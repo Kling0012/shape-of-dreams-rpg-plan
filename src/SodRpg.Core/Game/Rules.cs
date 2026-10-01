@@ -14,6 +14,7 @@ namespace SodRpg.Core.Game
         Lost,
         Recovered,
         Warning,
+        Bounty,
     }
 
     /// <summary>画面に流す通知。文言は発生時の表示言語で作る。</summary>
@@ -56,6 +57,9 @@ namespace SodRpg.Core.Game
                 ev.AddRange(EndRun(p, victory: false));
             }
             p.Run = new RunState { RunId = runId };
+            var brng = p.TakeRng();
+            p.Run.Bounties.AddRange(Bounties.Roll(brng));
+            p.StoreRng(brng);
             p.Stats.Runs++;
             if (p.LostAndFound.Count > 0)
             {
@@ -92,6 +96,13 @@ namespace SodRpg.Core.Game
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾った（未確保）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
                 AddToSatchel(p, relic, ev);
+                if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
+            }
+            switch (tier)
+            {
+                case MonsterTier.MiniBoss: AdvanceBounty(p, BountyKind.EliteHunter, 1, false, ev); break;
+                case MonsterTier.Boss: AdvanceBounty(p, BountyKind.Bossbane, 1, false, ev); break;
+                default: AdvanceBounty(p, BountyKind.Slayer, 1, false, ev); break;
             }
             ev.AddRange(AddXp(p, reward.Xp));
             return ev;
@@ -170,7 +181,53 @@ namespace SodRpg.Core.Game
                     $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
             }
             ev.AddRange(AddXp(p, Content.SecureXp));
+            AdvanceBounty(p, BountyKind.Collector, relics, true, ev);
+            if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
             return ev;
+        }
+
+        /// <summary>依頼の進捗を amount 進める。secured=true なら報酬を直接保管庫側へ（確保の最中に達成した場合）。</summary>
+        private static void AdvanceBounty(Profile p, BountyKind kind, int amount, bool secured, List<GameEvent> ev)
+        {
+            if (amount <= 0 || p.Run == null) return;
+            foreach (var b in p.Run.Bounties)
+            {
+                if (b.Kind != kind || b.Done) continue;
+                b.Progress = Math.Min(b.Target, b.Progress + amount);
+                if (b.Progress >= b.Target) CompleteBounty(p, b, secured, ev);
+            }
+        }
+
+        /// <summary>「値が目標以上に達したか」で判定する依頼（深度など）。</summary>
+        private static void ReachBounty(Profile p, BountyKind kind, int value, bool secured, List<GameEvent> ev)
+        {
+            if (p.Run == null) return;
+            foreach (var b in p.Run.Bounties)
+            {
+                if (b.Kind != kind || b.Done) continue;
+                b.Progress = Math.Max(b.Progress, Math.Min(b.Target, value));
+                if (value >= b.Target) CompleteBounty(p, b, secured, ev);
+            }
+        }
+
+        private static void CompleteBounty(Profile p, Bounty b, bool secured, List<GameEvent> ev)
+        {
+            b.Done = true;
+            b.Progress = b.Target;
+            if (secured)
+            {
+                p.AddMaterial(Materials.Shard, b.RewardShards);
+                p.AddMaterial(Materials.Tuning, b.RewardTuning);
+            }
+            else
+            {
+                p.Run.SatchelShards += b.RewardShards;
+                p.Run.SatchelTuning += b.RewardTuning;
+            }
+            ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
+                $"依頼達成：{b.Describe()}（{b.RewardText()}" + (secured ? "）" : "・未確保）"),
+                $"Bounty complete: {b.Describe()} ({b.RewardText()}" + (secured ? ")" : ", unsecured)"))));
+            ev.AddRange(AddXp(p, b.RewardXp));
         }
 
         /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>
@@ -194,7 +251,9 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            int added = clearedRooms - run.RoomsCleared;
             run.RoomsCleared = Math.Max(run.RoomsCleared, clearedRooms);
+            AdvanceBounty(p, BountyKind.Pathfinder, added, false, ev);
             if (run.LostRecovered || p.LostAndFound.Count == 0 || run.RoomsCleared < Content.RoomsToRecoverLost) return ev;
             var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
             p.LostAndFound.Remove(best);
@@ -256,6 +315,8 @@ namespace SodRpg.Core.Game
             report.PeakHeat = run.PeakHeat;
             report.SecuredCount = run.SecuredCount;
             report.LevelAfter = p.DreamLevel;
+            report.BountiesTotal = run.Bounties.Count;
+            report.BountiesDone = run.Bounties.Count(b => b.Done);
             p.LastReport = report;
             p.Run = null;
             return ev;

@@ -33,6 +33,8 @@ namespace SodRpg.Core.Game
         /// <summary>夢の深度（0〜5）。確保を見送って潜り続けるほど上がる。</summary>
         public int Heat { get; set; }
         public List<Relic> Satchel { get; } = new List<Relic>();
+        /// <summary>このランの依頼。</summary>
+        public List<Bounty> Bounties { get; } = new List<Bounty>();
         public int SatchelShards { get; set; }
         public int SatchelTuning { get; set; }
         public int RoomsCleared { get; set; }
@@ -68,6 +70,7 @@ namespace SodRpg.Core.Game
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
+            foreach (var b in Bounties) c.Bounties.Add(b.Clone());
             return c;
         }
     }
@@ -86,6 +89,8 @@ namespace SodRpg.Core.Game
         public int SecuredCount { get; set; }
         public int LevelBefore { get; set; }
         public int LevelAfter { get; set; }
+        public int BountiesDone { get; set; }
+        public int BountiesTotal { get; set; }
     }
 
     public sealed class ProfileStats

@@ -81,6 +81,7 @@ namespace SodRpg.Mod
                 case EventKind.Secured: return UiStyles.Colored(e.Text, "#7af0c8");
                 case EventKind.Delved: return UiStyles.Colored(e.Text, "#ff8a5c");
                 case EventKind.Recovered: return UiStyles.Colored(e.Text, "#7af0c8");
+                case EventKind.Bounty: return UiStyles.Colored(e.Text, "#ffd36e");
                 case EventKind.Lost:
                 case EventKind.Warning: return UiStyles.Colored(e.Text, "#ff7070");
                 default: return e.Text;
@@ -146,7 +147,7 @@ namespace SodRpg.Mod
         {
             var p = _s.Profile;
             var run = p.Run;
-            var rect = new Rect(10, h * 0.30f, 270, run != null ? 122 : 66);
+            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 122 + 20 * run.Bounties.Count : 66);
             GUILayout.BeginArea(rect, _st.Hud);
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : $"{p.DreamXp * 100 / Math.Max(1, need)}%";
@@ -159,6 +160,12 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("夢の深度 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
                 GUILayout.Label(Loc.T($"未確保：遺物{run.Satchel.Count}  欠片{run.SatchelShards}  調律石{run.SatchelTuning}",
                     $"Unsecured: {run.Satchel.Count} relics  {run.SatchelShards} shards  {run.SatchelTuning} tuning"), _st.Small);
+                foreach (var b in run.Bounties)
+                {
+                    string mark = b.Done ? "<color=#7af0c8>●</color>" : "○";
+                    string prog = b.Done ? "" : $" <color=#aaaacc>{b.Progress}/{b.Target}</color>";
+                    GUILayout.Label(mark + (b.Done ? "<color=#888>" + b.Describe() + "</color>" : b.Describe()) + prog, _st.Small);
+                }
                 if (!_s.HostConfirmed && _s.LocalHero != null)
                     GUILayout.Label(Loc.T("能力の反映待ち（ホスト未導入？）", "Waiting for host (host has no mod?)"), _st.Small);
             }
@@ -211,10 +218,10 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T(
                 $"撃破 {r.Kills}　遺物 {r.RelicsFound}個を発見\n確保 {r.RelicsSecured}個（確保{r.SecuredCount}回・欠片{r.ShardsSecured}）\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>遺失 {r.RelicsLost}個</color>　残響の欠片 {r.EchoShards}\n" : "") +
-                $"最高深度 {r.PeakHeat}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
+                $"最高深度 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
                 $"Kills {r.Kills}   Relics found {r.RelicsFound}\nSecured {r.RelicsSecured} ({r.SecuredCount} secures, {r.ShardsSecured} shards)\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>Lost {r.RelicsLost}</color>   Echo shards {r.EchoShards}\n" : "") +
-                $"Peak depth {r.PeakHeat}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
+                $"Peak depth {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
             if (r.RelicsLost > 0)
                 GUILayout.Label(Loc.T("失った遺物は、次の遠征で戦闘部屋を3つ突破すると1つ取り戻せます。", "Clear 3 combat rooms next expedition to recover one lost relic."), _st.Small);
             GUILayout.FlexibleSpace();
@@ -634,13 +641,15 @@ namespace SodRpg.Mod
                 "・全滅すると未確保の遺物は<b>遺失物</b>に。次の遠征で戦闘部屋を3つ突破すると、最良の1つを取り戻せる。\n" +
                 "・装備は遠征の外か確保地点で変更できる。主装備・防具・装飾品の3枠。\n" +
                 "・倒した数で<b>夢のレベル</b>が上がり、星図（専門化）のポイントが増える。6pt入れたルートでは<b>刻印</b>を1つ選べる。\n" +
-                "・鍛冶：欠片で強化（+5まで）、調律石で特性の引き直し（3回まで）、不要な遺物は分解。",
+                "・鍛冶：欠片で強化（+5まで）、調律石で特性の引き直し（3回まで）、不要な遺物は分解。\n" +
+                "・遠征ごとに依頼が3つ。達成すると欠片・調律石（未確保）と経験値。確保の最中に達成した分はそのまま確保。",
                 "- Enemies drop personal <b>relics</b> (gear) for every player. New loot starts <b>unsecured</b>.\n" +
                 "- Each new zone is a <b>secure point</b>. Secure moves loot to your stash. Delve raises dream depth: more drops and better rarity, but weaker defenses — and a bigger shard bonus when you finally secure.\n" +
                 "- If your party is wiped, unsecured relics become <b>Lost & Found</b>. Clear 3 combat rooms next run to recover the best one.\n" +
                 "- Change gear outside expeditions or at secure points. Three slots: weapon, armor, charm.\n" +
                 "- Kills raise your <b>Dream Level</b>, granting star map points. With 6 points in a route you can engrave one <b>keystone</b>.\n" +
-                "- Forge: enhance with shards (+5 max), retune affixes with tuning stones (3 times), salvage the rest."), _st.Small);
+                "- Forge: enhance with shards (+5 max), retune affixes with tuning stones (3 times), salvage the rest.\n" +
+                "- Each expedition offers 3 bounties. Rewards (shards, tuning) go to your satchel unsecured, plus xp."), _st.Small);
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
             GUILayout.BeginHorizontal();
@@ -666,6 +675,8 @@ namespace SodRpg.Mod
             if (p.Run != null)
             {
                 GUILayout.Label(Loc.T($"今回の遠征（未確保 {p.Run.Satchel.Count}）", $"This expedition ({p.Run.Satchel.Count} unsecured)"), _st.Header);
+                foreach (var b in p.Run.Bounties)
+                    GUILayout.Label((b.Done ? "● " : "○ ") + b.Describe() + $"  {b.Progress}/{b.Target}  <color=#c9a86a>{b.RewardText()}</color>", _st.Small);
                 foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             }
             GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);

@@ -72,7 +72,8 @@ namespace SodRpg.Core.Game
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
-                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("awaitingChoice", r.AwaitingChoice);
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured)
+                    .Add("bounties", WriteBounties(r.Bounties)).Add("awaitingChoice", r.AwaitingChoice);
             }
 
             return new JsonObject()
@@ -91,6 +92,44 @@ namespace SodRpg.Core.Game
                 .Add("codex", codex)
                 .Add("stats", stats)
                 .Add("run", run);
+        }
+
+        private static List<object> WriteBounties(IEnumerable<Bounty> bounties)
+        {
+            var list = new List<object>();
+            foreach (var b in bounties)
+            {
+                list.Add(new JsonObject()
+                    .Add("kind", (long)b.Kind).Add("target", (long)b.Target).Add("progress", (long)b.Progress).Add("done", b.Done)
+                    .Add("shards", (long)b.RewardShards).Add("tuning", (long)b.RewardTuning).Add("xp", (long)b.RewardXp));
+            }
+            return list;
+        }
+
+        private static void ReadBounties(JsonObject parent, List<Bounty> into, List<string> notes)
+        {
+            if (!parent.TryGet("bounties", out object o) || !(o is List<object> list)) return;
+            foreach (var item in list)
+            {
+                if (!(item is JsonObject j)) continue;
+                long kind = Long(j, "kind");
+                if (!Enum.IsDefined(typeof(BountyKind), (int)kind))
+                {
+                    notes.Add("未知の依頼を除外: " + kind);
+                    continue;
+                }
+                int target = Clamp(Long(j, "target"), 1, 100000);
+                into.Add(new Bounty
+                {
+                    Kind = (BountyKind)(int)kind,
+                    Target = target,
+                    Progress = Clamp(Long(j, "progress"), 0, target),
+                    Done = Bool(j, "done", false),
+                    RewardShards = Clamp(Long(j, "shards"), 0, 1000),
+                    RewardTuning = Clamp(Long(j, "tuning"), 0, 10),
+                    RewardXp = Clamp(Long(j, "xp"), 0, 10000),
+                });
+            }
         }
 
         private static List<object> WriteRelics(IEnumerable<Relic> relics)
@@ -200,6 +239,7 @@ namespace SodRpg.Core.Game
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
+                ReadBounties(rj, run.Bounties, notes);
                 p.Run = run;
             }
             return p;

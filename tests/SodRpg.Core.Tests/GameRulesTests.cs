@@ -109,6 +109,7 @@ namespace SodRpg.Core.Tests
         {
             var p = NewProfile();
             Rules.BeginRun(p, "run-1");
+            p.Run.Bounties.Clear();
             p.Run.Satchel.Add(Loot.RollRelic(new Rng(1), Rarity.Rare, 5));
             p.Run.SatchelShards = 40;
             p.Run.SatchelTuning = 1;
@@ -130,6 +131,7 @@ namespace SodRpg.Core.Tests
         {
             var p = NewProfile();
             Rules.BeginRun(p, "run-1");
+            p.Run.Bounties.Clear();
             var rng = new Rng(3);
             for (int i = 0; i < 3; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Uncommon, 5));
             p.Run.SatchelShards = 10;
@@ -148,6 +150,7 @@ namespace SodRpg.Core.Tests
         {
             var p = NewProfile();
             Rules.BeginRun(p, "a");
+            p.Run.Bounties.Clear();
             var rng = new Rng(3);
             for (int i = 0; i < 14; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 5));
             Rules.EndRun(p, victory: false);
