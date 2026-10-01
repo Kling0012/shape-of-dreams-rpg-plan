@@ -374,7 +374,7 @@ namespace SodRpg.Core.Tests
             w.Locked = true;
             Rules.Equip(p, "Hero_Lacerta", w.Uid);
             p.DreamLevel = 5;
-            Rules.AddTalentRank(p, "Hero_Lacerta", "t.grd.iron");
+            Rules.AddTalentRank(p, "Hero_Lacerta", "h.lacerta.powder");
             Rules.BeginRun(p, "run-x");
             Rules.Delve(p);
             p.Run.Satchel.Add(Loot.RollRelic(new Rng(9), Rarity.Epic, 12));

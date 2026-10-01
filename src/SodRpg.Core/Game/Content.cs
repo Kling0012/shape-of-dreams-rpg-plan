@@ -161,6 +161,8 @@ namespace SodRpg.Core.Game
         public Power Power { get; }
         public int PowerValue { get; }
         public Txt Description { get; }
+        /// <summary>旅人の刻印なら旅人の型名（例：Hero_Vesper）。汎用ノードは null。</summary>
+        public string HeroKey { get; set; }
     }
 
     /// <summary>
@@ -426,11 +428,13 @@ namespace SodRpg.Core.Game
             [Stat.ColdAmp] = 100,
             [Stat.LightAmp] = 100,
             [Stat.DarkAmp] = 100,
+            [Stat.AttackRangePct] = 30,
+            [Stat.FourthAttackShift] = 2,
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
         private static readonly Dictionary<string, UniqueDef> UniqueById = Index(Uniques, u => u.Id);
-        private static readonly Dictionary<string, TalentDef> TalentById = Index(Talents, t => t.Id);
+        private static readonly Dictionary<string, TalentDef> TalentById = Index(Talents.Concat(HeroSigils.All), t => t.Id);
 
         private static Dictionary<string, T> Index<T>(IEnumerable<T> items, Func<T, string> key)
         {
@@ -621,6 +625,8 @@ namespace SodRpg.Core.Game
                 case Stat.FireAmp: return Loc.T($"火属性効果 {sign}{v}%", $"{sign}{v}% Fire Effect");
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"{sign}{v}% Cold Effect");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"{sign}{v}% Light Effect");
+                case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"{sign}{v}% Attack Range");
+                case Stat.FourthAttackShift: return Loc.T($"4発目の位置 {sign}{v}", $"{sign}{v} Fourth-attack shift");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"{sign}{v}% Dark Effect");
             }
         }

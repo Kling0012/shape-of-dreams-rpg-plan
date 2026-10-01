@@ -472,6 +472,8 @@ namespace SodRpg.Mod
                     case Stat.ColdAmp: s.coldEffectAmpFlat += v; break;
                     case Stat.LightAmp: s.lightEffectAmpFlat += v; break;
                     case Stat.DarkAmp: s.darkEffectAmpFlat += v; break;
+                    case Stat.AttackRangePct: s.attackRangePercentage += v; break;
+                    case Stat.FourthAttackShift: s.everyFourAttackStartIndexFlat += (int)v; break;
                 }
             }
             return s;

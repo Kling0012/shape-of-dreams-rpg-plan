@@ -48,6 +48,10 @@ namespace SodRpg.Core.Game
         ColdAmp = 13,
         LightAmp = 14,
         DarkAmp = 15,
+        /// <summary>通常攻撃の射程（%）。</summary>
+        AttackRangePct = 16,
+        /// <summary>4発目の位置を前へ進める（本体の everyFourAttackStartIndex）。</summary>
+        FourthAttackShift = 17,
     }
 
     /// <summary>

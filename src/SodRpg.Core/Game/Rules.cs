@@ -119,8 +119,8 @@ namespace SodRpg.Core.Game
                 {
                     string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
                     ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                        $"{name}の熟練度 {after}「{Mastery.Title(after)}」：攻撃力・魔力・最大HP+1%",
-                        $"{name} mastery {after} \"{Mastery.Title(after)}\": +1% attack, power and max health")));
+                        $"{name}の熟練度 {after}「{Mastery.Title(after)}」" + (after == HeroSigils.KeystoneMastery ? "：到達刻印を選べるようになった" : ""),
+                        $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery ? ": keystones unlocked" : ""))));
                 }
             }
             if (isNightmare)
@@ -688,11 +688,27 @@ namespace SodRpg.Core.Game
 
         // ───────────── 専門化 ─────────────
 
+        /// <summary>到達刻印を選べるか。旅人の刻印はツリーに6pt＋熟練度3、汎用は同じルートに6pt。</summary>
+        public static bool KeystoneUnlocked(Profile p, string heroKey, TalentDef key)
+        {
+            var h = p.Hero(heroKey);
+            if (key.HeroKey != null)
+            {
+                if (key.HeroKey != heroKey) return false;
+                int ranks = 0;
+                foreach (var kv in h.Talents)
+                    if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) ranks += kv.Value;
+                return ranks >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery;
+            }
+            if (HeroSigils.HasTree(heroKey)) return false;
+            return RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
+        }
+
         public static int RouteRanks(HeroState h, Line route)
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.Route == route && !t.IsKeystone) n += kv.Value;
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == null && t.Route == route && !t.IsKeystone) n += kv.Value;
             return n;
         }
 
@@ -709,6 +725,7 @@ namespace SodRpg.Core.Game
         public static void AddTalentRank(Profile p, string heroKey, string talentId)
         {
             if (!Content.TryGetTalent(talentId, out var t) || t.IsKeystone) throw new InvalidOperationException("未知のノード: " + talentId);
+            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人のノードではありません。", "That node is not in this Traveler's tree."));
             var h = p.Hero(heroKey);
             int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
             if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
@@ -726,12 +743,20 @@ namespace SodRpg.Core.Game
                 return;
             }
             if (!Content.TryGetTalent(keystoneId, out var t) || !t.IsKeystone) throw new InvalidOperationException("未知の刻印: " + keystoneId);
-            if (RouteRanks(h, t.Route) < Content.KeystoneRouteRequirement)
-                throw new InvalidOperationException(Loc.T($"{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}ポイント以上必要です。",
-                    $"Requires {Content.KeystoneRouteRequirement}+ points in {Content.LineName(t.Route)}."));
+            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人の刻印ではありません。", "That keystone is not in this Traveler's tree."));
+            if (!KeystoneUnlocked(p, heroKey, t))
+                throw new InvalidOperationException(t.HeroKey != null
+                    ? Loc.T($"ツリーに{Content.KeystoneRouteRequirement}pt以上と熟練度{HeroSigils.KeystoneMastery}以上が必要です。", $"Requires {Content.KeystoneRouteRequirement}+ points and mastery {HeroSigils.KeystoneMastery}+.")
+                    : Loc.T($"{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}ポイント以上必要です。", $"Requires {Content.KeystoneRouteRequirement}+ points in {Content.LineName(t.Route)}."));
             if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
                 throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
             h.Keystone = keystoneId;
+        }
+
+        /// <summary>ノードがその旅人のツリーに属するか。</summary>
+        public static bool BelongsTo(TalentDef t, string heroKey)
+        {
+            return HeroSigils.HasTree(heroKey) ? t.HeroKey == heroKey : t.HeroKey == null;
         }
 
         public static void ResetTalents(Profile p, string heroKey)

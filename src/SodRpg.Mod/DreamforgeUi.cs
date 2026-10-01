@@ -683,53 +683,72 @@ namespace SodRpg.Mod
             if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征の外でのみ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
 
             GUILayout.BeginHorizontal();
-            foreach (Line route in Enum.GetValues(typeof(Line)))
+            if (HeroSigils.HasTree(hero))
             {
-                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(330));
-                GUILayout.Label($"{Content.LineName(route)}  <color=#aaa>({Rules.RouteRanks(hs, route)})</color>", _st.Header);
-                foreach (var t in Content.Talents.Where(x => x.Route == route))
-                {
-                    if (t.IsKeystone)
-                    {
-                        GUILayout.Space(6);
-                        bool active = hs.Keystone == t.Id;
-                        bool unlocked = Rules.RouteRanks(hs, route) >= Content.KeystoneRouteRequirement;
-                        GUILayout.Label((active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（刻印）", " (Keystone)"), _st.Label);
-                        GUILayout.Label(t.Description.ToString(), _st.Small);
-                        GUI.enabled = _s.CanEditTalents && (active || unlocked);
-                        string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
-                            ? Loc.T($"刻印する（{Content.KeystoneCost}pt）", $"Engrave ({Content.KeystoneCost}pt)")
-                            : Loc.T($"{Content.KeystoneRouteRequirement}pt以上で解放", $"Needs {Content.KeystoneRouteRequirement}pt in route");
-                        if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
-                        {
-                            try
-                            {
-                                Rules.SetKeystone(p, hero, active ? null : t.Id);
-                                _s.MarkDirty(true);
-                            }
-                            catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                        }
-                        GUI.enabled = true;
-                        continue;
-                    }
-                    int rank = hs.Talents.TryGetValue(t.Id, out int rk) ? rk : 0;
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label($"<b>{t.Name}</b> {rank}/{t.MaxRank}\n<color=#aab>{Content.FormatStat(t.Stat, t.PerRank)} /{Loc.T("段", "rank")}</color>", _st.Small, GUILayout.Width(230));
-                    GUI.enabled = _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
-                    if (GUILayout.Button("+", _st.Button, GUILayout.Width(44), GUILayout.Height(34)))
-                    {
-                        try
-                        {
-                            Rules.AddTalentRank(p, hero, t.Id);
-                            _s.MarkDirty(true);
-                        }
-                        catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                    }
-                    GUI.enabled = true;
-                    GUILayout.EndHorizontal();
-                }
+                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(520));
+                GUILayout.Label(Loc.T($"旅人の刻印：{HeroName(hero)}", $"Traveler sigils: {HeroName(hero)}"), _st.Header);
+                foreach (var t in HeroSigils.TreeFor(hero)) DrawTalentNode(p, hero, hs, t);
+                GUILayout.EndVertical();
+                GUILayout.BeginVertical(_st.Panel);
+                int lv = Mastery.Level(hs.Kills);
+                GUILayout.Label(Loc.T("この旅人のキットに効く刻印です。", "These sigils work with this Traveler's own kit."), _st.Small);
+                GUILayout.Label(Loc.T(
+                    $"到達刻印：ツリーに{Content.KeystoneRouteRequirement}pt以上＋熟練度{HeroSigils.KeystoneMastery}以上（現在 {lv}「{Mastery.Title(lv)}」）",
+                    $"Keystone: {Content.KeystoneRouteRequirement}+ points in the tree and mastery {HeroSigils.KeystoneMastery}+ (now {lv} \"{Mastery.Title(lv)}\")"), _st.Small);
                 GUILayout.EndVertical();
             }
+            else
+            {
+                foreach (Line route in Enum.GetValues(typeof(Line)))
+                {
+                    GUILayout.BeginVertical(_st.Panel, GUILayout.Width(330));
+                    GUILayout.Label($"{Content.LineName(route)}  <color=#aaa>({Rules.RouteRanks(hs, route)})</color>", _st.Header);
+                    foreach (var t in Content.Talents.Where(x => x.Route == route)) DrawTalentNode(p, hero, hs, t);
+                    GUILayout.EndVertical();
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawTalentNode(Profile p, string hero, HeroState hs, TalentDef t)
+        {
+            if (t.IsKeystone)
+            {
+                GUILayout.Space(6);
+                bool active = hs.Keystone == t.Id;
+                bool unlocked = Rules.KeystoneUnlocked(p, hero, t);
+                GUILayout.Label((active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（到達刻印）", " (Keystone)"), _st.Label);
+                GUILayout.Label(t.Description.ToString(), _st.Small);
+                GUI.enabled = _s.CanEditTalents && (active || unlocked);
+                string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
+                    ? Loc.T($"刻印する（{Content.KeystoneCost}pt）", $"Engrave ({Content.KeystoneCost}pt)")
+                    : Loc.T("条件を満たすと解放", "Locked");
+                if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
+                {
+                    try
+                    {
+                        Rules.SetKeystone(p, hero, active ? null : t.Id);
+                        _s.MarkDirty(true);
+                    }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                }
+                GUI.enabled = true;
+                return;
+            }
+            int rank = hs.Talents.TryGetValue(t.Id, out int rk) ? rk : 0;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"<b>{t.Name}</b> {rank}/{t.MaxRank}\n<color=#aab>{Content.FormatStat(t.Stat, t.PerRank)} /{Loc.T("段", "rank")}</color>", _st.Small, GUILayout.Width(230));
+            GUI.enabled = _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
+            if (GUILayout.Button("+", _st.Button, GUILayout.Width(44), GUILayout.Height(34)))
+            {
+                try
+                {
+                    Rules.AddTalentRank(p, hero, t.Id);
+                    _s.MarkDirty(true);
+                }
+                catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+            }
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
         }
 

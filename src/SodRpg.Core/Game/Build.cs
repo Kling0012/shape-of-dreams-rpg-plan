@@ -64,22 +64,15 @@ namespace SodRpg.Core.Game
             }
             foreach (var kv in h.Talents)
             {
-                if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone) continue;
+                if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone || !Rules.BelongsTo(t, heroKey)) continue;
                 Add(rawStats, t.Stat, t.PerRank * Math.Min(kv.Value, t.MaxRank));
             }
             if (h.Keystone != null && Content.TryGetTalent(h.Keystone, out var key) && key.IsKeystone
-                && Rules.RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement)
+                && Rules.BelongsTo(key, heroKey) && Rules.KeystoneUnlocked(p, heroKey, key))
             {
                 Add(rawPowers, key.Power, key.PowerValue);
             }
 
-            int mastery = Mastery.Level(h.Kills);
-            if (mastery > 0)
-            {
-                Add(rawStats, Stat.AttackPct, mastery);
-                Add(rawStats, Stat.PowerPct, mastery);
-                Add(rawStats, Stat.MaxHealthPct, mastery);
-            }
             var daily = DailyDream.Get(dailyId);
             if (daily != null)
             {

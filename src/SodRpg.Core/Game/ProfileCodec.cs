@@ -228,14 +228,17 @@ namespace SodRpg.Core.Game
                         foreach (var t in tal.Properties)
                         {
                             if (Content.TryGetTalent(t.Key, out var def) && !def.IsKeystone && t.Value is long rank && rank > 0)
-                                h.Talents[t.Key] = (int)Math.Min(def.MaxRank, rank);
+                            {
+                                if (Rules.BelongsTo(def, kv.Key)) h.Talents[t.Key] = (int)Math.Min(def.MaxRank, rank);
+                                else notes.Add($"{kv.Key}: 旅人の刻印へ移行したため汎用ノードのポイントを戻しました: {t.Key}");
+                            }
                             else
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
                     }
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
-                    if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone) h.Keystone = key;
+                    if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
                 }
             }
             if (b.TryGet("codex", out object co) && co is List<object> codex)

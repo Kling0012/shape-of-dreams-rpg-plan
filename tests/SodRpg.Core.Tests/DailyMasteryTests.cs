@@ -142,7 +142,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Kills_raise_hero_mastery_and_build_bonuses()
+        public void Kills_raise_hero_mastery()
         {
             var p = Profile.CreateNew(2);
             Rules.BeginRun(p, "m");
@@ -152,9 +152,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(100, p.Hero("Hero_Vesper").Kills);
             Assert.Contains(events, e => e.Kind == EventKind.LevelUp && e.Text.Contains("Vesper"));
             var b = Build.Compute(p, "Hero_Vesper", 0);
-            Assert.Equal(1, b.Get(Stat.AttackPct));
-            Assert.Equal(1, b.Get(Stat.MaxHealthPct));
-            Assert.Equal(0, Build.Compute(p, "Hero_Lacerta", 0).Get(Stat.AttackPct));
+            Assert.Equal(0, b.Get(Stat.AttackPct)); // v1.2：熟練度は能力%ではなく到達刻印の解放条件
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.Equal(100, q.Hero("Hero_Vesper").Kills);
         }

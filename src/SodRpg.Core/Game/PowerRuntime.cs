@@ -250,6 +250,8 @@ namespace SodRpg.Core.Game
                 case Stat.LightAmp:
                 case Stat.DarkAmp:
                     return value / 100f;
+                case Stat.FourthAttackShift:
+                    return value;
                 default:
                     return value;
             }
