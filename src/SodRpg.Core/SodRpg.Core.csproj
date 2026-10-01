@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- netstandard2.0: Unity/.NET Framework 4.x 系のMOD環境からも参照できる範囲に留める（第三者依存なし） -->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>SodRpg.Core</RootNamespace>
+    <AssemblyName>SodRpg.Core</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SodRpg.Core.Tests" />
+  </ItemGroup>
+
+</Project>
