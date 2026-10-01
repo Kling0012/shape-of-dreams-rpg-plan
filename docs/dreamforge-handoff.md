@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.6.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.7.0）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,7 +6,7 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.6.0**（GitHub Releases に v0.1.0〜v1.6.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.7.0**（GitHub Releases に v0.1.0〜v1.7.0、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
 | 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
@@ -107,3 +107,11 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - 重さの原因は本体マネージャーの `.instance`（不在時に毎回 `FindObjectOfType` ×2）を毎フレーム呼んでいたこと。MOD内は必ず `.softInstance` を使う（新しいコードでも `.instance` を使わない）。
 - 計測は `QuickSave/Mods/DreamforgeRPG/perf.flag` を置くと10秒ごとに Player.log へ出る。修正後：Update 約0.004ms、OnGUI 約0.006ms/回、全体 約135fps。
 - 初回起動の動線を実機で確認（2026-10-02、MODプロフィールを一時退避して再現）：タイトルで「ようこそ、夢鍛へ」→「メニューを開く」で保管庫に初期遺物3つ→遠征開始で空き枠へ自動装備し「初期の遺物を装備しました」のヒント。遠征中の計測：MOD Update 約0.012ms、OnGUI 約0.07ms/回、全体110〜135fps。
+
+## 役割分担と道具（2026-10-02 利用者指示）
+
+- コードの実装は **OMP 経由の GPT**（`omp -p --mode json --approval-mode write --model openai-codex/gpt-6.1-sol --thinking high --cwd <クローン> "<依頼>" < /dev/null`）。Codex CLI は使わない。GLM も OMP から使える（テスト・反復向け）。
+- **文章・デザイン・画面（UI）・仕様・数値の決定・確認は Claude**。
+- GPT には Google Drive 外の ASCII パス（`C:\Temp\sod-*`）のクローンで作業させる。`write` モードではコマンドが実行できないので、本体APIの確認・ビルド・試験・実機確認は Claude が行い、確認済みのAPIを依頼文に書いて渡す。標準入力を `< /dev/null` で閉じないと起動待ちのまま止まる。
+- バランスは `tools/BalanceSim` で確かめる（`dotnet run --project tools/BalanceSim -c Release -- --runs 30 --players 300 --seed 1`）。結果は `tools/BalanceSim/result-v1.7.md`。
+- リリースのたびに GitHub の issues と PR のコメントも確認する。
