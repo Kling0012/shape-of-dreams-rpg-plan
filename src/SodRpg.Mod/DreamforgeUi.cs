@@ -166,7 +166,7 @@ namespace SodRpg.Mod
             bool layout = LayoutEnabled;
             try
             {
-                var zm = NetworkedManagerBase<ZoneManager>.instance;
+                var zm = NetworkedManagerBase<ZoneManager>.softInstance;
                 bool transition = zm != null && zm.isInAnyTransition;
                 if (_s.InGame && !transition)
                 {

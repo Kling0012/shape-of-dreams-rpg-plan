@@ -247,7 +247,7 @@ namespace SodRpg.Mod
 
         private void EnsureRegistered()
         {
-            var am = NetworkedManagerBase<ActorManager>.instance;
+            var am = NetworkedManagerBase<ActorManager>.softInstance;
             var actor = am != null ? am.serverActor : null;
             if (actor != _registeredOn)
             {
@@ -278,7 +278,7 @@ namespace SodRpg.Mod
                 _nightmares.Clear();
                 if (am != null) am.ClientEvent_OnEntityAdd += _onEntityAdd;
             }
-            var cem = NetworkedManagerBase<ClientEventManager>.instance;
+            var cem = NetworkedManagerBase<ClientEventManager>.softInstance;
             if (cem != _cem)
             {
                 Unsubscribe();

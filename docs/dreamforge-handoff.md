@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.5.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.5.1）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,7 +6,7 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.5.0**（GitHub Releases に v0.1.0〜v1.5.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.5.1**（GitHub Releases に v0.1.0〜v1.5.1、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
 | 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
@@ -101,3 +101,8 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - 保存データは `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json`。互換を崩す変更は `ProfileCodec` で移行し、未知のIDは捨てずに注記する。
 - 文字列の中で `\n` を Python のヒアドキュメントで編集すると実際の改行になって C# が壊れることがあった。編集スクリプトはファイルに書いてから実行する。
 - 共有記憶（Agent Memory MCP）はこのセッションでは接続ツールが無く、保存できていない。Claude Code のローカル記憶（`~/.claude/projects/.../memory/`）には方針を保存済み。
+
+## v1.5.1 の性能修正（2026-10-02 実機確認済み）
+
+- 重さの原因は本体マネージャーの `.instance`（不在時に毎回 `FindObjectOfType` ×2）を毎フレーム呼んでいたこと。MOD内は必ず `.softInstance` を使う（新しいコードでも `.instance` を使わない）。
+- 計測は `QuickSave/Mods/DreamforgeRPG/perf.flag` を置くと10秒ごとに Player.log へ出る。修正後：Update 約0.004ms、OnGUI 約0.006ms/回、全体 約135fps。

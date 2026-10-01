@@ -228,7 +228,7 @@ namespace SodRpg.Mod
         private void SimKillCommand(int tier, int count)
         {
             if (_session.Profile.Run == null) { Debug.Log("[DreamforgeRPG] no run"); return; }
-            int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.instance?.ambientLevel ?? 1);
+            int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.softInstance?.ambientLevel ?? 1);
             for (int i = 0; i < Math.Max(1, Math.Min(count, 500)); i++)
                 foreach (var e in Rules.OnKill(_session.Profile, (MonsterTier)Math.Max(0, Math.Min(3, tier)), lvl)) _ui.Notify(e);
             _session.MarkDirty(false);

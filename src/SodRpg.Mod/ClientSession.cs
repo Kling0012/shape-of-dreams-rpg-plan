@@ -132,7 +132,7 @@ namespace SodRpg.Mod
             }
         }
 
-        public bool InGame => NetworkedManagerBase<GameManager>.instance != null;
+        public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
 
         public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || !InGame;
 
@@ -161,7 +161,7 @@ namespace SodRpg.Mod
 
         private void Wire()
         {
-            var zone = NetworkedManagerBase<ZoneManager>.instance;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
             if (zone != _zone)
             {
                 if (_zone != null)
@@ -184,7 +184,7 @@ namespace SodRpg.Mod
                     zone.ClientEvent_OnCurrentHuntLevelChanged += _onHuntChanged;
                 }
             }
-            var cem = NetworkedManagerBase<ClientEventManager>.instance;
+            var cem = NetworkedManagerBase<ClientEventManager>.softInstance;
             if (cem != _cem)
             {
                 if (_cem != null)
@@ -202,7 +202,7 @@ namespace SodRpg.Mod
                     cem.OnGemMergeUpgraded += _onMerged;
                 }
             }
-            var results = NetworkedManagerBase<GameResultManager>.instance;
+            var results = NetworkedManagerBase<GameResultManager>.softInstance;
             if (results != _results)
             {
                 if (_results != null)
@@ -212,7 +212,7 @@ namespace SodRpg.Mod
                 _results = results;
                 if (results != null) results.ClientEvent_OnGameConcluded += _onConcluded;
             }
-            var am = NetworkedManagerBase<ActorManager>.instance;
+            var am = NetworkedManagerBase<ActorManager>.softInstance;
             var actor = am != null ? am.serverActor : null;
             if (actor != _clientRpcOn)
             {
@@ -275,7 +275,7 @@ namespace SodRpg.Mod
 
         private void TrackRun()
         {
-            var gm = NetworkedManagerBase<GameManager>.instance;
+            var gm = NetworkedManagerBase<GameManager>.softInstance;
             if (gm == null)
             {
                 ActiveRunId = null;
@@ -347,7 +347,7 @@ namespace SodRpg.Mod
                 if (hero == null) return;
                 if (m.GetRelation(hero) != EntityRelation.Enemy) return;
                 int level = m.Status != null ? m.Status.level : 1;
-                var gm = NetworkedManagerBase<GameManager>.instance;
+                var gm = NetworkedManagerBase<GameManager>.softInstance;
                 if (gm != null) level = Math.Max(level, gm.ambientLevel);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 Nightmare.TryGetValue(m.netId, out var nightmare);
@@ -431,7 +431,7 @@ namespace SodRpg.Mod
         public int MerchantPrice()
         {
             int heat = Profile.Run?.Heat ?? 0;
-            var gm = NetworkedManagerBase<GameManager>.instance;
+            var gm = NetworkedManagerBase<GameManager>.softInstance;
             float price = Economy.MerchantGoldBase(heat);
             try { if (gm != null) price = gm.GetAdjustedGoldAmount_Cost(price); } catch (Exception) { }
             return Math.Max(1, (int)Math.Round(price));
