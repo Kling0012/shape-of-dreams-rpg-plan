@@ -174,6 +174,48 @@ namespace SodRpg.Mod
             Debug.Log("[DreamforgeRPG] lightweight=" + config.lightweight);
         }
 
+        [ConsoleCommand("Dreamforge (test): travel to the nearest connected combat node (prefers unvisited)", "dreamforge_travelnext")]
+        private void TravelNextCommand()
+        {
+            try
+            {
+                var zm = NetworkedManagerBase<ZoneManager>.softInstance;
+                if (zm == null)
+                {
+                    Debug.Log("[DreamforgeRPG] travel: ZoneManager unavailable");
+                    return;
+                }
+
+                int cur = zm.currentNodeIndex;
+                int target = -1;
+                for (int i = 0; i < zm.nodes.Count; i++)
+                {
+                    if (i == cur || zm.nodes[i].type == WorldNodeType.ExitBoss || !zm.IsNodeConnected(cur, i))
+                        continue;
+
+                    if (target < 0) target = i;
+                    if (zm.nodes[i].type == WorldNodeType.Combat && zm.nodes[i].status != WorldNodeStatus.HasVisited)
+                    {
+                        target = i;
+                        break;
+                    }
+                }
+
+                if (target < 0)
+                {
+                    Debug.Log("[DreamforgeRPG] travel: no connected destination");
+                    return;
+                }
+
+                zm.CmdTravelToNode(target);
+                Debug.Log("[DreamforgeRPG] travel -> " + target + " " + zm.nodes[target].type);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("[DreamforgeRPG] travel: " + ex);
+            }
+        }
+
         [ConsoleCommand("Dreamforge (test): set URP render scale (0.25-2.0) to emulate a weaker GPU", "dreamforge_renderscale")]
         private void RenderScaleCommand(float scale)
         {
