@@ -174,6 +174,26 @@ namespace SodRpg.Mod
             Debug.Log("[DreamforgeRPG] lightweight=" + config.lightweight);
         }
 
+        [ConsoleCommand("Dreamforge (test): set URP render scale (0.25-2.0) to emulate a weaker GPU", "dreamforge_renderscale")]
+        private void RenderScaleCommand(float scale)
+        {
+            try
+            {
+                var asset = URPUnlocker.API.URPUnlockerAPI.CurrentUnlockedURPAsset;
+                if (asset == null)
+                {
+                    Debug.Log("[DreamforgeRPG] renderScale: URP asset unavailable");
+                    return;
+                }
+                asset.Quality.RenderScale = Math.Max(0.25f, Math.Min(2.0f, scale));
+                Debug.Log("[DreamforgeRPG] renderScale=" + asset.Quality.RenderScale);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("[DreamforgeRPG] renderScale: " + ex);
+            }
+        }
+
         private void OnApplicationQuit()
         {
             _session?.SaveNow();
