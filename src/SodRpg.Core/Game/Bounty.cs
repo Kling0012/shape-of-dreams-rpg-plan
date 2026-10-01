@@ -13,7 +13,7 @@ namespace SodRpg.Core.Game
         Bossbane = 2,
         /// <summary>遺物を合計 Target 個確保する。</summary>
         Collector = 3,
-        /// <summary>夢の深度 Target 以上で確保する。</summary>
+        /// <summary>潜行 Target 以上で確保する。</summary>
         DeepDiver = 4,
         /// <summary>レア以上の遺物を Target 個見つける。</summary>
         Treasure = 5,
@@ -60,7 +60,7 @@ namespace SodRpg.Core.Game
                 case BountyKind.EliteHunter: return Loc.T($"エリートを{t}体倒す", $"Defeat {t} elites");
                 case BountyKind.Bossbane: return Loc.T($"ボスを{t}体倒す", $"Defeat {t} boss(es)");
                 case BountyKind.Collector: return Loc.T($"遺物を{t}個確保する", $"Secure {t} relics");
-                case BountyKind.DeepDiver: return Loc.T($"夢の深度{t}以上で確保する", $"Secure at dream depth {t}+");
+                case BountyKind.DeepDiver: return Loc.T($"潜行{t}以上で確保する", $"Secure at delve level {t}+");
                 case BountyKind.Treasure: return Loc.T($"レア以上の遺物を{t}個見つける", $"Find {t} Rare+ relic(s)");
                 case BountyKind.NightmareHunter: return Loc.T($"悪夢化した敵を{t}体倒す", $"Slay {t} nightmare(s)");
                 case BountyKind.ChaosSeeker: return Loc.T($"Chaosの祭壇を{t}回使う", $"Use {t} Chaos shrine(s)");

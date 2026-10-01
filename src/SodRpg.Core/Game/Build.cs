@@ -22,9 +22,11 @@ namespace SodRpg.Core.Game
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
         public int Get(Power p) => Powers.TryGetValue(p, out int v) ? v : 0;
 
-        /// <summary>夢の深度1ごとの代償。</summary>
-        public const int HeatArmorPenalty = 6;
-        public const int HeatHealthPenaltyPct = 4;
+        /// <summary>潜行1段ごとの被ダメージ増加（%）。本体 Limbo の「被ダメージ増加」と同じ表現。</summary>
+        public const int DamageTakenPerDelvePct = 6;
+
+        /// <summary>被ダメージの倍率（1.0 = 増減なし）。</summary>
+        public float DamageTakenMultiplier => 1f + DamageTakenPerDelvePct * Heat / 100f;
 
         public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null, int dailyId = 0)
         {
@@ -106,11 +108,6 @@ namespace SodRpg.Core.Game
                 var d = Game.Pacts.Get(id);
                 if (d == null) continue;
                 foreach (var s in d.Penalties) b.Stats[s.Stat] = b.Get(s.Stat) + s.Value;
-            }
-            if (b.Heat > 0)
-            {
-                b.Stats[Stat.Armor] = b.Get(Stat.Armor) - HeatArmorPenalty * b.Heat;
-                b.Stats[Stat.MaxHealthPct] = b.Get(Stat.MaxHealthPct) - HeatHealthPenaltyPct * b.Heat;
             }
             return b;
         }

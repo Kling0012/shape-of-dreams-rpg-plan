@@ -17,7 +17,7 @@ namespace SodRpg.Core.Game
         LeadenFeet = 4,
         /// <summary>狂乱：防御-25 / 攻撃力・魔力+15%（純粋な戦闘の賭け）</summary>
         Frenzy = 5,
-        /// <summary>呪われた財宝：確保時の深度ボーナス×2 / 全滅時の残響なし</summary>
+        /// <summary>呪われた財宝：確保時の潜行ボーナス×2 / 全滅時の残響なし</summary>
         CursedHoard = 6,
         /// <summary>乾いた夢：HP回復-3/秒・スキル加速-10 / 調律石の入手+1（エリート・ボス）</summary>
         DryDream = 7,
@@ -81,7 +81,7 @@ namespace SodRpg.Core.Game
             new PactDef
             {
                 Id = Pact.CursedHoard, Name = new Txt("呪われた財宝", "Cursed Hoard"),
-                Description = new Txt("確保時の深度ボーナス×2 ／ 全滅すると残響なし", "x2 depth bonus on secure / no echoes on defeat"),
+                Description = new Txt("確保時の潜行ボーナス×2 ／ 全滅すると残響なし", "x2 delve bonus on secure / no echoes on defeat"),
                 DoubleDepthBonus = true, NoEcho = true,
             },
             new PactDef

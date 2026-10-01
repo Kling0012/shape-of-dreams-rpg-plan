@@ -24,6 +24,7 @@ namespace SodRpg.Mod
             public StatBonus DynBonus;
             public Action<EventInfoAttackFired> OnFired;
             public Action<EventInfoSkillUse> OnSkill;
+            public DataProcessor<DamageData, Actor, Entity> DamageTaken;
         }
 
         private readonly Dictionary<DewPlayer, Build> _builds = new Dictionary<DewPlayer, Build>();
@@ -177,9 +178,45 @@ namespace SodRpg.Mod
                 if (regen > 0) _regen[m] = regen;
             }
             m.Status.AddStatBonus(bonus);
+            AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
+        }
+
+        private List<MirageSkinEffect> _mirageTier0, _mirageTier1;
+
+        /// <summary>
+        /// 悪夢化した敵に本体のエリート効果（MirageSkin：見た目と専用攻撃）を付ける。
+        /// 本体がすでに付けている敵には重ねない。深い悪夢（接頭2つ以上）は tier 1 も候補にする。
+        /// </summary>
+        private void AttachMirageSkin(Monster m, bool allowTier1)
+        {
+            try
+            {
+                if (m.Status.HasStatusEffect<MirageSkinEffect>()) return;
+                if (_mirageTier0 == null)
+                {
+                    _mirageTier0 = new List<MirageSkinEffect>();
+                    _mirageTier1 = new List<MirageSkinEffect>();
+                    foreach (var e in DewResources.FindAllByType<MirageSkinEffect>())
+                    {
+                        if (e == null) continue;
+                        if (e.tier <= 0) _mirageTier0.Add(e);
+                        else _mirageTier1.Add(e);
+                    }
+                    Log.Info($"MirageSkin pool: tier0={_mirageTier0.Count} tier1={_mirageTier1.Count}");
+                }
+                var pool = new List<MirageSkinEffect>(_mirageTier0);
+                if (allowTier1) pool.AddRange(_mirageTier1);
+                if (pool.Count == 0) return;
+                var pick = pool[_rng.Range(0, pool.Count - 1)];
+                m.CreateStatusEffect(pick.GetType(), m, new CastInfo(m));
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("MirageSkin attach failed: " + ex.Message);
+            }
         }
 
         private void RegenNightmares()
@@ -344,6 +381,12 @@ namespace SodRpg.Mod
                 rt.OnSkill = info => OnSkillUse(captured, info);
                 hero.EntityEvent_OnAttackFired += rt.OnFired;
                 hero.ClientHeroEvent_OnSkillUse += rt.OnSkill;
+                rt.DamageTaken = (ref DamageData d, Actor a, Entity t) =>
+                {
+                    float mult = captured.Powers.Build.DamageTakenMultiplier;
+                    if (mult > 1f) d.ApplyAmplification(mult - 1f);
+                };
+                hero.takenDamageProcessor.Add(rt.DamageTaken);
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
@@ -362,10 +405,12 @@ namespace SodRpg.Mod
             {
                 if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
+                if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
             }
             catch (Exception) { }
             rt.OnFired = null;
             rt.OnSkill = null;
+            rt.DamageTaken = null;
         }
 
         /// <summary>回避の残響・終の昂り。</summary>

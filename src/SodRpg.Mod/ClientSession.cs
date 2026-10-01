@@ -278,9 +278,23 @@ namespace SodRpg.Mod
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
             ActiveRunId = runId;
-            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today));
+            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth()));
             _buildDirty = true;
             SaveNow();
+        }
+
+        /// <summary>本体の Limbo 深度（Limbo でなければ0）。</summary>
+        private static int ReadLimboDepth()
+        {
+            try
+            {
+                var limbo = UnityEngine.Object.FindObjectOfType<GameMod_Limbo>();
+                return limbo != null ? Math.Max(0, limbo.depth) : 0;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
         }
 
         private void Emit(IEnumerable<GameEvent> events)

@@ -23,13 +23,13 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>
-    /// 悪夢化エリート（Diablo のチャンピオンに相当）。パーティの最大の夢の深度に応じて、ホストが一部の敵を悪夢化する。
+    /// 悪夢化エリート（Diablo のチャンピオンに相当）。パーティの最大の潜行に応じて、ホストが一部の敵を悪夢化する。
     /// 悪夢化した敵は強く、倒すとエリート相当の戦利品・欠片・経験値が出る。
     /// </summary>
     public static class Nightmares
     {
-        /// <summary>悪夢化の基礎体力の上乗せ（%）。</summary>
-        public const int BaseHealthPct = 80;
+        /// <summary>悪夢化の基礎体力の上乗せ（%）。見た目と専用攻撃は本体のエリート効果（MirageSkin）が担う。</summary>
+        public const int BaseHealthPct = 40;
 
         public static readonly NightmareAffix[] AllAffixes =
         {

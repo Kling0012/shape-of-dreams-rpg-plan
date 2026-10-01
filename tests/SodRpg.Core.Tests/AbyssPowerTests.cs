@@ -9,59 +9,48 @@ namespace SodRpg.Core.Tests
     public class AbyssPowerTests
     {
         [Fact]
-        public void Start_depth_is_limited_by_best_secured_depth_and_runs()
+        public void Start_depth_is_retired_in_favor_of_limbo()
         {
             var p = Profile.CreateNew(1);
-            Assert.Throws<InvalidOperationException>(() => Rules.SetStartDepth(p, 1));
             p.Stats.BestHeatSecured = 3;
-            Rules.SetStartDepth(p, 3);
-            Assert.Throws<InvalidOperationException>(() => Rules.SetStartDepth(p, 4));
+#pragma warning disable CS0618
+            Assert.Throws<InvalidOperationException>(() => Rules.SetStartDepth(p, 1));
+#pragma warning restore CS0618
+            p.StartDepth = 3; // 古い保存に残っていても
             Rules.BeginRun(p, "a");
-            Assert.Throws<InvalidOperationException>(() => Rules.SetStartDepth(p, 0));
-            Assert.Equal(3, p.Run.Heat);
-            Assert.Equal(3, p.Run.StartDepth);
-            Assert.Equal(3, p.Run.PeakHeat);
+            Assert.Equal(0, p.Run.Heat);
+            Assert.Equal(0, p.Run.StartDepth);
         }
 
         [Fact]
-        public void Securing_returns_to_the_start_depth_not_zero()
+        public void Limbo_depth_raises_drop_rate_and_luck()
         {
             var p = Profile.CreateNew(1);
-            p.Stats.BestHeatSecured = 2;
-            Rules.SetStartDepth(p, 2);
+            var ev = Rules.BeginRun(p, "l", null, 4);
+            Assert.Equal(4, p.Run.LimboDepth);
+            Assert.Contains(ev, e => e.Text.Contains("Limbo"));
+            var m = Rules.KillModifiers(p.Run);
+            Assert.Equal(0.4, m.DropBonus, 3);
+            Assert.Equal(0.8, m.Luck, 3);
+            var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(4, q.Run.LimboDepth);
+            var plain = Profile.CreateNew(1);
+            Rules.BeginRun(plain, "n");
+            Assert.Equal(0, Rules.KillModifiers(plain.Run).DropBonus);
+        }
+
+        [Fact]
+        public void Securing_returns_delve_to_zero()
+        {
+            var p = Profile.CreateNew(1);
             Rules.BeginRun(p, "a");
             p.Run.Bounties.Clear();
-            Assert.False(Rules.ShouldOfferSecurePoint(p)); // 開始深度のままでは何もない
             Rules.ReachSecurePoint(p);
             Rules.Delve(p);
-            Assert.Equal(3, p.Run.Heat);
+            Rules.Delve(p);
+            Assert.Equal(2, p.Run.Heat);
             Rules.Secure(p);
-            Assert.Equal(2, p.Run.Heat);
-        }
-
-        [Fact]
-        public void Victory_records_the_deepest_start()
-        {
-            var p = Profile.CreateNew(1);
-            Assert.Equal(-1, p.Stats.BestVictoryStartDepth);
-            p.Stats.BestHeatSecured = 4;
-            Rules.SetStartDepth(p, 4);
-            Rules.BeginRun(p, "v");
-            Rules.EndRun(p, victory: true);
-            Assert.Equal(4, p.Stats.BestVictoryStartDepth);
-            var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
-            Assert.Equal(4, q.Stats.BestVictoryStartDepth);
-            Assert.Equal(4, q.StartDepth);
-        }
-
-        [Fact]
-        public void Start_depth_is_clamped_if_best_secured_dropped()
-        {
-            var p = Profile.CreateNew(1);
-            p.StartDepth = 5; // 古い保存などで記録より深い値が残っていても
-            p.Stats.BestHeatSecured = 2;
-            Rules.BeginRun(p, "c");
-            Assert.Equal(2, p.Run.Heat);
+            Assert.Equal(0, p.Run.Heat);
         }
 
         private static Build With(Power p, int v)

@@ -335,8 +335,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, b0.Powers.Count);
 
             var b3 = Build.Compute(p, "H", 3);
-            Assert.Equal(b0.Get(Stat.Armor) - 18, b3.Get(Stat.Armor));
-            Assert.Equal(b0.Get(Stat.MaxHealthPct) - 12, b3.Get(Stat.MaxHealthPct));
+            Assert.Equal(b0.Stats, b3.Stats);                       // 潜行は能力値を下げない
+            Assert.Equal(1f, b0.DamageTakenMultiplier, 3);
+            Assert.Equal(1.18f, b3.DamageTakenMultiplier, 3);      // 被ダメージ +6%/段
+            Assert.Equal(3, Build.Decode(b3.Encode()).Heat);
 
             foreach (var kv in b0.Stats) Assert.True(kv.Value <= Content.StatCap(kv.Key));
         }

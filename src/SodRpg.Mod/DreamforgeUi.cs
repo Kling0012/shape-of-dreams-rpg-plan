@@ -157,10 +157,11 @@ namespace SodRpg.Mod
             if (run != null && _s.ActiveRunId != null)
             {
                 var daily = DailyDream.Get(run.DailyId);
-                if (daily != null) GUILayout.Label(UiStyles.Colored(Loc.T("今日の夢：", "Today: ") + daily.Name, "#a8d8ff"), _st.Small);
+                if (daily != null) GUILayout.Label(UiStyles.Colored(Loc.T("今日の夢：", "Today: ") + daily.Name, "#a8d8ff")
+                    + (run.LimboDepth > 0 ? UiStyles.Colored(Loc.T($"　Limbo {run.LimboDepth}", $"  Limbo {run.LimboDepth}"), "#d0a0ff") : ""), _st.Small);
                 string pips = new string('●', run.Heat) + new string('○', Content.MaxHeat - run.Heat);
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
-                GUILayout.Label(Loc.T("夢の深度 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
+                GUILayout.Label(Loc.T("潜行 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
                 GUILayout.Label(Loc.T($"未確保：遺物{run.Satchel.Count}  欠片{run.SatchelShards}  調律石{run.SatchelTuning}",
                     $"Unsecured: {run.Satchel.Count} relics  {run.SatchelShards} shards  {run.SatchelTuning} tuning"), _st.Small);
                 if (run.Pacts.Count > 0)
@@ -187,15 +188,15 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
             int bonus = run.SatchelShards * run.Heat / 4;
             GUILayout.Label(Loc.T(
-                $"未確保：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}（確保で深度ボーナス+{bonus}）・調律石{run.SatchelTuning}",
-                $"Unsecured: {run.Satchel.Count} relics, {run.SatchelShards} shards (+{bonus} depth bonus), {run.SatchelTuning} tuning"), _st.Label);
+                $"未確保：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}（確保で潜行ボーナス+{bonus}）・調律石{run.SatchelTuning}",
+                $"Unsecured: {run.Satchel.Count} relics, {run.SatchelShards} shards (+{bonus} delve bonus), {run.SatchelTuning} tuning"), _st.Label);
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
             GUILayout.Label(UiStyles.Colored(Loc.T(
-                $"深度{next}：敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%・エリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が悪夢化（倒せばエリート〜ボス級の戦利品）",
+                $"潜行{next}：敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%・エリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が悪夢化（本体のエリート化＋悪夢の効果。倒せばエリート〜ボス級の戦利品）",
                 $"Depth {next}: {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites become nightmares (elite-to-boss loot)"), "#ff9ae0"), _st.Small);
             GUILayout.Label(Loc.T(
-                $"深く潜る → 深度{next}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * next)}%・レア度上昇／防御-{Build.HeatArmorPenalty * next}・最大HP-{Build.HeatHealthPenaltyPct * next}%。全滅すると未確保品は遺失物に。",
-                $"Delve -> depth {next}: +{(int)(Loot.HeatDropBonus * 100 * next)}% drops, better rarity / -{Build.HeatArmorPenalty * next} armor, -{Build.HeatHealthPenaltyPct * next}% max HP. Unsecured loot is lost on defeat."), _st.Small);
+                $"深く潜る → 潜行{next}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * next)}%・レア度上昇／被ダメージ+{Build.DamageTakenPerDelvePct * next}%。全滅すると未確保品は遺失物に。",
+                $"Delve -> level {next}: +{(int)(Loot.HeatDropBonus * 100 * next)}% drops, better rarity / +{Build.DamageTakenPerDelvePct * next}% damage taken. Unsecured loot is lost on defeat."), _st.Small);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) _s.Secure();
             if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) _s.Delve();
@@ -292,10 +293,10 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T(
                 $"撃破 {r.Kills}　遺物 {r.RelicsFound}個を発見\n確保 {r.RelicsSecured}個（確保{r.SecuredCount}回・欠片{r.ShardsSecured}）\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>遺失 {r.RelicsLost}個</color>　残響の欠片 {r.EchoShards}\n" : "") +
-                $"最高深度 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
+                $"最高潜行 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
                 $"Kills {r.Kills}   Relics found {r.RelicsFound}\nSecured {r.RelicsSecured} ({r.SecuredCount} secures, {r.ShardsSecured} shards)\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>Lost {r.RelicsLost}</color>   Echo shards {r.EchoShards}\n" : "") +
-                $"Peak depth {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
+                $"Peak delve {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
             if (r.RelicsLost > 0)
                 GUILayout.Label(Loc.T("失った遺物は、次の遠征で戦闘部屋を3つ突破すると1つ取り戻せます。", "Clear 3 combat rooms next expedition to recover one lost relic."), _st.Small);
             GUILayout.FlexibleSpace();
@@ -360,30 +361,6 @@ namespace SodRpg.Mod
             if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
             foreach (Line l in Enum.GetValues(typeof(Line)))
                 if (GUILayout.Button(Content.LineName(l).ToString(), p.Focus == l ? _st.ButtonSel : _st.Button)) SetFocus(l);
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
-        }
-
-        private void StartDepthPicker()
-        {
-            var p = _s.Profile;
-            int best = p.Stats.BestHeatSecured;
-            if (best <= 0) return;
-            GUILayout.Label(Loc.T($"開始深度（深淵の段階・最高確保 {best}）", $"Start depth (abyss tier, best secured {best})"), _st.Small);
-            GUILayout.BeginHorizontal();
-            GUI.enabled = p.Run == null;
-            for (int d = 0; d <= best; d++)
-            {
-                if (GUILayout.Button(d.ToString(), p.StartDepth == d ? _st.ButtonSel : _st.Button))
-                {
-                    try
-                    {
-                        Rules.SetStartDepth(p, d);
-                        _s.MarkDirty(false);
-                    }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-            }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
         }
@@ -465,7 +442,6 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("遠征中は確保地点でのみ装備を変更できます。", "During an expedition, gear can only be changed at secure points."), _st.Warn);
             GUILayout.Label(Loc.T("同じ系統を2つ・3つ揃えるとセット効果。", "2 or 3 relics of one line grant a set bonus."), _st.Small);
             FocusPicker();
-            StartDepthPicker();
             GUILayout.EndVertical();
 
             // 中：保管庫
@@ -797,14 +773,14 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
             GUILayout.Label(Loc.T(
                 "・敵を倒すと、各プレイヤーに個別の「遺物」（装備）が落ちる。拾った物はまず<b>未確保</b>。\n" +
-                "・新しいゾーンに着くたびに<b>確保地点</b>。「確保」で保管庫へ。「深く潜る」と夢の深度が上がり、ドロップ率とレア度が上がる代わりに守りが下がる。深度が高いほど確保時の欠片ボーナスも増える。\n" +
+                "・新しいゾーンに着くたびに<b>確保地点</b>。「確保」で保管庫へ。「深く潜る」と潜行が上がり、ドロップ率とレア度・敵の悪夢化（本体のエリート化）が増える代わりに被ダメージも増える。潜行が深いほど確保時の欠片ボーナスも増える。本体の Limbo 深度も遺物のドロップを増やす。\n" +
                 "・全滅すると未確保の遺物は<b>遺失物</b>に。次の遠征で戦闘部屋を3つ突破すると、最良の1つを取り戻せる。\n" +
                 "・装備は遠征の外か確保地点で変更できる。主装備・防具・装飾品の3枠。\n" +
                 "・倒した数で<b>夢のレベル</b>が上がり、星図（専門化）のポイントが増える。6pt入れたルートでは<b>刻印</b>を1つ選べる。\n" +
                 "・鍛冶：欠片で強化（+5まで）、調律石で特性の引き直し（3回まで）、不要な遺物は分解。\n" +
                 "・遠征ごとに依頼が3つ。達成すると欠片・調律石（未確保）と経験値。確保の最中に達成した分はそのまま確保。",
                 "- Enemies drop personal <b>relics</b> (gear) for every player. New loot starts <b>unsecured</b>.\n" +
-                "- Each new zone is a <b>secure point</b>. Secure moves loot to your stash. Delve raises dream depth: more drops and better rarity, but weaker defenses — and a bigger shard bonus when you finally secure.\n" +
+                "- Each new zone is a <b>secure point</b>. Secure moves loot to your stash. Delve raises your delve level: more drops, better rarity and more nightmare elites (the game's own elites), but more damage taken — and a bigger shard bonus when you finally secure. The game's Limbo depth also boosts relic drops.\n" +
                 "- If your party is wiped, unsecured relics become <b>Lost & Found</b>. Clear 3 combat rooms next run to recover the best one.\n" +
                 "- Change gear outside expeditions or at secure points. Three slots: weapon, armor, charm.\n" +
                 "- Kills raise your <b>Dream Level</b>, granting star map points. With 6 points in a route you can engrave one <b>keystone</b>.\n" +
@@ -833,7 +809,7 @@ namespace SodRpg.Mod
             GUILayout.Label($"<b>{today.Name}</b>  {today.Description}", _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
-                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高深度 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nエピック救済カウント {p.EpicPity}",
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nエピック救済カウント {p.EpicPity}",
                 $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nEpic pity counter {p.EpicPity}"), _st.Small);
             if (p.Run != null)
             {

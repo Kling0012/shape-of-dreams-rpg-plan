@@ -73,7 +73,7 @@ namespace SodRpg.Core.Game
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
-                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth).Add("rerollsUsed", (long)r.RerollsUsed).Add("event", (long)r.OfferedEvent)
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth).Add("rerollsUsed", (long)r.RerollsUsed).Add("event", (long)r.OfferedEvent).Add("limbo", (long)r.LimboDepth)
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
@@ -283,6 +283,7 @@ namespace SodRpg.Core.Game
                     DailyId = DailyDream.Get((int)Long(rj, "daily")) != null ? (int)Long(rj, "daily") : 0,
                     StartDepth = Clamp(Long(rj, "startDepth"), 0, Content.MaxHeat),
                     RerollsUsed = Clamp(Long(rj, "rerollsUsed"), 0, 100),
+                    LimboDepth = Clamp(Long(rj, "limbo"), 0, 50),
                     OfferedEvent = Enum.IsDefined(typeof(DreamEvent), (int)Long(rj, "event")) ? (DreamEvent)(int)Long(rj, "event") : DreamEvent.None,
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };

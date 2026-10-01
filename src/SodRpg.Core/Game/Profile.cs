@@ -63,6 +63,8 @@ namespace SodRpg.Core.Game
         public int RerollsUsed { get; set; }
         /// <summary>確保地点に現れている出来事（選択待ちの間だけ）。</summary>
         public DreamEvent OfferedEvent { get; set; }
+        /// <summary>本体の Limbo 深度（ラン開始時に読む。0 は Limbo 以外）。</summary>
+        public int LimboDepth { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -89,6 +91,7 @@ namespace SodRpg.Core.Game
                 StartDepth = StartDepth,
                 RerollsUsed = RerollsUsed,
                 OfferedEvent = OfferedEvent,
+                LimboDepth = LimboDepth,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());

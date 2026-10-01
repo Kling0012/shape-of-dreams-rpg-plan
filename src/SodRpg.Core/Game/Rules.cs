@@ -46,7 +46,11 @@ namespace SodRpg.Core.Game
         /// ランの開始（または再開）。別のランIDの未解決ランが残っていれば、全滅と同じ扱いで精算する
         /// （途中で終了したランの未確保品は遺失物へ）。
         /// </summary>
-        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null)
+        /// <summary>Limbo 深度1ごとの遺物ドロップ率の上乗せと幸運。</summary>
+        public const double LimboDropBonus = 0.10;
+        public const double LimboLuck = 0.2;
+
+        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0)
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
@@ -56,9 +60,14 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
                 ev.AddRange(EndRun(p, victory: false));
             }
-            int start = Math.Max(0, Math.Min(p.StartDepth, p.Stats.BestHeatSecured));
-            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, StartDepth = start, Heat = start, PeakHeat = start };
-            if (start > 0) ev.Add(new GameEvent(EventKind.Delved, Loc.T($"深淵の段階{start}から潜る。", $"Descending from abyss tier {start}.")));
+            // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
+            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth) };
+            if (limboDepth > 0)
+            {
+                ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                    $"Limbo 深度{limboDepth}：遺物ドロップ率+{(int)(LimboDropBonus * 100 * limboDepth)}%・レア度上昇",
+                    $"Limbo depth {limboDepth}: +{(int)(LimboDropBonus * 100 * limboDepth)}% relic drops, better rarity")));
+            }
             if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
             var brng = p.TakeRng();
             p.Run.Bounties.AddRange(Bounties.Roll(brng));
@@ -77,6 +86,8 @@ namespace SodRpg.Core.Game
         public static Pacts.Totals KillModifiers(RunState run)
         {
             var t = Pacts.Sum(run.Pacts);
+            t.DropBonus += LimboDropBonus * run.LimboDepth;
+            t.Luck += LimboLuck * run.LimboDepth;
             var d = DailyDream.Get(run.DailyId);
             if (d != null)
             {
@@ -223,7 +234,7 @@ namespace SodRpg.Core.Game
             run.SecuredCount++;
             p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
 
-            string bonus = bonusShards > 0 ? Loc.T($"（深度ボーナス+{bonusShards}）", $" (depth bonus +{bonusShards})") : "";
+            string bonus = bonusShards > 0 ? Loc.T($"（潜行ボーナス+{bonusShards}）", $" (delve bonus +{bonusShards})") : "";
             ev.Add(new GameEvent(EventKind.Secured, Loc.T(
                 $"確保した：遺物{relics}個、欠片{shards}{bonus}、調律石{tuning}",
                 $"Secured: {relics} relic(s), {shards} shards{bonus}, {tuning} tuning stone(s)")));
@@ -307,8 +318,8 @@ namespace SodRpg.Core.Game
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
             run.AwaitingChoice = false;
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
-                $"夢の深度 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
-                $"Dream depth {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
+                $"潜行 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
+                $"Delve {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
             return ev;
         }
 
@@ -503,12 +514,10 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>開始深度を選ぶ。遠征の外でのみ、確保できた最高深度まで。</summary>
+        [Obsolete("v1.1 で廃止。本体の Limbo 深度を使う。")]
         public static void SetStartDepth(Profile p, int depth)
         {
-            if (p.Run != null) throw new InvalidOperationException(Loc.T("開始深度は遠征の外でのみ変更できます。", "Start depth can only be changed outside expeditions."));
-            if (depth < 0 || depth > p.Stats.BestHeatSecured)
-                throw new InvalidOperationException(Loc.T($"確保できた最高深度（{p.Stats.BestHeatSecured}）までです。", $"Up to your best secured depth ({p.Stats.BestHeatSecured})."));
-            p.StartDepth = depth;
+            throw new InvalidOperationException(Loc.T("開始深度は廃止しました。本体の Limbo 深度が遺物に反映されます。", "Start depth was removed; the game's Limbo depth now boosts relics."));
         }
 
         /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。</summary>
