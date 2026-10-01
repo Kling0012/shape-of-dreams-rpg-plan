@@ -286,6 +286,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.lamp.weapon", "weapon.calming_staff", new Txt("灯守の杖", "Lampkeeper's Staff"), "set.lamp"),
             new UniqueDef("set.lamp.armor", "armor.lampkeeper_mantle", new Txt("灯守の誓衣", "Lampkeeper's Vow"), "set.lamp"),
             new UniqueDef("set.lamp.charm", "charm.resonance_amulet", new Txt("灯守の護符", "Lampkeeper's Charm"), "set.lamp"),
+            new UniqueDef("set.cinder.weapon", "weapon.blaze_greatsword", new Txt("残火の大剣", "Cinderbrand"), "set.cinder"),
+            new UniqueDef("set.cinder.armor", "armor.thorn_mail", new Txt("残火の鱗鎧", "Cinderscale Mail"), "set.cinder"),
+            new UniqueDef("set.cinder.charm", "charm.old_clock", new Txt("残火の懐中時計", "Cinder Pocketwatch"), "set.cinder"),
+            new UniqueDef("set.dusk.weapon", "weapon.twin_fang", new Txt("黄昏の双牙", "Duskfang"), "set.dusk"),
+            new UniqueDef("set.dusk.armor", "armor.counter_gauntlets", new Txt("黄昏の籠手", "Dusk Gauntlets"), "set.dusk"),
+            new UniqueDef("set.dusk.charm", "charm.hunters_seal", new Txt("黄昏の印章", "Dusk Seal"), "set.dusk"),
         };
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
@@ -301,6 +307,18 @@ namespace SodRpg.Core.Game
                 Id = "set.lamp", Name = new Txt("灯守の誓い", "Lampkeeper's Oath"),
                 TwoPiece = new[] { new StatLine(Stat.LightAmp, 10), new StatLine(Stat.MaxHealthPct, 8) },
                 ThreePiece = new[] { new PowerLine(Power.Radiance, 30), new PowerLine(Power.SecondWind, 25) },
+            },
+            new SetDef
+            {
+                Id = "set.cinder", Name = new Txt("残火の誓約", "Cinder Covenant"),
+                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.AttackPct, 5) },
+                ThreePiece = new[] { new PowerLine(Power.Ember, 30), new PowerLine(Power.Blaze, 50) },
+            },
+            new SetDef
+            {
+                Id = "set.dusk", Name = new Txt("黄昏の狩装", "Dusk Hunter's Garb"),
+                TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.CritChancePct, 4) },
+                ThreePiece = new[] { new PowerLine(Power.Umbra, 30), new PowerLine(Power.Executioner, 40) },
             },
         };
 
