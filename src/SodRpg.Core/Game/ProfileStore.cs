@@ -51,26 +51,40 @@ namespace SodRpg.Core.Game
         /// <summary>保存する。成功すると p.Revision が1増える。失敗時は IOException を投げ、本体は変更しない。</summary>
         public void Save(Profile p)
         {
-            long nextRevision = p.Revision + 1;
             long prev = p.Revision;
-            p.Revision = nextRevision;
+            p.Revision = prev + 1;
             try
             {
-                string text = ProfileCodec.Write(p);
-                _fs.WriteAllText(TempPath, text);
-                var check = ProfileCodec.Read(_fs.ReadAllText(TempPath), new List<string>());
-                if (check.Revision != nextRevision) throw new IOException("読み戻しの内容が一致しません。");
-                _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
-            }
-            catch (Exception ex) when (!(ex is IOException))
-            {
-                p.Revision = prev;
-                throw new IOException("保存に失敗しました: " + ex.Message, ex);
+                WriteText(ProfileCodec.Write(p), p.Revision);
             }
             catch
             {
                 p.Revision = prev;
                 throw;
+            }
+        }
+
+        private readonly object _writeLock = new object();
+
+        /// <summary>
+        /// JSON化済みの内容を書き込む（別スレッドから呼んでよい）。一時ファイルへ書き、読み戻して確かめ、置換で確定する。
+        /// 失敗時は IOException を投げ、本体は変更しない。
+        /// </summary>
+        public void WriteText(string text, long revision)
+        {
+            lock (_writeLock)
+            {
+                try
+                {
+                    _fs.WriteAllText(TempPath, text);
+                    var check = ProfileCodec.Read(_fs.ReadAllText(TempPath), new List<string>());
+                    if (check.Revision != revision) throw new IOException("読み戻しの内容が一致しません。");
+                    _fs.Replace(TempPath, _path, _fs.Exists(_path) ? BackupPath : null);
+                }
+                catch (Exception ex) when (!(ex is IOException))
+                {
+                    throw new IOException("保存に失敗しました: " + ex.Message, ex);
+                }
             }
         }
 

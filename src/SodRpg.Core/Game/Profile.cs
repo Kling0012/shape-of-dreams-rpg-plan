@@ -160,6 +160,14 @@ namespace SodRpg.Core.Game
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>夢の工房の段階。</summary>
         public SortedDictionary<Upgrade, int> Upgrades { get; } = new SortedDictionary<Upgrade, int>();
+        /// <summary>見たヒント（Hint の値）。</summary>
+        public SortedSet<int> SeenHints { get; } = new SortedSet<int>();
+        /// <summary>ヒントを出さない（設定）。</summary>
+        public bool HintsOff { get; set; }
+        /// <summary>初期装備を配ったか。</summary>
+        public bool StarterGranted { get; set; }
+        /// <summary>初期装備の遺物の個体ID（自動装備に使う）。</summary>
+        public List<string> StarterUids { get; } = new List<string>();
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
 
@@ -244,6 +252,10 @@ namespace SodRpg.Core.Game
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var kv in Upgrades) c.Upgrades[kv.Key] = kv.Value;
+            foreach (var h in SeenHints) c.SeenHints.Add(h);
+            c.StarterUids.AddRange(StarterUids);
+            c.HintsOff = HintsOff;
+            c.StarterGranted = StarterGranted;
             return c;
         }
     }

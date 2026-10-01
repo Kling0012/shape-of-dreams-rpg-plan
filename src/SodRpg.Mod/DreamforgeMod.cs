@@ -37,6 +37,7 @@ namespace SodRpg.Mod
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _ui = new DreamforgeUi(_session, () => config);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
+                _session.FirstLaunch();
                 harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
             }
@@ -51,9 +52,12 @@ namespace SodRpg.Mod
             Loc.Japanese = config.japanese;
         }
 
+        private readonly PerfMeter _perf = new PerfMeter();
+
         private void Update()
         {
             if (_session == null) return;
+            _perf.Begin();
             HandleKeys();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
@@ -67,6 +71,14 @@ namespace SodRpg.Mod
             {
                 Log.Error("Host tick: " + ex);
             }
+            // GUILayout を使うパネルが無いときは、IMGUI のレイアウト処理（OnGUI の Layout イベント）自体を止める。
+            if (_ui != null)
+            {
+                bool layout = _ui.NeedsLayout;
+                _ui.LayoutEnabled = layout;
+                useGUILayout = layout;
+            }
+            _perf.EndUpdate();
         }
 
         /// <summary>メニュー操作中はゲーム側のUI（uGUI）にクリックを渡さない。</summary>
@@ -117,12 +129,22 @@ namespace SodRpg.Mod
 
         private void OnGUI()
         {
-            _ui?.Draw();
+            if (_ui == null) return;
+            _perf.Begin();
+            _ui.Draw();
+            _perf.EndGui();
+        }
+
+        [ConsoleCommand("Dreamforge: show time spent by this mod per frame (Update / OnGUI / save)", "dreamforge_perf")]
+        private void PerfCommand()
+        {
+            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") + "ms (main thread)");
         }
 
         private void OnApplicationQuit()
         {
             _session?.SaveNow();
+            _session?.FlushSaves();
         }
 
         private void OnDestroy()
@@ -130,7 +152,12 @@ namespace SodRpg.Mod
             // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
             try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }
-            try { _session?.SaveNow(); } catch (Exception ex) { Log.Error("Save on destroy: " + ex); }
+            try
+            {
+                _session?.SaveNow();
+                _session?.FlushSaves();
+            }
+            catch (Exception ex) { Log.Error("Save on destroy: " + ex); }
             BlockInputWhileMenuOpen.MenuOpen = false;
             BlockGameUi(false);
             try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }

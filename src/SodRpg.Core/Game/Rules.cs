@@ -15,6 +15,7 @@ namespace SodRpg.Core.Game
         Recovered,
         Warning,
         Bounty,
+        Hint,
     }
 
     /// <summary>画面に流す通知。文言は発生時の表示言語で作る。</summary>
@@ -30,6 +31,8 @@ namespace SodRpg.Core.Game
         public EventKind Kind { get; }
         public string Text { get; }
         public Rarity? Rarity { get; }
+        /// <summary>Kind が Hint のときのヒント。</summary>
+        public Hint? HintId { get; set; }
 
         public override string ToString() => Text;
     }
@@ -40,6 +43,22 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Rules
     {
+        /// <summary>まだ見ていないヒントなら通知に加える。</summary>
+        internal static void AddHint(Profile p, Hint h, List<GameEvent> ev)
+        {
+            if (!Onboarding.Show(p, h)) return;
+            var d = Onboarding.Get(h);
+            ev.Add(new GameEvent(EventKind.Hint, d?.Title.ToString() ?? h.ToString()) { HintId = h });
+        }
+
+        /// <summary>ヒントを1つだけ出す（他の操作に付随しない場面用）。</summary>
+        public static List<GameEvent> HintOnce(Profile p, Hint h)
+        {
+            var ev = new List<GameEvent>();
+            AddHint(p, h, ev);
+            return ev;
+        }
+
         // ───────────── 遠征 ─────────────
 
         /// <summary>
@@ -115,6 +134,7 @@ namespace SodRpg.Core.Game
                 int before = Mastery.Level(hs.Kills);
                 hs.Kills++;
                 int after = Mastery.Level(hs.Kills);
+                if (after > before && after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey)) AddHint(p, Hint.KeystoneReady, ev);
                 if (after > before)
                 {
                     string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
@@ -127,6 +147,7 @@ namespace SodRpg.Core.Game
             {
                 p.Stats.NightmaresSlain++;
                 ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を討った！", $"Slew a {Nightmares.Label(nightmare)}!")));
+                AddHint(p, Hint.FirstNightmare, ev);
             }
             p.EpicPity = pity;
             p.StoreRng(rng);
@@ -146,6 +167,7 @@ namespace SodRpg.Core.Game
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾った（未確保）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
                 AddToSatchel(p, relic, ev);
+                AddHint(p, Hint.FirstDrop, ev);
                 if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
             }
             if (isNightmare) AdvanceBounty(p, BountyKind.NightmareHunter, 1, false, ev);
@@ -184,16 +206,19 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保地点（新しいゾーン）に着いた。選ぶまで装備を整えられる。</summary>
-        public static void ReachSecurePoint(Profile p)
+        public static List<GameEvent> ReachSecurePoint(Profile p)
         {
+            var ev = new List<GameEvent>();
             var run = p.Run;
-            if (run == null) return;
+            if (run == null) return ev;
             run.AwaitingChoice = true;
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
             run.OfferedEvent = DreamEvents.Roll(rng, p);
             p.StoreRng(rng);
+            AddHint(p, Hint.FirstSecurePoint, ev);
+            return ev;
         }
 
         /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
@@ -245,6 +270,8 @@ namespace SodRpg.Core.Game
                     $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
             }
             if (pacts > 0) ev.Add(new GameEvent(EventKind.Info, Loc.T($"悪夢の契約{pacts}つが解けた。", $"{pacts} nightmare pact(s) dissolved.")));
+            AddHint(p, Hint.FirstSecure, ev);
+            if (p.Material(Materials.Shard) >= Onboarding.StarterShardsForForgeHint) AddHint(p, Hint.ForgeReady, ev);
             ev.AddRange(AddXp(p, Content.SecureXp));
             AdvanceBounty(p, BountyKind.Collector, stored, true, ev);
             if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
@@ -297,6 +324,7 @@ namespace SodRpg.Core.Game
                 $"依頼達成：{b.Describe()}（{b.RewardText(mult)}" + (secured ? "）" : "・未確保）"),
                 $"Bounty complete: {b.Describe()} ({b.RewardText(mult)}" + (secured ? ")" : ", unsecured)"))));
             ev.AddRange(AddXp(p, (int)Math.Round(b.RewardXp * mult)));
+            AddHint(p, Hint.FirstBounty, ev);
         }
 
         /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>
@@ -317,6 +345,7 @@ namespace SodRpg.Core.Game
             run.Heat = Loot.ClampHeat(run.Heat + 1);
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
             run.AwaitingChoice = false;
+            AddHint(p, Hint.FirstDelve, ev);
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
                 $"潜行 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
                 $"Delve {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
@@ -380,6 +409,7 @@ namespace SodRpg.Core.Game
                         $"未確保の遺物{lost}個は遺失物へ。欠片は残響として{echo}個だけ持ち帰った。",
                         $"{lost} unsecured relic(s) went to Lost & Found. {echo} shard(s) returned as echoes.")));
                 }
+                AddHint(p, Hint.FirstDefeat, ev);
                 if (salvaged > 0)
                 {
                     ev.Add(new GameEvent(EventKind.Warning, Loc.T(
@@ -537,8 +567,9 @@ namespace SodRpg.Core.Game
                 p.DreamXp -= Content.XpToNext(p.DreamLevel);
                 p.DreamLevel++;
                 ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                    $"夢のレベル {p.DreamLevel}！ 専門化ポイント+1",
-                    $"Dream Level {p.DreamLevel}! +1 specialization point")));
+                    $"夢のレベル {p.DreamLevel}！ 刻印ポイント+1",
+                    $"Dream Level {p.DreamLevel}! +1 sigil point")));
+                AddHint(p, Hint.TalentPoints, ev);
             }
             if (p.DreamLevel >= Content.MaxDreamLevel) p.DreamXp = 0;
             return ev;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -94,6 +95,10 @@ namespace SodRpg.Core.Game
                 .Add("heroes", heroes)
                 .Add("codex", codex)
                 .Add("upgrades", WriteUpgrades(p))
+                .Add("hints", p.SeenHints.Select(h => (object)(long)h).ToList())
+                .Add("hintsOff", p.HintsOff)
+                .Add("starterGranted", p.StarterGranted)
+                .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("run", run);
         }
@@ -244,6 +249,14 @@ namespace SodRpg.Core.Game
             if (b.TryGet("codex", out object co) && co is List<object> codex)
                 foreach (var c in codex)
                     if (c is string s) p.Codex.Add(s);
+            if (b.TryGet("hints", out object ho2) && ho2 is List<object> hints)
+                foreach (var h in hints)
+                    if (h is long hv && hv >= 0 && hv < 1000) p.SeenHints.Add((int)hv);
+            p.HintsOff = Bool(b, "hintsOff", false);
+            p.StarterGranted = Bool(b, "starterGranted", false);
+            if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
+                foreach (var u in sus)
+                    if (u is string us && p.FindStash(us) != null) p.StarterUids.Add(us);
             if (b.TryGet("upgrades", out object uo) && uo is JsonObject ups)
             {
                 foreach (var kv in ups.Properties)

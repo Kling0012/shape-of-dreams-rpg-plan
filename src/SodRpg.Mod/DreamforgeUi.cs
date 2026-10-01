@@ -19,7 +19,43 @@ namespace SodRpg.Mod
         {
             public string Text;
             public float Until;
+            public GUIContent Content;
+            public float W, H;
         }
+
+        private sealed class Label3D
+        {
+            public string Text;
+            public GUIContent Content;
+            public Vector2 Size;
+        }
+
+        // HUD は文字列を0.25秒ごとに作り直し、1枚のラベルとして描く（GUILayout を使わない）。
+        private string _hudText;
+        private GUIContent _hudContent;
+        private float _hudHeight;
+        private float _nextHudRebuild;
+        private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
+
+        /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
+        private readonly List<Hint> _hints = new List<Hint>();
+
+        public bool NeedsLayout
+        {
+            get
+            {
+                if (Open || _hints.Count > 0) return true;
+                var p = _s.Profile;
+                if (p.LastReport != null && (p.LastReport != _shownReport || !_reportDismissed)) return true;
+                return _s.InGame && p.Run != null && p.Run.AwaitingChoice && _s.ActiveRunId != null;
+            }
+        }
+
+        /// <summary>今フレーム、レイアウト処理が有効か（Update で設定）。無効なら GUILayout を呼ばない。</summary>
+        public bool LayoutEnabled { get; set; }
+
+        /// <summary>状態が変わったので HUD を作り直す。</summary>
+        public void InvalidateHud() => _nextHudRebuild = 0;
 
         private static readonly string[] KnownHeroes =
         {
@@ -66,7 +102,13 @@ namespace SodRpg.Mod
         public void Notify(GameEvent e)
         {
             if (e == null) return;
-            Log.Info(e.Text);
+            InvalidateHud();
+            if (e.Kind == EventKind.Hint)
+            {
+                if (e.HintId.HasValue && !_hints.Contains(e.HintId.Value)) _hints.Add(e.HintId.Value);
+                return;
+            }
+            if (e.Kind != EventKind.Drop && e.Kind != EventKind.Bounty) Log.Info(e.Text);
             if (!_cfg().showToasts && e.Kind == EventKind.Drop && e.Rarity.HasValue && e.Rarity.Value < Rarity.Rare) return;
             string text = e.Rarity.HasValue ? UiStyles.Colored(e.Text, UiStyles.RarityHex(e.Rarity.Value)) : Decorate(e);
             _toasts.Add(new Toast { Text = text, Until = Time.unscaledTime + (e.Kind == EventKind.Drop ? 6f : 8f) });
@@ -118,20 +160,27 @@ namespace SodRpg.Mod
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
             float w = Screen.width / scale;
             float h = Screen.height / scale;
-            if (Event.current.type == EventType.Repaint) MouseOverPanel = false;
+            var type = Event.current.type;
+            bool repaint = type == EventType.Repaint;
+            if (repaint) MouseOverPanel = false;
+            bool layout = LayoutEnabled;
             try
             {
                 var zm = NetworkedManagerBase<ZoneManager>.instance;
                 bool transition = zm != null && zm.isInAnyTransition;
                 if (_s.InGame && !transition)
                 {
-                    DrawNightmareLabels(scale);
-                    DrawHud(w, h, cfg);
-                    if (_s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
+                    if (repaint)
+                    {
+                        DrawNightmareLabels(scale);
+                        DrawHud(w, h, cfg);
+                    }
+                    if (layout && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
-                DrawToasts(w, h);
-                if (_s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
-                if (Open) DrawWindow(w, h, cfg);
+                if (repaint) DrawToasts(w, h);
+                if (layout && _s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
+                if (layout && Open) DrawWindow(w, h, cfg);
+                if (layout && _hints.Count > 0) DrawHint(w, h, cfg);
             }
             catch (Exception ex)
             {
@@ -146,37 +195,70 @@ namespace SodRpg.Mod
 
         private void DrawHud(float w, float h, DreamforgeConfig cfg)
         {
+            float now = Time.unscaledTime;
+            if (_hudText == null || now >= _nextHudRebuild)
+            {
+                _nextHudRebuild = now + 0.25f;
+                string text = BuildHudText(cfg);
+                if (text != _hudText)
+                {
+                    _hudText = text;
+                    _hudContent = new GUIContent(text);
+                    _hudHeight = _st.Hud.CalcHeight(_hudContent, 290);
+                }
+            }
+            GUI.Label(new Rect(10, h * 0.30f, 290, _hudHeight), _hudContent, _st.Hud);
+        }
+
+        private readonly System.Text.StringBuilder _hudSb = new System.Text.StringBuilder(512);
+
+        private string BuildHudText(DreamforgeConfig cfg)
+        {
             var p = _s.Profile;
             var run = p.Run;
-            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 142 + 20 * run.Bounties.Count + (run.Pacts.Count > 0 ? 20 : 0) : 66);
-            GUILayout.BeginArea(rect, _st.Hud);
+            var sb = _hudSb;
+            sb.Length = 0;
             int need = Content.XpToNext(p.DreamLevel);
-            string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : $"{p.DreamXp * 100 / Math.Max(1, need)}%";
-            GUILayout.Label(Loc.T($"<b>夢鍛</b>  夢のレベル {p.DreamLevel}  <color=#aaaacc>({xp})</color>",
-                $"<b>Dreamforge</b>  Dream Lv {p.DreamLevel}  <color=#aaaacc>({xp})</color>"), _st.Label);
+            string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
+            sb.Append(Loc.T("<b>夢鍛</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
             if (run != null && _s.ActiveRunId != null)
             {
                 var daily = DailyDream.Get(run.DailyId);
-                if (daily != null) GUILayout.Label(UiStyles.Colored(Loc.T("今日の夢：", "Today: ") + daily.Name, "#a8d8ff")
-                    + (run.LimboDepth > 0 ? UiStyles.Colored(Loc.T($"　Limbo {run.LimboDepth}", $"  Limbo {run.LimboDepth}"), "#d0a0ff") : ""), _st.Small);
-                string pips = new string('●', run.Heat) + new string('○', Content.MaxHeat - run.Heat);
+                if (daily != null || run.LimboDepth > 0)
+                {
+                    sb.Append("\n<size=13>");
+                    if (daily != null) sb.Append("<color=#a8d8ff>").Append(Loc.T("今日の夢：", "Today: ")).Append(daily.Name).Append("</color>");
+                    if (run.LimboDepth > 0) sb.Append("<color=#d0a0ff>").Append(Loc.T("　Limbo ", "  Limbo ")).Append(run.LimboDepth).Append("</color>");
+                    sb.Append("</size>");
+                }
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
-                GUILayout.Label(Loc.T("潜行 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
-                GUILayout.Label(Loc.T($"未確保：遺物{run.Satchel.Count}  欠片{run.SatchelShards}  調律石{run.SatchelTuning}",
-                    $"Unsecured: {run.Satchel.Count} relics  {run.SatchelShards} shards  {run.SatchelTuning} tuning"), _st.Small);
+                sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
+                    .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
+                sb.Append("\n<size=13>").Append(Loc.T("未確保：遺物", "Unsecured: ")).Append(run.Satchel.Count)
+                    .Append(Loc.T("  欠片", " relics  ")).Append(run.SatchelShards)
+                    .Append(Loc.T("  調律石", " shards  ")).Append(run.SatchelTuning).Append(Loc.T("", " tuning")).Append("</size>");
                 if (run.Pacts.Count > 0)
-                    GUILayout.Label(UiStyles.Colored(Loc.T("契約：", "Pacts: ") + string.Join("・", run.Pacts.Select(x => Pacts.Get(x)?.Name.ToString())), "#ff9a7a"), _st.Small);
+                {
+                    sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: "));
+                    for (int i = 0; i < run.Pacts.Count; i++)
+                    {
+                        if (i > 0) sb.Append("・");
+                        sb.Append(Pacts.Get(run.Pacts[i])?.Name);
+                    }
+                    sb.Append("</color></size>");
+                }
                 foreach (var b in run.Bounties)
                 {
-                    string mark = b.Done ? "<color=#7af0c8>●</color>" : "○";
-                    string prog = b.Done ? "" : $" <color=#aaaacc>{b.Progress}/{b.Target}</color>";
-                    GUILayout.Label(mark + (b.Done ? "<color=#888>" + b.Describe() + "</color>" : b.Describe()) + prog, _st.Small);
+                    sb.Append("\n<size=13>");
+                    if (b.Done) sb.Append("<color=#7af0c8>●</color><color=#888>").Append(b.Describe()).Append("</color>");
+                    else sb.Append("○").Append(b.Describe()).Append(" <color=#aaaacc>").Append(b.Progress).Append('/').Append(b.Target).Append("</color>");
+                    sb.Append("</size>");
                 }
                 if (!_s.HostConfirmed && _s.LocalHero != null)
-                    GUILayout.Label(Loc.T("能力の反映待ち（ホスト未導入？）", "Waiting for host (host has no mod?)"), _st.Small);
+                    sb.Append("\n<size=13>").Append(Loc.T("能力の反映待ち（ホスト未導入？）", "Waiting for host (host has no mod?)")).Append("</size>");
             }
-            GUILayout.Label(Loc.T($"[{cfg.menuKey}] メニュー", $"[{cfg.menuKey}] Menu"), _st.Small);
-            GUILayout.EndArea();
+            sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
+            return sb.ToString();
         }
 
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
@@ -262,11 +344,15 @@ namespace SodRpg.Mod
                 }
                 var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
                 if (sp.z <= 0) continue;
-                string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
-                var content = new GUIContent(text);
-                var size = _st.ToastMeasure.CalcSize(content);
-                float x = sp.x / scale - size.x / 2, y = (Screen.height - sp.y) / scale - size.y;
-                GUI.Label(new Rect(x, y, size.x + 4, size.y), text, _st.Toast);
+                if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
+                {
+                    string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
+                    var content = new GUIContent(text);
+                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _nightmareLabelCache[(int)kv.Value] = lab;
+                }
+                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
+                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
             }
             foreach (var k in _labelScratch)
             {
@@ -304,18 +390,60 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
+        /// <summary>初めて触る人向けのヒント（1つずつ）。ようこそは画面中央に大きく。</summary>
+        private void DrawHint(float w, float h, DreamforgeConfig cfg)
+        {
+            var id = _hints[0];
+            var def = Onboarding.Get(id);
+            if (def == null)
+            {
+                _hints.RemoveAt(0);
+                return;
+            }
+            bool welcome = id == Hint.Welcome;
+            float pw = welcome ? 640 : 520;
+            float ph = welcome ? 330 : 210;
+            var rect = welcome ? new Rect((w - pw) / 2, (h - ph) / 2, pw, ph) : new Rect((w - pw) / 2, h - ph - 150, pw, ph);
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
+            GUILayout.Label(def.Body.ToString().Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]"), _st.Label);
+            GUILayout.FlexibleSpace();
+            GUILayout.BeginHorizontal();
+            string next = _hints.Count > 1 ? Loc.T($"了解（あと{_hints.Count - 1}）", $"Got it ({_hints.Count - 1} more)") : Loc.T("了解", "Got it");
+            if (GUILayout.Button(next, _st.ButtonSel, GUILayout.Height(32))) _hints.RemoveAt(0);
+            if (welcome && GUILayout.Button(Loc.T($"メニューを開く [{cfg.menuKey}]", $"Open menu [{cfg.menuKey}]"), _st.Button, GUILayout.Height(32)))
+            {
+                _hints.RemoveAt(0);
+                Open = true;
+                _tab = 0;
+            }
+            if (GUILayout.Button(Loc.T("今後ヒントを出さない", "Turn tips off"), _st.Button, GUILayout.Height(32)))
+            {
+                _s.Profile.HintsOff = true;
+                _hints.Clear();
+                _s.MarkDirty(false);
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+        }
+
         private void DrawToasts(float w, float h)
         {
             float now = Time.unscaledTime;
-            _toasts.RemoveAll(t => t.Until < now);
+            for (int i = _toasts.Count - 1; i >= 0; i--)
+                if (_toasts[i].Until < now) _toasts.RemoveAt(i);
             float y = h * 0.30f;
             foreach (var t in _toasts)
             {
-                var content = new GUIContent(t.Text);
-                float tw = Mathf.Min(_st.ToastMeasure.CalcSize(content).x + 6, 560);
-                float th = _st.Toast.CalcHeight(content, tw);
-                GUI.Label(new Rect(w - tw - 16, y, tw, th), t.Text, _st.Toast);
-                y += th + 4;
+                if (t.Content == null)
+                {
+                    t.Content = new GUIContent(t.Text);
+                    t.W = Mathf.Min(_st.ToastMeasure.CalcSize(t.Content).x + 6, 560);
+                    t.H = _st.Toast.CalcHeight(t.Content, t.W);
+                }
+                GUI.Label(new Rect(w - t.W - 16, y, t.W, t.H), t.Content, _st.Toast);
+                y += t.H + 4;
             }
         }
 
@@ -808,6 +936,13 @@ namespace SodRpg.Mod
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("ヒントをもう一度見る", "Show tips again"), _st.Button, GUILayout.Width(180)))
+            {
+                _s.Profile.SeenHints.Clear();
+                _s.Profile.HintsOff = false;
+                _s.MarkDirty(false);
+                Notify(Rules.HintOnce(_s.Profile, Hint.Welcome).FirstOrDefault());
+            }
             if (GUILayout.Button(Loc.T("English", "日本語"), _st.Button, GUILayout.Width(120)))
             {
                 cfg.japanese = !cfg.japanese;

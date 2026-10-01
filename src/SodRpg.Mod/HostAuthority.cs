@@ -151,7 +151,12 @@ namespace SodRpg.Mod
                     _spawnQueue.RemoveAt(i);
                     continue;
                 }
-                if (!m.isActive || m.Status == null || m.Status.maxHealth <= 0) continue;
+                if (!m.isActive || m.Status == null || m.Status.maxHealth <= 0)
+                {
+                    // 出現しないまま残る（プールに戻された等）ものは20秒で捨て、待ち行列を溜めない。
+                    if (now - _spawnQueue[i].Value > 20f) _spawnQueue.RemoveAt(i);
+                    continue;
+                }
                 _spawnQueue.RemoveAt(i);
                 if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
@@ -357,6 +362,8 @@ namespace SodRpg.Mod
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
+        private List<CurseStatusEffect> _curseCache;
+
         private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)
         {
             try
@@ -365,8 +372,14 @@ namespace SodRpg.Mod
                 var hero = caller.hero;
                 if (hero == null || !hero.isActive) return;
                 var strength = msg.strength >= 3 ? HatredStrengthType.Powerful : msg.strength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
+                if (_curseCache == null)
+                {
+                    _curseCache = new List<CurseStatusEffect>();
+                    foreach (var c in DewResources.FindAllByType<CurseStatusEffect>())
+                        if (c != null) _curseCache.Add(c);
+                }
                 var pool = new List<CurseStatusEffect>();
-                foreach (var c in DewResources.FindAllByType<CurseStatusEffect>())
+                foreach (var c in _curseCache)
                 {
                     if (c == null || (c.availableStrengths & strength) == 0) continue;
                     if (hero.Status.HasStatusEffect(c.GetType())) continue;
@@ -537,12 +550,17 @@ namespace SodRpg.Mod
             p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
             var d = rt.DynBonus;
-            d.attackSpeedPercentage = dyn.AttackSpeedPct;
-            d.attackDamagePercentage = dyn.AttackPct;
-            d.abilityPowerPercentage = dyn.PowerPct;
-            d.movementSpeedPercentage = dyn.MoveSpeedPct;
-            d.armorFlat = dyn.Armor;
-            hero.Status.CalculateStatsIfDirty();
+            // 値が変わったときだけ能力を再計算する（StatBonus は同じ値の代入では汚れない）。
+            if (d.attackSpeedPercentage != dyn.AttackSpeedPct || d.attackDamagePercentage != dyn.AttackPct || d.abilityPowerPercentage != dyn.PowerPct
+                || d.movementSpeedPercentage != dyn.MoveSpeedPct || d.armorFlat != dyn.Armor)
+            {
+                d.attackSpeedPercentage = dyn.AttackSpeedPct;
+                d.attackDamagePercentage = dyn.AttackPct;
+                d.abilityPowerPercentage = dyn.PowerPct;
+                d.movementSpeedPercentage = dyn.MoveSpeedPct;
+                d.armorFlat = dyn.Armor;
+                hero.Status.CalculateStatsIfDirty();
+            }
 
             float shield = p.TakeBarrier(now, hero.maxHealth);
             if (shield > 0) hero.GiveShield(hero, shield, PowerRuntime.BarrierInterval);
@@ -551,9 +569,14 @@ namespace SodRpg.Mod
         }
 
         /// <summary>鉄の輪の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
+        private readonly List<HeroRuntime> _scanList = new List<HeroRuntime>();
+
         private void ScanArea()
         {
-            var list = new List<HeroRuntime>(_runtimes.Values);
+            var list = _scanList;
+            list.Clear();
+            list.AddRange(_runtimes.Values);
+            if (list.Count == 0) return;
             foreach (var rt in list)
                 rt.Powers.NearbyEnemies = rt.Powers.Build.Get(Power.Bulwark) > 0 && Alive(rt.Hero) ? CountEnemiesNear(rt.Hero, 6f) : 0;
 

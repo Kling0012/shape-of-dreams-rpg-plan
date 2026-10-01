@@ -60,7 +60,15 @@ namespace SodRpg.Mod
 
             Window = new GUIStyle { normal = { background = bgDark }, padding = new RectOffset(14, 14, 12, 12), font = Font };
             Panel = new GUIStyle { normal = { background = bgPanel }, padding = new RectOffset(10, 10, 8, 8), margin = new RectOffset(4, 4, 4, 4), font = Font };
-            Hud = new GUIStyle { normal = { background = bgHud }, padding = new RectOffset(10, 10, 6, 8), font = Font };
+            Hud = new GUIStyle
+            {
+                normal = { background = bgHud, textColor = new Color(0.92f, 0.92f, 0.96f) },
+                padding = new RectOffset(10, 10, 6, 8),
+                font = Font,
+                fontSize = 15,
+                richText = true,
+                wordWrap = true,
+            };
             Title = MakeLabel(22, FontStyle.Bold, new Color(1f, 0.86f, 0.55f));
             Header = MakeLabel(17, FontStyle.Bold, new Color(0.85f, 0.8f, 1f));
             Label = MakeLabel(15, FontStyle.Normal, new Color(0.92f, 0.92f, 0.96f));

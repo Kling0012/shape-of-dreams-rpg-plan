@@ -279,6 +279,7 @@ namespace SodRpg.Mod
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
             ActiveRunId = runId;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth()));
+            if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
         }
@@ -304,6 +305,18 @@ namespace SodRpg.Mod
                 _dirty = true;
                 _notify?.Invoke(e);
             }
+        }
+
+        /// <summary>初めての起動：初期装備を配り、ようこその案内を出す。</summary>
+        public void FirstLaunch()
+        {
+            if (!Profile.StarterGranted)
+            {
+                Onboarding.GrantStarterKit(Profile);
+                _dirty = true;
+            }
+            Emit(Rules.HintOnce(Profile, Hint.Welcome));
+            if (_dirty) SaveNow();
         }
 
         public void Emit(GameEvent e)
@@ -352,7 +365,7 @@ namespace SodRpg.Mod
                 if (!RunActive || info.isLoadingFromSave) return;
                 if (!info.isTraveling) return;
                 if (!Rules.ShouldOfferSecurePoint(Profile)) return;
-                Rules.ReachSecurePoint(Profile);
+                Emit(Rules.ReachSecurePoint(Profile));
                 _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                     "確保地点に到着。未確保の戦利品を「確保」するか、「深く潜る」かを選んでください。",
                     "Secure point reached. Choose to Secure your loot or Delve deeper.")));
@@ -465,22 +478,41 @@ namespace SodRpg.Mod
             _nextBuildSend = now + (HostConfirmed ? 20f : 5f);
         }
 
+        private AsyncProfileWriter _writer;
+        private double _saveMsTotal;
+        private int _saveCount;
+
+        /// <summary>メインスレッドで保存に使った平均時間（JSON化のみ。書き込みは別スレッド）。</summary>
+        public double SaveMsAverage => _saveCount > 0 ? _saveMsTotal / _saveCount : 0;
+
+        /// <summary>保存を予約する（ディスクへの書き込みは別スレッド）。</summary>
         public void SaveNow()
         {
             _dirty = false;
-            _nextSave = Time.unscaledTime + 10f;
+            _nextSave = Time.unscaledTime + 30f;
             if (_store == null) return;
+            if (_writer == null) _writer = new AsyncProfileWriter(_store);
+            var sw = System.Diagnostics.Stopwatch.StartNew();
             try
             {
-                _store.Save(Profile);
-                SaveError = null;
+                _writer.Enqueue(Profile);
             }
-            catch (IOException ex)
+            catch (Exception ex)
             {
                 SaveError = ex.Message;
                 _dirty = true;
                 Log.Error("Save failed: " + ex.Message);
             }
+            _saveMsTotal += sw.Elapsed.TotalMilliseconds;
+            _saveCount++;
+            if (_writer.LastError != null) SaveError = _writer.LastError;
+            else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
+        }
+
+        /// <summary>終了時：予約済みの保存を書き終えるまで待つ。</summary>
+        public void FlushSaves()
+        {
+            _writer?.Flush();
         }
     }
 }
