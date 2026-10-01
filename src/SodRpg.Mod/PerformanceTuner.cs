@@ -83,14 +83,14 @@ namespace SodRpg.Mod
             if (mode != LightweightMode.Off)
             {
                 RememberCurrentAsset();
-                if (mode == LightweightMode.Strong) RememberEffectManager();
+                if (mode >= LightweightMode.Strong) RememberEffectManager();
             }
 
             foreach (var settings in _assets.Values) settings.Apply(mode);
             foreach (var entry in _effects)
             {
                 if (entry.Key == null) continue;
-                if (mode == LightweightMode.Strong) entry.Value.Set(Quality3Levels.Low);
+                if (mode >= LightweightMode.Strong) entry.Value.Set(Quality3Levels.Low);
                 else entry.Value.Restore();
             }
 
@@ -101,8 +101,8 @@ namespace SodRpg.Mod
             }
             else
             {
-                if (_lodBias.Capture()) _lodBias.Set(_lodBias.Original * (mode == LightweightMode.Strong ? 0.5f : 0.7f));
-                _bakeInterval.Set(mode == LightweightMode.Strong ? 0.2f : 0.15f);
+                if (_lodBias.Capture()) _lodBias.Set(_lodBias.Original * (mode >= LightweightMode.Strong ? 0.5f : 0.7f));
+                _bakeInterval.Set(mode >= LightweightMode.Strong ? 0.2f : 0.15f);
             }
         }
 
@@ -239,6 +239,7 @@ namespace SodRpg.Mod
             private readonly SavedSetting<float> _shadowDistance;
             private readonly SavedSetting<int> _cascades, _lights;
             private readonly SavedSetting<MsaaQuality> _msaa;
+            private readonly SavedSetting<float> _renderScale;
 
             public AssetSettings(PerformanceTuner owner, UnlockedURPAsset asset)
             {
@@ -264,8 +265,13 @@ namespace SodRpg.Mod
                 {
                     var quality = asset.Quality;
                     _msaa = new SavedSetting<MsaaQuality>(owner, "AntiAliasing", () => quality.AntiAliasing, value => quality.AntiAliasing = value);
+                    _renderScale = new SavedSetting<float>(owner, "RenderScale", () => quality.RenderScale, value => quality.RenderScale = value);
                 }
-                catch (Exception ex) { owner.WarnOnce("AntiAliasing", ex.Message); }
+                catch (Exception ex)
+                {
+                    owner.WarnOnce("AntiAliasing", ex.Message);
+                    owner.WarnOnce("RenderScale", ex.Message);
+                }
             }
 
             public void Apply(LightweightMode mode)
@@ -276,14 +282,20 @@ namespace SodRpg.Mod
                     _cascades?.Restore();
                     _lights?.Restore();
                     _msaa?.Restore();
+                    _renderScale?.Restore();
                     return;
                 }
-                bool strong = mode == LightweightMode.Strong;
+                bool strong = mode >= LightweightMode.Strong;
                 if (_shadowDistance?.Capture() == true) _shadowDistance.Set(_shadowDistance.Original * (strong ? 0.4f : 0.6f));
                 if (_cascades?.Capture() == true) _cascades.Set(strong ? 1 : Math.Min(_cascades.Original, 2));
                 if (_lights?.Capture() == true) _lights.Set(Math.Min(_lights.Original, 2));
                 if (strong) _msaa?.Set(MsaaQuality.Disabled);
                 else _msaa?.Restore();
+                if (mode == LightweightMode.Max)
+                {
+                    if (_renderScale?.Capture() == true) _renderScale.Set(Math.Max(0.5f, _renderScale.Original * 0.75f));
+                }
+                else _renderScale?.Restore();
             }
         }
 

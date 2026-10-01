@@ -30,7 +30,7 @@ namespace SodRpg.Mod
         [UnityEngine.Range(0, 60)]
         public int backgroundFps = 20;
 
-        [LabelText("軽量化（Off：なし／Light：軽め／Strong：強め）")]
+        [LabelText("軽量化（Off：なし／Light：軽め／Strong：強め／Max：最大）")]
         public LightweightMode lightweight = LightweightMode.Off;
     }
 
@@ -46,5 +46,6 @@ namespace SodRpg.Mod
         Off = 0,
         Light = 1,
         Strong = 2,
+        Max = 3,
     }
 }
