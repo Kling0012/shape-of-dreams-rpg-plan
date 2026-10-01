@@ -9,6 +9,7 @@
 | 2026-10-01 | テストで上書きした「夢の続き（ヴェスパー）」の復元 | `%USERPROFILE%/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/QuickSave.backup-before-dreamforge-test` に全体バックアップあり。復元はゲーム終了後 | 指示があるまで復元しない（バックアップは保持） |
 | 2026-10-01 | ゲーム設定（`QuickSave/r_platform.json`）の開発者モードとMODの有効化 | テストのため開発者モードON、`com.kling0012.dreamforgerpg` を有効一覧へ追加。元の設定は同フォルダの `r_platform.json.bak-dreamforge-20261001` | そのまま（プレイ確認に使えるため） |
 | 2026-10-01 | Jev CU をゲーム試験に使うか | Unity画面はAX候補が取れず不向き。使うなら Codex Desktop 上で、`policy.mjs` の許可アプリ追加と `TYPESAFE_API_KEY` が必要 | 使わない。画面確認は自前のスクリーンショット＋入力で行う |
+| 2026-10-01 | v0.4〜v0.6 の画面確認（契約の選択肢・合成ボタン・熟練度・今日の夢の表示） | ビルドと単体試験は合格、実機表示は未確認 | PCが空いている時間に Computer Use で確認する |
 | 2026-10-01 | PR #4 のマージ | CI合格 | 利用者の判断を待つ（開発は同じブランチで継続） |
 
 ## プレイヤーによる実体験待ち
