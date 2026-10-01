@@ -112,7 +112,7 @@ namespace SodRpg.Mod
                 _spawnQueue.RemoveAt(i);
                 if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                var affix = Nightmares.Roll(_rng, tier, depth);
+                var affix = Nightmares.Roll(_rng, tier, depth, DailyDream.Today.NightmareMult);
                 if (affix == NightmareAffix.None) continue;
                 MakeNightmare(m, affix);
             }

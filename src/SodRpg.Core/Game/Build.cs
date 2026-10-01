@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         public const int HeatArmorPenalty = 6;
         public const int HeatHealthPenaltyPct = 4;
 
-        public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null)
+        public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null, int dailyId = 0)
         {
             var b = new Build { Heat = Loot.ClampHeat(heat) };
             var h = p.Hero(heroKey);
@@ -53,6 +53,19 @@ namespace SodRpg.Core.Game
                 Add(rawPowers, key.Power, key.PowerValue);
             }
 
+            int mastery = Mastery.Level(h.Kills);
+            if (mastery > 0)
+            {
+                Add(rawStats, Stat.AttackPct, mastery);
+                Add(rawStats, Stat.PowerPct, mastery);
+                Add(rawStats, Stat.MaxHealthPct, mastery);
+            }
+            var daily = DailyDream.Get(dailyId);
+            if (daily != null)
+            {
+                foreach (var pw in daily.BoostedPowers)
+                    if (rawPowers.TryGetValue(pw, out int v)) rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
+            }
             var pactList = pacts != null ? new List<Pact>(pacts) : new List<Pact>();
             foreach (var id in pactList)
             {

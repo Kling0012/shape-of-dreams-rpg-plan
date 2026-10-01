@@ -23,6 +23,8 @@ Turns every run into part of a long RPG journey: persistent relics, a risky secu
 [*] 夢のレベルで星図ポイントが増え、キャラごとに攻勢・守勢・共鳴へ配分。6pt入れたルートでは刻印を1つ選べる。
 [*] Forge: enhance (+5), retune affixes, salvage, craft.
 [*] Every expedition offers 3 bounties; choose a loot focus line; equip a line set for bonuses.
+[*] Nightmare pacts (risk/reward), nightmare elites that scale with depth, transmutation, daily dreams, traveler mastery.
+[*] 悪夢の契約、深度で増える悪夢化エリート、合成、今日の夢、旅人の熟練度。
 [*] 遠征ごとに依頼3つ。狙い系統で欲しい系統を出やすく、同系統セットでボーナス。
 [/list]
 

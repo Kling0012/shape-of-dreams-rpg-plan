@@ -148,7 +148,7 @@ namespace SodRpg.Mod
         {
             var p = _s.Profile;
             var run = p.Run;
-            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 122 + 20 * run.Bounties.Count + (run.Pacts.Count > 0 ? 20 : 0) : 66);
+            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 142 + 20 * run.Bounties.Count + (run.Pacts.Count > 0 ? 20 : 0) : 66);
             GUILayout.BeginArea(rect, _st.Hud);
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : $"{p.DreamXp * 100 / Math.Max(1, need)}%";
@@ -156,6 +156,8 @@ namespace SodRpg.Mod
                 $"<b>Dreamforge</b>  Dream Lv {p.DreamLevel}  <color=#aaaacc>({xp})</color>"), _st.Label);
             if (run != null && _s.ActiveRunId != null)
             {
+                var daily = DailyDream.Get(run.DailyId);
+                if (daily != null) GUILayout.Label(UiStyles.Colored(Loc.T("今日の夢：", "Today: ") + daily.Name, "#a8d8ff"), _st.Small);
                 string pips = new string('●', run.Heat) + new string('○', Content.MaxHeat - run.Heat);
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
                 GUILayout.Label(Loc.T("夢の深度 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
@@ -373,6 +375,14 @@ namespace SodRpg.Mod
             // 左：装着中とビルド
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(320));
             HeroPicker();
+            {
+                int kills = p.Hero(hero).Kills;
+                int lv = Mastery.Level(kills);
+                int next = Mastery.ToNext(kills);
+                GUILayout.Label(Loc.T(
+                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>次まで{next}体</color>" : ""),
+                    $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")), _st.Small);
+            }
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
                 var r = Rules.EquippedRelic(p, hero, slot);
@@ -728,6 +738,9 @@ namespace SodRpg.Mod
             GUILayout.BeginVertical(_st.Panel);
             var st = p.Stats;
             int need = Content.XpToNext(p.DreamLevel);
+            var today = DailyDream.Today;
+            GUILayout.Label(Loc.T("今日の夢", "Today's dream"), _st.Header);
+            GUILayout.Label($"<b>{today.Name}</b>  {today.Description}", _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
                 $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高深度 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nエピック救済カウント {p.EpicPity}",

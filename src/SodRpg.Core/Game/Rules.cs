@@ -46,7 +46,7 @@ namespace SodRpg.Core.Game
         /// ランの開始（または再開）。別のランIDの未解決ランが残っていれば、全滅と同じ扱いで精算する
         /// （途中で終了したランの未確保品は遺失物へ）。
         /// </summary>
-        public static List<GameEvent> BeginRun(Profile p, string runId)
+        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null)
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
@@ -56,7 +56,8 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
                 ev.AddRange(EndRun(p, victory: false));
             }
-            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel };
+            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0 };
+            if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
             var brng = p.TakeRng();
             p.Run.Bounties.AddRange(Bounties.Roll(brng));
             p.StoreRng(brng);
@@ -70,7 +71,21 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None)
+        /// <summary>契約と今日の夢を合わせた撃破報酬の補正。</summary>
+        public static Pacts.Totals KillModifiers(RunState run)
+        {
+            var t = Pacts.Sum(run.Pacts);
+            var d = DailyDream.Get(run.DailyId);
+            if (d != null)
+            {
+                t.DropBonus += d.DropBonus;
+                t.ShardMult *= d.ShardMult;
+                t.XpMult *= d.XpMult;
+            }
+            return t;
+        }
+
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -79,7 +94,22 @@ namespace SodRpg.Core.Game
             int pity = p.EpicPity;
             bool isNightmare = nightmare != NightmareAffix.None;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, p.Focus, Pacts.Sum(run.Pacts));
+            var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run));
+            if (heroKey != null)
+            {
+                var hs = p.Hero(heroKey);
+                int before = Mastery.Level(hs.Kills);
+                hs.Kills++;
+                int after = Mastery.Level(hs.Kills);
+                if (after > before)
+                {
+                    string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
+                    ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
+                        $"{name}の熟練度 {after}「{Mastery.Title(after)}」：攻撃力・魔力・最大HP+1%",
+                        $"{name} mastery {after} \"{Mastery.Title(after)}\": +1% attack, power and max health")));
+                }
+            }
             if (isNightmare)
             {
                 p.Stats.NightmaresSlain++;
@@ -234,21 +264,24 @@ namespace SodRpg.Core.Game
         {
             b.Done = true;
             b.Progress = b.Target;
+            double mult = DailyDream.Get(p.Run.DailyId)?.BountyMult ?? 1.0;
+            int shards = (int)Math.Round(b.RewardShards * mult);
+            int tuning = (int)Math.Round(b.RewardTuning * mult);
             if (secured)
             {
-                p.AddMaterial(Materials.Shard, b.RewardShards);
-                p.AddMaterial(Materials.Tuning, b.RewardTuning);
-                p.Run.ShardsSecured += b.RewardShards;
+                p.AddMaterial(Materials.Shard, shards);
+                p.AddMaterial(Materials.Tuning, tuning);
+                p.Run.ShardsSecured += shards;
             }
             else
             {
-                p.Run.SatchelShards += b.RewardShards;
-                p.Run.SatchelTuning += b.RewardTuning;
+                p.Run.SatchelShards += shards;
+                p.Run.SatchelTuning += tuning;
             }
             ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
                 $"依頼達成：{b.Describe()}（{b.RewardText()}" + (secured ? "）" : "・未確保）"),
                 $"Bounty complete: {b.Describe()} ({b.RewardText()}" + (secured ? ")" : ", unsecured)"))));
-            ev.AddRange(AddXp(p, b.RewardXp));
+            ev.AddRange(AddXp(p, (int)Math.Round(b.RewardXp * mult)));
         }
 
         /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>

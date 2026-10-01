@@ -52,7 +52,7 @@ namespace SodRpg.Core.Game
                 var eq = new List<object> { h.Equipped[0], h.Equipped[1], h.Equipped[2] };
                 var tal = new JsonObject();
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
-                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone));
+                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills));
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -73,7 +73,7 @@ namespace SodRpg.Core.Game
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
-                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart)
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId)
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
@@ -222,6 +222,7 @@ namespace SodRpg.Core.Game
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
                     }
+                    h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
                     if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone) h.Keystone = key;
                 }
@@ -257,6 +258,7 @@ namespace SodRpg.Core.Game
                     RelicsSecured = Clamp(Long(rj, "relicsSecured"), 0, int.MaxValue),
                     ShardsSecured = Clamp(Long(rj, "shardsSecured"), 0, int.MaxValue),
                     LevelAtStart = Clamp(Long(rj, "levelAtStart"), 0, Content.MaxDreamLevel),
+                    DailyId = DailyDream.Get((int)Long(rj, "daily")) != null ? (int)Long(rj, "daily") : 0,
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);

@@ -52,9 +52,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>悪夢化するか抽選し、するなら接頭効果（深度3以上で2つ、5で3つ）を返す。</summary>
-        public static NightmareAffix Roll(Rng rng, MonsterTier tier, int depth)
+        public static NightmareAffix Roll(Rng rng, MonsterTier tier, int depth, double chanceMult = 1.0)
         {
-            if (!rng.Chance(Chance(tier, depth))) return NightmareAffix.None;
+            if (!rng.Chance(Math.Min(1.0, Chance(tier, depth) * chanceMult))) return NightmareAffix.None;
             int count = depth >= 5 ? 3 : depth >= 3 ? 2 : 1;
             var pool = new List<NightmareAffix>(AllAffixes);
             var result = NightmareAffix.None;

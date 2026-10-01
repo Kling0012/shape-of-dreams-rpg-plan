@@ -14,9 +14,12 @@ namespace SodRpg.Core.Game
 
         public string Keystone { get; set; }
 
+        /// <summary>このキャラでの撃破数（熟練度）。</summary>
+        public int Kills { get; set; }
+
         public HeroState Clone()
         {
-            var c = new HeroState { Keystone = Keystone };
+            var c = new HeroState { Keystone = Keystone, Kills = Kills };
             Array.Copy(Equipped, c.Equipped, 3);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
             return c;
@@ -52,6 +55,8 @@ namespace SodRpg.Core.Game
         public int ShardsSecured { get; set; }
         /// <summary>ラン開始時の夢のレベル（結果表示用）。</summary>
         public int LevelAtStart { get; set; }
+        /// <summary>このランの「今日の夢」（開始日に決まる）。0 はなし。</summary>
+        public int DailyId { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -74,6 +79,7 @@ namespace SodRpg.Core.Game
                 RelicsSecured = RelicsSecured,
                 ShardsSecured = ShardsSecured,
                 LevelAtStart = LevelAtStart,
+                DailyId = DailyId,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());

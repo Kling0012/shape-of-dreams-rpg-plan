@@ -39,6 +39,7 @@ namespace SodRpg.Mod
         public Dictionary<uint, NightmareAffix> Nightmare { get; } = new Dictionary<uint, NightmareAffix>();
 
         private readonly RoomCounter _rooms = new RoomCounter();
+        private int _lastMastery = -1;
         private bool _dirty;
         private float _nextSave;
         private bool _buildDirty = true;
@@ -220,7 +221,7 @@ namespace SodRpg.Mod
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
             ActiveRunId = runId;
-            Emit(Rules.BeginRun(Profile, runId));
+            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today));
             _buildDirty = true;
             SaveNow();
         }
@@ -260,7 +261,12 @@ namespace SodRpg.Mod
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 Nightmare.TryGetValue(m.netId, out var nightmare);
                 Nightmare.Remove(m.netId);
-                Emit(Rules.OnKill(Profile, tier, level, nightmare));
+                Emit(Rules.OnKill(Profile, tier, level, nightmare, HeroKeyOf(hero)));
+                if (Mastery.Level(Profile.Hero(HeroKeyOf(hero)).Kills) != _lastMastery)
+                {
+                    _lastMastery = Mastery.Level(Profile.Hero(HeroKeyOf(hero)).Kills);
+                    _buildDirty = true;
+                }
                 if (tier >= MonsterTier.MiniBoss) _nextSave = 0;
             }
             catch (Exception ex)
@@ -355,7 +361,7 @@ namespace SodRpg.Mod
             SaveNow();
         }
 
-        public Build CurrentBuild(string heroKey) => Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts);
+        public Build CurrentBuild(string heroKey) => Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
 
         private void SendBuildIfNeeded()
         {
