@@ -106,3 +106,4 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 
 - 重さの原因は本体マネージャーの `.instance`（不在時に毎回 `FindObjectOfType` ×2）を毎フレーム呼んでいたこと。MOD内は必ず `.softInstance` を使う（新しいコードでも `.instance` を使わない）。
 - 計測は `QuickSave/Mods/DreamforgeRPG/perf.flag` を置くと10秒ごとに Player.log へ出る。修正後：Update 約0.004ms、OnGUI 約0.006ms/回、全体 約135fps。
+- 初回起動の動線を実機で確認（2026-10-02、MODプロフィールを一時退避して再現）：タイトルで「ようこそ、夢鍛へ」→「メニューを開く」で保管庫に初期遺物3つ→遠征開始で空き枠へ自動装備し「初期の遺物を装備しました」のヒント。遠征中の計測：MOD Update 約0.012ms、OnGUI 約0.07ms/回、全体110〜135fps。
