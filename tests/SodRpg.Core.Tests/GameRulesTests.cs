@@ -326,7 +326,9 @@ namespace SodRpg.Core.Tests
         public void Build_sums_equipment_caps_and_applies_heat_penalty()
         {
             var p = NewProfile();
-            var w = Give(p, Rarity.Legendary, Slot.Weapon, 40);
+            Content.TryGetUnique("unique.endless_dance", out var ud);
+            var w = Loot.RollUnique(new Rng(2001), ud, 40);
+            p.Stash.Add(w);
             Rules.Equip(p, "H", w.Uid);
             var b0 = Build.Compute(p, "H", 0);
             Assert.Equal(w.Implicit.Value + w.Affixes.Where(a => a.Stat == w.Implicit.Stat).Sum(a => a.Value), b0.Get(w.Implicit.Stat));

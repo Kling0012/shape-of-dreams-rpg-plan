@@ -79,13 +79,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Blaze_triggers_every_fourth_hit()
+        public void Blaze_triggers_on_the_games_fourth_attack()
         {
             var rt = new PowerRuntime(With((Power.Blaze, 80)), 0);
-            int procs = 0;
-            for (int i = 0; i < 12; i++)
-                if (rt.OnAttackHit(i, 500, 100, 1).BlazeDamage > 0) procs++;
-            Assert.Equal(3, procs);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage);
+            rt.OnAttackFired(isFourthAttack: false);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage);
+            rt.OnAttackFired(isFourthAttack: true);
+            Assert.Equal(80f, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage, 3);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage); // 1回の4発目で1回だけ
         }
 
         [Fact]

@@ -468,6 +468,15 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
+        /// <summary>本体での行動（祭壇・商人・強化・合成・分解・ハンター）を依頼へ反映する。</summary>
+        public static List<GameEvent> OnGameAction(Profile p, BountyKind action)
+        {
+            var ev = new List<GameEvent>();
+            if (p.Run == null) return ev;
+            AdvanceBounty(p, action, 1, false, ev);
+            return ev;
+        }
+
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);
 
         /// <summary>未達成の依頼を1つ、今ある依頼と重ならない種類で引き直す。</summary>

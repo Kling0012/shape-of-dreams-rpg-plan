@@ -31,7 +31,7 @@ namespace SodRpg.Core.Game
             {
                 Id = 1, Name = new Txt("烈火の日", "Day of Blaze"),
                 Description = new Txt("烈火・処刑・連撃が+50%、攻勢の遺物が出やすい", "Blaze, Executioner and Momentum +50%; Offense relics favored"),
-                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Blaze, Power.Executioner, Power.Momentum },
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Blaze, Power.Executioner, Power.Momentum, Power.Ember },
             },
             new DailyDream
             {
@@ -43,7 +43,7 @@ namespace SodRpg.Core.Game
             {
                 Id = 3, Name = new Txt("共鳴の日", "Day of Resonance"),
                 Description = new Txt("共鳴・追い風・灯守・吸命が+50%、共鳴の遺物が出やすい", "Resonance, Tailwind, Second Wind and Lifesteal +50%; Resonance relics favored"),
-                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Resonance, Power.Tailwind, Power.SecondWind, Power.Lifesteal },
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Resonance, Power.Tailwind, Power.SecondWind, Power.Lifesteal, Power.Radiance, Power.Convergence },
             },
             new DailyDream
             {

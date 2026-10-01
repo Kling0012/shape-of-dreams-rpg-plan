@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
@@ -28,7 +29,6 @@ namespace SodRpg.Core.Game
         public const float LifestealInterval = 0.15f;
         public const float ThornsInterval = 1f;
         public const float ExecuteThreshold = 0.3f;
-        public const int BlazeEvery = 4;
         public const int BulwarkEnemies = 3;
         public const float ResonanceRange = 10f;
         public const double ChainChance = 0.25;
@@ -38,6 +38,8 @@ namespace SodRpg.Core.Game
         public const float AegisThreshold = 0.2f;
         public const float AegisCooldown = 20f;
         public const float BloodlustThreshold = 0.5f;
+        public const float ConvergenceCooldown = 6f;
+        public const float SurgeDuration = 5f;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -46,16 +48,45 @@ namespace SodRpg.Core.Game
         private float _secondWindReady;
         private float _lifestealReady;
         private float _thornsReady;
-        private int _blazeCounter;
         private float _aegisReady;
+        private bool _nextHitIsFourth;
+        private float _surgeUntil;
+        private readonly Dictionary<int, float> _convergenceReady = new Dictionary<int, float>();
+        private readonly Rng _rng;
 
         /// <summary>現在のHP割合（ホストが毎フレーム設定）。血の渇きに使う。</summary>
         public float HealthRatio { get; set; } = 1f;
 
-        public PowerRuntime(Build build, float now)
+        public PowerRuntime(Build build, float now, ulong seed = 1)
         {
             Build = build ?? new Build();
             _nextBarrier = now + 3f;
+            _rng = new Rng(seed);
+        }
+
+        /// <summary>本体の通常攻撃が放たれた。4発目なら次の命中で烈火が発動する（Vesper・Lacerta の4発目と連動）。</summary>
+        public void OnAttackFired(bool isFourthAttack)
+        {
+            if (isFourthAttack) _nextHitIsFourth = true;
+        }
+
+        /// <summary>Memory を使った。回避なら Q/W/E を短縮する秒数を返す。Ultimate なら終の昂りを始める。</summary>
+        public float OnSkillUsed(float now, bool isMovement, bool isUltimate)
+        {
+            if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
+            int dodge = Build.Get(Power.EchoingDodge);
+            return isMovement && dodge > 0 ? dodge / 10f : 0;
+        }
+
+        /// <summary>四元の共鳴：敵に4属性が揃っていれば爆発ダメージを返す（同じ敵へは6秒に1回）。</summary>
+        public float TakeConvergence(float now, int victimId, bool allFour, float attackDamage)
+        {
+            int v = Build.Get(Power.Convergence);
+            if (v <= 0 || !allFour) return 0;
+            if (_convergenceReady.TryGetValue(victimId, out float ready) && now < ready) return 0;
+            _convergenceReady[victimId] = now + ConvergenceCooldown;
+            if (_convergenceReady.Count > 200) _convergenceReady.Clear();
+            return attackDamage * v / 100f;
         }
 
         public Build Build { get; private set; }
@@ -114,6 +145,8 @@ namespace SodRpg.Core.Game
             public float BlazeDamage;
             /// <summary>雷鎖：近くの敵（最大2体）へ与えるダメージ。</summary>
             public float ChainDamage;
+            /// <summary>付与する属性（火・冷気・光・闇の順）。</summary>
+            public bool ApplyFire, ApplyCold, ApplyLight, ApplyDark;
         }
 
         /// <summary>通常攻撃が命中した。回復量と追加ダメージを返す。</summary>
@@ -129,21 +162,28 @@ namespace SodRpg.Core.Game
             int exec = Build.Get(Power.Executioner);
             if (exec > 0 && victimHealthRatio < ExecuteThreshold) r.ExecuteDamage = attackDamage * exec / 100f;
             int blaze = Build.Get(Power.Blaze);
-            if (blaze > 0 && ++_blazeCounter >= BlazeEvery)
-            {
-                _blazeCounter = 0;
-                r.BlazeDamage = attackDamage * blaze / 100f;
-            }
+            if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = attackDamage * blaze / 100f;
+            _nextHitIsFourth = false;
+            r.ApplyFire = Roll(Power.Ember);
+            r.ApplyCold = Roll(Power.Frost);
+            r.ApplyLight = Roll(Power.Radiance);
+            r.ApplyDark = Roll(Power.Umbra);
             int chain = Build.Get(Power.ChainLightning);
             if (chain > 0 && roll < ChainChance) r.ChainDamage = attackDamage * chain / 100f;
             return r;
+        }
+
+        private bool Roll(Power p)
+        {
+            int v = Build.Get(p);
+            return v > 0 && _rng.NextDouble() * 100 < v;
         }
 
         /// <summary>今付けるべき一時補正。</summary>
         public DynamicBonus Current(float now)
         {
             if (now > _momentumUntil) MomentumStacks = 0;
-            int resonance = ResonanceSelf + ResonanceShared;
+            int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
             return new DynamicBonus
             {
                 AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0),

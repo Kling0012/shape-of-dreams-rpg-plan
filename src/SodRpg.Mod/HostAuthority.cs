@@ -22,6 +22,8 @@ namespace SodRpg.Mod
             public PowerRuntime Powers;
             public StatBonus BaseBonus;
             public StatBonus DynBonus;
+            public Action<EventInfoAttackFired> OnFired;
+            public Action<EventInfoSkillUse> OnSkill;
         }
 
         private readonly Dictionary<DewPlayer, Build> _builds = new Dictionary<DewPlayer, Build>();
@@ -34,6 +36,7 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
         private readonly Action<EventInfoAttackHit> _onAttackHit;
+        private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
 
         // 悪夢化エリート
@@ -57,6 +60,7 @@ namespace SodRpg.Mod
             _onTakeDamage = OnTakeDamage;
             _onAttackHit = OnAttackHit;
             _onEntityAdd = OnEntityAdd;
+            _onApplyElemental = OnApplyElemental;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -234,6 +238,7 @@ namespace SodRpg.Mod
                     cem.OnDeath += _onDeath;
                     cem.OnTakeDamage += _onTakeDamage;
                     cem.OnAttackHit += _onAttackHit;
+                    cem.OnApplyElemental += _onApplyElemental;
                 }
             }
         }
@@ -246,6 +251,7 @@ namespace SodRpg.Mod
                 _cem.OnDeath -= _onDeath;
                 _cem.OnTakeDamage -= _onTakeDamage;
                 _cem.OnAttackHit -= _onAttackHit;
+                _cem.OnApplyElemental -= _onApplyElemental;
             }
             catch (Exception) { }
             _cem = null;
@@ -254,7 +260,11 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
-            foreach (var rt in _runtimes.Values) RemoveBonuses(rt);
+            foreach (var rt in _runtimes.Values)
+            {
+                RemoveBonuses(rt);
+                Unhook(rt);
+            }
             _runtimes.Clear();
             _builds.Clear();
             Unsubscribe();
@@ -309,7 +319,11 @@ namespace SodRpg.Mod
             _scratch.Clear();
             foreach (var kv in _runtimes)
                 if (kv.Key == null || !kv.Key.isActive) _scratch.Add(kv.Key);
-            foreach (var h in _scratch) _runtimes.Remove(h);
+            foreach (var h in _scratch)
+            {
+                Unhook(_runtimes[h]);
+                _runtimes.Remove(h);
+            }
 
             // 新しく生まれたキャラ（ラン開始・復帰）へ、届いている Build を付け直す。
             foreach (var kv in _builds)
@@ -324,7 +338,12 @@ namespace SodRpg.Mod
         {
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
-                rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time) };
+                rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
+                var captured = rt;
+                rt.OnFired = info => captured.Powers.OnAttackFired(info.isThisAttackFourthAttack);
+                rt.OnSkill = info => OnSkillUse(captured, info);
+                hero.EntityEvent_OnAttackFired += rt.OnFired;
+                hero.ClientHeroEvent_OnSkillUse += rt.OnSkill;
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
@@ -333,6 +352,41 @@ namespace SodRpg.Mod
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
+        }
+
+        private static void Unhook(HeroRuntime rt)
+        {
+            var hero = rt.Hero;
+            if (hero == null) return;
+            try
+            {
+                if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
+                if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
+            }
+            catch (Exception) { }
+            rt.OnFired = null;
+            rt.OnSkill = null;
+        }
+
+        /// <summary>回避の残響・終の昂り。</summary>
+        private static void OnSkillUse(HeroRuntime rt, EventInfoSkillUse info)
+        {
+            try
+            {
+                var hero = rt.Hero;
+                if (!Alive(hero)) return;
+                float cdr = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R);
+                if (cdr <= 0 || hero.Skill == null) return;
+                foreach (var loc in new[] { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E })
+                {
+                    var t = hero.Skill.GetSkill(loc);
+                    if (t != null) hero.ApplyCooldownReduction(t, cdr);
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Host: OnSkillUse " + ex.Message);
+            }
         }
 
         private static void RemoveBonuses(HeroRuntime rt)
@@ -502,6 +556,26 @@ namespace SodRpg.Mod
             }
         }
 
+        /// <summary>四元の共鳴：属性が付いた瞬間、4属性が揃っていれば爆発。</summary>
+        private void OnApplyElemental(EventInfoApplyElemental info)
+        {
+            try
+            {
+                var rt = RuntimeOf(info.actor);
+                if (rt == null || !Alive(rt.Hero)) return;
+                var victim = info.victim;
+                if (victim == null || !victim.isActive || victim.Status == null) return;
+                var st = victim.Status;
+                bool all = st.fireStack > 0 && st.hasCold && st.lightStack > 0 && st.darkStack > 0;
+                float dmg = rt.Powers.TakeConvergence(Time.time, (int)victim.netId, all, rt.Hero.Status.attackDamage);
+                if (dmg > 0) rt.Hero.PureDamage(dmg, 0f).Dispatch(victim);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Host: OnApplyElemental " + ex.Message);
+            }
+        }
+
         private void OnAttackHit(EventInfoAttackHit info)
         {
             try
@@ -515,6 +589,13 @@ namespace SodRpg.Mod
                 if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
                 if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
                 if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);
+                if (victim.isActive)
+                {
+                    if (r.ApplyFire) hero.ApplyElemental(ElementalType.Fire, victim, 1);
+                    if (r.ApplyCold) hero.ApplyElemental(ElementalType.Cold, victim, 1);
+                    if (r.ApplyLight) hero.ApplyElemental(ElementalType.Light, victim, 1);
+                    if (r.ApplyDark) hero.ApplyElemental(ElementalType.Dark, victim, 1);
+                }
             }
             catch (Exception ex)
             {

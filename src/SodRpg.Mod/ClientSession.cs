@@ -34,6 +34,11 @@ namespace SodRpg.Mod
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
+        private readonly Action<DewPlayer> _onChaos;
+        private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
+        private readonly Action<Hero, Gem> _onMerged;
+        private readonly Action _onHuntChanged;
+        private int _lastHuntLevel = -1;
 
         /// <summary>悪夢化した敵（netId → 接頭効果）。名札の表示と撃破時の報酬に使う。</summary>
         public Dictionary<uint, NightmareAffix> Nightmare { get; } = new Dictionary<uint, NightmareAffix>();
@@ -81,6 +86,34 @@ namespace SodRpg.Mod
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
             _onNightmare = OnNightmare;
+            _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
+            _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
+            _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
+            _onDismantled = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Recycler); };
+            _onMerged = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Alchemist); };
+            _onHuntChanged = OnHuntChanged;
+        }
+
+        private bool IsLocal(Hero h) => h != null && h == LocalHero;
+
+        private void GameAction(BountyKind kind)
+        {
+            try
+            {
+                if (RunActive) Emit(Rules.OnGameAction(Profile, kind));
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Client GameAction: " + ex.Message);
+            }
+        }
+
+        private void OnHuntChanged()
+        {
+            if (_zone == null) return;
+            int now = _zone.currentHuntLevel;
+            if (_lastHuntLevel >= 0 && now > _lastHuntLevel) GameAction(BountyKind.HunterBait);
+            _lastHuntLevel = now;
         }
 
         public string SavePath => _store?.Path;
@@ -134,15 +167,18 @@ namespace SodRpg.Mod
                     {
                         _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
                         _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
+                        _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                     }
                     catch (Exception) { }
                 }
                 _zone = zone;
+                _lastHuntLevel = zone != null ? zone.currentHuntLevel : -1;
                 _rooms.Reset(zone != null ? zone.clearedCombatRooms : -1);
                 if (zone != null)
                 {
                     zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
                     zone.ClientEvent_OnClearedCombatRoomsChanged += _onClearedRoomsChanged;
+                    zone.ClientEvent_OnCurrentHuntLevelChanged += _onHuntChanged;
                 }
             }
             var cem = NetworkedManagerBase<ClientEventManager>.instance;
@@ -150,10 +186,18 @@ namespace SodRpg.Mod
             {
                 if (_cem != null)
                 {
-                    try { _cem.OnDeath -= _onDeath; } catch (Exception) { }
+                    try { UnhookCem(_cem); } catch (Exception) { }
                 }
                 _cem = cem;
-                if (cem != null) cem.OnDeath += _onDeath;
+                if (cem != null)
+                {
+                    cem.OnDeath += _onDeath;
+                    cem.OnChaosUsed += _onChaos;
+                    cem.OnItemBought += _onBought;
+                    cem.OnItemUpgraded += _onUpgraded;
+                    cem.OnDismantled += _onDismantled;
+                    cem.OnGemMergeUpgraded += _onMerged;
+                }
             }
             var results = NetworkedManagerBase<GameResultManager>.instance;
             if (results != _results)
@@ -187,6 +231,16 @@ namespace SodRpg.Mod
             }
         }
 
+        private void UnhookCem(ClientEventManager cem)
+        {
+            cem.OnDeath -= _onDeath;
+            cem.OnChaosUsed -= _onChaos;
+            cem.OnItemBought -= _onBought;
+            cem.OnItemUpgraded -= _onUpgraded;
+            cem.OnDismantled -= _onDismantled;
+            cem.OnGemMergeUpgraded -= _onMerged;
+        }
+
         public void Unwire()
         {
             try
@@ -195,8 +249,9 @@ namespace SodRpg.Mod
                 {
                     _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded;
                     _zone.ClientEvent_OnClearedCombatRoomsChanged -= _onClearedRoomsChanged;
+                    _zone.ClientEvent_OnCurrentHuntLevelChanged -= _onHuntChanged;
                 }
-                if (_cem != null) _cem.OnDeath -= _onDeath;
+                if (_cem != null) UnhookCem(_cem);
                 if (_results != null) _results.ClientEvent_OnGameConcluded -= _onConcluded;
                 if (_clientRpcOn != null)
                 {

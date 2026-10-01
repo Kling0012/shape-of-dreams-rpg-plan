@@ -241,6 +241,15 @@ namespace SodRpg.Core.Game
                 new Txt("追い詰められた獣ほど、よく暴れる。", "A cornered beast fights the hardest."),
                 Power.Bloodlust, 30, Power.Lifesteal, 10),
 
+            new UniqueDef("unique.prism_clock", "charm.old_clock", new Txt("四元の時計", "Prismatic Clock"),
+                new Txt("四つの夢が重なる瞬間、時は砕ける。", "When four dreams overlap, time itself shatters."),
+                Power.Convergence, 150, Power.Frost, 30),
+            new UniqueDef("unique.afterimage_cloak", "armor.flowing_cloak", new Txt("残像の外套", "Afterimage Cloak"),
+                new Txt("避けた先に、もう次の記憶が待っている。", "Where you dodge to, your next memory is already waiting."),
+                Power.EchoingDodge, 15, Power.Tailwind, 20),
+            new UniqueDef("unique.dawnbreaker", "weapon.calming_staff", new Txt("暁を呼ぶ杖", "Dawncaller"),
+                new Txt("三つ重なった光は、決して外れない。", "Light stacked thrice never misses."),
+                Power.Radiance, 40, Power.UltimateSurge, 20),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -282,6 +291,9 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.CritChancePct, 2, 4, 10),
                 new AffixDef(Stat.CritDamagePct, 6, 12, 10),
                 new AffixDef(Stat.Haste, 3, 6, 6),
+                new AffixDef(Stat.FireAmp, 6, 12, 5),
+                new AffixDef(Stat.LightAmp, 6, 12, 5),
+                new AffixDef(Stat.DarkAmp, 6, 12, 5),
             },
             [Slot.Armor] = new[]
             {
@@ -301,6 +313,10 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.PowerPct, 3, 6, 10),
                 new AffixDef(Stat.MaxHealthPct, 3, 6, 10),
                 new AffixDef(Stat.HealthRegen, 1, 2, 6),
+                new AffixDef(Stat.ColdAmp, 6, 12, 5),
+                new AffixDef(Stat.FireAmp, 6, 12, 4),
+                new AffixDef(Stat.LightAmp, 6, 12, 4),
+                new AffixDef(Stat.DarkAmp, 6, 12, 4),
             },
         };
 
@@ -314,6 +330,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Blaze, 40, 70),
                 new PowerRange(Power.ChainLightning, 30, 50),
                 new PowerRange(Power.Bloodlust, 12, 20),
+                new PowerRange(Power.Ember, 20, 35),
+                new PowerRange(Power.Radiance, 20, 35),
+                new PowerRange(Power.UltimateSurge, 15, 25),
             },
             [Slot.Armor] = new[]
             {
@@ -322,6 +341,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Thorns, 15, 30),
                 new PowerRange(Power.Barrier, 6, 10),
                 new PowerRange(Power.Aegis, 10, 20),
+                new PowerRange(Power.EchoingDodge, 6, 12),
             },
             [Slot.Charm] = new[]
             {
@@ -329,6 +349,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Tailwind, 15, 25),
                 new PowerRange(Power.SecondWind, 20, 30),
                 new PowerRange(Power.Shatter, 30, 60),
+                new PowerRange(Power.Frost, 20, 35),
+                new PowerRange(Power.Umbra, 20, 35),
+                new PowerRange(Power.Convergence, 80, 140),
             },
         };
 
@@ -375,6 +398,13 @@ namespace SodRpg.Core.Game
             [Power.Shatter] = 150,
             [Power.Aegis] = 40,
             [Power.Bloodlust] = 40,
+            [Power.Ember] = 80,
+            [Power.Frost] = 80,
+            [Power.Radiance] = 80,
+            [Power.Umbra] = 80,
+            [Power.Convergence] = 300,
+            [Power.EchoingDodge] = 30,
+            [Power.UltimateSurge] = 50,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -614,6 +644,13 @@ namespace SodRpg.Core.Game
                 case Power.Shatter: return Loc.T("爆砕", "Shatter");
                 case Power.Aegis: return Loc.T("守護霊", "Aegis");
                 case Power.Bloodlust: return Loc.T("血の渇き", "Bloodlust");
+                case Power.Ember: return Loc.T("火種", "Ember");
+                case Power.Frost: return Loc.T("霜", "Frost");
+                case Power.Radiance: return Loc.T("輝き", "Radiance");
+                case Power.Umbra: return Loc.T("影", "Umbra");
+                case Power.Convergence: return Loc.T("四元の共鳴", "Convergence");
+                case Power.EchoingDodge: return Loc.T("回避の残響", "Echoing Dodge");
+                case Power.UltimateSurge: return Loc.T("終の昂り", "Ultimate Surge");
                 default: return "-";
             }
         }
@@ -638,6 +675,13 @@ namespace SodRpg.Core.Game
                 case Power.Shatter: return Loc.T($"【{name}】撃破時、周囲4mの敵へ攻撃力{v}%のダメージ", $"[{name}] On kill, deal {v}% AD to enemies within 4m");
                 case Power.Aegis: return Loc.T($"【{name}】大きな一撃（最大HP20%以上）で最大HPの{v}%の障壁（20秒）", $"[{name}] A big hit (20%+ max HP) grants a {v}% max HP shield (20s)");
                 case Power.Bloodlust: return Loc.T($"【{name}】HP50%未満の間、攻撃速度+{v}%", $"[{name}] +{v}% attack speed below 50% health");
+                case Power.Ember: return Loc.T($"【{name}】通常攻撃の命中時{v}%で火を付与", $"[{name}] {v}% on hit: apply Fire");
+                case Power.Frost: return Loc.T($"【{name}】通常攻撃の命中時{v}%で冷気を付与", $"[{name}] {v}% on hit: apply Cold");
+                case Power.Radiance: return Loc.T($"【{name}】通常攻撃の命中時{v}%で光を付与（3重で光は確定会心）", $"[{name}] {v}% on hit: apply Light (3 stacks: light crits)");
+                case Power.Umbra: return Loc.T($"【{name}】通常攻撃の命中時{v}%で闇を付与", $"[{name}] {v}% on hit: apply Dark");
+                case Power.Convergence: return Loc.T($"【{name}】敵に4属性が揃うと攻撃力{v}%の爆発（同じ敵へ6秒に1回）", $"[{name}] All 4 elements on an enemy: burst for {v}% AD (6s per enemy)");
+                case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびにMemoryのクールダウン-{v / 10f:0.#}秒", $"[{name}] Each dodge: -{v / 10f:0.#}s Memory cooldowns");
+                case Power.UltimateSurge: return Loc.T($"【{name}】Ultimate使用後5秒、攻撃力・魔力+{v}%", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate");
                 default: return "-";
             }
         }

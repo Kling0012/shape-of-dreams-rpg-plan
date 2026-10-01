@@ -87,6 +87,20 @@ namespace SodRpg.Core.Game
         Aegis = 14,
         /// <summary>HP50%未満の間、攻撃速度+X%。「血の渇き」</summary>
         Bloodlust = 15,
+        /// <summary>通常攻撃の命中時にX%で火を1スタック付与。「火種」</summary>
+        Ember = 16,
+        /// <summary>通常攻撃の命中時にX%で冷気を付与。「霜」</summary>
+        Frost = 17,
+        /// <summary>通常攻撃の命中時にX%で光を1スタック付与。「輝き」</summary>
+        Radiance = 18,
+        /// <summary>通常攻撃の命中時にX%で闇を1スタック付与。「影」</summary>
+        Umbra = 19,
+        /// <summary>敵に火・冷気・光・闇がすべて乗った瞬間、攻撃力X%の純粋ダメージ（同じ敵へは6秒に1回）。「四元の共鳴」</summary>
+        Convergence = 20,
+        /// <summary>回避（Movement）を使うたびに Q/W/E のクールダウンを X/10 秒短縮。「回避の残響」</summary>
+        EchoingDodge = 21,
+        /// <summary>Ultimate（R）を使うと5秒間 攻撃力・魔力+X%。「終の昂り」</summary>
+        UltimateSurge = 22,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>
