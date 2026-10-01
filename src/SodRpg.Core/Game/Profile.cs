@@ -61,6 +61,8 @@ namespace SodRpg.Core.Game
         public int StartDepth { get; set; }
         /// <summary>このランで使った依頼の引き直し回数。</summary>
         public int RerollsUsed { get; set; }
+        /// <summary>確保地点に現れている出来事（選択待ちの間だけ）。</summary>
+        public DreamEvent OfferedEvent { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -86,6 +88,7 @@ namespace SodRpg.Core.Game
                 DailyId = DailyId,
                 StartDepth = StartDepth,
                 RerollsUsed = RerollsUsed,
+                OfferedEvent = OfferedEvent,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());

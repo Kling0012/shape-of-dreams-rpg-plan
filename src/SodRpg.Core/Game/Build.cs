@@ -15,6 +15,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<Power, int> Powers { get; } = new SortedDictionary<Power, int>();
         /// <summary>系統ごとの装着数（2以上でセット効果）。表示用で、通信には含めない。</summary>
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
+        /// <summary>セット遺物の装着数（表示用）。</summary>
+        public SortedDictionary<string, int> Sets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public int Heat { get; set; }
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
@@ -42,6 +44,22 @@ namespace SodRpg.Core.Game
             }
             foreach (var kv in b.Lines)
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
+            var setCounts = new Dictionary<string, int>();
+            foreach (string uid in h.Equipped)
+            {
+                var r = p.FindStash(uid);
+                if (r?.UniqueId == null || !Content.TryGetUnique(r.UniqueId, out var u) || u.SetId == null) continue;
+                setCounts.TryGetValue(u.SetId, out int n);
+                setCounts[u.SetId] = n + 1;
+            }
+            foreach (var kv in setCounts)
+            {
+                b.Sets[kv.Key] = kv.Value;
+                var set = Content.GetSet(kv.Key);
+                if (set == null) continue;
+                if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
+                if (kv.Value >= 3) foreach (var pw in set.ThreePiece) Add(rawPowers, pw.Power, pw.Value);
+            }
             foreach (var kv in h.Talents)
             {
                 if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone) continue;

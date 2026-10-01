@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SodRpg.Core.Game
 {
@@ -89,11 +90,40 @@ namespace SodRpg.Core.Game
             Powers = new[] { new PowerLine(p1, v1), new PowerLine(p2, v2) };
         }
 
+        /// <summary>セット遺物の部位（固有効果を持たない）。</summary>
+        public UniqueDef(string id, string baseId, Txt name, string setId)
+        {
+            Id = id;
+            BaseId = baseId;
+            Name = name;
+            Lore = new Txt("", "");
+            SetId = setId;
+            Powers = Array.Empty<PowerLine>();
+        }
+
         public string Id { get; }
         public string BaseId { get; }
         public Txt Name { get; }
         public Txt Lore { get; }
         public IReadOnlyList<PowerLine> Powers { get; }
+        /// <summary>セット遺物ならセットID、それ以外は null。</summary>
+        public string SetId { get; }
+    }
+
+    /// <summary>名前付きの3点セット（Diablo のセット装備）。2点・3点でボーナス。</summary>
+    public sealed class SetDef
+    {
+        public string Id;
+        public Txt Name;
+        public StatLine[] TwoPiece;
+        public PowerLine[] ThreePiece;
+
+        public string Describe()
+        {
+            string two = string.Join(Loc.T("・", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
+            string three = string.Join(Loc.T("・", ", "), ThreePiece.Select(p => Content.PowerName(p.Power) + " " + p.Value));
+            return Loc.T($"2点：{two}／3点：{three}", $"2pc: {two} / 3pc: {three}");
+        }
     }
 
     /// <summary>専門化（星図）のノード。小ノードは段階制、到達ノードは刻印として1つだけ有効。</summary>
@@ -210,7 +240,37 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.bloodied_maul", "weapon.shield_maul", new Txt("血塗れの大槌", "Bloodied Maul"),
                 new Txt("追い詰められた獣ほど、よく暴れる。", "A cornered beast fights the hardest."),
                 Power.Bloodlust, 30, Power.Lifesteal, 10),
+
+            new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
+            new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
+            new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
+            new UniqueDef("set.lamp.weapon", "weapon.calming_staff", new Txt("灯守の杖", "Lampkeeper's Staff"), "set.lamp"),
+            new UniqueDef("set.lamp.armor", "armor.lampkeeper_mantle", new Txt("灯守の誓衣", "Lampkeeper's Vow"), "set.lamp"),
+            new UniqueDef("set.lamp.charm", "charm.resonance_amulet", new Txt("灯守の護符", "Lampkeeper's Charm"), "set.lamp"),
         };
+
+        public static readonly IReadOnlyList<SetDef> Sets = new[]
+        {
+            new SetDef
+            {
+                Id = "set.tide", Name = new Txt("潮鳴りの装い", "Tidecaller's Regalia"),
+                TwoPiece = new[] { new StatLine(Stat.AttackSpeedPct, 10), new StatLine(Stat.MoveSpeedPct, 5) },
+                ThreePiece = new[] { new PowerLine(Power.Momentum, 6), new PowerLine(Power.Tailwind, 25) },
+            },
+            new SetDef
+            {
+                Id = "set.lamp", Name = new Txt("灯守の誓い", "Lampkeeper's Oath"),
+                TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 10), new StatLine(Stat.Haste, 10) },
+                ThreePiece = new[] { new PowerLine(Power.Barrier, 10), new PowerLine(Power.Resonance, 8) },
+            },
+        };
+
+        public static SetDef GetSet(string id)
+        {
+            foreach (var s in Sets)
+                if (s.Id == id) return s;
+            return null;
+        }
 
         private static readonly Dictionary<Slot, AffixDef[]> AffixPools = new Dictionary<Slot, AffixDef[]>
         {

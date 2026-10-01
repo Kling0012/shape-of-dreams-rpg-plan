@@ -35,7 +35,8 @@ namespace SodRpg.Core.Tests
                 if (r.Rarity == Rarity.Legendary)
                 {
                     Assert.NotNull(r.UniqueId);
-                    Assert.Equal(2, r.Powers.Count);
+                    Assert.True(Content.TryGetUnique(r.UniqueId, out var u));
+                    Assert.Equal(u.SetId != null ? 0 : 2, r.Powers.Count);
                 }
                 if (r.Rarity < Rarity.Epic) Assert.Empty(r.Powers);
             }

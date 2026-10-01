@@ -181,6 +181,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
+            run.OfferedEvent = DreamEvents.Roll(rng, p);
             p.StoreRng(rng);
         }
 
@@ -218,6 +219,7 @@ namespace SodRpg.Core.Game
             int pacts = run.Pacts.Count;
             run.Pacts.Clear();
             run.OfferedPacts.Clear();
+            run.OfferedEvent = DreamEvent.None;
             run.SecuredCount++;
             p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
 
@@ -300,6 +302,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}", $"Nightmare pact \"{d.Name}\": {d.Description}")));
             }
             run.OfferedPacts.Clear();
+            run.OfferedEvent = DreamEvent.None;
             run.Heat = Loot.ClampHeat(run.Heat + 1);
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
             run.AwaitingChoice = false;
@@ -400,6 +403,69 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Tuning, -cost.Tuning);
             p.Upgrades[u] = lv + 1;
             return new GameEvent(EventKind.LevelUp, Loc.T($"工房：{def.Name} {lv + 1}/{def.MaxLevel}", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}"));
+        }
+
+        /// <summary>確保地点の出来事を使う（1回だけ）。</summary>
+        public static List<GameEvent> UseEvent(Profile p, DreamEvent e)
+        {
+            if (!DreamEvents.CanUse(p, e, out string reason)) throw new InvalidOperationException(reason);
+            var run = p.Run;
+            var ev = new List<GameEvent>();
+            var rng = p.TakeRng();
+            switch (e)
+            {
+                case DreamEvent.Merchant:
+                {
+                    int cost = DreamEvents.MerchantCost(run.Heat);
+                    p.AddMaterial(Materials.Shard, -cost);
+                    var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * run.Heat, true, Rarity.Uncommon);
+                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null, p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine);
+                    p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+                    run.RelicsFound++;
+                    p.Stats.RelicsFound++;
+                    ev.Add(new GameEvent(EventKind.Drop, Loc.T($"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った（未確保）",
+                        $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant (unsecured)"), relic.Rarity));
+                    AddToSatchel(p, relic, ev);
+                    break;
+                }
+                case DreamEvent.Fountain:
+                {
+                    var sacrifice = run.Satchel.OrderBy(r => r.Score).First();
+                    run.Satchel.Remove(sacrifice);
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance).OrderByDescending(r => r.Score).First();
+                    target.Enhance++;
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げ、「{target.DisplayName}」になった。",
+                        $"Offered \"{sacrifice.DisplayName}\"; it became \"{target.DisplayName}\"."), target.Rarity));
+                    break;
+                }
+                case DreamEvent.Chalice:
+                {
+                    int bet = run.SatchelShards;
+                    if (rng.Chance(0.5))
+                    {
+                        run.SatchelShards += bet;
+                        ev.Add(new GameEvent(EventKind.Secured, Loc.T($"賭けに勝った！ 未確保の欠片 {bet} → {bet * 2}", $"You won! Unsecured shards {bet} -> {bet * 2}")));
+                    }
+                    else
+                    {
+                        run.SatchelShards = 0;
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負けた… 未確保の欠片 {bet} を失った", $"You lost... {bet} unsecured shards are gone")));
+                    }
+                    break;
+                }
+                case DreamEvent.Lantern:
+                {
+                    var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
+                    p.LostAndFound.Remove(best);
+                    ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯が「{best.DisplayName}」を照らした（未確保）",
+                        $"The lantern revealed \"{best.DisplayName}\" (unsecured)"), best.Rarity));
+                    AddToSatchel(p, best, ev);
+                    break;
+                }
+            }
+            p.StoreRng(rng);
+            run.OfferedEvent = DreamEvent.None;
+            return ev;
         }
 
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);

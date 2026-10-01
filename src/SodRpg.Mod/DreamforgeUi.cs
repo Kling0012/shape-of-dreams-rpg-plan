@@ -181,7 +181,7 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 300, 80, 600, 220 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0));
+            var rect = new Rect(w / 2 - 300, 80, 600, 220 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
@@ -205,6 +205,24 @@ namespace SodRpg.Mod
                 _tab = 0;
             }
             GUILayout.EndHorizontal();
+            if (run.OfferedEvent != DreamEvent.None)
+            {
+                var e = run.OfferedEvent;
+                bool ok = DreamEvents.CanUse(_s.Profile, e, out string why);
+                GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
+                GUI.enabled = ok;
+                if (GUILayout.Button(ok ? Loc.T("この出来事を選ぶ", "Take this event") : why, _st.Row, GUILayout.Height(32)))
+                {
+                    try
+                    {
+                        foreach (var x in Rules.UseEvent(_s.Profile, e)) _s.Emit(x);
+                        _s.MarkDirty(false);
+                        _s.SaveNow();
+                    }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                }
+                GUI.enabled = true;
+            }
             if (run.OfferedPacts.Count > 0)
             {
                 GUILayout.Label(Loc.T("…または悪夢の契約を結んで潜る（次の確保まで重なって効く）", "...or delve with a nightmare pact (stacks until you secure)"), _st.Small);
@@ -430,6 +448,12 @@ namespace SodRpg.Mod
             if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ補正はありません。", "No bonuses yet."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
+            foreach (var kv in build.Sets)
+            {
+                var set = Content.GetSet(kv.Key);
+                if (set == null) continue;
+                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3  ", "#ffb52e") + "<color=#aab>" + set.Describe() + "</color>", _st.Small);
+            }
             foreach (var kv in build.Lines)
             {
                 if (kv.Value < 2) continue;
@@ -522,7 +546,12 @@ namespace SodRpg.Mod
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
-                GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
+            {
+                if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
+                    GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ffb52e") + " <color=#aab>" + set.Describe() + "</color>", _st.Small);
+                else
+                    GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
+            }
         }
 
         private void Comparison(Relic sel, Relic cur)
