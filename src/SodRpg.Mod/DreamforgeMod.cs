@@ -166,6 +166,14 @@ namespace SodRpg.Mod
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }
 
+        [ConsoleCommand("Dreamforge (test): switch lightweight rendering 0=Off 1=Light 2=Strong", "dreamforge_lightweight")]
+        private void LightweightCommand(int mode)
+        {
+            config.lightweight = (LightweightMode)Math.Max(0, Math.Min(2, mode));
+            _performance?.Configure(config);
+            Debug.Log("[DreamforgeRPG] lightweight=" + config.lightweight);
+        }
+
         private void OnApplicationQuit()
         {
             _session?.SaveNow();
