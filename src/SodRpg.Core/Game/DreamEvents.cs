@@ -44,15 +44,15 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
-                    return Loc.T($"ゴールドで正体不明の遺物を買う（アンコモン以上・深いほど良い。基本{Economy.MerchantGoldBase(heat)}G）",
+                    return Loc.T($"ゴールドで中身の分からない遺物を1つ買えます。必ずアンコモン以上で、深く潜っているほど良い物が出ます（基本価格{Economy.MerchantGoldBase(heat)}G）。",
                         $"Buy a mystery relic with gold (Uncommon+, better when deeper; base {Economy.MerchantGoldBase(heat)}G)");
                 case DreamEvent.Fountain:
-                    return Loc.T("未確保の最も弱い遺物を捧げ、最も強い未確保の遺物を+1強化", "Sacrifice your weakest unsecured relic to enhance your best one by +1");
+                    return Loc.T("まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+1強化されます。", "Sacrifice your weakest unsecured relic to enhance your best one by +1");
                 case DreamEvent.Chalice:
-                    return Loc.T($"未確保の欠片{run?.SatchelShards ?? 0}を賭ける：50%で2倍、外れると失う",
+                    return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。50%の確率で2倍になり、外れるとすべて失います。",
                         $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double, else lose them");
                 case DreamEvent.Lantern:
-                    return Loc.T("遺失物を1つ、この場で取り戻す（未確保）", "Recover one lost relic right here (unsecured)");
+                    return Loc.T("遺失物を1つ、この場で取り戻せます（取り戻した物は、確保するまで未確保のままです）。", "Recover one lost relic right here (unsecured)");
                 default: return "";
             }
         }
@@ -77,7 +77,7 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.Fountain:
                     if (run.Satchel.Count < 2 || run.Satchel.All(r => r.Enhance >= Content.MaxEnhance))
-                        reason = Loc.T("未確保の遺物が2つ以上必要です（強化可能なもの）。", "Need 2+ unsecured relics (one enhanceable).");
+                        reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
                     if (run.SatchelShards <= 0) reason = Loc.T("賭ける欠片がありません。", "No shards to wager.");

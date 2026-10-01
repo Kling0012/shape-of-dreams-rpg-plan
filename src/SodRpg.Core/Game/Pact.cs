@@ -62,44 +62,44 @@ namespace SodRpg.Core.Game
             new PactDef
             {
                 Id = Pact.GlassHeart, Name = new Txt("硝子の心臓", "Glass Heart"),
-                Description = new Txt("呪い（弱）を受ける ／ 遺物ドロップ率+40%", "Take a Mild curse / +40% relic drop rate"), CurseStrength = 1, DropBonus = 0.4,
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：遺物が40%多く落ちます。", "Cost: a mild curse. Reward: 40% more relic drops."), CurseStrength = 1, DropBonus = 0.4,
             },
             new PactDef
             {
                 Id = Pact.DullBlade, Name = new Txt("鈍き刃", "Dull Blade"),
-                Description = new Txt("呪い（弱）を受ける ／ レア度が上がりやすい", "Take a Mild curse / better rarity"), CurseStrength = 1, Luck = 0.6,
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：レア度の高い遺物が出やすくなります。", "Cost: a mild curse. Reward: better relic rarity."), CurseStrength = 1, Luck = 0.6,
             },
             new PactDef
             {
                 Id = Pact.Unguarded, Name = new Txt("無防備", "Unguarded"),
-                Description = new Txt("呪い（弱）を受ける ／ 撃破で得る欠片×1.5", "Take a Mild curse / x1.5 shards from kills"), CurseStrength = 1, ShardMult = 1.5,
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：敵を倒して得る欠片が1.5倍になります。", "Cost: a mild curse. Reward: x1.5 shards from kills."), CurseStrength = 1, ShardMult = 1.5,
             },
             new PactDef
             {
                 Id = Pact.LeadenFeet, Name = new Txt("重い足", "Leaden Feet"),
-                Description = new Txt("呪い（弱）を受ける ／ 撃破経験値×1.5", "Take a Mild curse / x1.5 xp from kills"), CurseStrength = 1, XpMult = 1.5,
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：敵を倒して得る経験値が1.5倍になります。", "Cost: a mild curse. Reward: x1.5 experience from kills."), CurseStrength = 1, XpMult = 1.5,
             },
             new PactDef
             {
                 Id = Pact.Frenzy, Name = new Txt("狂乱", "Frenzy"),
-                Description = new Txt("呪い（中）を受ける ／ 攻撃力・魔力+15%", "Take a Potent curse / +15% attack and ability power"), CurseStrength = 2,
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：攻撃力と魔力が15%上がります。", "Cost: a potent curse. Reward: +15% attack damage and ability power."), CurseStrength = 2,
                 Boons = new[] { new StatLine(Stat.AttackPct, 15), new StatLine(Stat.PowerPct, 15) },
             },
             new PactDef
             {
                 Id = Pact.CursedHoard, Name = new Txt("呪われた財宝", "Cursed Hoard"),
-                Description = new Txt("呪い（弱）を受ける ／ 確保時の潜行ボーナス×2・全滅すると残響なし", "Take a Mild curse / x2 delve bonus on secure, no echoes on defeat"), CurseStrength = 1,
+                Description = new Txt("代償：弱い呪いを1つ受け、全滅したときに欠片が残響として戻らなくなります。見返り：確保したときの潜行ボーナスが2倍になります。", "Cost: a mild curse, and no shard echoes if your party falls. Reward: double delve bonus when you secure."), CurseStrength = 1,
                 DoubleDepthBonus = true, NoEcho = true,
             },
             new PactDef
             {
                 Id = Pact.DryDream, Name = new Txt("乾いた夢", "Dry Dream"),
-                Description = new Txt("呪い（中）を受ける ／ エリートとボスが調律石+1", "Take a Potent curse / elites and bosses drop +1 tuning"), CurseStrength = 2, TuningOnElite = 1,
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：エリートとボスが調律石を1つ多く落とします。", "Cost: a potent curse. Reward: elites and bosses drop 1 extra tuning stone."), CurseStrength = 2, TuningOnElite = 1,
             },
             new PactDef
             {
                 Id = Pact.Burden, Name = new Txt("見えざる重荷", "Unseen Burden"),
-                Description = new Txt("呪い（強）を受ける ／ エピック以上がかなり出やすい", "Take a Powerful curse / much better rarity"), CurseStrength = 3, Luck = 1.0,
+                Description = new Txt("代償：強い呪いを1つ受けます。見返り：エピック以上の遺物がかなり出やすくなります。", "Cost: a powerful curse. Reward: Epic or better relics become much more common."), CurseStrength = 3, Luck = 1.0,
             },
         };
 

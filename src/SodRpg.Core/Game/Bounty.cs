@@ -81,8 +81,8 @@ namespace SodRpg.Core.Game
             int shards = (int)Math.Round(RewardShards * mult);
             int tuningN = (int)Math.Round(RewardTuning * mult);
             int xp = (int)Math.Round(RewardXp * mult);
-            string tuning = tuningN > 0 ? Loc.T($"・調律石{tuningN}", $", {tuningN} tuning") : "";
-            return Loc.T($"欠片{shards}{tuning}・経験{xp}", $"{shards} shards{tuning}, {xp} xp");
+            string tuning = tuningN > 0 ? Loc.T($"、調律石{tuningN}", $", {tuningN} tuning") : "";
+            return Loc.T($"報酬：欠片{shards}{tuning}、経験値{xp}", $"Reward: {shards} shards{tuning}, {xp} xp");
         }
     }
 
