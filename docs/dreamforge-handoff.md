@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-01 時点・v1.3.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.4.0）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,12 +6,12 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.3.0**（GitHub Releases に v0.1.0〜v1.3.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.4.0**（GitHub Releases に v0.1.0〜v1.4.0、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
-| 試験 | `dotnet test` で **435件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール185件） |
+| 試験 | `dotnet test` で **449件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール199件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
 | 実機確認 | v0.1〜v0.3 の主要部分のみ（読み込み・UI・能力反映・確保・精算・ライブリロード）。**v1.0 以降の本体連動は実機未確認**（保留事項を参照） |
-| 次 | v1.4「経済の橋渡し」（計画は push 済み、未着手） |
+| 次 | 経済の橋渡し（計画の「その後の候補」）。v1.4 の最適化が実機で効いたかは `dreamforge_perf` で確認待ち |
 
 ## 2. 方針（利用者の指示で決まったこと）
 
@@ -91,6 +91,8 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 7. 必要なら Codex に差分レビューを依頼し、指摘は本体の逆コンパイルで裏取りしてから直す（Codex は「列挙型＋整数は不可」のような誤りも出す）。
 
 ## 7. 注意点・既知の制限
+
+- **性能**：OnGUI は1フレームに何度も呼ばれる。毎回の文字列生成・GUILayout・計測（CalcSize）を避け、キャッシュして描画イベントでだけ描く（v1.4 で対処）。パネルを足すときは `DreamforgeUi.NeedsLayout` に含めないと GUILayout が呼ばれない。保存は `AsyncProfileWriter`（別スレッド）を使い、メインで `ProfileStore.Save` を直接呼ばない。
 
 - **実機未確認の本体連動が多い**（v1.0〜v1.3）。特に MirageSkin・呪いの付与、`ClientHeroEvent_OnSkillUse` がホストで期待どおり発火するか、`ApplyElemental` の付与者の扱い。最初の実機確認で `Player.log` の `[DreamforgeRPG]` 行を見る。
 - 協力時、ホストはクライアントが送る能力の集計値を上限で丸めて受け入れる（装備データ一式の検証はしない）。信頼できる仲間との協力が前提。
