@@ -76,21 +76,21 @@ namespace SodRpg.Core.Game
             return floor;
         }
 
-        public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null)
+        public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null)
         {
             if (rarity == Rarity.Legendary)
             {
                 var candidates = new List<UniqueDef>();
                 foreach (var u in Content.Uniques)
                     if (slot == null || Content.GetBase(u.BaseId).Slot == slot.Value) candidates.Add(u);
-                if (candidates.Count > 0) return RollUnique(rng, candidates[rng.Range(0, candidates.Count - 1)], itemLevel);
+                if (candidates.Count > 0) return RollUnique(rng, PickWeighted(rng, candidates, u => Content.GetBase(u.BaseId).Line, focus), itemLevel);
                 rarity = Rarity.Epic;
             }
 
             var bases = new List<BaseDef>();
             foreach (var b in Content.Bases)
                 if (slot == null || b.Slot == slot.Value) bases.Add(b);
-            var baseDef = bases[rng.Range(0, bases.Count - 1)];
+            var baseDef = PickWeighted(rng, bases, b => b.Line, focus);
 
             var r = new Relic
             {
@@ -107,6 +107,24 @@ namespace SodRpg.Core.Game
                 r.Powers.Add(new PowerLine(pr.Power, rng.Range(pr.Min, pr.Max)));
             }
             return r;
+        }
+
+        /// <summary>狙い系統の重み。狙った系統は2倍出やすい（計画書 付録B）。</summary>
+        public const int FocusWeight = 2;
+
+        private static T PickWeighted<T>(Rng rng, List<T> items, Func<T, Line> lineOf, Line? focus)
+        {
+            if (focus == null) return items[rng.Range(0, items.Count - 1)];
+            int total = 0;
+            foreach (var i in items) total += lineOf(i) == focus.Value ? FocusWeight : 1;
+            int x = rng.Range(0, total - 1);
+            foreach (var i in items)
+            {
+                int w = lineOf(i) == focus.Value ? FocusWeight : 1;
+                if (x < w) return i;
+                x -= w;
+            }
+            return items[items.Count - 1];
         }
 
         public static Relic RollUnique(Rng rng, UniqueDef u, int itemLevel)
@@ -164,7 +182,7 @@ namespace SodRpg.Core.Game
         /// 1体の撃破に対する個人の報酬を抽選する。協力時は各プレイヤーが自分の分を独立に抽選する
         /// （計画書 第14章「確保と損失は個人ごと」）。epicPity はボス撃破でのみ進む。
         /// </summary>
-        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity)
+        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
@@ -181,12 +199,12 @@ namespace SodRpg.Core.Game
                     pity = true;
                 }
                 var rarity = RollRarity(rng, luck, allowLegendary, floor);
-                reward.Relics.Add(RollRelic(rng, rarity, itemLevel));
+                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus));
                 if (tier == MonsterTier.Boss)
                 {
                     if (pity || rarity >= Rarity.Epic) epicPity = 0;
                     else epicPity++;
-                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel));
+                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus));
                 }
             }
 

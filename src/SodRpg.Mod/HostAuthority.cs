@@ -129,6 +129,11 @@ namespace SodRpg.Mod
             try
             {
                 if (caller == null || msg == null) return;
+                if (msg.protocol != Protocol.Version)
+                {
+                    Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
+                    return;
+                }
                 var build = Build.Decode(msg.build);
                 if (build == null)
                 {

@@ -73,7 +73,7 @@ namespace SodRpg.Core.Game
             if (run == null) return ev;
             var rng = p.TakeRng();
             int pity = p.EpicPity;
-            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity);
+            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity, p.Focus);
             p.EpicPity = pity;
             p.StoreRng(rng);
 
@@ -84,6 +84,7 @@ namespace SodRpg.Core.Game
             foreach (var relic in reward.Relics)
             {
                 p.Stats.RelicsFound++;
+                run.RelicsFound++;
                 if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
                 p.Codex.Add(relic.UniqueId ?? relic.BaseId);
                 p.BestItemLevel = Math.Max(p.BestItemLevel, relic.ItemLevel);
@@ -148,6 +149,8 @@ namespace SodRpg.Core.Game
 
             p.AddMaterial(Materials.Shard, shards);
             p.AddMaterial(Materials.Tuning, tuning);
+            run.RelicsSecured += relics;
+            run.ShardsSecured += shards;
             run.Satchel.Clear();
             run.SatchelShards = 0;
             run.SatchelTuning = 0;
@@ -196,10 +199,10 @@ namespace SodRpg.Core.Game
             var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
             p.LostAndFound.Remove(best);
             run.LostRecovered = true;
-            run.Satchel.Add(best);
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                 $"遺失物「{best.DisplayName}」を取り戻した（未確保）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
+            AddToSatchel(p, best, ev);
             return ev;
         }
 
@@ -208,6 +211,7 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            var report = new RunReport { Victory = victory, LevelBefore = p.DreamLevel };
             if (victory)
             {
                 ev.AddRange(Secure(p));
@@ -221,6 +225,8 @@ namespace SodRpg.Core.Game
                 int echo = run.SatchelShards > 0 ? Math.Max(1, (run.SatchelShards + 3) / 4) : 0;
                 p.AddMaterial(Materials.Shard, echo);
                 int lost = run.Satchel.Count;
+                report.RelicsLost = lost;
+                report.EchoShards = echo;
                 foreach (var r in run.Satchel) p.LostAndFound.Add(r);
                 int salvaged = 0;
                 while (p.LostAndFound.Count > Content.LostAndFoundCapacity)
@@ -243,8 +249,23 @@ namespace SodRpg.Core.Game
                         $"Lost & Found overflowed: {salvaged} relic(s) were turned into shards.")));
                 }
             }
+            report.Kills = run.Kills;
+            report.RelicsFound = run.RelicsFound;
+            report.RelicsSecured = run.RelicsSecured;
+            report.ShardsSecured = run.ShardsSecured;
+            report.PeakHeat = run.PeakHeat;
+            report.SecuredCount = run.SecuredCount;
+            report.LevelAfter = p.DreamLevel;
+            p.LastReport = report;
             p.Run = null;
             return ev;
+        }
+
+        /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。</summary>
+        public static void SetFocus(Profile p, Line? focus)
+        {
+            if (p.Run != null) throw new InvalidOperationException(Loc.T("狙い系統は遠征の外でのみ変更できます。", "Focus can only be changed outside expeditions."));
+            p.Focus = focus;
         }
 
         public static List<GameEvent> AddXp(Profile p, int amount)

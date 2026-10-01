@@ -61,6 +61,8 @@ namespace SodRpg.Mod
 
         public void Close() => Open = false;
 
+        public void Dispose() => _st.Dispose();
+
         public void Notify(GameEvent e)
         {
             if (e == null) return;
@@ -78,6 +80,7 @@ namespace SodRpg.Mod
                 case EventKind.LevelUp: return UiStyles.Colored(e.Text, "#ffe17a");
                 case EventKind.Secured: return UiStyles.Colored(e.Text, "#7af0c8");
                 case EventKind.Delved: return UiStyles.Colored(e.Text, "#ff8a5c");
+                case EventKind.Recovered: return UiStyles.Colored(e.Text, "#7af0c8");
                 case EventKind.Lost:
                 case EventKind.Warning: return UiStyles.Colored(e.Text, "#ff7070");
                 default: return e.Text;
@@ -125,6 +128,7 @@ namespace SodRpg.Mod
                     if (_s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
                 DrawToasts(w, h);
+                if (_s.Profile.LastReport != null && !_reportDismissed && _s.Profile.Run == null) DrawReport(w, h);
                 if (Open) DrawWindow(w, h, cfg);
             }
             catch (Exception ex)
@@ -189,6 +193,35 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
+        private bool _reportDismissed;
+        private RunReport _shownReport;
+
+        private void DrawReport(float w, float h)
+        {
+            var r = _s.Profile.LastReport;
+            if (r != _shownReport)
+            {
+                _shownReport = r;
+                _reportDismissed = false;
+            }
+            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, 250);
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：踏破", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めた", "Expedition: Awakened"), _st.Title);
+            GUILayout.Label(Loc.T(
+                $"撃破 {r.Kills}　遺物 {r.RelicsFound}個を発見\n確保 {r.RelicsSecured}個（確保{r.SecuredCount}回・欠片{r.ShardsSecured}）\n" +
+                (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>遺失 {r.RelicsLost}個</color>　残響の欠片 {r.EchoShards}\n" : "") +
+                $"最高深度 {r.PeakHeat}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
+                $"Kills {r.Kills}   Relics found {r.RelicsFound}\nSecured {r.RelicsSecured} ({r.SecuredCount} secures, {r.ShardsSecured} shards)\n" +
+                (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>Lost {r.RelicsLost}</color>   Echo shards {r.EchoShards}\n" : "") +
+                $"Peak depth {r.PeakHeat}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
+            if (r.RelicsLost > 0)
+                GUILayout.Label(Loc.T("失った遺物は、次の遠征で戦闘部屋を3つ突破すると1つ取り戻せます。", "Clear 3 combat rooms next expedition to recover one lost relic."), _st.Small);
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(Loc.T("閉じる", "Close"), _st.Button, GUILayout.Height(30))) _reportDismissed = true;
+            GUILayout.EndArea();
+        }
+
         private void DrawToasts(float w, float h)
         {
             float now = Time.unscaledTime;
@@ -236,6 +269,32 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
+        private void FocusPicker()
+        {
+            var p = _s.Profile;
+            GUILayout.Label(Loc.T("狙い系統（その系統の遺物が2倍出やすい）", "Focus (relics of this line drop twice as often)"), _st.Small);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = p.Run == null || !_s.InGame;
+            if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
+            foreach (Line l in Enum.GetValues(typeof(Line)))
+                if (GUILayout.Button(Content.LineName(l).ToString(), p.Focus == l ? _st.ButtonSel : _st.Button)) SetFocus(l);
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+        }
+
+        private void SetFocus(Line? l)
+        {
+            try
+            {
+                Rules.SetFocus(_s.Profile, l);
+                _s.MarkDirty(false);
+            }
+            catch (InvalidOperationException ex)
+            {
+                SetStatus(ex.Message);
+            }
+        }
+
         private void HeroPicker()
         {
             if (_s.LocalHero != null) return;
@@ -275,9 +334,17 @@ namespace SodRpg.Mod
             if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ補正はありません。", "No bonuses yet."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
+            foreach (var kv in build.Lines)
+            {
+                if (kv.Value < 2) continue;
+                string bonus = string.Join("・", Content.SetBonus(kv.Key, kv.Value).Select(x => Content.FormatStat(x.Stat, x.Value)));
+                GUILayout.Label(UiStyles.Colored(Loc.T($"〈{Content.LineName(kv.Key)}×{kv.Value}〉{bonus}", $"<{Content.LineName(kv.Key)} x{kv.Value}> {bonus}"), "#9fe0c0"), _st.Small);
+            }
             GUILayout.EndScrollView();
             if (!_s.CanEditLoadout)
                 GUILayout.Label(Loc.T("遠征中は確保地点でのみ装備を変更できます。", "During an expedition, gear can only be changed at secure points."), _st.Warn);
+            GUILayout.Label(Loc.T("同じ系統を2つ・3つ揃えるとセット効果。", "2 or 3 relics of one line grant a set bonus."), _st.Small);
+            FocusPicker();
             GUILayout.EndVertical();
 
             // 中：保管庫

@@ -13,6 +13,8 @@ namespace SodRpg.Core.Game
     {
         public SortedDictionary<Stat, int> Stats { get; } = new SortedDictionary<Stat, int>();
         public SortedDictionary<Power, int> Powers { get; } = new SortedDictionary<Power, int>();
+        /// <summary>系統ごとの装着数（2以上でセット効果）。表示用で、通信には含めない。</summary>
+        public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         public int Heat { get; set; }
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
@@ -35,7 +37,11 @@ namespace SodRpg.Core.Game
                 if (r == null) continue;
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
                 foreach (var pw in r.EffectivePowers()) Add(rawPowers, pw.Power, pw.Value);
+                b.Lines.TryGetValue(r.Base.Line, out int n);
+                b.Lines[r.Base.Line] = n + 1;
             }
+            foreach (var kv in b.Lines)
+                foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             foreach (var kv in h.Talents)
             {
                 if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone) continue;

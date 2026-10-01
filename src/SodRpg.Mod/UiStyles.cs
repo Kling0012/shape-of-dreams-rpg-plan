@@ -22,6 +22,18 @@ namespace SodRpg.Mod
         public Font Font;
         public GUIStyle ToastMeasure, Panel, Window, Title, Label, Small, Header, Button, ButtonSel, Tab, TabSel, Row, RowSel, Toast, Hud, Warn;
         private bool _built;
+        private readonly System.Collections.Generic.List<Texture2D> _textures = new System.Collections.Generic.List<Texture2D>();
+
+        /// <summary>作ったフォントとテクスチャを破棄する（ライブリロード時に残さない）。</summary>
+        public void Dispose()
+        {
+            foreach (var t in _textures)
+                if (t != null) UnityEngine.Object.Destroy(t);
+            _textures.Clear();
+            if (Font != null) UnityEngine.Object.Destroy(Font);
+            Font = null;
+            _built = false;
+        }
 
         public void EnsureBuilt()
         {
@@ -98,11 +110,12 @@ namespace SodRpg.Mod
             };
         }
 
-        private static Texture2D Tex(Color c)
+        private Texture2D Tex(Color c)
         {
             var t = new Texture2D(1, 1, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave };
             t.SetPixel(0, 0, c);
             t.Apply();
+            _textures.Add(t);
             return t;
         }
 

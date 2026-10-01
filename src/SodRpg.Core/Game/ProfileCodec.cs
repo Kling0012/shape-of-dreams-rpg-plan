@@ -71,7 +71,8 @@ namespace SodRpg.Core.Game
                     .Add("shards", (long)r.SatchelShards).Add("tuning", (long)r.SatchelTuning)
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
-                    .Add("peakHeat", (long)r.PeakHeat).Add("awaitingChoice", r.AwaitingChoice);
+                    .Add("peakHeat", (long)r.PeakHeat)
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("awaitingChoice", r.AwaitingChoice);
             }
 
             return new JsonObject()
@@ -82,6 +83,7 @@ namespace SodRpg.Core.Game
                 .Add("epicPity", (long)p.EpicPity)
                 .Add("bestItemLevel", (long)p.BestItemLevel)
                 .Add("japanese", p.Japanese)
+                .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
@@ -121,6 +123,8 @@ namespace SodRpg.Core.Game
                 BestItemLevel = Clamp(Long(b, "bestItemLevel"), 1, Content.MaxItemLevel),
                 Japanese = Bool(b, "japanese", true),
             };
+            long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
+            if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)
             {
                 foreach (var kv in mats.Properties)
@@ -190,6 +194,9 @@ namespace SodRpg.Core.Game
                     SecuredCount = Clamp(Long(rj, "securedCount"), 0, int.MaxValue),
                     Kills = Clamp(Long(rj, "kills"), 0, int.MaxValue),
                     PeakHeat = Clamp(Long(rj, "peakHeat"), 0, Content.MaxHeat),
+                    RelicsFound = Clamp(Long(rj, "relicsFound"), 0, int.MaxValue),
+                    RelicsSecured = Clamp(Long(rj, "relicsSecured"), 0, int.MaxValue),
+                    ShardsSecured = Clamp(Long(rj, "shardsSecured"), 0, int.MaxValue),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);

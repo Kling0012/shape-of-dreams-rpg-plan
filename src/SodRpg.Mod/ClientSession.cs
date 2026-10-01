@@ -130,7 +130,7 @@ namespace SodRpg.Mod
                     catch (Exception) { }
                 }
                 _zone = zone;
-                _rooms.Reset();
+                _rooms.Reset(zone != null ? zone.clearedCombatRooms : -1);
                 if (zone != null)
                 {
                     zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
@@ -233,6 +233,9 @@ namespace SodRpg.Mod
             {
                 if (!RunActive) return;
                 if (!(info.victim is Monster m)) return;
+                // ゲーム本体が報酬を出さない敵（演出・召喚・ハンターの追加敵など）は対象外（PickupManager と同じ判定）。
+                if (m.disableLoot) return;
+                if (m.Status != null && m.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter) && !hunter.enableGoldAndExpDrops) return;
                 var hero = LocalHero;
                 if (hero == null) return;
                 if (m.GetRelation(hero) != EntityRelation.Enemy) return;
@@ -288,7 +291,7 @@ namespace SodRpg.Mod
             try
             {
                 if (!RunActive || result == null) return;
-                bool victory = result.result == DewGameResult.ResultType.PureWhiteDream || result.result == DewGameResult.ResultType.StarlessPath;
+                bool victory = IsVictory(result.result);
                 Emit(Rules.EndRun(Profile, victory));
                 ActiveRunId = null;
                 SaveNow();
@@ -297,6 +300,12 @@ namespace SodRpg.Mod
             {
                 Log.Error("Client OnConcluded: " + ex.Message);
             }
+        }
+
+        /// <summary>エンディングに到達した結果（ゲーム本体の GameResultManager と同じ判定）。</summary>
+        internal static bool IsVictory(DewGameResult.ResultType r)
+        {
+            return r == DewGameResult.ResultType.PureWhiteDream || r == DewGameResult.ResultType.StarlessPath || r == DewGameResult.ResultType.UnknownFate;
         }
 
         private void OnApplied(DreamforgeAppliedMsg msg)

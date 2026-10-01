@@ -427,6 +427,36 @@ namespace SodRpg.Core.Game
         public const int SecureXp = 20;
         public const int VictoryXp = 100;
 
+        /// <summary>同じ系統の遺物を count 個装着したときのボーナス（2個・3個）。</summary>
+        public static IEnumerable<StatLine> SetBonus(Line line, int count)
+        {
+            if (count >= 2)
+            {
+                switch (line)
+                {
+                    case Line.Offense:
+                        yield return new StatLine(Stat.AttackPct, 5);
+                        yield return new StatLine(Stat.PowerPct, 5);
+                        break;
+                    case Line.Guard:
+                        yield return new StatLine(Stat.Armor, 8);
+                        break;
+                    default:
+                        yield return new StatLine(Stat.Haste, 8);
+                        break;
+                }
+            }
+            if (count >= 3)
+            {
+                switch (line)
+                {
+                    case Line.Offense: yield return new StatLine(Stat.AttackSpeedPct, 6); break;
+                    case Line.Guard: yield return new StatLine(Stat.MaxHealthPct, 6); break;
+                    default: yield return new StatLine(Stat.MoveSpeedPct, 4); break;
+                }
+            }
+        }
+
         public static Txt SlotName(Slot s)
         {
             switch (s)

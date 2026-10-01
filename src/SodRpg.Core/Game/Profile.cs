@@ -41,6 +41,9 @@ namespace SodRpg.Core.Game
         public int Kills { get; set; }
         /// <summary>このランで最も深かった深度。</summary>
         public int PeakHeat { get; set; }
+        public int RelicsFound { get; set; }
+        public int RelicsSecured { get; set; }
+        public int ShardsSecured { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -59,11 +62,30 @@ namespace SodRpg.Core.Game
                 SecuredCount = SecuredCount,
                 Kills = Kills,
                 PeakHeat = PeakHeat,
+                RelicsFound = RelicsFound,
+                RelicsSecured = RelicsSecured,
+                ShardsSecured = ShardsSecured,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
             return c;
         }
+    }
+
+    /// <summary>1回のランの結果。</summary>
+    public sealed class RunReport
+    {
+        public bool Victory { get; set; }
+        public int Kills { get; set; }
+        public int RelicsFound { get; set; }
+        public int RelicsSecured { get; set; }
+        public int RelicsLost { get; set; }
+        public int ShardsSecured { get; set; }
+        public int EchoShards { get; set; }
+        public int PeakHeat { get; set; }
+        public int SecuredCount { get; set; }
+        public int LevelBefore { get; set; }
+        public int LevelAfter { get; set; }
     }
 
     public sealed class ProfileStats
@@ -101,6 +123,12 @@ namespace SodRpg.Core.Game
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
+
+        /// <summary>狙い系統。設定するとその系統の装備が出やすくなる。null は狙いなし。</summary>
+        public Line? Focus { get; set; }
+
+        /// <summary>直前に終わったランの結果（表示用。保存しない）。</summary>
+        public RunReport LastReport { get; set; }
 
         public static Profile CreateNew(ulong seed)
         {
@@ -164,6 +192,8 @@ namespace SodRpg.Core.Game
                 Japanese = Japanese,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
+                Focus = Focus,
+                LastReport = LastReport,
             };
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
             foreach (var r in Stash) c.Stash.Add(r.Clone());

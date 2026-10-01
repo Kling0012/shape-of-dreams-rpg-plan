@@ -133,6 +133,7 @@ namespace SodRpg.Mod
             try { _session?.SaveNow(); } catch (Exception ex) { Log.Error("Save on destroy: " + ex); }
             BlockInputWhileMenuOpen.MenuOpen = false;
             BlockGameUi(false);
+            try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }
             try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
         }
 

@@ -198,6 +198,7 @@ namespace SodRpg.Core.Game
             return clearedInZone - prev;
         }
 
-        public void Reset() => _last = -1;
+        /// <summary>基準値を設定し直す。現在値が分かっていれば渡す（その値からの増分を数える）。</summary>
+        public void Reset(int baseline = -1) => _last = baseline;
     }
 }
