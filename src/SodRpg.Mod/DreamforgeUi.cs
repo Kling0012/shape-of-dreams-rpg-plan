@@ -204,7 +204,7 @@ namespace SodRpg.Mod
                 _shownReport = r;
                 _reportDismissed = false;
             }
-            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, 250);
+            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, 215);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(r.Victory ? Loc.T("遠征の結果：踏破", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めた", "Expedition: Awakened"), _st.Title);

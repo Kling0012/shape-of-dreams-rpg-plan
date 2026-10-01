@@ -24,7 +24,7 @@
 - F7：確保する、F8：深く潜る（確保地点のパネル表示中）
 - キー・言語・表示倍率・拾得通知はゲームのMOD設定から変更できる
 
-開発者モードのコンソール（`）で使える確認用コマンド：`dreamforge_status`、`dreamforge_stats`（キャラの最終能力値と補正）、`dreamforge_give 個数 レア度`、`dreamforge_simkill 格 回数`、`dreamforge_killnear 半径`（ホストのみ）、`dreamforge_securepoint`。
+開発者モードのコンソール（`）で使える確認用コマンド：`dreamforge_status`、`dreamforge_stats`（キャラの最終能力値と補正）、`dreamforge_give 個数 レア度`、`dreamforge_simkill 格 回数`、`dreamforge_killnear 半径`（ホストのみ）、`dreamforge_securepoint`、`dreamforge_endrun 1|0`（MOD上のランを勝利／全滅で終える）。
 
 ## 構成
 
@@ -52,7 +52,7 @@ dotnet build src/SodRpg.Mod -c Release -p:GameDir="D:\app\stm\steamapps\common\S
 
 ## 実機確認の状況（2026-10-01、Windows 11、ゲーム r.1.4.0.13_s）
 
-確認済み：読み込み、日本語UI、遺物の装着・比較、ホストでの能力補正の反映（`dreamforge_stats` で攻撃力%・防御・移動速度が一致）、ドロップ・レベルアップ・確保の流れ（模擬撃破）、ライブリロード、他MOD 2つとの併用。
+確認済み：中断（ロビーに戻る）後に新しいランを始めたときの全滅精算（遺失物・残響）、最初のゾーンで確保地点を出さないこと、セット効果と狙い系統の表示、遠征結果パネル（確認用コマンド経由）、読み込み、日本語UI、遺物の装着・比較、ホストでの能力補正の反映（`dreamforge_stats` で攻撃力%・防御・移動速度が一致）、ドロップ・レベルアップ・確保の流れ（模擬撃破）、ライブリロード、他MOD 2つとの併用。
 
 既知の制限：協力時、ホストはクライアントが送る能力の集計値を上限で丸めて受け入れる（装備データ一式の検証はしない）。信頼できる仲間との協力を前提とする。プロトコル版が違うクライアントの値は無視する。
 
