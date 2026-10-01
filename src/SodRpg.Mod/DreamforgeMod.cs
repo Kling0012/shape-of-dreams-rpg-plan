@@ -57,6 +57,7 @@ namespace SodRpg.Mod
         private void Update()
         {
             if (_session == null) return;
+            _perf.Frame(Time.unscaledDeltaTime);
             _perf.Begin();
             HandleKeys();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
