@@ -54,6 +54,7 @@ v0.1 は方針の「たたき台」だった。Ver1.0 は、**計画書として
 | [付録D](docs/appendix-d-playtest.md) | 検証計画。遊びの質の指標、試験の進め方、段階ごとの通過条件、試験項目 |
 | [更新履歴（アップデートノート）](CHANGELOG.md) | 版ごとの追加・修正・次にやること（新しい順）。[Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases) に導入用 zip |
 | [開発計画](docs/dreamforge-roadmap.md) | 次に作るものと候補 |
+| [引き継ぎ](docs/dreamforge-handoff.md) | MOD開発の現状・方針・構成・環境・手順（次の担当者向け） |
 | [遊べるMOD（Dreamforge RPG）](src/SodRpg.Mod/README.md) | 本計画を目安に最初に遊べる形へまとめたゲーム内MOD。遺物・確保と夢の深度・遺失物・星図・鍛冶・協力。ルールは`src/SodRpg.Core/Game`、試験は`tests/` |
 | [技術プロトタイプ計画](docs/tech-prototype-plan.md) | 補正・保存・協力報酬の三つの接続点を実機で確かめる計画。純C#コアは`src/`、試験は`tests/` |
 
