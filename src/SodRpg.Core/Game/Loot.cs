@@ -76,14 +76,37 @@ namespace SodRpg.Core.Game
             return floor;
         }
 
-        public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null)
+        /// <summary>
+        /// 遺物を抽選する。ownedRelics は保管庫（装着品を含む）、unsecuredRelics は未確保の鞄。
+        /// 所持リストを省略すると、セット部位の収集補助は行わない。
+        /// </summary>
+        public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null,
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null)
         {
             if (rarity == Rarity.Legendary)
             {
-                var candidates = new List<UniqueDef>();
+                var candidates = new List<(UniqueDef Unique, int Weight)>();
+                int total = 0;
                 foreach (var u in Content.Uniques)
-                    if (slot == null || Content.GetBase(u.BaseId).Slot == slot.Value) candidates.Add(u);
-                if (candidates.Count > 0) return RollUnique(rng, PickWeighted(rng, candidates, u => Content.GetBase(u.BaseId).Line, focus), itemLevel);
+                {
+                    if (slot != null && Content.GetBase(u.BaseId).Slot != slot.Value) continue;
+                    int weight = focus != null && Content.GetBase(u.BaseId).Line == focus.Value ? FocusWeight : 1;
+                    if (u.SetId != null) weight *= SetPieceWeight;
+                    if (IsMissingSetPiece(u, ownedRelics, unsecuredRelics)) weight *= SetCompletionWeight;
+                    candidates.Add((u, weight));
+                    total += weight;
+                }
+                if (candidates.Count > 0)
+                {
+                    int x = rng.Range(0, total - 1);
+                    var chosen = candidates[candidates.Count - 1].Unique;
+                    foreach (var candidate in candidates)
+                    {
+                        if (x < candidate.Weight) { chosen = candidate.Unique; break; }
+                        x -= candidate.Weight;
+                    }
+                    return RollUnique(rng, chosen, itemLevel);
+                }
                 rarity = Rarity.Epic;
             }
 
@@ -111,6 +134,31 @@ namespace SodRpg.Core.Game
 
         /// <summary>狙い系統の重み。狙った系統は2倍出やすい（計画書 付録B）。</summary>
         public const int FocusWeight = 2;
+
+        /// <summary>所持しているセットの未所持部位の重み。狙い系統の重みと掛け合わせる。</summary>
+        /// <summary>伝説の抽選でセット品そのものが選ばれやすくなる倍率。</summary>
+        public const int SetPieceWeight = 2;
+
+        public const int SetCompletionWeight = 6;
+
+        private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        {
+            if (candidate.SetId == null) return false;
+            bool started = false;
+            for (int source = 0; source < 2; source++)
+            {
+                var relics = source == 0 ? ownedRelics : unsecuredRelics;
+                if (relics == null) continue;
+                for (int i = 0; i < relics.Count; i++)
+                {
+                    string id = relics[i].UniqueId;
+                    if (id == candidate.Id) return false;
+                    if (!started && Content.TryGetUnique(id, out var unique) && unique.SetId == candidate.SetId)
+                        started = true;
+                }
+            }
+            return started;
+        }
 
         private static T PickWeighted<T>(Rng rng, List<T> items, Func<T, Line> lineOf, Line? focus)
         {
@@ -182,7 +230,8 @@ namespace SodRpg.Core.Game
         /// 1体の撃破に対する個人の報酬を抽選する。協力時は各プレイヤーが自分の分を独立に抽選する
         /// （計画書 第14章「確保と損失は個人ごと」）。epicPity はボス撃破でのみ進む。
         /// </summary>
-        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null, Pacts.Totals mods = null)
+        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null, Pacts.Totals mods = null,
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
@@ -200,12 +249,12 @@ namespace SodRpg.Core.Game
                     pity = true;
                 }
                 var rarity = RollRarity(rng, luck, allowLegendary, floor);
-                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus));
+                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics));
                 if (tier == MonsterTier.Boss)
                 {
                     if (pity || rarity >= Rarity.Epic) epicPity = 0;
                     else epicPity++;
-                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus));
+                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics));
                 }
             }
 

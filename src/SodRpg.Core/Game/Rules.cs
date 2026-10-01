@@ -127,7 +127,7 @@ namespace SodRpg.Core.Game
             bool isNightmare = nightmare != NightmareAffix.None;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run));
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel);
             if (heroKey != null)
             {
                 var hs = p.Hero(heroKey);
@@ -460,7 +460,7 @@ namespace SodRpg.Core.Game
                 {
                     if (!goldPaid) p.AddMaterial(Materials.Shard, -DreamEvents.MerchantCost(run.Heat));
                     var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * run.Heat, true, Rarity.Uncommon);
-                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null, p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine);
+                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null, p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
                     p.Codex.Add(relic.UniqueId ?? relic.BaseId);
                     run.RelicsFound++;
                     p.Stats.RelicsFound++;
@@ -690,7 +690,7 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
             var rng = p.TakeRng();
             var rarity = Loot.RollRarity(rng, fine ? 1.0 : 0.5, allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
-            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot);
+            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot, ownedRelics: p.Stash, unsecuredRelics: p.Run?.Satchel);
             p.StoreRng(rng);
             p.AddMaterial(Materials.Shard, -shards);
             p.AddMaterial(Materials.Tuning, -tuning);
@@ -721,7 +721,7 @@ namespace SodRpg.Core.Game
             foreach (var x in parts) p.Stash.Remove(x);
             p.AddMaterial(Materials.Shard, -cost);
             var rng = p.TakeRng();
-            var result = Loot.RollRelic(rng, r + 1, ilvl, null, p.Focus);
+            var result = Loot.RollRelic(rng, r + 1, ilvl, null, p.Focus, p.Stash, p.Run?.Satchel);
             p.StoreRng(rng);
             p.Stash.Add(result);
             p.Codex.Add(result.UniqueId ?? result.BaseId);
