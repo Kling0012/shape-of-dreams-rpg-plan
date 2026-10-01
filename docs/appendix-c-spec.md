@@ -25,7 +25,7 @@ stateDiagram-v2
     遠征 --> 安全地点: 到達
     安全地点 --> 遠征: 続行
     安全地点 --> 結果: 帰還
-    安全地点 --> 拠点: 中断（保存）
+    安全地点 --> 拠点: 中断（終了）
     遠征 --> ボス: ボスノード
     ボス --> 結果: 撃破
     ボス --> 結果: 全滅
@@ -38,7 +38,7 @@ stateDiagram-v2
 | 拠点 | 可 | 可 | 恒久データの保存 | 整理、製作、専門化の再配分 |
 | 出発準備 | 可（準備の取消後） | 可 | なし | 全員の装備、危険度、狙い系統を確認 |
 | 遠征（ノードの途中） | 不可 | 既存の参加者のみ | なし（確定済みの報酬の台帳のみ更新） | 切断の猶予90秒 |
-| 安全地点 | 可 | 可 | 遠征の状態を保存（中断を選ぶ場合） | 確保が確定する |
+| 安全地点 | 可 | 可 | 到達時に遠征の状態を必ず保存 | 確保が確定する。中断は、保存済みの安全地点から再開できる終了の操作 |
 | ボス | 不可 | 既存の参加者のみ | なし | 敗北後の再開は安全地点から |
 | 結果 | 不可 | 可 | 結果と台帳を保存 | 確定済みの結果を再表示 |
 
@@ -53,8 +53,8 @@ stateDiagram-v2
   <プロフィールID>/
     profile.json          恒久・個人（装備台帳、素材、専門化、研究、図鑑、地域進行）
     ledger.json           報酬の確定履歴（再送の重複防止）
-    lostfound.json        遺失物（未確保の装備）
-    expedition.json       安全地点で保存した遠征の状態（中断した場合のみ）
+    lostfound.json        遺失物（未確保の装備。上限10個）
+    expedition.json       安全地点に到達するたびに保存する遠征の状態（遠征の終了時に削除）
     backups/
       profile.1.json ～ profile.3.json   直近3世代
     quarantine/           読み込めなかったデータ
@@ -73,7 +73,7 @@ stateDiagram-v2
   "checksum": "sha256:…",
   "characters": {
     "blade": {
-      "specialization": { "points": 22, "nodes": ["blade/counter/b1", "…"], "mark": "blade/counter/t" },
+      "specialization": { "points": 18, "nodes": ["sod:spec/blade/counter/b1", "…"], "mark": "sod:spec/blade/counter/t" },
       "presets": { "equipment": [], "specialization": [] },
       "firstClears": ["region1"]
     }
@@ -85,7 +85,7 @@ stateDiagram-v2
       "rarity": "rare",
       "ilvl": 14,
       "enhance": 2,
-      "traits": [{ "id": "sod:trait/atk_pct", "value": 8.4 }],
+      "traits": [{ "id": "sod:trait/atk_pct", "value": 8.4 }, { "id": "sod:trait/atk_speed_pct", "value": 5.1 }, { "id": "sod:trait/crit_rate", "value": 3.6 }],
       "retunes": 1,
       "locked": false
     }
@@ -107,8 +107,8 @@ stateDiagram-v2
 1. 保存内容をメモリ上で組み立て、整合性の検査（上限、参照）を行う。
 2. 検査値（sha256）を付けて一時ファイルへ書く。
 3. 一時ファイルを読み戻し、検査値を確かめる。
-4. 現在のファイルをbackups/へ移し、古い世代を削除する（3世代を保つ）。
-5. 一時ファイルを現在のファイルに**置換**する。
+4. 現在のファイルをbackups/へ**コピー**する（現在のファイルは残す）。
+5. 一時ファイルを現在のファイルに**置換**する。成功したら古い世代を削除する（3世代を保つ）。
 6. いずれかで失敗したら、現在のファイルを変更せず、失敗を表示する。
 
 ### 読み込みの手順
@@ -121,7 +121,7 @@ stateDiagram-v2
 
 ### 移行
 
-- 元のデータは移行後も残す（移行前の版をbackups/に保存）。
+- 元のデータは移行後も残す。移行前の版はbackups/pre-migration/に、直近3世代の回転とは別に保存し、自動では削除しない。
 - 移行は版ごとの小さな段階（1→2、2→3）に分け、各段階を単体で試験する。
 - 移行に失敗したらロードを止め、元のデータを変更しない。
 
