@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         public const int HeatArmorPenalty = 6;
         public const int HeatHealthPenaltyPct = 4;
 
-        public static Build Compute(Profile p, string heroKey, int heat)
+        public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null)
         {
             var b = new Build { Heat = Loot.ClampHeat(heat) };
             var h = p.Hero(heroKey);
@@ -53,6 +53,13 @@ namespace SodRpg.Core.Game
                 Add(rawPowers, key.Power, key.PowerValue);
             }
 
+            var pactList = pacts != null ? new List<Pact>(pacts) : new List<Pact>();
+            foreach (var id in pactList)
+            {
+                var d = Game.Pacts.Get(id);
+                if (d == null) continue;
+                foreach (var s in d.Boons) Add(rawStats, s.Stat, s.Value);
+            }
             foreach (var kv in rawStats)
             {
                 int cap = Content.StatCap(kv.Key);
@@ -62,6 +69,12 @@ namespace SodRpg.Core.Game
             {
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? Math.Min(kv.Value, cap) : kv.Value;
+            }
+            foreach (var id in pactList)
+            {
+                var d = Game.Pacts.Get(id);
+                if (d == null) continue;
+                foreach (var s in d.Penalties) b.Stats[s.Stat] = b.Get(s.Stat) + s.Value;
             }
             if (b.Heat > 0)
             {

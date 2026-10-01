@@ -147,7 +147,7 @@ namespace SodRpg.Mod
         {
             var p = _s.Profile;
             var run = p.Run;
-            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 122 + 20 * run.Bounties.Count : 66);
+            var rect = new Rect(10, h * 0.30f, 290, run != null && _s.ActiveRunId != null ? 122 + 20 * run.Bounties.Count + (run.Pacts.Count > 0 ? 20 : 0) : 66);
             GUILayout.BeginArea(rect, _st.Hud);
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : $"{p.DreamXp * 100 / Math.Max(1, need)}%";
@@ -160,6 +160,8 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("夢の深度 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
                 GUILayout.Label(Loc.T($"未確保：遺物{run.Satchel.Count}  欠片{run.SatchelShards}  調律石{run.SatchelTuning}",
                     $"Unsecured: {run.Satchel.Count} relics  {run.SatchelShards} shards  {run.SatchelTuning} tuning"), _st.Small);
+                if (run.Pacts.Count > 0)
+                    GUILayout.Label(UiStyles.Colored(Loc.T("契約：", "Pacts: ") + string.Join("・", run.Pacts.Select(x => Pacts.Get(x)?.Name.ToString())), "#ff9a7a"), _st.Small);
                 foreach (var b in run.Bounties)
                 {
                     string mark = b.Done ? "<color=#7af0c8>●</color>" : "○";
@@ -176,7 +178,7 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 280, 90, 560, 196);
+            var rect = new Rect(w / 2 - 300, 80, 600, 196 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
@@ -197,6 +199,16 @@ namespace SodRpg.Mod
                 _tab = 0;
             }
             GUILayout.EndHorizontal();
+            if (run.OfferedPacts.Count > 0)
+            {
+                GUILayout.Label(Loc.T("…または悪夢の契約を結んで潜る（次の確保まで重なって効く）", "...or delve with a nightmare pact (stacks until you secure)"), _st.Small);
+                foreach (var id in run.OfferedPacts.ToList())
+                {
+                    var d = Pacts.Get(id);
+                    if (d == null) continue;
+                    if (GUILayout.Button($"<b>{d.Name}</b>  <color=#ffb0a0>{d.Description}</color>", _st.Row, GUILayout.Height(36))) _s.Delve(id);
+                }
+            }
             GUILayout.EndArea();
         }
 
@@ -525,6 +537,17 @@ namespace SodRpg.Mod
             }
 
             GUILayout.FlexibleSpace();
+            GUILayout.Label(Loc.T("合成（鍵なし・未装着の同じレア度3つ → 1つ上のレア度）", "Transmute (3 unlocked, unequipped of a rarity -> 1 of the next)"), _st.Header);
+            GUILayout.BeginHorizontal();
+            foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
+            {
+                int n = Rules.TransmuteCandidates(p, r).Count;
+                GUI.enabled = n >= 3;
+                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n" + Loc.T($"欠片{Rules.TransmuteCost(r)}", $"{Rules.TransmuteCost(r)} shards");
+                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r), false);
+                GUI.enabled = true;
+            }
+            GUILayout.EndHorizontal();
             GUILayout.Label(Loc.T("製作（到達した最高アイテムレベルで作る）", "Craft (at your highest reached item level)"), _st.Header);
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
@@ -563,8 +586,8 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             HeroPicker();
             GUILayout.Label(Loc.T(
-                $"専門化ポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベルで増える・キャラごとに配分）",
-                $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} (grows with Dream Level, allotted per Traveler)"), _st.Label);
+                $"専門化ポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベル＋図鑑ボーナス{p.CodexBonusPoints}・キャラごとに配分）",
+                $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} (Dream Level + codex bonus {p.CodexBonusPoints}, allotted per Traveler)"), _st.Label);
             GUILayout.FlexibleSpace();
             GUI.enabled = _s.CanEditTalents;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))

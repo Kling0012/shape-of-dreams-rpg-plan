@@ -322,15 +322,15 @@ namespace SodRpg.Mod
             SaveNow();
         }
 
-        public void Delve()
+        public void Delve(Pact pact = Pact.None)
         {
             if (Profile.Run == null) return;
-            Emit(Rules.Delve(Profile));
+            Emit(Rules.Delve(Profile, pact));
             _buildDirty = true;
             SaveNow();
         }
 
-        public Build CurrentBuild(string heroKey) => Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0);
+        public Build CurrentBuild(string heroKey) => Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts);
 
         private void SendBuildIfNeeded()
         {

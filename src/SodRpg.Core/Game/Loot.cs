@@ -182,14 +182,15 @@ namespace SodRpg.Core.Game
         /// 1体の撃破に対する個人の報酬を抽選する。協力時は各プレイヤーが自分の分を独立に抽選する
         /// （計画書 第14章「確保と損失は個人ごと」）。epicPity はボス撃破でのみ進む。
         /// </summary>
-        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null)
+        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null, Pacts.Totals mods = null)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
-            double luck = TierLuck(tier) + HeatLuck * heat;
+            double luck = TierLuck(tier) + HeatLuck * heat + (mods?.Luck ?? 0);
             bool allowLegendary = tier >= MonsterTier.MiniBoss;
+            double chance = Math.Min(1.0, DropChance(tier, heat) * (1.0 + (mods?.DropBonus ?? 0)));
 
-            if (rng.Chance(DropChance(tier, heat)))
+            if (rng.Chance(chance))
             {
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
                 bool pity = false;
@@ -224,6 +225,12 @@ namespace SodRpg.Core.Game
                     reward.Shards = rng.Range(20, 30);
                     reward.Tuning = 1;
                     break;
+            }
+            if (mods != null)
+            {
+                reward.Shards = (int)Math.Round(reward.Shards * mods.ShardMult);
+                if (tier >= MonsterTier.MiniBoss) reward.Tuning += mods.TuningOnElite;
+                reward.Xp = (int)Math.Round(reward.Xp * mods.XpMult);
             }
             return reward;
         }

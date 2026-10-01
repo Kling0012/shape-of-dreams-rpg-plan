@@ -77,7 +77,7 @@ namespace SodRpg.Core.Game
             if (run == null) return ev;
             var rng = p.TakeRng();
             int pity = p.EpicPity;
-            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity, p.Focus);
+            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity, p.Focus, Pacts.Sum(run.Pacts));
             p.EpicPity = pity;
             p.StoreRng(rng);
 
@@ -135,7 +135,13 @@ namespace SodRpg.Core.Game
         /// <summary>確保地点（新しいゾーン）に着いた。選ぶまで装備を整えられる。</summary>
         public static void ReachSecurePoint(Profile p)
         {
-            if (p.Run != null) p.Run.AwaitingChoice = true;
+            var run = p.Run;
+            if (run == null) return;
+            run.AwaitingChoice = true;
+            run.OfferedPacts.Clear();
+            var rng = p.TakeRng();
+            run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts));
+            p.StoreRng(rng);
         }
 
         /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
@@ -147,6 +153,7 @@ namespace SodRpg.Core.Game
             int heat = run.Heat;
             int relics = run.Satchel.Count;
             int bonusShards = run.SatchelShards * heat / 4;
+            if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonusShards *= 2;
             int shards = run.SatchelShards + bonusShards;
             int tuning = run.SatchelTuning;
 
@@ -167,6 +174,9 @@ namespace SodRpg.Core.Game
             run.SatchelTuning = 0;
             run.Heat = 0;
             run.AwaitingChoice = false;
+            int pacts = run.Pacts.Count;
+            run.Pacts.Clear();
+            run.OfferedPacts.Clear();
             run.SecuredCount++;
             p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
 
@@ -180,6 +190,7 @@ namespace SodRpg.Core.Game
                     $"保管庫が一杯のため{overflow.Count}個を欠片にしました。",
                     $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
             }
+            if (pacts > 0) ev.Add(new GameEvent(EventKind.Info, Loc.T($"悪夢の契約{pacts}つが解けた。", $"{pacts} nightmare pact(s) dissolved.")));
             ev.AddRange(AddXp(p, Content.SecureXp));
             AdvanceBounty(p, BountyKind.Collector, relics, true, ev);
             if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
@@ -231,11 +242,19 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>
-        public static List<GameEvent> Delve(Profile p)
+        public static List<GameEvent> Delve(Profile p, Pact pact = Pact.None)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (pact != Pact.None)
+            {
+                if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer."));
+                run.Pacts.Add(pact);
+                var d = Pacts.Get(pact);
+                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}", $"Nightmare pact \"{d.Name}\": {d.Description}")));
+            }
+            run.OfferedPacts.Clear();
             run.Heat = Loot.ClampHeat(run.Heat + 1);
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
             run.AwaitingChoice = false;
@@ -281,7 +300,7 @@ namespace SodRpg.Core.Game
             else
             {
                 p.Stats.Defeats++;
-                int echo = run.SatchelShards > 0 ? Math.Max(1, (run.SatchelShards + 3) / 4) : 0;
+                int echo = run.SatchelShards > 0 && !Pacts.Sum(run.Pacts).NoEcho ? Math.Max(1, (run.SatchelShards + 3) / 4) : 0;
                 p.AddMaterial(Materials.Shard, echo);
                 int lost = run.Satchel.Count;
                 report.RelicsLost = lost;
@@ -450,6 +469,36 @@ namespace SodRpg.Core.Game
             return new GameEvent(EventKind.Drop, Loc.T(
                 $"製作：{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」",
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
+        }
+
+        public static int TransmuteCost(Rarity r) => 10 * ((int)r + 1);
+
+        /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
+        public static List<Relic> TransmuteCandidates(Profile p, Rarity r)
+        {
+            return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid)).OrderBy(x => x.Score).ToList();
+        }
+
+        /// <summary>同じレア度の遺物3つ（弱い順）を1つ上のレア度の遺物1つにする。エピック3つからは固有品。</summary>
+        public static GameEvent Transmute(Profile p, Rarity r)
+        {
+            if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
+            var parts = TransmuteCandidates(p, r).Take(3).ToList();
+            if (parts.Count < 3) throw new InvalidOperationException(Loc.T("材料が3つ足りません（鍵なし・未装着の同じレア度）。", "Need 3 unlocked, unequipped relics of the same rarity."));
+            int cost = TransmuteCost(r);
+            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
+            int ilvl = parts.Max(x => x.ItemLevel);
+            foreach (var x in parts) p.Stash.Remove(x);
+            p.AddMaterial(Materials.Shard, -cost);
+            var rng = p.TakeRng();
+            var result = Loot.RollRelic(rng, r + 1, ilvl, null, p.Focus);
+            p.StoreRng(rng);
+            p.Stash.Add(result);
+            p.Codex.Add(result.UniqueId ?? result.BaseId);
+            if (result.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
+            return new GameEvent(EventKind.Drop, Loc.T(
+                $"合成：{Content.RarityName(result.Rarity)}「{result.DisplayName}」",
+                $"Transmuted into {Content.RarityName(result.Rarity)} \"{result.DisplayName}\""), result.Rarity);
         }
 
         public static void ToggleLock(Profile p, string uid)

@@ -35,6 +35,10 @@ namespace SodRpg.Core.Game
         public List<Relic> Satchel { get; } = new List<Relic>();
         /// <summary>このランの依頼。</summary>
         public List<Bounty> Bounties { get; } = new List<Bounty>();
+        /// <summary>結んでいる悪夢の契約（次の確保で解ける）。</summary>
+        public List<Pact> Pacts { get; } = new List<Pact>();
+        /// <summary>確保地点で提示中の契約。</summary>
+        public List<Pact> OfferedPacts { get; } = new List<Pact>();
         public int SatchelShards { get; set; }
         public int SatchelTuning { get; set; }
         public int RoomsCleared { get; set; }
@@ -71,6 +75,8 @@ namespace SodRpg.Core.Game
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
             foreach (var b in Bounties) c.Bounties.Add(b.Clone());
+            c.Pacts.AddRange(Pacts);
+            c.OfferedPacts.AddRange(OfferedPacts);
             return c;
         }
     }
@@ -178,7 +184,10 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>使える専門化ポイントの総数（夢のレベル−1）。全キャラ共通の総数を、キャラごとに配分する。</summary>
-        public int TalentPoints => Math.Max(0, DreamLevel - 1);
+        public int TalentPoints => Math.Max(0, DreamLevel - 1) + CodexBonusPoints;
+
+        /// <summary>図鑑の節目（6種ごと）で得る星図ポイント。最大4。</summary>
+        public int CodexBonusPoints => Math.Min(Content.MaxCodexBonus, Codex.Count / Content.CodexPerPoint);
 
         public Rng TakeRng() => new Rng(RngState);
 

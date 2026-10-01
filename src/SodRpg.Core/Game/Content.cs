@@ -151,6 +151,8 @@ namespace SodRpg.Core.Game
         public const int KeystoneRouteRequirement = 6;
         public const int KeystoneCost = 3;
         public const int RoomsToRecoverLost = 3;
+        public const int CodexPerPoint = 6;
+        public const int MaxCodexBonus = 4;
 
         public static readonly IReadOnlyList<BaseDef> Bases = new[]
         {

@@ -73,7 +73,8 @@ namespace SodRpg.Core.Game
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
                     .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured)
-                    .Add("bounties", WriteBounties(r.Bounties)).Add("awaitingChoice", r.AwaitingChoice);
+                    .Add("bounties", WriteBounties(r.Bounties))
+                    .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
 
             return new JsonObject()
@@ -92,6 +93,23 @@ namespace SodRpg.Core.Game
                 .Add("codex", codex)
                 .Add("stats", stats)
                 .Add("run", run);
+        }
+
+        private static List<object> WritePacts(IEnumerable<Pact> pacts)
+        {
+            var list = new List<object>();
+            foreach (var x in pacts) list.Add((long)x);
+            return list;
+        }
+
+        private static void ReadPacts(JsonObject parent, string key, List<Pact> into, List<string> notes)
+        {
+            if (!parent.TryGet(key, out object o) || !(o is List<object> list)) return;
+            foreach (var item in list)
+            {
+                if (item is long v && v != 0 && Enum.IsDefined(typeof(Pact), (int)v) && !into.Contains((Pact)(int)v)) into.Add((Pact)(int)v);
+                else notes.Add("未知の契約を除外: " + item);
+            }
         }
 
         private static List<object> WriteBounties(IEnumerable<Bounty> bounties)
@@ -240,6 +258,8 @@ namespace SodRpg.Core.Game
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
                 ReadBounties(rj, run.Bounties, notes);
+                ReadPacts(rj, "pacts", run.Pacts, notes);
+                ReadPacts(rj, "offeredPacts", run.OfferedPacts, notes);
                 p.Run = run;
             }
             return p;
