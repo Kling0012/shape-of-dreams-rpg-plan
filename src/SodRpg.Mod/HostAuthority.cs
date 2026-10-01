@@ -34,6 +34,7 @@ namespace SodRpg.Mod
         private Actor _registeredOn;
         private ClientEventManager _cem;
         private readonly Action<DreamforgeBuildMsg, DewPlayer> _onBuild;
+        private readonly Action<DreamforgeCurseMsg, DewPlayer> _onCurse;
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
         private readonly Action<EventInfoAttackHit> _onAttackHit;
@@ -57,6 +58,7 @@ namespace SodRpg.Mod
         {
             _dailyIdOfHost = dailyIdOfHost;
             _onBuild = OnBuild;
+            _onCurse = OnCurse;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
             _onAttackHit = OnAttackHit;
@@ -245,11 +247,13 @@ namespace SodRpg.Mod
                 if (_registeredOn != null)
                 {
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
                 }
                 _registeredOn = actor;
                 if (actor != null)
                 {
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildMsg>(nameof(DreamforgeBuildMsg), _onBuild);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseMsg>(nameof(DreamforgeCurseMsg), _onCurse);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -316,6 +320,7 @@ namespace SodRpg.Mod
             if (_registeredOn != null)
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
                 _registeredOn = null;
             }
         }
@@ -348,6 +353,49 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 Log.Error("Host: OnBuild failed: " + ex);
+            }
+        }
+
+        /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
+        private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)
+        {
+            try
+            {
+                if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
+                var hero = caller.hero;
+                if (hero == null || !hero.isActive) return;
+                var strength = msg.strength >= 3 ? HatredStrengthType.Powerful : msg.strength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
+                var pool = new List<CurseStatusEffect>();
+                foreach (var c in DewResources.FindAllByType<CurseStatusEffect>())
+                {
+                    if (c == null || (c.availableStrengths & strength) == 0) continue;
+                    if (hero.Status.HasStatusEffect(c.GetType())) continue;
+                    try { if (!c.IsViable(hero)) continue; } catch (Exception) { continue; }
+                    pool.Add(c);
+                }
+                if (pool.Count == 0)
+                {
+                    Log.Warn("Curse: no viable curse for strength " + strength);
+                    return;
+                }
+                float total = 0;
+                foreach (var c in pool) total += Math.Max(0.01f, c.chanceWeight);
+                float x = (float)_rng.NextDouble() * total;
+                var pick = pool[pool.Count - 1];
+                foreach (var c in pool)
+                {
+                    x -= Math.Max(0.01f, c.chanceWeight);
+                    if (x <= 0) { pick = c; break; }
+                }
+                hero.CreateStatusEffect(pick.GetType(), hero, new CastInfo(hero), se =>
+                {
+                    if (se is CurseStatusEffect curse) curse.currentStrength = strength;
+                });
+                Log.Info($"Curse: {pick.GetType().Name} ({strength}) on {caller.playerName}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Host: OnCurse " + ex);
             }
         }
 

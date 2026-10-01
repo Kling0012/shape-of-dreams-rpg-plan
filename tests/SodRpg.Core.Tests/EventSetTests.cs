@@ -164,17 +164,17 @@ namespace SodRpg.Core.Tests
             Rules.Equip(p, "H", SetPiece(p, "set.tide.weapon").Uid);
             var b1 = Build.Compute(p, "H", 0);
             Assert.Equal(1, b1.Sets["set.tide"]);
-            Assert.Equal(0, b1.Get(Power.Momentum));
+            Assert.Equal(0, b1.Get(Power.Frost));
 
             Rules.Equip(p, "H", SetPiece(p, "set.tide.armor").Uid);
             var b2 = Build.Compute(p, "H", 0);
-            Assert.True(b2.Get(Stat.AttackSpeedPct) >= b1.Get(Stat.AttackSpeedPct) + 10);
-            Assert.Equal(0, b2.Get(Power.Tailwind));
+            Assert.True(b2.Get(Stat.ColdAmp) >= b1.Get(Stat.ColdAmp) + 10);
+            Assert.Equal(0, b2.Get(Power.Frost));
 
             Rules.Equip(p, "H", SetPiece(p, "set.tide.charm").Uid);
             var b3 = Build.Compute(p, "H", 0);
-            Assert.Equal(6, b3.Get(Power.Momentum));
-            Assert.Equal(25, b3.Get(Power.Tailwind));
+            Assert.Equal(30, b3.Get(Power.Frost));
+            Assert.Equal(10, b3.Get(Power.EchoingDodge));
         }
 
         [Fact]

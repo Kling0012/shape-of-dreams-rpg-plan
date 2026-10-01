@@ -64,35 +64,35 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Pact_penalties_and_boons_shape_the_build()
+        public void Pacts_no_longer_lower_stats_only_boons_apply()
         {
             var p = Profile.CreateNew(1);
-            var b = Build.Compute(p, "H", 0, new[] { Pact.GlassHeart, Pact.Frenzy });
-            Assert.Equal(-15, b.Get(Stat.MaxHealthPct));
-            Assert.Equal(-25, b.Get(Stat.Armor));
+            var b = Build.Compute(p, "H", 0, new[] { Pact.GlassHeart, Pact.Frenzy, Pact.Burden });
+            Assert.Equal(0, b.Get(Stat.MaxHealthPct));
+            Assert.Equal(0, b.Get(Stat.Armor));
             Assert.Equal(15, b.Get(Stat.AttackPct));
             Assert.Equal(15, b.Get(Stat.PowerPct));
-            var d = Build.Decode(b.Encode());
-            Assert.Equal(b.Stats, d.Stats);
         }
 
         [Fact]
-        public void Every_pact_has_a_downside_or_a_risk_and_an_upside()
+        public void Every_pact_carries_a_game_curse_and_an_upside()
         {
             foreach (var d in Pacts.All)
             {
-                bool downside = d.Penalties.Length > 0 || d.NoEcho;
+                Assert.InRange(d.CurseStrength, 1, 3);
+                Assert.Empty(d.Penalties);
                 bool upside = d.DropBonus > 0 || d.Luck > 0 || d.ShardMult > 1 || d.XpMult > 1 || d.TuningOnElite > 0 || d.DoubleDepthBonus || d.Boons.Length > 0;
-                Assert.True(downside && upside, d.Id.ToString());
-                Assert.All(d.Penalties, s => Assert.True(s.Value < 0));
+                Assert.True(upside, d.Id.ToString());
                 foreach (bool ja in new[] { true, false })
                 {
                     Loc.Japanese = ja;
                     Assert.False(string.IsNullOrWhiteSpace(d.Name.ToString()));
                     Assert.False(string.IsNullOrWhiteSpace(d.Description.ToString()));
+                    Assert.False(string.IsNullOrWhiteSpace(PactDef.StrengthName(d.CurseStrength)));
                 }
             }
             Loc.Japanese = true;
+            Assert.Contains(Pacts.All, d => d.CurseStrength == 3);
         }
 
         [Fact]

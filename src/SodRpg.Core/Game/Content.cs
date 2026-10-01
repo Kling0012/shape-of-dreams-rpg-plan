@@ -265,14 +265,14 @@ namespace SodRpg.Core.Game
             new SetDef
             {
                 Id = "set.tide", Name = new Txt("潮鳴りの装い", "Tidecaller's Regalia"),
-                TwoPiece = new[] { new StatLine(Stat.AttackSpeedPct, 10), new StatLine(Stat.MoveSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Momentum, 6), new PowerLine(Power.Tailwind, 25) },
+                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
+                ThreePiece = new[] { new PowerLine(Power.Frost, 30), new PowerLine(Power.EchoingDodge, 10) },
             },
             new SetDef
             {
                 Id = "set.lamp", Name = new Txt("灯守の誓い", "Lampkeeper's Oath"),
-                TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 10), new StatLine(Stat.Haste, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Barrier, 10), new PowerLine(Power.Resonance, 8) },
+                TwoPiece = new[] { new StatLine(Stat.LightAmp, 10), new StatLine(Stat.MaxHealthPct, 8) },
+                ThreePiece = new[] { new PowerLine(Power.Radiance, 30), new PowerLine(Power.SecondWind, 25) },
             },
         };
 
@@ -599,9 +599,9 @@ namespace SodRpg.Core.Game
         {
             switch (l)
             {
-                case Line.Offense: return new Txt("攻勢", "Offense");
-                case Line.Guard: return new Txt("守勢", "Guard");
-                default: return new Txt("共鳴", "Resonance");
+                case Line.Offense: return new Txt("破壊", "Destruction");
+                case Line.Guard: return new Txt("生命", "Life");
+                default: return new Txt("想像", "Imagination");
             }
         }
 

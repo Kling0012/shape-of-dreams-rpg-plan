@@ -310,7 +310,7 @@ namespace SodRpg.Core.Game
                 if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer."));
                 run.Pacts.Add(pact);
                 var d = Pacts.Get(pact);
-                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}", $"Nightmare pact \"{d.Name}\": {d.Description}")));
+                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}（本体の呪いが付く）", $"Nightmare pact \"{d.Name}\": {d.Description} (a game curse is applied)")));
             }
             run.OfferedPacts.Clear();
             run.OfferedEvent = DreamEvent.None;

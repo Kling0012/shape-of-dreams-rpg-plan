@@ -433,6 +433,9 @@ namespace SodRpg.Mod
         {
             if (Profile.Run == null) return;
             Emit(Rules.Delve(Profile, pact));
+            var def = Pacts.Get(pact);
+            if (def != null && _clientRpcOn != null && NetworkClient.active)
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg { strength = def.CurseStrength, protocol = Protocol.Version });
             _buildDirty = true;
             SaveNow();
         }

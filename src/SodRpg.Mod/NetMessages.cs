@@ -29,6 +29,14 @@ namespace SodRpg.Mod
         public int affixes;
     }
 
+    /// <summary>クライアント → ホスト：悪夢の契約の代償として、自分のキャラへ本体の呪いを付けてほしい。</summary>
+    [Serializable]
+    public class DreamforgeCurseMsg
+    {
+        public int strength;
+        public int protocol;
+    }
+
     internal static class Protocol
     {
         public const int Version = 1;
