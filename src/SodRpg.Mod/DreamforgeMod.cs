@@ -38,6 +38,8 @@ namespace SodRpg.Mod
                 _ui = new DreamforgeUi(_session, () => config);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 _session.FirstLaunch();
+                _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
+                if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
             }
@@ -80,7 +82,16 @@ namespace SodRpg.Mod
                 useGUILayout = layout;
             }
             _perf.EndUpdate();
+            if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
+            {
+                _nextPerfLog = Time.unscaledTime + 10f;
+                Debug.Log("[DreamforgeRPG] perf " + _perf.Report());
+            }
         }
+
+        // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
+        private bool _perfLogEnabled;
+        private float _nextPerfLog;
 
         /// <summary>メニュー操作中はゲーム側のUI（uGUI）にクリックを渡さない。</summary>
         private void BlockGameUi(bool block)
