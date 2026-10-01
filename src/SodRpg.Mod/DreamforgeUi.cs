@@ -1,0 +1,616 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using SodRpg.Core.Game;
+using UnityEngine;
+
+namespace SodRpg.Mod
+{
+    using Line = SodRpg.Core.Game.Line;
+    using Power = SodRpg.Core.Game.Power;
+    using Rarity = SodRpg.Core.Game.Rarity;
+    using Slot = SodRpg.Core.Game.Slot;
+    using Stat = SodRpg.Core.Game.Stat;
+
+    /// <summary>夢鍛メニュー（装備・鍛冶・星図・記録）、HUD、確保地点のパネル、通知の描画。</summary>
+    internal sealed class DreamforgeUi
+    {
+        private sealed class Toast
+        {
+            public string Text;
+            public float Until;
+        }
+
+        private static readonly string[] KnownHeroes =
+        {
+            "Hero_Lacerta", "Hero_Mist", "Hero_Aurena", "Hero_Bismuth", "Hero_Vesper", "Hero_Yubar", "Hero_Nachia", "Hero_Husk", "Hero_Cetus",
+        };
+
+        private readonly ClientSession _s;
+        private readonly Func<DreamforgeConfig> _cfg;
+        private readonly UiStyles _st = new UiStyles();
+        private readonly List<Toast> _toasts = new List<Toast>();
+
+        private int _tab;
+        private Slot _slot = Slot.Weapon;
+        private string _selected;
+        private string _heroSel;
+        private Vector2 _scrollList, _scrollDetail, _scrollRecords;
+        private int _retuneIndex = -1;
+        private string _confirmSalvage;
+        private bool _forgeAllSlots = true;
+        private string _status;
+        private float _statusUntil;
+
+        public bool Open { get; private set; }
+
+        /// <summary>直近の描画で、マウスが確保地点のパネルの上にあったか（クリックをゲームへ通さないため）。</summary>
+        public bool MouseOverPanel { get; private set; }
+
+        public DreamforgeUi(ClientSession session, Func<DreamforgeConfig> cfg)
+        {
+            _s = session;
+            _cfg = cfg;
+        }
+
+        public void Toggle()
+        {
+            Open = !Open;
+            _confirmSalvage = null;
+        }
+
+        public void Close() => Open = false;
+
+        public void Notify(GameEvent e)
+        {
+            if (e == null) return;
+            Log.Info(e.Text);
+            if (!_cfg().showToasts && e.Kind == EventKind.Drop && e.Rarity.HasValue && e.Rarity.Value < Rarity.Rare) return;
+            string text = e.Rarity.HasValue ? UiStyles.Colored(e.Text, UiStyles.RarityHex(e.Rarity.Value)) : Decorate(e);
+            _toasts.Add(new Toast { Text = text, Until = Time.unscaledTime + (e.Kind == EventKind.Drop ? 6f : 8f) });
+            while (_toasts.Count > 7) _toasts.RemoveAt(0);
+        }
+
+        private static string Decorate(GameEvent e)
+        {
+            switch (e.Kind)
+            {
+                case EventKind.LevelUp: return UiStyles.Colored(e.Text, "#ffe17a");
+                case EventKind.Secured: return UiStyles.Colored(e.Text, "#7af0c8");
+                case EventKind.Delved: return UiStyles.Colored(e.Text, "#ff8a5c");
+                case EventKind.Lost:
+                case EventKind.Warning: return UiStyles.Colored(e.Text, "#ff7070");
+                default: return e.Text;
+            }
+        }
+
+        private void SetStatus(string text)
+        {
+            _status = text;
+            _statusUntil = Time.unscaledTime + 5f;
+        }
+
+        private string HeroKey
+        {
+            get
+            {
+                var h = _s.LocalHero;
+                if (h != null) return ClientSession.HeroKeyOf(h);
+                if (_heroSel == null) _heroSel = _s.Profile.Heroes.Keys.FirstOrDefault(k => k.StartsWith("Hero_")) ?? KnownHeroes[0];
+                return _heroSel;
+            }
+        }
+
+        private static string HeroName(string key) => key != null && key.StartsWith("Hero_") ? key.Substring(5) : key;
+
+        // ─────────────────────────── 描画の入口 ───────────────────────────
+
+        public void Draw()
+        {
+            _st.EnsureBuilt();
+            var cfg = _cfg();
+            float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
+            var oldMatrix = GUI.matrix;
+            GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+            float w = Screen.width / scale;
+            float h = Screen.height / scale;
+            if (Event.current.type == EventType.Repaint) MouseOverPanel = false;
+            try
+            {
+                var zm = NetworkedManagerBase<ZoneManager>.instance;
+                bool transition = zm != null && zm.isInAnyTransition;
+                if (_s.InGame && !transition)
+                {
+                    DrawHud(w, h, cfg);
+                    if (_s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
+                }
+                DrawToasts(w, h);
+                if (Open) DrawWindow(w, h, cfg);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("UI: " + ex);
+                Open = false;
+            }
+            finally
+            {
+                GUI.matrix = oldMatrix;
+            }
+        }
+
+        private void DrawHud(float w, float h, DreamforgeConfig cfg)
+        {
+            var p = _s.Profile;
+            var run = p.Run;
+            var rect = new Rect(10, h * 0.30f, 270, run != null ? 122 : 66);
+            GUILayout.BeginArea(rect, _st.Hud);
+            int need = Content.XpToNext(p.DreamLevel);
+            string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : $"{p.DreamXp * 100 / Math.Max(1, need)}%";
+            GUILayout.Label(Loc.T($"<b>夢鍛</b>  夢のレベル {p.DreamLevel}  <color=#aaaacc>({xp})</color>",
+                $"<b>Dreamforge</b>  Dream Lv {p.DreamLevel}  <color=#aaaacc>({xp})</color>"), _st.Label);
+            if (run != null && _s.ActiveRunId != null)
+            {
+                string pips = new string('●', run.Heat) + new string('○', Content.MaxHeat - run.Heat);
+                string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
+                GUILayout.Label(Loc.T("夢の深度 ", "Depth ") + UiStyles.Colored(pips, heatColor), _st.Label);
+                GUILayout.Label(Loc.T($"未確保：遺物{run.Satchel.Count}  欠片{run.SatchelShards}  調律石{run.SatchelTuning}",
+                    $"Unsecured: {run.Satchel.Count} relics  {run.SatchelShards} shards  {run.SatchelTuning} tuning"), _st.Small);
+                if (!_s.HostConfirmed && _s.LocalHero != null)
+                    GUILayout.Label(Loc.T("能力の反映待ち（ホスト未導入？）", "Waiting for host (host has no mod?)"), _st.Small);
+            }
+            GUILayout.Label(Loc.T($"[{cfg.menuKey}] メニュー", $"[{cfg.menuKey}] Menu"), _st.Small);
+            GUILayout.EndArea();
+        }
+
+        private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
+        {
+            var run = _s.Profile.Run;
+            var rect = new Rect(w / 2 - 280, 90, 560, 196);
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
+            int bonus = run.SatchelShards * run.Heat / 4;
+            GUILayout.Label(Loc.T(
+                $"未確保：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}（確保で深度ボーナス+{bonus}）・調律石{run.SatchelTuning}",
+                $"Unsecured: {run.Satchel.Count} relics, {run.SatchelShards} shards (+{bonus} depth bonus), {run.SatchelTuning} tuning"), _st.Label);
+            int next = Math.Min(Content.MaxHeat, run.Heat + 1);
+            GUILayout.Label(Loc.T(
+                $"深く潜る → 深度{next}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * next)}%・レア度上昇／防御-{Build.HeatArmorPenalty * next}・最大HP-{Build.HeatHealthPenaltyPct * next}%。全滅すると未確保品は遺失物に。",
+                $"Delve -> depth {next}: +{(int)(Loot.HeatDropBonus * 100 * next)}% drops, better rarity / -{Build.HeatArmorPenalty * next} armor, -{Build.HeatHealthPenaltyPct * next}% max HP. Unsecured loot is lost on defeat."), _st.Small);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) _s.Secure();
+            if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) _s.Delve();
+            if (GUILayout.Button(Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]"), _st.Button, GUILayout.Height(34)))
+            {
+                Open = true;
+                _tab = 0;
+            }
+            GUILayout.EndHorizontal();
+            GUILayout.EndArea();
+        }
+
+        private void DrawToasts(float w, float h)
+        {
+            float now = Time.unscaledTime;
+            _toasts.RemoveAll(t => t.Until < now);
+            float y = h * 0.30f;
+            foreach (var t in _toasts)
+            {
+                var content = new GUIContent(t.Text);
+                float tw = Mathf.Min(_st.ToastMeasure.CalcSize(content).x + 6, 560);
+                float th = _st.Toast.CalcHeight(content, tw);
+                GUI.Label(new Rect(w - tw - 16, y, tw, th), t.Text, _st.Toast);
+                y += th + 4;
+            }
+        }
+
+        // ─────────────────────────── メニュー ───────────────────────────
+
+        private void DrawWindow(float w, float h, DreamforgeConfig cfg)
+        {
+            float ww = Mathf.Min(1060, w - 20), wh = Mathf.Min(660, h - 20);
+            var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
+            GUILayout.BeginArea(rect, _st.Window);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("夢鍛 ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
+            string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("記録", "Records") };
+            for (int i = 0; i < tabs.Length; i++)
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _retuneIndex = -1; }
+            GUILayout.FlexibleSpace();
+            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Open = false;
+            GUILayout.EndHorizontal();
+
+            var p = _s.Profile;
+            GUILayout.Label(Loc.T(
+                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Content.StashCapacity}　キャラ：{HeroName(HeroKey)}",
+                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Content.StashCapacity}   Traveler: {HeroName(HeroKey)}"), _st.Small);
+
+            switch (_tab)
+            {
+                case 0: DrawGearTab(); break;
+                case 1: DrawForgeTab(); break;
+                case 2: DrawTalentTab(); break;
+                default: DrawRecordsTab(cfg); break;
+            }
+            if (_status != null && Time.unscaledTime < _statusUntil) GUILayout.Label(_status, _st.Warn);
+            GUILayout.EndArea();
+        }
+
+        private void HeroPicker()
+        {
+            if (_s.LocalHero != null) return;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("キャラ：", "Traveler:"), _st.Small, GUILayout.Width(60));
+            var keys = KnownHeroes.Union(_s.Profile.Heroes.Keys.Where(k => k != "default")).ToList();
+            int idx = Math.Max(0, keys.IndexOf(HeroKey));
+            if (GUILayout.Button("<", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx - 1 + keys.Count) % keys.Count];
+            GUILayout.Label("<b>" + HeroName(HeroKey) + "</b>", _st.Label, GUILayout.Width(110));
+            if (GUILayout.Button(">", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx + 1) % keys.Count];
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawGearTab()
+        {
+            var p = _s.Profile;
+            string hero = HeroKey;
+            GUILayout.BeginHorizontal();
+
+            // 左：装着中とビルド
+            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(320));
+            HeroPicker();
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+            {
+                var r = Rules.EquippedRelic(p, hero, slot);
+                string label = Content.SlotName(slot) + "： " + (r != null ? UiStyles.RelicTitle(r) : Loc.T("<color=#777>（なし）</color>", "<color=#777>(empty)</color>"));
+                if (GUILayout.Button(label, _slot == slot ? _st.RowSel : _st.Row, GUILayout.Height(30)))
+                {
+                    _slot = slot;
+                    _selected = r?.Uid;
+                }
+            }
+            GUILayout.Space(6);
+            GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
+            var build = _s.CurrentBuild(hero);
+            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(300));
+            if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ補正はありません。", "No bonuses yet."), _st.Small);
+            foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
+            foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
+            GUILayout.EndScrollView();
+            if (!_s.CanEditLoadout)
+                GUILayout.Label(Loc.T("遠征中は確保地点でのみ装備を変更できます。", "During an expedition, gear can only be changed at secure points."), _st.Warn);
+            GUILayout.EndVertical();
+
+            // 中：保管庫
+            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(330));
+            GUILayout.BeginHorizontal();
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+                if (GUILayout.Button(Content.SlotName(slot).ToString(), _slot == slot ? _st.ButtonSel : _st.Button)) _slot = slot;
+            GUILayout.EndHorizontal();
+            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 470);
+            GUILayout.EndVertical();
+
+            // 右：詳細と比較
+            GUILayout.BeginVertical(_st.Panel);
+            var sel = p.FindStash(_selected);
+            if (sel == null)
+            {
+                GUILayout.Label(Loc.T("遺物を選ぶと詳細と比較が出ます。", "Select a relic to see details and comparison."), _st.Small);
+            }
+            else
+            {
+                RelicDetail(sel);
+                var cur = Rules.EquippedRelic(p, hero, sel.Slot);
+                if (cur != null && cur.Uid != sel.Uid) Comparison(sel, cur);
+                GUILayout.FlexibleSpace();
+                GUI.enabled = _s.CanEditLoadout;
+                GUILayout.BeginHorizontal();
+                bool equipped = cur != null && cur.Uid == sel.Uid;
+                if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
+                {
+                    Rules.Equip(p, hero, sel.Uid);
+                    _s.MarkDirty(true);
+                }
+                if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
+                {
+                    Rules.Unequip(p, hero, sel.Slot);
+                    _s.MarkDirty(true);
+                }
+                GUI.enabled = true;
+                if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
+                {
+                    Rules.ToggleLock(p, sel.Uid);
+                    _s.MarkDirty(false);
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+        }
+
+        private void RelicList(IEnumerable<Relic> relics, string hero, float height)
+        {
+            var list = relics.OrderByDescending(r => r.Score).ToList();
+            _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
+            if (list.Count == 0) GUILayout.Label(Loc.T("（空）遠征で敵を倒すと遺物が手に入ります。", "(empty) Defeat enemies on expeditions to find relics."), _st.Small);
+            var h = _s.Profile.Hero(hero);
+            foreach (var r in list)
+            {
+                string mark = h.Equipped.Contains(r.Uid) ? "<color=#ffe17a>★</color> " : "";
+                string lck = r.Locked ? " <color=#aaa>[鍵]</color>" : "";
+                string text = $"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}";
+                if (GUILayout.Button(text, _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(28)))
+                {
+                    _selected = r.Uid;
+                    _retuneIndex = -1;
+                    _confirmSalvage = null;
+                }
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void RelicDetail(Relic r)
+        {
+            GUILayout.Label("<size=19><b>" + UiStyles.RelicTitle(r) + "</b></size>", _st.Label);
+            GUILayout.Label($"{Content.RarityName(r.Rarity)} · {Content.SlotName(r.Slot)} · {Content.LineName(r.Base.Line)} · Lv{r.ItemLevel}"
+                + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
+            var imp = r.Implicit;
+            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（基礎）</color>", "  <color=#888>(base)</color>"), _st.Label);
+            foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
+            foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
+                GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
+        }
+
+        private void Comparison(Relic sel, Relic cur)
+        {
+            GUILayout.Space(6);
+            GUILayout.Label(Loc.T("装着中との差", "Versus equipped"), _st.Header);
+            var a = new Dictionary<Stat, int>();
+            foreach (var s in sel.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v + s.Value; }
+            foreach (var s in cur.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v - s.Value; }
+            foreach (var kv in a.OrderBy(k => k.Key))
+            {
+                if (kv.Value == 0) continue;
+                GUILayout.Label(UiStyles.Colored(Content.FormatStat(kv.Key, kv.Value), kv.Value > 0 ? "#7cf07c" : "#ff7a7a"), _st.Small);
+            }
+            var gained = sel.Powers.Select(x => x.Power).Except(cur.Powers.Select(x => x.Power));
+            var lost = cur.Powers.Select(x => x.Power).Except(sel.Powers.Select(x => x.Power));
+            foreach (var g in gained) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
+            foreach (var l in lost) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
+        }
+
+        private void DrawForgeTab()
+        {
+            var p = _s.Profile;
+            GUILayout.BeginHorizontal();
+
+            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(360));
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) _forgeAllSlots = true;
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+                if (GUILayout.Button(Content.SlotName(slot).ToString(), !_forgeAllSlots && _slot == slot ? _st.ButtonSel : _st.Button))
+                {
+                    _forgeAllSlots = false;
+                    _slot = slot;
+                }
+            GUILayout.EndHorizontal();
+            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 500);
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(_st.Panel);
+            var sel = p.FindStash(_selected);
+            if (sel != null)
+            {
+                RelicDetail(sel);
+                GUILayout.Space(8);
+                GUILayout.BeginHorizontal();
+                if (sel.Enhance < Content.MaxEnhance)
+                {
+                    if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
+                        Act(() => Rules.Enhance(p, sel.Uid), true);
+                }
+                else GUILayout.Label(Loc.T("強化は最大です", "Fully enhanced"), _st.Small);
+                string sv = _confirmSalvage == sel.Uid
+                    ? Loc.T("<color=#ff8080>本当に分解？</color>", "<color=#ff8080>Really salvage?</color>")
+                    : Loc.T($"分解（欠片{Rules.SalvageValue(sel)}）", $"Salvage ({Rules.SalvageValue(sel)} shards)");
+                if (GUILayout.Button(sv, _st.Button, GUILayout.Height(32)))
+                {
+                    if (_confirmSalvage == sel.Uid)
+                    {
+                        Act(() => Rules.Salvage(p, sel.Uid), true);
+                        _selected = null;
+                        _confirmSalvage = null;
+                    }
+                    else _confirmSalvage = sel.Uid;
+                }
+                GUILayout.EndHorizontal();
+
+                if (sel.Retunes < Content.MaxRetunes && sel.Affixes.Count > 0)
+                {
+                    GUILayout.Label(Loc.T($"再調律：特性を1つ選んで引き直す（調律石{Content.RetuneCost(sel.Retunes)}）", $"Retune: reroll one affix ({Content.RetuneCost(sel.Retunes)} tuning)"), _st.Small);
+                    GUILayout.BeginHorizontal();
+                    for (int i = 0; i < sel.Affixes.Count; i++)
+                    {
+                        var a = sel.Affixes[i];
+                        if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonSel : _st.Button)) _retuneIndex = i;
+                    }
+                    GUILayout.EndHorizontal();
+                    GUI.enabled = _retuneIndex >= 0;
+                    if (GUILayout.Button(Loc.T("再調律する", "Retune"), _st.Button, GUILayout.Height(30)))
+                    {
+                        int idx = _retuneIndex;
+                        Act(() => Rules.Retune(p, sel.Uid, idx), true);
+                        _retuneIndex = -1;
+                    }
+                    GUI.enabled = true;
+                }
+            }
+            else
+            {
+                GUILayout.Label(Loc.T("左の一覧から遺物を選ぶと、強化・再調律・分解ができます。", "Pick a relic on the left to enhance, retune or salvage it."), _st.Small);
+            }
+
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(Loc.T("製作（到達した最高アイテムレベルで作る）", "Craft (at your highest reached item level)"), _st.Header);
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(80));
+                if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.Button))
+                    Act(() => Rules.Craft(p, slot, false), false);
+                if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.Button))
+                    Act(() => Rules.Craft(p, slot, true), false);
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
+        }
+
+        private void Act(Func<GameEvent> action, bool affectsBuild)
+        {
+            try
+            {
+                var e = action();
+                _s.Emit(e);
+                _s.MarkDirty(affectsBuild);
+                _s.SaveNow();
+            }
+            catch (InvalidOperationException ex)
+            {
+                SetStatus(ex.Message);
+            }
+        }
+
+        private void DrawTalentTab()
+        {
+            var p = _s.Profile;
+            string hero = HeroKey;
+            var hs = p.Hero(hero);
+            GUILayout.BeginHorizontal();
+            HeroPicker();
+            GUILayout.Label(Loc.T(
+                $"専門化ポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベルで増える・キャラごとに配分）",
+                $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} (grows with Dream Level, allotted per Traveler)"), _st.Label);
+            GUILayout.FlexibleSpace();
+            GUI.enabled = _s.CanEditTalents;
+            if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
+            {
+                Rules.ResetTalents(p, hero);
+                _s.MarkDirty(true);
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征の外でのみ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+
+            GUILayout.BeginHorizontal();
+            foreach (Line route in Enum.GetValues(typeof(Line)))
+            {
+                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(330));
+                GUILayout.Label($"{Content.LineName(route)}  <color=#aaa>({Rules.RouteRanks(hs, route)})</color>", _st.Header);
+                foreach (var t in Content.Talents.Where(x => x.Route == route))
+                {
+                    if (t.IsKeystone)
+                    {
+                        GUILayout.Space(6);
+                        bool active = hs.Keystone == t.Id;
+                        bool unlocked = Rules.RouteRanks(hs, route) >= Content.KeystoneRouteRequirement;
+                        GUILayout.Label((active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（刻印）", " (Keystone)"), _st.Label);
+                        GUILayout.Label(t.Description.ToString(), _st.Small);
+                        GUI.enabled = _s.CanEditTalents && (active || unlocked);
+                        string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
+                            ? Loc.T($"刻印する（{Content.KeystoneCost}pt）", $"Engrave ({Content.KeystoneCost}pt)")
+                            : Loc.T($"{Content.KeystoneRouteRequirement}pt以上で解放", $"Needs {Content.KeystoneRouteRequirement}pt in route");
+                        if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
+                        {
+                            try
+                            {
+                                Rules.SetKeystone(p, hero, active ? null : t.Id);
+                                _s.MarkDirty(true);
+                            }
+                            catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                        }
+                        GUI.enabled = true;
+                        continue;
+                    }
+                    int rank = hs.Talents.TryGetValue(t.Id, out int rk) ? rk : 0;
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label($"<b>{t.Name}</b> {rank}/{t.MaxRank}\n<color=#aab>{Content.FormatStat(t.Stat, t.PerRank)} /{Loc.T("段", "rank")}</color>", _st.Small, GUILayout.Width(230));
+                    GUI.enabled = _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
+                    if (GUILayout.Button("+", _st.Button, GUILayout.Width(44), GUILayout.Height(34)))
+                    {
+                        try
+                        {
+                            Rules.AddTalentRank(p, hero, t.Id);
+                            _s.MarkDirty(true);
+                        }
+                        catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                    }
+                    GUI.enabled = true;
+                    GUILayout.EndHorizontal();
+                }
+                GUILayout.EndVertical();
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        private void DrawRecordsTab(DreamforgeConfig cfg)
+        {
+            var p = _s.Profile;
+            _scrollRecords = GUILayout.BeginScrollView(_scrollRecords);
+            GUILayout.BeginHorizontal();
+
+            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(480));
+            GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
+            GUILayout.Label(Loc.T(
+                "・敵を倒すと、各プレイヤーに個別の「遺物」（装備）が落ちる。拾った物はまず<b>未確保</b>。\n" +
+                "・新しいゾーンに着くたびに<b>確保地点</b>。「確保」で保管庫へ。「深く潜る」と夢の深度が上がり、ドロップ率とレア度が上がる代わりに守りが下がる。深度が高いほど確保時の欠片ボーナスも増える。\n" +
+                "・全滅すると未確保の遺物は<b>遺失物</b>に。次の遠征で戦闘部屋を3つ突破すると、最良の1つを取り戻せる。\n" +
+                "・装備は遠征の外か確保地点で変更できる。主装備・防具・装飾品の3枠。\n" +
+                "・倒した数で<b>夢のレベル</b>が上がり、星図（専門化）のポイントが増える。6pt入れたルートでは<b>刻印</b>を1つ選べる。\n" +
+                "・鍛冶：欠片で強化（+5まで）、調律石で特性の引き直し（3回まで）、不要な遺物は分解。",
+                "- Enemies drop personal <b>relics</b> (gear) for every player. New loot starts <b>unsecured</b>.\n" +
+                "- Each new zone is a <b>secure point</b>. Secure moves loot to your stash. Delve raises dream depth: more drops and better rarity, but weaker defenses — and a bigger shard bonus when you finally secure.\n" +
+                "- If your party is wiped, unsecured relics become <b>Lost & Found</b>. Clear 3 combat rooms next run to recover the best one.\n" +
+                "- Change gear outside expeditions or at secure points. Three slots: weapon, armor, charm.\n" +
+                "- Kills raise your <b>Dream Level</b>, granting star map points. With 6 points in a route you can engrave one <b>keystone</b>.\n" +
+                "- Forge: enhance with shards (+5 max), retune affixes with tuning stones (3 times), salvage the rest."), _st.Small);
+            GUILayout.Space(6);
+            GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("English", "日本語"), _st.Button, GUILayout.Width(120)))
+            {
+                cfg.japanese = !cfg.japanese;
+                Loc.Japanese = cfg.japanese;
+            }
+            GUILayout.Label(Loc.T("キー・倍率はゲームのMOD設定から変更できます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
+            GUILayout.EndHorizontal();
+            if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
+            if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);
+            if (_s.SaveError != null) GUILayout.Label(Loc.T("保存エラー：", "Save error: ") + _s.SaveError, _st.Warn);
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical(_st.Panel);
+            var st = p.Stats;
+            int need = Content.XpToNext(p.DreamLevel);
+            GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
+            GUILayout.Label(Loc.T(
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高深度 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nエピック救済カウント {p.EpicPity}",
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nEpic pity counter {p.EpicPity}"), _st.Small);
+            if (p.Run != null)
+            {
+                GUILayout.Label(Loc.T($"今回の遠征（未確保 {p.Run.Satchel.Count}）", $"This expedition ({p.Run.Satchel.Count} unsecured)"), _st.Header);
+                foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+            }
+            GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);
+            if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);
+            foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+            GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
+            foreach (var u in Content.Uniques)
+                GUILayout.Label(p.Codex.Contains(u.Id) ? UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)) : "<color=#666>◇ ？？？</color>", _st.Small);
+            GUILayout.EndVertical();
+
+            GUILayout.EndHorizontal();
+            GUILayout.EndScrollView();
+        }
+    }
+}

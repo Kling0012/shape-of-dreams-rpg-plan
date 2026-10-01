@@ -1,0 +1,176 @@
+using System;
+using System.Collections.Generic;
+
+namespace SodRpg.Core.Game
+{
+    /// <summary>キャラ（Traveler）ごとの装着と専門化。キーはゲーム側の Hero 型名（例: Hero_Lacerta）。</summary>
+    public sealed class HeroState
+    {
+        /// <summary>枠ごとの装着中の遺物Uid。未装着は null。保管庫の遺物を参照する。</summary>
+        public string[] Equipped { get; } = new string[3];
+
+        /// <summary>小ノードの段階。到達ノード（刻印）はここに含めず Keystone に持つ。</summary>
+        public SortedDictionary<string, int> Talents { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
+
+        public string Keystone { get; set; }
+
+        public HeroState Clone()
+        {
+            var c = new HeroState { Keystone = Keystone };
+            Array.Copy(Equipped, c.Equipped, 3);
+            foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
+            return c;
+        }
+    }
+
+    /// <summary>
+    /// 進行中の遠征（1回のラン）。持ち物は「未確保」で、確保地点（ゾーンの切り替わり）か勝利で保管庫へ移る。
+    /// 全滅すると遺物は遺失物へ、素材は25%だけ持ち帰る（計画書 第5章）。
+    /// </summary>
+    public sealed class RunState
+    {
+        public string RunId { get; set; }
+        /// <summary>夢の深度（0〜5）。確保を見送って潜り続けるほど上がる。</summary>
+        public int Heat { get; set; }
+        public List<Relic> Satchel { get; } = new List<Relic>();
+        public int SatchelShards { get; set; }
+        public int SatchelTuning { get; set; }
+        public int RoomsCleared { get; set; }
+        public bool LostRecovered { get; set; }
+        public int SecuredCount { get; set; }
+        public int Kills { get; set; }
+        /// <summary>このランで最も深かった深度。</summary>
+        public int PeakHeat { get; set; }
+        /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
+        public bool AwaitingChoice { get; set; }
+
+        public bool HasUnsecured => Satchel.Count > 0 || SatchelShards > 0 || SatchelTuning > 0;
+
+        public RunState Clone()
+        {
+            var c = new RunState
+            {
+                RunId = RunId,
+                Heat = Heat,
+                SatchelShards = SatchelShards,
+                SatchelTuning = SatchelTuning,
+                RoomsCleared = RoomsCleared,
+                LostRecovered = LostRecovered,
+                SecuredCount = SecuredCount,
+                Kills = Kills,
+                PeakHeat = PeakHeat,
+                AwaitingChoice = AwaitingChoice,
+            };
+            foreach (var r in Satchel) c.Satchel.Add(r.Clone());
+            return c;
+        }
+    }
+
+    public sealed class ProfileStats
+    {
+        public int Runs { get; set; }
+        public int Victories { get; set; }
+        public int Defeats { get; set; }
+        public int RelicsFound { get; set; }
+        public int LegendariesFound { get; set; }
+        public int BestHeatSecured { get; set; }
+        public int Kills { get; set; }
+
+        public ProfileStats Clone() => (ProfileStats)MemberwiseClone();
+    }
+
+    /// <summary>
+    /// 1人のプレイヤーの恒久データ。各PCが自分の分だけを保存する（協力時もホストは他人の保存に触れない）。
+    /// </summary>
+    public sealed class Profile
+    {
+        public const int CurrentVersion = 1;
+
+        public long Revision { get; set; }
+        public ulong RngState { get; set; }
+        public int DreamLevel { get; set; } = 1;
+        public int DreamXp { get; set; }
+        public int EpicPity { get; set; }
+        public int BestItemLevel { get; set; } = 1;
+        public bool Japanese { get; set; } = true;
+
+        public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        public List<Relic> Stash { get; } = new List<Relic>();
+        public List<Relic> LostAndFound { get; } = new List<Relic>();
+        public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
+        public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        public ProfileStats Stats { get; private set; } = new ProfileStats();
+        public RunState Run { get; set; }
+
+        public static Profile CreateNew(ulong seed)
+        {
+            return new Profile { RngState = seed == 0 ? 0x5EED5EEDUL : seed };
+        }
+
+        public int Material(string id) => Materials.TryGetValue(id, out int n) ? n : 0;
+
+        public void AddMaterial(string id, int amount)
+        {
+            if (amount == 0) return;
+            long next = (long)Material(id) + amount;
+            if (next < 0) throw new InvalidOperationException("素材が足りません: " + id);
+            Materials[id] = (int)Math.Min(int.MaxValue, next);
+        }
+
+        public HeroState Hero(string heroKey)
+        {
+            if (string.IsNullOrEmpty(heroKey)) heroKey = "default";
+            if (!Heroes.TryGetValue(heroKey, out var h))
+            {
+                h = new HeroState();
+                Heroes[heroKey] = h;
+            }
+            return h;
+        }
+
+        public Relic FindStash(string uid)
+        {
+            if (uid == null) return null;
+            foreach (var r in Stash)
+                if (r.Uid == uid) return r;
+            return null;
+        }
+
+        public bool IsEquippedAnywhere(string uid)
+        {
+            foreach (var h in Heroes.Values)
+                foreach (var e in h.Equipped)
+                    if (e == uid) return true;
+            return false;
+        }
+
+        /// <summary>使える専門化ポイントの総数（夢のレベル−1）。全キャラ共通の総数を、キャラごとに配分する。</summary>
+        public int TalentPoints => Math.Max(0, DreamLevel - 1);
+
+        public Rng TakeRng() => new Rng(RngState);
+
+        public void StoreRng(Rng rng) => RngState = rng.State;
+
+        public Profile Clone()
+        {
+            var c = new Profile
+            {
+                Revision = Revision,
+                RngState = RngState,
+                DreamLevel = DreamLevel,
+                DreamXp = DreamXp,
+                EpicPity = EpicPity,
+                BestItemLevel = BestItemLevel,
+                Japanese = Japanese,
+                Stats = Stats.Clone(),
+                Run = Run?.Clone(),
+            };
+            foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
+            foreach (var r in Stash) c.Stash.Add(r.Clone());
+            foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
+            foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
+            foreach (var s in Codex) c.Codex.Add(s);
+            return c;
+        }
+    }
+}

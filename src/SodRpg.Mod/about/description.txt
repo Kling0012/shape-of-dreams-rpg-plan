@@ -1,0 +1,38 @@
+[h1]Dreamforge RPG / 夢鍛RPG[/h1]
+Turns every run into part of a long RPG journey: persistent relics, a risky secure-or-delve choice at every zone, a per-Traveler star map, and a forge. Co-op ready.
+すべての遠征を長いRPGの一部にするMOD。持ち帰れる装備「遺物」、ゾーンごとの「確保か、深く潜るか」の決断、キャラごとの星図、鍛冶。協力プレイ対応。
+
+[h2]Relics / 遺物[/h2]
+[list]
+[*] Enemies drop personal relics for every player (weapon / armor / charm). 5 rarities, 18 bases, 6 legendaries with unique powers.
+[*] 敵を倒すと各プレイヤーに個別の遺物が落ちる（主装備・防具・装飾品）。レア度5段階、基礎18種、固有品6種。
+[*] Epic and Legendary relics carry powers: Momentum, Retaliation, Bulwark, Lifesteal, Thorns, Executioner, Resonance, Tailwind, Barrier, Second Wind, Blaze.
+[/list]
+
+[h2]Secure or Delve / 確保か、深く潜るか[/h2]
+[list]
+[*] New loot starts unsecured. Each new zone is a secure point: Secure to bank it, or Delve to raise dream depth (more drops, better rarity, weaker defenses, bigger shard bonus).
+[*] 拾った物はまず未確保。新しいゾーンが確保地点。「確保」で保管庫へ、「深く潜る」で夢の深度が上がる（ドロップ率とレア度が上がるが、守りが下がる）。
+[*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
+[*] 全滅すると未確保品は遺失物に。次の遠征で戦闘部屋を3つ突破すると最良の1つを取り戻せる。
+[/list]
+
+[h2]Growth / 成長[/h2]
+[list]
+[*] Dream Level grows with kills and grants star map points. Three routes per Traveler (Offense / Guard / Resonance) with an engravable keystone.
+[*] 夢のレベルで星図ポイントが増え、キャラごとに攻勢・守勢・共鳴へ配分。6pt入れたルートでは刻印を1つ選べる。
+[*] Forge: enhance (+5), retune affixes, salvage, craft.
+[/list]
+
+[h2]Controls / 操作[/h2]
+[list]
+[*] F6: Dreamforge menu / 夢鍛メニュー
+[*] F7: Secure / 確保する　F8: Delve / 深く潜る
+[*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示倍率はMOD設定で変更可能。
+[/list]
+
+[h2]Multiplayer / マルチプレイ[/h2]
+The host applies everyone's bonuses, so the host must have this mod. Each player keeps their own save; loot is rolled per player.
+能力の反映はホストが行うため、ホストの導入が必要です。保存と戦利品は各プレイヤー個別です。
+
+This mod alters gameplay. Save file: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json

@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    ゲーム本体へ読み込ませるMOD。ゲームのアセンブリを参照するため、CI（SodRpg.sln）には含めない。
+    ゲームの場所は環境変数 SOD_GAME_DIR か、ビルド時の -p:GameDir=... で指定する。
+    ビルドすると $(GameDir)/Mods/DreamforgeRPG へ about/ と DLL を配置する（そのままWorkshopへ登録できる形）。
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <NoStdLib>true</NoStdLib>
+    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AssemblyName>DreamforgeRPG</AssemblyName>
+    <RootNamespace>SodRpg.Mod</RootNamespace>
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <GameDir Condition="'$(GameDir)' == '' and '$(SOD_GAME_DIR)' != ''">$(SOD_GAME_DIR)</GameDir>
+    <GameDir Condition="'$(GameDir)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Shape of Dreams</GameDir>
+    <GameManagedDir>$(GameDir)\Shape of Dreams_Data\Managed</GameManagedDir>
+    <ModDeployDir>$(GameDir)\Mods\DreamforgeRPG</ModDeployDir>
+  </PropertyGroup>
+
+  <!-- 純C#コアは別DLLにせず同じアセンブリへ取り込む（ゲームは読み込み時にアセンブリ名を書き換えるため、MOD間参照を避ける）。 -->
+  <ItemGroup>
+    <Compile Include="..\SodRpg.Core\Game\*.cs" Link="Core\Game\%(Filename)%(Extension)" />
+    <Compile Include="..\SodRpg.Core\Internal\Json.cs" Link="Core\Internal\Json.cs" />
+    <Compile Include="..\SodRpg.Core\IFileSystem.cs" Link="Core\IFileSystem.cs" />
+    <Compile Include="..\SodRpg.Core\Exceptions.cs" Link="Core\Exceptions.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <GameRef Include="mscorlib;netstandard;System;System.Core;0Harmony;Assembly-CSharp;Dew.Core;Dew.Contents;Dew.UI;Mirror;Newtonsoft.Json;UniTask;Unity.InputSystem;Unity.TextMeshPro;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.InputLegacyModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.ImageConversionModule;UnityEngine.Physics2DModule;UnityEngine.PhysicsModule" />
+    <Reference Include="@(GameRef)">
+      <HintPath>$(GameManagedDir)\%(Identity).dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="about\**\*" />
+  </ItemGroup>
+
+  <Target Name="DeployToGame" AfterTargets="Build" Condition="Exists('$(GameDir)\Mods')">
+    <ItemGroup>
+      <AboutFiles Include="about\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ModDeployDir)" SkipUnchangedFiles="false" />
+    <Copy SourceFiles="@(AboutFiles)" DestinationFolder="$(ModDeployDir)\about\%(RecursiveDir)" SkipUnchangedFiles="false" />
+    <Message Importance="high" Text="Deployed to $(ModDeployDir)" />
+  </Target>
+
+</Project>

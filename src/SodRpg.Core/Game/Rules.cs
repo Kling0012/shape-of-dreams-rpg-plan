@@ -1,0 +1,434 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace SodRpg.Core.Game
+{
+    public enum EventKind
+    {
+        Info,
+        Drop,
+        LevelUp,
+        Secured,
+        Delved,
+        Lost,
+        Recovered,
+        Warning,
+    }
+
+    /// <summary>画面に流す通知。文言は発生時の表示言語で作る。</summary>
+    public sealed class GameEvent
+    {
+        public GameEvent(EventKind kind, string text, Rarity? rarity = null)
+        {
+            Kind = kind;
+            Text = text;
+            Rarity = rarity;
+        }
+
+        public EventKind Kind { get; }
+        public string Text { get; }
+        public Rarity? Rarity { get; }
+
+        public override string ToString() => Text;
+    }
+
+    /// <summary>
+    /// プロフィールに対する操作（遠征・鍛冶・装着・専門化）。すべて純粋なデータ操作で、
+    /// 失敗時は InvalidOperationException を投げ、プロフィールを変更しない。
+    /// </summary>
+    public static class Rules
+    {
+        // ───────────── 遠征 ─────────────
+
+        /// <summary>
+        /// ランの開始（または再開）。別のランIDの未解決ランが残っていれば、全滅と同じ扱いで精算する
+        /// （途中で終了したランの未確保品は遺失物へ）。
+        /// </summary>
+        public static List<GameEvent> BeginRun(Profile p, string runId)
+        {
+            var ev = new List<GameEvent>();
+            if (string.IsNullOrEmpty(runId)) runId = "unknown";
+            if (p.Run != null && p.Run.RunId == runId) return ev;
+            if (p.Run != null)
+            {
+                ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
+                ev.AddRange(EndRun(p, victory: false));
+            }
+            p.Run = new RunState { RunId = runId };
+            p.Stats.Runs++;
+            if (p.LostAndFound.Count > 0)
+            {
+                ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                    $"遺失物が{p.LostAndFound.Count}個あります。戦闘部屋を{Content.RoomsToRecoverLost}つ突破すると1つ取り戻せます。",
+                    $"You have {p.LostAndFound.Count} lost relic(s). Clear {Content.RoomsToRecoverLost} combat rooms to recover one.")));
+            }
+            return ev;
+        }
+
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel)
+        {
+            var ev = new List<GameEvent>();
+            var run = p.Run;
+            if (run == null) return ev;
+            var rng = p.TakeRng();
+            int pity = p.EpicPity;
+            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity);
+            p.EpicPity = pity;
+            p.StoreRng(rng);
+
+            run.Kills++;
+            p.Stats.Kills++;
+            run.SatchelShards += reward.Shards;
+            run.SatchelTuning += reward.Tuning;
+            foreach (var relic in reward.Relics)
+            {
+                p.Stats.RelicsFound++;
+                if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
+                p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+                p.BestItemLevel = Math.Max(p.BestItemLevel, relic.ItemLevel);
+                ev.Add(new GameEvent(EventKind.Drop, Loc.T(
+                    $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾った（未確保）",
+                    $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
+                AddToSatchel(p, relic, ev);
+            }
+            ev.AddRange(AddXp(p, reward.Xp));
+            return ev;
+        }
+
+        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev)
+        {
+            var run = p.Run;
+            run.Satchel.Add(relic);
+            if (run.Satchel.Count <= Content.SatchelCapacity) return;
+            var worst = run.Satchel.OrderBy(r => r.Score).First();
+            run.Satchel.Remove(worst);
+            run.SatchelShards += Content.SalvageShards(worst.Rarity);
+            ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                $"鞄が一杯のため「{worst.DisplayName}」を欠片にしました。",
+                $"Satchel full: \"{worst.DisplayName}\" was turned into shards.")));
+        }
+
+        /// <summary>
+        /// 新しいゾーンに着いたとき確保地点にするか。まだ何も倒しておらず、未確保品も深度もなければ、
+        /// 判断することがないので出さない（ラン開始直後の最初のゾーン）。
+        /// </summary>
+        public static bool ShouldOfferSecurePoint(Profile p)
+        {
+            var run = p.Run;
+            if (run == null || run.AwaitingChoice) return false;
+            return run.Kills > 0 || run.HasUnsecured || run.Heat > 0;
+        }
+
+        /// <summary>確保地点（新しいゾーン）に着いた。選ぶまで装備を整えられる。</summary>
+        public static void ReachSecurePoint(Profile p)
+        {
+            if (p.Run != null) p.Run.AwaitingChoice = true;
+        }
+
+        /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
+        public static List<GameEvent> Secure(Profile p)
+        {
+            var ev = new List<GameEvent>();
+            var run = p.Run;
+            if (run == null) return ev;
+            int heat = run.Heat;
+            int relics = run.Satchel.Count;
+            int bonusShards = run.SatchelShards * heat / 4;
+            int shards = run.SatchelShards + bonusShards;
+            int tuning = run.SatchelTuning;
+
+            var overflow = new List<Relic>();
+            foreach (var r in run.Satchel.OrderByDescending(r => r.Score))
+            {
+                if (p.Stash.Count < Content.StashCapacity) p.Stash.Add(r);
+                else overflow.Add(r);
+            }
+            foreach (var r in overflow) shards += Content.SalvageShards(r.Rarity);
+
+            p.AddMaterial(Materials.Shard, shards);
+            p.AddMaterial(Materials.Tuning, tuning);
+            run.Satchel.Clear();
+            run.SatchelShards = 0;
+            run.SatchelTuning = 0;
+            run.Heat = 0;
+            run.AwaitingChoice = false;
+            run.SecuredCount++;
+            p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
+
+            string bonus = bonusShards > 0 ? Loc.T($"（深度ボーナス+{bonusShards}）", $" (depth bonus +{bonusShards})") : "";
+            ev.Add(new GameEvent(EventKind.Secured, Loc.T(
+                $"確保した：遺物{relics}個、欠片{shards}{bonus}、調律石{tuning}",
+                $"Secured: {relics} relic(s), {shards} shards{bonus}, {tuning} tuning stone(s)")));
+            if (overflow.Count > 0)
+            {
+                ev.Add(new GameEvent(EventKind.Warning, Loc.T(
+                    $"保管庫が一杯のため{overflow.Count}個を欠片にしました。",
+                    $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
+            }
+            ev.AddRange(AddXp(p, Content.SecureXp));
+            return ev;
+        }
+
+        /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>
+        public static List<GameEvent> Delve(Profile p)
+        {
+            var ev = new List<GameEvent>();
+            var run = p.Run;
+            if (run == null) return ev;
+            run.Heat = Loot.ClampHeat(run.Heat + 1);
+            run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
+            run.AwaitingChoice = false;
+            ev.Add(new GameEvent(EventKind.Delved, Loc.T(
+                $"夢の深度 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
+                $"Dream depth {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
+            return ev;
+        }
+
+        /// <summary>戦闘部屋の突破数が増えた。条件を満たせば遺失物を1つ取り戻す（未確保として鞄へ）。</summary>
+        public static List<GameEvent> OnRoomsCleared(Profile p, int clearedRooms)
+        {
+            var ev = new List<GameEvent>();
+            var run = p.Run;
+            if (run == null) return ev;
+            run.RoomsCleared = Math.Max(run.RoomsCleared, clearedRooms);
+            if (run.LostRecovered || p.LostAndFound.Count == 0 || run.RoomsCleared < Content.RoomsToRecoverLost) return ev;
+            var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
+            p.LostAndFound.Remove(best);
+            run.LostRecovered = true;
+            run.Satchel.Add(best);
+            ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
+                $"遺失物「{best.DisplayName}」を取り戻した（未確保）",
+                $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
+            return ev;
+        }
+
+        public static List<GameEvent> EndRun(Profile p, bool victory)
+        {
+            var ev = new List<GameEvent>();
+            var run = p.Run;
+            if (run == null) return ev;
+            if (victory)
+            {
+                ev.AddRange(Secure(p));
+                p.Stats.Victories++;
+                ev.AddRange(AddXp(p, Content.VictoryXp));
+                ev.Add(new GameEvent(EventKind.Info, Loc.T("夢を踏破した！", "The dream is conquered!")));
+            }
+            else
+            {
+                p.Stats.Defeats++;
+                int echo = run.SatchelShards > 0 ? Math.Max(1, (run.SatchelShards + 3) / 4) : 0;
+                p.AddMaterial(Materials.Shard, echo);
+                int lost = run.Satchel.Count;
+                foreach (var r in run.Satchel) p.LostAndFound.Add(r);
+                int salvaged = 0;
+                while (p.LostAndFound.Count > Content.LostAndFoundCapacity)
+                {
+                    var worst = p.LostAndFound.OrderBy(r => r.Score).First();
+                    p.LostAndFound.Remove(worst);
+                    p.AddMaterial(Materials.Shard, Content.SalvageShards(worst.Rarity));
+                    salvaged++;
+                }
+                if (lost > 0 || echo > 0)
+                {
+                    ev.Add(new GameEvent(EventKind.Lost, Loc.T(
+                        $"未確保の遺物{lost}個は遺失物へ。欠片は残響として{echo}個だけ持ち帰った。",
+                        $"{lost} unsecured relic(s) went to Lost & Found. {echo} shard(s) returned as echoes.")));
+                }
+                if (salvaged > 0)
+                {
+                    ev.Add(new GameEvent(EventKind.Warning, Loc.T(
+                        $"遺失物が上限を超えたため{salvaged}個を欠片にしました。",
+                        $"Lost & Found overflowed: {salvaged} relic(s) were turned into shards.")));
+                }
+            }
+            p.Run = null;
+            return ev;
+        }
+
+        public static List<GameEvent> AddXp(Profile p, int amount)
+        {
+            var ev = new List<GameEvent>();
+            if (amount <= 0 || p.DreamLevel >= Content.MaxDreamLevel) return ev;
+            p.DreamXp += amount;
+            while (p.DreamLevel < Content.MaxDreamLevel && p.DreamXp >= Content.XpToNext(p.DreamLevel))
+            {
+                p.DreamXp -= Content.XpToNext(p.DreamLevel);
+                p.DreamLevel++;
+                ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
+                    $"夢のレベル {p.DreamLevel}！ 専門化ポイント+1",
+                    $"Dream Level {p.DreamLevel}! +1 specialization point")));
+            }
+            if (p.DreamLevel >= Content.MaxDreamLevel) p.DreamXp = 0;
+            return ev;
+        }
+
+        // ───────────── 装着 ─────────────
+
+        public static void Equip(Profile p, string heroKey, string uid)
+        {
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            p.Hero(heroKey).Equipped[(int)r.Slot] = uid;
+        }
+
+        public static void Unequip(Profile p, string heroKey, Slot slot)
+        {
+            p.Hero(heroKey).Equipped[(int)slot] = null;
+        }
+
+        public static Relic EquippedRelic(Profile p, string heroKey, Slot slot)
+        {
+            return p.FindStash(p.Hero(heroKey).Equipped[(int)slot]);
+        }
+
+        // ───────────── 鍛冶 ─────────────
+
+        public static int SalvageValue(Relic r)
+        {
+            int refund = 0;
+            for (int i = 0; i < r.Enhance; i++) refund += Content.EnhanceCost(i);
+            return Content.SalvageShards(r.Rarity) + refund / 2;
+        }
+
+        public static GameEvent Salvage(Profile p, string uid)
+        {
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
+            int shards = SalvageValue(r);
+            int tuning = Content.SalvageTuning(r.Rarity);
+            p.Stash.Remove(r);
+            foreach (var h in p.Heroes.Values)
+                for (int i = 0; i < h.Equipped.Length; i++)
+                    if (h.Equipped[i] == uid) h.Equipped[i] = null;
+            p.AddMaterial(Materials.Shard, shards);
+            p.AddMaterial(Materials.Tuning, tuning);
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"「{r.DisplayName}」を分解：欠片+{shards}" + (tuning > 0 ? $"、調律石+{tuning}" : ""),
+                $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
+        }
+
+        public static GameEvent Enhance(Profile p, string uid)
+        {
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (r.Enhance >= Content.MaxEnhance) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
+            int cost = Content.EnhanceCost(r.Enhance);
+            if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
+            p.AddMaterial(Materials.Shard, -cost);
+            r.Enhance++;
+            return new GameEvent(EventKind.Info, Loc.T($"「{r.DisplayName}」に強化した。", $"Enhanced to \"{r.DisplayName}\"."), r.Rarity);
+        }
+
+        public static GameEvent Retune(Profile p, string uid, int affixIndex)
+        {
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
+            if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
+            int cost = Content.RetuneCost(r.Retunes);
+            if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
+            var exclude = new HashSet<Stat> { r.Base.ImplicitStat };
+            foreach (var a in r.Affixes) exclude.Add(a.Stat);
+            var rng = p.TakeRng();
+            var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude);
+            if (line == null)
+            {
+                // 候補が尽きた場合は同じ能力値で数値だけ引き直す。
+                exclude.Remove(r.Affixes[affixIndex].Stat);
+                line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude);
+            }
+            p.StoreRng(rng);
+            p.AddMaterial(Materials.Tuning, -cost);
+            var old = r.Affixes[affixIndex];
+            r.Affixes[affixIndex] = line;
+            r.Retunes++;
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"再調律：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}",
+                $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
+        }
+
+        public static int CraftShardCost(bool fine) => fine ? 150 : 60;
+        public static int CraftTuningCost(bool fine) => fine ? 2 : 0;
+
+        /// <summary>製作。通常はアンコモン以上、上等はレア以上を、到達した最高アイテムレベルで作る。</summary>
+        public static GameEvent Craft(Profile p, Slot slot, bool fine)
+        {
+            int shards = CraftShardCost(fine);
+            int tuning = CraftTuningCost(fine);
+            if (p.Stash.Count >= Content.StashCapacity) throw new InvalidOperationException(Loc.T("保管庫が一杯です。", "Your stash is full."));
+            if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
+            var rng = p.TakeRng();
+            var rarity = Loot.RollRarity(rng, fine ? 1.0 : 0.5, allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
+            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot);
+            p.StoreRng(rng);
+            p.AddMaterial(Materials.Shard, -shards);
+            p.AddMaterial(Materials.Tuning, -tuning);
+            p.Stash.Add(relic);
+            p.Codex.Add(relic.BaseId);
+            return new GameEvent(EventKind.Drop, Loc.T(
+                $"製作：{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」",
+                $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
+        }
+
+        public static void ToggleLock(Profile p, string uid)
+        {
+            var r = p.FindStash(uid);
+            if (r != null) r.Locked = !r.Locked;
+        }
+
+        // ───────────── 専門化 ─────────────
+
+        public static int RouteRanks(HeroState h, Line route)
+        {
+            int n = 0;
+            foreach (var kv in h.Talents)
+                if (Content.TryGetTalent(kv.Key, out var t) && t.Route == route && !t.IsKeystone) n += kv.Value;
+            return n;
+        }
+
+        public static int SpentPoints(HeroState h)
+        {
+            int n = 0;
+            foreach (var kv in h.Talents) n += kv.Value;
+            if (h.Keystone != null) n += Content.KeystoneCost;
+            return n;
+        }
+
+        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints - SpentPoints(p.Hero(heroKey));
+
+        public static void AddTalentRank(Profile p, string heroKey, string talentId)
+        {
+            if (!Content.TryGetTalent(talentId, out var t) || t.IsKeystone) throw new InvalidOperationException("未知のノード: " + talentId);
+            var h = p.Hero(heroKey);
+            int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
+            if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
+            if (FreePoints(p, heroKey) < 1) throw new InvalidOperationException(Loc.T("ポイントが足りません。", "Not enough points."));
+            h.Talents[talentId] = cur + 1;
+        }
+
+        /// <summary>刻印（到達ノード）を選ぶ。そのルートに6ポイント以上必要。付け替えは追加費用なし。</summary>
+        public static void SetKeystone(Profile p, string heroKey, string keystoneId)
+        {
+            var h = p.Hero(heroKey);
+            if (keystoneId == null)
+            {
+                h.Keystone = null;
+                return;
+            }
+            if (!Content.TryGetTalent(keystoneId, out var t) || !t.IsKeystone) throw new InvalidOperationException("未知の刻印: " + keystoneId);
+            if (RouteRanks(h, t.Route) < Content.KeystoneRouteRequirement)
+                throw new InvalidOperationException(Loc.T($"{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}ポイント以上必要です。",
+                    $"Requires {Content.KeystoneRouteRequirement}+ points in {Content.LineName(t.Route)}."));
+            if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
+                throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
+            h.Keystone = keystoneId;
+        }
+
+        public static void ResetTalents(Profile p, string heroKey)
+        {
+            var h = p.Hero(heroKey);
+            h.Talents.Clear();
+            h.Keystone = null;
+        }
+    }
+}
