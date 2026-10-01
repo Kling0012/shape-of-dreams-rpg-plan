@@ -33,6 +33,8 @@ namespace SodRpg.Core.Game
         Recycler = 12,
         /// <summary>ハンターに取られた場所へ Target 回踏み込む。</summary>
         HunterBait = 13,
+        /// <summary>悪夢の契約を Target 回結ぶ。</summary>
+        PactBearer = 14,
     }
 
     /// <summary>
@@ -69,6 +71,7 @@ namespace SodRpg.Core.Game
                 case BountyKind.Alchemist: return Loc.T($"Essenceを{t}回合成する", $"Merge Essences {t} time(s)");
                 case BountyKind.Recycler: return Loc.T($"MemoryかEssenceを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)");
                 case BountyKind.HunterBait: return Loc.T($"ハンターの領域へ{t}回踏み込む", $"Enter hunter territory {t} time(s)");
+                case BountyKind.PactBearer: return Loc.T($"悪夢の契約を{t}回結ぶ", $"Swear {t} nightmare pact(s)");
                 default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms");
             }
         }
@@ -109,6 +112,7 @@ namespace SodRpg.Core.Game
             new Template { Kind = BountyKind.Alchemist, Min = 1, Max = 2, Shards = 25, Tuning = 1, Xp = 50 },
             new Template { Kind = BountyKind.Recycler, Min = 1, Max = 3, Shards = 15, Xp = 30 },
             new Template { Kind = BountyKind.HunterBait, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.PactBearer, Min = 1, Max = 2, Shards = 35, Tuning = 1, Xp = 60 },
         };
 
         /// <summary>種類の重ならない依頼を count 個作る。目標が大きいほど報酬も増える。</summary>

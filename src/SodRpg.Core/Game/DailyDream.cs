@@ -75,6 +75,18 @@ namespace SodRpg.Core.Game
                 Description = new Txt("依頼の報酬×2", "x2 bounty rewards"),
                 BountyMult = 2.0,
             },
+            new DailyDream
+            {
+                Id = 9, Name = new Txt("影の日", "Day of Shadows"),
+                Description = new Txt("影・処刑・爆砕が+50%、破壊の遺物が出やすい", "Umbra, Executioner and Shatter +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Umbra, Power.Executioner, Power.Shatter },
+            },
+            new DailyDream
+            {
+                Id = 10, Name = new Txt("霜の日", "Day of Frost"),
+                Description = new Txt("霜・回避の残響・守護霊が+50%、生命の遺物が出やすい", "Frost, Echoing Dodge and Aegis +50%; Life relics favored"),
+                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Frost, Power.EchoingDodge, Power.Aegis },
+            },
         };
 
         public static DailyDream Get(int id)

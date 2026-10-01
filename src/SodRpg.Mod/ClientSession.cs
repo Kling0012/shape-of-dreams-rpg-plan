@@ -453,7 +453,20 @@ namespace SodRpg.Mod
             SaveNow();
         }
 
-        public Build CurrentBuild(string heroKey) => Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
+        private Build _buildCache;
+        private string _buildCacheHero;
+        private int _buildCacheFrame = -1;
+
+        /// <summary>今回の強さ（同じフレーム・同じキャラなら使い回す。OnGUI は1フレームに何度も呼ばれるため）。</summary>
+        public Build CurrentBuild(string heroKey)
+        {
+            int frame = Time.frameCount;
+            if (_buildCache != null && _buildCacheFrame == frame && _buildCacheHero == heroKey) return _buildCache;
+            _buildCache = Build.Compute(Profile, heroKey, Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
+            _buildCacheHero = heroKey;
+            _buildCacheFrame = frame;
+            return _buildCache;
+        }
 
         private void SendBuildIfNeeded()
         {
