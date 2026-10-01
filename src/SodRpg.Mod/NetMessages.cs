@@ -21,6 +21,14 @@ namespace SodRpg.Mod
         public string summary;
     }
 
+    /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
+    [Serializable]
+    public class DreamforgeNightmareMsg
+    {
+        public uint netId;
+        public int affixes;
+    }
+
     internal static class Protocol
     {
         public const int Version = 1;

@@ -33,6 +33,10 @@ namespace SodRpg.Mod
         private readonly Action _onClearedRoomsChanged;
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
+        private readonly Action<DreamforgeNightmareMsg> _onNightmare;
+
+        /// <summary>悪夢化した敵（netId → 接頭効果）。名札の表示と撃破時の報酬に使う。</summary>
+        public Dictionary<uint, NightmareAffix> Nightmare { get; } = new Dictionary<uint, NightmareAffix>();
 
         private readonly RoomCounter _rooms = new RoomCounter();
         private bool _dirty;
@@ -73,6 +77,7 @@ namespace SodRpg.Mod
             _onClearedRoomsChanged = OnClearedRoomsChanged;
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
+            _onNightmare = OnNightmare;
         }
 
         public string SavePath => _store?.Path;
@@ -164,12 +169,18 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                 }
                 _clientRpcOn = actor;
+                Nightmare.Clear();
                 HostConfirmed = false;
                 HostSummary = null;
                 _buildDirty = true;
-                if (actor != null) actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                if (actor != null)
+                {
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                }
             }
         }
 
@@ -184,7 +195,11 @@ namespace SodRpg.Mod
                 }
                 if (_cem != null) _cem.OnDeath -= _onDeath;
                 if (_results != null) _results.ClientEvent_OnGameConcluded -= _onConcluded;
-                if (_clientRpcOn != null) _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                if (_clientRpcOn != null)
+                {
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                }
             }
             catch (Exception) { }
             _zone = null;
@@ -243,7 +258,9 @@ namespace SodRpg.Mod
                 var gm = NetworkedManagerBase<GameManager>.instance;
                 if (gm != null) level = Math.Max(level, gm.ambientLevel);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                Emit(Rules.OnKill(Profile, tier, level));
+                Nightmare.TryGetValue(m.netId, out var nightmare);
+                Nightmare.Remove(m.netId);
+                Emit(Rules.OnKill(Profile, tier, level, nightmare));
                 if (tier >= MonsterTier.MiniBoss) _nextSave = 0;
             }
             catch (Exception ex)
@@ -306,6 +323,14 @@ namespace SodRpg.Mod
         internal static bool IsVictory(DewGameResult.ResultType r)
         {
             return r == DewGameResult.ResultType.PureWhiteDream || r == DewGameResult.ResultType.StarlessPath || r == DewGameResult.ResultType.UnknownFate;
+        }
+
+        private void OnNightmare(DreamforgeNightmareMsg msg)
+        {
+            if (msg == null) return;
+            var a = Nightmares.Sanitize(msg.affixes);
+            if (a != NightmareAffix.None) Nightmare[msg.netId] = a;
+            if (Nightmare.Count > 300) Nightmare.Clear(); // 取りこぼしで溜まり続けないように
         }
 
         private void OnApplied(DreamforgeAppliedMsg msg)

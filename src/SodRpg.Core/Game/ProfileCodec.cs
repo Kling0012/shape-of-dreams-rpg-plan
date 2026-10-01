@@ -60,7 +60,8 @@ namespace SodRpg.Core.Game
             var stats = new JsonObject()
                 .Add("runs", (long)s.Runs).Add("victories", (long)s.Victories).Add("defeats", (long)s.Defeats)
                 .Add("relicsFound", (long)s.RelicsFound).Add("legendariesFound", (long)s.LegendariesFound)
-                .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills);
+                .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills)
+                .Add("nightmares", (long)s.NightmaresSlain);
 
             JsonObject run = null;
             if (p.Run != null)
@@ -237,6 +238,7 @@ namespace SodRpg.Core.Game
                 p.Stats.LegendariesFound = Clamp(Long(st, "legendariesFound"), 0, int.MaxValue);
                 p.Stats.BestHeatSecured = Clamp(Long(st, "bestHeatSecured"), 0, Content.MaxHeat);
                 p.Stats.Kills = Clamp(Long(st, "kills"), 0, int.MaxValue);
+                p.Stats.NightmaresSlain = Clamp(Long(st, "nightmares"), 0, int.MaxValue);
             }
             if (b.TryGet("run", out object ro) && ro is JsonObject rj)
             {

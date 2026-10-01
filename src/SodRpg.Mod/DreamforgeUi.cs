@@ -125,6 +125,7 @@ namespace SodRpg.Mod
                 bool transition = zm != null && zm.isInAnyTransition;
                 if (_s.InGame && !transition)
                 {
+                    DrawNightmareLabels(scale);
                     DrawHud(w, h, cfg);
                     if (_s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
@@ -178,7 +179,7 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 300, 80, 600, 196 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0));
+            var rect = new Rect(w / 2 - 300, 80, 600, 220 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
@@ -187,6 +188,9 @@ namespace SodRpg.Mod
                 $"未確保：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}（確保で深度ボーナス+{bonus}）・調律石{run.SatchelTuning}",
                 $"Unsecured: {run.Satchel.Count} relics, {run.SatchelShards} shards (+{bonus} depth bonus), {run.SatchelTuning} tuning"), _st.Label);
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
+            GUILayout.Label(UiStyles.Colored(Loc.T(
+                $"深度{next}：敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%・エリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が悪夢化（倒せばエリート〜ボス級の戦利品）",
+                $"Depth {next}: {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites become nightmares (elite-to-boss loot)"), "#ff9ae0"), _st.Small);
             GUILayout.Label(Loc.T(
                 $"深く潜る → 深度{next}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * next)}%・レア度上昇／防御-{Build.HeatArmorPenalty * next}・最大HP-{Build.HeatHealthPenaltyPct * next}%。全滅すると未確保品は遺失物に。",
                 $"Delve -> depth {next}: +{(int)(Loot.HeatDropBonus * 100 * next)}% drops, better rarity / -{Build.HeatArmorPenalty * next} armor, -{Build.HeatHealthPenaltyPct * next}% max HP. Unsecured loot is lost on defeat."), _st.Small);
@@ -210,6 +214,39 @@ namespace SodRpg.Mod
                 }
             }
             GUILayout.EndArea();
+        }
+
+        private readonly List<uint> _labelScratch = new List<uint>();
+
+        /// <summary>悪夢化した敵の頭上に名札を出す。</summary>
+        private void DrawNightmareLabels(float scale)
+        {
+            if (_s.Nightmare.Count == 0) return;
+            var cam = Camera.main;
+            if (cam == null) return;
+            _labelScratch.Clear();
+            foreach (var kv in _s.Nightmare)
+            {
+                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
+                {
+                    _labelScratch.Add(kv.Key);
+                    continue;
+                }
+                var m = id.GetComponent<Monster>();
+                if (m == null || !m.isActive)
+                {
+                    _labelScratch.Add(kv.Key);
+                    continue;
+                }
+                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
+                if (sp.z <= 0) continue;
+                string text = UiStyles.Colored(Nightmares.Label(kv.Value), "#ff6ad5");
+                var content = new GUIContent(text);
+                var size = _st.ToastMeasure.CalcSize(content);
+                float x = sp.x / scale - size.x / 2, y = (Screen.height - sp.y) / scale - size.y;
+                GUI.Label(new Rect(x, y, size.x + 4, size.y), text, _st.Toast);
+            }
+            foreach (var k in _labelScratch) _s.Nightmare.Remove(k);
         }
 
         private bool _reportDismissed;

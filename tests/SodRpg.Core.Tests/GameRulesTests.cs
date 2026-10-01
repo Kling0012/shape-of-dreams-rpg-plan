@@ -168,6 +168,7 @@ namespace SodRpg.Core.Tests
             p.LostAndFound.Add(best);
 
             Rules.BeginRun(p, "b");
+            p.Run.Bounties.Clear();
             Assert.Empty(Rules.OnRoomsCleared(p, 2));
             var ev = Rules.OnRoomsCleared(p, 3);
             Assert.Contains(ev, e => e.Kind == EventKind.Recovered);

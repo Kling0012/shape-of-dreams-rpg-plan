@@ -108,6 +108,7 @@ namespace SodRpg.Core.Game
         public int LegendariesFound { get; set; }
         public int BestHeatSecured { get; set; }
         public int Kills { get; set; }
+        public int NightmaresSlain { get; set; }
 
         public ProfileStats Clone() => (ProfileStats)MemberwiseClone();
     }

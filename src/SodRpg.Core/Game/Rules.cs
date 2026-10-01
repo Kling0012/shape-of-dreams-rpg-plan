@@ -70,14 +70,21 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
             var rng = p.TakeRng();
             int pity = p.EpicPity;
-            var reward = Loot.RollKill(rng, tier, itemLevel, run.Heat, ref pity, p.Focus, Pacts.Sum(run.Pacts));
+            bool isNightmare = nightmare != NightmareAffix.None;
+            var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, p.Focus, Pacts.Sum(run.Pacts));
+            if (isNightmare)
+            {
+                p.Stats.NightmaresSlain++;
+                ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を討った！", $"Slew a {Nightmares.Label(nightmare)}!")));
+            }
             p.EpicPity = pity;
             p.StoreRng(rng);
 
@@ -98,6 +105,7 @@ namespace SodRpg.Core.Game
                 AddToSatchel(p, relic, ev);
                 if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
             }
+            if (isNightmare) AdvanceBounty(p, BountyKind.NightmareHunter, 1, false, ev);
             switch (tier)
             {
                 case MonsterTier.MiniBoss: AdvanceBounty(p, BountyKind.EliteHunter, 1, false, ev); break;

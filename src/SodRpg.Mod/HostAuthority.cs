@@ -36,12 +36,22 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoAttackHit> _onAttackHit;
         private float _nextAreaScan;
 
+        // 悪夢化エリート
+        private ActorManager _am;
+        private readonly Action<Entity> _onEntityAdd;
+        private readonly List<Monster> _spawnQueue = new List<Monster>();
+        private readonly Dictionary<Monster, float> _regen = new Dictionary<Monster, float>();
+        private readonly List<Monster> _regenScratch = new List<Monster>();
+        private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
+        private float _nextRegen;
+
         public HostAuthority()
         {
             _onBuild = OnBuild;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
             _onAttackHit = OnAttackHit;
+            _onEntityAdd = OnEntityAdd;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -64,6 +74,88 @@ namespace SodRpg.Mod
                 ScanArea();
             }
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
+            ProcessSpawns();
+            if (now >= _nextRegen)
+            {
+                _nextRegen = now + 0.5f;
+                RegenNightmares();
+            }
+        }
+
+        /// <summary>パーティの最大の夢の深度（MOD導入者の Build から）。</summary>
+        private int PartyDepth()
+        {
+            int d = 0;
+            foreach (var kv in _builds)
+                if (kv.Key != null && kv.Key.hero != null) d = Math.Max(d, kv.Value.Heat);
+            return d;
+        }
+
+        private void OnEntityAdd(Entity e)
+        {
+            if (e is Monster m && !(e is BossMonster)) _spawnQueue.Add(m);
+        }
+
+        private void ProcessSpawns()
+        {
+            if (_spawnQueue.Count == 0) return;
+            int depth = PartyDepth();
+            for (int i = _spawnQueue.Count - 1; i >= 0; i--)
+            {
+                var m = _spawnQueue[i];
+                if (m == null)
+                {
+                    _spawnQueue.RemoveAt(i);
+                    continue;
+                }
+                if (!m.isActive || m.Status == null || m.Status.maxHealth <= 0) continue;
+                _spawnQueue.RemoveAt(i);
+                if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
+                var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
+                var affix = Nightmares.Roll(_rng, tier, depth);
+                if (affix == NightmareAffix.None) continue;
+                MakeNightmare(m, affix);
+            }
+        }
+
+        private void MakeNightmare(Monster m, NightmareAffix affix)
+        {
+            var bonus = new StatBonus();
+            foreach (var s in Nightmares.MonsterStats(affix, out float regen))
+            {
+                float v = StatUnits.ToGame(s.Stat, s.Value);
+                switch (s.Stat)
+                {
+                    case Stat.MaxHealthPct: bonus.maxHealthPercentage += v; break;
+                    case Stat.Armor: bonus.armorFlat += v; break;
+                    case Stat.AttackPct: bonus.attackDamagePercentage += v; break;
+                    case Stat.AttackSpeedPct: bonus.attackSpeedPercentage += v; break;
+                    case Stat.MoveSpeedPct: bonus.movementSpeedPercentage += v; break;
+                    case Stat.PowerPct: bonus.abilityPowerPercentage += v; break;
+                    case Stat.Haste: bonus.abilityHasteFlat += v; break;
+                }
+                if (regen > 0) _regen[m] = regen;
+            }
+            m.Status.AddStatBonus(bonus);
+            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
+        }
+
+        private void RegenNightmares()
+        {
+            if (_regen.Count == 0) return;
+            _regenScratch.Clear();
+            foreach (var kv in _regen)
+            {
+                var m = kv.Key;
+                if (m == null || !m.isActive)
+                {
+                    _regenScratch.Add(m);
+                    continue;
+                }
+                if (m.currentHealth < m.maxHealth) m.Heal(m.maxHealth * kv.Value / 100f * 0.5f).Dispatch(m);
+            }
+            foreach (var m in _regenScratch) _regen.Remove(m);
         }
 
         private void EnsureRegistered()
@@ -82,6 +174,17 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildMsg>(nameof(DreamforgeBuildMsg), _onBuild);
                     Log.Info("Host: registered build handler.");
                 }
+            }
+            if (am != _am)
+            {
+                if (_am != null)
+                {
+                    try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                }
+                _am = am;
+                _spawnQueue.Clear();
+                _regen.Clear();
+                if (am != null) am.ClientEvent_OnEntityAdd += _onEntityAdd;
             }
             var cem = NetworkedManagerBase<ClientEventManager>.instance;
             if (cem != _cem)
@@ -117,6 +220,13 @@ namespace SodRpg.Mod
             _runtimes.Clear();
             _builds.Clear();
             Unsubscribe();
+            if (_am != null)
+            {
+                try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                _am = null;
+            }
+            _spawnQueue.Clear();
+            _regen.Clear();
             if (_registeredOn != null)
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }

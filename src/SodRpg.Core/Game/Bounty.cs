@@ -19,6 +19,8 @@ namespace SodRpg.Core.Game
         Treasure = 5,
         /// <summary>戦闘部屋を Target 個突破する。</summary>
         Pathfinder = 6,
+        /// <summary>悪夢化した敵を Target 体倒す（深く潜らないと出ない）。</summary>
+        NightmareHunter = 7,
     }
 
     /// <summary>
@@ -48,6 +50,7 @@ namespace SodRpg.Core.Game
                 case BountyKind.Collector: return Loc.T($"遺物を{t}個確保する", $"Secure {t} relics");
                 case BountyKind.DeepDiver: return Loc.T($"夢の深度{t}以上で確保する", $"Secure at dream depth {t}+");
                 case BountyKind.Treasure: return Loc.T($"レア以上の遺物を{t}個見つける", $"Find {t} Rare+ relic(s)");
+                case BountyKind.NightmareHunter: return Loc.T($"悪夢化した敵を{t}体倒す", $"Slay {t} nightmare(s)");
                 default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms");
             }
         }
@@ -78,6 +81,7 @@ namespace SodRpg.Core.Game
             new Template { Kind = BountyKind.DeepDiver, Min = 1, Max = 3, Shards = 25, Tuning = 1, Xp = 50 },
             new Template { Kind = BountyKind.Treasure, Min = 1, Max = 3, Shards = 20, Xp = 40 },
             new Template { Kind = BountyKind.Pathfinder, Min = 4, Max = 8, Shards = 15, Xp = 30 },
+            new Template { Kind = BountyKind.NightmareHunter, Min = 1, Max = 3, Shards = 30, Tuning = 1, Xp = 60 },
         };
 
         /// <summary>種類の重ならない依頼を count 個作る。目標が大きいほど報酬も増える。</summary>
