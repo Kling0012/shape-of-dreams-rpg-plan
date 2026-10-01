@@ -193,6 +193,24 @@ namespace SodRpg.Mod
             _session.SaveNow();
         }
 
+        [ConsoleCommand("Dreamforge: give legendaries whose id starts with a prefix for testing (e.g. set.cinder)", "dreamforge_giveunique")]
+        private void GiveUniqueCommand(string prefix)
+        {
+            var p = _session.Profile;
+            var rng = p.TakeRng();
+            foreach (var u in Content.Uniques)
+            {
+                if (string.IsNullOrEmpty(prefix) || !u.Id.StartsWith(prefix, StringComparison.Ordinal)) continue;
+                var r = Loot.RollUnique(rng, u, Math.Max(1, p.BestItemLevel));
+                if (p.Run != null) p.Run.Satchel.Add(r);
+                else p.Stash.Add(r);
+                _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + r.DisplayName, r.Rarity));
+            }
+            p.StoreRng(rng);
+            _session.MarkDirty(true);
+            _session.SaveNow();
+        }
+
         [ConsoleCommand("Dreamforge: log your hero's final stats and the bonus applied by this mod", "dreamforge_stats")]
         private void StatsCommand()
         {
