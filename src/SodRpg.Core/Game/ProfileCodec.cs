@@ -61,7 +61,7 @@ namespace SodRpg.Core.Game
                 .Add("runs", (long)s.Runs).Add("victories", (long)s.Victories).Add("defeats", (long)s.Defeats)
                 .Add("relicsFound", (long)s.RelicsFound).Add("legendariesFound", (long)s.LegendariesFound)
                 .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills)
-                .Add("nightmares", (long)s.NightmaresSlain);
+                .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth);
 
             JsonObject run = null;
             if (p.Run != null)
@@ -73,7 +73,7 @@ namespace SodRpg.Core.Game
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
-                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId)
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth)
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
@@ -87,6 +87,7 @@ namespace SodRpg.Core.Game
                 .Add("bestItemLevel", (long)p.BestItemLevel)
                 .Add("japanese", p.Japanese)
                 .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
+                .Add("startDepth", (long)p.StartDepth)
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
@@ -181,6 +182,7 @@ namespace SodRpg.Core.Game
                 BestItemLevel = Clamp(Long(b, "bestItemLevel"), 1, Content.MaxItemLevel),
                 Japanese = Bool(b, "japanese", true),
             };
+            p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
             if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)
@@ -240,6 +242,7 @@ namespace SodRpg.Core.Game
                 p.Stats.BestHeatSecured = Clamp(Long(st, "bestHeatSecured"), 0, Content.MaxHeat);
                 p.Stats.Kills = Clamp(Long(st, "kills"), 0, int.MaxValue);
                 p.Stats.NightmaresSlain = Clamp(Long(st, "nightmares"), 0, int.MaxValue);
+                p.Stats.BestVictoryStartDepth = st.TryGet("bestVictoryStartDepth", out object bv) && bv is long bvl ? Clamp(bvl, -1, Content.MaxHeat) : -1;
             }
             if (b.TryGet("run", out object ro) && ro is JsonObject rj)
             {
@@ -259,6 +262,7 @@ namespace SodRpg.Core.Game
                     ShardsSecured = Clamp(Long(rj, "shardsSecured"), 0, int.MaxValue),
                     LevelAtStart = Clamp(Long(rj, "levelAtStart"), 0, Content.MaxDreamLevel),
                     DailyId = DailyDream.Get((int)Long(rj, "daily")) != null ? (int)Long(rj, "daily") : 0,
+                    StartDepth = Clamp(Long(rj, "startDepth"), 0, Content.MaxHeat),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);

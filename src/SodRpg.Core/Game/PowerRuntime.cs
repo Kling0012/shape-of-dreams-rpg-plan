@@ -31,6 +31,13 @@ namespace SodRpg.Core.Game
         public const int BlazeEvery = 4;
         public const int BulwarkEnemies = 3;
         public const float ResonanceRange = 10f;
+        public const double ChainChance = 0.25;
+        public const int ChainTargets = 2;
+        public const float ChainRange = 6f;
+        public const float ShatterRadius = 4f;
+        public const float AegisThreshold = 0.2f;
+        public const float AegisCooldown = 20f;
+        public const float BloodlustThreshold = 0.5f;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -40,6 +47,10 @@ namespace SodRpg.Core.Game
         private float _lifestealReady;
         private float _thornsReady;
         private int _blazeCounter;
+        private float _aegisReady;
+
+        /// <summary>現在のHP割合（ホストが毎フレーム設定）。血の渇きに使う。</summary>
+        public float HealthRatio { get; set; } = 1f;
 
         public PowerRuntime(Build build, float now)
         {
@@ -68,6 +79,23 @@ namespace SodRpg.Core.Game
             if (Build.Get(Power.Tailwind) > 0) _tailwindUntil = now + TailwindDuration;
         }
 
+        /// <summary>撃破した。爆砕の範囲ダメージ（0ならなし）を返す。</summary>
+        public float OnKill(float now, float attackDamage)
+        {
+            OnKill(now);
+            int shatter = Build.Get(Power.Shatter);
+            return shatter > 0 ? attackDamage * shatter / 100f : 0;
+        }
+
+        /// <summary>守護霊：大きな一撃を受けたら障壁量を返す（クールダウン20秒）。</summary>
+        public float TakeAegis(float now, float amount, float maxHealth)
+        {
+            int aegis = Build.Get(Power.Aegis);
+            if (aegis <= 0 || maxHealth <= 0 || now < _aegisReady || amount < maxHealth * AegisThreshold) return 0;
+            _aegisReady = now + AegisCooldown;
+            return maxHealth * aegis / 100f;
+        }
+
         /// <summary>被弾した。棘で返すダメージ（0なら返さない）を返す。</summary>
         public float OnDamaged(float now, float amount, bool attackerIsEnemy)
         {
@@ -84,10 +112,12 @@ namespace SodRpg.Core.Game
             public float Heal;
             public float ExecuteDamage;
             public float BlazeDamage;
+            /// <summary>雷鎖：近くの敵（最大2体）へ与えるダメージ。</summary>
+            public float ChainDamage;
         }
 
         /// <summary>通常攻撃が命中した。回復量と追加ダメージを返す。</summary>
-        public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float victimHealthRatio)
+        public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float victimHealthRatio, double roll = 1.0)
         {
             var r = new HitResult();
             int lifesteal = Build.Get(Power.Lifesteal);
@@ -104,6 +134,8 @@ namespace SodRpg.Core.Game
                 _blazeCounter = 0;
                 r.BlazeDamage = attackDamage * blaze / 100f;
             }
+            int chain = Build.Get(Power.ChainLightning);
+            if (chain > 0 && roll < ChainChance) r.ChainDamage = attackDamage * chain / 100f;
             return r;
         }
 
@@ -114,7 +146,7 @@ namespace SodRpg.Core.Game
             int resonance = ResonanceSelf + ResonanceShared;
             return new DynamicBonus
             {
-                AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks,
+                AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0),
                 AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance,
                 PowerPct = resonance,
                 MoveSpeedPct = now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0,

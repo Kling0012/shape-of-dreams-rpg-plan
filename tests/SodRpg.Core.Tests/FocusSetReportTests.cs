@@ -29,12 +29,15 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Focus_also_weights_legendaries()
         {
-            var rng = new Rng(3);
-            int offense = 0;
-            for (int i = 0; i < 6000; i++)
-                if (Loot.RollRelic(rng, Rarity.Legendary, 10, null, Line.Offense).Base.Line == Line.Offense) offense++;
-            // 固有品6のうち攻勢の基礎は4（終わらない舞・夢喰い・処刑人… は基礎の系統で判定）
-            Assert.True(offense > 6000 * 0.6);
+            double Share(Line? focus)
+            {
+                var rng = new Rng(3);
+                int offense = 0;
+                for (int i = 0; i < 8000; i++)
+                    if (Loot.RollRelic(rng, Rarity.Legendary, 10, null, focus).Base.Line == Line.Offense) offense++;
+                return offense / 8000.0;
+            }
+            Assert.True(Share(Line.Offense) > Share(null) * 1.3);
         }
 
         [Fact]

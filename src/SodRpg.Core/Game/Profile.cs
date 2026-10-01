@@ -57,6 +57,8 @@ namespace SodRpg.Core.Game
         public int LevelAtStart { get; set; }
         /// <summary>このランの「今日の夢」（開始日に決まる）。0 はなし。</summary>
         public int DailyId { get; set; }
+        /// <summary>このランの開始深度。確保するとここまで戻る。</summary>
+        public int StartDepth { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -80,6 +82,7 @@ namespace SodRpg.Core.Game
                 ShardsSecured = ShardsSecured,
                 LevelAtStart = LevelAtStart,
                 DailyId = DailyId,
+                StartDepth = StartDepth,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
@@ -118,6 +121,8 @@ namespace SodRpg.Core.Game
         public int BestHeatSecured { get; set; }
         public int Kills { get; set; }
         public int NightmaresSlain { get; set; }
+        /// <summary>踏破したときの最も深い開始深度（-1は未踏破）。</summary>
+        public int BestVictoryStartDepth { get; set; } = -1;
 
         public ProfileStats Clone() => (ProfileStats)MemberwiseClone();
     }
@@ -136,6 +141,8 @@ namespace SodRpg.Core.Game
         public int EpicPity { get; set; }
         public int BestItemLevel { get; set; } = 1;
         public bool Japanese { get; set; } = true;
+        /// <summary>遠征を始めるときの夢の深度（深淵の段階）。確保できた最高深度まで選べる。</summary>
+        public int StartDepth { get; set; }
 
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
@@ -214,6 +221,7 @@ namespace SodRpg.Core.Game
                 EpicPity = EpicPity,
                 BestItemLevel = BestItemLevel,
                 Japanese = Japanese,
+                StartDepth = StartDepth,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 Focus = Focus,

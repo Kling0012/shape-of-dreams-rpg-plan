@@ -231,7 +231,8 @@ namespace SodRpg.Mod
             {
                 if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
                 {
-                    _labelScratch.Add(kv.Key);
+                    // まだスポーンしていない可能性がある。10秒たっても現れなければ消す。
+                    if (!_s.NightmareSeenAt.TryGetValue(kv.Key, out float seen) || Time.unscaledTime - seen > 10f) _labelScratch.Add(kv.Key);
                     continue;
                 }
                 var m = id.GetComponent<Monster>();
@@ -248,7 +249,11 @@ namespace SodRpg.Mod
                 float x = sp.x / scale - size.x / 2, y = (Screen.height - sp.y) / scale - size.y;
                 GUI.Label(new Rect(x, y, size.x + 4, size.y), text, _st.Toast);
             }
-            foreach (var k in _labelScratch) _s.Nightmare.Remove(k);
+            foreach (var k in _labelScratch)
+            {
+                _s.Nightmare.Remove(k);
+                _s.NightmareSeenAt.Remove(k);
+            }
         }
 
         private bool _reportDismissed;
@@ -340,6 +345,30 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
+        private void StartDepthPicker()
+        {
+            var p = _s.Profile;
+            int best = p.Stats.BestHeatSecured;
+            if (best <= 0) return;
+            GUILayout.Label(Loc.T($"開始深度（深淵の段階・最高確保 {best}）", $"Start depth (abyss tier, best secured {best})"), _st.Small);
+            GUILayout.BeginHorizontal();
+            GUI.enabled = p.Run == null;
+            for (int d = 0; d <= best; d++)
+            {
+                if (GUILayout.Button(d.ToString(), p.StartDepth == d ? _st.ButtonSel : _st.Button))
+                {
+                    try
+                    {
+                        Rules.SetStartDepth(p, d);
+                        _s.MarkDirty(false);
+                    }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                }
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+        }
+
         private void SetFocus(Line? l)
         {
             try
@@ -411,6 +440,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T("遠征中は確保地点でのみ装備を変更できます。", "During an expedition, gear can only be changed at secure points."), _st.Warn);
             GUILayout.Label(Loc.T("同じ系統を2つ・3つ揃えるとセット効果。", "2 or 3 relics of one line grant a set bonus."), _st.Small);
             FocusPicker();
+            StartDepthPicker();
             GUILayout.EndVertical();
 
             // 中：保管庫
@@ -589,7 +619,7 @@ namespace SodRpg.Mod
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
                 int n = Rules.TransmuteCandidates(p, r).Count;
-                GUI.enabled = n >= 3;
+                GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= Rules.TransmuteCost(r);
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n" + Loc.T($"欠片{Rules.TransmuteCost(r)}", $"{Rules.TransmuteCost(r)} shards");
                 if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r), false);
                 GUI.enabled = true;

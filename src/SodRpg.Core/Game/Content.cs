@@ -198,6 +198,18 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.headsman", "charm.hunters_seal", new Txt("処刑人の印章", "Headsman's Seal"),
                 new Txt("弱った獲物を、狩人は見逃さない。", "A hunter never lets wounded prey escape."),
                 Power.Executioner, 50, Power.Momentum, 4),
+            new UniqueDef("unique.thunder_fangs", "weapon.twin_fang", new Txt("雷鳴の双牙", "Thunderfangs"),
+                new Txt("一つ斬れば、群れごと痺れる。", "Cut one, and the whole pack trembles."),
+                Power.ChainLightning, 60, Power.Momentum, 4),
+            new UniqueDef("unique.shattered_star", "charm.pulsing_core", new Txt("砕けた星核", "Shattered Starcore"),
+                new Txt("倒れた悪夢は、星屑になって弾ける。", "Fallen nightmares burst into stardust."),
+                Power.Shatter, 70, Power.Tailwind, 20),
+            new UniqueDef("unique.warding_spirit", "armor.resonant_robe", new Txt("守護霊の衣", "Shroud of the Warding Spirit"),
+                new Txt("深い傷ほど、誰かがそっと手を添える。", "The deeper the wound, the gentler the hand that covers it."),
+                Power.Aegis, 25, Power.Barrier, 8),
+            new UniqueDef("unique.bloodied_maul", "weapon.shield_maul", new Txt("血塗れの大槌", "Bloodied Maul"),
+                new Txt("追い詰められた獣ほど、よく暴れる。", "A cornered beast fights the hardest."),
+                Power.Bloodlust, 30, Power.Lifesteal, 10),
         };
 
         private static readonly Dictionary<Slot, AffixDef[]> AffixPools = new Dictionary<Slot, AffixDef[]>
@@ -240,6 +252,8 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Lifesteal, 5, 10),
                 new PowerRange(Power.Executioner, 25, 45),
                 new PowerRange(Power.Blaze, 40, 70),
+                new PowerRange(Power.ChainLightning, 30, 50),
+                new PowerRange(Power.Bloodlust, 12, 20),
             },
             [Slot.Armor] = new[]
             {
@@ -247,12 +261,14 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Bulwark, 15, 30),
                 new PowerRange(Power.Thorns, 15, 30),
                 new PowerRange(Power.Barrier, 6, 10),
+                new PowerRange(Power.Aegis, 10, 20),
             },
             [Slot.Charm] = new[]
             {
                 new PowerRange(Power.Resonance, 5, 9),
                 new PowerRange(Power.Tailwind, 15, 25),
                 new PowerRange(Power.SecondWind, 20, 30),
+                new PowerRange(Power.Shatter, 30, 60),
             },
         };
 
@@ -295,6 +311,10 @@ namespace SodRpg.Core.Game
             [Power.Barrier] = 25,
             [Power.SecondWind] = 60,
             [Power.Blaze] = 150,
+            [Power.ChainLightning] = 120,
+            [Power.Shatter] = 150,
+            [Power.Aegis] = 40,
+            [Power.Bloodlust] = 40,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -530,6 +550,10 @@ namespace SodRpg.Core.Game
                 case Power.Barrier: return Loc.T("護りの灯", "Barrier");
                 case Power.SecondWind: return Loc.T("灯守", "Second Wind");
                 case Power.Blaze: return Loc.T("烈火", "Blaze");
+                case Power.ChainLightning: return Loc.T("雷鎖", "Chain Lightning");
+                case Power.Shatter: return Loc.T("爆砕", "Shatter");
+                case Power.Aegis: return Loc.T("守護霊", "Aegis");
+                case Power.Bloodlust: return Loc.T("血の渇き", "Bloodlust");
                 default: return "-";
             }
         }
@@ -550,6 +574,10 @@ namespace SodRpg.Core.Game
                 case Power.Barrier: return Loc.T($"【{name}】12秒ごとに最大HPの{v}%の障壁", $"[{name}] Shield for {v}% max health every 12s");
                 case Power.SecondWind: return Loc.T($"【{name}】HP30%未満で最大HPの{v}%回復（60秒）", $"[{name}] Below 30% health, heal {v}% max health (60s)");
                 case Power.Blaze: return Loc.T($"【{name}】4回目ごとの通常攻撃に攻撃力{v}%の魔法追撃", $"[{name}] Every 4th hit deals +{v}% AD magic damage");
+                case Power.ChainLightning: return Loc.T($"【{name}】命中時25%で近くの敵2体へ攻撃力{v}%の魔法ダメージ", $"[{name}] 25% on hit: {v}% AD magic damage to 2 nearby enemies");
+                case Power.Shatter: return Loc.T($"【{name}】撃破時、周囲4mの敵へ攻撃力{v}%のダメージ", $"[{name}] On kill, deal {v}% AD to enemies within 4m");
+                case Power.Aegis: return Loc.T($"【{name}】大きな一撃（最大HP20%以上）で最大HPの{v}%の障壁（20秒）", $"[{name}] A big hit (20%+ max HP) grants a {v}% max HP shield (20s)");
+                case Power.Bloodlust: return Loc.T($"【{name}】HP50%未満の間、攻撃速度+{v}%", $"[{name}] +{v}% attack speed below 50% health");
                 default: return "-";
             }
         }

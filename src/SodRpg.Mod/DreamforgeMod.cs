@@ -36,7 +36,7 @@ namespace SodRpg.Mod
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _ui = new DreamforgeUi(_session, () => config);
-                _host = new HostAuthority();
+                _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
             }

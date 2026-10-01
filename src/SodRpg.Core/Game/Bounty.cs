@@ -55,10 +55,13 @@ namespace SodRpg.Core.Game
             }
         }
 
-        public string RewardText()
+        public string RewardText(double mult = 1.0)
         {
-            string tuning = RewardTuning > 0 ? Loc.T($"・調律石{RewardTuning}", $", {RewardTuning} tuning") : "";
-            return Loc.T($"欠片{RewardShards}{tuning}・経験{RewardXp}", $"{RewardShards} shards{tuning}, {RewardXp} xp");
+            int shards = (int)Math.Round(RewardShards * mult);
+            int tuningN = (int)Math.Round(RewardTuning * mult);
+            int xp = (int)Math.Round(RewardXp * mult);
+            string tuning = tuningN > 0 ? Loc.T($"・調律石{tuningN}", $", {tuningN} tuning") : "";
+            return Loc.T($"欠片{shards}{tuning}・経験{xp}", $"{shards} shards{tuning}, {xp} xp");
         }
     }
 

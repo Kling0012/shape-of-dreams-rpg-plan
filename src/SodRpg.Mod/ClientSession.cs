@@ -38,8 +38,10 @@ namespace SodRpg.Mod
         /// <summary>悪夢化した敵（netId → 接頭効果）。名札の表示と撃破時の報酬に使う。</summary>
         public Dictionary<uint, NightmareAffix> Nightmare { get; } = new Dictionary<uint, NightmareAffix>();
 
+        /// <summary>悪夢化の通知を受けた時刻（まだスポーンしていない敵を早まって消さないため）。</summary>
+        public Dictionary<uint, float> NightmareSeenAt { get; } = new Dictionary<uint, float>();
+
         private readonly RoomCounter _rooms = new RoomCounter();
-        private int _lastMastery = -1;
         private bool _dirty;
         private float _nextSave;
         private bool _buildDirty = true;
@@ -261,12 +263,11 @@ namespace SodRpg.Mod
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 Nightmare.TryGetValue(m.netId, out var nightmare);
                 Nightmare.Remove(m.netId);
-                Emit(Rules.OnKill(Profile, tier, level, nightmare, HeroKeyOf(hero)));
-                if (Mastery.Level(Profile.Hero(HeroKeyOf(hero)).Kills) != _lastMastery)
-                {
-                    _lastMastery = Mastery.Level(Profile.Hero(HeroKeyOf(hero)).Kills);
-                    _buildDirty = true;
-                }
+                NightmareSeenAt.Remove(m.netId);
+                string heroKey = HeroKeyOf(hero);
+                int masteryBefore = Mastery.Level(Profile.Hero(heroKey).Kills);
+                Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey));
+                if (Mastery.Level(Profile.Hero(heroKey).Kills) > masteryBefore) _buildDirty = true;
                 if (tier >= MonsterTier.MiniBoss) _nextSave = 0;
             }
             catch (Exception ex)
@@ -335,8 +336,14 @@ namespace SodRpg.Mod
         {
             if (msg == null) return;
             var a = Nightmares.Sanitize(msg.affixes);
-            if (a != NightmareAffix.None) Nightmare[msg.netId] = a;
-            if (Nightmare.Count > 300) Nightmare.Clear(); // 取りこぼしで溜まり続けないように
+            if (a == NightmareAffix.None) return;
+            Nightmare[msg.netId] = a;
+            NightmareSeenAt[msg.netId] = Time.unscaledTime;
+            if (Nightmare.Count > 300)
+            {
+                Nightmare.Clear(); // 取りこぼしで溜まり続けないように
+                NightmareSeenAt.Clear();
+            }
         }
 
         private void OnApplied(DreamforgeAppliedMsg msg)

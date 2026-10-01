@@ -39,14 +39,19 @@ namespace SodRpg.Mod
         // 悪夢化エリート
         private ActorManager _am;
         private readonly Action<Entity> _onEntityAdd;
-        private readonly List<Monster> _spawnQueue = new List<Monster>();
+        private readonly List<KeyValuePair<Monster, float>> _spawnQueue = new List<KeyValuePair<Monster, float>>();
+        private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
+        private readonly List<Monster> _nightmareScratch = new List<Monster>();
+        private float _nextNightmareSync;
+        private readonly Func<int> _dailyIdOfHost;
         private readonly Dictionary<Monster, float> _regen = new Dictionary<Monster, float>();
         private readonly List<Monster> _regenScratch = new List<Monster>();
         private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
         private float _nextRegen;
 
-        public HostAuthority()
+        public HostAuthority(Func<int> dailyIdOfHost)
         {
+            _dailyIdOfHost = dailyIdOfHost;
             _onBuild = OnBuild;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
@@ -80,6 +85,28 @@ namespace SodRpg.Mod
                 _nextRegen = now + 0.5f;
                 RegenNightmares();
             }
+            if (now >= _nextNightmareSync)
+            {
+                _nextNightmareSync = now + 5f;
+                ResyncNightmares();
+            }
+        }
+
+        /// <summary>生きている悪夢化の敵を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
+        private void ResyncNightmares()
+        {
+            if (_nightmares.Count == 0 || _registeredOn == null) return;
+            _nightmareScratch.Clear();
+            foreach (var kv in _nightmares)
+            {
+                if (kv.Key == null || !kv.Key.isActive)
+                {
+                    _nightmareScratch.Add(kv.Key);
+                    continue;
+                }
+                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
+            }
+            foreach (var m in _nightmareScratch) _nightmares.Remove(m);
         }
 
         /// <summary>パーティの最大の夢の深度（MOD導入者の Build から）。</summary>
@@ -93,16 +120,25 @@ namespace SodRpg.Mod
 
         private void OnEntityAdd(Entity e)
         {
-            if (e is Monster m && !(e is BossMonster)) _spawnQueue.Add(m);
+            if (e is Monster m && !(e is BossMonster)) _spawnQueue.Add(new KeyValuePair<Monster, float>(m, Time.time));
         }
 
         private void ProcessSpawns()
         {
             if (_spawnQueue.Count == 0) return;
+            float now = Time.time;
+            // 誰の Build もまだ届いていない間は、深度が分からないので待つ（最大15秒）。
+            if (_builds.Count == 0)
+            {
+                _spawnQueue.RemoveAll(x => x.Key == null || now - x.Value > 15f);
+                return;
+            }
             int depth = PartyDepth();
+            int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
+            double mult = DailyDream.Get(dailyId)?.NightmareMult ?? 1.0;
             for (int i = _spawnQueue.Count - 1; i >= 0; i--)
             {
-                var m = _spawnQueue[i];
+                var m = _spawnQueue[i].Key;
                 if (m == null)
                 {
                     _spawnQueue.RemoveAt(i);
@@ -112,7 +148,7 @@ namespace SodRpg.Mod
                 _spawnQueue.RemoveAt(i);
                 if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                var affix = Nightmares.Roll(_rng, tier, depth, DailyDream.Today.NightmareMult);
+                var affix = Nightmares.Roll(_rng, tier, depth, mult);
                 if (affix == NightmareAffix.None) continue;
                 MakeNightmare(m, affix);
             }
@@ -137,6 +173,7 @@ namespace SodRpg.Mod
                 if (regen > 0) _regen[m] = regen;
             }
             m.Status.AddStatBonus(bonus);
+            _nightmares[m] = affix;
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
         }
@@ -184,6 +221,7 @@ namespace SodRpg.Mod
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
+                _nightmares.Clear();
                 if (am != null) am.ClientEvent_OnEntityAdd += _onEntityAdd;
             }
             var cem = NetworkedManagerBase<ClientEventManager>.instance;
@@ -227,6 +265,7 @@ namespace SodRpg.Mod
             }
             _spawnQueue.Clear();
             _regen.Clear();
+            _nightmares.Clear();
             if (_registeredOn != null)
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
@@ -346,6 +385,7 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             if (!Alive(hero) || rt.DynBonus == null) return;
             var p = rt.Powers;
+            p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
             var d = rt.DynBonus;
             d.attackSpeedPercentage = dyn.AttackSpeedPct;
@@ -404,6 +444,23 @@ namespace SodRpg.Mod
             return false;
         }
 
+        /// <summary>中心の周りの敵へダメージ（except を除き、最大 maxTargets 体）。</summary>
+        private static void DamageAround(Hero hero, Vector3 center, float radius, float amount, Entity except, int maxTargets, bool magic)
+        {
+            ListReturnHandle<Entity> handle;
+            var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius,
+                (Func<Entity, bool>)(e => e != null && e.isActive && e != except && e.GetRelation(hero) == EntityRelation.Enemy));
+            var targets = new List<Entity>(found);
+            handle.Return();
+            int n = 0;
+            foreach (var e in targets)
+            {
+                if (n++ >= maxTargets) break;
+                if (magic) hero.MagicDamage(amount, 0f).Dispatch(e);
+                else hero.PhysicalDamage(amount, 0f).Dispatch(e);
+            }
+        }
+
         private HeroRuntime RuntimeOf(Actor actor)
         {
             if (actor == null) return null;
@@ -416,7 +473,10 @@ namespace SodRpg.Mod
             try
             {
                 if (!(info.victim is Monster)) return;
-                RuntimeOf(info.actor)?.Powers.OnKill(Time.time);
+                var rt = RuntimeOf(info.actor);
+                if (rt == null || !Alive(rt.Hero)) return;
+                float shatter = rt.Powers.OnKill(Time.time, rt.Hero.Status.attackDamage);
+                if (shatter > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, shatter, null, int.MaxValue, magic: false);
             }
             catch (Exception ex)
             {
@@ -433,6 +493,8 @@ namespace SodRpg.Mod
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
                 float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy);
                 if (reflect > 0) hero.PureDamage(reflect, 0f).Dispatch(attacker);
+                float aegis = rt.Powers.TakeAegis(Time.time, info.damage.amount, hero.maxHealth);
+                if (aegis > 0) hero.GiveShield(hero, aegis, 6f);
             }
             catch (Exception ex)
             {
@@ -448,7 +510,8 @@ namespace SodRpg.Mod
                 var victim = info.victim;
                 if (victim == null || !victim.isActive) return;
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
-                var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, ratio);
+                var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, ratio, _rng.NextDouble());
+                if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);
                 if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
                 if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
                 if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);

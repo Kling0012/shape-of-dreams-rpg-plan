@@ -79,6 +79,14 @@ namespace SodRpg.Core.Game
         SecondWind = 10,
         /// <summary>4回目ごとの通常攻撃に攻撃力X%の魔法追加ダメージ。「烈火」</summary>
         Blaze = 11,
+        /// <summary>通常攻撃の命中時に25%で、近くの敵2体へ攻撃力X%の魔法ダメージ。「雷鎖」</summary>
+        ChainLightning = 12,
+        /// <summary>撃破時、周囲4mの敵へ攻撃力X%のダメージ。「爆砕」</summary>
+        Shatter = 13,
+        /// <summary>1回で最大HPの20%以上を受けたら最大HPのX%の障壁（20秒に1回）。「守護霊」</summary>
+        Aegis = 14,
+        /// <summary>HP50%未満の間、攻撃速度+X%。「血の渇き」</summary>
+        Bloodlust = 15,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>

@@ -56,7 +56,9 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
                 ev.AddRange(EndRun(p, victory: false));
             }
-            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0 };
+            int start = Math.Max(0, Math.Min(p.StartDepth, p.Stats.BestHeatSecured));
+            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, StartDepth = start, Heat = start, PeakHeat = start };
+            if (start > 0) ev.Add(new GameEvent(EventKind.Delved, Loc.T($"深淵の段階{start}から潜る。", $"Descending from abyss tier {start}.")));
             if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
             var brng = p.TakeRng();
             p.Run.Bounties.AddRange(Bounties.Roll(brng));
@@ -167,7 +169,7 @@ namespace SodRpg.Core.Game
         {
             var run = p.Run;
             if (run == null || run.AwaitingChoice) return false;
-            return run.Kills > 0 || run.HasUnsecured || run.Heat > 0;
+            return run.Kills > 0 || run.HasUnsecured || run.Heat > run.StartDepth;
         }
 
         /// <summary>確保地点（新しいゾーン）に着いた。選ぶまで装備を整えられる。</summary>
@@ -211,7 +213,7 @@ namespace SodRpg.Core.Game
             run.Satchel.Clear();
             run.SatchelShards = 0;
             run.SatchelTuning = 0;
-            run.Heat = 0;
+            run.Heat = run.StartDepth;
             run.AwaitingChoice = false;
             int pacts = run.Pacts.Count;
             run.Pacts.Clear();
@@ -279,8 +281,8 @@ namespace SodRpg.Core.Game
                 p.Run.SatchelTuning += tuning;
             }
             ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
-                $"依頼達成：{b.Describe()}（{b.RewardText()}" + (secured ? "）" : "・未確保）"),
-                $"Bounty complete: {b.Describe()} ({b.RewardText()}" + (secured ? ")" : ", unsecured)"))));
+                $"依頼達成：{b.Describe()}（{b.RewardText(mult)}" + (secured ? "）" : "・未確保）"),
+                $"Bounty complete: {b.Describe()} ({b.RewardText(mult)}" + (secured ? ")" : ", unsecured)"))));
             ev.AddRange(AddXp(p, (int)Math.Round(b.RewardXp * mult)));
         }
 
@@ -337,6 +339,7 @@ namespace SodRpg.Core.Game
             {
                 ev.AddRange(Secure(p));
                 p.Stats.Victories++;
+                p.Stats.BestVictoryStartDepth = Math.Max(p.Stats.BestVictoryStartDepth, run.StartDepth);
                 ev.AddRange(AddXp(p, Content.VictoryXp));
                 ev.Add(new GameEvent(EventKind.Info, Loc.T("夢を踏破した！", "The dream is conquered!")));
             }
@@ -382,6 +385,15 @@ namespace SodRpg.Core.Game
             p.LastReport = report;
             p.Run = null;
             return ev;
+        }
+
+        /// <summary>開始深度を選ぶ。遠征の外でのみ、確保できた最高深度まで。</summary>
+        public static void SetStartDepth(Profile p, int depth)
+        {
+            if (p.Run != null) throw new InvalidOperationException(Loc.T("開始深度は遠征の外でのみ変更できます。", "Start depth can only be changed outside expeditions."));
+            if (depth < 0 || depth > p.Stats.BestHeatSecured)
+                throw new InvalidOperationException(Loc.T($"確保できた最高深度（{p.Stats.BestHeatSecured}）までです。", $"Up to your best secured depth ({p.Stats.BestHeatSecured})."));
+            p.StartDepth = depth;
         }
 
         /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。</summary>
