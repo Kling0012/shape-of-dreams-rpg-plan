@@ -235,7 +235,7 @@ namespace SodRpg.Mod
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
                 sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
                     .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
-                sb.Append("\n<size=13>").Append(Loc.T("未確保：遺物", "Unsecured: ")).Append(run.Satchel.Count)
+                sb.Append("\n<size=13>").Append(compact ? Loc.T("未確保：遺物", "Unsecured: ") : Loc.T("まだ持ち帰っていない物：遺物", "Not yet secured: ")).Append(run.Satchel.Count)
                     .Append(Loc.T("  欠片", " relics  ")).Append(run.SatchelShards)
                     .Append(Loc.T("  調律石", " shards  ")).Append(run.SatchelTuning).Append(Loc.T("", " tuning")).Append("</size>");
                 if (!compact && run.Pacts.Count > 0)
@@ -256,7 +256,7 @@ namespace SodRpg.Mod
                     sb.Append("</size>");
                 }
                 if (!_s.HostConfirmed && _s.LocalHero != null)
-                    sb.Append("\n<size=13>").Append(Loc.T("能力の反映待ち（ホスト未導入？）", "Waiting for host (host has no mod?)")).Append("</size>");
+                    sb.Append("\n<size=13>").Append(Loc.T("装備の効果がまだ反映されていません（ホストがこのMODを入れていない可能性があります）", "Gear bonuses not applied yet (the host may not have this mod)")).Append("</size>");
             }
             sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
@@ -265,21 +265,24 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 300, 80, 600, 260 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
+            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
+            GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             int bonus = run.SatchelShards * run.Heat / 4;
             GUILayout.Label(Loc.T(
-                $"未確保：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}（確保で潜行ボーナス+{bonus}）・調律石{run.SatchelTuning}",
-                $"Unsecured: {run.Satchel.Count} relics, {run.SatchelShards} shards (+{bonus} delve bonus), {run.SatchelTuning} tuning"), _st.Label);
+                $"まだ持ち帰っていない物：遺物{run.Satchel.Count}個、欠片{run.SatchelShards}、調律石{run.SatchelTuning}",
+                $"Not yet secured: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning"), _st.Label);
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
+            GUILayout.Label(UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
+                $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は遠征を始めたときの深さに戻ります。",
+                $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve returns to your starting depth."), _st.Small);
+            GUILayout.Label(UiStyles.Colored(Loc.T("深く潜る：", "Delve: "), "#ffb070") + Loc.T(
+                $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
+                $"Move on without securing; delve becomes {next}. Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found."), _st.Small);
             GUILayout.Label(UiStyles.Colored(Loc.T(
-                $"潜行{next}：敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%・エリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が悪夢化（本体のエリート化＋悪夢の効果。倒せばエリート〜ボス級の戦利品）",
-                $"Depth {next}: {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites become nightmares (elite-to-boss loot)"), "#ff9ae0"), _st.Small);
-            GUILayout.Label(Loc.T(
-                $"深く潜る → 潜行{next}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * next)}%・レア度上昇／被ダメージ+{Build.DamageTakenPerDelvePct * next}%。全滅すると未確保品は遺失物に。",
-                $"Delve -> level {next}: +{(int)(Loot.HeatDropBonus * 100 * next)}% drops, better rarity / +{Build.DamageTakenPerDelvePct * next}% damage taken. Unsecured loot is lost on defeat."), _st.Small);
+                $"潜行{next}では、敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%とエリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が「悪夢化」して強くなります。倒すとエリートやボス並みの戦利品が出ます。",
+                $"At delve {next}, {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites turn into stronger nightmares that drop elite-to-boss loot."), "#ff9ae0"), _st.Small);
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) _s.Secure();
             if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) _s.Delve();
@@ -294,7 +297,9 @@ namespace SodRpg.Mod
                 GUI.enabled = dust >= Economy.DustPerBatch && !_s.TradePending(TradeKind.DustToShards);
                 int batches = Math.Min(dust / Economy.DustPerBatch, 10);
                 if (GUILayout.Button(Loc.T(
-                        $"ドリームダストを欠片に換える（{Economy.DustPerBatch}→{Economy.ShardsPerBatch}、所持{dust}" + (batches > 0 ? $"、{batches * Economy.DustPerBatch}→{batches * Economy.ShardsPerBatch}" : "") + "）",
+                        batches > 0
+                            ? $"ドリームダスト{batches * Economy.DustPerBatch}を欠片{batches * Economy.ShardsPerBatch}に換える（ダスト{Economy.DustPerBatch}につき欠片{Economy.ShardsPerBatch}。所持{dust}）"
+                            : $"ドリームダストを欠片に換える（ダスト{Economy.DustPerBatch}につき欠片{Economy.ShardsPerBatch}。所持{dust}）",
                         $"Convert Dream Dust to shards ({Economy.DustPerBatch}->{Economy.ShardsPerBatch}, you have {dust})"), _st.Button, GUILayout.Height(30)))
                 {
                     string err = _s.ConvertDust();
@@ -333,7 +338,7 @@ namespace SodRpg.Mod
             }
             if (run.OfferedPacts.Count > 0)
             {
-                GUILayout.Label(Loc.T("…または悪夢の契約を結んで潜る（次の確保まで重なって効く）", "...or delve with a nightmare pact (stacks until you secure)"), _st.Small);
+                GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure."), _st.Small);
                 foreach (var id in run.OfferedPacts.ToList())
                 {
                     var d = Pacts.Get(id);
@@ -400,16 +405,16 @@ namespace SodRpg.Mod
             var rect = new Rect(w / 2 - 250, h * 0.16f, 500, 215);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：踏破", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めた", "Expedition: Awakened"), _st.Title);
+            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
             GUILayout.Label(Loc.T(
-                $"撃破 {r.Kills}　遺物 {r.RelicsFound}個を発見\n確保 {r.RelicsSecured}個（確保{r.SecuredCount}回・欠片{r.ShardsSecured}）\n" +
-                (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>遺失 {r.RelicsLost}個</color>　残響の欠片 {r.EchoShards}\n" : "") +
-                $"最高潜行 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
+                $"敵を{r.Kills}体倒し、遺物を{r.RelicsFound}個見つけました。\nそのうち{r.RelicsSecured}個を持ち帰りました（確保{r.SecuredCount}回、欠片{r.ShardsSecured}）。\n" +
+                (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>持ち帰れなかった遺物：{r.RelicsLost}個</color>　残響として残った欠片：{r.EchoShards}\n" : "") +
+                $"最も深い潜行 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}達成　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
                 $"Kills {r.Kills}   Relics found {r.RelicsFound}\nSecured {r.RelicsSecured} ({r.SecuredCount} secures, {r.ShardsSecured} shards)\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>Lost {r.RelicsLost}</color>   Echo shards {r.EchoShards}\n" : "") +
                 $"Peak delve {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
             if (r.RelicsLost > 0)
-                GUILayout.Label(Loc.T("失った遺物は、次の遠征で戦闘部屋を3つ突破すると1つ取り戻せます。", "Clear 3 combat rooms next expedition to recover one lost relic."), _st.Small);
+                GUILayout.Label(Loc.T("持ち帰れなかった遺物は「遺失物」として残ります。次の遠征で戦闘部屋を3つ突破すると、その中で一番良い物を1つ取り戻せます。", "Lost relics wait in Lost & Found. Clear 3 combat rooms next expedition to recover the best one."), _st.Small);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(Loc.T("閉じる", "Close"), _st.Button, GUILayout.Height(30))) _reportDismissed = true;
             GUILayout.EndArea();
@@ -490,8 +495,9 @@ namespace SodRpg.Mod
 
             var p = _s.Profile;
             GUILayout.Label(Loc.T(
-                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　キャラ：{HeroName(HeroKey)}",
+                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
                 $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
+            GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
 
             switch (_tab)
             {
@@ -505,10 +511,60 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
+        private static readonly Txt HowToPlay = new Txt(
+            "<b>このMODの目的</b>\n" +
+            "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
+            "<b>1回の遠征の流れ</b>\n" +
+            "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
+            "2. 拾った物は、まだ持ち帰っていない状態（未確保）です。\n" +
+            "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
+            "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
+            "<b>確保と潜行の考え方</b>\n" +
+            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を3つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
+            "<b>装備の育て方</b>\n" +
+            "・装備：旅人ごとに主装備・防具・装飾品の3つを装着します。\n" +
+            "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
+            "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
+            "・工房：余った素材で、すべての旅人に効く恒久的な強化を解放します。\n" +
+            "・依頼：遠征ごとに3つ出ます。達成すると欠片や調律石と経験値がもらえます。",
+            "<b>What this mod adds</b>\n" +
+            "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
+            "<b>One expedition</b>\n" +
+            "1. Enemies drop relics. In co-op every player gets their own drops, so there is no fighting over loot.\n" +
+            "2. What you pick up is not yet secured.\n" +
+            "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
+            "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
+            "<b>Securing vs. delving</b>\n" +
+            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear 3 combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
+            "<b>Growing your gear</b>\n" +
+            "- Gear: each Traveler has a weapon, armor and charm slot.\n" +
+            "- Forge: enhance with shards, reroll affixes with tuning stones, salvage the rest into shards.\n" +
+            "- Star Map: spend points from Dream Levels to grow stats; meet the conditions to pick one powerful keystone.\n" +
+            "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
+            "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
+
+        /// <summary>各タブの先頭に出す「ここでできること」。</summary>
+        private static string TabIntro(int tab)
+        {
+            switch (tab)
+            {
+                case 0: return Loc.T("持ち帰った遺物を、旅人ごとに3つの枠（主装備・防具・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
+                    "Equip relics you brought home into each Traveler's three slots (weapon, armor, charm). During an expedition you can only swap at secure points.");
+                case 1: return Loc.T("欠片で遺物を強くし、調律石で気に入らない特性を引き直します。いらない遺物は分解して欠片に戻せます。",
+                    "Use shards to enhance relics and tuning stones to reroll an affix you dislike. Salvage what you don't need back into shards.");
+                case 2: return Loc.T("夢のレベルが上がるともらえるポイントで、旅人ごとに能力を伸ばします。振り直しは無料なので、気軽に試してください。",
+                    "Spend the points you earn from Dream Levels to grow each Traveler. Respec is free, so feel free to experiment.");
+                case 3: return Loc.T("余った欠片と調律石で、すべての旅人に効く恒久的な強化を解放します。",
+                    "Spend spare shards and tuning stones on permanent upgrades shared by every Traveler.");
+                default: return Loc.T("遊び方の確認、今回の遠征の様子、これまでの記録と図鑑を見られます。",
+                    "Read how to play, check this expedition, and browse your records and codex.");
+            }
+        }
+
         private void FocusPicker()
         {
             var p = _s.Profile;
-            GUILayout.Label(Loc.T("狙い系統（その系統の遺物が2倍出やすい）", "Focus (relics of this line drop twice as often)"), _st.Small);
+            GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます）", "Focus: relics of the chosen line drop twice as often (choose before an expedition)"), _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = p.Run == null;
             if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
@@ -535,7 +591,7 @@ namespace SodRpg.Mod
         {
             if (_s.LocalHero != null) return;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("キャラ：", "Traveler:"), _st.Small, GUILayout.Width(60));
+            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, GUILayout.Width(60));
             var keys = KnownHeroes.Union(_s.Profile.Heroes.Keys.Where(k => k != "default")).ToList();
             int idx = Math.Max(0, keys.IndexOf(HeroKey));
             if (GUILayout.Button("<", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx - 1 + keys.Count) % keys.Count];
@@ -558,7 +614,7 @@ namespace SodRpg.Mod
                 int lv = Mastery.Level(kills);
                 int next = Mastery.ToNext(kills);
                 GUILayout.Label(Loc.T(
-                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>次まで{next}体</color>" : ""),
+                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>あと{next}体倒すと上がります</color>" : ""),
                     $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")), _st.Small);
             }
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
@@ -575,14 +631,14 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
             var build = _s.CurrentBuild(hero);
             _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(300));
-            if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ補正はありません。", "No bonuses yet."), _st.Small);
+            if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
             foreach (var kv in build.Sets)
             {
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
-                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3  ", "#ffb52e") + "<color=#aab>" + set.Describe() + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3", "#ffb52e") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
             }
             foreach (var kv in build.Lines)
             {
@@ -592,8 +648,8 @@ namespace SodRpg.Mod
             }
             GUILayout.EndScrollView();
             if (!_s.CanEditLoadout)
-                GUILayout.Label(Loc.T("遠征中は確保地点でのみ装備を変更できます。", "During an expedition, gear can only be changed at secure points."), _st.Warn);
-            GUILayout.Label(Loc.T("同じ系統を2つ・3つ揃えるとセット効果。", "2 or 3 relics of one line grant a set bonus."), _st.Small);
+                GUILayout.Label(Loc.T("遠征中は、確保地点に着いたときだけ装備を変えられます。", "During an expedition, you can only change gear at secure points."), _st.Warn);
+            GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2つ、3つとそろえると、系統のボーナスが付きます。", "Equipping 2 or 3 relics of the same line (Destruction, Life, Imagination) grants a line bonus."), _st.Small);
             FocusPicker();
             GUILayout.EndVertical();
 
@@ -611,7 +667,7 @@ namespace SodRpg.Mod
             var sel = p.FindStash(_selected);
             if (sel == null)
             {
-                GUILayout.Label(Loc.T("遺物を選ぶと詳細と比較が出ます。", "Select a relic to see details and comparison."), _st.Small);
+                GUILayout.Label(Loc.T("一覧から遺物を選ぶと、ここに性能と、いま装着している物との違いが表示されます。", "Select a relic to see its stats and how it compares with what you have equipped."), _st.Small);
             }
             else
             {
@@ -648,12 +704,12 @@ namespace SodRpg.Mod
         {
             var list = relics.OrderByDescending(r => r.Score).ToList();
             _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
-            if (list.Count == 0) GUILayout.Label(Loc.T("（空）遠征で敵を倒すと遺物が手に入ります。", "(empty) Defeat enemies on expeditions to find relics."), _st.Small);
+            if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
             var h = _s.Profile.Hero(hero);
             foreach (var r in list)
             {
                 string mark = h.Equipped.Contains(r.Uid) ? "<color=#ffe17a>★</color> " : "";
-                string lck = r.Locked ? " <color=#aaa>[鍵]</color>" : "";
+                string lck = r.Locked ? Loc.T(" <color=#aaa>[鍵]</color>", " <color=#aaa>[locked]</color>") : "";
                 string text = $"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}";
                 if (GUILayout.Button(text, _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(28)))
                 {
@@ -671,7 +727,7 @@ namespace SodRpg.Mod
             GUILayout.Label($"{Content.RarityName(r.Rarity)} · {Content.SlotName(r.Slot)} · {Content.LineName(r.Base.Line)} · Lv{r.ItemLevel}"
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
             var imp = r.Implicit;
-            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（基礎）</color>", "  <color=#888>(base)</color>"), _st.Label);
+            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
@@ -686,7 +742,7 @@ namespace SodRpg.Mod
         private void Comparison(Relic sel, Relic cur)
         {
             GUILayout.Space(6);
-            GUILayout.Label(Loc.T("装着中との差", "Versus equipped"), _st.Header);
+            GUILayout.Label(Loc.T("いま装着している物と比べると", "Compared with what you have equipped"), _st.Header);
             var a = new Dictionary<Stat, int>();
             foreach (var s in sel.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v + s.Value; }
             foreach (var s in cur.EffectiveStats()) { a.TryGetValue(s.Stat, out int v); a[s.Stat] = v - s.Value; }
@@ -731,9 +787,9 @@ namespace SodRpg.Mod
                     if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
                         Act(() => Rules.Enhance(p, sel.Uid), true);
                 }
-                else GUILayout.Label(Loc.T("強化は最大です", "Fully enhanced"), _st.Small);
+                else GUILayout.Label(Loc.T("これ以上は強化できません", "Fully enhanced"), _st.Small);
                 string sv = _confirmSalvage == sel.Uid
-                    ? Loc.T("<color=#ff8080>本当に分解？</color>", "<color=#ff8080>Really salvage?</color>")
+                    ? Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>")
                     : Loc.T($"分解（欠片{Rules.SalvageValue(sel)}）", $"Salvage ({Rules.SalvageValue(sel)} shards)");
                 if (GUILayout.Button(sv, _st.Button, GUILayout.Height(32)))
                 {
@@ -749,7 +805,7 @@ namespace SodRpg.Mod
 
                 if (sel.Retunes < Content.MaxRetunes && sel.Affixes.Count > 0)
                 {
-                    GUILayout.Label(Loc.T($"再調律：特性を1つ選んで引き直す（調律石{Content.RetuneCost(sel.Retunes)}）", $"Retune: reroll one affix ({Content.RetuneCost(sel.Retunes)} tuning)"), _st.Small);
+                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選んでください（調律石{Content.RetuneCost(sel.Retunes)}。1つの遺物につき{Content.MaxRetunes}回まで）", $"Retune: reroll one affix ({Content.RetuneCost(sel.Retunes)} tuning)"), _st.Small);
                     GUILayout.BeginHorizontal();
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
@@ -769,11 +825,11 @@ namespace SodRpg.Mod
             }
             else
             {
-                GUILayout.Label(Loc.T("左の一覧から遺物を選ぶと、強化・再調律・分解ができます。", "Pick a relic on the left to enhance, retune or salvage it."), _st.Small);
+                GUILayout.Label(Loc.T("左の一覧から遺物を選ぶと、強化・再調律・分解ができます。強化は欠片、再調律は調律石を使います。", "Pick a relic on the left to enhance (shards), retune (tuning stones) or salvage it."), _st.Small);
             }
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("合成（鍵なし・未装着の同じレア度3つ → 1つ上のレア度）", "Transmute (3 unlocked, unequipped of a rarity -> 1 of the next)"), _st.Header);
+            GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます（鍵をかけた物と装着中の物は使いません）", "Transmute: turn 3 relics of one rarity into 1 of the next (locked and equipped relics are never used)"), _st.Header);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
@@ -784,7 +840,7 @@ namespace SodRpg.Mod
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
-            GUILayout.Label(Loc.T("製作（到達した最高アイテムレベルで作る）", "Craft (at your highest reached item level)"), _st.Header);
+            GUILayout.Label(Loc.T("製作：欠片を使って、これまでに手に入れた最高のアイテムレベルで新しい遺物を作ります", "Craft: spend shards to make a new relic at the highest item level you have reached"), _st.Header);
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
                 GUILayout.BeginHorizontal();
@@ -822,7 +878,7 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             HeroPicker();
             GUILayout.Label(Loc.T(
-                $"専門化ポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベル＋図鑑ボーナス{p.CodexBonusPoints}・キャラごとに配分）",
+                $"使えるポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベルと図鑑のボーナス{p.CodexBonusPoints}の合計。旅人ごとに別々に振れます）",
                 $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} (Dream Level + codex bonus {p.CodexBonusPoints}, allotted per Traveler)"), _st.Label);
             GUILayout.FlexibleSpace();
             GUI.enabled = _s.CanEditTalents;
@@ -833,7 +889,7 @@ namespace SodRpg.Mod
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
-            if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征の外でのみ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+            if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
 
             GUILayout.BeginHorizontal();
             if (HeroSigils.HasTree(hero))
@@ -844,9 +900,9 @@ namespace SodRpg.Mod
                 GUILayout.EndVertical();
                 GUILayout.BeginVertical(_st.Panel);
                 int lv = Mastery.Level(hs.Kills);
-                GUILayout.Label(Loc.T("この旅人のキットに効く刻印です。", "These sigils work with this Traveler's own kit."), _st.Small);
+                GUILayout.Label(Loc.T("この旅人だけが使える刻印です。旅人自身のスキルや通常攻撃を伸ばします。", "Sigils unique to this Traveler that strengthen their own skills and attacks."), _st.Small);
                 GUILayout.Label(Loc.T(
-                    $"到達刻印：ツリーに{Content.KeystoneRouteRequirement}pt以上＋熟練度{HeroSigils.KeystoneMastery}以上（現在 {lv}「{Mastery.Title(lv)}」）",
+                    $"到達刻印を選ぶには、このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります（いまの熟練度は{lv}「{Mastery.Title(lv)}」）",
                     $"Keystone: {Content.KeystoneRouteRequirement}+ points in the tree and mastery {HeroSigils.KeystoneMastery}+ (now {lv} \"{Mastery.Title(lv)}\")"), _st.Small);
                 GUILayout.EndVertical();
             }
@@ -875,7 +931,7 @@ namespace SodRpg.Mod
                 GUI.enabled = _s.CanEditTalents && (active || unlocked);
                 string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
                     ? Loc.T($"刻印する（{Content.KeystoneCost}pt）", $"Engrave ({Content.KeystoneCost}pt)")
-                    : Loc.T("条件を満たすと解放", "Locked");
+                    : Loc.T("条件を満たすと選べます", "Locked");
                 if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
                 {
                     try
@@ -908,8 +964,6 @@ namespace SodRpg.Mod
         private void DrawWorkshopTab()
         {
             var p = _s.Profile;
-            GUILayout.Label(Loc.T("夢の工房：余った欠片と調律石で、アカウント共通の恒久強化を解放する（遠征の外でのみ）。",
-                "Dream Workshop: spend spare shards and tuning stones on permanent account-wide upgrades (outside expeditions)."), _st.Label);
             GUILayout.BeginVertical(_st.Panel);
             foreach (var def in Workshop.All)
             {
@@ -927,12 +981,12 @@ namespace SodRpg.Mod
                     if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id), false);
                     GUI.enabled = true;
                 }
-                else GUILayout.Label(Loc.T("完了", "Maxed"), _st.Header, GUILayout.Width(300));
+                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, GUILayout.Width(300));
                 GUILayout.EndHorizontal();
                 GUILayout.Space(4);
             }
             GUILayout.EndVertical();
-            if (p.Run != null) GUILayout.Label(Loc.T("遠征中は工房を使えません。", "The workshop is closed during expeditions."), _st.Warn);
+            if (p.Run != null) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
         }
 
         private void DrawRecordsTab(DreamforgeConfig cfg)
@@ -943,21 +997,7 @@ namespace SodRpg.Mod
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(480));
             GUILayout.Label(Loc.T("遊び方", "How to play"), _st.Header);
-            GUILayout.Label(Loc.T(
-                "・敵を倒すと、各プレイヤーに個別の「遺物」（装備）が落ちる。拾った物はまず<b>未確保</b>。\n" +
-                "・新しいゾーンに着くたびに<b>確保地点</b>。「確保」で保管庫へ。「深く潜る」と潜行が上がり、ドロップ率とレア度・敵の悪夢化（本体のエリート化）が増える代わりに被ダメージも増える。潜行が深いほど確保時の欠片ボーナスも増える。本体の Limbo 深度も遺物のドロップを増やす。\n" +
-                "・全滅すると未確保の遺物は<b>遺失物</b>に。次の遠征で戦闘部屋を3つ突破すると、最良の1つを取り戻せる。\n" +
-                "・装備は遠征の外か確保地点で変更できる。主装備・防具・装飾品の3枠。\n" +
-                "・倒した数で<b>夢のレベル</b>が上がり、星図（専門化）のポイントが増える。6pt入れたルートでは<b>刻印</b>を1つ選べる。\n" +
-                "・鍛冶：欠片で強化（+5まで）、調律石で特性の引き直し（3回まで）、不要な遺物は分解。\n" +
-                "・遠征ごとに依頼が3つ。達成すると欠片・調律石（未確保）と経験値。確保の最中に達成した分はそのまま確保。",
-                "- Enemies drop personal <b>relics</b> (gear) for every player. New loot starts <b>unsecured</b>.\n" +
-                "- Each new zone is a <b>secure point</b>. Secure moves loot to your stash. Delve raises your delve level: more drops, better rarity and more nightmare elites (the game's own elites), but more damage taken — and a bigger shard bonus when you finally secure. The game's Limbo depth also boosts relic drops.\n" +
-                "- If your party is wiped, unsecured relics become <b>Lost & Found</b>. Clear 3 combat rooms next run to recover the best one.\n" +
-                "- Change gear outside expeditions or at secure points. Three slots: weapon, armor, charm.\n" +
-                "- Kills raise your <b>Dream Level</b>, granting star map points. With 6 points in a route you can engrave one <b>keystone</b>.\n" +
-                "- Forge: enhance with shards (+5 max), retune affixes with tuning stones (3 times), salvage the rest.\n" +
-                "- Each expedition offers 3 bounties. Rewards (shards, tuning) go to your satchel unsecured, plus xp."), _st.Small);
+            GUILayout.Label(HowToPlay.ToString(), _st.Small);
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("設定", "Settings"), _st.Header);
             GUILayout.BeginHorizontal();
@@ -973,7 +1013,7 @@ namespace SodRpg.Mod
                 cfg.japanese = !cfg.japanese;
                 Loc.Japanese = cfg.japanese;
             }
-            GUILayout.Label(Loc.T("キー・倍率はゲームのMOD設定から変更できます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
+            GUILayout.Label(Loc.T("キーの割り当てや表示の大きさは、ゲームのMOD設定で変えられます。", "Keys and scale can be changed in the game's mod settings."), _st.Small);
             GUILayout.EndHorizontal();
             if (_s.SavePath != null) GUILayout.Label(Loc.T("保存先：", "Save file: ") + _s.SavePath, _st.Small);
             if (_s.LoadNotes != null) GUILayout.Label(_s.LoadNotes, _st.Warn);

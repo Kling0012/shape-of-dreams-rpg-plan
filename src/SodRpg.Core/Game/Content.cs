@@ -120,9 +120,17 @@ namespace SodRpg.Core.Game
 
         public string Describe()
         {
-            string two = string.Join(Loc.T("・", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
-            string three = string.Join(Loc.T("・", ", "), ThreePiece.Select(p => Content.PowerName(p.Power) + " " + p.Value));
-            return Loc.T($"2点：{two}／3点：{three}", $"2pc: {two} / 3pc: {three}");
+            string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
+            string three = string.Join("\n", ThreePiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+            return Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
+        }
+
+        /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>
+        public string Progress(int count)
+        {
+            if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.");
+            if (count == 2) return Loc.T("あと1つで、3つ装着の効果が加わります。", "One more piece adds the 3-piece bonus.");
+            return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.");
         }
     }
 
@@ -672,7 +680,7 @@ namespace SodRpg.Core.Game
                 case Stat.ColdAmp: return Loc.T($"冷気属性効果 {sign}{v}%", $"{sign}{v}% Cold Effect");
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"{sign}{v}% Light Effect");
                 case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"{sign}{v}% Attack Range");
-                case Stat.FourthAttackShift: return Loc.T($"4発目の位置 {sign}{v}", $"{sign}{v} Fourth-attack shift");
+                case Stat.FourthAttackShift: return Loc.T($"4発目の強い攻撃が{v}発早く出る", $"Empowered 4th attack comes {v} hit(s) sooner");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"{sign}{v}% Dark Effect");
             }
         }
@@ -712,28 +720,28 @@ namespace SodRpg.Core.Game
             string name = PowerName(p);
             switch (p)
             {
-                case Power.Momentum: return Loc.T($"【{name}】撃破ごとに攻撃速度+{v}%（4秒・5重）", $"[{name}] +{v}% attack speed per kill (4s, 5 stacks)");
-                case Power.Retaliation: return Loc.T($"【{name}】被弾後3秒、攻撃力+{v}%", $"[{name}] +{v}% attack damage for 3s after being hit");
-                case Power.Bulwark: return Loc.T($"【{name}】周囲の敵3体以上で防御+{v}", $"[{name}] +{v} armor while 3+ enemies are near");
-                case Power.Lifesteal: return Loc.T($"【{name}】通常攻撃の命中で最大HPの{v / 10f:0.#}%回復", $"[{name}] Basic attack hits heal {v / 10f:0.#}% max health");
-                case Power.Thorns: return Loc.T($"【{name}】受けたダメージの{v}%を反射", $"[{name}] Reflect {v}% of damage taken");
-                case Power.Executioner: return Loc.T($"【{name}】HP30%未満の敵へ攻撃力{v}%の追撃", $"[{name}] Hits on enemies below 30% deal +{v}% AD");
-                case Power.Resonance: return Loc.T($"【{name}】近くの味方と共に攻撃力・魔力+{v}%（ソロ半分）", $"[{name}] +{v}% AD/AP with a nearby ally (solo: half)");
-                case Power.Tailwind: return Loc.T($"【{name}】撃破後2秒、移動速度+{v}%", $"[{name}] +{v}% move speed for 2s after a kill");
-                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに最大HPの{v}%の障壁", $"[{name}] Shield for {v}% max health every 12s");
-                case Power.SecondWind: return Loc.T($"【{name}】HP30%未満で最大HPの{v}%回復（60秒）", $"[{name}] Below 30% health, heal {v}% max health (60s)");
-                case Power.Blaze: return Loc.T($"【{name}】4回目ごとの通常攻撃に攻撃力{v}%の魔法追撃", $"[{name}] Every 4th hit deals +{v}% AD magic damage");
-                case Power.ChainLightning: return Loc.T($"【{name}】命中時25%で近くの敵2体へ攻撃力{v}%の魔法ダメージ", $"[{name}] 25% on hit: {v}% AD magic damage to 2 nearby enemies");
-                case Power.Shatter: return Loc.T($"【{name}】撃破時、周囲4mの敵へ攻撃力{v}%のダメージ", $"[{name}] On kill, deal {v}% AD to enemies within 4m");
-                case Power.Aegis: return Loc.T($"【{name}】大きな一撃（最大HP20%以上）で最大HPの{v}%の障壁（20秒）", $"[{name}] A big hit (20%+ max HP) grants a {v}% max HP shield (20s)");
-                case Power.Bloodlust: return Loc.T($"【{name}】HP50%未満の間、攻撃速度+{v}%", $"[{name}] +{v}% attack speed below 50% health");
-                case Power.Ember: return Loc.T($"【{name}】通常攻撃の命中時{v}%で火を付与", $"[{name}] {v}% on hit: apply Fire");
-                case Power.Frost: return Loc.T($"【{name}】通常攻撃の命中時{v}%で冷気を付与", $"[{name}] {v}% on hit: apply Cold");
-                case Power.Radiance: return Loc.T($"【{name}】通常攻撃の命中時{v}%で光を付与（3重で光は確定会心）", $"[{name}] {v}% on hit: apply Light (3 stacks: light crits)");
-                case Power.Umbra: return Loc.T($"【{name}】通常攻撃の命中時{v}%で闇を付与", $"[{name}] {v}% on hit: apply Dark");
-                case Power.Convergence: return Loc.T($"【{name}】敵に4属性が揃うと攻撃力{v}%の爆発（同じ敵へ6秒に1回）", $"[{name}] All 4 elements on an enemy: burst for {v}% AD (6s per enemy)");
-                case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびにMemoryのクールダウン-{v / 10f:0.#}秒", $"[{name}] Each dodge: -{v / 10f:0.#}s Memory cooldowns");
-                case Power.UltimateSurge: return Loc.T($"【{name}】Ultimate使用後5秒、攻撃力・魔力+{v}%", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate");
+                case Power.Momentum: return Loc.T($"【{name}】敵を倒すたびに攻撃速度が{v}%上がる（4秒間、5回まで重なる）", $"[{name}] Each kill grants +{v}% attack speed for 4s (stacks up to 5 times)");
+                case Power.Retaliation: return Loc.T($"【{name}】攻撃を受けると、3秒間 攻撃力が{v}%上がる", $"[{name}] After taking a hit, gain +{v}% attack damage for 3s");
+                case Power.Bulwark: return Loc.T($"【{name}】周りに敵が3体以上いる間、防御が{v}上がる", $"[{name}] +{v} armor while 3 or more enemies are nearby");
+                case Power.Lifesteal: return Loc.T($"【{name}】通常攻撃が当たるたびに、最大HPの{v / 10f:0.#}%を回復する", $"[{name}] Basic attack hits heal you for {v / 10f:0.#}% of max health");
+                case Power.Thorns: return Loc.T($"【{name}】受けたダメージの{v}%を相手に跳ね返す", $"[{name}] Reflect {v}% of damage taken back to the attacker");
+                case Power.Executioner: return Loc.T($"【{name}】HPが30%未満の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies below 30% health deal +{v}% AD as bonus damage");
+                case Power.Resonance: return Loc.T($"【{name}】近くに味方がいる間、自分と味方の攻撃力・魔力が{v}%上がる（一人のときは半分）", $"[{name}] While an ally is near, you and your allies gain +{v}% AD/AP (half when solo)");
+                case Power.Tailwind: return Loc.T($"【{name}】敵を倒した後の2秒間、移動速度が{v}%上がる", $"[{name}] +{v}% move speed for 2s after a kill");
+                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに、最大HPの{v}%分の障壁を張る", $"[{name}] Every 12s, gain a shield worth {v}% of max health");
+                case Power.SecondWind: return Loc.T($"【{name}】HPが30%を切ると、最大HPの{v}%を回復する（60秒に1回）", $"[{name}] When you drop below 30% health, heal {v}% of max health (once per 60s)");
+                case Power.Blaze: return Loc.T($"【{name}】通常攻撃4回ごとに、攻撃力{v}%分の魔法ダメージを追加する", $"[{name}] Every 4th basic attack deals +{v}% AD as magic damage");
+                case Power.ChainLightning: return Loc.T($"【{name}】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力{v}%分の魔法ダメージを与える", $"[{name}] Basic attack hits have a 25% chance to deal {v}% AD magic damage to 2 nearby enemies");
+                case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力{v}%分のダメージを与える", $"[{name}] On kill, deal {v}% AD to enemies within 4m");
+                case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of max health, gain a shield worth {v}% of max health (once per 20s)");
+                case Power.Bloodlust: return Loc.T($"【{name}】HPが50%未満の間、攻撃速度が{v}%上がる", $"[{name}] +{v}% attack speed while below 50% health");
+                case Power.Ember: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵に火を付ける", $"[{name}] Basic attack hits have a {v}% chance to apply Fire");
+                case Power.Frost: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵を冷気で冷やす", $"[{name}] Basic attack hits have a {v}% chance to apply Cold");
+                case Power.Radiance: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵に光を付ける（光が3つ重なると光のダメージは必ず会心）", $"[{name}] Basic attack hits have a {v}% chance to apply Light (at 3 stacks, light damage always crits)");
+                case Power.Umbra: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵に闇を付ける", $"[{name}] Basic attack hits have a {v}% chance to apply Dark");
+                case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% AD (once per 6s per enemy)");
+                case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびに、Memory（スキル）のクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Each dodge shortens your Memory (skill) cooldowns by {v / 10f:0.#}s");
+                case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate");
                 default: return "-";
             }
         }
