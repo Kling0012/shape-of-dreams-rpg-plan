@@ -37,6 +37,26 @@ namespace SodRpg.Mod
         public int protocol;
     }
 
+    /// <summary>クライアント → ホスト：本体の通貨での取引（支払いと受け取り）を依頼する。</summary>
+    [Serializable]
+    public class DreamforgeTradeMsg
+    {
+        public long token;
+        public int spendGold;
+        public int spendDust;
+        public int earnDust;
+        public int protocol;
+    }
+
+    /// <summary>ホスト → クライアント：取引の結果。</summary>
+    [Serializable]
+    public class DreamforgeTradeResultMsg
+    {
+        public long token;
+        public bool ok;
+        public string reason;
+    }
+
     internal static class Protocol
     {
         public const int Version = 1;

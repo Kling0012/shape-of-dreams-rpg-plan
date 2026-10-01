@@ -82,42 +82,28 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Lantern_recovers_lost_relics_after_two_rooms()
+        public void Retired_upgrades_are_refunded_on_load()
         {
-            var p = Rich();
-            Rules.BuyUpgrade(p, Upgrade.LostLantern);
-            p.LostAndFound.Add(Loot.RollRelic(new Rng(1002), Rarity.Rare, 1));
-            Rules.BeginRun(p, "l");
-            p.Run.Bounties.Clear();
-            Assert.Empty(Rules.OnRoomsCleared(p, 1));
-            Assert.Contains(Rules.OnRoomsCleared(p, 2), e => e.Kind == EventKind.Recovered);
+            var p = Profile.CreateNew(1);
+            // v1.4 までの保存：廃止した強化を解放済み
+            p.Upgrades[Upgrade.LostLantern] = 1;
+            p.Upgrades[Upgrade.EchoAmp] = 2;
+            p.Upgrades[Upgrade.PactEye] = 1;
+            var notes = new List<string>();
+            var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
+            Assert.Empty(q.Upgrades);
+            Assert.Equal(250 + 150 + 300 + 300, q.Material(Materials.Shard));
+            Assert.Equal(3 + 2 + 4 + 5, q.Material(Materials.Tuning));
+            Assert.Equal(3, notes.Count(n => n.Contains("返しました")));
+            Assert.Equal(Content.RoomsToRecoverLost, Workshop.RoomsToRecover(q));
+            Assert.Equal(25, Workshop.EchoPercent(q));
+            Assert.Equal(Pacts.Offered, Workshop.PactsOffered(q));
         }
 
         [Fact]
-        public void Echo_amplifier_keeps_more_shards()
+        public void Only_capacity_and_reroll_upgrades_remain()
         {
-            var p = Rich();
-            Assert.Equal(25, Workshop.Echo(p, 100));
-            Max(p, Upgrade.EchoAmp);
-            Assert.Equal(45, Workshop.Echo(p, 100));
-            Assert.Equal(1, Workshop.Echo(p, 1));
-            Assert.Equal(0, Workshop.Echo(p, 0));
-            long before = p.Material(Materials.Shard);
-            Rules.BeginRun(p, "e");
-            p.Run.Bounties.Clear();
-            p.Run.SatchelShards = 100;
-            Rules.EndRun(p, victory: false);
-            Assert.Equal(before + 45, p.Material(Materials.Shard));
-        }
-
-        [Fact]
-        public void Pact_appraiser_offers_four_pacts()
-        {
-            var p = Rich();
-            Rules.BuyUpgrade(p, Upgrade.PactEye);
-            Rules.BeginRun(p, "p");
-            Rules.ReachSecurePoint(p);
-            Assert.Equal(4, p.Run.OfferedPacts.Count);
+            Assert.Equal(new[] { Upgrade.BigSatchel, Upgrade.WideStash, Upgrade.BountyReroll }, Workshop.All.Select(d => d.Id).ToArray());
         }
 
         [Fact]

@@ -44,8 +44,8 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
-                    return Loc.T($"欠片{MerchantCost(heat)}で正体不明の遺物を買う（アンコモン以上・深いほど良い）",
-                        $"Buy a mystery relic for {MerchantCost(heat)} shards (Uncommon+, better when deeper)");
+                    return Loc.T($"ゴールドで正体不明の遺物を買う（アンコモン以上・深いほど良い。基本{Economy.MerchantGoldBase(heat)}G）",
+                        $"Buy a mystery relic with gold (Uncommon+, better when deeper; base {Economy.MerchantGoldBase(heat)}G)");
                 case DreamEvent.Fountain:
                     return Loc.T("未確保の最も弱い遺物を捧げ、最も強い未確保の遺物を+1強化", "Sacrifice your weakest unsecured relic to enhance your best one by +1");
                 case DreamEvent.Chalice:
@@ -58,7 +58,10 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>今この出来事を使えるか（理由つき）。</summary>
-        public static bool CanUse(Profile p, DreamEvent e, out string reason)
+        public static bool CanUse(Profile p, DreamEvent e, out string reason) => CanUse(p, e, false, out reason);
+
+        /// <summary>今この出来事を使えるか。goldPaid=true なら夢の商人の代金はホストがゴールドで受け取り済み。</summary>
+        public static bool CanUse(Profile p, DreamEvent e, bool goldPaid, out string reason)
         {
             reason = null;
             var run = p.Run;
@@ -70,7 +73,7 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
-                    if (p.Material(Materials.Shard) < MerchantCost(run.Heat)) reason = Loc.T("欠片が足りません。", "Not enough shards.");
+                    if (!goldPaid && p.Material(Materials.Shard) < MerchantCost(run.Heat)) reason = Loc.T("欠片が足りません。", "Not enough shards.");
                     break;
                 case DreamEvent.Fountain:
                     if (run.Satchel.Count < 2 || run.Satchel.All(r => r.Enhance >= Content.MaxEnhance))

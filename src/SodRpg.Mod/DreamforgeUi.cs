@@ -173,7 +173,7 @@ namespace SodRpg.Mod
                     if (repaint)
                     {
                         DrawNightmareLabels(scale);
-                        DrawHud(w, h, cfg);
+                        if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
                     if (layout && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
@@ -221,10 +221,11 @@ namespace SodRpg.Mod
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
             sb.Append(Loc.T("<b>夢鍛</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
+            bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
                 var daily = DailyDream.Get(run.DailyId);
-                if (daily != null || run.LimboDepth > 0)
+                if (!compact && (daily != null || run.LimboDepth > 0))
                 {
                     sb.Append("\n<size=13>");
                     if (daily != null) sb.Append("<color=#a8d8ff>").Append(Loc.T("今日の夢：", "Today: ")).Append(daily.Name).Append("</color>");
@@ -237,7 +238,7 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13>").Append(Loc.T("未確保：遺物", "Unsecured: ")).Append(run.Satchel.Count)
                     .Append(Loc.T("  欠片", " relics  ")).Append(run.SatchelShards)
                     .Append(Loc.T("  調律石", " shards  ")).Append(run.SatchelTuning).Append(Loc.T("", " tuning")).Append("</size>");
-                if (run.Pacts.Count > 0)
+                if (!compact && run.Pacts.Count > 0)
                 {
                     sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: "));
                     for (int i = 0; i < run.Pacts.Count; i++)
@@ -247,7 +248,7 @@ namespace SodRpg.Mod
                     }
                     sb.Append("</color></size>");
                 }
-                foreach (var b in run.Bounties)
+                if (!compact) foreach (var b in run.Bounties)
                 {
                     sb.Append("\n<size=13>");
                     if (b.Done) sb.Append("<color=#7af0c8>●</color><color=#888>").Append(b.Describe()).Append("</color>");
@@ -264,7 +265,7 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 300, 80, 600, 220 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
+            var rect = new Rect(w / 2 - 300, 80, 600, 260 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点", "Secure Point"), _st.Title);
@@ -288,21 +289,45 @@ namespace SodRpg.Mod
                 _tab = 0;
             }
             GUILayout.EndHorizontal();
+            {
+                int dust = _s.LocalDust;
+                GUI.enabled = dust >= Economy.DustPerBatch && !_s.TradePending(TradeKind.DustToShards);
+                int batches = Math.Min(dust / Economy.DustPerBatch, 10);
+                if (GUILayout.Button(Loc.T(
+                        $"ドリームダストを欠片に換える（{Economy.DustPerBatch}→{Economy.ShardsPerBatch}、所持{dust}" + (batches > 0 ? $"、{batches * Economy.DustPerBatch}→{batches * Economy.ShardsPerBatch}" : "") + "）",
+                        $"Convert Dream Dust to shards ({Economy.DustPerBatch}->{Economy.ShardsPerBatch}, you have {dust})"), _st.Button, GUILayout.Height(30)))
+                {
+                    string err = _s.ConvertDust();
+                    if (err != null) SetStatus(err);
+                }
+                GUI.enabled = true;
+            }
             if (run.OfferedEvent != DreamEvent.None)
             {
                 var e = run.OfferedEvent;
-                bool ok = DreamEvents.CanUse(_s.Profile, e, out string why);
+                bool merchant = e == DreamEvent.Merchant;
+                bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why);
+                if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
                 GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
-                if (GUILayout.Button(ok ? Loc.T("この出来事を選ぶ", "Take this event") : why, _st.Row, GUILayout.Height(32)))
+                string label = !ok ? why : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)") : Loc.T("この出来事を選ぶ", "Take this event");
+                if (GUILayout.Button(label, _st.Row, GUILayout.Height(32)))
                 {
-                    try
+                    if (merchant)
                     {
-                        foreach (var x in Rules.UseEvent(_s.Profile, e)) _s.Emit(x);
-                        _s.MarkDirty(false);
-                        _s.SaveNow();
+                        string err = _s.BuyFromMerchant();
+                        if (err != null) SetStatus(err);
                     }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                    else
+                    {
+                        try
+                        {
+                            foreach (var x in Rules.UseEvent(_s.Profile, e)) _s.Emit(x);
+                            _s.MarkDirty(false);
+                            _s.SaveNow();
+                        }
+                        catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                    }
                 }
                 GUI.enabled = true;
             }
@@ -981,7 +1006,17 @@ namespace SodRpg.Mod
                     }
                     GUILayout.EndHorizontal();
                 }
-                foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+                foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score).ToList())
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+                    if (GUILayout.Button(Loc.T($"分解（ダスト+{Economy.SalvageDust(r)}）", $"Salvage (+{Economy.SalvageDust(r)} dust)"), _st.Button, GUILayout.Width(170)))
+                    {
+                        string err = _s.SalvageUnsecured(r.Uid);
+                        if (err != null) SetStatus(err);
+                    }
+                    GUILayout.EndHorizontal();
+                }
             }
             GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);
             if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);

@@ -263,6 +263,13 @@ namespace SodRpg.Core.Game
                 {
                     if (Workshop.TryGetByKey(kv.Key, out var def) && kv.Value is long lv && lv > 0)
                         p.Upgrades[def.Id] = (int)Math.Min(def.MaxLevel, lv);
+                    else if (Workshop.TryGetRetired(kv.Key, out var old) && kv.Value is long olv && olv > 0)
+                    {
+                        var refund = Workshop.Refund(old, (int)olv);
+                        p.AddMaterial(Materials.Shard, refund.Shards);
+                        p.AddMaterial(Materials.Tuning, refund.Tuning);
+                        notes.Add($"廃止した工房強化「{old.Name.Ja}」の費用を返しました（欠片{refund.Shards}・調律石{refund.Tuning}）");
+                    }
                     else
                         notes.Add("未知の工房強化を除外: " + kv.Key);
                 }

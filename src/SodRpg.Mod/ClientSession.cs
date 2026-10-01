@@ -34,6 +34,8 @@ namespace SodRpg.Mod
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
+        private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
+        private readonly TradeLedger _trades = new TradeLedger();
         private readonly Action<DewPlayer> _onChaos;
         private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
         private readonly Action<Hero, Gem> _onMerged;
@@ -86,6 +88,7 @@ namespace SodRpg.Mod
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
             _onNightmare = OnNightmare;
+            _onTradeResult = OnTradeResult;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -217,8 +220,10 @@ namespace SodRpg.Mod
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                 }
                 _clientRpcOn = actor;
+                _trades.Clear();
                 Nightmare.Clear();
                 HostConfirmed = false;
                 HostSummary = null;
@@ -227,6 +232,7 @@ namespace SodRpg.Mod
                 {
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
         }
@@ -257,6 +263,7 @@ namespace SodRpg.Mod
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
             catch (Exception) { }
@@ -412,6 +419,104 @@ namespace SodRpg.Mod
         internal static bool IsVictory(DewGameResult.ResultType r)
         {
             return r == DewGameResult.ResultType.PureWhiteDream || r == DewGameResult.ResultType.StarlessPath || r == DewGameResult.ResultType.UnknownFate;
+        }
+
+        // ───────── 本体の通貨での取引（ホストが支払いを確定したら、こちらの処理を確定する）─────────
+
+        public int LocalGold => DewPlayer.local != null ? DewPlayer.local.gold : 0;
+        public int LocalDust => DewPlayer.local != null ? DewPlayer.local.dreamDust : 0;
+        public bool TradePending(TradeKind kind) => _trades.HasPending(kind);
+
+        /// <summary>夢の商人をゴールドで買う（本体の難易度補正を通した価格）。</summary>
+        public int MerchantPrice()
+        {
+            int heat = Profile.Run?.Heat ?? 0;
+            var gm = NetworkedManagerBase<GameManager>.instance;
+            float price = Economy.MerchantGoldBase(heat);
+            try { if (gm != null) price = gm.GetAdjustedGoldAmount_Cost(price); } catch (Exception) { }
+            return Math.Max(1, (int)Math.Round(price));
+        }
+
+        public string BuyFromMerchant()
+        {
+            if (TradePending(TradeKind.MerchantGold)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            int price = MerchantPrice();
+            if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
+            return SendTrade(_trades.Begin(TradeKind.MerchantGold, price, 0, 0));
+        }
+
+        public string ConvertDust()
+        {
+            int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
+            if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
+            if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            return SendTrade(_trades.Begin(TradeKind.DustToShards, 0, Math.Min(dust, Economy.DustPerBatch * 10), 0));
+        }
+
+        public string SalvageForDust(Relic r)
+        {
+            if (r == null) return null;
+            return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid));
+        }
+
+        private string SendTrade(PendingTrade t)
+        {
+            if (_clientRpcOn == null || !NetworkClient.active)
+            {
+                _trades.Complete(t.Token, false);
+                return Loc.T("ゲームに接続していません。", "Not connected to a game.");
+            }
+            _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+            {
+                token = t.Token, spendGold = t.SpendGold, spendDust = t.SpendDust, earnDust = t.EarnDust, protocol = Protocol.Version,
+            });
+            return null;
+        }
+
+        private void OnTradeResult(DreamforgeTradeResultMsg msg)
+        {
+            try
+            {
+                if (msg == null) return;
+                var t = _trades.Complete(msg.token, msg.ok);
+                if (t == null)
+                {
+                    if (!msg.ok) Emit(new GameEvent(EventKind.Warning, Loc.T("取引できませんでした（" + msg.reason + "）", "Trade failed (" + msg.reason + ")")));
+                    return;
+                }
+                switch (t.Kind)
+                {
+                    case TradeKind.MerchantGold:
+                        Emit(Rules.UseEvent(Profile, DreamEvent.Merchant, goldPaid: true));
+                        break;
+                    case TradeKind.DustToShards:
+                        Emit(Rules.ConvertDust(Profile, t.SpendDust));
+                        break;
+                    case TradeKind.SalvageForDust:
+                        Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        break;
+                }
+                SaveNow();
+            }
+            catch (InvalidOperationException ex)
+            {
+                Emit(new GameEvent(EventKind.Warning, ex.Message));
+            }
+        }
+
+        /// <summary>未確保の遺物を分解：先に鞄から外し（二重の分解を防ぐ）、ホストからダストを受け取る。</summary>
+        public string SalvageUnsecured(string uid)
+        {
+            try
+            {
+                var r = Rules.SalvageUnsecured(Profile, uid);
+                MarkDirty(false);
+                return SalvageForDust(r);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return ex.Message;
+            }
         }
 
         private void OnNightmare(DreamforgeNightmareMsg msg)

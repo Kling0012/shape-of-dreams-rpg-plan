@@ -448,9 +448,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保地点の出来事を使う（1回だけ）。</summary>
-        public static List<GameEvent> UseEvent(Profile p, DreamEvent e)
+        public static List<GameEvent> UseEvent(Profile p, DreamEvent e, bool goldPaid = false)
         {
-            if (!DreamEvents.CanUse(p, e, out string reason)) throw new InvalidOperationException(reason);
+            if (!DreamEvents.CanUse(p, e, goldPaid, out string reason)) throw new InvalidOperationException(reason);
             var run = p.Run;
             var ev = new List<GameEvent>();
             var rng = p.TakeRng();
@@ -458,8 +458,7 @@ namespace SodRpg.Core.Game
             {
                 case DreamEvent.Merchant:
                 {
-                    int cost = DreamEvents.MerchantCost(run.Heat);
-                    p.AddMaterial(Materials.Shard, -cost);
+                    if (!goldPaid) p.AddMaterial(Materials.Shard, -DreamEvents.MerchantCost(run.Heat));
                     var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * run.Heat, true, Rarity.Uncommon);
                     var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null, p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine);
                     p.Codex.Add(relic.UniqueId ?? relic.BaseId);
@@ -517,6 +516,26 @@ namespace SodRpg.Core.Game
             if (p.Run == null) return ev;
             AdvanceBounty(p, action, 1, false, ev);
             return ev;
+        }
+
+        /// <summary>確保地点でドリームダストを欠片へ換える（ダストはホストが支払い済み）。欠片はそのまま保管庫側へ。</summary>
+        public static GameEvent ConvertDust(Profile p, int dustPaid)
+        {
+            if (p.Run == null || !p.Run.AwaitingChoice) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point."));
+            int batches = dustPaid / Economy.DustPerBatch;
+            if (batches <= 0) throw new InvalidOperationException(Loc.T("ドリームダストが足りません。", "Not enough Dream Dust."));
+            int shards = batches * Economy.ShardsPerBatch;
+            p.AddMaterial(Materials.Shard, shards);
+            return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えた", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
+        }
+
+        /// <summary>遠征中、未確保の遺物を分解する（ドリームダストはホストが渡す）。分解した遺物を返す。</summary>
+        public static Relic SalvageUnsecured(Profile p, string uid)
+        {
+            var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
+            var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
+            run.Satchel.Remove(r);
+            return r;
         }
 
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);

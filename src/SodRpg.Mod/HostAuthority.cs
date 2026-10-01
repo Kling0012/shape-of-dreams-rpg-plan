@@ -35,6 +35,7 @@ namespace SodRpg.Mod
         private ClientEventManager _cem;
         private readonly Action<DreamforgeBuildMsg, DewPlayer> _onBuild;
         private readonly Action<DreamforgeCurseMsg, DewPlayer> _onCurse;
+        private readonly Action<DreamforgeTradeMsg, DewPlayer> _onTrade;
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
         private readonly Action<EventInfoAttackHit> _onAttackHit;
@@ -59,6 +60,7 @@ namespace SodRpg.Mod
             _dailyIdOfHost = dailyIdOfHost;
             _onBuild = OnBuild;
             _onCurse = OnCurse;
+            _onTrade = OnTrade;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
             _onAttackHit = OnAttackHit;
@@ -253,12 +255,14 @@ namespace SodRpg.Mod
                 {
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 }
                 _registeredOn = actor;
                 if (actor != null)
                 {
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildMsg>(nameof(DreamforgeBuildMsg), _onBuild);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseMsg>(nameof(DreamforgeCurseMsg), _onCurse);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -326,6 +330,7 @@ namespace SodRpg.Mod
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 _registeredOn = null;
             }
         }
@@ -362,6 +367,34 @@ namespace SodRpg.Mod
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
+        /// <summary>本体の通貨での取引。残高を確かめて支払い・受け取りを行い、結果を返す（通貨を動かすのはホストだけ）。</summary>
+        private void OnTrade(DreamforgeTradeMsg msg, DewPlayer caller)
+        {
+            if (caller == null || msg == null) return;
+            bool ok = false;
+            string reason = null;
+            try
+            {
+                if (msg.protocol != Protocol.Version) reason = "protocol";
+                else if (msg.spendGold < 0 || msg.spendDust < 0 || msg.earnDust < 0 || msg.earnDust > Economy.MaxDustEarnPerTrade) reason = "invalid";
+                else if (caller.gold < msg.spendGold) reason = "gold";
+                else if (caller.dreamDust < msg.spendDust) reason = "dust";
+                else
+                {
+                    if (msg.spendGold > 0) caller.SpendGold(msg.spendGold);
+                    if (msg.spendDust > 0) caller.SpendDreamDust(msg.spendDust);
+                    if (msg.earnDust > 0) caller.EarnDreamDust(msg.earnDust);
+                    ok = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                reason = "error";
+                Log.Error("Host: OnTrade " + ex.Message);
+            }
+            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeTradeResultMsg { token = msg.token, ok = ok, reason = reason });
+        }
+
         private List<CurseStatusEffect> _curseCache;
 
         private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)

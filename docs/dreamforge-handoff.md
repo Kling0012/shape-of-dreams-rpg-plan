@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.4.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.5.0）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,12 +6,12 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.4.0**（GitHub Releases に v0.1.0〜v1.4.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.5.0**（GitHub Releases に v0.1.0〜v1.5.0、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
-| 試験 | `dotnet test` で **449件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール199件。性能の試験を含む） |
+| 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
 | 実機確認 | v0.1〜v0.3 の主要部分のみ（読み込み・UI・能力反映・確保・精算・ライブリロード）。**v1.0 以降の本体連動は実機未確認**（保留事項を参照） |
-| 次 | 経済の橋渡し（計画の「その後の候補」）。v1.4 の最適化が実機で効いたかは `dreamforge_perf` で確認待ち |
+| 次 | 利用者のテストプレイ結果を待って調整（`dreamforge_perf` の数値、手触り）。実機確認は利用者が行う（2026-10-02 指示） |
 
 ## 2. 方針（利用者の指示で決まったこと）
 
@@ -62,6 +62,7 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 | 呪い | `DewResources.FindAllByType<CurseStatusEffect>()` ＋ `CreateStatusEffect`（`currentStrength` を設定） |
 | ラン・ゾーン | `GameManager.runId/ambientLevel`、`ZoneManager.ClientEvent_OnZoneLoaded/OnClearedCombatRoomsChanged/OnCurrentHuntLevelChanged`、`GameResultManager.ClientEvent_OnGameConcluded` |
 | Limbo | `GameMod_Limbo.depth`（`FindObjectOfType`） |
+| 通貨（ホストのみ） | `DewPlayer.SpendGold/SpendDreamDust/EarnDreamDust`、`GameManager.GetAdjustedGoldAmount_Cost`（取引は `DreamforgeTradeMsg` → 結果で確定、`TradeLedger` で二重確定を防ぐ） |
 | 本体の行動（依頼） | `ClientEventManager.OnChaosUsed/OnItemBought/OnItemUpgraded/OnGemMergeUpgraded/OnDismantled` |
 | 入力の遮断 | `ControlManager.GetShouldProcessCharacterInputAllowKnockedOut`（Harmony）、`EventSystem.enabled` |
 

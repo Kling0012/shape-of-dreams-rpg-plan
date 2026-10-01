@@ -22,5 +22,15 @@ namespace SodRpg.Mod
 
         [LabelText("Show drop toasts / 拾得通知")]
         public bool showToasts = true;
+
+        [LabelText("HUD / 左の夢鍛パネル")]
+        public HudMode hudMode = HudMode.Full;
+    }
+
+    public enum HudMode
+    {
+        Full = 0,
+        Compact = 1,
+        Off = 2,
     }
 }
