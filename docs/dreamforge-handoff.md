@@ -122,3 +122,4 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - 計測するときは、本体の垂直同期を一時的にオフにしないと60fpsに張り付いて差が見えない（`QuickSave/r_platform.json` の `"vSync"`。計測後はバックアップから戻す）。裏に回す操作は、MinimizeAll では効かず、Alt+Tab で効いた。
 - 戦闘中や低性能PCでの効果は未確認。
 - v1.8.1：自動で戦闘部屋へ行くには、開始地点で `dreamforge_travelnext`（ゲーム内の地図の移動ボタンは自動クリックに反応しなかった）。戦闘部屋に入っても、敵が出る地点まで自動では進めていない。描画負荷の模擬は `dreamforge_renderscale 2`。
+- 2026-10-02 同じ場所で10秒ごとに Off/Max を切り替えた計測（CPU 2コア制限、敵なし）：平均 Off 約10.5ms / Max 約10.4ms（ほぼ同じ）、10秒ごとの最大 Off 30〜52ms / Max 26〜33ms。CPUが弱い環境では軽量化は平均にほとんど効かず、引っかかりを少し抑える程度。CPU側の重さは本体の処理が主因。`perfPressureStrengthOverride`（本体の適応的なエフェクト間引き）は、表示中のエフェクトを毎フレーム確率で消すため、常時有効にはしない。
