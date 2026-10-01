@@ -24,6 +24,8 @@ namespace SodRpg.Mod
         private ClientSession _session;
         private HostAuthority _host;
         private DreamforgeUi _ui;
+        private PerformanceTuner _performance;
+        private bool _hasFocus = true;
         private EventSystem _pausedEventSystem;
 
         private void Awake()
@@ -32,6 +34,8 @@ namespace SodRpg.Mod
             {
                 instance.isAlteringGameplay = true;
                 Loc.Japanese = config.japanese;
+                _performance = new PerformanceTuner();
+                _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
@@ -52,6 +56,13 @@ namespace SodRpg.Mod
         public override void OnConfigChanged()
         {
             Loc.Japanese = config.japanese;
+            _performance?.Configure(config);
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            _hasFocus = hasFocus;
+            _performance?.SetFocus(hasFocus);
         }
 
         private readonly PerfMeter _perf = new PerfMeter();
@@ -85,7 +96,8 @@ namespace SodRpg.Mod
             if (_perfLogEnabled && Time.unscaledTime >= _nextPerfLog)
             {
                 _nextPerfLog = Time.unscaledTime + 10f;
-                Debug.Log("[DreamforgeRPG] perf " + _perf.Report());
+                Debug.Log("[DreamforgeRPG] perf " + _perf.Report() +
+                    $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
             }
         }
 
@@ -150,7 +162,8 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: show time spent by this mod per frame (Update / OnGUI / save)", "dreamforge_perf")]
         private void PerfCommand()
         {
-            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") + "ms (main thread)");
+            Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
+                $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }
 
         private void OnApplicationQuit()
@@ -162,6 +175,7 @@ namespace SodRpg.Mod
         private void OnDestroy()
         {
             // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
+            try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
             try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }
             try

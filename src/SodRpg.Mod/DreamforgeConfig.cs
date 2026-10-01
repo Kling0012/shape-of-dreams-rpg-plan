@@ -25,6 +25,13 @@ namespace SodRpg.Mod
 
         [LabelText("HUD / 左の夢鍛パネル")]
         public HudMode hudMode = HudMode.Full;
+
+        [LabelText("ゲームが裏にあるときのFPS上限（0で無効。20〜60）")]
+        [UnityEngine.Range(0, 60)]
+        public int backgroundFps = 20;
+
+        [LabelText("軽量化（Off：なし／Light：軽め／Strong：強め）")]
+        public LightweightMode lightweight = LightweightMode.Off;
     }
 
     public enum HudMode
@@ -32,5 +39,12 @@ namespace SodRpg.Mod
         Full = 0,
         Compact = 1,
         Off = 2,
+    }
+
+    public enum LightweightMode
+    {
+        Off = 0,
+        Light = 1,
+        Strong = 2,
     }
 }
