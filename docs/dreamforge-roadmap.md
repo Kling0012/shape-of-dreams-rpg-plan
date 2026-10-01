@@ -6,21 +6,20 @@
 
 Dreamforge は単独のゲームではなく **Shape of Dreams のMOD**。新しい要素は、本体の仕組み（Memory・Essence・属性・旅人の固有能力・祭壇・商人・ハンター・Limbo の深度）に乗り、それを強めるものを優先する。各項目に、土台にする本体のAPIを明記する。
 
-## 次：v1.0「本体とのシナジー」
+## 次：v1.1「本体のエリートと Limbo」
 
-1. **属性の遺物**（本体の属性システムに乗る）
-   - 特性に「火・冷気・光・闇の効果増幅」を追加（`BonusStats.fire/cold/light/darkEffectAmpFlat`。本体の `ApplyElemental` がそのまま `ampAmount` に使う）。
-   - 固有効果「火種・霜・輝き・影」：通常攻撃の命中時に確率で該当属性を1スタック付与（`Actor.ApplyElemental`）。Lacerta（火）・Cetus（冷気）・Yubar/Aurena/Nachia（光）・空殻（闇）のキットと噛み合う。
-   - 固有効果「四元の共鳴」：敵に4属性すべてが乗った瞬間に爆発（`EntityStatus.fireStack/hasCold/lightStack/darkStack`、星座「全属性ダメージ」と同じ方向）。
-2. **4発目と噛み合う「烈火」**：自前の数え方をやめ、本体の4発目カウンタ（`EntityEvent_OnAttackFired.isThisAttackFourthAttack`）で発動。Vesper・Lacerta の4発目キットや `everyFourAttackStartIndex` と連動する。
-3. **Memory と噛み合う固有効果**
-   - 「回避の残響」：回避（Movement）を使うたびに Memory のクールダウンを短縮（スキル使用イベント＋`ApplyCooldownReduction`）。
-   - 「終の昂り」：Ultimate（R）を使うと数秒間 攻撃力・魔力が上がる。
-4. **本体の行動を依頼にする**：Chaos の祭壇を使う（`OnChaosUsed`）、商人で買う（`OnItemBought`）、Memory/Essence を強化（`OnItemUpgraded`）、Essence を合成（`OnGemMergeUpgraded`）、分解（`OnDismantled`）、ハンターの領域に入る（`OnCurrentHuntLevelChanged`）。
-5. **調査して可能なら**：悪夢化エリートに本体のエリート効果（`MirageSkin` 系の見た目と挙動）を付ける。
-6. **試験**：属性特性・付与の確率・四元判定・4発目・回避短縮・新しい依頼の進み方、保存の往復。
+[シナジー再評価](dreamforge-synergy-review.md) の結果に沿って、本体と並走していた要素を本体の仕組みへ乗せ替える。
 
-## その後の候補
+1. **悪夢化＝本体のエリート**：悪夢化した敵に本体の `MirageSkinEffect` を付ける（`DewResources.FindAllByType<MirageSkinEffect>()`、`CreateStatusEffect`）。見た目と専用攻撃が本体のものになる。潜行が深いほど tier 1 を混ぜる。本体がすでにエリート化した敵は対象外。報酬の格上げと名札は維持。
+2. **開始深度をやめて Limbo を読む**：MOD独自の開始深度を廃止し、本体の Limbo 深度（`GameMod_Limbo.depth`）に応じて遺物のドロップ率とレア度を上げる。保存済みの開始深度は無視し、記録だけ残す。
+3. **「夢の深度」を「潜行」に改名**し、代償を本体と同じ表現へ：防御・最大HPの減少をやめ、潜行ごとに「被ダメージ増加」（本体 Limbo d2 と同種）と「エリート化（MirageSkin）率の上昇」にする。
+4. **試験**：エリート化の抽選・対象外判定、Limbo 倍率、潜行の代償、保存の移行。
+
+## その後の候補（シナジー再評価の順番）
+
+- v1.2 旅人の刻印（汎用の星図・熟練度の%・図鑑ポイントを置き換え）
+- v1.3 呪いの契約と系統の統一（破壊・生命・想像）、セットを旅人・属性テーマへ
+- v1.4 経済の橋渡し（ドリームダスト→欠片、出来事の支払いをゴールドに、工房の縮小）
 
 - 悪夢の契約を本体の呪い（`CurseStatusEffect`）・Evil の明晰夢と結び付ける
 - 夢の商人の支払いをラン内のゴールドに（ホスト経由で `SpendGold`）、遺物の分解でドリームダスト
@@ -41,3 +40,4 @@ Dreamforge は単独のゲームではなく **Shape of Dreams のMOD**。新し
 - v0.7：開始深度（深淵の段階）・固有効果4種・固有品4種
 - v0.8：夢の工房（恒久強化6種）・依頼の引き直し
 - v0.9：夢の出来事・セット遺物
+- v1.0：本体とのシナジー（属性・4発目・Memory・本体行動の依頼）
