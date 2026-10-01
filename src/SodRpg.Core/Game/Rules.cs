@@ -67,8 +67,8 @@ namespace SodRpg.Core.Game
             if (p.LostAndFound.Count > 0)
             {
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"遺失物が{p.LostAndFound.Count}個あります。戦闘部屋を{Content.RoomsToRecoverLost}つ突破すると1つ取り戻せます。",
-                    $"You have {p.LostAndFound.Count} lost relic(s). Clear {Content.RoomsToRecoverLost} combat rooms to recover one.")));
+                    $"遺失物が{p.LostAndFound.Count}個あります。戦闘部屋を{Workshop.RoomsToRecover(p)}つ突破すると1つ取り戻せます。",
+                    $"You have {p.LostAndFound.Count} lost relic(s). Clear {Workshop.RoomsToRecover(p)} combat rooms to recover one.")));
             }
             return ev;
         }
@@ -152,7 +152,7 @@ namespace SodRpg.Core.Game
         {
             var run = p.Run;
             run.Satchel.Add(relic);
-            if (run.Satchel.Count <= Content.SatchelCapacity) return;
+            if (run.Satchel.Count <= Workshop.SatchelCapacity(p)) return;
             var worst = run.Satchel.OrderBy(r => r.Score).First();
             run.Satchel.Remove(worst);
             run.SatchelShards += Content.SalvageShards(worst.Rarity);
@@ -180,7 +180,7 @@ namespace SodRpg.Core.Game
             run.AwaitingChoice = true;
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
-            run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts));
+            run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
             p.StoreRng(rng);
         }
 
@@ -200,7 +200,7 @@ namespace SodRpg.Core.Game
             var overflow = new List<Relic>();
             foreach (var r in run.Satchel.OrderByDescending(r => r.Score))
             {
-                if (p.Stash.Count < Content.StashCapacity) p.Stash.Add(r);
+                if (p.Stash.Count < Workshop.StashCapacity(p)) p.Stash.Add(r);
                 else overflow.Add(r);
             }
             foreach (var r in overflow) shards += Content.SalvageShards(r.Rarity);
@@ -318,7 +318,7 @@ namespace SodRpg.Core.Game
             int added = clearedRooms - run.RoomsCleared;
             run.RoomsCleared = Math.Max(run.RoomsCleared, clearedRooms);
             AdvanceBounty(p, BountyKind.Pathfinder, added, false, ev);
-            if (run.LostRecovered || p.LostAndFound.Count == 0 || run.RoomsCleared < Content.RoomsToRecoverLost) return ev;
+            if (run.LostRecovered || p.LostAndFound.Count == 0 || run.RoomsCleared < Workshop.RoomsToRecover(p)) return ev;
             var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
             p.LostAndFound.Remove(best);
             run.LostRecovered = true;
@@ -346,7 +346,7 @@ namespace SodRpg.Core.Game
             else
             {
                 p.Stats.Defeats++;
-                int echo = run.SatchelShards > 0 && !Pacts.Sum(run.Pacts).NoEcho ? Math.Max(1, (run.SatchelShards + 3) / 4) : 0;
+                int echo = Pacts.Sum(run.Pacts).NoEcho ? 0 : Workshop.Echo(p, run.SatchelShards);
                 p.AddMaterial(Materials.Shard, echo);
                 int lost = run.Satchel.Count;
                 report.RelicsLost = lost;
@@ -385,6 +385,46 @@ namespace SodRpg.Core.Game
             p.LastReport = report;
             p.Run = null;
             return ev;
+        }
+
+        public static GameEvent BuyUpgrade(Profile p, Upgrade u)
+        {
+            if (p.Run != null) throw new InvalidOperationException(Loc.T("工房は遠征の外でのみ使えます。", "The workshop is only available outside expeditions."));
+            var def = Workshop.Get(u);
+            int lv = Workshop.Level(p, u);
+            if (lv >= def.MaxLevel) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at max level."));
+            var cost = def.Costs[lv];
+            if (p.Material(Materials.Shard) < cost.Shards || p.Material(Materials.Tuning) < cost.Tuning)
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{cost.Shards}・調律石{cost.Tuning}）。", $"Not enough materials ({cost.Shards} shards, {cost.Tuning} tuning)."));
+            p.AddMaterial(Materials.Shard, -cost.Shards);
+            p.AddMaterial(Materials.Tuning, -cost.Tuning);
+            p.Upgrades[u] = lv + 1;
+            return new GameEvent(EventKind.LevelUp, Loc.T($"工房：{def.Name} {lv + 1}/{def.MaxLevel}", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}"));
+        }
+
+        public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);
+
+        /// <summary>未達成の依頼を1つ、今ある依頼と重ならない種類で引き直す。</summary>
+        public static GameEvent RerollBounty(Profile p, int index)
+        {
+            var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
+            if (RerollsLeft(p) <= 0) throw new InvalidOperationException(Loc.T("引き直しの回数がありません（工房で解放）。", "No rerolls left (unlock in the workshop)."));
+            if (index < 0 || index >= run.Bounties.Count || run.Bounties[index].Done)
+                throw new InvalidOperationException(Loc.T("未達成の依頼を選んでください。", "Choose an unfinished bounty."));
+            var rng = p.TakeRng();
+            var existing = new HashSet<BountyKind>(run.Bounties.Select(b => b.Kind));
+            Bounty replacement = null;
+            for (int i = 0; i < 20 && replacement == null; i++)
+            {
+                var cand = Bounties.Roll(rng, 1)[0];
+                if (!existing.Contains(cand.Kind)) replacement = cand;
+            }
+            p.StoreRng(rng);
+            if (replacement == null) throw new InvalidOperationException(Loc.T("引き直せる依頼がありません。", "No other bounty available."));
+            var old = run.Bounties[index];
+            run.Bounties[index] = replacement;
+            run.RerollsUsed++;
+            return new GameEvent(EventKind.Bounty, Loc.T($"依頼を引き直し：{old.Describe()} → {replacement.Describe()}", $"Bounty rerolled: {old.Describe()} -> {replacement.Describe()}"));
         }
 
         /// <summary>開始深度を選ぶ。遠征の外でのみ、確保できた最高深度まで。</summary>
@@ -510,7 +550,7 @@ namespace SodRpg.Core.Game
         {
             int shards = CraftShardCost(fine);
             int tuning = CraftTuningCost(fine);
-            if (p.Stash.Count >= Content.StashCapacity) throw new InvalidOperationException(Loc.T("保管庫が一杯です。", "Your stash is full."));
+            if (p.Stash.Count >= Workshop.StashCapacity(p)) throw new InvalidOperationException(Loc.T("保管庫が一杯です。", "Your stash is full."));
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
             var rng = p.TakeRng();

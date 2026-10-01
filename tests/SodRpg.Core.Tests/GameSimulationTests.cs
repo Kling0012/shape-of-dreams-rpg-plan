@@ -17,11 +17,11 @@ namespace SodRpg.Core.Tests
         {
             var all = p.Stash.Concat(p.LostAndFound).Concat(p.Run?.Satchel ?? new List<Relic>()).ToList();
             Assert.Equal(all.Count, all.Select(r => r.Uid).Distinct().Count()); // 同じ遺物が二か所にない
-            Assert.True(p.Stash.Count <= Content.StashCapacity);
+            Assert.True(p.Stash.Count <= Workshop.StashCapacity(p));
             Assert.True(p.LostAndFound.Count <= Content.LostAndFoundCapacity);
             if (p.Run != null)
             {
-                Assert.True(p.Run.Satchel.Count <= Content.SatchelCapacity);
+                Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
                 Assert.InRange(p.Run.Heat, 0, Content.MaxHeat);
                 Assert.True(p.Run.SatchelShards >= 0 && p.Run.SatchelTuning >= 0);
             }

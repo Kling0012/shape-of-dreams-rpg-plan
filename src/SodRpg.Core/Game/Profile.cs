@@ -59,6 +59,8 @@ namespace SodRpg.Core.Game
         public int DailyId { get; set; }
         /// <summary>このランの開始深度。確保するとここまで戻る。</summary>
         public int StartDepth { get; set; }
+        /// <summary>このランで使った依頼の引き直し回数。</summary>
+        public int RerollsUsed { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -83,6 +85,7 @@ namespace SodRpg.Core.Game
                 LevelAtStart = LevelAtStart,
                 DailyId = DailyId,
                 StartDepth = StartDepth,
+                RerollsUsed = RerollsUsed,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
@@ -149,6 +152,8 @@ namespace SodRpg.Core.Game
         public List<Relic> LostAndFound { get; } = new List<Relic>();
         public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>夢の工房の段階。</summary>
+        public SortedDictionary<Upgrade, int> Upgrades { get; } = new SortedDictionary<Upgrade, int>();
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
 
@@ -232,6 +237,7 @@ namespace SodRpg.Core.Game
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
+            foreach (var kv in Upgrades) c.Upgrades[kv.Key] = kv.Value;
             return c;
         }
     }

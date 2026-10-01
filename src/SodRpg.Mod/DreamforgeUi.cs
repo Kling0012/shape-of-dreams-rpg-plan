@@ -309,7 +309,7 @@ namespace SodRpg.Mod
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("夢鍛 ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
-            string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("記録", "Records") };
+            string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
                 if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _retuneIndex = -1; }
             GUILayout.FlexibleSpace();
@@ -318,14 +318,15 @@ namespace SodRpg.Mod
 
             var p = _s.Profile;
             GUILayout.Label(Loc.T(
-                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Content.StashCapacity}　キャラ：{HeroName(HeroKey)}",
-                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Content.StashCapacity}   Traveler: {HeroName(HeroKey)}"), _st.Small);
+                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　キャラ：{HeroName(HeroKey)}",
+                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
 
             switch (_tab)
             {
                 case 0: DrawGearTab(); break;
                 case 1: DrawForgeTab(); break;
                 case 2: DrawTalentTab(); break;
+                case 3: DrawWorkshopTab(); break;
                 default: DrawRecordsTab(cfg); break;
             }
             if (_status != null && Time.unscaledTime < _statusUntil) GUILayout.Label(_status, _st.Warn);
@@ -727,6 +728,36 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
+        private void DrawWorkshopTab()
+        {
+            var p = _s.Profile;
+            GUILayout.Label(Loc.T("夢の工房：余った欠片と調律石で、アカウント共通の恒久強化を解放する（遠征の外でのみ）。",
+                "Dream Workshop: spend spare shards and tuning stones on permanent account-wide upgrades (outside expeditions)."), _st.Label);
+            GUILayout.BeginVertical(_st.Panel);
+            foreach (var def in Workshop.All)
+            {
+                int lv = Workshop.Level(p, def.Id);
+                GUILayout.BeginHorizontal();
+                string pips = new string('●', lv) + new string('○', def.MaxLevel - lv);
+                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>\n<color=#aab>{def.Description}</color>", _st.Small, GUILayout.Width(560));
+                if (lv < def.MaxLevel)
+                {
+                    var cost = def.Costs[lv];
+                    bool afford = p.Material(Materials.Shard) >= cost.Shards && p.Material(Materials.Tuning) >= cost.Tuning;
+                    GUI.enabled = afford && p.Run == null;
+                    string label = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
+                        $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
+                    if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id), false);
+                    GUI.enabled = true;
+                }
+                else GUILayout.Label(Loc.T("完了", "Maxed"), _st.Header, GUILayout.Width(300));
+                GUILayout.EndHorizontal();
+                GUILayout.Space(4);
+            }
+            GUILayout.EndVertical();
+            if (p.Run != null) GUILayout.Label(Loc.T("遠征中は工房を使えません。", "The workshop is closed during expeditions."), _st.Warn);
+        }
+
         private void DrawRecordsTab(DreamforgeConfig cfg)
         {
             var p = _s.Profile;
@@ -778,8 +809,19 @@ namespace SodRpg.Mod
             if (p.Run != null)
             {
                 GUILayout.Label(Loc.T($"今回の遠征（未確保 {p.Run.Satchel.Count}）", $"This expedition ({p.Run.Satchel.Count} unsecured)"), _st.Header);
-                foreach (var b in p.Run.Bounties)
+                int rerolls = Rules.RerollsLeft(p);
+                for (int i = 0; i < p.Run.Bounties.Count; i++)
+                {
+                    var b = p.Run.Bounties[i];
+                    GUILayout.BeginHorizontal();
                     GUILayout.Label((b.Done ? "● " : "○ ") + b.Describe() + $"  {b.Progress}/{b.Target}  <color=#c9a86a>{b.RewardText()}</color>", _st.Small);
+                    if (!b.Done && rerolls > 0)
+                    {
+                        int idx = i;
+                        if (GUILayout.Button(Loc.T($"引き直し（残り{rerolls}）", $"Reroll ({rerolls} left)"), _st.Button, GUILayout.Width(150))) Act(() => Rules.RerollBounty(p, idx), false);
+                    }
+                    GUILayout.EndHorizontal();
+                }
                 foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             }
             GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);

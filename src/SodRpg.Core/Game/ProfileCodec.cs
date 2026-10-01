@@ -73,7 +73,7 @@ namespace SodRpg.Core.Game
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
-                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth)
+                    .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth).Add("rerollsUsed", (long)r.RerollsUsed)
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
@@ -93,8 +93,17 @@ namespace SodRpg.Core.Game
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
                 .Add("heroes", heroes)
                 .Add("codex", codex)
+                .Add("upgrades", WriteUpgrades(p))
                 .Add("stats", stats)
                 .Add("run", run);
+        }
+
+        private static JsonObject WriteUpgrades(Profile p)
+        {
+            var o = new JsonObject();
+            foreach (var kv in p.Upgrades)
+                if (kv.Value > 0) o.Add(Workshop.Get(kv.Key).Key, (long)kv.Value);
+            return o;
         }
 
         private static List<object> WritePacts(IEnumerable<Pact> pacts)
@@ -232,6 +241,16 @@ namespace SodRpg.Core.Game
             if (b.TryGet("codex", out object co) && co is List<object> codex)
                 foreach (var c in codex)
                     if (c is string s) p.Codex.Add(s);
+            if (b.TryGet("upgrades", out object uo) && uo is JsonObject ups)
+            {
+                foreach (var kv in ups.Properties)
+                {
+                    if (Workshop.TryGetByKey(kv.Key, out var def) && kv.Value is long lv && lv > 0)
+                        p.Upgrades[def.Id] = (int)Math.Min(def.MaxLevel, lv);
+                    else
+                        notes.Add("未知の工房強化を除外: " + kv.Key);
+                }
+            }
             if (b.TryGet("stats", out object so) && so is JsonObject st)
             {
                 p.Stats.Runs = Clamp(Long(st, "runs"), 0, int.MaxValue);
@@ -263,6 +282,7 @@ namespace SodRpg.Core.Game
                     LevelAtStart = Clamp(Long(rj, "levelAtStart"), 0, Content.MaxDreamLevel),
                     DailyId = DailyDream.Get((int)Long(rj, "daily")) != null ? (int)Long(rj, "daily") : 0,
                     StartDepth = Clamp(Long(rj, "startDepth"), 0, Content.MaxHeat),
+                    RerollsUsed = Clamp(Long(rj, "rerollsUsed"), 0, 100),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
