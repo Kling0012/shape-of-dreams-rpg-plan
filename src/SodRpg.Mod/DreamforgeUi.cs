@@ -481,7 +481,7 @@ namespace SodRpg.Mod
 
         private void DrawWindow(float w, float h, DreamforgeConfig cfg)
         {
-            float ww = Mathf.Min(1060, w - 20), wh = Mathf.Min(660, h - 20);
+            float ww = Mathf.Min(1060, w - 20), wh = Mathf.Min(720, h - 20);
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
@@ -630,7 +630,7 @@ namespace SodRpg.Mod
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
             var build = _s.CurrentBuild(hero);
-            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(300));
+            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(250));
             if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
@@ -659,7 +659,7 @@ namespace SodRpg.Mod
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
                 if (GUILayout.Button(Content.SlotName(slot).ToString(), _slot == slot ? _st.ButtonSel : _st.Button)) _slot = slot;
             GUILayout.EndHorizontal();
-            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 470);
+            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 440);
             GUILayout.EndVertical();
 
             // 右：詳細と比較
@@ -772,7 +772,7 @@ namespace SodRpg.Mod
                     _slot = slot;
                 }
             GUILayout.EndHorizontal();
-            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 500);
+            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 470);
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel);
@@ -1063,7 +1063,7 @@ namespace SodRpg.Mod
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
             foreach (var u in Content.Uniques)
-                GUILayout.Label(p.Codex.Contains(u.Id) ? UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)) : "<color=#666>◇ ？？？</color>", _st.Small);
+                GUILayout.Label(p.Codex.Contains(u.Id) ? UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)) : Loc.T("<color=#8a8aa0>◇ まだ見つけていない固有品</color>", "<color=#8a8aa0>◇ not found yet</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
