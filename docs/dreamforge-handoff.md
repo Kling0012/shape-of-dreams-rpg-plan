@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.8.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.8.1）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,7 +6,7 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.8.0**（GitHub Releases に v0.1.0〜v1.8.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.8.1**（GitHub Releases に v0.1.0〜v1.8.1、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
 | 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
@@ -121,3 +121,4 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - `src/SodRpg.Mod/PerformanceTuner.cs`：設定変更・シーン読み込み・フォーカス変更のときだけ動く（毎フレームの処理なし）。本体APIは `inc8877.GraphicsConfigurator`（URPUnlocker）の `CurrentUnlockedURPAsset` 経由。
 - 計測するときは、本体の垂直同期を一時的にオフにしないと60fpsに張り付いて差が見えない（`QuickSave/r_platform.json` の `"vSync"`。計測後はバックアップから戻す）。裏に回す操作は、MinimizeAll では効かず、Alt+Tab で効いた。
 - 戦闘中や低性能PCでの効果は未確認。
+- v1.8.1：自動で戦闘部屋へ行くには、開始地点で `dreamforge_travelnext`（ゲーム内の地図の移動ボタンは自動クリックに反応しなかった）。戦闘部屋に入っても、敵が出る地点まで自動では進めていない。描画負荷の模擬は `dreamforge_renderscale 2`。
