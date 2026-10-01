@@ -20,7 +20,7 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Loot
     {
-        private static readonly int[] BaseRarityWeights = { 600, 270, 100, 26, 4 };
+        private static readonly int[] BaseRarityWeights = { 600, 270, 100, 26, 3 };
 
         /// <summary>夢の深度1あたりの装備ドロップ率の増分。</summary>
         public const double HeatDropBonus = 0.35;
@@ -44,8 +44,8 @@ namespace SodRpg.Core.Game
         {
             switch (tier)
             {
-                case MonsterTier.MiniBoss: return 1.0;
-                case MonsterTier.Boss: return 2.0;
+                case MonsterTier.MiniBoss: return 0.6;
+                case MonsterTier.Boss: return 1.2;
                 default: return 0.0;
             }
         }

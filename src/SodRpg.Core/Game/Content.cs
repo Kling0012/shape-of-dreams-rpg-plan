@@ -555,11 +555,11 @@ namespace SodRpg.Core.Game
         {
             switch (currentEnhance)
             {
-                case 0: return 15;
-                case 1: return 25;
-                case 2: return 40;
-                case 3: return 60;
-                case 4: return 90;
+                case 0: return 20;
+                case 1: return 35;
+                case 2: return 60;
+                case 3: return 90;
+                case 4: return 130;
                 default: return int.MaxValue;
             }
         }
@@ -581,7 +581,7 @@ namespace SodRpg.Core.Game
         public static int SalvageTuning(Rarity r) => r >= Rarity.Epic ? 1 : 0;
 
         /// <summary>夢のレベル n から n+1 へ必要な経験値。</summary>
-        public static int XpToNext(int level) => 60 + 25 * Math.Max(1, level);
+        public static int XpToNext(int level) => 60 + 25 * Math.Max(1, level) + 3 * level * level;
 
         public static int KillXp(MonsterTier tier)
         {

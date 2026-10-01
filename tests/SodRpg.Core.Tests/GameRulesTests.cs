@@ -240,7 +240,7 @@ namespace SodRpg.Core.Tests
             p.AddMaterial(Materials.Shard, 1000);
             for (int i = 0; i < Content.MaxEnhance; i++) Rules.Enhance(p, r.Uid);
             Assert.Equal(5, r.Enhance);
-            Assert.Equal(1000 - (15 + 25 + 40 + 60 + 90), p.Material(Materials.Shard));
+            Assert.Equal(1000 - (20 + 35 + 60 + 90 + 130), p.Material(Materials.Shard));
             Assert.True(r.EffectiveStats().Sum(s => s.Value) > before);
             Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p, r.Uid));
         }
