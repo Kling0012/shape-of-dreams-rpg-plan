@@ -197,5 +197,48 @@ namespace SodRpg.Core.Tests
             Assert.Contains(p.Run.Satchel, r => r.Rarity == Rarity.Legendary);
             Assert.True(p.Run.SatchelShards > shards);
         }
+
+        [Fact]
+        public void Report_level_before_is_the_level_at_run_start()
+        {
+            var p = Profile.CreateNew(6);
+            Rules.BeginRun(p, "lv");
+            int start = p.DreamLevel;
+            for (int i = 0; i < 10; i++) Rules.OnKill(p, MonsterTier.Boss, 5);
+            Assert.True(p.DreamLevel > start);
+            Rules.EndRun(p, victory: false);
+            Assert.Equal(start, p.LastReport.LevelBefore);
+            Assert.Equal(p.DreamLevel, p.LastReport.LevelAfter);
+        }
+
+        [Fact]
+        public void Overflowed_relics_do_not_count_as_secured()
+        {
+            var p = Profile.CreateNew(6);
+            var rng = new Rng(1006);
+            for (int i = 0; i < Content.StashCapacity - 1; i++) p.Stash.Add(Loot.RollRelic(rng, Rarity.Common, 1));
+            Rules.BeginRun(p, "of");
+            p.Run.Bounties.Clear();
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Collector, Target = 4, RewardShards = 5, RewardXp = 1 });
+            for (int i = 0; i < 4; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
+            Rules.Secure(p);
+            Assert.Equal(1, p.Run.RelicsSecured);
+            Assert.Equal(1, p.Run.Bounties[0].Progress);
+            Assert.False(p.Run.Bounties[0].Done);
+        }
+
+        [Fact]
+        public void Bounty_rewards_paid_during_secure_count_as_secured_shards()
+        {
+            var p = Profile.CreateNew(6);
+            Rules.BeginRun(p, "bs");
+            p.Run.Bounties.Clear();
+            p.Run.Bounties.Add(new Bounty { Kind = BountyKind.Collector, Target = 1, RewardShards = 20, RewardXp = 1 });
+            p.Run.Satchel.Add(Loot.RollRelic(new Rng(77), Rarity.Common, 1));
+            p.Run.SatchelShards = 100;
+            Rules.Secure(p);
+            Assert.Equal(120, p.Material(Materials.Shard));
+            Assert.Equal(120, p.Run.ShardsSecured);
+        }
     }
 }

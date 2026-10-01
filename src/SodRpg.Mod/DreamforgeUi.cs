@@ -130,7 +130,7 @@ namespace SodRpg.Mod
                     if (_s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
                 DrawToasts(w, h);
-                if (_s.Profile.LastReport != null && !_reportDismissed && _s.Profile.Run == null) DrawReport(w, h);
+                if (_s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
                 if (Open) DrawWindow(w, h, cfg);
             }
             catch (Exception ex)
@@ -330,7 +330,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             GUILayout.Label(Loc.T("狙い系統（その系統の遺物が2倍出やすい）", "Focus (relics of this line drop twice as often)"), _st.Small);
             GUILayout.BeginHorizontal();
-            GUI.enabled = p.Run == null || !_s.InGame;
+            GUI.enabled = p.Run == null;
             if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
             foreach (Line l in Enum.GetValues(typeof(Line)))
                 if (GUILayout.Button(Content.LineName(l).ToString(), p.Focus == l ? _st.ButtonSel : _st.Button)) SetFocus(l);

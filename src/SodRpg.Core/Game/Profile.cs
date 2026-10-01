@@ -50,6 +50,8 @@ namespace SodRpg.Core.Game
         public int RelicsFound { get; set; }
         public int RelicsSecured { get; set; }
         public int ShardsSecured { get; set; }
+        /// <summary>ラン開始時の夢のレベル（結果表示用）。</summary>
+        public int LevelAtStart { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
 
@@ -71,6 +73,7 @@ namespace SodRpg.Core.Game
                 RelicsFound = RelicsFound,
                 RelicsSecured = RelicsSecured,
                 ShardsSecured = ShardsSecured,
+                LevelAtStart = LevelAtStart,
                 AwaitingChoice = AwaitingChoice,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());

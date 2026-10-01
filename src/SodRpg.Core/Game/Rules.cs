@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
                 ev.AddRange(EndRun(p, victory: false));
             }
-            p.Run = new RunState { RunId = runId };
+            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel };
             var brng = p.TakeRng();
             p.Run.Bounties.AddRange(Bounties.Roll(brng));
             p.StoreRng(brng);
@@ -175,7 +175,8 @@ namespace SodRpg.Core.Game
 
             p.AddMaterial(Materials.Shard, shards);
             p.AddMaterial(Materials.Tuning, tuning);
-            run.RelicsSecured += relics;
+            int stored = relics - overflow.Count;
+            run.RelicsSecured += stored;
             run.ShardsSecured += shards;
             run.Satchel.Clear();
             run.SatchelShards = 0;
@@ -200,7 +201,7 @@ namespace SodRpg.Core.Game
             }
             if (pacts > 0) ev.Add(new GameEvent(EventKind.Info, Loc.T($"悪夢の契約{pacts}つが解けた。", $"{pacts} nightmare pact(s) dissolved.")));
             ev.AddRange(AddXp(p, Content.SecureXp));
-            AdvanceBounty(p, BountyKind.Collector, relics, true, ev);
+            AdvanceBounty(p, BountyKind.Collector, stored, true, ev);
             if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
             return ev;
         }
@@ -237,6 +238,7 @@ namespace SodRpg.Core.Game
             {
                 p.AddMaterial(Materials.Shard, b.RewardShards);
                 p.AddMaterial(Materials.Tuning, b.RewardTuning);
+                p.Run.ShardsSecured += b.RewardShards;
             }
             else
             {
@@ -297,7 +299,7 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
-            var report = new RunReport { Victory = victory, LevelBefore = p.DreamLevel };
+            var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
                 ev.AddRange(Secure(p));

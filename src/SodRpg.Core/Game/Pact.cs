@@ -62,13 +62,13 @@ namespace SodRpg.Core.Game
             new PactDef
             {
                 Id = Pact.Unguarded, Name = new Txt("無防備", "Unguarded"),
-                Description = new Txt("防御-15 ／ 欠片×1.5", "-15 armor / x1.5 shards"),
+                Description = new Txt("防御-15 ／ 撃破で得る欠片×1.5", "-15 armor / x1.5 shards from kills"),
                 Penalties = new[] { new StatLine(Stat.Armor, -15) }, ShardMult = 1.5,
             },
             new PactDef
             {
                 Id = Pact.LeadenFeet, Name = new Txt("重い足", "Leaden Feet"),
-                Description = new Txt("移動速度-10% ／ 経験値×1.5", "-10% move speed / x1.5 xp"),
+                Description = new Txt("移動速度-10% ／ 撃破経験値×1.5", "-10% move speed / x1.5 xp from kills"),
                 Penalties = new[] { new StatLine(Stat.MoveSpeedPct, -10) }, XpMult = 1.5,
             },
             new PactDef
