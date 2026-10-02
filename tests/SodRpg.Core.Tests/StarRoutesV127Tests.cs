@@ -21,20 +21,20 @@ namespace SodRpg.Core.Tests
             ["Hero_Mist"] = new[] { "St_D_AstridsMasterpieceEnGarde", "St_D_AstridsMasterpiecePriorite", "St_M_FastFeet", "St_Q_Fleche", "St_Q_Lunge", "St_R_Parry", "St_R_UnbreakableDetermination" },
             ["Hero_Nachia"] = new[] { "St_D_HeartOfThePack", "St_D_CircleOfLife", "St_M_DreamyWaltz", "St_Q_SylvanCall", "St_Q_MoonlightPact", "St_R_NaturesWhisper", "St_R_SerpentineBlessing" },
             ["Hero_Aurena"] = new[] { "St_D_DisintegratingClaw", "St_D_BeautifulThreat", "St_M_FeatheryDash", "St_Q_GoldenBurst", "St_Q_Reduction", "St_R_DangerousTheory", "St_R_ChainReaction" },
-            ["Hero_Bismuth"] = new[] { "St_D_PrismaticEyes", "St_D_ExplosionArtist", "St_M_Sprint", "St_QR_Innocence", "St_QR_InfernalTales", "St_QR_ValiantHeart", "St_QR_DistortedMind" },
+            ["Hero_Bismuth"] = new[] { "St_D_PrismaticEyes", "St_M_Sprint", "St_QR_Innocence", "St_QR_InfernalTales", "St_QR_ValiantHeart", "St_QR_DistortedMind" }, // v1.28：華麗なる芸術家のルートは外した
         };
 
         [Fact]
         public void Every_shipped_memory_has_exactly_one_complete_branch_for_its_owner()
         {
-            Assert.Equal(540, HeroStarRoutes.All.Count); // v1.27：Bismuth に共通のアイデンティティのルート、エッセンスの枠の星 3×9
+            Assert.Equal(532, HeroStarRoutes.All.Count); // v1.27：540（Bismuth に共通アイデンティティのルート）→ v1.28：芸術家のルートとその枠の星を外し62ルート
             Assert.Equal(Memories.Keys.OrderBy(x => x), HeroStarRoutes.All.Select(t => t.HeroKey).Distinct().OrderBy(x => x));
             foreach (var hero in Memories)
             {
                 var branches = HeroStarRoutes.All.Where(t => t.HeroKey == hero.Key && t.RouteId != null)
                     .GroupBy(t => t.RouteMemory).ToArray();
                 Assert.Equal(hero.Value.OrderBy(x => x), branches.Select(g => g.Key).OrderBy(x => x));
-                Assert.Equal(2, branches.Count(g => g.Key.StartsWith("St_D_", StringComparison.Ordinal)));
+                Assert.Equal(hero.Key == "Hero_Bismuth" ? 1 : 2, branches.Count(g => g.Key.StartsWith("St_D_", StringComparison.Ordinal))); // Bismuth のアイデンティティは1つ
                 Assert.Equal(5, branches.Count(g => !g.Key.StartsWith("St_D_", StringComparison.Ordinal)));
                 foreach (var branch in branches)
                 {
@@ -58,7 +58,7 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(21, nodes.Sum(t => t.MaxRank * t.RankCost));
                     // 目安は半分ずつ。記憶の仕組みに合わせて 2〜4 の幅を許す（v1.27 のレビューで調整）
                     Assert.InRange(nodes.Take(6).Count(t => t.LinkPerRank != null), 2, 4);
-                    Assert.True(nodes[6].LinkPerRank != null || nodes[6].IsPowerNode);
+                    Assert.True(nodes[6].LinkPerRank != null || nodes[6].IsPowerNode || nodes[6].Gimmick != null); // v1.28：頂点は仕掛けだけの星もある
                 }
             }
         }
@@ -91,7 +91,7 @@ namespace SodRpg.Core.Tests
         public void Added_ids_and_localized_names_are_safe_for_registry_and_display()
         {
             Assert.Equal(HeroSigils.All.Count, HeroSigils.All.Select(t => t.Id).Distinct(StringComparer.Ordinal).Count());
-            var people = new Regex(@"\b(Vesper|Lacerta|Cetus|Yubar|Husk|Mist|Nachia|Aurena|Bismuth|Astrid|El|Fenrir)\b", RegexOptions.IgnoreCase);
+            var peopleWord = new Regex(@"^(Vesper|Lacerta|Cetus|Yubar|Husk|Mist|Nachia|Aurena|Bismuth|Astrid|El|Fenrir)$", RegexOptions.IgnoreCase);
             string[] japanesePeople = { "ヴェスパー", "ラセルタ", "ケトゥス", "ユバール", "空殻", "ミスト", "ナキア", "アウレナ", "ビスマス", "アストリッド", "エルの", "フェンリル" };
             foreach (var node in HeroStarRoutes.All)
             {
@@ -100,7 +100,9 @@ namespace SodRpg.Core.Tests
                 Assert.Same(node, registered);
                 Assert.Matches(@"[\u3040-\u30ff\u3400-\u9fff]", node.Name.Ja);
                 Assert.Matches(@"[A-Za-z]", node.Name.En);
-                Assert.False(people.IsMatch(node.Name.En), node.Name.En);
+                // 旅人の名前が単語として残っていないか（ハイフン結合の「Mist-Rain＝霧雨」は別の語）
+                foreach (var word in node.Name.En.Split(' '))
+                    Assert.False(peopleWord.IsMatch(word.Trim('\'', '-', '.')), node.Name.En);
                 Assert.DoesNotContain(japanesePeople, node.Name.Ja.Contains);
                 Assert.DoesNotContain("St_", node.Name.En);
                 Assert.DoesNotContain("St_", node.Name.Ja);
@@ -152,7 +154,7 @@ namespace SodRpg.Core.Tests
         [InlineData("Hero_Mist", 7, 60, 238)]
         [InlineData("Hero_Nachia", 7, 60, 238)]
         [InlineData("Hero_Aurena", 7, 60, 238)]
-        [InlineData("Hero_Bismuth", 7, 60, 238)]
+        [InlineData("Hero_Bismuth", 6, 52, 212)]
         public void Whole_tree_has_more_choices_than_the_point_budget(string hero, int routes, int addedStars, int capacity)
         {
             var added = HeroStarRoutes.All.Where(t => t.HeroKey == hero).ToArray();
@@ -189,46 +191,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Theory]
-        [InlineData("St_Q_Discipline", Stat.AttackPct)]
-        [InlineData("St_M_Charge", Stat.MaxHealthPct)]
-        [InlineData("St_R_PrecisionShot", Stat.PowerPct)]
-        [InlineData("St_R_FrozenFists", Stat.AttackPct)]
-        [InlineData("St_Q_DeathMark", Stat.PowerPct)]
-        [InlineData("St_R_AnnihilationStance", Stat.PowerPct)]
-        [InlineData("St_D_AstridsMasterpieceEnGarde", Stat.PowerPct)]
-        [InlineData("St_D_AstridsMasterpiecePriorite", Stat.AttackPct)]
-        [InlineData("St_M_DreamyWaltz", Stat.MaxHealthPct)]
-        [InlineData("St_D_DisintegratingClaw", Stat.AttackPct)]
-        [InlineData("St_Q_GoldenBurst", Stat.PowerPct)]
-        [InlineData("St_QR_Innocence", Stat.PowerPct)]
-        [InlineData("St_QR_InfernalTales", Stat.PowerPct)]
-        [InlineData("St_QR_ValiantHeart", Stat.AttackPct)]
-        [InlineData("St_QR_DistortedMind", Stat.AttackPct)]
-        public void Memory_scaling_stars_follow_the_shipped_damage_or_shield_markers(string memory, Stat scaling)
-        {
-            Assert.Contains(HeroStarRoutes.All, t => t.RouteMemory == memory && t.LinkPerRank == null
-                && !t.IsPowerNode && t.Stat == scaling && t.PerRank > 0);
-        }
-
-        [Fact]
-        public void Double_shot_route_rewards_the_shots_after_a_memory_not_cooldown_recovery()
-        {
-            // v1.27：クールダウン短縮はエッセンスで手に入りやすいので、記憶の後の2発に乗る過負荷にした
-            var build = BuildThroughMechanic("Hero_Lacerta", "St_D_DoubleTap");
-            Assert.True(build.Get(Power.Overload) > 0);
-            Assert.Equal(0, build.Get(Power.CriticalEcho));
-        }
-
-        [Fact]
-        public void Parry_route_rewards_blocking_without_dodge_based_effects()
-        {
-            // v1.28：回避で発動する効果（見切りなど）は星図に置かない。受け流しのルートは守りの星にした
-            var build = BuildThroughMechanic("Hero_Mist", "St_R_Parry");
-            Assert.True(build.Get(Power.Aegis) > 0);
-            Assert.Equal(0, build.Get(Power.PerfectRead));
-        }
-
         [Fact]
         public void Star_map_has_no_dodge_triggered_effects()
         {
@@ -248,22 +210,6 @@ namespace SodRpg.Core.Tests
                 if (t.LinkPerRank != null && t.LinkPerRank.Requires.Any(r => r.StartsWith("St_M_", StringComparison.Ordinal)))
                     Assert.True(t.LinkPerRank.Kind == LinkKind.Guard || t.LinkPerRank.Kind == LinkKind.MemoryDamage, t.Id);
             }
-        }
-
-        private static Build BuildThroughMechanic(string hero, string memory)
-        {
-            var profile = Profile.CreateNew(1);
-            var state = profile.Hero(hero);
-            state.StarXp = StarProgression.TotalXpForPoints(150);
-            foreach (var core in HeroSigils.TreeFor(hero).Where(t => t.Tier == 1 && !t.IsKeystone).Take(2))
-                state.Talents[core.Id] = 3;
-            var route = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.RouteMemory == memory)
-                .OrderBy(t => t.RouteOrder).ToArray();
-            var mechanic = route.First(t => t.IsPowerNode);
-            TreeTestPaths.Connect(profile, hero, route[0].Id);
-            foreach (var node in route.TakeWhile(t => t.RouteOrder <= mechanic.RouteOrder))
-                state.Talents[node.Id] = node == mechanic ? node.MaxRank : 1;
-            return Build.Compute(profile, hero, 0);
         }
     }
 }

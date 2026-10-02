@@ -51,7 +51,7 @@ namespace SodRpg.Core.Tests
         {
             var tree = HeroTreeLayout.ForHero(hero);
             var branches = tree.Nodes.Where(n => n.Talent?.RouteId != null).GroupBy(n => n.Talent.RouteId).ToArray();
-            Assert.Equal(7, branches.Length);
+            Assert.InRange(branches.Length, 6, 7); // v1.28：Bismuth は芸術家のルートを外して6ルート
             var branchIndex = branches.Select((b, i) => new { b.Key, Index = i }).ToDictionary(x => x.Key, x => x.Index);
             foreach (var branch in branches)
             {
@@ -72,7 +72,7 @@ namespace SodRpg.Core.Tests
                 var ends = ring.Neighbors.Select(i => tree.Nodes[i]).Where(n => n.Talent?.RouteId != null).ToArray();
                 Assert.Equal(2, ends.Length);
                 int distance = Math.Abs(branchIndex[ends[0].Talent.RouteId] - branchIndex[ends[1].Talent.RouteId]);
-                Assert.True(distance == 1 || distance == 6);
+                Assert.True(distance == 1 || distance == branches.Length - 1);
             }
             int crossings = 0;
             foreach (var edge in tree.Edges)
@@ -81,7 +81,7 @@ namespace SodRpg.Core.Tests
                 var b = tree.Nodes[edge.B].Talent;
                 if (a?.RouteId == null || b?.RouteId == null || a.RouteId == b.RouteId) continue;
                 int distance = Math.Abs(branchIndex[a.RouteId] - branchIndex[b.RouteId]);
-                Assert.True(distance == 1 || distance == 6);
+                Assert.True(distance == 1 || distance == branches.Length - 1);
                 Assert.InRange(a.RouteOrder, 2, 6);
                 Assert.InRange(b.RouteOrder, 2, 6);
                 crossings++;
