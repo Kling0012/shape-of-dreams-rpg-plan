@@ -49,14 +49,10 @@ namespace SodRpg.Core.Game
         public BaseDef Base => Content.GetBase(BaseId);
         public Slot Slot => Base.Slot;
 
-        public string DisplayName
-        {
-            get
-            {
-                string name = UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Name.ToString() : Base.Name.ToString();
-                return Enhance > 0 ? name + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : name;
-            }
-        }
+        /// <summary>強化値を付けない名前。</summary>
+        public string PlainName => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Name.ToString() : Base.Name.ToString();
+
+        public string DisplayName => Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName;
 
         /// <summary>基礎能力の現在値（アイテムレベルと強化を反映）。</summary>
         public StatLine Implicit

@@ -235,9 +235,9 @@ namespace SodRpg.Mod
                 string heatColor = run.Heat == 0 ? "#9aa0b8" : run.Heat < 3 ? "#ffb070" : "#ff5a4a";
                 sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
                     .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
-                sb.Append("\n<size=13>").Append(compact ? Loc.T("未確保：遺物", "Unsecured: ") : Loc.T("まだ持ち帰っていない物：遺物", "Not yet secured: ")).Append(run.Satchel.Count)
-                    .Append(Loc.T("  欠片", " relics  ")).Append(run.SatchelShards)
-                    .Append(Loc.T("  調律石", " shards  ")).Append(run.SatchelTuning).Append(Loc.T("", " tuning")).Append("</size>");
+                sb.Append("\n<size=13>").Append(Loc.T(
+                    $"{(compact ? "未確保" : "まだ持ち帰っていない物")}：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
+                    $"{(compact ? "Unsecured" : "Not yet secured")}: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
                 if (!compact && run.Pacts.Count > 0)
                 {
                     sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: "));
@@ -260,7 +260,7 @@ namespace SodRpg.Mod
             }
             int unclaimedFeats = Feats.Unclaimed(p);
             if (unclaimedFeats > 0)
-                sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 受け取れる偉業 {unclaimedFeats}（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records)")).Append("</color></size>");
+                sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)")).Append("</color></size>");
             sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
         }
@@ -275,6 +275,7 @@ namespace SodRpg.Mod
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             int bonus = run.SatchelShards * run.Heat / 4;
+            if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
             GUILayout.Label(Loc.T(
                 $"まだ持ち帰っていない物：遺物{run.Satchel.Count}個、欠片{run.SatchelShards}、調律石{run.SatchelTuning}",
                 $"Not yet secured: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning"), _st.Label);
@@ -289,14 +290,18 @@ namespace SodRpg.Mod
             }
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
             GUILayout.Label(UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
-                $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は遠征を始めたときの深さに戻ります。",
-                $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve returns to your starting depth."), _st.Small);
+                $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は0に戻ります。",
+                $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve resets to 0."), _st.Small);
             GUILayout.Label(UiStyles.Colored(Loc.T("深く潜る：", "Delve: "), "#ffb070") + Loc.T(
                 $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
                 $"Move on without securing; delve becomes {next}. Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found."), _st.Small);
+            double nmMult = DailyDream.Get(run.DailyId)?.NightmareMult ?? 1.0;
+            int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
+            int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
+            string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
             GUILayout.Label(UiStyles.Colored(Loc.T(
-                $"潜行{next}では、敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%とエリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が「悪夢化」して強くなります。倒すとエリートやボス並みの戦利品が出ます。",
-                $"At delve {next}, {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites turn into stronger nightmares that drop elite-to-boss loot."), "#ff9ae0"), _st.Small);
+                $"潜行{next}では、敵の{nmNormal}%とエリートの{nmElite}%が「悪夢化」して強くなります{nmDay}。倒すとエリートやボス並みの戦利品が出ます。",
+                $"At delve {next}, {nmNormal}% of enemies and {nmElite}% of elites turn into stronger nightmares{nmDay} that drop elite-to-boss loot."), "#ff9ae0"), _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = !_s.HasPendingTrades;
             if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
@@ -553,8 +558,8 @@ namespace SodRpg.Mod
             "・装備：旅人ごとに主装備・防具・装飾品の3つを装着します。\n" +
             "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
             "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
-            "・工房：余った素材で、すべての旅人に効く恒久的な強化を解放します。\n" +
-            "・依頼：遠征ごとに3つ出ます。達成すると欠片や調律石と経験値がもらえます。",
+            "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
+            "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
             "<b>What this mod adds</b>\n" +
             "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
             "<b>One expedition</b>\n" +
@@ -576,7 +581,7 @@ namespace SodRpg.Mod
         {
             int done = p.Feats.Count, total = Feats.All.Count, unclaimed = Feats.Unclaimed(p);
             GUILayout.Label(Loc.T($"偉業（{done}／{total}）", $"Feats ({done}/{total})"), _st.Header);
-            GUILayout.Label(Loc.T("遊ぶうちに達成していく目標です。達成すると、欠片と調律石を受け取れます。",
+            GUILayout.Label(Loc.T("遊ぶうちに達成していく目標です。達成すると欠片を受け取れます（段階が上がると調律石も）。",
                 "Goals you complete as you play. Each one rewards shards and tuning stones."), _st.Small);
             foreach (var f in Feats.All)
             {
@@ -627,7 +632,7 @@ namespace SodRpg.Mod
                     "Use shards to enhance relics and tuning stones to reroll an affix you dislike. Salvage what you don't need back into shards.");
                 case 2: return Loc.T("夢のレベルが上がるともらえるポイントで、旅人ごとに能力を伸ばします。振り直しは無料なので、気軽に試してください。",
                     "Spend the points you earn from Dream Levels to grow each Traveler. Respec is free, so feel free to experiment.");
-                case 3: return Loc.T("余った欠片と調律石で、すべての旅人に効く恒久的な強化を解放します。",
+                case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
                     "Spend spare shards and tuning stones on permanent upgrades shared by every Traveler.");
                 default: return Loc.T("遊び方の確認、今回の遠征の様子、これまでの記録と図鑑を見られます。",
                     "Read how to play, check this expedition, and browse your records and codex.");
@@ -637,7 +642,7 @@ namespace SodRpg.Mod
         private void FocusPicker()
         {
             var p = _s.Profile;
-            GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます）", "Focus: relics of the chosen line drop twice as often (choose before an expedition)"), _st.Small);
+            GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます。「なし」なら今日の夢の系統が出やすくなります）", "Focus: relics of the chosen line drop twice as often (choose before an expedition; with None, today's dream decides)"), _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = p.Run == null;
             if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
@@ -899,7 +904,7 @@ namespace SodRpg.Mod
 
                 if (sel.Retunes < Content.MaxRetunes && sel.Affixes.Count > 0)
                 {
-                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選んでください（調律石{Content.RetuneCost(sel.Retunes)}。1つの遺物につき{Content.MaxRetunes}回まで）", $"Retune: reroll one affix ({Content.RetuneCost(sel.Retunes)} tuning)"), _st.Small);
+                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選んでください（調律石{Content.RetuneCost(sel.Retunes)}。1つの遺物につき{Content.MaxRetunes}回まで）", $"Retune: choose one affix to reroll ({Content.RetuneCost(sel.Retunes)} tuning; up to {Content.MaxRetunes} times per relic)"), _st.Small);
                     GUILayout.BeginHorizontal();
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
@@ -972,8 +977,8 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             HeroPicker();
             GUILayout.Label(Loc.T(
-                $"使えるポイント：残り {Rules.FreePoints(p, hero)} / {p.TalentPoints}（夢のレベルと図鑑のボーナス{p.CodexBonusPoints}の合計。旅人ごとに別々に振れます）",
-                $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} (Dream Level + codex bonus {p.CodexBonusPoints}, allotted per Traveler)"), _st.Label);
+                $"使えるポイント：残り{Rules.FreePoints(p, hero)}／{p.TalentPoints}（夢のレベルで{p.TalentPoints - p.CodexBonusPoints}、図鑑で{p.CodexBonusPoints}。旅人ごとに別々に振れます）",
+                $"Points: {Rules.FreePoints(p, hero)} free / {p.TalentPoints} ({p.TalentPoints - p.CodexBonusPoints} from Dream Level, {p.CodexBonusPoints} from the codex; allotted per Traveler)"), _st.Label);
             GUILayout.FlexibleSpace();
             GUI.enabled = _s.CanEditTalents;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
@@ -1028,7 +1033,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(t.Description.ToString(), _st.Small);
                 GUI.enabled = _s.CanEditTalents && (active || unlocked);
                 string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
-                    ? Loc.T($"刻印する（{Content.KeystoneCost}pt）", $"Engrave ({Content.KeystoneCost}pt)")
+                    ? Loc.T($"刻印する（{Content.KeystoneCost}ポイント）", $"Engrave ({Content.KeystoneCost} points)")
                     : Loc.T("条件を満たすと選べます", "Locked");
                 if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
                 {
@@ -1126,17 +1131,17 @@ namespace SodRpg.Mod
             GUILayout.Label($"<b>{today.Name}</b>  {today.Description}", _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
-                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nエピック救済カウント {p.EpicPity}",
-                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nEpic pity counter {p.EpicPity}"), _st.Small);
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nボスがエピック以上を落とす確率：{(int)(Loot.EpicPityChance(p.EpicPity) * 100)}%（エピックが出ないボスを倒すたびに上がります）",
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nBoss Epic+ chance: {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}% (rises with each boss that drops no Epic)"), _st.Small);
             if (p.Run != null)
             {
-                GUILayout.Label(Loc.T($"今回の遠征（未確保 {p.Run.Satchel.Count}）", $"This expedition ({p.Run.Satchel.Count} unsecured)"), _st.Header);
+                GUILayout.Label(Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
                 int rerolls = Rules.RerollsLeft(p);
                 for (int i = 0; i < p.Run.Bounties.Count; i++)
                 {
                     var b = p.Run.Bounties[i];
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label((b.Done ? "● " : "○ ") + b.Describe() + $"  {b.Progress}/{b.Target}  <color=#c9a86a>{b.RewardText()}</color>", _st.Small);
+                    GUILayout.Label((b.Done ? "● " : "○ ") + b.Describe() + $"  {b.Progress}/{b.Target}  <color=#c9a86a>{b.RewardText(DailyDream.Get(p.Run.DailyId)?.BountyMult ?? 1.0)}</color>", _st.Small);
                     if (!b.Done && rerolls > 0)
                     {
                         int idx = i;
@@ -1149,7 +1154,7 @@ namespace SodRpg.Mod
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
                     GUI.enabled = !_s.Trades.IsReserved(r.Uid);
-                    if (GUILayout.Button(Loc.T($"分解（ダスト+{Economy.SalvageDust(r)}）", $"Salvage (+{Economy.SalvageDust(r)} dust)"), _st.Button, GUILayout.Width(170)))
+                    if (GUILayout.Button(Loc.T($"ドリームダストに分解（+{Economy.SalvageDust(r)}）", $"Salvage for Dream Dust (+{Economy.SalvageDust(r)})"), _st.Button, GUILayout.Width(170)))
                     {
                         string err = _s.SalvageUnsecured(r.Uid);
                         if (err != null) SetStatus(err);

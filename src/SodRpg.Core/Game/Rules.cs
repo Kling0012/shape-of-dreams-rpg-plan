@@ -106,7 +106,7 @@ namespace SodRpg.Core.Game
             if (limboDepth > 0)
             {
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"Limbo 深度{limboDepth}：遺物ドロップ率+{(int)(LimboDropBonus * 100 * limboDepth)}%・レア度上昇",
+                    $"Limboの深さ{limboDepth}：遺物が{(int)(LimboDropBonus * 100 * limboDepth)}%出やすくなり、レア度も上がります。",
                     $"Limbo depth {limboDepth}: +{(int)(LimboDropBonus * 100 * limboDepth)}% relic drops, better rarity")));
             }
             if (daily != null) ev.Add(new GameEvent(EventKind.Info, Loc.T($"今日の夢「{daily.Name}」：{daily.Description}", $"Today's dream \"{daily.Name}\": {daily.Description}")));
@@ -161,14 +161,14 @@ namespace SodRpg.Core.Game
                 {
                     string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
                     ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                        $"{name}の熟練度 {after}「{Mastery.Title(after)}」" + (after == HeroSigils.KeystoneMastery ? "：到達刻印を選べるようになった" : ""),
-                        $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery ? ": keystones unlocked" : ""))));
+                        $"{name}の熟練度が{after}「{Mastery.Title(after)}」に上がりました。" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? "到達刻印を選べるようになりました。" : ""),
+                        $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? ": keystones unlocked" : ""))));
                 }
             }
             if (isNightmare)
             {
                 p.Stats.NightmaresSlain++;
-                ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を討った！", $"Slew a {Nightmares.Label(nightmare)}!")));
+                ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!")));
                 AddHint(p, Hint.FirstNightmare, ev);
             }
             p.EpicPity = pity;
@@ -186,7 +186,7 @@ namespace SodRpg.Core.Game
                 p.Codex.Add(relic.UniqueId ?? relic.BaseId);
                 p.BestItemLevel = Math.Max(p.BestItemLevel, relic.ItemLevel);
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
-                    $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾った（未確保）",
+                    $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
                 AddToSatchel(p, relic, ev, trades);
                 AddHint(p, Hint.FirstDrop, ev);
@@ -215,7 +215,7 @@ namespace SodRpg.Core.Game
             run.Satchel.Remove(worst);
             run.SatchelShards += Content.SalvageShards(worst.Rarity);
             ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                $"鞄が一杯のため「{worst.DisplayName}」を欠片にしました。",
+                $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を欠片に換えました。",
                 $"Satchel full: \"{worst.DisplayName}\" was turned into shards.")));
         }
 
@@ -295,17 +295,17 @@ namespace SodRpg.Core.Game
             run.SecuredCount++;
             p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
 
-            string bonus = bonusShards > 0 ? Loc.T($"（潜行ボーナス+{bonusShards}）", $" (delve bonus +{bonusShards})") : "";
+            string bonus = bonusShards > 0 ? Loc.T($"（うち潜行ボーナス{bonusShards}）", $" (incl. +{bonusShards} delve bonus)") : "";
             ev.Add(new GameEvent(EventKind.Secured, Loc.T(
-                $"確保した：遺物{relics}個、欠片{shards}{bonus}、調律石{tuning}",
-                $"Secured: {relics} relic(s), {shards} shards{bonus}, {tuning} tuning stone(s)")));
+                $"遺物{stored}個・欠片{shards}{bonus}・調律石{tuning}を保管庫に持ち帰りました。",
+                $"Secured {stored} relic(s), {shards} shards{bonus}, {tuning} tuning stone(s).")));
             if (overflow.Count > 0)
             {
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T(
                     $"保管庫が一杯のため{overflow.Count}個を欠片にしました。",
                     $"Stash full: {overflow.Count} relic(s) were turned into shards.")));
             }
-            if (pacts > 0) ev.Add(new GameEvent(EventKind.Info, Loc.T($"悪夢の契約{pacts}つが解けた。", $"{pacts} nightmare pact(s) dissolved.")));
+            if (pacts > 0) ev.Add(new GameEvent(EventKind.Info, Loc.T($"結んでいた悪夢の契約{pacts}つが解けました。", $"{pacts} nightmare pact(s) dissolved.")));
             AddHint(p, Hint.FirstSecure, ev);
             if (p.Material(Materials.Shard) >= Onboarding.StarterShardsForForgeHint) AddHint(p, Hint.ForgeReady, ev);
             ev.AddRange(AddXp(p, Content.SecureXp));
@@ -361,7 +361,7 @@ namespace SodRpg.Core.Game
                 p.Run.SatchelTuning += tuning;
             }
             ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
-                $"依頼達成：{b.Describe()}（{b.RewardText(mult)}" + (secured ? "）" : "・未確保）"),
+                $"依頼「{b.Describe()}」を達成しました。{b.RewardText(mult)}" + (secured ? "" : "（欠片と調律石はまだ持ち帰っていません）"),
                 $"Bounty complete: {b.Describe()} ({b.RewardText(mult)}" + (secured ? ")" : ", unsecured)"))));
             ev.AddRange(AddXp(p, (int)Math.Round(b.RewardXp * mult)));
             AddHint(p, Hint.FirstBounty, ev);
@@ -381,7 +381,7 @@ namespace SodRpg.Core.Game
                 p.Stats.PactsSworn++;
                 AdvanceBounty(p, BountyKind.PactBearer, 1, false, ev);
                 var d = Pacts.Get(pact);
-                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}（本体の呪いが付く）", $"Nightmare pact \"{d.Name}\": {d.Description} (a game curse is applied)")));
+                ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」を結びました。{d.Description}", $"Swore the nightmare pact \"{d.Name}\". {d.Description}")));
             }
             run.OfferedPacts.Clear();
             run.OfferedEvent = DreamEvent.None;
@@ -390,8 +390,8 @@ namespace SodRpg.Core.Game
             run.AwaitingChoice = false;
             AddHint(p, Hint.FirstDelve, ev);
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
-                $"潜行 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
-                $"Delve {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
+                $"潜行{run.Heat}に進みました。遺物が{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%出やすくなり、受けるダメージは{Build.DamageTakenPerDelvePct * run.Heat}%増えます（まだ持ち帰っていない遺物{run.Satchel.Count}個）。",
+                $"Delve {run.Heat}: relics +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%, damage taken +{Build.DamageTakenPerDelvePct * run.Heat}% (carrying {run.Satchel.Count} unsecured relic(s)).")));
             AdvanceBounty(p, BountyKind.Delver, 1, false, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
@@ -411,7 +411,7 @@ namespace SodRpg.Core.Game
             p.LostAndFound.Remove(best);
             run.LostRecovered = true;
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
-                $"遺失物「{best.DisplayName}」を取り戻した（未確保）",
+                $"遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
             AddToSatchel(p, best, ev, trades);
             return ev;
@@ -440,7 +440,7 @@ namespace SodRpg.Core.Game
                 p.Stats.Victories++;
                 p.Stats.BestVictoryStartDepth = Math.Max(p.Stats.BestVictoryStartDepth, run.StartDepth);
                 ev.AddRange(AddXp(p, Content.VictoryXp));
-                ev.Add(new GameEvent(EventKind.Info, Loc.T("夢を踏破した！", "The dream is conquered!")));
+                ev.Add(new GameEvent(EventKind.Info, Loc.T("夢を踏破しました！", "The dream is conquered!")));
             }
             else
             {
@@ -455,7 +455,7 @@ namespace SodRpg.Core.Game
                 if (lost > 0 || echo > 0)
                 {
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T(
-                        $"未確保の遺物{lost}個は遺失物へ。欠片は残響として{echo}個だけ持ち帰った。",
+                        $"まだ持ち帰っていなかった遺物{lost}個は遺失物になりました。欠片の一部（{echo}）は残響として戻りました。",
                         $"{lost} unsecured relic(s) went to Lost & Found. {echo} shard(s) returned as echoes.")));
                 }
                 AddHint(p, Hint.FirstDefeat, ev);
@@ -495,7 +495,7 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, -cost.Shards);
             p.AddMaterial(Materials.Tuning, -cost.Tuning);
             p.Upgrades[u] = lv + 1;
-            return new GameEvent(EventKind.LevelUp, Loc.T($"工房：{def.Name} {lv + 1}/{def.MaxLevel}", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}"));
+            return new GameEvent(EventKind.LevelUp, Loc.T($"工房で「{def.Name}」を解放しました（{lv + 1}/{def.MaxLevel}）。", $"Workshop: {def.Name} {lv + 1}/{def.MaxLevel}"));
         }
 
         /// <summary>確保地点の出来事を使う（1回だけ）。</summary>
@@ -519,8 +519,8 @@ namespace SodRpg.Core.Game
                     run.Satchel.Remove(sacrifice);
                     var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     target.Enhance++;
-                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げ、「{target.DisplayName}」になった。",
-                        $"Offered \"{sacrifice.DisplayName}\"; it became \"{target.DisplayName}\"."), target.Rarity));
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げると、「{target.PlainName}」が+{target.Enhance}に強化されました。",
+                        $"Offered \"{sacrifice.DisplayName}\"; \"{target.PlainName}\" was enhanced to +{target.Enhance}."), target.Rarity));
                     break;
                 }
                 case DreamEvent.Chalice:
@@ -529,12 +529,12 @@ namespace SodRpg.Core.Game
                     if (rng.Chance(0.5))
                     {
                         run.SatchelShards += bet;
-                        ev.Add(new GameEvent(EventKind.Secured, Loc.T($"賭けに勝った！ 未確保の欠片 {bet} → {bet * 2}", $"You won! Unsecured shards {bet} -> {bet * 2}")));
+                        ev.Add(new GameEvent(EventKind.Secured, Loc.T($"賭けに勝ちました！ まだ持ち帰っていない欠片が{bet}から{bet * 2}に増えました。", $"You won! Unsecured shards {bet} -> {bet * 2}")));
                     }
                     else
                     {
                         run.SatchelShards = 0;
-                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負けた… 未確保の欠片 {bet} を失った", $"You lost... {bet} unsecured shards are gone")));
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負けました…。まだ持ち帰っていない欠片{bet}を失いました。", $"You lost... {bet} unsecured shards are gone")));
                     }
                     break;
                 }
@@ -542,8 +542,8 @@ namespace SodRpg.Core.Game
                 {
                     var best = p.LostAndFound.OrderByDescending(r => r.Score).First();
                     p.LostAndFound.Remove(best);
-                    ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯が「{best.DisplayName}」を照らした（未確保）",
-                        $"The lantern revealed \"{best.DisplayName}\" (unsecured)"), best.Rarity));
+                    ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯で、遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）。",
+                        $"The lantern recovered the lost relic \"{best.DisplayName}\" (unsecured)."), best.Rarity));
                     AddToSatchel(p, best, ev, trades);
                     break;
                 }
@@ -552,8 +552,8 @@ namespace SodRpg.Core.Game
                     var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     run.SatchelShards -= 20;
                     target.Enhance++;
-                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.DisplayName}」に強化した。",
-                        $"Enhanced to \"{target.DisplayName}\" at the Forge Shrine."), target.Rarity));
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.PlainName}」を+{target.Enhance}に強化しました。",
+                        $"The Forge Shrine enhanced \"{target.PlainName}\" to +{target.Enhance}."), target.Rarity));
                     break;
                 }
                 case DreamEvent.TwinMirror:
@@ -587,7 +587,7 @@ namespace SodRpg.Core.Game
                     int tuning = Math.Max(1, count / 3);
                     run.SatchelShards += shards;
                     run.SatchelTuning += tuning;
-                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせた：欠片+{shards}・調律石+{tuning}（未確保）",
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせ、欠片{shards}と調律石{tuning}を得ました（まだ持ち帰っていません）。",
                         $"Fed {count} relic(s) to the tapir: +{shards} shards, +{tuning} tuning (unsecured).")));
                     break;
                 }
@@ -595,7 +595,7 @@ namespace SodRpg.Core.Game
                     run.Heat = Loot.ClampHeat(run.Heat + 1);
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
                     run.SatchelShards += 40;
-                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門：潜行{run.Heat}、未確保の欠片+40",
+                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門をくぐり、潜行が{run.Heat}になりました。まだ持ち帰っていない欠片が40増えました。",
                         $"Gate of Courage: delve {run.Heat}, +40 unsecured shards")));
                     break;
                 case DreamEvent.Archive:
@@ -690,7 +690,7 @@ namespace SodRpg.Core.Game
             if (batches <= 0) throw new InvalidOperationException(Loc.T("ドリームダストが足りません。", "Not enough Dream Dust."));
             int shards = batches * Economy.ShardsPerBatch;
             p.AddMaterial(Materials.Shard, shards);
-            return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えた", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
+            return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えました。", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
         }
 
         /// <summary>成功応答の対象を鞄か預かりから1つだけ取り除く。既に無ければ null。</summary>
@@ -772,7 +772,7 @@ namespace SodRpg.Core.Game
             var old = run.Bounties[index];
             run.Bounties[index] = replacement;
             run.RerollsUsed++;
-            return new GameEvent(EventKind.Bounty, Loc.T($"依頼を引き直し：{old.Describe()} → {replacement.Describe()}", $"Bounty rerolled: {old.Describe()} -> {replacement.Describe()}"));
+            return new GameEvent(EventKind.Bounty, Loc.T($"依頼を引き直しました：{old.Describe()} → {replacement.Describe()}", $"Bounty rerolled: {old.Describe()} -> {replacement.Describe()}"));
         }
 
         /// <summary>開始深度を選ぶ。遠征の外でのみ、確保できた最高深度まで。</summary>
@@ -799,8 +799,8 @@ namespace SodRpg.Core.Game
                 p.DreamXp -= Content.XpToNext(p.DreamLevel);
                 p.DreamLevel++;
                 ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                    $"夢のレベル {p.DreamLevel}！ 刻印ポイント+1",
-                    $"Dream Level {p.DreamLevel}! +1 sigil point")));
+                    $"夢のレベルが{p.DreamLevel}に上がりました！ 星図のポイントが1増えました。",
+                    $"Dream Level {p.DreamLevel}! +1 star map point")));
                 AddHint(p, Hint.TalentPoints, ev);
             }
             if (p.DreamLevel >= Content.MaxDreamLevel) p.DreamXp = 0;
@@ -851,7 +851,7 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, shards);
             p.AddMaterial(Materials.Tuning, tuning);
             return new GameEvent(EventKind.Info, Loc.T(
-                $"「{r.DisplayName}」を分解：欠片+{shards}" + (tuning > 0 ? $"、調律石+{tuning}" : ""),
+                $"「{r.DisplayName}」を分解して、欠片{shards}" + (tuning > 0 ? $"と調律石{tuning}" : "") + "を得ました。",
                 $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
         }
 
@@ -864,7 +864,7 @@ namespace SodRpg.Core.Game
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
             r.Enhance++;
-            return new GameEvent(EventKind.Info, Loc.T($"「{r.DisplayName}」に強化した。", $"Enhanced to \"{r.DisplayName}\"."), r.Rarity);
+            return new GameEvent(EventKind.Info, Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}."), r.Rarity);
         }
 
         public static GameEvent Retune(Profile p, string uid, int affixIndex, TradeLedger trades = null)
@@ -891,7 +891,7 @@ namespace SodRpg.Core.Game
             r.Affixes[affixIndex] = line;
             r.Retunes++;
             return new GameEvent(EventKind.Info, Loc.T(
-                $"再調律：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}",
+                $"再調律しました：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}",
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
@@ -915,7 +915,7 @@ namespace SodRpg.Core.Game
             p.Stash.Add(relic);
             p.Codex.Add(relic.BaseId);
             return new GameEvent(EventKind.Drop, Loc.T(
-                $"製作：{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」",
+                $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を作りました。",
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
         }
 
@@ -945,7 +945,7 @@ namespace SodRpg.Core.Game
             p.Codex.Add(result.UniqueId ?? result.BaseId);
             if (result.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             return new GameEvent(EventKind.Drop, Loc.T(
-                $"合成：{Content.RarityName(result.Rarity)}「{result.DisplayName}」",
+                $"合成して、{Content.RarityName(result.Rarity)}「{result.DisplayName}」ができました。",
                 $"Transmuted into {Content.RarityName(result.Rarity)} \"{result.DisplayName}\""), result.Rarity);
         }
 
@@ -1022,7 +1022,7 @@ namespace SodRpg.Core.Game
             if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人の刻印ではありません。", "That keystone is not in this Traveler's tree."));
             if (!KeystoneUnlocked(p, heroKey, t))
                 throw new InvalidOperationException(t.HeroKey != null
-                    ? Loc.T($"ツリーに{Content.KeystoneRouteRequirement}pt以上と熟練度{HeroSigils.KeystoneMastery}以上が必要です。", $"Requires {Content.KeystoneRouteRequirement}+ points and mastery {HeroSigils.KeystoneMastery}+.")
+                    ? Loc.T($"このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります。", $"Requires {Content.KeystoneRouteRequirement}+ points and mastery {HeroSigils.KeystoneMastery}+.")
                     : Loc.T($"{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}ポイント以上必要です。", $"Requires {Content.KeystoneRouteRequirement}+ points in {Content.LineName(t.Route)}."));
             if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
                 throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
