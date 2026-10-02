@@ -35,6 +35,20 @@ namespace SodRpg.Core.Game
         HunterBait = 13,
         /// <summary>悪夢の契約を Target 回結ぶ。</summary>
         PactBearer = 14,
+        /// <summary>固有品を Target 個見つける。</summary>
+        LegendFinder = 15,
+        /// <summary>エピック以上の遺物を Target 個見つける。</summary>
+        EpicFinder = 16,
+        /// <summary>夢の出来事を Target 回選ぶ。</summary>
+        EventTaker = 17,
+        /// <summary>確保を Target 回行う。</summary>
+        Securer = 18,
+        /// <summary>「深く潜る」を Target 回選ぶ。</summary>
+        Delver = 19,
+        /// <summary>セット品を Target 個見つける。</summary>
+        SetHunter = 20,
+        /// <summary>悪夢の契約を Target 個以上結んだまま確保する。</summary>
+        PactKeeper = 21,
     }
 
     /// <summary>
@@ -72,6 +86,13 @@ namespace SodRpg.Core.Game
                 case BountyKind.Recycler: return Loc.T($"MemoryかEssenceを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)");
                 case BountyKind.HunterBait: return Loc.T($"ハンターの領域へ{t}回踏み込む", $"Enter hunter territory {t} time(s)");
                 case BountyKind.PactBearer: return Loc.T($"悪夢の契約を{t}回結ぶ", $"Swear {t} nightmare pact(s)");
+                case BountyKind.LegendFinder: return Loc.T($"固有品を{t}個見つける", $"Find {t} legendary relic(s)");
+                case BountyKind.EpicFinder: return Loc.T($"エピック以上の遺物を{t}個見つける", $"Find {t} Epic+ relic(s)");
+                case BountyKind.EventTaker: return Loc.T($"夢の出来事を{t}回選ぶ", $"Take {t} dream event(s)");
+                case BountyKind.Securer: return Loc.T($"確保を{t}回行う", $"Secure {t} time(s)");
+                case BountyKind.Delver: return Loc.T($"「深く潜る」を{t}回選ぶ", $"Delve {t} time(s)");
+                case BountyKind.SetHunter: return Loc.T($"セット品を{t}個見つける", $"Find {t} set piece(s)");
+                case BountyKind.PactKeeper: return Loc.T($"悪夢の契約を{t}つ結んだまま確保する", $"Secure while bound by {t}+ nightmare pact(s)");
                 default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms");
             }
         }
@@ -113,6 +134,13 @@ namespace SodRpg.Core.Game
             new Template { Kind = BountyKind.Recycler, Min = 1, Max = 3, Shards = 15, Xp = 30 },
             new Template { Kind = BountyKind.HunterBait, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
             new Template { Kind = BountyKind.PactBearer, Min = 1, Max = 2, Shards = 35, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.LegendFinder, Min = 1, Max = 1, Shards = 40, Tuning = 1, Xp = 70 },
+            new Template { Kind = BountyKind.EpicFinder, Min = 1, Max = 2, Shards = 25, Xp = 50 },
+            new Template { Kind = BountyKind.EventTaker, Min = 1, Max = 2, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.Securer, Min = 2, Max = 3, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.Delver, Min = 1, Max = 3, Shards = 25, Tuning = 1, Xp = 50 },
+            new Template { Kind = BountyKind.SetHunter, Min = 1, Max = 1, Shards = 40, Tuning = 1, Xp = 70 },
+            new Template { Kind = BountyKind.PactKeeper, Min = 1, Max = 2, Shards = 35, Tuning = 1, Xp = 60 },
         };
 
         /// <summary>種類の重ならない依頼を count 個作る。目標が大きいほど報酬も増える。</summary>

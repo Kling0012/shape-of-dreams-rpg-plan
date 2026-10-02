@@ -191,6 +191,7 @@ namespace SodRpg.Core.Game
                 AddToSatchel(p, relic, ev);
                 AddHint(p, Hint.FirstDrop, ev);
                 if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
+                AdvanceRelicBounties(p, relic, ev);
             }
             if (isNightmare) AdvanceBounty(p, BountyKind.NightmareHunter, 1, false, ev);
             switch (tier)
@@ -215,6 +216,15 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Info, Loc.T(
                 $"鞄が一杯のため「{worst.DisplayName}」を欠片にしました。",
                 $"Satchel full: \"{worst.DisplayName}\" was turned into shards.")));
+        }
+
+        /// <summary>新しく見つけた遺物を依頼へ反映する。鞄が満杯で欠片になった場合も数える。</summary>
+        private static void AdvanceRelicBounties(Profile p, Relic relic, List<GameEvent> ev)
+        {
+            if (relic.Rarity == Rarity.Legendary) AdvanceBounty(p, BountyKind.LegendFinder, 1, false, ev);
+            if (relic.Rarity >= Rarity.Epic) AdvanceBounty(p, BountyKind.EpicFinder, 1, false, ev);
+            if (Content.TryGetUnique(relic.UniqueId, out var unique) && unique.SetId != null)
+                AdvanceBounty(p, BountyKind.SetHunter, 1, false, ev);
         }
 
         /// <summary>
@@ -300,6 +310,8 @@ namespace SodRpg.Core.Game
             ev.AddRange(AddXp(p, Content.SecureXp));
             AdvanceBounty(p, BountyKind.Collector, stored, true, ev);
             if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
+            AdvanceBounty(p, BountyKind.Securer, 1, true, ev);
+            ReachBounty(p, BountyKind.PactKeeper, pacts, true, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
         }
@@ -379,6 +391,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
                 $"潜行 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
                 $"Delve {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
+            AdvanceBounty(p, BountyKind.Delver, 1, false, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
         }
@@ -501,6 +514,7 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Drop, Loc.T($"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った（未確保）",
                         $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant (unsecured)"), relic.Rarity));
                     AddToSatchel(p, relic, ev);
+                    AdvanceRelicBounties(p, relic, ev);
                     break;
                 }
                 case DreamEvent.Fountain:
@@ -601,6 +615,7 @@ namespace SodRpg.Core.Game
             p.Stats.EventsUsed++;
             p.StoreRng(rng);
             run.OfferedEvent = DreamEvent.None;
+            AdvanceBounty(p, BountyKind.EventTaker, 1, false, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
         }
@@ -615,6 +630,7 @@ namespace SodRpg.Core.Game
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れた（未確保）",
                 $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
             AddToSatchel(p, relic, ev);
+            AdvanceRelicBounties(p, relic, ev);
         }
 
         /// <summary>本体での行動（祭壇・商人・強化・合成・分解・ハンター）を依頼へ反映する。</summary>
