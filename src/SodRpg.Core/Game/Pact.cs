@@ -23,6 +23,10 @@ namespace SodRpg.Core.Game
         DryDream = 7,
         /// <summary>見えざる重荷：本体の呪い / エピック以上の確率が上がる（幸運+1.0）</summary>
         Burden = 8,
+        Glutton = 9,
+        Scholar = 10,
+        Gambler = 11,
+        AbyssEye = 12,
     }
 
     public sealed class PactDef
@@ -100,6 +104,26 @@ namespace SodRpg.Core.Game
             {
                 Id = Pact.Burden, Name = new Txt("見えざる重荷", "Unseen Burden"),
                 Description = new Txt("代償：強い呪いを1つ受けます。見返り：エピック以上の遺物がかなり出やすくなります。", "Cost: a powerful curse. Reward: Epic or better relics become much more common."), CurseStrength = 3, Luck = 1.0,
+            },
+            new PactDef
+            {
+                Id = Pact.Glutton, Name = new Txt("暴食", "Gluttony"),
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：遺物が60%多く落ちます。", "Cost: a potent curse. Reward: 60% more relic drops."), CurseStrength = 2, DropBonus = 0.6,
+            },
+            new PactDef
+            {
+                Id = Pact.Scholar, Name = new Txt("夜の学徒", "Night Scholar"),
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：経験値が1.3倍になり、レア度の高い遺物も少し出やすくなります。", "Cost: a mild curse. Reward: x1.3 experience and slightly better rarity."), CurseStrength = 1, XpMult = 1.3, Luck = 0.3,
+            },
+            new PactDef
+            {
+                Id = Pact.Gambler, Name = new Txt("賭け師の誓い", "Gambler's Oath"),
+                Description = new Txt("代償：中くらいの呪いを1つ受け、全滅したときに欠片が残響として戻らなくなります。見返り：敵を倒して得る欠片が2倍になります。", "Cost: a potent curse, and no shard echoes if your party falls. Reward: x2 shards from kills."), CurseStrength = 2, ShardMult = 2.0, NoEcho = true,
+            },
+            new PactDef
+            {
+                Id = Pact.AbyssEye, Name = new Txt("深淵の眼", "Eye of the Abyss"),
+                Description = new Txt("代償：強い呪いを1つ受けます。見返り：遺物が50%多く落ち、良い物が出やすくなり、エリートとボスが調律石を1つ多く落とします。", "Cost: a powerful curse. Reward: 50% more relics, better rarity, and elites and bosses drop 1 extra tuning stone."), CurseStrength = 3, DropBonus = 0.5, Luck = 0.8, TuningOnElite = 1,
             },
         };
 

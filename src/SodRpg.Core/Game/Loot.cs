@@ -139,7 +139,7 @@ namespace SodRpg.Core.Game
         /// <summary>伝説の抽選でセット品そのものが選ばれやすくなる倍率。</summary>
         public const int SetPieceWeight = 2;
 
-        public const int SetCompletionWeight = 6;
+        public const int SetCompletionWeight = 10;
 
         private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
         {

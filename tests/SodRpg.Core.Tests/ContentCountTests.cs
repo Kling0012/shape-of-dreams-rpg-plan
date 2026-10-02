@@ -20,17 +20,17 @@ namespace SodRpg.Core.Tests
             int powers = slots.Sum(s => Content.PowerPool(s).Count);
             var counts = new (string Name, int Count, int Min)[]
             {
-                ("bases", Content.Bases.Count, 9),
-                ("uniques", Content.Uniques.Count, 15),
-                ("sets", Content.Sets.Count, 4),
+                ("bases", Content.Bases.Count, 27),
+                ("uniques", Content.Uniques.Count, 52),
+                ("sets", Content.Sets.Count, 6),
                 ("talents", Content.Talents.Count, 15),
                 ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),
                 ("heroSigils", HeroSigils.All.Count, 4),
-                ("affixes", affixes, 15),
+                ("affixes", affixes, 32),
                 ("powers", powers, 9),
-                ("pacts", Pacts.All.Count, 6),
+                ("pacts", Pacts.All.Count, 12),
                 ("nightmareAffixes", Nightmares.AllAffixes.Length, 4),
-                ("dailyDreams", DailyDream.All.Count, 7),
+                ("dailyDreams", DailyDream.All.Count, 14),
                 ("dreamEvents", Enum.GetValues(typeof(DreamEvent)).Length, 3),
                 ("bountyKinds", Enum.GetValues(typeof(BountyKind)).Length, 6),
                 ("hints", Onboarding.All.Count, 5),

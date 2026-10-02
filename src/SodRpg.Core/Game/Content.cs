@@ -216,6 +216,15 @@ namespace SodRpg.Core.Game
             new BaseDef("charm.pulsing_core", Slot.Charm, Line.Guard, new Txt("脈打つ核", "Pulsing Core"), Stat.MaxHealthFlat, 20),
             new BaseDef("charm.chain_necklace", Slot.Charm, Line.Guard, new Txt("鎖の首飾り", "Chain Necklace"), Stat.Tenacity, 10),
             new BaseDef("charm.old_clock", Slot.Charm, Line.Offense, new Txt("古き時計", "Old Clock"), Stat.Haste, 6),
+            new BaseDef("weapon.frost_spear", Slot.Weapon, Line.Guard, new Txt("霜穂の槍", "Frostspike Spear"), Stat.AttackRangePct, 8),
+            new BaseDef("weapon.dusk_scythe", Slot.Weapon, Line.Offense, new Txt("黄昏の大鎌", "Dusk Scythe"), Stat.CritDamagePct, 14),
+            new BaseDef("weapon.lantern_rod", Slot.Weapon, Line.Resonance, new Txt("灯火の杖", "Lantern Rod"), Stat.LightAmp, 10),
+            new BaseDef("armor.frost_coat", Slot.Armor, Line.Guard, new Txt("霜の上衣", "Frostweave Coat"), Stat.Tenacity, 15),
+            new BaseDef("armor.dancer_garb", Slot.Armor, Line.Offense, new Txt("舞手の衣", "Dancer's Garb"), Stat.AttackSpeedPct, 4),
+            new BaseDef("armor.star_cloak", Slot.Armor, Line.Resonance, new Txt("星読みの外套", "Stargazer's Cloak"), Stat.PowerPct, 5),
+            new BaseDef("charm.ember_locket", Slot.Charm, Line.Offense, new Txt("残り火のロケット", "Ember Locket"), Stat.FireAmp, 10),
+            new BaseDef("charm.moon_bell", Slot.Charm, Line.Resonance, new Txt("月の鈴", "Moon Bell"), Stat.ColdAmp, 10),
+            new BaseDef("charm.iron_feather", Slot.Charm, Line.Guard, new Txt("鉄の羽根", "Iron Feather"), Stat.Armor, 6),
         };
 
         public static readonly IReadOnlyList<UniqueDef> Uniques = new[]
@@ -288,6 +297,42 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.sig.bismuth", "charm.pulsing_core", new Txt("四冊目の物語", "The Fourth Tale"),
                 new Txt("三つの物語が揃えば、四つ目が始まる。（Bismuth）", "When three tales meet, the fourth begins. (Bismuth)"),
                 Power.Convergence, 120, Power.Ember, 25),
+            new UniqueDef("unique.glacier_lance", "weapon.frost_spear", new Txt("氷河の槍", "Glacier Lance"),
+                new Txt("凍りついた敵は、もう逃げられない。", "A frozen foe has nowhere left to run."),
+                Power.Frost, 40, Power.Bulwark, 25),
+            new UniqueDef("unique.moon_reaper", "weapon.dusk_scythe", new Txt("月喰いの鎌", "Moon Reaper"),
+                new Txt("欠けた月の夜にだけ、刃は研がれる。", "Its edge is honed only on waning-moon nights."),
+                Power.Umbra, 40, Power.Executioner, 45),
+            new UniqueDef("unique.lighthouse", "weapon.lantern_rod", new Txt("夜明けの灯台", "Lighthouse of Dawn"),
+                new Txt("迷った夢を、光が岸まで導く。", "Its light guides lost dreams back to shore."),
+                Power.Radiance, 35, Power.Barrier, 10),
+            new UniqueDef("unique.winter_vow", "armor.frost_coat", new Txt("冬の誓い", "Winter's Vow"),
+                new Txt("凍えるほど、守る意志は固くなる。", "The colder it gets, the firmer the resolve."),
+                Power.Frost, 30, Power.Aegis, 25),
+            new UniqueDef("unique.whirling_veil", "armor.dancer_garb", new Txt("渦巻く舞衣", "Whirling Veil"),
+                new Txt("止まらない舞は、刃より速い。", "A dance that never stops outpaces any blade."),
+                Power.Momentum, 6, Power.EchoingDodge, 12),
+            new UniqueDef("unique.astral_mantle", "armor.star_cloak", new Txt("天球の外套", "Astral Mantle"),
+                new Txt("星の巡りを読めば、切り札はいつでも手の中に。", "Read the turning stars, and your trump card is always at hand."),
+                Power.UltimateSurge, 25, Power.Resonance, 8),
+            new UniqueDef("unique.phoenix_locket", "charm.ember_locket", new Txt("不死鳥のロケット", "Phoenix Locket"),
+                new Txt("燃え尽きたと思ったときが、始まりだ。", "The moment you think you have burned out is when it begins."),
+                Power.Ember, 40, Power.SecondWind, 30),
+            new UniqueDef("unique.moonlit_bell", "charm.moon_bell", new Txt("月夜の鈴", "Moonlit Bell"),
+                new Txt("鳴るたびに、冷たい雷が走る。", "Each chime sends cold lightning running."),
+                Power.Frost, 35, Power.ChainLightning, 50),
+            new UniqueDef("unique.iron_wing", "charm.iron_feather", new Txt("鉄翼", "Iron Wing"),
+                new Txt("羽ばたくたびに、刃を弾く。", "Every beat of its wings turns a blade aside."),
+                Power.Thorns, 30, Power.Bulwark, 30),
+            new UniqueDef("unique.storm_caller", "weapon.chain_sword", new Txt("嵐を呼ぶ剣", "Stormcaller"),
+                new Txt("振るえば、空が応える。", "Swing it, and the sky answers."),
+                Power.ChainLightning, 70, Power.Tailwind, 20),
+            new UniqueDef("unique.hungering_dark", "armor.resonant_robe", new Txt("飢える闇", "Hungering Dark"),
+                new Txt("闇は、与えた傷の分だけ満たされる。", "The dark is filled by every wound it gives."),
+                Power.Umbra, 35, Power.Lifesteal, 8),
+            new UniqueDef("unique.last_bastion", "armor.guardian_plate", new Txt("最後の砦", "Last Bastion"),
+                new Txt("倒れる寸前こそ、本当の戦いだ。", "The real fight begins just before you fall."),
+                Power.Bloodlust, 30, Power.Retaliation, 30),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -300,6 +345,12 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.dusk.weapon", "weapon.twin_fang", new Txt("黄昏の双牙", "Duskfang"), "set.dusk"),
             new UniqueDef("set.dusk.armor", "armor.counter_gauntlets", new Txt("黄昏の籠手", "Dusk Gauntlets"), "set.dusk"),
             new UniqueDef("set.dusk.charm", "charm.hunters_seal", new Txt("黄昏の印章", "Dusk Seal"), "set.dusk"),
+            new UniqueDef("set.winter.weapon", "weapon.frost_spear", new Txt("冬枯れの槍", "Winterbound Spear"), "set.winter"),
+            new UniqueDef("set.winter.armor", "armor.frost_coat", new Txt("冬枯れの上衣", "Winterbound Coat"), "set.winter"),
+            new UniqueDef("set.winter.charm", "charm.moon_bell", new Txt("冬枯れの鈴", "Winterbound Bell"), "set.winter"),
+            new UniqueDef("set.starsong.weapon", "weapon.lantern_rod", new Txt("星詠みの杖", "Starsinger's Rod"), "set.starsong"),
+            new UniqueDef("set.starsong.armor", "armor.star_cloak", new Txt("星詠みの外套", "Starsinger's Cloak"), "set.starsong"),
+            new UniqueDef("set.starsong.charm", "charm.old_clock", new Txt("星詠みの時計", "Starsinger's Clock"), "set.starsong"),
         };
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
@@ -328,6 +379,18 @@ namespace SodRpg.Core.Game
                 TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.CritChancePct, 4) },
                 ThreePiece = new[] { new PowerLine(Power.Umbra, 30), new PowerLine(Power.Executioner, 40) },
             },
+            new SetDef
+            {
+                Id = "set.winter", Name = new Txt("冬枯れの誓約", "Winterbound Oath"),
+                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.Armor, 6) },
+                ThreePiece = new[] { new PowerLine(Power.Frost, 30), new PowerLine(Power.Bulwark, 30) },
+            },
+            new SetDef
+            {
+                Id = "set.starsong", Name = new Txt("星詠みの装束", "Starsinger's Raiment"),
+                TwoPiece = new[] { new StatLine(Stat.Haste, 10), new StatLine(Stat.PowerPct, 5) },
+                ThreePiece = new[] { new PowerLine(Power.UltimateSurge, 25), new PowerLine(Power.EchoingDodge, 10) },
+            },
         };
 
         public static SetDef GetSet(string id)
@@ -350,6 +413,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.FireAmp, 6, 12, 5),
                 new AffixDef(Stat.LightAmp, 6, 12, 5),
                 new AffixDef(Stat.DarkAmp, 6, 12, 5),
+                new AffixDef(Stat.AttackRangePct, 4, 8, 5),
+                new AffixDef(Stat.ColdAmp, 6, 12, 5),
             },
             [Slot.Armor] = new[]
             {
@@ -359,6 +424,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.HealthRegen, 1, 3, 8),
                 new AffixDef(Stat.Tenacity, 6, 12, 8),
                 new AffixDef(Stat.MoveSpeedPct, 2, 4, 6),
+                new AffixDef(Stat.Haste, 3, 6, 6),
+                new AffixDef(Stat.LightAmp, 5, 10, 4),
             },
             [Slot.Charm] = new[]
             {
@@ -373,6 +440,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.FireAmp, 6, 12, 4),
                 new AffixDef(Stat.LightAmp, 6, 12, 4),
                 new AffixDef(Stat.DarkAmp, 6, 12, 4),
+                new AffixDef(Stat.Tenacity, 6, 12, 6),
+                new AffixDef(Stat.CritDamagePct, 5, 10, 8),
             },
         };
 

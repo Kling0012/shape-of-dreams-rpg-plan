@@ -87,6 +87,30 @@ namespace SodRpg.Core.Game
                 Description = new Txt("霜・回避の残響・守護霊が+50%、生命の遺物が出やすい", "Frost, Echoing Dodge and Aegis +50%; Life relics favored"),
                 FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Frost, Power.EchoingDodge, Power.Aegis },
             },
+            new DailyDream
+            {
+                Id = 11, Name = new Txt("灯の日", "Day of Lanterns"),
+                Description = new Txt("輝き・護りの灯・灯守・終の昂りが+50%、想像の遺物が出やすい", "Radiance, Barrier, Second Wind and Ultimate Surge +50%; Imagination relics favored"),
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Radiance, Power.Barrier, Power.SecondWind, Power.UltimateSurge },
+            },
+            new DailyDream
+            {
+                Id = 12, Name = new Txt("嵐の日", "Day of Storms"),
+                Description = new Txt("雷鎖・爆砕・追い風が+50%、破壊の遺物が出やすい", "Chain Lightning, Shatter and Tailwind +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.ChainLightning, Power.Shatter, Power.Tailwind },
+            },
+            new DailyDream
+            {
+                Id = 13, Name = new Txt("学びの夢", "Dream of Learning"),
+                Description = new Txt("敵を倒して得る経験値×1.5", "x1.5 experience from kills"),
+                XpMult = 1.5,
+            },
+            new DailyDream
+            {
+                Id = 14, Name = new Txt("依頼の夢", "Dream of Errands"),
+                Description = new Txt("依頼の報酬×2", "x2 bounty rewards"),
+                BountyMult = 2.0,
+            },
         };
 
         public static DailyDream Get(int id)

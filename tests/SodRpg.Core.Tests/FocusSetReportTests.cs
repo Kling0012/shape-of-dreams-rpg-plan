@@ -20,10 +20,10 @@ namespace SodRpg.Core.Tests
                     if (Loot.RollRelic(rng, Rarity.Rare, 10, null, focus).Base.Line == Line.Guard) hit++;
                 return (double)hit / n;
             }
-            double baseShare = Share(null);   // 18基礎のうち守勢は6
+            double baseShare = Share(null);   // 27基礎のうち生命は9
             double focused = Share(Line.Guard);
             Assert.InRange(baseShare, 0.30, 0.37);
-            Assert.InRange(focused, 0.47, 0.53);  // 12/24 = 0.5
+            Assert.InRange(focused, 0.47, 0.53);  // 18/36 = 0.5
         }
 
         [Fact]
