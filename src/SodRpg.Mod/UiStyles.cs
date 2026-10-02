@@ -20,7 +20,7 @@ namespace SodRpg.Mod
         };
 
         public Font Font;
-        public GUIStyle ToastMeasure, Panel, Window, Title, Label, Small, Header, Button, ButtonSel, Tab, TabSel, Row, RowSel, Toast, Hud, Warn;
+        public GUIStyle ToastMeasure, Panel, Window, Title, Label, Small, Header, Button, ButtonSel, Tab, TabSel, Row, RowWrap, RowSel, Toast, Hud, Warn;
         private bool _built;
         private readonly System.Collections.Generic.List<Texture2D> _textures = new System.Collections.Generic.List<Texture2D>();
 
@@ -101,6 +101,7 @@ namespace SodRpg.Mod
                 hover = { background = bgRowHover, textColor = Color.white },
                 margin = new RectOffset(2, 2, 1, 1),
             };
+            RowWrap = new GUIStyle(Row) { wordWrap = true, fontSize = 13, padding = new RectOffset(10, 10, 4, 4) };
             RowSel = new GUIStyle(Row) { normal = { background = bgRowSel, textColor = Color.white }, hover = { background = bgRowSel, textColor = Color.white } };
         }
 

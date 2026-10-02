@@ -76,9 +76,9 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, feat.RewardShards);
             p.AddMaterial(Materials.Tuning, feat.RewardTuning);
             p.FeatsClaimed.Add(featId);
-            return new GameEvent(EventKind.Info, Loc.T(
-                $"偉業「{feat.Name}」の報酬を受け取った：欠片{feat.RewardShards}・調律石{feat.RewardTuning}",
-                $"Claimed \"{feat.Name}\": {feat.RewardShards} shards, {feat.RewardTuning} tuning"));
+            string ja = feat.RewardTuning > 0 ? $"欠片{feat.RewardShards}と調律石{feat.RewardTuning}" : $"欠片{feat.RewardShards}";
+            string en = feat.RewardTuning > 0 ? $"{feat.RewardShards} shards and {feat.RewardTuning} tuning" : $"{feat.RewardShards} shards";
+            return new GameEvent(EventKind.Info, Loc.T($"偉業「{feat.Name}」の報酬として{ja}を受け取りました。", $"Claimed \"{feat.Name}\": {en}."));
         }
 
         // ───────────── 遠征 ─────────────

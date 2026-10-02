@@ -268,7 +268,7 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 40 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
+            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
@@ -346,7 +346,7 @@ namespace SodRpg.Mod
                 {
                     var d = Pacts.Get(id);
                     if (d == null) continue;
-                    if (GUILayout.Button($"<b>{d.Name}</b>  <color=#ffb0a0>{d.Description}</color>", _st.Row, GUILayout.Height(36))) _s.Delve(id);
+                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52))) _s.Delve(id);
                 }
             }
             GUILayout.EndArea();
