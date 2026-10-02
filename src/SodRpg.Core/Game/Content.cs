@@ -431,7 +431,7 @@ namespace SodRpg.Core.Game
                 Power.EchoingDodge, 15, Power.Umbra, 30),
             new UniqueDef("unique.dew_robe", "armor.mist_robe", new Txt("朝露の法衣", "Morning Dew Robe"),
                 new Txt("夜明けの雫が、仲間の傷を洗う。", "Drops of dawn wash your allies' wounds."),
-                Power.Resonance, 10, Power.Radiance, 30),
+                Power.Resonance, 8, Power.Barrier, 8),
             new UniqueDef("unique.pilgrim_shawl", "armor.prayer_shawl", new Txt("巡礼の肩掛け", "Pilgrim's Shawl"),
                 new Txt("歩いた道が長いほど、祈りは深くなる。", "The longer the road walked, the deeper the prayer."),
                 Power.SecondWind, 25, Power.UltimateSurge, 20),
@@ -464,7 +464,7 @@ namespace SodRpg.Core.Game
                 Power.Bloodlust, 30, Power.Executioner, 40),
             new UniqueDef("unique.viper_fang", "charm.fang_necklace", new Txt("毒蛇の牙", "Viper's Fang"),
                 new Txt("小さな傷が、やがて命を奪う。", "A tiny wound in time takes a life."),
-                Power.Umbra, 35, Power.Lifesteal, 8),
+                Power.Umbra, 35, Power.OpeningStrike, 40),
             new UniqueDef("unique.battle_drum", "charm.war_drum", new Txt("鬨の太鼓", "Battle-Cry Drum"),
                 new Txt("太鼓が鳴れば、足は止まらない。", "When the drum sounds, no foot stands still."),
                 Power.Momentum, 6, Power.Resonance, 8),
@@ -488,7 +488,7 @@ namespace SodRpg.Core.Game
                 Power.UltimateSurge, 25, Power.EchoingDodge, 10),
             new UniqueDef("unique.prism_lens", "charm.dream_lens", new Txt("虹の水晶", "Prism Lens"),
                 new Txt("一つの光が、四つの夢に分かれる。", "One light splits into four dreams."),
-                Power.Convergence, 120, Power.Ember, 25),
+                Power.Convergence, 120, Power.Radiance, 25),
             new UniqueDef("unique.jester_mask", "charm.shadow_mask", new Txt("道化の仮面", "Jester's Mask"),
                 new Txt("笑わせているうちに、背後を取る。", "While they laugh, it takes their back."),
                 Power.EchoingDodge, 15, Power.Executioner, 40),
@@ -503,13 +503,13 @@ namespace SodRpg.Core.Game
                 Power.Frost, 30, Power.Resonance, 8),
             new UniqueDef("unique.windcutter", "charm.iron_feather", new Txt("風切り羽根", "Windcutter Feather"),
                 new Txt("羽ばたき一つで、戦場を駆け抜ける。", "A single flap carries you across the field."),
-                Power.Tailwind, 20, Power.EchoingDodge, 12),
+                Power.Tailwind, 20, Power.Sprint, 20),
             new UniqueDef("unique.hourglass", "charm.old_clock", new Txt("時の砂時計", "Hourglass of Ages"),
                 new Txt("落ちる砂が、切り札を早める。", "The falling sand hastens your trump card."),
                 Power.UltimateSurge, 25, Power.Momentum, 4),
             new UniqueDef("unique.throbbing_core", "charm.pulsing_core", new Txt("鼓動する核", "Throbbing Core"),
                 new Txt("鼓動が速まるほど、力が湧く。", "The faster it beats, the stronger you get."),
-                Power.Bloodlust, 30, Power.SecondWind, 25),
+                Power.Bloodlust, 30, Power.SoulSiphon, 15),
             new UniqueDef("unique.chain_choker", "charm.chain_necklace", new Txt("鎖の首輪", "Chain Choker"),
                 new Txt("縛られた者ほど、強く抗う。", "The more bound, the harder it resists."),
                 Power.Retaliation, 30, Power.Aegis, 20),
@@ -518,7 +518,7 @@ namespace SodRpg.Core.Game
                 Power.Tailwind, 20, Power.Shatter, 50),
             new UniqueDef("unique.mark_of_prey", "charm.hunters_seal", new Txt("獲物の刻印", "Mark of the Prey"),
                 new Txt("刻まれた獲物は、逃げられない。", "Marked prey cannot escape."),
-                Power.Executioner, 45, Power.ChainLightning, 50),
+                Power.Executioner, 45, Power.Momentum, 4),
             new UniqueDef("unique.choir_amulet", "charm.resonance_amulet", new Txt("合唱の護符", "Choir Amulet"),
                 new Txt("声が重なるほど、力は大きくなる。", "The more voices join, the greater the power."),
                 Power.Resonance, 10, Power.UltimateSurge, 20),
@@ -560,7 +560,7 @@ namespace SodRpg.Core.Game
                 Power.Frenzy, 3, Power.Bulwark, 25),
             new UniqueDef("unique.first_light", "weapon.longspike_bow", new Txt("一番星の弓", "Bow of the First Star"),
                 new Txt("最初の一矢が、すべてを決める。", "The first arrow decides everything."),
-                Power.OpeningStrike, 80, Power.Radiance, 25),
+                Power.OpeningStrike, 50, Power.Radiance, 25),
             new UniqueDef("unique.starward_mantle", "armor.star_cloak", new Txt("星守りの外套", "Starward Mantle"),
                 new Txt("切り札を切るとき、星が身を守る。", "When you play your trump card, the stars guard you."),
                 Power.StarShield, 20, Power.UltimateSurge, 20),
@@ -584,7 +584,7 @@ namespace SodRpg.Core.Game
                 Power.Frenzy, 3, Power.Bloodlust, 25),
             new UniqueDef("unique.dawn_herald", "weapon.hunting_bow", new Txt("暁の伝令", "Herald of Dawn"),
                 new Txt("夜明けの一矢は、まだ眠る敵を貫く。", "The dawn arrow pierces foes still half asleep."),
-                Power.OpeningStrike, 70, Power.Vigor, 12),
+                Power.OpeningStrike, 45, Power.Vigor, 12),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -609,7 +609,7 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.bastion.weapon", "weapon.tower_lance", new Txt("不落城の槍", "Bastion Lance"), "set.bastion"),
             new UniqueDef("set.bastion.armor", "armor.bastion_shell", new Txt("不落城の甲羅", "Bastion Shell"), "set.bastion"),
             new UniqueDef("set.bastion.charm", "charm.guardian_seal", new Txt("不落城の封印", "Bastion Seal"), "set.bastion"),
-            new UniqueDef("set.wildfire.weapon", "weapon.war_axe", new Txt("燎原の斧", "Wildfire Axe"), "set.wildfire"),
+            new UniqueDef("set.wildfire.weapon", "weapon.war_axe", new Txt("燎原の斧", "Wildfire Cleaver"), "set.wildfire"),
             new UniqueDef("set.wildfire.armor", "armor.ember_plate", new Txt("燎原の鎧", "Wildfire Plate"), "set.wildfire"),
             new UniqueDef("set.wildfire.charm", "charm.war_drum", new Txt("燎原の太鼓", "Wildfire Drum"), "set.wildfire"),
             new UniqueDef("set.grove.weapon", "weapon.oath_mace", new Txt("古森の戦棍", "Grove Mace"), "set.grove"),
@@ -676,7 +676,7 @@ namespace SodRpg.Core.Game
             new SetDef
             {
                 Id = "set.wildfire", Name = new Txt("燎原の軍装", "Wildfire Warband"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.AttackPct, 5) },
+                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.AttackSpeedPct, 5) },
                 ThreePiece = new[] { new PowerLine(Power.Ember, 35), new PowerLine(Power.Shatter, 60) },
             },
             new SetDef
@@ -766,7 +766,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.UltimateSurge, 15, 25),
                 new PowerRange(Power.SoulSiphon, 10, 20),
                 new PowerRange(Power.Frenzy, 1, 3),
-                new PowerRange(Power.OpeningStrike, 40, 80),
+                new PowerRange(Power.OpeningStrike, 25, 50),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Overload, 10, 20),
             },
@@ -807,23 +807,22 @@ namespace SodRpg.Core.Game
             new TalentDef("t.off.mind", Line.Offense, new Txt("魔力", "Arcane Mind"), Stat.PowerPct, 3, 3),
             new TalentDef("t.off.swift", Line.Offense, new Txt("迅速", "Swiftness"), Stat.AttackSpeedPct, 3, 3),
             new TalentDef("t.off.vital", Line.Offense, new Txt("急所", "Vital Points"), Stat.CritChancePct, 2, 3),
-            new TalentDef("t.off.key", Line.Offense, new Txt("終わらない舞", "Endless Dance"), Power.Momentum, 4,
-                new Txt("撃破ごとに攻撃速度+4%（4秒、5重まで）", "+4% attack speed per kill (4s, up to 5 stacks)")),
+            new TalentDef("t.off.key", Line.Offense, new Txt("舞い続ける者", "Ceaseless Dancer"), Power.Momentum, 4,
+                new Txt("敵を次々に倒す戦い方に向いています。", "Suits fights where you chain kills.")),
 
             new TalentDef("t.grd.hearty", Line.Guard, new Txt("頑健", "Hearty"), Stat.MaxHealthPct, 4, 3),
             new TalentDef("t.grd.iron", Line.Guard, new Txt("鉄皮", "Ironhide"), Stat.Armor, 5, 3),
             new TalentDef("t.grd.regen", Line.Guard, new Txt("再生", "Regrowth"), Stat.HealthRegen, 1, 3),
             new TalentDef("t.grd.steady", Line.Guard, new Txt("不屈", "Unyielding"), Stat.Tenacity, 8, 3),
             new TalentDef("t.grd.key", Line.Guard, new Txt("逆襲の構え", "Counterstance"), Power.Retaliation, 20,
-                new Txt("被弾後3秒、攻撃力+20%", "+20% attack damage for 3s after being hit")),
+                new Txt("敵の攻撃を受け止めて反撃する戦い方に向いています。", "Suits a tank that strikes back.")),
 
             new TalentDef("t.res.focus", Line.Resonance, new Txt("集中", "Focus"), Stat.Haste, 5, 3),
             new TalentDef("t.res.light", Line.Resonance, new Txt("軽歩", "Lightstep"), Stat.MoveSpeedPct, 3, 3),
             new TalentDef("t.res.tune", Line.Resonance, new Txt("共振", "Attunement"), Stat.AttackPct, 2, 3),
             new TalentDef("t.res.ward", Line.Resonance, new Txt("守護", "Warding"), Stat.MaxHealthFlat, 12, 3),
             new TalentDef("t.res.key", Line.Resonance, new Txt("共鳴の環", "Ring of Resonance"), Power.Resonance, 8,
-                new Txt("10m以内に味方がいる間、自分と味方の攻撃力・魔力+8%（ソロは+4%）",
-                    "+8% attack and ability power to you and allies within 10m (solo: +4%)")),
+                new Txt("味方の近くで戦うほど活きます。", "Best when fighting close to allies.")),
         };
 
         /// <summary>同じ固有効果を複数持つ場合の合計上限。</summary>
@@ -1115,7 +1114,7 @@ namespace SodRpg.Core.Game
                 case Power.OpeningStrike: return Loc.T("先制", "Opening Strike");
                 case Power.StarShield: return Loc.T("星の加護", "Star Shield");
                 case Power.Sprint: return Loc.T("疾駆", "Sprint");
-                case Power.Vigor: return Loc.T("不屈", "Vigor");
+                case Power.Vigor: return Loc.T("万全", "Vigor");
                 case Power.Overload: return Loc.T("過負荷", "Overload");
                 default: return "-";
             }

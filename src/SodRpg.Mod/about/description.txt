@@ -1,42 +1,50 @@
 [h1]Dreamforge RPG[/h1]
-Turns every run into part of a long RPG journey: persistent relics, a risky secure-or-delve choice at every zone, a per-Traveler star map, and a forge. Co-op ready.
-すべての遠征を長いRPGの一部にするMOD。持ち帰れる装備「遺物」、ゾーンごとの「確保か、深く潜るか」の決断、キャラごとの星図、鍛冶。協力プレイ対応。
+Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
+すべての遠征を、長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / armor / charm). 5 rarities, 18 bases, 6 legendaries with unique powers.
-[*] 敵を倒すと各プレイヤーに個別の遺物が落ちる（主装備・防具・装飾品）。レア度5段階、基礎18種、固有品6種。
-[*] Epic and Legendary relics carry powers: Momentum, Retaliation, Bulwark, Lifesteal, Thorns, Executioner, Resonance, Tailwind, Barrier, Second Wind, Blaze.
+[*] Enemies drop personal relics for every player (weapon / armor / charm), each with its own hand-painted icon. 5 rarities, 45 bases, 112 legendaries and 12 sets (36 set pieces), 30 kinds of powers.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・防具・装飾品）。遺物には1つずつ絵が付いています。レア度は5段階、土台は45種、固有品は112種、セットは12種（36部位）、固有効果は30種類あります。
+[*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
+[*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
 [/list]
 
 [h2]Secure or Delve / 確保か、深く潜るか[/h2]
 [list]
-[*] New loot starts unsecured. Each new zone is a secure point: Secure to bank it, or Delve to raise dream depth (more drops, better rarity, weaker defenses, bigger shard bonus).
-[*] 拾った物はまず未確保。新しいゾーンが確保地点。「確保」で保管庫へ、「深く潜る」で夢の深度が上がる（ドロップ率とレア度が上がるが、守りが下がる）。
+[*] New loot starts unsecured. Each new zone is a secure point: Secure to bank everything, or Delve for more and better drops, while you take 6% more damage per delve level. Delving deeper also raises the shard bonus when you finally secure.
+[*] 拾った物は、まだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
+[*] 12 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 20 nightmare pacts trade a game curse for bigger rewards.
+[*] 確保地点には12種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
-[*] 全滅すると未確保品は遺失物に。次の遠征で戦闘部屋を3つ突破すると最良の1つを取り戻せる。
+[*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]
 
 [h2]Growth / 成長[/h2]
 [list]
-[*] Dream Level grows with kills and grants star map points. Three routes per Traveler (Offense / Guard / Resonance) with an engravable keystone.
-[*] 夢のレベルで星図ポイントが増え、キャラごとに攻勢・守勢・共鳴へ配分。6pt入れたルートでは刻印を1つ選べる。
-[*] Forge: enhance (+5), retune affixes, salvage, craft.
-[*] Every expedition offers 3 bounties; choose a loot focus line; equip a line set for bonuses.
-[*] Nightmare pacts (risk/reward), nightmare elites that scale with depth, transmutation, daily dreams, traveler mastery.
-[*] 悪夢の契約、深度で増える悪夢化エリート、合成、今日の夢、旅人の熟練度。
-[*] 遠征ごとに依頼3つ。狙い系統で欲しい系統を出やすく、同系統セットでボーナス。
+[*] Dream Level grows as you play and grants star map points. Every base-game Traveler has their own sigil tree with two keystones to choose from.
+[*] 遊ぶほど夢のレベルが上がり、星図のポイントが増えます。本体の旅人には、それぞれ専用の刻印のツリーがあり、2つの到達刻印から1つを選べます。
+[*] Forge: enhance (+5), retune affixes, salvage, transmute and craft. The workshop unlocks convenience upgrades.
+[*] 鍛冶では強化（+5まで）・再調律・分解・合成・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
+[*] 22 kinds of bounties each run, 30 daily dreams, 43 feats with rewards, and traveler mastery.
+[*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（43個）、旅人の熟練度があります。
+[/list]
+
+[h2]Performance / 軽さ[/h2]
+[list]
+[*] The mod itself costs well under 0.1 ms per frame. Optional settings lighten the whole game: an FPS cap while the game is in the background, and lighter rendering (Light / Strong / Max).
+[*] このMOD自体の処理は1フレームあたり0.1ミリ秒未満です。設定で、ゲームが裏にあるときのFPS上限や、描画の軽量化（軽め・強め・最大）を選べます。
 [/list]
 
 [h2]Controls / 操作[/h2]
 [list]
 [*] F6: Dreamforge menu / Dreamforge のメニュー
 [*] F7: Secure / 確保する　F8: Delve / 深く潜る
-[*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示倍率はMOD設定で変更可能。
+[*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示の大きさは、MOD設定で変えられます。
 [/list]
 
 [h2]Multiplayer / マルチプレイ[/h2]
-The host applies everyone's bonuses, so the host must have this mod. Each player keeps their own save; loot is rolled per player.
-能力の反映はホストが行うため、ホストの導入が必要です。保存と戦利品は各プレイヤー個別です。
+Every player needs the same version of this mod. The host applies everyone's bonuses. Each player keeps their own save, and loot is rolled per player.
+参加者全員が同じ版のMODを入れてください。能力の反映はホストが行います。保存と戦利品は、プレイヤーごとに別々です。
 
 This mod alters gameplay. Save file: <persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json

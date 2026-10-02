@@ -175,12 +175,33 @@ namespace SodRpg.Mod
                         DrawNightmareLabels(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
-                    if (layout && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
+                    if (layout && !Open && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
                 }
                 if (repaint) DrawToasts(w, h);
-                if (layout && _s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
-                if (layout && Open) DrawWindow(w, h, cfg);
+                // メニューを開いている間は、確保地点と遠征結果のパネルを隠す（重なった下のボタンを押せないように）。
+                if (layout && !Open && _s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
+                // ヒントの上にマウスがあるときは、下にあるメニューのボタンへマウスの操作を渡さない。
+                bool mouseEvent = type == EventType.MouseDown || type == EventType.MouseUp || type == EventType.MouseDrag || type == EventType.ScrollWheel;
+                Vector2 realMouse = Event.current.mousePosition;
+                bool shield = mouseEvent && _hints.Count > 0 && HintRect(w, h).Contains(realMouse);
+                if (shield) Event.current.mousePosition = new Vector2(-99999f, -99999f);
+                try
+                {
+                    if (layout && Open) DrawWindow(w, h, cfg);
+                }
+                finally
+                {
+                    if (shield) Event.current.mousePosition = realMouse;
+                }
                 if (layout && _hints.Count > 0) DrawHint(w, h, cfg);
+            }
+            catch (ExitGUIException)
+            {
+                throw;
+            }
+            catch (ArgumentException ex) when (ex.Message.Contains("Getting control"))
+            {
+                // ボタンを押した瞬間に表示が変わると、その回の描画だけ配置が合わなくなる。次の描画で直るので、メニューは閉じない。
             }
             catch (Exception ex)
             {
@@ -270,9 +291,11 @@ namespace SodRpg.Mod
             var run = _s.Profile.Run;
             var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
                 + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades ? 24 : 0)
-                + (_status != null && Time.unscaledTime < _statusUntil ? 24 : 0));
+                + 24);
+            if (rect.height > h - 100) rect.height = h - 100;
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
+            _scrollSecure = GUILayout.BeginScrollView(_scrollSecure);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
@@ -283,7 +306,7 @@ namespace SodRpg.Mod
             {
                 // 持ち帰れる遺物を、良い物から順にアイコンで並べる（最大14個）。
                 GUILayout.BeginHorizontal();
-                foreach (var r in run.Satchel.OrderByDescending(x => x.Score).Take(14)) IconSlot(r, 36);
+                foreach (var r in SatchelTop()) IconSlot(r, 36);
                 if (run.Satchel.Count > 14) GUILayout.Label($"+{run.Satchel.Count - 14}", _st.Small);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -339,7 +362,7 @@ namespace SodRpg.Mod
                 if (merchant && _s.TradePending(TradeKind.MerchantGold)) { ok = false; why = Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."); }
                 GUILayout.BeginHorizontal();
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
-                if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, "events/" + e);
+                if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, EventArtKey(e));
                 GUILayout.BeginVertical();
                 GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
@@ -378,8 +401,18 @@ namespace SodRpg.Mod
                 }
                 GUI.enabled = true;
             }
-            if (_status != null && Time.unscaledTime < _statusUntil) GUILayout.Label(_status, _st.Warn);
+            GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
+            GUILayout.EndScrollView();
             GUILayout.EndArea();
+        }
+
+        private Vector2 _scrollSecure;
+        private static readonly Dictionary<DreamEvent, string> EventArt = new Dictionary<DreamEvent, string>();
+
+        private static string EventArtKey(DreamEvent e)
+        {
+            if (!EventArt.TryGetValue(e, out var k)) EventArt[e] = k = "events/" + e;
+            return k;
         }
 
         private readonly List<uint> _labelScratch = new List<uint>();
@@ -435,7 +468,7 @@ namespace SodRpg.Mod
                 _shownReport = r;
                 _reportDismissed = false;
             }
-            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, 215);
+            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, r.RelicsLost > 0 || r.EchoShards > 0 ? 270 : 215);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
@@ -453,6 +486,14 @@ namespace SodRpg.Mod
             GUILayout.EndArea();
         }
 
+        private Rect HintRect(float w, float h)
+        {
+            bool welcome = _hints.Count > 0 && _hints[0] == Hint.Welcome;
+            float pw = welcome ? 640 : 520;
+            float ph = welcome ? 330 : 210;
+            return welcome ? new Rect((w - pw) / 2, (h - ph) / 2, pw, ph) : new Rect((w - pw) / 2, h - ph - 150, pw, ph);
+        }
+
         /// <summary>初めて触る人向けのヒント（1つずつ）。ようこそは画面中央に大きく。</summary>
         private void DrawHint(float w, float h, DreamforgeConfig cfg)
         {
@@ -464,9 +505,7 @@ namespace SodRpg.Mod
                 return;
             }
             bool welcome = id == Hint.Welcome;
-            float pw = welcome ? 640 : 520;
-            float ph = welcome ? 330 : 210;
-            var rect = welcome ? new Rect((w - pw) / 2, (h - ph) / 2, pw, ph) : new Rect((w - pw) / 2, h - ph - 150, pw, ph);
+            var rect = HintRect(w, h);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
@@ -540,7 +579,7 @@ namespace SodRpg.Mod
                 case 3: DrawWorkshopTab(); break;
                 default: DrawRecordsTab(cfg); break;
             }
-            if (_status != null && Time.unscaledTime < _statusUntil) GUILayout.Label(_status, _st.Warn);
+            GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
             GUILayout.EndArea();
         }
 
@@ -577,12 +616,48 @@ namespace SodRpg.Mod
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
         /// <summary>記録タブの偉業：受け取れる物 → 未達成（進み具合）→ 受け取り済み の順に並べる。</summary>
+        private readonly List<string> _openFeats = new List<string>();
+        private float _openFeatsUntil;
+
+        /// <summary>未達成の偉業（種類ごとに次の1段だけ）の表示行。0.5秒ごとに作り直す。条件を満たしていれば、ここで達成にする。</summary>
+        private List<string> OpenFeatLines(Profile p)
+        {
+            float now = Time.unscaledTime;
+            if (now < _openFeatsUntil) return _openFeats;
+            _openFeatsUntil = now + 0.5f;
+            foreach (var e in Feats.Check(p)) _s.Emit(e);
+            _openFeats.Clear();
+            var seen = new HashSet<FeatKind>();
+            foreach (var f in Feats.All)
+            {
+                if (p.Feats.Contains(f.Id) || !seen.Add(f.Kind)) continue;
+                int prog = Math.Min(Feats.Progress(p, f), f.Target);
+                _openFeats.Add("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>");
+            }
+            return _openFeats;
+        }
+
+        private readonly List<string> _foundUniques = new List<string>();
+        private int _foundUniquesCodex = -1;
+        private bool _foundUniquesJa;
+
+        private List<string> FoundUniques(Profile p)
+        {
+            if (p.Codex.Count == _foundUniquesCodex && _foundUniquesJa == Loc.Japanese) return _foundUniques;
+            _foundUniquesCodex = p.Codex.Count;
+            _foundUniquesJa = Loc.Japanese;
+            _foundUniques.Clear();
+            foreach (var u in Content.Uniques)
+                if (p.Codex.Contains(u.Id)) _foundUniques.Add(UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)));
+            return _foundUniques;
+        }
+
         private void DrawFeats(Profile p)
         {
             int done = p.Feats.Count, total = Feats.All.Count, unclaimed = Feats.Unclaimed(p);
             GUILayout.Label(Loc.T($"偉業（{done}／{total}）", $"Feats ({done}/{total})"), _st.Header);
             GUILayout.Label(Loc.T("遊ぶうちに達成していく目標です。達成すると欠片を受け取れます（段階が上がると調律石も）。",
-                "Goals you complete as you play. Each one rewards shards and tuning stones."), _st.Small);
+                "Goals you complete as you play. Each one rewards shards (and tuning stones at higher tiers)."), _st.Small);
             foreach (var f in Feats.All)
             {
                 if (!p.Feats.Contains(f.Id) || p.FeatsClaimed.Contains(f.Id)) continue;
@@ -598,27 +673,12 @@ namespace SodRpg.Mod
                 }
                 GUILayout.EndHorizontal();
             }
-            int shown = 0;
-            foreach (var f in Feats.All)
-            {
-                if (p.Feats.Contains(f.Id)) continue;
-                // 未達成は、種類ごとに次の1段だけを出す（一覧が長くなりすぎないように）。
-                bool earlierOpen = false;
-                foreach (var g in Feats.All)
-                {
-                    if (g == f) break;
-                    if (g.Kind == f.Kind && !p.Feats.Contains(g.Id)) { earlierOpen = true; break; }
-                }
-                if (earlierOpen) continue;
-                int prog = Math.Min(Feats.Progress(p, f), f.Target);
-                GUILayout.Label("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>", _st.Small);
-                shown++;
-            }
+            var open = OpenFeatLines(p);
+            foreach (var line in open) GUILayout.Label(line, _st.Small);
+            int shown = open.Count;
             if (unclaimed == 0 && shown == 0)
                 GUILayout.Label(Loc.T("すべての偉業を達成しました。", "Every feat is complete."), _st.Small);
-            int claimed = p.FeatsClaimed.Count;
-            if (claimed > 0)
-                GUILayout.Label(Loc.T($"<color=#8a8aa0>受け取り済み：{claimed}個</color>", $"<color=#8a8aa0>Claimed: {claimed}</color>"), _st.Small);
+            GUILayout.Label(Loc.T($"<color=#8a8aa0>受け取り済み：{p.FeatsClaimed.Count}個</color>", $"<color=#8a8aa0>Claimed: {p.FeatsClaimed.Count}</color>"), _st.Small);
         }
 
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>
@@ -752,10 +812,11 @@ namespace SodRpg.Mod
             }
             else
             {
-                RelicDetail(sel);
                 var cur = Rules.EquippedRelic(p, hero, sel.Slot);
+                _scrollRight = GUILayout.BeginScrollView(_scrollRight);
+                RelicDetail(sel);
                 if (cur != null && cur.Uid != sel.Uid) Comparison(sel, cur);
-                GUILayout.FlexibleSpace();
+                GUILayout.EndScrollView();
                 GUI.enabled = _s.CanEditLoadout && !_s.Trades.IsReserved(sel.Uid);
                 GUILayout.BeginHorizontal();
                 bool equipped = cur != null && cur.Uid == sel.Uid;
@@ -784,7 +845,7 @@ namespace SodRpg.Mod
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
         {
-            var list = relics.OrderByDescending(r => r.Score).ToList();
+            var list = SortedCached(relics, height);
             _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
             if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
             var h = _s.Profile.Hero(hero);
@@ -806,11 +867,74 @@ namespace SodRpg.Mod
             GUILayout.EndScrollView();
         }
 
+        // ───── 描画の使い回し（OnGUI は1フレームに何度も呼ばれるので、並べ替えは0.3秒ごとに1回だけ行う） ─────
+        private Vector2 _scrollRight;
+        private readonly Dictionary<float, List<Relic>> _sortedCache = new Dictionary<float, List<Relic>>();
+        private readonly Dictionary<float, string> _sortedKey = new Dictionary<float, string>();
+        private float _sortedUntil;
+        private readonly List<Relic> _satchelTop = new List<Relic>();
+        private float _satchelTopUntil;
+        private int _satchelTopCount = -1;
+        private readonly int[] _transmuteCounts = new int[5];
+        private float _transmuteUntil;
+
+        private string CacheStamp()
+        {
+            var p = _s.Profile;
+            return p.Stash.Count + ":" + p.Material(Materials.Shard) + ":" + p.Material(Materials.Tuning) + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
+        }
+
+        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・素材・枠が変わるか、0.3秒たったら作り直す。</summary>
+        private List<Relic> SortedCached(IEnumerable<Relic> relics, float id)
+        {
+            float now = Time.unscaledTime;
+            string key = CacheStamp();
+            if (now >= _sortedUntil)
+            {
+                _sortedUntil = now + 0.3f;
+                _sortedKey.Clear();
+            }
+            if (_sortedKey.TryGetValue(id, out var k) && k == key && _sortedCache.TryGetValue(id, out var cached)) return cached;
+            if (!_sortedCache.TryGetValue(id, out var list)) _sortedCache[id] = list = new List<Relic>();
+            list.Clear();
+            list.AddRange(relics);
+            list.Sort((a, b) => b.Score.CompareTo(a.Score));
+            _sortedKey[id] = key;
+            return list;
+        }
+
+        private List<Relic> SatchelTop()
+        {
+            var run = _s.Profile.Run;
+            float now = Time.unscaledTime;
+            if (run == null) return _satchelTop;
+            if (now < _satchelTopUntil && run.Satchel.Count == _satchelTopCount) return _satchelTop;
+            _satchelTopUntil = now + 0.3f;
+            _satchelTopCount = run.Satchel.Count;
+            _satchelTop.Clear();
+            _satchelTop.AddRange(run.Satchel);
+            _satchelTop.Sort((a, b) => b.Score.CompareTo(a.Score));
+            if (_satchelTop.Count > 14) _satchelTop.RemoveRange(14, _satchelTop.Count - 14);
+            return _satchelTop;
+        }
+
+        private int TransmuteCount(Rarity r)
+        {
+            float now = Time.unscaledTime;
+            if (now >= _transmuteUntil)
+            {
+                _transmuteUntil = now + 0.3f;
+                for (int i = 0; i < _transmuteCounts.Length; i++)
+                    _transmuteCounts[i] = i < (int)Rarity.Legendary ? Rules.TransmuteCandidates(_s.Profile, (Rarity)i, _s.Trades).Count : 0;
+            }
+            return _transmuteCounts[(int)r];
+        }
+
         /// <summary>アイコンの場所を確保して描く。アイコンが無い遺物・空の枠では場所だけ空ける（行の高さをそろえる）。</summary>
         private static void IconSlot(Relic r, float size)
         {
             var rect = GUILayoutUtility.GetRect(size, size, GUILayout.Width(size), GUILayout.Height(size));
-            if (r != null && Event.current.type == EventType.Repaint) RelicIcons.Draw(rect, r);
+            if (Event.current.type == EventType.Repaint) RelicIcons.Draw(rect, r);
         }
 
         private void RelicDetail(Relic r)
@@ -876,16 +1000,20 @@ namespace SodRpg.Mod
             var sel = p.FindStash(_selected);
             if (sel != null)
             {
+                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(200));
                 RelicDetail(sel);
-                GUILayout.Space(8);
+                GUILayout.EndScrollView();
+                GUILayout.Space(4);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 if (sel.Enhance < Content.MaxEnhance)
                 {
+                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
                     if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
                         Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
                 }
                 else GUILayout.Label(Loc.T("これ以上は強化できません", "Fully enhanced"), _st.Small);
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 string sv = _confirmSalvage == sel.Uid
                     ? Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>")
                     : Loc.T($"分解（欠片{Rules.SalvageValue(sel)}）", $"Salvage ({Rules.SalvageValue(sel)} shards)");
@@ -932,7 +1060,7 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
-                int n = Rules.TransmuteCandidates(p, r, _s.Trades).Count;
+                int n = TransmuteCount(r);
                 GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= Rules.TransmuteCost(r);
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n" + Loc.T($"欠片{Rules.TransmuteCost(r)}", $"{Rules.TransmuteCost(r)} shards");
                 if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades), false);
@@ -944,10 +1072,13 @@ namespace SodRpg.Mod
             {
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(80));
+                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
                 if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.Button))
                     Act(() => Rules.Craft(p, slot, false), false);
+                GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
                 if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.Button))
                     Act(() => Rules.Craft(p, slot, true), false);
+                GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndVertical();
@@ -1030,7 +1161,7 @@ namespace SodRpg.Mod
                 bool active = hs.Keystone == t.Id;
                 bool unlocked = Rules.KeystoneUnlocked(p, hero, t);
                 GUILayout.Label((active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（到達刻印）", " (Keystone)"), _st.Label);
-                GUILayout.Label(t.Description.ToString(), _st.Small);
+                GUILayout.Label(UiStyles.Colored(Content.FormatPower(t.Power, t.PowerValue), "#e0b0ff") + "\n<color=#aab>" + t.Description + "</color>", _st.Small);
                 GUI.enabled = _s.CanEditTalents && (active || unlocked);
                 string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
                     ? Loc.T($"刻印する（{Content.KeystoneCost}ポイント）", $"Engrave ({Content.KeystoneCost} points)")
@@ -1168,13 +1299,9 @@ namespace SodRpg.Mod
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             DrawFeats(p);
             GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
-            int foundUniques = 0;
-            foreach (var u in Content.Uniques)
-            {
-                if (!p.Codex.Contains(u.Id)) continue;
-                foundUniques++;
-                GUILayout.Label(UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)), _st.Small);
-            }
+            var found = FoundUniques(p);
+            foreach (var line in found) GUILayout.Label(line, _st.Small);
+            int foundUniques = found.Count;
             int missingUniques = Content.Uniques.Count - foundUniques;
             GUILayout.Label(Loc.T(
                 $"<color=#8a8aa0>見つけた固有品 {foundUniques}／{Content.Uniques.Count}種。まだ見つけていない物が{missingUniques}種あります。</color>",

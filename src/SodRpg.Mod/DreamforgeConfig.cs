@@ -8,29 +8,29 @@ namespace SodRpg.Mod
         [LabelText("Menu key / メニューを開くキー")]
         public Key menuKey = Key.F6;
 
-        [LabelText("Secure key / 確保する")]
+        [LabelText("Secure key / 確保するキー")]
         public Key secureKey = Key.F7;
 
-        [LabelText("Delve key / 深く潜る")]
+        [LabelText("Delve key / 深く潜るキー")]
         public Key delveKey = Key.F8;
 
         [LabelText("Japanese UI / 日本語表示")]
         public bool japanese = true;
 
-        [LabelText("UI scale / 表示倍率")]
+        [LabelText("UI scale / 表示の大きさ")]
         public float uiScale = 1f;
 
-        [LabelText("Show drop toasts / 拾得通知")]
+        [LabelText("Show drops below Rare / レア未満の拾得通知")]
         public bool showToasts = true;
 
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 
-        [LabelText("ゲームが裏にあるときのFPS上限（0で無効。20〜60）")]
+        [LabelText("Background FPS cap (0 = off, 20-60) / ゲームが裏にあるときのFPS上限（0で無効、20〜60）")]
         [UnityEngine.Range(0, 60)]
         public int backgroundFps = 20;
 
-        [LabelText("軽量化（Off：なし／Light：軽め／Strong：強め／Max：最大）")]
+        [LabelText("Lighter rendering / 描画の軽量化（Off：なし／Light：軽め／Strong：強め／Max：最大）")]
         public LightweightMode lightweight = LightweightMode.Off;
     }
 

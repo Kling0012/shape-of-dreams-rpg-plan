@@ -46,13 +46,13 @@ namespace SodRpg.Core.Game
                     "This mod adds take-home gear (relics) to your Shape of Dreams runs.\n" +
                     "1) Enemies drop relics (personal loot for each player).\n" +
                     "2) Each new zone is a secure point: Secure to keep your loot, or Delve for more loot and more danger.\n" +
-                    "3) Gear, forge and sigils live in the [F6] menu. You get 3 starter relics, auto-equipped on your first run."),
+                    "3) Gear, forge and the star map live in the [F6] menu. You get 3 starter relics, auto-equipped on your first run."),
             },
             new HintDef
             {
                 Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped"),
-                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。強い遺物を拾ったら、確保地点で [F6] から付け替えましょう。",
-                    "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. When you find better ones, swap them at a secure point via [F6]."),
+                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。拾った遺物は、確保して保管庫に入れると付け替えられます（遠征中は確保地点で、遠征の後ならいつでも）。",
+                    "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. Relics you pick up can be equipped once secured into your stash (at a secure point during a run, or any time after)."),
             },
             new HintDef
             {
@@ -63,7 +63,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstSecurePoint, Title = new Txt("確保地点に着きました", "Secure point"),
-                Body = new Txt("ここでは次のどちらかを選びます。\n・確保する [F7]：拾った遺物と欠片を持ち帰ります。この先で全滅しても失いません。\n・深く潜る [F8]：潜行が1段深くなり、遺物が多く良い物が出やすくなります。悪夢化した敵が増え、受けるダメージも増えます。\n迷ったら、まずは確保しましょう。遠征中に [F6] で装備を付け替えられるのは、この確保地点だけです。",
+                Body = new Txt("ここでは次のどちらかを選びます。\n・確保する [F7]：拾った遺物と欠片を持ち帰ります。この先で全滅しても失いません。\n・深く潜る [F8]：潜行が1段深くなり、遺物が多く落ち、良い物も出やすくなります。悪夢化した敵が増え、受けるダメージも増えます。\n迷ったら、まずは確保しましょう。遠征中に [F6] で装備を付け替えられるのは、この確保地点だけです。",
                     "Choose here.\n- Secure [F7]: keep your unsecured relics and shards (safe).\n- Delve [F8]: +1 delve level: more and better drops and nightmare elites, but more damage taken.\nWhen unsure, Secure. During a run, [F6] gear changes are only allowed here."),
             },
             new HintDef
@@ -81,24 +81,24 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke"),
-                Body = new Txt("未確保の遺物は「遺失物」に移りました。次の遠征で戦闘部屋を突破すると、最も良いものを1つ取り戻せます。欠片の一部は残響として戻っています。",
-                    "Your unsecured relics moved to Lost & Found. Clear combat rooms next run to recover the best one. Some shards came back as echoes."),
+                Body = new Txt("未確保の遺物は「遺失物」に移りました。次の遠征で戦闘部屋を3つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の25%は、残響として戻っています。",
+                    "Your unsecured relics moved to Lost & Found. Clear 3 combat rooms next run to recover the best one. 25% of your unsecured shards came back as echoes."),
             },
             new HintDef
             {
                 Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned"),
-                Body = new Txt("夢のレベルが上がり、ポイントを得ました。遠征の外で [F6] の「星図」タブを開き、使っている旅人の刻印に振りましょう。旅人ごとに、その旅人のスキルを伸ばす刻印があります。",
+                Body = new Txt("夢のレベルが上がり、ポイントを得ました。遠征の外で [F6] の「星図」タブを開き、使っている旅人の刻印に振りましょう。本体の旅人には専用の刻印があり、それ以外の旅人は破壊・生命・想像の3つの道に振ります。",
                     "Your Dream Level rose. Outside a run, open the [F6] Star Map tab and spend points on your Traveler's sigils, which boost that Traveler's own kit."),
             },
             new HintDef
             {
                 Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
-                Body = new Txt("この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに6ポイント以上振っておく必要があります。",
-                    "This Traveler's mastery now allows a keystone (needs 6 points in the tree)."),
+                Body = new Txt("この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに6ポイント以上振っておく必要もあります。",
+                    "This Traveler's mastery now allows a keystone. You also need 6+ points in this tree."),
             },
             new HintDef
             {
-                Id = Hint.FirstNightmare, Title = new Txt("悪夢化した敵", "Nightmare elite"),
+                Id = Hint.FirstNightmare, Title = new Txt("悪夢化した敵", "Nightmare enemies"),
                 Body = new Txt("頭上にピンクの名札がある敵は「悪夢化」しています。普通より強いですが、倒すと1段上の格の戦利品を落とします。深く潜るほど増えます。",
                     "Enemies with a pink tag are nightmares: tougher, but they drop loot one tier higher. They appear more as you delve deeper."),
             },
@@ -130,7 +130,7 @@ namespace SodRpg.Core.Game
             return p.SeenHints.Add((int)h);
         }
 
-        public const int StarterShardsForForgeHint = 15;
+        public const int StarterShardsForForgeHint = 20;
 
         /// <summary>
         /// 初期装備：最初に一度だけ、各枠1つずつアンコモンの遺物を保管庫に入れる。

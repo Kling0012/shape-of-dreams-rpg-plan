@@ -40,6 +40,7 @@ namespace SodRpg.Mod
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 RelicIcons.Init(mod?.path);
+                RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 _session.FirstLaunch();
@@ -246,6 +247,7 @@ namespace SodRpg.Mod
         private void OnDestroy()
         {
             // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
+            try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Icons dispose: " + ex); }
             try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
             try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }

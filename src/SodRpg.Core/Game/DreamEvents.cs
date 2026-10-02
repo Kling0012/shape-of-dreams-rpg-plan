@@ -60,30 +60,30 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
-                    return Loc.T($"ゴールドで中身の分からない遺物を1つ買えます。必ずアンコモン以上で、深く潜っているほど良い物が出ます（基本価格{Economy.MerchantGoldBase(heat)}G）。",
-                        $"Buy a mystery relic with gold (Uncommon+, better when deeper; base {Economy.MerchantGoldBase(heat)}G)");
+                    return Loc.T($"ゴールドで中身の分からない遺物を1つ買えます。必ずアンコモン以上で、深く潜っているほど良い物が出ます。",
+                        "Buy a mystery relic with gold (Uncommon or better; better when deeper).");
                 case DreamEvent.Fountain:
-                    return Loc.T("まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+1強化されます。", "Sacrifice your weakest unsecured relic to enhance your best one by +1");
+                    return Loc.T("まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+1強化されます。", "Sacrifice your weakest unsecured relic to enhance your best one by +1.");
                 case DreamEvent.Chalice:
                     return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。50%の確率で2倍になり、外れるとすべて失います。",
-                        $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double, else lose them");
+                        $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double them, otherwise you lose them all.");
                 case DreamEvent.Lantern:
-                    return Loc.T("遺失物を1つ、この場で取り戻せます（取り戻した物は、確保するまで未確保のままです）。", "Recover one lost relic right here (unsecured)");
+                    return Loc.T("遺失物のうち一番良い物を1つ、この場で取り戻せます（確保するまでは、まだ持ち帰っていない扱いです）。", "Recover your best lost relic right here (it stays unsecured until you secure).");
                 case DreamEvent.ForgeShrine:
                     return Loc.T("まだ持ち帰っていない欠片を20払うと、まだ持ち帰っていない遺物のうち一番強い物が+1強化されます。",
                         "Pay 20 unsecured shards to enhance your best unsecured relic by +1.");
                 case DreamEvent.TwinMirror:
-                    return Loc.T("まだ持ち帰っていない欠片を30払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（伝説はエピックになります）。",
+                    return Loc.T("まだ持ち帰っていない欠片を30払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
                         "Pay 30 unsecured shards to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
                 case DreamEvent.Stargazer:
-                    return Loc.T("次に確保するまで、遺物が50%多く落ちます。",
-                        "Until you next secure, relics drop 50% more often.");
+                    return Loc.T("次に確保するまで、遺物が30%多く落ちます。",
+                        "Until you next secure, relics drop 30% more often.");
                 case DreamEvent.Cauldron:
                     return Loc.T("まだ持ち帰っていないコモンかアンコモンの遺物を3つ溶かして、1つ上のレア度の遺物を1つ作ります。",
                         "Melt 3 unsecured Common or Uncommon relics into one relic of the next rarity.");
                 case DreamEvent.Tapir:
-                    return Loc.T("まだ持ち帰っていない遺物をすべて獏に食べさせ、1つにつき欠片12と、3つにつき調律石1をもらいます（どちらも未確保）。",
-                        "Feed all your unsecured relics to the tapir: 12 shards each and 1 tuning stone per 3 relics (both unsecured).");
+                    return Loc.T("まだ持ち帰っていないエピック未満の遺物をすべて獏に食べさせ、分解と同じだけの欠片と、3つごとに調律石1をもらいます（欠片はすぐ保管庫に入ります。エピック以上は食べません）。",
+                        "Feed all unsecured relics below Epic to the tapir: shards equal to salvaging them, plus 1 tuning stone per 3 relics (the shards go straight to your stash; Epic and above are spared).");
                 case DreamEvent.CourageGate:
                     return Loc.T("潜行が1段深くなる代わりに、まだ持ち帰っていない欠片が40増えます。",
                         "Your delve goes one level deeper, and you gain 40 unsecured shards.");
@@ -91,8 +91,8 @@ namespace SodRpg.Core.Game
                     return Loc.T($"夢のレベルの経験値を{40 + 20 * heat}もらいます。",
                         $"Gain {40 + 20 * heat} Dream Level experience.");
                 case DreamEvent.LuckyStar:
-                    return Loc.T("次に確保するまで、レア度の高い遺物が出やすくなります。",
-                        "Until you next secure, rarer relics drop more often.");
+                    return Loc.T("次に確保するまで、レア度の高い遺物が少し出やすくなります。",
+                        "Until you next secure, rarer relics drop slightly more often.");
                 default: return "";
             }
         }
