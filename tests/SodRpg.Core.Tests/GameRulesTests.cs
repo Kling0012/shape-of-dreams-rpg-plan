@@ -254,6 +254,7 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < Content.MaxRetunes; i++)
             {
                 Rules.Retune(p, r.Uid, 0);
+                Rules.ChooseRetune(p, 0);
                 var stats = r.Affixes.Select(a => a.Stat).Append(r.Base.ImplicitStat).ToList();
                 Assert.Equal(stats.Count, stats.Distinct().Count());
             }

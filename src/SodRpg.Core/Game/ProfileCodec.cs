@@ -103,6 +103,7 @@ namespace SodRpg.Core.Game
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
                 .Add("pendingSalvage", pendingSalvage)
+                .Add("retuneOffer", WriteRetuneOffer(p.RetuneOffer))
                 .Add("heroes", heroes)
                 .Add("codex", codex)
                 .Add("feats", p.Feats.Select(f => (object)f).ToList())
@@ -198,6 +199,7 @@ namespace SodRpg.Core.Game
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened)
+                .Add("milestones", (long)r.EnhanceMilestones)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -231,6 +233,7 @@ namespace SodRpg.Core.Game
             ReadRelics(b, "stash", p.Stash, notes);
             ReadRelics(b, "lostAndFound", p.LostAndFound, notes);
             ReadPendingSalvage(b, p.PendingSalvage, notes);
+            p.RetuneOffer = ReadRetuneOffer(b, notes);
             if (b.TryGet("heroes", out object ho) && ho is JsonObject heroes)
             {
                 foreach (var kv in heroes.Properties)
@@ -372,6 +375,34 @@ namespace SodRpg.Core.Game
             }
         }
 
+        private static object WriteRetuneOffer(RetuneOffer o)
+        {
+            if (o == null) return null;
+            var opts = new List<object>();
+            foreach (var a in o.Options) opts.Add(new List<object> { (long)a.Stat, (long)a.Value });
+            return new JsonObject().Add("uid", o.Uid).Add("index", (long)o.Index).Add("options", opts);
+        }
+
+        private static RetuneOffer ReadRetuneOffer(JsonObject parent, List<string> notes)
+        {
+            if (!parent.TryGet("retuneOffer", out object o) || !(o is JsonObject j)) return null;
+            var offer = new RetuneOffer { Uid = j.TryGet("uid", out object u) ? u as string : null, Index = Clamp(Long(j, "index"), 0, 16) };
+            if (j.TryGet("options", out object oo) && oo is List<object> list)
+            {
+                foreach (var a in list)
+                {
+                    if (a is List<object> pair && pair.Count == 2 && pair[0] is long sid && pair[1] is long v && Enum.IsDefined(typeof(Stat), (int)sid))
+                        offer.Options.Add(new StatLine((Stat)(int)sid, (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, v))));
+                }
+            }
+            if (string.IsNullOrEmpty(offer.Uid) || offer.Options.Count == 0)
+            {
+                notes.Add("retuneOffer: 形式が不正 → 除外");
+                return null;
+            }
+            return offer;
+        }
+
         private static void ReadPendingSalvage(JsonObject parent, List<PendingSalvage> into, List<string> notes)
         {
             if (!parent.TryGet("pendingSalvage", out object o) || !(o is List<object> list)) return;
@@ -407,6 +438,7 @@ namespace SodRpg.Core.Game
                 Locked = Bool(j, "locked", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 Awakened = Bool(j, "awakened", false),
+                EnhanceMilestones = Clamp(Long(j, "milestones"), 0, 2),
             };
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);

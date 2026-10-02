@@ -535,8 +535,9 @@ namespace SodRpg.Core.Game
                     run.Satchel.Remove(sacrifice);
                     var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     target.Enhance++;
+                    string fountainMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げると、「{target.PlainName}」が+{target.Enhance}に強化されました。",
-                        $"Offered \"{sacrifice.DisplayName}\"; \"{target.PlainName}\" was enhanced to +{target.Enhance}."), target.Rarity));
+                        $"Offered \"{sacrifice.DisplayName}\"; \"{target.PlainName}\" was enhanced to +{target.Enhance}.") + MilestoneSuffix(fountainMilestone), target.Rarity));
                     break;
                 }
                 case DreamEvent.Chalice:
@@ -568,8 +569,9 @@ namespace SodRpg.Core.Game
                     var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     run.SatchelShards -= 20;
                     target.Enhance++;
+                    string shrineMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.PlainName}」を+{target.Enhance}に強化しました。",
-                        $"The Forge Shrine enhanced \"{target.PlainName}\" to +{target.Enhance}."), target.Rarity));
+                        $"The Forge Shrine enhanced \"{target.PlainName}\" to +{target.Enhance}.") + MilestoneSuffix(shrineMilestone), target.Rarity));
                     break;
                 }
                 case DreamEvent.TwinMirror:
@@ -869,6 +871,7 @@ namespace SodRpg.Core.Game
         public static GameEvent Salvage(Profile p, string uid, TradeLedger trades = null, bool loadoutLocked = false)
         {
             RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
             if (loadoutLocked && p.IsEquippedAnywhere(uid))
@@ -891,38 +894,134 @@ namespace SodRpg.Core.Game
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Enhance >= Content.MaxEnhance) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
             int cost = Content.EnhanceCost(r.Enhance);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
             r.Enhance++;
-            return new GameEvent(EventKind.Info, Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}."), r.Rarity);
+            var rng = p.TakeRng();
+            string milestone = GrantEnhanceMilestones(rng, r);
+            p.StoreRng(rng);
+            return new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
+                Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity);
         }
 
+        private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
+
+        /// <summary>
+        /// 強化の節目（+3：特性が1行増える。+5：固有効果を持たない遺物はその枠の固有効果を1つ得る。持っている遺物は特性がもう1行）。
+        /// 強化段階が上がったときと、起動時の一度だけの補完で呼ぶ。起きたことの文を返す（何もなければ null）。
+        /// </summary>
+        public static string GrantEnhanceMilestones(Rng rng, Relic r)
+        {
+            var notes = new List<string>();
+            if (r.Enhance >= Content.EnhanceMilestoneFirst && r.EnhanceMilestones < 1)
+            {
+                r.EnhanceMilestones = 1;
+                var line = AddMilestoneAffix(rng, r);
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+            }
+            if (r.Enhance >= Content.EnhanceMilestoneSecond && r.EnhanceMilestones < 2)
+            {
+                r.EnhanceMilestones = 2;
+                if (r.Powers.Count == 0)
+                {
+                    var pool = Content.PowerPool(r.Slot);
+                    var pr = pool[rng.Range(0, pool.Count - 1)];
+                    r.Powers.Add(new PowerLine(pr.Power, pr.Min));
+                    notes.Add(Loc.T($"固有効果「{Content.PowerName(pr.Power)}」が宿りました。", $"gained the power \"{Content.PowerName(pr.Power)}\"."));
+                }
+                else
+                {
+                    var line = AddMilestoneAffix(rng, r);
+                    if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+                }
+            }
+            return notes.Count == 0 ? null : string.Join(Loc.T("", " "), notes);
+        }
+
+        private static StatLine AddMilestoneAffix(Rng rng, Relic r)
+        {
+            var used = new HashSet<Stat> { r.Base.ImplicitStat };
+            foreach (var a in r.Affixes) used.Add(a.Stat);
+            var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, used);
+            if (line != null) r.Affixes.Add(line);
+            return line;
+        }
+
+        /// <summary>v1.20 より前に+3・+5にした遺物へ、節目を一度だけ付ける。付けた遺物の数を返す。</summary>
+        public static int ApplyEnhanceMilestones(Profile p)
+        {
+            int n = 0;
+            var rng = p.TakeRng();
+            IEnumerable<Relic> all = p.Stash.Concat(p.LostAndFound);
+            if (p.Run != null) all = all.Concat(p.Run.Satchel);
+            foreach (var r in all.ToList())
+            {
+                int before = r.EnhanceMilestones;
+                GrantEnhanceMilestones(rng, r);
+                if (r.EnhanceMilestones != before) n++;
+            }
+            p.StoreRng(rng);
+            return n;
+        }
+
+        private static void RequireNoRetuneOffer(Profile p, string uid)
+        {
+            if (p.RetuneOffer != null && p.RetuneOffer.Uid == uid)
+                throw new InvalidOperationException(Loc.T("この遺物は再調律の候補を選んでいる途中です。先に候補を選んでください。", "Choose a retune option for this relic first."));
+        }
+
+        /// <summary>
+        /// 再調律：調律石を払って、その特性の候補を3つ出す（できるだけ別の能力値）。候補は保存し、ChooseRetune で選ぶ。
+        /// 払った調律石と回数は、選ばなくても戻らない。
+        /// </summary>
         public static GameEvent Retune(Profile p, string uid, int affixIndex, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
+            if (p.RetuneOffer != null) throw new InvalidOperationException(Loc.T("先に、出ている再調律の候補を選んでください。", "Choose from the pending retune options first."));
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
             if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
             int cost = Content.RetuneCost(r.Retunes);
             if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
-            var exclude = new HashSet<Stat> { r.Base.ImplicitStat };
-            foreach (var a in r.Affixes) exclude.Add(a.Stat);
+            var others = new HashSet<Stat> { r.Base.ImplicitStat };
+            for (int i = 0; i < r.Affixes.Count; i++) if (i != affixIndex) others.Add(r.Affixes[i].Stat);
             var rng = p.TakeRng();
-            var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude);
-            if (line == null)
+            var offer = new RetuneOffer { Uid = uid, Index = affixIndex };
+            var exclude = new HashSet<Stat>(others);
+            for (int k = 0; k < Content.RetuneChoices; k++)
             {
-                // 候補が尽きた場合は同じ能力値で数値だけ引き直す。
-                exclude.Remove(r.Affixes[affixIndex].Stat);
-                line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude);
+                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude)
+                    ?? Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, others); // 能力値の種類が尽きたら、数値だけ違う候補にする
+                if (line == null) break;
+                exclude.Add(line.Stat);
+                offer.Options.Add(line);
             }
             p.StoreRng(rng);
+            if (offer.Options.Count == 0) throw new InvalidOperationException(Loc.T("候補を作れませんでした。", "No options available."));
             p.AddMaterial(Materials.Tuning, -cost);
-            var old = r.Affixes[affixIndex];
-            r.Affixes[affixIndex] = line;
             r.Retunes++;
+            p.RetuneOffer = offer;
+            return new GameEvent(EventKind.Info, Loc.T($"再調律の候補が{offer.Options.Count}つ出ました。1つ選ぶか、元のままにしてください。",
+                $"{offer.Options.Count} retune options are ready. Pick one, or keep the original."), r.Rarity);
+        }
+
+        /// <summary>再調律の候補を選ぶ（choice が範囲外なら元のまま）。候補は消える。</summary>
+        public static GameEvent ChooseRetune(Profile p, int choice)
+        {
+            var offer = p.RetuneOffer ?? throw new InvalidOperationException(Loc.T("再調律の候補がありません。", "No retune options pending."));
+            p.RetuneOffer = null;
+            var r = p.FindStash(offer.Uid);
+            if (r == null || offer.Index >= r.Affixes.Count)
+                return new GameEvent(EventKind.Info, Loc.T("候補の遺物が見つからないため、再調律を取りやめました。", "The relic is gone; the retune was cancelled."));
+            if (choice < 0 || choice >= offer.Options.Count)
+                return new GameEvent(EventKind.Info, Loc.T($"「{r.PlainName}」の特性は元のままにしました。", $"Kept the original affix on \"{r.PlainName}\"."), r.Rarity);
+            var old = r.Affixes[offer.Index];
+            var line = offer.Options[choice];
+            r.Affixes[offer.Index] = line;
             return new GameEvent(EventKind.Info, Loc.T(
                 $"再調律しました：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(line.Stat, line.Value)}",
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
@@ -957,22 +1056,26 @@ namespace SodRpg.Core.Game
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
         public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)
         {
-            return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && (trades == null || !trades.IsReserved(x.Uid))).OrderBy(x => x.Score).ToList();
+            string offered = p.RetuneOffer?.Uid;
+            return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).OrderBy(x => x.Score).ToList();
         }
 
         /// <summary>同じレア度の遺物3つ（弱い順）を1つ上のレア度の遺物1つにする。エピック3つからは固有品。</summary>
-        public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null)
+        /// <summary>合成の費用。結果の枠を選ぶと TransmuteTargetCostPct 倍。</summary>
+        public static int TransmuteCost(Rarity r, bool targeted) => targeted ? TransmuteCost(r) * Content.TransmuteTargetCostPct / 100 : TransmuteCost(r);
+
+        public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null, Slot? target = null)
         {
             if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
             var parts = TransmuteCandidates(p, r, trades).Take(3).ToList();
             if (parts.Count < 3) throw new InvalidOperationException(Loc.T("材料が3つ足りません（鍵なし・未装着の同じレア度）。", "Need 3 unlocked, unequipped relics of the same rarity."));
-            int cost = TransmuteCost(r);
+            int cost = TransmuteCost(r, target != null);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             int ilvl = parts.Max(x => x.ItemLevel);
             foreach (var x in parts) p.Stash.Remove(x);
             p.AddMaterial(Materials.Shard, -cost);
             var rng = p.TakeRng();
-            var result = Loot.RollRelic(rng, r + 1, ilvl, null, p.Focus, p.Stash, p.Run?.Satchel);
+            var result = Loot.RollRelic(rng, r + 1, ilvl, target, p.Focus, p.Stash, p.Run?.Satchel);
             p.StoreRng(rng);
             p.Stash.Add(result);
             p.Codex.Add(result.UniqueId ?? result.BaseId);

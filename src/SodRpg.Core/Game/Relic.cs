@@ -43,6 +43,8 @@ namespace SodRpg.Core.Game
         public int Enhance { get; set; }
         public int Retunes { get; set; }
         public bool Locked { get; set; }
+        /// <summary>強化の節目をいくつ受け取ったか（0〜2。+3で1、+5で2）。</summary>
+        public int EnhanceMilestones { get; set; }
         public int AwakenPoints { get; set; }
         public bool Awakened { get; set; }
         public List<StatLine> Affixes { get; } = new List<StatLine>();
@@ -113,6 +115,7 @@ namespace SodRpg.Core.Game
                 Enhance = Enhance,
                 Retunes = Retunes,
                 Locked = Locked,
+                EnhanceMilestones = EnhanceMilestones,
                 AwakenPoints = AwakenPoints,
                 Awakened = Awakened,
             };

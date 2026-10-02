@@ -219,6 +219,13 @@ namespace SodRpg.Core.Game
         public const int RoomsToRecoverLost = 3;
         public const int CodexPerPoint = 6;
         public const int MaxCodexBonus = 4;
+        /// <summary>強化の節目。+3で特性が1行、+5で固有効果（なければ）か特性1行。</summary>
+        public const int EnhanceMilestoneFirst = 3;
+        public const int EnhanceMilestoneSecond = 5;
+        /// <summary>再調律で出す候補の数。</summary>
+        public const int RetuneChoices = 3;
+        /// <summary>合成の結果の枠を選ぶときの欠片の倍率（%）。</summary>
+        public const int TransmuteTargetCostPct = 150;
         public const int AwakenThreshold = 500;
         public const int AwakenPowerPct = 150;
         public const int AwakenAffixPct = 120;

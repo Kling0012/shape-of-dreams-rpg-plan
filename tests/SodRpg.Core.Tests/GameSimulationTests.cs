@@ -88,7 +88,7 @@ namespace SodRpg.Core.Tests
                     {
                         case 0: if (r != null) Rules.Equip(p, hero, r.Uid); break;
                         case 1: if (r != null) Rules.Enhance(p, r.Uid); break;
-                        case 2: if (r != null && r.Affixes.Count > 0) Rules.Retune(p, r.Uid, rng.Range(0, r.Affixes.Count - 1)); break;
+                        case 2: if (r != null && r.Affixes.Count > 0) { Rules.Retune(p, r.Uid, rng.Range(0, r.Affixes.Count - 1)); Rules.ChooseRetune(p, rng.Range(-1, Content.RetuneChoices - 1)); } break;
                         case 3: if (r != null && p.Stash.Count > 20) Rules.Salvage(p, r.Uid); break;
                         case 4: Rules.Craft(p, (Slot)rng.Range(0, Content.SlotCount - 1), rng.Chance(0.3)); break;
                         case 5: Rules.AddTalentRank(p, hero, Content.Talents.Where(t => !t.IsKeystone).ElementAt(rng.Range(0, 11)).Id); break;

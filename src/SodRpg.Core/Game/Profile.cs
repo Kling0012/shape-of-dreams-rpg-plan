@@ -171,8 +171,26 @@ namespace SodRpg.Core.Game
     /// <summary>
     /// 1人のプレイヤーの恒久データ。各PCが自分の分だけを保存する（協力時もホストは他人の保存に触れない）。
     /// </summary>
+    /// <summary>再調律で出た候補（選ぶまで保存する。読み直しで引き直せないように）。</summary>
+    public sealed class RetuneOffer
+    {
+        public string Uid { get; set; }
+        public int Index { get; set; }
+        public List<StatLine> Options { get; } = new List<StatLine>();
+
+        public RetuneOffer Clone()
+        {
+            var c = new RetuneOffer { Uid = Uid, Index = Index };
+            c.Options.AddRange(Options);
+            return c;
+        }
+    }
+
     public sealed class Profile
     {
+        /// <summary>選んでいない再調律の候補。なければ null。</summary>
+        public RetuneOffer RetuneOffer { get; set; }
+
         public const int CurrentVersion = 1;
 
         public long Revision { get; set; }
@@ -285,6 +303,7 @@ namespace SodRpg.Core.Game
                 Run = Run?.Clone(),
                 Focus = Focus,
                 LastReport = LastReport,
+                RetuneOffer = RetuneOffer?.Clone(),
             };
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
             foreach (var r in Stash) c.Stash.Add(r.Clone());
