@@ -22,7 +22,7 @@ namespace SodRpg.Core.Tests
         [InlineData(Slot.Feet)]
         public void Every_slot_has_bases_affixes_and_rollable_epic_powers(Slot slot)
         {
-            Assert.Equal(25, Content.BasesFor(slot).Count());
+            Assert.Equal(30, Content.BasesFor(slot).Count());
             Assert.True(Content.AffixPool(slot).Count >= 8);
             Assert.True(Content.PowerPool(slot).Count >= 8);
             var rng = new Rng((ulong)(119 + (int)slot));
