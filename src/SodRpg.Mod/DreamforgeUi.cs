@@ -768,7 +768,7 @@ namespace SodRpg.Mod
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
-            "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThreshold + "で覚醒して固有効果が1.5倍になります。気に入った1本を使い込みましょう。\n" +
+            "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
@@ -784,7 +784,7 @@ namespace SodRpg.Mod
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
-            "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThreshold + " they awaken and their powers become 1.5x. Pick a favourite and keep using it.\n" +
+            "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
             "- Star Map: spend points from Dream Levels to grow stats; meet the conditions to pick one powerful keystone.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
@@ -1101,7 +1101,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < stash.Count; i++)
             {
                 var r = stash[i];
-                state = state * 31 + (r.Locked ? 1 : 0) + (r.Awakened ? 2 : 0) + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+                state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
             return p.Stash.Count + ":" + p.Material(Materials.Shard) + ":" + p.Material(Materials.Tuning) + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
         }
@@ -1150,7 +1150,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < list.Count; i++)
             {
                 var r = list[i];
-                stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + (r.Awakened ? 2 : 0) + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+                stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
             string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
             if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
@@ -1267,15 +1267,25 @@ namespace SodRpg.Mod
         /// <summary>固有品の覚醒の進み具合、または覚醒済みの印。</summary>
         private static string AwakenLine(Relic r)
         {
-            int powerX = Content.AwakenPowerPct, affixX = Content.AwakenAffixPct;
-            if (r.Awakened)
-                return UiStyles.Colored(Loc.T($"✦ 覚醒済み：固有効果{powerX / 100f:0.#}倍・特性{affixX / 100f:0.#}倍", $"✦ Awakened: powers x{powerX / 100f:0.#}, affixes x{affixX / 100f:0.#}"), "#ffe17a");
-            int now = r.AwakenPoints, need = Content.AwakenThreshold;
-            int filled = Math.Max(0, Math.Min(10, now * 10 / need));
+            int level = r.AwakenLevel;
+            string done = "";
+            if (level > 0)
+            {
+                int powerX = Content.AwakenPowerPctAt(level), affixX = Content.AwakenAffixPctAt(level);
+                done = UiStyles.Colored(Loc.T($"✦ 覚醒{Content.AwakenNumeral(level)}：固有効果{powerX / 100f:0.##}倍・特性{affixX / 100f:0.##}倍",
+                    $"✦ Awakening {Content.AwakenNumeral(level)}: powers x{powerX / 100f:0.##}, affixes x{affixX / 100f:0.##}"), "#ffe17a");
+                if (level >= Content.MaxAwakenLevel) return done;
+                done += "\n";
+            }
+            int from = Content.AwakenThresholdFor(level), to = Content.AwakenThresholdFor(level + 1);
+            int now = r.AwakenPoints;
+            int filled = Math.Max(0, Math.Min(10, (now - from) * 10 / Math.Max(1, to - from)));
             string bar = "<color=#ffe17a>" + new string('■', filled) + "</color><color=#8a8aa0>" + new string('□', 10 - filled) + "</color>";
-            return Loc.T(
-                $"覚醒まで {bar} {now}/{need}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は2倍）。覚醒すると固有効果が{powerX / 100f:0.#}倍、特性が{affixX / 100f:0.#}倍になります。</color>",
-                $"Awakening {bar} {now}/{need}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x2). Awakened: powers x{powerX / 100f:0.#}, affixes x{affixX / 100f:0.#}.</color>");
+            string next = Content.AwakenNumeral(level + 1);
+            int nextPower = Content.AwakenPowerPctAt(level + 1), nextAffix = Content.AwakenAffixPctAt(level + 1);
+            return done + Loc.T(
+                $"覚醒{next}まで {bar} {now}/{to}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は2倍）。覚醒{next}で固有効果が{nextPower / 100f:0.##}倍、特性が{nextAffix / 100f:0.##}倍になります（全3段）。</color>",
+                $"Awakening {next} {bar} {now}/{to}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x2). Awakening {next}: powers x{nextPower / 100f:0.##}, affixes x{nextAffix / 100f:0.##} (3 levels).</color>");
         }
 
         private void Comparison(Relic sel, Relic cur)

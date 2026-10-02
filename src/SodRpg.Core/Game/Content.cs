@@ -231,9 +231,31 @@ namespace SodRpg.Core.Game
         public const int RetuneChoices = 3;
         /// <summary>合成の結果の枠を選ぶときの欠片の倍率（%）。</summary>
         public const int TransmuteTargetCostPct = 150;
-        public const int AwakenThreshold = 500;
-        public const int AwakenPowerPct = 150;
-        public const int AwakenAffixPct = 120;
+        /// <summary>覚醒の段の数（v1.27 で1段から3段に）。</summary>
+        public const int MaxAwakenLevel = 3;
+        private static readonly int[] AwakenThresholds = { 0, 1000, 3000, 7000 };
+        private static readonly int[] AwakenPowerPcts = { 100, 125, 150, 180 };
+        private static readonly int[] AwakenAffixPcts = { 100, 110, 120, 130 };
+        /// <summary>v1.26 までに覚醒した遺物が入る段（倍率が当時と同じ）。</summary>
+        public const int LegacyAwakenLevel = 2;
+        /// <summary>覚醒の力の上限（最後の段に要る累計）。</summary>
+        public static int AwakenThreshold => AwakenThresholds[MaxAwakenLevel];
+
+        private static int AwakenClamp(int level) => Math.Max(0, Math.Min(MaxAwakenLevel, level));
+        /// <summary>その段に上がるのに要る覚醒の力（累計）。</summary>
+        public static int AwakenThresholdFor(int level) => AwakenThresholds[AwakenClamp(level)];
+        /// <summary>その段の固有効果（と連携）の倍率（%）。</summary>
+        public static int AwakenPowerPctAt(int level) => AwakenPowerPcts[AwakenClamp(level)];
+        /// <summary>その段の特性の倍率（%）。</summary>
+        public static int AwakenAffixPctAt(int level) => AwakenAffixPcts[AwakenClamp(level)];
+        /// <summary>覚醒の力の累計から、届いている段。</summary>
+        public static int AwakenLevelFor(int points)
+        {
+            int level = 0;
+            while (level < MaxAwakenLevel && points >= AwakenThresholds[level + 1]) level++;
+            return level;
+        }
+        public static string AwakenNumeral(int level) => level == 1 ? "Ⅰ" : level == 2 ? "Ⅱ" : level == 3 ? "Ⅲ" : "";
 
         public static readonly IReadOnlyList<BaseDef> Bases = new[]
         {

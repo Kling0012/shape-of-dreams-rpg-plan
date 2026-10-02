@@ -33,7 +33,7 @@ namespace SodRpg.Core.Tests
         private static bool IsAwakening(GameEvent e)
         {
             return e.Kind == EventKind.LevelUp &&
-                (e.Text.Contains("覚醒しました！") || e.Text.Contains("has awakened!"));
+                (e.Text.Contains("」が覚醒") || e.Text.Contains("reached Awakening"));
         }
 
         [Theory]
@@ -56,31 +56,35 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Twenty_five_boss_kills_awaken_once_and_stop_at_five_hundred()
+        public void Boss_kills_climb_three_awakening_levels_and_stop_at_the_last()
         {
             var r = Legendary();
             var p = Equipped(r);
             var events = new List<GameEvent>();
-            for (int i = 1; i <= 24; i++)
-            {
-                events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey));
-                Assert.Equal(i * 20, r.AwakenPoints);
-                Assert.False(r.Awakened);
-            }
+            void Kill(int n) { for (int i = 0; i < n; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey)); }
+
+            Kill(49);
+            Assert.Equal(980, r.AwakenPoints);
+            Assert.False(r.Awakened);
             Assert.DoesNotContain(events, IsAwakening);
-            Assert.Equal(0, p.Stats.RelicsAwakened);
 
-            events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey));
-            Assert.Equal(500, r.AwakenPoints);
-            Assert.True(r.Awakened);
+            Kill(1); // 1000：覚醒Ⅰ
+            Assert.Equal(1, r.AwakenLevel);
             Assert.Equal(1, p.Stats.RelicsAwakened);
-            Assert.Single(events.Where(IsAwakening));
             Assert.Contains("feat.awakening.1", p.Feats);
+            Assert.Single(events, IsAwakening);
 
-            for (int i = 0; i < 5; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey));
-            Assert.Equal(500, r.AwakenPoints);
-            Assert.Equal(1, p.Stats.RelicsAwakened);
-            Assert.Single(events.Where(IsAwakening));
+            Kill(100); // 3000：覚醒Ⅱ
+            Assert.Equal(2, r.AwakenLevel);
+            Kill(200); // 7000：覚醒Ⅲ
+            Assert.Equal(3, r.AwakenLevel);
+            Assert.Equal(Content.AwakenThreshold, r.AwakenPoints);
+            Assert.Equal(3, events.Count(IsAwakening));
+            Assert.Equal(1, p.Stats.RelicsAwakened); // 実績は最初の覚醒だけ数える
+
+            Kill(5);
+            Assert.Equal(Content.AwakenThreshold, r.AwakenPoints);
+            Assert.Equal(3, events.Count(IsAwakening));
         }
 
         [Fact]
@@ -91,7 +95,7 @@ namespace SodRpg.Core.Tests
             {
                 var unique = Content.Uniques.First(u => Content.GetBase(u.BaseId).Slot == slot);
                 var r = Loot.RollUnique(new Rng((ulong)(20 + (int)slot)), unique, 1);
-                r.AwakenPoints = 499;
+                r.AwakenPoints = 999;
                 p.Stash.Add(r);
                 Rules.Equip(p, HeroKey, r.Uid);
             }
@@ -101,9 +105,21 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Content.SlotCount, events.Count(IsAwakening));
             Assert.All(p.Stash, r =>
             {
-                Assert.Equal(500, r.AwakenPoints);
-                Assert.True(r.Awakened);
+                Assert.Equal(1009, r.AwakenPoints);
+                Assert.Equal(1, r.AwakenLevel);
             });
+        }
+
+        [Theory]
+        [InlineData(0, 100, 100)]
+        [InlineData(1, 110, 125)]
+        [InlineData(2, 120, 150)]
+        [InlineData(3, 130, 180)]
+        public void Each_level_has_its_own_multipliers(int level, int affixPct, int powerPct)
+        {
+            Assert.Equal(affixPct, Content.AwakenAffixPctAt(level));
+            Assert.Equal(powerPct, Content.AwakenPowerPctAt(level));
+            Assert.Equal(new[] { 0, 1000, 3000, 7000 }[level], Content.AwakenThresholdFor(level));
         }
 
         [Theory]
@@ -190,7 +206,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(123, false)]
-        [InlineData(500, true)]
+        [InlineData(3000, true)]
         public void Save_round_trip_preserves_awakening_and_progress_continues(int points, bool awakened)
         {
             var r = Legendary();
@@ -206,14 +222,14 @@ namespace SodRpg.Core.Tests
             Assert.Equal(awakened, loaded.Awakened);
             Assert.Equal(p.Stats.RelicsAwakened, q.Stats.RelicsAwakened);
             Rules.OnKill(q, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey);
-            Assert.Equal(awakened ? 500 : points + 20, loaded.AwakenPoints);
+            Assert.Equal(points + 20, loaded.AwakenPoints);
             Assert.Equal(awakened ? 1 : 0, q.Stats.RelicsAwakened);
         }
 
         [Theory]
         [InlineData(-1, 0)]
-        [InlineData(501, 500)]
-        [InlineData(int.MaxValue, 500)]
+        [InlineData(7001, 7000)]
+        [InlineData(int.MaxValue, 7000)]
         public void Loading_clamps_awakening_points(int saved, int expected)
         {
             var r = Legendary();
@@ -230,7 +246,7 @@ namespace SodRpg.Core.Tests
                 var copy = new JsonObject();
                 foreach (var kv in obj.Properties)
                 {
-                    if (kv.Key == "awaken" || kv.Key == "awakened" || kv.Key == "relicsAwakened") continue;
+                    if (kv.Key == "awaken" || kv.Key == "awakened" || kv.Key == "awakenLevel" || kv.Key == "relicsAwakened") continue;
                     copy.Add(kv.Key, WithoutAwakening(kv.Value));
                 }
                 return copy;
@@ -292,6 +308,45 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => Rules.ClaimFeat(p, master.Id));
             Assert.Equal(210, p.Material(Materials.Shard));
             Assert.Equal(3, p.Material(Materials.Tuning));
+        }
+
+        [Fact]
+        public void Legacy_awakened_relics_become_level_two_and_keep_climbing()
+        {
+            var r = Legendary();
+            var p = Equipped(r);
+            r.AwakenPoints = 500;
+            r.Awakened = true;
+            var root = (JsonObject)Json.Parse(ProfileCodec.Write(p));
+            // awakenLevel を持たない v1.26 までの保存を作る
+            Assert.True(root.TryGet("body", out object body));
+            var oldBody = StripKey(body, "awakenLevel");
+            string checksum;
+            using (var sha = SHA256.Create())
+            {
+                checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(oldBody))))
+                    .Replace("-", "").ToLowerInvariant();
+            }
+            var oldSave = new JsonObject().Add("format", ProfileCodec.Format).Add("version", (long)Profile.CurrentVersion)
+                .Add("checksum", checksum).Add("body", oldBody);
+            var q = ProfileCodec.Read(Json.Write(oldSave), new List<string>());
+            var loaded = q.FindStash(r.Uid);
+            Assert.Equal(Content.LegacyAwakenLevel, loaded.AwakenLevel);
+            Assert.Equal(3000, loaded.AwakenPoints);
+            Assert.Equal(150, Content.AwakenPowerPctAt(loaded.AwakenLevel)); // 当時と同じ倍率
+        }
+
+        private static object StripKey(object value, string key)
+        {
+            if (value is JsonObject obj)
+            {
+                var copy = new JsonObject();
+                foreach (var kv in obj.Properties)
+                    if (kv.Key != key) copy.Add(kv.Key, StripKey(kv.Value, key));
+                return copy;
+            }
+            if (value is List<object> list) return list.Select(v => StripKey(v, key)).ToList();
+            return value;
         }
     }
 }

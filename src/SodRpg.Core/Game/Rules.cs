@@ -160,16 +160,18 @@ namespace SodRpg.Core.Game
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
-                    if (r == null || r.Rarity != Rarity.Legendary || r.Awakened) continue;
+                    if (r == null || r.Rarity != Rarity.Legendary || r.AwakenLevel >= Content.MaxAwakenLevel) continue;
                     r.AwakenPoints = Math.Min(Content.AwakenThreshold, r.AwakenPoints + points);
-                    if (r.AwakenPoints < Content.AwakenThreshold) continue;
-                    r.Awakened = true;
-                    p.Stats.RelicsAwakened++;
-                    string powerMult = (Content.AwakenPowerPct / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-                    string affixMult = (Content.AwakenAffixPct / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                    int level = Content.AwakenLevelFor(r.AwakenPoints);
+                    if (level <= r.AwakenLevel) continue;
+                    if (r.AwakenLevel == 0) p.Stats.RelicsAwakened++; // 実績は最初の覚醒で数える
+                    r.AwakenLevel = level;
+                    string powerMult = (Content.AwakenPowerPctAt(level) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                    string affixMult = (Content.AwakenAffixPctAt(level) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                    string numeral = Content.AwakenNumeral(level);
                     ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                        $"「{r.PlainName}」が覚醒しました！固有効果が{powerMult}倍、特性が{affixMult}倍になります。",
-                        $"\"{r.PlainName}\" has awakened! Powers x{powerMult}, affixes x{affixMult}.")));
+                        $"「{r.PlainName}」が覚醒{numeral}になりました！固有効果が{powerMult}倍、特性が{affixMult}倍になります。",
+                        $"\"{r.PlainName}\" reached Awakening {numeral}! Powers x{powerMult}, affixes x{affixMult}.")));
                 }
                 int before = Mastery.Level(hs.Kills);
                 hs.Kills++;

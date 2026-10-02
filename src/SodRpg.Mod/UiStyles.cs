@@ -150,6 +150,8 @@ namespace SodRpg.Mod
         }
 
         /// <summary>遺物の名前（覚醒済みなら頭に ✦）。</summary>
-        public static string RelicTitle(Relic r) => r.Awakened ? "<color=#ffe17a>✦</color>" + Colored(r.DisplayName, RelicHex(r)) : Colored(r.DisplayName, RelicHex(r));
+        public static string RelicTitle(Relic r) => r.Awakened
+            ? "<color=#ffe17a>✦" + Content.AwakenNumeral(r.AwakenLevel) + "</color>" + Colored(r.DisplayName, RelicHex(r))
+            : Colored(r.DisplayName, RelicHex(r));
     }
 }

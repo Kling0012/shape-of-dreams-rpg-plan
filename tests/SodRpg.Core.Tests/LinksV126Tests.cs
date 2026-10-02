@@ -210,8 +210,8 @@ namespace SodRpg.Core.Tests
             relic.Enhance = 3; // 強化は連携の値を伸ばさない
             Assert.Equal(26, Assert.Single(Build.Compute(p, "Hero_Vesper", 0).Links).Value);
 
-            relic.Awakened = true; // 覚醒は AwakenPowerPct（150%）を掛ける
-            Assert.Equal(26 * Content.AwakenPowerPct / 100, Assert.Single(Build.Compute(p, "Hero_Vesper", 0).Links).Value);
+            relic.Awakened = true; // 覚醒（旧来の覚醒と同じ覚醒Ⅱ）は 150% を掛ける
+            Assert.Equal(26 * Content.AwakenPowerPctAt(relic.AwakenLevel) / 100, Assert.Single(Build.Compute(p, "Hero_Vesper", 0).Links).Value);
         }
 
         [Fact]

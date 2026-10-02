@@ -46,7 +46,18 @@ namespace SodRpg.Core.Game
         /// <summary>強化の節目をいくつ受け取ったか（0〜2。+3で1、+5で2）。</summary>
         public int EnhanceMilestones { get; set; }
         public int AwakenPoints { get; set; }
-        public bool Awakened { get; set; }
+        /// <summary>覚醒の段（0〜3）。</summary>
+        public int AwakenLevel { get; set; }
+        /// <summary>1段以上覚醒しているか。true を入れると、まだなら旧来の覚醒と同じ段にする。</summary>
+        public bool Awakened
+        {
+            get => AwakenLevel > 0;
+            set
+            {
+                if (!value) AwakenLevel = 0;
+                else if (AwakenLevel == 0) AwakenLevel = Content.LegacyAwakenLevel;
+            }
+        }
         public List<StatLine> Affixes { get; } = new List<StatLine>();
         public List<PowerLine> Powers { get; } = new List<PowerLine>();
 
@@ -88,7 +99,7 @@ namespace SodRpg.Core.Game
             foreach (var a in Affixes)
             {
                 int value = Scale(a.Value, pct);
-                if (Awakened) value = (int)((long)value * Content.AwakenAffixPct / 100);
+                if (Awakened) value = (int)((long)value * Content.AwakenAffixPctAt(AwakenLevel) / 100);
                 yield return new StatLine(a.Stat, value);
             }
         }
@@ -100,7 +111,7 @@ namespace SodRpg.Core.Game
             foreach (var p in Powers)
             {
                 int value = Scale(p.Value, pct);
-                if (Awakened) value = (int)((long)value * Content.AwakenPowerPct / 100);
+                if (Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(AwakenLevel) / 100);
                 yield return new PowerLine(p.Power, value);
             }
         }
@@ -129,7 +140,7 @@ namespace SodRpg.Core.Game
                 Locked = Locked,
                 EnhanceMilestones = EnhanceMilestones,
                 AwakenPoints = AwakenPoints,
-                Awakened = Awakened,
+                AwakenLevel = AwakenLevel,
             };
             c.Affixes.AddRange(Affixes);
             c.Powers.AddRange(Powers);

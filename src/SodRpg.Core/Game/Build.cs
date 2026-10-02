@@ -47,7 +47,7 @@ namespace SodRpg.Core.Game
                 var link = r.Link;
                 if (link != null)
                 {
-                    int value = r.Awakened ? (int)((long)link.Value * Content.AwakenPowerPct / 100) : link.Value;
+                    int value = r.Awakened ? (int)((long)link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100) : link.Value;
                     var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, Value = value };
                     if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
                 }

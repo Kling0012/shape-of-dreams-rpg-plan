@@ -198,7 +198,7 @@ namespace SodRpg.Core.Game
                 .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
-                .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened)
+                .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
                 .Add("milestones", (long)r.EnhanceMilestones)
                 .Add("affixes", aff).Add("powers", pw);
         }
@@ -446,7 +446,9 @@ namespace SodRpg.Core.Game
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
                 Locked = Bool(j, "locked", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
-                Awakened = Bool(j, "awakened", false),
+                AwakenLevel = j.TryGet("awakenLevel", out _)
+                    ? Clamp(Long(j, "awakenLevel"), 0, Content.MaxAwakenLevel)
+                    : Bool(j, "awakened", false) ? Content.LegacyAwakenLevel : 0, // v1.26 までの覚醒は覚醒Ⅱ
                 EnhanceMilestones = Clamp(Long(j, "milestones"), 0, 2),
             };
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
@@ -454,6 +456,9 @@ namespace SodRpg.Core.Game
             if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
                 throw new LedgerFormatException("未知の固有品ID: " + r.UniqueId);
             if (!seen.Add(r.Uid)) throw new LedgerFormatException("Uidの重複: " + r.Uid);
+            // 段と覚醒の力をそろえる（v1.26 までの覚醒は覚醒Ⅱの累計から続ける）。
+            if (r.AwakenPoints < Content.AwakenThresholdFor(r.AwakenLevel)) r.AwakenPoints = Content.AwakenThresholdFor(r.AwakenLevel);
+            if (Content.AwakenLevelFor(r.AwakenPoints) > r.AwakenLevel) r.AwakenLevel = Content.AwakenLevelFor(r.AwakenPoints);
             if (j.TryGet("affixes", out object ao) && ao is List<object> affs)
             {
                 foreach (var a in affs)
