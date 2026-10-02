@@ -79,7 +79,7 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - Codex CLI：`codex exec -C C:\Temp\sodreview -s read-only` でレビューを並行実行できる（Google Drive 配下は読めないので差分を `C:\Temp` に置く）。Computer Use は Codex デスクトップ専用で CLI からは使えない。Jev CU は Unity 画面に不向き。
 - 実機の画面確認：`ALL/.tmp/sodtest/ui.ps1`（スクリーンショット・クリック・キー・文字入力）。**利用者がPCを使っていない時間だけ**使う。
 - ゲーム設定の変更：開発者モードON、本MODを有効化（元は `QuickSave/r_platform.json.bak-dreamforge-20261001`）。テストで上書きした「夢の続き」は `QuickSave.backup-before-dreamforge-test` に全体バックアップ（復元は判断待ち）。
-- 実機の確認用コマンド（開発者モードのコンソール `）：`dreamforge_status`・`_stats`・`_give 個数 レア度`・`_simkill 格 回数`・`_killnear 半径`・`_securepoint`・`_endrun 1|0`。MOD管理の「すべてリロード」でライブリロード。
+- 実機の確認用コマンド（開発者モードのコンソール `）：`dreamforge_status`・`_stats`・`_perf`。MOD管理の「すべてリロード」でライブリロード。
 
 ## 6. 作業の手順（1つの版）
 
@@ -121,9 +121,9 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - `src/SodRpg.Mod/PerformanceTuner.cs`：設定変更・シーン読み込み・フォーカス変更のときだけ動く（毎フレームの処理なし）。本体APIは `inc8877.GraphicsConfigurator`（URPUnlocker）の `CurrentUnlockedURPAsset` 経由。
 - 計測するときは、本体の垂直同期を一時的にオフにしないと60fpsに張り付いて差が見えない（`QuickSave/r_platform.json` の `"vSync"`。計測後はバックアップから戻す）。裏に回す操作は、MinimizeAll では効かず、Alt+Tab で効いた。
 - 戦闘中や低性能PCでの効果は未確認。
-- v1.8.1：自動で戦闘部屋へ行くには、開始地点で `dreamforge_travelnext`（ゲーム内の地図の移動ボタンは自動クリックに反応しなかった）。戦闘部屋に入っても、敵が出る地点まで自動では進めていない。描画負荷の模擬は `dreamforge_renderscale 2`。
+- v1.8.1：ゲーム内の地図の移動ボタンは自動クリックに反応しなかった。戦闘部屋に入っても、敵が出る地点まで自動では進めていない。描画負荷の模擬は `dreamforge_renderscale 2`。
 - 2026-10-02 同じ場所で10秒ごとに Off/Max を切り替えた計測（CPU 2コア制限、敵なし）：平均 Off 約10.5ms / Max 約10.4ms（ほぼ同じ）、10秒ごとの最大 Off 30〜52ms / Max 26〜33ms。CPUが弱い環境では軽量化は平均にほとんど効かず、引っかかりを少し抑える程度。CPU側の重さは本体の処理が主因。`perfPressureStrengthOverride`（本体の適応的なエフェクト間引き）は、表示中のエフェクトを毎フレーム確率で消すため、常時有効にはしない。
-- 実機での確認のコツ（2026-10-02）：Mist の回避（Movement）は Space、右クリックは Q（RMB）のスキル。遠征中に `dreamforge_giveunique` で出した遺物は鞄（未確保）に入るので、装着を試すならタイトル画面で出してから遠征に入る。コンソールで `dreamforge_stats` を出す手順は時間がずれるので、一時補正の確認はホストの処理にログを仕込んで見る方が確実。
+- 実機での確認のコツ（2026-10-02）：Mist の回避（Movement）は Space、右クリックは Q（RMB）のスキル。コンソールで `dreamforge_stats` を出す手順は時間がずれるので、一時補正の確認はホストの処理にログを仕込んで見る方が確実。
 - 協力プレイの前提（2026-10-02 利用者決定）：参加者全員が同じ版のMODを読み込んでいる。版の違う相手との通信の互換は考えない（通信メッセージは版ごとに自由に変えてよい）。
 - 名前（2026-10-02 利用者）：MOD名は「Dreamforge」に統一する。「夢鍛」は使わない（日本語の画面でも Dreamforge と表記し、パネルなどは役割で呼ぶ）。
 - v1.13.1（issue #5・#6・#7 の修正、2026-10-02）：取引の返事待ちの間は確保・潜行・契約を止め、支払い済みの対価は `Rules.GrantPaidDustShards` / `GrantPaidMerchant` で状態に関係なく渡す。分解は `TradeLedger.IsReserved` で予約し、成功の返事で初めて鞄から取り除く（失敗・送信不能・30秒で予約解除。30秒後の遅い返事は無視するので、まれに二重取りが起きうる）。参加者は確認済みでも30秒ごとに Build を送り直し、ホストは同じ内容なら付け直さずに確認だけ返す。2台での確認は未実施。

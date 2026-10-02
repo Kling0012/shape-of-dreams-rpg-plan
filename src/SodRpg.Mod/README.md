@@ -61,7 +61,7 @@
   - 最大（v1.8.1）：強めに加えて描画解像度を0.75倍にする（画面は少しぼやけるが、描画の重さが大きく減る）。
   - どれも見た目と描画だけを変え、ゲームの進行や協力プレイの同期には触れない。「なし」に戻すと元の値に戻る。
 
-開発者モードのコンソール（`）で使える確認用コマンド：`dreamforge_perf`（このMODの1フレームあたりの処理時間）、`dreamforge_status`、`dreamforge_stats`（キャラの最終能力値と補正）、`dreamforge_give 個数 レア度`、`dreamforge_simkill 格 回数`、`dreamforge_killnear 半径`（ホストのみ）、`dreamforge_securepoint`、`dreamforge_endrun 1|0`（MOD上のランを勝利／全滅で終える）。
+開発者モードのコンソール（`）で使える確認用コマンド：`dreamforge_perf`（このMODの1フレームあたりの処理時間）、`dreamforge_status`、`dreamforge_stats`（キャラの最終能力値と補正）。
 
 ## 構成
 

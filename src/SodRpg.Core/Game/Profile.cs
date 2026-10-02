@@ -206,7 +206,11 @@ namespace SodRpg.Core.Game
         /// <summary>選んでいない再調律の候補。なければ null。</summary>
         public RetuneOffer RetuneOffer { get; set; }
 
-        public const int CurrentVersion = 1;
+        /// <summary>保存の版。v1.27 で 2 に上げた（大きな変更のため、版1の保存は写しを残して新しく始める）。</summary>
+        public const int CurrentVersion = 2;
+
+        /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
+        public const int ResetBeforeVersion = 2;
 
         public long Revision { get; set; }
         public ulong RngState { get; set; }
@@ -296,7 +300,7 @@ namespace SodRpg.Core.Game
         public int TalentPoints(string heroKey) => (int)Math.Min(int.MaxValue,
             (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints));
 
-        /// <summary>テスト用に足す星図ポイント（コンソールの dreamforge_testpoints。保存しない）。0〜100。</summary>
+        /// <summary>確認用に足す星図ポイント（保存しない）。0〜100。</summary>
         public static int TestBonusPoints { get; set; }
 
         /// <summary>図鑑の節目（6種ごと）で得る星図ポイント。最大4。</summary>

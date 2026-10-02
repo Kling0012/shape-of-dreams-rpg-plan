@@ -20,7 +20,7 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Loot
     {
-        private static readonly int[] BaseRarityWeights = { 600, 270, 100, 26, 3 };
+        private static readonly int[] BaseRarityWeights = { 1200, 540, 200, 44, 3 };
 
         /// <summary>夢の深度1あたりの装備ドロップ率の増分。</summary>
         public const double HeatDropBonus = 0.35;
