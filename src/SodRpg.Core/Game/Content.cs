@@ -233,7 +233,7 @@ namespace SodRpg.Core.Game
         public const int TransmuteTargetCostPct = 150;
         /// <summary>覚醒の段の数（v1.27 で1段から3段に）。</summary>
         public const int MaxAwakenLevel = 3;
-        private static readonly int[] AwakenThresholds = { 0, 1000, 3000, 7000 };
+        private static readonly int[] AwakenThresholds = { 0, 2000, 6000, 15000 }; // 1回の遠征で約460溜まる（BalanceSim の前提）。約4・13・32回
         private static readonly int[] AwakenPowerPcts = { 100, 125, 150, 180 };
         private static readonly int[] AwakenAffixPcts = { 100, 110, 120, 130 };
         /// <summary>v1.26 までに覚醒した遺物が入る段（倍率が当時と同じ）。</summary>
