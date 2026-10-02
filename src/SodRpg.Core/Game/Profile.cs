@@ -17,9 +17,13 @@ namespace SodRpg.Core.Game
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
         public int Kills { get; set; }
 
+        /// <summary>この旅人の星の経験。獲得ポイントは StarProgression で求める。</summary>
+        private int _starXp;
+        public int StarXp { get => _starXp; set => _starXp = Math.Max(0, value); }
+
         public HeroState Clone()
         {
-            var c = new HeroState { Keystone = Keystone, Kills = Kills };
+            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp };
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
             return c;
@@ -33,6 +37,10 @@ namespace SodRpg.Core.Game
     public sealed class RunState
     {
         public string RunId { get; set; }
+        /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
+        public string HeroKey { get; set; }
+        /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
+        public bool StarSecureRewarded { get; set; }
         /// <summary>夢の深度（0〜5）。確保を見送って潜り続けるほど上がる。</summary>
         public int Heat { get; set; }
         public List<Relic> Satchel { get; } = new List<Relic>();
@@ -81,6 +89,8 @@ namespace SodRpg.Core.Game
             var c = new RunState
             {
                 RunId = RunId,
+                HeroKey = HeroKey,
+                StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
                 SatchelShards = SatchelShards,
                 SatchelTuning = SatchelTuning,
@@ -282,8 +292,9 @@ namespace SodRpg.Core.Game
             return false;
         }
 
-        /// <summary>使える専門化ポイントの総数（夢のレベル−1）。全キャラ共通の総数を、キャラごとに配分する。</summary>
-        public int TalentPoints => Math.Max(0, DreamLevel - 1) + CodexBonusPoints + TestBonusPoints;
+        /// <summary>その旅人の星ポイントに、図鑑とテスト設定の共通ボーナスを加える。</summary>
+        public int TalentPoints(string heroKey) => (int)Math.Min(int.MaxValue,
+            (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints));
 
         /// <summary>テスト用に足す星図ポイント（コンソールの dreamforge_testpoints。保存しない）。0〜100。</summary>
         public static int TestBonusPoints { get; set; }

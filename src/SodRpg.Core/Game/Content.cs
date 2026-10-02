@@ -155,6 +155,12 @@ namespace SodRpg.Core.Game
             RankPower = power;
         }
 
+        public TalentDef(string id, Line route, Txt name, LinkDef linkPerRank, int maxRank)
+            : this(id, route, name, default(Stat), linkPerRank.Value, maxRank)
+        {
+            LinkPerRank = linkPerRank;
+        }
+
         public TalentDef(string id, Line route, Txt name, Power power, int powerValue, Txt description)
         {
             Id = id;
@@ -173,10 +179,20 @@ namespace SodRpg.Core.Game
         public Stat Stat { get; }
         public int PerRank { get; }
         public int MaxRank { get; }
-        /// <summary>小ノードが1段ごとに伸ばす固有効果。能力値ノードは None。</summary>
+        /// <summary>記憶ルート内の識別子と順番。核・夢の輪は RouteId が null。</summary>
+        public string RouteId { get; set; }
+        public int RouteOrder { get; set; }
+        /// <summary>直前の星。1段以上振ると次が開く。</summary>
+        public string PrerequisiteId { get; set; }
+        /// <summary>ルートの記憶の型名。見出しは Links.Name で表示する。</summary>
+        public string RouteMemory { get; set; }
+        public bool IsDreamRing { get; set; }
+        /// <summary>1段あたりの連携。能力値とは別に、装着条件をホストで判定する。</summary>
+        public LinkDef LinkPerRank { get; set; }
+        /// <summary>小ノードが1段ごとに伸ばす固有効果。能力値・連携ノードは None。</summary>
         public Power RankPower { get; set; }
-        public bool IsPowerNode => !IsKeystone && RankPower != Power.None;
-        /// <summary>1は手前の星、2は奥の星。</summary>
+        public bool IsPowerNode => !IsKeystone && LinkPerRank == null && RankPower != Power.None;
+        /// <summary>1は核の手前の星、2は奥の星・記憶ルート・夢の輪。</summary>
         public int Tier { get; set; } = 1;
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
@@ -191,7 +207,8 @@ namespace SodRpg.Core.Game
         public string Describe()
         {
             if (IsKeystone) return Content.FormatPower(Power, PowerValue) + "\n" + Description;
-            string effect = IsPowerNode ? Content.FormatPower(RankPower, PerRank) : Content.FormatStat(Stat, PerRank);
+            string effect = LinkPerRank != null ? Links.Describe(LinkPerRank)
+                : IsPowerNode ? Content.FormatPower(RankPower, PerRank) : Content.FormatStat(Stat, PerRank);
             if (RankCost > 1) return effect + Loc.T($"（1段まで・{RankCost}ポイント）", $" (1 rank only, costs {RankCost} points)");
             return effect + Loc.T("（1段ごと）", " (per rank)");
         }

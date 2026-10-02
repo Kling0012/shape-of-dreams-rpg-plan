@@ -35,8 +35,8 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Links
     {
-        /// <summary>Build 文字列に入れられる連携の数（6枠より多いのは信用しない）。</summary>
-        public const int MaxLinks = 12;
+        /// <summary>遺物6枠と記憶ルートの連携を収める通信上限。</summary>
+        public const int MaxLinks = 40;
 
         /// <summary>導きの羅針盤の正規形（充電前後で型が違うが、連携では同じエッセンスとして数える）。</summary>
         public const string Compass = "Gem_U_GuidingCompass_NotCharged";
@@ -273,9 +273,23 @@ namespace SodRpg.Core.Game
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
-            string ja = DescribeJa(link, isSatisfied, value);
-            string en = DescribeEn(link, isSatisfied, value);
-            return Loc.T(ja, en);
+            string limitJa, limitEn;
+            switch (link.Kind)
+            {
+                case LinkKind.MemoryHaste:
+                    limitJa = "（同じ発動での合計100%まで）";
+                    limitEn = " (Up to 100% total per cast.)";
+                    break;
+                case LinkKind.MemorySurge:
+                    limitJa = "（同時には最大値1つ。重ならず時間を延長し、装着条件を外すと解除）";
+                    limitEn = " (Only the strongest active link applies; refreshes without stacking and ends when unequipped.)";
+                    break;
+                default:
+                    limitJa = "（同種の連携は加算・効果量の合計上限なし）";
+                    limitEn = " (Matching link bonuses add together, with no aggregate cap.)";
+                    break;
+            }
+            return Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
         }
 
         private static string Mark(string target, Func<string, bool> isSatisfied)

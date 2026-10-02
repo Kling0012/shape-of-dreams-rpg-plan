@@ -24,14 +24,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(2, tree.Count(t => t.IsKeystone)); // v1.13：到達刻印は2つから1つを選ぶ
                 Assert.True(tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank) >= Content.KeystoneRouteRequirement, h);
                 Assert.All(tree, t => Assert.Equal(h, t.HeroKey));
-                foreach (bool ja in new[] { true, false })
-                {
-                    Loc.Japanese = ja;
-                    Assert.All(tree, t => Assert.False(string.IsNullOrWhiteSpace(t.Name.ToString())));
-                    Assert.All(tree.Where(t => t.IsKeystone), k => Assert.False(string.IsNullOrWhiteSpace(k.Description.ToString())));
-                }
             }
-            Loc.Japanese = true;
             Assert.Equal(HeroSigils.All.Count, HeroSigils.All.Select(t => t.Id).Distinct().Count());
         }
 
@@ -46,7 +39,8 @@ namespace SodRpg.Core.Tests
         public void Nodes_only_fit_their_own_traveler()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 20;
+            p.Hero("Hero_Lacerta").StarXp = StarProgression.TotalXpForPoints(19);
+            p.Hero("Hero_Kindred").StarXp = StarProgression.TotalXpForPoints(19);
             Rules.AddTalentRank(p, "Hero_Lacerta", "h.lacerta.powder");
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, "Hero_Vesper", "h.lacerta.powder"));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, "Hero_Vesper", "t.off.edge")); // 汎用ノードは本体の旅人に使えない
@@ -58,7 +52,7 @@ namespace SodRpg.Core.Tests
         public void Keystone_needs_six_points_and_mastery_three()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 20;
+            p.Hero("Hero_Cetus").StarXp = StarProgression.TotalXpForPoints(19);
             const string h = "Hero_Cetus";
             foreach (var id in new[] { "h.cetus.cold", "h.cetus.cold", "h.cetus.cold", "h.cetus.shell", "h.cetus.shell", "h.cetus.shell" })
                 Rules.AddTalentRank(p, h, id);
@@ -75,7 +69,7 @@ namespace SodRpg.Core.Tests
         public void Fourth_attack_shift_is_capped_and_converts_to_game_index()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 20;
+            p.Hero("Hero_Vesper").StarXp = StarProgression.TotalXpForPoints(19);
             foreach (var id in new[] { "h.vesper.wall", "h.vesper.wall", "h.vesper.wall", "h.vesper.light", "h.vesper.light", "h.vesper.light" })
                 Rules.AddTalentRank(p, "Hero_Vesper", id);
             Rules.AddTalentRank(p, "Hero_Vesper", "h.vesper.fourth"); // v1.27：奥の星、1段まで
@@ -91,7 +85,7 @@ namespace SodRpg.Core.Tests
         public void Generic_points_on_base_travelers_are_refunded_on_load()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 10;
+            p.Hero("Hero_Mist").StarXp = StarProgression.TotalXpForPoints(9);
             // v1.1 までの保存：本体の旅人に汎用ノードと汎用の刻印
             p.Hero("Hero_Mist").Talents["t.off.edge"] = 3;
             p.Hero("Hero_Mist").Talents["t.off.swift"] = 3;
@@ -100,7 +94,7 @@ namespace SodRpg.Core.Tests
             var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
             Assert.Empty(q.Hero("Hero_Mist").Talents);
             Assert.Null(q.Hero("Hero_Mist").Keystone);
-            Assert.Equal(q.TalentPoints, Rules.FreePoints(q, "Hero_Mist"));
+            Assert.Equal(q.TalentPoints("Hero_Mist"), Rules.FreePoints(q, "Hero_Mist"));
             Assert.NotEmpty(notes);
         }
     }

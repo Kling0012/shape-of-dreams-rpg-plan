@@ -43,9 +43,9 @@ namespace SodRpg.Core.Tests
         {
             var p = Profile.CreateNew(3);
             var seen = new List<Hint>();
-            seen.AddRange(Hints(Rules.BeginRun(p, "r")));
+            seen.AddRange(Hints(Rules.BeginRun(p, "r", heroKey: "Hero_Vesper")));
             p.Run.Bounties.Clear();
-            for (int i = 0; i < 6; i++) seen.AddRange(Hints(Rules.OnKill(p, MonsterTier.Boss, 5)));
+            for (int i = 0; i < 6; i++) seen.AddRange(Hints(Rules.OnKill(p, MonsterTier.Boss, 5, heroKey: "Hero_Vesper")));
             seen.AddRange(Hints(Rules.ReachSecurePoint(p)));
             seen.AddRange(Hints(Rules.Delve(p)));
             seen.AddRange(Hints(Rules.ReachSecurePoint(p)));

@@ -54,7 +54,7 @@ namespace SodRpg.Core.Game
                 foreach (var uid in h.Equipped) eq.Add(uid);
                 var tal = new JsonObject();
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
-                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills));
+                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp));
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -77,6 +77,7 @@ namespace SodRpg.Core.Game
                 var r = p.Run;
                 run = new JsonObject()
                     .Add("runId", r.RunId).Add("heat", (long)r.Heat).Add("satchel", WriteRelics(r.Satchel))
+                    .Add("heroKey", r.HeroKey).Add("starSecureRewarded", r.StarSecureRewarded)
                     .Add("shards", (long)r.SatchelShards).Add("tuning", (long)r.SatchelTuning)
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
@@ -263,6 +264,9 @@ namespace SodRpg.Core.Game
                         }
                     }
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
+                    h.StarXp = hj.TryGet("starXp", out object sx)
+                        ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)
+                        : StarProgression.LegacyXp(h.Kills);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
                     if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
                 }
@@ -324,6 +328,8 @@ namespace SodRpg.Core.Game
                 var run = new RunState
                 {
                     RunId = Str(rj, "runId"),
+                    HeroKey = Str(rj, "heroKey"),
+                    StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),
                     SatchelShards = Clamp(Long(rj, "shards"), 0, int.MaxValue),
                     SatchelTuning = Clamp(Long(rj, "tuning"), 0, int.MaxValue),
@@ -352,12 +358,13 @@ namespace SodRpg.Core.Game
                 ReadPacts(rj, "offeredPacts", run.OfferedPacts, notes);
                 p.Run = run;
             }
-            // v1.27：連装・四の型を奥の星（1段・4ポイント）へ移した。ポイントが足りなくなった旅人は刻印を無料で振り直す。
+            // Keep valid saved ranks, even if locked; refund only allocations exceeding the new budget.
             foreach (var kv in p.Heroes)
             {
-                if (kv.Value.Talents.Count == 0 || Rules.FreePoints(p, kv.Key) >= 0) continue;
+                if (Rules.FreePoints(p, kv.Key) >= 0) continue;
                 Rules.ResetTalents(p, kv.Key);
-                notes.Add($"{kv.Key}: 刻印の費用が変わったため、刻印を無料で振り直せるようにしました");
+                notes.Add(Loc.T($"{kv.Key}: 星の経験と刻印の費用に合わせ、刻印を無料で振り直せるようにしました。",
+                    $"{kv.Key}: Star point allocation exceeded the current budget and was reset for free."));
             }
             return p;
         }

@@ -21,7 +21,7 @@ namespace SodRpg.Core.Tests
         public void Only_one_keystone_can_be_active_and_the_second_one_can_be_chosen()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 20;
+            p.Hero("Hero_Mist").StarXp = StarProgression.TotalXpForPoints(19);
             const string hero = "Hero_Mist";
             p.Hero(hero).Kills = 100000;
             foreach (var n in HeroSigils.TreeFor(hero).Where(t => !t.IsKeystone && t.Tier == 1))
@@ -35,7 +35,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(keys[0].Id, p.Hero(hero).Keystone);
             var b = Build.Compute(p, hero, 0);
             Assert.True(b.Get(Power.EchoingDodge) > 0);
-            Assert.Equal(0, b.Get(Power.Sprint));
+            Assert.Equal(0, b.Get(Power.PerfectRead));
         }
 
         [Fact]

@@ -17,9 +17,12 @@ namespace SodRpg.Core.Game
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         /// <summary>セット遺物の装着数（表示用）。</summary>
         public SortedDictionary<string, int> Sets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        /// <summary>装着中の遺物の連携（v1.26）。覚醒の倍率を反映した値で、正しくない物は入れない。</summary>
+        /// <summary>遺物と星の連携。装着条件はホストで判定し、常時の能力値には加えない。</summary>
         public List<LinkDef> Links { get; } = new List<LinkDef>();
         public int Heat { get; set; }
+        /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
+        public int DreamLevel { get; set; } = 1;
+        public int SpentStarPoints { get; set; }
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
         public int Get(Power p) => Powers.TryGetValue(p, out int v) ? v : 0;
@@ -32,8 +35,13 @@ namespace SodRpg.Core.Game
 
         public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null, int dailyId = 0)
         {
-            var b = new Build { Heat = Loot.ClampHeat(heat) };
             var h = p.Hero(heroKey);
+            var b = new Build
+            {
+                Heat = Loot.ClampHeat(heat),
+                DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, p.DreamLevel)),
+                SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, Rules.SpentPoints(h))),
+            };
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
 
@@ -73,14 +81,23 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) Add(rawPowers, pw.Power, pw.Value);
             }
-            bool deepStarsOpen = Rules.Tier1Ranks(h, heroKey) >= Content.DeepStarRequirement;
             foreach (var kv in h.Talents)
             {
-                if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone || !Rules.BelongsTo(t, heroKey)) continue;
-                if (t.Tier == 2 && !deepStarsOpen) continue;
-                int value = t.PerRank * Math.Min(kv.Value, t.MaxRank);
-                if (t.IsPowerNode) Add(rawPowers, t.RankPower, value);
-                else Add(rawStats, t.Stat, value);
+                if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone
+                    || !Rules.TalentUnlocked(h, heroKey, t)) continue;
+                int rank = Math.Min(kv.Value, t.MaxRank);
+                if (t.LinkPerRank != null)
+                {
+                    var link = new LinkDef
+                    {
+                        Requires = t.LinkPerRank.Requires,
+                        Kind = t.LinkPerRank.Kind,
+                        Value = t.LinkPerRank.Value * rank,
+                    };
+                    if (global::SodRpg.Core.Game.Links.Validate(link)) b.Links.Add(link);
+                }
+                else if (t.IsPowerNode) Add(rawPowers, t.RankPower, t.PerRank * rank);
+                else Add(rawStats, t.Stat, t.PerRank * rank);
             }
             if (h.Keystone != null && Content.TryGetTalent(h.Keystone, out var key) && key.IsKeystone
                 && Rules.BelongsTo(key, heroKey) && Rules.KeystoneUnlocked(p, heroKey, key))
@@ -127,8 +144,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;l:3=22:St_X+Gem_Y" の形。
-        /// l 区間の各要素は「種類:値:条件+条件+条件」（v1.26 の連携）。
+        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;d:30;a:150;l:3:22:St_X+Gem_Y" の形。
+        /// d は夢のレベル、a は使用済み星ポイント。l は「種類:値:条件+条件+条件」。
         /// ホストはこれを検証してから能力補正へ変換する。
         /// </summary>
         public string Encode()
@@ -151,6 +168,8 @@ namespace SodRpg.Core.Game
                 sb.Append((int)kv.Key).Append('=').Append(kv.Value.ToString(CultureInfo.InvariantCulture));
             }
             sb.Append(";h:").Append(Heat.ToString(CultureInfo.InvariantCulture));
+            sb.Append(";d:").Append(DreamLevel.ToString(CultureInfo.InvariantCulture));
+            sb.Append(";a:").Append(SpentStarPoints.ToString(CultureInfo.InvariantCulture));
             sb.Append(";l:");
             first = true;
             foreach (var link in Links)
@@ -170,7 +189,7 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static Build Decode(string text)
         {
-            if (string.IsNullOrEmpty(text) || text.Length > 2000) return null;
+            if (string.IsNullOrEmpty(text) || text.Length > 16384) return null;
             var b = new Build();
             try
             {
@@ -183,6 +202,16 @@ namespace SodRpg.Core.Game
                     if (kind == "h")
                     {
                         b.Heat = Loot.ClampHeat(int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture));
+                        continue;
+                    }
+                    if (kind == "d")
+                    {
+                        b.DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture)));
+                        continue;
+                    }
+                    if (kind == "a")
+                    {
+                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture)));
                         continue;
                     }
                     if (kind == "l")

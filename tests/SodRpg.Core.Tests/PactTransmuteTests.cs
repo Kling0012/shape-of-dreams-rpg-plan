@@ -213,12 +213,12 @@ namespace SodRpg.Core.Tests
         public void Codex_milestones_grant_talent_points_up_to_four()
         {
             var p = Profile.CreateNew(1);
-            Assert.Equal(0, p.TalentPoints);
+            Assert.Equal(0, p.TalentPoints("Hero_Vesper"));
             for (int i = 0; i < 5; i++) p.Codex.Add("x" + i);
             Assert.Equal(0, p.CodexBonusPoints);
             p.Codex.Add("x5");
             Assert.Equal(1, p.CodexBonusPoints);
-            Assert.Equal(1, p.TalentPoints);
+            Assert.Equal(1, p.TalentPoints("Hero_Vesper"));
             for (int i = 6; i < 40; i++) p.Codex.Add("x" + i);
             Assert.Equal(Content.MaxCodexBonus, p.CodexBonusPoints);
         }

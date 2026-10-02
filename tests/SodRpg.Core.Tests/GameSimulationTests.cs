@@ -33,9 +33,10 @@ namespace SodRpg.Core.Tests
                 Assert.InRange(r.Enhance, 0, Content.MaxEnhance);
                 Assert.InRange(r.Retunes, 0, Content.MaxRetunes);
             }
-            foreach (var h in p.Heroes.Values)
+            foreach (var entry in p.Heroes)
             {
-                Assert.True(Rules.SpentPoints(h) <= p.TalentPoints);
+                var h = entry.Value;
+                Assert.True(Rules.SpentPoints(h) <= p.TalentPoints(entry.Key));
                 for (int i = 0; i < Content.SlotCount; i++)
                 {
                     if (h.Equipped[i] == null) continue;
@@ -48,7 +49,8 @@ namespace SodRpg.Core.Tests
 
         private static void PlayRandomRun(Profile p, Rng rng, string runId)
         {
-            Rules.BeginRun(p, runId);
+            string hero = "Hero_" + rng.Range(0, 3);
+            Rules.BeginRun(p, runId, heroKey: hero);
             int zones = rng.Range(1, 5);
             for (int z = 0; z < zones; z++)
             {
@@ -57,7 +59,7 @@ namespace SodRpg.Core.Tests
                 {
                     double x = rng.NextDouble();
                     var tier = x < 0.5 ? MonsterTier.Lesser : x < 0.97 ? MonsterTier.Normal : x < 0.995 ? MonsterTier.MiniBoss : MonsterTier.Boss;
-                    Rules.OnKill(p, tier, 1 + z * 8);
+                    Rules.OnKill(p, tier, 1 + z * 8, heroKey: hero);
                 }
                 Rules.OnRoomsCleared(p, p.Run.RoomsCleared + rng.Range(0, 3));
                 if (rng.Chance(0.15))

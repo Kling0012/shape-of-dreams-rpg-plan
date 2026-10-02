@@ -21,6 +21,15 @@ namespace SodRpg.Mod
         public string summary;
     }
 
+    /// <summary>ホストが求めた夢の圧。途中参加向けにも定期送信する。</summary>
+    [Serializable]
+    public class DreamforgePressureMsg
+    {
+        public int protocol;
+        public float healthMultiplier;
+        public float damageMultiplier;
+    }
+
     /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
     [Serializable]
     public class DreamforgeNightmareMsg
@@ -74,9 +83,7 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Unknown CustomRpc handler behavior is not documented in the reflection dumps.
-        // Require matching builds rather than silently losing variant identity/rewards.
-        // v1.26 で 4 に上げた（Build 文字列に連携の l: 区間を追加。3 は呪い解除の追加、v1.25 は 2）。
-        public const int Version = 4;
+        // Version 5 adds per-player dream level/spent stars and host-authoritative pressure.
+        public const int Version = 5;
     }
 }

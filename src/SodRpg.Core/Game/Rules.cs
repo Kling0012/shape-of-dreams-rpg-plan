@@ -92,18 +92,22 @@ namespace SodRpg.Core.Game
         public const double LimboDropBonus = 0.10;
         public const double LimboLuck = 0.2;
 
-        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null)
+        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null, string heroKey = null)
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
-            if (p.Run != null && p.Run.RunId == runId) return ev;
+            if (p.Run != null && p.Run.RunId == runId)
+            {
+                if (string.IsNullOrEmpty(p.Run.HeroKey) && !string.IsNullOrEmpty(heroKey)) p.Run.HeroKey = heroKey;
+                return ev;
+            }
             if (p.Run != null)
             {
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
                 ev.AddRange(EndRun(p, victory: false, reservedUids: reservedUids));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
-            p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth) };
+            p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth) };
             if (limboDepth > 0)
             {
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -145,6 +149,7 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (string.IsNullOrEmpty(heroKey)) heroKey = run.HeroKey;
             var rng = p.TakeRng();
             int pity = p.EpicPity;
             var variant = Variants.Get(variantId);
@@ -153,9 +158,11 @@ namespace SodRpg.Core.Game
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel);
-            if (heroKey != null)
+            if (!string.IsNullOrEmpty(heroKey))
             {
                 var hs = p.Hero(heroKey);
+                if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
+                AddStarXp(p, heroKey, StarProgression.KillXp(tier, isNightmare), ev);
                 int points = Content.AwakenPoints(tier, isNightmare);
                 foreach (var uid in hs.Equipped)
                 {
@@ -174,7 +181,7 @@ namespace SodRpg.Core.Game
                         $"\"{r.PlainName}\" reached Awakening {numeral}! Powers x{powerMult}, affixes x{affixMult}.")));
                 }
                 int before = Mastery.Level(hs.Kills);
-                hs.Kills++;
+                if (hs.Kills < int.MaxValue) hs.Kills++;
                 int after = Mastery.Level(hs.Kills);
                 if (after > before && after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey)) AddHint(p, Hint.KeystoneReady, ev);
                 if (after > before)
@@ -201,8 +208,9 @@ namespace SodRpg.Core.Game
             p.StoreRng(rng);
 
             run.GearWindow = false;
-            run.Kills++;
-            p.Stats.Kills++;
+            run.StarSecureRewarded = false;
+            if (run.Kills < int.MaxValue) run.Kills++;
+            if (p.Stats.Kills < int.MaxValue) p.Stats.Kills++;
             run.SatchelShards += reward.Shards;
             run.SatchelTuning += reward.Tuning;
             foreach (var relic in reward.Relics)
@@ -272,6 +280,8 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (run.AwaitingChoice) return ev;
+            run.StarSecureRewarded = false;
             run.AwaitingChoice = true;
             run.GearWindow = true;
             run.OfferedPacts.Clear();
@@ -284,11 +294,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
-        public static List<GameEvent> Secure(Profile p)
+        public static List<GameEvent> Secure(Profile p) => Secure(p, true);
+
+        private static List<GameEvent> Secure(Profile p, bool awardStarXp)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (awardStarXp && !run.StarSecureRewarded)
+                AddStarXp(p, run.HeroKey, StarProgression.SecureXp, ev);
+            run.StarSecureRewarded = true;
             int heat = run.Heat;
             int relics = run.Satchel.Count;
             int bonusShards = run.SatchelShards * heat / 4;
@@ -464,7 +479,8 @@ namespace SodRpg.Core.Game
             var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
-                ev.AddRange(Secure(p));
+                ev.AddRange(Secure(p, false));
+                AddStarXp(p, run.HeroKey, StarProgression.VictoryXp, ev);
                 p.Stats.Victories++;
                 p.Stats.BestVictoryStartDepth = Math.Max(p.Stats.BestVictoryStartDepth, run.StartDepth);
                 ev.AddRange(AddXp(p, Content.VictoryXp));
@@ -829,19 +845,32 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
+        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev)
+        {
+            if (string.IsNullOrEmpty(heroKey)) return;
+            var hero = p.Hero(heroKey);
+            int before = StarProgression.Points(hero.StarXp);
+            StarProgression.AddXp(hero, amount);
+            int gained = StarProgression.Points(hero.StarXp) - before;
+            if (gained <= 0) return;
+            ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
+                $"{heroKey}の星図ポイントが{gained}増えました。",
+                $"{heroKey} earned {gained} star map point(s).")));
+            AddHint(p, Hint.TalentPoints, ev);
+        }
+
         public static List<GameEvent> AddXp(Profile p, int amount)
         {
             var ev = new List<GameEvent>();
             if (amount <= 0 || p.DreamLevel >= Content.MaxDreamLevel) return ev;
-            p.DreamXp += amount;
+            p.DreamXp = (int)Math.Min(int.MaxValue, (long)p.DreamXp + amount);
             while (p.DreamLevel < Content.MaxDreamLevel && p.DreamXp >= Content.XpToNext(p.DreamLevel))
             {
                 p.DreamXp -= Content.XpToNext(p.DreamLevel);
                 p.DreamLevel++;
                 ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                    $"夢のレベルが{p.DreamLevel}に上がりました！ 星図のポイントが1増えました。",
-                    $"Dream Level {p.DreamLevel}! +1 star map point")));
-                AddHint(p, Hint.TalentPoints, ev);
+                    $"夢のレベルが{p.DreamLevel}に上がりました！",
+                    $"Dream Level {p.DreamLevel}!")));
             }
             if (p.DreamLevel >= Content.MaxDreamLevel) p.DreamXp = 0;
             return ev;
@@ -1173,7 +1202,7 @@ namespace SodRpg.Core.Game
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += kv.Value;
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
             return n;
         }
 
@@ -1182,30 +1211,49 @@ namespace SodRpg.Core.Game
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone && t.Tier == 1) n += kv.Value;
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone && t.Tier == 1) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
             return n;
         }
 
         public static bool DeepStarsOpen(Profile p, string heroKey) => Tier1Ranks(p.Hero(heroKey), heroKey) >= Content.DeepStarRequirement;
 
+        /// <summary>購入と発動に共通する条件。直前だけでなくルートの全前提を確かめる。</summary>
+        public static bool TalentUnlocked(HeroState h, string heroKey, TalentDef t)
+        {
+            if (h == null || t == null || !BelongsTo(t, heroKey)) return false;
+            if (t.Tier >= 2 && Tier1Ranks(h, heroKey) < Content.DeepStarRequirement) return false;
+            var node = t;
+            // 順番が必ず1つずつ戻るため、不正な循環でもルートは開かない。
+            while (!string.IsNullOrEmpty(node.PrerequisiteId))
+            {
+                if (!Content.TryGetTalent(node.PrerequisiteId, out var parent)
+                    || !BelongsTo(parent, heroKey) || parent.IsKeystone
+                    || parent.RouteId != t.RouteId || parent.RouteOrder != node.RouteOrder - 1
+                    || parent.RouteOrder < 1
+                    || !h.Talents.TryGetValue(parent.Id, out int rank) || rank <= 0) return false;
+                node = parent;
+            }
+            return string.IsNullOrEmpty(t.RouteId) || node.RouteOrder == 1;
+        }
+
         public static int RouteRanks(HeroState h, Line route)
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == null && t.Route == route && !t.IsKeystone) n += kv.Value;
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == null && t.Route == route && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
             return n;
         }
 
         public static int SpentPoints(HeroState h)
         {
-            int n = 0;
+            long n = 0;
             foreach (var kv in h.Talents)
-                n += kv.Value * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
+                n += (long)Math.Max(0, kv.Value) * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
             if (h.Keystone != null) n += Content.KeystoneCost;
-            return n;
+            return (int)Math.Min(int.MaxValue, n);
         }
 
-        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints - SpentPoints(p.Hero(heroKey));
+        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey));
 
         public static void AddTalentRank(Profile p, string heroKey, string talentId)
         {
@@ -1214,8 +1262,8 @@ namespace SodRpg.Core.Game
             var h = p.Hero(heroKey);
             int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
             if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
-            if (t.Tier == 2 && !DeepStarsOpen(p, heroKey))
-                throw new InvalidOperationException(Loc.T($"奥の星は、このツリーの手前の星に{Content.DeepStarRequirement}ポイント振ると開きます。", $"Deep stars open after {Content.DeepStarRequirement} points in this tree's first stars."));
+            if (!TalentUnlocked(h, heroKey, t))
+                throw new InvalidOperationException(Loc.T("奥の星を開き、前の星に1段以上振る必要があります。", "Open the deep stars and invest at least one rank in each preceding star."));
             if (FreePoints(p, heroKey) < t.RankCost)
                 throw new InvalidOperationException(t.RankCost > 1
                     ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")

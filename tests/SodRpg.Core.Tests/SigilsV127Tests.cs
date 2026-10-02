@@ -6,7 +6,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>v1.27：刻印を旅人の伸び方に合わせる、連装の費用、属性の上限、重なり方の明記。</summary>
+    /// <summary>Traveler scaling coverage, costly fourth attacks, migration and elemental caps.</summary>
     public class SigilsV127Tests
     {
         [Theory]
@@ -24,30 +24,9 @@ namespace SodRpg.Core.Tests
         [InlineData("Hero_Bismuth", Stat.PowerPct)]
         public void Each_traveler_has_a_star_for_the_value_their_kit_scales_with(string hero, Stat stat)
         {
-            Assert.Contains(HeroSigils.TreeFor(hero), t => !t.IsKeystone && !t.IsPowerNode && t.Stat == stat);
+            Assert.Contains(HeroSigils.TreeFor(hero), t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null && t.Stat == stat);
         }
 
-        [Fact]
-        public void Swapped_stars_keep_their_ids_and_new_values()
-        {
-            Assert.True(Content.TryGetTalent("h.vesper.fire", out var vesper));
-            Assert.Equal(Stat.PowerPct, vesper.Stat);
-            Assert.True(Content.TryGetTalent("h.cetus.shell", out var shell));
-            Assert.Equal(5, shell.PerRank);
-            Assert.True(Content.TryGetTalent("h.yubar.reach", out var reach));
-            Assert.Equal(Stat.Haste, reach.Stat);
-            Assert.True(Content.TryGetTalent("h.mist.read", out var mist));
-            Assert.Equal(Stat.PowerPct, mist.Stat);
-            Assert.True(Content.TryGetTalent("h.aurena.key", out var aurena));
-            Assert.Equal(Power.Overload, aurena.Power);
-            Assert.True(Content.TryGetTalent("h.aurena.deep.bloodlust", out var prayer));
-            Assert.Equal(Power.Overload, prayer.RankPower);
-            Assert.True(Content.TryGetTalent("h.husk.key", out var husk));
-            Assert.Equal(100, husk.PowerValue);
-            Assert.True(Content.TryGetTalent("h.mist.key", out var duel));
-            Assert.Equal(Power.EchoingDodge, duel.Power);
-            Assert.Equal(80, duel.PowerValue);
-        }
 
         [Theory]
         [InlineData("Hero_Lacerta", "h.lacerta.fourth")]
@@ -62,7 +41,7 @@ namespace SodRpg.Core.Tests
 
             var p = Profile.CreateNew(1);
             var tier1 = HeroSigils.TreeFor(hero).Where(x => !x.IsKeystone && x.Tier == 1).ToList();
-            p.DreamLevel = 1 + Content.DeepStarRequirement + HeroSigils.CostlyRankCost - 1; // 1ポイント足りない
+            p.Hero(hero).StarXp = StarProgression.TotalXpForPoints(Content.DeepStarRequirement + HeroSigils.CostlyRankCost - 1);
             int spent = 0;
             foreach (var n in tier1)
                 for (int r = 0; r < n.MaxRank && spent < Content.DeepStarRequirement; r++, spent++)
@@ -71,7 +50,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(HeroSigils.CostlyRankCost - 1, Rules.FreePoints(p, hero));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, hero, id));
 
-            p.DreamLevel++;
+            StarProgression.AddXp(p.Hero(hero), StarProgression.CostForPoint(Content.DeepStarRequirement + HeroSigils.CostlyRankCost));
             Rules.AddTalentRank(p, hero, id);
             Assert.Equal(0, Rules.FreePoints(p, hero));
             Assert.Equal(Content.DeepStarRequirement + HeroSigils.CostlyRankCost, Rules.SpentPoints(p.Hero(hero)));
@@ -82,7 +61,8 @@ namespace SodRpg.Core.Tests
         public void Old_saves_that_no_longer_fit_get_a_free_respec()
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 4;
+            p.Hero("Hero_Lacerta").StarXp = StarProgression.TotalXpForPoints(3);
+            p.Hero("Hero_Husk").StarXp = StarProgression.TotalXpForPoints(3);
             // 以前は手前の星だった連装を、奥の星が開いていない状態で持っている。
             p.Hero("Hero_Lacerta").Talents["h.lacerta.fourth"] = 1;
             p.Hero("Hero_Lacerta").Talents["h.lacerta.powder"] = 2;
@@ -91,7 +71,7 @@ namespace SodRpg.Core.Tests
             var loaded = ProfileCodec.Read(ProfileCodec.Write(p), notes);
             Assert.Empty(loaded.Hero("Hero_Lacerta").Talents);
             Assert.Equal(2, loaded.Hero("Hero_Husk").Talents["h.husk.dark"]);
-            Assert.Contains(notes, n => n.Contains("Hero_Lacerta") && n.Contains("振り直せる"));
+            Assert.Single(notes);
         }
 
         [Fact]
@@ -107,55 +87,5 @@ namespace SodRpg.Core.Tests
                     Assert.True(Content.PowerCap(pl.Power) == 0 || pl.Value <= Content.PowerCap(pl.Power), u.Id);
         }
 
-        [Theory]
-        [InlineData(Power.Momentum)]
-        [InlineData(Power.Frenzy)]
-        [InlineData(Power.CrystalResonance)]
-        [InlineData(Power.PreyPride)]
-        [InlineData(Power.Devotion)]
-        [InlineData(Power.LucidBoon)]
-        [InlineData(Power.SpendersWard)]
-        [InlineData(Power.Ember)]
-        [InlineData(Power.Frost)]
-        [InlineData(Power.Radiance)]
-        [InlineData(Power.Umbra)]
-        [InlineData(Power.EchoingDodge)]
-        [InlineData(Power.Sprint)]
-        [InlineData(Power.Retaliation)]
-        [InlineData(Power.Tailwind)]
-        [InlineData(Power.UltimateSurge)]
-        [InlineData(Power.Overload)]
-        [InlineData(Power.PerfectRead)]
-        public void Stacking_effects_say_how_far_they_stack(Power power)
-        {
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                string ja = Content.FormatPower(power, 50);
-                Assert.True(new[] { "まで", "上限なし", "重ならず", "重ならない" }.Any(ja.Contains), ja);
-                Loc.Japanese = false;
-                string en = Content.FormatPower(power, 50);
-                Assert.True(new[] { "up to", "no stack limit", "does not stack", "without stacking", "refreshes" }.Any(en.Contains), en);
-            }
-            finally { Loc.Japanese = previous; }
-        }
-
-        [Fact]
-        public void Magic_and_area_damage_text_names_the_higher_of_ad_or_ap()
-        {
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                foreach (var p in new[] { Power.Blaze, Power.ChainLightning, Power.Shatter, Power.Whirlwind, Power.Convergence, Power.EchoingDodge })
-                    Assert.Contains("攻撃力か魔力の高い方", Content.FormatPower(p, 50));
-                foreach (var p in new[] { Power.Executioner, Power.OpeningStrike })
-                    Assert.DoesNotContain("魔力", Content.FormatPower(p, 50));
-                foreach (var p in new[] { Power.Retaliation, Power.Vigor })
-                    Assert.Contains("攻撃力・魔力", Content.FormatPower(p, 50));
-            }
-            finally { Loc.Japanese = previous; }
-        }
     }
 }

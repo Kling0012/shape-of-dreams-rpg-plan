@@ -9,12 +9,12 @@ namespace SodRpg.Core.Tests
     {
         private const string Hero = "Hero_Vesper";
         private const string DeepStat = "h.vesper.deep.tenacity";
-        private const string DeepPower = "h.vesper.deep.thorns";
+        private const string DeepPower = "h.vesper.deep.bulwark";
 
         private static Profile NewProfile(int firstStarRanks = 6)
         {
             var p = Profile.CreateNew(1);
-            p.DreamLevel = 30;
+            p.Hero(Hero).StarXp = StarProgression.TotalXpForPoints(29);
             for (int i = 0; i < firstStarRanks; i++)
                 Rules.AddTalentRank(p, Hero, i < 3 ? "h.vesper.fire" : "h.vesper.wall");
             return p;
@@ -64,31 +64,31 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(1, 8)]
-        [InlineData(2, 16)]
-        [InlineData(3, 24)]
+        [InlineData(1, 6)]
+        [InlineData(2, 12)]
+        [InlineData(3, 18)]
         public void Ranked_power_nodes_add_power_without_adding_a_stat(int rank, int value)
         {
             var p = NewProfile();
             AddRanks(p, DeepPower, rank);
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(value, b.Get(Power.Thorns));
-            Assert.Equal(0, b.Get(Stat.AttackPct));
-            Assert.Equal(12, b.Get(Stat.PowerPct)); // v1.27：炎の誓い → 聖なる力（魔力 4%）
-            Assert.Equal(18, b.Get(Stat.Armor));
+            Assert.Equal(value, b.Get(Power.Bulwark));
+            Assert.Equal(9, b.Get(Stat.AttackPct));
+            Assert.Equal(0, b.Get(Stat.PowerPct));
+            Assert.Equal(24, b.Get(Stat.CritDamagePct));
         }
 
         [Theory]
-        [InlineData(1, 8)]
-        [InlineData(2, 16)]
-        [InlineData(3, 24)]
+        [InlineData(1, 3)]
+        [InlineData(2, 6)]
+        [InlineData(3, 9)]
         public void Deep_stat_nodes_keep_stat_rank_scaling(int rank, int value)
         {
             var p = NewProfile();
             AddRanks(p, DeepStat, rank);
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(value, b.Get(Stat.Tenacity));
-            Assert.Equal(0, b.Get(Power.Thorns));
+            Assert.Equal(value, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(0, b.Get(Power.Bulwark));
         }
 
         [Theory]
@@ -111,14 +111,14 @@ namespace SodRpg.Core.Tests
             p.Hero(Hero).Talents[DeepStat] = 99;
             p.Hero(Hero).Talents[DeepPower] = 99;
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(24, b.Get(Stat.Tenacity));
-            Assert.Equal(24, b.Get(Power.Thorns));
+            Assert.Equal(9, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(18, b.Get(Power.Bulwark));
         }
 
         [Theory]
-        [InlineData(0, 3, 2, 36)]
-        [InlineData(10, 2, 2, 39)]
-        [InlineData(60, 3, 0, 80)]
+        [InlineData(0, 3, 2, 27)]
+        [InlineData(10, 2, 2, 33)]
+        [InlineData(70, 3, 0, 80)]
         [InlineData(40, 3, 2, 80)]
         public void Ranked_powers_stack_with_relics_before_daily_boosts_and_the_final_cap(int relicValue, int ranks, int dailyId, int expected)
         {
@@ -127,13 +127,13 @@ namespace SodRpg.Core.Tests
             if (relicValue > 0)
             {
                 var r = new Relic { Uid = "thorns", BaseId = "weapon.blaze_greatsword", Rarity = Rarity.Epic, ItemLevel = 1 };
-                r.Powers.Add(new PowerLine(Power.Thorns, relicValue));
+                r.Powers.Add(new PowerLine(Power.Bulwark, relicValue));
                 p.Stash.Add(r);
                 Rules.Equip(p, Hero, r.Uid);
             }
             var b = Build.Compute(p, Hero, 0, null, dailyId);
-            Assert.Equal(expected, b.Get(Power.Thorns));
-            Assert.True(b.Get(Power.Thorns) <= Content.PowerCap(Power.Thorns));
+            Assert.Equal(expected, b.Get(Power.Bulwark));
+            Assert.True(b.Get(Power.Bulwark) <= Content.PowerCap(Power.Bulwark));
         }
 
         [Fact]
@@ -144,17 +144,17 @@ namespace SodRpg.Core.Tests
             h.Talents[DeepStat] = 2;
             h.Talents[DeepPower] = 3;
             var b = Build.Compute(p, Hero, 0, null, 2);
-            Assert.Equal(0, b.Get(Stat.Tenacity));
-            Assert.Equal(0, b.Get(Power.Thorns));
-            Assert.Equal(12, b.Get(Stat.PowerPct)); // v1.27：炎の誓い → 聖なる力（魔力 4%）
-            Assert.Equal(12, b.Get(Stat.Armor));
+            Assert.Equal(0, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(0, b.Get(Power.Bulwark));
+            Assert.Equal(9, b.Get(Stat.AttackPct));
+            Assert.Equal(16, b.Get(Stat.CritDamagePct));
             Assert.Equal(2, h.Talents[DeepStat]);
             Assert.Equal(3, h.Talents[DeepPower]);
 
             Rules.AddTalentRank(p, Hero, "h.vesper.wall");
             b = Build.Compute(p, Hero, 0, null, 2);
-            Assert.Equal(16, b.Get(Stat.Tenacity));
-            Assert.Equal(36, b.Get(Power.Thorns));
+            Assert.Equal(6, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(27, b.Get(Power.Bulwark));
         }
 
         [Fact]
@@ -182,7 +182,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(5, 0, 0)]
-        [InlineData(6, 16, 24)]
+        [InlineData(6, 6, 18)]
         public void Save_load_keeps_deep_ranks_even_when_their_requirement_is_unmet(int firstStarRanks, int statValue, int powerValue)
         {
             var p = NewProfile(firstStarRanks);
@@ -196,8 +196,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(firstStarRanks, Rules.Tier1Ranks(q.Hero(Hero), Hero));
             Assert.Equal(Rules.FreePoints(p, Hero), Rules.FreePoints(q, Hero));
             var b = Build.Compute(q, Hero, 0);
-            Assert.Equal(statValue, b.Get(Stat.Tenacity));
-            Assert.Equal(powerValue, b.Get(Power.Thorns));
+            Assert.Equal(statValue, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(powerValue, b.Get(Power.Bulwark));
         }
 
         [Fact]
@@ -211,11 +211,11 @@ namespace SodRpg.Core.Tests
             Rules.ResetTalents(p, Hero);
             Assert.Empty(p.Hero(Hero).Talents);
             Assert.Null(p.Hero(Hero).Keystone);
-            Assert.Equal(p.TalentPoints, Rules.FreePoints(p, Hero));
+            Assert.Equal(p.TalentPoints(Hero), Rules.FreePoints(p, Hero));
             Assert.False(Rules.DeepStarsOpen(p, Hero));
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(0, b.Get(Stat.Tenacity));
-            Assert.Equal(0, b.Get(Power.Thorns));
+            Assert.Equal(0, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(0, b.Get(Power.Bulwark));
             Assert.Equal(0, b.Get(Power.Retaliation));
         }
     }

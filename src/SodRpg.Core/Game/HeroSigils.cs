@@ -1,9 +1,10 @@
+using System;
 using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
     /// <summary>
-    /// 旅人の刻印：本体の旅人ごとのキットに効く刻印ツリー（手前の星・奥の星・到達刻印）。
+    /// 旅人の刻印：核（手前・奥・到達刻印）、記憶ごとのルート、夢の輪。
     /// 本体の星座（汎用の恒久強化）と重ならないよう、その旅人の戦い方に関わる値だけを扱う。
     /// 本体以外の旅人（他MODのキャラ）は従来の汎用ツリー（Content.Talents）を使う。
     /// </summary>
@@ -34,7 +35,7 @@ namespace SodRpg.Core.Game
         private static TalentDef Key(string hero, string id, string ja, string en, Power power, int value, string descJa, string descEn)
             => new TalentDef("h." + id, Line.Offense, new Txt(ja, en), power, value, new Txt(descJa, descEn)) { HeroKey = hero };
 
-        public static readonly IReadOnlyList<TalentDef> All = new[]
+        private static readonly TalentDef[] Core = new[]
         {
             DeepCostly("Hero_Vesper", "vesper.fourth", "四の型", "Fourth Form", Stat.FourthAttackShift),
             Node("Hero_Vesper", "vesper.fire", "聖なる剛力", "Holy Strength", Stat.AttackPct, 3),
@@ -97,7 +98,7 @@ namespace SodRpg.Core.Game
             DeepNode("Hero_Yubar", "yubar.deep.life", "星の器", "Stellar Vessel", Stat.MaxHealthPct, 3),
             DeepPower("Hero_Yubar", "yubar.deep.move", "流れ星", "Shooting Star", Power.Finale, 8),
             DeepPower("Hero_Yubar", "yubar.deep.surge", "重力の昂り", "Gravity Surge", Power.UltimateSurge, 6),
-            DeepPower("Hero_Yubar", "yubar.deep.shield", "事象の地平", "Event Horizon", Power.StarShield, 5),
+            DeepPower("Hero_Yubar", "yubar.deep.shield", "事象の地平", "Event Horizon", Power.StarShield, 4),
             DeepPower("Hero_Yubar", "yubar.deep.radiance", "星屑の輝き", "Stardust Glow", Power.Radiance, 20),
 
             Node("Hero_Husk", "husk.dark", "深い影", "Deep Shadow", Stat.DarkAmp, 8),
@@ -181,25 +182,40 @@ namespace SodRpg.Core.Game
             DeepPower("Hero_Bismuth", "bismuth.deep.umbra", "闇の頁", "Page of Shadow", Power.Umbra, 15),
         };
 
-        public static bool HasTree(string heroKey)
+        /// <summary>核のIDを維持したまま、記憶ルートと夢の輪を加える。</summary>
+        public static readonly IReadOnlyList<TalentDef> All = CreateAll();
+        private static readonly Dictionary<string, IReadOnlyList<TalentDef>> Trees = CreateTrees();
+
+        private static IReadOnlyList<TalentDef> CreateAll()
         {
-            foreach (var t in All)
-                if (t.HeroKey == heroKey) return true;
-            return false;
+            var routes = HeroStarRoutes.All;
+            var all = new TalentDef[Core.Length + routes.Count];
+            Array.Copy(Core, all, Core.Length);
+            for (int i = 0; i < routes.Count; i++) all[Core.Length + i] = routes[i];
+            return all;
         }
 
-        /// <summary>その旅人のツリー（本体の旅人なら刻印、それ以外は汎用）。</summary>
-        public static IEnumerable<TalentDef> TreeFor(string heroKey)
+        private static Dictionary<string, IReadOnlyList<TalentDef>> CreateTrees()
         {
-            if (HasTree(heroKey))
+            var groups = new Dictionary<string, List<TalentDef>>(StringComparer.Ordinal);
+            foreach (var t in All)
             {
-                foreach (var t in All)
-                    if (t.HeroKey == heroKey) yield return t;
+                if (!groups.TryGetValue(t.HeroKey, out var tree))
+                {
+                    tree = new List<TalentDef>();
+                    groups.Add(t.HeroKey, tree);
+                }
+                tree.Add(t);
             }
-            else
-            {
-                foreach (var t in Content.Talents) yield return t;
-            }
+            var trees = new Dictionary<string, IReadOnlyList<TalentDef>>(StringComparer.Ordinal);
+            foreach (var group in groups) trees.Add(group.Key, group.Value.ToArray());
+            return trees;
         }
+
+        public static bool HasTree(string heroKey) => heroKey != null && Trees.ContainsKey(heroKey);
+
+        /// <summary>旅人ごとに一度だけ分類する。未知の旅人は従来の汎用ツリー。</summary>
+        public static IReadOnlyList<TalentDef> TreeFor(string heroKey) =>
+            heroKey != null && Trees.TryGetValue(heroKey, out var tree) ? tree : Content.Talents;
     }
 }

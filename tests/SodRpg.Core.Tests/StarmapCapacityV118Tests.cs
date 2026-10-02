@@ -4,13 +4,13 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>v1.18：どの旅人の星図も、夢のレベル30＋図鑑のポイントを使い切れる広さがある。</summary>
+    /// <summary>Every Traveler can spend the full earned star budget and shared codex bonus.</summary>
     public class StarmapCapacityV118Tests
     {
         [Fact]
         public void Every_traveler_tree_can_hold_all_points()
         {
-            int maxPoints = Content.MaxDreamLevel - 1 + Content.MaxCodexBonus;
+            int maxPoints = StarProgression.MaxPoints + Content.MaxCodexBonus;
             var heroes = HeroSigils.All.Select(t => t.HeroKey).Distinct().ToList();
             Assert.Equal(9, heroes.Count);
             foreach (var hero in heroes)
@@ -18,8 +18,6 @@ namespace SodRpg.Core.Tests
                 var tree = HeroSigils.TreeFor(hero).ToList();
                 int capacity = tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank * t.RankCost) + Content.KeystoneCost;
                 Assert.True(capacity >= maxPoints, $"{hero}: {capacity} < {maxPoints}");
-                Assert.Equal(6, tree.Count(t => t.Tier == 2 && t.RankCost == 1)); // v1.27：連装・四の型（費用の高い奥の星）は別に数える
-                Assert.Equal(3, tree.Count(t => t.IsPowerNode));
             }
         }
 

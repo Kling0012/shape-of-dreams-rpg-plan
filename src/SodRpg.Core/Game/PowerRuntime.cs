@@ -73,8 +73,8 @@ namespace SodRpg.Core.Game
         /// <summary>連携（記憶の余韻）の持続時間。効果は重ならず、時間だけ伸びる。</summary>
         public const float LinkSurgeDuration = 5f;
 
-        private float _linkSurgeUntil;
-        private int _linkSurgeValue;
+        private readonly Dictionary<LinkDef, float> _linkSurges = new Dictionary<LinkDef, float>();
+        private readonly List<LinkDef> _expiredLinkSurges = new List<LinkDef>();
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -188,12 +188,42 @@ namespace SodRpg.Core.Game
         /// <summary>連携（守り）：条件を満たしている間の防御（ホストの定期走査で更新）。</summary>
         public int LinkGuardArmor { get; set; }
 
-        /// <summary>連携（記憶の余韻）：効果は重ならず、残り時間だけ伸ばす（値は大きい方を保つ）。</summary>
-        public void OnLinkSurge(float now, int value)
+        /// <summary>余韻は重ならない。発動元ごとに、装着中だけ5秒の期限を延長する。</summary>
+        public void OnLinkSurge(float now, LinkDef source)
         {
-            if (now >= _linkSurgeUntil) _linkSurgeValue = 0;
-            if (value > _linkSurgeValue) _linkSurgeValue = value;
-            _linkSurgeUntil = now + LinkSurgeDuration;
+            if (source != null && source.Kind == LinkKind.MemorySurge && source.Value > 0)
+                _linkSurges[source] = now + LinkSurgeDuration;
+        }
+
+        /// <summary>装着条件を外した余韻だけを消す。他の有効な発動元は残す。</summary>
+        public void RetainLinkSurges(IReadOnlyList<LinkDef> satisfied, float now)
+        {
+            _expiredLinkSurges.Clear();
+            foreach (var pair in _linkSurges)
+            {
+                bool keep = false;
+                if (now < pair.Value && satisfied != null)
+                    for (int i = 0; i < satisfied.Count; i++)
+                        if (ReferenceEquals(satisfied[i], pair.Key)) { keep = true; break; }
+                if (!keep) _expiredLinkSurges.Add(pair.Key);
+            }
+            foreach (var source in _expiredLinkSurges) _linkSurges.Remove(source);
+        }
+
+        /// <summary>使った記憶の連携加速を合計する。1回の発動でクールダウン全量（100%）まで。</summary>
+        public static int LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
+        {
+            long total = 0;
+            if (satisfied == null || usedMemory == null) return 0;
+            for (int i = 0; i < satisfied.Count; i++)
+            {
+                var link = satisfied[i];
+                if (link == null || link.Kind != LinkKind.MemoryHaste || link.Requires == null
+                    || Array.IndexOf(link.Requires, usedMemory) < 0) continue;
+                total += Math.Max(0, link.Value);
+                if (total >= 100) return 100;
+            }
+            return (int)total;
         }
 
         /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
@@ -320,8 +350,8 @@ namespace SodRpg.Core.Game
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
             LinkGuardArmor = 0;
-            _linkSurgeValue = 0;
-            _linkSurgeUntil = 0f;
+            _linkSurges.Clear();
+            _expiredLinkSurges.Clear();
         }
 
         public void OnKill(float now)
@@ -450,7 +480,9 @@ namespace SodRpg.Core.Game
         {
             if (now > _momentumUntil) MomentumStacks = 0;
             // 連携（v1.26）：同調は常時、記憶の余韻は条件の記憶を使った後の5秒間。
-            int linkSurge = now < _linkSurgeUntil ? _linkSurgeValue : 0;
+            int linkSurge = 0;
+            foreach (var pair in _linkSurges)
+                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.Value);
             int linkAttack = LinkAttunePct + linkSurge;
             int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
             // 逆襲・万全は攻撃力・魔力の両方を上げる（v1.27）。

@@ -300,7 +300,7 @@ namespace SodRpg.Core.Tests
         public void Talents_respect_points_ranks_and_keystone_requirement()
         {
             var p = NewProfile();
-            p.DreamLevel = 10; // 9 points
+            p.Hero("H").StarXp = StarProgression.TotalXpForPoints(9);
             Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, "H", "t.off.key"));
             Rules.AddTalentRank(p, "H", "t.off.edge");
             Rules.AddTalentRank(p, "H", "t.off.edge");
@@ -318,8 +318,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(9, b.Get(Stat.AttackSpeedPct));
             Assert.Equal(4, b.Get(Power.Momentum));
 
-            // 他のキャラは独立に配分できる
-            Assert.Equal(9, Rules.FreePoints(p, "Other"));
+            // Unplayed Travelers do not inherit another Traveler's earned points.
+            Assert.Equal(0, Rules.FreePoints(p, "Other"));
             Rules.ResetTalents(p, "H");
             Assert.Equal(9, Rules.FreePoints(p, "H"));
         }
@@ -376,6 +376,7 @@ namespace SodRpg.Core.Tests
             w.Locked = true;
             Rules.Equip(p, "Hero_Lacerta", w.Uid);
             p.DreamLevel = 5;
+            p.Hero("Hero_Lacerta").StarXp = StarProgression.TotalXpForPoints(4);
             Rules.AddTalentRank(p, "Hero_Lacerta", "h.lacerta.powder");
             Rules.BeginRun(p, "run-x");
             Rules.Delve(p);

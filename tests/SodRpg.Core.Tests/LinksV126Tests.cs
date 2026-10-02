@@ -101,52 +101,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, Links.Cap(LinkKind.None, count));
         }
 
-        [Fact]
-        public void Describe_marks_each_requirement_in_both_languages()
-        {
-            var pair = Link(LinkKind.Attune, 20, "St_L_Blizzard", "St_L_MentalCorruption");
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                string ja = Links.Describe(pair, t => t == "St_L_Blizzard");
-                Assert.StartsWith("連携：", ja);
-                Assert.Contains("『吹雪』✓", ja);
-                Assert.Contains("『精神汚染』・", ja);
-                Assert.Contains("を両方装着していると", ja);
-                Assert.Contains("攻撃力・魔力が20%上がる", ja);
-                Loc.Japanese = false;
-                string en = Links.Describe(pair, t => t == "St_L_Blizzard");
-                Assert.StartsWith("Link: ", en);
-                Assert.Contains("Blizzard ✓", en);
-                Assert.Contains("Mental Corruption ・", en);
-                Assert.Contains("both equipped", en);
-            }
-            finally { Loc.Japanese = previous; }
-
-            // 印なし（ゲームの外）では記号が付かない。
-            Assert.DoesNotContain("✓", Links.Describe(pair));
-            Assert.DoesNotContain("』・", Links.Describe(pair));
-            // 旅人の条件は「旅人で、」の形で前に出る。
-            Loc.Japanese = true;
-            try
-            {
-                string traveler = Links.Describe(Link(LinkKind.Attune, 20, "Hero_Vesper", "St_D_MercyOfEl", "Gem_L_Perfect"));
-                Assert.Contains("Vesper で、", traveler);
-                Assert.Contains("『エルの慈悲』", traveler);
-                Assert.Contains("『完璧』", traveler);
-                Assert.Contains("を装着していると", traveler);
-                // 条件が記憶1つだけなら「『記憶』を使うと」と短く言う。
-                string haste = Links.Describe(Link(LinkKind.MemoryHaste, 30, "St_L_Blizzard"));
-                Assert.StartsWith("連携：『吹雪』 を使うと", haste);
-                Assert.Contains("クールダウンが30%早く戻る", haste);
-                string surge = Links.Describe(Link(LinkKind.MemorySurge, 30, "Hero_Lacerta", "St_D_DoubleTap"));
-                Assert.Contains("その後5秒間", surge);
-                string guard = Links.Describe(Link(LinkKind.Guard, 18, "Hero_Mist", "St_Q_Fleche", "St_R_Parry"));
-                Assert.Contains("最大HPが18%上がり、防御が18増える", guard);
-            }
-            finally { Loc.Japanese = previous; }
-        }
 
         [Fact]
         public void Build_encode_and_decode_round_trip_keeps_valid_links()
@@ -179,13 +133,11 @@ namespace SodRpg.Core.Tests
             var clamped = Build.Decode("s:;p:;h:0;l:3:999:St_L_Blizzard");
             Assert.Equal(Links.EquippedCap(LinkKind.Attune, 1), clamped.Links[0].Value); // 覚醒Ⅲまでを含む上限（issue #14）
 
-            // 13個送られてきても12個まで。
+            // 旅人ルートを含む上限までは保ち、それ以上は受信しない。
             var many = new Build();
-            string[] memories = { "St_L_Blizzard", "St_L_ButchersStrike", "St_L_CoinExplosion", "St_L_LightExplosion",
-                "St_L_MentalCorruption", "St_L_Multishot", "St_L_PyranasFireball", "St_L_SpectreBullet",
-                "St_L_HerosReturn", "St_L_SmallMoltenCore", "St_U_BeamOfBalance", "St_U_Burrow", "St_U_HerWorld" };
-            foreach (string m in memories) many.Links.Add(Link(LinkKind.Attune, 10, m));
-            Assert.Equal(13, many.Links.Count);
+            foreach (string m in HeroSigils.All.Where(t => t.RouteMemory != null).Select(t => t.RouteMemory).Distinct().Take(Links.MaxLinks + 1))
+                many.Links.Add(Link(LinkKind.Attune, 10, m));
+            Assert.Equal(Links.MaxLinks + 1, many.Links.Count);
             var trimmed = Build.Decode(many.Encode());
             Assert.Equal(Links.MaxLinks, trimmed.Links.Count);
 

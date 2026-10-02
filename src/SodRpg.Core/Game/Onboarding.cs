@@ -87,8 +87,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned"),
-                Body = new Txt("夢のレベルが上がり、ポイントを得ました。遠征の外で [F6] の「星図」タブを開き、使っている旅人の刻印に振りましょう。本体の旅人には専用の刻印があり、それ以外の旅人は破壊・生命・想像の3つの系統に振ります。",
-                    "Your Dream Level rose. Outside a run, open the [F6] Star Map tab and spend points on your Traveler's sigils, which boost that Traveler's own kit."),
+                Body = new Txt("この旅人の星の経験が溜まり、ポイントを得ました。撃破・確保・踏破で星の経験が増え、旅人ごとに最大150ポイントを得られます。図鑑のボーナスは全旅人に加わります。遠征の外で [F6] の「星図」から星に振りましょう。振り直しは無料です。",
+                    "This Traveler earned star experience and points. Kills, securing and victories earn up to 150 points independently per Traveler; codex bonuses apply to everyone. Outside a run, spend them in the [F6] Star Map. Resets are free."),
             },
             new HintDef
             {

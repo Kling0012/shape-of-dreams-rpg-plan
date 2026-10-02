@@ -33,6 +33,7 @@ namespace SodRpg.Mod
         private readonly Action _onClearedRoomsChanged;
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
+        private readonly Action<DreamforgePressureMsg> _onPressure;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
         private readonly Action<DreamforgeVariantMsg> _onVariant;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
@@ -73,12 +74,15 @@ namespace SodRpg.Mod
         private float _nextSave;
         private bool _buildDirty = true;
         private float _nextBuildSend;
+        private int _sentDreamLevel = -1;
         private Hero _lastHero;
 
         public Profile Profile { get; private set; }
         public string ActiveRunId { get; private set; }
         public bool HostConfirmed { get; private set; }
         public string HostSummary { get; private set; }
+        public float PressureHealthMultiplier { get; private set; } = 1f;
+        public float PressureDamageMultiplier { get; private set; } = 1f;
         public string LoadNotes { get; private set; }
         public string SaveError { get; private set; }
 
@@ -106,6 +110,7 @@ namespace SodRpg.Mod
             _onClearedRoomsChanged = OnClearedRoomsChanged;
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
+            _onPressure = OnPressure;
             _onNightmare = OnNightmare;
             _onVariant = OnVariant;
             _onTradeResult = OnTradeResult;
@@ -258,12 +263,13 @@ namespace SodRpg.Mod
                 if (results != null) results.ClientEvent_OnGameConcluded += _onConcluded;
             }
             var am = NetworkedManagerBase<ActorManager>.softInstance;
-            var actor = am != null ? am.serverActor : null;
-            if (actor != _clientRpcOn)
+            var actor = NetworkClient.active && am != null ? am.serverActor : null;
+            if (!ReferenceEquals(actor, _clientRpcOn))
             {
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
@@ -281,10 +287,13 @@ namespace SodRpg.Mod
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
+                PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+                _sentDreamLevel = -1;
                 _buildDirty = true;
                 if (actor != null)
                 {
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
@@ -317,6 +326,7 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
@@ -327,6 +337,11 @@ namespace SodRpg.Mod
             _cem = null;
             _results = null;
             _clientRpcOn = null;
+            HostConfirmed = false;
+            HostSummary = null;
+            PressureHealthMultiplier = PressureDamageMultiplier = 1f;
+            _sentDreamLevel = -1;
+            _buildDirty = true;
             Nightmare.Clear();
             NightmareSeenAt.Clear();
             ClearVariants();
@@ -347,7 +362,7 @@ namespace SodRpg.Mod
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
-            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids()));
+            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero)));
             if (pacts > 0) SendCurseClear();
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
@@ -744,8 +759,15 @@ namespace SodRpg.Mod
 
         private void OnApplied(DreamforgeAppliedMsg msg)
         {
-            HostConfirmed = true;
             HostSummary = msg?.summary;
+        }
+
+        private void OnPressure(DreamforgePressureMsg msg)
+        {
+            if (msg == null || msg.protocol != Protocol.Version) return;
+            PressureHealthMultiplier = msg.healthMultiplier;
+            PressureDamageMultiplier = msg.damageMultiplier;
+            HostConfirmed = true;
         }
 
         public string Secure()
@@ -807,6 +829,11 @@ namespace SodRpg.Mod
         {
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
+            if (_sentDreamLevel != Profile.DreamLevel)
+            {
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
             if (hero != _lastHero)
             {
                 _lastHero = hero;
@@ -817,6 +844,7 @@ namespace SodRpg.Mod
             string encoded = CurrentBuild(HeroKeyOf(hero)).Encode();
             _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildMsg { build = encoded, protocol = Protocol.Version });
             _buildDirty = false;
+            _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
 

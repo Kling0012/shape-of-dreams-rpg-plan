@@ -54,6 +54,7 @@ namespace SodRpg.Mod
             public bool SpawnProcessed;
             public StatBonus DepthBonus;
             public StatBonus SpecialBonus;
+            public bool PressureApplied;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
@@ -88,6 +89,16 @@ namespace SodRpg.Mod
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
         private readonly List<Hero> _scratch = new List<Hero>();
+        private readonly List<Build> _pressureBuilds = new List<Build>();
+        private readonly HashSet<DewPlayer> _pressurePlayers = new HashSet<DewPlayer>();
+        private readonly List<DewPlayer> _departedPlayers = new List<DewPlayer>();
+        private DreamPressure _pressure = DreamPressure.Neutral;
+        private int _pressurePlayerCount = -1;
+        private readonly DataProcessor<FinalStats> _pressureHealth;
+        private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
+        private readonly Action<DewPlayer> _onPressurePlayerAdded;
+        private readonly Action<DewPlayer> _onPressurePlayerRemoved;
+        private bool _pressureDirty = true;
 
         private Actor _registeredOn;
         private ClientEventManager _cem;
@@ -141,6 +152,15 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> dailyIdOfHost)
         {
             _dailyIdOfHost = dailyIdOfHost;
+            _pressureHealth = (ref FinalStats stats) => stats.maxHealth *= (float)_pressure.HealthMultiplier;
+            _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
+                damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
+            _onPressurePlayerAdded = player => _pressureDirty = true;
+            _onPressurePlayerRemoved = player =>
+            {
+                if (!ReferenceEquals(player, null)) _builds.Remove(player);
+                _pressureDirty = true;
+            };
             _onBuild = OnBuild;
             _onCurse = OnCurse;
             _onCurseClear = OnCurseClear;
@@ -169,12 +189,13 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active)
             {
-                if (_registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
+                if (_pressurePlayerCount >= 0 || _registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
                 return;
             }
             EnsureRegistered();
             if (_registeredOn == null) return;
             float now = Time.time;
+            if (_pressureDirty) RefreshPressure();
             PruneAndApplyPending();
             bool scan = now >= _nextAreaScan;
             if (scan)
@@ -195,7 +216,63 @@ namespace SodRpg.Mod
             {
                 _nextNightmareSync = now + 5f;
                 ResyncNightmares();
+                SendPressure();
             }
+        }
+
+        private void RefreshPressure(bool synchronize = false)
+        {
+            _pressureDirty = false;
+            _pressureBuilds.Clear();
+            _pressurePlayers.Clear();
+            // The game roster includes dead participants, but excludes lobby players and spectators.
+            foreach (var player in DewPlayer.gamePlayers)
+            {
+                if (player == null || !player.isHumanPlayer || !_pressurePlayers.Add(player)) continue;
+                _pressureBuilds.Add(_builds.TryGetValue(player, out var received) ? received.Build : null);
+            }
+            _departedPlayers.Clear();
+            foreach (var player in _builds.Keys)
+                if (!_pressurePlayers.Contains(player)) _departedPlayers.Add(player);
+            foreach (var player in _departedPlayers) _builds.Remove(player);
+            var pressure = DreamPressure.Average(_pressureBuilds);
+            bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
+                || pressure.DamageMultiplier != _pressure.DamageMultiplier;
+            synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
+            _pressurePlayerCount = _pressureBuilds.Count;
+            _pressure = pressure;
+            if (changed)
+            {
+                foreach (var rt in _monsters.Values)
+                {
+                    if (!rt.PressureApplied || rt.Monster == null || rt.Monster.Status == null) continue;
+                    // CalculateStats starts from base stats and preserves current/max health itself.
+                    rt.Monster.Status.MarkStatsDirty();
+                    rt.Monster.Status.CalculateStatsIfDirty();
+                }
+            }
+            if (synchronize) SendPressure();
+        }
+
+        private void SendPressure()
+        {
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgePressureMsg
+            {
+                protocol = Protocol.Version,
+                healthMultiplier = (float)_pressure.HealthMultiplier,
+                damageMultiplier = (float)_pressure.DamageMultiplier
+            });
+        }
+
+        private void ApplyPressure(MonsterRuntime rt)
+        {
+            if (rt.PressureApplied) return;
+            var monster = rt.Monster;
+            // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
+            monster.Status.finalStatsProcessors.Add(_pressureHealth, int.MaxValue);
+            monster.dealtDamageProcessor.Add(_pressureDamage);
+            rt.PressureApplied = true;
+            monster.Status.CalculateStatsIfDirty();
         }
 
         /// <summary>生きている悪夢・変種を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
@@ -329,6 +406,18 @@ namespace SodRpg.Mod
         {
             var m = rt.Monster;
             if (m == null) return;
+            if (rt.PressureApplied)
+            {
+                try
+                {
+                    m.Status.finalStatsProcessors.Remove(_pressureHealth);
+                    m.Status.CalculateStatsIfDirty();
+                }
+                catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
+                try { m.dealtDamageProcessor.Remove(_pressureDamage); }
+                catch (Exception ex) { Log.Error("Host: unhook pressure damage " + ex); }
+                rt.PressureApplied = false;
+            }
             // Each removal is independent: one failed cleanup must not leave other hooks attached.
             try { m.ClientEntityEvent_OnStatusEffectAdded -= _onEnemyStatusAdded; }
             catch (Exception ex) { Log.Error("Host: unhook monster status " + ex); }
@@ -501,12 +590,6 @@ namespace SodRpg.Mod
             if (_spawnQueue.Count == 0) return;
             if (_zone != null && _zone.isInAnyTransition) return;
             float now = Time.time;
-            // 誰の Build もまだ届いていない間は、深度が分からないので待つ（最大15秒）。
-            if (_builds.Count == 0)
-            {
-                _spawnQueue.RemoveAll(x => x.Key == null || now - x.Value > 15f);
-                return;
-            }
             int depth = PartyDepth();
             int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
             double mult = (DailyDream.Get(dailyId)?.NightmareMult ?? 1.0) * PartyGearChanceMult();
@@ -524,10 +607,15 @@ namespace SodRpg.Mod
                     if (now - _spawnQueue[i].Value > 20f) _spawnQueue.RemoveAt(i);
                     continue;
                 }
+                if (m.owner == null || m.owner.isHumanPlayer) { _spawnQueue.RemoveAt(i); continue; }
+                if (!_monsters.TryGetValue(m, out var rt)) { _spawnQueue.RemoveAt(i); continue; }
+                ApplyPressure(rt);
+                // Pressure is already active; give the initial depth build time to arrive.
+                if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
                 _spawnQueue.RemoveAt(i);
-                if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
+                if (depth <= 0) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                if (!_monsters.TryGetValue(m, out var rt) || rt.SpawnProcessed) continue;
+                if (rt.SpawnProcessed) continue;
                 rt.SpawnProcessed = true;
                 try
                 {
@@ -703,8 +791,10 @@ namespace SodRpg.Mod
         {
             var am = NetworkedManagerBase<ActorManager>.softInstance;
             var actor = am != null ? am.serverActor : null;
-            if (actor != _registeredOn)
+            if (!ReferenceEquals(actor, _registeredOn))
             {
+                DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
+                DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
                 if (_registeredOn != null)
                 {
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
@@ -712,9 +802,16 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 }
+                foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
+                _runtimes.Clear();
+                _builds.Clear();
+                _pressurePlayerCount = -1;
+                _pressureDirty = true;
                 _registeredOn = actor;
                 if (actor != null)
                 {
+                    DewPlayer.onGamePlayerAdded += _onPressurePlayerAdded;
+                    DewPlayer.onGamePlayerRemoved += _onPressurePlayerRemoved;
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildMsg>(nameof(DreamforgeBuildMsg), _onBuild);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseMsg>(nameof(DreamforgeCurseMsg), _onCurse);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
@@ -797,6 +894,9 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
+            DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
+            _pressureDirty = true;
             foreach (var rt in _runtimes.Values)
             {
                 RemoveBonuses(rt);
@@ -806,6 +906,11 @@ namespace SodRpg.Mod
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
+            _pressure = DreamPressure.Neutral;
+            _pressurePlayerCount = -1;
+            _pressureBuilds.Clear();
+            _pressurePlayers.Clear();
+            _departedPlayers.Clear();
             _pactCurses.Clear();
             Unsubscribe();
             UnhookShrines();
@@ -851,7 +956,7 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (caller == null || msg == null) return;
+                if (caller == null || msg == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)) return;
                 if (msg.protocol != Protocol.Version)
                 {
                     Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
@@ -863,6 +968,7 @@ namespace SodRpg.Mod
                 {
                     // 定期再送は確認だけ返す。固有効果のスタックやクールダウンをリセットしない。
                     _builds[caller] = rt.AppliedBuild;
+                    RefreshPressure(true);
                     SendApplied(caller, hero, rt.AppliedBuild);
                     return;
                 }
@@ -874,6 +980,7 @@ namespace SodRpg.Mod
                 }
                 var received = new ReceivedBuild { Build = build, Encoded = msg.build, Summary = build.Encode() };
                 _builds[caller] = received;
+                RefreshPressure(true);
                 if (hero != null && !hero.IsNullOrInactive()) Apply(hero, received);
                 SendApplied(caller, hero, received);
             }
@@ -1250,23 +1357,18 @@ namespace SodRpg.Mod
                     }
                 }
                 // 連携（v1.26）：使った記憶が条件に入っている連携だけを発動する。
+                UpdateLinks(rt, true);
                 if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
+                    int haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used);
+                    if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
                         if (link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge) continue;
                         if (Array.IndexOf(link.Requires, used) < 0) continue;
-                        if (link.Kind == LinkKind.MemoryHaste)
-                        {
-                            hero.ApplyCooldownReductionByRatio(info.skill, link.Value / 100f, false);
-                            LogLinkApplied(link);
-                        }
-                        else
-                        {
-                            rt.Powers.OnLinkSurge(Time.time, link.Value);
-                            LogLinkApplied(link);
-                        }
+                        if (link.Kind == LinkKind.MemorySurge) rt.Powers.OnLinkSurge(Time.time, link);
+                        LogLinkApplied(link);
                     }
                 }
             }
@@ -1453,6 +1555,7 @@ namespace SodRpg.Mod
                     p.LinkGuardHealthPct = 0;
                     p.LinkGuardArmor = 0;
                 }
+                p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
                 return;
             }
             var hero = rt.Hero;
@@ -1489,6 +1592,7 @@ namespace SodRpg.Mod
                         break;
                 }
             }
+            p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
             p.LinkAttunePct = attune;
             p.LinkGuardHealthPct = guardHealth;
             p.LinkGuardArmor = guardArmor;
