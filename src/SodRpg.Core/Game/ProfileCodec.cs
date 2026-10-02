@@ -65,6 +65,10 @@ namespace SodRpg.Core.Game
                 .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth)
                 .Add("pactsSworn", (long)s.PactsSworn).Add("eventsUsed", (long)s.EventsUsed).Add("bountiesDone", (long)s.BountiesDone);
 
+            var pendingSalvage = new List<object>();
+            foreach (var pending in p.PendingSalvage)
+                pendingSalvage.Add(WriteRelic(pending.Relic).Add("returnTarget", (long)pending.ReturnTarget));
+
             JsonObject run = null;
             if (p.Run != null)
             {
@@ -96,6 +100,7 @@ namespace SodRpg.Core.Game
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
+                .Add("pendingSalvage", pendingSalvage)
                 .Add("heroes", heroes)
                 .Add("codex", codex)
                 .Add("feats", p.Feats.Select(f => (object)f).ToList())
@@ -175,19 +180,21 @@ namespace SodRpg.Core.Game
         private static List<object> WriteRelics(IEnumerable<Relic> relics)
         {
             var list = new List<object>();
-            foreach (var r in relics)
-            {
-                var aff = new List<object>();
-                foreach (var a in r.Affixes) aff.Add(new List<object> { (long)a.Stat, (long)a.Value });
-                var pw = new List<object>();
-                foreach (var x in r.Powers) pw.Add(new List<object> { (long)x.Power, (long)x.Value });
-                list.Add(new JsonObject()
-                    .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
-                    .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
-                    .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
-                    .Add("affixes", aff).Add("powers", pw));
-            }
+            foreach (var r in relics) list.Add(WriteRelic(r));
             return list;
+        }
+
+        private static JsonObject WriteRelic(Relic r)
+        {
+            var aff = new List<object>();
+            foreach (var a in r.Affixes) aff.Add(new List<object> { (long)a.Stat, (long)a.Value });
+            var pw = new List<object>();
+            foreach (var x in r.Powers) pw.Add(new List<object> { (long)x.Power, (long)x.Value });
+            return new JsonObject()
+                .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
+                .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
+                .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
+                .Add("affixes", aff).Add("powers", pw);
         }
 
         private static Profile ReadBody(JsonObject b, List<string> notes)
@@ -219,6 +226,7 @@ namespace SodRpg.Core.Game
             }
             ReadRelics(b, "stash", p.Stash, notes);
             ReadRelics(b, "lostAndFound", p.LostAndFound, notes);
+            ReadPendingSalvage(b, p.PendingSalvage, notes);
             if (b.TryGet("heroes", out object ho) && ho is JsonObject heroes)
             {
                 foreach (var kv in heroes.Properties)
@@ -349,54 +357,80 @@ namespace SodRpg.Core.Game
                 }
                 try
                 {
-                    var r = new Relic
-                    {
-                        Uid = Str(j, "uid"),
-                        BaseId = Str(j, "base"),
-                        UniqueId = j.TryGet("unique", out object u) ? u as string : null,
-                        Rarity = (Rarity)Clamp(Long(j, "rarity"), 0, (int)Rarity.Legendary),
-                        ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
-                        Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhance),
-                        Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
-                        Locked = Bool(j, "locked", false),
-                    };
-                    if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
-                        throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
-                    if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
-                        throw new LedgerFormatException("未知の固有品ID: " + r.UniqueId);
-                    if (!seen.Add(r.Uid)) throw new LedgerFormatException("Uidの重複: " + r.Uid);
-                    if (j.TryGet("affixes", out object ao) && ao is List<object> affs)
-                    {
-                        foreach (var a in affs)
-                        {
-                            if (a is List<object> pair && pair.Count == 2 && pair[0] is long sid && pair[1] is long v
-                                && Enum.IsDefined(typeof(Stat), (int)sid))
-                            {
-                                var stat = (Stat)(int)sid;
-                                int cap = Math.Max(1, Content.StatCap(stat));
-                                r.Affixes.Add(new StatLine(stat, Clamp(v, -cap, cap)));
-                            }
-                        }
-                    }
-                    if (j.TryGet("powers", out object po) && po is List<object> pws)
-                    {
-                        foreach (var x in pws)
-                        {
-                            if (x is List<object> pair && pair.Count == 2 && pair[0] is long pid && pair[1] is long v
-                                && pid != 0 && Enum.IsDefined(typeof(Power), (int)pid))
-                            {
-                                var pw = (Power)(int)pid;
-                                r.Powers.Add(new PowerLine(pw, Clamp(v, 0, Content.PowerCap(pw))));
-                            }
-                        }
-                    }
-                    into.Add(r);
+                    into.Add(ReadRelic(j, seen));
                 }
                 catch (LedgerFormatException ex)
                 {
                     notes.Add(key + ": " + ex.Message + " → 除外");
                 }
             }
+        }
+
+        private static void ReadPendingSalvage(JsonObject parent, List<PendingSalvage> into, List<string> notes)
+        {
+            if (!parent.TryGet("pendingSalvage", out object o) || !(o is List<object> list)) return;
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var item in list)
+            {
+                try
+                {
+                    if (!(item is JsonObject j)) throw new LedgerFormatException("遺物の形式が不正");
+                    if (!j.TryGet("returnTarget", out object target) || !(target is long value)
+                        || (value != (long)SalvageReturnTarget.Stash && value != (long)SalvageReturnTarget.LostAndFound))
+                        throw new LedgerFormatException("預かり品の戻し先が不正");
+                    into.Add(new PendingSalvage(ReadRelic(j, seen), (SalvageReturnTarget)value));
+                }
+                catch (LedgerFormatException ex)
+                {
+                    notes.Add("pendingSalvage: " + ex.Message + " → 除外");
+                }
+            }
+        }
+
+        private static Relic ReadRelic(JsonObject j, HashSet<string> seen)
+        {
+            var r = new Relic
+            {
+                Uid = Str(j, "uid"),
+                BaseId = Str(j, "base"),
+                UniqueId = j.TryGet("unique", out object u) ? u as string : null,
+                Rarity = (Rarity)Clamp(Long(j, "rarity"), 0, (int)Rarity.Legendary),
+                ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
+                Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhance),
+                Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
+                Locked = Bool(j, "locked", false),
+            };
+            if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
+                throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
+            if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
+                throw new LedgerFormatException("未知の固有品ID: " + r.UniqueId);
+            if (!seen.Add(r.Uid)) throw new LedgerFormatException("Uidの重複: " + r.Uid);
+            if (j.TryGet("affixes", out object ao) && ao is List<object> affs)
+            {
+                foreach (var a in affs)
+                {
+                    if (a is List<object> pair && pair.Count == 2 && pair[0] is long sid && pair[1] is long v
+                        && Enum.IsDefined(typeof(Stat), (int)sid))
+                    {
+                        var stat = (Stat)(int)sid;
+                        int cap = Math.Max(1, Content.StatCap(stat));
+                        r.Affixes.Add(new StatLine(stat, Clamp(v, -cap, cap)));
+                    }
+                }
+            }
+            if (j.TryGet("powers", out object po) && po is List<object> pws)
+            {
+                foreach (var x in pws)
+                {
+                    if (x is List<object> pair && pair.Count == 2 && pair[0] is long pid && pair[1] is long v
+                        && pid != 0 && Enum.IsDefined(typeof(Power), (int)pid))
+                    {
+                        var pw = (Power)(int)pid;
+                        r.Powers.Add(new PowerLine(pw, Clamp(v, 0, Content.PowerCap(pw))));
+                    }
+                }
+            }
+            return r;
         }
 
         private static string Str(JsonObject o, string key) => o.TryGet(key, out object v) ? v as string : null;

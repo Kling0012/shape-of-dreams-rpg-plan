@@ -91,7 +91,7 @@ namespace SodRpg.Core.Game
         public const double LimboDropBonus = 0.10;
         public const double LimboLuck = 0.2;
 
-        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0)
+        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null)
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
@@ -99,7 +99,7 @@ namespace SodRpg.Core.Game
             if (p.Run != null)
             {
                 ev.Add(new GameEvent(EventKind.Warning, Loc.T("前回の遠征は確保されずに終わりました。", "Your previous expedition ended unsecured.")));
-                ev.AddRange(EndRun(p, victory: false));
+                ev.AddRange(EndRun(p, victory: false, reservedUids: reservedUids));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
             p.Run = new RunState { RunId = runId, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth) };
@@ -417,11 +417,22 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        public static List<GameEvent> EndRun(Profile p, bool victory)
+        public static List<GameEvent> EndRun(Profile p, bool victory, ISet<string> reservedUids = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (reservedUids != null)
+            {
+                var returnTarget = victory ? SalvageReturnTarget.Stash : SalvageReturnTarget.LostAndFound;
+                for (int i = 0; i < run.Satchel.Count; i++)
+                {
+                    var relic = run.Satchel[i];
+                    if (!reservedUids.Contains(relic.Uid)) continue;
+                    p.PendingSalvage.Add(new PendingSalvage(relic, returnTarget));
+                    run.Satchel.RemoveAt(i--);
+                }
+            }
             var report = new RunReport { Victory = victory, LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel };
             if (victory)
             {
@@ -440,14 +451,7 @@ namespace SodRpg.Core.Game
                 report.RelicsLost = lost;
                 report.EchoShards = echo;
                 foreach (var r in run.Satchel) p.LostAndFound.Add(r);
-                int salvaged = 0;
-                while (p.LostAndFound.Count > Content.LostAndFoundCapacity)
-                {
-                    var worst = p.LostAndFound.OrderBy(r => r.Score).First();
-                    p.LostAndFound.Remove(worst);
-                    p.AddMaterial(Materials.Shard, Content.SalvageShards(worst.Rarity));
-                    salvaged++;
-                }
+                int salvaged = TrimLostAndFound(p);
                 if (lost > 0 || echo > 0)
                 {
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T(
@@ -689,13 +693,61 @@ namespace SodRpg.Core.Game
             return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えた", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
         }
 
-        /// <summary>ホストの分解成功応答後に、未確保の遺物を鞄から取り除く。分解した遺物を返す。</summary>
+        /// <summary>成功応答の対象を鞄か預かりから1つだけ取り除く。既に無ければ null。</summary>
         public static Relic SalvageUnsecured(Profile p, string uid)
         {
-            var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
-            var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
-            run.Satchel.Remove(r);
-            return r;
+            var relic = p.Run?.Satchel.Find(r => r.Uid == uid);
+            if (relic != null)
+            {
+                p.Run.Satchel.Remove(relic);
+                return relic;
+            }
+            int index = p.PendingSalvage.FindIndex(s => s.Relic.Uid == uid);
+            if (index < 0) return null;
+            relic = p.PendingSalvage[index].Relic;
+            p.PendingSalvage.RemoveAt(index);
+            return relic;
+        }
+
+        /// <summary>分解失敗の預かり品を返す。uid が null なら台帳の無い起動時などに全品を返す。</summary>
+        public static List<GameEvent> RestorePendingSalvage(Profile p, string uid = null)
+        {
+            var ev = new List<GameEvent>();
+            if (uid != null && p.Run?.Satchel.Find(r => r.Uid == uid) != null) return ev;
+            bool restored = false;
+            for (int i = 0; i < p.PendingSalvage.Count; i++)
+            {
+                var pending = p.PendingSalvage[i];
+                if (uid != null && pending.Relic.Uid != uid) continue;
+                p.PendingSalvage.RemoveAt(i--);
+                if (pending.ReturnTarget == SalvageReturnTarget.Stash && p.Stash.Count < Workshop.StashCapacity(p))
+                    p.Stash.Add(pending.Relic);
+                else
+                    p.LostAndFound.Add(pending.Relic);
+                restored = true;
+                if (uid != null) break;
+            }
+            if (!restored) return ev;
+            int salvaged = TrimLostAndFound(p);
+            ev.Add(new GameEvent(EventKind.Info, Loc.T("分解待ちの遺物を戻しました。", "Pending salvage relics were returned.")));
+            if (salvaged > 0)
+                ev.Add(new GameEvent(EventKind.Warning, Loc.T(
+                    $"遺失物が上限を超えたため{salvaged}個を欠片にしました。",
+                    $"Lost & Found overflowed: {salvaged} relic(s) were turned into shards.")));
+            return ev;
+        }
+
+        private static int TrimLostAndFound(Profile p)
+        {
+            int salvaged = 0;
+            while (p.LostAndFound.Count > Content.LostAndFoundCapacity)
+            {
+                var worst = p.LostAndFound.OrderBy(r => r.Score).First();
+                p.LostAndFound.Remove(worst);
+                p.AddMaterial(Materials.Shard, Content.SalvageShards(worst.Rarity));
+                salvaged++;
+            }
+            return salvaged;
         }
 
         public static int RerollsLeft(Profile p) => p.Run == null ? 0 : Math.Max(0, Workshop.RerollsPerRun(p) - p.Run.RerollsUsed);

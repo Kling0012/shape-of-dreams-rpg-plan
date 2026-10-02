@@ -145,6 +145,27 @@ namespace SodRpg.Core.Game
         public ProfileStats Clone() => (ProfileStats)MemberwiseClone();
     }
 
+    public enum SalvageReturnTarget
+    {
+        Stash,
+        LostAndFound,
+    }
+
+    /// <summary>遠征の精算から外した、分解の応答待ちの遺物。</summary>
+    public sealed class PendingSalvage
+    {
+        public PendingSalvage(Relic relic, SalvageReturnTarget returnTarget)
+        {
+            Relic = relic;
+            ReturnTarget = returnTarget;
+        }
+
+        public Relic Relic { get; }
+        public SalvageReturnTarget ReturnTarget { get; }
+
+        public PendingSalvage Clone() => new PendingSalvage(Relic.Clone(), ReturnTarget);
+    }
+
     /// <summary>
     /// 1人のプレイヤーの恒久データ。各PCが自分の分だけを保存する（協力時もホストは他人の保存に触れない）。
     /// </summary>
@@ -165,6 +186,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
         public List<Relic> LostAndFound { get; } = new List<Relic>();
+        /// <summary>分解の応答待ち。装着・鍛冶・出来事の対象には含めない。</summary>
+        public List<PendingSalvage> PendingSalvage { get; } = new List<PendingSalvage>();
         public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>達成済みの偉業のID。</summary>
@@ -262,6 +285,7 @@ namespace SodRpg.Core.Game
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
+            foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);

@@ -61,7 +61,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Content.SalvageShards(Rarity.Epic) * 5 + 20, Economy.SalvageDust(r));
             Assert.Same(r, Rules.SalvageUnsecured(p, r.Uid));
             Assert.Empty(p.Run.Satchel);
-            Assert.Throws<InvalidOperationException>(() => Rules.SalvageUnsecured(p, r.Uid));
+            Assert.Null(Rules.SalvageUnsecured(p, r.Uid)); // v1.14.1：二度目の成功応答は何もしない
             Assert.True(Economy.SalvageDust(r) <= Economy.MaxDustEarnPerTrade);
         }
 

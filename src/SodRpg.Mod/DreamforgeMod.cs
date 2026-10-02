@@ -340,7 +340,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): end the current run in the mod (1 = victory, 0 = defeat)", "dreamforge_endrun")]
         private void EndRunCommand(int victory)
         {
-            foreach (var e in Rules.EndRun(_session.Profile, victory != 0)) _ui.Notify(e);
+            foreach (var e in Rules.EndRun(_session.Profile, victory != 0, _session.Trades.ReservedSalvageUids())) _ui.Notify(e);
             _session.MarkDirty(true);
             _session.SaveNow();
         }

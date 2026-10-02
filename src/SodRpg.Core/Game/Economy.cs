@@ -71,13 +71,26 @@ namespace SodRpg.Core.Game
             return false;
         }
 
-        /// <summary>30秒返事がない分解予約だけを解除する。支払いの対価を待つ取引は捨てない。</summary>
-        public int ExpireSalvage(double now)
+        public HashSet<string> ReservedSalvageUids()
+        {
+            var uids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var t in _pending.Values)
+                if (t.Kind == TradeKind.SalvageForDust && !string.IsNullOrEmpty(t.Uid)) uids.Add(t.Uid);
+            return uids;
+        }
+
+        /// <summary>30秒返事がない分解予約を解除し、返却処理へ取引を渡す。支払い待ちの取引は捨てない。</summary>
+        public int ExpireSalvage(double now, Action<PendingTrade> onExpired = null)
         {
             _expired.Clear();
             foreach (var t in _pending.Values)
                 if (t.Kind == TradeKind.SalvageForDust && now - t.StartedAt >= 30.0) _expired.Add(t.Token);
-            foreach (var token in _expired) _pending.Remove(token);
+            foreach (var token in _expired)
+            {
+                var t = _pending[token];
+                _pending.Remove(token);
+                onExpired?.Invoke(t);
+            }
             return _expired.Count;
         }
 

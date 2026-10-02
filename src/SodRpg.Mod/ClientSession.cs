@@ -35,6 +35,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
+        private readonly Action<PendingTrade> _onSalvageExpired;
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
         public bool HasPendingTrades => _trades.PendingCount > 0;
@@ -90,6 +91,7 @@ namespace SodRpg.Mod
             _onApplied = OnApplied;
             _onNightmare = OnNightmare;
             _onTradeResult = OnTradeResult;
+            _onSalvageExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -151,8 +153,11 @@ namespace SodRpg.Mod
             {
                 Wire();
                 TrackRun();
-                if (_trades.ExpireSalvage(Time.unscaledTime) > 0)
+                if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) > 0)
+                {
                     Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
+                    SaveNow();
+                }
                 SendBuildIfNeeded();
                 if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
             }
@@ -227,6 +232,11 @@ namespace SodRpg.Mod
                 }
                 _clientRpcOn = actor;
                 _trades.Clear();
+                if (Profile.PendingSalvage.Count > 0)
+                {
+                    Emit(Rules.RestorePendingSalvage(Profile));
+                    SaveNow();
+                }
                 Nightmare.Clear();
                 HostConfirmed = false;
                 HostSummary = null;
@@ -288,7 +298,7 @@ namespace SodRpg.Mod
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
             ActiveRunId = runId;
-            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth()));
+            Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids()));
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
@@ -320,6 +330,7 @@ namespace SodRpg.Mod
         /// <summary>初めての起動：初期装備を配り、ようこその案内を出す。</summary>
         public void FirstLaunch()
         {
+            Emit(Rules.RestorePendingSalvage(Profile));
             if (!Profile.StarterGranted)
             {
                 Onboarding.GrantStarterKit(Profile);
@@ -408,7 +419,7 @@ namespace SodRpg.Mod
             {
                 if (!RunActive || result == null) return;
                 bool victory = IsVictory(result.result);
-                Emit(Rules.EndRun(Profile, victory));
+                Emit(Rules.EndRun(Profile, victory, _trades.ReservedSalvageUids()));
                 ActiveRunId = null;
                 SaveNow();
             }
@@ -462,7 +473,7 @@ namespace SodRpg.Mod
         {
             if (_clientRpcOn == null || !NetworkClient.active)
             {
-                _trades.Complete(t.Token, false);
+                RestoreSalvageTrade(_trades.Complete(t.Token, false));
                 return Loc.T("ゲームに接続していません。", "Not connected to a game.");
             }
             try
@@ -474,11 +485,17 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                _trades.Complete(t.Token, false);
+                RestoreSalvageTrade(_trades.Complete(t.Token, false));
                 Log.Error("Client SendTrade: " + ex.Message);
                 return Loc.T("取引を送れませんでした。", "Could not send the trade.");
             }
             return null;
+        }
+
+        private void RestoreSalvageTrade(PendingTrade trade)
+        {
+            if (trade == null || trade.Kind != TradeKind.SalvageForDust) return;
+            Emit(Rules.RestorePendingSalvage(Profile, trade.Uid));
         }
 
         private void OnTradeResult(DreamforgeTradeResultMsg msg)
@@ -490,7 +507,9 @@ namespace SodRpg.Mod
                 if (t == null) return;
                 if (!msg.ok)
                 {
+                    RestoreSalvageTrade(t);
                     Emit(new GameEvent(EventKind.Warning, Loc.T("取引できませんでした（" + msg.reason + "）", "Trade failed (" + msg.reason + ")")));
+                    SaveNow();
                     return;
                 }
                 switch (t.Kind)
@@ -502,9 +521,8 @@ namespace SodRpg.Mod
                         Emit(Rules.GrantPaidDustShards(Profile, t.SpendDust));
                         break;
                     case TradeKind.SalvageForDust:
-                        if (Profile.Run?.Satchel.Find(r => r.Uid == t.Uid) != null)
-                            Rules.SalvageUnsecured(Profile, t.Uid);
-                        Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
+                            Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
                         break;
                 }
                 SaveNow();
@@ -515,12 +533,13 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>未確保の遺物を予約し、成功応答を受けてから鞄から取り除く。</summary>
+        /// <summary>未確保の遺物を予約し、成功応答を受けてから鞄か遠征終了後の預かりから取り除く。</summary>
         public string SalvageUnsecured(string uid)
         {
             try
             {
-                if (_trades.IsReserved(uid)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+                if (_trades.IsReserved(uid) || Profile.PendingSalvage.Exists(s => s.Relic.Uid == uid))
+                    return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
                 var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
                 return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid, Time.unscaledTime));
