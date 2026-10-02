@@ -641,8 +641,40 @@ namespace SodRpg.Core.Game
 
             foreach (string hero in new[] { "Vesper", "Lacerta", "Cetus", "Yubar", "Husk", "Mist", "Nachia", "Aurena", "Bismuth" })
                 AddRing(nodes, hero);
+            AddEssenceSlots(nodes);
             return nodes.AsReadOnly();
         }
+
+        /// <summary>
+        /// アイデンティティ記憶のルートと移動の記憶のルートの頂点の先に、エッセンスの枠を1つ増やす星を置く（1段・5ポイント）。
+        /// アイデンティティのルートは2本あるが、両方取っても増える枠は1つまで（EssenceSlots で抑える）。
+        /// </summary>
+        private static void AddEssenceSlots(List<TalentDef> nodes)
+        {
+            var capstones = new List<TalentDef>();
+            foreach (var t in nodes)
+                if (t.RouteId != null && t.RouteOrder == 7 && t.RouteMemory != null
+                    && (t.RouteMemory.StartsWith("St_D_", System.StringComparison.Ordinal) || t.RouteMemory.StartsWith("St_M_", System.StringComparison.Ordinal)))
+                    capstones.Add(t);
+            foreach (var cap in capstones)
+            {
+                bool identity = cap.RouteMemory.StartsWith("St_D_", System.StringComparison.Ordinal);
+                var node = identity
+                    ? new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("記憶の器を広げる", "Widen the Memory's Vessel"), Stat.EssenceSlotIdentity, 1, 1)
+                    : new TalentDef(cap.RouteId + ".slot", Line.Offense, new Txt("回避の器を広げる", "Widen the Dodge's Vessel"), Stat.EssenceSlotMovement, 1, 1);
+                node.HeroKey = cap.HeroKey;
+                node.Tier = 2;
+                node.RouteId = cap.RouteId;
+                node.RouteMemory = cap.RouteMemory;
+                node.RouteOrder = 8;
+                node.PrerequisiteId = cap.Id;
+                node.RankCost = EssenceSlotCost;
+                nodes.Add(node);
+            }
+        }
+
+        /// <summary>エッセンスの枠を増やす星の費用。</summary>
+        public const int EssenceSlotCost = 5;
 
         private static void AddRing(List<TalentDef> nodes, string hero)
         {

@@ -561,7 +561,7 @@ namespace SodRpg.Core.Game
                 {
                     var sacrifice = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).First();
                     run.Satchel.Remove(sacrifice);
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     target.Enhance++;
                     string fountainMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げると、「{target.PlainName}」が+{target.Enhance}に強化されました。",
@@ -594,7 +594,7 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.ForgeShrine:
                 {
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     run.SatchelShards -= 20;
                     target.Enhance++;
                     string shrineMilestone = GrantEnhanceMilestones(rng, target);
@@ -967,7 +967,7 @@ namespace SodRpg.Core.Game
             RequireUnreserved(trades, uid);
             RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            if (r.Enhance >= Content.MaxEnhance) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
+            if (r.Enhance >= Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
             int cost = Content.EnhanceCost(r.Enhance);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
@@ -981,8 +981,47 @@ namespace SodRpg.Core.Game
 
         private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
 
+        /// <summary>限界突破の材料になる遺物（目標と同じ枠・同じレア度以上・鍵なし・未装着・取引中でない・再調律中でない）を弱い順に。</summary>
+        public static List<Relic> LimitBreakCandidates(Profile p, Relic target, TradeLedger trades = null)
+        {
+            string offered = p.RetuneOffer?.Uid;
+            return p.Stash.Where(x => x != target && x.Slot == target.Slot && x.Rarity >= target.Rarity && !x.Locked
+                && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid)))
+                .OrderBy(x => x.Score).ToList();
+        }
+
         /// <summary>
-        /// 強化の節目（+3：特性が1行増える。+5：固有効果を持たない遺物はその枠の固有効果を1つ得る。持っている遺物は特性がもう1行）。
+        /// 限界突破（v1.27）。強化が上限に達した遺物の強化上限を+5広げる。
+        /// 同じ枠の同じレア度以上の遺物1つを材料として消費し、調律石と欠片を払う。
+        /// </summary>
+        public static GameEvent LimitBreak(Profile p, string uid, string materialUid, TradeLedger trades = null)
+        {
+            RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            int maxBreaks = Content.MaxLimitBreaks(r.Rarity);
+            if (maxBreaks <= 0) throw new InvalidOperationException(Loc.T("このレア度の遺物は限界突破できません。", "Relics of this rarity cannot limit break."));
+            if (r.LimitBreaks >= maxBreaks) throw new InvalidOperationException(Loc.T("限界突破の回数が上限です。", "No limit breaks left."));
+            if (r.Enhance < Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("強化が上限に達してから限界突破できます。", "Limit break is available at maximum enhancement."));
+            var material = p.FindStash(materialUid) ?? throw new InvalidOperationException(Loc.T("材料の遺物が保管庫にありません。", "The material relic is not in your stash."));
+            if (!LimitBreakCandidates(p, r, trades).Contains(material))
+                throw new InvalidOperationException(Loc.T("材料は同じ枠で同じレア度以上の、鍵なし・未装着・取引中でない遺物です。", "The material must be an unlocked, unequipped, unreserved relic of the same slot and equal or higher rarity."));
+            int n = r.LimitBreaks + 1;
+            int tuningCost = Content.LimitBreakTuningCost(n), shardCost = Content.LimitBreakShardCost(n);
+            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
+            if (p.Material(Materials.Shard) < shardCost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{shardCost}必要）。", $"Not enough shards ({shardCost} needed)."));
+            p.AddMaterial(Materials.Tuning, -tuningCost);
+            p.AddMaterial(Materials.Shard, -shardCost);
+            p.Stash.Remove(material);
+            r.LimitBreaks = n;
+            return new GameEvent(EventKind.LevelUp, Loc.T(
+                $"「{r.PlainName}」を限界突破しました（{n}/{maxBreaks}。素材「{material.PlainName}」。強化上限+{Content.MaxEnhanceFor(r)}）。",
+                $"Limit broke \"{r.PlainName}\" ({n}/{maxBreaks}, used \"{material.PlainName}\". Enhancement cap +{Content.MaxEnhanceFor(r)})."), r.Rarity);
+        }
+
+        /// <summary>
+        /// 強化の節目（+3：特性が1行。+5：固有効果を持たない遺物はその枠の固有効果を1つ得る、持っている遺物は特性がもう1行。
+        /// +10・+15：特性が1行ずつ。+20：伝説だけ、固有効果1つの値が1.2倍）。
         /// 強化段階が上がったときと、起動時の一度だけの補完で呼ぶ。起きたことの文を返す（何もなければ null）。
         /// </summary>
         public static string GrantEnhanceMilestones(Rng rng, Relic r)
@@ -1010,6 +1049,24 @@ namespace SodRpg.Core.Game
                     if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
                 }
             }
+            if (r.Enhance >= Content.EnhanceMilestoneThird && r.EnhanceMilestones < 3)
+            {
+                r.EnhanceMilestones = 3;
+                var line = AddMilestoneAffix(rng, r);
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+            }
+            if (r.Enhance >= Content.EnhanceMilestoneFourth && r.EnhanceMilestones < 4)
+            {
+                r.EnhanceMilestones = 4;
+                var line = AddMilestoneAffix(rng, r);
+                if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
+            }
+            if (r.Enhance >= Content.EnhanceMilestoneFifth && r.EnhanceMilestones < 5 && r.Rarity == Rarity.Legendary)
+            {
+                r.EnhanceMilestones = 5;
+                var boosted = BoostMilestonePower(r);
+                if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
+            }
             return notes.Count == 0 ? null : string.Join(Loc.T("", " "), notes);
         }
 
@@ -1020,6 +1077,18 @@ namespace SodRpg.Core.Game
             var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, used);
             if (line != null) r.Affixes.Add(line);
             return line;
+        }
+
+        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の値を1.2倍にする（合計の上限 PowerCap で止まる）。</summary>
+        private static PowerLine BoostMilestonePower(Relic r)
+        {
+            if (r.Powers.Count == 0) return null;
+            var first = r.Powers[0];
+            int cap = Content.PowerCap(first.Power);
+            int value = Relic.Scale(first.Value, Content.LimitBreakPowerPct);
+            if (cap > 0) value = Math.Min(cap, value);
+            r.Powers[0] = new PowerLine(first.Power, value);
+            return r.Powers[0];
         }
 
         /// <summary>v1.20 より前に+3・+5にした遺物へ、節目を一度だけ付ける。付けた遺物の数を返す。</summary>

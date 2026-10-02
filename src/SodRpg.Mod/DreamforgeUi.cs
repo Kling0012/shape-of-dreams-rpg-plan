@@ -1258,6 +1258,9 @@ namespace SodRpg.Mod
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+            if (Content.MaxLimitBreaks(r.Rarity) > 0 && (r.LimitBreaks > 0 || r.Enhance >= Content.MaxEnhance))
+                GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
+                    $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
             var imp = r.Implicit;
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
@@ -1357,13 +1360,14 @@ namespace SodRpg.Mod
                 GUILayout.Space(4);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
-                if (sel.Enhance < Content.MaxEnhance)
+                int maxEnhance = Content.MaxEnhanceFor(sel);
+                if (sel.Enhance < maxEnhance)
                 {
                     GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
                     if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
                         Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
                 }
-                else GUILayout.Label(Loc.T($"強化は+{Content.MaxEnhance}が上限です", $"Enhancement is capped at +{Content.MaxEnhance}"), _st.Small);
+                else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
                 bool salvageBlocked = sel.Locked || (equippedSel && !_s.CanEditLoadout);
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked;
@@ -1387,6 +1391,10 @@ namespace SodRpg.Mod
                 }
                 GUILayout.EndHorizontal();
                 GUI.enabled = true;
+
+                // 限界突破（v1.27）：上限に達したレア以上の遺物だけ。
+                if (sel.Enhance >= maxEnhance && sel.LimitBreaks < Content.MaxLimitBreaks(sel.Rarity))
+                    DrawLimitBreak(sel);
 
                 string nextMilestone = NextMilestone(sel);
                 if (nextMilestone != null) GUILayout.Label(UiStyles.Colored(Loc.T("次の節目：", "Next milestone: ") + nextMilestone, "#ffd36e"), _st.Small);
@@ -1485,16 +1493,97 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
-        /// <summary>強化の次の節目（+3・+5）で何が起きるか。もう節目がなければ null。</summary>
+        /// <summary>強化の次の節目（+3・+5・+10・+15・+20）で何が起きるか。もう節目がなければ null。</summary>
         private static string NextMilestone(Relic r)
         {
+            // そのレア度で届く一番高い強化値（限界突破の回数上限まで）。
+            int ceiling = Content.MaxEnhanceFor(r.Rarity, Content.MaxLimitBreaks(r.Rarity));
             if (r.EnhanceMilestones < 1)
                 return Loc.T($"+{Content.EnhanceMilestoneFirst}で特性が1行増えます。", $"+{Content.EnhanceMilestoneFirst}: one more affix.");
             if (r.EnhanceMilestones < 2)
                 return r.Powers.Count == 0
                     ? Loc.T($"+{Content.EnhanceMilestoneSecond}でこの枠の固有効果が1つ宿ります。", $"+{Content.EnhanceMilestoneSecond}: gains a power for this slot.")
                     : Loc.T($"+{Content.EnhanceMilestoneSecond}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneSecond}: one more affix.");
+            if (r.EnhanceMilestones < 3 && Content.EnhanceMilestoneThird <= ceiling)
+                return Loc.T($"+{Content.EnhanceMilestoneThird}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneThird}: one more affix.");
+            if (r.EnhanceMilestones < 4 && Content.EnhanceMilestoneFourth <= ceiling)
+                return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.");
+            if (r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
+                return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が1.2倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows 1.2x.");
             return null;
+        }
+
+        // ───── 限界突破（v1.27）：素材選びの状態 ─────
+        private string _limitBreakTarget, _limitBreakMaterial;
+        private bool _limitBreakOpen, _confirmLimitBreak;
+
+        /// <summary>限界突破の確認。同じ枠・同じレア度以上の使える遺物から素材を選び、2回押しで確定する。</summary>
+        private void DrawLimitBreak(Relic sel)
+        {
+            var p = _s.Profile;
+            int maxBreaks = Content.MaxLimitBreaks(sel.Rarity);
+            int n = sel.LimitBreaks + 1;
+            int tuningCost = Content.LimitBreakTuningCost(n), shardCost = Content.LimitBreakShardCost(n);
+            int capNow = Content.MaxEnhanceFor(sel), capNext = Content.MaxEnhanceFor(sel.Rarity, n);
+            if (_limitBreakTarget != sel.Uid)
+            {
+                _limitBreakTarget = sel.Uid;
+                _limitBreakMaterial = null;
+                _confirmLimitBreak = false;
+            }
+            if (GUILayout.Button(_limitBreakOpen
+                    ? Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}　△ 閉じる", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}   close")
+                    : Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}"),
+                    _st.Button, GUILayout.Height(30)))
+            {
+                _limitBreakOpen = !_limitBreakOpen;
+                _confirmLimitBreak = false;
+            }
+            if (!_limitBreakOpen) return;
+            GUILayout.Label(Loc.T("同じ枠で同じレア度以上の遺物を1つ素材として消費します（装着中・取引の待ち・鍵のかかった物・再調律の候補中の物は使えません）。",
+                "Consumes one relic of the same slot and equal or higher rarity (equipped, pending-trade, locked or retuning relics can't be used)."), _st.Small);
+            GUILayout.Label(Loc.T($"{n}回目の費用：調律石{tuningCost}・欠片{shardCost}（所持：調律石{p.Material(Materials.Tuning)}・欠片{p.Material(Materials.Shard)}）",
+                $"Break {n} costs {tuningCost} tuning and {shardCost} shards (you have {p.Material(Materials.Tuning)} tuning, {p.Material(Materials.Shard)} shards)."), _st.Small);
+            var parts = Rules.LimitBreakCandidates(p, sel, _s.Trades);
+            if (_limitBreakMaterial != null && p.FindStash(_limitBreakMaterial) == null) _limitBreakMaterial = null;
+            if (parts.Count == 0)
+            {
+                GUILayout.Label(Loc.T("使える素材がありません（同じ枠で同じレア度以上の、鍵なし・未装着の遺物が必要です）。", "No usable material (need an unlocked, unequipped relic of the same slot and equal or higher rarity)."), _st.Warn);
+                return;
+            }
+            GUILayout.Label(Loc.T("素材を選んでください：", "Pick a material:"), _st.Small);
+            foreach (var m in parts)
+            {
+                if (GUILayout.Button((_limitBreakMaterial == m.Uid ? "● " : "○ ") + UiStyles.RelicTitle(m) + $" <color=#9a9ab0>+{m.Enhance} · Lv{m.ItemLevel}</color>",
+                    _limitBreakMaterial == m.Uid ? _st.ButtonSel : _st.Row, GUILayout.Height(26)))
+                {
+                    _limitBreakMaterial = m.Uid;
+                    _confirmLimitBreak = false;
+                }
+            }
+            bool afford = p.Material(Materials.Tuning) >= tuningCost && p.Material(Materials.Shard) >= shardCost;
+            GUI.enabled = _limitBreakMaterial != null && afford && !_s.Trades.IsReserved(sel.Uid);
+            string materialName = _limitBreakMaterial != null ? p.FindStash(_limitBreakMaterial)?.PlainName : null;
+            string label = _limitBreakMaterial == null
+                ? Loc.T("素材を選んでください", "Pick a material")
+                : !afford
+                    ? Loc.T($"調律石{tuningCost}と欠片{shardCost}が必要です", $"Need {tuningCost} tuning and {shardCost} shards")
+                    : _confirmLimitBreak
+                        ? Loc.T($"<color=#ff8080>「{materialName}」を素材に限界突破します。もう一度押すと確定</color>", $"<color=#ff8080>Limit break using \"{materialName}\"? Press again</color>")
+                        : Loc.T($"限界突破する（上限 +{capNext}）", $"Limit break (cap becomes +{capNext})");
+            if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
+            {
+                if (!_confirmLimitBreak) _confirmLimitBreak = true;
+                else
+                {
+                    string material = _limitBreakMaterial;
+                    Act(() => Rules.LimitBreak(p, sel.Uid, material, _s.Trades), true);
+                    _limitBreakOpen = false;
+                    _confirmLimitBreak = false;
+                    _limitBreakMaterial = null;
+                }
+            }
+            GUI.enabled = true;
         }
 
         private Vector2 _scrollForge;

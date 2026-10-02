@@ -41,9 +41,11 @@ namespace SodRpg.Core.Game
         public Rarity Rarity { get; set; }
         public int ItemLevel { get; set; }
         public int Enhance { get; set; }
+        /// <summary>限界突破の回数（0〜3）。1回ごとに強化の上限が+5広がる（v1.27）。</summary>
+        public int LimitBreaks { get; set; }
         public int Retunes { get; set; }
         public bool Locked { get; set; }
-        /// <summary>強化の節目をいくつ受け取ったか（0〜2。+3で1、+5で2）。</summary>
+        /// <summary>強化の節目をいくつ受け取ったか（0〜5。+3・+5・+10・+15・+20）。</summary>
         public int EnhanceMilestones { get; set; }
         public int AwakenPoints { get; set; }
         /// <summary>覚醒の段（0〜3）。</summary>
@@ -104,10 +106,10 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>強化を反映した固有効果（+1ごとに+5%）。覚醒の倍率は切り捨てる。</summary>
+        /// <summary>強化を反映した固有効果（+5までは+1ごとに+5%、そこから先は+1ごとに+3%）。覚醒の倍率は切り捨てる。</summary>
         public IEnumerable<PowerLine> EffectivePowers()
         {
-            int pct = 100 + 5 * Enhance;
+            int pct = Content.EnhancePowerScalePct(Enhance);
             foreach (var p in Powers)
             {
                 int value = Scale(p.Value, pct);
@@ -121,7 +123,7 @@ namespace SodRpg.Core.Game
         {
             get
             {
-                int s = (int)Rarity * 1000 + ItemLevel * 2 + Enhance * 10;
+                int s = (int)Rarity * 1000 + ItemLevel * 2 + Enhance * 10 + LimitBreaks * 50;
                 return s;
             }
         }
@@ -136,6 +138,7 @@ namespace SodRpg.Core.Game
                 Rarity = Rarity,
                 ItemLevel = ItemLevel,
                 Enhance = Enhance,
+                LimitBreaks = LimitBreaks,
                 Retunes = Retunes,
                 Locked = Locked,
                 EnhanceMilestones = EnhanceMilestones,

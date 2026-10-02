@@ -55,6 +55,10 @@ namespace SodRpg.Core.Game
         AttackRangePct = 16,
         /// <summary>4発目の位置を前へ進める（本体の everyFourAttackStartIndex）。</summary>
         FourthAttackShift = 17,
+        /// <summary>アイデンティティ記憶のエッセンス枠の追加数（星図の頂点。最大1。能力補正にはならない）。</summary>
+        EssenceSlotIdentity = 18,
+        /// <summary>回避（移動の記憶）のエッセンス枠の追加数（星図の頂点。最大1。能力補正にはならない）。</summary>
+        EssenceSlotMovement = 19,
     }
 
     /// <summary>

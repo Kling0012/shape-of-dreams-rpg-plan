@@ -244,6 +244,16 @@ namespace SodRpg.Core.Game
         /// <summary>強化の節目。+3で特性が1行、+5で固有効果（なければ）か特性1行。</summary>
         public const int EnhanceMilestoneFirst = 3;
         public const int EnhanceMilestoneSecond = 5;
+        /// <summary>限界突破（v1.27）。1回ごとに強化上限がこの値だけ広がる。</summary>
+        public const int EnhanceStepPerBreak = 5;
+        /// <summary>限界突破の節目。+10と+15で特性が1行ずつ、+20（伝説のみ）で固有効果1つの値が1.2倍。</summary>
+        public const int EnhanceMilestoneThird = 10;
+        public const int EnhanceMilestoneFourth = 15;
+        public const int EnhanceMilestoneFifth = 20;
+        /// <summary>強化の節目の数（+3・+5・+10・+15・+20）。</summary>
+        public const int MaxEnhanceMilestones = 5;
+        /// <summary>限界突破で固有効果1つの値に掛ける倍率（%）。+20の節目。</summary>
+        public const int LimitBreakPowerPct = 120;
         /// <summary>再調律で出す候補の数。</summary>
         public const int RetuneChoices = 3;
         /// <summary>合成の結果の枠を選ぶときの欠片の倍率（%）。</summary>
@@ -2435,6 +2445,8 @@ namespace SodRpg.Core.Game
             [Stat.DarkAmp] = 100,
             [Stat.AttackRangePct] = 30,
             [Stat.FourthAttackShift] = 1, // v1.27：連装・四の型は1段まで
+            [Stat.EssenceSlotIdentity] = 1, // v1.27：星図でエッセンス枠+1（能力補正ではなく枠の追加）
+            [Stat.EssenceSlotMovement] = 1,
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
@@ -2548,8 +2560,24 @@ namespace SodRpg.Core.Game
             return 100 + 3 * (l - 1);
         }
 
-        /// <summary>強化段階による倍率（%）。+1ごとに+6%。</summary>
-        public static int EnhanceScalePct(int enhance) => 100 + 6 * Math.Max(0, Math.Min(enhance, MaxEnhance));
+        /// <summary>
+        /// 強化段階による倍率（%）。+5までは+1ごとに+6%、そこから先（限界突破）は+1ごとに+4%（+20で190%）。
+        /// </summary>
+        public static int EnhanceScalePct(int enhance)
+        {
+            int h = Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth));
+            return h <= MaxEnhance ? 100 + 6 * h : 100 + 6 * MaxEnhance + 4 * (h - MaxEnhance);
+        }
+
+        /// <summary>固有効果の強化による倍率（%）。+5までは+1ごとに+5%、そこから先は+1ごとに+3%（+20で170%）。</summary>
+        public static int EnhancePowerScalePct(int enhance)
+        {
+            int h = Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth));
+            return h <= MaxEnhance ? 100 + 5 * h : 100 + 5 * MaxEnhance + 3 * (h - MaxEnhance);
+        }
+
+        /// <summary>+6以降の強化1回の欠片（+6〜+10が180・230・290・360・440、+11〜+15は1.5倍、+16〜+20は2倍）。</summary>
+        private static readonly int[] LimitBreakEnhanceCosts = { 180, 230, 290, 360, 440 };
 
         public static int EnhanceCost(int currentEnhance)
         {
@@ -2560,9 +2588,29 @@ namespace SodRpg.Core.Game
                 case 2: return 60;
                 case 3: return 90;
                 case 4: return 130;
-                default: return int.MaxValue;
+                default:
+                    int beyond = currentEnhance - MaxEnhance; // +6にするときが0
+                    if (beyond < 0 || beyond >= LimitBreakEnhanceCosts.Length * 3) return int.MaxValue;
+                    int baseCost = LimitBreakEnhanceCosts[beyond % LimitBreakEnhanceCosts.Length];
+                    int tier = beyond / LimitBreakEnhanceCosts.Length; // 0:+6〜+10、1:+11〜+15、2:+16〜+20
+                    return tier == 0 ? baseCost : tier == 1 ? baseCost * 3 / 2 : baseCost * 2;
             }
         }
+
+        /// <summary>限界突破の回数の上限。レア1回・エピック2回・伝説3回。コモン・アンコモンはできない。</summary>
+        public static int MaxLimitBreaks(Rarity r) => r >= Rarity.Legendary ? 3 : r >= Rarity.Epic ? 2 : r >= Rarity.Rare ? 1 : 0;
+
+        /// <summary>その遺物の強化の上限。限界突破1回ごとに+5（レア+10・エピック+15・伝説+20）。</summary>
+        public static int MaxEnhanceFor(Relic r) => MaxEnhanceFor(r == null ? Rarity.Common : r.Rarity, r?.LimitBreaks ?? 0);
+
+        public static int MaxEnhanceFor(Rarity rarity, int limitBreaks)
+            => MaxEnhance + EnhanceStepPerBreak * Math.Max(0, Math.Min(MaxLimitBreaks(rarity), limitBreaks));
+
+        /// <summary>限界突破 n 回目（1〜3）に要る調律石。</summary>
+        public static int LimitBreakTuningCost(int n) => n <= 1 ? 5 : n == 2 ? 10 : 20;
+
+        /// <summary>限界突破 n 回目（1〜3）に要る欠片。</summary>
+        public static int LimitBreakShardCost(int n) => n <= 1 ? 200 : n == 2 ? 400 : 800;
 
         public static int RetuneCost(int retunesDone) => retunesDone + 1;
 
@@ -2724,6 +2772,8 @@ namespace SodRpg.Core.Game
                 case Stat.LightAmp: return Loc.T($"光属性効果 {sign}{v}%", $"{sign}{v}% Light Effect");
                 case Stat.AttackRangePct: return Loc.T($"通常攻撃の射程 {sign}{v}%", $"{sign}{v}% Attack Range");
                 case Stat.FourthAttackShift: return Loc.T($"4発目の強い攻撃が{v}発早く出る", $"Empowered 4th attack comes {v} hit(s) sooner");
+                case Stat.EssenceSlotIdentity: return Loc.T($"アイデンティティ記憶にエッセンスをもう{v}つはめられる", $"You can socket {v} more essence in your Identity memory");
+                case Stat.EssenceSlotMovement: return Loc.T($"回避（移動の記憶）にエッセンスをもう{v}つはめられる", $"You can socket {v} more essence in your Dodge (Movement memory)");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"{sign}{v}% Dark Effect");
             }
         }

@@ -154,7 +154,7 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.Fountain:
                     if (run.Satchel.Count(r => trades == null || !trades.IsReserved(r.Uid)) < 2
-                        || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhance))
+                        || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhanceFor(r)))
                         reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.ForgeShrine:
                     if (run.SatchelShards < 20) reason = Loc.T($"まだ持ち帰っていない欠片が20必要です（いま{run.SatchelShards}）。", $"Need 20 unsecured shards (you have {run.SatchelShards}).");
-                    else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))))
+                    else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))))
                         reason = Loc.T("まだ強化できる未確保の遺物が必要です。", "Need an enhanceable unsecured relic.");
                     break;
                 case DreamEvent.TwinMirror:

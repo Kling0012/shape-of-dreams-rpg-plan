@@ -27,7 +27,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_shipped_memory_has_exactly_one_complete_branch_for_its_owner()
         {
-            Assert.Equal(513, HeroStarRoutes.All.Count); // v1.27：Bismuth に共通のアイデンティティのルートを足した
+            Assert.Equal(540, HeroStarRoutes.All.Count); // v1.27：Bismuth に共通のアイデンティティのルート、エッセンスの枠の星 3×9
             Assert.Equal(Memories.Keys.OrderBy(x => x), HeroStarRoutes.All.Select(t => t.HeroKey).Distinct().OrderBy(x => x));
             foreach (var hero in Memories)
             {
@@ -39,7 +39,10 @@ namespace SodRpg.Core.Tests
                 foreach (var branch in branches)
                 {
                     Assert.True(Links.IsMemory(branch.Key), branch.Key);
-                    var nodes = branch.OrderBy(t => t.RouteOrder).ToArray();
+                    // 頂点の先のエッセンスの枠の星（8番目）は別に確かめる
+                    var slot = branch.Where(t => t.RouteOrder == 8).ToArray();
+                    Assert.Equal(branch.Key.StartsWith("St_D_", StringComparison.Ordinal) || branch.Key.StartsWith("St_M_", StringComparison.Ordinal) ? 1 : 0, slot.Length);
+                    var nodes = branch.Where(t => t.RouteOrder <= 7).OrderBy(t => t.RouteOrder).ToArray();
                     Assert.Equal(7, nodes.Length);
                     Assert.Single(nodes.Select(t => t.RouteId).Distinct());
                     for (int i = 0; i < nodes.Length; i++)
@@ -130,15 +133,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData("Hero_Vesper", 7, 57, 224)]
-        [InlineData("Hero_Lacerta", 7, 57, 224)]
-        [InlineData("Hero_Cetus", 7, 57, 223)]
-        [InlineData("Hero_Yubar", 7, 57, 223)]
-        [InlineData("Hero_Husk", 7, 57, 223)]
-        [InlineData("Hero_Mist", 7, 57, 223)]
-        [InlineData("Hero_Nachia", 7, 57, 223)]
-        [InlineData("Hero_Aurena", 7, 57, 223)]
-        [InlineData("Hero_Bismuth", 7, 57, 223)]
+        [InlineData("Hero_Vesper", 7, 60, 239)]
+        [InlineData("Hero_Lacerta", 7, 60, 239)]
+        [InlineData("Hero_Cetus", 7, 60, 238)]
+        [InlineData("Hero_Yubar", 7, 60, 238)]
+        [InlineData("Hero_Husk", 7, 60, 238)]
+        [InlineData("Hero_Mist", 7, 60, 238)]
+        [InlineData("Hero_Nachia", 7, 60, 238)]
+        [InlineData("Hero_Aurena", 7, 60, 238)]
+        [InlineData("Hero_Bismuth", 7, 60, 238)]
         public void Whole_tree_has_more_choices_than_the_point_budget(string hero, int routes, int addedStars, int capacity)
         {
             var added = HeroStarRoutes.All.Where(t => t.HeroKey == hero).ToArray();
@@ -167,7 +170,7 @@ namespace SodRpg.Core.Tests
                     Assert.True((long)total * 5 <= (long)Content.PowerCap(power.Key) * 4,
                         hero + " / " + power.Key + " = " + total);
                 }
-                foreach (var stat in tree.Where(t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null).GroupBy(t => t.Stat))
+                foreach (var stat in tree.Where(t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null && t.Stat != Stat.EssenceSlotIdentity).GroupBy(t => t.Stat)) // 枠の星は2本取っても +1 に抑える（EssenceSlots）
                 {
                     int total = stat.Sum(t => t.PerRank * t.MaxRank);
                     Assert.InRange(total, 1, Content.StatCap(stat.Key));

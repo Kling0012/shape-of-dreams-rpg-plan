@@ -237,7 +237,7 @@ internal sealed class Simulation
             for (int slot = 0; slot < Content.SlotCount; slot++)
             {
                 var relic = Rules.EquippedRelic(p, Hero, (Slot)slot);
-                if (relic == null || relic.Enhance >= Content.MaxEnhance
+                if (relic == null || relic.Enhance >= Content.MaxEnhanceFor(relic)
                     || Content.EnhanceCost(relic.Enhance) > p.Material(Materials.Shard)) continue;
                 if (next == null || relic.Enhance < next.Enhance) next = relic;
             }

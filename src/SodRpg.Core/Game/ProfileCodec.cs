@@ -200,7 +200,7 @@ namespace SodRpg.Core.Game
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
-                .Add("milestones", (long)r.EnhanceMilestones)
+                .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -442,21 +442,25 @@ namespace SodRpg.Core.Game
 
         private static Relic ReadRelic(JsonObject j, HashSet<string> seen)
         {
+            Rarity rarity = (Rarity)Clamp(Long(j, "rarity"), 0, (int)Rarity.Legendary);
+            // 限界突破（v1.27）。古い保存には無いので0。強化値はその遺物の上限で切る。
+            int limitBreaks = Clamp(Long(j, "limitBreaks"), 0, Content.MaxLimitBreaks(rarity));
             var r = new Relic
             {
                 Uid = Str(j, "uid"),
                 BaseId = Str(j, "base"),
                 UniqueId = j.TryGet("unique", out object u) ? u as string : null,
-                Rarity = (Rarity)Clamp(Long(j, "rarity"), 0, (int)Rarity.Legendary),
+                Rarity = rarity,
                 ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
-                Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhance),
+                Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
+                LimitBreaks = limitBreaks,
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
                 Locked = Bool(j, "locked", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)
                     ? Clamp(Long(j, "awakenLevel"), 0, Content.MaxAwakenLevel)
                     : Bool(j, "awakened", false) ? Content.LegacyAwakenLevel : 0, // v1.26 までの覚醒は覚醒Ⅱ
-                EnhanceMilestones = Clamp(Long(j, "milestones"), 0, 2),
+                EnhanceMilestones = Clamp(Long(j, "milestones"), 0, Content.MaxEnhanceMilestones),
             };
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
