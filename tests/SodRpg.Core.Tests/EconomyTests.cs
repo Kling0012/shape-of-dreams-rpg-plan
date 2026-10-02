@@ -17,7 +17,8 @@ namespace SodRpg.Core.Tests
             Assert.True(l.HasPending(TradeKind.MerchantGold));
             Assert.Same(a, l.Complete(a.Token, true));
             Assert.Null(l.Complete(a.Token, true));      // 重複した応答は無視
-            Assert.Null(l.Complete(b.Token, false));     // 失敗は確定しない
+            Assert.Same(b, l.Complete(b.Token, false));  // 失敗でも取引の中身を返す（呼び出し側が予約を解除する。v1.13.1）
+            Assert.Null(l.Complete(b.Token, false));     // 2回目は無視
             Assert.Null(l.Complete(999, true));          // 未知の応答
             Assert.Equal(0, l.PendingCount);
             Assert.Throws<ArgumentOutOfRangeException>(() => l.Begin(TradeKind.SalvageForDust, -1, 0, 0));

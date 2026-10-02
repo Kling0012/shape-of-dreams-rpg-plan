@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.13.0）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.13.1）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,7 +6,7 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.13.0**（GitHub Releases に v0.1.0〜v1.13.0、v0.7.0 以降は導入用 zip 付き） |
+| 版 | **v1.13.1**（GitHub Releases に v0.1.0〜v1.13.1、v0.7.0 以降は導入用 zip 付き） |
 | ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
 | 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
 | ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
@@ -126,3 +126,4 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - 実機での確認のコツ（2026-10-02）：Mist の回避（Movement）は Space、右クリックは Q（RMB）のスキル。遠征中に `dreamforge_giveunique` で出した遺物は鞄（未確保）に入るので、装着を試すならタイトル画面で出してから遠征に入る。コンソールで `dreamforge_stats` を出す手順は時間がずれるので、一時補正の確認はホストの処理にログを仕込んで見る方が確実。
 - 協力プレイの前提（2026-10-02 利用者決定）：参加者全員が同じ版のMODを読み込んでいる。版の違う相手との通信の互換は考えない（通信メッセージは版ごとに自由に変えてよい）。
 - 名前（2026-10-02 利用者）：MOD名は「Dreamforge」に統一する。「夢鍛」は使わない（日本語の画面でも Dreamforge と表記し、パネルなどは役割で呼ぶ）。
+- v1.13.1（issue #5・#6・#7 の修正、2026-10-02）：取引の返事待ちの間は確保・潜行・契約を止め、支払い済みの対価は `Rules.GrantPaidDustShards` / `GrantPaidMerchant` で状態に関係なく渡す。分解は `TradeLedger.IsReserved` で予約し、成功の返事で初めて鞄から取り除く（失敗・送信不能・30秒で予約解除。30秒後の遅い返事は無視するので、まれに二重取りが起きうる）。参加者は確認済みでも30秒ごとに Build を送り直し、ホストは同じ内容なら付け直さずに確認だけ返す。2台での確認は未実施。

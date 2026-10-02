@@ -139,7 +139,7 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -188,7 +188,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾った（未確保）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-                AddToSatchel(p, relic, ev);
+                AddToSatchel(p, relic, ev, trades);
                 AddHint(p, Hint.FirstDrop, ev);
                 if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
                 AdvanceRelicBounties(p, relic, ev);
@@ -205,12 +205,13 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev)
+        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null)
         {
             var run = p.Run;
             run.Satchel.Add(relic);
             if (run.Satchel.Count <= Workshop.SatchelCapacity(p)) return;
-            var worst = run.Satchel.OrderBy(r => r.Score).First();
+            var worst = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).FirstOrDefault();
+            if (worst == null) return; // 全品予約中なら、容量より予約対象の保護を優先する。
             run.Satchel.Remove(worst);
             run.SatchelShards += Content.SalvageShards(worst.Rarity);
             ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -397,7 +398,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>戦闘部屋の突破数が増えた。条件を満たせば遺失物を1つ取り戻す（未確保として鞄へ）。</summary>
-        public static List<GameEvent> OnRoomsCleared(Profile p, int clearedRooms)
+        public static List<GameEvent> OnRoomsCleared(Profile p, int clearedRooms, TradeLedger trades = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -412,7 +413,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                 $"遺失物「{best.DisplayName}」を取り戻した（未確保）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
-            AddToSatchel(p, best, ev);
+            AddToSatchel(p, best, ev, trades);
             return ev;
         }
 
@@ -494,9 +495,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保地点の出来事を使う（1回だけ）。</summary>
-        public static List<GameEvent> UseEvent(Profile p, DreamEvent e, bool goldPaid = false)
+        public static List<GameEvent> UseEvent(Profile p, DreamEvent e, bool goldPaid = false, TradeLedger trades = null)
         {
-            if (!DreamEvents.CanUse(p, e, goldPaid, out string reason)) throw new InvalidOperationException(reason);
+            if (!DreamEvents.CanUse(p, e, goldPaid, out string reason, trades)) throw new InvalidOperationException(reason);
             var run = p.Run;
             var ev = new List<GameEvent>();
             var rng = p.TakeRng();
@@ -505,23 +506,14 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Merchant:
                 {
                     if (!goldPaid) p.AddMaterial(Materials.Shard, -DreamEvents.MerchantCost(run.Heat));
-                    var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * run.Heat, true, Rarity.Uncommon);
-                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null, p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
-                    p.Codex.Add(relic.UniqueId ?? relic.BaseId);
-                    run.RelicsFound++;
-                    p.Stats.RelicsFound++;
-                    if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
-                    ev.Add(new GameEvent(EventKind.Drop, Loc.T($"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った（未確保）",
-                        $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant (unsecured)"), relic.Rarity));
-                    AddToSatchel(p, relic, ev);
-                    AdvanceRelicBounties(p, relic, ev);
+                    GiveMerchantRelic(p, rng, ev, trades);
                     break;
                 }
                 case DreamEvent.Fountain:
                 {
-                    var sacrifice = run.Satchel.OrderBy(r => r.Score).First();
+                    var sacrifice = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).First();
                     run.Satchel.Remove(sacrifice);
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance).OrderByDescending(r => r.Score).First();
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     target.Enhance++;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げ、「{target.DisplayName}」になった。",
                         $"Offered \"{sacrifice.DisplayName}\"; it became \"{target.DisplayName}\"."), target.Rarity));
@@ -548,12 +540,12 @@ namespace SodRpg.Core.Game
                     p.LostAndFound.Remove(best);
                     ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯が「{best.DisplayName}」を照らした（未確保）",
                         $"The lantern revealed \"{best.DisplayName}\" (unsecured)"), best.Rarity));
-                    AddToSatchel(p, best, ev);
+                    AddToSatchel(p, best, ev, trades);
                     break;
                 }
                 case DreamEvent.ForgeShrine:
                 {
-                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance).OrderByDescending(r => r.Score).First();
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
                     run.SatchelShards -= 20;
                     target.Enhance++;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.DisplayName}」に強化した。",
@@ -562,11 +554,11 @@ namespace SodRpg.Core.Game
                 }
                 case DreamEvent.TwinMirror:
                 {
-                    var source = run.Satchel.OrderByDescending(r => r.Score).First();
+                    var source = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderByDescending(r => r.Score).First();
                     var rarity = source.Rarity == Rarity.Legendary ? Rarity.Epic : source.Rarity;
                     var relic = Loot.RollBaseRelic(rng, source.Base, rarity, source.ItemLevel);
                     run.SatchelShards -= 30;
-                    RecordEventRelic(p, relic, ev);
+                    RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
                 case DreamEvent.Stargazer:
@@ -575,21 +567,20 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.Cauldron:
                 {
-                    var parts = run.Satchel.Where(r => r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon)
+                    var parts = run.Satchel.Where(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid)))
                         .OrderBy(r => r.Score).Take(3).ToList();
                     var rarity = parts.Max(r => r.Rarity) + 1;
                     foreach (var part in parts) run.Satchel.Remove(part);
                     var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
                         p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
-                    RecordEventRelic(p, relic, ev);
+                    RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
                 case DreamEvent.Tapir:
                 {
-                    int count = run.Satchel.Count;
+                    int count = run.Satchel.RemoveAll(r => trades == null || !trades.IsReserved(r.Uid));
                     int shards = count * 12;
                     int tuning = Math.Max(1, count / 3);
-                    run.Satchel.Clear();
                     run.SatchelShards += shards;
                     run.SatchelTuning += tuning;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせた：欠片+{shards}・調律石+{tuning}（未確保）",
@@ -620,7 +611,46 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        private static void RecordEventRelic(Profile p, Relic relic, List<GameEvent> ev)
+        /// <summary>ホストが支払いを確定した商人の遺物を渡す。出来事や確保地点が終わっていても付与する。</summary>
+        public static List<GameEvent> GrantPaidMerchant(Profile p, TradeLedger trades = null)
+        {
+            var ev = new List<GameEvent>();
+            var rng = p.TakeRng();
+            GiveMerchantRelic(p, rng, ev, trades);
+            p.StoreRng(rng);
+            p.Stats.EventsUsed++;
+            if (p.Run?.OfferedEvent == DreamEvent.Merchant) p.Run.OfferedEvent = DreamEvent.None;
+            AdvanceBounty(p, BountyKind.EventTaker, 1, false, ev);
+            ev.AddRange(Feats.Check(p));
+            return ev;
+        }
+
+        private static void GiveMerchantRelic(Profile p, Rng rng, List<GameEvent> ev, TradeLedger trades)
+        {
+            var run = p.Run;
+            var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * (run?.Heat ?? 0), true, Rarity.Uncommon);
+            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
+                p.Focus ?? DailyDream.Get(run?.DailyId ?? 0)?.FeaturedLine, p.Stash, run?.Satchel);
+            p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+            p.Stats.RelicsFound++;
+            if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
+            ev.Add(new GameEvent(EventKind.Drop, Loc.T(
+                $"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った" + (run != null ? "（未確保）" : "（保管庫）"),
+                $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant" + (run != null ? " (unsecured)" : " (stash)")), relic.Rarity));
+            if (run != null)
+            {
+                run.RelicsFound++;
+                AddToSatchel(p, relic, ev, trades);
+                AdvanceRelicBounties(p, relic, ev);
+            }
+            else
+            {
+                // 支払い済みの対価は、保管庫が満杯でも失わせない。
+                p.Stash.Add(relic);
+            }
+        }
+
+        private static void RecordEventRelic(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null)
         {
             p.Codex.Add(relic.UniqueId ?? relic.BaseId);
             p.Run.RelicsFound++;
@@ -629,7 +659,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れた（未確保）",
                 $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-            AddToSatchel(p, relic, ev);
+            AddToSatchel(p, relic, ev, trades);
             AdvanceRelicBounties(p, relic, ev);
         }
 
@@ -646,6 +676,12 @@ namespace SodRpg.Core.Game
         public static GameEvent ConvertDust(Profile p, int dustPaid)
         {
             if (p.Run == null || !p.Run.AwaitingChoice) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point."));
+            return GrantPaidDustShards(p, dustPaid);
+        }
+
+        /// <summary>支払い済みのダストの対価を保管庫側の素材へ渡す。現在のラン状態は問わない。</summary>
+        public static GameEvent GrantPaidDustShards(Profile p, int dustPaid)
+        {
             int batches = dustPaid / Economy.DustPerBatch;
             if (batches <= 0) throw new InvalidOperationException(Loc.T("ドリームダストが足りません。", "Not enough Dream Dust."));
             int shards = batches * Economy.ShardsPerBatch;
@@ -653,7 +689,7 @@ namespace SodRpg.Core.Game
             return new GameEvent(EventKind.Secured, Loc.T($"ドリームダスト{batches * Economy.DustPerBatch}を欠片{shards}に換えた", $"Converted {batches * Economy.DustPerBatch} Dream Dust into {shards} shards"));
         }
 
-        /// <summary>遠征中、未確保の遺物を分解する（ドリームダストはホストが渡す）。分解した遺物を返す。</summary>
+        /// <summary>ホストの分解成功応答後に、未確保の遺物を鞄から取り除く。分解した遺物を返す。</summary>
         public static Relic SalvageUnsecured(Profile p, string uid)
         {
             var run = p.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
@@ -721,8 +757,9 @@ namespace SodRpg.Core.Game
 
         // ───────────── 装着 ─────────────
 
-        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid)
+        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null)
         {
+            RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             p.Hero(heroKey).Equipped[(int)r.Slot] = uid;
             return Feats.Check(p);
@@ -748,8 +785,9 @@ namespace SodRpg.Core.Game
             return Content.SalvageShards(r.Rarity) + refund / 2;
         }
 
-        public static GameEvent Salvage(Profile p, string uid)
+        public static GameEvent Salvage(Profile p, string uid, TradeLedger trades = null)
         {
+            RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
             int shards = SalvageValue(r);
@@ -765,8 +803,9 @@ namespace SodRpg.Core.Game
                 $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
         }
 
-        public static GameEvent Enhance(Profile p, string uid)
+        public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
         {
+            RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Enhance >= Content.MaxEnhance) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
             int cost = Content.EnhanceCost(r.Enhance);
@@ -776,8 +815,9 @@ namespace SodRpg.Core.Game
             return new GameEvent(EventKind.Info, Loc.T($"「{r.DisplayName}」に強化した。", $"Enhanced to \"{r.DisplayName}\"."), r.Rarity);
         }
 
-        public static GameEvent Retune(Profile p, string uid, int affixIndex)
+        public static GameEvent Retune(Profile p, string uid, int affixIndex, TradeLedger trades = null)
         {
+            RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
             if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
@@ -830,16 +870,16 @@ namespace SodRpg.Core.Game
         public static int TransmuteCost(Rarity r) => 10 * ((int)r + 1);
 
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
-        public static List<Relic> TransmuteCandidates(Profile p, Rarity r)
+        public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)
         {
-            return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid)).OrderBy(x => x.Score).ToList();
+            return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && (trades == null || !trades.IsReserved(x.Uid))).OrderBy(x => x.Score).ToList();
         }
 
         /// <summary>同じレア度の遺物3つ（弱い順）を1つ上のレア度の遺物1つにする。エピック3つからは固有品。</summary>
-        public static GameEvent Transmute(Profile p, Rarity r)
+        public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null)
         {
             if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
-            var parts = TransmuteCandidates(p, r).Take(3).ToList();
+            var parts = TransmuteCandidates(p, r, trades).Take(3).ToList();
             if (parts.Count < 3) throw new InvalidOperationException(Loc.T("材料が3つ足りません（鍵なし・未装着の同じレア度）。", "Need 3 unlocked, unequipped relics of the same rarity."));
             int cost = TransmuteCost(r);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
@@ -857,10 +897,17 @@ namespace SodRpg.Core.Game
                 $"Transmuted into {Content.RarityName(result.Rarity)} \"{result.DisplayName}\""), result.Rarity);
         }
 
-        public static void ToggleLock(Profile p, string uid)
+        public static void ToggleLock(Profile p, string uid, TradeLedger trades = null)
         {
+            RequireUnreserved(trades, uid);
             var r = p.FindStash(uid);
             if (r != null) r.Locked = !r.Locked;
+        }
+
+        private static void RequireUnreserved(TradeLedger trades, string uid)
+        {
+            if (trades != null && trades.IsReserved(uid))
+                throw new InvalidOperationException(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."));
         }
 
         // ───────────── 専門化 ─────────────

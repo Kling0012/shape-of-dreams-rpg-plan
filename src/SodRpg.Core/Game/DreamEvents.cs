@@ -101,7 +101,7 @@ namespace SodRpg.Core.Game
         public static bool CanUse(Profile p, DreamEvent e, out string reason) => CanUse(p, e, false, out reason);
 
         /// <summary>今この出来事を使えるか。goldPaid=true なら夢の商人の代金はホストがゴールドで受け取り済み。</summary>
-        public static bool CanUse(Profile p, DreamEvent e, bool goldPaid, out string reason)
+        public static bool CanUse(Profile p, DreamEvent e, bool goldPaid, out string reason, TradeLedger trades = null)
         {
             reason = null;
             var run = p.Run;
@@ -110,11 +110,11 @@ namespace SodRpg.Core.Game
                 reason = Loc.T("この出来事は今はありません。", "That event is not available.");
                 return false;
             }
-            reason = UnavailableReason(p, e, goldPaid);
+            reason = UnavailableReason(p, e, goldPaid, trades);
             return reason == null;
         }
 
-        private static string UnavailableReason(Profile p, DreamEvent e, bool goldPaid)
+        private static string UnavailableReason(Profile p, DreamEvent e, bool goldPaid, TradeLedger trades = null)
         {
             var run = p.Run;
             string reason = null;
@@ -125,7 +125,8 @@ namespace SodRpg.Core.Game
                     if (!goldPaid && p.Material(Materials.Shard) < MerchantCost(run.Heat)) reason = Loc.T("欠片が足りません。", "Not enough shards.");
                     break;
                 case DreamEvent.Fountain:
-                    if (run.Satchel.Count < 2 || !run.Satchel.OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhance))
+                    if (run.Satchel.Count(r => trades == null || !trades.IsReserved(r.Uid)) < 2
+                        || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhance))
                         reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
@@ -136,19 +137,19 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.ForgeShrine:
                     if (run.SatchelShards < 20) reason = Loc.T("未確保の欠片が20必要です。", "Need 20 unsecured shards.");
-                    else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhance))
+                    else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))))
                         reason = Loc.T("まだ強化できる未確保の遺物が必要です。", "Need an enhanceable unsecured relic.");
                     break;
                 case DreamEvent.TwinMirror:
                     if (run.SatchelShards < 30) reason = Loc.T("未確保の欠片が30必要です。", "Need 30 unsecured shards.");
-                    else if (run.Satchel.Count == 0) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
+                    else if (!run.Satchel.Any(r => trades == null || !trades.IsReserved(r.Uid))) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
                     break;
                 case DreamEvent.Cauldron:
-                    if (run.Satchel.Count(r => r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) < 3)
+                    if (run.Satchel.Count(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid))) < 3)
                         reason = Loc.T("コモンかアンコモンの未確保の遺物が3つ必要です。", "Need 3 unsecured Common or Uncommon relics.");
                     break;
                 case DreamEvent.Tapir:
-                    if (run.Satchel.Count == 0) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
+                    if (!run.Satchel.Any(r => trades == null || !trades.IsReserved(r.Uid))) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
                     break;
                 case DreamEvent.CourageGate:
                     if (run.Heat >= Content.MaxHeat) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");

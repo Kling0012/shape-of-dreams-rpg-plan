@@ -36,6 +36,8 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly TradeLedger _trades = new TradeLedger();
+        public TradeLedger Trades => _trades;
+        public bool HasPendingTrades => _trades.PendingCount > 0;
         private readonly Action<DewPlayer> _onChaos;
         private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
         private readonly Action<Hero, Gem> _onMerged;
@@ -54,7 +56,6 @@ namespace SodRpg.Mod
         private bool _buildDirty = true;
         private float _nextBuildSend;
         private Hero _lastHero;
-        private string _lastSentBuild;
 
         public Profile Profile { get; private set; }
         public string ActiveRunId { get; private set; }
@@ -150,6 +151,8 @@ namespace SodRpg.Mod
             {
                 Wire();
                 TrackRun();
+                if (_trades.ExpireSalvage(Time.unscaledTime) > 0)
+                    Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
                 SendBuildIfNeeded();
                 if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
             }
@@ -355,7 +358,7 @@ namespace SodRpg.Mod
                 NightmareSeenAt.Remove(m.netId);
                 string heroKey = HeroKeyOf(hero);
                 int masteryBefore = Mastery.Level(Profile.Hero(heroKey).Kills);
-                Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey));
+                Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey, _trades));
                 if (Mastery.Level(Profile.Hero(heroKey).Kills) > masteryBefore) _buildDirty = true;
                 if (tier >= MonsterTier.MiniBoss) _nextSave = 0;
             }
@@ -391,7 +394,7 @@ namespace SodRpg.Mod
                 if (_zone == null) return;
                 int added = _rooms.Observe(_zone.clearedCombatRooms);
                 if (!RunActive || added <= 0) return;
-                Emit(Rules.OnRoomsCleared(Profile, Profile.Run.RoomsCleared + added));
+                Emit(Rules.OnRoomsCleared(Profile, Profile.Run.RoomsCleared + added, _trades));
             }
             catch (Exception ex)
             {
@@ -440,6 +443,7 @@ namespace SodRpg.Mod
         public string BuyFromMerchant()
         {
             if (TradePending(TradeKind.MerchantGold)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
             return SendTrade(_trades.Begin(TradeKind.MerchantGold, price, 0, 0));
@@ -447,16 +451,11 @@ namespace SodRpg.Mod
 
         public string ConvertDust()
         {
+            if (Profile.Run == null || !Profile.Run.AwaitingChoice) return Loc.T("確保地点でのみ換えられます。", "Only at a secure point.");
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
             if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
             if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
             return SendTrade(_trades.Begin(TradeKind.DustToShards, 0, Math.Min(dust, Economy.DustPerBatch * 10), 0));
-        }
-
-        public string SalvageForDust(Relic r)
-        {
-            if (r == null) return null;
-            return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid));
         }
 
         private string SendTrade(PendingTrade t)
@@ -466,10 +465,19 @@ namespace SodRpg.Mod
                 _trades.Complete(t.Token, false);
                 return Loc.T("ゲームに接続していません。", "Not connected to a game.");
             }
-            _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+            try
             {
-                token = t.Token, spendGold = t.SpendGold, spendDust = t.SpendDust, earnDust = t.EarnDust, protocol = Protocol.Version,
-            });
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+                {
+                    token = t.Token, spendGold = t.SpendGold, spendDust = t.SpendDust, earnDust = t.EarnDust, protocol = Protocol.Version,
+                });
+            }
+            catch (Exception ex)
+            {
+                _trades.Complete(t.Token, false);
+                Log.Error("Client SendTrade: " + ex.Message);
+                return Loc.T("取引を送れませんでした。", "Could not send the trade.");
+            }
             return null;
         }
 
@@ -479,20 +487,23 @@ namespace SodRpg.Mod
             {
                 if (msg == null) return;
                 var t = _trades.Complete(msg.token, msg.ok);
-                if (t == null)
+                if (t == null) return;
+                if (!msg.ok)
                 {
-                    if (!msg.ok) Emit(new GameEvent(EventKind.Warning, Loc.T("取引できませんでした（" + msg.reason + "）", "Trade failed (" + msg.reason + ")")));
+                    Emit(new GameEvent(EventKind.Warning, Loc.T("取引できませんでした（" + msg.reason + "）", "Trade failed (" + msg.reason + ")")));
                     return;
                 }
                 switch (t.Kind)
                 {
                     case TradeKind.MerchantGold:
-                        Emit(Rules.UseEvent(Profile, DreamEvent.Merchant, goldPaid: true));
+                        Emit(Rules.GrantPaidMerchant(Profile, _trades));
                         break;
                     case TradeKind.DustToShards:
-                        Emit(Rules.ConvertDust(Profile, t.SpendDust));
+                        Emit(Rules.GrantPaidDustShards(Profile, t.SpendDust));
                         break;
                     case TradeKind.SalvageForDust:
+                        if (Profile.Run?.Satchel.Find(r => r.Uid == t.Uid) != null)
+                            Rules.SalvageUnsecured(Profile, t.Uid);
                         Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
                         break;
                 }
@@ -504,14 +515,15 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>未確保の遺物を分解：先に鞄から外し（二重の分解を防ぐ）、ホストからダストを受け取る。</summary>
+        /// <summary>未確保の遺物を予約し、成功応答を受けてから鞄から取り除く。</summary>
         public string SalvageUnsecured(string uid)
         {
             try
             {
-                var r = Rules.SalvageUnsecured(Profile, uid);
-                MarkDirty(false);
-                return SalvageForDust(r);
+                if (_trades.IsReserved(uid)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+                var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
+                var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
+                return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid, Time.unscaledTime));
             }
             catch (InvalidOperationException ex)
             {
@@ -539,23 +551,27 @@ namespace SodRpg.Mod
             HostSummary = msg?.summary;
         }
 
-        public void Secure()
+        public string Secure()
         {
-            if (Profile.Run == null) return;
+            if (_trades.PendingCount > 0) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            if (Profile.Run == null) return null;
             Emit(Rules.Secure(Profile));
             _buildDirty = true;
             SaveNow();
+            return null;
         }
 
-        public void Delve(Pact pact = Pact.None)
+        public string Delve(Pact pact = Pact.None)
         {
-            if (Profile.Run == null) return;
+            if (_trades.PendingCount > 0) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            if (Profile.Run == null) return null;
             Emit(Rules.Delve(Profile, pact));
             var def = Pacts.Get(pact);
             if (def != null && _clientRpcOn != null && NetworkClient.active)
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg { strength = def.CurseStrength, protocol = Protocol.Version });
             _buildDirty = true;
             SaveNow();
+            return null;
         }
 
         private Build _buildCache;
@@ -585,15 +601,9 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             if (!_buildDirty && now < _nextBuildSend) return;
             string encoded = CurrentBuild(HeroKeyOf(hero)).Encode();
-            if (!_buildDirty && encoded == _lastSentBuild && HostConfirmed)
-            {
-                _nextBuildSend = now + 20f;
-                return;
-            }
             _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildMsg { build = encoded, protocol = Protocol.Version });
-            _lastSentBuild = encoded;
             _buildDirty = false;
-            _nextBuildSend = now + (HostConfirmed ? 20f : 5f);
+            _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
 
         private AsyncProfileWriter _writer;

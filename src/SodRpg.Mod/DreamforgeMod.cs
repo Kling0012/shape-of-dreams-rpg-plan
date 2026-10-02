@@ -131,10 +131,10 @@ namespace SodRpg.Mod
             if (Pressed(kb, config.menuKey)) _ui.Toggle();
             if (_ui.Open && kb.escapeKey.wasPressedThisFrame) _ui.Close();
             var run = _session.Profile.Run;
-            if (run != null && run.AwaitingChoice && _session.ActiveRunId != null)
+            if (run != null && run.AwaitingChoice && _session.ActiveRunId != null && !_session.HasPendingTrades)
             {
-                if (Pressed(kb, config.secureKey)) _session.Secure();
-                else if (Pressed(kb, config.delveKey)) _session.Delve();
+                if (Pressed(kb, config.secureKey)) _ui.SetStatus(_session.Secure());
+                else if (Pressed(kb, config.delveKey)) _ui.SetStatus(_session.Delve());
             }
         }
 
@@ -332,7 +332,7 @@ namespace SodRpg.Mod
             if (_session.Profile.Run == null) { Debug.Log("[DreamforgeRPG] no run"); return; }
             int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.softInstance?.ambientLevel ?? 1);
             for (int i = 0; i < Math.Max(1, Math.Min(count, 500)); i++)
-                foreach (var e in Rules.OnKill(_session.Profile, (MonsterTier)Math.Max(0, Math.Min(3, tier)), lvl)) _ui.Notify(e);
+                foreach (var e in Rules.OnKill(_session.Profile, (MonsterTier)Math.Max(0, Math.Min(3, tier)), lvl, trades: _session.Trades)) _ui.Notify(e);
             _session.MarkDirty(false);
         }
 

@@ -12,7 +12,7 @@ namespace SodRpg.Mod
     using Slot = SodRpg.Core.Game.Slot;
     using Stat = SodRpg.Core.Game.Stat;
 
-    /// <summary>夢鍛メニュー（装備・鍛冶・星図・記録）、HUD、確保地点のパネル、通知の描画。</summary>
+    /// <summary>Dreamforge のメニュー（装備・鍛冶・星図・記録）、HUD、確保地点のパネル、通知の描画。</summary>
     internal sealed class DreamforgeUi
     {
         private sealed class Toast
@@ -130,7 +130,7 @@ namespace SodRpg.Mod
             }
         }
 
-        private void SetStatus(string text)
+        public void SetStatus(string text)
         {
             _status = text;
             _statusUntil = Time.unscaledTime + 5f;
@@ -220,7 +220,7 @@ namespace SodRpg.Mod
             sb.Length = 0;
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
-            sb.Append(Loc.T("<b>夢鍛</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
+            sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
@@ -268,7 +268,9 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0) + (run.OfferedEvent != DreamEvent.None ? 76 : 0));
+            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
+                + (run.OfferedEvent != DreamEvent.None ? 76 : 0) + (_s.HasPendingTrades ? 24 : 0)
+                + (_status != null && Time.unscaledTime < _statusUntil ? 24 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
@@ -287,14 +289,18 @@ namespace SodRpg.Mod
                 $"潜行{next}では、敵の{(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}%とエリートの{(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}%が「悪夢化」して強くなります。倒すとエリートやボス並みの戦利品が出ます。",
                 $"At delve {next}, {(int)(Nightmares.Chance(MonsterTier.Normal, next) * 100)}% of enemies and {(int)(Nightmares.Chance(MonsterTier.MiniBoss, next) * 100)}% of elites turn into stronger nightmares that drop elite-to-boss loot."), "#ff9ae0"), _st.Small);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) _s.Secure();
-            if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) _s.Delve();
+            GUI.enabled = !_s.HasPendingTrades;
+            if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
+            if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
+            GUI.enabled = true;
             if (GUILayout.Button(Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]"), _st.Button, GUILayout.Height(34)))
             {
                 Open = true;
                 _tab = 0;
             }
             GUILayout.EndHorizontal();
+            if (_s.HasPendingTrades)
+                GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);
             {
                 int dust = _s.LocalDust;
                 GUI.enabled = dust >= Economy.DustPerBatch && !_s.TradePending(TradeKind.DustToShards);
@@ -314,8 +320,9 @@ namespace SodRpg.Mod
             {
                 var e = run.OfferedEvent;
                 bool merchant = e == DreamEvent.Merchant;
-                bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why);
+                bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
                 if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
+                if (merchant && _s.TradePending(TradeKind.MerchantGold)) { ok = false; why = Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."); }
                 GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
                 string label = !ok ? why : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)") : Loc.T("この出来事を選ぶ", "Take this event");
@@ -330,7 +337,7 @@ namespace SodRpg.Mod
                     {
                         try
                         {
-                            foreach (var x in Rules.UseEvent(_s.Profile, e)) _s.Emit(x);
+                            foreach (var x in Rules.UseEvent(_s.Profile, e, trades: _s.Trades)) _s.Emit(x);
                             _s.MarkDirty(false);
                             _s.SaveNow();
                         }
@@ -342,13 +349,16 @@ namespace SodRpg.Mod
             if (run.OfferedPacts.Count > 0)
             {
                 GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure."), _st.Small);
+                GUI.enabled = !_s.HasPendingTrades;
                 foreach (var id in run.OfferedPacts.ToList())
                 {
                     var d = Pacts.Get(id);
                     if (d == null) continue;
-                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52))) _s.Delve(id);
+                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52))) SetStatus(_s.Delve(id));
                 }
+                GUI.enabled = true;
             }
+            if (_status != null && Time.unscaledTime < _statusUntil) GUILayout.Label(_status, _st.Warn);
             GUILayout.EndArea();
         }
 
@@ -488,7 +498,7 @@ namespace SodRpg.Mod
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("夢鍛 ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
+            GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
                 if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _retuneIndex = -1; }
@@ -723,12 +733,12 @@ namespace SodRpg.Mod
                 var cur = Rules.EquippedRelic(p, hero, sel.Slot);
                 if (cur != null && cur.Uid != sel.Uid) Comparison(sel, cur);
                 GUILayout.FlexibleSpace();
-                GUI.enabled = _s.CanEditLoadout;
+                GUI.enabled = _s.CanEditLoadout && !_s.Trades.IsReserved(sel.Uid);
                 GUILayout.BeginHorizontal();
                 bool equipped = cur != null && cur.Uid == sel.Uid;
                 if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
                 {
-                    foreach (var e in Rules.Equip(p, hero, sel.Uid)) _s.Emit(e);
+                    foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
                     _s.MarkDirty(true);
                 }
                 if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
@@ -736,13 +746,14 @@ namespace SodRpg.Mod
                     foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
                     _s.MarkDirty(true);
                 }
-                GUI.enabled = true;
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
                 {
-                    Rules.ToggleLock(p, sel.Uid);
+                    Rules.ToggleLock(p, sel.Uid, _s.Trades);
                     _s.MarkDirty(false);
                 }
                 GUILayout.EndHorizontal();
+                GUI.enabled = true;
             }
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
@@ -830,10 +841,11 @@ namespace SodRpg.Mod
                 RelicDetail(sel);
                 GUILayout.Space(8);
                 GUILayout.BeginHorizontal();
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 if (sel.Enhance < Content.MaxEnhance)
                 {
                     if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
-                        Act(() => Rules.Enhance(p, sel.Uid), true);
+                        Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
                 }
                 else GUILayout.Label(Loc.T("これ以上は強化できません", "Fully enhanced"), _st.Small);
                 string sv = _confirmSalvage == sel.Uid
@@ -843,13 +855,14 @@ namespace SodRpg.Mod
                 {
                     if (_confirmSalvage == sel.Uid)
                     {
-                        Act(() => Rules.Salvage(p, sel.Uid), true);
+                        Act(() => Rules.Salvage(p, sel.Uid, _s.Trades), true);
                         _selected = null;
                         _confirmSalvage = null;
                     }
                     else _confirmSalvage = sel.Uid;
                 }
                 GUILayout.EndHorizontal();
+                GUI.enabled = true;
 
                 if (sel.Retunes < Content.MaxRetunes && sel.Affixes.Count > 0)
                 {
@@ -861,11 +874,11 @@ namespace SodRpg.Mod
                         if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonSel : _st.Button)) _retuneIndex = i;
                     }
                     GUILayout.EndHorizontal();
-                    GUI.enabled = _retuneIndex >= 0;
+                    GUI.enabled = _retuneIndex >= 0 && !_s.Trades.IsReserved(sel.Uid);
                     if (GUILayout.Button(Loc.T("再調律する", "Retune"), _st.Button, GUILayout.Height(30)))
                     {
                         int idx = _retuneIndex;
-                        Act(() => Rules.Retune(p, sel.Uid, idx), true);
+                        Act(() => Rules.Retune(p, sel.Uid, idx, _s.Trades), true);
                         _retuneIndex = -1;
                     }
                     GUI.enabled = true;
@@ -881,10 +894,10 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
-                int n = Rules.TransmuteCandidates(p, r).Count;
+                int n = Rules.TransmuteCandidates(p, r, _s.Trades).Count;
                 GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= Rules.TransmuteCost(r);
                 string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n" + Loc.T($"欠片{Rules.TransmuteCost(r)}", $"{Rules.TransmuteCost(r)} shards");
-                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r), false);
+                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades), false);
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
@@ -1102,11 +1115,13 @@ namespace SodRpg.Mod
                 {
                     GUILayout.BeginHorizontal();
                     GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+                    GUI.enabled = !_s.Trades.IsReserved(r.Uid);
                     if (GUILayout.Button(Loc.T($"分解（ダスト+{Economy.SalvageDust(r)}）", $"Salvage (+{Economy.SalvageDust(r)} dust)"), _st.Button, GUILayout.Width(170)))
                     {
                         string err = _s.SalvageUnsecured(r.Uid);
                         if (err != null) SetStatus(err);
                     }
+                    GUI.enabled = true;
                     GUILayout.EndHorizontal();
                 }
             }

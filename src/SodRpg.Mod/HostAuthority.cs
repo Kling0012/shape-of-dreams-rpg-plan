@@ -16,10 +16,18 @@ namespace SodRpg.Mod
     /// </summary>
     internal sealed class HostAuthority
     {
+        private sealed class ReceivedBuild
+        {
+            public Build Build;
+            public string Encoded;
+            public string Summary;
+        }
+
         private sealed class HeroRuntime
         {
             public Hero Hero;
             public PowerRuntime Powers;
+            public ReceivedBuild AppliedBuild;
             public StatBonus BaseBonus;
             public StatBonus DynBonus;
             public Action<EventInfoAttackFired> OnFired;
@@ -27,7 +35,7 @@ namespace SodRpg.Mod
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
         }
 
-        private readonly Dictionary<DewPlayer, Build> _builds = new Dictionary<DewPlayer, Build>();
+        private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
         private readonly List<Hero> _scratch = new List<Hero>();
 
@@ -123,7 +131,7 @@ namespace SodRpg.Mod
         {
             int d = 0;
             foreach (var kv in _builds)
-                if (kv.Key != null && kv.Key.hero != null) d = Math.Max(d, kv.Value.Heat);
+                if (kv.Key != null && kv.Key.hero != null) d = Math.Max(d, kv.Value.Build.Heat);
             return d;
         }
 
@@ -345,25 +353,39 @@ namespace SodRpg.Mod
                     Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
                     return;
                 }
+                var hero = caller.hero;
+                if (hero != null && !hero.IsNullOrInactive()
+                    && _runtimes.TryGetValue(hero, out var rt) && rt.AppliedBuild != null && rt.AppliedBuild.Encoded == msg.build)
+                {
+                    // 定期再送は確認だけ返す。固有効果のスタックやクールダウンをリセットしない。
+                    _builds[caller] = rt.AppliedBuild;
+                    SendApplied(caller, hero, rt.AppliedBuild);
+                    return;
+                }
                 var build = Build.Decode(msg.build);
                 if (build == null)
                 {
                     Log.Warn("Host: rejected malformed build from " + caller.playerName);
                     return;
                 }
-                _builds[caller] = build;
-                var hero = caller.hero;
-                if (hero != null && !hero.IsNullOrInactive()) Apply(hero, build);
-                _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeAppliedMsg
-                {
-                    heroNetId = hero != null ? hero.netId : 0,
-                    summary = build.Encode(),
-                });
+                var received = new ReceivedBuild { Build = build, Encoded = msg.build, Summary = build.Encode() };
+                _builds[caller] = received;
+                if (hero != null && !hero.IsNullOrInactive()) Apply(hero, received);
+                SendApplied(caller, hero, received);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnBuild failed: " + ex);
             }
+        }
+
+        private void SendApplied(DewPlayer caller, Hero hero, ReceivedBuild build)
+        {
+            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeAppliedMsg
+            {
+                heroNetId = hero != null ? hero.netId : 0,
+                summary = build.Summary,
+            });
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
@@ -465,8 +487,9 @@ namespace SodRpg.Mod
             }
         }
 
-        private void Apply(Hero hero, Build build)
+        private void Apply(Hero hero, ReceivedBuild received)
         {
+            var build = received.Build;
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
@@ -489,6 +512,7 @@ namespace SodRpg.Mod
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
+            rt.AppliedBuild = received;
         }
 
         private static void Unhook(HeroRuntime rt)

@@ -40,6 +40,8 @@ namespace SodRpg.Core.Game
         public int EarnDust;
         /// <summary>分解する遺物など、確定時に使う対象。</summary>
         public string Uid;
+        /// <summary>応答待ちを始めた時刻（保存・通信には含めない）。</summary>
+        public double StartedAt;
     }
 
     /// <summary>
@@ -48,6 +50,7 @@ namespace SodRpg.Core.Game
     public sealed class TradeLedger
     {
         private readonly Dictionary<long, PendingTrade> _pending = new Dictionary<long, PendingTrade>();
+        private readonly List<long> _expired = new List<long>();
         private long _next = 1;
 
         public int PendingCount => _pending.Count;
@@ -59,20 +62,39 @@ namespace SodRpg.Core.Game
             return false;
         }
 
-        public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null)
+        /// <summary>分解の応答待ちで、別の操作に使えない遺物か。</summary>
+        public bool IsReserved(string uid)
+        {
+            if (string.IsNullOrEmpty(uid)) return false;
+            foreach (var t in _pending.Values)
+                if (t.Kind == TradeKind.SalvageForDust && t.Uid == uid) return true;
+            return false;
+        }
+
+        /// <summary>30秒返事がない分解予約だけを解除する。支払いの対価を待つ取引は捨てない。</summary>
+        public int ExpireSalvage(double now)
+        {
+            _expired.Clear();
+            foreach (var t in _pending.Values)
+                if (t.Kind == TradeKind.SalvageForDust && now - t.StartedAt >= 30.0) _expired.Add(t.Token);
+            foreach (var token in _expired) _pending.Remove(token);
+            return _expired.Count;
+        }
+
+        public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null, double now = 0)
         {
             if (spendGold < 0 || spendDust < 0 || earnDust < 0) throw new ArgumentOutOfRangeException();
-            var t = new PendingTrade { Token = _next++, Kind = kind, SpendGold = spendGold, SpendDust = spendDust, EarnDust = earnDust, Uid = uid };
+            var t = new PendingTrade { Token = _next++, Kind = kind, SpendGold = spendGold, SpendDust = spendDust, EarnDust = earnDust, Uid = uid, StartedAt = now };
             _pending[t.Token] = t;
             return t;
         }
 
-        /// <summary>ホストの応答。成功なら確定すべき取引を返す。失敗・未知・重複なら null。</summary>
+        /// <summary>成功・失敗とも取引を返して予約を解除する。未知・重複の応答は null。</summary>
         public PendingTrade Complete(long token, bool ok)
         {
             if (!_pending.TryGetValue(token, out var t)) return null;
             _pending.Remove(token);
-            return ok ? t : null;
+            return t;
         }
 
         /// <summary>接続が切れたときなど、応答待ちを捨てる。</summary>
