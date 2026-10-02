@@ -62,6 +62,10 @@ Dreamforge は単独のゲームではなく **Shape of Dreams のMOD**。新し
 - #13：遺物一覧の行の文字の使い回しが、鍵・覚醒・強化の変化を見ていない。遺物の状態を鍵に含めて作り直す。
 - 実装：GLM-5.3（OMP、thinking max）。確認・取り込み：Claude。
 
+## その次：v1.26「夢の変種を増やす・新しいモデルの試験」
+
+変種 13→25種、本体の敵1体の見た目を差し替える技術検証。仕様は [docs/specs/v1.26-variants-and-models.md](specs/v1.26-variants-and-models.md)。
+
 ## その次の候補
 
 - 完了 v1.20 鍛冶を数値だけにしない：強化の+3・+5に節目（特性1行・固有効果）、再調律は3つの候補から選ぶ、合成の結果の枠を選べる。仕様は [docs/specs/v1.20-forge.md](specs/v1.20-forge.md)。
