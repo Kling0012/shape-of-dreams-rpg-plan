@@ -23,6 +23,7 @@ namespace SodRpg.Core.Tests
         {
             var rng = new Rng(9);
             var p = Profile.CreateNew(1);
+            Rules.BeginRun(p, "events"); // 確保地点の出来事は遠征中にだけ出る（v1.11）
             int offered = 0;
             for (int i = 0; i < 4000; i++)
             {

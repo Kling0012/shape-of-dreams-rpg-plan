@@ -258,6 +258,9 @@ namespace SodRpg.Mod
                 if (!_s.HostConfirmed && _s.LocalHero != null)
                     sb.Append("\n<size=13>").Append(Loc.T("装備の効果がまだ反映されていません（ホストがこのMODを入れていない可能性があります）", "Gear bonuses not applied yet (the host may not have this mod)")).Append("</size>");
             }
+            int unclaimedFeats = Feats.Unclaimed(p);
+            if (unclaimedFeats > 0)
+                sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 受け取れる偉業 {unclaimedFeats}（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records)")).Append("</color></size>");
             sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
         }
@@ -543,6 +546,51 @@ namespace SodRpg.Mod
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
+        /// <summary>記録タブの偉業：受け取れる物 → 未達成（進み具合）→ 受け取り済み の順に並べる。</summary>
+        private void DrawFeats(Profile p)
+        {
+            int done = p.Feats.Count, total = Feats.All.Count, unclaimed = Feats.Unclaimed(p);
+            GUILayout.Label(Loc.T($"偉業（{done}／{total}）", $"Feats ({done}/{total})"), _st.Header);
+            GUILayout.Label(Loc.T("遊ぶうちに達成していく目標です。達成すると、欠片と調律石を受け取れます。",
+                "Goals you complete as you play. Each one rewards shards and tuning stones."), _st.Small);
+            foreach (var f in Feats.All)
+            {
+                if (!p.Feats.Contains(f.Id) || p.FeatsClaimed.Contains(f.Id)) continue;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(UiStyles.Colored("★ " + f.Name, "#ffe17a") + "  <color=#aab>" + Feats.Describe(f) + "</color>", _st.Small);
+                string reward = f.RewardTuning > 0
+                    ? Loc.T($"受け取る（欠片{f.RewardShards}・調律石{f.RewardTuning}）", $"Claim ({f.RewardShards} shards, {f.RewardTuning} tuning)")
+                    : Loc.T($"受け取る（欠片{f.RewardShards}）", $"Claim ({f.RewardShards} shards)");
+                if (GUILayout.Button(reward, _st.ButtonSel, GUILayout.Width(210)))
+                {
+                    string id = f.Id;
+                    Act(() => Rules.ClaimFeat(p, id), false);
+                }
+                GUILayout.EndHorizontal();
+            }
+            int shown = 0;
+            foreach (var f in Feats.All)
+            {
+                if (p.Feats.Contains(f.Id)) continue;
+                // 未達成は、種類ごとに次の1段だけを出す（一覧が長くなりすぎないように）。
+                bool earlierOpen = false;
+                foreach (var g in Feats.All)
+                {
+                    if (g == f) break;
+                    if (g.Kind == f.Kind && !p.Feats.Contains(g.Id)) { earlierOpen = true; break; }
+                }
+                if (earlierOpen) continue;
+                int prog = Math.Min(Feats.Progress(p, f), f.Target);
+                GUILayout.Label("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>", _st.Small);
+                shown++;
+            }
+            if (unclaimed == 0 && shown == 0)
+                GUILayout.Label(Loc.T("すべての偉業を達成しました。", "Every feat is complete."), _st.Small);
+            int claimed = p.FeatsClaimed.Count;
+            if (claimed > 0)
+                GUILayout.Label(Loc.T($"<color=#8a8aa0>受け取り済み：{claimed}個</color>", $"<color=#8a8aa0>Claimed: {claimed}</color>"), _st.Small);
+        }
+
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>
         private static string TabIntro(int tab)
         {
@@ -680,12 +728,12 @@ namespace SodRpg.Mod
                 bool equipped = cur != null && cur.Uid == sel.Uid;
                 if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
                 {
-                    Rules.Equip(p, hero, sel.Uid);
+                    foreach (var e in Rules.Equip(p, hero, sel.Uid)) _s.Emit(e);
                     _s.MarkDirty(true);
                 }
                 if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
                 {
-                    Rules.Unequip(p, hero, sel.Slot);
+                    foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
                     _s.MarkDirty(true);
                 }
                 GUI.enabled = true;
@@ -1061,6 +1109,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T($"遺失物（{p.LostAndFound.Count}/{Content.LostAndFoundCapacity}）", $"Lost & Found ({p.LostAndFound.Count}/{Content.LostAndFoundCapacity})"), _st.Header);
             if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+            DrawFeats(p);
             GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
             int foundUniques = 0;
             foreach (var u in Content.Uniques)

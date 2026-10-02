@@ -16,6 +16,14 @@ namespace SodRpg.Core.Game
         Chalice = 3,
         /// <summary>迷い人の灯：遺失物を1つその場で取り戻す。</summary>
         Lantern = 4,
+        ForgeShrine = 5,
+        TwinMirror = 6,
+        Stargazer = 7,
+        Cauldron = 8,
+        Tapir = 9,
+        CourageGate = 10,
+        Archive = 11,
+        LuckyStar = 12,
     }
 
     public static class DreamEvents
@@ -33,6 +41,14 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Fountain: return Loc.T("祈りの泉", "Fountain of Prayer");
                 case DreamEvent.Chalice: return Loc.T("賭けの杯", "Gambler's Chalice");
                 case DreamEvent.Lantern: return Loc.T("迷い人の灯", "Lantern of the Lost");
+                case DreamEvent.ForgeShrine: return Loc.T("鍛冶の祠", "Forge Shrine");
+                case DreamEvent.TwinMirror: return Loc.T("双子の鏡", "Twin Mirror");
+                case DreamEvent.Stargazer: return Loc.T("星読みの塔", "Stargazer's Tower");
+                case DreamEvent.Cauldron: return Loc.T("錬金の釜", "Alchemist's Cauldron");
+                case DreamEvent.Tapir: return Loc.T("夢喰いの獏", "Dream Tapir");
+                case DreamEvent.CourageGate: return Loc.T("勇気の門", "Gate of Courage");
+                case DreamEvent.Archive: return Loc.T("記憶の書庫", "Archive of Memories");
+                case DreamEvent.LuckyStar: return Loc.T("幸運の星", "Lucky Star");
                 default: return "";
             }
         }
@@ -53,6 +69,30 @@ namespace SodRpg.Core.Game
                         $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double, else lose them");
                 case DreamEvent.Lantern:
                     return Loc.T("遺失物を1つ、この場で取り戻せます（取り戻した物は、確保するまで未確保のままです）。", "Recover one lost relic right here (unsecured)");
+                case DreamEvent.ForgeShrine:
+                    return Loc.T("まだ持ち帰っていない欠片を20払うと、まだ持ち帰っていない遺物のうち一番強い物が+1強化されます。",
+                        "Pay 20 unsecured shards to enhance your best unsecured relic by +1.");
+                case DreamEvent.TwinMirror:
+                    return Loc.T("まだ持ち帰っていない欠片を30払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（伝説はエピックになります）。",
+                        "Pay 30 unsecured shards to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
+                case DreamEvent.Stargazer:
+                    return Loc.T("次に確保するまで、遺物が50%多く落ちます。",
+                        "Until you next secure, relics drop 50% more often.");
+                case DreamEvent.Cauldron:
+                    return Loc.T("まだ持ち帰っていないコモンかアンコモンの遺物を3つ溶かして、1つ上のレア度の遺物を1つ作ります。",
+                        "Melt 3 unsecured Common or Uncommon relics into one relic of the next rarity.");
+                case DreamEvent.Tapir:
+                    return Loc.T("まだ持ち帰っていない遺物をすべて獏に食べさせ、1つにつき欠片12と、3つにつき調律石1をもらいます（どちらも未確保）。",
+                        "Feed all your unsecured relics to the tapir: 12 shards each and 1 tuning stone per 3 relics (both unsecured).");
+                case DreamEvent.CourageGate:
+                    return Loc.T("潜行が1段深くなる代わりに、まだ持ち帰っていない欠片が40増えます。",
+                        "Your delve goes one level deeper, and you gain 40 unsecured shards.");
+                case DreamEvent.Archive:
+                    return Loc.T($"夢のレベルの経験値を{40 + 20 * heat}もらいます。",
+                        $"Gain {40 + 20 * heat} Dream Level experience.");
+                case DreamEvent.LuckyStar:
+                    return Loc.T("次に確保するまで、レア度の高い遺物が出やすくなります。",
+                        "Until you next secure, rarer relics drop more often.");
                 default: return "";
             }
         }
@@ -70,13 +110,22 @@ namespace SodRpg.Core.Game
                 reason = Loc.T("この出来事は今はありません。", "That event is not available.");
                 return false;
             }
+            reason = UnavailableReason(p, e, goldPaid);
+            return reason == null;
+        }
+
+        private static string UnavailableReason(Profile p, DreamEvent e, bool goldPaid)
+        {
+            var run = p.Run;
+            string reason = null;
+            if (run == null) return Loc.T("遠征中のみ使えます。", "Only during an expedition.");
             switch (e)
             {
                 case DreamEvent.Merchant:
                     if (!goldPaid && p.Material(Materials.Shard) < MerchantCost(run.Heat)) reason = Loc.T("欠片が足りません。", "Not enough shards.");
                     break;
                 case DreamEvent.Fountain:
-                    if (run.Satchel.Count < 2 || run.Satchel.All(r => r.Enhance >= Content.MaxEnhance))
+                    if (run.Satchel.Count < 2 || !run.Satchel.OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhance))
                         reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
@@ -85,17 +134,47 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Lantern:
                     if (p.LostAndFound.Count == 0) reason = Loc.T("遺失物がありません。", "No lost relics.");
                     break;
+                case DreamEvent.ForgeShrine:
+                    if (run.SatchelShards < 20) reason = Loc.T("未確保の欠片が20必要です。", "Need 20 unsecured shards.");
+                    else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhance))
+                        reason = Loc.T("まだ強化できる未確保の遺物が必要です。", "Need an enhanceable unsecured relic.");
+                    break;
+                case DreamEvent.TwinMirror:
+                    if (run.SatchelShards < 30) reason = Loc.T("未確保の欠片が30必要です。", "Need 30 unsecured shards.");
+                    else if (run.Satchel.Count == 0) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
+                    break;
+                case DreamEvent.Cauldron:
+                    if (run.Satchel.Count(r => r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) < 3)
+                        reason = Loc.T("コモンかアンコモンの未確保の遺物が3つ必要です。", "Need 3 unsecured Common or Uncommon relics.");
+                    break;
+                case DreamEvent.Tapir:
+                    if (run.Satchel.Count == 0) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
+                    break;
+                case DreamEvent.CourageGate:
+                    if (run.Heat >= Content.MaxHeat) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");
+                    break;
+                case DreamEvent.Stargazer:
+                case DreamEvent.Archive:
+                case DreamEvent.LuckyStar:
+                    break;
+                default:
+                    reason = Loc.T("この出来事は今はありません。", "That event is not available.");
+                    break;
             }
-            return reason == null;
+            return reason;
         }
 
         /// <summary>確保地点に着いたとき、出来事を抽選する。</summary>
         public static DreamEvent Roll(Rng rng, Profile p)
         {
-            if (!rng.Chance(OfferChance)) return DreamEvent.None;
-            var pool = new List<DreamEvent> { DreamEvent.Merchant, DreamEvent.Fountain, DreamEvent.Chalice };
-            if (p.LostAndFound.Count > 0) pool.Add(DreamEvent.Lantern);
-            return pool[rng.Range(0, pool.Count - 1)];
+            if (p.Run == null || !rng.Chance(OfferChance)) return DreamEvent.None;
+            var pool = new List<DreamEvent>();
+            for (int value = (int)DreamEvent.Merchant; value <= (int)DreamEvent.LuckyStar; value++)
+            {
+                var e = (DreamEvent)value;
+                if (UnavailableReason(p, e, e == DreamEvent.Merchant) == null) pool.Add(e);
+            }
+            return pool.Count == 0 ? DreamEvent.None : pool[rng.Range(0, pool.Count - 1)];
         }
     }
 }

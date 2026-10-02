@@ -59,6 +59,28 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
+        /// <summary>達成済みの偉業の報酬を1回だけ受け取る。遠征中も受け取れる。</summary>
+        public static GameEvent ClaimFeat(Profile p, string featId)
+        {
+            FeatDef feat = null;
+            for (int i = 0; i < Feats.All.Count; i++)
+            {
+                if (Feats.All[i].Id != featId) continue;
+                feat = Feats.All[i];
+                break;
+            }
+            if (feat == null) throw new InvalidOperationException(Loc.T("その偉業は見つかりません。", "That feat does not exist."));
+            if (!p.Feats.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業はまだ達成していません。", "You have not completed this feat yet."));
+            if (p.FeatsClaimed.Contains(featId)) throw new InvalidOperationException(Loc.T("この偉業の報酬は、もう受け取っています。", "You already claimed this reward."));
+
+            p.AddMaterial(Materials.Shard, feat.RewardShards);
+            p.AddMaterial(Materials.Tuning, feat.RewardTuning);
+            p.FeatsClaimed.Add(featId);
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"偉業「{feat.Name}」の報酬を受け取った：欠片{feat.RewardShards}・調律石{feat.RewardTuning}",
+                $"Claimed \"{feat.Name}\": {feat.RewardShards} shards, {feat.RewardTuning} tuning"));
+        }
+
         // ───────────── 遠征 ─────────────
 
         /// <summary>
@@ -101,12 +123,12 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        /// <summary>契約と今日の夢を合わせた撃破報酬の補正。</summary>
+        /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。</summary>
         public static Pacts.Totals KillModifiers(RunState run)
         {
             var t = Pacts.Sum(run.Pacts);
-            t.DropBonus += LimboDropBonus * run.LimboDepth;
-            t.Luck += LimboLuck * run.LimboDepth;
+            t.DropBonus += LimboDropBonus * run.LimboDepth + run.EventDropBonus;
+            t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
             var d = DailyDream.Get(run.DailyId);
             if (d != null)
             {
@@ -178,6 +200,7 @@ namespace SodRpg.Core.Game
                 default: AdvanceBounty(p, BountyKind.Slayer, 1, false, ev); break;
             }
             ev.AddRange(AddXp(p, reward.Xp));
+            ev.AddRange(Feats.Check(p));
             return ev;
         }
 
@@ -250,6 +273,8 @@ namespace SodRpg.Core.Game
             run.Satchel.Clear();
             run.SatchelShards = 0;
             run.SatchelTuning = 0;
+            run.EventDropBonus = 0;
+            run.EventLuck = 0;
             run.Heat = run.StartDepth;
             run.AwaitingChoice = false;
             int pacts = run.Pacts.Count;
@@ -275,6 +300,7 @@ namespace SodRpg.Core.Game
             ev.AddRange(AddXp(p, Content.SecureXp));
             AdvanceBounty(p, BountyKind.Collector, stored, true, ev);
             if (heat > 0) ReachBounty(p, BountyKind.DeepDiver, heat, true, ev);
+            ev.AddRange(Feats.Check(p));
             return ev;
         }
 
@@ -306,6 +332,7 @@ namespace SodRpg.Core.Game
         {
             b.Done = true;
             b.Progress = b.Target;
+            p.Stats.BountiesDone++;
             double mult = DailyDream.Get(p.Run.DailyId)?.BountyMult ?? 1.0;
             int shards = (int)Math.Round(b.RewardShards * mult);
             int tuning = (int)Math.Round(b.RewardTuning * mult);
@@ -325,6 +352,7 @@ namespace SodRpg.Core.Game
                 $"Bounty complete: {b.Describe()} ({b.RewardText(mult)}" + (secured ? ")" : ", unsecured)"))));
             ev.AddRange(AddXp(p, (int)Math.Round(b.RewardXp * mult)));
             AddHint(p, Hint.FirstBounty, ev);
+            ev.AddRange(Feats.Check(p));
         }
 
         /// <summary>確保を見送り、さらに深く潜る。ドロップ率とレア度が上がるが、被ダメージも増える。</summary>
@@ -337,6 +365,7 @@ namespace SodRpg.Core.Game
             {
                 if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer."));
                 run.Pacts.Add(pact);
+                p.Stats.PactsSworn++;
                 AdvanceBounty(p, BountyKind.PactBearer, 1, false, ev);
                 var d = Pacts.Get(pact);
                 ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」：{d.Description}（本体の呪いが付く）", $"Nightmare pact \"{d.Name}\": {d.Description} (a game curse is applied)")));
@@ -350,6 +379,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
                 $"潜行 {run.Heat}：ドロップ率+{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%、未確保の遺物{run.Satchel.Count}個を抱えたまま進む",
                 $"Delve {run.Heat}: +{(int)(Loot.HeatDropBonus * 100 * run.Heat)}% drop rate, carrying {run.Satchel.Count} unsecured relic(s)")));
+            ev.AddRange(Feats.Check(p));
             return ev;
         }
 
@@ -428,7 +458,10 @@ namespace SodRpg.Core.Game
             report.BountiesTotal = run.Bounties.Count;
             report.BountiesDone = run.Bounties.Count(b => b.Done);
             p.LastReport = report;
+            run.EventDropBonus = 0;
+            run.EventLuck = 0;
             p.Run = null;
+            ev.AddRange(Feats.Check(p));
             return ev;
         }
 
@@ -464,6 +497,7 @@ namespace SodRpg.Core.Game
                     p.Codex.Add(relic.UniqueId ?? relic.BaseId);
                     run.RelicsFound++;
                     p.Stats.RelicsFound++;
+                    if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
                     ev.Add(new GameEvent(EventKind.Drop, Loc.T($"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った（未確保）",
                         $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant (unsecured)"), relic.Rarity));
                     AddToSatchel(p, relic, ev);
@@ -503,10 +537,84 @@ namespace SodRpg.Core.Game
                     AddToSatchel(p, best, ev);
                     break;
                 }
+                case DreamEvent.ForgeShrine:
+                {
+                    var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhance).OrderByDescending(r => r.Score).First();
+                    run.SatchelShards -= 20;
+                    target.Enhance++;
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.DisplayName}」に強化した。",
+                        $"Enhanced to \"{target.DisplayName}\" at the Forge Shrine."), target.Rarity));
+                    break;
+                }
+                case DreamEvent.TwinMirror:
+                {
+                    var source = run.Satchel.OrderByDescending(r => r.Score).First();
+                    var rarity = source.Rarity == Rarity.Legendary ? Rarity.Epic : source.Rarity;
+                    var relic = Loot.RollBaseRelic(rng, source.Base, rarity, source.ItemLevel);
+                    run.SatchelShards -= 30;
+                    RecordEventRelic(p, relic, ev);
+                    break;
+                }
+                case DreamEvent.Stargazer:
+                    run.EventDropBonus += 0.5;
+                    ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
+                    break;
+                case DreamEvent.Cauldron:
+                {
+                    var parts = run.Satchel.Where(r => r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon)
+                        .OrderBy(r => r.Score).Take(3).ToList();
+                    var rarity = parts.Max(r => r.Rarity) + 1;
+                    foreach (var part in parts) run.Satchel.Remove(part);
+                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                    RecordEventRelic(p, relic, ev);
+                    break;
+                }
+                case DreamEvent.Tapir:
+                {
+                    int count = run.Satchel.Count;
+                    int shards = count * 12;
+                    int tuning = Math.Max(1, count / 3);
+                    run.Satchel.Clear();
+                    run.SatchelShards += shards;
+                    run.SatchelTuning += tuning;
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせた：欠片+{shards}・調律石+{tuning}（未確保）",
+                        $"Fed {count} relic(s) to the tapir: +{shards} shards, +{tuning} tuning (unsecured).")));
+                    break;
+                }
+                case DreamEvent.CourageGate:
+                    run.Heat = Loot.ClampHeat(run.Heat + 1);
+                    run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
+                    run.SatchelShards += 40;
+                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"勇気の門：潜行{run.Heat}、未確保の欠片+40",
+                        $"Gate of Courage: delve {run.Heat}, +40 unsecured shards")));
+                    break;
+                case DreamEvent.Archive:
+                    ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
+                    ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
+                    break;
+                case DreamEvent.LuckyStar:
+                    run.EventLuck += 0.6;
+                    ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
+                    break;
             }
+            p.Stats.EventsUsed++;
             p.StoreRng(rng);
             run.OfferedEvent = DreamEvent.None;
+            ev.AddRange(Feats.Check(p));
             return ev;
+        }
+
+        private static void RecordEventRelic(Profile p, Relic relic, List<GameEvent> ev)
+        {
+            p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+            p.Run.RelicsFound++;
+            p.Stats.RelicsFound++;
+            if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
+            ev.Add(new GameEvent(EventKind.Drop, Loc.T(
+                $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れた（未確保）",
+                $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
+            AddToSatchel(p, relic, ev);
         }
 
         /// <summary>本体での行動（祭壇・商人・強化・合成・分解・ハンター）を依頼へ反映する。</summary>
@@ -597,15 +705,17 @@ namespace SodRpg.Core.Game
 
         // ───────────── 装着 ─────────────
 
-        public static void Equip(Profile p, string heroKey, string uid)
+        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid)
         {
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             p.Hero(heroKey).Equipped[(int)r.Slot] = uid;
+            return Feats.Check(p);
         }
 
-        public static void Unequip(Profile p, string heroKey, Slot slot)
+        public static IReadOnlyList<GameEvent> Unequip(Profile p, string heroKey, Slot slot)
         {
             p.Hero(heroKey).Equipped[(int)slot] = null;
+            return Feats.Check(p);
         }
 
         public static Relic EquippedRelic(Profile p, string heroKey, Slot slot)

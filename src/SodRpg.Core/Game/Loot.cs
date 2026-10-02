@@ -114,6 +114,12 @@ namespace SodRpg.Core.Game
             foreach (var b in Content.Bases)
                 if (slot == null || b.Slot == slot.Value) bases.Add(b);
             var baseDef = PickWeighted(rng, bases, b => b.Line, focus);
+            return RollBaseRelic(rng, baseDef, rarity, itemLevel);
+        }
+
+        /// <summary>指定された土台の通常遺物を新しく抽選する（双子の鏡用）。</summary>
+        internal static Relic RollBaseRelic(Rng rng, BaseDef baseDef, Rarity rarity, int itemLevel)
+        {
 
             var r = new Relic
             {

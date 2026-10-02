@@ -62,7 +62,8 @@ namespace SodRpg.Core.Game
                 .Add("runs", (long)s.Runs).Add("victories", (long)s.Victories).Add("defeats", (long)s.Defeats)
                 .Add("relicsFound", (long)s.RelicsFound).Add("legendariesFound", (long)s.LegendariesFound)
                 .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills)
-                .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth);
+                .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth)
+                .Add("pactsSworn", (long)s.PactsSworn).Add("eventsUsed", (long)s.EventsUsed).Add("bountiesDone", (long)s.BountiesDone);
 
             JsonObject run = null;
             if (p.Run != null)
@@ -75,6 +76,9 @@ namespace SodRpg.Core.Game
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
                     .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth).Add("rerollsUsed", (long)r.RerollsUsed).Add("event", (long)r.OfferedEvent).Add("limbo", (long)r.LimboDepth)
+                    // 最小JSONは整数のみ扱うため、小数の補正はカルチャ非依存の文字列で保存する。
+                    .Add("eventDropBonus", r.EventDropBonus.ToString("R", CultureInfo.InvariantCulture))
+                    .Add("eventLuck", r.EventLuck.ToString("R", CultureInfo.InvariantCulture))
                     .Add("bounties", WriteBounties(r.Bounties))
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
             }
@@ -94,6 +98,8 @@ namespace SodRpg.Core.Game
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
                 .Add("heroes", heroes)
                 .Add("codex", codex)
+                .Add("feats", p.Feats.Select(f => (object)f).ToList())
+                .Add("featsClaimed", p.FeatsClaimed.Select(f => (object)f).ToList())
                 .Add("upgrades", WriteUpgrades(p))
                 .Add("hints", p.SeenHints.Select(h => (object)(long)h).ToList())
                 .Add("hintsOff", p.HintsOff)
@@ -249,6 +255,12 @@ namespace SodRpg.Core.Game
             if (b.TryGet("codex", out object co) && co is List<object> codex)
                 foreach (var c in codex)
                     if (c is string s) p.Codex.Add(s);
+            if (b.TryGet("feats", out object fe) && fe is List<object> feats)
+                foreach (var f in feats)
+                    if (f is string id) p.Feats.Add(id);
+            if (b.TryGet("featsClaimed", out object fc) && fc is List<object> featsClaimed)
+                foreach (var f in featsClaimed)
+                    if (f is string id) p.FeatsClaimed.Add(id);
             if (b.TryGet("hints", out object ho2) && ho2 is List<object> hints)
                 foreach (var h in hints)
                     if (h is long hv && hv >= 0 && hv < 1000) p.SeenHints.Add((int)hv);
@@ -284,6 +296,9 @@ namespace SodRpg.Core.Game
                 p.Stats.BestHeatSecured = Clamp(Long(st, "bestHeatSecured"), 0, Content.MaxHeat);
                 p.Stats.Kills = Clamp(Long(st, "kills"), 0, int.MaxValue);
                 p.Stats.NightmaresSlain = Clamp(Long(st, "nightmares"), 0, int.MaxValue);
+                p.Stats.PactsSworn = Clamp(Long(st, "pactsSworn"), 0, int.MaxValue);
+                p.Stats.EventsUsed = Clamp(Long(st, "eventsUsed"), 0, int.MaxValue);
+                p.Stats.BountiesDone = Clamp(Long(st, "bountiesDone"), 0, int.MaxValue);
                 p.Stats.BestVictoryStartDepth = st.TryGet("bestVictoryStartDepth", out object bv) && bv is long bvl ? Clamp(bvl, -1, Content.MaxHeat) : -1;
             }
             if (b.TryGet("run", out object ro) && ro is JsonObject rj)
@@ -308,6 +323,8 @@ namespace SodRpg.Core.Game
                     RerollsUsed = Clamp(Long(rj, "rerollsUsed"), 0, 100),
                     LimboDepth = Clamp(Long(rj, "limbo"), 0, 50),
                     OfferedEvent = Enum.IsDefined(typeof(DreamEvent), (int)Long(rj, "event")) ? (DreamEvent)(int)Long(rj, "event") : DreamEvent.None,
+                    EventDropBonus = Bonus(rj, "eventDropBonus"),
+                    EventLuck = Bonus(rj, "eventLuck"),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
@@ -385,6 +402,13 @@ namespace SodRpg.Core.Game
         private static string Str(JsonObject o, string key) => o.TryGet(key, out object v) ? v as string : null;
 
         private static long Long(JsonObject o, string key) => o.TryGet(key, out object v) && v is long l ? l : 0;
+
+        private static double Bonus(JsonObject o, string key)
+        {
+            if (!double.TryParse(Str(o, key), NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+                || double.IsNaN(value) || double.IsInfinity(value) || value < 0) return 0;
+            return value;
+        }
 
         private static bool Bool(JsonObject o, string key, bool fallback) => o.TryGet(key, out object v) && v is bool b ? b : fallback;
 

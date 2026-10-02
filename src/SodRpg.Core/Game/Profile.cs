@@ -63,6 +63,10 @@ namespace SodRpg.Core.Game
         public int RerollsUsed { get; set; }
         /// <summary>確保地点に現れている出来事（選択待ちの間だけ）。</summary>
         public DreamEvent OfferedEvent { get; set; }
+        /// <summary>出来事による撃破時の遺物ドロップ率の上乗せ（次の確保まで）。</summary>
+        public double EventDropBonus { get; set; }
+        /// <summary>出来事による撃破時の幸運（次の確保まで）。</summary>
+        public double EventLuck { get; set; }
         /// <summary>本体の Limbo 深度（ラン開始時に読む。0 は Limbo 以外）。</summary>
         public int LimboDepth { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
@@ -91,6 +95,8 @@ namespace SodRpg.Core.Game
                 StartDepth = StartDepth,
                 RerollsUsed = RerollsUsed,
                 OfferedEvent = OfferedEvent,
+                EventDropBonus = EventDropBonus,
+                EventLuck = EventLuck,
                 LimboDepth = LimboDepth,
                 AwaitingChoice = AwaitingChoice,
             };
@@ -130,6 +136,9 @@ namespace SodRpg.Core.Game
         public int BestHeatSecured { get; set; }
         public int Kills { get; set; }
         public int NightmaresSlain { get; set; }
+        public int PactsSworn { get; set; }
+        public int EventsUsed { get; set; }
+        public int BountiesDone { get; set; }
         /// <summary>踏破したときの最も深い開始深度（-1は未踏破）。</summary>
         public int BestVictoryStartDepth { get; set; } = -1;
 
@@ -158,6 +167,10 @@ namespace SodRpg.Core.Game
         public List<Relic> LostAndFound { get; } = new List<Relic>();
         public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>達成済みの偉業のID。</summary>
+        public SortedSet<string> Feats { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>報酬を受け取り済みの偉業のID。</summary>
+        public SortedSet<string> FeatsClaimed { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>夢の工房の段階。</summary>
         public SortedDictionary<Upgrade, int> Upgrades { get; } = new SortedDictionary<Upgrade, int>();
         /// <summary>見たヒント（Hint の値）。</summary>
@@ -251,6 +264,8 @@ namespace SodRpg.Core.Game
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
+            foreach (var f in Feats) c.Feats.Add(f);
+            foreach (var f in FeatsClaimed) c.FeatsClaimed.Add(f);
             foreach (var kv in Upgrades) c.Upgrades[kv.Key] = kv.Value;
             foreach (var h in SeenHints) c.SeenHints.Add(h);
             c.StarterUids.AddRange(StarterUids);
