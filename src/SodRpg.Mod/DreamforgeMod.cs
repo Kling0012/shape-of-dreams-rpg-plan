@@ -34,7 +34,6 @@ namespace SodRpg.Mod
             {
                 instance.isAlteringGameplay = true;
                 Loc.Japanese = config.japanese;
-                Profile.TestBonusPoints = Math.Max(0, Math.Min(100, config.testTalentPoints));
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
@@ -59,7 +58,6 @@ namespace SodRpg.Mod
         public override void OnConfigChanged()
         {
             Loc.Japanese = config.japanese;
-            Profile.TestBonusPoints = Math.Max(0, Math.Min(100, config.testTalentPoints));
             _performance?.Configure(config);
         }
 
@@ -263,6 +261,14 @@ namespace SodRpg.Mod
             BlockGameUi(false);
             try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }
             try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
+        }
+
+        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-100, 0 = off)", "dreamforge_testpoints")]
+        private void TestPointsCommand(int points)
+        {
+            // 保存しない。ゲームを終えれば元に戻る。設定画面には置かない（誰でも触れる所に置かない）。
+            Profile.TestBonusPoints = Math.Max(0, Math.Min(100, points));
+            _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points +" + Profile.TestBonusPoints));
         }
 
         [ConsoleCommand("Dreamforge: give relics for testing (count, rarity 0-4)", "dreamforge_give")]

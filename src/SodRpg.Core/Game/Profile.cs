@@ -285,7 +285,7 @@ namespace SodRpg.Core.Game
         /// <summary>使える専門化ポイントの総数（夢のレベル−1）。全キャラ共通の総数を、キャラごとに配分する。</summary>
         public int TalentPoints => Math.Max(0, DreamLevel - 1) + CodexBonusPoints + TestBonusPoints;
 
-        /// <summary>テスト用に足す星図ポイント（MOD 設定。保存しない）。0〜100。</summary>
+        /// <summary>テスト用に足す星図ポイント（コンソールの dreamforge_testpoints。保存しない）。0〜100。</summary>
         public static int TestBonusPoints { get; set; }
 
         /// <summary>図鑑の節目（6種ごと）で得る星図ポイント。最大4。</summary>

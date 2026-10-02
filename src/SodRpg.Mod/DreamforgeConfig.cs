@@ -30,10 +30,6 @@ namespace SodRpg.Mod
         [UnityEngine.Range(0, 60)]
         public int backgroundFps = 20;
 
-        [LabelText("Test: extra star map points (0 = off) / テスト用：星図ポイントを足す（0で無効）")]
-        [UnityEngine.Range(0, 100)]
-        public int testTalentPoints = 0;
-
         [LabelText("Lighter rendering / 描画の軽量化（Off：なし／Light：軽め／Strong：強め／Max：最大）")]
         public LightweightMode lightweight = LightweightMode.Off;
     }
