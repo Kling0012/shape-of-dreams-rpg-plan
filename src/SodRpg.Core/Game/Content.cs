@@ -549,6 +549,42 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.shadowstitch", "armor.flowing_cloak", new Txt("影縫いの外套", "Shadowstitch Cloak"),
                 new Txt("影を縫い留めれば、敵は動けない。", "Stitch down the shadow, and the foe cannot move."),
                 Power.Umbra, 35, Power.Frost, 30),
+            new UniqueDef("unique.soul_lantern", "weapon.lantern_rod", new Txt("魂の灯籠", "Soul Lantern"),
+                new Txt("消えた灯が、持ち主の命になる。", "Every light that goes out becomes the bearer's life."),
+                Power.SoulSiphon, 15, Power.Radiance, 30),
+            new UniqueDef("unique.cyclone_cloak", "armor.flowing_cloak", new Txt("竜巻の外套", "Cyclone Cloak"),
+                new Txt("身をかわすたび、嵐が生まれる。", "Every sidestep gives birth to a storm."),
+                Power.Whirlwind, 70, Power.EchoingDodge, 10),
+            new UniqueDef("unique.brawler_gauntlets", "armor.counter_gauntlets", new Txt("乱闘者の籠手", "Brawler's Gauntlets"),
+                new Txt("囲まれてからが、本番だ。", "The real fight starts once you are surrounded."),
+                Power.Frenzy, 3, Power.Bulwark, 25),
+            new UniqueDef("unique.first_light", "weapon.longspike_bow", new Txt("一番星の弓", "Bow of the First Star"),
+                new Txt("最初の一矢が、すべてを決める。", "The first arrow decides everything."),
+                Power.OpeningStrike, 80, Power.Radiance, 25),
+            new UniqueDef("unique.starward_mantle", "armor.star_cloak", new Txt("星守りの外套", "Starward Mantle"),
+                new Txt("切り札を切るとき、星が身を守る。", "When you play your trump card, the stars guard you."),
+                Power.StarShield, 20, Power.UltimateSurge, 20),
+            new UniqueDef("unique.hare_boots", "armor.dancer_garb", new Txt("白兎の舞衣", "White Hare Garb"),
+                new Txt("跳ねるように逃げ、跳ねるように戻る。", "Bound away, bound back."),
+                Power.Sprint, 25, Power.EchoingDodge, 12),
+            new UniqueDef("unique.unbowed_crown", "charm.guardian_seal", new Txt("屈せぬ冠", "Unbowed Crown"),
+                new Txt("傷ひとつない者は、恐れを知らない。", "One without a scratch knows no fear."),
+                Power.Vigor, 16, Power.Barrier, 8),
+            new UniqueDef("unique.overload_core", "charm.pulsing_core", new Txt("過負荷の核", "Overload Core"),
+                new Txt("力を使うほど、次の力が満ちる。", "The more power you spend, the more fills the next."),
+                Power.Overload, 20, Power.UltimateSurge, 15),
+            new UniqueDef("unique.reaper_harvest", "weapon.dusk_scythe", new Txt("刈り入れの鎌", "Harvest Scythe"),
+                new Txt("刈った命は、刃の主に還る。", "The lives it reaps return to its master."),
+                Power.SoulSiphon, 20, Power.Executioner, 40),
+            new UniqueDef("unique.tempest_dancer", "charm.war_drum", new Txt("嵐舞の太鼓", "Drum of the Storm Dance"),
+                new Txt("跳ぶたび、太鼓が雷を呼ぶ。", "Every leap makes the drum call lightning."),
+                Power.Whirlwind, 60, Power.Sprint, 15),
+            new UniqueDef("unique.berserker_axe", "weapon.war_axe", new Txt("狂戦士の斧", "Berserker's Axe"),
+                new Txt("敵が多いほど、斧は軽くなる。", "The more foes, the lighter the axe."),
+                Power.Frenzy, 3, Power.Bloodlust, 25),
+            new UniqueDef("unique.dawn_herald", "weapon.hunting_bow", new Txt("暁の伝令", "Herald of Dawn"),
+                new Txt("夜明けの一矢は、まだ眠る敵を貫く。", "The dawn arrow pierces foes still half asleep."),
+                Power.OpeningStrike, 70, Power.Vigor, 12),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -728,6 +764,11 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Ember, 20, 35),
                 new PowerRange(Power.Radiance, 20, 35),
                 new PowerRange(Power.UltimateSurge, 15, 25),
+                new PowerRange(Power.SoulSiphon, 10, 20),
+                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.OpeningStrike, 40, 80),
+                new PowerRange(Power.Vigor, 8, 16),
+                new PowerRange(Power.Overload, 10, 20),
             },
             [Slot.Armor] = new[]
             {
@@ -737,6 +778,10 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Barrier, 6, 10),
                 new PowerRange(Power.Aegis, 10, 20),
                 new PowerRange(Power.EchoingDodge, 6, 12),
+                new PowerRange(Power.Whirlwind, 40, 80),
+                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.StarShield, 10, 20),
+                new PowerRange(Power.Sprint, 10, 25),
             },
             [Slot.Charm] = new[]
             {
@@ -747,6 +792,12 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Frost, 20, 35),
                 new PowerRange(Power.Umbra, 20, 35),
                 new PowerRange(Power.Convergence, 80, 140),
+                new PowerRange(Power.SoulSiphon, 10, 20),
+                new PowerRange(Power.Whirlwind, 40, 80),
+                new PowerRange(Power.StarShield, 10, 20),
+                new PowerRange(Power.Sprint, 10, 25),
+                new PowerRange(Power.Vigor, 8, 16),
+                new PowerRange(Power.Overload, 10, 20),
             },
         };
 
@@ -800,6 +851,14 @@ namespace SodRpg.Core.Game
             [Power.Convergence] = 300,
             [Power.EchoingDodge] = 30,
             [Power.UltimateSurge] = 50,
+            [Power.SoulSiphon] = 40,
+            [Power.Whirlwind] = 200,
+            [Power.Frenzy] = 6,
+            [Power.OpeningStrike] = 150,
+            [Power.StarShield] = 40,
+            [Power.Sprint] = 60,
+            [Power.Vigor] = 40,
+            [Power.Overload] = 50,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -1050,6 +1109,14 @@ namespace SodRpg.Core.Game
                 case Power.Convergence: return Loc.T("四元の共鳴", "Convergence");
                 case Power.EchoingDodge: return Loc.T("回避の残響", "Echoing Dodge");
                 case Power.UltimateSurge: return Loc.T("終の昂り", "Ultimate Surge");
+                case Power.SoulSiphon: return Loc.T("吸魂", "Soul Siphon");
+                case Power.Whirlwind: return Loc.T("旋風", "Whirlwind");
+                case Power.Frenzy: return Loc.T("乱戦", "Melee Frenzy");
+                case Power.OpeningStrike: return Loc.T("先制", "Opening Strike");
+                case Power.StarShield: return Loc.T("星の加護", "Star Shield");
+                case Power.Sprint: return Loc.T("疾駆", "Sprint");
+                case Power.Vigor: return Loc.T("不屈", "Vigor");
+                case Power.Overload: return Loc.T("過負荷", "Overload");
                 default: return "-";
             }
         }
@@ -1081,6 +1148,14 @@ namespace SodRpg.Core.Game
                 case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% AD (once per 6s per enemy)");
                 case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびに、Memory（スキル）のクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Each dodge shortens your Memory (skill) cooldowns by {v / 10f:0.#}s");
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate");
+                case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health");
+                case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% AD to enemies within 4m (once per 2s)");
+                case Power.Frenzy: return Loc.T($"【{name}】周りの敵1体につき、攻撃速度が{v}%上がる（5体まで）", $"[{name}] +{v}% attack speed per nearby enemy (up to 5)");
+                case Power.OpeningStrike: return Loc.T($"【{name}】HPが90%以上の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies above 90% health deal +{v}% AD");
+                case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health");
+                case Power.Sprint: return Loc.T($"【{name}】回避した後の3秒間、移動速度が{v}%上がる", $"[{name}] +{v}% move speed for 3s after dodging");
+                case Power.Vigor: return Loc.T($"【{name}】HPが80%以上の間、攻撃力が{v}%上がる", $"[{name}] +{v}% attack damage while above 80% health");
+                case Power.Overload: return Loc.T($"【{name}】スキルを使った後の4秒間、魔力が{v}%上がる", $"[{name}] +{v}% ability power for 4s after using a skill");
                 default: return "-";
             }
         }

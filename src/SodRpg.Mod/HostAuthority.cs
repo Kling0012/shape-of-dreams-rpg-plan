@@ -507,14 +507,18 @@ namespace SodRpg.Mod
             rt.DamageTaken = null;
         }
 
-        /// <summary>回避の残響・終の昂り。</summary>
+        /// <summary>回避・Memory・Ultimate の固有効果。</summary>
         private static void OnSkillUse(HeroRuntime rt, EventInfoSkillUse info)
         {
             try
             {
                 var hero = rt.Hero;
                 if (!Alive(hero)) return;
-                float cdr = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R);
+                var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
+                    hero.Status.attackDamage, hero.maxHealth);
+                if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.BarrierInterval);
+                if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: false);
+                float cdr = r.CooldownReduction;
                 if (cdr <= 0 || hero.Skill == null) return;
                 foreach (var loc in new[] { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E })
                 {
@@ -601,7 +605,7 @@ namespace SodRpg.Mod
             if (heal > 0) hero.Heal(heal).Dispatch(hero);
         }
 
-        /// <summary>鉄の輪の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
+        /// <summary>鉄の輪・乱戦の敵数と、共鳴の距離判定（0.25秒ごと）。</summary>
         private readonly List<HeroRuntime> _scanList = new List<HeroRuntime>();
 
         private void ScanArea()
@@ -611,7 +615,8 @@ namespace SodRpg.Mod
             list.AddRange(_runtimes.Values);
             if (list.Count == 0) return;
             foreach (var rt in list)
-                rt.Powers.NearbyEnemies = rt.Powers.Build.Get(Power.Bulwark) > 0 && Alive(rt.Hero) ? CountEnemiesNear(rt.Hero, 6f) : 0;
+                rt.Powers.NearbyEnemies = (rt.Powers.Build.Get(Power.Bulwark) > 0 || rt.Powers.Build.Get(Power.Frenzy) > 0)
+                    && Alive(rt.Hero) ? CountEnemiesNear(rt.Hero, 6f) : 0;
 
             var powers = new PowerRuntime[list.Count];
             for (int i = 0; i < list.Count; i++) powers[i] = list[i].Powers;
@@ -680,8 +685,9 @@ namespace SodRpg.Mod
                 if (!(info.victim is Monster)) return;
                 var rt = RuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
-                float shatter = rt.Powers.OnKill(Time.time, rt.Hero.Status.attackDamage);
-                if (shatter > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, shatter, null, int.MaxValue, magic: false);
+                var r = rt.Powers.OnKill(Time.time, rt.Hero.Status.attackDamage, rt.Hero.maxHealth);
+                if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
+                if (r.ShatterDamage > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: false);
             }
             catch (Exception ex)
             {
@@ -747,6 +753,8 @@ namespace SodRpg.Mod
                     if (r.ApplyLight) hero.ApplyElemental(ElementalType.Light, victim, 1);
                     if (r.ApplyDark) hero.ApplyElemental(ElementalType.Dark, victim, 1);
                 }
+                if (r.OpeningDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                    hero.PureDamage(r.OpeningDamage, 0f).Dispatch(victim);
             }
             catch (Exception ex)
             {

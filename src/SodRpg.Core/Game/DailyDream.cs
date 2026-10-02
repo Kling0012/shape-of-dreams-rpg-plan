@@ -90,8 +90,8 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 11, Name = new Txt("灯の日", "Day of Lanterns"),
-                Description = new Txt("輝き・護りの灯・灯守・終の昂りが+50%、想像の遺物が出やすい", "Radiance, Barrier, Second Wind and Ultimate Surge +50%; Imagination relics favored"),
-                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Radiance, Power.Barrier, Power.SecondWind, Power.UltimateSurge },
+                Description = new Txt("輝き・護りの灯・灯守・終の昂り・星の加護が+50%、想像の遺物が出やすい", "Radiance, Barrier, Second Wind, Ultimate Surge and Star Shield +50%; Imagination relics favored"),
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Radiance, Power.Barrier, Power.SecondWind, Power.UltimateSurge, Power.StarShield },
             },
             new DailyDream
             {
@@ -114,14 +114,14 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 15, Name = new Txt("疾風の日", "Day of Gales"),
-                Description = new Txt("連撃・追い風・回避の残響が+50%、破壊の遺物が出やすい", "Momentum, Tailwind and Echoing Dodge +50%; Destruction relics favored"),
-                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Momentum, Power.Tailwind, Power.EchoingDodge },
+                Description = new Txt("連撃・追い風・回避の残響・疾駆・旋風が+50%、破壊の遺物が出やすい", "Momentum, Tailwind, Echoing Dodge, Sprint and Whirlwind +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Momentum, Power.Tailwind, Power.EchoingDodge, Power.Sprint, Power.Whirlwind },
             },
             new DailyDream
             {
                 Id = 16, Name = new Txt("血の日", "Day of Blood"),
-                Description = new Txt("吸命・血の渇き・逆襲が+50%、生命の遺物が出やすい", "Lifesteal, Bloodlust and Retaliation +50%; Life relics favored"),
-                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Lifesteal, Power.Bloodlust, Power.Retaliation },
+                Description = new Txt("吸命・血の渇き・逆襲・吸魂が+50%、生命の遺物が出やすい", "Lifesteal, Bloodlust, Retaliation and Soul Siphon +50%; Life relics favored"),
+                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Lifesteal, Power.Bloodlust, Power.Retaliation, Power.SoulSiphon },
             },
             new DailyDream
             {
@@ -186,8 +186,8 @@ namespace SodRpg.Core.Game
             new DailyDream
             {
                 Id = 27, Name = new Txt("雷の日", "Day of Thunder"),
-                Description = new Txt("雷鎖・処刑・連撃が+50%、破壊の遺物が出やすい", "Chain Lightning, Executioner and Momentum +50%; Destruction relics favored"),
-                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.ChainLightning, Power.Executioner, Power.Momentum },
+                Description = new Txt("雷鎖・処刑・連撃・先制が+50%、破壊の遺物が出やすい", "Chain Lightning, Executioner, Momentum and Opening Strike +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.ChainLightning, Power.Executioner, Power.Momentum, Power.OpeningStrike },
             },
             new DailyDream
             {

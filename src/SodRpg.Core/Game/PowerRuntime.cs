@@ -40,6 +40,14 @@ namespace SodRpg.Core.Game
         public const float BloodlustThreshold = 0.5f;
         public const float ConvergenceCooldown = 6f;
         public const float SurgeDuration = 5f;
+        public const float SoulSiphonInterval = 0.5f;
+        public const float WhirlwindInterval = 2f;
+        public const float WhirlwindRadius = 4f;
+        public const int FrenzyMaxEnemies = 5;
+        public const float OpeningStrikeThreshold = 0.9f;
+        public const float SprintDuration = 3f;
+        public const float VigorThreshold = 0.8f;
+        public const float OverloadDuration = 4f;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -51,10 +59,14 @@ namespace SodRpg.Core.Game
         private float _aegisReady;
         private bool _nextHitIsFourth;
         private float _surgeUntil;
+        private float _soulSiphonReady;
+        private float _whirlwindReady;
+        private float _sprintUntil;
+        private float _overloadUntil;
         private readonly Dictionary<int, float> _convergenceReady = new Dictionary<int, float>();
         private readonly Rng _rng;
 
-        /// <summary>現在のHP割合（ホストが毎フレーム設定）。血の渇きに使う。</summary>
+        /// <summary>現在のHP割合（ホストが毎フレーム設定）。血の渇き・不屈に使う。</summary>
         public float HealthRatio { get; set; } = 1f;
 
         public PowerRuntime(Build build, float now, ulong seed = 1)
@@ -70,12 +82,36 @@ namespace SodRpg.Core.Game
             if (isFourthAttack) _nextHitIsFourth = true;
         }
 
-        /// <summary>Memory を使った。回避なら Q/W/E を短縮する秒数を返す。Ultimate なら終の昂りを始める。</summary>
+        /// <summary>Memory を使った。一時補正を始め、回避なら Q/W/E を短縮する秒数を返す。</summary>
         public float OnSkillUsed(float now, bool isMovement, bool isUltimate)
         {
             if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
+            if (isMovement && Build.Get(Power.Sprint) > 0) _sprintUntil = now + SprintDuration;
+            if (!isMovement && !isUltimate && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
             int dodge = Build.Get(Power.EchoingDodge);
             return isMovement && dodge > 0 ? dodge / 10f : 0;
+        }
+
+        public struct SkillResult
+        {
+            public float CooldownReduction;
+            public float WhirlwindDamage;
+            public float Shield;
+        }
+
+        /// <summary>Memory の使用結果。一時補正と短縮に加え、旋風・星の加護の量を返す。</summary>
+        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackDamage, float maxHealth)
+        {
+            var r = new SkillResult { CooldownReduction = OnSkillUsed(now, isMovement, isUltimate) };
+            int whirlwind = Build.Get(Power.Whirlwind);
+            if (isMovement && whirlwind > 0 && now >= _whirlwindReady)
+            {
+                _whirlwindReady = now + WhirlwindInterval;
+                r.WhirlwindDamage = attackDamage * whirlwind / 100f;
+            }
+            int starShield = Build.Get(Power.StarShield);
+            if (isUltimate && starShield > 0) r.Shield = maxHealth * starShield / 100f;
+            return r;
         }
 
         /// <summary>四元の共鳴：敵に4属性が揃っていれば爆発ダメージを返す（同じ敵へは6秒に1回）。</summary>
@@ -118,6 +154,25 @@ namespace SodRpg.Core.Game
             return shatter > 0 ? attackDamage * shatter / 100f : 0;
         }
 
+        public struct KillResult
+        {
+            public float ShatterDamage;
+            public float Heal;
+        }
+
+        /// <summary>撃破した。爆砕の範囲ダメージと吸魂の回復量を返す。</summary>
+        public KillResult OnKill(float now, float attackDamage, float maxHealth)
+        {
+            var r = new KillResult { ShatterDamage = OnKill(now, attackDamage) };
+            int soulSiphon = Build.Get(Power.SoulSiphon);
+            if (soulSiphon > 0 && maxHealth > 0 && now >= _soulSiphonReady)
+            {
+                _soulSiphonReady = now + SoulSiphonInterval;
+                r.Heal = maxHealth * soulSiphon / 1000f;
+            }
+            return r;
+        }
+
         /// <summary>守護霊：大きな一撃を受けたら障壁量を返す（クールダウン20秒）。</summary>
         public float TakeAegis(float now, float amount, float maxHealth)
         {
@@ -142,6 +197,7 @@ namespace SodRpg.Core.Game
         {
             public float Heal;
             public float ExecuteDamage;
+            public float OpeningDamage;
             public float BlazeDamage;
             /// <summary>雷鎖：近くの敵（最大2体）へ与えるダメージ。</summary>
             public float ChainDamage;
@@ -161,6 +217,8 @@ namespace SodRpg.Core.Game
             }
             int exec = Build.Get(Power.Executioner);
             if (exec > 0 && victimHealthRatio < ExecuteThreshold) r.ExecuteDamage = attackDamage * exec / 100f;
+            int opening = Build.Get(Power.OpeningStrike);
+            if (opening > 0 && victimHealthRatio >= OpeningStrikeThreshold) r.OpeningDamage = attackDamage * opening / 100f;
             int blaze = Build.Get(Power.Blaze);
             if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = attackDamage * blaze / 100f;
             _nextHitIsFourth = false;
@@ -186,10 +244,13 @@ namespace SodRpg.Core.Game
             int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
             return new DynamicBonus
             {
-                AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0),
-                AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance,
-                PowerPct = resonance,
-                MoveSpeedPct = now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0,
+                AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0)
+                    + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies)),
+                AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance
+                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0),
+                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0),
+                MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
+                    + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
                 Armor = NearbyEnemies >= BulwarkEnemies ? Build.Get(Power.Bulwark) : 0,
             };
         }

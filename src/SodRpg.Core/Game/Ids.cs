@@ -105,6 +105,22 @@ namespace SodRpg.Core.Game
         EchoingDodge = 21,
         /// <summary>Ultimate（R）を使うと5秒間 攻撃力・魔力+X%。「終の昂り」</summary>
         UltimateSurge = 22,
+        /// <summary>撃破で最大HPのX/10%回復（0.5秒に1回）。「吸魂」</summary>
+        SoulSiphon = 23,
+        /// <summary>回避で周囲4mの敵へ攻撃力X%のダメージ（2秒に1回）。「旋風」</summary>
+        Whirlwind = 24,
+        /// <summary>周囲6mの敵1体につき攻撃速度+X%（5体まで）。「乱戦」</summary>
+        Frenzy = 25,
+        /// <summary>HP90%以上の敵への通常攻撃に攻撃力X%の追加ダメージ。「先制」</summary>
+        OpeningStrike = 26,
+        /// <summary>Ultimateを使うと最大HPのX%の障壁。「星の加護」</summary>
+        StarShield = 27,
+        /// <summary>回避後3秒、移動速度+X%。「疾駆」</summary>
+        Sprint = 28,
+        /// <summary>HP80%以上の間、攻撃力+X%。「不屈」</summary>
+        Vigor = 29,
+        /// <summary>Ultimate・回避以外のスキル使用後4秒、魔力+X%（時間だけ延長）。「過負荷」</summary>
+        Overload = 30,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>
