@@ -31,9 +31,12 @@ namespace SodRpg.Core.Tests
                 var relic = Loot.RollRelic(rng, Rarity.Epic, 10, slot: slot);
                 Assert.Equal(slot, relic.Slot);
                 Assert.Equal(Rarity.Epic, relic.Rarity);
-                var power = Assert.Single(relic.Powers);
-                Assert.Contains(Content.PowerPool(slot), p => p.Power == power.Power &&
-                    power.Value >= p.Min && power.Value <= p.Max);
+                // v1.22：エピックは固有効果2つ（別々の物）。どちらもその枠の候補の範囲内。
+                Assert.Equal(2, relic.Powers.Count);
+                Assert.NotEqual(relic.Powers[0].Power, relic.Powers[1].Power);
+                foreach (var power in relic.Powers)
+                    Assert.Contains(Content.PowerPool(slot), p => p.Power == power.Power &&
+                        power.Value >= p.Min && power.Value <= p.Max);
             }
         }
 
@@ -44,7 +47,7 @@ namespace SodRpg.Core.Tests
         public void New_slots_have_twelve_standalone_uniques_with_matching_bases(Slot slot)
         {
             var prefix = slot.ToString().ToLowerInvariant() + ".";
-            var uniques = Content.Uniques.Where(u => u.BaseId.StartsWith(prefix, StringComparison.Ordinal)).ToList();
+            var uniques = Content.Uniques.Where(u => u.SetId == null && u.BaseId.StartsWith(prefix, StringComparison.Ordinal)).ToList();
             Assert.True(uniques.Count >= 40, $"{slot}: {uniques.Count}");
             foreach (var unique in uniques)
             {

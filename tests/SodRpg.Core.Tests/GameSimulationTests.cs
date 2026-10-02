@@ -274,7 +274,7 @@ namespace SodRpg.Core.Tests
         {
             var rng = new Rng(31);
             var seen = new HashSet<string>();
-            for (int i = 0; i < 20000; i++)
+            for (int i = 0; i < 40000; i++) // v1.21 で固有品が増えたので試行を倍に
             {
                 var r = Loot.RollRelic(rng, (Rarity)(i % 5), 10);
                 seen.Add(r.UniqueId ?? r.BaseId);

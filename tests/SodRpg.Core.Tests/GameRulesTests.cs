@@ -31,14 +31,15 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(Content.AffixCount(r.Rarity), r.Affixes.Count);
                 var stats = r.Affixes.Select(a => a.Stat).Append(r.Base.ImplicitStat).ToList();
                 Assert.Equal(stats.Count, stats.Distinct().Count());
-                if (r.Rarity == Rarity.Epic) Assert.Single(r.Powers);
+                if (r.Rarity == Rarity.Epic) Assert.Equal(2, r.Powers.Count); // v1.22
                 if (r.Rarity == Rarity.Legendary)
                 {
                     Assert.NotNull(r.UniqueId);
                     Assert.True(Content.TryGetUnique(r.UniqueId, out var u));
                     Assert.Equal(u.SetId != null ? 0 : 2, r.Powers.Count);
                 }
-                if (r.Rarity < Rarity.Epic) Assert.Empty(r.Powers);
+                if (r.Rarity == Rarity.Rare) Assert.Single(r.Powers); // v1.22：レアは弱い固有効果1つ
+                if (r.Rarity < Rarity.Rare) Assert.Empty(r.Powers);
             }
         }
 

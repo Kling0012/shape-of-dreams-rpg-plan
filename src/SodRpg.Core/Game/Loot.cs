@@ -129,13 +129,31 @@ namespace SodRpg.Core.Game
                 ItemLevel = ClampLevel(itemLevel),
             };
             RollAffixes(rng, r, Content.AffixCount(rarity));
+            // v1.22：レア度にふさわしい固有効果。レアは弱いものを1つ、エピックは範囲どおりの1つと弱いもう1つ。
+            var pool = Content.PowerPool(baseDef.Slot);
             if (rarity == Rarity.Epic)
             {
-                var pool = Content.PowerPool(baseDef.Slot);
                 var pr = pool[rng.Range(0, pool.Count - 1)];
                 r.Powers.Add(new PowerLine(pr.Power, rng.Range(pr.Min, pr.Max)));
+                AddMinorPower(rng, r, pool);
+            }
+            else if (rarity == Rarity.Rare)
+            {
+                AddMinorPower(rng, r, pool);
             }
             return r;
+        }
+
+        /// <summary>まだ持っていない固有効果を1つ、範囲の下半分の値で足す（レアと、エピックの2つ目）。</summary>
+        private static void AddMinorPower(Rng rng, Relic r, IReadOnlyList<PowerRange> pool)
+        {
+            var candidates = new List<PowerRange>();
+            foreach (var pr in pool)
+                if (!r.Powers.Exists(x => x.Power == pr.Power)) candidates.Add(pr);
+            if (candidates.Count == 0) return;
+            var pick = candidates[rng.Range(0, candidates.Count - 1)];
+            int top = Math.Max(pick.Min, pick.Min + (pick.Max - pick.Min) / 2);
+            r.Powers.Add(new PowerLine(pick.Power, rng.Range(pick.Min, top)));
         }
 
         /// <summary>狙い系統の重み。狙った系統は2倍出やすい（計画書 付録B）。</summary>
@@ -143,9 +161,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>所持しているセットの未所持部位の重み。狙い系統の重みと掛け合わせる。</summary>
         /// <summary>伝説の抽選でセット品そのものが選ばれやすくなる倍率。</summary>
-        public const int SetPieceWeight = 5; // v1.21：一般の固有品が増えたので、セット品の割合を保つ
+        public const int SetPieceWeight = 4; // v1.22：セット24種。一般の固有品とのつり合いを保つ
 
-        public const int SetCompletionWeight = 40;
+        public const int SetCompletionWeight = 60;
 
         private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
         {

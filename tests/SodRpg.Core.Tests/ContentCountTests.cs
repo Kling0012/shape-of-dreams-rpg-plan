@@ -50,8 +50,9 @@ namespace SodRpg.Core.Tests
             {
                 var pieces = Content.Uniques.Where(u => u.SetId == set.Id).ToList();
                 Assert.Equal(3, pieces.Count);
-                Assert.Equal(new[] { Slot.Weapon, Slot.Armor, Slot.Charm },
-                    pieces.Select(u => { Assert.True(Content.TryGetBase(u.BaseId, out var b)); return b.Slot; }).OrderBy(s => s));
+                // v1.22：新しい枠を使うセットもある。どのセットも3つの別々の枠。
+                var slots = pieces.Select(u => { Assert.True(Content.TryGetBase(u.BaseId, out var b)); return b.Slot; }).ToList();
+                Assert.Equal(3, slots.Distinct().Count());
             }
             var elements = Content.Sets.SelectMany(s => s.ThreePiece).Select(pw => pw.Power).ToHashSet();
             Assert.Subset(elements, new[] { Power.Ember, Power.Frost, Power.Radiance, Power.Umbra }.ToHashSet());

@@ -55,7 +55,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Old_enhanced_relics_get_their_milestones_once()
         {
-            var (p, r) = WithRelic(Rarity.Rare);
+            var (p, r) = WithRelic(Rarity.Uncommon);
             r.Enhance = 5; // v1.20 より前に強化した物
             int affixes = r.Affixes.Count;
             Assert.Equal(1, Rules.ApplyEnhanceMilestones(p));

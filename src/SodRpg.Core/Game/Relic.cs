@@ -54,7 +54,17 @@ namespace SodRpg.Core.Game
         public Slot Slot => Base.Slot;
 
         /// <summary>強化値を付けない名前。</summary>
-        public string PlainName => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Name.ToString() : Base.Name.ToString();
+        public string PlainName
+        {
+            get
+            {
+                if (UniqueId != null && Content.TryGetUnique(UniqueId, out var u)) return u.Name.ToString();
+                // エピックは、1つ目の固有効果から銘が付く（例：猛火の連なりの剣）。
+                if (Rarity == Rarity.Epic && Powers.Count > 0 && Content.Epithet(Powers[0].Power) is Txt ep)
+                    return Loc.Japanese ? ep.Ja + " " + Base.Name.Ja : ep.En + " " + Base.Name.En; // 「乱戦の 共鳴の衣」のように区切って読みやすく
+                return Base.Name.ToString();
+            }
+        }
 
         public string DisplayName => Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName;
 

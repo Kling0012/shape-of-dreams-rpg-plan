@@ -1215,6 +1215,43 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.phantom.weapon", "weapon.dream_wand", new Txt("幻影の杖", "Phantom Wand"), "set.phantom"),
             new UniqueDef("set.phantom.armor", "armor.mist_robe", new Txt("幻影の法衣", "Phantom Robe"), "set.phantom"),
             new UniqueDef("set.phantom.charm", "charm.shadow_mask", new Txt("幻影の仮面", "Phantom Mask"), "set.phantom"),
+            // v1.22：新しい枠を使うセットの部位
+            new UniqueDef("set.permafrost.head", "head.frost_helm", new Txt("凍土の兜", "Permafrost Helm"), "set.permafrost"),
+            new UniqueDef("set.permafrost.hands", "hands.frost_mitts", new Txt("凍土の手甲", "Permafrost Gauntlets"), "set.permafrost"),
+            new UniqueDef("set.permafrost.feet", "feet.frost_boots", new Txt("凍土の脚絆", "Permafrost Greaves"), "set.permafrost"),
+            new UniqueDef("set.asura.head", "head.berserker_mask", new Txt("修羅道の面", "Carnage Mask"), "set.asura"),
+            new UniqueDef("set.asura.hands", "hands.claw_gauntlets", new Txt("修羅道の爪", "Carnage Claws"), "set.asura"),
+            new UniqueDef("set.asura.feet", "feet.spiked_boots", new Txt("修羅道の脛", "Carnage Spurs"), "set.asura"),
+            new UniqueDef("set.gale.head", "head.mist_veil", new Txt("風舞の面紗", "Galedancer Veil"), "set.gale"),
+            new UniqueDef("set.gale.hands", "hands.quick_fingers", new Txt("風舞の指貫", "Galedancer Gloves"), "set.gale"),
+            new UniqueDef("set.gale.feet", "feet.dancer_shoes", new Txt("風舞の靴", "Galedancer Shoes"), "set.gale"),
+            new UniqueDef("set.firmament.head", "head.star_diadem", new Txt("天穹の冠", "Firmament Diadem"), "set.firmament"),
+            new UniqueDef("set.firmament.hands", "hands.star_rings", new Txt("天穹の指環", "Firmament Rings"), "set.firmament"),
+            new UniqueDef("set.firmament.feet", "feet.star_steps", new Txt("天穹の沓", "Firmament Steps"), "set.firmament"),
+            new UniqueDef("set.ambush.head", "head.eye_patch", new Txt("闇討ちの眼帯", "Nightstrike Eyepatch"), "set.ambush"),
+            new UniqueDef("set.ambush.hands", "hands.duelist_gloves", new Txt("闇討ちの手袋", "Nightstrike Gloves"), "set.ambush"),
+            new UniqueDef("set.ambush.feet", "feet.stalker_boots", new Txt("闇討ちの足袋", "Nightstrike Tabi"), "set.ambush"),
+            new UniqueDef("set.ashrunner.head", "head.ash_hood", new Txt("灰走りの頭巾", "Ashrunner Hood"), "set.ashrunner"),
+            new UniqueDef("set.ashrunner.hands", "hands.flame_grips", new Txt("灰走りの手甲", "Ashrunner Grips"), "set.ashrunner"),
+            new UniqueDef("set.ashrunner.feet", "feet.ash_boots", new Txt("灰走りの靴", "Ashrunner Boots"), "set.ashrunner"),
+            new UniqueDef("set.mercy.weapon", "weapon.pilgrim_staff", new Txt("施療の錫杖", "Healer's Staff"), "set.mercy"),
+            new UniqueDef("set.mercy.hands", "hands.healer_hands", new Txt("施療の手袋", "Healer's Gloves"), "set.mercy"),
+            new UniqueDef("set.mercy.charm", "charm.sun_brooch", new Txt("施療の飾り", "Healer's Brooch"), "set.mercy"),
+            new UniqueDef("set.ironknight.armor", "armor.scale_coat", new Txt("鉄騎の竜鎧", "Ironknight Scale Mail"), "set.ironknight"),
+            new UniqueDef("set.ironknight.head", "head.knight_helm", new Txt("鉄騎の大兜", "Ironknight Greathelm"), "set.ironknight"),
+            new UniqueDef("set.ironknight.feet", "feet.knight_sabatons", new Txt("鉄騎の鉄脚", "Ironknight Sabatons"), "set.ironknight"),
+            new UniqueDef("set.eclipse.weapon", "weapon.moon_sickle", new Txt("月蝕の鎌", "Eclipse Sickle"), "set.eclipse"),
+            new UniqueDef("set.eclipse.head", "head.void_helm", new Txt("月蝕の兜", "Eclipse Helm"), "set.eclipse"),
+            new UniqueDef("set.eclipse.charm", "charm.shadow_ring", new Txt("月蝕の指輪", "Eclipse Ring"), "set.eclipse"),
+            new UniqueDef("set.thunderclap.weapon", "weapon.thunder_hammer", new Txt("迅雷の戦鎚", "Thunderclap Hammer"), "set.thunderclap"),
+            new UniqueDef("set.thunderclap.armor", "armor.monk_garb", new Txt("迅雷の道着", "Thunderclap Gi"), "set.thunderclap"),
+            new UniqueDef("set.thunderclap.feet", "feet.wolf_boots", new Txt("迅雷の長靴", "Thunderclap Boots"), "set.thunderclap"),
+            new UniqueDef("set.myriad.armor", "armor.resonant_robe", new Txt("万象の法衣", "Myriad Robe"), "set.myriad"),
+            new UniqueDef("set.myriad.hands", "hands.alchemist_gloves", new Txt("万象の手袋", "Myriad Gloves"), "set.myriad"),
+            new UniqueDef("set.myriad.charm", "charm.clockwork_charm", new Txt("万象の飾り", "Myriad Trinket"), "set.myriad"),
+            new UniqueDef("set.daybreak.weapon", "weapon.dawn_scepter", new Txt("払暁の笏", "Daybreak Scepter"), "set.daybreak"),
+            new UniqueDef("set.daybreak.head", "head.radiant_halo", new Txt("払暁の光輪", "Daybreak Halo"), "set.daybreak"),
+            new UniqueDef("set.daybreak.feet", "feet.dawn_steps", new Txt("払暁の長靴", "Daybreak Treads"), "set.daybreak"),
         };
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
@@ -1290,6 +1327,79 @@ namespace SodRpg.Core.Game
                 Id = "set.phantom", Name = new Txt("幻影の一座", "Phantom Troupe"),
                 TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
                 ThreePiece = new[] { new PowerLine(Power.Umbra, 35), new PowerLine(Power.EchoingDodge, 12) },
+            },
+            // v1.22：新しい枠を使うセット
+            new SetDef
+            {
+                Id = "set.permafrost", Name = new Txt("凍土の装い", "Permafrost Garb"),
+                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.Armor, 10) },
+                ThreePiece = new[] { new PowerLine(Power.Thorns, 30), new PowerLine(Power.Frost, 30) },
+            },
+            new SetDef
+            {
+                Id = "set.asura", Name = new Txt("修羅道の装い", "Path of Carnage"),
+                TwoPiece = new[] { new StatLine(Stat.AttackPct, 8), new StatLine(Stat.MaxHealthFlat, 40) },
+                ThreePiece = new[] { new PowerLine(Power.Bloodlust, 20), new PowerLine(Power.Lifesteal, 10) },
+            },
+            new SetDef
+            {
+                Id = "set.gale", Name = new Txt("風舞の装い", "Galedancer's Attire"),
+                TwoPiece = new[] { new StatLine(Stat.MoveSpeedPct, 5), new StatLine(Stat.Haste, 10) },
+                ThreePiece = new[] { new PowerLine(Power.Whirlwind, 60), new PowerLine(Power.Sprint, 15) },
+            },
+            new SetDef
+            {
+                Id = "set.firmament", Name = new Txt("天穹の誓い", "Firmament Vow"),
+                TwoPiece = new[] { new StatLine(Stat.PowerPct, 6), new StatLine(Stat.Haste, 8) },
+                ThreePiece = new[] { new PowerLine(Power.UltimateSurge, 20), new PowerLine(Power.StarShield, 12) },
+            },
+            new SetDef
+            {
+                Id = "set.ambush", Name = new Txt("闇討ちの装い", "Nightstrike Gear"),
+                TwoPiece = new[] { new StatLine(Stat.CritChancePct, 4), new StatLine(Stat.AttackSpeedPct, 6) },
+                ThreePiece = new[] { new PowerLine(Power.Umbra, 30), new PowerLine(Power.OpeningStrike, 60) },
+            },
+            new SetDef
+            {
+                Id = "set.ashrunner", Name = new Txt("灰走りの装い", "Ashrunner's Garb"),
+                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
+                ThreePiece = new[] { new PowerLine(Power.Ember, 30), new PowerLine(Power.Tailwind, 15) },
+            },
+            new SetDef
+            {
+                Id = "set.mercy", Name = new Txt("施療の誓い", "Healer's Pledge"),
+                TwoPiece = new[] { new StatLine(Stat.HealthRegen, 3), new StatLine(Stat.LightAmp, 10) },
+                ThreePiece = new[] { new PowerLine(Power.Barrier, 10), new PowerLine(Power.Resonance, 10) },
+            },
+            new SetDef
+            {
+                Id = "set.ironknight", Name = new Txt("鉄騎の誓い", "Ironknight's Oath"),
+                TwoPiece = new[] { new StatLine(Stat.Armor, 10), new StatLine(Stat.MaxHealthPct, 8) },
+                ThreePiece = new[] { new PowerLine(Power.Thorns, 35), new PowerLine(Power.Aegis, 20) },
+            },
+            new SetDef
+            {
+                Id = "set.eclipse", Name = new Txt("月蝕の装い", "Eclipse Regalia"),
+                TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.CritDamagePct, 15) },
+                ThreePiece = new[] { new PowerLine(Power.Umbra, 30), new PowerLine(Power.SoulSiphon, 20) },
+            },
+            new SetDef
+            {
+                Id = "set.thunderclap", Name = new Txt("迅雷の武装", "Thunderclap Arms"),
+                TwoPiece = new[] { new StatLine(Stat.AttackPct, 8), new StatLine(Stat.AttackSpeedPct, 6) },
+                ThreePiece = new[] { new PowerLine(Power.ChainLightning, 40), new PowerLine(Power.Frenzy, 3) },
+            },
+            new SetDef
+            {
+                Id = "set.myriad", Name = new Txt("万象の装い", "Myriad Weaver's Vestments"),
+                TwoPiece = new[] { new StatLine(Stat.PowerPct, 7), new StatLine(Stat.Haste, 10) },
+                ThreePiece = new[] { new PowerLine(Power.Convergence, 80), new PowerLine(Power.Overload, 15) },
+            },
+            new SetDef
+            {
+                Id = "set.daybreak", Name = new Txt("払暁の誓い", "Daybreak Vow"),
+                TwoPiece = new[] { new StatLine(Stat.LightAmp, 10), new StatLine(Stat.AttackPct, 6) },
+                ThreePiece = new[] { new PowerLine(Power.Radiance, 30), new PowerLine(Power.Vigor, 15) },
             },
         };
 
@@ -1594,6 +1704,43 @@ namespace SodRpg.Core.Game
 
         public static IReadOnlyList<AffixDef> AffixPool(Slot slot) => AffixPools[slot];
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
+
+        /// <summary>エピックの銘（1つ目の固有効果から）。v1.22。</summary>
+        private static readonly Dictionary<Power, Txt> Epithets = new Dictionary<Power, Txt>
+        {
+            [Power.Momentum] = new Txt("連撃の", "Relentless"),
+            [Power.Retaliation] = new Txt("報復の", "Vengeful"),
+            [Power.Bulwark] = new Txt("鉄壁の", "Steadfast"),
+            [Power.Lifesteal] = new Txt("吸血の", "Vampiric"),
+            [Power.Thorns] = new Txt("逆棘の", "Barbed"),
+            [Power.Executioner] = new Txt("断罪の", "Executing"),
+            [Power.Resonance] = new Txt("共鳴の", "Resonant"),
+            [Power.Tailwind] = new Txt("追い風の", "Windborne"),
+            [Power.Barrier] = new Txt("護りの", "Warding"),
+            [Power.SecondWind] = new Txt("不倒の", "Undying"),
+            [Power.Blaze] = new Txt("猛火の", "Blazing"),
+            [Power.ChainLightning] = new Txt("雷鳴の", "Thundering"),
+            [Power.Shatter] = new Txt("砕きの", "Shattering"),
+            [Power.Aegis] = new Txt("守護の", "Guardian"),
+            [Power.Bloodlust] = new Txt("血狂いの", "Bloodmad"),
+            [Power.Ember] = new Txt("燻る", "Smoldering"),
+            [Power.Frost] = new Txt("凍てつく", "Freezing"),
+            [Power.Radiance] = new Txt("輝く", "Radiant"),
+            [Power.Umbra] = new Txt("宵闇の", "Dusky"),
+            [Power.Convergence] = new Txt("四元の", "Converging"),
+            [Power.EchoingDodge] = new Txt("残像の", "Echoing"),
+            [Power.UltimateSurge] = new Txt("昂りの", "Surging"),
+            [Power.SoulSiphon] = new Txt("魂喰いの", "Soul-eating"),
+            [Power.Whirlwind] = new Txt("旋風の", "Whirling"),
+            [Power.Frenzy] = new Txt("乱戦の", "Frenzied"),
+            [Power.OpeningStrike] = new Txt("先駆けの", "Vanguard"),
+            [Power.StarShield] = new Txt("星護りの", "Starward"),
+            [Power.Sprint] = new Txt("疾駆の", "Swift"),
+            [Power.Vigor] = new Txt("万全の", "Hale"),
+            [Power.Overload] = new Txt("溢れる", "Overflowing"),
+        };
+
+        public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : null;
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
