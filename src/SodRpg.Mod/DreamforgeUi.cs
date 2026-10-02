@@ -1029,10 +1029,18 @@ namespace SodRpg.Mod
         private string CacheStamp()
         {
             var p = _s.Profile;
-            return p.Stash.Count + ":" + p.Material(Materials.Shard) + ":" + p.Material(Materials.Tuning) + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
+            // 強化は並べ替えの基準（Score）も変えるので、鍵・覚醒・強化の状態も刻印に入れる。
+            int state = 0;
+            var stash = p.Stash;
+            for (int i = 0; i < stash.Count; i++)
+            {
+                var r = stash[i];
+                state = state * 31 + (r.Locked ? 1 : 0) + (r.Awakened ? 2 : 0) + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+            }
+            return p.Stash.Count + ":" + p.Material(Materials.Shard) + ":" + p.Material(Materials.Tuning) + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
         }
 
-        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・素材・枠が変わるか、0.3秒たったら作り直す。</summary>
+        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・素材・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
         private List<Relic> SortedCached(IEnumerable<Relic> relics, float id)
         {
             float now = Time.unscaledTime;
@@ -1071,7 +1079,14 @@ namespace SodRpg.Mod
             var h = p.Hero(hero);
             int equipHash = hero == null ? 0 : hero.GetHashCode();
             foreach (var u in h.Equipped) equipHash = equipHash * 31 + (u == null ? 0 : u.GetHashCode());
-            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + (Loc.Japanese ? ":j" : ":e") : null;
+            // 行の文字は鍵・覚醒・強化も出るので、その状態が変わっても作り直す。
+            int stateHash = 0;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var r = list[i];
+                stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + (r.Awakened ? 2 : 0) + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+            }
+            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
             if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
                 return cached;
             if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
@@ -1091,39 +1106,28 @@ namespace SodRpg.Mod
             return rows;
         }
 
-        // ───── まとめて分解（コモン・アンコモン。鍵・装着中・取引中の物は使わない） ─────
+        // ───── まとめて分解（コモン・アンコモン。鍵・装着中・取引中・再調律中の物は使わない） ─────
         private bool _confirmBulk;
 
         private void BulkSalvageRow()
         {
             var p = _s.Profile;
-            int count = 0, shards = 0;
-            foreach (var r in p.Stash)
-            {
-                if (r.Rarity > Rarity.Uncommon || r.Locked || p.IsEquippedAnywhere(r.Uid) || _s.Trades.IsReserved(r.Uid)) continue;
-                count++;
-                shards += Rules.SalvageValue(r);
-            }
-            GUI.enabled = count > 0 && p.Run == null;
+            var parts = Rules.BulkSalvageCandidates(p, _s.Trades);
+            int shards = 0;
+            foreach (var r in parts) shards += Rules.SalvageValue(r);
+            GUI.enabled = parts.Count > 0 && p.Run == null;
             string label = _confirmBulk
-                ? Loc.T($"<color=#ff8080>もう一度押すと、{count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {count} relics</color>")
-                : Loc.T($"コモンとアンコモンをまとめて分解（{count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({count} relics, {shards} shards)");
+                ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics</color>")
+                : Loc.T($"コモンとアンコモンをまとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({parts.Count} relics, {shards} shards)");
             if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
             {
                 if (!_confirmBulk) _confirmBulk = true;
                 else
                 {
                     _confirmBulk = false;
-                    int done = 0, got = 0;
-                    foreach (var r in p.Stash.ToList())
-                    {
-                        if (r.Rarity > Rarity.Uncommon || r.Locked || p.IsEquippedAnywhere(r.Uid) || _s.Trades.IsReserved(r.Uid)) continue;
-                        got += Rules.SalvageValue(r);
-                        try { Rules.Salvage(p, r.Uid, _s.Trades, !_s.CanEditLoadout); done++; }
-                        catch (InvalidOperationException) { }
-                    }
+                    var ev = Rules.BulkSalvage(p, _s.Trades, !_s.CanEditLoadout);
                     if (_selected != null && p.FindStash(_selected) == null) _selected = null;
-                    _s.Emit(new GameEvent(EventKind.Info, Loc.T($"{done}個をまとめて分解して、欠片{got}を得ました。", $"Salvaged {done} relics for {got} shards.")));
+                    _s.Emit(ev);
                     _s.MarkDirty(true);
                     _s.SaveNow();
                 }

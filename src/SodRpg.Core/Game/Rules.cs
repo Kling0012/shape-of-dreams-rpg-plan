@@ -899,6 +899,36 @@ namespace SodRpg.Core.Game
                 $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
         }
 
+        /// <summary>まとめて分解の対象（コモンとアンコモンで、鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
+        public static List<Relic> BulkSalvageCandidates(Profile p, TradeLedger trades = null)
+        {
+            string offered = p.RetuneOffer?.Uid;
+            return p.Stash.Where(x => x.Rarity <= Rarity.Uncommon && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).ToList();
+        }
+
+        /// <summary>候補を全部分解する。成功した物だけを数えて、得た欠片と調律石は素材の実際の増分で測る。</summary>
+        public static GameEvent BulkSalvage(Profile p, TradeLedger trades = null, bool loadoutLocked = false)
+        {
+            var parts = BulkSalvageCandidates(p, trades);
+            int shardsBefore = p.Material(Materials.Shard), tuningBefore = p.Material(Materials.Tuning);
+            int done = 0;
+            foreach (var r in parts)
+            {
+                try
+                {
+                    Salvage(p, r.Uid, trades, loadoutLocked);
+                    done++;
+                }
+                catch (InvalidOperationException) { }
+            }
+            if (done == 0) return new GameEvent(EventKind.Info, Loc.T("分解できる遺物はありませんでした。", "Nothing could be salvaged."));
+            int shards = p.Material(Materials.Shard) - shardsBefore;
+            int tuning = p.Material(Materials.Tuning) - tuningBefore;
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"{done}個をまとめて分解して、欠片{shards}" + (tuning > 0 ? $"と調律石{tuning}" : "") + "を得ました。",
+                $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
+        }
+
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
