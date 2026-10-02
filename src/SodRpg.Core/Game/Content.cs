@@ -1907,6 +1907,43 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.link3_frenzied_claws", "hands.void_claws", new Txt("狂乱の爪痕", "Scars of Frenzy"),
                 new Txt("ヒステリーが解き放たれ、純白の爪が敵を引き裂き続ける。", "Hysteria unleashed, pure white claws keep tearing at the foe."),
                 Power.Frenzy, 3, Power.OpeningStrike, 75) { Link = new LinkDef { Requires = new[] { "St_U_Hysteria", "Gem_L_Liberty", "Gem_L_PureWhite" }, Kind = LinkKind.MemoryHaste, Value = 78 } },
+            // v1.27.1：癒やし・シールド・召喚獣・献身を支える固有品。
+            new UniqueDef("unique.support_moonlit_lullaby", "weapon.bone_flute", new Txt("月獣の子守唄", "Moonbeast Lullaby"),
+                new Txt("傷ついた狼が眠るまで、笛の音は月の下を巡る。", "The flute circles beneath the moon until the wounded wolf sleeps."),
+                Power.Resonance, 9, Power.Aegis, 22) { Link = new LinkDef { Requires = new[] { "St_Q_MoonlightPact" }, Kind = LinkKind.Attune, Value = 20 } },
+            new UniqueDef("unique.support_golden_recompense", "weapon.calming_staff", new Txt("命返しの金杖", "Golden Staff of Recompense"),
+                new Txt("捧げた命の行く先に、誰かの明日が芽吹く。", "Where an offered life flows, another's tomorrow takes root."),
+                Power.OverflowingLife, 40, Power.Overload, 20) { Link = new LinkDef { Requires = new[] { "St_Q_GoldenBurst" }, Kind = LinkKind.MemorySurge, Value = 24 } },
+            new UniqueDef("unique.support_winter_haven", "armor.frost_coat", new Txt("冬の避難所", "Winter Haven"),
+                new Txt("冷たい衣の内側だけは、嵐の中でも静かだった。", "Within the cold mantle, even the storm was still."),
+                Power.Barrier, 10, Power.StillWater, 8) { Link = new LinkDef { Requires = new[] { "St_Q_EmbracingTheChill" }, Kind = LinkKind.MemoryHaste, Value = 32 } },
+            new UniqueDef("unique.support_serpent_cradle", "armor.prayer_shawl", new Txt("蛇環の揺り籠", "Serpent-Ring Cradle"),
+                new Txt("古い鱗を脱ぐように、仲間の傷もほどけていく。", "As old scales fall away, the wounds of companions unravel."),
+                Power.OverflowingLife, 40, Power.Resonance, 9) { Link = new LinkDef { Requires = new[] { "St_R_SerpentineBlessing" }, Kind = LinkKind.MemoryHaste, Value = 30 } },
+            new UniqueDef("unique.support_mending_plume", "head.healer_band", new Txt("傷縫いの金羽根", "Golden Mending Plume"),
+                new Txt("爪が奪った命を、羽根は一針ずつ縫い戻す。", "What the claw takes, the feather stitches back one thread at a time."),
+                Power.OverflowingLife, 38, Power.Lifesteal, 9) { Link = new LinkDef { Requires = new[] { "St_D_DisintegratingClaw" }, Kind = LinkKind.Attune, Value = 18 } },
+            new UniqueDef("unique.support_pack_vigil", "head.wolf_pelt", new Txt("群れ守りの夜番", "Packkeeper's Vigil"),
+                new Txt("一匹も置いていかぬよう、夜通し耳を澄ませている。", "All night the keeper listens, so not one of the pack is left behind."),
+                Power.Resonance, 9, Power.Frenzy, 3) { Link = new LinkDef { Requires = new[] { "St_D_CircleOfLife" }, Kind = LinkKind.Attune, Value = 18 } },
+            new UniqueDef("unique.support_measured_offering", "hands.healer_hands", new Txt("惜しみの献杯", "Measured Offering"),
+                new Txt("命を注ぐ手を止めるのは、次の誰かも救うため。", "The hand pauses its offering to save the next soul as well."),
+                Power.OverflowingLife, 38, Power.SecondWind, 30) { Link = new LinkDef { Requires = new[] { "St_Q_Reduction" }, Kind = LinkKind.MemorySurge, Value = 24 } },
+            new UniqueDef("unique.support_sheltering_tide", "hands.frost_mitts", new Txt("庇い手の氷袖", "Sheltering Ice Sleeves"),
+                new Txt("振り払う腕の後ろには、仲間のための凪が残る。", "Behind the sweeping arm, calm water remains for companions."),
+                Power.Resonance, 9, Power.StillWater, 8) { Link = new LinkDef { Requires = new[] { "St_R_BackOff" }, Kind = LinkKind.MemoryHaste, Value = 32 } },
+            new UniqueDef("unique.support_waltz_shelter", "feet.root_sandals", new Txt("木漏れ日の舞靴", "Dancing Shoes of Dappled Light"),
+                new Txt("踏み出すたびに木陰が揺れ、小さな背中を包み込む。", "Each step stirs the shade and shelters the little backs beneath it."),
+                Power.Resonance, 9, Power.Barrier, 9) { Link = new LinkDef { Requires = new[] { "St_M_DreamyWaltz" }, Kind = LinkKind.MemoryHaste, Value = 30 } },
+            new UniqueDef("unique.support_brink_return", "feet.pilgrim_boots", new Txt("生還の足跡", "Footprints of Return"),
+                new Txt("危うい一歩の先にも、戻る道だけは残しておく。", "Beyond the perilous step, always leave a path home."),
+                Power.OverflowingLife, 38, Power.Bloodlust, 20) { Link = new LinkDef { Requires = new[] { "St_R_DangerousTheory" }, Kind = LinkKind.MemorySurge, Value = 24 } },
+            new UniqueDef("unique.support_sylvan_kinship", "charm.oak_amulet", new Txt("若葉の呼び鈴", "Bell of Young Leaves"),
+                new Txt("ひとたび鳴らせば、森の子らが家族の声を思い出す。", "One ring reminds the forest's young of the voice of home."),
+                Power.Resonance, 9, Power.Overload, 20) { Link = new LinkDef { Requires = new[] { "St_Q_SylvanCall" }, Kind = LinkKind.MemoryHaste, Value = 32 } },
+            new UniqueDef("unique.support_life_confluence", "charm.sun_brooch", new Txt("命の合流点", "Confluence of Life"),
+                new Txt("幾筋もの光が交わり、途切れかけた鼓動をつなぐ。", "Strands of light meet and join heartbeats that were fading apart."),
+                Power.OverflowingLife, 40, Power.StarShield, 20) { Link = new LinkDef { Requires = new[] { "St_R_ChainReaction" }, Kind = LinkKind.MemoryHaste, Value = 30 } },
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -2171,6 +2208,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.ColdAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.DarkAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.FireAmp, 6, 12, 4), // v1.21
+                new AffixDef(Stat.HealPower, 3, 6, 3),
+                new AffixDef(Stat.ShieldPower, 3, 6, 3),
             },
             [Slot.Charm] = new[]
             {
@@ -2187,6 +2226,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.DarkAmp, 6, 12, 4),
                 new AffixDef(Stat.Tenacity, 6, 12, 6),
                 new AffixDef(Stat.CritDamagePct, 5, 10, 8),
+                new AffixDef(Stat.HealPower, 3, 6, 3),
+                new AffixDef(Stat.ShieldPower, 3, 6, 3),
             },
             [Slot.Head] = new[]
             {
@@ -2203,6 +2244,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.MoveSpeedPct, 2, 4, 4), // v1.21
                 new AffixDef(Stat.ColdAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.FireAmp, 6, 12, 4), // v1.21
+                new AffixDef(Stat.HealPower, 3, 6, 3),
+                new AffixDef(Stat.ShieldPower, 3, 6, 3),
             },
             [Slot.Hands] = new[]
             {
@@ -2447,6 +2490,10 @@ namespace SodRpg.Core.Game
             [Stat.FourthAttackShift] = 1, // v1.27：連装・四の型は1段まで
             [Stat.EssenceSlotIdentity] = 1, // v1.27：星図でエッセンス枠+1（能力補正ではなく枠の追加）
             [Stat.EssenceSlotMovement] = 1,
+            [Stat.HealPower] = 60,
+            [Stat.ShieldPower] = 60,
+            [Stat.SummonPower] = 80,
+            [Stat.SacrificeReduction] = 40,
         };
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
@@ -2774,6 +2821,10 @@ namespace SodRpg.Core.Game
                 case Stat.FourthAttackShift: return Loc.T($"4発目の強い攻撃が{v}発早く出る", $"Empowered 4th attack comes {v} hit(s) sooner");
                 case Stat.EssenceSlotIdentity: return Loc.T($"アイデンティティ記憶にエッセンスをもう{v}つはめられる", $"You can socket {v} more essence in your Identity memory");
                 case Stat.EssenceSlotMovement: return Loc.T($"回避（移動の記憶）にエッセンスをもう{v}つはめられる", $"You can socket {v} more essence in your Dodge (Movement memory)");
+                case Stat.HealPower: return Loc.T($"与える回復が{v}%増える（味方への回復も・上限{StatCap(s)}%）", $"Healing you grant increases by {v}% (including allies; cap {StatCap(s)}%)");
+                case Stat.ShieldPower: return Loc.T($"与えるシールドが{v}%増える（味方へのシールドも・上限{StatCap(s)}%）", $"Shields you grant increase by {v}% (including allies; cap {StatCap(s)}%)");
+                case Stat.SummonPower: return Loc.T($"召喚獣の与えるダメージが{v}%増える（上限{StatCap(s)}%）", $"Your summons deal {v}% more damage (cap {StatCap(s)}%)");
+                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技の消費が{v}%減る（上限{StatCap(s)}%）", $"Skills that sacrifice HP cost {v}% less HP (cap {StatCap(s)}%)");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"{sign}{v}% Dark Effect");
             }
         }

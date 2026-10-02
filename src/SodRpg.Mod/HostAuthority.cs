@@ -40,6 +40,11 @@ namespace SodRpg.Mod
             public Action<int> OnSpendGold;
             public DataProcessor<DamageData, Actor, Entity> DamageDealt;
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
+            public DataProcessor<HealData, Actor, Entity> HealDealt;
+            public DataProcessor<HealData, Actor, Entity> ShieldDealt;
+            public Action<EventInfoSummon> OnSummon;
+            public readonly Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>> Summons =
+                new Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>>();
             // 連携（v1.26）：旅人の型名と、装着中の記憶・エッセンスの型名（0.25秒ごとに集め直す）。
             public string HeroKey;
             public readonly HashSet<string> LinkMemories = new HashSet<string>();
@@ -548,12 +553,24 @@ namespace SodRpg.Mod
 
         private void OnActorAdd(Actor actor)
         {
+            if (actor is Summon summon)
+            {
+                var hero = summon.FindFirstAncestorOfType<Hero>();
+                if (hero != null && _runtimes.TryGetValue(hero, out var rt)) HookSummon(rt, summon);
+            }
             if (actor is Shrine shrine && _shrines.Add(shrine))
                 shrine.ClientEvent_OnSuccessfulUse += _onShrineUsed;
         }
 
         private void OnActorRemove(Actor actor)
         {
+            if (actor is Summon summon)
+                foreach (var rt in _runtimes.Values)
+                    if (rt.Summons.TryGetValue(summon, out var processor))
+                    {
+                        summon.dealtDamageProcessor.Remove(processor);
+                        rt.Summons.Remove(summon);
+                    }
             if (actor is Monster m) RemoveMonster(m);
             if (actor is Shrine shrine && _shrines.Remove(shrine))
                 shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
@@ -1161,6 +1178,10 @@ namespace SodRpg.Mod
                 {
                     float mult = captured.Powers.Build.DamageTakenMultiplier;
                     if (mult > 1f) d.ApplyAmplification(mult - 1f);
+                    // These verified sources dispatch HP sacrifice as self-damage, not enemy attacks.
+                    if (t == captured.Hero && IsHealthSacrifice(d.actor, captured.Hero))
+                        d = d.ApplyRawMultiplier(SupportStats.ReduceSacrifice(1f,
+                            captured.Powers.Build.Get(Stat.SacrificeReduction)));
                 };
                 hero.takenDamageProcessor.Add(rt.DamageTaken);
                 rt.DamageDealt = (ref DamageData d, Actor a, Entity t) =>
@@ -1174,6 +1195,16 @@ namespace SodRpg.Mod
                     LogPowerTrigger(Power.Fetters);
                 };
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);
+                // Actor walks its ancestor processors, including for Heal().Dispatch and GiveShield.
+                // Mod-created recovery therefore uses these hooks too; do not multiply at call sites.
+                rt.HealDealt = (ref HealData heal, Actor a, Entity t) =>
+                    heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower)) - 1f);
+                rt.ShieldDealt = (ref HealData shield, Actor a, Entity t) =>
+                    shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower)) - 1f);
+                hero.dealtHealProcessor.Add(rt.HealDealt);
+                hero.dealtShieldProcessor.Add(rt.ShieldDealt);
+                rt.OnSummon = info => HookSummon(captured, info.summon);
+                hero.ActorEvent_OnSpawnSummon += rt.OnSummon;
                 rt.OnHeal = info => OnHealTaken(captured, info);
                 hero.EntityEvent_OnTakeHeal += rt.OnHeal;
                 rt.OnImmunity = info => OnDamageNegated(captured, info);
@@ -1194,6 +1225,34 @@ namespace SodRpg.Mod
             rt.AppliedBuild = received;
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
+            // Builds can arrive after a persistent summon (for example Fenrir) has spawned.
+            if (_am != null)
+                foreach (var entity in _am.allEntities)
+                    if (entity is Summon summon) HookSummon(rt, summon);
+        }
+
+        private static bool IsHealthSacrifice(Actor source, Hero hero)
+        {
+            if (source is Se_HealthCost cost) return cost.victim == hero;
+            if (source is Ai_Q_GoldenBurst burst) return burst.info.caster == hero;
+            if (source is Ai_Q_Reduction_Spawner reduction) return reduction.info.caster == hero;
+            return false;
+        }
+
+        private static void HookSummon(HeroRuntime rt, Summon summon)
+        {
+            if (summon == null || !summon.isActive
+                || summon.FindFirstAncestorOfType<Hero>() != rt.Hero || rt.Summons.ContainsKey(summon)) return;
+            DataProcessor<DamageData, Actor, Entity> processor = (ref DamageData damage, Actor source, Entity target) =>
+            {
+                // Only the nearest summon handles a hit: child summons also inherit ancestor processors.
+                if (source == null || source.FindFirstOfType<Summon>() != summon
+                    || summon.FindFirstAncestorOfType<Hero>() != rt.Hero) return;
+                damage.ApplyAmplification(SupportStats.AmplifySummonDamage(1f,
+                    rt.Powers.Build.Get(Stat.SummonPower)) - 1f);
+            };
+            rt.Summons.Add(summon, processor);
+            summon.dealtDamageProcessor.Add(processor);
         }
 
         /// <summary>
@@ -1253,6 +1312,9 @@ namespace SodRpg.Mod
         private static void Unhook(HeroRuntime rt)
         {
             UnhookGoldSpend(rt);
+            foreach (var summon in rt.Summons)
+                if (summon.Key != null) summon.Key.dealtDamageProcessor.Remove(summon.Value);
+            rt.Summons.Clear();
             var hero = rt.Hero;
             if (hero == null) return;
             try
@@ -1267,6 +1329,9 @@ namespace SodRpg.Mod
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
+                if (rt.HealDealt != null) hero.dealtHealProcessor.Remove(rt.HealDealt);
+                if (rt.ShieldDealt != null) hero.dealtShieldProcessor.Remove(rt.ShieldDealt);
+                if (rt.OnSummon != null) hero.ActorEvent_OnSpawnSummon -= rt.OnSummon;
                 if (rt.OnHeal != null) hero.EntityEvent_OnTakeHeal -= rt.OnHeal;
             }
             catch (Exception ex) { Log.Error("Host: Unhook hero " + ex); }
@@ -1277,6 +1342,9 @@ namespace SodRpg.Mod
             rt.DamageDealt = null;
             rt.OnHeal = null;
             rt.OnImmunity = null;
+            rt.HealDealt = null;
+            rt.ShieldDealt = null;
+            rt.OnSummon = null;
         }
 
         private void BindGoldSpend(HeroRuntime rt)
@@ -1511,6 +1579,11 @@ namespace SodRpg.Mod
                     // エッセンス枠（v1.27）は能力補正ではなく ApplyGemSlots が枠の数として扱う。
                     case Stat.EssenceSlotIdentity:
                     case Stat.EssenceSlotMovement:
+                    // Support stats are handled by combat processors, not native StatBonus fields.
+                    case Stat.HealPower:
+                    case Stat.ShieldPower:
+                    case Stat.SummonPower:
+                    case Stat.SacrificeReduction:
                         break;
                 }
             }

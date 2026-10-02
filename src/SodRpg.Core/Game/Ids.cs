@@ -59,6 +59,14 @@ namespace SodRpg.Core.Game
         EssenceSlotIdentity = 18,
         /// <summary>回避（移動の記憶）のエッセンス枠の追加数（星図の頂点。最大1。能力補正にはならない）。</summary>
         EssenceSlotMovement = 19,
+        /// <summary>与える回復量（味方への回復も含む、%）。</summary>
+        HealPower = 20,
+        /// <summary>与えるシールド量（味方へのシールドも含む、%）。</summary>
+        ShieldPower = 21,
+        /// <summary>自身の召喚獣が与えるダメージ（%）。</summary>
+        SummonPower = 22,
+        /// <summary>HPを捧げる技の消費軽減（%）。</summary>
+        SacrificeReduction = 23,
     }
 
     /// <summary>
