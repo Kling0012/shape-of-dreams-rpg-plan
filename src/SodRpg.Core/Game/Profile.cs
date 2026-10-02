@@ -135,6 +135,8 @@ namespace SodRpg.Core.Game
         public int LegendariesFound { get; set; }
         /// <summary>覚醒させた伝説の遺物の累計。</summary>
         public int RelicsAwakened { get; set; }
+        /// <summary>倒した夢の変種の数（v1.24）。</summary>
+        public int VariantsSlain { get; set; }
         public int BestHeatSecured { get; set; }
         public int Kills { get; set; }
         public int NightmaresSlain { get; set; }

@@ -140,14 +140,16 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
             var rng = p.TakeRng();
             int pity = p.EpicPity;
-            bool isNightmare = nightmare != NightmareAffix.None;
+            var variant = Variants.Get(variantId);
+            // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
+            bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel);
@@ -181,7 +183,13 @@ namespace SodRpg.Core.Game
                         $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? ": keystones unlocked" : ""))));
                 }
             }
-            if (isNightmare)
+            if (variant != null)
+            {
+                p.Stats.VariantsSlain++;
+                ev.Add(new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!")));
+                if (variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
+            }
+            else if (isNightmare)
             {
                 p.Stats.NightmaresSlain++;
                 ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!")));

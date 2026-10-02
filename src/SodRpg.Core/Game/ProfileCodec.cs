@@ -62,7 +62,7 @@ namespace SodRpg.Core.Game
             var stats = new JsonObject()
                 .Add("runs", (long)s.Runs).Add("victories", (long)s.Victories).Add("defeats", (long)s.Defeats)
                 .Add("relicsFound", (long)s.RelicsFound).Add("legendariesFound", (long)s.LegendariesFound)
-                .Add("relicsAwakened", (long)s.RelicsAwakened)
+                .Add("relicsAwakened", (long)s.RelicsAwakened).Add("variantsSlain", (long)s.VariantsSlain)
                 .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills)
                 .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth)
                 .Add("pactsSworn", (long)s.PactsSworn).Add("eventsUsed", (long)s.EventsUsed).Add("bountiesDone", (long)s.BountiesDone);
@@ -310,6 +310,7 @@ namespace SodRpg.Core.Game
                 p.Stats.RelicsFound = Clamp(Long(st, "relicsFound"), 0, int.MaxValue);
                 p.Stats.LegendariesFound = Clamp(Long(st, "legendariesFound"), 0, int.MaxValue);
                 p.Stats.RelicsAwakened = Clamp(Long(st, "relicsAwakened"), 0, int.MaxValue);
+                p.Stats.VariantsSlain = Clamp(Long(st, "variantsSlain"), 0, int.MaxValue);
                 p.Stats.BestHeatSecured = Clamp(Long(st, "bestHeatSecured"), 0, Content.MaxHeat);
                 p.Stats.Kills = Clamp(Long(st, "kills"), 0, int.MaxValue);
                 p.Stats.NightmaresSlain = Clamp(Long(st, "nightmares"), 0, int.MaxValue);
