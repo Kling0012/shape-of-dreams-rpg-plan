@@ -2477,6 +2477,7 @@ namespace SodRpg.Core.Game
             [Power.SpendersWard] = 20,
             [Power.PerfectRead] = 40,
             [Power.LucidBoon] = 18,
+            [Power.ShadowStep] = 150,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -2932,6 +2933,7 @@ namespace SodRpg.Core.Game
                 case Power.SpendersWard: return Loc.T("散財の護り", "Spender's Ward");
                 case Power.PerfectRead: return Loc.T("見切り", "Perfect Read");
                 case Power.LucidBoon: return Loc.T("明晰", "Lucid Boon");
+                case Power.ShadowStep: return Loc.T("瞬歩の刃", "Flash-Step Blade");
                 default: return "-";
             }
         }
@@ -2983,6 +2985,7 @@ namespace SodRpg.Core.Game
                 case Power.SpendersWard: return Loc.T($"【{name}】ゴールドを100使うごとに、最大HPの{v}%分の障壁を10秒間張る（3回分まで重なる）", $"[{name}] Each 100 gold spent grants a {v}% max-health shield for 10s (up to 3 stacks)");
                 case Power.PerfectRead: return Loc.T($"【{name}】無敵でダメージを実際に無効化すると、4秒間 攻撃速度が{v}%上がる（1.5秒に1回、重ならず時間を延長）", $"[{name}] Negating damage with invulnerability grants +{v}% attack speed for 4s (once per 1.5s; refreshes without stacking)");
                 case Power.LucidBoon: return Loc.T($"【{name}】有効な邪悪な明晰夢1つにつき、攻撃力・魔力が{v}%上がる（6つまで、合計18%まで）", $"[{name}] +{v}% AD/AP per active Evil lucid dream (up to 6 dreams and +18% total)");
+                case Power.ShadowStep: return Loc.T($"【{name}】回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、移動するたびに時間を延長）", $"[{name}] After a dodge, dash or teleport, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each movement refreshes it)");
                 default: return "-";
             }
         }

@@ -224,6 +224,14 @@ namespace SodRpg.Core.Tests
             {
                 Assert.DoesNotContain(t.Power, banned);
                 Assert.DoesNotContain(t.RankPower, banned);
+                if (t.Power == Power.ShadowStep || t.RankPower == Power.ShadowStep)
+                {
+                    Assert.Equal("Hero_Husk", t.HeroKey);
+                    Assert.Equal("h.husk.key2", t.Id);
+                    Assert.True(t.IsKeystone);
+                    Assert.Equal(Power.ShadowStep, t.Power);
+                    Assert.Equal(Power.None, t.RankPower);
+                }
                 if (t.LinkPerRank != null && t.LinkPerRank.Requires.Any(r => r.StartsWith("St_M_", StringComparison.Ordinal)))
                     Assert.True(t.LinkPerRank.Kind == LinkKind.Attune || t.LinkPerRank.Kind == LinkKind.Guard, t.Id);
             }

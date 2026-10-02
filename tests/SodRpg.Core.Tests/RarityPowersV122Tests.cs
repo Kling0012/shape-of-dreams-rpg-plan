@@ -36,11 +36,10 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Every_power_has_an_epithet_and_epics_show_it()
+        public void Every_loot_power_has_an_epithet_and_epics_show_it()
         {
-            foreach (Power p in System.Enum.GetValues(typeof(Power)))
+            foreach (Power p in Content.SlotOrder.SelectMany(Content.PowerPool).Select(range => range.Power).Distinct())
             {
-                if (p == Power.None) continue;
                 var ep = Content.Epithet(p);
                 Assert.NotNull(ep);
                 Assert.False(string.IsNullOrWhiteSpace(ep.Ja));

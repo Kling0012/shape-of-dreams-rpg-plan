@@ -34,6 +34,8 @@ namespace SodRpg.Mod
             public Action<EventInfoAttackFired> OnFired;
             public Action<EventInfoAttackHit> OnHit;
             public Action<EventInfoSkillUse> OnSkill;
+            public Action<Vector3, Vector3> OnTeleport;
+            public Action<Displacement> OnDisplacement;
             public Action<EventInfoHeal> OnHeal;
             public Action<EventInfoDamageNegatedByImmunity> OnImmunity;
             public DewPlayer Player;
@@ -1175,6 +1177,14 @@ namespace SodRpg.Mod
                 // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
                 hero.EntityEvent_OnAttackHit += rt.OnHit;
                 hero.ClientHeroEvent_OnSkillUse += rt.OnSkill;
+                rt.OnTeleport = (from, to) => OnHeroTeleport(captured);
+                rt.OnDisplacement = disp =>
+                {
+                    // Displacement has no source: the game's own Husk crit effects use isFriendly.
+                    if (disp != null && disp.isFriendly) OnHeroSelfMovement(captured);
+                };
+                hero.Control.ClientEvent_OnTeleport += rt.OnTeleport;
+                hero.Control.ClientEvent_OnDisplacementStarted += rt.OnDisplacement;
                 rt.DamageTaken = (ref DamageData d, Actor a, Entity t) =>
                 {
                     float mult = captured.Powers.Build.DamageTakenMultiplier;
@@ -1328,6 +1338,8 @@ namespace SodRpg.Mod
                 if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
                 if (rt.OnHit != null) hero.EntityEvent_OnAttackHit -= rt.OnHit;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
+                if (rt.OnTeleport != null) hero.Control.ClientEvent_OnTeleport -= rt.OnTeleport;
+                if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
                 if (rt.HealDealt != null) hero.dealtHealProcessor.Remove(rt.HealDealt);
@@ -1339,6 +1351,8 @@ namespace SodRpg.Mod
             rt.OnFired = null;
             rt.OnHit = null;
             rt.OnSkill = null;
+            rt.OnTeleport = null;
+            rt.OnDisplacement = null;
             rt.DamageTaken = null;
             rt.DamageDealt = null;
             rt.OnHeal = null;
@@ -1458,6 +1472,32 @@ namespace SodRpg.Mod
             // The dumps do not guarantee the string identifier format; never guess an unresolved dream's type.
             var limbo = GameMod_Limbo.softInstance;
             return limbo != null ? Math.Min(PowerRuntime.LucidBoonMaxDreams, Math.Max(0, limbo.depth)) : 0;
+        }
+
+        private void OnHeroSelfMovement(HeroRuntime rt)
+        {
+            if (!NetworkServer.active || !Alive(rt.Hero)) return;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            var transition = ManagerBase<TransitionManager>.instance;
+            if (zone == null || zone.isInAnyTransition
+                || transition == null || transition.state == TransitionManager.StateType.Loading) return;
+            rt.Powers.OnSelfMovement(Time.time);
+        }
+
+        private void OnHeroTeleport(HeroRuntime rt)
+        {
+            if (!Alive(rt.Hero)) return;
+            // DispByTarget can teleport to resolve an unreachable target before clearing itself.
+            // Do not turn an enemy pull's final correction into a voluntary movement trigger.
+            var displacement = rt.Hero.Control.ongoingDisplacement;
+            // Position-only events cannot establish who requested a standalone teleport.
+            // Actor.Teleport retains its caster for this synchronous callback; unowned warps fail closed.
+            if (TeleportInitiator.Current != null)
+            {
+                if (!TeleportInitiator.IsSelf(rt.Hero)) return;
+            }
+            else if (displacement == null || !displacement.isFriendly) return;
+            OnHeroSelfMovement(rt);
         }
 
         /// <summary>回避・Memory・Ultimate の固有効果。</summary>
@@ -1950,6 +1990,11 @@ namespace SodRpg.Mod
                 {
                     hero.PureDamage(r.EchoDamage, 0f).Dispatch(victim);
                     LogPowerTrigger(Power.EchoingDodge);
+                }
+                if (r.ShadowStepDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                {
+                    hero.PureDamage(r.ShadowStepDamage, 0f).Dispatch(victim);
+                    LogPowerTrigger(Power.ShadowStep);
                 }
             }
             catch (Exception ex)

@@ -53,6 +53,8 @@ namespace SodRpg.Core.Game
         public const float SprintDuration = 3f;
         /// <summary>回避の残響：回避の後、次の通常攻撃への上乗せができる猶予（新しい回避で延びる）。</summary>
         public const float EchoingDodgeWindow = 3f;
+        /// <summary>瞬歩の刃：回避・ダッシュ・瞬間移動の後、次の通常攻撃への上乗せができる猶予。</summary>
+        public const float ShadowStepWindow = 3f;
         public const float VigorThreshold = 0.8f;
         public const float OverloadDuration = 4f;
         public const float FinaleWindow = 8f;
@@ -94,6 +96,7 @@ namespace SodRpg.Core.Game
         private float _whirlwindReady;
         private float _sprintUntil;
         private float _echoUntil = float.NegativeInfinity;
+        private float _shadowStepUntil = float.NegativeInfinity;
         private float _overloadUntil;
         private float _finaleQ = float.NegativeInfinity;
         private float _finaleW = float.NegativeInfinity;
@@ -127,12 +130,19 @@ namespace SodRpg.Core.Game
             _nextHitIsFourth = isFourthAttack; // 4発目が外れたら、次に放った攻撃で取り消す
         }
 
-        /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響の3秒も始める（重ならず延長）。</summary>
+        /// <summary>本体が回避・ダッシュ・瞬間移動した。瞬歩の刃だけを準備し、再移動では時間だけを延長する。</summary>
+        public void OnSelfMovement(float now)
+        {
+            if (Build.Get(Power.ShadowStep) > 0) _shadowStepUntil = now + ShadowStepWindow;
+        }
+
+        /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響・瞬歩の刃の3秒も始める（重ならず延長）。</summary>
         public void OnSkillUsed(float now, bool isMovement, bool isUltimate)
         {
             if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
             if (isMovement && Build.Get(Power.Sprint) > 0) _sprintUntil = now + SprintDuration;
             if (isMovement && Build.Get(Power.EchoingDodge) > 0) _echoUntil = now + EchoingDodgeWindow;
+            if (isMovement) OnSelfMovement(now);
             if (!isMovement && !isUltimate && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
         }
 
@@ -426,13 +436,15 @@ namespace SodRpg.Core.Game
             public float ChainDamage;
             /// <summary>回避の残響：回避後3秒以内の次の通常攻撃に上乗せるダメージ（その命中で消費）。</summary>
             public float EchoDamage;
+            /// <summary>瞬歩の刃：本体の移動後3秒以内の次の通常攻撃に上乗せるダメージ（その命中で消費）。</summary>
+            public float ShadowStepDamage;
             /// <summary>付与する属性のスタック数（火・冷気・光・闇の順）。</summary>
             public int FireStacks, ColdStacks, LightStacks, DarkStacks;
         }
 
         /// <summary>
         /// 通常攻撃が命中した。回復量・追加ダメージ・属性のスタック数を返す。
-        /// 烈火・雷鎖・回避の残響は攻撃力と魔力の高い方、処刑・先制は攻撃力で計算する。
+        /// 烈火・雷鎖・回避の残響・瞬歩の刃は攻撃力と魔力の高い方、処刑・先制は攻撃力で計算する。
         /// </summary>
         public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float abilityPower,
             float victimHealthRatio, bool isCrit = false, double roll = 1.0)
@@ -457,6 +469,12 @@ namespace SodRpg.Core.Game
             {
                 r.EchoDamage = higher * echo / 100f;
                 _echoUntil = float.NegativeInfinity; // この命中で消費する
+            }
+            int shadowStep = Build.Get(Power.ShadowStep);
+            if (shadowStep > 0 && now < _shadowStepUntil)
+            {
+                r.ShadowStepDamage = higher * shadowStep / 100f;
+                _shadowStepUntil = float.NegativeInfinity;
             }
             r.FireStacks = ElementStacks(Power.Ember);
             r.ColdStacks = ElementStacks(Power.Frost);

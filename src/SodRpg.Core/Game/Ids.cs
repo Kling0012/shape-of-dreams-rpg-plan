@@ -164,6 +164,8 @@ namespace SodRpg.Core.Game
         PerfectRead = 41,
         /// <summary>Evilの明晰夢1つにつき攻撃力・魔力+X%（6つまで、合計18%まで）。「明晰」</summary>
         LucidBoon = 42,
+        /// <summary>回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方のX%を上乗せ（重ならず時間を延長）。「瞬歩の刃」</summary>
+        ShadowStep = 43,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>
