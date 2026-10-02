@@ -147,6 +147,12 @@ namespace SodRpg.Core.Game
             MaxRank = maxRank;
         }
 
+        public TalentDef(string id, Line route, Txt name, Power power, int perRank, int maxRank)
+            : this(id, route, name, default(Stat), perRank, maxRank)
+        {
+            RankPower = power;
+        }
+
         public TalentDef(string id, Line route, Txt name, Power power, int powerValue, Txt description)
         {
             Id = id;
@@ -165,12 +171,25 @@ namespace SodRpg.Core.Game
         public Stat Stat { get; }
         public int PerRank { get; }
         public int MaxRank { get; }
+        /// <summary>小ノードが1段ごとに伸ばす固有効果。能力値ノードは None。</summary>
+        public Power RankPower { get; set; }
+        public bool IsPowerNode => !IsKeystone && RankPower != Power.None;
+        /// <summary>1は手前の星、2は奥の星。</summary>
+        public int Tier { get; set; } = 1;
         public bool IsKeystone { get; }
         public Power Power { get; }
         public int PowerValue { get; }
         public Txt Description { get; }
         /// <summary>旅人の刻印なら旅人の型名（例：Hero_Vesper）。汎用ノードは null。</summary>
         public string HeroKey { get; set; }
+
+        /// <summary>星図に表示する効果。小ノードは1段あたりの値。</summary>
+        public string Describe()
+        {
+            if (IsKeystone) return Content.FormatPower(Power, PowerValue) + "\n" + Description;
+            string effect = IsPowerNode ? Content.FormatPower(RankPower, PerRank) : Content.FormatStat(Stat, PerRank);
+            return effect + Loc.T("（1段ごと）", " (per rank)");
+        }
     }
 
     /// <summary>
@@ -189,6 +208,7 @@ namespace SodRpg.Core.Game
         public const int MaxRetunes = 3;
         public const int MaxDreamLevel = 30;
         public const int KeystoneRouteRequirement = 6;
+        public const int DeepStarRequirement = 6;
         public const int KeystoneCost = 3;
         public const int RoomsToRecoverLost = 3;
         public const int CodexPerPoint = 6;

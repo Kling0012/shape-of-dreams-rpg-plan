@@ -24,7 +24,7 @@ namespace SodRpg.Core.Tests
             p.DreamLevel = 20;
             const string hero = "Hero_Mist";
             p.Hero(hero).Kills = 100000;
-            foreach (var n in HeroSigils.TreeFor(hero).Where(t => !t.IsKeystone))
+            foreach (var n in HeroSigils.TreeFor(hero).Where(t => !t.IsKeystone && t.Tier == 1))
                 for (int i = 0; i < n.MaxRank; i++)
                     if (Rules.FreePoints(p, hero) > 0) Rules.AddTalentRank(p, hero, n.Id);
             var keys = HeroSigils.TreeFor(hero).Where(t => t.IsKeystone).ToList();

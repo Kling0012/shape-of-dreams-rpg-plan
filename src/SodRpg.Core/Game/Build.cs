@@ -62,10 +62,14 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) Add(rawPowers, pw.Power, pw.Value);
             }
+            bool deepStarsOpen = Rules.Tier1Ranks(h, heroKey) >= Content.DeepStarRequirement;
             foreach (var kv in h.Talents)
             {
                 if (!Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone || !Rules.BelongsTo(t, heroKey)) continue;
-                Add(rawStats, t.Stat, t.PerRank * Math.Min(kv.Value, t.MaxRank));
+                if (t.Tier == 2 && !deepStarsOpen) continue;
+                int value = t.PerRank * Math.Min(kv.Value, t.MaxRank);
+                if (t.IsPowerNode) Add(rawPowers, t.RankPower, value);
+                else Add(rawStats, t.Stat, value);
             }
             if (h.Keystone != null && Content.TryGetTalent(h.Keystone, out var key) && key.IsKeystone
                 && Rules.BelongsTo(key, heroKey) && Rules.KeystoneUnlocked(p, heroKey, key))

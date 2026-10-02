@@ -1004,14 +1004,31 @@ namespace SodRpg.Core.Game
             if (key.HeroKey != null)
             {
                 if (key.HeroKey != heroKey) return false;
-                int ranks = 0;
-                foreach (var kv in h.Talents)
-                    if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) ranks += kv.Value;
-                return ranks >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery;
+                return TreeRanks(h, heroKey) >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery;
             }
             if (HeroSigils.HasTree(heroKey)) return false;
             return RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
         }
+
+        /// <summary>その旅人の刻印ツリーに振った段数。奥の星を含み、到達刻印は含めない。</summary>
+        public static int TreeRanks(HeroState h, string heroKey)
+        {
+            int n = 0;
+            foreach (var kv in h.Talents)
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += kv.Value;
+            return n;
+        }
+
+        /// <summary>奥の星を開くための、その旅人の手前の星に振った段数。</summary>
+        public static int Tier1Ranks(HeroState h, string heroKey)
+        {
+            int n = 0;
+            foreach (var kv in h.Talents)
+                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone && t.Tier == 1) n += kv.Value;
+            return n;
+        }
+
+        public static bool DeepStarsOpen(Profile p, string heroKey) => Tier1Ranks(p.Hero(heroKey), heroKey) >= Content.DeepStarRequirement;
 
         public static int RouteRanks(HeroState h, Line route)
         {
@@ -1038,6 +1055,8 @@ namespace SodRpg.Core.Game
             var h = p.Hero(heroKey);
             int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
             if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
+            if (t.Tier == 2 && !DeepStarsOpen(p, heroKey))
+                throw new InvalidOperationException(Loc.T($"奥の星は、このツリーの手前の星に{Content.DeepStarRequirement}ポイント振ると開きます。", $"Deep stars open after {Content.DeepStarRequirement} points in this tree's first stars."));
             if (FreePoints(p, heroKey) < 1) throw new InvalidOperationException(Loc.T("ポイントが足りません。", "Not enough points."));
             h.Talents[talentId] = cur + 1;
         }

@@ -1319,23 +1319,36 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
 
+            _scrollTalent = GUILayout.BeginScrollView(_scrollTalent);
             GUILayout.BeginHorizontal();
             if (HeroSigils.HasTree(hero))
             {
-                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(520));
-                GUILayout.Label(Loc.T($"旅人の刻印：{HeroName(hero)}", $"Traveler sigils: {HeroName(hero)}"), _st.Header);
-                // 小さな強化を先に、到達刻印（どちらか1つ）を後にまとめて並べる。
-                foreach (var t in HeroSigils.TreeFor(hero)) if (!t.IsKeystone) DrawTalentNode(p, hero, hs, t);
-                foreach (var t in HeroSigils.TreeFor(hero)) if (t.IsKeystone) DrawTalentNode(p, hero, hs, t);
+                // 手前の星 ｜ 奥の星 ｜ 到達刻印 の3列。
+                var tree = HeroSigils.TreeFor(hero);
+                int tier1 = Rules.Tier1Ranks(hs, hero);
+                bool deepOpen = Rules.DeepStarsOpen(p, hero);
+
+                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(290));
+                GUILayout.Label(Loc.T($"手前の星 <color=#aaa>({tier1})</color>", $"First stars <color=#aaa>({tier1})</color>"), _st.Header);
+                GUILayout.Label(Loc.T("この旅人だけの刻印です。まずここに振ります。", "This Traveler's own sigils. Start here."), _st.Small);
+                foreach (var t in tree) if (!t.IsKeystone && t.Tier == 1) DrawTalentNode(p, hero, hs, t);
                 GUILayout.EndVertical();
+
+                GUILayout.BeginVertical(_st.Panel, GUILayout.Width(350));
+                GUILayout.Label(Loc.T("奥の星", "Deep stars"), _st.Header);
+                GUILayout.Label(deepOpen
+                    ? Loc.T("開いています。固有効果を少しずつ伸ばす星もあります。", "Open. Some deep stars grow a power, rank by rank.")
+                    : UiStyles.Colored(Loc.T($"手前の星にあと{Content.DeepStarRequirement - tier1}ポイント振ると開きます（{tier1}/{Content.DeepStarRequirement}）。", $"Opens after {Content.DeepStarRequirement - tier1} more points in the first stars ({tier1}/{Content.DeepStarRequirement})."), "#ffb070"), _st.Small);
+                foreach (var t in tree) if (!t.IsKeystone && t.Tier == 2) DrawTalentNode(p, hero, hs, t, deepOpen);
+                GUILayout.EndVertical();
+
                 GUILayout.BeginVertical(_st.Panel);
                 int lv = Mastery.Level(hs.Kills);
-                GUILayout.Label(Loc.T("この旅人だけが使える刻印です。旅人自身のスキルや通常攻撃を伸ばします。", "Sigils unique to this Traveler that strengthen their own skills and attacks."), _st.Small);
+                GUILayout.Label(Loc.T("到達刻印（どちらか1つ）", "Keystones (pick one)"), _st.Header);
                 GUILayout.Label(Loc.T(
-                    $"到達刻印を選ぶには、このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります（いまの熟練度は{lv}「{Mastery.Title(lv)}」）",
-                    $"Keystone: {Content.KeystoneRouteRequirement}+ points in the tree and mastery {HeroSigils.KeystoneMastery}+ (now {lv} \"{Mastery.Title(lv)}\")"), _st.Small);
-                GUILayout.Label(Loc.T("到達刻印は2つ用意されていて、有効にできるのはどちらか1つです。遠征に出ていないときならいつでも付け替えられるので、戦い方に合わせて選んでください。",
-                    "Each Traveler has two keystones, and only one can be active. You can switch any time outside an expedition, so pick the one that fits your playstyle."), _st.Small);
+                    $"このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にすると選べます（いまの熟練度は{lv}「{Mastery.Title(lv)}」）。遠征に出ていないときなら、いつでも付け替えられます。",
+                    $"Needs {Content.KeystoneRouteRequirement}+ points in the tree and mastery {HeroSigils.KeystoneMastery}+ (now {lv} \"{Mastery.Title(lv)}\"). Switch freely outside expeditions."), _st.Small);
+                foreach (var t in tree) if (t.IsKeystone) DrawTalentNode(p, hero, hs, t);
                 GUILayout.EndVertical();
             }
             else
@@ -1349,7 +1362,10 @@ namespace SodRpg.Mod
                 }
             }
             GUILayout.EndHorizontal();
+            GUILayout.EndScrollView();
         }
+
+        private Vector2 _scrollTalent;
 
         /// <summary>到達刻印を選ぶのに、あと何が足りないか。</summary>
         private static string KeystoneMissing(HeroState hs, string hero, TalentDef t)
@@ -1363,15 +1379,15 @@ namespace SodRpg.Mod
                 int lv = Mastery.Level(hs.Kills);
                 var ja = new List<string>();
                 var en = new List<string>();
-                if (ranks < need) { ja.Add($"このツリーにあと{need - ranks}ポイント"); en.Add($"{need - ranks} more points in this tree"); }
-                if (lv < HeroSigils.KeystoneMastery) { ja.Add($"熟練度を{HeroSigils.KeystoneMastery}に（いま{lv}）"); en.Add($"mastery {HeroSigils.KeystoneMastery} (now {lv})"); }
-                return Loc.T("選ぶには：" + string.Join("・", ja), "Needs " + string.Join(" and ", en));
+                if (ranks < need) { ja.Add($"{need - ranks}ポイント"); en.Add($"{need - ranks} more points in this tree"); }
+                if (lv < HeroSigils.KeystoneMastery) { ja.Add($"熟練度{HeroSigils.KeystoneMastery}（いま{lv}）"); en.Add($"mastery {HeroSigils.KeystoneMastery} (now {lv})"); }
+                return Loc.T("あと：" + string.Join("・", ja), "Needs " + string.Join(", ", en));
             }
             int route = Rules.RouteRanks(hs, t.Route);
             return Loc.T($"選ぶには：{Content.LineName(t.Route)}にあと{Math.Max(0, need - route)}ポイント", $"Needs {Math.Max(0, need - route)} more points in {Content.LineName(t.Route)}");
         }
 
-        private void DrawTalentNode(Profile p, string hero, HeroState hs, TalentDef t)
+        private void DrawTalentNode(Profile p, string hero, HeroState hs, TalentDef t, bool open = true)
         {
             if (t.IsKeystone)
             {
@@ -1399,8 +1415,10 @@ namespace SodRpg.Mod
             }
             int rank = hs.Talents.TryGetValue(t.Id, out int rk) ? rk : 0;
             GUILayout.BeginHorizontal();
-            GUILayout.Label($"<b>{t.Name}</b> {rank}/{t.MaxRank}\n<color=#aab>{Content.FormatStat(t.Stat, t.PerRank)} /{Loc.T("段", "rank")}</color>", _st.Small, GUILayout.Width(230));
-            GUI.enabled = _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
+            string pips = "<color=#ffd36e>" + new string('●', rank) + "</color><color=#8a8aa0>" + new string('○', Math.Max(0, t.MaxRank - rank)) + "</color>";
+            string effect = t.IsPowerNode ? UiStyles.Colored(t.Describe(), "#e0b0ff") : "<color=#aab>" + t.Describe() + "</color>";
+            GUILayout.Label($"<b>{t.Name}</b> {pips}\n{effect}", _st.Small, GUILayout.Width(t.Tier == 2 ? 270 : 210));
+            GUI.enabled = open && _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
             if (GUILayout.Button("+", _st.Button, GUILayout.Width(44), GUILayout.Height(34)))
             {
                 try

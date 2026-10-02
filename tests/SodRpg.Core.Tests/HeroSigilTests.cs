@@ -14,13 +14,13 @@ namespace SodRpg.Core.Tests
         };
 
         [Fact]
-        public void Every_base_traveler_has_five_nodes_and_two_keystones()
+        public void Every_base_traveler_has_an_unlockable_tree_and_keystones()
         {
             foreach (var h in Heroes)
             {
                 Assert.True(HeroSigils.HasTree(h), h);
                 var tree = HeroSigils.TreeFor(h).ToList();
-                Assert.Equal(5, tree.Count(t => !t.IsKeystone));
+                Assert.True(tree.Where(t => !t.IsKeystone && t.Tier == 1).Sum(t => t.MaxRank) >= Content.DeepStarRequirement, h);
                 Assert.Equal(2, tree.Count(t => t.IsKeystone)); // v1.13：到達刻印は2つから1つを選ぶ
                 Assert.True(tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank) >= Content.KeystoneRouteRequirement, h);
                 Assert.All(tree, t => Assert.Equal(h, t.HeroKey));
