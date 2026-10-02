@@ -60,7 +60,7 @@ namespace SodRpg.Core.Tests
             Rules.SetKeystone(p, h, "h.cetus.key");
             var b = Build.Compute(p, h, 0);
             Assert.Equal(24, b.Get(Stat.ColdAmp));
-            Assert.Equal(15, b.Get(Stat.MaxHealthPct)); // v1.27：氷の殻 4 → 5%
+            Assert.Equal(12, b.Get(Stat.MaxHealthPct)); // v1.28：手前の守りは1段4%にそろえた
             Assert.Equal(70, b.Get(Power.Frost)); // v1.27：凍てつく潮 35 → 70
         }
 

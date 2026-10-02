@@ -25,6 +25,10 @@ namespace SodRpg.Core.Game
         public const float RetaliationDuration = 3f;
         public const float TailwindDuration = 2f;
         public const float BarrierInterval = 12f;
+        /// <summary>護りの灯の障壁が残る時間（v1.28：12秒続くと常に張られている状態になるため短く）。</summary>
+        public const float BarrierDuration = 4f;
+        /// <summary>星の盾（Ultimate で張る障壁）が残る時間。</summary>
+        public const float StarShieldDuration = 5f;
         public const float SecondWindCooldown = 60f;
         public const float SecondWindThreshold = 0.3f;
         public const float LifestealInterval = 0.15f;

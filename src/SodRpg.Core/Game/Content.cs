@@ -2482,8 +2482,8 @@ namespace SodRpg.Core.Game
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
         private static readonly Dictionary<Stat, int> StatCaps = new Dictionary<Stat, int>
         {
-            [Stat.AttackPct] = 60, // v1.28：%は控えめに
-            [Stat.PowerPct] = 60,
+            [Stat.AttackPct] = 100, // v1.28：120 → 100（星図の分が最大約60あるので、装備の分を残す）
+            [Stat.PowerPct] = 100,
             [Stat.AttackFlat] = 150,
             [Stat.PowerFlat] = 150,
             [Stat.AttackSpeedPct] = 80,
@@ -2949,7 +2949,7 @@ namespace SodRpg.Core.Game
                 case Power.Executioner: return Loc.T($"【{name}】HPが30%未満の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies below 30% health deal +{v}% AD as bonus damage");
                 case Power.Resonance: return Loc.T($"【{name}】近くに味方がいる間、自分の攻撃力・魔力が{v}%、近くの味方は{v / 2}%上がる（一人のときは自分も半分。味方への分は重ならず、いちばん高い人の分）", $"[{name}] While an ally is near, you gain +{v}% AD/AP and nearby allies gain +{v / 2}% (half for yourself when alone; allies take only the highest, no stacking)");
                 case Power.Tailwind: return Loc.T($"【{name}】敵を倒した後の2秒間、移動速度が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% move speed for 2s after a kill (refreshes, does not stack)");
-                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに、最大HPの{v}%分の障壁を12秒間張る", $"[{name}] Every 12s, gain a shield worth {v}% of max health for 12s");
+                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに、最大HPの{v}%分の障壁を4秒間張る", $"[{name}] Every 12s, gain a shield worth {v}% of max health for 4s");
                 case Power.SecondWind: return Loc.T($"【{name}】HPが30%を切ると、最大HPの{v}%を回復する（60秒に1回）", $"[{name}] When you drop below 30% health, heal {v}% of max health (once per 60s)");
                 case Power.Blaze: return Loc.T($"【{name}】通常攻撃4回ごとに、攻撃力か魔力の高い方の{v}%分の魔法ダメージを追加する", $"[{name}] Every 4th basic attack deals +{v}% of the higher of AD or AP as magic damage");
                 case Power.ChainLightning: return Loc.T($"【{name}】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力か魔力の高い方の{v}%分の魔法ダメージを与える", $"[{name}] Basic attack hits have a 25% chance to deal {v}% of the higher of AD or AP as magic damage to 2 nearby enemies");
@@ -2967,7 +2967,7 @@ namespace SodRpg.Core.Game
                 case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% of the higher of AD or AP to enemies within 4m (once per 2s)");
                 case Power.Frenzy: return Loc.T($"【{name}】周りの敵1体につき、攻撃速度が{v}%上がる（8体まで）", $"[{name}] +{v}% attack speed per nearby enemy (up to 8)");
                 case Power.OpeningStrike: return Loc.T($"【{name}】HPが90%以上の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies above 90% health deal +{v}% AD");
-                case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を12秒間張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health for 12s");
+                case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を5秒間張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health for 5s");
                 case Power.Sprint: return Loc.T($"【{name}】回避した後の3秒間、移動速度と攻撃速度が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% move speed and attack speed for 3s after dodging (refreshes, does not stack)");
                 case Power.Vigor: return Loc.T($"【{name}】HPが80%以上の間、攻撃力・魔力が{v}%上がる", $"[{name}] +{v}% attack damage and ability power while above 80% health");
                 case Power.Overload: return Loc.T($"【{name}】Q・W・Eを使った後の4秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 4s after using Q, W or E (refreshes, does not stack)");

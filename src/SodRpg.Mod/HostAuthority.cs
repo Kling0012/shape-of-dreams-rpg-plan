@@ -1469,7 +1469,7 @@ namespace SodRpg.Mod
                 if (!Alive(hero)) return;
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
                     Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
-                if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.BarrierInterval);
+                if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
                 if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: hero.Status.abilityPower > hero.Status.attackDamage);
                 if (hero.Skill == null) return;
                 int slot = info.type == HeroSkillLocation.Q ? 0 : info.type == HeroSkillLocation.W ? 1
@@ -1617,7 +1617,7 @@ namespace SodRpg.Mod
             }
 
             float shield = p.TakeBarrier(now, hero.maxHealth);
-            if (shield > 0) hero.GiveShield(hero, shield, PowerRuntime.BarrierInterval);
+            if (shield > 0) hero.GiveShield(hero, shield, PowerRuntime.BarrierDuration);
             float heal = p.TakeSecondWind(now, hero.currentHealth, hero.maxHealth);
             if (heal > 0) hero.Heal(heal).Dispatch(hero);
         }

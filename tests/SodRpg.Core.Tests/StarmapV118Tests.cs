@@ -8,7 +8,7 @@ namespace SodRpg.Core.Tests
     public class StarmapV118Tests
     {
         private const string Hero = "Hero_Vesper";
-        private const string DeepStat = "h.vesper.deep.tenacity";
+        private const string DeepStat = "h.vesper.deep.body"; // v1.28：審判の一撃（会心ダメージ 8%/段）
         private const string DeepPower = "h.vesper.deep.bulwark";
 
         private static Profile NewProfile(int firstStarRanks = 6)
@@ -43,15 +43,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(1, 3)]
-        [InlineData(2, 6)]
-        [InlineData(3, 9)]
+        [InlineData(1, 8)]
+        [InlineData(2, 16)]
+        [InlineData(3, 24)]
         public void Deep_stat_nodes_keep_stat_rank_scaling(int rank, int value)
         {
             var p = NewProfile();
             AddRanks(p, DeepStat, rank);
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(value, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(value, b.Get(Stat.CritDamagePct));
             Assert.Equal(0, b.Get(Power.Bulwark));
         }
 
@@ -77,7 +77,7 @@ namespace SodRpg.Core.Tests
             p.Hero(Hero).Talents[DeepStat] = 99;
             p.Hero(Hero).Talents[DeepPower] = 99;
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(9, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(24, b.Get(Stat.CritDamagePct));
             Assert.Equal(18, b.Get(Power.Bulwark));
         }
 
@@ -148,7 +148,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, q.Hero(Hero).Talents[DeepStat]);
             Assert.Equal(3, q.Hero(Hero).Talents[DeepPower]);
             Assert.Equal(Rules.FreePoints(p, Hero), Rules.FreePoints(q, Hero));
-            Assert.Equal(6, Build.Compute(q, Hero, 0).Get(Stat.AttackSpeedPct));
+            Assert.Equal(16, Build.Compute(q, Hero, 0).Get(Stat.CritDamagePct));
             Assert.Equal(18, Build.Compute(q, Hero, 0).Get(Power.Bulwark));
         }
 
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Tests
             Assert.Null(p.Hero(Hero).Keystone);
             Assert.Equal(p.TalentPoints(Hero), Rules.FreePoints(p, Hero));
             var b = Build.Compute(p, Hero, 0);
-            Assert.Equal(0, b.Get(Stat.AttackSpeedPct));
+            Assert.Equal(0, b.Get(Stat.CritDamagePct));
             Assert.Equal(0, b.Get(Power.Bulwark));
             Assert.Equal(0, b.Get(Power.Retaliation));
         }
