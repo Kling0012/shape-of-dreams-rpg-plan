@@ -143,3 +143,8 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - **実機確認**：`.tmp/sodtest` の `prep.ps1`／`onboard_restore.ps1` は **pwsh（PowerShell 7）** で動かす（Windows PowerShell 5 は日本語の行で壊れる）。ようこその「了解」は (726,622)、ロビーの「開始」は (1642,1000)→(900,585)。
 - **バランス**：変更のたびに `tools/BalanceSim` を回し、結果を `tools/BalanceSim/result-vX.md` に残す。プレイヤー側を強くしたら、モンスター側のつり合いも考える。
 - **アイテム数はできるだけ増やす**（利用者の繰り返しの要望）。
+
+## ビルドの置き場所（2026-10-02 利用者の指示）
+
+利用者がゲームのフォルダの MOD で遊んでいる間は、**ゲームのフォルダ（`Mods/DreamforgeRPG`）に書き込まない**。ビルドは
+`-p:ModDeployDir="C:\Temp\DreamforgeRPG-build\DreamforgeRPG"` を付けて別のフォルダへ出す（`GameDir` は参照のためだけに必要）。リリースの zip もそこから作る。実機での確認は、利用者の許可があるまでしない。
