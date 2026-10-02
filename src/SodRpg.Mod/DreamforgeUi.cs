@@ -1062,8 +1062,17 @@ namespace SodRpg.Mod
             if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
+            int foundUniques = 0;
             foreach (var u in Content.Uniques)
-                GUILayout.Label(p.Codex.Contains(u.Id) ? UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)) : Loc.T("<color=#8a8aa0>◇ まだ見つけていない固有品</color>", "<color=#8a8aa0>◇ not found yet</color>"), _st.Small);
+            {
+                if (!p.Codex.Contains(u.Id)) continue;
+                foundUniques++;
+                GUILayout.Label(UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)), _st.Small);
+            }
+            int missingUniques = Content.Uniques.Count - foundUniques;
+            GUILayout.Label(Loc.T(
+                $"<color=#8a8aa0>見つけた固有品 {foundUniques}／{Content.Uniques.Count}種。まだ見つけていない物が{missingUniques}種あります。</color>",
+                $"<color=#8a8aa0>Legendaries found: {foundUniques}/{Content.Uniques.Count}. {missingUniques} still undiscovered.</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
