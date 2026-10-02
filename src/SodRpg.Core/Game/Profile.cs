@@ -133,6 +133,8 @@ namespace SodRpg.Core.Game
         public int Defeats { get; set; }
         public int RelicsFound { get; set; }
         public int LegendariesFound { get; set; }
+        /// <summary>覚醒させた伝説の遺物の累計。</summary>
+        public int RelicsAwakened { get; set; }
         public int BestHeatSecured { get; set; }
         public int Kills { get; set; }
         public int NightmaresSlain { get; set; }

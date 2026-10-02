@@ -43,6 +43,8 @@ namespace SodRpg.Core.Game
         public int Enhance { get; set; }
         public int Retunes { get; set; }
         public bool Locked { get; set; }
+        public int AwakenPoints { get; set; }
+        public bool Awakened { get; set; }
         public List<StatLine> Affixes { get; } = new List<StatLine>();
         public List<PowerLine> Powers { get; } = new List<PowerLine>();
 
@@ -64,19 +66,29 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>強化を反映した能力値の一覧（基礎能力＋特性）。</summary>
+        /// <summary>強化を反映した能力値の一覧。覚醒の倍率は特性だけに掛け、切り捨てる。</summary>
         public IEnumerable<StatLine> EffectiveStats()
         {
             yield return Implicit;
             int pct = Content.EnhanceScalePct(Enhance);
-            foreach (var a in Affixes) yield return new StatLine(a.Stat, Scale(a.Value, pct));
+            foreach (var a in Affixes)
+            {
+                int value = Scale(a.Value, pct);
+                if (Awakened) value = (int)((long)value * Content.AwakenAffixPct / 100);
+                yield return new StatLine(a.Stat, value);
+            }
         }
 
-        /// <summary>強化を反映した固有効果（+1ごとに+5%）。</summary>
+        /// <summary>強化を反映した固有効果（+1ごとに+5%）。覚醒の倍率は切り捨てる。</summary>
         public IEnumerable<PowerLine> EffectivePowers()
         {
             int pct = 100 + 5 * Enhance;
-            foreach (var p in Powers) yield return new PowerLine(p.Power, Scale(p.Value, pct));
+            foreach (var p in Powers)
+            {
+                int value = Scale(p.Value, pct);
+                if (Awakened) value = (int)((long)value * Content.AwakenPowerPct / 100);
+                yield return new PowerLine(p.Power, value);
+            }
         }
 
         /// <summary>レア度を最優先にした強さ（並べ替え・比較用）。</summary>
@@ -101,6 +113,8 @@ namespace SodRpg.Core.Game
                 Enhance = Enhance,
                 Retunes = Retunes,
                 Locked = Locked,
+                AwakenPoints = AwakenPoints,
+                Awakened = Awakened,
             };
             c.Affixes.AddRange(Affixes);
             c.Powers.AddRange(Powers);

@@ -61,6 +61,7 @@ namespace SodRpg.Core.Game
             var stats = new JsonObject()
                 .Add("runs", (long)s.Runs).Add("victories", (long)s.Victories).Add("defeats", (long)s.Defeats)
                 .Add("relicsFound", (long)s.RelicsFound).Add("legendariesFound", (long)s.LegendariesFound)
+                .Add("relicsAwakened", (long)s.RelicsAwakened)
                 .Add("bestHeatSecured", (long)s.BestHeatSecured).Add("kills", (long)s.Kills)
                 .Add("nightmares", (long)s.NightmaresSlain).Add("bestVictoryStartDepth", (long)s.BestVictoryStartDepth)
                 .Add("pactsSworn", (long)s.PactsSworn).Add("eventsUsed", (long)s.EventsUsed).Add("bountiesDone", (long)s.BountiesDone);
@@ -194,6 +195,7 @@ namespace SodRpg.Core.Game
                 .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
+                .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -301,6 +303,7 @@ namespace SodRpg.Core.Game
                 p.Stats.Defeats = Clamp(Long(st, "defeats"), 0, int.MaxValue);
                 p.Stats.RelicsFound = Clamp(Long(st, "relicsFound"), 0, int.MaxValue);
                 p.Stats.LegendariesFound = Clamp(Long(st, "legendariesFound"), 0, int.MaxValue);
+                p.Stats.RelicsAwakened = Clamp(Long(st, "relicsAwakened"), 0, int.MaxValue);
                 p.Stats.BestHeatSecured = Clamp(Long(st, "bestHeatSecured"), 0, Content.MaxHeat);
                 p.Stats.Kills = Clamp(Long(st, "kills"), 0, int.MaxValue);
                 p.Stats.NightmaresSlain = Clamp(Long(st, "nightmares"), 0, int.MaxValue);
@@ -399,6 +402,8 @@ namespace SodRpg.Core.Game
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhance),
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
                 Locked = Bool(j, "locked", false),
+                AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
+                Awakened = Bool(j, "awakened", false),
             };
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);

@@ -8,6 +8,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・防具・装飾品）。遺物には1つずつ絵が付いています。レア度は5段階、土台は45種、固有品は112種、セットは12種（36部位）、固有効果は30種類あります。
 [*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
 [*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
+[*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakened, its powers become 1.5x and its affixes 1.2x.
+[*] 固有品は使い込むほど目覚めます。装着した旅人で敵を倒すと覚醒の力が溜まり（エリートやボスは多く、悪夢化した敵は2倍）、覚醒すると固有効果が1.5倍、特性が1.2倍になります。
 [/list]
 
 [h2]Secure or Delve / 確保か、深く潜るか[/h2]
@@ -26,8 +28,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] 遊ぶほど夢のレベルが上がり、星図のポイントが増えます。本体の旅人には、それぞれ専用の刻印のツリーがあり、2つの到達刻印から1つを選べます。
 [*] Forge: enhance (+5), retune affixes, salvage, transmute and craft. The workshop unlocks convenience upgrades.
 [*] 鍛冶では強化（+5まで）・再調律・分解・合成・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
-[*] 22 kinds of bounties each run, 30 daily dreams, 43 feats with rewards, and traveler mastery.
-[*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（43個）、旅人の熟練度があります。
+[*] 22 kinds of bounties each run, 30 daily dreams, 45 feats with rewards, and traveler mastery.
+[*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（45個）、旅人の熟練度があります。
 [/list]
 
 [h2]Performance / 軽さ[/h2]

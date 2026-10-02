@@ -335,8 +335,8 @@ namespace SodRpg.Mod
             if (_session.Profile.Run == null) { Debug.Log("[DreamforgeRPG] no run"); return; }
             int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.softInstance?.ambientLevel ?? 1);
             for (int i = 0; i < Math.Max(1, Math.Min(count, 500)); i++)
-                foreach (var e in Rules.OnKill(_session.Profile, (MonsterTier)Math.Max(0, Math.Min(3, tier)), lvl, trades: _session.Trades)) _ui.Notify(e);
-            _session.MarkDirty(false);
+                foreach (var e in Rules.OnKill(_session.Profile, (MonsterTier)Math.Max(0, Math.Min(3, tier)), lvl, heroKey: ClientSession.HeroKeyOf(_session.LocalHero), trades: _session.Trades)) _ui.Notify(e);
+            _session.MarkDirty(true);
         }
 
         [ConsoleCommand("Dreamforge (test): end the current run in the mod (1 = victory, 0 = defeat)", "dreamforge_endrun")]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace SodRpg.Core.Game
@@ -153,6 +154,21 @@ namespace SodRpg.Core.Game
             if (heroKey != null)
             {
                 var hs = p.Hero(heroKey);
+                int points = Content.AwakenPoints(tier, isNightmare);
+                foreach (var uid in hs.Equipped)
+                {
+                    var r = p.FindStash(uid);
+                    if (r == null || r.Rarity != Rarity.Legendary || r.Awakened) continue;
+                    r.AwakenPoints = Math.Min(Content.AwakenThreshold, r.AwakenPoints + points);
+                    if (r.AwakenPoints < Content.AwakenThreshold) continue;
+                    r.Awakened = true;
+                    p.Stats.RelicsAwakened++;
+                    string powerMult = (Content.AwakenPowerPct / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                    string affixMult = (Content.AwakenAffixPct / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+                    ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
+                        $"「{r.PlainName}」が覚醒しました！固有効果が{powerMult}倍、特性が{affixMult}倍になります。",
+                        $"\"{r.PlainName}\" has awakened! Powers x{powerMult}, affixes x{affixMult}.")));
+                }
                 int before = Mastery.Level(hs.Kills);
                 hs.Kills++;
                 int after = Mastery.Level(hs.Kills);

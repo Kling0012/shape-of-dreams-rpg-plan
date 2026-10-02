@@ -385,8 +385,15 @@ namespace SodRpg.Mod
                 NightmareSeenAt.Remove(m.netId);
                 string heroKey = HeroKeyOf(hero);
                 int masteryBefore = Mastery.Level(Profile.Hero(heroKey).Kills);
+                int awakenedBefore = Profile.Stats.RelicsAwakened;
                 Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey, _trades));
                 if (Mastery.Level(Profile.Hero(heroKey).Kills) > masteryBefore) _buildDirty = true;
+                if (Profile.Stats.RelicsAwakened > awakenedBefore)
+                {
+                    // 覚醒で固有効果が強くなったので、能力をホストへ送り直し、すぐ保存する。
+                    _buildDirty = true;
+                    _nextSave = 0;
+                }
                 if (tier >= MonsterTier.MiniBoss) _nextSave = 0;
             }
             catch (Exception ex)

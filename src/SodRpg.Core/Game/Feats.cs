@@ -19,6 +19,7 @@ namespace SodRpg.Core.Game
         Events = 10,
         Bounties = 11,
         SetsCompleted = 12,
+        RelicsAwakened = 13,
     }
 
     public sealed class FeatDef
@@ -78,9 +79,11 @@ namespace SodRpg.Core.Game
             Def("feat.sets.1", FeatKind.SetsCompleted, 1, 1, "揃いの装い", "Matching Set"),
             Def("feat.sets.2", FeatKind.SetsCompleted, 4, 2, "衣装持ち", "Well Dressed"),
             Def("feat.sets.3", FeatKind.SetsCompleted, 12, 3, "すべての装束", "Every Raiment"),
+            Def("feat.awakening.1", FeatKind.RelicsAwakened, 1, 1, "目覚めの刻", "First Awakening", rewardShards: 60),
+            Def("feat.awakening.2", FeatKind.RelicsAwakened, 5, 3, "覚醒の主", "Master of Awakening", rewardShards: 150),
         };
 
-        private static FeatDef Def(string id, FeatKind kind, int target, int stage, string ja, string en)
+        private static FeatDef Def(string id, FeatKind kind, int target, int stage, string ja, string en, int? rewardShards = null)
         {
             return new FeatDef
             {
@@ -88,7 +91,7 @@ namespace SodRpg.Core.Game
                 Name = new Txt(ja, en),
                 Kind = kind,
                 Target = target,
-                RewardShards = stage == 1 ? 30 : stage == 2 ? 80 : stage == 3 ? 200 : 400,
+                RewardShards = rewardShards ?? (stage == 1 ? 30 : stage == 2 ? 80 : stage == 3 ? 200 : 400),
                 RewardTuning = stage == 1 ? 0 : stage == 2 ? 1 : stage == 3 ? 3 : 5,
             };
         }
@@ -110,6 +113,7 @@ namespace SodRpg.Core.Game
                 case FeatKind.Events: return p.Stats.EventsUsed;
                 case FeatKind.Bounties: return p.Stats.BountiesDone;
                 case FeatKind.SetsCompleted: return CompletedSets(p);
+                case FeatKind.RelicsAwakened: return p.Stats.RelicsAwakened;
                 default: throw new ArgumentOutOfRangeException(nameof(f), "Unknown feat kind.");
             }
         }
@@ -195,6 +199,9 @@ namespace SodRpg.Core.Game
                 case FeatKind.Events: return Loc.T($"夢の出来事を合計{n}回選ぶ", $"Take {n} dream events");
                 case FeatKind.Bounties: return Loc.T($"依頼を合計{n}回達成する", $"Complete {n} bounties");
                 case FeatKind.SetsCompleted: return Loc.T($"セットを{n}種類そろえる（3部位）", $"Complete {n} different sets (3 pieces)");
+                case FeatKind.RelicsAwakened: return n == 1
+                    ? Loc.T("固有品を1つ覚醒させる", "Awaken 1 legendary relic")
+                    : Loc.T($"固有品を合計{n}つ覚醒させる", $"Awaken {n} legendary relics in total");
                 default: throw new ArgumentOutOfRangeException(nameof(f), "Unknown feat kind.");
             }
         }

@@ -175,7 +175,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_feat_has_text_and_a_reward()
         {
-            Assert.Equal(43, Feats.All.Count);
+            Assert.Equal(45, Feats.All.Count);
             Assert.Equal(Feats.All.Count, Feats.All.Select(f => f.Id).Distinct().Count());
             foreach (var f in Feats.All)
             {

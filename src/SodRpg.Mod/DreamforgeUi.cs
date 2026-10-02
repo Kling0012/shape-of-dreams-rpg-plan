@@ -145,9 +145,29 @@ namespace SodRpg.Mod
             {
                 var h = _s.LocalHero;
                 if (h != null) return ClientSession.HeroKeyOf(h);
+                // ロビーで旅人を選び直したら、メニューもその旅人に合わせる（メニューの < > で選んだ物は、次に選び直すまで保つ）。
+                string lobby = LobbyHeroKey();
+                if (lobby != null && lobby != _lobbySeen)
+                {
+                    _lobbySeen = lobby;
+                    _heroSel = lobby;
+                }
                 if (_heroSel == null) _heroSel = _s.Profile.Heroes.Keys.FirstOrDefault(k => k.StartsWith("Hero_")) ?? KnownHeroes[0];
                 return _heroSel;
             }
+        }
+
+        private string _lobbySeen;
+
+        private static string LobbyHeroKey()
+        {
+            try
+            {
+                var lp = DewPlayer.local;
+                string t = lp != null ? lp.selectedHeroType : null;
+                return string.IsNullOrEmpty(t) ? null : t;
+            }
+            catch (Exception) { return null; }
         }
 
         private static string HeroName(string key) => key != null && key.StartsWith("Hero_") ? key.Substring(5) : key;
@@ -654,6 +674,7 @@ namespace SodRpg.Mod
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに主装備・防具・装飾品の3つを装着します。\n" +
             "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
+            "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThreshold + "で覚醒して固有効果が1.5倍になります。気に入った1本を使い込みましょう。\n" +
             "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
@@ -669,6 +690,7 @@ namespace SodRpg.Mod
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has a weapon, armor and charm slot.\n" +
             "- Forge: enhance with shards, reroll affixes with tuning stones, salvage the rest into shards.\n" +
+            "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThreshold + " they awaken and their powers become 1.5x. Pick a favourite and keep using it.\n" +
             "- Star Map: spend points from Dream Levels to grow stats; meet the conditions to pick one powerful keystone.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
@@ -1095,6 +1117,7 @@ namespace SodRpg.Mod
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            if (r.Rarity == Rarity.Legendary) GUILayout.Label(AwakenLine(r), _st.Small);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
@@ -1102,6 +1125,20 @@ namespace SodRpg.Mod
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
             }
+        }
+
+        /// <summary>固有品の覚醒の進み具合、または覚醒済みの印。</summary>
+        private static string AwakenLine(Relic r)
+        {
+            int powerX = Content.AwakenPowerPct, affixX = Content.AwakenAffixPct;
+            if (r.Awakened)
+                return UiStyles.Colored(Loc.T($"✦ 覚醒済み：固有効果{powerX / 100f:0.#}倍・特性{affixX / 100f:0.#}倍", $"✦ Awakened: powers x{powerX / 100f:0.#}, affixes x{affixX / 100f:0.#}"), "#ffe17a");
+            int now = r.AwakenPoints, need = Content.AwakenThreshold;
+            int filled = Math.Max(0, Math.Min(10, now * 10 / need));
+            string bar = "<color=#ffe17a>" + new string('■', filled) + "</color><color=#8a8aa0>" + new string('□', 10 - filled) + "</color>";
+            return Loc.T(
+                $"覚醒まで {bar} {now}/{need}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は2倍）。覚醒すると固有効果が{powerX / 100f:0.#}倍、特性が{affixX / 100f:0.#}倍になります。</color>",
+                $"Awakening {bar} {now}/{need}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x2). Awakened: powers x{powerX / 100f:0.#}, affixes x{affixX / 100f:0.#}.</color>");
         }
 
         private void Comparison(Relic sel, Relic cur)
@@ -1163,11 +1200,11 @@ namespace SodRpg.Mod
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked;
                 int svShards = Rules.SalvageValue(sel), svTuning = Content.SalvageTuning(sel.Rarity);
                 string svGain = Loc.T($"欠片{svShards}" + (svTuning > 0 ? $"・調律石{svTuning}" : ""), $"{svShards} shards" + (svTuning > 0 ? $", {svTuning} tuning" : ""));
-                bool weighty = equippedSel || sel.Rarity >= Rarity.Epic;
+                bool weighty = equippedSel || sel.Rarity >= Rarity.Epic || sel.AwakenPoints > 0;
                 string sv = sel.Locked ? Loc.T("鍵を外すと分解できます", "Unlock to salvage")
                     : salvageBlocked ? Loc.T("装着中の物は確保地点で分解できます", "Equipped: salvage at a secure point")
                     : _confirmSalvage != sel.Uid ? Loc.T($"分解（{svGain}）", $"Salvage ({svGain})")
-                    : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"? Press again</color>")
+                    : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します{(sel.Awakened ? "（覚醒も失われます）" : sel.AwakenPoints > 0 ? "（覚醒の力も失われます）" : "")}。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"{(sel.AwakenPoints > 0 ? " (awakening is lost)" : "")}? Press again</color>")
                     : Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>");
                 if (GUILayout.Button(sv, _st.Button, GUILayout.Height(32)))
                 {

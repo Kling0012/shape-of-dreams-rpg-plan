@@ -193,6 +193,9 @@ namespace SodRpg.Core.Game
         public const int RoomsToRecoverLost = 3;
         public const int CodexPerPoint = 6;
         public const int MaxCodexBonus = 4;
+        public const int AwakenThreshold = 500;
+        public const int AwakenPowerPct = 150;
+        public const int AwakenAffixPct = 120;
 
         public static readonly IReadOnlyList<BaseDef> Bases = new[]
         {
@@ -989,6 +992,19 @@ namespace SodRpg.Core.Game
                 case MonsterTier.MiniBoss: return 12;
                 default: return 50;
             }
+        }
+
+        /// <summary>装着中の伝説の遺物にたまる覚醒の力。悪夢化の報酬格ではなく、元の敵の格を使う。</summary>
+        public static int AwakenPoints(MonsterTier tier, bool nightmare)
+        {
+            int points;
+            switch (tier)
+            {
+                case MonsterTier.Boss: points = 20; break;
+                case MonsterTier.MiniBoss: points = 5; break;
+                default: points = 1; break;
+            }
+            return nightmare ? points * 2 : points;
         }
 
         public const int SecureXp = 20;
