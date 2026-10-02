@@ -48,6 +48,7 @@ namespace SodRpg.Core.Game
                 if (link != null)
                 {
                     int value = r.Awakened ? (int)((long)link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100) : link.Value;
+                    value = Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), value); // ホストの受信と同じ上限
                     var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, Value = value };
                     if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
                 }
@@ -202,7 +203,7 @@ namespace SodRpg.Core.Game
                             {
                                 Requires = targets,
                                 Kind = linkKind,
-                                Value = Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.Cap(linkKind, targets.Length), v)),
+                                Value = Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(linkKind, targets.Length), v)),
                             };
                             if (global::SodRpg.Core.Game.Links.Validate(def)) b.Links.Add(def);
                         }

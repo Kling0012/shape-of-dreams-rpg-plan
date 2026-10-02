@@ -428,12 +428,12 @@ namespace SodRpg.Mod
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 string heroKey = HeroKeyOf(hero);
                 int masteryBefore = Mastery.Level(Profile.Hero(heroKey).Kills);
-                int awakenedBefore = Profile.Stats.RelicsAwakened;
+                int awakenBefore = Rules.EquippedAwakenLevels(Profile, heroKey);
                 Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey, _trades, variantId: variantId));
                 if (Mastery.Level(Profile.Hero(heroKey).Kills) > masteryBefore) _buildDirty = true;
-                if (Profile.Stats.RelicsAwakened > awakenedBefore)
+                if (Rules.EquippedAwakenLevels(Profile, heroKey) > awakenBefore)
                 {
-                    // 覚醒で固有効果が強くなったので、能力をホストへ送り直し、すぐ保存する。
+                    // 覚醒の段が上がった（Ⅰ→Ⅱ・Ⅱ→Ⅲも）ので、能力をホストへ送り直し、すぐ保存する。
                     _buildDirty = true;
                     _nextSave = 0;
                 }

@@ -208,6 +208,19 @@ namespace SodRpg.Core.Game
             return (int)Math.Round(single * mult, MidpointRounding.AwayFromZero);
         }
 
+        /// <summary>記憶加速は、覚醒しても 90% を超えない（クールダウンが無くならないように）。</summary>
+        public const int MaxHaste = 90;
+
+        /// <summary>
+        /// 装着中の連携に許す上限（v1.27、issue #14）。覚醒Ⅲの倍率まで含め、記憶加速は 90 まで。
+        /// クライアントの Compute とホストの Decode の両方で同じ上限を使い、表示と実効値をそろえる。
+        /// </summary>
+        public static int EquippedCap(LinkKind kind, int requireCount)
+        {
+            int cap = (int)((long)Cap(kind, requireCount) * Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100);
+            return kind == LinkKind.MemoryHaste ? Math.Min(MaxHaste, cap) : cap;
+        }
+
         /// <summary>データとして正しいか。対象は既知で、1〜3つ、重複なし。記憶を使う効果には記憶が要る。</summary>
         public static bool Validate(LinkDef link)
         {

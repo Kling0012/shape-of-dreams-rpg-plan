@@ -1155,6 +1155,19 @@ namespace SodRpg.Core.Game
             return RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
         }
 
+        /// <summary>装着中の遺物の覚醒の段の合計。段が上がったか（能力の送り直しが要るか）の判定に使う（issue #15）。</summary>
+        public static int EquippedAwakenLevels(Profile p, string heroKey)
+        {
+            int n = 0;
+            if (heroKey == null) return 0;
+            foreach (string uid in p.Hero(heroKey).Equipped)
+            {
+                var r = uid != null ? p.FindStash(uid) : null;
+                if (r != null) n += r.AwakenLevel;
+            }
+            return n;
+        }
+
         /// <summary>その旅人の刻印ツリーに振った段数。奥の星を含み、到達刻印は含めない。</summary>
         public static int TreeRanks(HeroState h, string heroKey)
         {

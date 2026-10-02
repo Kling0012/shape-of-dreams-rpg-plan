@@ -177,7 +177,7 @@ namespace SodRpg.Core.Tests
 
             // 値は条件の数に対する上限で切る。
             var clamped = Build.Decode("s:;p:;h:0;l:3:999:St_L_Blizzard");
-            Assert.Equal(Links.Cap(LinkKind.Attune, 1), clamped.Links[0].Value);
+            Assert.Equal(Links.EquippedCap(LinkKind.Attune, 1), clamped.Links[0].Value); // 覚醒Ⅲまでを含む上限（issue #14）
 
             // 13個送られてきても12個まで。
             var many = new Build();
