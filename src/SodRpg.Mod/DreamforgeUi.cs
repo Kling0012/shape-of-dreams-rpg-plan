@@ -944,7 +944,9 @@ namespace SodRpg.Mod
             {
                 GUILayout.BeginVertical(_st.Panel, GUILayout.Width(520));
                 GUILayout.Label(Loc.T($"旅人の刻印：{HeroName(hero)}", $"Traveler sigils: {HeroName(hero)}"), _st.Header);
-                foreach (var t in HeroSigils.TreeFor(hero)) DrawTalentNode(p, hero, hs, t);
+                // 小さな強化を先に、到達刻印（どちらか1つ）を後にまとめて並べる。
+                foreach (var t in HeroSigils.TreeFor(hero)) if (!t.IsKeystone) DrawTalentNode(p, hero, hs, t);
+                foreach (var t in HeroSigils.TreeFor(hero)) if (t.IsKeystone) DrawTalentNode(p, hero, hs, t);
                 GUILayout.EndVertical();
                 GUILayout.BeginVertical(_st.Panel);
                 int lv = Mastery.Level(hs.Kills);
@@ -952,6 +954,8 @@ namespace SodRpg.Mod
                 GUILayout.Label(Loc.T(
                     $"到達刻印を選ぶには、このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります（いまの熟練度は{lv}「{Mastery.Title(lv)}」）",
                     $"Keystone: {Content.KeystoneRouteRequirement}+ points in the tree and mastery {HeroSigils.KeystoneMastery}+ (now {lv} \"{Mastery.Title(lv)}\")"), _st.Small);
+                GUILayout.Label(Loc.T("到達刻印は2つ用意されていて、有効にできるのはどちらか1つです。遠征に出ていないときならいつでも付け替えられるので、戦い方に合わせて選んでください。",
+                    "Each Traveler has two keystones, and only one can be active. You can switch any time outside an expedition, so pick the one that fits your playstyle."), _st.Small);
                 GUILayout.EndVertical();
             }
             else
