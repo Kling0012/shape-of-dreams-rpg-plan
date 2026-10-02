@@ -233,16 +233,17 @@ namespace SodRpg.Core.Game
             var pool = Content.AffixPool(slot);
             int total = 0;
             foreach (var a in pool)
-                if (!exclude.Contains(a.Stat)) total += a.Weight;
+                if (!exclude.Contains(a.Stat) && rarity >= a.MinRarity) total += a.Weight;
             if (total <= 0) return null;
             int x = rng.Range(0, total - 1);
             foreach (var a in pool)
             {
-                if (exclude.Contains(a.Stat)) continue;
+                if (exclude.Contains(a.Stat) || rarity < a.MinRarity) continue;
                 if (x < a.Weight)
                 {
                     int raw = rng.Range(a.Min, a.Max);
-                    int pct = Content.RarityValuePct(rarity) * Content.LevelScalePct(itemLevel) / 100;
+                    int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(itemLevel) : 100;
+                    int pct = Content.RarityValuePct(rarity) * level / 100;
                     return new StatLine(a.Stat, Relic.Scale(raw, pct));
                 }
                 x -= a.Weight;

@@ -38,7 +38,9 @@ namespace SodRpg.Core.Game
             string expected = Str(root, "checksum");
             string actual = "sha256:" + Sha256(Json.Write(body));
             if (!string.Equals(expected, actual, StringComparison.Ordinal)) throw new LedgerFormatException("チェックサムが一致しません。");
-            return ReadBody(body, notes ?? new List<string>());
+            var loaded = ReadBody(body, notes ?? new List<string>());
+            loaded.LoadedVersion = (int)Math.Max(0, Math.Min(int.MaxValue, version));
+            return loaded;
         }
 
         private static JsonObject WriteBody(Profile p)

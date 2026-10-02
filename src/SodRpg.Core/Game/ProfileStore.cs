@@ -29,12 +29,28 @@ namespace SodRpg.Core.Game
         /// <summary>読み込み時の注意（復旧した、除外した等）。画面に出す。</summary>
         public List<string> Notes { get; } = new List<string>();
 
+        /// <summary>
+        /// リセットに必要な写しが作れなかったので、保存を止めている（issue #17）。写しがそろうまで元のファイルを変えない。
+        /// </summary>
+        public bool WritesBlocked { get; private set; }
+
         public Profile Load()
         {
             Notes.Clear();
+            WritesBlocked = false;
             if (ResetIfOld()) return Profile.CreateNew(_seed);
             Profile main = TryRead(_path, "本体");
             Profile bak = TryRead(BackupPath, "バックアップ");
+            if (!WritesBlocked)
+            {
+                // リセットより前の版は、復旧の候補にしない（issue #16：リセット後の初回保存の直後に旧 .bak が選ばれていた）。
+                if (main != null && main.LoadedVersion < Profile.ResetBeforeVersion) main = null;
+                if (bak != null && bak.LoadedVersion < Profile.ResetBeforeVersion)
+                {
+                    bak = null;
+                    if (main == null) Notes.Add("保存データが読めず、残っていたのはリセット前のデータだけでした。新しいプロフィールで始めます（前のデータの写しは残っています）。");
+                }
+            }
             if (main != null && (bak == null || main.Revision >= bak.Revision)) return main;
             if (bak != null)
             {
@@ -53,6 +69,7 @@ namespace SodRpg.Core.Game
         /// <summary>保存する。成功すると p.Revision が1増える。失敗時は IOException を投げ、本体は変更しない。</summary>
         public void Save(Profile p)
         {
+            if (WritesBlocked) throw new IOException(BlockedMessage);
             long prev = p.Revision;
             p.Revision = prev + 1;
             try
@@ -76,6 +93,7 @@ namespace SodRpg.Core.Game
         {
             lock (_writeLock)
             {
+                if (WritesBlocked) throw new IOException(BlockedMessage);
                 try
                 {
                     _fs.WriteAllText(TempPath, text);
@@ -124,6 +142,9 @@ namespace SodRpg.Core.Game
             string dir = System.IO.Path.GetDirectoryName(_path) ?? "";
             string name = System.IO.Path.GetFileNameWithoutExtension(_path);
             string archive = System.IO.Path.Combine(dir, name + ".v" + version + "-archive-" + stamp + ".json");
+            // 同じ秒に再試行しても前の写しを上書きしないよう、名前が重なれば番号を足す
+            for (int i = 2; _fs.Exists(archive) || _fs.Exists(archive + ".bak"); i++)
+                archive = System.IO.Path.Combine(dir, name + ".v" + version + "-archive-" + stamp + "-" + i + ".json");
             try
             {
                 if (_fs.Exists(_path)) _fs.Copy(_path, archive, overwrite: false);
@@ -131,13 +152,16 @@ namespace SodRpg.Core.Game
             }
             catch (IOException ex)
             {
-                // 写しが作れなければリセットしない（前のデータを失わないため）。次の起動でもう一度試す。
-                Notes.Add("前のデータの写しを作れなかったため、今回はリセットしませんでした: " + ex.Message);
+                // 写しが作れなければリセットせず、保存も止める（前のデータを失わないため。issue #17）。次の起動でもう一度試す。
+                WritesBlocked = true;
+                Notes.Add("前のデータの写しを作れなかったため、今回はリセットせず、保存も止めています。次に起動したときにもう一度試します: " + ex.Message);
                 return false;
             }
             Notes.Add("大きな更新のため、プロフィールを新しく始めました。前のデータは " + System.IO.Path.GetFileName(archive) + " に残しています。");
             return true;
         }
+
+        private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
 
         private long ReadVersion(string path)
         {

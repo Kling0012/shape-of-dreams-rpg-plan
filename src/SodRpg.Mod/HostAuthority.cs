@@ -1565,6 +1565,8 @@ namespace SodRpg.Mod
                     case Stat.CritDamagePct: s.critAmpFlat += v; break;
                     case Stat.MaxHealthPct: s.maxHealthPercentage += v; break;
                     case Stat.MaxHealthFlat: s.maxHealthFlat += v; break;
+                    case Stat.AttackFlat: s.attackDamageFlat += v; break;
+                    case Stat.PowerFlat: s.abilityPowerFlat += v; break;
                     case Stat.Armor: s.armorFlat += v; break;
                     case Stat.HealthRegen: s.healthRegenFlat += v; break;
                     case Stat.Haste: s.abilityHasteFlat += v; break;

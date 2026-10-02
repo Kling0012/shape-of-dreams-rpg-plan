@@ -258,17 +258,37 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Item_level_scales_affix_values()
+        public void Item_level_scales_flat_affixes_but_not_percent_ones()
         {
-            var lo = new List<int>();
-            var hi = new List<int>();
+            // v1.28：固定値はアイテムレベルで伸び、%は伸びない
+            var loFlat = new List<int>();
+            var hiFlat = new List<int>();
+            var loPct = new List<int>();
+            var hiPct = new List<int>();
             var rng = new Rng(8);
-            for (int i = 0; i < 2000; i++)
+            for (int i = 0; i < 4000; i++)
             {
-                lo.Add(Loot.RollRelic(rng, Rarity.Rare, 1, Slot.Weapon).Affixes.Sum(a => a.Value));
-                hi.Add(Loot.RollRelic(rng, Rarity.Rare, 40, Slot.Weapon).Affixes.Sum(a => a.Value));
+                foreach (var a in Loot.RollRelic(rng, Rarity.Epic, 1, Slot.Weapon).Affixes)
+                    (Content.ScalesWithItemLevel(a.Stat) ? loFlat : loPct).Add(a.Value);
+                foreach (var a in Loot.RollRelic(rng, Rarity.Epic, 40, Slot.Weapon).Affixes)
+                    (Content.ScalesWithItemLevel(a.Stat) ? hiFlat : hiPct).Add(a.Value);
             }
-            Assert.True(hi.Average() > lo.Average() * 1.8);
+            Assert.True(hiFlat.Average() > loFlat.Average() * 1.8);
+            Assert.InRange(hiPct.Average() / loPct.Average(), 0.9, 1.1);
+        }
+
+        [Theory]
+        [InlineData(Rarity.Common)]
+        [InlineData(Rarity.Uncommon)]
+        [InlineData(Rarity.Rare)]
+        public void Attack_and_power_percent_affixes_need_epic_or_better(Rarity rarity)
+        {
+            var rng = new Rng(11);
+            for (int i = 0; i < 3000; i++)
+            {
+                var r = Loot.RollRelic(rng, rarity, 30);
+                Assert.DoesNotContain(r.Affixes, a => a.Stat == Stat.AttackPct || a.Stat == Stat.PowerPct);
+            }
         }
 
         [Fact]

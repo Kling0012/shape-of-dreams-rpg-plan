@@ -89,7 +89,8 @@ namespace SodRpg.Core.Game
             get
             {
                 var b = Base;
-                return new StatLine(b.ImplicitStat, Scale(b.ImplicitValue, Content.LevelScalePct(ItemLevel) * Content.EnhanceScalePct(Enhance) / 100));
+                int level = Content.ScalesWithItemLevel(b.ImplicitStat) ? Content.LevelScalePct(ItemLevel) : 100; // v1.28：%はレベルで伸びない
+                return new StatLine(b.ImplicitStat, Scale(b.ImplicitValue, level * Content.EnhanceScalePct(Enhance) / 100));
             }
         }
 

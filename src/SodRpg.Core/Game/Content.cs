@@ -29,14 +29,17 @@ namespace SodRpg.Core.Game
     /// <summary>特性（ランダムに付く能力値）の定義。値域は アイテムレベル1・レア度補正前。</summary>
     public sealed class AffixDef
     {
-        public AffixDef(Stat stat, int min, int max, int weight = 10)
+        public AffixDef(Stat stat, int min, int max, int weight = 10, Rarity minRarity = Rarity.Common)
         {
             Stat = stat;
             Min = min;
             Max = max;
             Weight = weight;
+            MinRarity = minRarity;
         }
 
+        /// <summary>この特性が付く最低のレア度（v1.28：攻撃力%・魔力%はエピック以上）。</summary>
+        public Rarity MinRarity { get; }
         public Stat Stat { get; }
         public int Min { get; }
         public int Max { get; }
@@ -288,10 +291,10 @@ namespace SodRpg.Core.Game
         {
             new BaseDef("weapon.chain_sword", Slot.Weapon, Line.Offense, new Txt("連なりの剣", "Chain Sword"), Stat.AttackSpeedPct, 4),
             new BaseDef("weapon.twin_fang", Slot.Weapon, Line.Offense, new Txt("双牙の短刀", "Twin Fang Daggers"), Stat.CritChancePct, 3),
-            new BaseDef("weapon.calming_staff", Slot.Weapon, Line.Resonance, new Txt("鎮めの杖", "Calming Staff"), Stat.PowerPct, 6),
+            new BaseDef("weapon.calming_staff", Slot.Weapon, Line.Resonance, new Txt("鎮めの杖", "Calming Staff"), Stat.PowerFlat, 6),
             new BaseDef("weapon.longspike_bow", Slot.Weapon, Line.Offense, new Txt("長穂の弓", "Longspike Bow"), Stat.CritDamagePct, 10),
             new BaseDef("weapon.shield_maul", Slot.Weapon, Line.Guard, new Txt("盾打ちの槌", "Shieldbash Maul"), Stat.MaxHealthPct, 5),
-            new BaseDef("weapon.blaze_greatsword", Slot.Weapon, Line.Offense, new Txt("烈火の大剣", "Blazing Greatsword"), Stat.AttackPct, 6),
+            new BaseDef("weapon.blaze_greatsword", Slot.Weapon, Line.Offense, new Txt("烈火の大剣", "Blazing Greatsword"), Stat.AttackFlat, 6),
 
             new BaseDef("armor.counter_gauntlets", Slot.Armor, Line.Guard, new Txt("反撃の籠手", "Counter Gauntlets"), Stat.Armor, 6),
             new BaseDef("armor.flowing_cloak", Slot.Armor, Line.Resonance, new Txt("流れの外套", "Flowing Cloak"), Stat.MoveSpeedPct, 3),
@@ -311,16 +314,16 @@ namespace SodRpg.Core.Game
             new BaseDef("weapon.lantern_rod", Slot.Weapon, Line.Resonance, new Txt("灯火の杖", "Lantern Rod"), Stat.LightAmp, 10),
             new BaseDef("armor.frost_coat", Slot.Armor, Line.Guard, new Txt("霜の上衣", "Frostweave Coat"), Stat.Tenacity, 15),
             new BaseDef("armor.dancer_garb", Slot.Armor, Line.Offense, new Txt("舞手の衣", "Dancer's Garb"), Stat.AttackSpeedPct, 4),
-            new BaseDef("armor.star_cloak", Slot.Armor, Line.Resonance, new Txt("星読みの外套", "Stargazer's Cloak"), Stat.PowerPct, 5),
+            new BaseDef("armor.star_cloak", Slot.Armor, Line.Resonance, new Txt("星読みの外套", "Stargazer's Cloak"), Stat.PowerFlat, 5),
             new BaseDef("charm.ember_locket", Slot.Charm, Line.Offense, new Txt("残り火のロケット", "Ember Locket"), Stat.FireAmp, 10),
             new BaseDef("charm.moon_bell", Slot.Charm, Line.Resonance, new Txt("月の鈴", "Moon Bell"), Stat.ColdAmp, 10),
             new BaseDef("charm.iron_feather", Slot.Charm, Line.Guard, new Txt("鉄の羽根", "Iron Feather"), Stat.Armor, 6),
             new BaseDef("weapon.hunting_bow", Slot.Weapon, Line.Offense, new Txt("狩人の短弓", "Hunting Shortbow"), Stat.AttackSpeedPct, 5),
-            new BaseDef("weapon.war_axe", Slot.Weapon, Line.Offense, new Txt("戦斧", "War Axe"), Stat.AttackPct, 7),
+            new BaseDef("weapon.war_axe", Slot.Weapon, Line.Offense, new Txt("戦斧", "War Axe"), Stat.AttackFlat, 7),
             new BaseDef("weapon.tower_lance", Slot.Weapon, Line.Guard, new Txt("城壁の槍", "Rampart Lance"), Stat.Armor, 6),
             new BaseDef("weapon.oath_mace", Slot.Weapon, Line.Guard, new Txt("誓いの戦棍", "Oath Mace"), Stat.MaxHealthFlat, 25),
             new BaseDef("weapon.dream_wand", Slot.Weapon, Line.Resonance, new Txt("夢見の杖", "Dreamer's Wand"), Stat.Haste, 6),
-            new BaseDef("weapon.star_harp", Slot.Weapon, Line.Resonance, new Txt("星の竪琴", "Star Harp"), Stat.PowerPct, 7),
+            new BaseDef("weapon.star_harp", Slot.Weapon, Line.Resonance, new Txt("星の竪琴", "Star Harp"), Stat.PowerFlat, 7),
             new BaseDef("armor.hunter_leather", Slot.Armor, Line.Offense, new Txt("狩人の革鎧", "Hunter's Leathers"), Stat.CritChancePct, 3),
             new BaseDef("armor.ember_plate", Slot.Armor, Line.Offense, new Txt("燠火の鎧", "Emberforged Plate"), Stat.FireAmp, 10),
             new BaseDef("armor.root_mail", Slot.Armor, Line.Guard, new Txt("根の鎖帷子", "Rootbound Mail"), Stat.HealthRegen, 3),
@@ -331,13 +334,13 @@ namespace SodRpg.Core.Game
             new BaseDef("charm.war_drum", Slot.Charm, Line.Offense, new Txt("戦太鼓", "War Drum"), Stat.AttackSpeedPct, 4),
             new BaseDef("charm.guardian_seal", Slot.Charm, Line.Guard, new Txt("守護の封印", "Guardian Seal"), Stat.MaxHealthPct, 5),
             new BaseDef("charm.stone_heart", Slot.Charm, Line.Guard, new Txt("石の心臓", "Stone Heart"), Stat.Tenacity, 12),
-            new BaseDef("charm.dream_lens", Slot.Charm, Line.Resonance, new Txt("夢見の水晶", "Dreaming Lens"), Stat.PowerPct, 5),
+            new BaseDef("charm.dream_lens", Slot.Charm, Line.Resonance, new Txt("夢見の水晶", "Dreaming Lens"), Stat.PowerFlat, 5),
             new BaseDef("charm.shadow_mask", Slot.Charm, Line.Resonance, new Txt("影の仮面", "Shadow Mask"), Stat.DarkAmp, 10),
             new BaseDef("head.iron_helm", Slot.Head, Line.Guard, new Txt("鉄の兜", "Iron Helm"), Stat.Armor, 6),
             new BaseDef("head.dream_circlet", Slot.Head, Line.Resonance, new Txt("夢見の額冠", "Dreamer's Circlet"), Stat.Haste, 5),
             new BaseDef("head.hunter_hood", Slot.Head, Line.Offense, new Txt("狩人の頭巾", "Hunter's Hood"), Stat.CritChancePct, 3),
-            new BaseDef("head.horned_helm", Slot.Head, Line.Offense, new Txt("双角の兜", "Horned Helm"), Stat.AttackPct, 5),
-            new BaseDef("head.sage_hat", Slot.Head, Line.Resonance, new Txt("賢者のとんがり帽", "Sage's Hat"), Stat.PowerPct, 5),
+            new BaseDef("head.horned_helm", Slot.Head, Line.Offense, new Txt("双角の兜", "Horned Helm"), Stat.AttackFlat, 5),
+            new BaseDef("head.sage_hat", Slot.Head, Line.Resonance, new Txt("賢者のとんがり帽", "Sage's Hat"), Stat.PowerFlat, 5),
             new BaseDef("head.mist_veil", Slot.Head, Line.Resonance, new Txt("霧のヴェール", "Veil of Mist"), Stat.MoveSpeedPct, 3),
             new BaseDef("head.warden_visor", Slot.Head, Line.Guard, new Txt("番人の面頬", "Warden's Visor"), Stat.Tenacity, 8),
             new BaseDef("head.ember_crown", Slot.Head, Line.Offense, new Txt("残り火の冠", "Ember Crown"), Stat.FireAmp, 6),
@@ -346,8 +349,8 @@ namespace SodRpg.Core.Game
             new BaseDef("hands.leather_gloves", Slot.Hands, Line.Offense, new Txt("革の手袋", "Leather Gloves"), Stat.AttackSpeedPct, 4),
             new BaseDef("hands.iron_gauntlets", Slot.Hands, Line.Guard, new Txt("鉄の籠手", "Iron Gauntlets"), Stat.Armor, 6),
             new BaseDef("hands.archer_bracers", Slot.Hands, Line.Offense, new Txt("射手の腕当て", "Archer's Bracers"), Stat.CritDamagePct, 10),
-            new BaseDef("hands.spell_gloves", Slot.Hands, Line.Resonance, new Txt("呪文の手袋", "Spellweave Gloves"), Stat.PowerPct, 5),
-            new BaseDef("hands.claw_gauntlets", Slot.Hands, Line.Offense, new Txt("獣爪の手甲", "Beastclaw Gauntlets"), Stat.AttackPct, 5),
+            new BaseDef("hands.spell_gloves", Slot.Hands, Line.Resonance, new Txt("呪文の手袋", "Spellweave Gloves"), Stat.PowerFlat, 5),
+            new BaseDef("hands.claw_gauntlets", Slot.Hands, Line.Offense, new Txt("獣爪の手甲", "Beastclaw Gauntlets"), Stat.AttackFlat, 5),
             new BaseDef("hands.frost_mitts", Slot.Hands, Line.Resonance, new Txt("霜の指なし手袋", "Frost Mitts"), Stat.ColdAmp, 6),
             new BaseDef("hands.radiant_wraps", Slot.Hands, Line.Resonance, new Txt("光の手巻き", "Radiant Wraps"), Stat.LightAmp, 6),
             new BaseDef("hands.vigor_grips", Slot.Hands, Line.Guard, new Txt("活力の握り", "Grips of Vigor"), Stat.MaxHealthFlat, 25),
@@ -375,8 +378,8 @@ namespace SodRpg.Core.Game
             new BaseDef("hands.duelist_gloves", Slot.Hands, Line.Offense, new Txt("決闘者の手袋", "Duelist's Gloves"), Stat.CritChancePct, 3),
             new BaseDef("feet.frost_boots", Slot.Feet, Line.Resonance, new Txt("氷上の靴", "Ice Skimmers"), Stat.ColdAmp, 6),
             new BaseDef("feet.shadow_slippers", Slot.Feet, Line.Offense, new Txt("影の上履き", "Shadow Slippers"), Stat.DarkAmp, 6),
-            new BaseDef("feet.spiked_boots", Slot.Feet, Line.Offense, new Txt("棘付きの長靴", "Spiked Boots"), Stat.AttackPct, 5),
-            new BaseDef("feet.sage_slippers", Slot.Feet, Line.Resonance, new Txt("賢者の室内履き", "Sage's Slippers"), Stat.PowerPct, 5),
+            new BaseDef("feet.spiked_boots", Slot.Feet, Line.Offense, new Txt("棘付きの長靴", "Spiked Boots"), Stat.AttackFlat, 5),
+            new BaseDef("feet.sage_slippers", Slot.Feet, Line.Resonance, new Txt("賢者の室内履き", "Sage's Slippers"), Stat.PowerFlat, 5),
             new BaseDef("feet.guard_sabatons", Slot.Feet, Line.Guard, new Txt("守りの鉄靴", "Guardian Sabatons"), Stat.MaxHealthFlat, 25),
 
             // v1.21：各枠 +10
@@ -389,9 +392,9 @@ namespace SodRpg.Core.Game
             new BaseDef("weapon.bone_cleaver", Slot.Weapon, Line.Offense, new Txt("骨断ちの大包丁", "Bone Cleaver"), Stat.CritDamagePct, 10),
             new BaseDef("weapon.twin_rapier", Slot.Weapon, Line.Offense, new Txt("双子の細剣", "Twin Rapiers"), Stat.AttackSpeedPct, 4),
             new BaseDef("weapon.pilgrim_staff", Slot.Weapon, Line.Guard, new Txt("巡礼の錫杖", "Pilgrim's Staff"), Stat.HealthRegen, 2),
-            new BaseDef("weapon.thunder_hammer", Slot.Weapon, Line.Offense, new Txt("雷鳴の戦鎚", "Thunder Hammer"), Stat.AttackPct, 6),
+            new BaseDef("weapon.thunder_hammer", Slot.Weapon, Line.Offense, new Txt("雷鳴の戦鎚", "Thunder Hammer"), Stat.AttackFlat, 6),
             new BaseDef("head.wolf_pelt", Slot.Head, Line.Offense, new Txt("狼の毛皮かぶり", "Wolf Pelt Hood"), Stat.AttackSpeedPct, 4),
-            new BaseDef("head.star_diadem", Slot.Head, Line.Resonance, new Txt("星の髪飾り", "Star Diadem"), Stat.PowerPct, 5),
+            new BaseDef("head.star_diadem", Slot.Head, Line.Resonance, new Txt("星の髪飾り", "Star Diadem"), Stat.PowerFlat, 5),
             new BaseDef("head.plague_mask", Slot.Head, Line.Guard, new Txt("鳥嘴の面", "Beaked Mask"), Stat.Tenacity, 8),
             new BaseDef("head.coral_crown", Slot.Head, Line.Resonance, new Txt("珊瑚の冠", "Coral Crown"), Stat.ColdAmp, 6),
             new BaseDef("head.knight_helm", Slot.Head, Line.Guard, new Txt("騎士の大兜", "Knight's Greathelm"), Stat.MaxHealthPct, 5),
@@ -404,7 +407,7 @@ namespace SodRpg.Core.Game
             new BaseDef("armor.frost_robe", Slot.Armor, Line.Resonance, new Txt("霜の法衣", "Frost Robe"), Stat.ColdAmp, 6),
             new BaseDef("armor.scale_coat", Slot.Armor, Line.Guard, new Txt("竜鱗の外套", "Dragonscale Coat"), Stat.Armor, 9),
             new BaseDef("armor.hunter_vest", Slot.Armor, Line.Offense, new Txt("狩人の胴衣", "Hunter's Vest"), Stat.CritChancePct, 3),
-            new BaseDef("armor.star_mantle", Slot.Armor, Line.Resonance, new Txt("星屑の肩掛け", "Stardust Mantle"), Stat.PowerPct, 5),
+            new BaseDef("armor.star_mantle", Slot.Armor, Line.Resonance, new Txt("星屑の肩掛け", "Stardust Mantle"), Stat.PowerFlat, 5),
             new BaseDef("armor.monk_garb", Slot.Armor, Line.Offense, new Txt("修行者の道着", "Ascetic's Garb"), Stat.AttackSpeedPct, 4),
             new BaseDef("armor.shadow_cloak", Slot.Armor, Line.Offense, new Txt("影織りの外套", "Shadowweave Cloak"), Stat.DarkAmp, 6),
             new BaseDef("armor.sun_plate", Slot.Armor, Line.Resonance, new Txt("陽光の鎧", "Sunlit Plate"), Stat.LightAmp, 6),
@@ -439,7 +442,7 @@ namespace SodRpg.Core.Game
             new BaseDef("charm.clockwork_charm", Slot.Charm, Line.Resonance, new Txt("ぜんまい仕掛けの飾り", "Clockwork Charm"), Stat.Haste, 5),
             new BaseDef("charm.iron_seal", Slot.Charm, Line.Guard, new Txt("鉄の印章", "Iron Seal"), Stat.Armor, 6),
             new BaseDef("charm.feather_token", Slot.Charm, Line.Resonance, new Txt("風切り羽", "Windfeather Token"), Stat.MoveSpeedPct, 3),
-            new BaseDef("charm.war_horn", Slot.Charm, Line.Offense, new Txt("戦の角笛", "War Horn"), Stat.AttackPct, 5),
+            new BaseDef("charm.war_horn", Slot.Charm, Line.Offense, new Txt("戦の角笛", "War Horn"), Stat.AttackFlat, 5),
 
             // v1.25：各枠 +5
             new BaseDef("weapon.storm_glaive", Slot.Weapon, Line.Offense, new Txt("嵐の薙刀", "Storm Glaive"), Stat.AttackSpeedPct, 4),
@@ -451,14 +454,14 @@ namespace SodRpg.Core.Game
             new BaseDef("head.lantern_hat", Slot.Head, Line.Resonance, new Txt("灯籠の笠", "Lantern Hat"), Stat.LightAmp, 6),
             new BaseDef("head.iron_coif", Slot.Head, Line.Guard, new Txt("鎖頭巾", "Chain Coif"), Stat.Armor, 6),
             new BaseDef("head.dream_veil", Slot.Head, Line.Resonance, new Txt("夢見の薄衣", "Dreamer's Veil"), Stat.Haste, 5),
-            new BaseDef("head.antler_crown", Slot.Head, Line.Offense, new Txt("大角の冠", "Antler Crown"), Stat.AttackPct, 5),
-            new BaseDef("armor.ink_robe", Slot.Armor, Line.Resonance, new Txt("墨染めの衣", "Ink-Dyed Robe"), Stat.PowerPct, 5),
+            new BaseDef("head.antler_crown", Slot.Head, Line.Offense, new Txt("大角の冠", "Antler Crown"), Stat.AttackFlat, 5),
+            new BaseDef("armor.ink_robe", Slot.Armor, Line.Resonance, new Txt("墨染めの衣", "Ink-Dyed Robe"), Stat.PowerFlat, 5),
             new BaseDef("armor.chain_hauberk", Slot.Armor, Line.Guard, new Txt("鎖帷子", "Chain Hauberk"), Stat.Armor, 9),
             new BaseDef("armor.ember_jacket", Slot.Armor, Line.Offense, new Txt("火の粉の革衣", "Cinder Jacket"), Stat.FireAmp, 6),
             new BaseDef("armor.moon_silk", Slot.Armor, Line.Resonance, new Txt("月絹の衣", "Moonsilk Robe"), Stat.DarkAmp, 6),
             new BaseDef("armor.spiked_plate", Slot.Armor, Line.Guard, new Txt("棘付きの板金鎧", "Spiked Plate"), Stat.Tenacity, 10),
             new BaseDef("hands.ice_bracers", Slot.Hands, Line.Resonance, new Txt("氷の腕輪", "Ice Bracers"), Stat.ColdAmp, 6),
-            new BaseDef("hands.chain_wraps", Slot.Hands, Line.Offense, new Txt("鎖巻きの拳", "Chain-Wrapped Fists"), Stat.AttackPct, 5),
+            new BaseDef("hands.chain_wraps", Slot.Hands, Line.Offense, new Txt("鎖巻きの拳", "Chain-Wrapped Fists"), Stat.AttackFlat, 5),
             new BaseDef("hands.sun_gauntlets", Slot.Hands, Line.Guard, new Txt("陽光の籠手", "Sunlit Gauntlets"), Stat.LightAmp, 6),
             new BaseDef("hands.thief_gloves", Slot.Hands, Line.Offense, new Txt("盗賊の手袋", "Thief's Gloves"), Stat.CritChancePct, 3),
             new BaseDef("hands.monk_wraps", Slot.Hands, Line.Guard, new Txt("修行者の手巻き", "Ascetic's Wraps"), Stat.HealthRegen, 2),
@@ -471,7 +474,7 @@ namespace SodRpg.Core.Game
             new BaseDef("charm.lotus_seal", Slot.Charm, Line.Guard, new Txt("蓮の印", "Lotus Seal"), Stat.HealthRegen, 2),
             new BaseDef("charm.storm_bell", Slot.Charm, Line.Resonance, new Txt("嵐の鈴", "Storm Bell"), Stat.Haste, 5),
             new BaseDef("charm.ice_heart", Slot.Charm, Line.Resonance, new Txt("氷の心臓", "Frozen Heart"), Stat.ColdAmp, 6),
-            new BaseDef("charm.ink_stone", Slot.Charm, Line.Offense, new Txt("墨の硯", "Ink Stone"), Stat.PowerPct, 5),
+            new BaseDef("charm.ink_stone", Slot.Charm, Line.Offense, new Txt("墨の硯", "Ink Stone"), Stat.PowerFlat, 5),
         };
 
         public static readonly IReadOnlyList<UniqueDef> Uniques = new[]
@@ -2179,8 +2182,10 @@ namespace SodRpg.Core.Game
         {
             [Slot.Weapon] = new[]
             {
-                new AffixDef(Stat.AttackPct, 4, 8, 14),
-                new AffixDef(Stat.PowerPct, 4, 8, 14),
+                new AffixDef(Stat.AttackFlat, 2, 5, 14),
+                new AffixDef(Stat.AttackPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
+                new AffixDef(Stat.PowerFlat, 2, 5, 14),
+                new AffixDef(Stat.PowerPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.AttackSpeedPct, 3, 6, 12),
                 new AffixDef(Stat.CritChancePct, 2, 4, 10),
                 new AffixDef(Stat.CritDamagePct, 6, 12, 10),
@@ -2203,8 +2208,10 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.MoveSpeedPct, 2, 4, 6),
                 new AffixDef(Stat.Haste, 3, 6, 6),
                 new AffixDef(Stat.LightAmp, 5, 10, 4),
-                new AffixDef(Stat.PowerPct, 4, 8, 7), // v1.21
-                new AffixDef(Stat.AttackPct, 4, 8, 7), // v1.21
+                new AffixDef(Stat.PowerFlat, 2, 5, 7), // v1.21
+                new AffixDef(Stat.PowerPct, 2, 4, 2, Rarity.Epic), // v1.28：%はエピック以上・控えめに
+                new AffixDef(Stat.AttackFlat, 2, 5, 7), // v1.21
+                new AffixDef(Stat.AttackPct, 2, 4, 2, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.ColdAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.DarkAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.FireAmp, 6, 12, 4), // v1.21
@@ -2216,8 +2223,10 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.Haste, 4, 8, 12),
                 new AffixDef(Stat.MoveSpeedPct, 2, 5, 8),
                 new AffixDef(Stat.CritChancePct, 2, 4, 10),
-                new AffixDef(Stat.AttackPct, 3, 6, 10),
-                new AffixDef(Stat.PowerPct, 3, 6, 10),
+                new AffixDef(Stat.AttackFlat, 2, 5, 10),
+                new AffixDef(Stat.AttackPct, 2, 4, 3, Rarity.Epic), // v1.28：%はエピック以上・控えめに
+                new AffixDef(Stat.PowerFlat, 2, 5, 10),
+                new AffixDef(Stat.PowerPct, 2, 4, 3, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.MaxHealthPct, 3, 6, 10),
                 new AffixDef(Stat.HealthRegen, 1, 2, 6),
                 new AffixDef(Stat.ColdAmp, 6, 12, 5),
@@ -2231,7 +2240,8 @@ namespace SodRpg.Core.Game
             },
             [Slot.Head] = new[]
             {
-                new AffixDef(Stat.PowerPct, 4, 8, 14),
+                new AffixDef(Stat.PowerFlat, 2, 5, 14),
+                new AffixDef(Stat.PowerPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.Haste, 3, 6, 6),
                 new AffixDef(Stat.CritChancePct, 2, 4, 10),
                 new AffixDef(Stat.MaxHealthPct, 4, 8, 14),
@@ -2240,7 +2250,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.LightAmp, 6, 12, 5),
                 new AffixDef(Stat.DarkAmp, 6, 12, 5),
                 new AffixDef(Stat.HealthRegen, 1, 3, 8),
-                new AffixDef(Stat.AttackPct, 4, 8, 14),
+                new AffixDef(Stat.AttackFlat, 2, 5, 14),
+                new AffixDef(Stat.AttackPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.MoveSpeedPct, 2, 4, 4), // v1.21
                 new AffixDef(Stat.ColdAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.FireAmp, 6, 12, 4), // v1.21
@@ -2249,11 +2260,13 @@ namespace SodRpg.Core.Game
             },
             [Slot.Hands] = new[]
             {
-                new AffixDef(Stat.AttackPct, 4, 8, 14),
+                new AffixDef(Stat.AttackFlat, 2, 5, 14),
+                new AffixDef(Stat.AttackPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.AttackSpeedPct, 3, 6, 12),
                 new AffixDef(Stat.CritChancePct, 2, 4, 10),
                 new AffixDef(Stat.CritDamagePct, 6, 12, 10),
-                new AffixDef(Stat.PowerPct, 4, 8, 14),
+                new AffixDef(Stat.PowerFlat, 2, 5, 14),
+                new AffixDef(Stat.PowerPct, 2, 4, 4, Rarity.Epic), // v1.28：%はエピック以上・控えめに
                 new AffixDef(Stat.FireAmp, 6, 12, 5),
                 new AffixDef(Stat.ColdAmp, 6, 12, 5),
                 new AffixDef(Stat.AttackRangePct, 4, 8, 5),
@@ -2278,8 +2291,10 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.CritChancePct, 2, 4, 5), // v1.21
                 new AffixDef(Stat.LightAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.DarkAmp, 6, 12, 4), // v1.21
-                new AffixDef(Stat.AttackPct, 3, 6, 8), // v1.27：足にも攻撃力・魔力
-                new AffixDef(Stat.PowerPct, 3, 6, 8),
+                new AffixDef(Stat.AttackFlat, 2, 5, 8), // v1.27：足にも攻撃力・魔力
+                new AffixDef(Stat.AttackPct, 2, 4, 2, Rarity.Epic), // v1.28：%はエピック以上・控えめに
+                new AffixDef(Stat.PowerFlat, 2, 5, 8),
+                new AffixDef(Stat.PowerPct, 2, 4, 2, Rarity.Epic), // v1.28：%はエピック以上・控えめに
             },
         };
 
@@ -2470,8 +2485,10 @@ namespace SodRpg.Core.Game
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
         private static readonly Dictionary<Stat, int> StatCaps = new Dictionary<Stat, int>
         {
-            [Stat.AttackPct] = 120,
-            [Stat.PowerPct] = 120,
+            [Stat.AttackPct] = 60, // v1.28：%は控えめに
+            [Stat.PowerPct] = 60,
+            [Stat.AttackFlat] = 150,
+            [Stat.PowerFlat] = 150,
             [Stat.AttackSpeedPct] = 80,
             [Stat.CritChancePct] = 50,
             [Stat.CritDamagePct] = 150,
@@ -2597,6 +2614,27 @@ namespace SodRpg.Core.Game
                 case Rarity.Epic: return 120;
                 case Rarity.Legendary: return 130;
                 default: return 100;
+            }
+        }
+
+        /// <summary>
+        /// アイテムレベルで伸びる能力値か（v1.28）。固定値（攻撃力・魔力・最大HP・防御・HP回復・記憶加速・行動妨害耐性）だけが伸び、
+        /// %の能力値はレベルで伸びない（レア度と強化の倍率は掛かる）。
+        /// </summary>
+        public static bool ScalesWithItemLevel(Stat s)
+        {
+            switch (s)
+            {
+                case Stat.AttackFlat:
+                case Stat.PowerFlat:
+                case Stat.MaxHealthFlat:
+                case Stat.Armor:
+                case Stat.HealthRegen:
+                case Stat.Haste:
+                case Stat.Tenacity:
+                    return true;
+                default:
+                    return false;
             }
         }
 
@@ -2809,6 +2847,8 @@ namespace SodRpg.Core.Game
                 case Stat.CritDamagePct: return Loc.T($"会心ダメージ {sign}{v}%", $"{sign}{v}% Crit Damage");
                 case Stat.MaxHealthPct: return Loc.T($"最大HP {sign}{v}%", $"{sign}{v}% Max Health");
                 case Stat.MaxHealthFlat: return Loc.T($"最大HP {sign}{v}", $"{sign}{v} Max Health");
+                case Stat.AttackFlat: return Loc.T($"攻撃力 {sign}{v}", $"{sign}{v} Attack Damage");
+                case Stat.PowerFlat: return Loc.T($"魔力 {sign}{v}", $"{sign}{v} Ability Power");
                 case Stat.Armor: return Loc.T($"防御 {sign}{v}", $"{sign}{v} Armor");
                 case Stat.HealthRegen: return Loc.T($"HP回復 {sign}{v}/秒", $"{sign}{v} Health Regen/s");
                 case Stat.Haste: return Loc.T($"スキル加速 {sign}{v}", $"{sign}{v} Ability Haste");

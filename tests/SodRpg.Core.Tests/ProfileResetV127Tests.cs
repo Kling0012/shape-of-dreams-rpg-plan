@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using SodRpg.Core.Game;
 using SodRpg.Core.Tests.Testing;
@@ -9,6 +10,95 @@ namespace SodRpg.Core.Tests
     public class ProfileResetV127Tests
     {
         private const string Path = "/save/profile.json";
+
+        private static string OldSave(long revision)
+        {
+            var p = Profile.CreateNew(3);
+            p.DreamLevel = 12;
+            p.Revision = revision;
+            string text = ProfileCodec.Write(p);
+            return text.Replace("\"version\":" + Profile.CurrentVersion, "\"version\":2");
+        }
+
+        /// <summary>写しだけを、指定した回数目で失敗させる。</summary>
+        private sealed class CopyFailingFileSystem : IFileSystem
+        {
+            private readonly InMemoryFileSystem _inner = new InMemoryFileSystem();
+            private int _copies;
+            public int FailCopyAt { get; set; } = -1;
+            public InMemoryFileSystem Inner => _inner;
+            public bool Exists(string path) => _inner.Exists(path);
+            public string ReadAllText(string path) => _inner.ReadAllText(path);
+            public void WriteAllText(string path, string contents) => _inner.WriteAllText(path, contents);
+            public void Replace(string temp, string dest, string backupOrNull) => _inner.Replace(temp, dest, backupOrNull);
+            public void Delete(string path) => _inner.Delete(path);
+            public void Copy(string source, string dest, bool overwrite)
+            {
+                if (++_copies == FailCopyAt) throw new IOException("写しの失敗（試験）");
+                _inner.Copy(source, dest, overwrite);
+            }
+        }
+
+        [Fact]
+        public void First_save_after_reset_survives_a_reload_even_if_the_old_backup_has_a_higher_revision()
+        {
+            // issue #16：版2・rev 42 からリセットし、1回だけ保存して読み直すと、旧 .bak（rev 42）が選ばれていた
+            var fs = new InMemoryFileSystem();
+            string old = OldSave(42);
+            fs.WriteAllText(Path, old);
+            fs.WriteAllText(Path + ".bak", old);
+            var store = new ProfileStore(fs, Path, 7);
+            var fresh = store.Load();
+            fresh.DreamLevel = 3;
+            store.Save(fresh); // 本体は版3・rev 1、.bak は旧版2・rev 42
+
+            var reloaded = new ProfileStore(fs, Path, 7).Load();
+            Assert.Equal(3, reloaded.DreamLevel);
+            Assert.Equal(Profile.CurrentVersion, reloaded.LoadedVersion);
+        }
+
+        [Fact]
+        public void Corrupt_main_with_only_an_old_backup_starts_fresh_instead_of_reviving_old_progress()
+        {
+            var fs = new InMemoryFileSystem();
+            string old = OldSave(42);
+            fs.WriteAllText(Path, old);
+            fs.WriteAllText(Path + ".bak", old);
+            var store = new ProfileStore(fs, Path, 7);
+            store.Save(store.Load());
+            fs.WriteAllText(Path, "{壊れた"); // 本体が壊れ、.bak は旧版だけ
+            var again = new ProfileStore(fs, Path, 7);
+            var p = again.Load();
+            Assert.Equal(1, p.DreamLevel); // 旧進行（夢のレベル12）を復活させない
+        }
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void Saving_is_blocked_until_both_archive_copies_succeed(int failAt)
+        {
+            // issue #17：写しが作れなかったあとも保存でき、旧データが失われていた
+            var fs = new CopyFailingFileSystem { FailCopyAt = failAt };
+            string old = OldSave(42);
+            fs.WriteAllText(Path, old);
+            fs.WriteAllText(Path + ".bak", old);
+            var store = new ProfileStore(fs, Path, 7);
+            var p = store.Load();
+            Assert.True(store.WritesBlocked);
+            Assert.Contains(store.Notes, n => n.Contains("保存も止めています"));
+            Assert.Throws<IOException>(() => store.Save(p));
+            Assert.Throws<IOException>(() => store.Save(p));
+            Assert.Equal(old, fs.ReadAllText(Path)); // 元のファイルは変わらない
+            Assert.Equal(old, fs.ReadAllText(Path + ".bak"));
+
+            // I/O が戻った次の起動では、写しを作って正しくリセットする
+            fs.FailCopyAt = -1;
+            var retry = new ProfileStore(fs, Path, 7);
+            var fresh = retry.Load();
+            Assert.False(retry.WritesBlocked);
+            Assert.Equal(1, fresh.DreamLevel);
+            Assert.Contains(fs.Inner.Files.Keys, k => k.Contains("-archive-") && fs.Inner.Files[k] == old);
+        }
 
         private static string OldSave()
         {

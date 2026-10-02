@@ -67,6 +67,10 @@ namespace SodRpg.Core.Game
         SummonPower = 22,
         /// <summary>HPを捧げる技の消費軽減（%）。</summary>
         SacrificeReduction = 23,
+        /// <summary>攻撃力（固定値）。本体の attackDamageFlat（v1.28）。</summary>
+        AttackFlat = 24,
+        /// <summary>魔力（固定値）。本体の abilityPowerFlat（v1.28）。</summary>
+        PowerFlat = 25,
     }
 
     /// <summary>

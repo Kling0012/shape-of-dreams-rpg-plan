@@ -206,11 +206,14 @@ namespace SodRpg.Core.Game
         /// <summary>選んでいない再調律の候補。なければ null。</summary>
         public RetuneOffer RetuneOffer { get; set; }
 
-        /// <summary>保存の版。v1.27 で 2 に上げた（大きな変更のため、版1の保存は写しを残して新しく始める）。</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>保存の版。v1.27 で 2、v1.28 で 3 に上げた（大きな変更のたびに、古い保存は写しを残して新しく始める）。</summary>
+        public const int CurrentVersion = 3;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
-        public const int ResetBeforeVersion = 2;
+        public const int ResetBeforeVersion = 3;
+
+        /// <summary>読み込んだ保存の版（保存しない）。新しく作ったプロフィールは CurrentVersion。</summary>
+        public int LoadedVersion { get; set; } = CurrentVersion;
 
         public long Revision { get; set; }
         public ulong RngState { get; set; }
