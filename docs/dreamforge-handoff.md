@@ -1,4 +1,4 @@
-# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.15.1）
+# Dreamforge RPG 引き継ぎ（2026-10-02 時点・v1.22.0）
 
 次にこのMODを触る人（人間・AIエージェント）向けの引き継ぎ。最初にこの文書、次に [開発計画](dreamforge-roadmap.md)、[保留事項](dreamforge-pending.md)、[シナジー再評価](dreamforge-synergy-review.md)、[CHANGELOG](../CHANGELOG.md) を読む。
 
@@ -6,12 +6,12 @@
 
 | 項目 | 状態 |
 | --- | --- |
-| 版 | **v1.15.1**（GitHub Releases に v0.1.0〜v1.15.1、v0.7.0 以降は導入用 zip 付き） |
-| ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ。CI 合格） |
-| 試験 | `dotnet test` で **453件すべて合格**（既存の技術プロトタイプ250件＋ゲームルール203件。性能の試験を含む） |
-| ビルド | MOD は警告0・エラー0。ゲームの `Mods/DreamforgeRPG` に配置済み |
-| 実機確認 | v0.1〜v0.3 の主要部分のみ（読み込み・UI・能力反映・確保・精算・ライブリロード）。**v1.0 以降の本体連動は実機未確認**（保留事項を参照） |
-| 次 | 利用者のテストプレイ結果を待って調整（`dreamforge_perf` の数値、手触り）。実機確認は利用者が行う（2026-10-02 指示） |
+| 版 | **v1.22.0**（GitHub Releases、prerelease、zip 付き） |
+| ブランチ | `claude/dreamforge-playable-v0.1`（PR #4、main へは未マージ） |
+| 試験 | `dotnet test` で **600件すべて合格** |
+| 規模 | 装備6枠（主装備・頭・防具・手・足・装飾品）、土台150、固有品334（一般262・セット品72）、セット24、固有効果30（v1.23 で+8予定）、特性 各枠13種、旅人の星図 最大35 |
+| 実機確認 | 各タブの表示、確保地点・出来事・覚醒・鍛冶（節目・再調律の3択）は実機で確認済み。固有効果の戦闘中の手触りは利用者のプレイ待ち |
+| 次 | v1.23 本体と噛み合う新しい固有効果8種、v1.24 モンスター側のつり合い（[開発計画](dreamforge-roadmap.md)） |
 
 ## 2. 方針（利用者の指示で決まったこと）
 
@@ -131,3 +131,15 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - v1.14.1（#8）：分解の返事待ちの遺物は `Rules.EndRun(p, victory, reservedUids)` で `Profile.PendingSalvage`（戻し先つき、保存される）に移し、成功で `Rules.SalvageUnsecured`、失敗・期限切れ・起動時に `Rules.RestorePendingSalvage` で戻す。
 - v1.15：今日の夢・悪夢の契約の説明は `DailyDream.Description` / `Pacts.Describe` で数値から作る（説明文を手で書かない）。到達刻印の効果は `Content.FormatPower` で表示し、`TalentDef.Description` には向いている戦い方だけを書く。画面のクリックの重なりは DreamforgeUi.Draw でまとめて扱う（メニューを開いている間は下のパネルを描かない・ヒントの下はマウス位置をずらす）。
 - 教訓（v1.15.1）：説明文の変更と実装の変更は、同じコミット（少なくとも同じ push）に入れる。途中の push が issue で指摘された（#10・#11）。数値は説明と効果で同じ定数を使う。
+
+## 進め方（v1.16〜v1.22 で固まったこと）
+
+- **利用者は助言だけをする**。方針の選択肢を並べて選ばせず、自分で判断して進め、判断と理由を報告する。
+- **手を止めない**：GPT（OMP）や画像生成が走っている間も、次の版の仕様・データ・画面・実機確認を並行して進める。
+- **実装の分担**：GPT（OMP、`C:\Temp\sod-c` の複製で）と Claude の両方が実装する。重ならないよう、別の版・別の部分を受け持つ。Claude は `C:\Temp\sod-v120` のような別の複製で作り、`git cherry-pick` で取り込んだこともある。
+- **大量のデータ**（固有品・セット）は、Sonnet のサブエージェントに下書きさせ、Claude が全件を読み、スクリプトで検査（ID・名前の重複、土台の枠、固有効果の組み合わせの重複、上限）してから組み込む。
+- **アイコン**：`C:\Temp\sod-art` の Codex 画像生成（`run_batches.sh` 形式、5枚ずつ）。2本並行で約6分/5枚。`shrink.py` で128pxにして `src/SodRpg.Mod/icons/` へ。
+- **本体の API 調査**：`C:\Temp\sod-reflect`（MetadataLoadContext のダンプ）。`dump/` に型ごとの一覧、`_events.txt` にイベント全件。
+- **実機確認**：`.tmp/sodtest` の `prep.ps1`／`onboard_restore.ps1` は **pwsh（PowerShell 7）** で動かす（Windows PowerShell 5 は日本語の行で壊れる）。ようこその「了解」は (726,622)、ロビーの「開始」は (1642,1000)→(900,585)。
+- **バランス**：変更のたびに `tools/BalanceSim` を回し、結果を `tools/BalanceSim/result-vX.md` に残す。プレイヤー側を強くしたら、モンスター側のつり合いも考える。
+- **アイテム数はできるだけ増やす**（利用者の繰り返しの要望）。
