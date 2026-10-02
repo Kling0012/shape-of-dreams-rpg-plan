@@ -1130,8 +1130,9 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             var imp = r.Implicit;
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
-            foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
+            // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             if (r.Rarity == Rarity.Legendary) GUILayout.Label(AwakenLine(r), _st.Small);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
@@ -1207,7 +1208,7 @@ namespace SodRpg.Mod
             var sel = p.FindStash(_selected);
             if (sel != null)
             {
-                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(170));
+                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(260)); // 固有効果まで見えるように
                 RelicDetail(sel);
                 GUILayout.EndScrollView();
                 GUILayout.Space(4);

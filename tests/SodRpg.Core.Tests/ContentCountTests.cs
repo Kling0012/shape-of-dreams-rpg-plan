@@ -20,8 +20,8 @@ namespace SodRpg.Core.Tests
             int powers = slots.Sum(s => Content.PowerPool(s).Count);
             var counts = new (string Name, int Count, int Min)[]
             {
-                ("bases", Content.Bases.Count, 90),
-                ("uniques", Content.Uniques.Count, 184),
+                ("bases", Content.Bases.Count, 150),
+                ("uniques", Content.Uniques.Count, 298),
                 ("sets", Content.Sets.Count, 12),
                 ("talents", Content.Talents.Count, 15),
                 ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),

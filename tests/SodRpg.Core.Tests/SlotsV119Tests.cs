@@ -22,7 +22,7 @@ namespace SodRpg.Core.Tests
         [InlineData(Slot.Feet)]
         public void Every_slot_has_bases_affixes_and_rollable_epic_powers(Slot slot)
         {
-            Assert.Equal(15, Content.BasesFor(slot).Count());
+            Assert.Equal(25, Content.BasesFor(slot).Count());
             Assert.True(Content.AffixPool(slot).Count >= 8);
             Assert.True(Content.PowerPool(slot).Count >= 8);
             var rng = new Rng((ulong)(119 + (int)slot));
@@ -45,7 +45,7 @@ namespace SodRpg.Core.Tests
         {
             var prefix = slot.ToString().ToLowerInvariant() + ".";
             var uniques = Content.Uniques.Where(u => u.BaseId.StartsWith(prefix, StringComparison.Ordinal)).ToList();
-            Assert.Equal(12, uniques.Count);
+            Assert.True(uniques.Count >= 40, $"{slot}: {uniques.Count}");
             foreach (var unique in uniques)
             {
                 Assert.True(Content.TryGetBase(unique.BaseId, out var baseDef));
