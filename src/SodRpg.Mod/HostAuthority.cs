@@ -34,8 +34,30 @@ namespace SodRpg.Mod
             public Action<EventInfoAttackHit> OnHit;
             public Action<EventInfoSkillUse> OnSkill;
             public Action<EventInfoHeal> OnHeal;
+            public Action<EventInfoDamageNegatedByImmunity> OnImmunity;
+            public DewPlayer Player;
+            public Action<int> OnSpendGold;
             public DataProcessor<DamageData, Actor, Entity> DamageDealt;
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
+        }
+
+        private sealed class MonsterRuntime
+        {
+            public Monster Monster;
+            public float QueuedAt;
+            public bool SpawnProcessed;
+            public StatBonus DepthBonus;
+            public StatBonus NightmareBonus;
+            public Se_GenericShield_OneShot Ward;
+            public Action<EventInfoDamage> OnDamageDealt;
+            public bool Reflects;
+            public bool Sunders;
+        }
+
+        private sealed class SunderRuntime
+        {
+            public StatBonus Bonus;
+            public float Until;
         }
 
         private sealed class EnemyValidator : IBinaryEntityValidator
@@ -76,6 +98,18 @@ namespace SodRpg.Mod
         // 悪夢化エリート
         private ActorManager _am;
         private readonly Action<Entity> _onEntityAdd;
+        private readonly Action<Entity> _onEntityRemove;
+        private readonly Action<EventInfoKill> _onMonsterDeath;
+        private readonly Action<EventInfoStatusEffect> _onEnemyStatusAdded;
+        private readonly Action<EventInfoDamage> _onMonsterDamageTaken;
+        private readonly Action<EventInfoAttackHit> _onMonsterAttackHit;
+        private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
+        private readonly List<Monster> _monsterScratch = new List<Monster>();
+        private readonly Dictionary<Hero, SunderRuntime> _sunders = new Dictionary<Hero, SunderRuntime>();
+        private readonly List<Hero> _sunderScratch = new List<Hero>();
+        private readonly HashSet<NightmareAffix> _triggeredAffixes = new HashSet<NightmareAffix>();
+        private bool _reflectingDamage;
+        private Dictionary<string, LucidDreamType> _lucidTypes;
         private readonly List<KeyValuePair<Monster, float>> _spawnQueue = new List<KeyValuePair<Monster, float>>();
         private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
         private readonly List<Monster> _nightmareScratch = new List<Monster>();
@@ -96,6 +130,11 @@ namespace SodRpg.Mod
             _onTakeDamage = OnTakeDamage;
             _onAttackHit = OnAttackHit;
             _onEntityAdd = OnEntityAdd;
+            _onEntityRemove = OnEntityRemove;
+            _onMonsterDeath = info => OnEntityRemove(info.victim);
+            _onEnemyStatusAdded = OnEnemyStatusAdded;
+            _onMonsterDamageTaken = OnMonsterDamageTaken;
+            _onMonsterAttackHit = OnMonsterAttackHit;
             _onApplyElemental = OnApplyElemental;
             _resonanceNear = RuntimesNear;
             _onActorAdd = OnActorAdd;
@@ -125,6 +164,8 @@ namespace SodRpg.Mod
             }
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
             ProcessSpawns();
+            PruneMonsters(now);
+            ExpireSunders(now);
             if (now >= _nextRegen)
             {
                 _nextRegen = now + 0.5f;
@@ -151,7 +192,7 @@ namespace SodRpg.Mod
                 }
                 _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
             }
-            foreach (var m in _nightmareScratch) _nightmares.Remove(m);
+            foreach (var m in _nightmareScratch) RemoveMonster(m);
         }
 
         /// <summary>パーティの最大の夢の深度（MOD導入者の Build から）。</summary>
@@ -163,9 +204,178 @@ namespace SodRpg.Mod
             return d;
         }
 
+        private double PartyGearChanceMult()
+        {
+            double mult = 1.0;
+            foreach (var kv in _builds)
+                if (kv.Key != null && kv.Key.hero != null)
+                    mult = Math.Max(mult, Nightmares.GearChanceMult(kv.Value.Build));
+            return mult;
+        }
+
         private void OnEntityAdd(Entity e)
         {
-            if (e is Monster m && !(e is BossMonster)) _spawnQueue.Add(new KeyValuePair<Monster, float>(m, Time.time));
+            if (!(e is Monster m) || _monsters.ContainsKey(m)) return;
+            try
+            {
+                var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time };
+                _monsters[m] = rt;
+                m.ClientEntityEvent_OnStatusEffectAdded += _onEnemyStatusAdded;
+                m.EntityEvent_OnDeath += _onMonsterDeath;
+                _spawnQueue.Add(new KeyValuePair<Monster, float>(m, rt.QueuedAt));
+            }
+            catch (Exception ex) { Log.Error("Host: OnEntityAdd " + ex); }
+        }
+
+        private void OnEntityRemove(Entity e)
+        {
+            if (e is Monster m) RemoveMonster(m);
+        }
+
+        private void LogAffixTrigger(NightmareAffix affix, string action)
+        {
+            if (_triggeredAffixes.Add(affix)) Log.Info("nightmare " + affix + " " + action);
+        }
+
+        private void RemoveMonster(Monster m)
+        {
+            if (ReferenceEquals(m, null)) return;
+            if (_monsters.TryGetValue(m, out var rt))
+            {
+                _monsters.Remove(m);
+                Unhook(rt);
+            }
+            _nightmares.Remove(m);
+            _regen.Remove(m);
+            for (int i = _spawnQueue.Count - 1; i >= 0; i--)
+                if (_spawnQueue[i].Key == m) _spawnQueue.RemoveAt(i);
+        }
+
+        private void UnhookMonsters()
+        {
+            foreach (var rt in _monsters.Values) Unhook(rt);
+            _monsters.Clear();
+        }
+
+        private void Unhook(MonsterRuntime rt)
+        {
+            var m = rt.Monster;
+            if (m == null) return;
+            // Each removal is independent: one failed cleanup must not leave other hooks attached.
+            try { m.ClientEntityEvent_OnStatusEffectAdded -= _onEnemyStatusAdded; }
+            catch (Exception ex) { Log.Error("Host: unhook monster status " + ex); }
+            try { m.EntityEvent_OnDeath -= _onMonsterDeath; }
+            catch (Exception ex) { Log.Error("Host: unhook monster death " + ex); }
+            try { if (rt.Reflects) m.EntityEvent_OnTakeDamage -= _onMonsterDamageTaken; }
+            catch (Exception ex) { Log.Error("Host: unhook monster Thorns " + ex); }
+            try { if (rt.OnDamageDealt != null) m.ActorEvent_OnDealDamage -= rt.OnDamageDealt; }
+            catch (Exception ex) { Log.Error("Host: unhook monster leech " + ex); }
+            try { if (rt.Sunders) m.EntityEvent_OnAttackHit -= _onMonsterAttackHit; }
+            catch (Exception ex) { Log.Error("Host: unhook monster Sunder " + ex); }
+            try { if (rt.Ward != null && rt.Ward.isActive) rt.Ward.Destroy(); }
+            catch (Exception ex) { Log.Error("Host: remove nightmare Ward " + ex); }
+            try
+            {
+                if (m.Status != null)
+                {
+                    if (rt.DepthBonus != null) m.Status.RemoveStatBonus(rt.DepthBonus);
+                    if (rt.NightmareBonus != null) m.Status.RemoveStatBonus(rt.NightmareBonus);
+                }
+            }
+            catch (Exception ex) { Log.Error("Host: remove monster bonuses " + ex); }
+        }
+
+        private void PruneMonsters(float now)
+        {
+            _monsterScratch.Clear();
+            foreach (var kv in _monsters)
+                if (kv.Key == null || (!kv.Key.isActive && (kv.Value.SpawnProcessed || now - kv.Value.QueuedAt >= 20f)))
+                    _monsterScratch.Add(kv.Key);
+            foreach (var m in _monsterScratch) RemoveMonster(m);
+        }
+
+        private void OnMonsterDamageTaken(EventInfoDamage info)
+        {
+            try
+            {
+                if (_reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false))
+                    || info.damage.amount <= 0 || !(info.victim is Monster m)
+                    || !_monsters.TryGetValue(m, out var rt) || !rt.Reflects) return;
+                var attacker = info.actor != null ? info.actor as Entity ?? info.actor.firstEntity : null;
+                if (!(attacker is Hero hero) || !Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy) return;
+                _reflectingDamage = true;
+                try
+                {
+                    m.PureDamage(info.damage.amount * Nightmares.ThornsReflectPct / 100f, 0f)
+                        .Dispatch(hero, _registeredOn != null ? info.chain.New(_registeredOn) : info.chain);
+                    LogAffixTrigger(NightmareAffix.Thorned, "reflected");
+                }
+                finally { _reflectingDamage = false; }
+            }
+            catch (Exception ex) { Log.Error("Host: nightmare Thorned " + ex); }
+        }
+
+        private void OnMonsterDamageDealt(MonsterRuntime rt, EventInfoDamage info)
+        {
+            try
+            {
+                var m = rt.Monster;
+                if (m == null || !m.isActive || m.currentHealth <= 0 || info.damage.amount <= 0
+                    || info.victim == null || info.victim.GetRelation(m) != EntityRelation.Enemy) return;
+                m.Heal(info.damage.amount * Nightmares.RavenousLeechPct / 100f).Dispatch(m, info.chain);
+                LogAffixTrigger(NightmareAffix.Ravenous, "healed");
+            }
+            catch (Exception ex) { Log.Error("Host: nightmare Ravenous " + ex); }
+        }
+
+        private void OnMonsterAttackHit(EventInfoAttackHit info)
+        {
+            try
+            {
+                if (!(info.attacker is Monster m) || !_monsters.TryGetValue(m, out var rt) || !rt.Sunders
+                    || !(info.victim is Hero hero) || !Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy
+                    || hero.Status == null) return;
+                if (!_sunders.TryGetValue(hero, out var sunder))
+                {
+                    sunder = new SunderRuntime { Bonus = new StatBonus { armorFlat = -Nightmares.SunderArmor } };
+                    hero.Status.AddStatBonus(sunder.Bonus);
+                    _sunders[hero] = sunder;
+                    hero.Status.CalculateStatsIfDirty();
+                }
+                sunder.Until = Time.time + Nightmares.SunderSeconds;
+                LogAffixTrigger(NightmareAffix.Sundering, "armor reduced");
+            }
+            catch (Exception ex) { Log.Error("Host: nightmare Sundering " + ex); }
+        }
+
+        private void RemoveSunder(Hero hero)
+        {
+            if (!_sunders.TryGetValue(hero, out var sunder)) return;
+            _sunders.Remove(hero);
+            try
+            {
+                if (hero != null && hero.Status != null)
+                {
+                    hero.Status.RemoveStatBonus(sunder.Bonus);
+                    hero.Status.CalculateStatsIfDirty();
+                }
+            }
+            catch (Exception ex) { Log.Error("Host: remove Sunder " + ex); }
+        }
+
+        private void ExpireSunders(float now)
+        {
+            _sunderScratch.Clear();
+            foreach (var kv in _sunders)
+                if (!Alive(kv.Key) || now >= kv.Value.Until) _sunderScratch.Add(kv.Key);
+            foreach (var hero in _sunderScratch) RemoveSunder(hero);
+        }
+
+        private void ClearSunders()
+        {
+            _sunderScratch.Clear();
+            foreach (var hero in _sunders.Keys) _sunderScratch.Add(hero);
+            foreach (var hero in _sunderScratch) RemoveSunder(hero);
         }
 
         private void LogPowerTrigger(Power power)
@@ -181,6 +391,7 @@ namespace SodRpg.Mod
 
         private void OnActorRemove(Actor actor)
         {
+            if (actor is Monster m) RemoveMonster(m);
             if (actor is Shrine shrine && _shrines.Remove(shrine))
                 shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
         }
@@ -226,7 +437,7 @@ namespace SodRpg.Mod
             }
             int depth = PartyDepth();
             int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
-            double mult = DailyDream.Get(dailyId)?.NightmareMult ?? 1.0;
+            double mult = (DailyDream.Get(dailyId)?.NightmareMult ?? 1.0) * PartyGearChanceMult();
             for (int i = _spawnQueue.Count - 1; i >= 0; i--)
             {
                 var m = _spawnQueue[i].Key;
@@ -244,9 +455,35 @@ namespace SodRpg.Mod
                 _spawnQueue.RemoveAt(i);
                 if (depth <= 0 || m.owner == null || m.owner.isHumanPlayer) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                var affix = Nightmares.Roll(_rng, tier, depth, mult);
-                if (affix == NightmareAffix.None) continue;
-                MakeNightmare(m, affix);
+                if (!_monsters.TryGetValue(m, out var rt) || rt.SpawnProcessed) continue;
+                rt.SpawnProcessed = true;
+                try
+                {
+                    var stats = Nightmares.DepthBonus(tier, depth);
+                    if (stats.Count > 0)
+                    {
+                        var bonus = new StatBonus();
+                        rt.DepthBonus = bonus;
+                        foreach (var s in stats)
+                        {
+                            float v = StatUnits.ToGame(s.Stat, s.Value);
+                            switch (s.Stat)
+                            {
+                                case Stat.MaxHealthPct: bonus.maxHealthPercentage += v; break;
+                                case Stat.AttackPct: bonus.attackDamagePercentage += v; break;
+                                case Stat.Armor: bonus.armorFlat += v; break;
+                            }
+                        }
+                        m.Status.AddStatBonus(bonus);
+                        m.Status.CalculateStatsIfDirty();
+                    }
+                    var affix = Nightmares.Roll(_rng, tier, depth, mult);
+                    if (affix != NightmareAffix.None) MakeNightmare(m, affix);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Host: ProcessSpawns " + ex);
+                }
             }
         }
 
@@ -269,8 +506,32 @@ namespace SodRpg.Mod
                 if (regen > 0) _regen[m] = regen;
             }
             m.Status.AddStatBonus(bonus);
+            var rt = _monsters[m];
+            rt.NightmareBonus = bonus;
             AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
+            if ((affix & NightmareAffix.Thorned) != 0)
+            {
+                rt.Reflects = true;
+                m.EntityEvent_OnTakeDamage += _onMonsterDamageTaken;
+            }
+            if ((affix & NightmareAffix.Ravenous) != 0)
+            {
+                rt.OnDamageDealt = info => OnMonsterDamageDealt(rt, info);
+                m.ActorEvent_OnDealDamage += rt.OnDamageDealt;
+            }
+            if ((affix & NightmareAffix.Sundering) != 0)
+            {
+                rt.Sunders = true;
+                m.EntityEvent_OnAttackHit += _onMonsterAttackHit;
+            }
+            if ((affix & NightmareAffix.Warded) != 0)
+            {
+                m.Status.CalculateStatsIfDirty();
+                rt.Ward = m.GiveShield(m, m.maxHealth * Nightmares.WardShieldPct / 100f,
+                    3600f, false, default(ReactionChain));
+                if (rt.Ward != null) LogAffixTrigger(NightmareAffix.Warded, "shield granted");
+            }
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
             _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
         }
@@ -353,10 +614,14 @@ namespace SodRpg.Mod
                 if (_am != null)
                 {
                     try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                    try { _am.ClientEvent_OnEntityRemove -= _onEntityRemove; }
+                    catch (Exception ex) { Log.Error("Host: unhook entity removal " + ex); }
                     try { _am.ClientEvent_OnActorAdd -= _onActorAdd; } catch (Exception) { }
                     try { _am.ClientEvent_OnActorRemove -= _onActorRemove; } catch (Exception) { }
                 }
                 UnhookShrines();
+                UnhookMonsters();
+                ClearSunders();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -364,9 +629,11 @@ namespace SodRpg.Mod
                 if (am != null)
                 {
                     am.ClientEvent_OnEntityAdd += _onEntityAdd;
+                    am.ClientEvent_OnEntityRemove += _onEntityRemove;
                     am.ClientEvent_OnActorAdd += _onActorAdd;
                     am.ClientEvent_OnActorRemove += _onActorRemove;
                     ScanShrines();
+                    foreach (var e in am.allEntities) OnEntityAdd(e);
                 }
             }
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -421,6 +688,8 @@ namespace SodRpg.Mod
             _builds.Clear();
             Unsubscribe();
             UnhookShrines();
+            UnhookMonsters();
+            ClearSunders();
             if (_zone != null)
             {
                 try { _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded; } catch (Exception) { }
@@ -428,9 +697,14 @@ namespace SodRpg.Mod
             }
             _triggeredPowers.Clear();
             _spreadingFire = false;
+            _triggeredAffixes.Clear();
+            _reflectingDamage = false;
+            _lucidTypes = null;
             if (_am != null)
             {
                 try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                try { _am.ClientEvent_OnEntityRemove -= _onEntityRemove; }
+                catch (Exception ex) { Log.Error("Host: unhook entity removal " + ex); }
                 try { _am.ClientEvent_OnActorAdd -= _onActorAdd; } catch (Exception) { }
                 try { _am.ClientEvent_OnActorRemove -= _onActorRemove; } catch (Exception) { }
                 _am = null;
@@ -589,6 +863,7 @@ namespace SodRpg.Mod
                 if (hero == null || !hero.isActive) continue;
                 if (!_runtimes.ContainsKey(hero)) Apply(hero, kv.Value);
             }
+            foreach (var rt in _runtimes.Values) BindGoldSpend(rt);
         }
 
         private void Apply(Hero hero, ReceivedBuild received)
@@ -625,6 +900,8 @@ namespace SodRpg.Mod
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);
                 rt.OnHeal = info => OnHealTaken(captured, info);
                 hero.EntityEvent_OnTakeHeal += rt.OnHeal;
+                rt.OnImmunity = info => OnDamageNegated(captured, info);
+                hero.EntityEvent_OnDamageNegatedByImmunity += rt.OnImmunity;
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
@@ -634,12 +911,19 @@ namespace SodRpg.Mod
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
             rt.AppliedBuild = received;
+            BindGoldSpend(rt);
         }
 
         private static void Unhook(HeroRuntime rt)
         {
+            UnhookGoldSpend(rt);
             var hero = rt.Hero;
             if (hero == null) return;
+            try
+            {
+                if (rt.OnImmunity != null) hero.EntityEvent_OnDamageNegatedByImmunity -= rt.OnImmunity;
+            }
+            catch (Exception ex) { Log.Error("Host: unhook immunity " + ex); }
             try
             {
                 if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
@@ -649,13 +933,126 @@ namespace SodRpg.Mod
                 if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
                 if (rt.OnHeal != null) hero.EntityEvent_OnTakeHeal -= rt.OnHeal;
             }
-            catch (Exception) { }
+            catch (Exception ex) { Log.Error("Host: Unhook hero " + ex); }
             rt.OnFired = null;
             rt.OnHit = null;
             rt.OnSkill = null;
             rt.DamageTaken = null;
             rt.DamageDealt = null;
             rt.OnHeal = null;
+            rt.OnImmunity = null;
+        }
+
+        private void BindGoldSpend(HeroRuntime rt)
+        {
+            try
+            {
+                var player = rt.Hero != null ? rt.Hero.owner : null;
+                if (player != null && player.hero != rt.Hero) player = null;
+                if (rt.Player == player) return;
+                UnhookGoldSpend(rt);
+                if (player == null) return;
+                rt.Player = player;
+                rt.OnSpendGold = amount => OnGoldSpent(player, amount);
+                player.ClientEvent_OnSpendGold += rt.OnSpendGold;
+            }
+            catch (Exception ex) { Log.Error("Host: bind gold spending " + ex); }
+        }
+
+        private static void UnhookGoldSpend(HeroRuntime rt)
+        {
+            try
+            {
+                if (rt.Player != null && rt.OnSpendGold != null)
+                    rt.Player.ClientEvent_OnSpendGold -= rt.OnSpendGold;
+            }
+            catch (Exception ex) { Log.Error("Host: unhook gold spending " + ex); }
+            rt.Player = null;
+            rt.OnSpendGold = null;
+        }
+
+        private void OnGoldSpent(DewPlayer player, int amount)
+        {
+            try
+            {
+                var hero = player != null ? player.hero : null;
+                if (!Alive(hero) || !_runtimes.TryGetValue(hero, out var rt)) return;
+                float shield = rt.Powers.TakeSpendersWard(Time.time, amount, hero.maxHealth);
+                if (shield <= 0) return;
+                hero.GiveShield(hero, shield, PowerRuntime.SpendersWardDuration, false, default(ReactionChain));
+                LogPowerTrigger(Power.SpendersWard);
+            }
+            catch (Exception ex) { Log.Error("Host: SpendersWard " + ex); }
+        }
+
+        private void OnEnemyStatusAdded(EventInfoStatusEffect info)
+        {
+            try
+            {
+                var effect = info.effect;
+                if (info.victim == null || !info.victim.isActive || effect == null
+                    || !(effect.info.caster is Hero hero) || !Alive(hero)
+                    || info.victim.GetRelation(hero) != EntityRelation.Enemy
+                    || !_runtimes.TryGetValue(hero, out var rt)) return;
+                bool stun = false;
+                foreach (var basic in effect.basicEffects)
+                    if (basic != null && basic.isAlive && (basic.mask & BasicEffectMask.Stun) != 0)
+                    { stun = true; break; }
+                float shield = rt.Powers.TakeStillWater(Time.time, stun, hero.maxHealth);
+                if (shield <= 0) return;
+                hero.GiveShield(hero, shield, PowerRuntime.StillWaterDuration, false, default(ReactionChain));
+                LogPowerTrigger(Power.StillWater);
+            }
+            catch (Exception ex) { Log.Error("Host: StillWater " + ex); }
+        }
+
+        private void OnDamageNegated(HeroRuntime rt, EventInfoDamageNegatedByImmunity info)
+        {
+            try
+            {
+                if (!Alive(rt.Hero) || info.victim != rt.Hero || info.data.amount <= 0) return;
+                bool invulnerable = info.effect != null && (info.effect.mask & BasicEffectMask.Invulnerable) != 0;
+                if (!rt.Powers.TakePerfectRead(Time.time, invulnerable)) return;
+                UpdateRuntime(rt, Time.time);
+                LogPowerTrigger(Power.PerfectRead);
+            }
+            catch (Exception ex) { Log.Error("Host: PerfectRead " + ex); }
+        }
+
+        private int ReadEvilDreamCount()
+        {
+            try
+            {
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                if (settings != null)
+                {
+                    if (settings.activeLucidDreams.Count == 0) return 0;
+                    if (_lucidTypes == null)
+                    {
+                        var types = new Dictionary<string, LucidDreamType>(StringComparer.Ordinal);
+                        foreach (var dream in DewResources.FindAllByType<LucidDream>())
+                        {
+                            if (dream == null) continue;
+                            var type = dream.GetType();
+                            types[type.Name] = dream.type;
+                            if (type.FullName != null) types[type.FullName] = dream.type;
+                        }
+                        _lucidTypes = types;
+                    }
+                    int evil = 0;
+                    bool resolved = true;
+                    foreach (string id in settings.activeLucidDreams)
+                    {
+                        if (id == null || !_lucidTypes.TryGetValue(id, out var type)) { resolved = false; break; }
+                        if (type == LucidDreamType.Evil) evil++;
+                    }
+                    if (resolved) return Math.Min(PowerRuntime.LucidBoonMaxDreams, evil);
+                }
+            }
+            catch (Exception ex) { Log.Error("Host: resolve Evil lucid dreams " + ex); }
+            // The dumps do not guarantee the string identifier format; never guess an unresolved dream's type.
+            var limbo = GameMod_Limbo.softInstance;
+            return limbo != null ? Math.Min(PowerRuntime.LucidBoonMaxDreams, Math.Max(0, limbo.depth)) : 0;
         }
 
         /// <summary>回避・Memory・Ultimate の固有効果。</summary>
@@ -808,6 +1205,10 @@ namespace SodRpg.Mod
                 return;
             }
             int huntLevel = _zone != null ? _zone.currentHuntLevel : 0;
+            bool needsLucidCount = false;
+            foreach (var rt in list)
+                if (rt.Powers.Build.Get(Power.LucidBoon) > 0) { needsLucidCount = true; break; }
+            int evilDreams = needsLucidCount ? ReadEvilDreamCount() : 0;
             foreach (var rt in list)
             {
                 var p = rt.Powers;
@@ -823,6 +1224,9 @@ namespace SodRpg.Mod
                 }
                 p.GemQualityTotal = (int)Math.Min(int.MaxValue, quality);
                 p.HuntLevel = huntLevel;
+                p.EvilDreamCount = evilDreams;
+                if (alive && p.Build.Get(Power.LucidBoon) > 0 && evilDreams > 0)
+                    LogPowerTrigger(Power.LucidBoon);
                 if (alive && p.Build.Get(Power.CrystalResonance) > 0 && p.GemQualityTotal >= 100)
                     LogPowerTrigger(Power.CrystalResonance);
                 if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
@@ -928,8 +1332,18 @@ namespace SodRpg.Mod
                 if (!(info.victim is Hero hero) || !_runtimes.TryGetValue(hero, out var rt) || !Alive(hero)) return;
                 var attacker = info.actor != null ? (info.actor as Entity ?? info.actor.firstEntity) : null;
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
-                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy);
-                if (reflect > 0) hero.PureDamage(reflect, 0f).Dispatch(attacker);
+                bool reflected = _reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false));
+                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected);
+                if (reflect > 0)
+                {
+                    _reflectingDamage = true;
+                    try
+                    {
+                        hero.PureDamage(reflect, 0f).Dispatch(attacker,
+                            _registeredOn != null ? info.chain.New(_registeredOn) : info.chain);
+                    }
+                    finally { _reflectingDamage = false; }
+                }
                 float aegis = rt.Powers.TakeAegis(Time.time, info.damage.amount, hero.maxHealth);
                 if (aegis > 0) hero.GiveShield(hero, aegis, 6f);
             }

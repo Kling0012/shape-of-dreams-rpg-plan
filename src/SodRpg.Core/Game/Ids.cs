@@ -140,6 +140,14 @@ namespace SodRpg.Core.Game
         Devotion = 37,
         /// <summary>火3スタック以上の敵への火付与時、X%で近くの敵1体に火を付与（同じ敵から2秒に1回）。「飛び火」</summary>
         Wildfire = 38,
+        /// <summary>自分の技で敵をスタンさせると、最大HPのX%の障壁（3秒、2秒に1回）。「止水」</summary>
+        StillWater = 39,
+        /// <summary>ゴールドを100使うごとに最大HPのX%の障壁（10秒、3回分まで）。「散財の護り」</summary>
+        SpendersWard = 40,
+        /// <summary>無敵でダメージを無効化すると攻撃速度+X%（3秒、1.5秒に1回）。「見切り」</summary>
+        PerfectRead = 41,
+        /// <summary>Evilの明晰夢1つにつき攻撃力・魔力+X%（6つまで、合計18%まで）。「明晰」</summary>
+        LucidBoon = 42,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>

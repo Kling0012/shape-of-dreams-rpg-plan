@@ -59,6 +59,14 @@ namespace SodRpg.Core.Game
         public const int WildfireMinStacks = 3;
         public const float WildfireRange = 6f;
         public const float WildfireCooldown = 2f;
+        public const float StillWaterDuration = 3f;
+        public const float StillWaterCooldown = 2f;
+        public const int SpendersWardGold = 100;
+        public const int SpendersWardMaxStacks = 3;
+        public const float SpendersWardDuration = 10f;
+        public const float PerfectReadDuration = 3f;
+        public const float PerfectReadCooldown = 1.5f;
+        public const int LucidBoonMaxDreams = 6;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -79,6 +87,11 @@ namespace SodRpg.Core.Game
         private float _finaleE = float.NegativeInfinity;
         private float _finaleReady;
         private float _criticalEchoReady;
+        private float _stillWaterReady = float.NegativeInfinity;
+        private float _perfectReadReady = float.NegativeInfinity;
+        private float _perfectReadUntil = float.NegativeInfinity;
+        private int _wardGoldRemainder;
+        private readonly float[] _wardUntil = { float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity };
         private readonly Dictionary<int, float> _wildfireReady = new Dictionary<int, float>();
         private readonly List<int> _expiredWildfire = new List<int>();
         private float _nextWildfirePrune;
@@ -157,6 +170,53 @@ namespace SodRpg.Core.Game
         /// <summary>現在のハンター追跡度。補正は0〜3に制限する。</summary>
         public int HuntLevel { get; set; }
         public int DevotionStacks { get; private set; }
+        /// <summary>有効なEvilの明晰夢の数。6つまで、補正の合計は18%まで。</summary>
+        public int EvilDreamCount { get; set; }
+
+        /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
+        public float TakeStillWater(float now, bool ownSkillStun, float maxHealth)
+        {
+            int v = Math.Min(Content.PowerCap(Power.StillWater), Build.Get(Power.StillWater));
+            if (v <= 0 || !ownSkillStun || maxHealth <= 0 || now < _stillWaterReady) return 0;
+            _stillWaterReady = now + StillWaterCooldown;
+            return maxHealth * v / 100f;
+        }
+
+        /// <summary>散財の護り：新たに張る障壁量だけを返す。既存の障壁の期限は延長しない。</summary>
+        public float TakeSpendersWard(float now, int goldSpent, float maxHealth)
+        {
+            int v = Math.Min(Content.PowerCap(Power.SpendersWard), Build.Get(Power.SpendersWard));
+            if (v <= 0 || goldSpent <= 0 || maxHealth <= 0) return 0;
+            long gold = (long)_wardGoldRemainder + goldSpent;
+            int grants = (int)(gold / SpendersWardGold);
+            _wardGoldRemainder = (int)(gold % SpendersWardGold);
+            int added = 0;
+            for (int i = 0; i < _wardUntil.Length && added < grants; i++)
+            {
+                if (now < _wardUntil[i]) continue;
+                _wardUntil[i] = now + SpendersWardDuration;
+                added++;
+            }
+            // 上限で弾かれた100ゴールド分は貯めず、100未満の端数だけを持ち越す。
+            return maxHealth * v / 100f * added;
+        }
+
+        public int SpendersWardStacks(float now)
+        {
+            int stacks = 0;
+            foreach (float until in _wardUntil)
+                if (now < until) stacks++;
+            return stacks;
+        }
+
+        /// <summary>見切り：無敵で実際に無効化したときだけ、重ならない時限補正を更新する。</summary>
+        public bool TakePerfectRead(float now, bool negatedByInvulnerability)
+        {
+            if (Build.Get(Power.PerfectRead) <= 0 || !negatedByInvulnerability || now < _perfectReadReady) return false;
+            _perfectReadReady = now + PerfectReadCooldown;
+            _perfectReadUntil = now + PerfectReadDuration;
+            return true;
+        }
 
         /// <summary>終曲：slot は Q=0/W=1/E=2。3種を8秒以内に使うとR短縮の割合を返す。</summary>
         public float TakeFinale(float now, int slot)
@@ -342,11 +402,14 @@ namespace SodRpg.Core.Game
             int conditional = Math.Max(0, Build.Get(Power.CrystalResonance))
                     * Math.Min(CrystalResonanceMaxTiers, Math.Max(0, GemQualityTotal) / 100)
                 + Math.Max(0, Build.Get(Power.PreyPride)) * Math.Min(PreyPrideMaxLevel, Math.Max(0, HuntLevel))
-                + Math.Max(0, Build.Get(Power.Devotion)) * DevotionStacks;
+                + Math.Max(0, Build.Get(Power.Devotion)) * DevotionStacks
+                + (int)Math.Min(Content.PowerCap(Power.LucidBoon),
+                    (long)Math.Max(0, Build.Get(Power.LucidBoon)) * Math.Min(LucidBoonMaxDreams, Math.Max(0, EvilDreamCount)));
             return new DynamicBonus
             {
                 AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0)
-                    + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies)),
+                    + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
+                    + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
                 AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance
                     + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0) + conditional,
                 PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional,

@@ -1643,6 +1643,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Sprint, 10, 25),
                 new PowerRange(Power.OverflowingLife, 20, 40),
                 new PowerRange(Power.Fetters, 8, 15),
+                new PowerRange(Power.StillWater, 4, 8),
             },
             [Slot.Charm] = new[]
             {
@@ -1662,6 +1663,8 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Devotion, 2, 4),
                 new PowerRange(Power.CrystalResonance, 1, 2),
                 new PowerRange(Power.PreyPride, 3, 5),
+                new PowerRange(Power.SpendersWard, 5, 10),
+                new PowerRange(Power.LucidBoon, 1, 3),
             },
             [Slot.Head] = new[]
             {
@@ -1678,6 +1681,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Finale, 10, 20),
                 new PowerRange(Power.CrystalResonance, 1, 2),
                 new PowerRange(Power.Devotion, 2, 4),
+                new PowerRange(Power.LucidBoon, 1, 3),
             },
             [Slot.Hands] = new[]
             {
@@ -1694,6 +1698,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.CriticalEcho, 2, 4),
                 new PowerRange(Power.Fetters, 8, 15),
                 new PowerRange(Power.Wildfire, 15, 30),
+                new PowerRange(Power.StillWater, 4, 8),
             },
             [Slot.Feet] = new[]
             {
@@ -1709,6 +1714,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Retaliation, 15, 25),
                 new PowerRange(Power.PreyPride, 3, 5),
                 new PowerRange(Power.OverflowingLife, 20, 40),
+                new PowerRange(Power.PerfectRead, 10, 20),
             },
         };
 
@@ -1777,6 +1783,10 @@ namespace SodRpg.Core.Game
             [Power.OverflowingLife] = 100,
             [Power.Devotion] = 10,
             [Power.Wildfire] = 60,
+            [Power.StillWater] = 15,
+            [Power.SpendersWard] = 20,
+            [Power.PerfectRead] = 40,
+            [Power.LucidBoon] = 18,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -1867,6 +1877,10 @@ namespace SodRpg.Core.Game
             [Power.OverflowingLife] = new Txt("満ちる", "Brimming"),
             [Power.Devotion] = new Txt("祈りの", "Devout"),
             [Power.Wildfire] = new Txt("飛び火の", "Spreading"),
+            [Power.StillWater] = new Txt("止水の", "Stilled"),
+            [Power.SpendersWard] = new Txt("散財の", "Lavish"),
+            [Power.PerfectRead] = new Txt("見切りの", "Keen-eyed"),
+            [Power.LucidBoon] = new Txt("明晰な", "Lucid"),
         };
 
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : null;
@@ -2131,6 +2145,10 @@ namespace SodRpg.Core.Game
                 case Power.OverflowingLife: return Loc.T("溢れる命", "Overflowing Life");
                 case Power.Devotion: return Loc.T("祈願", "Devotion");
                 case Power.Wildfire: return Loc.T("飛び火", "Wildfire");
+                case Power.StillWater: return Loc.T("止水", "Still Water");
+                case Power.SpendersWard: return Loc.T("散財の護り", "Spender's Ward");
+                case Power.PerfectRead: return Loc.T("見切り", "Perfect Read");
+                case Power.LucidBoon: return Loc.T("明晰", "Lucid Boon");
                 default: return "-";
             }
         }
@@ -2178,6 +2196,10 @@ namespace SodRpg.Core.Game
                 case Power.OverflowingLife: return Loc.T($"【{name}】最大HPを超えた回復の{v}%が、3秒の障壁になる", $"[{name}] {v}% of overhealing becomes a 3s shield");
                 case Power.Devotion: return Loc.T($"【{name}】聖堂を使うたび、そのゾーンの間 攻撃力・魔力が{v}%上がる（5回まで）", $"[{name}] Each shrine you use grants +{v}% AD/AP for the rest of the zone (up to 5)");
                 case Power.Wildfire: return Loc.T($"【{name}】火が3つ以上重なった敵に火を付けると、{v}%の確率で近くの敵にも火が1つ移る", $"[{name}] Applying fire to an enemy with 3+ fire stacks has a {v}% chance to spread 1 stack to a nearby enemy");
+                case Power.StillWater: return Loc.T($"【{name}】自分の技で敵をスタンさせると、最大HPの{v}%分の障壁を3秒間張る（2秒に1回）", $"[{name}] Stunning an enemy with your own skill grants a {v}% max-health shield for 3s (once per 2s)");
+                case Power.SpendersWard: return Loc.T($"【{name}】ゴールドを100使うごとに、最大HPの{v}%分の障壁を10秒間張る（3回分まで重なる）", $"[{name}] Each 100 gold spent grants a {v}% max-health shield for 10s (up to 3 stacks)");
+                case Power.PerfectRead: return Loc.T($"【{name}】無敵でダメージを実際に無効化すると、3秒間 攻撃速度が{v}%上がる（1.5秒に1回、重ならず時間を延長）", $"[{name}] Negating damage with invulnerability grants +{v}% attack speed for 3s (once per 1.5s; refreshes without stacking)");
+                case Power.LucidBoon: return Loc.T($"【{name}】有効な邪悪な明晰夢1つにつき、攻撃力・魔力が{v}%上がる（6つまで、合計18%まで）", $"[{name}] +{v}% AD/AP per active Evil lucid dream (up to 6 dreams and +18% total)");
                 default: return "-";
             }
         }
