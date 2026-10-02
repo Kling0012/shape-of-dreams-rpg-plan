@@ -119,14 +119,27 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(new[] { node.RouteMemory }, link.Requires);
                     Assert.True(Links.Validate(link), node.Id);
                     Assert.InRange(link.Value, 1, Links.Cap(link.Kind, 1) / node.MaxRank);
-                    // Identities never emit OnSkillUsed. Moonlight Pact's passive-only
-                    // constellation must retain useful stars as well.
+                    // Identities never emit OnSkillUsed, and Moonlight Pact's Lone-Wolf
+                    // constellation can disable its cast: OnSkillUse-driven links must not
+                    // appear there. v1.28 memory damage only needs the memory equipped,
+                    // so it stays valid for identity passives and Fenrir's attacks.
                     if (node.RouteMemory.StartsWith("St_D_", StringComparison.Ordinal)
                         || node.RouteMemory == "St_Q_MoonlightPact")
-                        Assert.True(link.Kind == LinkKind.Attune || link.Kind == LinkKind.Guard, node.Id);
+                        Assert.True(link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge, node.Id);
                 }
                 foreach (var kind in links.GroupBy(t => t.LinkPerRank.Kind))
-                    Assert.InRange(kind.Sum(t => t.LinkPerRank.Value * t.MaxRank), 1, Links.Cap(kind.Key, 1));
+                {
+                    if (kind.Key == LinkKind.MemoryDamage)
+                    {
+                        // v1.28：頂点（1段）は Cap を 20 まで超えてよい（予算の詳細は StarRoutesV128Tests）。
+                        int mid = kind.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                        int top = kind.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                        Assert.InRange(mid, 0, Links.Cap(LinkKind.MemoryDamage, 1));
+                        Assert.InRange(top, 0, 20);
+                    }
+                    else
+                        Assert.InRange(kind.Sum(t => t.LinkPerRank.Value * t.MaxRank), 1, Links.Cap(kind.Key, 1));
+                }
             }
         }
 
@@ -233,7 +246,7 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(Power.None, t.RankPower);
                 }
                 if (t.LinkPerRank != null && t.LinkPerRank.Requires.Any(r => r.StartsWith("St_M_", StringComparison.Ordinal)))
-                    Assert.True(t.LinkPerRank.Kind == LinkKind.Attune || t.LinkPerRank.Kind == LinkKind.Guard, t.Id);
+                    Assert.True(t.LinkPerRank.Kind == LinkKind.Guard || t.LinkPerRank.Kind == LinkKind.MemoryDamage, t.Id);
             }
         }
 
