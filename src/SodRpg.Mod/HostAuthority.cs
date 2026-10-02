@@ -1235,7 +1235,7 @@ namespace SodRpg.Mod
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
                     Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.BarrierInterval);
-                if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: false);
+                if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: hero.Status.abilityPower > hero.Status.attackDamage);
                 if (hero.Skill == null) return;
                 int slot = info.type == HeroSkillLocation.Q ? 0 : info.type == HeroSkillLocation.W ? 1
                     : info.type == HeroSkillLocation.E ? 2 : -1;
@@ -1573,7 +1573,7 @@ namespace SodRpg.Mod
                 if (rt == null || !Alive(rt.Hero)) return;
                 var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
                 if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
-                if (r.ShatterDamage > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: false);
+                if (r.ShatterDamage > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage);
             }
             catch (Exception ex)
             {

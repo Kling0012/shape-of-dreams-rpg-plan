@@ -25,8 +25,11 @@ namespace SodRpg.Core.Tests
             foreach (var slot in Content.SlotOrder)
             {
                 var pool = Content.AffixPool(slot);
-                Assert.Equal(13, pool.Count);
+                Assert.True(pool.Count >= 13, slot.ToString());
                 Assert.Equal(pool.Count, pool.Select(a => a.Stat).Distinct().Count());
+                // v1.27：どの枠でも攻撃力・魔力の両方を引ける（魔力で伸びる旅人が多いため）
+                Assert.Contains(pool, a => a.Stat == Stat.AttackPct);
+                Assert.Contains(pool, a => a.Stat == Stat.PowerPct);
             }
         }
 

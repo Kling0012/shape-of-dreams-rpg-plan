@@ -165,10 +165,10 @@ namespace SodRpg.Core.Tests
                 { EvilDreamCount = 6, GemQualityTotal = 200, HuntLevel = 2 };
             rt.OnSkillUsed(0, false, true);
             rt.OnSkillUsed(0, false, false);
-            Assert.Equal(33, rt.Current(1).AttackPct);
+            Assert.Equal(40, rt.Current(1).AttackPct); // v1.27：過負荷は攻撃力にも
             Assert.Equal(40, rt.Current(1).PowerPct);
             rt.EvilDreamCount = 1;
-            Assert.Equal(18, rt.Current(1).AttackPct);
+            Assert.Equal(25, rt.Current(1).AttackPct);
             Assert.Equal(25, rt.Current(1).PowerPct);
             rt.SetBuild(With((Power.LucidBoon, 2)));
             Assert.Equal(2, rt.Current(1).AttackPct);

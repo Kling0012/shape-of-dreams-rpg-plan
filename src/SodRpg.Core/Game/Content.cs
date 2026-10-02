@@ -2208,6 +2208,8 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.CritChancePct, 2, 4, 5), // v1.21
                 new AffixDef(Stat.LightAmp, 6, 12, 4), // v1.21
                 new AffixDef(Stat.DarkAmp, 6, 12, 4), // v1.21
+                new AffixDef(Stat.AttackPct, 3, 6, 8), // v1.27：足にも攻撃力・魔力
+                new AffixDef(Stat.PowerPct, 3, 6, 8),
             },
         };
 
@@ -2303,6 +2305,8 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Fetters, 8, 15),
                 new PowerRange(Power.Wildfire, 15, 30),
                 new PowerRange(Power.StillWater, 4, 8),
+                new PowerRange(Power.Overload, 10, 20), // v1.27：手にもスキルで発動する効果
+                new PowerRange(Power.Finale, 10, 20),
             },
             [Slot.Feet] = new[]
             {
@@ -2765,17 +2769,17 @@ namespace SodRpg.Core.Game
                 case Power.Momentum: return Loc.T($"【{name}】敵を倒すたびに攻撃速度が{v}%上がる（4秒間、5回まで重なる）", $"[{name}] Each kill grants +{v}% attack speed for 4s (stacks up to 5 times)");
                 case Power.Retaliation: return Loc.T($"【{name}】攻撃を受けると、3秒間 攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] After taking a hit, gain +{v}% attack damage and ability power for 3s (refreshes, does not stack)");
                 case Power.Bulwark: return Loc.T($"【{name}】周りに敵が3体以上いる間、防御が{v}上がる", $"[{name}] +{v} armor while 3 or more enemies are nearby");
-                case Power.Lifesteal: return Loc.T($"【{name}】通常攻撃が当たるたびに、最大HPの{v / 10f:0.#}%を回復する", $"[{name}] Basic attack hits heal you for {v / 10f:0.#}% of max health");
-                case Power.Thorns: return Loc.T($"【{name}】受けたダメージの{v}%を相手に跳ね返す", $"[{name}] Reflect {v}% of damage taken back to the attacker");
+                case Power.Lifesteal: return Loc.T($"【{name}】通常攻撃が当たるたびに、最大HPの{v / 10f:0.#}%を回復する（0.15秒に1回まで）", $"[{name}] Basic attack hits heal you for {v / 10f:0.#}% of max health (at most once per 0.15s)");
+                case Power.Thorns: return Loc.T($"【{name}】受けたダメージの{v}%を相手に跳ね返す（1秒に1回）", $"[{name}] Reflect {v}% of damage taken back to the attacker (once per second)");
                 case Power.Executioner: return Loc.T($"【{name}】HPが30%未満の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies below 30% health deal +{v}% AD as bonus damage");
-                case Power.Resonance: return Loc.T($"【{name}】近くに味方がいる間、自分と味方の攻撃力・魔力が{v}%上がる（一人のときは半分）", $"[{name}] While an ally is near, you and your allies gain +{v}% AD/AP (half when solo)");
+                case Power.Resonance: return Loc.T($"【{name}】近くに味方がいる間、自分の攻撃力・魔力が{v}%、近くの味方は{v / 2}%上がる（一人のときは自分も半分。味方への分は重ならず、いちばん高い人の分）", $"[{name}] While an ally is near, you gain +{v}% AD/AP and nearby allies gain +{v / 2}% (half for yourself when alone; allies take only the highest, no stacking)");
                 case Power.Tailwind: return Loc.T($"【{name}】敵を倒した後の2秒間、移動速度が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% move speed for 2s after a kill (refreshes, does not stack)");
-                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに、最大HPの{v}%分の障壁を張る", $"[{name}] Every 12s, gain a shield worth {v}% of max health");
+                case Power.Barrier: return Loc.T($"【{name}】12秒ごとに、最大HPの{v}%分の障壁を12秒間張る", $"[{name}] Every 12s, gain a shield worth {v}% of max health for 12s");
                 case Power.SecondWind: return Loc.T($"【{name}】HPが30%を切ると、最大HPの{v}%を回復する（60秒に1回）", $"[{name}] When you drop below 30% health, heal {v}% of max health (once per 60s)");
                 case Power.Blaze: return Loc.T($"【{name}】通常攻撃4回ごとに、攻撃力か魔力の高い方の{v}%分の魔法ダメージを追加する", $"[{name}] Every 4th basic attack deals +{v}% of the higher of AD or AP as magic damage");
                 case Power.ChainLightning: return Loc.T($"【{name}】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力か魔力の高い方の{v}%分の魔法ダメージを与える", $"[{name}] Basic attack hits have a 25% chance to deal {v}% of the higher of AD or AP as magic damage to 2 nearby enemies");
                 case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える", $"[{name}] On kill, deal {v}% of the higher of AD or AP to enemies within 4m");
-                case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of max health, gain a shield worth {v}% of max health (once per 20s)");
+                case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を6秒間張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of your max health, gain a shield worth {v}% of max health for 6s (once per 20s)");
                 case Power.Bloodlust: return Loc.T($"【{name}】HPが50%未満の間、攻撃速度が{v}%上がる", $"[{name}] +{v}% attack speed while below 50% health");
                 case Power.Ember: return Loc.T($"【{name}】通常攻撃が当たるたびに、敵に火を平均{v / 100f:0.##}スタック重ねる（端数は確率。火は上限なし）", $"[{name}] Each basic attack hit applies {v / 100f:0.##} Fire stacks on average (fractions are a chance; Fire has no stack limit)");
                 case Power.Frost: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵を冷気で冷やす（冷気は重ならない）", $"[{name}] Basic attack hits have a {v}% chance to apply Cold (Cold does not stack)");
@@ -2784,20 +2788,20 @@ namespace SodRpg.Core.Game
                 case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力か魔力の高い方の{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% of the higher of AD or AP (once per 6s per enemy)");
                 case Power.EchoingDodge: return Loc.T($"【{name}】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、回避するたびに時間を延長）", $"[{name}] After a dodge, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each dodge refreshes it)");
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate (refreshes, does not stack)");
-                case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health");
+                case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する（0.5秒に1回まで）", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health (at most once per 0.5s)");
                 case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% of the higher of AD or AP to enemies within 4m (once per 2s)");
                 case Power.Frenzy: return Loc.T($"【{name}】周りの敵1体につき、攻撃速度が{v}%上がる（5体まで）", $"[{name}] +{v}% attack speed per nearby enemy (up to 5)");
                 case Power.OpeningStrike: return Loc.T($"【{name}】HPが90%以上の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies above 90% health deal +{v}% AD");
-                case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health");
+                case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を12秒間張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health for 12s");
                 case Power.Sprint: return Loc.T($"【{name}】回避した後の3秒間、移動速度と攻撃速度が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% move speed and attack speed for 3s after dodging (refreshes, does not stack)");
                 case Power.Vigor: return Loc.T($"【{name}】HPが80%以上の間、攻撃力・魔力が{v}%上がる", $"[{name}] +{v}% attack damage and ability power while above 80% health");
-                case Power.Overload: return Loc.T($"【{name}】スキルを使った後の4秒間、魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% ability power for 4s after using a skill (refreshes, does not stack)");
+                case Power.Overload: return Loc.T($"【{name}】Q・W・Eを使った後の4秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 4s after using Q, W or E (refreshes, does not stack)");
                 case Power.Finale: return Loc.T($"【{name}】Q・W・Eを8秒以内にすべて使うと、Ultimate の残りクールダウンが{v}%縮む（10秒に1回）", $"[{name}] Using Q, W and E within 8s cuts your Ultimate's remaining cooldown by {v}% (once per 10s)");
-                case Power.CriticalEcho: return Loc.T($"【{name}】通常攻撃が会心で当たると、Q・W・Eのクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Critical basic attacks shorten Q/W/E cooldowns by {v / 10f:0.#}s");
+                case Power.CriticalEcho: return Loc.T($"【{name}】通常攻撃が会心で当たると、Q・W・Eのクールダウンが{v / 10f:0.#}秒縮む（0.5秒に1回まで）", $"[{name}] Critical basic attacks shorten Q/W/E cooldowns by {v / 10f:0.#}s (at most once per 0.5s)");
                 case Power.Fetters: return Loc.T($"【{name}】スタン・スロウ・冷気のどれかが乗った敵へのダメージが{v}%上がる", $"[{name}] +{v}% damage to stunned, slowed or chilled enemies");
                 case Power.CrystalResonance: return Loc.T($"【{name}】装着中のエッセンスの品質の合計100%ごとに、攻撃力・魔力が{v}%上がる（8段まで）", $"[{name}] +{v}% AD/AP per 100% total quality of your equipped Essences (up to 8)");
                 case Power.PreyPride: return Loc.T($"【{name}】ハンターの追跡度1ごとに、攻撃力・魔力が{v}%上がる（3まで）", $"[{name}] +{v}% AD/AP per hunter tracking level (up to 3)");
-                case Power.OverflowingLife: return Loc.T($"【{name}】最大HPを超えた回復の{v}%が、3秒の障壁になる", $"[{name}] {v}% of overhealing becomes a 3s shield");
+                case Power.OverflowingLife: return Loc.T($"【{name}】最大HPを超えた回復の{v}%が、3秒の障壁になる（障壁は最大HPの10%まで）", $"[{name}] {v}% of overhealing becomes a 3s shield (up to 10% of max health)");
                 case Power.Devotion: return Loc.T($"【{name}】聖堂を使うたび、そのゾーンの間 攻撃力・魔力が{v}%上がる（5回まで）", $"[{name}] Each shrine you use grants +{v}% AD/AP for the rest of the zone (up to 5)");
                 case Power.Wildfire: return Loc.T($"【{name}】火が3つ以上重なった敵に火を付けると、{v}%の確率で近くの敵にも火が1つ移る", $"[{name}] Applying fire to an enemy with 3+ fire stacks has a {v}% chance to spread 1 stack to a nearby enemy");
                 case Power.StillWater: return Loc.T($"【{name}】自分の技で敵をスタンさせると、最大HPの{v}%分の障壁を3秒間張る（2秒に1回）", $"[{name}] Stunning an enemy with your own skill grants a {v}% max-health shield for 3s (once per 2s)");

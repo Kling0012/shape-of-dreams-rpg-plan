@@ -149,11 +149,11 @@ namespace SodRpg.Core.Tests
             rt.OnShrineUsed();
             rt.OnSkillUsed(1, false, true);
             rt.OnSkillUsed(1, false, false);
-            Assert.Equal(19, rt.Current(2).AttackPct);
+            Assert.Equal(26, rt.Current(2).AttackPct); // v1.27：過負荷は攻撃力にも
             Assert.Equal(26, rt.Current(2).PowerPct);
             rt.GemQualityTotal = 99;
             rt.HuntLevel = 0;
-            Assert.Equal(9, rt.Current(2).AttackPct);
+            Assert.Equal(16, rt.Current(2).AttackPct);
             Assert.Equal(16, rt.Current(2).PowerPct);
             rt.SetBuild(With((Power.Devotion, 6)));
             Assert.Equal(6, rt.Current(2).AttackPct);

@@ -120,7 +120,7 @@ namespace SodRpg.Core.Game
         /// <summary>本体の通常攻撃が放たれた。4発目なら次の命中で烈火が発動する（Vesper・Lacerta の4発目と連動）。</summary>
         public void OnAttackFired(bool isFourthAttack)
         {
-            if (isFourthAttack) _nextHitIsFourth = true;
+            _nextHitIsFourth = isFourthAttack; // 4発目が外れたら、次に放った攻撃で取り消す
         }
 
         /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響の3秒も始める（重ならず延長）。</summary>
@@ -468,7 +468,8 @@ namespace SodRpg.Core.Game
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0)
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
-                AttackPct = retaliation + vigor + resonance + conditional + linkAttack,
+                AttackPct = retaliation + vigor + resonance + conditional + linkAttack
+                    + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0), // v1.27：過負荷は攻撃力にも
                 PowerPct = retaliation + vigor + resonance
                     + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)

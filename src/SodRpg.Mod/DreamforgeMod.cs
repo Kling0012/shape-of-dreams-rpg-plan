@@ -34,6 +34,7 @@ namespace SodRpg.Mod
             {
                 instance.isAlteringGameplay = true;
                 Loc.Japanese = config.japanese;
+                Profile.TestBonusPoints = Math.Max(0, Math.Min(100, config.testTalentPoints));
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
@@ -58,6 +59,7 @@ namespace SodRpg.Mod
         public override void OnConfigChanged()
         {
             Loc.Japanese = config.japanese;
+            Profile.TestBonusPoints = Math.Max(0, Math.Min(100, config.testTalentPoints));
             _performance?.Configure(config);
         }
 
