@@ -40,7 +40,7 @@ namespace SodRpg.Core.Game
         Expose = 8,
         /// <summary>当てたダメージの Value% を、0.3秒後にもう一度与える。</summary>
         Echo = 9,
-        /// <summary>その記憶の使用回数を1回戻す（使用回数が複数ある記憶のみ。v1.28）。</summary>
+        /// <summary>その記憶の使用回数を1回戻す。単発の記憶は残りクールダウンを全て戻す（v1.28）。</summary>
         Reload = 10,
         /// <summary>装着中のほかの記憶の残りクールダウンを Value% 縮める（回避・Ultimate・アイデンティティは対象外。v1.28）。</summary>
         RechargeOther = 11,
@@ -73,6 +73,10 @@ namespace SodRpg.Core.Game
         public GimmickEntry Entry { get; set; }
         public int VictimId { get; set; }
         public float Damage { get; set; }
+        /// <summary>周囲へ作用する半径（m）。0 は単体への作用。</summary>
+        public float AreaRadius { get; set; }
+        /// <summary>範囲の中心が使用者か。false は VictimId の敵の発動時の位置。</summary>
+        public bool AreaAroundHero { get; set; }
     }
 
     /// <summary>記憶の仕掛けの説明と、通信・計算で共用する上限。</summary>
@@ -82,18 +86,21 @@ namespace SodRpg.Core.Game
         public const int MaxStarIdLength = 96;
         public const float MaxCooldown = 60f;
         public const float BuffDuration = 4f;
+        public const float AreaRadius = 4f;
 
         public static int Cap(GimmickEffect effect)
         {
             switch (effect)
             {
                 case GimmickEffect.Element: return 600;
+                case GimmickEffect.Reload: return 1;
                 case GimmickEffect.Burst:
                 case GimmickEffect.Echo: return 1000;
                 case GimmickEffect.Empower: return 200;
                 case GimmickEffect.Shield:
                 case GimmickEffect.Heal:
                 case GimmickEffect.Recharge:
+                case GimmickEffect.RechargeOther:
                 case GimmickEffect.Quicken:
                 case GimmickEffect.Expose: return 100;
                 default: return 0;
@@ -109,6 +116,35 @@ namespace SodRpg.Core.Game
         }
 
         internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+
+        /// <summary>複数回の記憶は1回だけ補充。単発の記憶は回数を直接変えず、全クールダウンを戻す。</summary>
+        public static bool TryReload(int currentCharges, int maxCharges, out int nextCharges, out bool resetCooldown)
+        {
+            nextCharges = currentCharges;
+            resetCooldown = false;
+            if (maxCharges <= 0 || currentCharges < 0 || currentCharges > maxCharges) return false;
+            if (maxCharges == 1)
+            {
+                resetCooldown = true;
+                return true;
+            }
+            if (currentCharges == maxCharges) return false;
+            nextCharges = currentCharges + 1;
+            return true;
+        }
+
+        /// <summary>残り時間の割合短縮を、本体APIの最大時間基準の比率へ換算する。</summary>
+        public static float RemainingCooldownReductionRatio(float remaining, float maximum, int percent)
+        {
+            if (!Finite(remaining) || !Finite(maximum) || remaining <= 0f || maximum <= 0f || percent <= 0) return 0f;
+            float ratio = (float)((double)remaining / maximum * Math.Min(percent, 100) / 100);
+            return Finite(ratio) ? ratio : 0f;
+        }
+
+        /// <summary>実際のスキル種別で判定する。枠や型名の Q/R では通常スキルかどうかを推測しない。</summary>
+        public static bool CanRechargeOther(string sourceMemory, string targetMemory, bool isNormalSkill, bool isIdentity) =>
+            isNormalSkill && !isIdentity && sourceMemory != targetMemory
+            && Links.IsMemory(sourceMemory) && Links.IsMemory(targetMemory);
 
         /// <summary>通信で使う区切りを含まない、長さ1〜96の星の識別子。</summary>
         public static bool ValidStarId(string starId)
@@ -166,13 +202,20 @@ namespace SodRpg.Core.Game
                         : whole + "つ" + (chance == 0 ? "" : "（さらに" + chance + "%の確率でもう1つ）"))
                         : (whole == 0 ? "1 stack with a " + chance + "% chance"
                         : whole + (whole == 1 ? " stack" : " stacks") + (chance == 0 ? "" : " (plus a " + chance + "% chance of 1 more)"));
-                    effect = ja ? (def.Trigger == GimmickTrigger.OnUse ? "近くの敵" : "当てた敵") + "に" + element + "を" + stacks + "付ける"
-                        : "apply " + stacks + " of " + element + " to " + (def.Trigger == GimmickTrigger.OnUse ? "nearby enemies" : "the hit enemy");
+                    string targets = def.Trigger == GimmickTrigger.OnUse
+                        ? (ja ? "自分の周り4mの敵" : "enemies within 4m of yourself")
+                        : def.Trigger == GimmickTrigger.OnKill
+                            ? (ja ? "倒した敵の周り4mの敵" : "enemies within 4m of the killed enemy")
+                            : (ja ? "当てた敵" : "the hit enemy");
+                    effect = ja ? targets + "に" + element + "を" + stacks + "付ける"
+                        : "apply " + stacks + " of " + element + " to " + targets;
                     break;
                 case GimmickEffect.Burst:
-                    effect = ja ? (def.Trigger == GimmickTrigger.OnUse ? "自分" : "当てた敵") + "の周り4mに、攻撃力か魔力の高い方の" + n + "%の追加ダメージ（魔力が高ければ魔法）"
+                    string center = def.Trigger == GimmickTrigger.OnUse ? (ja ? "自分" : "yourself")
+                        : def.Trigger == GimmickTrigger.OnKill ? (ja ? "倒した敵" : "the killed enemy") : (ja ? "当てた敵" : "the hit enemy");
+                    effect = ja ? center + "の周り4mに、攻撃力か魔力の高い方の" + n + "%の追加ダメージ（魔力が高ければ魔法）"
                         : "deal " + n + "% of the higher of attack damage or ability power as extra damage within 4m of "
-                            + (def.Trigger == GimmickTrigger.OnUse ? "yourself" : "the hit enemy") + " (magic damage if ability power is higher)";
+                            + center + " (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Shield:
                     effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（4秒）" : "gain a shield equal to " + n + "% of maximum health for 4 seconds";
@@ -183,6 +226,14 @@ namespace SodRpg.Core.Game
                     break;
                 case GimmickEffect.Recharge:
                     effect = ja ? "その記憶の残りクールダウンを" + n + "%縮める" : "reduce that memory's remaining cooldown by " + n + "%";
+                    break;
+                case GimmickEffect.Reload:
+                    effect = ja ? "その記憶の使用回数を1回戻す（最大使用回数を超えない。使用回数が1回の記憶は、代わりに残りクールダウンを全て戻す）"
+                        : "restore 1 charge to that memory, up to its maximum charges (single-charge memories fully reset their remaining cooldown instead)";
+                    break;
+                case GimmickEffect.RechargeOther:
+                    effect = ja ? "装着中のほかの通常の記憶の残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティは対象外）"
+                        : "reduce the remaining cooldown of other equipped normal memories by " + n + "% (excluding Movement, Ultimate, and Identity memories)";
                     break;
                 case GimmickEffect.Quicken:
                     effect = ja ? "4秒間、攻撃速度+" + n + "%" : "gain +" + n + "% attack speed for 4 seconds";
@@ -203,7 +254,9 @@ namespace SodRpg.Core.Game
                 : (ja ? "この星全体で" + cooldown + "秒に1回" : "once every " + cooldown + (def.Cooldown == 1f ? " second" : " seconds") + " per star, shared across enemies and triggers");
             string cap = def.Effect == GimmickEffect.Element
                 ? (ja ? "効果量上限" + Cap(def.Effect) / 100 + "つ" : "capped at " + Cap(def.Effect) / 100 + " stacks")
-                : (ja ? "効果量上限" + Cap(def.Effect) + "%" : "capped at " + Cap(def.Effect) + "%");
+                : def.Effect == GimmickEffect.Reload
+                    ? (ja ? "効果量上限1回" : "capped at 1 charge")
+                    : (ja ? "効果量上限" + Cap(def.Effect) + "%" : "capped at " + Cap(def.Effect) + "%");
             string stacking = def.Effect == GimmickEffect.Quicken || def.Effect == GimmickEffect.Empower || def.Effect == GimmickEffect.Expose
                 ? (ja ? "・同時には最大値1つ、重ならず発動した星の時間を延長" : "; only the strongest active value applies, refreshing each star without stacking") : "";
             return trigger + effect + (ja ? "（" + interval + "・" + cap + stacking + "。仕掛けのダメージからは発動しない）"
@@ -317,7 +370,10 @@ namespace SodRpg.Core.Game
                 {
                     Entry = state.Entry,
                     VictimId = victimId,
-                    Damage = Gimmicks.Finite(damage) && damage > 0 ? damage : 0
+                    Damage = Gimmicks.Finite(damage) && damage > 0 ? damage : 0,
+                    AreaRadius = def.Effect == GimmickEffect.Burst || def.Effect == GimmickEffect.Element
+                        && (trigger == GimmickTrigger.OnUse || trigger == GimmickTrigger.OnKill) ? Gimmicks.AreaRadius : 0f,
+                    AreaAroundHero = trigger == GimmickTrigger.OnUse
                 });
             }
         }

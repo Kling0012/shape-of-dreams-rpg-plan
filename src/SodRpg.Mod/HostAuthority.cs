@@ -1936,7 +1936,8 @@ namespace SodRpg.Mod
                 {
                     Request = request,
                     Victim = victim,
-                    Center = victim != null ? victim.position : rt.Hero.agentPosition,
+                    Center = request.AreaAroundHero ? rt.Hero.agentPosition
+                        : victim != null ? victim.position : rt.Hero.agentPosition,
                     Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? 0.3f : 0f),
                 });
             }
@@ -1985,11 +1986,16 @@ namespace SodRpg.Mod
                     if (stacks <= 0) break;
                     var element = def.Arg == 0 ? ElementalType.Fire : def.Arg == 1 ? ElementalType.Cold
                         : def.Arg == 2 ? ElementalType.Light : ElementalType.Dark;
-                    if (def.Trigger == GimmickTrigger.OnUse)
+                    if (request.AreaRadius > 0f)
                     {
                         ListReturnHandle<Entity> handle;
-                        var found = DewPhysics.OverlapCircleAllEntities(out handle, hero.agentPosition, 4f, EnemyFilter, hero);
-                        try { foreach (var enemy in found) hero.ApplyElemental(element, enemy, stacks); }
+                        var found = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, request.AreaRadius, EnemyFilter, hero);
+                        try
+                        {
+                            foreach (var enemy in found)
+                                if (enemy != victim && enemy != null && enemy.isActive && enemy.currentHealth > 0f)
+                                    hero.ApplyElemental(element, enemy, stacks);
+                        }
                         finally { handle.Return(); }
                     }
                     else if (liveTarget) hero.ApplyElemental(element, victim, stacks);
@@ -2005,27 +2011,46 @@ namespace SodRpg.Mod
                     finally { _gimmickDamageDepth--; }
                     break;
                 case GimmickEffect.Shield:
-                    hero.GiveShield(hero, hero.maxHealth * def.Value / 100f, 4f);
+                    // The root server actor has no hero ancestors: native support cannot grant Heart of the Pack.
+                    // 出どころを変えたので、旅人のシールド量はここで掛ける（v1.27.1 の能力値）。
+                    ActorManager.instance.serverActor.GiveShield(hero,
+                        SupportStats.AmplifyShield(hero.maxHealth * def.Value / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), 4f);
                     break;
                 case GimmickEffect.Heal:
-                    hero.Heal(hero.maxHealth * def.Value / 100f).Dispatch(hero);
+                    var support = ActorManager.instance.serverActor;
+                    // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
+                    int healPower = rt.Powers.Build.Get(Stat.HealPower);
+                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.Value / 100f, healPower)).Dispatch(hero);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
                         {
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
                                 || (ally.agentPosition - hero.agentPosition).sqrMagnitude > 100f) continue;
-                            hero.Heal(ally.maxHealth * def.Value / 100f).Dispatch(ally);
+                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.Value / 100f, healPower)).Dispatch(ally);
                         }
                     break;
                 case GimmickEffect.Recharge:
+                    ReduceMemoryCooldown(hero, FindMemory(hero, request.Entry.Memory), def.Value);
+                    break;
+                case GimmickEffect.Reload:
                     var skill = FindMemory(hero, request.Entry.Memory);
-                    if (skill != null && skill.currentConfigUnscaledMaxCooldownTime > 0f)
+                    if (skill != null && Gimmicks.TryReload(skill.currentConfigCurrentCharge, skill.currentConfig.maxCharges,
+                        out int nextCharges, out bool resetCooldown))
                     {
-                        // The native ratio uses maximum cooldown, not the remaining cooldown.
-                        float ratio = Math.Max(0f, skill.currentConfigUnscaledCooldownTime)
-                            / skill.currentConfigUnscaledMaxCooldownTime * def.Value / 100f;
-                        if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
+                        if (resetCooldown) hero.ResetCooldown(skill);
+                        else skill.SetCharge(skill.currentConfigIndex, nextCharges);
+                    }
+                    break;
+                case GimmickEffect.RechargeOther:
+                    if (hero.Skill == null) break;
+                    foreach (var slot in LinkSkills)
+                    {
+                        var other = hero.Skill.GetSkill(slot);
+                        if (other == null || slot == HeroSkillLocation.Movement) continue;
+                        if (Gimmicks.CanRechargeOther(request.Entry.Memory, other.GetType().Name,
+                            other.type == SkillType.Normal, slot == HeroSkillLocation.Identity))
+                            ReduceMemoryCooldown(hero, other, def.Value);
                     }
                     break;
                 case GimmickEffect.Echo:
@@ -2041,6 +2066,15 @@ namespace SodRpg.Mod
                     break;
                 // Quicken/Empower/Expose windows are registered by the pure runtime.
             }
+        }
+
+        private static void ReduceMemoryCooldown(Hero hero, SkillTrigger skill, int percent)
+        {
+            if (skill == null) return;
+            // The native ratio is a fraction of maximum cooldown, not remaining cooldown.
+            float ratio = Gimmicks.RemainingCooldownReductionRatio(skill.currentConfigUnscaledCooldownTime,
+                skill.currentConfigUnscaledMaxCooldownTime, percent);
+            if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
 
         /// <summary>中心の周りの敵へダメージ（except を除き、最大 maxTargets 体）。</summary>

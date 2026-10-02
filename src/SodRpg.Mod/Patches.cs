@@ -80,4 +80,15 @@ namespace SodRpg.Mod
             TeleportInitiator.Current = __state;
         }
     }
+
+    /// <summary>Finalize generated damage after both native processor chains, before elemental application and hit events.</summary>
+    [HarmonyPatch(typeof(Entity), nameof(Entity.ProcessReceivedDamage))]
+    internal static class GimmickDamageIsolation
+    {
+        private static void Postfix(ref DamageData data)
+        {
+            if (!data.IsAmountModifiedBy(typeof(SodRpg.Core.Game.GimmickRuntime))) return;
+            data = data.SetElemental(null).DoAttackEffect(AttackEffectType.Others, 0f);
+        }
+    }
 }

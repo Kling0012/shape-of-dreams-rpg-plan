@@ -20,7 +20,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void Descriptions_show_scaled_probability_caps_and_shared_nonstacking_windows(bool japanese)
+        public void Element_descriptions_explain_scaled_probability_and_stack_caps(bool japanese)
         {
             bool previous = Loc.Japanese;
             try
@@ -35,29 +35,195 @@ namespace SodRpg.Core.Tests
                 Assert.Contains(japanese ? "確率" : "chance", description);
                 Assert.Contains(japanese ? "星全体" : "per star", description);
                 Assert.Contains(japanese ? Links.Name(Memory).Ja : Links.Name(Memory).En, description);
-                Assert.Contains(japanese ? "1つ（さらに60%の確率でもう1つ）" : "plus a 60% chance of 1 more", description);
                 var fractional = Entry(effect: GimmickEffect.Element, value: 60).Def;
                 Assert.Contains(japanese ? "60%の確率で1つ" : "1 stack with a 60% chance", Gimmicks.Describe(fractional, Memory));
                 Assert.Contains(japanese ? "間隔制限なし" : "no cooldown", Gimmicks.Describe(fractional, Memory));
                 Assert.Equal(Gimmicks.Describe(element, Memory, 8),
                     Gimmicks.Describe(element, Memory, int.MaxValue));
-                foreach (var effect in new[] { GimmickEffect.Quicken, GimmickEffect.Empower, GimmickEffect.Expose })
-                {
-                    var def = Entry(effect: effect, value: 8, cooldown: 1).Def;
-                    var runtime = new GimmickRuntime();
-                    runtime.SetBuild(new[] { Entry(effect: effect, value: 24, cooldown: 1) });
-                    runtime.Fire(GimmickTrigger.OnHit, Memory, 0, 11, 10, false, new List<GimmickRequest>());
-                    int effective = effect == GimmickEffect.Quicken ? runtime.QuickenPercent(0)
-                        : effect == GimmickEffect.Empower ? runtime.EmpowerPercent(0) : runtime.ExposePercent(11, 0);
-                    string text = Gimmicks.Describe(def, Memory, 3);
-                    Assert.Contains(effective + "%", text);
-                    Assert.Contains(japanese ? "4秒" : "4 seconds", text);
-                    Assert.Contains(japanese ? "最大値" : "strongest", text);
-                    Assert.Contains(japanese ? "延長" : "refresh", text);
-                    Assert.Contains(japanese ? "重ならず" : "without stacking", text);
-                }
             }
             finally { Loc.Japanese = previous; }
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Reload_and_RechargeOther_descriptions_distinguish_charges_from_remaining_cooldown(bool japanese)
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = japanese;
+                string reload = Gimmicks.Describe(Entry(effect: GimmickEffect.Reload, value: 1).Def, Memory, int.MaxValue);
+                Assert.Contains(japanese ? "使用回数を1回" : "restore 1 charge", reload);
+                Assert.Contains(japanese ? "最大使用回数" : "maximum charges", reload);
+                Assert.Contains(japanese ? "使用回数が1回の記憶" : "single-charge memories", reload);
+                Assert.Contains(japanese ? "残りクールダウンを全て戻す" : "fully reset their remaining cooldown", reload);
+                Assert.Contains(japanese ? "上限1回" : "capped at 1 charge", reload);
+                Assert.DoesNotContain("%", reload);
+                string other = Gimmicks.Describe(Entry(effect: GimmickEffect.RechargeOther, value: 40).Def, Memory, 3);
+                Assert.Contains("100%", other);
+                Assert.DoesNotContain("120%", other);
+                Assert.Contains(japanese ? "装着中のほかの通常の記憶" : "other equipped normal memories", other);
+                Assert.Contains(japanese ? "残りクールダウン" : "remaining cooldown", other);
+                Assert.Contains(japanese ? "移動" : "Movement", other);
+                Assert.Contains("Ultimate", other);
+                Assert.Contains(japanese ? "アイデンティティ" : "Identity", other);
+            }
+            finally { Loc.Japanese = previous; }
+        }
+
+        [Theory]
+        [InlineData(true, GimmickTrigger.OnUse)]
+        [InlineData(false, GimmickTrigger.OnUse)]
+        [InlineData(true, GimmickTrigger.OnKill)]
+        [InlineData(false, GimmickTrigger.OnKill)]
+        public void Element_area_descriptions_identify_the_living_targets_and_center(bool japanese, GimmickTrigger trigger)
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = japanese;
+                string description = Gimmicks.Describe(Entry(effect: GimmickEffect.Element, value: 100, trigger: trigger).Def, Memory);
+                Assert.Contains(japanese ? "周り4mの敵" : "enemies within 4m", description);
+                string center = trigger == GimmickTrigger.OnUse
+                    ? (japanese ? "自分の周り" : "of yourself")
+                    : (japanese ? "倒した敵の周り" : "of the killed enemy");
+                Assert.Contains(center, description);
+            }
+            finally { Loc.Japanese = previous; }
+        }
+
+        [Theory]
+        [InlineData(0, 3, true, 1, false)]
+        [InlineData(1, 3, true, 2, false)]
+        [InlineData(2, 3, true, 3, false)]
+        [InlineData(3, 3, false, 3, false)]
+        [InlineData(0, 1, true, 0, true)]
+        [InlineData(1, 1, true, 1, true)]
+        [InlineData(-1, 3, false, -1, false)]
+        [InlineData(4, 3, false, 4, false)]
+        [InlineData(0, 0, false, 0, false)]
+        [InlineData(0, -1, false, 0, false)]
+        public void Reload_restores_one_charge_without_overflow_or_uses_single_charge_reset(
+            int current, int maximum, bool applies, int expected, bool reset)
+        {
+            Assert.Equal(applies, Gimmicks.TryReload(current, maximum, out int next, out bool resetCooldown));
+            Assert.Equal(expected, next);
+            Assert.Equal(reset, resetCooldown);
+        }
+
+        [Theory]
+        [InlineData(4f, 10f, 25, 0.1f)]
+        [InlineData(4f, 10f, 100, 0.4f)]
+        [InlineData(4f, 10f, 200, 0.4f)]
+        [InlineData(12f, 10f, 50, 0.6f)]
+        [InlineData(0f, 10f, 25, 0f)]
+        [InlineData(-1f, 10f, 25, 0f)]
+        [InlineData(4f, 0f, 25, 0f)]
+        [InlineData(4f, -1f, 25, 0f)]
+        [InlineData(4f, 10f, 0, 0f)]
+        [InlineData(4f, 10f, -1, 0f)]
+        [InlineData(float.NaN, 10f, 25, 0f)]
+        [InlineData(float.PositiveInfinity, 10f, 25, 0f)]
+        [InlineData(4f, float.NaN, 25, 0f)]
+        [InlineData(4f, float.PositiveInfinity, 25, 0f)]
+        public void Remaining_cooldown_reduction_converts_to_native_maximum_based_ratio(
+            float remaining, float maximum, int percent, float expected)
+        {
+            Assert.Equal(expected, Gimmicks.RemainingCooldownReductionRatio(remaining, maximum, percent));
+        }
+
+        [Theory]
+        [InlineData("St_R_Parry", true, false, true)]
+        [InlineData(Memory, true, false, false)]
+        [InlineData("St_R_Parry", false, false, false)]
+        [InlineData("St_Q_HandCannon", false, false, false)]
+        [InlineData("St_D_SalamanderPowder", true, true, false)]
+        [InlineData("St_X_Unknown", true, false, false)]
+        [InlineData(null, true, false, false)]
+        public void RechargeOther_excludes_source_and_non_normal_or_identity_categories_not_R_slots(
+            string target, bool isNormalSkill, bool isIdentity, bool eligible)
+        {
+            Assert.Equal(eligible, Gimmicks.CanRechargeOther(Memory, target, isNormalSkill, isIdentity));
+            Assert.False(Gimmicks.CanRechargeOther("St_X_Unknown", target, isNormalSkill, isIdentity));
+        }
+
+        [Theory]
+        [InlineData(GimmickTrigger.OnHit)]
+        [InlineData(GimmickTrigger.OnKill)]
+        public void Zero_cooldown_allows_multiple_targets_and_repeated_events_at_the_same_time(GimmickTrigger trigger)
+        {
+            var runtime = new GimmickRuntime();
+            runtime.SetBuild(new[]
+            {
+                Entry("h.mist.unlimited", GimmickEffect.RechargeOther, trigger: trigger),
+                Entry("h.mist.throttled", GimmickEffect.RechargeOther, cooldown: 1, trigger: trigger)
+            });
+            var requests = new List<GimmickRequest>();
+            runtime.Fire(trigger, Memory, 5, 11, 10, true, requests);
+            Assert.Empty(requests);
+            runtime.Fire(trigger, Memory, 5, 11, 10, false, requests);
+            Assert.Equal(new[] { "h.mist.unlimited", "h.mist.throttled" }, requests.Select(r => r.Entry.StarId));
+            requests.Clear();
+            runtime.Fire(trigger, Memory, 5, 22, 10, false, requests);
+            runtime.Fire(trigger, Memory, 5, 22, 10, false, requests);
+            Assert.Equal(new[] { 22, 22 }, requests.Select(r => r.VictimId));
+            Assert.All(requests, r => Assert.Equal("h.mist.unlimited", r.Entry.StarId));
+        }
+
+        [Theory]
+        [InlineData(GimmickTrigger.OnKill, -42, 4f, false)]
+        [InlineData(GimmickTrigger.OnUse, 0, 4f, true)]
+        [InlineData(GimmickTrigger.OnHit, -42, 0f, false)]
+        [InlineData(GimmickTrigger.OnCrit, -42, 0f, false)]
+        public void Element_requests_preserve_dead_victim_id_and_distinguish_area_from_direct_targets(
+            GimmickTrigger trigger, int victim, float radius, bool aroundHero)
+        {
+            var runtime = new GimmickRuntime();
+            runtime.SetBuild(new[] { Entry(effect: GimmickEffect.Element, value: 100, cooldown: 1, trigger: trigger) });
+            var requests = new List<GimmickRequest>();
+            runtime.Fire(trigger, Memory, 5, victim, 0, true, requests);
+            Assert.Empty(requests);
+            runtime.Fire(trigger, Memory, 5, victim, 0, false, requests);
+            var request = Assert.Single(requests);
+            Assert.Equal(victim, request.VictimId);
+            Assert.Equal(radius, request.AreaRadius);
+            Assert.Equal(aroundHero, request.AreaAroundHero);
+        }
+
+        [Theory]
+        [InlineData(GimmickTrigger.OnUse)]
+        [InlineData(GimmickTrigger.OnKill)]
+        public void Generated_events_never_request_reload_or_consume_its_positive_cooldown(GimmickTrigger trigger)
+        {
+            var runtime = new GimmickRuntime();
+            runtime.SetBuild(new[] { Entry(effect: GimmickEffect.Reload, value: 1, cooldown: 1, trigger: trigger) });
+            var requests = new List<GimmickRequest>();
+            runtime.Fire(trigger, Memory, 5, 11, 10, true, requests);
+            Assert.Empty(requests);
+            runtime.Fire(trigger, Memory, 5, 11, 10, false, requests);
+            Assert.Equal(GimmickEffect.Reload, Assert.Single(requests).Entry.Def.Effect);
+            requests.Clear();
+            runtime.Fire(trigger, Memory, 5.5f, 22, 10, false, requests);
+            Assert.Empty(requests);
+        }
+
+        [Theory]
+        [InlineData(GimmickEffect.Reload)]
+        [InlineData(GimmickEffect.RechargeOther)]
+        public void New_effects_reject_invalid_arguments_in_local_and_described_definitions(GimmickEffect effect)
+        {
+            var entry = Entry(effect: effect, value: 1);
+            entry.Def.Arg = 1;
+            Assert.Null(Gimmicks.Clamp(entry));
+            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory));
+            entry.Def.Arg = 0;
+            entry.Def.Value = 0;
+            Assert.Null(Gimmicks.Clamp(entry));
+            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory));
+            entry.Def.Value = 1;
+            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory, 0));
+            Assert.Equal("", Gimmicks.Describe(entry.Def, Memory, -1));
         }
 
         [Fact]
@@ -182,6 +348,10 @@ namespace SodRpg.Core.Tests
         [InlineData("h.test:St_Q_Fleche:2:9:25:0:NaN")]
         [InlineData("h.test:St_Q_Fleche:2:9:25:0:Infinity")]
         [InlineData("h.test:St_Q_Fleche:2:9:25:0:-1")]
+        [InlineData("h.test:St_Q_Fleche:2:10:1:1:0")]
+        [InlineData("h.test:St_Q_Fleche:2:10:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:11:25:1:0")]
+        [InlineData("h.test:St_Q_Fleche:2:11:-1:0:0")]
         [InlineData("h bad:St_Q_Fleche:2:9:25:0:1")]
         [InlineData("h.test:St_Q_Fleche:2:9:abc:0:1")]
         [InlineData("h.test:St_Q_Fleche:2:9:25")]
@@ -204,6 +374,8 @@ namespace SodRpg.Core.Tests
         [InlineData(GimmickEffect.Empower, 200)]
         [InlineData(GimmickEffect.Expose, 100)]
         [InlineData(GimmickEffect.Echo, 1000)]
+        [InlineData(GimmickEffect.Reload, 1)]
+        [InlineData(GimmickEffect.RechargeOther, 100)]
         public void Wire_caps_value_and_cooldown_by_effect(GimmickEffect effect, int cap)
         {
             var decoded = Build.Decode("g:h.test:St_Q_Fleche:2:" + (int)effect + ":2147483647:0:999");
@@ -230,15 +402,19 @@ namespace SodRpg.Core.Tests
             Assert.Equal(15, roundTrip.Gimmicks[0].Def.Value);
         }
 
-        [Fact]
-        public void Compute_collects_scaled_unlocked_gimmicks_independently_of_link_path()
+        [Theory]
+        [InlineData(GimmickEffect.Echo, 12, 36)]
+        [InlineData(GimmickEffect.Reload, 1, 1)]
+        [InlineData(GimmickEffect.RechargeOther, 40, 100)]
+        public void Compute_collects_scaled_and_capped_unlocked_gimmicks_independently_of_link_path(
+            GimmickEffect effect, int perRank, int expectedValue)
         {
             var star = HeroSigils.TreeFor(Hero).First(t => t.RouteMemory == Memory && t.RouteOrder == 4 && t.MaxRank >= 3 && !t.IsKeystone);
             var oldGimmick = star.Gimmick;
             var oldLink = star.LinkPerRank;
             try
             {
-                star.Gimmick = Entry(effect: GimmickEffect.Echo, value: 12).Def;
+                star.Gimmick = Entry(effect: effect, value: perRank).Def;
                 star.LinkPerRank = new LinkDef { Kind = LinkKind.MemoryDamage, Value = 5, Requires = new[] { Memory } };
                 var p = Profile.CreateNew(128);
                 p.Hero(Hero).StarXp = StarProgression.TotalXpForPoints(150);
@@ -247,9 +423,9 @@ namespace SodRpg.Core.Tests
                 var build = Build.Compute(p, Hero, 0);
                 var entry = Assert.Single(build.Gimmicks, e => e.StarId == star.Id);
                 Assert.Equal(Memory, entry.Memory);
-                Assert.Equal(36, entry.Def.Value);
+                Assert.Equal(expectedValue, entry.Def.Value);
                 Assert.Contains(build.Links, l => l.Kind == LinkKind.MemoryDamage && l.Value == 15);
-                Assert.Equal(12, star.Gimmick.Value);
+                Assert.Equal(perRank, star.Gimmick.Value);
                 Assert.DoesNotContain(Build.Compute(p, "Hero_Cetus", 0).Gimmicks, e => e.StarId == star.Id);
                 Rules.ResetTalents(p, Hero);
                 p.Hero(Hero).Talents[star.Id] = 3;
