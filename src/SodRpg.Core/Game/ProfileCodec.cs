@@ -360,13 +360,17 @@ namespace SodRpg.Core.Game
                 ReadPacts(rj, "offeredPacts", run.OfferedPacts, notes);
                 p.Run = run;
             }
-            // Keep valid saved ranks, even if locked; refund only allocations exceeding the new budget.
+            // Preserve connected allocations; refund only this Traveler when the budget or graph is invalid.
             foreach (var kv in p.Heroes)
             {
-                if (Rules.FreePoints(p, kv.Key) >= 0) continue;
+                bool overBudget = Rules.FreePoints(p, kv.Key) < 0;
+                if (!overBudget && Rules.TalentsConnected(kv.Value, kv.Key)) continue;
                 Rules.ResetTalents(p, kv.Key);
-                notes.Add(Loc.T($"{kv.Key}: 星の経験と刻印の費用に合わせ、刻印を無料で振り直せるようにしました。",
-                    $"{kv.Key}: Star point allocation exceeded the current budget and was reset for free."));
+                notes.Add(overBudget
+                    ? Loc.T($"{kv.Key}: 星の経験と刻印の費用に合わせ、刻印を無料で振り直せるようにしました。",
+                        $"{kv.Key}: Star point allocation exceeded the current budget and was reset for free.")
+                    : Loc.T($"{kv.Key}: 始まりの星につながらない星があったため、この旅人の星を無料で振り直せるようにしました。",
+                        $"{kv.Key}: Some allocated stars were disconnected from the starting star; this Traveler's stars were reset for free."));
             }
             return p;
         }

@@ -30,6 +30,7 @@ namespace SodRpg.Core.Tests
             var route = HeroSigils.TreeFor(Hero).Where(t => t.RouteMemory == Memory).OrderBy(t => t.RouteOrder);
             foreach (var t in route)
             {
+                TreeTestPaths.Connect(p, Hero, t.Id);
                 if (t.LinkPerRank != null) return t;
                 Rules.AddTalentRank(p, Hero, t.Id);
             }
@@ -66,6 +67,7 @@ namespace SodRpg.Core.Tests
             h.Talents[star.Id] = star.MaxRank;
             Assert.Empty(Build.Compute(p, Hero, 0).Links);
             Assert.Equal(star.MaxRank, h.Talents[star.Id]);
+            TreeTestPaths.Connect(p, Hero, route[0].Id);
             foreach (var previous in route.Where(t => t.RouteOrder < star.RouteOrder)) h.Talents[previous.Id] = 1;
             Assert.Contains(Build.Compute(p, Hero, 0).Links, l => l.Kind == star.LinkPerRank.Kind && l.Value == star.LinkPerRank.Value * star.MaxRank);
             h.Talents.Remove(route[0].Id);

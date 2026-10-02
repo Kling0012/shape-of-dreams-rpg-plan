@@ -22,46 +22,10 @@ namespace SodRpg.Core.Tests
 
         private static void AddRanks(Profile p, string id, int ranks)
         {
+            TreeTestPaths.Connect(p, Hero, id);
             for (int i = 0; i < ranks; i++) Rules.AddTalentRank(p, Hero, id);
         }
 
-        [Theory]
-        [InlineData(DeepStat)]
-        [InlineData(DeepPower)]
-        public void Deep_stars_require_six_first_star_ranks_in_their_own_tree(string id)
-        {
-            var p = NewProfile(5);
-            var h = p.Hero(Hero);
-            h.Talents["h.cetus.cold"] = 3;
-            h.Talents["t.off.edge"] = 3;
-            h.Keystone = "h.vesper.key";
-            p.Hero("Hero_Cetus").Talents["h.cetus.shell"] = 3;
-
-            Assert.Equal(5, Rules.Tier1Ranks(h, Hero));
-            Assert.False(Rules.DeepStarsOpen(p, Hero));
-            int free = Rules.FreePoints(p, Hero);
-            Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, id));
-            Assert.False(h.Talents.ContainsKey(id));
-            Assert.Equal(free, Rules.FreePoints(p, Hero));
-
-            Rules.AddTalentRank(p, Hero, "h.vesper.wall");
-            Assert.Equal(6, Rules.Tier1Ranks(h, Hero));
-            Assert.True(Rules.DeepStarsOpen(p, Hero));
-            Rules.AddTalentRank(p, Hero, id);
-            Assert.Equal(1, h.Talents[id]);
-            Assert.Equal(free - 2, Rules.FreePoints(p, Hero));
-        }
-
-        [Fact]
-        public void Deep_ranks_cannot_unlock_more_deep_stars()
-        {
-            var p = NewProfile(5);
-            p.Hero(Hero).Talents[DeepPower] = 3;
-            Assert.Equal(8, Rules.TreeRanks(p.Hero(Hero), Hero));
-            Assert.Equal(5, Rules.Tier1Ranks(p.Hero(Hero), Hero));
-            Assert.False(Rules.DeepStarsOpen(p, Hero));
-            Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, DeepStat));
-        }
 
         [Theory]
         [InlineData(1, 6)]
@@ -70,12 +34,12 @@ namespace SodRpg.Core.Tests
         public void Ranked_power_nodes_add_power_without_adding_a_stat(int rank, int value)
         {
             var p = NewProfile();
+            TreeTestPaths.Connect(p, Hero, DeepPower);
+            var before = Build.Compute(p, Hero, 0);
             AddRanks(p, DeepPower, rank);
             var b = Build.Compute(p, Hero, 0);
             Assert.Equal(value, b.Get(Power.Bulwark));
-            Assert.Equal(9, b.Get(Stat.AttackPct));
-            Assert.Equal(0, b.Get(Stat.PowerPct));
-            Assert.Equal(24, b.Get(Stat.CritDamagePct));
+            Assert.Equal(before.Stats, b.Stats);
         }
 
         [Theory]
@@ -108,6 +72,8 @@ namespace SodRpg.Core.Tests
         public void Build_clamps_forged_ranks_to_each_nodes_maximum()
         {
             var p = NewProfile();
+            TreeTestPaths.Connect(p, Hero, DeepStat);
+            TreeTestPaths.Connect(p, Hero, DeepPower);
             p.Hero(Hero).Talents[DeepStat] = 99;
             p.Hero(Hero).Talents[DeepPower] = 99;
             var b = Build.Compute(p, Hero, 0);
@@ -137,24 +103,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Build_ignores_locked_deep_ranks_without_erasing_them_and_activates_them_at_six()
+        public void Build_ignores_disconnected_deep_ranks_until_connected()
         {
-            var p = NewProfile(5);
+            var p = NewProfile(0);
             var h = p.Hero(Hero);
-            h.Talents[DeepStat] = 2;
             h.Talents[DeepPower] = 3;
-            var b = Build.Compute(p, Hero, 0, null, 2);
-            Assert.Equal(0, b.Get(Stat.AttackSpeedPct));
-            Assert.Equal(0, b.Get(Power.Bulwark));
-            Assert.Equal(9, b.Get(Stat.AttackPct));
-            Assert.Equal(16, b.Get(Stat.CritDamagePct));
-            Assert.Equal(2, h.Talents[DeepStat]);
+            Assert.Equal(0, Build.Compute(p, Hero, 0).Get(Power.Bulwark));
             Assert.Equal(3, h.Talents[DeepPower]);
-
-            Rules.AddTalentRank(p, Hero, "h.vesper.wall");
-            b = Build.Compute(p, Hero, 0, null, 2);
-            Assert.Equal(6, b.Get(Stat.AttackSpeedPct));
-            Assert.Equal(27, b.Get(Power.Bulwark));
+            TreeTestPaths.Connect(p, Hero, DeepPower);
+            Assert.Equal(18, Build.Compute(p, Hero, 0).Get(Power.Bulwark));
         }
 
         [Fact]
@@ -172,7 +129,6 @@ namespace SodRpg.Core.Tests
             h.Talents["t.off.edge"] = 3;
             h.Talents["h.vesper.key2"] = 1;
             Assert.Equal(6, Rules.TreeRanks(h, Hero));
-            Assert.Equal(5, Rules.Tier1Ranks(h, Hero));
             Assert.True(Rules.KeystoneUnlocked(p, Hero, key));
             Assert.False(Rules.KeystoneUnlocked(p, "Hero_Cetus", key));
 
@@ -180,24 +136,20 @@ namespace SodRpg.Core.Tests
             Assert.False(Rules.KeystoneUnlocked(p, Hero, key));
         }
 
-        [Theory]
-        [InlineData(5, 0, 0)]
-        [InlineData(6, 6, 18)]
-        public void Save_load_keeps_deep_ranks_even_when_their_requirement_is_unmet(int firstStarRanks, int statValue, int powerValue)
+        [Fact]
+        public void Save_load_keeps_connected_deep_ranks()
         {
-            var p = NewProfile(firstStarRanks);
-            p.Hero(Hero).Talents[DeepStat] = 2;
-            p.Hero(Hero).Talents[DeepPower] = 3;
+            var p = NewProfile();
+            AddRanks(p, DeepStat, 2);
+            AddRanks(p, DeepPower, 3);
             var notes = new List<string>();
             var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
             Assert.Empty(notes);
             Assert.Equal(2, q.Hero(Hero).Talents[DeepStat]);
             Assert.Equal(3, q.Hero(Hero).Talents[DeepPower]);
-            Assert.Equal(firstStarRanks, Rules.Tier1Ranks(q.Hero(Hero), Hero));
             Assert.Equal(Rules.FreePoints(p, Hero), Rules.FreePoints(q, Hero));
-            var b = Build.Compute(q, Hero, 0);
-            Assert.Equal(statValue, b.Get(Stat.AttackSpeedPct));
-            Assert.Equal(powerValue, b.Get(Power.Bulwark));
+            Assert.Equal(6, Build.Compute(q, Hero, 0).Get(Stat.AttackSpeedPct));
+            Assert.Equal(18, Build.Compute(q, Hero, 0).Get(Power.Bulwark));
         }
 
         [Fact]
@@ -212,7 +164,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(p.Hero(Hero).Talents);
             Assert.Null(p.Hero(Hero).Keystone);
             Assert.Equal(p.TalentPoints(Hero), Rules.FreePoints(p, Hero));
-            Assert.False(Rules.DeepStarsOpen(p, Hero));
             var b = Build.Compute(p, Hero, 0);
             Assert.Equal(0, b.Get(Stat.AttackSpeedPct));
             Assert.Equal(0, b.Get(Power.Bulwark));

@@ -20,7 +20,6 @@ namespace SodRpg.Core.Tests
             {
                 Assert.True(HeroSigils.HasTree(h), h);
                 var tree = HeroSigils.TreeFor(h).ToList();
-                Assert.True(tree.Where(t => !t.IsKeystone && t.Tier == 1).Sum(t => t.MaxRank) >= Content.DeepStarRequirement, h);
                 Assert.Equal(2, tree.Count(t => t.IsKeystone)); // v1.13：到達刻印は2つから1つを選ぶ
                 Assert.True(tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank) >= Content.KeystoneRouteRequirement, h);
                 Assert.All(tree, t => Assert.Equal(h, t.HeroKey));

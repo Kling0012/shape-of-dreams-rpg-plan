@@ -108,10 +108,15 @@ namespace SodRpg.Mod
         public void Toggle()
         {
             Open = !Open;
+            if (!Open) CancelStarDrag();
             _confirmSalvage = null;
         }
 
-        public void Close() => Open = false;
+        public void Close()
+        {
+            CancelStarDrag();
+            Open = false;
+        }
 
         public void Dispose() => _st.Dispose();
 
@@ -732,21 +737,15 @@ namespace SodRpg.Mod
         private void DrawWindow(float w, float h, DreamforgeConfig cfg)
         {
             float ww = Mathf.Min(1060, w - 20), wh = Mathf.Min(720, h - 20);
-            float starWidth = Mathf.Max(100, (ww - 80) / 3);
-            if (_starColumnOptions == null || _starColumnWidth != starWidth)
-            {
-                _starColumnWidth = starWidth;
-                _starColumnOptions = new[] { GUILayout.Width(starWidth) };
-            }
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _confirmBulk = false; _retuneIndex = -1; }
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmBulk = false; _retuneIndex = -1; }
             GUILayout.FlexibleSpace();
-            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Open = false;
+            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
             GUILayout.EndHorizontal();
 
             var p = _s.Profile;
@@ -781,7 +780,7 @@ namespace SodRpg.Mod
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
-            "・星図：旅人ごとの星の経験で最大150ポイントを得ます。図鑑・テスト用の追加分は別枠です。核から記憶ごとのルート、夢の輪へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
+            "・星図：旅人ごとの星の経験で最大150ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
             "<b>What this mod adds</b>\n" +
@@ -797,7 +796,7 @@ namespace SodRpg.Mod
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
-            "- Star Map: each Traveler earns up to 150 points from their own star XP, plus separate codex/test bonuses. Grow the core, memory routes and dream ring; choose one core keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
+            "- Star Map: each Traveler earns up to 150 points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
@@ -889,8 +888,8 @@ namespace SodRpg.Mod
                     "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.");
                 case 1: return Loc.T("欠片で遺物を強くし、調律石で気に入らない特性を引き直します。いらない遺物は分解して欠片に戻せます。",
                     "Use shards to enhance relics and tuning stones to reroll an affix you dislike. Salvage what you don't need back into shards.");
-                case 2: return Loc.T("旅人ごとの星の経験で、核から記憶のルート・夢の輪へ伸ばします。振り直しは無料です。夢のレベルと振った星は、敵を強くする夢の圧にも関わります。",
-                    "Earn star XP per Traveler, then grow the core, memory routes and dream ring. Respec is free. Dream Level and spent stars also raise dream pressure, strengthening enemies.");
+                case 2: return Loc.T("旅人ごとの星の経験で、始まりの星からつながる星へ伸ばします。振り直しは無料です。夢のレベルと振った星は、敵を強くする夢の圧にも関わります。",
+                    "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars also raise dream pressure, strengthening enemies.");
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
                     "Spend spare shards and tuning stones on permanent conveniences such as a bigger satchel and stash. They don't make you stronger, but they make expeditions much easier.");
                 default: return Loc.T("遊び方の確認、今回の遠征の様子、これまでの記録と図鑑を見られます。",
@@ -1605,92 +1604,69 @@ namespace SodRpg.Mod
 
         private sealed class StarNode
         {
-            public TalentDef Talent;
-            public int Rank = -1;
-            public bool Unlocked, Active;
-            public string Effect, Label, Button, LockReason;
+            public int Rank;
+            public bool Allocated, Available;
+            public string Description;
+            public float TooltipWidth, TooltipHeight;
+            public readonly GUIContent RankLabel = new GUIContent();
+            public readonly GUIContent Tooltip = new GUIContent();
         }
 
-        private sealed class StarGroup
-        {
-            public string Id, Memory, ClosedTitle, OpenTitle;
-            public Line GenericLine;
-            public bool Expanded;
-            public readonly List<StarNode> Nodes = new List<StarNode>();
-        }
-
-        // Definitions/grouping live for the selected Traveler and language. Rank snapshots are
-        // checked once per Layout; descriptions and labels are never rebuilt for every IMGUI event.
-        private readonly List<StarNode> _starNodes = new List<StarNode>();
-        private readonly List<StarNode> _starFirst = new List<StarNode>();
-        private readonly List<StarNode> _starDeep = new List<StarNode>();
-        private readonly List<StarNode> _starKeys = new List<StarNode>();
-        private readonly List<StarNode> _starRing = new List<StarNode>();
-        private readonly List<StarGroup> _starRoutes = new List<StarGroup>();
-        private readonly List<StarGroup> _starGeneric = new List<StarGroup>();
-        private readonly Dictionary<string, bool> _starExpanded = new Dictionary<string, bool>();
-        private string _starHero, _starKeystone, _starPoints, _starProgress, _starFirstTitle, _starDeepNote, _starKeyNote;
+        // Layout and localized text survive IMGUI events; only state changes rebuild descriptions.
+        private HeroTreeLayout _starLayout;
+        private StarNode[] _starNodes;
+        private string _starHero, _starKeystone;
+        private readonly GUIContent _starPoints = new GUIContent();
+        private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState;
-        private bool _starJapanese, _starDirty = true, _starHasTree;
+        private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
         private int _starXp, _starKills, _starCodex, _starTestBonus, _starSpent, _starFree;
-        private Vector2 _scrollTalent;
-        private float _starColumnWidth;
-        private GUILayoutOption[] _starColumnOptions;
-        private static readonly GUILayoutOption[] StarColumn = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
-        private static readonly GUILayoutOption[] StarAddButton = { GUILayout.Width(64), GUILayout.Height(34) };
+        private int _starPressed = -1, _starMouseButton, _starDragControl;
+        private Vector2 _starPan, _starDragOrigin, _starPanOrigin;
+        private float _starZoom = 1f;
+        private GUIStyle _starRankStyle, _starTooltipStyle;
+        private static readonly GUILayoutOption[] StarFill = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] StarCanvasSize =
+            { GUILayout.MinHeight(160), GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true) };
+        private static readonly Color StarGold = new Color(1f, 0.79f, 0.32f);
+        private static readonly Color StarBright = new Color(0.87f, 0.94f, 1f);
+        private static readonly Color StarGrey = new Color(0.36f, 0.39f, 0.46f);
+
+        private void CancelStarDrag()
+        {
+            if (_starDragControl != 0 && GUIUtility.hotControl == _starDragControl) GUIUtility.hotControl = 0;
+            _starDragControl = 0;
+            _starDragging = false;
+            _starPressed = -1;
+        }
 
         private void RebuildStarTree(string hero)
         {
+            bool newHero = _starHero != hero;
             _starHero = hero;
             _starJapanese = Loc.Japanese;
-            _starHasTree = HeroSigils.HasTree(hero);
-            _starNodes.Clear();
-            _starFirst.Clear();
-            _starDeep.Clear();
-            _starKeys.Clear();
-            _starRing.Clear();
-            _starRoutes.Clear();
-            _starGeneric.Clear();
-            var definitions = _starHasTree ? HeroSigils.TreeFor(hero) : Content.Talents;
-            foreach (var t in definitions)
+            _starLayout = HeroTreeLayout.ForHero(hero);
+            _starNodes = new StarNode[_starLayout.Nodes.Count];
+            for (int i = 0; i < _starNodes.Length; i++)
             {
-                var node = new StarNode { Talent = t };
-                node.Effect = UiStyles.Colored(t.Describe(), t.IsKeystone || t.IsPowerNode || t.LinkPerRank != null ? "#e0b0ff" : "#aab");
-                node.Button = t.RankCost > 1 ? t.RankCost + " pt" : "+";
-                _starNodes.Add(node);
-                if (!_starHasTree)
-                {
-                    StarGroup group = null;
-                    for (int i = 0; i < _starGeneric.Count; i++)
-                        if (_starGeneric[i].GenericLine == t.Route) { group = _starGeneric[i]; break; }
-                    if (group == null)
-                    {
-                        group = new StarGroup { GenericLine = t.Route };
-                        _starGeneric.Add(group);
-                    }
-                    group.Nodes.Add(node);
-                }
-                else if (t.IsKeystone) _starKeys.Add(node);
-                else if (t.IsDreamRing) _starRing.Add(node);
-                else if (t.RouteId != null)
-                {
-                    StarGroup group = null;
-                    for (int i = 0; i < _starRoutes.Count; i++)
-                        if (_starRoutes[i].Id == t.RouteId) { group = _starRoutes[i]; break; }
-                    if (group == null)
-                    {
-                        group = new StarGroup { Id = t.RouteId, Memory = t.RouteMemory };
-                        group.Expanded = _starExpanded.TryGetValue(hero + ":" + t.RouteId, out var expanded) && expanded;
-                        _starRoutes.Add(group);
-                    }
-                    group.Nodes.Add(node);
-                }
-                else if (t.Tier == 1) _starFirst.Add(node);
-                else _starDeep.Add(node);
+                var t = _starLayout.Nodes[i].Talent;
+                _starNodes[i] = new StarNode { Description = t == null ? null : t.Describe() };
             }
-            for (int i = 0; i < _starRoutes.Count; i++)
-                _starRoutes[i].Nodes.Sort((a, b) => a.Talent.RouteOrder.CompareTo(b.Talent.RouteOrder));
+            if (newHero) { _starPan = Vector2.zero; _starZoom = 1f; }
+            CancelStarDrag();
             _starDirty = true;
+            if (_starRankStyle == null)
+            {
+                _starRankStyle = new GUIStyle(_st.Label)
+                {
+                    alignment = TextAnchor.MiddleCenter, fontSize = 15, wordWrap = false,
+                    padding = new RectOffset(0, 0, 0, 0)
+                };
+                _starTooltipStyle = new GUIStyle(_st.Label)
+                {
+                    fontSize = 16, wordWrap = true, padding = new RectOffset(12, 12, 10, 10)
+                };
+            }
         }
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
@@ -1701,26 +1677,15 @@ namespace SodRpg.Mod
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
                 || _starKeystone != hs.Keystone || _starSpent != spent;
-            for (int i = 0; i < _starNodes.Count; i++)
+            for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
-                int rank = hs.Talents.TryGetValue(n.Talent.Id, out var r) ? r : 0;
-                bool active = n.Talent.IsKeystone && hs.Keystone == n.Talent.Id;
-                if (n.Rank == rank && n.Active == active) continue;
-                changed = true;
+                var t = _starLayout.Nodes[i].Talent;
+                int rank = t == null ? 1 : t.IsKeystone ? (hs.Keystone == t.Id ? 1 : 0)
+                    : hs.Talents.TryGetValue(t.Id, out var r) ? r : 0;
+                if (n.Rank != rank) changed = true;
                 n.Rank = rank;
-                n.Active = active;
-                var t = n.Talent;
-                if (t.IsKeystone)
-                    n.Label = (active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（到達刻印）", " (Keystone)");
-                else
-                {
-                    int visibleRank = Math.Max(0, Math.Min(t.MaxRank, rank));
-                    string pips = "<color=#ffd36e>" + new string('●', visibleRank) + "</color><color=#8a8aa0>"
-                        + new string('○', t.MaxRank - visibleRank) + "</color>";
-                    string order = t.RouteId != null ? t.RouteOrder + ". " : "";
-                    n.Label = $"<b>{order}{t.Name}</b> {pips}\n{n.Effect}";
-                }
+                n.Allocated = rank > 0;
             }
             if (!changed) return;
             _starState = hs;
@@ -1733,70 +1698,47 @@ namespace SodRpg.Mod
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
             int earned = StarProgression.Points(hs.StarXp);
-            _starPoints = Loc.T(
-                $"星のポイント：残り{_starFree}／{p.TalentPoints(hero)}（星のレベル {earned}/{StarProgression.MaxPoints} ＋ 図鑑 {_starCodex} ＋ テスト {_starTestBonus}）",
-                $"Star points: {_starFree} free / {p.TalentPoints(hero)} (star level {earned}/{StarProgression.MaxPoints} + codex {_starCodex} + test {_starTestBonus})");
-            _starProgress = earned >= StarProgression.MaxPoints
-                ? Loc.T($"この旅人の星の経験：{hs.StarXp}（ポイント上限）", $"This Traveler's star XP: {hs.StarXp} (point cap reached)")
-                : Loc.T($"この旅人の星の経験：{hs.StarXp}　次のポイントまで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)}",
-                    $"This Traveler's star XP: {hs.StarXp}   Next point: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP");
-            int tier1 = Rules.Tier1Ranks(hs, hero);
-            _starFirstTitle = Loc.T($"核：手前の星 ({tier1})", $"Core: first stars ({tier1})");
-            _starDeepNote = tier1 >= Content.DeepStarRequirement
-                ? Loc.T("開いています。", "Unlocked.")
-                : Loc.T($"核の手前の星にあと{Content.DeepStarRequirement - tier1}ポイント（{tier1}/{Content.DeepStarRequirement}）。",
-                    $"Needs {Content.DeepStarRequirement - tier1} more points in the core's first stars ({tier1}/{Content.DeepStarRequirement}).");
-            int lv = Mastery.Level(hs.Kills);
-            _starKeyNote = Loc.T(
-                $"このツリーに{Content.KeystoneRouteRequirement}ポイント・熟練度{HeroSigils.KeystoneMastery}以上で選べます（いま{lv}「{Mastery.Title(lv)}」）。遠征外で無料で付け替え。",
-                $"Requires {Content.KeystoneRouteRequirement} tree points and mastery {HeroSigils.KeystoneMastery} (now {lv}, {Mastery.Title(lv)}). Switch free outside expeditions.");
-            for (int i = 0; i < _starNodes.Count; i++)
+            _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}",
+                $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total");
+            _starProgress.text = Loc.T($"星のレベル {earned}/{StarProgression.MaxPoints}　", $"Star level {earned}/{StarProgression.MaxPoints}   ")
+                + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
+                : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
+                    $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
+            for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
-                var t = n.Talent;
-                n.Unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : Rules.TalentUnlocked(hs, hero, t);
-                n.LockReason = n.Unlocked ? null : t.IsKeystone ? KeystoneMissing(hs, hero, t) : StarMissing(hs, hero, t, tier1);
-                if (t.IsKeystone)
-                    n.Button = n.Active ? Loc.T("刻印を外す", "Remove")
-                        : !n.Unlocked ? n.LockReason
-                        : hs.Keystone != null ? Loc.T("こちらに付け替える（無料）", "Switch to this (free)")
-                        : Loc.T($"刻印する（{Content.KeystoneCost}ポイント）", $"Engrave ({Content.KeystoneCost} points)");
-            }
-            for (int i = 0; i < _starRoutes.Count; i++)
-            {
-                var group = _starRoutes[i];
-                int used = 0, capacity = 0;
-                for (int j = 0; j < group.Nodes.Count; j++)
+                n.TooltipWidth = 0;
+                var t = _starLayout.Nodes[i].Talent;
+                if (t == null)
                 {
-                    var n = group.Nodes[j];
-                    used += n.Rank * n.Talent.RankCost;
-                    capacity += n.Talent.MaxRank * n.Talent.RankCost;
+                    n.RankLabel.text = "+";
+                    n.Tooltip.text = Loc.T("<b>始まりの星</b>\n取得済み。ここからつながる星へ伸ばせます。",
+                        "<b>Starting star</b>\nAlready acquired. Grow along its connections.");
+                    continue;
                 }
-                string title = Links.Name(group.Memory) + Loc.T($" のルート　{used}/{capacity}ポイント", $" route   {used}/{capacity} points");
-                group.ClosedTitle = "+  " + title;
-                group.OpenTitle = "−  " + title;
+                bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : Rules.TalentUnlocked(hs, hero, t);
+                int cost = t.IsKeystone ? (hs.Keystone != null ? 0 : Content.KeystoneCost) : t.RankCost;
+                n.Available = unlocked && n.Rank < t.MaxRank && _starFree >= cost;
+                n.RankLabel.text = n.Rank + "/" + t.MaxRank;
+                string condition = Loc.T("取得済みの星と線でつながると振れます。",
+                    "Requires a connection to an acquired star.");
+                if (t.IsKeystone)
+                    condition += t.HeroKey != null
+                        ? Loc.T($"\n到達刻印は1つ。ツリーに{Content.KeystoneRouteRequirement}段・熟練度{HeroSigils.KeystoneMastery}が必要（いま熟練度{Mastery.Level(hs.Kills)}）。付け替えは無料。",
+                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} tree ranks and mastery {HeroSigils.KeystoneMastery} (now {Mastery.Level(hs.Kills)}). Switching is free.")
+                        : Loc.T($"\n到達刻印は1つ。この刻印に対応する能力の星に{Content.KeystoneRouteRequirement}段必要（いま{Rules.RouteRanks(hs, t.Route)}段）。付け替えは無料。",
+                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} ranks in its matching attribute stars (now {Rules.RouteRanks(hs, t.Route)}). Switching is free.");
+                string state = n.Rank >= t.MaxRank ? Loc.T("最大段です。", "Maximum rank.")
+                    : !unlocked ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
+                    : _starFree < cost ? Loc.T("ポイントが足りません。", "Not enough points.")
+                    : Loc.T("振れます。", "Available.");
+                n.Tooltip.text = "<b>" + t.Name + "</b>  " + n.RankLabel.text + "\n" + n.Description
+                    + Loc.T($"\n費用：1段 {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} ポイント",
+                        $"\nCost: {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} points per rank")
+                    + "\n" + condition + "\n" + state
+                    + Loc.T("\n左クリック：1段振る　右クリック：1段外す\n残りの星が始まりにつながる場合だけ外せます。",
+                        "\nLeft click: allocate one rank. Right click: refund one rank.\nRefunds require all remaining stars to stay connected to the start.");
             }
-            for (int i = 0; i < _starGeneric.Count; i++)
-            {
-                var group = _starGeneric[i];
-                group.OpenTitle = $"{Content.LineName(group.GenericLine)}  <color=#aaa>({Rules.RouteRanks(hs, group.GenericLine)})</color>";
-            }
-        }
-
-        private static string StarMissing(HeroState hs, string hero, TalentDef t, int tier1)
-        {
-            if (!Rules.BelongsTo(t, hero)) return Loc.T("この旅人の星ではありません。", "Not in this Traveler's tree.");
-            if (t.Tier >= 2 && tier1 < Content.DeepStarRequirement)
-                return Loc.T($"未解放：核の手前の星に{Content.DeepStarRequirement}ポイント必要（いま{tier1}）。",
-                    $"Locked: needs {Content.DeepStarRequirement} points in the core's first stars (now {tier1}).");
-            var previous = t;
-            for (int i = 0; previous.PrerequisiteId != null && i < 64; i++)
-            {
-                if (!Content.TryGetTalent(previous.PrerequisiteId, out previous)) break;
-                if (!hs.Talents.TryGetValue(previous.Id, out var rank) || rank <= 0)
-                    return Loc.T($"未解放：「{previous.Name}」に1段必要。", $"Locked: needs 1 rank in {previous.Name}.");
-            }
-            return Loc.T("未解放：前の星の条件を満たしてください。", "Locked: complete the prerequisite chain.");
         }
 
         private void DrawTalentTab()
@@ -1805,11 +1747,16 @@ namespace SodRpg.Mod
             string beforePicker = HeroKey;
             HeroPicker();
             string hero = HeroKey;
-            if (hero != beforePicker) GUIUtility.ExitGUI();
-            var hs = p.Hero(hero);
-            RefreshStarState(p, hero, hs);
+            if (hero != beforePicker) { CancelStarDrag(); GUIUtility.ExitGUI(); }
+            RefreshStarState(p, hero, p.Hero(hero));
             GUILayout.BeginHorizontal();
-            GUILayout.Label(_starPoints, _st.Label, StarColumn);
+            GUILayout.Label(_starPoints, _st.Label, StarFill);
+            if (GUILayout.Button(Loc.T("中心に戻す", "Center"), _st.Button))
+            {
+                _starPan = Vector2.zero;
+                _starZoom = 1f;
+                CancelStarDrag();
+            }
             GUI.enabled = _s.CanEditTalents;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
             {
@@ -1823,134 +1770,185 @@ namespace SodRpg.Mod
             GUILayout.Label(_starProgress, _st.Small);
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
             if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+            GUILayout.Label(Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す",
+                "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund"), _st.Small);
+            DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
+        }
 
-            _scrollTalent = GUILayout.BeginScrollView(_scrollTalent);
-            GUILayout.BeginHorizontal();
-            if (_starHasTree)
+        private Vector2 StarPosition(int index, Rect viewport)
+        {
+            var n = _starLayout.Nodes[index];
+            return viewport.center + _starPan + new Vector2(n.X, n.Y) * _starZoom;
+        }
+
+        private Rect StarRect(int index, Rect viewport)
+        {
+            var kind = _starLayout.Nodes[index].Kind;
+            float size = kind == HeroTreeNodeKind.Small ? 34f : kind == HeroTreeNodeKind.Notable ? 44f : 54f;
+            size *= Mathf.Clamp(_starZoom, 0.8f, 1.3f);
+            Vector2 point = StarPosition(index, viewport);
+            return new Rect(point.x - size / 2, point.y - size / 2, size, size);
+        }
+
+        private void DrawStarCanvas(Rect canvas, Profile p, string hero)
+        {
+            var e = Event.current;
+            int control = GUIUtility.GetControlID(FocusType.Passive);
+            if (e.type == EventType.Layout) return;
+            int hover = -1;
+            GUI.BeginGroup(canvas);
+            try
             {
-                GUILayout.BeginVertical(_st.Panel, _starColumnOptions);
-                GUILayout.Label(_starFirstTitle, _st.Header);
-                DrawStarNodes(p, hero, hs, _starFirst);
-                GUILayout.EndVertical();
-                GUILayout.BeginVertical(_st.Panel, _starColumnOptions);
-                GUILayout.Label(Loc.T("核：奥の星", "Core: deep stars"), _st.Header);
-                GUILayout.Label(_starDeepNote, _st.Small);
-                DrawStarNodes(p, hero, hs, _starDeep);
-                GUILayout.EndVertical();
-                GUILayout.BeginVertical(_st.Panel, _starColumnOptions);
-                GUILayout.Label(Loc.T("到達刻印（どちらか1つ）", "Keystones (pick one)"), _st.Header);
-                GUILayout.Label(_starKeyNote, _st.Small);
-                DrawStarNodes(p, hero, hs, _starKeys);
-                GUILayout.EndVertical();
+                var viewport = new Rect(0, 0, canvas.width, canvas.height);
+                Vector2 mouse = e.mousePosition;
+                bool inside = viewport.Contains(mouse);
+                if (inside)
+                    for (int i = _starNodes.Length - 1; i >= 0; i--)
+                        if (StarRect(i, viewport).Contains(mouse)) { hover = i; break; }
+                if (inside && e.type == EventType.ScrollWheel)
+                {
+                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), 0.5f, 2.5f);
+                    _starPan = mouse - viewport.center - (mouse - viewport.center - _starPan) * (zoom / _starZoom);
+                    _starZoom = zoom;
+                    e.Use();
+                }
+                if (inside && e.type == EventType.MouseDown && e.button <= 2)
+                {
+                    _starDragging = true;
+                    GUIUtility.hotControl = control;
+                    _starDragControl = control;
+                    _starMoved = false;
+                    _starPressed = hover;
+                    _starMouseButton = e.button;
+                    _starDragOrigin = mouse;
+                    _starPanOrigin = _starPan;
+                    e.Use();
+                }
+                if (_starDragging && e.type == EventType.MouseDrag)
+                {
+                    Vector2 delta = mouse - _starDragOrigin;
+                    if (delta.sqrMagnitude > 16f) _starMoved = true;
+                    if (_starMoved) _starPan = _starPanOrigin + delta;
+                    e.Use();
+                }
+                if (_starDragging && e.type == EventType.MouseUp && e.button == _starMouseButton)
+                {
+                    int pressed = _starPressed;
+                    CancelStarDrag();
+                    e.Use();
+                    if (!_starMoved && inside && hover == pressed && pressed >= 0 && _starMouseButton < 2 && _s.CanEditTalents)
+                    {
+                        var t = _starLayout.Nodes[pressed].Talent;
+                        if (t != null)
+                        {
+                            try
+                            {
+                                if (_starMouseButton == 1) Rules.RemoveTalentRank(p, hero, t.Id);
+                                else if (t.IsKeystone)
+                                {
+                                    if (!_starNodes[pressed].Allocated) Rules.SetKeystone(p, hero, t.Id);
+                                }
+                                else Rules.AddTalentRank(p, hero, t.Id);
+                                _starDirty = true;
+                                _s.MarkDirty(true);
+                            }
+                            catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                        }
+                    }
+                }
+                if (e.type != EventType.Repaint) return;
+                StarFillRect(viewport, new Color(0.035f, 0.045f, 0.075f));
+                for (int i = 0; i < _starLayout.Edges.Count; i++)
+                {
+                    var edge = _starLayout.Edges[i];
+                    var a = _starNodes[edge.A];
+                    var b = _starNodes[edge.B];
+                    Color color = a.Allocated && b.Allocated ? StarGold
+                        : (a.Allocated && b.Available || b.Allocated && a.Available) ? StarBright : StarGrey * 0.55f;
+                    DrawStarEdge(StarPosition(edge.A, viewport), StarPosition(edge.B, viewport), viewport, color);
+                }
+                for (int i = 0; i < _starNodes.Length; i++)
+                {
+                    Rect rect = StarRect(i, viewport);
+                    if (!viewport.Overlaps(rect)) continue;
+                    var n = _starNodes[i];
+                    Color color = n.Allocated ? StarGold : n.Available ? StarBright : StarGrey;
+                    if (n.Available && !n.Allocated)
+                    {
+                        StarFillRect(new Rect(rect.x - 3f, rect.y - 3f, rect.width + 6f, rect.height + 6f),
+                            new Color(StarBright.r, StarBright.g, StarBright.b, 0.08f));
+                        StarFillRect(new Rect(rect.x - 1.5f, rect.y - 1.5f, rect.width + 3f, rect.height + 3f),
+                            new Color(StarBright.r, StarBright.g, StarBright.b, 0.18f));
+                    }
+                    StarFillRect(rect, color);
+                    float border = i == hover ? 4f : 2f;
+                    StarFillRect(new Rect(rect.x + border, rect.y + border, rect.width - border * 2, rect.height - border * 2),
+                        n.Allocated ? new Color(0.22f, 0.15f, 0.05f) : new Color(0.07f, 0.09f, 0.14f));
+                    GUI.Label(rect, n.RankLabel, _starRankStyle);
+                }
+            }
+            finally { GUI.EndGroup(); }
+            // Tooltips may extend above the viewport, so long effects remain readable.
+            if (hover >= 0 && !_starDragging)
+            {
+                float width = Mathf.Min(440f, canvas.width - 12f);
+                var node = _starNodes[hover];
+                if (node.TooltipWidth != width)
+                {
+                    node.TooltipWidth = width;
+                    node.TooltipHeight = _starTooltipStyle.CalcHeight(node.Tooltip, width);
+                }
+                Vector2 mouse = e.mousePosition;
+                float x = mouse.x + 22f;
+                if (x + width > canvas.xMax - 6f) x = mouse.x - width - 22f;
+                var tip = new Rect(Mathf.Clamp(x, canvas.x + 6f, Mathf.Max(canvas.x + 6f, canvas.xMax - width - 6f)),
+                    Mathf.Clamp(mouse.y + 18f, 6f, Mathf.Max(6f, canvas.yMax - node.TooltipHeight - 6f)), width, node.TooltipHeight);
+                StarFillRect(tip, new Color(0.1f, 0.12f, 0.18f));
+                GUI.Label(tip, node.Tooltip, _starTooltipStyle);
+            }
+        }
+
+        private static void StarFillRect(Rect rect, Color color)
+        {
+            var old = GUI.color;
+            GUI.color = color;
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
+            GUI.color = old;
+        }
+
+        private static void DrawStarEdge(Vector2 a, Vector2 b, Rect viewport, Color color)
+        {
+            // Clip the segment before rotating so offscreen branches never produce giant draw quads.
+            Vector2 delta = b - a;
+            float from = 0f, to = 1f;
+            if (!ClipStarEdge(-delta.x, a.x, ref from, ref to)
+                || !ClipStarEdge(delta.x, viewport.width - a.x, ref from, ref to)
+                || !ClipStarEdge(-delta.y, a.y, ref from, ref to)
+                || !ClipStarEdge(delta.y, viewport.height - a.y, ref from, ref to)) return;
+            b = a + delta * to;
+            a += delta * from;
+            delta = b - a;
+            var matrix = GUI.matrix;
+            GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, a);
+            StarFillRect(new Rect(a.x, a.y - 1f, delta.magnitude, 2f), color);
+            GUI.matrix = matrix;
+        }
+
+        private static bool ClipStarEdge(float direction, float distance, ref float from, ref float to)
+        {
+            if (Mathf.Abs(direction) < 0.0001f) return distance >= 0f;
+            float ratio = distance / direction;
+            if (direction < 0f)
+            {
+                if (ratio > to) return false;
+                if (ratio > from) from = ratio;
             }
             else
             {
-                for (int i = 0; i < _starGeneric.Count; i++)
-                {
-                    var group = _starGeneric[i];
-                    GUILayout.BeginVertical(_st.Panel, _starColumnOptions);
-                    GUILayout.Label(group.OpenTitle, _st.Header);
-                    DrawStarNodes(p, hero, hs, group.Nodes);
-                    GUILayout.EndVertical();
-                }
+                if (ratio < from) return false;
+                if (ratio < to) to = ratio;
             }
-            GUILayout.EndHorizontal();
-            for (int i = 0; i < _starRoutes.Count; i++)
-            {
-                var group = _starRoutes[i];
-                GUILayout.BeginVertical(_st.Panel);
-                if (GUILayout.Button(group.Expanded ? group.OpenTitle : group.ClosedTitle, _st.RowWrap))
-                {
-                    group.Expanded = !group.Expanded;
-                    _starExpanded[hero + ":" + group.Id] = group.Expanded;
-                    GUIUtility.ExitGUI();
-                }
-                if (group.Expanded)
-                {
-                    GUILayout.Label(Loc.T("前の星に1段振ると次が開きます。連携の星は、このルートの記憶を装着中だけ有効です。頂点は3ポイント（到達刻印とは別枠）。",
-                        "One rank in the preceding star opens the next. Linked stars work only with this route's memory equipped. The capstone costs 3 points, independently of the core keystone."), _st.Small);
-                    DrawStarNodes(p, hero, hs, group.Nodes);
-                }
-                GUILayout.EndVertical();
-            }
-            if (_starRing.Count > 0)
-            {
-                GUILayout.BeginVertical(_st.Panel);
-                GUILayout.Label(Loc.T("夢の輪（8種・各5段）", "Dream ring (8 stars, 5 ranks each)"), _st.Header);
-                GUILayout.Label(_starDeepNote, _st.Small);
-                DrawStarNodes(p, hero, hs, _starRing);
-                GUILayout.EndVertical();
-            }
-            GUILayout.EndScrollView();
-        }
-
-        private void DrawStarNodes(Profile p, string hero, HeroState hs, List<StarNode> nodes)
-        {
-            for (int i = 0; i < nodes.Count; i++) DrawTalentNode(p, hero, hs, nodes[i]);
-        }
-
-        /// <summary>到達刻印を選ぶのに、あと何が足りないか。</summary>
-        private static string KeystoneMissing(HeroState hs, string hero, TalentDef t)
-        {
-            int need = Content.KeystoneRouteRequirement;
-            if (t.HeroKey != null)
-            {
-                int ranks = 0;
-                foreach (var kv in hs.Talents)
-                    if (Content.TryGetTalent(kv.Key, out var x) && x.HeroKey == hero && !x.IsKeystone) ranks += kv.Value;
-                int lv = Mastery.Level(hs.Kills);
-                var ja = new List<string>();
-                var en = new List<string>();
-                if (ranks < need) { ja.Add($"{need - ranks}ポイント"); en.Add($"{need - ranks} more points in this tree"); }
-                if (lv < HeroSigils.KeystoneMastery) { ja.Add($"熟練度{HeroSigils.KeystoneMastery}（いま{lv}）"); en.Add($"mastery {HeroSigils.KeystoneMastery} (now {lv})"); }
-                return Loc.T("あと：" + string.Join("・", ja), "Needs " + string.Join(", ", en));
-            }
-            int route = Rules.RouteRanks(hs, t.Route);
-            return Loc.T($"選ぶには：{Content.LineName(t.Route)}にあと{Math.Max(0, need - route)}ポイント", $"Needs {Math.Max(0, need - route)} more points in {Content.LineName(t.Route)}");
-        }
-
-        private void DrawTalentNode(Profile p, string hero, HeroState hs, StarNode node)
-        {
-            var t = node.Talent;
-            if (t.IsKeystone)
-            {
-                GUILayout.Space(6);
-                GUILayout.Label(node.Label, _st.Label, StarColumn);
-                GUILayout.Label(node.Effect, _st.Small, StarColumn);
-                GUI.enabled = _s.CanEditTalents && (node.Active || node.Unlocked && (hs.Keystone != null || _starFree >= Content.KeystoneCost));
-                if (GUILayout.Button(node.Button, node.Active ? _st.ButtonSel : _st.RowWrap, StarColumn))
-                {
-                    try
-                    {
-                        Rules.SetKeystone(p, hero, node.Active ? null : t.Id);
-                        _starDirty = true;
-                        _s.MarkDirty(true);
-                        GUIUtility.ExitGUI();
-                    }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-                GUI.enabled = true;
-                return;
-            }
-            GUILayout.BeginHorizontal();
-            GUILayout.BeginVertical(StarColumn);
-            GUILayout.Label(node.Label, _st.Small, StarColumn);
-            if (node.LockReason != null) GUILayout.Label(node.LockReason, _st.Warn, StarColumn);
-            GUILayout.EndVertical();
-            GUI.enabled = node.Unlocked && _s.CanEditTalents && node.Rank < t.MaxRank && _starFree >= t.RankCost;
-            if (GUILayout.Button(node.Button, _st.Button, StarAddButton))
-            {
-                try
-                {
-                    Rules.AddTalentRank(p, hero, t.Id);
-                    _starDirty = true;
-                    _s.MarkDirty(true);
-                    GUIUtility.ExitGUI();
-                }
-                catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-            }
-            GUI.enabled = true;
-            GUILayout.EndHorizontal();
+            return true;
         }
 
         private void DrawWorkshopTab()

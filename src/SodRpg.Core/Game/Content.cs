@@ -185,9 +185,7 @@ namespace SodRpg.Core.Game
         /// <summary>記憶ルート内の識別子と順番。核・夢の輪は RouteId が null。</summary>
         public string RouteId { get; set; }
         public int RouteOrder { get; set; }
-        /// <summary>直前の星。1段以上振ると次が開く。</summary>
-        public string PrerequisiteId { get; set; }
-        /// <summary>ルートの記憶の型名。見出しは Links.Name で表示する。</summary>
+        /// <summary>ルートに対応する記憶の型名。</summary>
         public string RouteMemory { get; set; }
         public bool IsDreamRing { get; set; }
         /// <summary>1段あたりの連携。能力値とは別に、装着条件をホストで判定する。</summary>
@@ -239,7 +237,6 @@ namespace SodRpg.Core.Game
         public const int MaxRetunes = 3;
         public const int MaxDreamLevel = 30;
         public const int KeystoneRouteRequirement = 6;
-        public const int DeepStarRequirement = 6;
         public const int KeystoneCost = 3;
         public const int RoomsToRecoverLost = 3;
         public const int CodexPerPoint = 6;

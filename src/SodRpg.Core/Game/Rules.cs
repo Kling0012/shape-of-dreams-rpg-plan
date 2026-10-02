@@ -1240,17 +1240,15 @@ namespace SodRpg.Core.Game
 
         // ───────────── 専門化 ─────────────
 
-        /// <summary>到達刻印を選べるか。旅人の刻印はツリーに6pt＋熟練度3、汎用は同じルートに6pt。</summary>
+        /// <summary>到達刻印のつながりと段数・熟練度の条件を確かめる。</summary>
         public static bool KeystoneUnlocked(Profile p, string heroKey, TalentDef key)
         {
+            if (key == null || !key.IsKeystone || !BelongsTo(key, heroKey)) return false;
             var h = p.Hero(heroKey);
-            if (key.HeroKey != null)
-            {
-                if (key.HeroKey != heroKey) return false;
-                return TreeRanks(h, heroKey) >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery;
-            }
-            if (HeroSigils.HasTree(heroKey)) return false;
-            return RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
+            if (!HeroTreeLayout.ForHero(heroKey).CanReach(h, key)) return false;
+            return key.HeroKey != null
+                ? TreeRanks(h, heroKey) >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery
+                : RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
         }
 
         /// <summary>装着中の遺物の覚醒の段の合計。段が上がったか（能力の送り直しが要るか）の判定に使う（issue #15）。</summary>
@@ -1275,34 +1273,17 @@ namespace SodRpg.Core.Game
             return n;
         }
 
-        /// <summary>奥の星を開くための、その旅人の手前の星に振った段数。</summary>
-        public static int Tier1Ranks(HeroState h, string heroKey)
-        {
-            int n = 0;
-            foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone && t.Tier == 1) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
-            return n;
-        }
-
-        public static bool DeepStarsOpen(Profile p, string heroKey) => Tier1Ranks(p.Hero(heroKey), heroKey) >= Content.DeepStarRequirement;
-
-        /// <summary>購入と発動に共通する条件。直前だけでなくルートの全前提を確かめる。</summary>
+        /// <summary>始まりから取得済みの星を通って届く星だけ、購入・発動できる。</summary>
         public static bool TalentUnlocked(HeroState h, string heroKey, TalentDef t)
         {
-            if (h == null || t == null || !BelongsTo(t, heroKey)) return false;
-            if (t.Tier >= 2 && Tier1Ranks(h, heroKey) < Content.DeepStarRequirement) return false;
-            var node = t;
-            // 順番が必ず1つずつ戻るため、不正な循環でもルートは開かない。
-            while (!string.IsNullOrEmpty(node.PrerequisiteId))
-            {
-                if (!Content.TryGetTalent(node.PrerequisiteId, out var parent)
-                    || !BelongsTo(parent, heroKey) || parent.IsKeystone
-                    || parent.RouteId != t.RouteId || parent.RouteOrder != node.RouteOrder - 1
-                    || parent.RouteOrder < 1
-                    || !h.Talents.TryGetValue(parent.Id, out int rank) || rank <= 0) return false;
-                node = parent;
-            }
-            return string.IsNullOrEmpty(t.RouteId) || node.RouteOrder == 1;
+            return h != null && t != null && BelongsTo(t, heroKey)
+                && HeroTreeLayout.ForHero(heroKey).CanReach(h, t);
+        }
+
+        /// <summary>取得済みの星すべてが始まりの星につながっているか。</summary>
+        public static bool TalentsConnected(HeroState h, string heroKey)
+        {
+            return h != null && HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, null, h.Keystone);
         }
 
         public static int RouteRanks(HeroState h, Line route)
@@ -1332,7 +1313,7 @@ namespace SodRpg.Core.Game
             int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
             if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
             if (!TalentUnlocked(h, heroKey, t))
-                throw new InvalidOperationException(Loc.T("奥の星を開き、前の星に1段以上振る必要があります。", "Open the deep stars and invest at least one rank in each preceding star."));
+                throw new InvalidOperationException(Loc.T("始まりの星からつながる星に先に振ってください。", "Allocate a connected star leading here from the starting star first."));
             if (FreePoints(p, heroKey) < t.RankCost)
                 throw new InvalidOperationException(t.RankCost > 1
                     ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")
@@ -1340,12 +1321,40 @@ namespace SodRpg.Core.Game
             h.Talents[talentId] = cur + 1;
         }
 
-        /// <summary>刻印（到達ノード）を選ぶ。そのルートに6ポイント以上必要。付け替えは追加費用なし。</summary>
+        /// <summary>1段戻す。最後の1段を外しても、残る星がすべて始まりにつながる必要がある。</summary>
+        public static void RemoveTalentRank(Profile p, string heroKey, string talentId)
+        {
+            if (!Content.TryGetTalent(talentId, out var t) || !BelongsTo(t, heroKey))
+                throw new InvalidOperationException(Loc.T("この旅人の星ではありません。", "That star is not in this Traveler's tree."));
+            var h = p.Hero(heroKey);
+            if (t.IsKeystone)
+            {
+                if (h.Keystone != talentId)
+                    throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
+                SetKeystone(p, heroKey, null);
+                return;
+            }
+            if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
+                throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
+            RequireConnectedRefund(h, heroKey, rank == 1 ? talentId : null, h.Keystone);
+            if (rank == 1) h.Talents.Remove(talentId);
+            else h.Talents[talentId] = rank - 1;
+        }
+
+        private static void RequireConnectedRefund(HeroState h, string heroKey, string removedTalent, string keystone)
+        {
+            if (!HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, removedTalent, keystone))
+                throw new InvalidOperationException(Loc.T("つながりが切れます。先に外側の星を外してください。",
+                    "That would disconnect allocated stars. Remove the outer stars first."));
+        }
+
+        /// <summary>到達刻印は1つまで。付け替えは追加費用なしで、残る星のつながりを維持する。</summary>
         public static void SetKeystone(Profile p, string heroKey, string keystoneId)
         {
             var h = p.Hero(heroKey);
             if (keystoneId == null)
             {
+                RequireConnectedRefund(h, heroKey, null, null);
                 h.Keystone = null;
                 return;
             }
@@ -1353,10 +1362,11 @@ namespace SodRpg.Core.Game
             if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人の刻印ではありません。", "That keystone is not in this Traveler's tree."));
             if (!KeystoneUnlocked(p, heroKey, t))
                 throw new InvalidOperationException(t.HeroKey != null
-                    ? Loc.T($"このツリーに{Content.KeystoneRouteRequirement}ポイント以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります。", $"Requires {Content.KeystoneRouteRequirement}+ points and mastery {HeroSigils.KeystoneMastery}+.")
-                    : Loc.T($"{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}ポイント以上必要です。", $"Requires {Content.KeystoneRouteRequirement}+ points in {Content.LineName(t.Route)}."));
+                    ? Loc.T($"始まりにつながり、このツリーに{Content.KeystoneRouteRequirement}段以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります。", $"Requires a connection to the starting star, {Content.KeystoneRouteRequirement}+ tree ranks and mastery {HeroSigils.KeystoneMastery}+.")
+                    : Loc.T($"始まりにつながり、{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}段以上必要です。", $"Requires a connection to the starting star and {Content.KeystoneRouteRequirement}+ ranks in {Content.LineName(t.Route)}."));
             if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
                 throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
+            RequireConnectedRefund(h, heroKey, null, keystoneId);
             h.Keystone = keystoneId;
         }
 

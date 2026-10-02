@@ -31,7 +31,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData("Hero_Lacerta", "h.lacerta.fourth")]
         [InlineData("Hero_Vesper", "h.vesper.fourth")]
-        public void Fourth_attack_shift_is_a_costly_single_deep_star(string hero, string id)
+        public void Fourth_attack_shift_is_a_costly_single_inner_star(string hero, string id)
         {
             Assert.True(Content.TryGetTalent(id, out var t));
             Assert.Equal(2, t.Tier);
@@ -40,20 +40,14 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Stat.FourthAttackShift, t.Stat);
 
             var p = Profile.CreateNew(1);
-            var tier1 = HeroSigils.TreeFor(hero).Where(x => !x.IsKeystone && x.Tier == 1).ToList();
-            p.Hero(hero).StarXp = StarProgression.TotalXpForPoints(Content.DeepStarRequirement + HeroSigils.CostlyRankCost - 1);
-            int spent = 0;
-            foreach (var n in tier1)
-                for (int r = 0; r < n.MaxRank && spent < Content.DeepStarRequirement; r++, spent++)
-                    Rules.AddTalentRank(p, hero, n.Id);
-            Assert.True(Rules.DeepStarsOpen(p, hero));
+            p.Hero(hero).StarXp = StarProgression.TotalXpForPoints(HeroSigils.CostlyRankCost - 1);
             Assert.Equal(HeroSigils.CostlyRankCost - 1, Rules.FreePoints(p, hero));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, hero, id));
 
-            StarProgression.AddXp(p.Hero(hero), StarProgression.CostForPoint(Content.DeepStarRequirement + HeroSigils.CostlyRankCost));
+            StarProgression.AddXp(p.Hero(hero), StarProgression.CostForPoint(HeroSigils.CostlyRankCost));
             Rules.AddTalentRank(p, hero, id);
             Assert.Equal(0, Rules.FreePoints(p, hero));
-            Assert.Equal(Content.DeepStarRequirement + HeroSigils.CostlyRankCost, Rules.SpentPoints(p.Hero(hero)));
+            Assert.Equal(HeroSigils.CostlyRankCost, Rules.SpentPoints(p.Hero(hero)));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, hero, id)); // 1段まで
         }
 

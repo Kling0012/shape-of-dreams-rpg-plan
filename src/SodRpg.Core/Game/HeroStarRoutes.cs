@@ -36,7 +36,6 @@ namespace SodRpg.Core.Game
                 node.RouteId = id;
                 node.RouteMemory = memory;
                 node.RouteOrder = ++order;
-                node.PrerequisiteId = order == 1 ? null : id + "." + (order - 1);
                 node.RankCost = order == 7 ? 3 : 1;
                 nodes.Add(node);
             }
@@ -667,7 +666,6 @@ namespace SodRpg.Core.Game
                 node.RouteId = cap.RouteId;
                 node.RouteMemory = cap.RouteMemory;
                 node.RouteOrder = 8;
-                node.PrerequisiteId = cap.Id;
                 node.RankCost = EssenceSlotCost;
                 nodes.Add(node);
             }

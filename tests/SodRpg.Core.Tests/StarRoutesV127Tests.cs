@@ -54,7 +54,6 @@ namespace SodRpg.Core.Tests
                         Assert.Equal(i + 1, node.RouteOrder);
                         Assert.Equal(i == 6 ? 1 : 3, node.MaxRank);
                         Assert.Equal(i == 6 ? 3 : 1, node.RankCost);
-                        Assert.Equal(i == 0 ? null : nodes[i - 1].Id, node.PrerequisiteId);
                     }
                     Assert.Equal(21, nodes.Sum(t => t.MaxRank * t.RankCost));
                     // 目安は半分ずつ。記憶の仕組みに合わせて 2〜4 の幅を許す（v1.27 のレビューで調整）
@@ -80,7 +79,6 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(2, t.Tier);
                     Assert.Null(t.RouteId);
                     Assert.Null(t.RouteMemory);
-                    Assert.Null(t.PrerequisiteId);
                     Assert.Null(t.LinkPerRank);
                     Assert.False(t.IsKeystone);
                     Assert.False(t.IsPowerNode);
@@ -228,11 +226,13 @@ namespace SodRpg.Core.Tests
         {
             var profile = Profile.CreateNew(1);
             var state = profile.Hero(hero);
+            state.StarXp = StarProgression.TotalXpForPoints(150);
             foreach (var core in HeroSigils.TreeFor(hero).Where(t => t.Tier == 1 && !t.IsKeystone).Take(2))
                 state.Talents[core.Id] = 3;
             var route = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.RouteMemory == memory)
                 .OrderBy(t => t.RouteOrder).ToArray();
             var mechanic = route.First(t => t.IsPowerNode);
+            TreeTestPaths.Connect(profile, hero, route[0].Id);
             foreach (var node in route.TakeWhile(t => t.RouteOrder <= mechanic.RouteOrder))
                 state.Talents[node.Id] = node == mechanic ? node.MaxRank : 1;
             return Build.Compute(profile, hero, 0);

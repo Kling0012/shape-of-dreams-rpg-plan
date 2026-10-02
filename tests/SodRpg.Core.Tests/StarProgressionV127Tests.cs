@@ -225,6 +225,8 @@ namespace SodRpg.Core.Tests
             p.Hero(Hero).Talents["h.vesper.fire"] = 3;
             p.Hero(Hero).Talents["h.vesper.deep.thorns"] = 2;
             p.Hero(Hero).Talents["h.vesper.fourth"] = 2; // old two-rank costly node becomes one
+            p.Hero(Hero).StarXp = StarProgression.TotalXpForPoints(150);
+            TreeTestPaths.Connect(p, Hero, "h.vesper.deep.thorns");
             p.Hero(Hero).Keystone = "h.vesper.key";
             p.Hero(Other).Kills = 1;
             p.Hero(Other).Talents["h.husk.dark"] = 3;
@@ -235,13 +237,12 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, q.Hero(Hero).Talents["h.vesper.deep.thorns"]);
             Assert.Equal(1, q.Hero(Hero).Talents["h.vesper.fourth"]);
             Assert.Equal("h.vesper.key", q.Hero(Hero).Keystone);
-            Assert.Equal(12, Rules.SpentPoints(q.Hero(Hero)));
+            Assert.Equal(Rules.SpentPoints(p.Hero(Hero)) - 4, Rules.SpentPoints(q.Hero(Hero)));
             Assert.Empty(q.Hero(Other).Talents);
             Assert.Null(q.Hero(Other).Keystone);
             Assert.Single(notes);
             Assert.Equal(0, q.Material(Materials.Shard));
-            Assert.False(Rules.DeepStarsOpen(q, Hero));
-            Assert.Equal(0, Build.Compute(q, Hero, 0).Get(Stat.FourthAttackShift));
+            Assert.Equal(1, Build.Compute(q, Hero, 0).Get(Stat.FourthAttackShift));
         }
 
         [Fact]
@@ -283,65 +284,26 @@ namespace SodRpg.Core.Tests
             Assert.Equal(109, q.Hero(Other).StarXp);
         }
 
-        [Fact]
-        public void Routes_require_core_and_every_ancestor_but_only_one_rank_per_predecessor()
-        {
-            var p = Funded();
-            var h = p.Hero(Hero);
-            var route = Route();
-            Assert.False(Rules.TalentUnlocked(h, Hero, route[0]));
-            Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[0].Id));
-            OpenCore(p);
-            Assert.True(Rules.TalentUnlocked(h, Hero, route[0]));
-            Assert.False(Rules.TalentUnlocked(h, Other, route[0]));
-            h.Talents[route[1].Id] = 1;
-            Assert.False(Rules.TalentUnlocked(h, Hero, route[2]));
-            Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[2].Id));
-            Rules.AddTalentRank(p, Hero, route[0].Id);
-            Assert.True(Rules.TalentUnlocked(h, Hero, route[2]));
-            Rules.AddTalentRank(p, Hero, route[2].Id);
-            Assert.Equal(6, Rules.Tier1Ranks(h, Hero));
-            h.Talents[route[0].Id] = 0;
-            Assert.False(Rules.TalentUnlocked(h, Hero, route[2]));
-        }
-
-        [Fact]
-        public void Forged_core_rank_cannot_open_deep_stars_and_route_cycles_do_not_unlock()
-        {
-            var p = Funded();
-            var h = p.Hero(Hero);
-            h.Talents["h.vesper.fire"] = int.MaxValue;
-            Assert.Equal(3, Rules.Tier1Ranks(h, Hero));
-            Assert.False(Rules.DeepStarsOpen(p, Hero));
-            Assert.Equal(int.MaxValue, Rules.SpentPoints(h));
-            h.Talents.Clear();
-            OpenCore(p);
-            var route = Route();
-            h.Talents[route[1].Id] = 1;
-            var cycle = new TalentDef(route[1].Id, Line.Offense, new Txt("cycle", "cycle"), Stat.Armor, 1, 3)
-            {
-                HeroKey = Hero, Tier = 2, RouteId = route[1].RouteId,
-                RouteOrder = 2, PrerequisiteId = route[1].Id,
-            };
-            Assert.False(Rules.TalentUnlocked(h, Hero, cycle));
-        }
 
         [Fact]
         public void Capstone_costs_three_and_remains_separate_from_exclusive_core_keystone()
         {
-            var p = Funded(17);
+            var p = Funded();
             var h = p.Hero(Hero);
             var route = Route();
             OpenCore(p);
             h.Kills = 600;
             Rules.SetKeystone(p, Hero, "h.vesper.key");
+            TreeTestPaths.Connect(p, Hero, route[0].Id);
             foreach (var node in route.Take(6)) Rules.AddTalentRank(p, Hero, node.Id);
+            int before = Rules.SpentPoints(h);
+            h.StarXp = StarProgression.TotalXpForPoints(before + 2);
             Assert.Equal(2, Rules.FreePoints(p, Hero));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[6].Id));
-            h.StarXp = StarProgression.TotalXpForPoints(18);
+            h.StarXp = StarProgression.TotalXpForPoints(before + 3);
             Rules.AddTalentRank(p, Hero, route[6].Id);
             Assert.Equal(0, Rules.FreePoints(p, Hero));
-            Assert.Equal(18, Rules.SpentPoints(h));
+            Assert.Equal(before + 3, Rules.SpentPoints(h));
             Assert.Equal("h.vesper.key", h.Keystone);
             Assert.Equal(1, h.Talents[route[6].Id]);
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[6].Id));
@@ -349,7 +311,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Saved_locked_routes_and_ring_keep_ranks_but_have_no_effect_until_unlocked()
+        public void Saved_disconnected_routes_and_ring_receive_free_respec()
         {
             var p = Funded();
             var route = Route();
@@ -358,21 +320,11 @@ namespace SodRpg.Core.Tests
             p.Hero(Hero).Talents[ring.Id] = 5;
             var notes = new List<string>();
             var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
-            Assert.Empty(notes);
-            Assert.Equal(2, q.Hero(Hero).Talents[route[2].Id]);
-            Assert.Equal(5, q.Hero(Hero).Talents[ring.Id]);
-            var locked = Build.Compute(q, Hero, 0);
-            Assert.Empty(locked.Stats);
-            Assert.Empty(locked.Powers);
-            Assert.Empty(locked.Links);
-            Assert.False(Rules.TalentUnlocked(q.Hero(Hero), Hero, ring));
-            OpenCore(q);
-            Assert.True(Rules.TalentUnlocked(q.Hero(Hero), Hero, ring));
-            Assert.Equal(ring.PerRank * 5, Build.Compute(q, Hero, 0).Get(Stat.Armor));
-            Assert.False(Rules.TalentUnlocked(q.Hero(Hero), Hero, route[2]));
-            Rules.AddTalentRank(q, Hero, route[0].Id);
-            Rules.AddTalentRank(q, Hero, route[1].Id);
-            Assert.True(Rules.TalentUnlocked(q.Hero(Hero), Hero, route[2]));
+            Assert.Single(notes);
+            Assert.Empty(q.Hero(Hero).Talents);
+            Assert.Equal(150, Rules.FreePoints(q, Hero));
+            Assert.Equal(p.Hero(Hero).StarXp, q.Hero(Hero).StarXp);
+            Assert.Empty(Build.Compute(q, Hero, 0).Links);
         }
 
         private static string LegacySave(Profile p)
