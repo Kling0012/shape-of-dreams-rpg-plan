@@ -566,7 +566,7 @@ namespace SodRpg.Core.Game
                     break;
                 }
                 case DreamEvent.Stargazer:
-                    run.EventDropBonus += 0.3;
+                    run.EventDropBonus += DreamEvents.StargazerDropBonus;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.Cauldron:
@@ -613,7 +613,7 @@ namespace SodRpg.Core.Game
                     ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
                     break;
                 case DreamEvent.LuckyStar:
-                    run.EventLuck += 0.4;
+                    run.EventLuck += DreamEvents.LuckyStarLuck;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
             }

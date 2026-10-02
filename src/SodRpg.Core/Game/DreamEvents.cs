@@ -30,6 +30,10 @@ namespace SodRpg.Core.Game
     {
         /// <summary>確保地点で出来事が現れる確率。</summary>
         public const double OfferChance = 0.5;
+        /// <summary>星読みの塔：次に確保するまでの遺物ドロップ率の上乗せ（説明文と効果の両方で使う）。</summary>
+        public const double StargazerDropBonus = 0.3;
+        /// <summary>幸運の星：次に確保するまでの幸運（レア度の上振れ）。</summary>
+        public const double LuckyStarLuck = 0.4;
 
         public static int MerchantCost(int heat) => 50 + 10 * Loot.ClampHeat(heat);
 
@@ -76,8 +80,8 @@ namespace SodRpg.Core.Game
                     return Loc.T("まだ持ち帰っていない欠片を30払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
                         "Pay 30 unsecured shards to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
                 case DreamEvent.Stargazer:
-                    return Loc.T("次に確保するまで、遺物が30%多く落ちます。",
-                        "Until you next secure, relics drop 30% more often.");
+                    return Loc.T($"次に確保するまで、遺物が{(int)Math.Round(StargazerDropBonus * 100)}%多く落ちます。",
+                        $"Until you next secure, relics drop {(int)Math.Round(StargazerDropBonus * 100)}% more often.");
                 case DreamEvent.Cauldron:
                     return Loc.T("まだ持ち帰っていないコモンかアンコモンの遺物を3つ溶かして、1つ上のレア度の遺物を1つ作ります。",
                         "Melt 3 unsecured Common or Uncommon relics into one relic of the next rarity.");
@@ -149,7 +153,7 @@ namespace SodRpg.Core.Game
                         reason = Loc.T("コモンかアンコモンの未確保の遺物が3つ必要です。", "Need 3 unsecured Common or Uncommon relics.");
                     break;
                 case DreamEvent.Tapir:
-                    if (!run.Satchel.Any(r => trades == null || !trades.IsReserved(r.Uid))) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
+                    if (!run.Satchel.Any(r => r.Rarity < Rarity.Epic && (trades == null || !trades.IsReserved(r.Uid)))) reason = Loc.T("まだ持ち帰っていない、エピック未満の遺物が必要です。", "Need an unsecured relic below Epic.");
                     break;
                 case DreamEvent.CourageGate:
                     if (run.Heat >= Content.MaxHeat) reason = Loc.T("これ以上深く潜れません。", "Cannot delve any deeper.");

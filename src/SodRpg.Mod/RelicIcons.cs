@@ -57,12 +57,17 @@ namespace SodRpg.Mod
                 if (File.Exists(file))
                 {
                     tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
-                    if (!tex.LoadImage(File.ReadAllBytes(file))) tex = null;
+                    if (!tex.LoadImage(File.ReadAllBytes(file)))
+                    {
+                        UnityEngine.Object.Destroy(tex);
+                        tex = null;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Log.Warn("Icon " + baseId + ": " + ex.Message);
+                if (tex != null) UnityEngine.Object.Destroy(tex);
                 tex = null;
             }
             Cache[baseId] = tex;
