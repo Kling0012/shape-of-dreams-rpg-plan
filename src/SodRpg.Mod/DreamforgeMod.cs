@@ -39,6 +39,7 @@ namespace SodRpg.Mod
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
+                RelicIcons.Init(mod?.path);
                 _ui = new DreamforgeUi(_session, () => config);
                 _host = new HostAuthority(() => _session?.Profile.Run?.DailyId ?? DailyDream.Today.Id);
                 _session.FirstLaunch();

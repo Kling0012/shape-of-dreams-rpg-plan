@@ -136,12 +136,19 @@ namespace SodRpg.Mod
                 case Rarity.Uncommon: return "#62d962";
                 case Rarity.Rare: return "#4fa8ff";
                 case Rarity.Epic: return "#c475ff";
-                default: return "#ffb52e";
+                default: return "#ffd24a";
             }
         }
 
         public static string Colored(string text, string hex) => "<color=" + hex + ">" + text + "</color>";
 
-        public static string RelicTitle(Relic r) => Colored(r.DisplayName, RarityHex(r.Rarity));
+        /// <summary>遺物の色。セット品は橙で、ほかの伝説（金）と見分ける。</summary>
+        public static string RelicHex(Relic r)
+        {
+            if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u) && u.SetId != null) return "#ff8a3d";
+            return RarityHex(r.Rarity);
+        }
+
+        public static string RelicTitle(Relic r) => Colored(r.DisplayName, RelicHex(r));
     }
 }

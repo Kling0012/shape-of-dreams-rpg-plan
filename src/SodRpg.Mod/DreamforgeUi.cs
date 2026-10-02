@@ -268,8 +268,8 @@ namespace SodRpg.Mod
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
-            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
-                + (run.OfferedEvent != DreamEvent.None ? 76 : 0) + (_s.HasPendingTrades ? 24 : 0)
+            var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
+                + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades ? 24 : 0)
                 + (_status != null && Time.unscaledTime < _statusUntil ? 24 : 0));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
@@ -278,6 +278,15 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T(
                 $"まだ持ち帰っていない物：遺物{run.Satchel.Count}個、欠片{run.SatchelShards}、調律石{run.SatchelTuning}",
                 $"Not yet secured: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning"), _st.Label);
+            if (run.Satchel.Count > 0)
+            {
+                // 持ち帰れる遺物を、良い物から順にアイコンで並べる（最大14個）。
+                GUILayout.BeginHorizontal();
+                foreach (var r in run.Satchel.OrderByDescending(x => x.Score).Take(14)) IconSlot(r, 36);
+                if (run.Satchel.Count > 14) GUILayout.Label($"+{run.Satchel.Count - 14}", _st.Small);
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+            }
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
             GUILayout.Label(UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
                 $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は遠征を始めたときの深さに戻ります。",
@@ -323,6 +332,10 @@ namespace SodRpg.Mod
                 bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
                 if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
                 if (merchant && _s.TradePending(TradeKind.MerchantGold)) { ok = false; why = Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."); }
+                GUILayout.BeginHorizontal();
+                var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
+                if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, "events/" + e);
+                GUILayout.BeginVertical();
                 GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
                 string label = !ok ? why : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)") : Loc.T("この出来事を選ぶ", "Take this event");
@@ -345,6 +358,8 @@ namespace SodRpg.Mod
                     }
                 }
                 GUI.enabled = true;
+                GUILayout.EndVertical();
+                GUILayout.EndHorizontal();
             }
             if (run.OfferedPacts.Count > 0)
             {
@@ -679,11 +694,14 @@ namespace SodRpg.Mod
             {
                 var r = Rules.EquippedRelic(p, hero, slot);
                 string label = Content.SlotName(slot) + "： " + (r != null ? UiStyles.RelicTitle(r) : Loc.T("<color=#777>（なし）</color>", "<color=#777>(empty)</color>"));
-                if (GUILayout.Button(label, _slot == slot ? _st.RowSel : _st.Row, GUILayout.Height(30)))
+                GUILayout.BeginHorizontal();
+                IconSlot(r, 34);
+                if (GUILayout.Button(label, _slot == slot ? _st.RowSel : _st.Row, GUILayout.Height(34)))
                 {
                     _slot = slot;
                     _selected = r?.Uid;
                 }
+                GUILayout.EndHorizontal();
             }
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
@@ -696,7 +714,7 @@ namespace SodRpg.Mod
             {
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
-                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3", "#ffb52e") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
             }
             foreach (var kv in build.Lines)
             {
@@ -770,21 +788,36 @@ namespace SodRpg.Mod
                 string mark = h.Equipped.Contains(r.Uid) ? "<color=#ffe17a>★</color> " : "";
                 string lck = r.Locked ? Loc.T(" <color=#aaa>[鍵]</color>", " <color=#aaa>[locked]</color>") : "";
                 string text = $"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}";
-                if (GUILayout.Button(text, _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(28)))
+                GUILayout.BeginHorizontal();
+                IconSlot(r, 36);
+                if (GUILayout.Button(text, _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(36)))
                 {
                     _selected = r.Uid;
                     _retuneIndex = -1;
                     _confirmSalvage = null;
                 }
+                GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
         }
 
+        /// <summary>アイコンの場所を確保して描く。アイコンが無い遺物・空の枠では場所だけ空ける（行の高さをそろえる）。</summary>
+        private static void IconSlot(Relic r, float size)
+        {
+            var rect = GUILayoutUtility.GetRect(size, size, GUILayout.Width(size), GUILayout.Height(size));
+            if (r != null && Event.current.type == EventType.Repaint) RelicIcons.Draw(rect, r);
+        }
+
         private void RelicDetail(Relic r)
         {
+            GUILayout.BeginHorizontal();
+            IconSlot(r, 80);
+            GUILayout.BeginVertical();
             GUILayout.Label("<size=19><b>" + UiStyles.RelicTitle(r) + "</b></size>", _st.Label);
             GUILayout.Label($"{Content.RarityName(r.Rarity)} · {Content.SlotName(r.Slot)} · {Content.LineName(r.Base.Line)} · Lv{r.ItemLevel}"
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
+            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
             var imp = r.Implicit;
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
@@ -792,7 +825,7 @@ namespace SodRpg.Mod
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
-                    GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ffb52e") + " <color=#aab>" + set.Describe() + "</color>", _st.Small);
+                    GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#aab>" + set.Describe() + "</color>", _st.Small);
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
             }
