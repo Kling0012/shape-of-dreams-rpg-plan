@@ -19,6 +19,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<string, int> Sets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         /// <summary>遺物と星の連携。装着条件はホストで判定し、常時の能力値には加えない。</summary>
         public List<LinkDef> Links { get; } = new List<LinkDef>();
+        /// <summary>振ったルートの星が持つ、記憶に反応する仕掛け。</summary>
+        public List<GimmickEntry> Gimmicks { get; } = new List<GimmickEntry>();
         public int Heat { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
         public int DreamLevel { get; set; } = 1;
@@ -55,8 +57,8 @@ namespace SodRpg.Core.Game
                 var link = r.Link;
                 if (link != null)
                 {
-                    int value = r.Awakened ? (int)((long)link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100) : link.Value;
-                    value = Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), value); // ホストの受信と同じ上限
+                    long scaled = r.Awakened ? (long)link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100 : link.Value;
+                    int value = (int)Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), scaled));
                     var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, Value = value };
                     if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
                 }
@@ -86,6 +88,23 @@ namespace SodRpg.Core.Game
                 if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone
                     || !Rules.TalentUnlocked(h, heroKey, t)) continue;
                 int rank = Math.Min(kv.Value, t.MaxRank);
+                if (t.Gimmick != null && t.Gimmick.Value > 0 && b.Gimmicks.Count < global::SodRpg.Core.Game.Gimmicks.MaxEntries)
+                {
+                    var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
+                    {
+                        StarId = t.Id,
+                        Memory = t.RouteMemory,
+                        Def = new GimmickDef
+                        {
+                            Trigger = t.Gimmick.Trigger,
+                            Effect = t.Gimmick.Effect,
+                            Value = (int)Math.Min(int.MaxValue, (long)t.Gimmick.Value * rank),
+                            Arg = t.Gimmick.Arg,
+                            Cooldown = t.Gimmick.Cooldown,
+                        },
+                    });
+                    if (entry != null) b.Gimmicks.Add(entry);
+                }
                 if (t.LinkPerRank != null)
                 {
                     var link = new LinkDef
@@ -180,6 +199,25 @@ namespace SodRpg.Core.Game
                     .Append(link.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(string.Join("+", link.Requires));
             }
+            sb.Append(";g:");
+            first = true;
+            var stars = new HashSet<string>(StringComparer.Ordinal);
+            int count = 0;
+            foreach (var raw in Gimmicks)
+            {
+                if (count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) break;
+                var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(raw);
+                if (entry == null || !stars.Add(entry.StarId)) continue;
+                if (!first) sb.Append(',');
+                first = false;
+                count++;
+                sb.Append(entry.StarId).Append(':').Append(entry.Memory).Append(':')
+                    .Append(((int)entry.Def.Trigger).ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(((int)entry.Def.Effect).ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.Arg.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture));
+            }
             return sb.ToString();
         }
 
@@ -191,6 +229,7 @@ namespace SodRpg.Core.Game
         {
             if (string.IsNullOrEmpty(text) || text.Length > 16384) return null;
             var b = new Build();
+            var stars = new HashSet<string>(StringComparer.Ordinal);
             try
             {
                 foreach (string part in text.Split(';'))
@@ -235,6 +274,36 @@ namespace SodRpg.Core.Game
                                 Value = Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(linkKind, targets.Length), v)),
                             };
                             if (global::SodRpg.Core.Game.Links.Validate(def)) b.Links.Add(def);
+                        }
+                        continue;
+                    }
+                    if (kind == "g")
+                    {
+                        if (body.Length == 0) continue;
+                        foreach (string encoded in body.Split(','))
+                        {
+                            if (b.Gimmicks.Count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) break;
+                            string[] fields = encoded.Split(':');
+                            if (fields.Length != 7
+                                || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int trigger)
+                                || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int effect)
+                                || !int.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
+                                || !int.TryParse(fields[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out int arg)
+                                || !float.TryParse(fields[6], NumberStyles.Float, CultureInfo.InvariantCulture, out float cooldown)) continue;
+                            var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
+                            {
+                                StarId = fields[0],
+                                Memory = fields[1],
+                                Def = new GimmickDef
+                                {
+                                    Trigger = (GimmickTrigger)trigger,
+                                    Effect = (GimmickEffect)effect,
+                                    Value = value,
+                                    Arg = arg,
+                                    Cooldown = cooldown,
+                                },
+                            });
+                            if (entry != null && stars.Add(entry.StarId)) b.Gimmicks.Add(entry);
                         }
                         continue;
                     }

@@ -83,7 +83,7 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 5 adds per-player dream level/spent stars and host-authoritative pressure.
-        public const int Version = 5;
+        // Version 6 adds route-star memory gimmicks to the build payload.
+        public const int Version = 6;
     }
 }

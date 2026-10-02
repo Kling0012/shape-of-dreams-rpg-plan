@@ -28,6 +28,12 @@ namespace SodRpg.Mod
         {
             public Hero Hero;
             public PowerRuntime Powers;
+            public readonly GimmickRuntime Gimmicks = new GimmickRuntime();
+            public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
+            public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public Action<EventInfoDamage> OnMemoryDamage;
+            public Action<EventInfoKill> OnMemoryKill;
+            public readonly Dictionary<int, float> MemoryHitAmounts = new Dictionary<int, float>();
             public ReceivedBuild AppliedBuild;
             public StatBonus BaseBonus;
             public StatBonus DynBonus;
@@ -56,6 +62,14 @@ namespace SodRpg.Mod
             public bool GemSlotsCaptured;
             public int BaseGemIdentity, BaseGemMovement;
             public int AddedGemIdentity, AddedGemMovement;
+        }
+
+        private struct PendingGimmick
+        {
+            public GimmickRequest Request;
+            public Entity Victim;
+            public float Due;
+            public Vector3 Center;
         }
 
         private sealed class MonsterRuntime
@@ -132,6 +146,9 @@ namespace SodRpg.Mod
         private ZoneManager _zone;
         private bool _spreadingFire;
         private bool _shattering;
+        // Actor damage/kill events are synchronous. Also suppress nested identity reactions.
+        private int _gimmickDamageDepth;
+        private readonly Dictionary<Type, string> _memorySourceTypes = new Dictionary<Type, string>();
 
         // 悪夢化エリート・夢の変種
         private ActorManager _am;
@@ -215,6 +232,7 @@ namespace SodRpg.Mod
                 _nextAreaScan = now + 0.25f;
                 ScanArea();
             }
+            foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
             ProcessSpawns();
             PruneMonsters(now);
@@ -1201,11 +1219,30 @@ namespace SodRpg.Mod
                         || t.GetRelation(captured.Hero) != EntityRelation.Enemy) return;
                     var status = t.Status;
                     float amp = captured.Powers.FettersAmplification(status.hasStun || status.hasSlow || status.hasCold);
-                    if (amp <= 0) return;
-                    d.ApplyAmplification(amp);
-                    LogPowerTrigger(Power.Fetters);
+                    if (amp > 0)
+                    {
+                        d.ApplyAmplification(amp);
+                        LogPowerTrigger(Power.Fetters);
+                    }
+                    if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+                    string memory = MemorySource(d.actor ?? a);
+                    int memoryAmp = 0;
+                    if (memory != null)
+                        foreach (var link in captured.SatisfiedLinks)
+                            if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
+                            {
+                                memoryAmp += link.Value;
+                                LogLinkApplied(link);
+                            }
+                    if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
+                    int expose = captured.Gimmicks.ExposePercent(t.GetInstanceID(), Time.time);
+                    if (expose > 0) d.ApplyAmplification(expose / 100f);
                 };
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);
+                rt.OnMemoryDamage = info => OnMemoryDamage(captured, info);
+                rt.OnMemoryKill = info => OnMemoryKill(captured, info);
+                hero.ActorEvent_OnDealDamage += rt.OnMemoryDamage;
+                hero.ActorEvent_OnKill += rt.OnMemoryKill;
                 // Actor walks its ancestor processors, including for Heal().Dispatch and GiveShield.
                 // Mod-created recovery therefore uses these hooks too; do not multiply at call sites.
                 rt.HealDealt = (ref HealData heal, Actor a, Entity t) =>
@@ -1229,6 +1266,8 @@ namespace SodRpg.Mod
             rt.LinkMemories.Clear();
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
+            rt.Gimmicks.SetBuild(build.Gimmicks);
+            rt.PendingGimmicks.Clear();
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
@@ -1337,6 +1376,8 @@ namespace SodRpg.Mod
             {
                 if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
                 if (rt.OnHit != null) hero.EntityEvent_OnAttackHit -= rt.OnHit;
+                if (rt.OnMemoryDamage != null) hero.ActorEvent_OnDealDamage -= rt.OnMemoryDamage;
+                if (rt.OnMemoryKill != null) hero.ActorEvent_OnKill -= rt.OnMemoryKill;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
                 if (rt.OnTeleport != null) hero.Control.ClientEvent_OnTeleport -= rt.OnTeleport;
                 if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
@@ -1360,6 +1401,9 @@ namespace SodRpg.Mod
             rt.HealDealt = null;
             rt.ShieldDealt = null;
             rt.OnSummon = null;
+            rt.OnMemoryDamage = null;
+            rt.OnMemoryKill = null;
+            rt.PendingGimmicks.Clear();
         }
 
         private void BindGoldSpend(HeroRuntime rt)
@@ -1507,6 +1551,8 @@ namespace SodRpg.Mod
             {
                 var hero = rt.Hero;
                 if (!Alive(hero)) return;
+                if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
+                    QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
                     Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
@@ -1642,6 +1688,12 @@ namespace SodRpg.Mod
             var p = rt.Powers;
             p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
+            dyn.AttackSpeedPct += rt.Gimmicks.QuickenPercent(now);
+            int empower = rt.Gimmicks.EmpowerPercent(now);
+            dyn.AttackPct += empower;
+            dyn.PowerPct += empower;
+            // Kill() follows the synchronous hit event; do not retain old victims between frames.
+            rt.MemoryHitAmounts.Clear();
             var d = rt.DynBonus;
             // 値が変わったときだけ能力を再計算する（StatBonus は同じ値の代入では汚れない）。
             if (d.attackSpeedPercentage != dyn.AttackSpeedPct || d.attackDamagePercentage != dyn.AttackPct || d.abilityPowerPercentage != dyn.PowerPct
@@ -1725,7 +1777,7 @@ namespace SodRpg.Mod
         {
             var p = rt.Powers;
             var links = p.Build.Links;
-            if (links.Count == 0)
+            if (links.Count == 0 && p.Build.Gimmicks.Count == 0)
             {
                 if (rt.SatisfiedLinks.Count > 0)
                 {
@@ -1816,8 +1868,183 @@ namespace SodRpg.Mod
             return false;
         }
 
+        /// <summary>Use the creating actor chain, never guess St_* from an Ai_* name.</summary>
+        private string MemorySource(Actor actor)
+        {
+            for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
+            {
+                // Gems can borrow a skill as their parent; their own damage is not that memory.
+                if (actor is Gem || (actor is AbilityInstance instance && instance.gem != null)) return null;
+                if (!(actor is SkillTrigger)) continue;
+                var type = actor.GetType();
+                if (!_memorySourceTypes.TryGetValue(type, out string memory))
+                {
+                    string name = type.Name;
+                    memory = Links.IsMemory(name) ? name : null;
+                    _memorySourceTypes[type] = memory;
+                }
+                return memory;
+            }
+            return null;
+        }
+
+        private void OnMemoryDamage(HeroRuntime rt, EventInfoDamage info)
+        {
+            try
+            {
+                if (_gimmickDamageDepth != 0 || !Alive(rt.Hero) || info.victim == null
+                    || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy || info.damage.amount <= 0f) return;
+                string memory = MemorySource(info.actor);
+                if (memory == null) return;
+                if (rt.Powers.Build.Gimmicks.Count > 0)
+                    rt.MemoryHitAmounts[info.victim.GetInstanceID()] = info.damage.amount;
+                QueueGimmicks(rt, GimmickTrigger.OnHit, memory, info.victim, info.damage.amount);
+                if (info.damage.HasAttr(DamageAttribute.IsCrit))
+                    QueueGimmicks(rt, GimmickTrigger.OnCrit, memory, info.victim, info.damage.amount);
+            }
+            catch (Exception ex) { Log.Error("Host: memory hit " + ex); }
+        }
+
+        private void OnMemoryKill(HeroRuntime rt, EventInfoKill info)
+        {
+            try
+            {
+                if (_gimmickDamageDepth != 0 || !Alive(rt.Hero) || info.victim == null
+                    || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
+                string memory = MemorySource(info.actor);
+                int victimId = info.victim.GetInstanceID();
+                rt.MemoryHitAmounts.TryGetValue(victimId, out float damage);
+                rt.MemoryHitAmounts.Remove(victimId);
+                if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage);
+            }
+            catch (Exception ex) { Log.Error("Host: memory kill " + ex); }
+        }
+
+        private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage)
+        {
+            if (rt.Powers.Build.Gimmicks.Count == 0 || FindMemory(rt.Hero, memory) == null) return;
+            var requests = rt.GimmickRequests;
+            requests.Clear();
+            float now = Time.time;
+            rt.Gimmicks.Fire(trigger, memory, now, victim != null ? victim.GetInstanceID() : 0,
+                damage, _gimmickDamageDepth != 0, requests);
+            foreach (var request in requests)
+            {
+                var effect = request.Entry.Def.Effect;
+                if (effect == GimmickEffect.Quicken || effect == GimmickEffect.Empower || effect == GimmickEffect.Expose) continue;
+                rt.PendingGimmicks.Add(new PendingGimmick
+                {
+                    Request = request,
+                    Victim = victim,
+                    Center = victim != null ? victim.position : rt.Hero.agentPosition,
+                    Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? 0.3f : 0f),
+                });
+            }
+            requests.Clear();
+        }
+
+        private static SkillTrigger FindMemory(Hero hero, string memory)
+        {
+            if (hero.Skill == null) return null;
+            foreach (var slot in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(slot);
+                if (skill != null && skill.GetType().Name == memory) return skill;
+            }
+            return null;
+        }
+
+        private void ApplyPendingGimmicks(HeroRuntime rt, float now)
+        {
+            var pending = rt.PendingGimmicks;
+            if (!Alive(rt.Hero)) { pending.Clear(); return; }
+            // Remove before dispatch: nested game events must never replay this request.
+            for (int i = pending.Count - 1; i >= 0; i--)
+            {
+                var effect = pending[i];
+                if (effect.Due > now) continue;
+                pending.RemoveAt(i);
+                try { ApplyGimmick(rt, effect); }
+                catch (Exception ex) { Log.Error("Host: memory effect " + ex); }
+            }
+        }
+
+        private void ApplyGimmick(HeroRuntime rt, PendingGimmick pending)
+        {
+            var hero = rt.Hero;
+            var request = pending.Request;
+            var def = request.Entry.Def;
+            var victim = pending.Victim;
+            bool liveTarget = victim != null && victim.isActive && victim.currentHealth > 0f
+                && victim.GetRelation(hero) == EntityRelation.Enemy;
+            switch (def.Effect)
+            {
+                case GimmickEffect.Element:
+                    int stacks = def.Value / 100;
+                    if (_rng.NextDouble() * 100 < def.Value % 100) stacks++;
+                    if (stacks <= 0) break;
+                    var element = def.Arg == 0 ? ElementalType.Fire : def.Arg == 1 ? ElementalType.Cold
+                        : def.Arg == 2 ? ElementalType.Light : ElementalType.Dark;
+                    if (def.Trigger == GimmickTrigger.OnUse)
+                    {
+                        ListReturnHandle<Entity> handle;
+                        var found = DewPhysics.OverlapCircleAllEntities(out handle, hero.agentPosition, 4f, EnemyFilter, hero);
+                        try { foreach (var enemy in found) hero.ApplyElemental(element, enemy, stacks); }
+                        finally { handle.Return(); }
+                    }
+                    else if (liveTarget) hero.ApplyElemental(element, victim, stacks);
+                    break;
+                case GimmickEffect.Burst:
+                    _gimmickDamageDepth++;
+                    try
+                    {
+                        DamageAround(hero, pending.Center, 4f,
+                            Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.Value / 100f,
+                            null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
+                    }
+                    finally { _gimmickDamageDepth--; }
+                    break;
+                case GimmickEffect.Shield:
+                    hero.GiveShield(hero, hero.maxHealth * def.Value / 100f, 4f);
+                    break;
+                case GimmickEffect.Heal:
+                    hero.Heal(hero.maxHealth * def.Value / 100f).Dispatch(hero);
+                    if (def.Arg == 1)
+                        foreach (var player in DewPlayer.gamePlayers)
+                        {
+                            var ally = player != null ? player.hero : null;
+                            if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
+                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > 100f) continue;
+                            hero.Heal(ally.maxHealth * def.Value / 100f).Dispatch(ally);
+                        }
+                    break;
+                case GimmickEffect.Recharge:
+                    var skill = FindMemory(hero, request.Entry.Memory);
+                    if (skill != null && skill.currentConfigUnscaledMaxCooldownTime > 0f)
+                    {
+                        // The native ratio uses maximum cooldown, not the remaining cooldown.
+                        float ratio = Math.Max(0f, skill.currentConfigUnscaledCooldownTime)
+                            / skill.currentConfigUnscaledMaxCooldownTime * def.Value / 100f;
+                        if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
+                    }
+                    break;
+                case GimmickEffect.Echo:
+                    if (!liveTarget || request.Damage <= 0f) break;
+                    _gimmickDamageDepth++;
+                    try
+                    {
+                        // Final damage is already armor-adjusted; repeat that amount without a second armor reduction.
+                        hero.PureDamage(request.Damage * def.Value / 100f, 0f)
+                            .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
+                    }
+                    finally { _gimmickDamageDepth--; }
+                    break;
+                // Quicken/Empower/Expose windows are registered by the pure runtime.
+            }
+        }
+
         /// <summary>中心の周りの敵へダメージ（except を除き、最大 maxTargets 体）。</summary>
-        private static void DamageAround(Hero hero, Vector3 center, float radius, float amount, Entity except, int maxTargets, bool magic)
+        private static void DamageAround(Hero hero, Vector3 center, float radius, float amount, Entity except, int maxTargets, bool magic, bool gimmick = false)
         {
             ListReturnHandle<Entity> handle;
             var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius,
@@ -1830,8 +2057,9 @@ namespace SodRpg.Mod
                 {
                     if (e == except) continue;
                     if (n++ >= maxTargets) break;
-                    if (magic) hero.MagicDamage(amount, 0f).Dispatch(e);
-                    else hero.PhysicalDamage(amount, 0f).Dispatch(e);
+                    var damage = magic ? hero.MagicDamage(amount, 0f) : hero.PhysicalDamage(amount, 0f);
+                    if (gimmick) damage = damage.SetAmountModifiedBy(typeof(GimmickRuntime));
+                    damage.Dispatch(e);
                 }
             }
             finally

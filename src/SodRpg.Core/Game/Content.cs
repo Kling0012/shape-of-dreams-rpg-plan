@@ -209,9 +209,16 @@ namespace SodRpg.Core.Game
         /// <summary>星図に表示する効果。小ノードは1段あたりの値。</summary>
         public string Describe()
         {
-            if (IsKeystone) return Content.FormatPower(Power, PowerValue) + "\n" + Description;
-            string effect = LinkPerRank != null ? Links.Describe(LinkPerRank)
-                : IsPowerNode ? Content.FormatPower(RankPower, PerRank) : Content.FormatStat(Stat, PerRank);
+            string effect;
+            if (IsKeystone)
+                effect = Content.FormatPower(Power, PowerValue) + "\n" + Description;
+            else
+                effect = LinkPerRank != null ? Links.Describe(LinkPerRank)
+                    : IsPowerNode ? Content.FormatPower(RankPower, PerRank)
+                    : Gimmick != null && PerRank == 0 ? "" : Content.FormatStat(Stat, PerRank);
+            string gimmick = Gimmicks.Describe(Gimmick, RouteMemory);
+            if (gimmick.Length > 0) effect = effect.Length == 0 ? gimmick : effect + "\n" + gimmick;
+            if (IsKeystone) return effect;
             if (RankCost > 1) return effect + Loc.T($"（1段まで・{RankCost}ポイント）", $" (1 rank only, costs {RankCost} points)");
             return effect + Loc.T("（1段ごと）", " (per rank)");
         }
