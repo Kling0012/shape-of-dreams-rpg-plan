@@ -2309,7 +2309,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Radiance, 40, 80),
                 new PowerRange(Power.UltimateSurge, 15, 25),
                 new PowerRange(Power.SoulSiphon, 10, 20),
-                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.Frenzy, 1, 2),
                 new PowerRange(Power.OpeningStrike, 25, 50),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Overload, 10, 20),
@@ -2326,7 +2326,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Aegis, 10, 20),
                 new PowerRange(Power.EchoingDodge, 40, 80),
                 new PowerRange(Power.Whirlwind, 40, 80),
-                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.Frenzy, 1, 2),
                 new PowerRange(Power.StarShield, 10, 20),
                 new PowerRange(Power.Sprint, 10, 25),
                 new PowerRange(Power.OverflowingLife, 20, 40),
@@ -2378,7 +2378,7 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.ChainLightning, 30, 50),
                 new PowerRange(Power.Ember, 25, 50),
                 new PowerRange(Power.Frost, 30, 55),
-                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.Frenzy, 1, 2),
                 new PowerRange(Power.Lifesteal, 5, 10),
                 new PowerRange(Power.OpeningStrike, 25, 50),
                 new PowerRange(Power.Shatter, 30, 60),
@@ -2965,7 +2965,7 @@ namespace SodRpg.Core.Game
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate (refreshes, does not stack)");
                 case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する（0.5秒に1回まで）", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health (at most once per 0.5s)");
                 case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% of the higher of AD or AP to enemies within 4m (once per 2s)");
-                case Power.Frenzy: return Loc.T($"【{name}】周りの敵1体につき、攻撃速度が{v}%上がる（5体まで）", $"[{name}] +{v}% attack speed per nearby enemy (up to 5)");
+                case Power.Frenzy: return Loc.T($"【{name}】周りの敵1体につき、攻撃速度が{v}%上がる（8体まで）", $"[{name}] +{v}% attack speed per nearby enemy (up to 8)");
                 case Power.OpeningStrike: return Loc.T($"【{name}】HPが90%以上の敵への通常攻撃に、攻撃力{v}%分のダメージを上乗せする", $"[{name}] Basic attacks on enemies above 90% health deal +{v}% AD");
                 case Power.StarShield: return Loc.T($"【{name}】Ultimateを使うと、最大HPの{v}%分の障壁を12秒間張る", $"[{name}] Using your Ultimate grants a shield worth {v}% of max health for 12s");
                 case Power.Sprint: return Loc.T($"【{name}】回避した後の3秒間、移動速度と攻撃速度が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% move speed and attack speed for 3s after dodging (refreshes, does not stack)");

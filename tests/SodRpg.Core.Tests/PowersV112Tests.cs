@@ -35,13 +35,13 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Frenzy_scales_with_nearby_enemies_up_to_five()
+        public void Frenzy_scales_with_nearby_enemies_up_to_eight()
         {
             var rt = new PowerRuntime(With(Power.Frenzy, 3), 0);
             rt.NearbyEnemies = 2;
             Assert.Equal(6, rt.Current(1f).AttackSpeedPct);
             rt.NearbyEnemies = 9;
-            Assert.Equal(15, rt.Current(1f).AttackSpeedPct);
+            Assert.Equal(24, rt.Current(1f).AttackSpeedPct); // v1.28：8体まで
         }
 
         [Fact]

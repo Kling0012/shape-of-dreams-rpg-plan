@@ -44,7 +44,7 @@ namespace SodRpg.Core.Game
         public const float SoulSiphonInterval = 0.5f;
         public const float WhirlwindInterval = 2f;
         public const float WhirlwindRadius = 4f;
-        public const int FrenzyMaxEnemies = 5;
+        public const int FrenzyMaxEnemies = 8; // v1.28：敵が多く出るので5体では頭打ちが早い
         public const float OpeningStrikeThreshold = 0.9f;
         public const float SprintDuration = 3f;
         /// <summary>回避の残響：回避の後、次の通常攻撃への上乗せができる猶予（新しい回避で延びる）。</summary>
