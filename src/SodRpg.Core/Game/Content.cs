@@ -2638,6 +2638,26 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>
+        /// 属性を付ける量の説明（v1.28：「平均0.6スタック（端数は確率）」は分かりにくいので、言い換える）。
+        /// 100 ごとに確実に1つ、端数はその確率でもう1つ。例：60 →「60%の確率で1つ」、160 →「1つ、さらに60%の確率でもう1つ」。
+        /// </summary>
+        private static string ElementJa(int v, string element)
+        {
+            int sure = Math.Max(0, v) / 100, chance = Math.Max(0, v) % 100;
+            if (sure == 0) return $"通常攻撃が当たると、{chance}%の確率で敵に{element}を1つ付ける";
+            string head = $"通常攻撃が当たるたびに、敵に{element}を{sure}つ付ける";
+            return chance > 0 ? head + $"（さらに{chance}%の確率でもう1つ）" : head;
+        }
+
+        private static string ElementEn(int v, string element)
+        {
+            int sure = Math.Max(0, v) / 100, chance = Math.Max(0, v) % 100;
+            if (sure == 0) return $"Basic attack hits have a {chance}% chance to apply 1 {element}";
+            string head = $"Basic attack hits apply {sure} {element}";
+            return chance > 0 ? head + $" (plus a {chance}% chance for 1 more)" : head;
+        }
+
         /// <summary>アイテムレベルによる倍率（%）。1で100%、40以上で217%。</summary>
         public static int LevelScalePct(int itemLevel)
         {
@@ -2939,10 +2959,10 @@ namespace SodRpg.Core.Game
                 case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える", $"[{name}] On kill, deal {v}% of the higher of AD or AP to enemies within 4m");
                 case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を6秒間張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of your max health, gain a shield worth {v}% of max health for 6s (once per 20s)");
                 case Power.Bloodlust: return Loc.T($"【{name}】HPが50%未満の間、攻撃速度が{v}%上がる", $"[{name}] +{v}% attack speed while below 50% health");
-                case Power.Ember: return Loc.T($"【{name}】通常攻撃が当たるたびに、敵に火を平均{v / 100f:0.##}スタック重ねる（端数は確率。火は上限なし）", $"[{name}] Each basic attack hit applies {v / 100f:0.##} Fire stacks on average (fractions are a chance; Fire has no stack limit)");
+                case Power.Ember: return Loc.T($"【{name}】" + ElementJa(v, "火") + "（火は上限なしで重なる）", $"[{name}] " + ElementEn(v, "Fire") + " (Fire has no stack limit)");
                 case Power.Frost: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵を冷気で冷やす（冷気は重ならない）", $"[{name}] Basic attack hits have a {v}% chance to apply Cold (Cold does not stack)");
-                case Power.Radiance: return Loc.T($"【{name}】通常攻撃が当たるたびに、敵に光を平均{v / 100f:0.##}スタック重ねる（端数は確率。光は5スタックまで、3スタックで光のダメージは必ず会心）", $"[{name}] Each basic attack hit applies {v / 100f:0.##} Light stacks on average (fractions are a chance; up to 5 stacks, and at 3 stacks light damage always crits)");
-                case Power.Umbra: return Loc.T($"【{name}】通常攻撃が当たるたびに、敵に闇を平均{v / 100f:0.##}スタック重ねる（端数は確率。会心ならもう1スタック。闇は5スタックまで）", $"[{name}] Each basic attack hit applies {v / 100f:0.##} Dark stacks on average (fractions are a chance; critical hits add 1 more; up to 5 stacks)");
+                case Power.Radiance: return Loc.T($"【{name}】" + ElementJa(v, "光") + "（光は5つまで。3つ重なると光のダメージは必ず会心）", $"[{name}] " + ElementEn(v, "Light") + " (up to 5; at 3, light damage always crits)");
+                case Power.Umbra: return Loc.T($"【{name}】" + ElementJa(v, "闇") + "。会心で当たればもう1つ（闇は5つまで）", $"[{name}] " + ElementEn(v, "Dark") + "; a critical hit adds 1 more (up to 5)");
                 case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力か魔力の高い方の{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% of the higher of AD or AP (once per 6s per enemy)");
                 case Power.EchoingDodge: return Loc.T($"【{name}】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、回避するたびに時間を延長）", $"[{name}] After a dodge, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each dodge refreshes it)");
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate (refreshes, does not stack)");

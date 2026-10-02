@@ -58,7 +58,7 @@ namespace SodRpg.Core.Game
             Node("Hero_Lacerta", "lacerta.range", "防弾の外套", "Armored Coat", Stat.MaxHealthPct, 4),
             Node("Hero_Lacerta", "lacerta.rapid", "速射", "Rapid Fire", Stat.AttackSpeedPct, 3),
             Key("Hero_Lacerta", "lacerta.key", "サラマンダーの火種", "Salamander Ember", Power.Ember, 60,
-                "4発目の爆発と一緒に、火を重ねられます。", "Stacks Fire alongside your 4th-shot blast."),
+                "通常攻撃で敵を燃やしておくと、サラマンダーパウダーの4発目の爆発が2倍になります。", "Keep foes burning with basic attacks so Salamander Powder's 4th-shot blast deals double."),
             Node("Hero_Lacerta", "lacerta.crit", "狙撃", "Marksman", Stat.AttackPct, 3),
             Key("Hero_Lacerta", "lacerta.key2", "一番手の銃声", "Opening Shot", Power.OpeningStrike, 70,
                 "離れた所から先に撃つほど活きます。", "Rewards striking first from afar."),
