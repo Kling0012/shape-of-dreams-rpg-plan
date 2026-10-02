@@ -9,8 +9,11 @@ namespace SodRpg.Core.Game
         private readonly double _averageLevelAboveOne;
         public double AverageDreamLevel => 1 + _averageLevelAboveOne;
         public double AverageSpentStarPoints { get; }
-        public double HealthMultiplier => 1 + 0.03 * (AverageDreamLevel - 1) + 0.004 * AverageSpentStarPoints;
-        public double DamageMultiplier => 1 + 0.015 * (AverageDreamLevel - 1) + 0.002 * AverageSpentStarPoints;
+        /// <summary>夢のレベルはこの値を超えた分だけ数える（序盤は夢のレベルがすぐ上がるため。v1.27 のバランス調整）。</summary>
+        public const int FreeDreamLevels = 5;
+        private double LevelsOverFree => Math.Max(0, AverageDreamLevel - FreeDreamLevels);
+        public double HealthMultiplier => 1 + 0.025 * LevelsOverFree + 0.005 * AverageSpentStarPoints;
+        public double DamageMultiplier => 1 + 0.012 * LevelsOverFree + 0.0025 * AverageSpentStarPoints;
 
         private DreamPressure(double dreamLevel, double spentStarPoints)
         {
