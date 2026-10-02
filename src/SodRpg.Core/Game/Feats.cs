@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SodRpg.Core.Game
 {
@@ -113,7 +114,48 @@ namespace SodRpg.Core.Game
             }
         }
 
+        private struct SetRelicState
+        {
+            public Relic Relic;
+            public string BaseId;
+            public string UniqueId;
+        }
+
+        private sealed class SetProgressCache
+        {
+            public readonly List<SetRelicState> Stash = new List<SetRelicState>();
+            public int Completed;
+        }
+
+        private static readonly ConditionalWeakTable<Profile, SetProgressCache> SetProgress =
+            new ConditionalWeakTable<Profile, SetProgressCache>();
+
         private static int CompletedSets(Profile p)
+        {
+            var cache = SetProgress.GetValue(p, _ => new SetProgressCache());
+            bool unchanged = cache.Stash.Count == p.Stash.Count;
+            if (unchanged)
+            {
+                for (int i = 0; i < p.Stash.Count; i++)
+                {
+                    var relic = p.Stash[i];
+                    var previous = cache.Stash[i];
+                    if (ReferenceEquals(previous.Relic, relic) && previous.BaseId == relic.BaseId && previous.UniqueId == relic.UniqueId) continue;
+                    unchanged = false;
+                    break;
+                }
+            }
+            if (unchanged) return cache.Completed;
+
+            // Stash は公開 List。個数だけでなく、同数の入れ替えとセット識別情報の変更も検出する。
+            cache.Stash.Clear();
+            foreach (var relic in p.Stash)
+                cache.Stash.Add(new SetRelicState { Relic = relic, BaseId = relic.BaseId, UniqueId = relic.UniqueId });
+            cache.Completed = CountCompletedSets(p);
+            return cache.Completed;
+        }
+
+        private static int CountCompletedSets(Profile p)
         {
             if (p.Stash.Count < 3) return 0;
             int completed = 0;

@@ -60,11 +60,11 @@ namespace SodRpg.Core.Tests
         {
             var p = AtEvent(DreamEvent.Stargazer);
             Rules.UseEvent(p, DreamEvent.Stargazer);
-            Assert.Equal(0.5, p.Run.EventDropBonus, 3);
+            Assert.Equal(0.3, p.Run.EventDropBonus, 3);
             p.Run.OfferedEvent = DreamEvent.LuckyStar;
             Rules.UseEvent(p, DreamEvent.LuckyStar);
-            Assert.Equal(0.6, p.Run.EventLuck, 3);
-            Assert.True(Rules.KillModifiers(p.Run).DropBonus >= 0.5);
+            Assert.Equal(0.4, p.Run.EventLuck, 3);
+            Assert.True(Rules.KillModifiers(p.Run).DropBonus >= 0.3);
             Rules.Secure(p);
             Assert.Equal(0, p.Run.EventDropBonus);
             Assert.Equal(0, p.Run.EventLuck);
@@ -86,13 +86,18 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Tapir_turns_relics_into_unsecured_materials()
+        public void Tapir_eats_relics_below_epic_for_salvage_value()
         {
+            // v1.15：分解と同じ欠片（保管庫へ直接、潜行ボーナスの対象外）。3つごとに調律石1。エピック以上は食べない。
             var p = AtEvent(DreamEvent.Tapir);
             for (int i = 0; i < 4; i++) Give(p, Rarity.Common);
+            var epic = Give(p, Rarity.Epic);
+            int before = p.Material(Materials.Shard);
             Rules.UseEvent(p, DreamEvent.Tapir);
-            Assert.Empty(p.Run.Satchel);
-            Assert.Equal(48, p.Run.SatchelShards);
+            Assert.Single(p.Run.Satchel);
+            Assert.Contains(epic, p.Run.Satchel);
+            Assert.Equal(before + 4 * Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
+            Assert.Equal(0, p.Run.SatchelShards);
             Assert.Equal(1, p.Run.SatchelTuning);
         }
 

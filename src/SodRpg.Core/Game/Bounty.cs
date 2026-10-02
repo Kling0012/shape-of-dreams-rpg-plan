@@ -150,8 +150,21 @@ namespace SodRpg.Core.Game
             var result = new List<Bounty>();
             while (result.Count < count && pool.Count > 0)
             {
-                var t = pool[rng.Range(0, pool.Count - 1)];
-                pool.Remove(t);
+                // 固有品・セット品の依頼は、ほかの依頼の1/3の重みで選ぶ。
+                int totalWeight = 0;
+                foreach (var candidate in pool)
+                    totalWeight += candidate.Kind == BountyKind.LegendFinder || candidate.Kind == BountyKind.SetHunter ? 1 : 3;
+                int pick = rng.Range(0, totalWeight - 1);
+                int index = 0;
+                for (; index < pool.Count - 1; index++)
+                {
+                    var candidate = pool[index];
+                    int selectionWeight = candidate.Kind == BountyKind.LegendFinder || candidate.Kind == BountyKind.SetHunter ? 1 : 3;
+                    if (pick < selectionWeight) break;
+                    pick -= selectionWeight;
+                }
+                var t = pool[index];
+                pool.RemoveAt(index);
                 int target = rng.Range(t.Min, t.Max);
                 // 目標の重さ（0〜1）で報酬を最大1.5倍まで上げる。
                 double weight = t.Max == t.Min ? 0 : (double)(target - t.Min) / (t.Max - t.Min);

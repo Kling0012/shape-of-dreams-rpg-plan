@@ -190,7 +190,6 @@ namespace SodRpg.Core.Game
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
                 AddToSatchel(p, relic, ev, trades);
                 AddHint(p, Hint.FirstDrop, ev);
-                if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
                 AdvanceRelicBounties(p, relic, ev);
             }
             if (isNightmare) AdvanceBounty(p, BountyKind.NightmareHunter, 1, false, ev);
@@ -222,6 +221,7 @@ namespace SodRpg.Core.Game
         /// <summary>新しく見つけた遺物を依頼へ反映する。鞄が満杯で欠片になった場合も数える。</summary>
         private static void AdvanceRelicBounties(Profile p, Relic relic, List<GameEvent> ev)
         {
+            if (relic.Rarity >= Rarity.Rare) AdvanceBounty(p, BountyKind.Treasure, 1, false, ev);
             if (relic.Rarity == Rarity.Legendary) AdvanceBounty(p, BountyKind.LegendFinder, 1, false, ev);
             if (relic.Rarity >= Rarity.Epic) AdvanceBounty(p, BountyKind.EpicFinder, 1, false, ev);
             if (Content.TryGetUnique(relic.UniqueId, out var unique) && unique.SetId != null)
@@ -566,7 +566,7 @@ namespace SodRpg.Core.Game
                     break;
                 }
                 case DreamEvent.Stargazer:
-                    run.EventDropBonus += 0.5;
+                    run.EventDropBonus += 0.3;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
                 case DreamEvent.Cauldron:
@@ -574,21 +574,31 @@ namespace SodRpg.Core.Game
                     var parts = run.Satchel.Where(r => (r.Rarity == Rarity.Common || r.Rarity == Rarity.Uncommon) && (trades == null || !trades.IsReserved(r.Uid)))
                         .OrderBy(r => r.Score).Take(3).ToList();
                     var rarity = parts.Max(r => r.Rarity) + 1;
+                    int itemLevel = parts.Max(r => r.ItemLevel);
                     foreach (var part in parts) run.Satchel.Remove(part);
-                    var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
+                    var relic = Loot.RollRelic(rng, rarity, itemLevel, null,
                         p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
                     RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
                 case DreamEvent.Tapir:
                 {
-                    int count = run.Satchel.RemoveAll(r => trades == null || !trades.IsReserved(r.Uid));
-                    int shards = count * 12;
-                    int tuning = Math.Max(1, count / 3);
-                    run.SatchelShards += shards;
+                    int count = 0;
+                    int shards = 0;
+                    for (int i = run.Satchel.Count - 1; i >= 0; i--)
+                    {
+                        var relic = run.Satchel[i];
+                        if (relic.Rarity >= Rarity.Epic || (trades != null && trades.IsReserved(relic.Uid))) continue;
+                        shards += Content.SalvageShards(relic.Rarity);
+                        count++;
+                        run.Satchel.RemoveAt(i);
+                    }
+                    int tuning = count / 3;
+                    // 獏の欠片は保管庫へ直接入れ、確保時の潜行ボーナスを掛けない。
+                    p.AddMaterial(Materials.Shard, shards);
                     run.SatchelTuning += tuning;
-                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせ、欠片{shards}と調律石{tuning}を得ました（まだ持ち帰っていません）。",
-                        $"Fed {count} relic(s) to the tapir: +{shards} shards, +{tuning} tuning (unsecured).")));
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T($"獏に遺物{count}個を食べさせ、保管庫の欠片{shards}と未確保の調律石{tuning}を得ました。",
+                        $"Fed {count} relic(s) to the tapir: +{shards} stash shards, +{tuning} unsecured tuning.")));
                     break;
                 }
                 case DreamEvent.CourageGate:
@@ -603,7 +613,7 @@ namespace SodRpg.Core.Game
                     ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
                     break;
                 case DreamEvent.LuckyStar:
-                    run.EventLuck += 0.6;
+                    run.EventLuck += 0.4;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
             }

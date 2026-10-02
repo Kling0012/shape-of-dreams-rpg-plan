@@ -144,7 +144,13 @@ namespace SodRpg.Mod
         public void MarkDirty(bool buildChanged)
         {
             _dirty = true;
-            if (buildChanged) _buildDirty = true;
+            if (buildChanged)
+            {
+                _buildDirty = true;
+                _buildCacheFrame = -1;
+            }
+            // 鍛冶・偉業の受け取り・確認用の遺物付与も、この変更通知を通る。
+            Emit(Feats.Check(Profile));
         }
 
         public void Tick()
@@ -320,11 +326,7 @@ namespace SodRpg.Mod
 
         private void Emit(IEnumerable<GameEvent> events)
         {
-            foreach (var e in events)
-            {
-                _dirty = true;
-                _notify?.Invoke(e);
-            }
+            foreach (var e in events) Emit(e);
         }
 
         /// <summary>初めての起動：初期装備を配り、ようこその案内を出す。</summary>
@@ -343,6 +345,8 @@ namespace SodRpg.Mod
         public void Emit(GameEvent e)
         {
             _dirty = true;
+            // 勇気の門を含む潜行の変更は、次の送信に新しい Build を使う。
+            if (e.Kind == EventKind.Delved) MarkDirty(true);
             _notify?.Invoke(e);
         }
 

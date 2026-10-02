@@ -79,12 +79,12 @@ namespace SodRpg.Core.Game
             foreach (var p in Powers) yield return new PowerLine(p.Power, Scale(p.Value, pct));
         }
 
-        /// <summary>おおよその強さ（並べ替え・比較用）。</summary>
+        /// <summary>レア度を最優先にした強さ（並べ替え・比較用）。</summary>
         public int Score
         {
             get
             {
-                int s = (int)Rarity * 100 + ItemLevel * 2 + Enhance * 10;
+                int s = (int)Rarity * 1000 + ItemLevel * 2 + Enhance * 10;
                 return s;
             }
         }

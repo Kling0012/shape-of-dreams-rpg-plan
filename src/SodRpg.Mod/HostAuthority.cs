@@ -31,9 +31,22 @@ namespace SodRpg.Mod
             public StatBonus BaseBonus;
             public StatBonus DynBonus;
             public Action<EventInfoAttackFired> OnFired;
+            public Action<EventInfoAttackHit> OnHit;
             public Action<EventInfoSkillUse> OnSkill;
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
         }
+
+        private sealed class EnemyValidator : IBinaryEntityValidator
+        {
+            public bool Evaluate(Entity self, Entity target) =>
+                target != null && target.isActive && target.GetRelation(self) == EntityRelation.Enemy;
+        }
+
+        private static readonly IBinaryEntityValidator EnemyFilter = new EnemyValidator();
+        private static readonly HeroSkillLocation[] CooldownSkills =
+            { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E };
+        private readonly Func<int, int, bool> _resonanceNear;
+        private PowerRuntime[] _scanPowers = Array.Empty<PowerRuntime>();
 
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
@@ -74,6 +87,7 @@ namespace SodRpg.Mod
             _onAttackHit = OnAttackHit;
             _onEntityAdd = OnEntityAdd;
             _onApplyElemental = OnApplyElemental;
+            _resonanceNear = RuntimesNear;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -295,7 +309,6 @@ namespace SodRpg.Mod
                 {
                     cem.OnDeath += _onDeath;
                     cem.OnTakeDamage += _onTakeDamage;
-                    cem.OnAttackHit += _onAttackHit;
                     cem.OnApplyElemental += _onApplyElemental;
                 }
             }
@@ -308,7 +321,6 @@ namespace SodRpg.Mod
             {
                 _cem.OnDeath -= _onDeath;
                 _cem.OnTakeDamage -= _onTakeDamage;
-                _cem.OnAttackHit -= _onAttackHit;
                 _cem.OnApplyElemental -= _onApplyElemental;
             }
             catch (Exception) { }
@@ -324,6 +336,8 @@ namespace SodRpg.Mod
                 Unhook(rt);
             }
             _runtimes.Clear();
+            _scanList.Clear();
+            _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
             Unsubscribe();
             if (_am != null)
@@ -496,7 +510,11 @@ namespace SodRpg.Mod
                 var captured = rt;
                 rt.OnFired = info => captured.Powers.OnAttackFired(info.isThisAttackFourthAttack);
                 rt.OnSkill = info => OnSkillUse(captured, info);
+                rt.OnHit = _onAttackHit;
                 hero.EntityEvent_OnAttackFired += rt.OnFired;
+                // Actor.DoBasicAttackHit は、この同期イベントの後で DealDamage を呼ぶ。
+                // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
+                hero.EntityEvent_OnAttackHit += rt.OnHit;
                 hero.ClientHeroEvent_OnSkillUse += rt.OnSkill;
                 rt.DamageTaken = (ref DamageData d, Actor a, Entity t) =>
                 {
@@ -522,11 +540,13 @@ namespace SodRpg.Mod
             try
             {
                 if (rt.OnFired != null) hero.EntityEvent_OnAttackFired -= rt.OnFired;
+                if (rt.OnHit != null) hero.EntityEvent_OnAttackHit -= rt.OnHit;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
             }
             catch (Exception) { }
             rt.OnFired = null;
+            rt.OnHit = null;
             rt.OnSkill = null;
             rt.DamageTaken = null;
         }
@@ -544,7 +564,7 @@ namespace SodRpg.Mod
                 if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: false);
                 float cdr = r.CooldownReduction;
                 if (cdr <= 0 || hero.Skill == null) return;
-                foreach (var loc in new[] { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E })
+                foreach (var loc in CooldownSkills)
                 {
                     var t = hero.Skill.GetSkill(loc);
                     if (t != null) hero.ApplyCooldownReduction(t, cdr);
@@ -636,17 +656,20 @@ namespace SodRpg.Mod
         {
             var list = _scanList;
             list.Clear();
-            list.AddRange(_runtimes.Values);
-            if (list.Count == 0) return;
+            foreach (var rt in _runtimes.Values) list.Add(rt);
+            if (list.Count == 0)
+            {
+                _scanPowers = Array.Empty<PowerRuntime>();
+                return;
+            }
             foreach (var rt in list)
                 rt.Powers.NearbyEnemies = (rt.Powers.Build.Get(Power.Bulwark) > 0 || rt.Powers.Build.Get(Power.Frenzy) > 0)
                     && Alive(rt.Hero) ? CountEnemiesNear(rt.Hero, 6f) : 0;
 
-            var powers = new PowerRuntime[list.Count];
-            for (int i = 0; i < list.Count; i++) powers[i] = list[i].Powers;
-            PowerRuntime.DistributeResonance(powers, (i, j) =>
-                Alive(list[i].Hero) && Alive(list[j].Hero)
-                && Vector3.Distance(list[i].Hero.agentPosition, list[j].Hero.agentPosition) <= PowerRuntime.ResonanceRange);
+            // DistributeResonance は配列全体を使うため、人数が変わったときだけ長さを合わせる。
+            if (_scanPowers.Length != list.Count) _scanPowers = new PowerRuntime[list.Count];
+            for (int i = 0; i < list.Count; i++) _scanPowers[i] = list[i].Powers;
+            PowerRuntime.DistributeResonance(_scanPowers, _resonanceNear);
             // MOD未導入の味方が近くにいても、自分の共鳴は全量にする。
             foreach (var rt in list)
             {
@@ -655,14 +678,23 @@ namespace SodRpg.Mod
             }
         }
 
+        private bool RuntimesNear(int i, int j) =>
+            Alive(_scanList[i].Hero) && Alive(_scanList[j].Hero)
+            && Vector3.Distance(_scanList[i].Hero.agentPosition, _scanList[j].Hero.agentPosition) <= PowerRuntime.ResonanceRange;
+
         private static int CountEnemiesNear(Hero hero, float radius)
         {
             ListReturnHandle<Entity> handle;
             var found = DewPhysics.OverlapCircleAllEntities(out handle, hero.agentPosition, radius,
-                (Func<Entity, bool>)(e => e != null && e.isActive && e.GetRelation(hero) == EntityRelation.Enemy));
-            int n = found.Count;
-            handle.Return();
-            return n;
+                EnemyFilter, hero);
+            try
+            {
+                return found.Count;
+            }
+            finally
+            {
+                handle.Return();
+            }
         }
 
         private static bool AnyAllyNear(Hero hero)
@@ -683,15 +715,22 @@ namespace SodRpg.Mod
         {
             ListReturnHandle<Entity> handle;
             var found = DewPhysics.OverlapCircleAllEntities(out handle, center, radius,
-                (Func<Entity, bool>)(e => e != null && e.isActive && e != except && e.GetRelation(hero) == EntityRelation.Enemy));
-            var targets = new List<Entity>(found);
-            handle.Return();
-            int n = 0;
-            foreach (var e in targets)
+                EnemyFilter, hero);
+            // 検索結果そのものがプールのリスト。Dispatch 中も借りたままにし、再入した検索と共有しない。
+            try
             {
-                if (n++ >= maxTargets) break;
-                if (magic) hero.MagicDamage(amount, 0f).Dispatch(e);
-                else hero.PhysicalDamage(amount, 0f).Dispatch(e);
+                int n = 0;
+                foreach (var e in found)
+                {
+                    if (e == except) continue;
+                    if (n++ >= maxTargets) break;
+                    if (magic) hero.MagicDamage(amount, 0f).Dispatch(e);
+                    else hero.PhysicalDamage(amount, 0f).Dispatch(e);
+                }
+            }
+            finally
+            {
+                handle.Return();
             }
         }
 
