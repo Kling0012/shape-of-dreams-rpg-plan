@@ -21,7 +21,7 @@ namespace SodRpg.Core.Tests
             var counts = new (string Name, int Count, int Min)[]
             {
                 ("bases", Content.Bases.Count, 150),
-                ("uniques", Content.Uniques.Count, 298),
+                ("uniques", Content.Uniques.Count, 366),
                 ("sets", Content.Sets.Count, 12),
                 ("talents", Content.Talents.Count, 15),
                 ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),

@@ -48,6 +48,17 @@ namespace SodRpg.Core.Game
         public const float SprintDuration = 3f;
         public const float VigorThreshold = 0.8f;
         public const float OverloadDuration = 4f;
+        public const float FinaleWindow = 8f;
+        public const float FinaleCooldown = 10f;
+        public const float CriticalEchoCooldown = 0.5f;
+        public const int CrystalResonanceMaxTiers = 8;
+        public const int PreyPrideMaxLevel = 3;
+        public const int DevotionMaxStacks = 5;
+        public const float OverflowingLifeDuration = 3f;
+        public const float OverflowingLifeMaxHealthRatio = 0.1f;
+        public const int WildfireMinStacks = 3;
+        public const float WildfireRange = 6f;
+        public const float WildfireCooldown = 2f;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -63,6 +74,14 @@ namespace SodRpg.Core.Game
         private float _whirlwindReady;
         private float _sprintUntil;
         private float _overloadUntil;
+        private float _finaleQ = float.NegativeInfinity;
+        private float _finaleW = float.NegativeInfinity;
+        private float _finaleE = float.NegativeInfinity;
+        private float _finaleReady;
+        private float _criticalEchoReady;
+        private readonly Dictionary<int, float> _wildfireReady = new Dictionary<int, float>();
+        private readonly List<int> _expiredWildfire = new List<int>();
+        private float _nextWildfirePrune;
         private readonly Dictionary<int, float> _convergenceReady = new Dictionary<int, float>();
         private readonly Rng _rng;
 
@@ -133,6 +152,84 @@ namespace SodRpg.Core.Game
         /// <summary>共鳴：近くの味方から分けてもらった分。</summary>
         public int ResonanceShared { get; set; }
 
+        /// <summary>装着中のエッセンスの品質合計（%）。</summary>
+        public int GemQualityTotal { get; set; }
+        /// <summary>現在のハンター追跡度。補正は0〜3に制限する。</summary>
+        public int HuntLevel { get; set; }
+        public int DevotionStacks { get; private set; }
+
+        /// <summary>終曲：slot は Q=0/W=1/E=2。3種を8秒以内に使うとR短縮の割合を返す。</summary>
+        public float TakeFinale(float now, int slot)
+        {
+            int v = Build.Get(Power.Finale);
+            if (v <= 0) return 0;
+            switch (slot)
+            {
+                case 0: _finaleQ = now; break;
+                case 1: _finaleW = now; break;
+                case 2: _finaleE = now; break;
+                default: return 0;
+            }
+            if (now < _finaleReady || now - _finaleQ > FinaleWindow
+                || now - _finaleW > FinaleWindow || now - _finaleE > FinaleWindow) return 0;
+            _finaleReady = now + FinaleCooldown;
+            // 同じ組み合わせを使い回さず、次の発動には3種を改めて使う。
+            _finaleQ = _finaleW = _finaleE = float.NegativeInfinity;
+            return v / 100f;
+        }
+
+        /// <summary>会心の余韻：通常攻撃の会心でQ/W/Eを短縮する秒数。</summary>
+        public float TakeCriticalEcho(float now, bool isCrit)
+        {
+            int v = Build.Get(Power.CriticalEcho);
+            if (v <= 0 || !isCrit || now < _criticalEchoReady) return 0;
+            _criticalEchoReady = now + CriticalEchoCooldown;
+            return v / 10f;
+        }
+
+        /// <summary>足枷：対象にスタン・スロウ・冷気がある場合のダメージ増幅。</summary>
+        public float FettersAmplification(bool hindered) =>
+            hindered ? Math.Max(0, Build.Get(Power.Fetters)) / 100f : 0;
+
+        /// <summary>溢れる命：1回の超過回復から張る障壁量。</summary>
+        public float TakeOverflowingLife(float discardedAmount, float maxHealth)
+        {
+            int v = Build.Get(Power.OverflowingLife);
+            if (v <= 0 || discardedAmount <= 0 || maxHealth <= 0) return 0;
+            return Math.Min(discardedAmount * v / 100f, maxHealth * OverflowingLifeMaxHealthRatio);
+        }
+
+        /// <summary>祈願：成功した聖堂使用を積む。上限到達時や未装着ならfalse。</summary>
+        public bool OnShrineUsed()
+        {
+            if (Build.Get(Power.Devotion) <= 0 || DevotionStacks >= DevotionMaxStacks) return false;
+            DevotionStacks++;
+            return true;
+        }
+
+        public void OnZoneLoaded()
+        {
+            DevotionStacks = 0;
+        }
+
+        /// <summary>飛び火：火3重以上からの伝播判定。同じ敵からは成功後2秒待つ。</summary>
+        public bool TakeWildfire(float now, int victimId, int fireStacks, double roll)
+        {
+            int v = Build.Get(Power.Wildfire);
+            if (v <= 0 || fireStacks < WildfireMinStacks || roll * 100 >= v) return false;
+            if (_wildfireReady.TryGetValue(victimId, out float ready) && now < ready) return false;
+            // 生きているクールダウンを消さず、古い敵の記録だけを再利用リストで掃除する。
+            if (_wildfireReady.Count > 200 && now >= _nextWildfirePrune)
+            {
+                _nextWildfirePrune = now + WildfireCooldown;
+                _expiredWildfire.Clear();
+                foreach (var kv in _wildfireReady)
+                    if (now >= kv.Value) _expiredWildfire.Add(kv.Key);
+                foreach (int id in _expiredWildfire) _wildfireReady.Remove(id);
+            }
+            _wildfireReady[victimId] = now + WildfireCooldown;
+            return true;
+        }
         public void SetBuild(Build build) => Build = build ?? new Build();
 
         public void OnKill(float now)
@@ -242,13 +339,17 @@ namespace SodRpg.Core.Game
         {
             if (now > _momentumUntil) MomentumStacks = 0;
             int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
+            int conditional = Math.Max(0, Build.Get(Power.CrystalResonance))
+                    * Math.Min(CrystalResonanceMaxTiers, Math.Max(0, GemQualityTotal) / 100)
+                + Math.Max(0, Build.Get(Power.PreyPride)) * Math.Min(PreyPrideMaxLevel, Math.Max(0, HuntLevel))
+                + Math.Max(0, Build.Get(Power.Devotion)) * DevotionStacks;
             return new DynamicBonus
             {
                 AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0)
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies)),
                 AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance
-                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0),
-                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0),
+                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0) + conditional,
+                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
                 Armor = NearbyEnemies >= BulwarkEnemies ? Build.Get(Power.Bulwark) : 0,

@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
                     foreach (var pl in u.Powers)
                         Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
             }
-            Assert.Equal(262, Content.Uniques.Count(u => u.SetId == null));
+            Assert.Equal(294, Content.Uniques.Count(u => u.SetId == null)); // v1.23：新しい固有効果の固有品 +32
         }
     }
 }

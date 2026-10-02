@@ -339,6 +339,22 @@ namespace SodRpg.Mod
             _session.MarkDirty(true);
         }
 
+        [ConsoleCommand("Dreamforge (test): equip the newest stash relic of every slot on your traveler", "dreamforge_equipnew")]
+        private void EquipNewCommand()
+        {
+            var p = _session.Profile;
+            string hero = ClientSession.HeroKeyOf(_session.LocalHero);
+            if (hero == null) { Debug.Log("[DreamforgeRPG] no local hero"); return; }
+            foreach (var slot in Content.SlotOrder)
+            {
+                Relic newest = null;
+                foreach (var r in p.Stash) if (r.Slot == slot) newest = r;
+                if (newest != null) Rules.Equip(p, hero, newest.Uid, _session.Trades);
+            }
+            _session.MarkDirty(true);
+            Debug.Log("[DreamforgeRPG] equipped newest relics on " + hero);
+        }
+
         [ConsoleCommand("Dreamforge (test): end the current run in the mod (1 = victory, 0 = defeat)", "dreamforge_endrun")]
         private void EndRunCommand(int victory)
         {

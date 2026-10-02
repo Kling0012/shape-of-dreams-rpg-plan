@@ -1179,6 +1179,103 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.rally_horn", "charm.war_horn", new Txt("決起の角笛", "Rally Horn"),
                 new Txt("群れの中で吹けば、奥義が燃え上がる。", "Blow it amid the swarm and your ultimate roars."),
                 Power.Frenzy, 3, Power.UltimateSurge, 28),
+            // v1.23：新しい固有効果を使う固有品
+            new UniqueDef("unique.finale_codex", "weapon.dream_tome", new Txt("終幕の写本", "Codex of the Curtain Call"),
+                new Txt("三つの技を綴れば、終幕は早く訪れる。", "Chain three skills, and the final act arrives early."),
+                Power.Finale, 22, Power.StarShield, 20),
+            new UniqueDef("unique.grand_finale_diadem", "head.star_diadem", new Txt("大詰めの髪飾り", "Diadem of the Grand Finale"),
+                new Txt("三つの技を重ね、切り札を引き寄せろ。", "Layer Q, W and E to pull your ultimate closer."),
+                Power.Finale, 20, Power.UltimateSurge, 22),
+            new UniqueDef("unique.intermission_shoes", "feet.dancer_shoes", new Txt("幕間の舞靴", "Intermission Dancers"),
+                new Txt("舞い続けて技を巡らせ、最後の幕を開けよ。", "Keep dancing through your skills to raise the last curtain."),
+                Power.Finale, 18, Power.EchoingDodge, 10),
+            new UniqueDef("unique.last_movement_charm", "charm.clockwork_charm", new Txt("終楽章の歯車", "Gear of the Last Movement"),
+                new Txt("歯車が噛み合えば、終曲は目前だ。", "When the gears mesh, the finale is near."),
+                Power.Finale, 25, Power.Overload, 20),
+            new UniqueDef("unique.echo_longbow", "weapon.longspike_bow", new Txt("谺の長弓", "Echoing Longbow"),
+                new Txt("会心の矢が鳴るたび、技はすぐに戻る。", "Each critical arrow rings out and recalls your skills."),
+                Power.CriticalEcho, 5, Power.OpeningStrike, 45),
+            new UniqueDef("unique.afterglow_fingers", "hands.duelist_gloves", new Txt("残響の指", "Fingers of Afterglow"),
+                new Txt("急所を突くたび、余韻が技を呼び戻す。", "Every vital strike leaves an echo that refreshes your skills."),
+                Power.CriticalEcho, 5, Power.Momentum, 5),
+            new UniqueDef("unique.reverberant_vest", "armor.hunter_vest", new Txt("木霊の胴衣", "Reverberant Vest"),
+                new Txt("狙い澄ました一撃が、次の技を早める。", "A well-aimed blow hastens your next skill."),
+                Power.CriticalEcho, 4, Power.Sprint, 26),
+            new UniqueDef("unique.echoing_tread", "feet.stalker_boots", new Txt("谺を踏む足", "Tread of Echoes"),
+                new Txt("忍び寄る一撃の余韻が、技を研ぎ澄ます。", "The echo of a stealthy crit sharpens your skills."),
+                Power.CriticalEcho, 5, Power.EchoingDodge, 12),
+            new UniqueDef("unique.ice_shackle_spear", "weapon.glacier_spear", new Txt("氷枷の穂先", "Icebound Spearhead"),
+                new Txt("凍らせて動きを奪い、渾身の一突きを。", "Freeze them in place, then thrust with everything."),
+                Power.Fetters, 16, Power.Frost, 40),
+            new UniqueDef("unique.snaring_coral", "head.coral_crown", new Txt("絡め取る珊瑚", "Snaring Coral"),
+                new Txt("動けぬ敵ほど、深く刃が食い込む。", "The less they can move, the deeper the blade bites."),
+                Power.Fetters, 17, Power.Shatter, 55),
+            new UniqueDef("unique.neap_tide_grip", "hands.tide_gloves", new Txt("引き潮の枷", "Shackle of the Ebb Tide"),
+                new Txt("冷たい潮で足を絡め、そこを狙え。", "Tangle their legs in cold tide and strike there."),
+                Power.Fetters, 18, Power.Frost, 34),
+            new UniqueDef("unique.bound_oath", "charm.chain_necklace", new Txt("繋がれた誓い", "Chained Oath"),
+                new Txt("鎖に縛られた敵へ、報復は容赦しない。", "Retribution spares no enemy caught in your chains."),
+                Power.Fetters, 18, Power.Retaliation, 30),
+            new UniqueDef("unique.crystal_chorale", "weapon.star_harp", new Txt("水晶の調べ", "Crystal Chorale"),
+                new Txt("結晶を揃えるほど、魔力の音色は澄んでいく。", "The more crystals you gather, the purer the magic rings."),
+                Power.CrystalResonance, 2, Power.Overload, 20),
+            new UniqueDef("unique.collectors_hat", "head.sage_hat", new Txt("蒐集家の帽子", "Collector's Hat"),
+                new Txt("集めた結晶の数だけ、力は高まっていく。", "Your power grows with every crystal you collect."),
+                Power.CrystalResonance, 2, Power.Resonance, 9),
+            new UniqueDef("unique.crystal_shroud", "armor.star_mantle", new Txt("結晶纏い", "Crystal Shroud"),
+                new Txt("結晶の輝きを纏い、星の盾を張れ。", "Wear the crystals' glow and raise a shield of stars."),
+                Power.CrystalResonance, 2, Power.StarShield, 22),
+            new UniqueDef("unique.crystal_eye", "charm.dream_lens", new Txt("結晶の瞳", "Eye of Crystal"),
+                new Txt("磨いた結晶が、四つの元素を呼び合わせる。", "Polished crystals call the four elements together."),
+                Power.CrystalResonance, 2, Power.Convergence, 120),
+            new UniqueDef("unique.huntmasters_bow", "weapon.hunting_bow", new Txt("狩猟長の弓", "Huntmaster's Bow"),
+                new Txt("狩りを重ねるほど、弱った獲物は逃げられない。", "The deeper your hunt, the less your wounded prey can flee."),
+                Power.PreyPride, 5, Power.Executioner, 45),
+            new UniqueDef("unique.fangking_pelt", "head.wolf_pelt", new Txt("牙王の毛皮", "Pelt of the Fang King"),
+                new Txt("獲物を追うほど、群れの誇りが牙を研ぐ。", "Tracking prey sharpens your fangs with the pack's pride."),
+                Power.PreyPride, 6, Power.Frenzy, 3),
+            new UniqueDef("unique.praying_claws", "hands.claw_gauntlets", new Txt("祈る爪", "Praying Claws"),
+                new Txt("祈りを捧げて獲物を追い、危険へ踏み込め。", "Offer prayers, track your prey, and step into danger."),
+                Power.PreyPride, 5, Power.Devotion, 3),
+            new UniqueDef("unique.proud_tracks", "feet.hunter_boots", new Txt("誇りの足跡", "Tracks of Pride"),
+                new Txt("獲物を深く追うほど、足取りは軽くなる。", "The deeper the pursuit, the lighter your stride."),
+                Power.PreyPride, 4, Power.Sprint, 26),
+            new UniqueDef("unique.overflowing_sap", "armor.bark_mail", new Txt("滴る生命樹", "Dripping Lifetree"),
+                new Txt("傷が癒えて余った命は、樹皮の盾となる。", "Surplus healing hardens into a shield of bark."),
+                Power.OverflowingLife, 45, Power.Lifesteal, 10),
+            new UniqueDef("unique.brimming_chalice_staff", "weapon.pilgrim_staff", new Txt("杯満つる錫杖", "Brimming Chalice Staff"),
+                new Txt("倒して満ちた命は、溢れて身を守る。", "Life gathered from kills overflows into protection."),
+                Power.OverflowingLife, 40, Power.SoulSiphon, 18),
+            new UniqueDef("unique.full_bloom_wreath", "head.leaf_wreath", new Txt("満開の花冠", "Wreath in Full Bloom"),
+                new Txt("万全の身で咲く花は、散りぎわに盾となる。", "A flower in full health becomes a shield as it fades."),
+                Power.OverflowingLife, 50, Power.Vigor, 14),
+            new UniqueDef("unique.spring_water_steps", "feet.root_sandals", new Txt("湧き水の歩", "Steps of the Wellspring"),
+                new Txt("癒しが溢れるほど、足元に守りが湧く。", "The more your healing overflows, the more shelter wells up."),
+                Power.OverflowingLife, 35, Power.Lifesteal, 9),
+            new UniqueDef("unique.votive_shawl", "armor.prayer_shawl", new Txt("奉納の肩掛け", "Votive Shawl"),
+                new Txt("聖堂を巡るたび、肩掛けは力を宿していく。", "The shawl gathers power with every shrine you visit."),
+                Power.Devotion, 4, Power.SecondWind, 28),
+            new UniqueDef("unique.wish_beads", "hands.prayer_beads", new Txt("願掛けの数珠", "Wishing Beads"),
+                new Txt("一つ祈るごとに、数珠は強く握られる。", "With each prayer, the beads are held tighter."),
+                Power.Devotion, 3, Power.Barrier, 10),
+            new UniqueDef("unique.pilgrims_badge", "charm.sun_brooch", new Txt("参詣の徽章", "Pilgrim's Badge"),
+                new Txt("聖堂で祈りを重ね、陽の力を高めよ。", "Stack prayers at shrines to raise the power of the sun."),
+                Power.Devotion, 4, Power.Radiance, 36),
+            new UniqueDef("unique.dedicated_greathelm", "head.knight_helm", new Txt("奉じる大兜", "Dedicated Greathelm"),
+                new Txt("誓いを捧げるほど、兜は守りを増す。", "Each vow offered strengthens the helm's guard."),
+                Power.Devotion, 3, Power.Aegis, 18),
+            new UniqueDef("unique.sparking_crown", "head.ember_crown", new Txt("火の粉の冠", "Crown of Sparks"),
+                new Txt("燃える敵から、火の粉が隣へ飛び移る。", "Sparks leap from burning foes to their neighbors."),
+                Power.Wildfire, 30, Power.Ember, 32),
+            new UniqueDef("unique.sea_of_flame_plate", "armor.ember_plate", new Txt("火の海の鎧", "Plate of the Flame Sea"),
+                new Txt("火を重ねれば、戦場ごと燃え広がる。", "Stack the flames and the whole field catches fire."),
+                Power.Wildfire, 35, Power.Blaze, 50),
+            new UniqueDef("unique.seed_scatterer", "feet.ash_boots", new Txt("火種蒔き", "Seed Scatterer"),
+                new Txt("歩いた跡から、火種が次々と飛び移る。", "Embers hop from foe to foe in your wake."),
+                Power.Wildfire, 28, Power.Ember, 30),
+            new UniqueDef("unique.spreading_fist", "hands.flame_grips", new Txt("燃え移る手", "Hand of Spreading Flame"),
+                new Txt("一撃の炎は、隣の敵へ燃え移る。", "One strike's flame leaps on to the next enemy."),
+                Power.Wildfire, 32, Power.Blaze, 60),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -1528,6 +1625,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.OpeningStrike, 25, 50),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Overload, 10, 20),
+                new PowerRange(Power.Fetters, 8, 15),
+                new PowerRange(Power.CriticalEcho, 2, 4),
+                new PowerRange(Power.Wildfire, 15, 30),
             },
             [Slot.Armor] = new[]
             {
@@ -1541,6 +1641,8 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Frenzy, 1, 3),
                 new PowerRange(Power.StarShield, 10, 20),
                 new PowerRange(Power.Sprint, 10, 25),
+                new PowerRange(Power.OverflowingLife, 20, 40),
+                new PowerRange(Power.Fetters, 8, 15),
             },
             [Slot.Charm] = new[]
             {
@@ -1557,6 +1659,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Sprint, 10, 25),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Overload, 10, 20),
+                new PowerRange(Power.Devotion, 2, 4),
+                new PowerRange(Power.CrystalResonance, 1, 2),
+                new PowerRange(Power.PreyPride, 3, 5),
             },
             [Slot.Head] = new[]
             {
@@ -1570,6 +1675,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Barrier, 6, 10),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Bloodlust, 12, 20),
+                new PowerRange(Power.Finale, 10, 20),
+                new PowerRange(Power.CrystalResonance, 1, 2),
+                new PowerRange(Power.Devotion, 2, 4),
             },
             [Slot.Hands] = new[]
             {
@@ -1583,6 +1691,9 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.OpeningStrike, 25, 50),
                 new PowerRange(Power.Shatter, 30, 60),
                 new PowerRange(Power.Momentum, 3, 5),
+                new PowerRange(Power.CriticalEcho, 2, 4),
+                new PowerRange(Power.Fetters, 8, 15),
+                new PowerRange(Power.Wildfire, 15, 30),
             },
             [Slot.Feet] = new[]
             {
@@ -1596,6 +1707,8 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Thorns, 15, 30),
                 new PowerRange(Power.SoulSiphon, 10, 20),
                 new PowerRange(Power.Retaliation, 15, 25),
+                new PowerRange(Power.PreyPride, 3, 5),
+                new PowerRange(Power.OverflowingLife, 20, 40),
             },
         };
 
@@ -1656,6 +1769,14 @@ namespace SodRpg.Core.Game
             [Power.Sprint] = 60,
             [Power.Vigor] = 40,
             [Power.Overload] = 50,
+            [Power.Finale] = 50,
+            [Power.CriticalEcho] = 12,
+            [Power.Fetters] = 40,
+            [Power.CrystalResonance] = 6,
+            [Power.PreyPride] = 12,
+            [Power.OverflowingLife] = 100,
+            [Power.Devotion] = 10,
+            [Power.Wildfire] = 60,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -1738,6 +1859,14 @@ namespace SodRpg.Core.Game
             [Power.Sprint] = new Txt("疾駆の", "Swift"),
             [Power.Vigor] = new Txt("万全の", "Hale"),
             [Power.Overload] = new Txt("溢れる", "Overflowing"),
+            [Power.Finale] = new Txt("終曲の", "Final"),
+            [Power.CriticalEcho] = new Txt("余韻の", "Lingering"),
+            [Power.Fetters] = new Txt("枷の", "Fettering"),
+            [Power.CrystalResonance] = new Txt("結晶の", "Crystalline"),
+            [Power.PreyPride] = new Txt("誇り高き", "Proud"),
+            [Power.OverflowingLife] = new Txt("満ちる", "Brimming"),
+            [Power.Devotion] = new Txt("祈りの", "Devout"),
+            [Power.Wildfire] = new Txt("飛び火の", "Spreading"),
         };
 
         public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : null;
@@ -1994,6 +2123,14 @@ namespace SodRpg.Core.Game
                 case Power.Sprint: return Loc.T("疾駆", "Sprint");
                 case Power.Vigor: return Loc.T("万全", "Vigor");
                 case Power.Overload: return Loc.T("過負荷", "Overload");
+                case Power.Finale: return Loc.T("終曲", "Finale");
+                case Power.CriticalEcho: return Loc.T("会心の余韻", "Critical Echo");
+                case Power.Fetters: return Loc.T("足枷", "Fetters");
+                case Power.CrystalResonance: return Loc.T("結晶共鳴", "Crystal Resonance");
+                case Power.PreyPride: return Loc.T("獲物の誇り", "Prey's Pride");
+                case Power.OverflowingLife: return Loc.T("溢れる命", "Overflowing Life");
+                case Power.Devotion: return Loc.T("祈願", "Devotion");
+                case Power.Wildfire: return Loc.T("飛び火", "Wildfire");
                 default: return "-";
             }
         }
@@ -2033,6 +2170,14 @@ namespace SodRpg.Core.Game
                 case Power.Sprint: return Loc.T($"【{name}】回避した後の3秒間、移動速度が{v}%上がる", $"[{name}] +{v}% move speed for 3s after dodging");
                 case Power.Vigor: return Loc.T($"【{name}】HPが80%以上の間、攻撃力が{v}%上がる", $"[{name}] +{v}% attack damage while above 80% health");
                 case Power.Overload: return Loc.T($"【{name}】スキルを使った後の4秒間、魔力が{v}%上がる", $"[{name}] +{v}% ability power for 4s after using a skill");
+                case Power.Finale: return Loc.T($"【{name}】Q・W・Eを8秒以内にすべて使うと、Ultimate の残りクールダウンが{v}%縮む（10秒に1回）", $"[{name}] Using Q, W and E within 8s cuts your Ultimate's remaining cooldown by {v}% (once per 10s)");
+                case Power.CriticalEcho: return Loc.T($"【{name}】通常攻撃が会心で当たると、Q・W・Eのクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Critical basic attacks shorten Q/W/E cooldowns by {v / 10f:0.#}s");
+                case Power.Fetters: return Loc.T($"【{name}】スタン・スロウ・冷気のどれかが乗った敵へのダメージが{v}%上がる", $"[{name}] +{v}% damage to stunned, slowed or chilled enemies");
+                case Power.CrystalResonance: return Loc.T($"【{name}】装着中のエッセンスの品質の合計100%ごとに、攻撃力・魔力が{v}%上がる（8段まで）", $"[{name}] +{v}% AD/AP per 100% total quality of your equipped Essences (up to 8)");
+                case Power.PreyPride: return Loc.T($"【{name}】ハンターの追跡度1ごとに、攻撃力・魔力が{v}%上がる（3まで）", $"[{name}] +{v}% AD/AP per hunter tracking level (up to 3)");
+                case Power.OverflowingLife: return Loc.T($"【{name}】最大HPを超えた回復の{v}%が、3秒の障壁になる", $"[{name}] {v}% of overhealing becomes a 3s shield");
+                case Power.Devotion: return Loc.T($"【{name}】聖堂を使うたび、そのゾーンの間 攻撃力・魔力が{v}%上がる（5回まで）", $"[{name}] Each shrine you use grants +{v}% AD/AP for the rest of the zone (up to 5)");
+                case Power.Wildfire: return Loc.T($"【{name}】火が3つ以上重なった敵に火を付けると、{v}%の確率で近くの敵にも火が1つ移る", $"[{name}] Applying fire to an enemy with 3+ fire stacks has a {v}% chance to spread 1 stack to a nearby enemy");
                 default: return "-";
             }
         }

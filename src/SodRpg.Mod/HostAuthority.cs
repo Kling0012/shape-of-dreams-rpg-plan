@@ -33,6 +33,8 @@ namespace SodRpg.Mod
             public Action<EventInfoAttackFired> OnFired;
             public Action<EventInfoAttackHit> OnHit;
             public Action<EventInfoSkillUse> OnSkill;
+            public Action<EventInfoHeal> OnHeal;
+            public DataProcessor<DamageData, Actor, Entity> DamageDealt;
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
         }
 
@@ -62,6 +64,14 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoAttackHit> _onAttackHit;
         private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
+        private readonly HashSet<Power> _triggeredPowers = new HashSet<Power>();
+        private readonly HashSet<Shrine> _shrines = new HashSet<Shrine>();
+        private readonly Action<Actor> _onActorAdd;
+        private readonly Action<Actor> _onActorRemove;
+        private readonly Action<Entity> _onShrineUsed;
+        private readonly Action<EventInfoLoadZone> _onZoneLoaded;
+        private ZoneManager _zone;
+        private bool _spreadingFire;
 
         // 悪夢化エリート
         private ActorManager _am;
@@ -88,6 +98,10 @@ namespace SodRpg.Mod
             _onEntityAdd = OnEntityAdd;
             _onApplyElemental = OnApplyElemental;
             _resonanceNear = RuntimesNear;
+            _onActorAdd = OnActorAdd;
+            _onActorRemove = OnActorRemove;
+            _onShrineUsed = OnShrineUsed;
+            _onZoneLoaded = OnZoneLoaded;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -96,7 +110,7 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active)
             {
-                if (_registeredOn != null || _cem != null) Detach();
+                if (_registeredOn != null || _cem != null || _am != null || _zone != null) Detach();
                 return;
             }
             EnsureRegistered();
@@ -152,6 +166,52 @@ namespace SodRpg.Mod
         private void OnEntityAdd(Entity e)
         {
             if (e is Monster m && !(e is BossMonster)) _spawnQueue.Add(new KeyValuePair<Monster, float>(m, Time.time));
+        }
+
+        private void LogPowerTrigger(Power power)
+        {
+            if (_triggeredPowers.Add(power)) Log.Info("power " + power + " triggered");
+        }
+
+        private void OnActorAdd(Actor actor)
+        {
+            if (actor is Shrine shrine && _shrines.Add(shrine))
+                shrine.ClientEvent_OnSuccessfulUse += _onShrineUsed;
+        }
+
+        private void OnActorRemove(Actor actor)
+        {
+            if (actor is Shrine shrine && _shrines.Remove(shrine))
+                shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
+        }
+
+        private void UnhookShrines()
+        {
+            foreach (var shrine in _shrines)
+            {
+                if (shrine == null) continue;
+                try { shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed; } catch (Exception) { }
+            }
+            _shrines.Clear();
+        }
+
+        /// <summary>途中からホスト処理を付けた場合も、すでにある聖堂を拾う。</summary>
+        private void ScanShrines()
+        {
+            foreach (var shrine in UnityEngine.Object.FindObjectsOfType<Shrine>()) OnActorAdd(shrine);
+        }
+
+        private void OnShrineUsed(Entity user)
+        {
+            if (!(user is Hero hero) || !_runtimes.TryGetValue(hero, out var rt) || !Alive(hero)) return;
+            if (rt.Powers.OnShrineUsed()) LogPowerTrigger(Power.Devotion);
+        }
+
+        private void OnZoneLoaded(EventInfoLoadZone info)
+        {
+            foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
+            UnhookShrines();
+            ScanShrines();
         }
 
         private void ProcessSpawns()
@@ -293,12 +353,32 @@ namespace SodRpg.Mod
                 if (_am != null)
                 {
                     try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                    try { _am.ClientEvent_OnActorAdd -= _onActorAdd; } catch (Exception) { }
+                    try { _am.ClientEvent_OnActorRemove -= _onActorRemove; } catch (Exception) { }
                 }
+                UnhookShrines();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
                 _nightmares.Clear();
-                if (am != null) am.ClientEvent_OnEntityAdd += _onEntityAdd;
+                if (am != null)
+                {
+                    am.ClientEvent_OnEntityAdd += _onEntityAdd;
+                    am.ClientEvent_OnActorAdd += _onActorAdd;
+                    am.ClientEvent_OnActorRemove += _onActorRemove;
+                    ScanShrines();
+                }
+            }
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone != _zone)
+            {
+                if (_zone != null)
+                {
+                    try { _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded; } catch (Exception) { }
+                }
+                _zone = zone;
+                foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
+                if (zone != null) zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
             }
             var cem = NetworkedManagerBase<ClientEventManager>.softInstance;
             if (cem != _cem)
@@ -340,9 +420,19 @@ namespace SodRpg.Mod
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
             Unsubscribe();
+            UnhookShrines();
+            if (_zone != null)
+            {
+                try { _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded; } catch (Exception) { }
+                _zone = null;
+            }
+            _triggeredPowers.Clear();
+            _spreadingFire = false;
             if (_am != null)
             {
                 try { _am.ClientEvent_OnEntityAdd -= _onEntityAdd; } catch (Exception) { }
+                try { _am.ClientEvent_OnActorAdd -= _onActorAdd; } catch (Exception) { }
+                try { _am.ClientEvent_OnActorRemove -= _onActorRemove; } catch (Exception) { }
                 _am = null;
             }
             _spawnQueue.Clear();
@@ -522,6 +612,19 @@ namespace SodRpg.Mod
                     if (mult > 1f) d.ApplyAmplification(mult - 1f);
                 };
                 hero.takenDamageProcessor.Add(rt.DamageTaken);
+                rt.DamageDealt = (ref DamageData d, Actor a, Entity t) =>
+                {
+                    if (!Alive(captured.Hero) || t == null || !t.isActive || t.Status == null
+                        || t.GetRelation(captured.Hero) != EntityRelation.Enemy) return;
+                    var status = t.Status;
+                    float amp = captured.Powers.FettersAmplification(status.hasStun || status.hasSlow || status.hasCold);
+                    if (amp <= 0) return;
+                    d.ApplyAmplification(amp);
+                    LogPowerTrigger(Power.Fetters);
+                };
+                hero.dealtDamageProcessor.Add(rt.DamageDealt);
+                rt.OnHeal = info => OnHealTaken(captured, info);
+                hero.EntityEvent_OnTakeHeal += rt.OnHeal;
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
@@ -543,16 +646,20 @@ namespace SodRpg.Mod
                 if (rt.OnHit != null) hero.EntityEvent_OnAttackHit -= rt.OnHit;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
                 if (rt.DamageTaken != null) hero.takenDamageProcessor.Remove(rt.DamageTaken);
+                if (rt.DamageDealt != null) hero.dealtDamageProcessor.Remove(rt.DamageDealt);
+                if (rt.OnHeal != null) hero.EntityEvent_OnTakeHeal -= rt.OnHeal;
             }
             catch (Exception) { }
             rt.OnFired = null;
             rt.OnHit = null;
             rt.OnSkill = null;
             rt.DamageTaken = null;
+            rt.DamageDealt = null;
+            rt.OnHeal = null;
         }
 
         /// <summary>回避・Memory・Ultimate の固有効果。</summary>
-        private static void OnSkillUse(HeroRuntime rt, EventInfoSkillUse info)
+        private void OnSkillUse(HeroRuntime rt, EventInfoSkillUse info)
         {
             try
             {
@@ -562,17 +669,55 @@ namespace SodRpg.Mod
                     hero.Status.attackDamage, hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.BarrierInterval);
                 if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: false);
-                float cdr = r.CooldownReduction;
-                if (cdr <= 0 || hero.Skill == null) return;
-                foreach (var loc in CooldownSkills)
+                if (hero.Skill == null) return;
+                int slot = info.type == HeroSkillLocation.Q ? 0 : info.type == HeroSkillLocation.W ? 1
+                    : info.type == HeroSkillLocation.E ? 2 : -1;
+                float finale = rt.Powers.TakeFinale(Time.time, slot);
+                if (finale > 0)
                 {
-                    var t = hero.Skill.GetSkill(loc);
-                    if (t != null) hero.ApplyCooldownReduction(t, cdr);
+                    var ultimate = hero.Skill.GetSkill(HeroSkillLocation.R);
+                    if (ultimate != null)
+                    {
+                        hero.ApplyCooldownReductionByRatio(ultimate, finale, false);
+                        LogPowerTrigger(Power.Finale);
+                    }
                 }
+                ReduceMemoryCooldowns(hero, r.CooldownReduction);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnSkillUse " + ex.Message);
+            }
+        }
+
+        private static bool ReduceMemoryCooldowns(Hero hero, float amount)
+        {
+            if (amount <= 0 || hero.Skill == null) return false;
+            bool applied = false;
+            foreach (var loc in CooldownSkills)
+            {
+                var skill = hero.Skill.GetSkill(loc);
+                if (skill == null) continue;
+                hero.ApplyCooldownReduction(skill, amount);
+                applied = true;
+            }
+            return applied;
+        }
+
+        private void OnHealTaken(HeroRuntime rt, EventInfoHeal info)
+        {
+            try
+            {
+                var hero = rt.Hero;
+                if (!Alive(hero) || info.target != hero) return;
+                float shield = rt.Powers.TakeOverflowingLife(info.discardedAmount, hero.maxHealth);
+                if (shield <= 0) return;
+                hero.GiveShield(hero, shield, PowerRuntime.OverflowingLifeDuration);
+                LogPowerTrigger(Power.OverflowingLife);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Host: OnHealTaken " + ex.Message);
             }
         }
 
@@ -662,9 +807,27 @@ namespace SodRpg.Mod
                 _scanPowers = Array.Empty<PowerRuntime>();
                 return;
             }
+            int huntLevel = _zone != null ? _zone.currentHuntLevel : 0;
             foreach (var rt in list)
-                rt.Powers.NearbyEnemies = (rt.Powers.Build.Get(Power.Bulwark) > 0 || rt.Powers.Build.Get(Power.Frenzy) > 0)
-                    && Alive(rt.Hero) ? CountEnemiesNear(rt.Hero, 6f) : 0;
+            {
+                var p = rt.Powers;
+                var hero = rt.Hero;
+                bool alive = Alive(hero);
+                p.NearbyEnemies = (p.Build.Get(Power.Bulwark) > 0 || p.Build.Get(Power.Frenzy) > 0)
+                    && alive ? CountEnemiesNear(hero, 6f) : 0;
+                long quality = 0;
+                if (p.Build.Get(Power.CrystalResonance) > 0 && alive && hero.Skill != null)
+                {
+                    foreach (var kv in hero.Skill.gems)
+                        if (kv.Value != null) quality += Math.Max(0, kv.Value.quality);
+                }
+                p.GemQualityTotal = (int)Math.Min(int.MaxValue, quality);
+                p.HuntLevel = huntLevel;
+                if (alive && p.Build.Get(Power.CrystalResonance) > 0 && p.GemQualityTotal >= 100)
+                    LogPowerTrigger(Power.CrystalResonance);
+                if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
+                    LogPowerTrigger(Power.PreyPride);
+            }
 
             // DistributeResonance は配列全体を使うため、人数が変わったときだけ長さを合わせる。
             if (_scanPowers.Length != list.Count) _scanPowers = new PowerRuntime[list.Count];
@@ -789,10 +952,52 @@ namespace SodRpg.Mod
                 bool all = st.fireStack > 0 && st.hasCold && st.lightStack > 0 && st.darkStack > 0;
                 float dmg = rt.Powers.TakeConvergence(Time.time, (int)victim.netId, all, rt.Hero.Status.attackDamage);
                 if (dmg > 0) rt.Hero.PureDamage(dmg, 0f).Dispatch(victim);
+                if (!_spreadingFire && info.type == ElementalType.Fire && info.addedStack > 0
+                    && victim.isActive && victim.GetRelation(rt.Hero) == EntityRelation.Enemy
+                    && rt.Powers.Build.Get(Power.Wildfire) > 0 && st.fireStack >= PowerRuntime.WildfireMinStacks)
+                    SpreadWildfire(rt, victim);
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnApplyElemental " + ex.Message);
+            }
+        }
+
+        private void SpreadWildfire(HeroRuntime rt, Entity victim)
+        {
+            var hero = rt.Hero;
+            ListReturnHandle<Entity> handle;
+            var found = DewPhysics.OverlapCircleAllEntities(out handle, victim.agentPosition, PowerRuntime.WildfireRange,
+                EnemyFilter, hero);
+            try
+            {
+                Entity nearest = null;
+                float nearestDistance = float.PositiveInfinity;
+                foreach (var other in found)
+                {
+                    if (other == victim || !other.isActive) continue;
+                    float distance = (other.agentPosition - victim.agentPosition).sqrMagnitude;
+                    if (distance > PowerRuntime.WildfireRange * PowerRuntime.WildfireRange) continue;
+                    if (distance >= nearestDistance) continue;
+                    nearestDistance = distance;
+                    nearest = other;
+                }
+                if (nearest == null || !rt.Powers.TakeWildfire(Time.time, (int)victim.netId,
+                    victim.Status.fireStack, _rng.NextDouble())) return;
+                _spreadingFire = true;
+                try
+                {
+                    hero.ApplyElemental(ElementalType.Fire, nearest, 1);
+                    LogPowerTrigger(Power.Wildfire);
+                }
+                finally
+                {
+                    _spreadingFire = false;
+                }
+            }
+            finally
+            {
+                handle.Return();
             }
         }
 
@@ -803,6 +1008,8 @@ namespace SodRpg.Mod
                 if (!(info.attacker is Hero hero) || !_runtimes.TryGetValue(hero, out var rt) || !Alive(hero)) return;
                 var victim = info.victim;
                 if (victim == null || !victim.isActive) return;
+                float criticalEcho = rt.Powers.TakeCriticalEcho(Time.time, info.isCrit);
+                if (ReduceMemoryCooldowns(hero, criticalEcho)) LogPowerTrigger(Power.CriticalEcho);
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
                 var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, ratio, _rng.NextDouble());
                 if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);

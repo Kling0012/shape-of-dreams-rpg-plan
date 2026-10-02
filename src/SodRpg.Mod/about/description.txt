@@ -4,10 +4,12 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 150 bases, 262 legendaries and 24 sets (72 set pieces), 30 kinds of powers.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は150種、固有品は262種、セットは24種（72部位）、固有効果は30種類あります。
+[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 150 bases, 294 legendaries and 24 sets (72 set pieces), 38 kinds of powers.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は150種、固有品は294種、セットは24種（72部位）、固有効果は38種類あります。
 [*] Rare relics carry a minor power; Epics carry two and an epithet named after their first power.
 [*] レアは弱い固有効果を1つ、エピックは固有効果を2つと、1つ目の固有効果にちなんだ銘を持ちます。
+[*] Powers that react to the base game: Q/W/E rotations, critical hits, stuns and slows, overhealing, Essence quality, hunters, shrines and spreading fire.
+[*] 本体の仕組みに反応する固有効果：Q・W・Eの使い分け、会心、スタンやスロウ、超過回復、エッセンスの品質、ハンター、聖堂、燃え広がる火。
 [*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
 [*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
 [*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakened, its powers become 1.5x and its affixes 1.2x.

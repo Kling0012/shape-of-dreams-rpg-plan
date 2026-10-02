@@ -124,6 +124,22 @@ namespace SodRpg.Core.Game
         Vigor = 29,
         /// <summary>Ultimate・回避以外のスキル使用後4秒、魔力+X%（時間だけ延長）。「過負荷」</summary>
         Overload = 30,
+        /// <summary>Q/W/Eを8秒以内に使うとRの残りクールダウンをX%短縮（10秒に1回）。「終曲」</summary>
+        Finale = 31,
+        /// <summary>通常攻撃の会心でQ/W/EのクールダウンをX/10秒短縮（0.5秒に1回）。「会心の余韻」</summary>
+        CriticalEcho = 32,
+        /// <summary>スタン・スロウ・冷気のある敵への与ダメージ+X%。「足枷」</summary>
+        Fetters = 33,
+        /// <summary>装着エッセンスの品質合計100%ごとに攻撃力・魔力+X%（8段まで）。「結晶共鳴」</summary>
+        CrystalResonance = 34,
+        /// <summary>ハンターの追跡度1ごとに攻撃力・魔力+X%（3まで）。「獲物の誇り」</summary>
+        PreyPride = 35,
+        /// <summary>超過回復のX%を3秒の障壁にする（1回につき最大HPの10%まで）。「溢れる命」</summary>
+        OverflowingLife = 36,
+        /// <summary>聖堂を使うたびゾーン内で攻撃力・魔力+X%（5重まで）。「祈願」</summary>
+        Devotion = 37,
+        /// <summary>火3スタック以上の敵への火付与時、X%で近くの敵1体に火を付与（同じ敵から2秒に1回）。「飛び火」</summary>
+        Wildfire = 38,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>

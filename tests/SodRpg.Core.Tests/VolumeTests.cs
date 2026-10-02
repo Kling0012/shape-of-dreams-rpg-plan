@@ -24,7 +24,7 @@ namespace SodRpg.Core.Tests
             Assert.True(Content.Uniques.Count(u => u.SetId == null) >= 20);
             Assert.True(DailyDream.All.Count >= 10);
             Assert.True(Enum.GetValues(typeof(BountyKind)).Length >= 15);
-            Assert.True(Enum.GetValues(typeof(Power)).Length - 1 >= 22);
+            Assert.True(Enum.GetValues(typeof(Power)).Length - 1 >= 38);
             Assert.True(HeroSigils.All.Count >= 45);
         }
 
