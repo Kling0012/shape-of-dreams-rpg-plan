@@ -24,7 +24,11 @@ Dreamforge は単独のゲームではなく **Shape of Dreams のMOD**。新し
 本体が毎フレーム行っている重い探索（`FindObjectOfType` など）で、安全にキャッシュできるものは Harmony で軽くする。
 効果は `perf.flag` の計測（フレーム時間）で前後を比べて確かめる。対戦結果や同期に影響する処理は変えない。仕様は [docs/specs/v1.8-performance.md](specs/v1.8-performance.md)。
 
-## 次：v1.13.1「取引と同期の不具合修正」
+## 次：v1.14「見た目」
+
+利用者の希望（2026-10-02）：UIのデザインにこだわる。装備の土台45種のアイコンを Codex の画像生成で作り、遺物の一覧・詳細・装着枠に表示する。レア度の色・余白・見出しを整える。仕様は [docs/specs/v1.14-visual.md](specs/v1.14-visual.md)。
+
+## 完了：v1.13.1「取引と同期の不具合修正」
 
 利用者の issue #5（取引の返事より先に確保・潜行すると通貨だけ減る）、#6（分解が失敗しても遺物が消える）、#7（ホストだけMODを読み直すと参加者の補正が戻らない）を直す。仕様は [docs/specs/v1.13.1-trade-sync-fixes.md](specs/v1.13.1-trade-sync-fixes.md)。
 
