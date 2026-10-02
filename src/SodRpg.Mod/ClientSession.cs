@@ -167,7 +167,7 @@ namespace SodRpg.Mod
             }
         }
 
-        public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || !InGame;
+        public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || Profile.Run.GearWindow || !InGame;
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
 
@@ -344,8 +344,11 @@ namespace SodRpg.Mod
             string runId = gm.runId;
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
+            // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
+            int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids()));
+            if (pacts > 0) SendCurseClear();
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
@@ -482,7 +485,10 @@ namespace SodRpg.Mod
             {
                 if (!RunActive || result == null) return;
                 bool victory = IsVictory(result.result);
+                int pacts = Profile.Run.Pacts.Count;
                 Emit(Rules.EndRun(Profile, victory, _trades.ReservedSalvageUids()));
+                // 契約が1つでも解けていれば、潜行で付いた呪いをホストから消す。
+                if (pacts > 0) SendCurseClear();
                 ActiveRunId = null;
                 SaveNow();
             }
@@ -525,7 +531,7 @@ namespace SodRpg.Mod
 
         public string ConvertDust()
         {
-            if (Profile.Run == null || !Profile.Run.AwaitingChoice) return Loc.T("確保地点でのみ換えられます。", "Only at a secure point.");
+            if (Profile.Run == null || (!Profile.Run.AwaitingChoice && !Profile.Run.GearWindow)) return Loc.T("確保地点でのみ換えられます。", "Only at a secure point.");
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
             if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
             if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
@@ -746,7 +752,10 @@ namespace SodRpg.Mod
         {
             if (_trades.PendingCount > 0) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
             if (Profile.Run == null) return null;
+            int pacts = Profile.Run.Pacts.Count;
             Emit(Rules.Secure(Profile));
+            // 契約が1つでも解けたら、潜行で付いた呪いをホストから消す。
+            if (pacts > 0) SendCurseClear();
             _buildDirty = true;
             SaveNow();
             return null;
@@ -763,6 +772,20 @@ namespace SodRpg.Mod
             _buildDirty = true;
             SaveNow();
             return null;
+        }
+
+        /// <summary>契約が解けたことをホストへ伝え、潜行で付いた呪いを消してもらう。</summary>
+        private void SendCurseClear()
+        {
+            if (_clientRpcOn == null || !NetworkClient.active) return;
+            try
+            {
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseClearMsg { protocol = Protocol.Version });
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Client SendCurseClear: " + ex.Message);
+            }
         }
 
         private Build _buildCache;

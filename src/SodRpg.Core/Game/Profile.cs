@@ -71,6 +71,8 @@ namespace SodRpg.Core.Game
         public int LimboDepth { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
+        /// <summary>確保地点での選択が終わってから、次の敵を倒すまで装備を整えられる。</summary>
+        public bool GearWindow { get; set; }
 
         public bool HasUnsecured => Satchel.Count > 0 || SatchelShards > 0 || SatchelTuning > 0;
 
@@ -99,6 +101,7 @@ namespace SodRpg.Core.Game
                 EventLuck = EventLuck,
                 LimboDepth = LimboDepth,
                 AwaitingChoice = AwaitingChoice,
+                GearWindow = GearWindow,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());
             foreach (var b in Bounties) c.Bounties.Add(b.Clone());

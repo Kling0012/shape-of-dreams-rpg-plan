@@ -84,6 +84,7 @@ namespace SodRpg.Mod
         private ClientEventManager _cem;
         private readonly Action<DreamforgeBuildMsg, DewPlayer> _onBuild;
         private readonly Action<DreamforgeCurseMsg, DewPlayer> _onCurse;
+        private readonly Action<DreamforgeCurseClearMsg, DewPlayer> _onCurseClear;
         private readonly Action<DreamforgeTradeMsg, DewPlayer> _onTrade;
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
@@ -133,6 +134,7 @@ namespace SodRpg.Mod
             _dailyIdOfHost = dailyIdOfHost;
             _onBuild = OnBuild;
             _onCurse = OnCurse;
+            _onCurseClear = OnCurseClear;
             _onTrade = OnTrade;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
@@ -698,6 +700,7 @@ namespace SodRpg.Mod
                 {
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 }
                 _registeredOn = actor;
@@ -705,6 +708,7 @@ namespace SodRpg.Mod
                 {
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeBuildMsg>(nameof(DreamforgeBuildMsg), _onBuild);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseMsg>(nameof(DreamforgeCurseMsg), _onCurse);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     Log.Info("Host: registered build handler.");
                 }
@@ -793,6 +797,7 @@ namespace SodRpg.Mod
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
+            _pactCurses.Clear();
             Unsubscribe();
             UnhookShrines();
             UnhookMonsters();
@@ -827,6 +832,7 @@ namespace SodRpg.Mod
             {
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeBuildMsg>(_onBuild); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 _registeredOn = null;
             }
@@ -908,6 +914,9 @@ namespace SodRpg.Mod
 
         private List<CurseStatusEffect> _curseCache;
 
+        // 潜行の契約で付けた呪い（プレイヤーごと）。契約が解けたら（確保・遠征の終わり）まとめて消す。
+        private readonly Dictionary<DewPlayer, List<StatusEffect>> _pactCurses = new Dictionary<DewPlayer, List<StatusEffect>>();
+
         private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)
         {
             try
@@ -944,15 +953,51 @@ namespace SodRpg.Mod
                     x -= Math.Max(0.01f, c.chanceWeight);
                     if (x <= 0) { pick = c; break; }
                 }
-                hero.CreateStatusEffect(pick.GetType(), hero, new CastInfo(hero), se =>
+                var effect = hero.CreateStatusEffect(pick.GetType(), hero, new CastInfo(hero), se =>
                 {
                     if (se is CurseStatusEffect curse) curse.currentStrength = strength;
                 });
+                if (effect != null)
+                {
+                    if (!_pactCurses.TryGetValue(caller, out var list)) _pactCurses[caller] = list = new List<StatusEffect>();
+                    list.Add(effect);
+                }
                 Log.Info($"Curse: {pick.GetType().Name} ({strength}) on {caller.playerName}");
             }
             catch (Exception ex)
             {
                 Log.Error("Host: OnCurse " + ex);
+            }
+        }
+
+        /// <summary>契約が解けたので、その契約で付けた呪いを送ってきたプレイヤーのキャラから消す。</summary>
+        private void OnCurseClear(DreamforgeCurseClearMsg msg, DewPlayer caller)
+        {
+            try
+            {
+                if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
+                if (!_pactCurses.TryGetValue(caller, out var curses) || curses.Count == 0) return;
+                int cleared = 0;
+                foreach (var se in curses)
+                {
+                    // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
+                    if (se == null || se.isDestroyed || !se.isActive) continue;
+                    try
+                    {
+                        se.Destroy();
+                        cleared++;
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("Host: clear pact curse " + ex);
+                    }
+                }
+                curses.Clear();
+                if (cleared > 0) Log.Info($"pact curses cleared: {cleared}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Host: OnCurseClear " + ex);
             }
         }
 

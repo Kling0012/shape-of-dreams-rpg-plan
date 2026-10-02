@@ -198,6 +198,7 @@ namespace SodRpg.Core.Game
             p.EpicPity = pity;
             p.StoreRng(rng);
 
+            run.GearWindow = false;
             run.Kills++;
             p.Stats.Kills++;
             run.SatchelShards += reward.Shards;
@@ -263,13 +264,14 @@ namespace SodRpg.Core.Game
             return run.Kills > 0 || run.HasUnsecured || run.Heat > run.StartDepth;
         }
 
-        /// <summary>確保地点（新しいゾーン）に着いた。選ぶまで装備を整えられる。</summary>
+        /// <summary>確保地点（新しいゾーン）に着いた。次の敵を倒すまで装備を整えられる。</summary>
         public static List<GameEvent> ReachSecurePoint(Profile p)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
             run.AwaitingChoice = true;
+            run.GearWindow = true;
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
@@ -507,9 +509,9 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        public static GameEvent BuyUpgrade(Profile p, Upgrade u)
+        public static GameEvent BuyUpgrade(Profile p, Upgrade u, bool inExpedition = true)
         {
-            if (p.Run != null) throw new InvalidOperationException(Loc.T("工房は遠征の外でのみ使えます。", "The workshop is only available outside expeditions."));
+            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("工房は遠征の外でのみ使えます。", "The workshop is only available outside expeditions."));
             var def = Workshop.Get(u);
             int lv = Workshop.Level(p, u);
             if (lv >= def.MaxLevel) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at max level."));
@@ -715,7 +717,7 @@ namespace SodRpg.Core.Game
         /// <summary>確保地点でドリームダストを欠片へ換える（ダストはホストが支払い済み）。欠片はそのまま保管庫側へ。</summary>
         public static GameEvent ConvertDust(Profile p, int dustPaid)
         {
-            if (p.Run == null || !p.Run.AwaitingChoice) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point."));
+            if (p.Run == null || (!p.Run.AwaitingChoice && !p.Run.GearWindow)) throw new InvalidOperationException(Loc.T("確保地点でのみ換えられます。", "Only at a secure point."));
             return GrantPaidDustShards(p, dustPaid);
         }
 
@@ -818,10 +820,10 @@ namespace SodRpg.Core.Game
             throw new InvalidOperationException(Loc.T("開始深度は廃止しました。本体の Limbo 深度が遺物に反映されます。", "Start depth was removed; the game's Limbo depth now boosts relics."));
         }
 
-        /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。</summary>
-        public static void SetFocus(Profile p, Line? focus)
+        /// <summary>狙い系統を選ぶ（null で解除）。遠征中は変えられない。ロビーにいる間は残ったランがあっても変えられる。</summary>
+        public static void SetFocus(Profile p, Line? focus, bool inExpedition = true)
         {
-            if (p.Run != null) throw new InvalidOperationException(Loc.T("狙い系統は遠征の外でのみ変更できます。", "Focus can only be changed outside expeditions."));
+            if (inExpedition && p.Run != null) throw new InvalidOperationException(Loc.T("狙い系統は遠征の外でのみ変更できます。", "Focus can only be changed outside expeditions."));
             p.Focus = focus;
         }
 
@@ -845,8 +847,8 @@ namespace SodRpg.Core.Game
 
         // ───────────── 装着 ─────────────
 
-        /// <summary>遠征中は確保地点の選択待ちか、ゲームの外でのみ装備を変更できる。</summary>
-        public static bool LoadoutLocked(Profile p, bool inGame) => p.Run != null && !p.Run.AwaitingChoice && inGame;
+        /// <summary>遠征中は、確保地点の選択待ちか、確保してから次の敵を倒すまでの間だけ、装備を変更できる。</summary>
+        public static bool LoadoutLocked(Profile p, bool inGame) => p.Run != null && !p.Run.AwaitingChoice && !p.Run.GearWindow && inGame;
 
         public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null)
         {

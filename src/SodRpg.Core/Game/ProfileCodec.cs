@@ -86,7 +86,7 @@ namespace SodRpg.Core.Game
                     .Add("eventDropBonus", r.EventDropBonus.ToString("R", CultureInfo.InvariantCulture))
                     .Add("eventLuck", r.EventLuck.ToString("R", CultureInfo.InvariantCulture))
                     .Add("bounties", WriteBounties(r.Bounties))
-                    .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice);
+                    .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice).Add("gearWindow", r.GearWindow);
             }
 
             return new JsonObject()
@@ -344,6 +344,7 @@ namespace SodRpg.Core.Game
                     EventDropBonus = Bonus(rj, "eventDropBonus"),
                     EventLuck = Bonus(rj, "eventLuck"),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
+                    GearWindow = Bool(rj, "gearWindow", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
                 ReadBounties(rj, run.Bounties, notes);

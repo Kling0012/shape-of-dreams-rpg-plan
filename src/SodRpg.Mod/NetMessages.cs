@@ -45,6 +45,13 @@ namespace SodRpg.Mod
         public int protocol;
     }
 
+    /// <summary>クライアント → ホスト：契約が解けたので、潜行で付いた呪いを消してほしい。</summary>
+    [Serializable]
+    public class DreamforgeCurseClearMsg
+    {
+        public int protocol;
+    }
+
     /// <summary>クライアント → ホスト：本体の通貨での取引（支払いと受け取り）を依頼する。</summary>
     [Serializable]
     public class DreamforgeTradeMsg
@@ -69,6 +76,7 @@ namespace SodRpg.Mod
     {
         // Unknown CustomRpc handler behavior is not documented in the reflection dumps.
         // Require matching builds rather than silently losing variant identity/rewards.
-        public const int Version = 2;
+        // v1.26 で 3 に上げた（DreamforgeCurseClearMsg を追加。v1.25 は 2）。
+        public const int Version = 3;
     }
 }

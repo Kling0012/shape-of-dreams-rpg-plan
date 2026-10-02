@@ -34,6 +34,8 @@ namespace SodRpg.Mod
         private string _hudText;
         private GUIContent _hudContent;
         private float _hudHeight;
+        private float _hudBottom;
+        private int _hudFrame = -10;
         private float _nextHudRebuild;
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
         private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
@@ -252,7 +254,10 @@ namespace SodRpg.Mod
                     _hudHeight = _st.Hud.CalcHeight(_hudContent, 290);
                 }
             }
-            GUI.Label(new Rect(10, h * 0.30f, 290, _hudHeight), _hudContent, _st.Hud);
+            // v1.25.2：Discord のオーバーレイと重ならないよう、画面の左上に出す。
+            GUI.Label(new Rect(10, 10, 290, _hudHeight), _hudContent, _st.Hud);
+            _hudBottom = 10 + _hudHeight;
+            _hudFrame = Time.frameCount;
         }
 
         private readonly System.Text.StringBuilder _hudSb = new System.Text.StringBuilder(512);
@@ -651,16 +656,19 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             for (int i = _toasts.Count - 1; i >= 0; i--)
                 if (_toasts[i].Until < now) _toasts.RemoveAt(i);
-            float y = h * 0.30f;
-            foreach (var t in _toasts)
+            // v1.25.2：本体の呪いの表示（画面の右側）と重ならないよう、左側の上部の表示の下に並べる。新しい物を上に、最大6件。
+            float y = (Time.frameCount - _hudFrame <= 2 ? _hudBottom : 0) + 10;
+            int shown = 0;
+            for (int i = _toasts.Count - 1; i >= 0 && shown < 6; i--, shown++)
             {
+                var t = _toasts[i];
                 if (t.Content == null)
                 {
                     t.Content = new GUIContent(t.Text);
-                    t.W = Mathf.Min(_st.ToastMeasure.CalcSize(t.Content).x + 6, 560);
+                    t.W = Mathf.Min(_st.ToastMeasure.CalcSize(t.Content).x + 6, Mathf.Min(620, w * 0.45f));
                     t.H = _st.Toast.CalcHeight(t.Content, t.W);
                 }
-                GUI.Label(new Rect(w - t.W - 16, y, t.W, t.H), t.Content, _st.Toast);
+                GUI.Label(new Rect(10, y, t.W, t.H), t.Content, _st.Toast);
                 y += t.H + 4;
             }
         }
@@ -835,7 +843,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             GUILayout.Label(Loc.T("狙い系統：選んだ系統の遺物が2倍出やすくなります（遠征の前に選びます。「なし」なら今日の夢の系統が出やすくなります）", "Focus: relics of the chosen line drop twice as often (choose before an expedition; with None, today's dream decides)"), _st.Small);
             GUILayout.BeginHorizontal();
-            GUI.enabled = p.Run == null;
+            GUI.enabled = p.Run == null || !_s.InGame;
             if (GUILayout.Button(Loc.T("なし", "None"), p.Focus == null ? _st.ButtonSel : _st.Button)) SetFocus(null);
             foreach (Line l in Enum.GetValues(typeof(Line)))
                 if (GUILayout.Button(Content.LineName(l).ToString(), p.Focus == l ? _st.ButtonSel : _st.Button)) SetFocus(l);
@@ -847,7 +855,7 @@ namespace SodRpg.Mod
         {
             try
             {
-                Rules.SetFocus(_s.Profile, l);
+                Rules.SetFocus(_s.Profile, l, _s.InGame && _s.Profile.Run != null);
                 _s.MarkDirty(false);
             }
             catch (InvalidOperationException ex)
@@ -923,7 +931,7 @@ namespace SodRpg.Mod
             }
             GUILayout.EndScrollView();
             if (!_s.CanEditLoadout)
-                GUILayout.Label(Loc.T("遠征中は、確保地点に着いたときだけ装備を変えられます。", "During an expedition, you can only change gear at secure points."), _st.Warn);
+                GUILayout.Label(Loc.T("遠征中は、確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight."), _st.Warn);
             GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2・3・4・6個とそろえるほど、系統のボーナスが重なります。", "Equip 2, 3, 4 or 6 relics of the same line (Destruction, Life, Imagination) for stacking line bonuses."), _st.Small);
             FocusPicker();
             GUILayout.EndVertical();
@@ -1115,7 +1123,7 @@ namespace SodRpg.Mod
             var parts = Rules.BulkSalvageCandidates(p, _s.Trades);
             int shards = 0;
             foreach (var r in parts) shards += Rules.SalvageValue(r);
-            GUI.enabled = parts.Count > 0 && p.Run == null;
+            GUI.enabled = parts.Count > 0 && (p.Run == null || !_s.InGame);
             string label = _confirmBulk
                 ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics</color>")
                 : Loc.T($"コモンとアンコモンをまとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({parts.Count} relics, {shards} shards)");
@@ -1133,7 +1141,7 @@ namespace SodRpg.Mod
                 }
             }
             GUI.enabled = true;
-            if (p.Run != null) GUILayout.Label(Loc.T("まとめて分解は、遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
+            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("まとめて分解は、遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
         }
 
         private List<Relic> SatchelTop()
@@ -1571,10 +1579,10 @@ namespace SodRpg.Mod
                 {
                     var cost = def.Costs[lv];
                     bool afford = p.Material(Materials.Shard) >= cost.Shards && p.Material(Materials.Tuning) >= cost.Tuning;
-                    GUI.enabled = afford && p.Run == null;
+                    GUI.enabled = afford && (p.Run == null || !_s.InGame);
                     string label = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
                         $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
-                    if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id), false);
+                    if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id, _s.InGame && p.Run != null), false);
                     GUI.enabled = true;
                 }
                 else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, GUILayout.Width(300));
@@ -1582,7 +1590,7 @@ namespace SodRpg.Mod
                 GUILayout.Space(4);
             }
             GUILayout.EndVertical();
-            if (p.Run != null) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
+            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
         }
 
         /// <summary>工房の強化の「いまの値 → 解放後の値」。</summary>
