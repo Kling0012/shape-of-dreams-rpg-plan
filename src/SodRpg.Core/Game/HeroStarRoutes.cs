@@ -4,7 +4,7 @@ namespace SodRpg.Core.Game
 {
     /// <summary>
     /// 日本語の記憶・旅人・星座データを照合した記憶別ルート。
-    /// Bismuthのアイデンティティは1つ。合計62ルート・434星と夢の輪72星。
+    /// Bismuthの固有のアイデンティティは1つなので、共通のアイデンティティ「華麗なる芸術家」のルートを足す。合計63ルート・441星と夢の輪72星。
     /// Contentの初期化中に登録されるため、構築時にContentの値は参照しない。
     /// </summary>
     public static class HeroStarRoutes
@@ -66,14 +66,14 @@ namespace SodRpg.Core.Game
             r.L("鉄槌の同調", "Hammer Attunement", LinkKind.Attune, 1);
             r.P("癒える城壁", "Mending Rampart", Power.OverflowingLife, 4);
             r.L("揺るがぬ足場", "Unshaken Ground", LinkKind.Guard, 1);
-            r.S("鎧の継ぎ目", "Joined Armor", Stat.Armor, 2);
+            r.P("決意の鉄槌", "Hammer of Resolve", Power.Fetters, 3);
             r.L("折れない誓約", "Unbroken Covenant", LinkKind.Guard, 8);
 
             r = new Route(nodes, "Vesper", "mercy", "St_D_MercyOfEl");
             r.L("慈愛の灯火", "Light of Mercy", LinkKind.Attune, 2);
             r.S("慈愛の拳", "Merciful Fist", Stat.AttackPct, 2);
-            r.L("祈りの外套", "Prayer Mantle", LinkKind.Guard, 1);
-            r.P("四拍の余光", "Fourth Beat Afterglow", Power.CriticalEcho, 1);
+            r.S("慈悲の連打", "Merciful Flurry", Stat.AttackSpeedPct, 2);
+            r.P("慈悲の光輪", "Halo of Mercy", Power.Radiance, 5);
             r.L("光槌の誓い", "Light Hammer Oath", LinkKind.Attune, 1);
             r.S("聖光の芯", "Heart of Holy Light", Stat.PowerPct, 2);
             r.L("尽きぬ慈愛", "Enduring Mercy", LinkKind.Attune, 8);
@@ -84,7 +84,7 @@ namespace SodRpg.Core.Game
             r.L("突進の呼吸", "Charging Breath", LinkKind.MemoryHaste, 2);
             r.P("衝突の波紋", "Collision Ripples", Power.Whirlwind, 6);
             r.L("突貫の余勢", "Driving Momentum", LinkKind.MemorySurge, 2);
-            r.S("重装の裏地", "Armored Lining", Stat.Armor, 2);
+            r.P("重装の盾", "Heavy Bulwark", Power.Aegis, 4);
             r.L("生きた破城槌", "Living Battering Ram", LinkKind.Guard, 9);
 
             r = new Route(nodes, "Vesper", "cruel-sun", "St_Q_CruelSun");
@@ -92,7 +92,7 @@ namespace SodRpg.Core.Game
             r.S("炉心の魔力", "Furnace Power", Stat.PowerPct, 2);
             r.L("灼熱の構え", "Scorching Stance", LinkKind.Guard, 1);
             r.P("焼け跡の静寂", "Silence after Fire", Power.StillWater, 2);
-            r.L("日輪の再来", "Returning Sun", LinkKind.MemoryHaste, 2);
+            r.P("灼ける裁き", "Searing Judgment", Power.Fetters, 3);
             r.S("太陽を支える体", "Sun-Bearing Body", Stat.MaxHealthPct, 2);
             r.L("沈まぬ日輪", "Unsetting Sun", LinkKind.MemorySurge, 10);
 
@@ -109,7 +109,7 @@ namespace SodRpg.Core.Game
             r.L("陽炎の余力", "Heat Haze Reserve", LinkKind.MemorySurge, 2);
             r.S("火を宿す腕", "Fire-Bearing Arm", Stat.AttackPct, 2);
             r.L("誘いの鎧", "Challenger's Armor", LinkKind.Guard, 2);
-            r.P("燃え広がる誓い", "Spreading Fire Oath", Power.Wildfire, 4);
+            r.P("洗礼の火種", "Baptismal Embers", Power.Ember, 5);
             r.L("洗礼の巡り", "Baptism Cycle", LinkKind.MemoryHaste, 2);
             r.S("爆心の魔力", "Blast Core Power", Stat.PowerPct, 2);
             r.L("炎の受け皿", "Vessel of Flame", LinkKind.Guard, 9);
@@ -117,18 +117,18 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Vesper", "sanctuary", "St_R_SanctuaryOfEl");
             r.L("聖域の響き", "Sanctuary Echo", LinkKind.Attune, 2);
             r.S("祈りの深さ", "Depth of Prayer", Stat.PowerPct, 2);
-            r.L("祝福の余光", "Blessed Afterglow", LinkKind.MemorySurge, 2);
+            r.L("聖域の加護", "Sanctum's Grace", LinkKind.Attune, 2);
             r.P("輪の内の絆", "Bonds within the Circle", Power.Resonance, 2);
             r.L("聖域の門", "Sanctuary Gate", LinkKind.Guard, 1);
             r.S("守護者の体", "Guardian's Body", Stat.MaxHealthPct, 2);
-            r.L("常しえの祝福", "Lasting Blessing", LinkKind.MemorySurge, 10);
+            r.L("巡る聖域", "Returning Sanctum", LinkKind.MemoryHaste, 20);
 
             // Lacerta: distinguish AD double shots from AP fire; defense fills the kit's weakness.
             r = new Route(nodes, "Lacerta", "double-tap", "St_D_DoubleTap");
             r.L("二射の照準", "Twin-Shot Alignment", LinkKind.Attune, 2);
             r.S("二重の火薬", "Double Powder Charge", Stat.AttackPct, 2);
             r.L("銃床の守り", "Stock Guard", LinkKind.Guard, 1);
-            r.P("会心の再装填", "Critical Reload", Power.CriticalEcho, 2);
+            r.P("二射の昂り", "Double-Tap Surge", Power.Overload, 4);
             r.L("重なる銃声", "Overlapping Gunshots", LinkKind.Attune, 1);
             r.S("反動の受け身", "Recoil Brace", Stat.MaxHealthPct, 2);
             r.L("二射一体", "Two Shots as One", LinkKind.Attune, 8);
@@ -155,7 +155,7 @@ namespace SodRpg.Core.Game
             r.L("砲口の熱", "Muzzle Heat", LinkKind.MemorySurge, 2);
             r.S("近接砲の魔力", "Close Cannon Power", Stat.PowerPct, 2);
             r.L("反動の支え", "Recoil Support", LinkKind.Guard, 2);
-            r.P("至近の防壁", "Point-Blank Bulwark", Power.Bulwark, 4);
+            r.P("硝煙の足止め", "Fouled Smoke", Power.Fetters, 3);
             r.L("砲身の冷却", "Barrel Cooling", LinkKind.MemoryHaste, 2);
             r.S("火炎砲の芯", "Flame Cannon Core", Stat.FireAmp, 2);
             r.L("零距離の轟音", "Point-Blank Thunder", LinkKind.MemorySurge, 10);
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Game
             r.S("燃える弾芯", "Burning Bullet Core", Stat.PowerPct, 2);
             r.L("火線の余熱", "Firing Line Heat", LinkKind.MemorySurge, 2);
             r.P("延焼する弾道", "Spreading Fire Trajectory", Power.Wildfire, 5);
-            r.L("火薬袋の守り", "Powder Pouch Guard", LinkKind.Guard, 1);
+            r.P("焼夷の追い火", "Incendiary Follow-up", Power.Ember, 6);
             r.S("焼夷の濃度", "Incendiary Concentrate", Stat.FireAmp, 2);
             r.L("燃え尽きぬ弾倉", "Ever-Burning Magazine", LinkKind.MemoryHaste, 10);
 
@@ -175,7 +175,7 @@ namespace SodRpg.Core.Game
             r.L("伏射の守り", "Firing Position Guard", LinkKind.Guard, 2);
             r.P("着弾の静止", "Impact Stillness", Power.StillWater, 2);
             r.L("照準の復帰", "Sight Recovery", LinkKind.MemoryHaste, 2);
-            r.S("ぶれない体幹", "Steady Core", Stat.Armor, 2);
+            r.P("狙い澄ました一撃", "Steadied Shot", Power.Fetters, 3);
             r.L("一点を貫く意志", "Piercing Resolve", LinkKind.MemorySurge, 10);
 
             r = new Route(nodes, "Lacerta", "quick-trigger", "St_R_QuickTrigger");
@@ -191,16 +191,16 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Cetus", "icy-veins", "St_D_IcyVeins");
             r.L("冷血の同調", "Cold Blood Attunement", LinkKind.Attune, 2);
             r.S("氷脈の魔力", "Ice Vein Power", Stat.PowerPct, 2);
-            r.L("氷膜の守り", "Ice Film Guard", LinkKind.Guard, 2);
+            r.P("氷の外殻", "Ice Carapace", Power.Barrier, 2);
             r.P("凍えを留める", "Holding the Chill", Power.Frost, 3);
             r.L("五重の冷気", "Fivefold Chill", LinkKind.Attune, 1);
-            r.S("氷を抱く器", "Ice-Holding Vessel", Stat.MaxHealthPct, 2);
+            r.S("凍れる脈", "Frozen Pulse", Stat.ColdAmp, 3);
             r.L("解けない血脈", "Unmelting Veins", LinkKind.Guard, 8);
 
             r = new Route(nodes, "Cetus", "charged", "St_D_ChargedAnguillian");
             r.L("帯電の共振", "Charge Resonance", LinkKind.Attune, 2);
             r.S("雷を蓄える知", "Charge-Holding Wisdom", Stat.PowerPct, 2);
-            r.L("電殻の守り", "Charged Shell Guard", LinkKind.Guard, 1);
+            r.S("帯電の鱗", "Charged Scales", Stat.LightAmp, 3);
             r.P("反撃の放電", "Retaliatory Discharge", Power.Retaliation, 4);
             r.L("満ちる電位", "Rising Potential", LinkKind.Attune, 1);
             r.S("帯電の器", "Charged Vessel", Stat.MaxHealthPct, 2);
@@ -222,7 +222,7 @@ namespace SodRpg.Core.Game
             r.P("凍原の足止め", "Frozen Field Snare", Power.Fetters, 2);
             r.L("氷域の余力", "Ice Field Reserve", LinkKind.MemorySurge, 2);
             r.S("氷域の厚み", "Ice Field Depth", Stat.MaxHealthPct, 2);
-            r.L("終わらぬ冬の抱擁", "Endless Winter's Embrace", LinkKind.MemoryHaste, 10);
+            r.L("冬の抱擁", "Winter's Embrace", LinkKind.Attune, 10);
 
             r = new Route(nodes, "Cetus", "boreal-chunk", "St_Q_BigBorealChunk");
             r.L("氷河の蓄積", "Glacier Accumulation", LinkKind.MemorySurge, 2);
@@ -235,7 +235,7 @@ namespace SodRpg.Core.Game
 
             r = new Route(nodes, "Cetus", "back-off", "St_R_BackOff");
             r.L("氷盾の備え", "Ice Shield Readiness", LinkKind.Guard, 2);
-            r.S("押し返す腕", "Repelling Arm", Stat.AttackPct, 2);
+            r.S("押し返す潮", "Repelling Tide", Stat.PowerPct, 2);
             r.L("薙ぎ払いの余波", "Sweeping Aftershock", LinkKind.MemorySurge, 2);
             r.P("押し返す枷", "Repelling Shackles", Power.Fetters, 2);
             r.L("氷盾の再展開", "Ice Shield Redeployment", LinkKind.MemoryHaste, 2);
@@ -256,7 +256,7 @@ namespace SodRpg.Core.Game
             r.L("星弾の同調", "Starshot Attunement", LinkKind.Attune, 2);
             r.S("跳弾の軌道", "Ricochet Orbit", Stat.AttackPct, 2);
             r.L("星衣の守り", "Starcloak Guard", LinkKind.Guard, 1);
-            r.P("連なる星雷", "Linked Star Lightning", Power.ChainLightning, 5);
+            r.S("集う星光", "Gathering Starlight", Stat.LightAmp, 2);
             r.L("集光の律動", "Gathering Light Rhythm", LinkKind.Attune, 1);
             r.S("星弾を継ぐ手", "Starshot Relay", Stat.AttackSpeedPct, 1);
             r.L("交わる三つの軌道", "Three Crossing Orbits", LinkKind.Attune, 8);
@@ -267,7 +267,7 @@ namespace SodRpg.Core.Game
             r.L("粒子の殻", "Particle Shell", LinkKind.Guard, 1);
             r.P("光子の重なり", "Layered Photons", Power.Radiance, 5);
             r.L("四重の凝縮", "Fourfold Condensation", LinkKind.Attune, 1);
-            r.S("放出の鼓動", "Discharge Pulse", Stat.AttackSpeedPct, 1);
+            r.S("異質な光", "Exotic Light", Stat.LightAmp, 2);
             r.L("臨界の物質", "Critical Matter", LinkKind.Attune, 8);
 
             r = new Route(nodes, "Yubar", "flicker", "St_M_Flicker");
@@ -286,14 +286,14 @@ namespace SodRpg.Core.Game
             r.P("光を帯びる手", "Light-Bearing Hand", Power.Radiance, 5);
             r.L("光輪の防壁", "Halo Bulwark", LinkKind.Guard, 1);
             r.S("光束の密度", "Light Beam Density", Stat.LightAmp, 2);
-            r.L("帰り来る星環", "Returning Star Ring", LinkKind.MemoryHaste, 10);
+            r.L("エーテルの余韻", "Ethereal Afterglow", LinkKind.MemorySurge, 10);
 
             r = new Route(nodes, "Yubar", "supernova", "St_Q_SuperNova");
             r.L("星核の蓄積", "Star Core Accumulation", LinkKind.MemorySurge, 2);
             r.S("爆縮の知", "Implosion Wisdom", Stat.PowerPct, 2);
             r.L("星雲の覆い", "Nebula Cover", LinkKind.Guard, 2);
-            r.P("重力の足止め", "Gravity Snare", Power.Fetters, 3);
-            r.L("新星の再誕", "Nova Rebirth", LinkKind.MemoryHaste, 2);
+            r.P("超新星の重力", "Supernova Gravity", Power.Fetters, 8);
+            r.P("超新星の昂り", "Supernova Surge", Power.Overload, 4);
             r.S("星光の圧縮", "Starlight Compression", Stat.LightAmp, 2);
             r.L("大いなる爆縮", "Great Implosion", LinkKind.MemorySurge, 10);
 
@@ -310,9 +310,9 @@ namespace SodRpg.Core.Game
             r.L("静寂の巡り", "Quiet Cycle", LinkKind.MemoryHaste, 2);
             r.S("静謐の知", "Tranquil Wisdom", Stat.PowerPct, 2);
             r.L("静寂の後光", "Quiet Halo", LinkKind.MemorySurge, 2);
-            r.P("無敵の見極め", "Invulnerable Insight", Power.PerfectRead, 3);
+            r.S("静けさの器", "Vessel of Calm", Stat.MaxHealthPct, 2);
             r.L("静寂の外殻", "Quiet Shell", LinkKind.Guard, 1);
-            r.S("戻る鼓動", "Returning Heartbeat", Stat.HealthRegen, 1);
+            r.S("静かな殻", "Quiet Shell", Stat.Armor, 2);
             r.L("途切れぬ静謐", "Unbroken Tranquility", LinkKind.MemoryHaste, 10);
 
             // Husk: attack-speed conversion belongs to the identity; Death Mark and the
@@ -333,13 +333,13 @@ namespace SodRpg.Core.Game
             r.P("傷から溢れる命", "Life beyond the Wound", Power.OverflowingLife, 4);
             r.L("風刃の共振", "Wind Blade Resonance", LinkKind.Attune, 1);
             r.S("深い風傷", "Deep Wind Scar", Stat.DarkAmp, 2);
-            r.L("癒しを運ぶ刃", "Healing Wind Blade", LinkKind.Attune, 8);
+            r.L("風刃の極み", "Pinnacle of the Wind Blade", LinkKind.Attune, 8);
 
             r = new Route(nodes, "Husk", "flash-step", "St_M_FlashStep");
             r.L("瞬歩の備え", "Flash Step Readiness", LinkKind.Guard, 1);
             r.S("間合いを断つ腕", "Gap-Cutting Arm", Stat.AttackPct, 2);
             r.L("影道の再接続", "Shadowpath Reconnection", LinkKind.MemoryHaste, 2);
-            r.P("瞬間の斬り返し", "Instant Countercut", Power.EchoingDodge, 5);
+            r.P("瞬歩の旋風", "Flash-Step Gale", Power.Whirlwind, 10);
             r.L("残影の余力", "Shadow Trace Reserve", LinkKind.MemorySurge, 2);
             r.S("影走りの体幹", "Shadow Runner's Core", Stat.MaxHealthPct, 2);
             r.L("刃先の一瞬", "Blade-Edge Instant", LinkKind.MemorySurge, 10);
@@ -357,7 +357,7 @@ namespace SodRpg.Core.Game
             r.L("楔の再来", "Returning Wedge", LinkKind.MemoryHaste, 2);
             r.S("呪楔の魔力", "Cursed Wedge Power", Stat.PowerPct, 2);
             r.L("刻印の余波", "Mark Aftershock", LinkKind.MemorySurge, 2);
-            r.P("楔に宿る影", "Shadow in the Wedge", Power.Umbra, 3);
+            r.P("刻印の処刑", "Marked Execution", Power.Executioner, 6);
             r.L("転移先の備え", "Arrival Readiness", LinkKind.Guard, 1);
             r.S("刻み込む闇", "Engraved Darkness", Stat.DarkAmp, 2);
             r.L("消えない楔", "Undying Wedge", LinkKind.MemorySurge, 10);
@@ -375,7 +375,7 @@ namespace SodRpg.Core.Game
             r.L("隠れ身の巡り", "Concealment Cycle", LinkKind.MemoryHaste, 2);
             r.S("影から振るう刃", "Blade from Shadow", Stat.AttackPct, 2);
             r.L("奇襲の余波", "Ambush Aftershock", LinkKind.MemorySurge, 2);
-            r.P("姿なき防壁", "Unseen Bulwark", Power.Barrier, 2);
+            r.P("闇からの奇襲", "Ambush from Shadow", Power.OpeningStrike, 10);
             r.L("隠れ身の備え", "Concealed Readiness", LinkKind.Guard, 2);
             r.S("潜む闇の濃さ", "Lurking Dark Intensity", Stat.DarkAmp, 2);
             r.L("静寂を裂く影", "Silence-Rending Shadow", LinkKind.MemorySurge, 10);
@@ -394,7 +394,7 @@ namespace SodRpg.Core.Game
             r.L("標的への集中", "Marked Focus", LinkKind.Attune, 2);
             r.S("一点を穿つ腕", "Point-Piercing Arm", Stat.AttackPct, 2);
             r.L("決闘の護身", "Duelist's Guard", LinkKind.Guard, 1);
-            r.P("六撃の終止符", "Six-Strike Finish", Power.Executioner, 6);
+            r.P("印の追撃", "Marked Pursuit", Power.Fetters, 8);
             r.L("標の共振", "Mark Resonance", LinkKind.Attune, 1);
             r.S("刻み続ける剣", "Relentless Marking Blade", Stat.AttackSpeedPct, 1);
             r.L("一点への六連撃", "Six Blows to One Point", LinkKind.Attune, 8);
@@ -412,7 +412,7 @@ namespace SodRpg.Core.Game
             r.L("突剣の巡り", "Thrusting Blade Cycle", LinkKind.MemoryHaste, 3);
             r.S("刺突の剛力", "Thrusting Strength", Stat.AttackPct, 2);
             r.L("突剣の余勢", "Thrusting Momentum", LinkKind.MemorySurge, 2);
-            r.P("踏破の旋風", "Advancing Whirlwind", Power.Whirlwind, 5);
+            r.P("流れる突き", "Flowing Thrust", Power.Momentum, 2);
             r.L("切り込む備え", "Advance Guard", LinkKind.Guard, 1);
             r.S("傷を塞ぐ体", "Wound-Mending Body", Stat.MaxHealthPct, 2);
             r.L("途切れぬ突剣", "Unbroken Thrusts", LinkKind.MemoryHaste, 10);
@@ -450,7 +450,7 @@ namespace SodRpg.Core.Game
             r.L("団結の同調", "Unity Attunement", LinkKind.Attune, 2);
             r.S("絆を照らす力", "Bond-Illuminating Power", Stat.PowerPct, 2);
             r.L("分かち合う守り", "Shared Guard", LinkKind.Guard, 1);
-            r.P("溢れる団結", "Overflowing Unity", Power.OverflowingLife, 4);
+            r.P("団結の光", "Light of Unity", Power.Radiance, 5);
             r.L("心音の共振", "Heartbeat Resonance", LinkKind.Attune, 1);
             r.S("団結の光量", "Unity Radiance", Stat.LightAmp, 2);
             r.L("一つになる心音", "Heartbeats as One", LinkKind.Attune, 8);
@@ -461,14 +461,14 @@ namespace SodRpg.Core.Game
             r.L("命脈の同調", "Lifeline Attunement", LinkKind.Attune, 1);
             r.S("群れに渡す鎧", "Armor Shared with the Pack", Stat.Armor, 3);
             r.L("共に生きる備え", "Shared Life Readiness", LinkKind.Guard, 1);
-            r.S("命を継ぐ器", "Life-Renewing Vessel", Stat.MaxHealthPct, 2);
+            r.S("循環の魔力", "Power of the Cycle", Stat.PowerPct, 2);
             r.L("巡り続ける命脈", "Unbroken Lifeline", LinkKind.Guard, 8);
 
             r = new Route(nodes, "Nachia", "dreamy-waltz", "St_M_DreamyWaltz");
             r.L("輪舞の守り", "Waltz Guard", LinkKind.Guard, 2);
-            r.S("夢幻の器", "Dreamlike Vessel", Stat.MaxHealthPct, 2);
+            r.S("舞う器", "Dancing Vessel", Stat.MaxHealthPct, 2);
             r.L("舞い戻る呼吸", "Returning Dance Breath", LinkKind.MemoryHaste, 2);
-            r.P("輪舞の加速", "Waltz Acceleration", Power.Sprint, 3);
+            r.P("ワルツの返し", "Waltz Riposte", Power.EchoingDodge, 5);
             r.L("波動の同調", "Wave Attunement", LinkKind.Attune, 1);
             r.S("群れの舞踏靴", "Pack Dancing Shoes", Stat.Armor, 2);
             r.L("群れを包む輪舞", "Pack-Enfolding Waltz", LinkKind.Guard, 9);
@@ -488,7 +488,7 @@ namespace SodRpg.Core.Game
             r.L("月獣の守り", "Moonbeast Guard", LinkKind.Guard, 2);
             r.P("月爪の足止め", "Moonclaw Snare", Power.Fetters, 3);
             r.L("月牙の共振", "Moonfang Resonance", LinkKind.Attune, 1);
-            r.S("共に駆ける拍子", "Shared Hunting Tempo", Stat.AttackSpeedPct, 1);
+            r.P("月の誓いの昂り", "Moonlit Surge", Power.Overload, 2);
             r.L("消えない月の契り", "Unfading Moon Covenant", LinkKind.Attune, 8);
 
             r = new Route(nodes, "Nachia", "natures-whisper", "St_R_NaturesWhisper");
@@ -506,7 +506,7 @@ namespace SodRpg.Core.Game
             r.L("祝福の余韻", "Blessing Echo", LinkKind.MemorySurge, 2);
             r.P("蛇牙の足枷", "Serpent Fang Shackles", Power.Fetters, 3);
             r.L("蛇環の同調", "Serpent Ring Attunement", LinkKind.Attune, 1);
-            r.S("祝福を宿す器", "Blessing-Bearing Vessel", Stat.MaxHealthPct, 2);
+            r.P("蛇の守り", "Serpent Ward", Power.StarShield, 3);
             r.L("脱皮する命", "Life Renewed", LinkKind.MemorySurge, 10);
 
             // Aurena: AP healing does not scale with the HP sacrificed. AD claws/theory
@@ -524,7 +524,7 @@ namespace SodRpg.Core.Game
             r.L("金羽の同調", "Golden Feather Attunement", LinkKind.Attune, 2);
             r.S("羽根を織る知", "Feather-Weaving Wisdom", Stat.PowerPct, 2);
             r.L("羽衣の守り", "Feather Robe Guard", LinkKind.Guard, 1);
-            r.P("満ち足りた羽根", "Brimming Feathers", Power.Vigor, 3);
+            r.P("羽ばたく渇き", "Fluttering Thirst", Power.Bloodlust, 4);
             r.L("六羽の共振", "Six-Feather Resonance", LinkKind.Attune, 1);
             r.S("羽根を渡す拍子", "Feather-Giving Tempo", Stat.AttackSpeedPct, 1);
             r.L("六羽の生命環", "Six-Feather Life Ring", LinkKind.Attune, 8);
@@ -535,7 +535,7 @@ namespace SodRpg.Core.Game
             r.L("羽根の舞い戻り", "Returning Feather Dance", LinkKind.MemoryHaste, 2);
             r.P("舞い降りる一撃", "Descending Strike", Power.EchoingDodge, 5);
             r.L("羽跡の余韻", "Feather Trail Echo", LinkKind.MemorySurge, 2);
-            r.S("着地の備え", "Landing Brace", Stat.Armor, 2);
+            r.S("羽根の加速", "Feather Haste", Stat.AttackSpeedPct, 2);
             r.L("黄金の帰還", "Golden Return", LinkKind.MemorySurge, 10);
 
             r = new Route(nodes, "Aurena", "golden-burst", "St_Q_GoldenBurst");
@@ -543,7 +543,7 @@ namespace SodRpg.Core.Game
             r.S("腐食の叡智", "Corrosion Wisdom", Stat.PowerPct, 2);
             r.L("爆光の余力", "Golden Blast Reserve", LinkKind.MemorySurge, 2);
             r.P("捧身の防壁", "Sacrificial Bulwark", Power.Barrier, 2);
-            r.L("金光の再来", "Returning Golden Light", LinkKind.MemoryHaste, 1);
+            r.L("黄金の同調", "Golden Attunement", LinkKind.Attune, 2);
             r.S("崩れない姿勢", "Unbroken Posture", Stat.Armor, 2);
             r.L("命を返す閃光", "Life-Restoring Flash", LinkKind.MemorySurge, 10);
 
@@ -553,7 +553,7 @@ namespace SodRpg.Core.Game
             r.L("還流の余力", "Return Flow Reserve", LinkKind.MemorySurge, 2);
             r.P("献身の再起", "Devoted Renewal", Power.SecondWind, 4);
             r.L("金片の同調", "Golden Shard Attunement", LinkKind.Attune, 1);
-            r.S("命脈の修復", "Lifeline Repair", Stat.HealthRegen, 1);
+            r.P("捧げた後の冴え", "Clarity After Offering", Power.Overload, 3);
             r.L("三筋の還流", "Threefold Return Flow", LinkKind.MemoryHaste, 10);
 
             r = new Route(nodes, "Aurena", "dangerous-theory", "St_R_DangerousTheory");
@@ -569,7 +569,7 @@ namespace SodRpg.Core.Game
             r.L("反応環の同調", "Reaction Ring Attunement", LinkKind.Attune, 2);
             r.S("魔法陣の深さ", "Depth of the Magic Circle", Stat.PowerPct, 2);
             r.L("連鎖の余光", "Chain Afterglow", LinkKind.MemorySurge, 2);
-            r.P("円環から溢れる命", "Life beyond the Circle", Power.OverflowingLife, 4);
+            r.P("連鎖の守り", "Chain Ward", Power.StarShield, 3);
             r.L("反応環の守り", "Reaction Ring Guard", LinkKind.Guard, 1);
             r.S("陣を保つ鎧", "Circle-Keeping Armor", Stat.Armor, 2);
             r.L("命を巡らす大環", "Great Ring of Life", LinkKind.MemorySurge, 10);
@@ -585,11 +585,20 @@ namespace SodRpg.Core.Game
             r.S("頁を送る拍子", "Page-Turning Tempo", Stat.AttackSpeedPct, 1);
             r.L("自ら紡ぐ物語", "Self-Writing Tale", LinkKind.Attune, 8);
 
+            r = new Route(nodes, "Bismuth", "explosion-artist", "St_D_ExplosionArtist");
+            r.L("炎の挿絵", "Illustrated Flame", LinkKind.Attune, 2);
+            r.S("燃える余白", "Burning Margins", Stat.FireAmp, 3);
+            r.L("爆ぜる頁", "Bursting Page", LinkKind.Guard, 1);
+            r.P("飛び火の章", "Chapter of Spreading Fire", Power.Wildfire, 5);
+            r.L("華やぐ回避", "Flourishing Dodge", LinkKind.Attune, 1);
+            r.S("火の筆致", "Fiery Strokes", Stat.PowerPct, 2);
+            r.L("芸術の極み", "Pinnacle of Art", LinkKind.Attune, 8);
+
             r = new Route(nodes, "Bismuth", "distorting-sprint", "St_M_Sprint");
             r.L("書架の退避", "Bookshelf Retreat", LinkKind.Guard, 1);
             r.S("駆ける頁の知", "Racing Page Wisdom", Stat.PowerPct, 2);
             r.L("頁路の再接続", "Pagepath Reconnection", LinkKind.MemoryHaste, 2);
-            r.P("駆け抜ける朗読", "Running Recital", Power.Sprint, 3);
+            r.P("歪む冷気", "Warped Frost", Power.Frost, 5);
             r.L("疾走の余韻", "Sprint Echo", LinkKind.MemorySurge, 2);
             r.S("旅する装丁", "Traveling Binding", Stat.MaxHealthPct, 2);
             r.L("風より速い頁", "Pages Faster than Wind", LinkKind.MemorySurge, 10);
@@ -641,7 +650,7 @@ namespace SodRpg.Core.Game
             Ring(nodes, hero, "insight", "夢輪の叡智", "Dream Ring Wisdom", Stat.PowerPct, 1);
             Ring(nodes, hero, "vessel", "夢輪の器", "Dream Ring Vessel", Stat.MaxHealthPct, 1);
             Ring(nodes, hero, "armor", "夢輪の鎧", "Dream Ring Armor", Stat.Armor, 2);
-            Ring(nodes, hero, "recall", "夢輪の追憶", "Dream Ring Recall", Stat.Haste, 1);
+            Ring(nodes, hero, "recall", "夢輪の生命", "Dream Ring Life", Stat.MaxHealthFlat, 6);
             Ring(nodes, hero, "rhythm", "夢輪の鼓動", "Dream Ring Rhythm", Stat.AttackSpeedPct, 1);
             Ring(nodes, hero, "resolve", "夢輪の不屈", "Dream Ring Resolve", Stat.Tenacity, 2);
             Ring(nodes, hero, "renewal", "夢輪の再生", "Dream Ring Renewal", Stat.HealthRegen, 1);

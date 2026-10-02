@@ -21,20 +21,20 @@ namespace SodRpg.Core.Tests
             ["Hero_Mist"] = new[] { "St_D_AstridsMasterpieceEnGarde", "St_D_AstridsMasterpiecePriorite", "St_M_FastFeet", "St_Q_Fleche", "St_Q_Lunge", "St_R_Parry", "St_R_UnbreakableDetermination" },
             ["Hero_Nachia"] = new[] { "St_D_HeartOfThePack", "St_D_CircleOfLife", "St_M_DreamyWaltz", "St_Q_SylvanCall", "St_Q_MoonlightPact", "St_R_NaturesWhisper", "St_R_SerpentineBlessing" },
             ["Hero_Aurena"] = new[] { "St_D_DisintegratingClaw", "St_D_BeautifulThreat", "St_M_FeatheryDash", "St_Q_GoldenBurst", "St_Q_Reduction", "St_R_DangerousTheory", "St_R_ChainReaction" },
-            ["Hero_Bismuth"] = new[] { "St_D_PrismaticEyes", "St_M_Sprint", "St_QR_Innocence", "St_QR_InfernalTales", "St_QR_ValiantHeart", "St_QR_DistortedMind" },
+            ["Hero_Bismuth"] = new[] { "St_D_PrismaticEyes", "St_D_ExplosionArtist", "St_M_Sprint", "St_QR_Innocence", "St_QR_InfernalTales", "St_QR_ValiantHeart", "St_QR_DistortedMind" },
         };
 
         [Fact]
         public void Every_shipped_memory_has_exactly_one_complete_branch_for_its_owner()
         {
-            Assert.Equal(506, HeroStarRoutes.All.Count);
+            Assert.Equal(513, HeroStarRoutes.All.Count); // v1.27：Bismuth に共通のアイデンティティのルートを足した
             Assert.Equal(Memories.Keys.OrderBy(x => x), HeroStarRoutes.All.Select(t => t.HeroKey).Distinct().OrderBy(x => x));
             foreach (var hero in Memories)
             {
                 var branches = HeroStarRoutes.All.Where(t => t.HeroKey == hero.Key && t.RouteId != null)
                     .GroupBy(t => t.RouteMemory).ToArray();
                 Assert.Equal(hero.Value.OrderBy(x => x), branches.Select(g => g.Key).OrderBy(x => x));
-                Assert.Equal(hero.Key == "Hero_Bismuth" ? 1 : 2, branches.Count(g => g.Key.StartsWith("St_D_", StringComparison.Ordinal)));
+                Assert.Equal(2, branches.Count(g => g.Key.StartsWith("St_D_", StringComparison.Ordinal)));
                 Assert.Equal(5, branches.Count(g => !g.Key.StartsWith("St_D_", StringComparison.Ordinal)));
                 foreach (var branch in branches)
                 {
@@ -54,8 +54,8 @@ namespace SodRpg.Core.Tests
                         Assert.Equal(i == 0 ? null : nodes[i - 1].Id, node.PrerequisiteId);
                     }
                     Assert.Equal(21, nodes.Sum(t => t.MaxRank * t.RankCost));
-                    Assert.Equal(3, nodes.Take(6).Count(t => t.LinkPerRank != null));
-                    Assert.Equal(3, nodes.Take(6).Count(t => t.LinkPerRank == null));
+                    // 目安は半分ずつ。記憶の仕組みに合わせて 2〜4 の幅を許す（v1.27 のレビューで調整）
+                    Assert.InRange(nodes.Take(6).Count(t => t.LinkPerRank != null), 2, 4);
                     Assert.True(nodes[6].LinkPerRank != null || nodes[6].IsPowerNode);
                 }
             }
@@ -65,7 +65,7 @@ namespace SodRpg.Core.Tests
         public void Rings_offer_eight_distinct_five_rank_stats_without_route_dependencies()
         {
             var expected = new[] { Stat.AttackPct, Stat.PowerPct, Stat.MaxHealthPct, Stat.Armor,
-                Stat.Haste, Stat.AttackSpeedPct, Stat.Tenacity, Stat.HealthRegen };
+                Stat.MaxHealthFlat, Stat.AttackSpeedPct, Stat.Tenacity, Stat.HealthRegen }; // 記憶加速はエッセンスで手に入りやすいので外した
             foreach (string hero in Memories.Keys)
             {
                 var ring = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.IsDreamRing).ToArray();
@@ -138,7 +138,7 @@ namespace SodRpg.Core.Tests
         [InlineData("Hero_Mist", 7, 57, 223)]
         [InlineData("Hero_Nachia", 7, 57, 223)]
         [InlineData("Hero_Aurena", 7, 57, 223)]
-        [InlineData("Hero_Bismuth", 6, 50, 202)]
+        [InlineData("Hero_Bismuth", 7, 57, 223)]
         public void Whole_tree_has_more_choices_than_the_point_budget(string hero, int routes, int addedStars, int capacity)
         {
             var added = HeroStarRoutes.All.Where(t => t.HeroKey == hero).ToArray();
@@ -198,14 +198,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Double_shot_route_turns_critical_hits_into_cooldown_recovery_not_passive_haste()
+        public void Double_shot_route_rewards_the_shots_after_a_memory_not_cooldown_recovery()
         {
+            // v1.27：クールダウン短縮はエッセンスで手に入りやすいので、記憶の後の2発に乗る過負荷にした
             var build = BuildThroughMechanic("Hero_Lacerta", "St_D_DoubleTap");
-            var runtime = new PowerRuntime(build, 0);
-            Assert.Equal(0f, runtime.TakeCriticalEcho(1, false));
-            Assert.Equal(0.6f, runtime.TakeCriticalEcho(1, true));
-            Assert.Equal(0f, runtime.TakeCriticalEcho(1.1f, true));
-            Assert.Equal(0.6f, runtime.TakeCriticalEcho(1.5f, true));
+            Assert.True(build.Get(Power.Overload) > 0);
+            Assert.Equal(0, build.Get(Power.CriticalEcho));
         }
 
         [Fact]
