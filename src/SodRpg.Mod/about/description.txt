@@ -1,4 +1,4 @@
-[h1]Dreamforge RPG / 夢鍛RPG[/h1]
+[h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: persistent relics, a risky secure-or-delve choice at every zone, a per-Traveler star map, and a forge. Co-op ready.
 すべての遠征を長いRPGの一部にするMOD。持ち帰れる装備「遺物」、ゾーンごとの「確保か、深く潜るか」の決断、キャラごとの星図、鍛冶。協力プレイ対応。
 
@@ -30,7 +30,7 @@ Turns every run into part of a long RPG journey: persistent relics, a risky secu
 
 [h2]Controls / 操作[/h2]
 [list]
-[*] F6: Dreamforge menu / 夢鍛メニュー
+[*] F6: Dreamforge menu / Dreamforge のメニュー
 [*] F7: Secure / 確保する　F8: Delve / 深く潜る
 [*] Keys, language and UI scale can be changed in the mod settings. / キー・言語・表示倍率はMOD設定で変更可能。
 [/list]

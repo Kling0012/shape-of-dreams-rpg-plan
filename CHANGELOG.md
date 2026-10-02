@@ -1,6 +1,6 @@
 # 更新履歴（アップデートノート）
 
-Dreamforge RPG / 夢鍛RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上。
+Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上。
 各版は GitHub の [Releases](https://github.com/Kling0012/shape-of-dreams-rpg-plan/releases) にもあり、最新版には導入用の zip を添付する。
 これから作るものは [開発計画](docs/dreamforge-roadmap.md)、利用者の判断待ちは [保留事項](docs/dreamforge-pending.md) を参照。
 

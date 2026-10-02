@@ -5,7 +5,7 @@ namespace SodRpg.Mod
     /// <summary>ゲーム内のMOD設定画面に出る設定。保存はゲーム側（QuickSave/Mods）が行う。</summary>
     public class DreamforgeConfig : ModConfig
     {
-        [LabelText("Menu key / 夢鍛メニュー")]
+        [LabelText("Menu key / メニューを開くキー")]
         public Key menuKey = Key.F6;
 
         [LabelText("Secure key / 確保する")]
@@ -23,7 +23,7 @@ namespace SodRpg.Mod
         [LabelText("Show drop toasts / 拾得通知")]
         public bool showToasts = true;
 
-        [LabelText("HUD / 左の夢鍛パネル")]
+        [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 
         [LabelText("ゲームが裏にあるときのFPS上限（0で無効。20〜60）")]

@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace SodRpg.Mod
 {
-    /// <summary>夢鍛メニューを開いている間は、キャラ操作（クリック移動・攻撃・スキル）を止める。</summary>
+    /// <summary>Dreamforge のメニューを開いている間は、キャラ操作（クリック移動・攻撃・スキル）を止める。</summary>
     [HarmonyPatch(typeof(ControlManager), "GetShouldProcessCharacterInputAllowKnockedOut")]
     internal static class BlockInputWhileMenuOpen
     {

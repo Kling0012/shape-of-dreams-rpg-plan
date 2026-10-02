@@ -37,7 +37,7 @@ namespace SodRpg.Core.Game
         {
             new HintDef
             {
-                Id = Hint.Welcome, Title = new Txt("ようこそ、夢鍛へ", "Welcome to Dreamforge"),
+                Id = Hint.Welcome, Title = new Txt("ようこそ、Dreamforge へ", "Welcome to Dreamforge"),
                 Body = new Txt(
                     "このMODでは、Shape of Dreams の遠征で「持ち帰れる装備（遺物）」が手に入るようになります。\n" +
                     "① 敵を倒すと遺物が落ちます。協力プレイでも一人ひとりに別々に落ちます。\n" +
@@ -51,7 +51,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.StarterGear, Title = new Txt("初期の遺物を装備しました", "Starter relics equipped"),
-                Body = new Txt("空いていた枠に初期の遺物を装備しました。左の夢鍛パネルで状態を確認できます。強い遺物を拾ったら、確保地点で [F6] から付け替えましょう。",
+                Body = new Txt("空いていた枠に初期の遺物を装備しました。左のパネルで状態を確認できます。強い遺物を拾ったら、確保地点で [F6] から付け替えましょう。",
                     "Your empty slots now hold starter relics. Check the Dreamforge panel on the left. When you find better ones, swap them at a secure point via [F6]."),
             },
             new HintDef
@@ -105,7 +105,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstBounty, Title = new Txt("依頼を達成しました", "Bounty complete"),
-                Body = new Txt("遠征ごとに依頼が3つあります（左の夢鍛パネル）。祭壇・商人・強化など、本体での行動も依頼になります。",
+                Body = new Txt("遠征ごとに依頼が3つあります（左のパネル）。祭壇・商人・強化など、本体での行動も依頼になります。",
                     "Each run has 3 bounties (left Dreamforge panel). Many are about using the game's own shrines, merchants and upgrades."),
             },
             new HintDef
