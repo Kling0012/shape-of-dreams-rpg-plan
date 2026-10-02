@@ -79,11 +79,11 @@ namespace SodRpg.Core.Game
                 case BountyKind.DeepDiver: return Loc.T($"潜行{t}以上で確保する", $"Secure at delve level {t}+");
                 case BountyKind.Treasure: return Loc.T($"レア以上の遺物を{t}個見つける", $"Find {t} Rare+ relic(s)");
                 case BountyKind.NightmareHunter: return Loc.T($"悪夢化した敵を{t}体倒す", $"Slay {t} nightmare(s)");
-                case BountyKind.ChaosSeeker: return Loc.T($"Chaosの祭壇を{t}回使う", $"Use {t} Chaos shrine(s)");
+                case BountyKind.ChaosSeeker: return Loc.T($"混沌を{t}回使う", $"Use Chaos {t} time(s)");
                 case BountyKind.Patron: return Loc.T($"商人から{t}回買う", $"Buy from merchants {t} time(s)");
-                case BountyKind.Refiner: return Loc.T($"MemoryかEssenceを{t}回強化する", $"Upgrade Memories/Essences {t} time(s)");
-                case BountyKind.Alchemist: return Loc.T($"Essenceを{t}回合成する", $"Merge Essences {t} time(s)");
-                case BountyKind.Recycler: return Loc.T($"MemoryかEssenceを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)");
+                case BountyKind.Refiner: return Loc.T($"記憶かエッセンスを{t}回強化する", $"Upgrade Memories/Essences {t} time(s)");
+                case BountyKind.Alchemist: return Loc.T($"エッセンスを{t}回合成する", $"Merge Essences {t} time(s)");
+                case BountyKind.Recycler: return Loc.T($"記憶かエッセンスを{t}回分解する", $"Dismantle Memories/Essences {t} time(s)");
                 case BountyKind.HunterBait: return Loc.T($"ハンターの領域へ{t}回踏み込む", $"Enter hunter territory {t} time(s)");
                 case BountyKind.PactBearer: return Loc.T($"悪夢の契約を{t}回結ぶ", $"Swear {t} nightmare pact(s)");
                 case BountyKind.LegendFinder: return Loc.T($"固有品を{t}個見つける", $"Find {t} legendary relic(s)");

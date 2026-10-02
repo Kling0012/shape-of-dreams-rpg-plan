@@ -260,8 +260,8 @@ namespace SodRpg.Mod
                 sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
                     .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
                 sb.Append("\n<size=13>").Append(Loc.T(
-                    $"{(compact ? "未確保" : "まだ持ち帰っていない物")}：遺物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
-                    $"{(compact ? "Unsecured" : "Not yet secured")}: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
+                    $"未確保：遺物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
+                    $"Unsecured: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
                 if (p.LostAndFound.Count > 0 && !run.LostRecovered)
                 {
                     int rooms = Workshop.RoomsToRecover(p);
@@ -302,6 +302,8 @@ namespace SodRpg.Mod
             var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
                 + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades ? 24 : 0)
                 + 24);
+            // 前のフレームで測った中身の高さがあれば、それに合わせる（余白も、はみ出しも出さない）。
+            if (_secureMeasured > 0) rect.height = _secureMeasured + 28;
             if (rect.height > h - 100) rect.height = h - 100;
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
@@ -415,7 +417,7 @@ namespace SodRpg.Mod
             }
             if (run.OfferedPacts.Count > 0)
             {
-                GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure."), _st.Small);
+                GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact."), _st.Small);
                 GUI.enabled = !_s.HasPendingTrades;
                 foreach (var id in run.OfferedPacts.ToList())
                 {
@@ -426,9 +428,12 @@ namespace SodRpg.Mod
                 GUI.enabled = true;
             }
             GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
+            if (Event.current.type == EventType.Repaint) _secureMeasured = GUILayoutUtility.GetLastRect().yMax;
             GUILayout.EndScrollView();
             GUILayout.EndArea();
         }
+
+        private float _secureMeasured;
 
         private Vector2 _scrollSecure;
         private DreamEvent _confirmEvent;

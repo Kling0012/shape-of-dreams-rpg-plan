@@ -105,7 +105,7 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstBounty, Title = new Txt("依頼を達成しました", "Bounty complete"),
-                Body = new Txt("遠征ごとに依頼が3つあります（左のパネル）。祭壇・商人・強化など、本体での行動も依頼になります。",
+                Body = new Txt("遠征ごとに依頼が3つあります（左のパネル）。聖堂・商人・強化など、本体での行動も依頼になります。",
                     "Each run has 3 bounties (left Dreamforge panel). Many are about using the game's own shrines, merchants and upgrades."),
             },
             new HintDef

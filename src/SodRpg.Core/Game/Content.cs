@@ -1145,7 +1145,7 @@ namespace SodRpg.Core.Game
                 case Power.Radiance: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵に光を付ける（光が3つ重なると光のダメージは必ず会心）", $"[{name}] Basic attack hits have a {v}% chance to apply Light (at 3 stacks, light damage always crits)");
                 case Power.Umbra: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵に闇を付ける", $"[{name}] Basic attack hits have a {v}% chance to apply Dark");
                 case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% AD (once per 6s per enemy)");
-                case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびに、Memory（スキル）のクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Each dodge shortens your Memory (skill) cooldowns by {v / 10f:0.#}s");
+                case Power.EchoingDodge: return Loc.T($"【{name}】回避するたびに、記憶（スキル）のクールダウンが{v / 10f:0.#}秒縮む", $"[{name}] Each dodge shortens your Memory (skill) cooldowns by {v / 10f:0.#}s");
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate");
                 case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health");
                 case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% AD to enemies within 4m (once per 2s)");
