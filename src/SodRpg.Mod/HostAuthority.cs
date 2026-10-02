@@ -40,6 +40,11 @@ namespace SodRpg.Mod
             public Action<int> OnSpendGold;
             public DataProcessor<DamageData, Actor, Entity> DamageDealt;
             public DataProcessor<DamageData, Actor, Entity> DamageTaken;
+            // 連携（v1.26）：旅人の型名と、装着中の記憶・エッセンスの型名（0.25秒ごとに集め直す）。
+            public string HeroKey;
+            public readonly HashSet<string> LinkMemories = new HashSet<string>();
+            public readonly HashSet<string> LinkEssences = new HashSet<string>();
+            public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
         }
 
         private sealed class MonsterRuntime
@@ -73,8 +78,12 @@ namespace SodRpg.Mod
         private static readonly IBinaryEntityValidator EnemyFilter = new EnemyValidator();
         private static readonly HeroSkillLocation[] CooldownSkills =
             { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E };
+        // 連携の判定に見る枠（Identity と Movement も記憶の対象になる）。
+        private static readonly HeroSkillLocation[] LinkSkills =
+            { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R, HeroSkillLocation.Identity, HeroSkillLocation.Movement };
         private readonly Func<int, int, bool> _resonanceNear;
         private PowerRuntime[] _scanPowers = Array.Empty<PowerRuntime>();
+        private readonly HashSet<LinkKind> _triggeredLinks = new HashSet<LinkKind>();
 
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
@@ -1061,6 +1070,11 @@ namespace SodRpg.Mod
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
+            // 連携の判定結果は Build と装着に紐付くので、付け直すときに一旦空にする。
+            rt.HeroKey = hero.GetType().Name;
+            rt.SatisfiedLinks.Clear();
+            rt.LinkMemories.Clear();
+            rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
@@ -1236,6 +1250,26 @@ namespace SodRpg.Mod
                     }
                 }
                 ReduceMemoryCooldowns(hero, r.CooldownReduction);
+                // 連携（v1.26）：使った記憶が条件に入っている連携だけを発動する。
+                if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
+                {
+                    string used = info.skill.GetType().Name;
+                    foreach (var link in rt.SatisfiedLinks)
+                    {
+                        if (link.Kind != LinkKind.MemoryHaste && link.Kind != LinkKind.MemorySurge) continue;
+                        if (Array.IndexOf(link.Requires, used) < 0) continue;
+                        if (link.Kind == LinkKind.MemoryHaste)
+                        {
+                            hero.ApplyCooldownReductionByRatio(info.skill, link.Value / 100f, false);
+                            LogLinkApplied(link);
+                        }
+                        else
+                        {
+                            rt.Powers.OnLinkSurge(Time.time, link.Value);
+                            LogLinkApplied(link);
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1331,12 +1365,13 @@ namespace SodRpg.Mod
             var d = rt.DynBonus;
             // 値が変わったときだけ能力を再計算する（StatBonus は同じ値の代入では汚れない）。
             if (d.attackSpeedPercentage != dyn.AttackSpeedPct || d.attackDamagePercentage != dyn.AttackPct || d.abilityPowerPercentage != dyn.PowerPct
-                || d.movementSpeedPercentage != dyn.MoveSpeedPct || d.armorFlat != dyn.Armor)
+                || d.movementSpeedPercentage != dyn.MoveSpeedPct || d.maxHealthPercentage != dyn.MaxHealthPct || d.armorFlat != dyn.Armor)
             {
                 d.attackSpeedPercentage = dyn.AttackSpeedPct;
                 d.attackDamagePercentage = dyn.AttackPct;
                 d.abilityPowerPercentage = dyn.PowerPct;
                 d.movementSpeedPercentage = dyn.MoveSpeedPct;
+                d.maxHealthPercentage = dyn.MaxHealthPct;
                 d.armorFlat = dyn.Armor;
                 hero.Status.CalculateStatsIfDirty();
             }
@@ -1387,6 +1422,7 @@ namespace SodRpg.Mod
                     LogPowerTrigger(Power.CrystalResonance);
                 if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
                     LogPowerTrigger(Power.PreyPride);
+                UpdateLinks(rt, alive);
             }
 
             // DistributeResonance は配列全体を使うため、人数が変わったときだけ長さを合わせる。
@@ -1399,6 +1435,71 @@ namespace SodRpg.Mod
                 int v = rt.Powers.Build.Get(Power.Resonance);
                 if (v > 0 && rt.Powers.ResonanceSelf < v && AnyAllyNear(rt.Hero)) rt.Powers.ResonanceSelf = v;
             }
+        }
+
+        /// <summary>
+        /// 連携（v1.26）：装っている記憶・エッセンスの型名と旅人の型名から、満たしている連携を選ぶ（0.25秒ごと）。
+        /// 同調と守りはここで補正に足し、外れたら次の走査で消える。記憶を使う2種は OnSkillUse で使う。
+        /// </summary>
+        private void UpdateLinks(HeroRuntime rt, bool alive)
+        {
+            var p = rt.Powers;
+            var links = p.Build.Links;
+            if (links.Count == 0)
+            {
+                if (rt.SatisfiedLinks.Count > 0)
+                {
+                    rt.SatisfiedLinks.Clear();
+                    p.LinkAttunePct = 0;
+                    p.LinkGuardHealthPct = 0;
+                    p.LinkGuardArmor = 0;
+                }
+                return;
+            }
+            var hero = rt.Hero;
+            var memories = rt.LinkMemories;
+            var essences = rt.LinkEssences;
+            memories.Clear();
+            essences.Clear();
+            if (alive && hero.Skill != null)
+            {
+                foreach (var loc in LinkSkills)
+                {
+                    var skill = hero.Skill.GetSkill(loc);
+                    if (skill != null) memories.Add(skill.GetType().Name);
+                }
+                foreach (var kv in hero.Skill.gems)
+                    if (kv.Value != null) essences.Add(kv.Value.GetType().Name);
+            }
+            rt.SatisfiedLinks.Clear();
+            int attune = 0, guardHealth = 0, guardArmor = 0;
+            foreach (var link in links)
+            {
+                if (!Links.Satisfied(link, rt.HeroKey, memories, essences)) continue;
+                rt.SatisfiedLinks.Add(link);
+                switch (link.Kind)
+                {
+                    case LinkKind.Attune:
+                        attune += link.Value;
+                        LogLinkApplied(link);
+                        break;
+                    case LinkKind.Guard:
+                        guardHealth += link.Value;
+                        guardArmor += link.Value;
+                        LogLinkApplied(link);
+                        break;
+                }
+            }
+            p.LinkAttunePct = attune;
+            p.LinkGuardHealthPct = guardHealth;
+            p.LinkGuardArmor = guardArmor;
+        }
+
+        /// <summary>連携が最初に効いたときだけ、種類ごとに1行ログを残す。</summary>
+        private void LogLinkApplied(LinkDef link)
+        {
+            if (_triggeredLinks.Add(link.Kind))
+                Log.Info("[DreamforgeRPG] link " + link.Kind + " applied: " + string.Join("+", link.Requires));
         }
 
         private bool RuntimesNear(int i, int j) =>

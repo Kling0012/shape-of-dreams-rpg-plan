@@ -10,6 +10,7 @@ namespace SodRpg.Core.Game
         public int AttackPct;
         public int PowerPct;
         public int MoveSpeedPct;
+        public int MaxHealthPct;
         public int Armor;
     }
 
@@ -67,6 +68,11 @@ namespace SodRpg.Core.Game
         public const float PerfectReadDuration = 3f;
         public const float PerfectReadCooldown = 1.5f;
         public const int LucidBoonMaxDreams = 6;
+        /// <summary>連携（記憶の余韻）の持続時間。効果は重ならず、時間だけ伸びる。</summary>
+        public const float LinkSurgeDuration = 5f;
+
+        private float _linkSurgeUntil;
+        private int _linkSurgeValue;
 
         private float _momentumUntil;
         private float _retaliationUntil;
@@ -172,6 +178,21 @@ namespace SodRpg.Core.Game
         public int DevotionStacks { get; private set; }
         /// <summary>有効なEvilの明晰夢の数。6つまで、補正の合計は18%まで。</summary>
         public int EvilDreamCount { get; set; }
+
+        /// <summary>連携（同調）：条件を満たしている間の攻撃力・魔力%（ホストの定期走査で更新）。</summary>
+        public int LinkAttunePct { get; set; }
+        /// <summary>連携（守り）：条件を満たしている間の最大HP%（ホストの定期走査で更新）。</summary>
+        public int LinkGuardHealthPct { get; set; }
+        /// <summary>連携（守り）：条件を満たしている間の防御（ホストの定期走査で更新）。</summary>
+        public int LinkGuardArmor { get; set; }
+
+        /// <summary>連携（記憶の余韻）：効果は重ならず、残り時間だけ伸ばす（値は大きい方を保つ）。</summary>
+        public void OnLinkSurge(float now, int value)
+        {
+            if (now >= _linkSurgeUntil) _linkSurgeValue = 0;
+            if (value > _linkSurgeValue) _linkSurgeValue = value;
+            _linkSurgeUntil = now + LinkSurgeDuration;
+        }
 
         /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
         public float TakeStillWater(float now, bool ownSkillStun, float maxHealth)
@@ -290,7 +311,16 @@ namespace SodRpg.Core.Game
             _wildfireReady[victimId] = now + WildfireCooldown;
             return true;
         }
-        public void SetBuild(Build build) => Build = build ?? new Build();
+        public void SetBuild(Build build)
+        {
+            Build = build ?? new Build();
+            // 連携の状態は装備に紐付くので、Build が変わったらやり直す（判定は次の走査で）。
+            LinkAttunePct = 0;
+            LinkGuardHealthPct = 0;
+            LinkGuardArmor = 0;
+            _linkSurgeValue = 0;
+            _linkSurgeUntil = 0f;
+        }
 
         public void OnKill(float now)
         {
@@ -398,6 +428,9 @@ namespace SodRpg.Core.Game
         public DynamicBonus Current(float now)
         {
             if (now > _momentumUntil) MomentumStacks = 0;
+            // 連携（v1.26）：同調は常時、記憶の余韻は条件の記憶を使った後の5秒間。
+            int linkSurge = now < _linkSurgeUntil ? _linkSurgeValue : 0;
+            int linkAttack = LinkAttunePct + linkSurge;
             int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
             int conditional = Math.Max(0, Build.Get(Power.CrystalResonance))
                     * Math.Min(CrystalResonanceMaxTiers, Math.Max(0, GemQualityTotal) / 100)
@@ -411,11 +444,12 @@ namespace SodRpg.Core.Game
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
                 AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance
-                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0) + conditional,
-                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional,
+                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0) + conditional + linkAttack,
+                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
-                Armor = NearbyEnemies >= BulwarkEnemies ? Build.Get(Power.Bulwark) : 0,
+                MaxHealthPct = LinkGuardHealthPct,
+                Armor = (NearbyEnemies >= BulwarkEnemies ? Build.Get(Power.Bulwark) : 0) + LinkGuardArmor,
             };
         }
 

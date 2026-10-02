@@ -65,6 +65,10 @@ namespace SodRpg.Mod
             "Hero_Lacerta", "Hero_Mist", "Hero_Aurena", "Hero_Bismuth", "Hero_Vesper", "Hero_Yubar", "Hero_Nachia", "Hero_Husk", "Hero_Cetus",
         };
 
+        // 連携（v1.26）の印に見る枠。Identity と Movement も記憶の対象になる。
+        private static readonly HeroSkillLocation[] LinkSkillSlots =
+            { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R, HeroSkillLocation.Identity, HeroSkillLocation.Movement };
+
         private readonly ClientSession _s;
         private readonly Func<DreamforgeConfig> _cfg;
         private readonly UiStyles _st = new UiStyles();
@@ -80,6 +84,12 @@ namespace SodRpg.Mod
         private bool _forgeAllSlots = true;
         private string _status;
         private float _statusUntil;
+        // 連携（v1.26）：ローカルの旅人の装着は0.5秒に1回だけ見る（OnGUI は1フレームに何度も走るため）。
+        private readonly HashSet<string> _linkMemories = new HashSet<string>();
+        private readonly HashSet<string> _linkEssences = new HashSet<string>();
+        private string _linkHeroKey;
+        private Func<string, bool> _linkMarks;
+        private float _nextLinkCheck;
 
         public bool Open { get; private set; }
 
@@ -158,6 +168,44 @@ namespace SodRpg.Mod
                 if (_heroSel == null) _heroSel = _s.Profile.Heroes.Keys.FirstOrDefault(k => k.StartsWith("Hero_")) ?? KnownHeroes[0];
                 return _heroSel;
             }
+        }
+
+        /// <summary>
+        /// 連携（v1.26）の条件の ✓／・ の判定。ゲームの中ではローカルの旅人の装着と比べ、
+        /// 0.5秒に1回までしか集め直さない。ゲームの外では null（印を付けない）。
+        /// </summary>
+        private Func<string, bool> LinkMarks()
+        {
+            var hero = _s.LocalHero;
+            if (hero == null)
+            {
+                _linkMarks = null;
+                _linkHeroKey = null;
+                return null;
+            }
+            string key = ClientSession.HeroKeyOf(hero);
+            float now = Time.unscaledTime;
+            if (_linkMarks == null || key != _linkHeroKey || now >= _nextLinkCheck)
+            {
+                _nextLinkCheck = now + 0.5f;
+                _linkHeroKey = key;
+                _linkMemories.Clear();
+                _linkEssences.Clear();
+                if (hero.Skill != null)
+                {
+                    foreach (var loc in LinkSkillSlots)
+                    {
+                        var skill = hero.Skill.GetSkill(loc);
+                        if (skill != null) _linkMemories.Add(skill.GetType().Name);
+                    }
+                    foreach (var kv in hero.Skill.gems)
+                        if (kv.Value != null) _linkEssences.Add(kv.Value.GetType().Name);
+                }
+                var memories = _linkMemories;
+                var essences = _linkEssences;
+                _linkMarks = t => Links.RequirementSatisfied(t, key, memories, essences);
+            }
+            return _linkMarks;
         }
 
         private string _lobbySeen;
@@ -929,6 +977,16 @@ namespace SodRpg.Mod
                 string bonus = string.Join("・", Content.SetBonus(kv.Key, kv.Value).Select(x => Content.FormatStat(x.Stat, x.Value)));
                 GUILayout.Label(UiStyles.Colored(Loc.T($"〈{Content.LineName(kv.Key)}×{kv.Value}〉{bonus}", $"<{Content.LineName(kv.Key)} x{kv.Value}> {bonus}"), "#9fe0c0"), _st.Small);
             }
+            // 連携（v1.26）：いま条件を満たしている連携だけを出す（ゲームの外では判定できないので出さない）。
+            var marks = LinkMarks();
+            if (marks != null)
+            {
+                foreach (var active in build.Links)
+                {
+                    if (!Links.Satisfied(active, _linkHeroKey, _linkMemories, _linkEssences)) continue;
+                    GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks), "#7fd8ff"), _st.Small);
+                }
+            }
             GUILayout.EndScrollView();
             if (!_s.CanEditLoadout)
                 GUILayout.Label(Loc.T("遠征中は、確保地点に着いてから次の戦闘で敵を倒すまで、装備を変えられます。", "During an expedition, you can change gear from the moment you reach a secure point until you slay an enemy in the next fight."), _st.Warn);
@@ -1192,6 +1250,9 @@ namespace SodRpg.Mod
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
+            var link = r.Link;
+            if (link != null) GUILayout.Label(UiStyles.Colored(Links.Describe(link, LinkMarks()), "#7fd8ff"), _st.Small);
             foreach (var a in r.EffectiveStats().Skip(1)) GUILayout.Label(Content.FormatStat(a.Stat, a.Value), _st.Label);
             if (r.Rarity == Rarity.Legendary) GUILayout.Label(AwakenLine(r), _st.Small);
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))

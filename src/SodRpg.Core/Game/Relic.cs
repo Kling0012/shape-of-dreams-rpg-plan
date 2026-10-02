@@ -52,6 +52,8 @@ namespace SodRpg.Core.Game
 
         public BaseDef Base => Content.GetBase(BaseId);
         public Slot Slot => Base.Slot;
+        /// <summary>固有品の連携（v1.26）。連携を持たない遺物・個体は null。</summary>
+        public LinkDef Link => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Link : null;
 
         /// <summary>強化値を付けない名前。</summary>
         public string PlainName

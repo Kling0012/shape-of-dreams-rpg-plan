@@ -76,7 +76,7 @@ namespace SodRpg.Mod
     {
         // Unknown CustomRpc handler behavior is not documented in the reflection dumps.
         // Require matching builds rather than silently losing variant identity/rewards.
-        // v1.26 で 3 に上げた（DreamforgeCurseClearMsg を追加。v1.25 は 2）。
-        public const int Version = 3;
+        // v1.26 で 4 に上げた（Build 文字列に連携の l: 区間を追加。3 は呪い解除の追加、v1.25 は 2）。
+        public const int Version = 4;
     }
 }

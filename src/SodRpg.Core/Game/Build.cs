@@ -17,6 +17,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         /// <summary>セット遺物の装着数（表示用）。</summary>
         public SortedDictionary<string, int> Sets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        /// <summary>装着中の遺物の連携（v1.26）。覚醒の倍率を反映した値で、正しくない物は入れない。</summary>
+        public List<LinkDef> Links { get; } = new List<LinkDef>();
         public int Heat { get; set; }
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
@@ -41,6 +43,14 @@ namespace SodRpg.Core.Game
                 if (r == null) continue;
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
                 foreach (var pw in r.EffectivePowers()) Add(rawPowers, pw.Power, pw.Value);
+                // 連携（v1.26）：強化では伸びず、覚醒だけが値を掛ける。正しくない定義は無視する。
+                var link = r.Link;
+                if (link != null)
+                {
+                    int value = r.Awakened ? (int)((long)link.Value * Content.AwakenPowerPct / 100) : link.Value;
+                    var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, Value = value };
+                    if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
+                }
                 b.Lines.TryGetValue(r.Base.Line, out int n);
                 b.Lines[r.Base.Line] = n + 1;
             }
@@ -116,7 +126,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2" の形。
+        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;l:3=22:St_X+Gem_Y" の形。
+        /// l 区間の各要素は「種類:値:条件+条件+条件」（v1.26 の連携）。
         /// ホストはこれを検証してから能力補正へ変換する。
         /// </summary>
         public string Encode()
@@ -139,6 +150,16 @@ namespace SodRpg.Core.Game
                 sb.Append((int)kv.Key).Append('=').Append(kv.Value.ToString(CultureInfo.InvariantCulture));
             }
             sb.Append(";h:").Append(Heat.ToString(CultureInfo.InvariantCulture));
+            sb.Append(";l:");
+            first = true;
+            foreach (var link in Links)
+            {
+                if (!first) sb.Append(',');
+                first = false;
+                sb.Append(((int)link.Kind).ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(link.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(string.Join("+", link.Requires));
+            }
             return sb.ToString();
         }
 
@@ -161,6 +182,30 @@ namespace SodRpg.Core.Game
                     if (kind == "h")
                     {
                         b.Heat = Loot.ClampHeat(int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture));
+                        continue;
+                    }
+                    if (kind == "l")
+                    {
+                        if (body.Length == 0) continue;
+                        foreach (string entry in body.Split(','))
+                        {
+                            if (b.Links.Count >= global::SodRpg.Core.Game.Links.MaxLinks) break; // 多すぎる分は切り捨てる
+                            int c1 = entry.IndexOf(':');
+                            int c2 = c1 < 0 ? -1 : entry.IndexOf(':', c1 + 1);
+                            if (c2 < 0) return null;
+                            var linkKind = (LinkKind)int.Parse(entry.Substring(0, c1), NumberStyles.Integer, CultureInfo.InvariantCulture);
+                            if (linkKind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), linkKind)) continue;
+                            int v = int.Parse(entry.Substring(c1 + 1, c2 - c1 - 1), NumberStyles.Integer, CultureInfo.InvariantCulture);
+                            string[] targets = entry.Substring(c2 + 1).Split('+');
+                            for (int i = 0; i < targets.Length; i++) targets[i] = global::SodRpg.Core.Game.Links.Canon(targets[i]);
+                            var def = new LinkDef
+                            {
+                                Requires = targets,
+                                Kind = linkKind,
+                                Value = Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.Cap(linkKind, targets.Length), v)),
+                            };
+                            if (global::SodRpg.Core.Game.Links.Validate(def)) b.Links.Add(def);
+                        }
                         continue;
                     }
                     if (body.Length == 0) continue;
