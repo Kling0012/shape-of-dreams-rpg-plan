@@ -137,9 +137,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>所持しているセットの未所持部位の重み。狙い系統の重みと掛け合わせる。</summary>
         /// <summary>伝説の抽選でセット品そのものが選ばれやすくなる倍率。</summary>
-        public const int SetPieceWeight = 2;
+        public const int SetPieceWeight = 3;
 
-        public const int SetCompletionWeight = 10;
+        public const int SetCompletionWeight = 25;
 
         private static bool IsMissingSetPiece(UniqueDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
         {

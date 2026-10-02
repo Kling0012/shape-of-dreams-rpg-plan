@@ -27,6 +27,14 @@ namespace SodRpg.Core.Game
         Scholar = 10,
         Gambler = 11,
         AbyssEye = 12,
+        BloodPrice = 13,
+        IronOath = 14,
+        HollowCrown = 15,
+        ThiefsBargain = 16,
+        Stargazer = 17,
+        Wanderer = 18,
+        Miser = 19,
+        BloodMoon = 20,
     }
 
     public sealed class PactDef
@@ -124,6 +132,49 @@ namespace SodRpg.Core.Game
             {
                 Id = Pact.AbyssEye, Name = new Txt("深淵の眼", "Eye of the Abyss"),
                 Description = new Txt("代償：強い呪いを1つ受けます。見返り：遺物が50%多く落ち、良い物が出やすくなり、エリートとボスが調律石を1つ多く落とします。", "Cost: a powerful curse. Reward: 50% more relics, better rarity, and elites and bosses drop 1 extra tuning stone."), CurseStrength = 3, DropBonus = 0.5, Luck = 0.8, TuningOnElite = 1,
+            },
+            new PactDef
+            {
+                Id = Pact.BloodPrice, Name = new Txt("血の代価", "Blood Price"),
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：攻撃速度が15%上がります。", "Cost: a potent curse. Reward: +15% attack speed."), CurseStrength = 2,
+                Boons = new[] { new StatLine(Stat.AttackSpeedPct, 15) },
+            },
+            new PactDef
+            {
+                Id = Pact.IronOath, Name = new Txt("鉄の誓約", "Iron Oath"),
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：防御が10上がります。", "Cost: a mild curse. Reward: +10 armor."), CurseStrength = 1,
+                Boons = new[] { new StatLine(Stat.Armor, 10) },
+            },
+            new PactDef
+            {
+                Id = Pact.HollowCrown, Name = new Txt("虚ろな王冠", "Hollow Crown"),
+                Description = new Txt("代償：強い呪いを1つ受けます。見返り：遺物が80%多く落ち、敵を倒して得る欠片が1.5倍になります。", "Cost: a powerful curse. Reward: 80% more relics and x1.5 shards from kills."), CurseStrength = 3, DropBonus = 0.8, ShardMult = 1.5,
+            },
+            new PactDef
+            {
+                Id = Pact.ThiefsBargain, Name = new Txt("盗人の取引", "Thief's Bargain"),
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：欠片が1.3倍になり、遺物も20%多く落ちます。", "Cost: a mild curse. Reward: x1.3 shards and 20% more relics."), CurseStrength = 1, ShardMult = 1.3, DropBonus = 0.2,
+            },
+            new PactDef
+            {
+                Id = Pact.Stargazer, Name = new Txt("星見の契約", "Stargazer's Pact"),
+                Description = new Txt("代償：弱い呪いを1つ受けます。見返り：レア度の高い遺物が出やすくなります。", "Cost: a mild curse. Reward: better relic rarity."), CurseStrength = 1, Luck = 0.5,
+            },
+            new PactDef
+            {
+                Id = Pact.Wanderer, Name = new Txt("放浪者の契約", "Wanderer's Pact"),
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：経験値が1.5倍になり、遺物も30%多く落ちます。", "Cost: a potent curse. Reward: x1.5 experience and 30% more relics."), CurseStrength = 2, XpMult = 1.5, DropBonus = 0.3,
+            },
+            new PactDef
+            {
+                Id = Pact.Miser, Name = new Txt("守銭奴", "Miser"),
+                Description = new Txt("代償：中くらいの呪いを1つ受けます。見返り：確保したときの潜行ボーナスが2倍になり、欠片も1.3倍になります。", "Cost: a potent curse. Reward: double delve bonus when you secure, and x1.3 shards."), CurseStrength = 2, DoubleDepthBonus = true, ShardMult = 1.3,
+            },
+            new PactDef
+            {
+                Id = Pact.BloodMoon, Name = new Txt("血月の契約", "Blood Moon Pact"),
+                Description = new Txt("代償：強い呪いを1つ受けます。見返り：攻撃力と魔力が20%上がります。", "Cost: a powerful curse. Reward: +20% attack damage and ability power."), CurseStrength = 3,
+                Boons = new[] { new StatLine(Stat.AttackPct, 20), new StatLine(Stat.PowerPct, 20) },
             },
         };
 

@@ -111,6 +111,102 @@ namespace SodRpg.Core.Game
                 Description = new Txt("依頼の報酬×2", "x2 bounty rewards"),
                 BountyMult = 2.0,
             },
+            new DailyDream
+            {
+                Id = 15, Name = new Txt("疾風の日", "Day of Gales"),
+                Description = new Txt("連撃・追い風・回避の残響が+50%、破壊の遺物が出やすい", "Momentum, Tailwind and Echoing Dodge +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Momentum, Power.Tailwind, Power.EchoingDodge },
+            },
+            new DailyDream
+            {
+                Id = 16, Name = new Txt("血の日", "Day of Blood"),
+                Description = new Txt("吸命・血の渇き・逆襲が+50%、生命の遺物が出やすい", "Lifesteal, Bloodlust and Retaliation +50%; Life relics favored"),
+                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Lifesteal, Power.Bloodlust, Power.Retaliation },
+            },
+            new DailyDream
+            {
+                Id = 17, Name = new Txt("星の日", "Day of Stars"),
+                Description = new Txt("終の昂り・共鳴・四元の共鳴が+50%、想像の遺物が出やすい", "Ultimate Surge, Resonance and Convergence +50%; Imagination relics favored"),
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.UltimateSurge, Power.Resonance, Power.Convergence },
+            },
+            new DailyDream
+            {
+                Id = 18, Name = new Txt("棘の日", "Day of Thorns"),
+                Description = new Txt("棘・鉄の輪・守護霊が+50%、生命の遺物が出やすい", "Thorns, Bulwark and Aegis +50%; Life relics favored"),
+                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Thorns, Power.Bulwark, Power.Aegis },
+            },
+            new DailyDream
+            {
+                Id = 19, Name = new Txt("火の日", "Day of Embers"),
+                Description = new Txt("火種・烈火・爆砕が+50%、破壊の遺物が出やすい", "Ember, Blaze and Shatter +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.Ember, Power.Blaze, Power.Shatter },
+            },
+            new DailyDream
+            {
+                Id = 20, Name = new Txt("月の日", "Day of the Moon"),
+                Description = new Txt("影・霜・輝きが+50%、想像の遺物が出やすい", "Umbra, Frost and Radiance +50%; Imagination relics favored"),
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.Umbra, Power.Frost, Power.Radiance },
+            },
+            new DailyDream
+            {
+                Id = 21, Name = new Txt("豊作の夢", "Harvest Dream"),
+                Description = new Txt("遺物ドロップ率+20%、撃破で得る欠片×1.2", "+20% relic drop rate, x1.2 shards from kills"),
+                DropBonus = 0.2, ShardMult = 1.2,
+            },
+            new DailyDream
+            {
+                Id = 22, Name = new Txt("悪夢の祭り", "Festival of Nightmares"),
+                Description = new Txt("悪夢化する敵が1.5倍、経験値×1.2", "x1.5 nightmares, x1.2 experience"),
+                NightmareMult = 1.5, XpMult = 1.2,
+            },
+            new DailyDream
+            {
+                Id = 23, Name = new Txt("宝の夢", "Treasure Dream"),
+                Description = new Txt("遺物ドロップ率+35%", "+35% relic drop rate"),
+                DropBonus = 0.35,
+            },
+            new DailyDream
+            {
+                Id = 24, Name = new Txt("修練の夢", "Training Dream"),
+                Description = new Txt("経験値×1.3、依頼の報酬×1.5", "x1.3 experience, x1.5 bounty rewards"),
+                XpMult = 1.3, BountyMult = 1.5,
+            },
+            new DailyDream
+            {
+                Id = 25, Name = new Txt("職人の夢", "Artisan's Dream"),
+                Description = new Txt("撃破で得る欠片×1.6", "x1.6 shards from kills"),
+                ShardMult = 1.6,
+            },
+            new DailyDream
+            {
+                Id = 26, Name = new Txt("静寂の森", "Silent Forest"),
+                Description = new Txt("依頼の報酬×1.5、遺物ドロップ率+10%", "x1.5 bounty rewards, +10% relic drop rate"),
+                BountyMult = 1.5, DropBonus = 0.1,
+            },
+            new DailyDream
+            {
+                Id = 27, Name = new Txt("雷の日", "Day of Thunder"),
+                Description = new Txt("雷鎖・処刑・連撃が+50%、破壊の遺物が出やすい", "Chain Lightning, Executioner and Momentum +50%; Destruction relics favored"),
+                FeaturedLine = Line.Offense, BoostedPowers = new[] { Power.ChainLightning, Power.Executioner, Power.Momentum },
+            },
+            new DailyDream
+            {
+                Id = 28, Name = new Txt("守りの日", "Day of Wards"),
+                Description = new Txt("護りの灯・灯守・守護霊が+50%、生命の遺物が出やすい", "Barrier, Second Wind and Aegis +50%; Life relics favored"),
+                FeaturedLine = Line.Guard, BoostedPowers = new[] { Power.Barrier, Power.SecondWind, Power.Aegis },
+            },
+            new DailyDream
+            {
+                Id = 29, Name = new Txt("響きの日", "Day of Echoes"),
+                Description = new Txt("回避の残響・共鳴・追い風が+50%、想像の遺物が出やすい", "Echoing Dodge, Resonance and Tailwind +50%; Imagination relics favored"),
+                FeaturedLine = Line.Resonance, BoostedPowers = new[] { Power.EchoingDodge, Power.Resonance, Power.Tailwind },
+            },
+            new DailyDream
+            {
+                Id = 30, Name = new Txt("混沌の夢", "Chaotic Dream"),
+                Description = new Txt("悪夢化する敵が1.5倍、遺物ドロップ率+25%", "x1.5 nightmares, +25% relic drop rate"),
+                NightmareMult = 1.5, DropBonus = 0.25,
+            },
         };
 
         public static DailyDream Get(int id)
