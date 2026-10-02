@@ -74,7 +74,7 @@ namespace SodRpg.Core.Tests
             var b = Build.Compute(p, Hero, 0);
             Assert.Equal(value, b.Get(Power.Thorns));
             Assert.Equal(0, b.Get(Stat.AttackPct));
-            Assert.Equal(18, b.Get(Stat.FireAmp));
+            Assert.Equal(12, b.Get(Stat.PowerPct)); // v1.27：炎の誓い → 聖なる力（魔力 4%）
             Assert.Equal(18, b.Get(Stat.Armor));
         }
 
@@ -146,7 +146,7 @@ namespace SodRpg.Core.Tests
             var b = Build.Compute(p, Hero, 0, null, 2);
             Assert.Equal(0, b.Get(Stat.Tenacity));
             Assert.Equal(0, b.Get(Power.Thorns));
-            Assert.Equal(18, b.Get(Stat.FireAmp));
+            Assert.Equal(12, b.Get(Stat.PowerPct)); // v1.27：炎の誓い → 聖なる力（魔力 4%）
             Assert.Equal(12, b.Get(Stat.Armor));
             Assert.Equal(2, h.Talents[DeepStat]);
             Assert.Equal(3, h.Talents[DeepPower]);

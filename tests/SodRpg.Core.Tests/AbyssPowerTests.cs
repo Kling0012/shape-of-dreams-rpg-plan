@@ -64,9 +64,9 @@ namespace SodRpg.Core.Tests
         public void Chain_lightning_triggers_on_low_rolls_only()
         {
             var rt = new PowerRuntime(With(Power.ChainLightning, 60), 0);
-            Assert.Equal(60f, rt.OnAttackHit(1, 500, 100, 1, 0.1).ChainDamage, 3);
-            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1, 0.3).ChainDamage);
-            Assert.Equal(0, new PowerRuntime(new Build(), 0).OnAttackHit(1, 500, 100, 1, 0.0).ChainDamage);
+            Assert.Equal(60f, rt.OnAttackHit(1, 500, 100, 0, 1, roll: 0.1).ChainDamage, 3);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0, 1, roll: 0.3).ChainDamage);
+            Assert.Equal(0, new PowerRuntime(new Build(), 0).OnAttackHit(1, 500, 100, 0, 1, roll: 0.0).ChainDamage);
         }
 
         [Fact]

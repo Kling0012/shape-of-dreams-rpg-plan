@@ -67,8 +67,8 @@ namespace SodRpg.Core.Tests
             Rules.SetKeystone(p, h, "h.cetus.key");
             var b = Build.Compute(p, h, 0);
             Assert.Equal(24, b.Get(Stat.ColdAmp));
-            Assert.Equal(12, b.Get(Stat.MaxHealthPct));
-            Assert.Equal(35, b.Get(Power.Frost));
+            Assert.Equal(15, b.Get(Stat.MaxHealthPct)); // v1.27：氷の殻 4 → 5%
+            Assert.Equal(70, b.Get(Power.Frost)); // v1.27：凍てつく潮 35 → 70
         }
 
         [Fact]
@@ -76,13 +76,14 @@ namespace SodRpg.Core.Tests
         {
             var p = Profile.CreateNew(1);
             p.DreamLevel = 20;
-            Rules.AddTalentRank(p, "Hero_Vesper", "h.vesper.fourth");
-            Rules.AddTalentRank(p, "Hero_Vesper", "h.vesper.fourth");
+            foreach (var id in new[] { "h.vesper.wall", "h.vesper.wall", "h.vesper.wall", "h.vesper.light", "h.vesper.light", "h.vesper.light" })
+                Rules.AddTalentRank(p, "Hero_Vesper", id);
+            Rules.AddTalentRank(p, "Hero_Vesper", "h.vesper.fourth"); // v1.27：奥の星、1段まで
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, "Hero_Vesper", "h.vesper.fourth"));
             var b = Build.Compute(p, "Hero_Vesper", 0);
-            Assert.Equal(2, b.Get(Stat.FourthAttackShift));
-            Assert.Equal(2f, StatUnits.ToGame(Stat.FourthAttackShift, 2));
-            Assert.Equal(2, Build.Decode("s:17=99;p:;h:0").Get(Stat.FourthAttackShift));
+            Assert.Equal(1, b.Get(Stat.FourthAttackShift));
+            Assert.Equal(1f, StatUnits.ToGame(Stat.FourthAttackShift, 1));
+            Assert.Equal(1, Build.Decode("s:17=99;p:;h:0").Get(Stat.FourthAttackShift));
             Assert.Equal(5f, StatUnits.ToGame(Stat.AttackRangePct, 5));
         }
 

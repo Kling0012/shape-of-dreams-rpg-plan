@@ -117,8 +117,8 @@ namespace SodRpg.Core.Tests
             Assert.False(rt.TakePerfectRead(1.5f, false));
             Assert.True(rt.TakePerfectRead(1.5f, true));
             Assert.Equal(20, rt.Current(3).AttackSpeedPct);
-            Assert.Equal(20, rt.Current(4.499f).AttackSpeedPct);
-            Assert.Equal(0, rt.Current(4.5f).AttackSpeedPct);
+            Assert.Equal(20, rt.Current(5.499f).AttackSpeedPct); // v1.27：3秒→4秒
+            Assert.Equal(0, rt.Current(5.5f).AttackSpeedPct);
         }
 
         [Fact]

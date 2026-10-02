@@ -1612,7 +1612,7 @@ namespace SodRpg.Mod
             string pips = "<color=#ffd36e>" + new string('●', rank) + "</color><color=#8a8aa0>" + new string('○', Math.Max(0, t.MaxRank - rank)) + "</color>";
             string effect = t.IsPowerNode ? UiStyles.Colored(t.Describe(), "#e0b0ff") : "<color=#aab>" + t.Describe() + "</color>";
             GUILayout.Label($"<b>{t.Name}</b> {pips}\n{effect}", _st.Small, GUILayout.Width(t.Tier == 2 ? 270 : 210));
-            GUI.enabled = open && _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) > 0;
+            GUI.enabled = open && _s.CanEditTalents && rank < t.MaxRank && Rules.FreePoints(p, hero) >= t.RankCost;
             if (GUILayout.Button("+", _st.Button, GUILayout.Width(44), GUILayout.Height(34)))
             {
                 try

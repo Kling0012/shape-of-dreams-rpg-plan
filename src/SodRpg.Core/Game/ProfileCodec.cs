@@ -352,6 +352,13 @@ namespace SodRpg.Core.Game
                 ReadPacts(rj, "offeredPacts", run.OfferedPacts, notes);
                 p.Run = run;
             }
+            // v1.27：連装・四の型を奥の星（1段・4ポイント）へ移した。ポイントが足りなくなった旅人は刻印を無料で振り直す。
+            foreach (var kv in p.Heroes)
+            {
+                if (kv.Value.Talents.Count == 0 || Rules.FreePoints(p, kv.Key) >= 0) continue;
+                Rules.ResetTalents(p, kv.Key);
+                notes.Add($"{kv.Key}: 刻印の費用が変わったため、刻印を無料で振り直せるようにしました");
+            }
             return p;
         }
 

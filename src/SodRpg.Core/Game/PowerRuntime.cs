@@ -47,6 +47,8 @@ namespace SodRpg.Core.Game
         public const int FrenzyMaxEnemies = 5;
         public const float OpeningStrikeThreshold = 0.9f;
         public const float SprintDuration = 3f;
+        /// <summary>回避の残響：回避の後、次の通常攻撃への上乗せができる猶予（新しい回避で延びる）。</summary>
+        public const float EchoingDodgeWindow = 3f;
         public const float VigorThreshold = 0.8f;
         public const float OverloadDuration = 4f;
         public const float FinaleWindow = 8f;
@@ -65,7 +67,7 @@ namespace SodRpg.Core.Game
         public const int SpendersWardGold = 100;
         public const int SpendersWardMaxStacks = 3;
         public const float SpendersWardDuration = 10f;
-        public const float PerfectReadDuration = 3f;
+        public const float PerfectReadDuration = 4f;
         public const float PerfectReadCooldown = 1.5f;
         public const int LucidBoonMaxDreams = 6;
         /// <summary>連携（記憶の余韻）の持続時間。効果は重ならず、時間だけ伸びる。</summary>
@@ -87,6 +89,7 @@ namespace SodRpg.Core.Game
         private float _soulSiphonReady;
         private float _whirlwindReady;
         private float _sprintUntil;
+        private float _echoUntil = float.NegativeInfinity;
         private float _overloadUntil;
         private float _finaleQ = float.NegativeInfinity;
         private float _finaleW = float.NegativeInfinity;
@@ -120,47 +123,46 @@ namespace SodRpg.Core.Game
             if (isFourthAttack) _nextHitIsFourth = true;
         }
 
-        /// <summary>Memory を使った。一時補正を始め、回避なら Q/W/E を短縮する秒数を返す。</summary>
-        public float OnSkillUsed(float now, bool isMovement, bool isUltimate)
+        /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響の3秒も始める（重ならず延長）。</summary>
+        public void OnSkillUsed(float now, bool isMovement, bool isUltimate)
         {
             if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
             if (isMovement && Build.Get(Power.Sprint) > 0) _sprintUntil = now + SprintDuration;
+            if (isMovement && Build.Get(Power.EchoingDodge) > 0) _echoUntil = now + EchoingDodgeWindow;
             if (!isMovement && !isUltimate && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
-            int dodge = Build.Get(Power.EchoingDodge);
-            return isMovement && dodge > 0 ? dodge / 10f : 0;
         }
 
         public struct SkillResult
         {
-            public float CooldownReduction;
             public float WhirlwindDamage;
             public float Shield;
         }
 
-        /// <summary>Memory の使用結果。一時補正と短縮に加え、旋風・星の加護の量を返す。</summary>
-        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackDamage, float maxHealth)
+        /// <summary>Memory の使用結果。旋風・星の加護の量を返す。旋風は攻撃力と魔力の高い方（attackOrPower）で計算する。</summary>
+        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackOrPower, float maxHealth)
         {
-            var r = new SkillResult { CooldownReduction = OnSkillUsed(now, isMovement, isUltimate) };
+            OnSkillUsed(now, isMovement, isUltimate);
+            var r = new SkillResult();
             int whirlwind = Build.Get(Power.Whirlwind);
             if (isMovement && whirlwind > 0 && now >= _whirlwindReady)
             {
                 _whirlwindReady = now + WhirlwindInterval;
-                r.WhirlwindDamage = attackDamage * whirlwind / 100f;
+                r.WhirlwindDamage = attackOrPower * whirlwind / 100f;
             }
             int starShield = Build.Get(Power.StarShield);
             if (isUltimate && starShield > 0) r.Shield = maxHealth * starShield / 100f;
             return r;
         }
 
-        /// <summary>四元の共鳴：敵に4属性が揃っていれば爆発ダメージを返す（同じ敵へは6秒に1回）。</summary>
-        public float TakeConvergence(float now, int victimId, bool allFour, float attackDamage)
+        /// <summary>四元の共鳴：敵に4属性が揃っていれば爆発ダメージを返す（同じ敵へは6秒に1回）。攻撃力と魔力の高い方（attackOrPower）で計算する。</summary>
+        public float TakeConvergence(float now, int victimId, bool allFour, float attackOrPower)
         {
             int v = Build.Get(Power.Convergence);
             if (v <= 0 || !allFour) return 0;
             if (_convergenceReady.TryGetValue(victimId, out float ready) && now < ready) return 0;
             _convergenceReady[victimId] = now + ConvergenceCooldown;
             if (_convergenceReady.Count > 200) _convergenceReady.Clear();
-            return attackDamage * v / 100f;
+            return attackOrPower * v / 100f;
         }
 
         public Build Build { get; private set; }
@@ -333,12 +335,12 @@ namespace SodRpg.Core.Game
             if (Build.Get(Power.Tailwind) > 0) _tailwindUntil = now + TailwindDuration;
         }
 
-        /// <summary>撃破した。爆砕の範囲ダメージ（0ならなし）を返す。</summary>
-        public float OnKill(float now, float attackDamage)
+        /// <summary>撃破した。爆砕の範囲ダメージ（攻撃力と魔力の高い方で計算。0ならなし）を返す。</summary>
+        public float OnKill(float now, float attackOrPower)
         {
             OnKill(now);
             int shatter = Build.Get(Power.Shatter);
-            return shatter > 0 ? attackDamage * shatter / 100f : 0;
+            return shatter > 0 ? attackOrPower * shatter / 100f : 0;
         }
 
         public struct KillResult
@@ -347,10 +349,10 @@ namespace SodRpg.Core.Game
             public float Heal;
         }
 
-        /// <summary>撃破した。爆砕の範囲ダメージと吸魂の回復量を返す。</summary>
-        public KillResult OnKill(float now, float attackDamage, float maxHealth)
+        /// <summary>撃破した。爆砕の範囲ダメージ（攻撃力と魔力の高い方で計算）と吸魂の回復量を返す。</summary>
+        public KillResult OnKill(float now, float attackOrPower, float maxHealth)
         {
-            var r = new KillResult { ShatterDamage = OnKill(now, attackDamage) };
+            var r = new KillResult { ShatterDamage = OnKill(now, attackOrPower) };
             int soulSiphon = Build.Get(Power.SoulSiphon);
             if (soulSiphon > 0 && maxHealth > 0 && now >= _soulSiphonReady)
             {
@@ -388,12 +390,18 @@ namespace SodRpg.Core.Game
             public float BlazeDamage;
             /// <summary>雷鎖：近くの敵（最大2体）へ与えるダメージ。</summary>
             public float ChainDamage;
-            /// <summary>付与する属性（火・冷気・光・闇の順）。</summary>
-            public bool ApplyFire, ApplyCold, ApplyLight, ApplyDark;
+            /// <summary>回避の残響：回避後3秒以内の次の通常攻撃に上乗せるダメージ（その命中で消費）。</summary>
+            public float EchoDamage;
+            /// <summary>付与する属性のスタック数（火・冷気・光・闇の順）。</summary>
+            public int FireStacks, ColdStacks, LightStacks, DarkStacks;
         }
 
-        /// <summary>通常攻撃が命中した。回復量と追加ダメージを返す。</summary>
-        public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float victimHealthRatio, double roll = 1.0)
+        /// <summary>
+        /// 通常攻撃が命中した。回復量・追加ダメージ・属性のスタック数を返す。
+        /// 烈火・雷鎖・回避の残響は攻撃力と魔力の高い方、処刑・先制は攻撃力で計算する。
+        /// </summary>
+        public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float abilityPower,
+            float victimHealthRatio, bool isCrit = false, double roll = 1.0)
         {
             var r = new HitResult();
             int lifesteal = Build.Get(Power.Lifesteal);
@@ -406,22 +414,35 @@ namespace SodRpg.Core.Game
             if (exec > 0 && victimHealthRatio < ExecuteThreshold) r.ExecuteDamage = attackDamage * exec / 100f;
             int opening = Build.Get(Power.OpeningStrike);
             if (opening > 0 && victimHealthRatio >= OpeningStrikeThreshold) r.OpeningDamage = attackDamage * opening / 100f;
+            float higher = Math.Max(attackDamage, abilityPower);
             int blaze = Build.Get(Power.Blaze);
-            if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = attackDamage * blaze / 100f;
+            if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = higher * blaze / 100f;
             _nextHitIsFourth = false;
-            r.ApplyFire = Roll(Power.Ember);
-            r.ApplyCold = Roll(Power.Frost);
-            r.ApplyLight = Roll(Power.Radiance);
-            r.ApplyDark = Roll(Power.Umbra);
+            int echo = Build.Get(Power.EchoingDodge);
+            if (echo > 0 && now < _echoUntil)
+            {
+                r.EchoDamage = higher * echo / 100f;
+                _echoUntil = float.NegativeInfinity; // この命中で消費する
+            }
+            r.FireStacks = ElementStacks(Power.Ember);
+            r.ColdStacks = ElementStacks(Power.Frost);
+            r.LightStacks = ElementStacks(Power.Radiance);
+            r.DarkStacks = ElementStacks(Power.Umbra);
+            // 闇だけ、会心で当たったらさらに1つ重ねる（影を持るときだけ）。
+            if (isCrit && Build.Get(Power.Umbra) > 0) r.DarkStacks++;
             int chain = Build.Get(Power.ChainLightning);
-            if (chain > 0 && roll < ChainChance) r.ChainDamage = attackDamage * chain / 100f;
+            if (chain > 0 && roll < ChainChance) r.ChainDamage = higher * chain / 100f;
             return r;
         }
 
-        private bool Roll(Power p)
+        /// <summary>属性付与の量。100ごとに確実に1つ、端数はその確率でもう1つ。</summary>
+        private int ElementStacks(Power p)
         {
             int v = Build.Get(p);
-            return v > 0 && _rng.NextDouble() * 100 < v;
+            if (v <= 0) return 0;
+            int stacks = v / 100;
+            if (_rng.NextDouble() * 100 < v % 100) stacks++;
+            return stacks;
         }
 
         /// <summary>今付けるべき一時補正。</summary>
@@ -432,6 +453,9 @@ namespace SodRpg.Core.Game
             int linkSurge = now < _linkSurgeUntil ? _linkSurgeValue : 0;
             int linkAttack = LinkAttunePct + linkSurge;
             int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
+            // 逆襲・万全は攻撃力・魔力の両方を上げる（v1.27）。
+            int retaliation = now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0;
+            int vigor = HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0;
             int conditional = Math.Max(0, Build.Get(Power.CrystalResonance))
                     * Math.Min(CrystalResonanceMaxTiers, Math.Max(0, GemQualityTotal) / 100)
                 + Math.Max(0, Build.Get(Power.PreyPride)) * Math.Min(PreyPrideMaxLevel, Math.Max(0, HuntLevel))
@@ -442,10 +466,11 @@ namespace SodRpg.Core.Game
             {
                 AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0)
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
+                    + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0)
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
-                AttackPct = (now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0) + resonance
-                    + (HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0) + conditional + linkAttack,
-                PowerPct = resonance + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional + linkAttack,
+                AttackPct = retaliation + vigor + resonance + conditional + linkAttack,
+                PowerPct = retaliation + vigor + resonance
+                    + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
                 MaxHealthPct = LinkGuardHealthPct,

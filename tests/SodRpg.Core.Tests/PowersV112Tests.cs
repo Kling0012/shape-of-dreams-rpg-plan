@@ -48,9 +48,9 @@ namespace SodRpg.Core.Tests
         public void Opening_strike_only_on_healthy_targets()
         {
             var rt = new PowerRuntime(With(Power.OpeningStrike, 80), 0);
-            Assert.Equal(80f, rt.OnAttackHit(1f, 500f, 100f, 1.0f).OpeningDamage, 3);
-            Assert.Equal(80f, rt.OnAttackHit(2f, 500f, 100f, 0.9f).OpeningDamage, 3);
-            Assert.Equal(0f, rt.OnAttackHit(3f, 500f, 100f, 0.5f).OpeningDamage);
+            Assert.Equal(80f, rt.OnAttackHit(1f, 500f, 100f, 0f, 1.0f).OpeningDamage, 3);
+            Assert.Equal(80f, rt.OnAttackHit(2f, 500f, 100f, 0f, 0.9f).OpeningDamage, 3);
+            Assert.Equal(0f, rt.OnAttackHit(3f, 500f, 100f, 0f, 0.5f).OpeningDamage);
         }
 
         [Fact]

@@ -18,10 +18,12 @@ namespace SodRpg.Core.Tests
             var rt = new PowerRuntime(new Build(), 0);
             rt.OnKill(1);
             Assert.Equal(0, rt.OnDamaged(1, 100, true));
-            var hit = rt.OnAttackHit(1, 500, 50, 0.1f);
+            var hit = rt.OnAttackHit(1, 500, 50, 0, 0.1f);
             Assert.Equal(0, hit.Heal);
             Assert.Equal(0, hit.ExecuteDamage);
             Assert.Equal(0, hit.BlazeDamage);
+            Assert.Equal(0, hit.EchoDamage);
+            Assert.Equal(0, hit.FireStacks + hit.ColdStacks + hit.LightStacks + hit.DarkStacks);
             Assert.Equal(default(DynamicBonus), rt.Current(1));
             Assert.Equal(0, rt.TakeBarrier(100, 500));
             Assert.Equal(0, rt.TakeSecondWind(100, 1, 500));
@@ -65,29 +67,29 @@ namespace SodRpg.Core.Tests
         public void Lifesteal_heals_per_mille_of_max_health_with_short_cooldown()
         {
             var rt = new PowerRuntime(With((Power.Lifesteal, 8)), 0);
-            Assert.Equal(4f, rt.OnAttackHit(1, 500, 50, 1).Heal, 3);
-            Assert.Equal(0, rt.OnAttackHit(1.1f, 500, 50, 1).Heal);
-            Assert.Equal(4f, rt.OnAttackHit(1.2f, 500, 50, 1).Heal, 3);
+            Assert.Equal(4f, rt.OnAttackHit(1, 500, 50, 0, 1).Heal, 3);
+            Assert.Equal(0, rt.OnAttackHit(1.1f, 500, 50, 0, 1).Heal);
+            Assert.Equal(4f, rt.OnAttackHit(1.2f, 500, 50, 0, 1).Heal, 3);
         }
 
         [Fact]
         public void Executioner_only_below_threshold()
         {
             var rt = new PowerRuntime(With((Power.Executioner, 50)), 0);
-            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0.31f).ExecuteDamage);
-            Assert.Equal(50f, rt.OnAttackHit(1, 500, 100, 0.29f).ExecuteDamage, 3);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0, 0.31f).ExecuteDamage);
+            Assert.Equal(50f, rt.OnAttackHit(1, 500, 100, 0, 0.29f).ExecuteDamage, 3);
         }
 
         [Fact]
         public void Blaze_triggers_on_the_games_fourth_attack()
         {
             var rt = new PowerRuntime(With((Power.Blaze, 80)), 0);
-            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0, 1).BlazeDamage);
             rt.OnAttackFired(isFourthAttack: false);
-            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0, 1).BlazeDamage);
             rt.OnAttackFired(isFourthAttack: true);
-            Assert.Equal(80f, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage, 3);
-            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 1).BlazeDamage); // 1回の4発目で1回だけ
+            Assert.Equal(80f, rt.OnAttackHit(1, 500, 100, 0, 1).BlazeDamage, 3);
+            Assert.Equal(0, rt.OnAttackHit(1, 500, 100, 0, 1).BlazeDamage); // 1回の4発目で1回だけ
         }
 
         [Fact]

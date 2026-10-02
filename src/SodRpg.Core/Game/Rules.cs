@@ -1184,7 +1184,8 @@ namespace SodRpg.Core.Game
         public static int SpentPoints(HeroState h)
         {
             int n = 0;
-            foreach (var kv in h.Talents) n += kv.Value;
+            foreach (var kv in h.Talents)
+                n += kv.Value * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
             if (h.Keystone != null) n += Content.KeystoneCost;
             return n;
         }
@@ -1200,7 +1201,10 @@ namespace SodRpg.Core.Game
             if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
             if (t.Tier == 2 && !DeepStarsOpen(p, heroKey))
                 throw new InvalidOperationException(Loc.T($"奥の星は、このツリーの手前の星に{Content.DeepStarRequirement}ポイント振ると開きます。", $"Deep stars open after {Content.DeepStarRequirement} points in this tree's first stars."));
-            if (FreePoints(p, heroKey) < 1) throw new InvalidOperationException(Loc.T("ポイントが足りません。", "Not enough points."));
+            if (FreePoints(p, heroKey) < t.RankCost)
+                throw new InvalidOperationException(t.RankCost > 1
+                    ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")
+                    : Loc.T("ポイントが足りません。", "Not enough points."));
             h.Talents[talentId] = cur + 1;
         }
 

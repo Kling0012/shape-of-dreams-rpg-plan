@@ -20,19 +20,19 @@ namespace SodRpg.Core.Tests
         [InlineData(Power.Frost)]
         [InlineData(Power.Radiance)]
         [InlineData(Power.Umbra)]
-        public void Element_powers_apply_their_element_at_the_listed_rate(Power power)
+        public void Element_powers_stack_their_element_at_the_listed_amount(Power power)
         {
             var rt = new PowerRuntime(With((power, 30)), 0, 77);
-            int n = 20000, hits = 0;
+            int n = 20000, total = 0;
             for (int i = 0; i < n; i++)
             {
-                var r = rt.OnAttackHit(i, 500, 100, 1);
-                bool applied = power == Power.Ember ? r.ApplyFire : power == Power.Frost ? r.ApplyCold : power == Power.Radiance ? r.ApplyLight : r.ApplyDark;
-                bool other = (r.ApplyFire ? 1 : 0) + (r.ApplyCold ? 1 : 0) + (r.ApplyLight ? 1 : 0) + (r.ApplyDark ? 1 : 0) > (applied ? 1 : 0);
-                Assert.False(other);
-                if (applied) hits++;
+                var r = rt.OnAttackHit(i, 500, 100, 0, 1);
+                int applied = power == Power.Ember ? r.FireStacks : power == Power.Frost ? r.ColdStacks
+                    : power == Power.Radiance ? r.LightStacks : r.DarkStacks;
+                Assert.Equal(0, r.FireStacks + r.ColdStacks + r.LightStacks + r.DarkStacks - applied);
+                total += applied;
             }
-            Assert.InRange(hits / (double)n, 0.27, 0.33);
+            Assert.InRange(total / (double)n, 0.27, 0.33); // 30は平均0.3つ
         }
 
         [Fact]
@@ -45,15 +45,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(150f, rt.TakeConvergence(3, 8, true, 100), 3);     // 別の敵は即
             Assert.Equal(150f, rt.TakeConvergence(7.1f, 7, true, 100), 3);
             Assert.Equal(0, new PowerRuntime(new Build(), 0).TakeConvergence(1, 1, true, 100));
-        }
-
-        [Fact]
-        public void Echoing_dodge_returns_cooldown_seconds_only_for_movement()
-        {
-            var rt = new PowerRuntime(With((Power.EchoingDodge, 12)), 0);
-            Assert.Equal(1.2f, rt.OnSkillUsed(1, isMovement: true, isUltimate: false), 3);
-            Assert.Equal(0, rt.OnSkillUsed(1, isMovement: false, isUltimate: false));
-            Assert.Equal(0, new PowerRuntime(new Build(), 0).OnSkillUsed(1, true, false));
         }
 
         [Fact]

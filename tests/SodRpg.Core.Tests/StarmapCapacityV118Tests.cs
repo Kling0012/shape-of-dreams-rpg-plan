@@ -16,9 +16,9 @@ namespace SodRpg.Core.Tests
             foreach (var hero in heroes)
             {
                 var tree = HeroSigils.TreeFor(hero).ToList();
-                int capacity = tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank) + Content.KeystoneCost;
+                int capacity = tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank * t.RankCost) + Content.KeystoneCost;
                 Assert.True(capacity >= maxPoints, $"{hero}: {capacity} < {maxPoints}");
-                Assert.Equal(6, tree.Count(t => t.Tier == 2));
+                Assert.Equal(6, tree.Count(t => t.Tier == 2 && t.RankCost == 1)); // v1.27：連装・四の型（費用の高い奥の星）は別に数える
                 Assert.Equal(3, tree.Count(t => t.IsPowerNode));
             }
         }

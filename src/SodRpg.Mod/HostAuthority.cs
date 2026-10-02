@@ -1233,7 +1233,7 @@ namespace SodRpg.Mod
                 var hero = rt.Hero;
                 if (!Alive(hero)) return;
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
-                    hero.Status.attackDamage, hero.maxHealth);
+                    Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.BarrierInterval);
                 if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: false);
                 if (hero.Skill == null) return;
@@ -1249,7 +1249,6 @@ namespace SodRpg.Mod
                         LogPowerTrigger(Power.Finale);
                     }
                 }
-                ReduceMemoryCooldowns(hero, r.CooldownReduction);
                 // 連携（v1.26）：使った記憶が条件に入っている連携だけを発動する。
                 if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
                 {
@@ -1572,7 +1571,7 @@ namespace SodRpg.Mod
                 if (!(info.victim is Monster)) return;
                 var rt = RuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
-                var r = rt.Powers.OnKill(Time.time, rt.Hero.Status.attackDamage, rt.Hero.maxHealth);
+                var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
                 if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
                 if (r.ShatterDamage > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: false);
             }
@@ -1621,7 +1620,8 @@ namespace SodRpg.Mod
                 if (victim == null || !victim.isActive || victim.Status == null) return;
                 var st = victim.Status;
                 bool all = st.fireStack > 0 && st.hasCold && st.lightStack > 0 && st.darkStack > 0;
-                float dmg = rt.Powers.TakeConvergence(Time.time, (int)victim.netId, all, rt.Hero.Status.attackDamage);
+                float dmg = rt.Powers.TakeConvergence(Time.time, (int)victim.netId, all,
+                    Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower));
                 if (dmg > 0) rt.Hero.PureDamage(dmg, 0f).Dispatch(victim);
                 if (!_spreadingFire && info.type == ElementalType.Fire && info.addedStack > 0
                     && victim.isActive && victim.GetRelation(rt.Hero) == EntityRelation.Enemy
@@ -1682,20 +1682,26 @@ namespace SodRpg.Mod
                 float criticalEcho = rt.Powers.TakeCriticalEcho(Time.time, info.isCrit);
                 if (ReduceMemoryCooldowns(hero, criticalEcho)) LogPowerTrigger(Power.CriticalEcho);
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
-                var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, ratio, _rng.NextDouble());
+                var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, hero.Status.abilityPower,
+                    ratio, info.isCrit, _rng.NextDouble());
                 if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);
                 if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
                 if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
                 if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);
                 if (victim.isActive)
                 {
-                    if (r.ApplyFire) hero.ApplyElemental(ElementalType.Fire, victim, 1);
-                    if (r.ApplyCold) hero.ApplyElemental(ElementalType.Cold, victim, 1);
-                    if (r.ApplyLight) hero.ApplyElemental(ElementalType.Light, victim, 1);
-                    if (r.ApplyDark) hero.ApplyElemental(ElementalType.Dark, victim, 1);
+                    if (r.FireStacks > 0) hero.ApplyElemental(ElementalType.Fire, victim, r.FireStacks);
+                    if (r.ColdStacks > 0) hero.ApplyElemental(ElementalType.Cold, victim, r.ColdStacks);
+                    if (r.LightStacks > 0) hero.ApplyElemental(ElementalType.Light, victim, r.LightStacks);
+                    if (r.DarkStacks > 0) hero.ApplyElemental(ElementalType.Dark, victim, r.DarkStacks);
                 }
                 if (r.OpeningDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
                     hero.PureDamage(r.OpeningDamage, 0f).Dispatch(victim);
+                if (r.EchoDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                {
+                    hero.PureDamage(r.EchoDamage, 0f).Dispatch(victim);
+                    LogPowerTrigger(Power.EchoingDodge);
+                }
             }
             catch (Exception ex)
             {

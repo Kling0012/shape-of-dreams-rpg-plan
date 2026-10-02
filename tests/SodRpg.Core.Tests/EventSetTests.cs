@@ -174,8 +174,8 @@ namespace SodRpg.Core.Tests
 
             Rules.Equip(p, "H", SetPiece(p, "set.tide.charm").Uid);
             var b3 = Build.Compute(p, "H", 0);
-            Assert.Equal(30, b3.Get(Power.Frost));
-            Assert.Equal(10, b3.Get(Power.EchoingDodge));
+            Assert.Equal(45, b3.Get(Power.Frost)); // v1.27：霜は 1.5倍
+            Assert.Equal(65, b3.Get(Power.EchoingDodge)); // v1.27：回避の残響は上乗せ%の尺度（6.5倍）
         }
 
         [Fact]
