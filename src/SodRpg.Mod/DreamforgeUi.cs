@@ -87,6 +87,9 @@ namespace SodRpg.Mod
         {
             _s = session;
             _cfg = cfg;
+            // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
+            foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
+            _seenInit = true;
         }
 
         public void Toggle()
@@ -560,7 +563,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _retuneIndex = -1; }
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { _tab = i; _confirmSalvage = null; _confirmBulk = false; _retuneIndex = -1; }
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Open = false;
             GUILayout.EndHorizontal();
@@ -846,19 +849,18 @@ namespace SodRpg.Mod
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
         {
             var list = SortedCached(relics, height);
+            var rows = RowTexts(list, hero, height);
             _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
             if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
-            var h = _s.Profile.Hero(hero);
-            foreach (var r in list)
+            for (int i = 0; i < list.Count; i++)
             {
-                string mark = h.Equipped.Contains(r.Uid) ? "<color=#ffe17a>★</color> " : "";
-                string lck = r.Locked ? Loc.T(" <color=#aaa>[鍵]</color>", " <color=#aaa>[locked]</color>") : "";
-                string text = $"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}";
+                var r = list[i];
                 GUILayout.BeginHorizontal();
                 IconSlot(r, 36);
-                if (GUILayout.Button(text, _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(36)))
+                if (GUILayout.Button(rows[i], _selected == r.Uid ? _st.RowSel : _st.Row, GUILayout.Height(36)))
                 {
                     _selected = r.Uid;
+                    _seenUids.Add(r.Uid);
                     _retuneIndex = -1;
                     _confirmSalvage = null;
                 }
@@ -901,6 +903,84 @@ namespace SodRpg.Mod
             list.Sort((a, b) => b.Score.CompareTo(a.Score));
             _sortedKey[id] = key;
             return list;
+        }
+
+        // ───── 一覧の行の文字（★装着中・▲いまより強い・NEW 新しく手に入れた物・鍵） ─────
+        private readonly Dictionary<float, List<string>> _rowCache = new Dictionary<float, List<string>>();
+        private readonly Dictionary<float, List<Relic>> _rowCacheFor = new Dictionary<float, List<Relic>>();
+        private readonly Dictionary<float, string> _rowCacheKey = new Dictionary<float, string>();
+        private readonly HashSet<string> _seenUids = new HashSet<string>();
+        private bool _seenInit;
+
+        private List<string> RowTexts(List<Relic> list, string hero, float id)
+        {
+            var p = _s.Profile;
+            if (!_seenInit)
+            {
+                // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
+                _seenInit = true;
+                foreach (var r in p.Stash) _seenUids.Add(r.Uid);
+            }
+            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count : null;
+            if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
+                return cached;
+            if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
+            rows.Clear();
+            var h = p.Hero(hero);
+            foreach (var r in list)
+            {
+                bool equipped = h.Equipped.Contains(r.Uid);
+                var cur = equipped ? null : Rules.EquippedRelic(p, hero, r.Slot);
+                bool better = !equipped && (cur == null || r.Score > cur.Score);
+                string mark = equipped ? "<color=#ffe17a>★</color> " : better ? "<color=#7cf07c>▲</color> " : "";
+                string fresh = _seenUids.Contains(r.Uid) ? "" : " <color=#ffd24a><b>NEW</b></color>";
+                string lck = r.Locked ? Loc.T(" <color=#aaa>[鍵]</color>", " <color=#aaa>[locked]</color>") : "";
+                rows.Add($"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}{fresh}");
+            }
+            _rowCacheFor[id] = list;
+            if (key != null) _rowCacheKey[id] = key;
+            return rows;
+        }
+
+        // ───── まとめて分解（コモン・アンコモン。鍵・装着中・取引中の物は使わない） ─────
+        private bool _confirmBulk;
+
+        private void BulkSalvageRow()
+        {
+            var p = _s.Profile;
+            int count = 0, shards = 0;
+            foreach (var r in p.Stash)
+            {
+                if (r.Rarity > Rarity.Uncommon || r.Locked || p.IsEquippedAnywhere(r.Uid) || _s.Trades.IsReserved(r.Uid)) continue;
+                count++;
+                shards += Rules.SalvageValue(r);
+            }
+            GUI.enabled = count > 0 && p.Run == null;
+            string label = _confirmBulk
+                ? Loc.T($"<color=#ff8080>もう一度押すと、{count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {count} relics</color>")
+                : Loc.T($"コモンとアンコモンをまとめて分解（{count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({count} relics, {shards} shards)");
+            if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
+            {
+                if (!_confirmBulk) _confirmBulk = true;
+                else
+                {
+                    _confirmBulk = false;
+                    int done = 0, got = 0;
+                    foreach (var r in p.Stash.ToList())
+                    {
+                        if (r.Rarity > Rarity.Uncommon || r.Locked || p.IsEquippedAnywhere(r.Uid) || _s.Trades.IsReserved(r.Uid)) continue;
+                        got += Rules.SalvageValue(r);
+                        try { Rules.Salvage(p, r.Uid, _s.Trades); done++; }
+                        catch (InvalidOperationException) { }
+                    }
+                    if (_selected != null && p.FindStash(_selected) == null) _selected = null;
+                    _s.Emit(new GameEvent(EventKind.Info, Loc.T($"{done}個をまとめて分解して、欠片{got}を得ました。", $"Salvaged {done} relics for {got} shards.")));
+                    _s.MarkDirty(true);
+                    _s.SaveNow();
+                }
+            }
+            GUI.enabled = true;
+            if (p.Run != null) GUILayout.Label(Loc.T("まとめて分解は、遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
         }
 
         private List<Relic> SatchelTop()
@@ -993,7 +1073,8 @@ namespace SodRpg.Mod
                     _slot = slot;
                 }
             GUILayout.EndHorizontal();
-            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 470);
+            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 430);
+            BulkSalvageRow();
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel);
