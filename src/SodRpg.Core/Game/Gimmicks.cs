@@ -40,6 +40,10 @@ namespace SodRpg.Core.Game
         Expose = 8,
         /// <summary>当てたダメージの Value% を、0.3秒後にもう一度与える。</summary>
         Echo = 9,
+        /// <summary>その記憶の使用回数を1回戻す（使用回数が複数ある記憶のみ。v1.28）。</summary>
+        Reload = 10,
+        /// <summary>装着中のほかの記憶の残りクールダウンを Value% 縮める（回避・Ultimate・アイデンティティは対象外。v1.28）。</summary>
+        RechargeOther = 11,
     }
 
     /// <summary>記憶の仕掛け1つ分の定義（v1.28）。</summary>
