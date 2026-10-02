@@ -4,8 +4,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 150 bases, 294 legendaries and 24 sets (72 set pieces), 38 kinds of powers.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は150種、固有品は294種、セットは24種（72部位）、固有効果は38種類あります。
+[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 180 bases, 354 legendaries and 24 sets (72 set pieces), 42 kinds of powers.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は180種、固有品は354種、セットは24種（72部位）、固有効果は42種類あります。
 [*] Rare relics carry a minor power; Epics carry two and an epithet named after their first power.
 [*] レアは弱い固有効果を1つ、エピックは固有効果を2つと、1つ目の固有効果にちなんだ銘を持ちます。
 [*] Powers that react to the base game: Q/W/E rotations, critical hits, stuns and slows, overhealing, Essence quality, hunters, shrines and spreading fire.
@@ -24,6 +24,14 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [*] 確保地点には12種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
 [*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
+[/list]
+
+[h2]Monsters / 敵[/h2]
+[list]
+[*] Enemies grow with your delve depth, and stronger gear draws more nightmares. Nightmares can be warded, thorned, ravenous or sundering.
+[*] 敵は深度に合わせて強くなり、強い装備で潜るほど悪夢の敵が増えます。悪夢には結界・棘皮・飢渇・破甲などの性質があります。
+[*] 13 dream variants: base-game enemies reborn with new names, colors, abilities and better loot.
+[*] 本体の敵をもとにした「夢の変種」13種。名前・色・能力が変わり、倒すと良い戦利品が出ます。
 [/list]
 
 [h2]Growth / 成長[/h2]

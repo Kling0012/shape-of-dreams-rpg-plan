@@ -36,6 +36,7 @@ namespace SodRpg.Mod
         private float _hudHeight;
         private float _nextHudRebuild;
         private readonly Dictionary<int, Label3D> _nightmareLabelCache = new Dictionary<int, Label3D>();
+        private readonly Dictionary<string, Label3D> _variantLabelCache = new Dictionary<string, Label3D>();
 
         /// <summary>GUILayout を使うパネル（メニュー・確保地点・結果）が出ているか。出ていなければレイアウト処理自体を止める。</summary>
         private readonly List<Hint> _hints = new List<Hint>();
@@ -467,9 +468,10 @@ namespace SodRpg.Mod
 
         private readonly List<uint> _labelScratch = new List<uint>();
 
-        /// <summary>悪夢化した敵の頭上に名札を出す。</summary>
+        /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
         private void DrawNightmareLabels(float scale)
         {
+            DrawVariantLabels(scale);
             if (_s.Nightmare.Count == 0) return;
             var cam = Camera.main;
             if (cam == null) return;
@@ -505,6 +507,42 @@ namespace SodRpg.Mod
                 _s.Nightmare.Remove(k);
                 _s.NightmareSeenAt.Remove(k);
             }
+        }
+
+        private void DrawVariantLabels(float scale)
+        {
+            if (_s.Variant.Count == 0) return;
+            var cam = Camera.main;
+            if (cam == null) return;
+            _labelScratch.Clear();
+            foreach (var kv in _s.Variant)
+            {
+                bool pending = _s.VariantSeenAt.TryGetValue(kv.Key, out float seen) && Time.unscaledTime - seen <= 10f;
+                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
+                {
+                    if (!pending) _labelScratch.Add(kv.Key);
+                    continue;
+                }
+                var m = id.GetComponent<Monster>();
+                var def = Variants.Get(kv.Value);
+                if (m == null || def == null || !m.isActive)
+                {
+                    if (m == null || def == null || !pending) _labelScratch.Add(kv.Key);
+                    continue;
+                }
+                var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
+                if (sp.z <= 0) continue;
+                if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
+                {
+                    string text = UiStyles.Colored(Variants.Label(def), "#ffb347");
+                    var content = new GUIContent(text);
+                    lab = new Label3D { Text = text, Content = content, Size = _st.ToastMeasure.CalcSize(content) };
+                    _variantLabelCache[kv.Value] = lab;
+                }
+                float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
+                GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
+            }
+            foreach (uint netId in _labelScratch) _s.RemoveVariant(netId);
         }
 
         private bool _reportDismissed;
@@ -762,6 +800,16 @@ namespace SodRpg.Mod
             if (unclaimed == 0 && shown == 0)
                 GUILayout.Label(Loc.T("すべての偉業を達成しました。", "Every feat is complete."), _st.Small);
             GUILayout.Label(Loc.T($"<color=#8a8aa0>受け取り済み：{p.FeatsClaimed.Count}個</color>", $"<color=#8a8aa0>Claimed: {p.FeatsClaimed.Count}</color>"), _st.Small);
+        }
+
+        /// <summary>記録タブ：夢の変種の一覧（どんな敵で、どう戦うか）。</summary>
+        private void DrawVariantBook(Profile p)
+        {
+            GUILayout.Label(Loc.T($"夢の変種（倒した数 {p.Stats.VariantsSlain}）", $"Dream variants (slain {p.Stats.VariantsSlain})"), _st.Header);
+            GUILayout.Label(Loc.T($"深度{Variants.MinDepth}以降、本体の敵がまれに強い「夢の変種」になって現れます（部屋に1体まで）。倒すと一段上の戦利品が出ます。",
+                $"From delve {Variants.MinDepth}, base-game enemies sometimes appear as stronger dream variants (one per room). They drop loot a tier higher."), _st.Small);
+            foreach (var v in Variants.All)
+                GUILayout.Label(UiStyles.Colored(v.Name.ToString(), "#ffb347") + "  <color=#aab>" + v.Description + "</color>", _st.Small);
         }
 
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>
@@ -1640,6 +1688,7 @@ namespace SodRpg.Mod
             if (p.LostAndFound.Count == 0) GUILayout.Label(Loc.T("なし", "None"), _st.Small);
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             DrawFeats(p);
+            DrawVariantBook(p);
             GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
             var found = FoundUniques(p);
             foreach (var line in found) GUILayout.Label(line, _st.Small);

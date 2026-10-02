@@ -29,6 +29,14 @@ namespace SodRpg.Mod
         public int affixes;
     }
 
+    /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>
+    [Serializable]
+    public class DreamforgeVariantMsg
+    {
+        public uint netId;
+        public string variantId;
+    }
+
     /// <summary>クライアント → ホスト：悪夢の契約の代償として、自分のキャラへ本体の呪いを付けてほしい。</summary>
     [Serializable]
     public class DreamforgeCurseMsg
@@ -59,6 +67,8 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        public const int Version = 1;
+        // Unknown CustomRpc handler behavior is not documented in the reflection dumps.
+        // Require matching builds rather than silently losing variant identity/rewards.
+        public const int Version = 2;
     }
 }

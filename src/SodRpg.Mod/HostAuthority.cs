@@ -8,6 +8,7 @@ namespace SodRpg.Mod
 {
     using Power = SodRpg.Core.Game.Power;
     using Stat = SodRpg.Core.Game.Stat;
+    using VariantDef = SodRpg.Core.Game.VariantDef;
 
     /// <summary>
     /// ホスト側の処理。各プレイヤーから届いた Build を、そのプレイヤーのキャラへ能力補正（StatBonus）として付け、
@@ -47,7 +48,10 @@ namespace SodRpg.Mod
             public float QueuedAt;
             public bool SpawnProcessed;
             public StatBonus DepthBonus;
-            public StatBonus NightmareBonus;
+            public StatBonus SpecialBonus;
+            public VariantDef Variant;
+            public DataProcessor<DamageData, Actor, Entity> HitCap;
+            public bool DeathBurstTriggered;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -92,10 +96,11 @@ namespace SodRpg.Mod
         private readonly Action<Actor> _onActorRemove;
         private readonly Action<Entity> _onShrineUsed;
         private readonly Action<EventInfoLoadZone> _onZoneLoaded;
+        private readonly Action<EventInfoLoadRoom> _onRoomLoaded;
         private ZoneManager _zone;
         private bool _spreadingFire;
 
-        // 悪夢化エリート
+        // 悪夢化エリート・夢の変種
         private ActorManager _am;
         private readonly Action<Entity> _onEntityAdd;
         private readonly Action<Entity> _onEntityRemove;
@@ -119,6 +124,9 @@ namespace SodRpg.Mod
         private readonly List<Monster> _regenScratch = new List<Monster>();
         private readonly Rng _rng = new Rng(Rng.SeedFrom(DateTime.UtcNow.Ticks.ToString()));
         private float _nextRegen;
+        private bool _roomHasVariant;
+        private bool _loggedVariantSpawn, _loggedDeathBurst;
+        private readonly List<Hero> _deathBurstHeroes = new List<Hero>();
 
         public HostAuthority(Func<int> dailyIdOfHost)
         {
@@ -131,7 +139,7 @@ namespace SodRpg.Mod
             _onAttackHit = OnAttackHit;
             _onEntityAdd = OnEntityAdd;
             _onEntityRemove = OnEntityRemove;
-            _onMonsterDeath = info => OnEntityRemove(info.victim);
+            _onMonsterDeath = OnMonsterDeath;
             _onEnemyStatusAdded = OnEnemyStatusAdded;
             _onMonsterDamageTaken = OnMonsterDamageTaken;
             _onMonsterAttackHit = OnMonsterAttackHit;
@@ -141,6 +149,7 @@ namespace SodRpg.Mod
             _onActorRemove = OnActorRemove;
             _onShrineUsed = OnShrineUsed;
             _onZoneLoaded = OnZoneLoaded;
+            _onRoomLoaded = info => _roomHasVariant = false;
         }
 
         public bool IsActive => _registeredOn != null;
@@ -178,10 +187,10 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>生きている悪夢化の敵を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
+        /// <summary>生きている悪夢・変種を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
         private void ResyncNightmares()
         {
-            if (_nightmares.Count == 0 || _registeredOn == null) return;
+            if (_registeredOn == null) return;
             _nightmareScratch.Clear();
             foreach (var kv in _nightmares)
             {
@@ -191,6 +200,17 @@ namespace SodRpg.Mod
                     continue;
                 }
                 _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
+            }
+            foreach (var rt in _monsters.Values)
+            {
+                if (rt.Variant == null) continue;
+                var m = rt.Monster;
+                if (m == null || !m.isActive)
+                {
+                    _nightmareScratch.Add(m);
+                    continue;
+                }
+                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = rt.Variant.Id });
             }
             foreach (var m in _nightmareScratch) RemoveMonster(m);
         }
@@ -230,6 +250,43 @@ namespace SodRpg.Mod
         private void OnEntityRemove(Entity e)
         {
             if (e is Monster m) RemoveMonster(m);
+        }
+
+        private void OnMonsterDeath(EventInfoKill info)
+        {
+            if (!(info.victim is Monster m)) return;
+            try
+            {
+                if (!_monsters.TryGetValue(m, out var rt) || rt.Variant == null
+                    || (rt.Variant.Traits & VariantTrait.DeathBurst) == 0 || rt.DeathBurstTriggered) return;
+                rt.DeathBurstTriggered = true;
+                if (!_loggedDeathBurst)
+                {
+                    _loggedDeathBurst = true;
+                    Log.Info($"variant DeathBurst triggered: {rt.Variant.Id} netId={m.netId}");
+                }
+                if (_am == null) return;
+                // Damage can remove heroes or trigger another burst. Nested calls borrow a suffix.
+                int start = _deathBurstHeroes.Count;
+                _deathBurstHeroes.AddRange(_am.allHeroes);
+                int end = _deathBurstHeroes.Count;
+                var center = m.position;
+                float radiusSq = Variants.DeathBurstRadius * Variants.DeathBurstRadius;
+                try
+                {
+                    for (int i = start; i < end; i++)
+                    {
+                        var hero = _deathBurstHeroes[i];
+                        if (!Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy
+                            || (hero.position - center).sqrMagnitude > radiusSq) continue;
+                        m.PureDamage(hero.maxHealth * Variants.DeathBurstPct / 100f, 0f)
+                            .Dispatch(hero, default(ReactionChain));
+                    }
+                }
+                finally { _deathBurstHeroes.RemoveRange(start, end - start); }
+            }
+            catch (Exception ex) { Log.Error("Host: variant DeathBurst " + ex); }
+            finally { RemoveMonster(m); }
         }
 
         private void LogAffixTrigger(NightmareAffix affix, string action)
@@ -272,6 +329,8 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: unhook monster leech " + ex); }
             try { if (rt.Sunders) m.EntityEvent_OnAttackHit -= _onMonsterAttackHit; }
             catch (Exception ex) { Log.Error("Host: unhook monster Sunder " + ex); }
+            try { if (rt.HitCap != null) m.takenDamageProcessor.Remove(rt.HitCap); }
+            catch (Exception ex) { Log.Error("Host: unhook variant HitCap " + ex); }
             try { if (rt.Ward != null && rt.Ward.isActive) rt.Ward.Destroy(); }
             catch (Exception ex) { Log.Error("Host: remove nightmare Ward " + ex); }
             try
@@ -279,7 +338,7 @@ namespace SodRpg.Mod
                 if (m.Status != null)
                 {
                     if (rt.DepthBonus != null) m.Status.RemoveStatBonus(rt.DepthBonus);
-                    if (rt.NightmareBonus != null) m.Status.RemoveStatBonus(rt.NightmareBonus);
+                    if (rt.SpecialBonus != null) m.Status.RemoveStatBonus(rt.SpecialBonus);
                 }
             }
             catch (Exception ex) { Log.Error("Host: remove monster bonuses " + ex); }
@@ -420,6 +479,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            _roomHasVariant = false;
             foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
             UnhookShrines();
             ScanShrines();
@@ -428,6 +488,7 @@ namespace SodRpg.Mod
         private void ProcessSpawns()
         {
             if (_spawnQueue.Count == 0) return;
+            if (_zone != null && _zone.isInAnyTransition) return;
             float now = Time.time;
             // 誰の Build もまだ届いていない間は、深度が分からないので待つ（最大15秒）。
             if (_builds.Count == 0)
@@ -462,20 +523,17 @@ namespace SodRpg.Mod
                     var stats = Nightmares.DepthBonus(tier, depth);
                     if (stats.Count > 0)
                     {
-                        var bonus = new StatBonus();
+                        var bonus = ToMonsterStatBonus(stats);
                         rt.DepthBonus = bonus;
-                        foreach (var s in stats)
-                        {
-                            float v = StatUnits.ToGame(s.Stat, s.Value);
-                            switch (s.Stat)
-                            {
-                                case Stat.MaxHealthPct: bonus.maxHealthPercentage += v; break;
-                                case Stat.AttackPct: bonus.attackDamagePercentage += v; break;
-                                case Stat.Armor: bonus.armorFlat += v; break;
-                            }
-                        }
                         m.Status.AddStatBonus(bonus);
                         m.Status.CalculateStatsIfDirty();
+                    }
+                    var variant = Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
+                    if (variant != null)
+                    {
+                        _roomHasVariant = true;
+                        MakeVariant(rt, variant);
+                        continue;
                     }
                     var affix = Nightmares.Roll(_rng, tier, depth, mult);
                     if (affix != NightmareAffix.None) MakeNightmare(m, affix);
@@ -487,11 +545,12 @@ namespace SodRpg.Mod
             }
         }
 
-        private void MakeNightmare(Monster m, NightmareAffix affix)
+        private static StatBonus ToMonsterStatBonus(IReadOnlyList<StatLine> stats)
         {
             var bonus = new StatBonus();
-            foreach (var s in Nightmares.MonsterStats(affix, out float regen))
+            for (int i = 0; i < stats.Count; i++)
             {
+                var s = stats[i];
                 float v = StatUnits.ToGame(s.Stat, s.Value);
                 switch (s.Stat)
                 {
@@ -503,13 +562,56 @@ namespace SodRpg.Mod
                     case Stat.PowerPct: bonus.abilityPowerPercentage += v; break;
                     case Stat.Haste: bonus.abilityHasteFlat += v; break;
                 }
-                if (regen > 0) _regen[m] = regen;
             }
-            m.Status.AddStatBonus(bonus);
+            return bonus;
+        }
+
+        private void MakeNightmare(Monster m, NightmareAffix affix)
+        {
             var rt = _monsters[m];
-            rt.NightmareBonus = bonus;
+            rt.SpecialBonus = ToMonsterStatBonus(Nightmares.MonsterStats(affix, out float regen));
+            m.Status.AddStatBonus(rt.SpecialBonus);
             AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
+            ApplyMonsterAffixes(rt, affix, regen);
+            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
+        }
+
+        private void MakeVariant(MonsterRuntime rt, VariantDef variant)
+        {
+            var m = rt.Monster;
+            rt.Variant = variant;
+            rt.SpecialBonus = ToMonsterStatBonus(variant.Stats);
+            m.Status.AddStatBonus(rt.SpecialBonus);
+            AttachMirageSkin(m, Nightmares.Count(variant.Affixes) >= 2);
+            m.Status.CalculateStatsIfDirty();
+            float regen = 0f;
+            if ((variant.Affixes & NightmareAffix.Regenerating) != 0)
+                Nightmares.MonsterStats(variant.Affixes, out regen);
+            ApplyMonsterAffixes(rt, variant.Affixes, regen);
+            if ((variant.Traits & VariantTrait.HitCap) != 0)
+            {
+                rt.HitCap = (ref DamageData damage, Actor actor, Entity target) =>
+                {
+                    float amount = damage.currentAmount;
+                    float cap = m.maxHealth * Variants.HitCapPct / 100f;
+                    if (amount > cap && cap > 0f) damage = damage.ApplyRawMultiplier(cap / amount);
+                };
+                m.takenDamageProcessor.Add(rt.HitCap);
+            }
+            if (!_loggedVariantSpawn)
+            {
+                _loggedVariantSpawn = true;
+                Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
+            }
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = variant.Id });
+        }
+
+        private void ApplyMonsterAffixes(MonsterRuntime rt, NightmareAffix affix, float regen)
+        {
+            var m = rt.Monster;
+            if (regen > 0) _regen[m] = regen;
             if ((affix & NightmareAffix.Thorned) != 0)
             {
                 rt.Reflects = true;
@@ -532,8 +634,6 @@ namespace SodRpg.Mod
                     3600f, false, default(ReactionChain));
                 if (rt.Ward != null) LogAffixTrigger(NightmareAffix.Warded, "shield granted");
             }
-            Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
         }
 
         private List<MirageSkinEffect> _mirageTier0, _mirageTier1;
@@ -626,6 +726,7 @@ namespace SodRpg.Mod
                 _spawnQueue.Clear();
                 _regen.Clear();
                 _nightmares.Clear();
+                _roomHasVariant = false;
                 if (am != null)
                 {
                     am.ClientEvent_OnEntityAdd += _onEntityAdd;
@@ -642,10 +743,16 @@ namespace SodRpg.Mod
                 if (_zone != null)
                 {
                     try { _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded; } catch (Exception) { }
+                    try { _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded; } catch (Exception) { }
                 }
                 _zone = zone;
+                _roomHasVariant = false;
                 foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
-                if (zone != null) zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
+                if (zone != null)
+                {
+                    zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
+                    zone.ClientEvent_OnRoomLoaded += _onRoomLoaded;
+                }
             }
             var cem = NetworkedManagerBase<ClientEventManager>.softInstance;
             if (cem != _cem)
@@ -693,11 +800,15 @@ namespace SodRpg.Mod
             if (_zone != null)
             {
                 try { _zone.ClientEvent_OnZoneLoaded -= _onZoneLoaded; } catch (Exception) { }
+                try { _zone.ClientEvent_OnRoomLoaded -= _onRoomLoaded; } catch (Exception) { }
                 _zone = null;
             }
             _triggeredPowers.Clear();
             _spreadingFire = false;
             _triggeredAffixes.Clear();
+            _roomHasVariant = false;
+            _loggedVariantSpawn = _loggedDeathBurst = false;
+            _deathBurstHeroes.Clear();
             _reflectingDamage = false;
             _lucidTypes = null;
             if (_am != null)

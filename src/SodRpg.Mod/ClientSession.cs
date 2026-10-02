@@ -34,6 +34,7 @@ namespace SodRpg.Mod
         private readonly Action<DewGameResult> _onConcluded;
         private readonly Action<DreamforgeAppliedMsg> _onApplied;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
+        private readonly Action<DreamforgeVariantMsg> _onVariant;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly Action<PendingTrade> _onSalvageExpired;
         private readonly TradeLedger _trades = new TradeLedger();
@@ -50,6 +51,22 @@ namespace SodRpg.Mod
 
         /// <summary>悪夢化の通知を受けた時刻（まだスポーンしていない敵を早まって消さないため）。</summary>
         public Dictionary<uint, float> NightmareSeenAt { get; } = new Dictionary<uint, float>();
+
+        /// <summary>夢の変種（netId → Core の変種ID）。名札と撃破時の報酬に使う。</summary>
+        public Dictionary<uint, string> Variant { get; } = new Dictionary<uint, string>();
+        public Dictionary<uint, float> VariantSeenAt { get; } = new Dictionary<uint, float>();
+
+        private sealed class VariantVisual
+        {
+            public Monster Monster;
+            public EntityVisual Visual;
+            public EntityColorModifier Color;
+            public EntityTransformModifier Transform;
+        }
+
+        private readonly Dictionary<uint, VariantVisual> _variantVisuals = new Dictionary<uint, VariantVisual>();
+        private readonly List<uint> _variantScratch = new List<uint>();
+        private bool _loggedVariantVisualFailure;
 
         private readonly RoomCounter _rooms = new RoomCounter();
         private bool _dirty;
@@ -90,6 +107,7 @@ namespace SodRpg.Mod
             _onConcluded = OnConcluded;
             _onApplied = OnApplied;
             _onNightmare = OnNightmare;
+            _onVariant = OnVariant;
             _onTradeResult = OnTradeResult;
             _onSalvageExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
@@ -170,6 +188,7 @@ namespace SodRpg.Mod
             try
             {
                 Wire();
+                UpdateVariantVisuals();
                 TrackRun();
                 if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) > 0)
                 {
@@ -246,6 +265,7 @@ namespace SodRpg.Mod
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                 }
                 _clientRpcOn = actor;
@@ -256,6 +276,9 @@ namespace SodRpg.Mod
                     SaveNow();
                 }
                 Nightmare.Clear();
+                NightmareSeenAt.Clear();
+                ClearVariants();
+                _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
                 _buildDirty = true;
@@ -263,6 +286,7 @@ namespace SodRpg.Mod
                 {
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
@@ -294,6 +318,7 @@ namespace SodRpg.Mod
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
@@ -302,6 +327,10 @@ namespace SodRpg.Mod
             _cem = null;
             _results = null;
             _clientRpcOn = null;
+            Nightmare.Clear();
+            NightmareSeenAt.Clear();
+            ClearVariants();
+            _loggedVariantVisualFailure = false;
         }
 
         private void TrackRun()
@@ -377,8 +406,13 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (!RunActive) return;
                 if (!(info.victim is Monster m)) return;
+                Nightmare.TryGetValue(m.netId, out var nightmare);
+                Variant.TryGetValue(m.netId, out var variantId);
+                Nightmare.Remove(m.netId);
+                NightmareSeenAt.Remove(m.netId);
+                RemoveVariant(m.netId);
+                if (!RunActive) return;
                 // ゲーム本体が報酬を出さない敵（演出・召喚・ハンターの追加敵など）は対象外（PickupManager と同じ判定）。
                 if (m.disableLoot) return;
                 if (m.Status != null && m.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter) && !hunter.enableGoldAndExpDrops) return;
@@ -389,13 +423,10 @@ namespace SodRpg.Mod
                 var gm = NetworkedManagerBase<GameManager>.softInstance;
                 if (gm != null) level = Math.Max(level, gm.ambientLevel);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
-                Nightmare.TryGetValue(m.netId, out var nightmare);
-                Nightmare.Remove(m.netId);
-                NightmareSeenAt.Remove(m.netId);
                 string heroKey = HeroKeyOf(hero);
                 int masteryBefore = Mastery.Level(Profile.Hero(heroKey).Kills);
                 int awakenedBefore = Profile.Stats.RelicsAwakened;
-                Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey, _trades));
+                Emit(Rules.OnKill(Profile, tier, level, nightmare, heroKey, _trades, variantId: variantId));
                 if (Mastery.Level(Profile.Hero(heroKey).Kills) > masteryBefore) _buildDirty = true;
                 if (Profile.Stats.RelicsAwakened > awakenedBefore)
                 {
@@ -587,6 +618,7 @@ namespace SodRpg.Mod
             if (msg == null) return;
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None) return;
+            RemoveVariant(msg.netId);
             Nightmare[msg.netId] = a;
             NightmareSeenAt[msg.netId] = Time.unscaledTime;
             if (Nightmare.Count > 300)
@@ -594,6 +626,114 @@ namespace SodRpg.Mod
                 Nightmare.Clear(); // 取りこぼしで溜まり続けないように
                 NightmareSeenAt.Clear();
             }
+        }
+
+        private void OnVariant(DreamforgeVariantMsg msg)
+        {
+            if (msg == null) return;
+            var def = Variants.Get(msg.variantId);
+            if (def == null) return;
+            if (Variant.TryGetValue(msg.netId, out var previous) && previous != def.Id)
+                RemoveVariant(msg.netId);
+            Nightmare.Remove(msg.netId);
+            NightmareSeenAt.Remove(msg.netId);
+            Variant[msg.netId] = def.Id;
+            VariantSeenAt[msg.netId] = Time.unscaledTime;
+            if (Variant.Count > 300)
+            {
+                ClearVariants();
+                return;
+            }
+            if (NetworkClient.spawned.TryGetValue(msg.netId, out var id) && id != null)
+                ApplyVariantVisual(msg.netId, id.GetComponent<Monster>(), def);
+        }
+
+        private void UpdateVariantVisuals()
+        {
+            if (Variant.Count == 0) return;
+            _variantScratch.Clear();
+            foreach (var kv in Variant)
+            {
+                bool pending = !_variantVisuals.ContainsKey(kv.Key)
+                    && VariantSeenAt.TryGetValue(kv.Key, out float seen) && Time.unscaledTime - seen <= 10f;
+                if (!NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
+                {
+                    if (!pending) _variantScratch.Add(kv.Key);
+                    continue;
+                }
+                var m = id.GetComponent<Monster>();
+                if (m == null || !m.isActive)
+                {
+                    if (m == null || !pending) _variantScratch.Add(kv.Key);
+                    continue;
+                }
+                ApplyVariantVisual(kv.Key, m, Variants.Get(kv.Value));
+            }
+            foreach (uint netId in _variantScratch) RemoveVariant(netId);
+        }
+
+        private void ApplyVariantVisual(uint netId, Monster m, SodRpg.Core.Game.VariantDef def)
+        {
+            if (def == null || m == null || !m.isActive) return;
+            var visual = m.Visual;
+            if (_variantVisuals.TryGetValue(netId, out var old))
+            {
+                if (old.Monster == m && old.Visual == visual) return;
+                StopVariantVisual(old);
+                _variantVisuals.Remove(netId);
+            }
+            // A message can arrive before the entity or its model is ready.
+            if (visual == null || visual.model == null) return;
+            var state = new VariantVisual { Monster = m, Visual = visual };
+            _variantVisuals[netId] = state;
+            try
+            {
+                state.Color = visual.GetNewColorModifier();
+                state.Color.baseColor = new Color(def.R, def.G, def.B, 1f);
+                state.Transform = visual.GetNewTransformModifier();
+                state.Transform.scaleMultiplier = Vector3.one * def.Scale;
+            }
+            catch (Exception ex)
+            {
+                // Retain the state to avoid repeatedly failing or stacking modifiers on resync.
+                StopVariantVisual(state);
+                LogVariantVisualFailure(ex);
+            }
+        }
+
+        private void LogVariantVisualFailure(Exception ex)
+        {
+            if (_loggedVariantVisualFailure) return;
+            _loggedVariantVisualFailure = true;
+            Log.Warn("Variant visuals unavailable; keeping name tags: " + ex.Message);
+        }
+
+        private void StopVariantVisual(VariantVisual state)
+        {
+            try { state.Color?.Stop(); }
+            catch (Exception ex) { LogVariantVisualFailure(ex); }
+            try { state.Transform?.Stop(); }
+            catch (Exception ex) { LogVariantVisualFailure(ex); }
+            state.Color = null;
+            state.Transform = null;
+        }
+
+        public void RemoveVariant(uint netId)
+        {
+            Variant.Remove(netId);
+            VariantSeenAt.Remove(netId);
+            if (!_variantVisuals.TryGetValue(netId, out var state)) return;
+            _variantVisuals.Remove(netId);
+            StopVariantVisual(state);
+        }
+
+        private void ClearVariants()
+        {
+            foreach (var state in _variantVisuals.Values) StopVariantVisual(state);
+            _variantVisuals.Clear();
+            Variant.Clear();
+            VariantSeenAt.Clear();
+            _variantScratch.Clear();
         }
 
         private void OnApplied(DreamforgeAppliedMsg msg)
