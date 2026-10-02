@@ -195,6 +195,8 @@ namespace SodRpg.Core.Game
         public bool IsPowerNode => !IsKeystone && LinkPerRank == null && RankPower != Power.None;
         /// <summary>1は核の手前の星、2は奥の星・記憶ルート・夢の輪。</summary>
         public int Tier { get; set; } = 1;
+        /// <summary>記憶の仕掛け（v1.28）。ルートの記憶に反応する。なければ null。</summary>
+        public GimmickDef Gimmick { get; set; }
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
         public bool IsKeystone { get; }

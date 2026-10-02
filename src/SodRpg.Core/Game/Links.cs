@@ -16,6 +16,8 @@ namespace SodRpg.Core.Game
         Attune = 3,
         /// <summary>守り：条件を満たしている間、最大HPが Value% 上がり、防御が Value 増える。</summary>
         Guard = 4,
+        /// <summary>記憶の冴え（v1.28）：条件の記憶（アイデンティティの受け身を含む）で与えるダメージが Value% 上がる。</summary>
+        MemoryDamage = 5,
     }
 
     /// <summary>
@@ -202,6 +204,7 @@ namespace SodRpg.Core.Game
                 case LinkKind.Guard: single = 25; break;
                 case LinkKind.MemoryHaste: single = 50; break;
                 case LinkKind.MemorySurge: single = 40; break;
+                case LinkKind.MemoryDamage: single = 40; break;
                 default: return 0;
             }
             double mult = requireCount >= 3 ? 2.2 : requireCount == 2 ? 1.6 : 1.0;
@@ -237,7 +240,7 @@ namespace SodRpg.Core.Game
                     if (Canon(link.Requires[j]) == t) return false;
                 if (MemoryNames.ContainsKey(t)) hasMemory = true;
             }
-            if ((link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge) && !hasMemory) return false;
+            if ((link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge || link.Kind == LinkKind.MemoryDamage) && !hasMemory) return false;
             return true;
         }
 
@@ -328,6 +331,11 @@ namespace SodRpg.Core.Game
         private static string DescribeJa(LinkDef link, Func<string, bool> isSatisfied, string value)
         {
             bool memoryKind = link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge;
+            if (link.Kind == LinkKind.MemoryDamage)
+            {
+                string cond2 = ConditionJa(link, isSatisfied, false);
+                return "連携：" + cond2 + "、" + MemorySubjectJa(link) + "で与えるダメージが" + value + "%上がる";
+            }
             // 条件が記憶1つだけなら「『吹雪』✓ を使うと…」と短く言う。
             if (memoryKind && link.Requires.Length == 1)
             {
@@ -403,6 +411,8 @@ namespace SodRpg.Core.Game
             string cond = ConditionEn(link, isSatisfied, memoryKind);
             switch (link.Kind)
             {
+                case LinkKind.MemoryDamage:
+                    return "Link: " + cond + "damage dealt by " + MemorySubjectEn(link) + " is increased by " + value + "%.";
                 case LinkKind.Attune:
                     return "Link: " + cond + "attack damage and ability power are increased by " + value + "%.";
                 case LinkKind.Guard:
