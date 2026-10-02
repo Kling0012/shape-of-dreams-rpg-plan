@@ -136,7 +136,7 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 
 - **利用者は助言だけをする**。方針の選択肢を並べて選ばせず、自分で判断して進め、判断と理由を報告する。
 - **手を止めない**：GPT（OMP）や画像生成が走っている間も、次の版の仕様・データ・画面・実機確認を並行して進める。
-- **実装の分担**：2026-10-02 から実装役は **GLM-5.3**（OMP の `--model zhipu-coding-plan/glm-5.3 --thinking high`）。それまでは GPT（OMP、`C:\Temp\sod-c` の複製で）と Claude の両方が実装する。重ならないよう、別の版・別の部分を受け持つ。Claude は `C:\Temp\sod-v120` のような別の複製で作り、`git cherry-pick` で取り込んだこともある。
+- **実装の分担**：2026-10-02 から実装役は **GLM-5.3**（OMP の `--model zhipu-coding-plan/glm-5.3 --thinking max`）。それまでは GPT（OMP、`C:\Temp\sod-c` の複製で）と Claude の両方が実装する。重ならないよう、別の版・別の部分を受け持つ。Claude は `C:\Temp\sod-v120` のような別の複製で作り、`git cherry-pick` で取り込んだこともある。
 - **大量のデータ**（固有品・セット）は、Sonnet のサブエージェントに下書きさせ、Claude が全件を読み、スクリプトで検査（ID・名前の重複、土台の枠、固有効果の組み合わせの重複、上限）してから組み込む。
 - **アイコン**：`C:\Temp\sod-art` の Codex 画像生成（`run_batches.sh` 形式、5枚ずつ）。2本並行で約6分/5枚。`shrink.py` で128pxにして `src/SodRpg.Mod/icons/` へ。
 - **本体の API 調査**：`C:\Temp\sod-reflect`（MetadataLoadContext のダンプ）。`dump/` に型ごとの一覧、`_events.txt` にイベント全件。
