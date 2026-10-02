@@ -36,7 +36,7 @@ namespace SodRpg.Core.Tests
             foreach (var h in p.Heroes.Values)
             {
                 Assert.True(Rules.SpentPoints(h) <= p.TalentPoints);
-                for (int i = 0; i < 3; i++)
+                for (int i = 0; i < Content.SlotCount; i++)
                 {
                     if (h.Equipped[i] == null) continue;
                     var r = p.FindStash(h.Equipped[i]);
@@ -90,7 +90,7 @@ namespace SodRpg.Core.Tests
                         case 1: if (r != null) Rules.Enhance(p, r.Uid); break;
                         case 2: if (r != null && r.Affixes.Count > 0) Rules.Retune(p, r.Uid, rng.Range(0, r.Affixes.Count - 1)); break;
                         case 3: if (r != null && p.Stash.Count > 20) Rules.Salvage(p, r.Uid); break;
-                        case 4: Rules.Craft(p, (Slot)rng.Range(0, 2), rng.Chance(0.3)); break;
+                        case 4: Rules.Craft(p, (Slot)rng.Range(0, Content.SlotCount - 1), rng.Chance(0.3)); break;
                         case 5: Rules.AddTalentRank(p, hero, Content.Talents.Where(t => !t.IsKeystone).ElementAt(rng.Range(0, 11)).Id); break;
                         case 6: Rules.SetKeystone(p, hero, Content.Talents.Where(t => t.IsKeystone).ElementAt(rng.Range(0, 2)).Id); break;
                         default: Rules.ToggleLock(p, r?.Uid); break;
@@ -249,9 +249,9 @@ namespace SodRpg.Core.Tests
                 for (int i = 0; i < n; i++) drops += Loot.RollKill(rng, t, 10, 0, ref pity).Relics.Count;
                 return (double)drops / n;
             }
-            Assert.InRange(Rate(MonsterTier.Lesser, 100000), 0.004, 0.008);
-            Assert.InRange(Rate(MonsterTier.Normal, 50000), 0.017, 0.023);
-            Assert.InRange(Rate(MonsterTier.MiniBoss, 5000), 0.32, 0.38);
+            Assert.InRange(Rate(MonsterTier.Lesser, 100000), 0.006, 0.010); // v1.19：6枠に合わせて約3割増し
+            Assert.InRange(Rate(MonsterTier.Normal, 50000), 0.024, 0.030);
+            Assert.InRange(Rate(MonsterTier.MiniBoss, 5000), 0.42, 0.48);
             Assert.InRange(Rate(MonsterTier.Boss, 5000), 1.55, 1.65); // 1個確定＋60%で2個目
         }
 
@@ -303,7 +303,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Content_tables_are_consistent()
         {
-            Assert.Equal(45, Content.Bases.Count);
+            Assert.Equal(90, Content.Bases.Count);
             foreach (Slot s in Enum.GetValues(typeof(Slot)))
             {
                 Assert.Equal(15, Content.BasesFor(s).Count());

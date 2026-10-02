@@ -7,7 +7,7 @@ namespace SodRpg.Core.Game
     public sealed class HeroState
     {
         /// <summary>枠ごとの装着中の遺物Uid。未装着は null。保管庫の遺物を参照する。</summary>
-        public string[] Equipped { get; } = new string[3];
+        public string[] Equipped { get; } = new string[Content.SlotCount];
 
         /// <summary>小ノードの段階。到達ノード（刻印）はここに含めず Keystone に持つ。</summary>
         public SortedDictionary<string, int> Talents { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
@@ -20,7 +20,7 @@ namespace SodRpg.Core.Game
         public HeroState Clone()
         {
             var c = new HeroState { Keystone = Keystone, Kills = Kills };
-            Array.Copy(Equipped, c.Equipped, 3);
+            Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
             return c;
         }
@@ -204,6 +204,8 @@ namespace SodRpg.Core.Game
         public bool HintsOff { get; set; }
         /// <summary>初期装備を配ったか。</summary>
         public bool StarterGranted { get; set; }
+        /// <summary>頭・手・足の初期装備を配ったか。</summary>
+        public bool StarterV119Granted { get; set; }
         /// <summary>初期装備の遺物の個体ID（自動装備に使う）。</summary>
         public List<string> StarterUids { get; } = new List<string>();
         public ProfileStats Stats { get; private set; } = new ProfileStats();
@@ -297,6 +299,7 @@ namespace SodRpg.Core.Game
             c.StarterUids.AddRange(StarterUids);
             c.HintsOff = HintsOff;
             c.StarterGranted = StarterGranted;
+            c.StarterV119Granted = StarterV119Granted;
             return c;
         }
     }

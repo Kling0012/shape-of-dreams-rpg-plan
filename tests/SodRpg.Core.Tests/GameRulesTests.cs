@@ -69,7 +69,7 @@ namespace SodRpg.Core.Tests
 
             int d0 = Count(0, out int e0);
             int d5 = Count(5, out int e5);
-            Assert.InRange(d0, 650, 950); // 2%
+            Assert.InRange(d0, 920, 1240); // 2.7%（v1.19）
             Assert.True(d5 > d0 * 2.2, $"heat5 drops {d5} vs {d0}");
             Assert.True((double)e5 / d5 > (double)e0 / d0 * 2, "heat raises epic share");
         }

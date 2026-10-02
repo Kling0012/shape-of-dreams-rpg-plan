@@ -20,10 +20,14 @@ namespace SodRpg.Core.Tests
                     if (Loot.RollRelic(rng, Rarity.Rare, 10, null, focus).Base.Line == Line.Guard) hit++;
                 return (double)hit / n;
             }
-            double baseShare = Share(null);   // 45基礎のうち生命は15
+            double baseShare = Share(null);
             double focused = Share(Line.Guard);
-            Assert.InRange(baseShare, 0.30, 0.37);
-            Assert.InRange(focused, 0.47, 0.53);  // 30/60 = 0.5
+            int guards = Content.Bases.Count(b => b.Line == Line.Guard);
+            double expectedBase = (double)guards / Content.Bases.Count;
+            double expectedFocus = (double)(guards * Loot.FocusWeight) /
+                (Content.Bases.Count + guards * (Loot.FocusWeight - 1));
+            Assert.InRange(baseShare, expectedBase - 0.03, expectedBase + 0.03);
+            Assert.InRange(focused, expectedFocus - 0.03, expectedFocus + 0.03);
         }
 
         [Fact]
@@ -74,7 +78,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Two_and_three_of_a_line_grant_set_bonuses()
+        public void Line_bonuses_accumulate_through_six_equipped_slots()
         {
             var p = Profile.CreateNew(1);
             Rules.Equip(p, "H", Make(p, "weapon.shield_maul").Uid);      // 守勢
@@ -90,6 +94,24 @@ namespace SodRpg.Core.Tests
             var b3 = Build.Compute(p, "H", 0);
             Assert.Equal(8, b3.Get(Stat.Armor));
             Assert.Equal(b2.Get(Stat.MaxHealthPct) + 6, b3.Get(Stat.MaxHealthPct));
+
+            Rules.Equip(p, "H", Make(p, "head.iron_helm").Uid);
+            var b4 = Build.Compute(p, "H", 0);
+            Assert.Equal(4, b4.Lines[Line.Guard]);
+            Assert.Equal(b3.Get(Stat.Armor) + 6, b4.Get(Stat.Armor));
+            Assert.Equal(b3.Get(Stat.Tenacity) + 12, b4.Get(Stat.Tenacity));
+
+            Rules.Equip(p, "H", Make(p, "hands.iron_gauntlets").Uid);
+            var b5 = Build.Compute(p, "H", 0);
+            Assert.Equal(5, b5.Lines[Line.Guard]);
+            Assert.Equal(b4.Get(Stat.Armor) + 6, b5.Get(Stat.Armor));
+            Assert.Equal(b4.Get(Stat.Tenacity), b5.Get(Stat.Tenacity));
+
+            Rules.Equip(p, "H", Make(p, "feet.iron_greaves").Uid);
+            var b6 = Build.Compute(p, "H", 0);
+            Assert.Equal(6, b6.Lines[Line.Guard]);
+            Assert.Equal(b5.Get(Stat.Armor) + 6 + 12, b6.Get(Stat.Armor));
+            Assert.Equal(b5.Get(Stat.MaxHealthPct) + 6, b6.Get(Stat.MaxHealthPct));
         }
 
         [Fact]
@@ -105,17 +127,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, b.Get(Stat.PowerPct));
         }
 
-        [Fact]
-        public void Every_line_has_set_bonuses_at_two_and_three()
-        {
-            foreach (Line l in Enum.GetValues(typeof(Line)))
-            {
-                Assert.Empty(Content.SetBonus(l, 1));
-                int two = Content.SetBonus(l, 2).Count();
-                Assert.True(two > 0);
-                Assert.True(Content.SetBonus(l, 3).Count() > two);
-            }
-        }
 
         [Fact]
         public void Report_summarizes_a_victory()

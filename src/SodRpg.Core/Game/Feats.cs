@@ -161,22 +161,28 @@ namespace SodRpg.Core.Game
 
         private static int CountCompletedSets(Profile p)
         {
-            if (p.Stash.Count < 3) return 0;
             int completed = 0;
             for (int i = 0; i < Content.Sets.Count; i++)
             {
-                int slots = 0;
+                bool hasPieces = false;
+                bool complete = true;
                 string setId = Content.Sets[i].Id;
-                foreach (var relic in p.Stash)
+                foreach (var piece in Content.Uniques)
                 {
-                    if (!Content.TryGetUnique(relic.UniqueId, out var unique) || unique.SetId != setId) continue;
-                    slots |= 1 << (int)relic.Slot;
-                    if (slots == 7)
+                    if (piece.SetId != setId) continue;
+                    hasPieces = true;
+                    bool owned = false;
+                    foreach (var relic in p.Stash)
                     {
-                        completed++;
+                        if (relic.UniqueId != piece.Id || relic.BaseId != piece.BaseId) continue;
+                        owned = true;
                         break;
                     }
+                    if (owned) continue;
+                    complete = false;
+                    break;
                 }
+                if (hasPieces && complete) completed++;
             }
             return completed;
         }

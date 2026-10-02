@@ -62,11 +62,11 @@ namespace SodRpg.Core.Tests
         {
             var p = Profile.CreateNew(1);
             var kit = Onboarding.GrantStarterKit(p);
-            Assert.Equal(3, kit.Count);
-            Assert.Equal(3, kit.Select(r => r.Slot).Distinct().Count());
+            Assert.Equal(Content.SlotCount, kit.Count);
+            Assert.Equal(Content.SlotCount, kit.Select(r => r.Slot).Distinct().Count());
             Assert.All(kit, r => Assert.Equal(Rarity.Uncommon, r.Rarity));
             Assert.Empty(Onboarding.GrantStarterKit(p));
-            Assert.Equal(3, p.Stash.Count);
+            Assert.Equal(Content.SlotCount, p.Stash.Count);
         }
 
         [Fact]
@@ -75,14 +75,16 @@ namespace SodRpg.Core.Tests
             var p = Profile.CreateNew(1);
             Onboarding.GrantStarterKit(p);
             Assert.True(Onboarding.AutoEquipStarter(p, "Hero_Vesper"));
-            Assert.All(p.Hero("Hero_Vesper").Equipped, u => Assert.NotNull(u));
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+                Assert.Equal(slot, p.FindStash(p.Hero("Hero_Vesper").Equipped[(int)slot]).Slot);
             Assert.False(Onboarding.AutoEquipStarter(p, "Hero_Vesper")); // もう装備済み
 
             var other = Loot.RollRelic(new Rng(77), Rarity.Rare, 5, Slot.Weapon);
             p.Stash.Add(other);
             Rules.Equip(p, "Hero_Mist", other.Uid);
             Assert.False(Onboarding.AutoEquipStarter(p, "Hero_Mist")); // 自分で装備したキャラには触らない
-            Assert.Null(p.Hero("Hero_Mist").Equipped[(int)Slot.Armor]);
+            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+                if (slot != Slot.Weapon) Assert.Null(p.Hero("Hero_Mist").Equipped[(int)slot]);
         }
 
         [Fact]
@@ -95,6 +97,7 @@ namespace SodRpg.Core.Tests
             p.HintsOff = true;
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.True(q.StarterGranted);
+            Assert.True(q.StarterV119Granted);
             Assert.Equal(p.StarterUids, q.StarterUids);
             Assert.Equal(p.SeenHints, q.SeenHints);
             Assert.True(q.HintsOff);

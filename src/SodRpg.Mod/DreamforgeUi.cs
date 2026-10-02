@@ -672,7 +672,7 @@ namespace SodRpg.Mod
             "<b>確保と潜行の考え方</b>\n" +
             "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
-            "・装備：旅人ごとに主装備・防具・装飾品の3つを装着します。\n" +
+            "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThreshold + "で覚醒して固有効果が1.5倍になります。気に入った1本を使い込みましょう。\n" +
             "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
@@ -688,7 +688,7 @@ namespace SodRpg.Mod
             "<b>Securing vs. delving</b>\n" +
             "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
-            "- Gear: each Traveler has a weapon, armor and charm slot.\n" +
+            "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards, reroll affixes with tuning stones, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThreshold + " they awaken and their powers become 1.5x. Pick a favourite and keep using it.\n" +
             "- Star Map: spend points from Dream Levels to grow stats; meet the conditions to pick one powerful keystone.\n" +
@@ -769,8 +769,8 @@ namespace SodRpg.Mod
         {
             switch (tab)
             {
-                case 0: return Loc.T("持ち帰った遺物を、旅人ごとに3つの枠（主装備・防具・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
-                    "Equip relics you brought home into each Traveler's three slots (weapon, armor, charm). During an expedition you can only swap at secure points.");
+                case 0: return Loc.T("持ち帰った遺物を、旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）へ装着します。遠征中は確保地点でだけ付け替えられます。",
+                    "Equip relics you brought home into each Traveler's six slots (weapon, head, armor, hands, feet, charm). During an expedition you can only swap at secure points.");
                 case 1: return Loc.T("欠片で遺物を強くし、調律石で気に入らない特性を引き直します。いらない遺物は分解して欠片に戻せます。",
                     "Use shards to enhance relics and tuning stones to reroll an affix you dislike. Salvage what you don't need back into shards.");
                 case 2: return Loc.T("夢のレベルが上がるともらえるポイントで、旅人ごとに能力を伸ばします。振り直しは無料なので、気軽に試してください。",
@@ -841,13 +841,13 @@ namespace SodRpg.Mod
                     $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")
                         + (keyLocked ? $"\n<color=#888>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : "")), _st.Small);
             }
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+            foreach (Slot slot in Content.SlotOrder)
             {
                 var r = Rules.EquippedRelic(p, hero, slot);
                 string label = Content.SlotName(slot) + "： " + (r != null ? UiStyles.RelicTitle(r) : Loc.T("<color=#777>（なし）</color>", "<color=#777>(empty)</color>"));
                 GUILayout.BeginHorizontal();
-                IconSlot(r, 34);
-                if (GUILayout.Button(label, _slot == slot ? _st.RowSel : _st.Row, GUILayout.Height(34)))
+                IconSlot(r, 30);
+                if (GUILayout.Button(label, _slot == slot ? _st.RowSel : _st.Row, GUILayout.Height(30)))
                 {
                     _slot = slot;
                     _selected = r?.Uid;
@@ -857,7 +857,7 @@ namespace SodRpg.Mod
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
             var build = _s.CurrentBuild(hero);
-            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(250));
+            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(160));
             if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
@@ -876,17 +876,25 @@ namespace SodRpg.Mod
             GUILayout.EndScrollView();
             if (!_s.CanEditLoadout)
                 GUILayout.Label(Loc.T("遠征中は、確保地点に着いたときだけ装備を変えられます。", "During an expedition, you can only change gear at secure points."), _st.Warn);
-            GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2つ、3つとそろえると、系統のボーナスが付きます。", "Equipping 2 or 3 relics of the same line (Destruction, Life, Imagination) grants a line bonus."), _st.Small);
+            GUILayout.Label(Loc.T("同じ系統（破壊・生命・想像）の遺物を2・3・4・6個とそろえるほど、系統のボーナスが重なります。", "Equip 2, 3, 4 or 6 relics of the same line (Destruction, Life, Imagination) for stacking line bonuses."), _st.Small);
             FocusPicker();
             GUILayout.EndVertical();
 
             // 中：保管庫
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(330));
             GUILayout.BeginHorizontal();
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
-                if (GUILayout.Button(Content.SlotName(slot).ToString(), _slot == slot ? _st.ButtonSel : _st.Button)) _slot = slot;
+            for (int i = 0; i < Content.SlotOrder.Count; i++)
+            {
+                if (i == 3)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+                var slot = Content.SlotOrder[i];
+                if (GUILayout.Button(SlotTabLabel(p, slot), _slot == slot ? _st.ButtonSel : _st.Button)) _slot = slot;
+            }
             GUILayout.EndHorizontal();
-            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 440);
+            RelicList(p.Stash.Where(r => r.Slot == _slot), hero, 410);
             GUILayout.EndVertical();
 
             // 右：詳細と比較
@@ -927,6 +935,13 @@ namespace SodRpg.Mod
             }
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+        }
+
+        private static string SlotTabLabel(Profile p, Slot slot)
+        {
+            int n = 0;
+            foreach (var r in p.Stash) if (r.Slot == slot) n++;
+            return n > 0 ? $"{Content.SlotName(slot)} <color=#9a9ab0>{n}</color>" : Content.SlotName(slot).ToString();
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
@@ -1167,12 +1182,20 @@ namespace SodRpg.Mod
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(360));
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) _forgeAllSlots = true;
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
-                if (GUILayout.Button(Content.SlotName(slot).ToString(), !_forgeAllSlots && _slot == slot ? _st.ButtonSel : _st.Button))
+            for (int i = 0; i < Content.SlotOrder.Count; i++)
+            {
+                if (i == 3)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                }
+                var slot = Content.SlotOrder[i];
+                if (GUILayout.Button(SlotTabLabel(p, slot), !_forgeAllSlots && _slot == slot ? _st.ButtonSel : _st.Button))
                 {
                     _forgeAllSlots = false;
                     _slot = slot;
                 }
+            }
             GUILayout.EndHorizontal();
             RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 430);
             BulkSalvageRow();
@@ -1266,10 +1289,10 @@ namespace SodRpg.Mod
             }
             GUILayout.EndHorizontal();
             GUILayout.Label(Loc.T($"製作：欠片で新しい遺物を作ります（Lv{Math.Max(1, p.BestItemLevel)}＝これまでの最高）", $"Craft: make a new relic with shards (Lv{Math.Max(1, p.BestItemLevel)}, your best so far)"), _st.Header);
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
+            foreach (Slot slot in Content.SlotOrder)
             {
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(80));
+                GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
                 GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
                 if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.Button))
                     Act(() => Rules.Craft(p, slot, false), false);

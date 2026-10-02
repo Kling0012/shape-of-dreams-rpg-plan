@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
                     foreach (var pl in u.Powers)
                         Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
             }
-            Assert.Equal(112, Content.Uniques.Count(u => u.SetId == null));
+            Assert.Equal(148, Content.Uniques.Count(u => u.SetId == null));
         }
     }
 }

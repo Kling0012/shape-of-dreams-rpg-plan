@@ -50,7 +50,8 @@ namespace SodRpg.Core.Game
             foreach (var kv in p.Heroes)
             {
                 var h = kv.Value;
-                var eq = new List<object> { h.Equipped[0], h.Equipped[1], h.Equipped[2] };
+                var eq = new List<object>(Content.SlotCount);
+                foreach (var uid in h.Equipped) eq.Add(uid);
                 var tal = new JsonObject();
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
                 heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills));
@@ -110,6 +111,7 @@ namespace SodRpg.Core.Game
                 .Add("hints", p.SeenHints.Select(h => (object)(long)h).ToList())
                 .Add("hintsOff", p.HintsOff)
                 .Add("starterGranted", p.StarterGranted)
+                .Add("starterV119Granted", p.StarterV119Granted)
                 .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("run", run);
@@ -237,7 +239,7 @@ namespace SodRpg.Core.Game
                     var h = p.Hero(kv.Key);
                     if (hj.TryGet("equipped", out object eo) && eo is List<object> eq)
                     {
-                        for (int i = 0; i < 3 && i < eq.Count; i++)
+                        for (int i = 0; i < Content.SlotCount && i < eq.Count; i++)
                         {
                             string uid = eq[i] as string;
                             var r = p.FindStash(uid);
@@ -276,6 +278,7 @@ namespace SodRpg.Core.Game
                     if (h is long hv && hv >= 0 && hv < 1000) p.SeenHints.Add((int)hv);
             p.HintsOff = Bool(b, "hintsOff", false);
             p.StarterGranted = Bool(b, "starterGranted", false);
+            p.StarterV119Granted = Bool(b, "starterV119Granted", false);
             if (b.TryGet("starterUids", out object so2) && so2 is List<object> sus)
                 foreach (var u in sus)
                     if (u is string us && p.FindStash(us) != null) p.StarterUids.Add(us);

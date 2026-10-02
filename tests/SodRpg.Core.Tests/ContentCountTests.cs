@@ -20,8 +20,8 @@ namespace SodRpg.Core.Tests
             int powers = slots.Sum(s => Content.PowerPool(s).Count);
             var counts = new (string Name, int Count, int Min)[]
             {
-                ("bases", Content.Bases.Count, 45),
-                ("uniques", Content.Uniques.Count, 136),
+                ("bases", Content.Bases.Count, 90),
+                ("uniques", Content.Uniques.Count, 184),
                 ("sets", Content.Sets.Count, 12),
                 ("talents", Content.Talents.Count, 15),
                 ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),
@@ -44,13 +44,14 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Every_set_has_one_piece_per_slot_and_covers_all_four_elements()
+        public void Every_set_has_weapon_armor_and_charm_and_covers_all_four_elements()
         {
             foreach (var set in Content.Sets)
             {
                 var pieces = Content.Uniques.Where(u => u.SetId == set.Id).ToList();
                 Assert.Equal(3, pieces.Count);
-                Assert.Equal(3, pieces.Select(u => { Assert.True(Content.TryGetBase(u.BaseId, out var b)); return b.Slot; }).Distinct().Count());
+                Assert.Equal(new[] { Slot.Weapon, Slot.Armor, Slot.Charm },
+                    pieces.Select(u => { Assert.True(Content.TryGetBase(u.BaseId, out var b)); return b.Slot; }).OrderBy(s => s));
             }
             var elements = Content.Sets.SelectMany(s => s.ThreePiece).Select(pw => pw.Power).ToHashSet();
             Assert.Subset(elements, new[] { Power.Ember, Power.Frost, Power.Radiance, Power.Umbra }.ToHashSet());

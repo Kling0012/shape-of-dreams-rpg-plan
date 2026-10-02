@@ -32,9 +32,9 @@ namespace SodRpg.Core.Game
             double baseChance;
             switch (tier)
             {
-                case MonsterTier.Lesser: baseChance = 0.006; break;
-                case MonsterTier.Normal: baseChance = 0.02; break;
-                case MonsterTier.MiniBoss: baseChance = 0.35; break;
+                case MonsterTier.Lesser: baseChance = 0.008; break; // v1.19：枠が6つに増えたので、約3割増し
+                case MonsterTier.Normal: baseChance = 0.027; break;
+                case MonsterTier.MiniBoss: baseChance = 0.45; break;
                 default: baseChance = 1.0; break;
             }
             return Math.Min(1.0, baseChance * (1.0 + HeatDropBonus * ClampHeat(heat)));

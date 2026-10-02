@@ -198,6 +198,12 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Content
     {
+        public const int SlotCount = 6;
+        public static readonly IReadOnlyList<Slot> SlotOrder = new[]
+        {
+            Slot.Weapon, Slot.Head, Slot.Armor, Slot.Hands, Slot.Feet, Slot.Charm,
+        };
+
         public const int MaxItemLevel = 60;
         public const int ItemLevelScalingCap = 40;
         public const int StashCapacity = 80;
@@ -266,6 +272,51 @@ namespace SodRpg.Core.Game
             new BaseDef("charm.stone_heart", Slot.Charm, Line.Guard, new Txt("石の心臓", "Stone Heart"), Stat.Tenacity, 12),
             new BaseDef("charm.dream_lens", Slot.Charm, Line.Resonance, new Txt("夢見の水晶", "Dreaming Lens"), Stat.PowerPct, 5),
             new BaseDef("charm.shadow_mask", Slot.Charm, Line.Resonance, new Txt("影の仮面", "Shadow Mask"), Stat.DarkAmp, 10),
+            new BaseDef("head.iron_helm", Slot.Head, Line.Guard, new Txt("鉄の兜", "Iron Helm"), Stat.Armor, 6),
+            new BaseDef("head.dream_circlet", Slot.Head, Line.Resonance, new Txt("夢見の額冠", "Dreamer's Circlet"), Stat.Haste, 5),
+            new BaseDef("head.hunter_hood", Slot.Head, Line.Offense, new Txt("狩人の頭巾", "Hunter's Hood"), Stat.CritChancePct, 3),
+            new BaseDef("head.horned_helm", Slot.Head, Line.Offense, new Txt("双角の兜", "Horned Helm"), Stat.AttackPct, 5),
+            new BaseDef("head.sage_hat", Slot.Head, Line.Resonance, new Txt("賢者のとんがり帽", "Sage's Hat"), Stat.PowerPct, 5),
+            new BaseDef("head.mist_veil", Slot.Head, Line.Resonance, new Txt("霧のヴェール", "Veil of Mist"), Stat.MoveSpeedPct, 3),
+            new BaseDef("head.warden_visor", Slot.Head, Line.Guard, new Txt("番人の面頬", "Warden's Visor"), Stat.Tenacity, 8),
+            new BaseDef("head.ember_crown", Slot.Head, Line.Offense, new Txt("残り火の冠", "Ember Crown"), Stat.FireAmp, 6),
+            new BaseDef("head.moon_hood", Slot.Head, Line.Resonance, new Txt("月影の頭巾", "Moonshadow Hood"), Stat.DarkAmp, 6),
+            new BaseDef("head.healer_band", Slot.Head, Line.Guard, new Txt("癒し手の鉢巻", "Healer's Band"), Stat.HealthRegen, 2),
+            new BaseDef("hands.leather_gloves", Slot.Hands, Line.Offense, new Txt("革の手袋", "Leather Gloves"), Stat.AttackSpeedPct, 4),
+            new BaseDef("hands.iron_gauntlets", Slot.Hands, Line.Guard, new Txt("鉄の籠手", "Iron Gauntlets"), Stat.Armor, 6),
+            new BaseDef("hands.archer_bracers", Slot.Hands, Line.Offense, new Txt("射手の腕当て", "Archer's Bracers"), Stat.CritDamagePct, 10),
+            new BaseDef("hands.spell_gloves", Slot.Hands, Line.Resonance, new Txt("呪文の手袋", "Spellweave Gloves"), Stat.PowerPct, 5),
+            new BaseDef("hands.claw_gauntlets", Slot.Hands, Line.Offense, new Txt("獣爪の手甲", "Beastclaw Gauntlets"), Stat.AttackPct, 5),
+            new BaseDef("hands.frost_mitts", Slot.Hands, Line.Resonance, new Txt("霜の指なし手袋", "Frost Mitts"), Stat.ColdAmp, 6),
+            new BaseDef("hands.radiant_wraps", Slot.Hands, Line.Resonance, new Txt("光の手巻き", "Radiant Wraps"), Stat.LightAmp, 6),
+            new BaseDef("hands.vigor_grips", Slot.Hands, Line.Guard, new Txt("活力の握り", "Grips of Vigor"), Stat.MaxHealthFlat, 25),
+            new BaseDef("hands.quick_fingers", Slot.Hands, Line.Resonance, new Txt("早業の手袋", "Quickfinger Gloves"), Stat.Haste, 5),
+            new BaseDef("hands.reach_bracers", Slot.Hands, Line.Offense, new Txt("遠手の腕輪", "Bracers of Reach"), Stat.AttackRangePct, 5),
+            new BaseDef("feet.travel_boots", Slot.Feet, Line.Resonance, new Txt("旅の長靴", "Traveler's Boots"), Stat.MoveSpeedPct, 4),
+            new BaseDef("feet.iron_greaves", Slot.Feet, Line.Guard, new Txt("鉄の脛当て", "Iron Greaves"), Stat.Armor, 6),
+            new BaseDef("feet.dancer_shoes", Slot.Feet, Line.Offense, new Txt("舞い手の靴", "Dancer's Shoes"), Stat.AttackSpeedPct, 3),
+            new BaseDef("feet.wind_sandals", Slot.Feet, Line.Resonance, new Txt("風のサンダル", "Wind Sandals"), Stat.Haste, 4),
+            new BaseDef("feet.stalker_boots", Slot.Feet, Line.Offense, new Txt("忍び足の靴", "Stalker's Boots"), Stat.CritChancePct, 3),
+            new BaseDef("feet.rooted_boots", Slot.Feet, Line.Guard, new Txt("根を張る靴", "Rooted Boots"), Stat.Tenacity, 10),
+            new BaseDef("feet.ember_treads", Slot.Feet, Line.Offense, new Txt("残り火の足甲", "Ember Treads"), Stat.FireAmp, 6),
+            new BaseDef("feet.pilgrim_boots", Slot.Feet, Line.Guard, new Txt("巡礼の靴", "Pilgrim's Boots"), Stat.HealthRegen, 2),
+            new BaseDef("feet.stone_boots", Slot.Feet, Line.Guard, new Txt("岩の重靴", "Stone Boots"), Stat.MaxHealthPct, 5),
+            new BaseDef("feet.star_steps", Slot.Feet, Line.Resonance, new Txt("星渡りの靴", "Starstep Boots"), Stat.LightAmp, 6),
+            new BaseDef("head.thorn_circlet", Slot.Head, Line.Guard, new Txt("茨の冠", "Thorn Circlet"), Stat.MaxHealthFlat, 25),
+            new BaseDef("head.frost_helm", Slot.Head, Line.Resonance, new Txt("霜の兜", "Frost Helm"), Stat.ColdAmp, 6),
+            new BaseDef("head.radiant_halo", Slot.Head, Line.Resonance, new Txt("光輪", "Radiant Halo"), Stat.LightAmp, 6),
+            new BaseDef("head.scout_goggles", Slot.Head, Line.Offense, new Txt("斥候の遠眼鏡", "Scout's Goggles"), Stat.AttackRangePct, 5),
+            new BaseDef("head.berserker_mask", Slot.Head, Line.Offense, new Txt("狂戦士の面", "Berserker's Mask"), Stat.AttackSpeedPct, 4),
+            new BaseDef("hands.ember_gauntlets", Slot.Hands, Line.Offense, new Txt("残り火の手甲", "Ember Gauntlets"), Stat.FireAmp, 6),
+            new BaseDef("hands.shadow_gloves", Slot.Hands, Line.Offense, new Txt("影縫いの手袋", "Shadowstitch Gloves"), Stat.DarkAmp, 6),
+            new BaseDef("hands.healer_hands", Slot.Hands, Line.Guard, new Txt("癒し手の手袋", "Healer's Gloves"), Stat.HealthRegen, 2),
+            new BaseDef("hands.stone_fists", Slot.Hands, Line.Guard, new Txt("岩の拳", "Stone Fists"), Stat.MaxHealthPct, 5),
+            new BaseDef("hands.duelist_gloves", Slot.Hands, Line.Offense, new Txt("決闘者の手袋", "Duelist's Gloves"), Stat.CritChancePct, 3),
+            new BaseDef("feet.frost_boots", Slot.Feet, Line.Resonance, new Txt("氷上の靴", "Ice Skimmers"), Stat.ColdAmp, 6),
+            new BaseDef("feet.shadow_slippers", Slot.Feet, Line.Offense, new Txt("影の上履き", "Shadow Slippers"), Stat.DarkAmp, 6),
+            new BaseDef("feet.spiked_boots", Slot.Feet, Line.Offense, new Txt("棘付きの長靴", "Spiked Boots"), Stat.AttackPct, 5),
+            new BaseDef("feet.sage_slippers", Slot.Feet, Line.Resonance, new Txt("賢者の室内履き", "Sage's Slippers"), Stat.PowerPct, 5),
+            new BaseDef("feet.guard_sabatons", Slot.Feet, Line.Guard, new Txt("守りの鉄靴", "Guardian Sabatons"), Stat.MaxHealthFlat, 25),
         };
 
         public static readonly IReadOnlyList<UniqueDef> Uniques = new[]
@@ -608,6 +659,114 @@ namespace SodRpg.Core.Game
             new UniqueDef("unique.dawn_herald", "weapon.hunting_bow", new Txt("暁の伝令", "Herald of Dawn"),
                 new Txt("夜明けの一矢は、まだ眠る敵を貫く。", "The dawn arrow pierces foes still half asleep."),
                 Power.OpeningStrike, 45, Power.Vigor, 12),
+            new UniqueDef("unique.last_star_crown", "head.dream_circlet", new Txt("終わりの星冠", "Crown of the Last Star"),
+                new Txt("最後に輝く星は、いちばん明るい。", "The last star to shine is the brightest."),
+                Power.StarShield, 18, Power.UltimateSurge, 22),
+            new UniqueDef("unique.overflowing_mind", "head.sage_hat", new Txt("溢れる思索", "Overflowing Mind"),
+                new Txt("考えが止まらないなら、止めなければいい。", "If your thoughts will not stop, let them run."),
+                Power.Overload, 18, Power.SecondWind, 25),
+            new UniqueDef("unique.unburnt_king", "head.ember_crown", new Txt("燃え尽きぬ王", "The Unburnt King"),
+                new Txt("玉座は灰になった。王冠だけが燃え続けている。", "The throne is ash. Only the crown still burns."),
+                Power.Ember, 32, Power.Blaze, 60),
+            new UniqueDef("unique.moonless_hood", "head.moon_hood", new Txt("月なき夜の頭巾", "Hood of the Moonless Night"),
+                new Txt("月のない夜は、狩る者の味方をする。", "A moonless night sides with the hunter."),
+                Power.Umbra, 32, Power.Executioner, 40),
+            new UniqueDef("unique.wardens_oath", "head.warden_visor", new Txt("番人の誓い", "Warden's Oath"),
+                new Txt("ここを通りたければ、まず私を倒せ。", "To pass, you must first get through me."),
+                Power.Bulwark, 28, Power.Vigor, 14),
+            new UniqueDef("unique.mist_bride", "head.mist_veil", new Txt("霧の花嫁", "Bride of the Mist"),
+                new Txt("触れようとした手は、いつも霧をつかむ。", "Every hand that reaches for her grasps only mist."),
+                Power.Sprint, 22, Power.EchoingDodge, 10),
+            new UniqueDef("unique.raging_horns", "head.horned_helm", new Txt("怒れる双角", "Raging Horns"),
+                new Txt("囲まれるほど、角は熱くなる。", "The more foes close in, the hotter the horns burn."),
+                Power.Frenzy, 3, Power.Bloodlust, 18),
+            new UniqueDef("unique.first_dawn", "head.healer_band", new Txt("最初の夜明け", "The First Dawn"),
+                new Txt("長い夢にも、朝は来る。", "Even the longest dream has a morning."),
+                Power.Barrier, 9, Power.Radiance, 30),
+            new UniqueDef("unique.headsman_grip", "hands.claw_gauntlets", new Txt("断頭人の握り", "Headsman's Grip"),
+                new Txt("弱った獲物を、この爪は逃さない。", "These claws never let a weakened prey slip away."),
+                Power.Executioner, 45, Power.Momentum, 5),
+            new UniqueDef("unique.storm_fingers", "hands.spell_gloves", new Txt("嵐を呼ぶ指", "Stormcalling Fingers"),
+                new Txt("指を鳴らせば、空が応える。", "Snap your fingers, and the sky answers."),
+                Power.ChainLightning, 48, Power.Overload, 16),
+            new UniqueDef("unique.frostbite", "hands.frost_mitts", new Txt("凍傷", "Frostbite"),
+                new Txt("凍らせて、砕く。それだけのこと。", "Freeze it, then break it. Nothing more."),
+                Power.Frost, 34, Power.Shatter, 55),
+            new UniqueDef("unique.first_arrow", "hands.archer_bracers", new Txt("一番矢", "The First Arrow"),
+                new Txt("戦いは、最初の一射で決まる。", "A battle is decided by the first shot."),
+                Power.OpeningStrike, 48, Power.Executioner, 30),
+            new UniqueDef("unique.dawnwrap", "hands.radiant_wraps", new Txt("夜明けの手巻き", "Dawnwrap"),
+                new Txt("光を巻いた拳は、四つの色を呼び寄せる。", "A fist wrapped in light calls all four colors."),
+                Power.Radiance, 34, Power.Convergence, 110),
+            new UniqueDef("unique.heartbeat_grips", "hands.vigor_grips", new Txt("鼓動の握り", "Heartbeat Grips"),
+                new Txt("強く握るほど、心臓も強く打つ。", "The tighter the grip, the stronger the heartbeat."),
+                Power.Vigor, 15, Power.Lifesteal, 8),
+            new UniqueDef("unique.thousand_cuts", "hands.leather_gloves", new Txt("千の切り傷", "A Thousand Cuts"),
+                new Txt("一つひとつは浅くても、千を重ねれば深い。", "Each cut is shallow; a thousand run deep."),
+                Power.Frenzy, 3, Power.Momentum, 4),
+            new UniqueDef("unique.far_hand", "hands.reach_bracers", new Txt("遠き手", "The Far Hand"),
+                new Txt("届かない場所など、ほとんどない。", "There is almost nowhere it cannot reach."),
+                Power.OpeningStrike, 40, Power.Sprint, 18),
+            new UniqueDef("unique.whirling_steps", "feet.dancer_shoes", new Txt("旋風の足取り", "Whirling Steps"),
+                new Txt("舞い手が通った後には、風だけが残る。", "Where the dancer passed, only wind remains."),
+                Power.Whirlwind, 75, Power.EchoingDodge, 10),
+            new UniqueDef("unique.windchaser", "feet.wind_sandals", new Txt("風を追う者", "Windchaser"),
+                new Txt("風より先に着けば、風は追い風になる。", "Arrive before the wind, and it becomes your tailwind."),
+                Power.Sprint, 24, Power.Tailwind, 22),
+            new UniqueDef("unique.rooted_oath", "feet.rooted_boots", new Txt("根付く誓い", "Rooted Oath"),
+                new Txt("一歩も退かない。根は、退き方を知らない。", "Not one step back. Roots do not know how."),
+                Power.Bulwark, 28, Power.Thorns, 28),
+            new UniqueDef("unique.firewalker", "feet.ember_treads", new Txt("火渡り", "Firewalker"),
+                new Txt("燃える道を選ぶ者にだけ、道は開ける。", "The path opens only for those who choose to walk through fire."),
+                Power.Ember, 30, Power.Whirlwind, 60),
+            new UniqueDef("unique.silent_step", "feet.stalker_boots", new Txt("音なき足", "Silent Step"),
+                new Txt("気づいたときには、もう背後にいる。", "By the time they notice, you are already behind them."),
+                Power.OpeningStrike, 45, Power.Umbra, 28),
+            new UniqueDef("unique.pilgrims_end", "feet.pilgrim_boots", new Txt("巡礼の終わり", "Pilgrim's End"),
+                new Txt("長い旅の終わりに、倒した者の数だけ祈りがある。", "At the journey's end, a prayer for every fallen foe."),
+                Power.SoulSiphon, 18, Power.SecondWind, 28),
+            new UniqueDef("unique.mountain_stride", "feet.stone_boots", new Txt("山の歩み", "Mountain Stride"),
+                new Txt("山は動かない。動くときは、すべてを押し流す。", "A mountain does not move. When it does, it moves everything."),
+                Power.Aegis, 18, Power.Retaliation, 24),
+            new UniqueDef("unique.star_wanderer", "feet.star_steps", new Txt("星を渡る者", "Star Wanderer"),
+                new Txt("星と星のあいだにも、道はある。", "There are roads between the stars, too."),
+                Power.StarShield, 16, Power.Tailwind, 20),
+            new UniqueDef("unique.thorn_crown", "head.thorn_circlet", new Txt("茨の王冠", "Crown of Thorns"),
+                new Txt("王の痛みは、触れた者にも分け与えられる。", "The king's pain is shared with all who touch him."),
+                Power.Thorns, 30, Power.Retaliation, 22),
+            new UniqueDef("unique.halo_of_mercy", "head.radiant_halo", new Txt("慈悲の光輪", "Halo of Mercy"),
+                new Txt("この光の下では、誰も独りで倒れない。", "Beneath this light, no one falls alone."),
+                Power.Radiance, 32, Power.Barrier, 8),
+            new UniqueDef("unique.far_sight", "head.scout_goggles", new Txt("千里眼", "Far Sight"),
+                new Txt("見えているなら、もう当たっている。", "If you can see it, you have already hit it."),
+                Power.OpeningStrike, 45, Power.Executioner, 35),
+            new UniqueDef("unique.frozen_thought", "head.frost_helm", new Txt("凍てつく思考", "Frozen Thought"),
+                new Txt("冷えた頭は、決して慌てない。", "A cold head never panics."),
+                Power.Frost, 32, Power.Aegis, 16),
+            new UniqueDef("unique.ash_hands", "hands.ember_gauntlets", new Txt("灰の手", "Hands of Ash"),
+                new Txt("触れたものは、すべて灰になる。", "Everything it touches turns to ash."),
+                Power.Blaze, 65, Power.Ember, 28),
+            new UniqueDef("unique.shadow_stitch", "hands.shadow_gloves", new Txt("影縫い", "Shadowstitch"),
+                new Txt("影を縫い止めれば、本体も動けない。", "Pin the shadow, and its owner cannot move."),
+                Power.Umbra, 32, Power.Frenzy, 2),
+            new UniqueDef("unique.mending_touch", "hands.healer_hands", new Txt("繕いの手", "Mending Touch"),
+                new Txt("傷は、触れるそばから閉じていく。", "Wounds close as soon as it touches them."),
+                Power.Lifesteal, 9, Power.SecondWind, 26),
+            new UniqueDef("unique.duelists_promise", "hands.duelist_gloves", new Txt("決闘者の約束", "Duelist's Promise"),
+                new Txt("一対一なら、負けたことはない。", "One on one, it has never lost."),
+                Power.Momentum, 5, Power.OpeningStrike, 40),
+            new UniqueDef("unique.icewalker", "feet.frost_boots", new Txt("氷を歩む者", "Icewalker"),
+                new Txt("氷の上こそ、もっとも速く走れる。", "On ice, you run fastest of all."),
+                Power.Frost, 30, Power.Sprint, 20),
+            new UniqueDef("unique.shadow_dancer", "feet.shadow_slippers", new Txt("影踊り", "Shadow Dancer"),
+                new Txt("影は、踊り手の足元から離れない。", "The shadow never leaves the dancer's feet."),
+                Power.Umbra, 30, Power.EchoingDodge, 10),
+            new UniqueDef("unique.spiked_charge", "feet.spiked_boots", new Txt("棘の突進", "Spiked Charge"),
+                new Txt("止まれと言われて、止まったことがない。", "Told to stop, it never has."),
+                Power.Whirlwind, 70, Power.Thorns, 25),
+            new UniqueDef("unique.quiet_study", "feet.sage_slippers", new Txt("静かな書斎", "The Quiet Study"),
+                new Txt("急がない者ほど、遠くまで行ける。", "Those who do not hurry go the farthest."),
+                Power.Overload, 18, Power.Vigor, 12),
             new UniqueDef("set.tide.weapon", "weapon.chain_sword", new Txt("潮鳴りの剣", "Tidecaller's Blade"), "set.tide"),
             new UniqueDef("set.tide.armor", "armor.flowing_cloak", new Txt("潮鳴りの外套", "Tidecaller's Cloak"), "set.tide"),
             new UniqueDef("set.tide.charm", "charm.tailwind_ring", new Txt("潮鳴りの指輪", "Tidecaller's Ring"), "set.tide"),
@@ -772,6 +931,45 @@ namespace SodRpg.Core.Game
                 new AffixDef(Stat.Tenacity, 6, 12, 6),
                 new AffixDef(Stat.CritDamagePct, 5, 10, 8),
             },
+            [Slot.Head] = new[]
+            {
+                new AffixDef(Stat.PowerPct, 4, 8, 14),
+                new AffixDef(Stat.Haste, 3, 6, 6),
+                new AffixDef(Stat.CritChancePct, 2, 4, 10),
+                new AffixDef(Stat.MaxHealthPct, 4, 8, 14),
+                new AffixDef(Stat.Armor, 4, 9, 14),
+                new AffixDef(Stat.Tenacity, 6, 12, 8),
+                new AffixDef(Stat.LightAmp, 6, 12, 5),
+                new AffixDef(Stat.DarkAmp, 6, 12, 5),
+                new AffixDef(Stat.HealthRegen, 1, 3, 8),
+                new AffixDef(Stat.AttackPct, 4, 8, 14),
+            },
+            [Slot.Hands] = new[]
+            {
+                new AffixDef(Stat.AttackPct, 4, 8, 14),
+                new AffixDef(Stat.AttackSpeedPct, 3, 6, 12),
+                new AffixDef(Stat.CritChancePct, 2, 4, 10),
+                new AffixDef(Stat.CritDamagePct, 6, 12, 10),
+                new AffixDef(Stat.PowerPct, 4, 8, 14),
+                new AffixDef(Stat.FireAmp, 6, 12, 5),
+                new AffixDef(Stat.ColdAmp, 6, 12, 5),
+                new AffixDef(Stat.AttackRangePct, 4, 8, 5),
+                new AffixDef(Stat.Armor, 4, 9, 14),
+                new AffixDef(Stat.MaxHealthFlat, 15, 30, 12),
+            },
+            [Slot.Feet] = new[]
+            {
+                new AffixDef(Stat.MoveSpeedPct, 2, 4, 6),
+                new AffixDef(Stat.Tenacity, 6, 12, 8),
+                new AffixDef(Stat.Armor, 4, 9, 14),
+                new AffixDef(Stat.MaxHealthPct, 4, 8, 14),
+                new AffixDef(Stat.MaxHealthFlat, 15, 30, 12),
+                new AffixDef(Stat.HealthRegen, 1, 3, 8),
+                new AffixDef(Stat.AttackSpeedPct, 3, 6, 12),
+                new AffixDef(Stat.Haste, 3, 6, 6),
+                new AffixDef(Stat.ColdAmp, 6, 12, 5),
+                new AffixDef(Stat.FireAmp, 6, 12, 5),
+            },
         };
 
         private static readonly Dictionary<Slot, PowerRange[]> PowerPools = new Dictionary<Slot, PowerRange[]>
@@ -821,6 +1019,45 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Sprint, 10, 25),
                 new PowerRange(Power.Vigor, 8, 16),
                 new PowerRange(Power.Overload, 10, 20),
+            },
+            [Slot.Head] = new[]
+            {
+                new PowerRange(Power.Overload, 10, 20),
+                new PowerRange(Power.UltimateSurge, 15, 25),
+                new PowerRange(Power.StarShield, 10, 20),
+                new PowerRange(Power.Resonance, 5, 9),
+                new PowerRange(Power.SecondWind, 20, 30),
+                new PowerRange(Power.Radiance, 20, 35),
+                new PowerRange(Power.Umbra, 20, 35),
+                new PowerRange(Power.Barrier, 6, 10),
+                new PowerRange(Power.Vigor, 8, 16),
+                new PowerRange(Power.Bloodlust, 12, 20),
+            },
+            [Slot.Hands] = new[]
+            {
+                new PowerRange(Power.Executioner, 25, 45),
+                new PowerRange(Power.Blaze, 40, 70),
+                new PowerRange(Power.ChainLightning, 30, 50),
+                new PowerRange(Power.Ember, 20, 35),
+                new PowerRange(Power.Frost, 20, 35),
+                new PowerRange(Power.Frenzy, 1, 3),
+                new PowerRange(Power.Lifesteal, 5, 10),
+                new PowerRange(Power.OpeningStrike, 25, 50),
+                new PowerRange(Power.Shatter, 30, 60),
+                new PowerRange(Power.Momentum, 3, 5),
+            },
+            [Slot.Feet] = new[]
+            {
+                new PowerRange(Power.Sprint, 10, 25),
+                new PowerRange(Power.Tailwind, 15, 25),
+                new PowerRange(Power.Whirlwind, 40, 80),
+                new PowerRange(Power.EchoingDodge, 6, 12),
+                new PowerRange(Power.Momentum, 3, 5),
+                new PowerRange(Power.Aegis, 10, 20),
+                new PowerRange(Power.Bulwark, 15, 30),
+                new PowerRange(Power.Thorns, 15, 30),
+                new PowerRange(Power.SoulSiphon, 10, 20),
+                new PowerRange(Power.Retaliation, 15, 25),
             },
         };
 
@@ -1030,7 +1267,7 @@ namespace SodRpg.Core.Game
         public const int SecureXp = 20;
         public const int VictoryXp = 100;
 
-        /// <summary>同じ系統の遺物を count 個装着したときのボーナス（2個・3個）。</summary>
+        /// <summary>同じ系統の遺物を count 個装着したときの累積ボーナス（2個・3個・4個・6個）。</summary>
         public static IEnumerable<StatLine> SetBonus(Line line, int count)
         {
             if (count >= 2)
@@ -1058,6 +1295,33 @@ namespace SodRpg.Core.Game
                     default: yield return new StatLine(Stat.MoveSpeedPct, 4); break;
                 }
             }
+            if (count >= 4)
+            {
+                switch (line)
+                {
+                    case Line.Offense: yield return new StatLine(Stat.CritChancePct, 4); break;
+                    case Line.Guard: yield return new StatLine(Stat.Tenacity, 12); break;
+                    default: yield return new StatLine(Stat.Haste, 8); break;
+                }
+            }
+            if (count >= 6)
+            {
+                switch (line)
+                {
+                    case Line.Offense:
+                        yield return new StatLine(Stat.AttackPct, 8);
+                        yield return new StatLine(Stat.PowerPct, 8);
+                        break;
+                    case Line.Guard:
+                        yield return new StatLine(Stat.Armor, 12);
+                        yield return new StatLine(Stat.MaxHealthPct, 6);
+                        break;
+                    default:
+                        yield return new StatLine(Stat.PowerPct, 8);
+                        yield return new StatLine(Stat.MoveSpeedPct, 4);
+                        break;
+                }
+            }
         }
 
         public static Txt SlotName(Slot s)
@@ -1066,6 +1330,9 @@ namespace SodRpg.Core.Game
             {
                 case Slot.Weapon: return new Txt("主装備", "Weapon");
                 case Slot.Armor: return new Txt("防具", "Armor");
+                case Slot.Head: return new Txt("頭", "Head");
+                case Slot.Hands: return new Txt("手", "Hands");
+                case Slot.Feet: return new Txt("足", "Feet");
                 default: return new Txt("装飾品", "Charm");
             }
         }

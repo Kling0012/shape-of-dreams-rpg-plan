@@ -122,6 +122,9 @@ namespace SodRpg.Core.Tests
             Assert.Contains((Slot.Weapon, Power.Bloodlust), seen);
             Assert.Contains((Slot.Armor, Power.Aegis), seen);
             Assert.Contains((Slot.Charm, Power.Shatter), seen);
+            Assert.Contains((Slot.Head, Power.StarShield), seen);
+            Assert.Contains((Slot.Hands, Power.OpeningStrike), seen);
+            Assert.Contains((Slot.Feet, Power.Sprint), seen);
         }
 
         [Fact]

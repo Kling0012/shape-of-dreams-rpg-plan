@@ -97,8 +97,8 @@ namespace SodRpg.Core.Tests
             }
             Rules.BeginRun(p, HeroKey);
             var events = Rules.OnKill(p, MonsterTier.MiniBoss, 1, NightmareAffix.Ironclad, HeroKey);
-            Assert.Equal(3, p.Stats.RelicsAwakened);
-            Assert.Equal(3, events.Count(IsAwakening));
+            Assert.Equal(Content.SlotCount, p.Stats.RelicsAwakened);
+            Assert.Equal(Content.SlotCount, events.Count(IsAwakening));
             Assert.All(p.Stash, r =>
             {
                 Assert.Equal(500, r.AwakenPoints);

@@ -350,6 +350,12 @@ namespace SodRpg.Mod
                 Onboarding.GrantStarterKit(Profile);
                 _dirty = true;
             }
+            var newSlotStarters = Onboarding.GrantNewSlotStarters(Profile);
+            if (newSlotStarters.Count > 0)
+            {
+                Emit(newSlotStarters);
+                _dirty = true;
+            }
             Emit(Rules.HintOnce(Profile, Hint.Welcome));
             if (_dirty) SaveNow();
         }

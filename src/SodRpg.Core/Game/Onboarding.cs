@@ -140,6 +140,7 @@ namespace SodRpg.Core.Game
             var given = new List<Relic>();
             if (p.StarterGranted) return given;
             p.StarterGranted = true;
+            p.StarterV119Granted = true;
             var rng = p.TakeRng();
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
@@ -151,6 +152,27 @@ namespace SodRpg.Core.Game
             }
             p.StoreRng(rng);
             return given;
+        }
+
+        /// <summary>既存の旅人に、増えた3枠の初期装備を一度だけ保管庫へ配る。</summary>
+        public static List<GameEvent> GrantNewSlotStarters(Profile p)
+        {
+            var events = new List<GameEvent>();
+            if (!p.StarterGranted || p.StarterV119Granted) return events;
+            var rng = p.TakeRng();
+            for (int i = (int)Slot.Head; i <= (int)Slot.Feet; i++)
+            {
+                var r = Loot.RollRelic(rng, Rarity.Uncommon, Math.Max(1, p.BestItemLevel), (Slot)i); // すでに遊んでいる人には、いまの最高アイテムレベルで
+                p.Stash.Add(r);
+                p.StarterUids.Add(r.Uid);
+                p.Codex.Add(r.BaseId);
+            }
+            p.StoreRng(rng);
+            p.StarterV119Granted = true;
+            events.Add(new GameEvent(EventKind.Info, Loc.T(
+                "新しい装備の枠（頭・手・足）が増えました。それぞれの遺物を1つずつ保管庫に入れました。",
+                "New equipment slots (Head, Hands, Feet) are available. One relic for each has been added to your stash.")));
+            return events;
         }
 
         /// <summary>この旅人に何も装備していなければ、初期の遺物を空いた枠に装備する。装備したら true。</summary>

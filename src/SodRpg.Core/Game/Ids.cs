@@ -1,11 +1,14 @@
 namespace SodRpg.Core.Game
 {
-    /// <summary>装備枠。主装備・防具・装飾品の3枠（計画書 第9章）。</summary>
+    /// <summary>装備枠。主装備・頭・防具・手・足・装飾品の6枠。保存用の値は変更しない。</summary>
     public enum Slot
     {
         Weapon = 0,
         Armor = 1,
         Charm = 2,
+        Head = 3,
+        Hands = 4,
+        Feet = 5,
     }
 
     /// <summary>レア度。固有品は名前付きの固定品で、ボスからのみ落ちる。</summary>

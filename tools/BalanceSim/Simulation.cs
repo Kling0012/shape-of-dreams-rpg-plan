@@ -13,7 +13,7 @@ internal sealed class Simulation
 {
     internal static readonly string[] MilestoneNames =
     ["初めてのレア以上（発見）", "初めてのエピック以上（発見）", "初めての伝説・固有品（発見）",
-     "初めてのセット3部位所持", "夢のレベル5", "夢のレベル10", "夢のレベル20", "装着3枠がすべて+3以上"];
+     "初めてのセット3部位所持", "夢のレベル5", "夢のレベル10", "夢のレベル20", "装着6枠がすべて+3以上"];
     private const string Hero = "default";
     private readonly Options options;
     public double[,,] Samples { get; }
@@ -177,12 +177,25 @@ internal sealed class Simulation
         if (Milestones[3, player] != 0) return;
         foreach (var set in Content.Sets)
         {
-            int slots = 0;
-            foreach (var relic in p.Stash)
-                if (Content.TryGetUnique(relic.UniqueId, out var unique) && unique.SetId == set.Id)
-                    slots |= 1 << (int)relic.Slot;
+            bool hasPieces = false;
+            bool complete = true;
+            foreach (var piece in Content.Uniques)
+            {
+                if (piece.SetId != set.Id) continue;
+                hasPieces = true;
+                bool owned = false;
+                foreach (var relic in p.Stash)
+                {
+                    if (relic.UniqueId != piece.Id || relic.BaseId != piece.BaseId) continue;
+                    owned = true;
+                    break;
+                }
+                if (owned) continue;
+                complete = false;
+                break;
+            }
             // Equipped relics are references into Stash; never count them twice.
-            if (slots == 7) { Reach(3, player, run); return; }
+            if (hasPieces && complete) { Reach(3, player, run); return; }
         }
     }
 
@@ -194,7 +207,7 @@ internal sealed class Simulation
 
     private static void ManageEquipment(Profile p)
     {
-        for (int slot = 0; slot < 3; slot++)
+        for (int slot = 0; slot < Content.SlotCount; slot++)
         {
             Relic? best = Rules.EquippedRelic(p, Hero, (Slot)slot);
             foreach (var relic in p.Stash)
@@ -203,7 +216,7 @@ internal sealed class Simulation
         }
         // Leave room for a full satchel at the next return. Mid-run overflow
         // remains the core's decision; do not manipulate Stash/Satchel directly.
-        int target = Math.Max(3, Workshop.StashCapacity(p) - Workshop.SatchelCapacity(p));
+        int target = Math.Max(Content.SlotCount, Workshop.StashCapacity(p) - Workshop.SatchelCapacity(p));
         while (p.Stash.Count > target)
         {
             Relic? worst = null;
@@ -221,7 +234,7 @@ internal sealed class Simulation
         while (true)
         {
             Relic? next = null;
-            for (int slot = 0; slot < 3; slot++)
+            for (int slot = 0; slot < Content.SlotCount; slot++)
             {
                 var relic = Rules.EquippedRelic(p, Hero, (Slot)slot);
                 if (relic == null || relic.Enhance >= Content.MaxEnhance
@@ -237,7 +250,7 @@ internal sealed class Simulation
     {
         int slots = 0, rarity = 0, enhance = 0;
         bool allPlusThree = true;
-        for (int slot = 0; slot < 3; slot++)
+        for (int slot = 0; slot < Content.SlotCount; slot++)
         {
             var relic = Rules.EquippedRelic(p, Hero, (Slot)slot);
             if (relic == null) { allPlusThree = false; continue; }

@@ -4,8 +4,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / armor / charm), each with its own hand-painted icon. 5 rarities, 45 bases, 112 legendaries and 12 sets (36 set pieces), 30 kinds of powers.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・防具・装飾品）。遺物には1つずつ絵が付いています。レア度は5段階、土台は45種、固有品は112種、セットは12種（36部位）、固有効果は30種類あります。
+[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 90 bases, 148 legendaries and 12 sets (36 set pieces), 30 kinds of powers.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は90種、固有品は148種、セットは12種（36部位）、固有効果は30種類あります。
 [*] Sets help you complete what you have started: the missing pieces of a set you own drop more often.
 [*] すでに持っているセットの、まだ持っていない部位は出やすくなります。
 [*] Legendaries awaken with use: the Traveler wearing one fills its awakening as they defeat enemies (elites and bosses count more, nightmares double). Awakened, its powers become 1.5x and its affixes 1.2x.
