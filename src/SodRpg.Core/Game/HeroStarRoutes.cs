@@ -80,9 +80,9 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Vesper", "charge", "St_M_Charge");
             r.L("盾の助走", "Shielded Run-Up", LinkKind.Guard, 2);
             r.S("重装の心臓", "Armored Heart", Stat.MaxHealthPct, 2);
-            r.L("突進の呼吸", "Charging Breath", LinkKind.MemoryHaste, 2);
-            r.P("衝突の波紋", "Collision Ripples", Power.Whirlwind, 6);
-            r.L("突貫の余勢", "Driving Momentum", LinkKind.MemorySurge, 2);
+            r.L("突進の呼吸", "Charging Breath", LinkKind.Guard, 1);
+            r.P("衝突の陣", "Collision Formation", Power.Bulwark, 4);
+            r.L("突貫の余勢", "Driving Momentum", LinkKind.Attune, 1);
             r.S("重装の盾", "Heavy Bulwark", Stat.ShieldPower, 3);
             r.L("生きた破城槌", "Living Battering Ram", LinkKind.Guard, 9);
 
@@ -144,11 +144,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Lacerta", "nimble-dodge", "St_M_NimbleDodge");
             r.L("射線の離脱", "Leaving the Firing Line", LinkKind.Guard, 1);
             r.S("返し撃ちの腕", "Countershot Arm", Stat.AttackPct, 2);
-            r.L("回避の仕切り直し", "Dodge Reset", LinkKind.MemoryHaste, 2);
-            r.P("跳び撃ちの残響", "Leaping Shot Echo", Power.EchoingDodge, 6);
-            r.L("反撃の装填", "Counterattack Loading", LinkKind.MemorySurge, 2);
+            r.L("回避の仕切り直し", "Dodge Reset", LinkKind.Guard, 1);
+            r.P("跳び撃ちの止め", "Leaping Finisher", Power.Executioner, 6);
+            r.L("反撃の装填", "Counterattack Loading", LinkKind.Attune, 1);
             r.S("身軽な防弾服", "Light Ballistic Vest", Stat.MaxHealthPct, 2);
-            r.L("危地からの二射", "Twin Shots from Danger", LinkKind.MemorySurge, 10);
+            r.L("危地からの二射", "Twin Shots from Danger", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Lacerta", "hand-cannon", "St_Q_HandCannon");
             r.L("砲口の熱", "Muzzle Heat", LinkKind.MemorySurge, 2);
@@ -208,11 +208,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Cetus", "frost-charge", "St_M_FrostyCharge");
             r.L("氷走りの備え", "Frost Run Readiness", LinkKind.Guard, 1);
             r.S("氷の推進力", "Frost Propulsion", Stat.PowerPct, 2);
-            r.L("氷走りの再起", "Frost Run Renewal", LinkKind.MemoryHaste, 2);
-            r.P("突進の渦潮", "Charging Whirlpool", Power.Whirlwind, 6);
-            r.L("氷砕きの余勢", "Icebreaker Momentum", LinkKind.MemorySurge, 2);
+            r.L("氷走りの再起", "Frost Run Renewal", LinkKind.Guard, 1);
+            r.P("突進の氷壁", "Charging Ice Wall", Power.Aegis, 4);
+            r.L("氷砕きの余勢", "Icebreaker Momentum", LinkKind.Attune, 1);
             r.S("氷山の質量", "Iceberg Mass", Stat.MaxHealthPct, 2);
-            r.L("止まらぬ氷山", "Unstoppable Iceberg", LinkKind.MemorySurge, 10);
+            r.L("止まらぬ氷山", "Unstoppable Iceberg", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Cetus", "embrace-chill", "St_Q_EmbracingTheChill");
             r.L("冷気の循環", "Chill Circulation", LinkKind.MemoryHaste, 2);
@@ -272,11 +272,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Yubar", "flicker", "St_M_Flicker");
             r.L("転移の備え", "Blink Readiness", LinkKind.Guard, 1);
             r.S("転移の星核", "Blink Star Core", Stat.PowerPct, 2);
-            r.L("光路の再接続", "Lightpath Reconnection", LinkKind.MemoryHaste, 2);
-            r.P("転移後の星弾", "Post-Blink Starshot", Power.EchoingDodge, 6);
-            r.L("光跡の余韻", "Light Trail Echo", LinkKind.MemorySurge, 2);
+            r.L("光路の再接続", "Lightpath Reconnection", LinkKind.Guard, 1);
+            r.P("転移の星光", "Blinking Starlight", Power.Radiance, 5);
+            r.L("光跡の余韻", "Light Trail Echo", LinkKind.Attune, 1);
             r.S("薄明の器", "Twilight Vessel", Stat.MaxHealthPct, 2);
-            r.L("二重の星渡り", "Double Star Crossing", LinkKind.MemorySurge, 10);
+            r.L("二重の星渡り", "Double Star Crossing", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Yubar", "ethereal", "St_Q_EtherealInfluence");
             r.L("往復する光", "Returning Light", LinkKind.MemoryHaste, 2);
@@ -320,7 +320,7 @@ namespace SodRpg.Core.Game
             r.L("一撃の同調", "Single Strike Attunement", LinkKind.Attune, 2);
             r.S("速さを刃に", "Speed into Steel", Stat.AttackSpeedPct, 2);
             r.L("空洞の守り", "Hollow Guard", LinkKind.Guard, 1);
-            r.P("踏み込みの残響", "Advancing Echo", Power.EchoingDodge, 5);
+            r.P("踏み込みの渇き", "Advancing Thirst", Power.Bloodlust, 4);
             r.L("歩みの殺気", "Killing Step", LinkKind.Attune, 1);
             r.S("一歩の剛力", "One-Step Strength", Stat.AttackPct, 2);
             r.L("一歩に宿る刃", "Blade within a Step", LinkKind.Attune, 8);
@@ -337,17 +337,17 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Husk", "flash-step", "St_M_FlashStep");
             r.L("瞬歩の備え", "Flash Step Readiness", LinkKind.Guard, 1);
             r.S("間合いを断つ腕", "Gap-Cutting Arm", Stat.AttackPct, 2);
-            r.L("影道の再接続", "Shadowpath Reconnection", LinkKind.MemoryHaste, 2);
-            r.P("瞬歩の旋風", "Flash-Step Gale", Power.Whirlwind, 10);
-            r.L("残影の余力", "Shadow Trace Reserve", LinkKind.MemorySurge, 2);
+            r.L("影道の再接続", "Shadowpath Reconnection", LinkKind.Guard, 1);
+            r.P("瞬歩の初撃", "Flash-Step Opener", Power.OpeningStrike, 10);
+            r.L("残影の余力", "Shadow Trace Reserve", LinkKind.Attune, 1);
             r.S("影走りの体幹", "Shadow Runner's Core", Stat.MaxHealthPct, 2);
-            r.L("刃先の一瞬", "Blade-Edge Instant", LinkKind.MemorySurge, 10);
+            r.L("刃先の一瞬", "Blade-Edge Instant", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Husk", "laceration", "St_Q_Laceration");
             r.L("二色の巡り", "Two-Color Cycle", LinkKind.MemoryHaste, 3);
             r.S("裂く剛力", "Rending Strength", Stat.AttackPct, 2);
             r.L("赤刃の余勢", "Red Blade Momentum", LinkKind.MemorySurge, 2);
-            r.P("青刃の見極め", "Blue Blade Insight", Power.PerfectRead, 3);
+            r.P("青刃の足止め", "Blue Blade Snare", Power.Fetters, 3);
             r.L("交差する守り", "Crossed Guard", LinkKind.Guard, 1);
             r.S("裂け目の闇", "Darkness in the Rift", Stat.DarkAmp, 2);
             r.L("赤と青の輪舞", "Red and Blue Rondo", LinkKind.MemoryHaste, 10);
@@ -401,11 +401,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Mist", "fast-feet", "St_M_FastFeet");
             r.L("足運びの備え", "Footwork Readiness", LinkKind.Guard, 1);
             r.S("返し刃の腕", "Counterblade Arm", Stat.AttackPct, 2);
-            r.L("踏み直す呼吸", "Resetting Breath", LinkKind.MemoryHaste, 2);
-            r.P("足跡に残る刃", "Blade in the Footsteps", Power.EchoingDodge, 5);
-            r.L("回り込みの余勢", "Flanking Momentum", LinkKind.MemorySurge, 2);
+            r.L("踏み直す呼吸", "Resetting Breath", LinkKind.Guard, 1);
+            r.P("足跡の守り", "Footstep Ward", Power.Barrier, 2);
+            r.L("回り込みの余勢", "Flanking Momentum", LinkKind.Attune, 1);
             r.S("剣舞の体幹", "Sword Dance Core", Stat.MaxHealthPct, 2);
-            r.L("一歩先の切先", "A Blade One Step Ahead", LinkKind.MemorySurge, 10);
+            r.L("一歩先の切先", "A Blade One Step Ahead", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Mist", "fleche", "St_Q_Fleche");
             r.L("突剣の巡り", "Thrusting Blade Cycle", LinkKind.MemoryHaste, 3);
@@ -420,7 +420,7 @@ namespace SodRpg.Core.Game
             r.L("踏み込みの巡り", "Advancing Cycle", LinkKind.MemoryHaste, 2);
             r.S("伸びる剣先", "Reaching Blade", Stat.AttackPct, 2);
             r.L("刺突の余韻", "Thrust Echo", LinkKind.MemorySurge, 2);
-            r.P("引き足の残響", "Retreating Step Echo", Power.EchoingDodge, 5);
+            r.P("突きの止め", "Thrust Finisher", Power.Executioner, 6);
             r.L("引き足の備え", "Retreating Step Guard", LinkKind.Guard, 1);
             r.S("突剣の下支え", "Thrust Support", Stat.Armor, 2);
             r.L("往復する切先", "Returning Blade Point", LinkKind.MemoryHaste, 10);
@@ -429,7 +429,7 @@ namespace SodRpg.Core.Game
             r.L("受け流す間合い", "Parrying Distance", LinkKind.Guard, 2);
             r.S("反射の魔力", "Reflection Power", Stat.PowerPct, 2);
             r.L("反撃の余韻", "Riposte Echo", LinkKind.MemorySurge, 2);
-            r.P("見切りの拍子", "Foresight Tempo", Power.PerfectRead, 3);
+            r.P("受け流しの盾", "Parrying Shield", Power.Aegis, 4);
             r.L("構え直す呼吸", "Reforming Stance", LinkKind.MemoryHaste, 2);
             r.S("受け流しの体幹", "Parrying Core", Stat.MaxHealthPct, 2);
             r.L("刃返しの極点", "Perfect Riposte", LinkKind.MemorySurge, 10);
@@ -466,8 +466,8 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Nachia", "dreamy-waltz", "St_M_DreamyWaltz");
             r.L("輪舞の守り", "Waltz Guard", LinkKind.Guard, 2);
             r.S("舞う器", "Dancing Vessel", Stat.MaxHealthPct, 2);
-            r.L("舞い戻る呼吸", "Returning Dance Breath", LinkKind.MemoryHaste, 2);
-            r.P("ワルツの返し", "Waltz Riposte", Power.EchoingDodge, 5);
+            r.L("舞い戻る呼吸", "Returning Dance Breath", LinkKind.Guard, 1);
+            r.P("ワルツの守り", "Waltz Ward", Power.Barrier, 2);
             r.L("波動の同調", "Wave Attunement", LinkKind.Attune, 1);
             r.S("群れを包む薄衣", "Veil Enfolding the Pack", Stat.ShieldPower, 4);
             r.L("群れを包む輪舞", "Pack-Enfolding Waltz", LinkKind.Guard, 9);
@@ -531,11 +531,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Aurena", "feathery-dash", "St_M_FeatheryDash");
             r.L("羽ばたきの備え", "Wingbeat Readiness", LinkKind.Guard, 1);
             r.S("飛翔の魔力", "Flight Power", Stat.PowerPct, 2);
-            r.L("羽根の舞い戻り", "Returning Feather Dance", LinkKind.MemoryHaste, 2);
-            r.P("舞い降りる一撃", "Descending Strike", Power.EchoingDodge, 5);
-            r.L("羽跡の余韻", "Feather Trail Echo", LinkKind.MemorySurge, 2);
+            r.L("羽根の舞い戻り", "Returning Feather Dance", LinkKind.Guard, 1);
+            r.P("舞い降りる光", "Descending Light", Power.Radiance, 5);
+            r.L("羽跡の余韻", "Feather Trail Echo", LinkKind.Attune, 1);
             r.S("羽根の加速", "Feather Haste", Stat.AttackSpeedPct, 2);
-            r.L("黄金の帰還", "Golden Return", LinkKind.MemorySurge, 10);
+            r.L("黄金の帰還", "Golden Return", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Aurena", "golden-burst", "St_Q_GoldenBurst");
             r.L("金光の同調", "Golden Light Attunement", LinkKind.Attune, 2);
@@ -596,11 +596,11 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Bismuth", "distorting-sprint", "St_M_Sprint");
             r.L("書架の退避", "Bookshelf Retreat", LinkKind.Guard, 1);
             r.S("駆ける頁の知", "Racing Page Wisdom", Stat.PowerPct, 2);
-            r.L("頁路の再接続", "Pagepath Reconnection", LinkKind.MemoryHaste, 2);
+            r.L("頁路の再接続", "Pagepath Reconnection", LinkKind.Guard, 1);
             r.P("歪む冷気", "Warped Frost", Power.Frost, 5);
-            r.L("疾走の余韻", "Sprint Echo", LinkKind.MemorySurge, 2);
+            r.L("疾走の余韻", "Sprint Echo", LinkKind.Attune, 1);
             r.S("旅する装丁", "Traveling Binding", Stat.MaxHealthPct, 2);
-            r.L("風より速い頁", "Pages Faster than Wind", LinkKind.MemorySurge, 10);
+            r.L("風より速い頁", "Pages Faster than Wind", LinkKind.Attune, 6);
 
             r = new Route(nodes, "Bismuth", "innocence", "St_QR_Innocence");
             r.L("光文の巡り", "Light Script Cycle", LinkKind.MemoryHaste, 3);

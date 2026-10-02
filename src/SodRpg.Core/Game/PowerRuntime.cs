@@ -465,7 +465,7 @@ namespace SodRpg.Core.Game
             return r;
         }
 
-        /// <summary>属性付与の量。100ごとに確実に1つ、端数はその確率でもう1つ。</summary>
+        /// <summary>属性付与の量。100ごとに確実に1つ、残り（100未満の分）はその%の確率でもう1つ。</summary>
         private int ElementStacks(Power p)
         {
             int v = Build.Get(p);

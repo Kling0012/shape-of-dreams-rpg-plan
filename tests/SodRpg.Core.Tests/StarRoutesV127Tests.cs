@@ -208,18 +208,25 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Parry_route_rewards_actual_damage_negation_and_expires_without_stacking()
+        public void Parry_route_rewards_blocking_without_dodge_based_effects()
         {
+            // v1.28：回避で発動する効果（見切りなど）は星図に置かない。受け流しのルートは守りの星にした
             var build = BuildThroughMechanic("Hero_Mist", "St_R_Parry");
-            var runtime = new PowerRuntime(build, 0);
-            Assert.False(runtime.TakePerfectRead(1, false));
-            Assert.Equal(0, runtime.Current(1).AttackSpeedPct);
-            Assert.True(runtime.TakePerfectRead(1, true));
-            Assert.Equal(9, runtime.Current(1).AttackSpeedPct);
-            Assert.False(runtime.TakePerfectRead(1.5f, true));
-            Assert.True(runtime.TakePerfectRead(3, true));
-            Assert.Equal(9, runtime.Current(5).AttackSpeedPct);
-            Assert.Equal(0, runtime.Current(7).AttackSpeedPct);
+            Assert.True(build.Get(Power.Aegis) > 0);
+            Assert.Equal(0, build.Get(Power.PerfectRead));
+        }
+
+        [Fact]
+        public void Star_map_has_no_dodge_triggered_effects()
+        {
+            var banned = new[] { Power.EchoingDodge, Power.Sprint, Power.Whirlwind, Power.PerfectRead };
+            foreach (var t in HeroSigils.All.Concat(HeroStarRoutes.All))
+            {
+                Assert.DoesNotContain(t.Power, banned);
+                Assert.DoesNotContain(t.RankPower, banned);
+                if (t.LinkPerRank != null && t.LinkPerRank.Requires.Any(r => r.StartsWith("St_M_", StringComparison.Ordinal)))
+                    Assert.True(t.LinkPerRank.Kind == LinkKind.Attune || t.LinkPerRank.Kind == LinkKind.Guard, t.Id);
+            }
         }
 
         private static Build BuildThroughMechanic(string hero, string memory)

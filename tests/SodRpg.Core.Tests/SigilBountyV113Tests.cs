@@ -34,8 +34,8 @@ namespace SodRpg.Core.Tests
             Rules.SetKeystone(p, hero, keys[0].Id);
             Assert.Equal(keys[0].Id, p.Hero(hero).Keystone);
             var b = Build.Compute(p, hero, 0);
-            Assert.True(b.Get(Power.EchoingDodge) > 0);
-            Assert.Equal(0, b.Get(Power.PerfectRead));
+            Assert.True(b.Get(Power.OpeningStrike) > 0); // v1.28：回避で発動する刻印をやめ、先手の型に
+            Assert.Equal(0, b.Get(Power.EchoingDodge));
         }
 
         [Fact]

@@ -129,6 +129,7 @@ namespace SodRpg.Mod
         private readonly Action<EventInfoLoadRoom> _onRoomLoaded;
         private ZoneManager _zone;
         private bool _spreadingFire;
+        private bool _shattering;
 
         // 悪夢化エリート・夢の変種
         private ActorManager _am;
@@ -1815,7 +1816,13 @@ namespace SodRpg.Mod
                 if (rt == null || !Alive(rt.Hero)) return;
                 var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
                 if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
-                if (r.ShatterDamage > 0) DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage);
+                // 爆砕で倒した敵からは爆砕しない（同時に倒した群れ全体へ連鎖しないように。v1.28）
+                if (r.ShatterDamage > 0 && !_shattering)
+                {
+                    _shattering = true;
+                    try { DamageAround(rt.Hero, info.victim.position, PowerRuntime.ShatterRadius, r.ShatterDamage, null, int.MaxValue, magic: rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage); }
+                    finally { _shattering = false; }
+                }
             }
             catch (Exception ex)
             {

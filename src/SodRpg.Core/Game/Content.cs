@@ -2636,8 +2636,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 属性を付ける量の説明（v1.28：「平均0.6スタック（端数は確率）」は分かりにくいので、言い換える）。
-        /// 100 ごとに確実に1つ、端数はその確率でもう1つ。例：60 →「60%の確率で1つ」、160 →「1つ、さらに60%の確率でもう1つ」。
+        /// 属性を付ける量の説明（v1.28：平均のスタック数ではなく%で書く）。
+        /// 100 ごとに確実に1つ、残りはその%の確率でもう1つ。例：60 →「60%の確率で1つ」、160 →「1つ、さらに60%の確率でもう1つ」。
         /// </summary>
         private static string ElementJa(int v, string element)
         {
@@ -2953,7 +2953,7 @@ namespace SodRpg.Core.Game
                 case Power.SecondWind: return Loc.T($"【{name}】HPが30%を切ると、最大HPの{v}%を回復する（60秒に1回）", $"[{name}] When you drop below 30% health, heal {v}% of max health (once per 60s)");
                 case Power.Blaze: return Loc.T($"【{name}】通常攻撃4回ごとに、攻撃力か魔力の高い方の{v}%分の魔法ダメージを追加する", $"[{name}] Every 4th basic attack deals +{v}% of the higher of AD or AP as magic damage");
                 case Power.ChainLightning: return Loc.T($"【{name}】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力か魔力の高い方の{v}%分の魔法ダメージを与える", $"[{name}] Basic attack hits have a 25% chance to deal {v}% of the higher of AD or AP as magic damage to 2 nearby enemies");
-                case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える", $"[{name}] On kill, deal {v}% of the higher of AD or AP to enemies within 4m");
+                case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（爆砕で倒した敵からは起きない）", $"[{name}] On kill, deal {v}% of the higher of AD or AP to enemies within 4m (kills by Shatter do not chain)");
                 case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を6秒間張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of your max health, gain a shield worth {v}% of max health for 6s (once per 20s)");
                 case Power.Bloodlust: return Loc.T($"【{name}】HPが50%未満の間、攻撃速度が{v}%上がる", $"[{name}] +{v}% attack speed while below 50% health");
                 case Power.Ember: return Loc.T($"【{name}】" + ElementJa(v, "火") + "（火は上限なしで重なる）", $"[{name}] " + ElementEn(v, "Fire") + " (Fire has no stack limit)");
