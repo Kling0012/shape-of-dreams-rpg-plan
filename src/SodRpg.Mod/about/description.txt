@@ -26,8 +26,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [list]
 [*] Dream Level grows as you play and grants star map points. Every base-game Traveler has their own sigil tree: first stars, deep stars that grow powers rank by rank, and two keystones to choose from.
 [*] 遊ぶほど夢のレベルが上がり、星図のポイントが増えます。本体の旅人には、それぞれ専用の刻印のツリーがあります。手前の星、固有効果を1段ずつ伸ばせる奥の星、2つから1つを選ぶ到達刻印です。
-[*] Forge: enhance (+5), retune affixes, salvage, transmute and craft. The workshop unlocks convenience upgrades.
-[*] 鍛冶では強化（+5まで）・再調律・分解・合成・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
+[*] Forge: enhance to +5 (milestones at +3 and +5 add an affix or a power), retune an affix choosing from 3 options, salvage, transmute (pick the result slot) and craft. The workshop unlocks convenience upgrades.
+[*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
 [*] 22 kinds of bounties each run, 30 daily dreams, 45 feats with rewards, and traveler mastery.
 [*] 遠征ごとの依頼（22種類）、日替わりの「今日の夢」（30種類）、報酬つきの偉業（45個）、旅人の熟練度があります。
 [/list]

@@ -673,7 +673,7 @@ namespace SodRpg.Mod
             "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
-            "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
+            "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThreshold + "で覚醒して固有効果が1.5倍になります。気に入った1本を使い込みましょう。\n" +
             "・星図：夢のレベルが上がるともらえるポイントで能力を伸ばします。条件を満たすと、強力な到達刻印を1つ選べます。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
@@ -689,7 +689,7 @@ namespace SodRpg.Mod
             "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
-            "- Forge: enhance with shards, reroll affixes with tuning stones, salvage the rest into shards.\n" +
+            "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThreshold + " they awaken and their powers become 1.5x. Pick a favourite and keep using it.\n" +
             "- Star Map: spend points from Dream Levels to grow stats; meet the conditions to pick one powerful keystone.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
@@ -1202,10 +1202,12 @@ namespace SodRpg.Mod
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel);
+            // 6枠になって製作の行が増えたので、右の欄全体をスクロールできるようにする。
+            _scrollForge = GUILayout.BeginScrollView(_scrollForge);
             var sel = p.FindStash(_selected);
             if (sel != null)
             {
-                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(200));
+                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(170));
                 RelicDetail(sel);
                 GUILayout.EndScrollView();
                 GUILayout.Space(4);
@@ -1242,11 +1244,40 @@ namespace SodRpg.Mod
                 GUILayout.EndHorizontal();
                 GUI.enabled = true;
 
-                if (sel.Retunes >= Content.MaxRetunes)
+                string nextMilestone = NextMilestone(sel);
+                if (nextMilestone != null) GUILayout.Label(UiStyles.Colored(Loc.T("次の節目：", "Next milestone: ") + nextMilestone, "#ffd36e"), _st.Small);
+
+                var offer = p.RetuneOffer;
+                if (offer != null && offer.Uid == sel.Uid && offer.Index < sel.Affixes.Count)
+                {
+                    // 再調律の候補：3つから選ぶか、元のまま
+                    var cur = sel.Affixes[offer.Index];
+                    GUILayout.Label(Loc.T($"再調律の候補から1つ選んでください（いま：{Content.FormatStat(cur.Stat, cur.Value)}）", $"Pick a retune option (now: {Content.FormatStat(cur.Stat, cur.Value)})"), _st.Small);
+                    GUILayout.BeginHorizontal();
+                    for (int i = 0; i < offer.Options.Count; i++)
+                    {
+                        var o = offer.Options[i];
+                        string mark = o.Stat == cur.Stat ? (o.Value > cur.Value ? " <color=#7cf07c>▲</color>" : o.Value < cur.Value ? " <color=#ff7a7a>▼</color>" : "") : "";
+                        int choice = i;
+                        if (GUILayout.Button(Content.FormatStat(o.Stat, o.Value) + mark, _st.ButtonSel, GUILayout.Height(32))) Act(() => Rules.ChooseRetune(p, choice), true);
+                    }
+                    GUILayout.EndHorizontal();
+                    if (GUILayout.Button(Loc.T("元のままにする（使った調律石は戻りません）", "Keep the original (tuning stones are not refunded)"), _st.Button, GUILayout.Height(28))) Act(() => Rules.ChooseRetune(p, -1), false);
+                }
+                else if (offer != null)
+                {
+                    GUILayout.Label(Loc.T("別の遺物で、再調律の候補を選んでいる途中です。", "Another relic has retune options waiting."), _st.Warn);
+                    if (GUILayout.Button(Loc.T("その遺物を開く", "Open that relic"), _st.Button, GUILayout.Height(28)))
+                    {
+                        _forgeAllSlots = true;
+                        _selected = offer.Uid;
+                    }
+                }
+                else if (sel.Retunes >= Content.MaxRetunes)
                     GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Content.MaxRetunes}/{Content.MaxRetunes}）。", $"No retunes left on this relic ({Content.MaxRetunes}/{Content.MaxRetunes})."), _st.Small);
                 else if (sel.Affixes.Count > 0)
                 {
-                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます（調律石を使います。この遺物はあと{Content.MaxRetunes - sel.Retunes}回）", $"Retune: pick one affix to reroll with tuning stones ({Content.MaxRetunes - sel.Retunes} left on this relic)"), _st.Small);
+                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます。調律石を払うと候補が{Content.RetuneChoices}つ出て、そこから選べます（この遺物はあと{Content.MaxRetunes - sel.Retunes}回）", $"Retune: pick an affix, pay tuning stones, then choose from {Content.RetuneChoices} options ({Content.MaxRetunes - sel.Retunes} left on this relic)"), _st.Small);
                     GUILayout.BeginHorizontal();
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
@@ -1259,7 +1290,7 @@ namespace SodRpg.Mod
                     GUI.enabled = _retuneIndex >= 0 && rtAfford && !_s.Trades.IsReserved(sel.Uid);
                     string rtLabel = !rtAfford ? Loc.T($"調律石が足りません（{rtCost}必要・所持{p.Material(Materials.Tuning)}）", $"Not enough tuning stones ({rtCost} needed, have {p.Material(Materials.Tuning)})")
                         : _retuneIndex < 0 ? Loc.T($"上の特性を1つ選んでください（調律石{rtCost}）", $"Pick an affix above ({rtCost} tuning)")
-                        : Loc.T($"再調律する（調律石{rtCost}）", $"Retune ({rtCost} tuning)");
+                        : Loc.T($"候補を出す（調律石{rtCost}）", $"Roll options ({rtCost} tuning)");
                     if (GUILayout.Button(rtLabel, _st.Button, GUILayout.Height(30)))
                     {
                         int idx = _retuneIndex;
@@ -1276,15 +1307,18 @@ namespace SodRpg.Mod
 
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます", "Transmute: turn 3 relics of one rarity into 1 of the next"), _st.Header);
-            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に3つを使います。エピック3つからは固有品が生まれます。",
-                "Locked and equipped relics are never used; the 3 weakest of the rest go in. Three Epics become a legendary."), _st.Small);
+            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に3つを使います。エピック3つからは固有品が生まれます。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
+                "Locked and equipped relics are never used; the 3 weakest of the rest go in. Three Epics become a legendary. Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
                 int n = TransmuteCount(r);
-                GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= Rules.TransmuteCost(r);
-                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n" + Loc.T($"欠片{Rules.TransmuteCost(r)}", $"{Rules.TransmuteCost(r)} shards");
-                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades), false);
+                Slot? target = _forgeAllSlots ? (Slot?)null : _slot;
+                int tcost = Rules.TransmuteCost(r, target != null);
+                GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= tcost;
+                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n"
+                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}", $"→{Content.SlotName(target.Value)}, {tcost} shards") : Loc.T($"欠片{tcost}", $"{tcost} shards"));
+                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
@@ -1302,9 +1336,24 @@ namespace SodRpg.Mod
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
+            GUILayout.EndScrollView();
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
         }
+
+        /// <summary>強化の次の節目（+3・+5）で何が起きるか。もう節目がなければ null。</summary>
+        private static string NextMilestone(Relic r)
+        {
+            if (r.EnhanceMilestones < 1)
+                return Loc.T($"+{Content.EnhanceMilestoneFirst}で特性が1行増えます。", $"+{Content.EnhanceMilestoneFirst}: one more affix.");
+            if (r.EnhanceMilestones < 2)
+                return r.Powers.Count == 0
+                    ? Loc.T($"+{Content.EnhanceMilestoneSecond}でこの枠の固有効果が1つ宿ります。", $"+{Content.EnhanceMilestoneSecond}: gains a power for this slot.")
+                    : Loc.T($"+{Content.EnhanceMilestoneSecond}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneSecond}: one more affix.");
+            return null;
+        }
+
+        private Vector2 _scrollForge;
 
         private void Act(Func<GameEvent> action, bool affectsBuild)
         {
