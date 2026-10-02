@@ -71,21 +71,21 @@ namespace SodRpg.Core.Game
             {
                 Id = Upgrade.BigSatchel, Key = "bigSatchel",
                 Name = new Txt("大きな鞄", "Bigger Satchel"),
-                Description = new Txt("未確保の鞄の上限 +5", "+5 unsecured satchel capacity"),
+                Description = new Txt("遠征中に持ち歩ける遺物が5個増えます。", "Carry 5 more unsecured relics on an expedition."),
                 Costs = new[] { (100, 0), (200, 2), (400, 4) },
             },
             new UpgradeDef
             {
                 Id = Upgrade.WideStash, Key = "wideStash",
                 Name = new Txt("広い保管庫", "Wider Stash"),
-                Description = new Txt("保管庫の上限 +20", "+20 stash capacity"),
+                Description = new Txt("保管庫に入る遺物が20個増えます。", "Your stash holds 20 more relics."),
                 Costs = new[] { (80, 0), (160, 1), (320, 3) },
             },
             new UpgradeDef
             {
                 Id = Upgrade.BountyReroll, Key = "bountyReroll",
                 Name = new Txt("依頼の引き直し", "Bounty Reroll"),
-                Description = new Txt("遠征ごとに依頼を引き直せる回数 +1", "+1 bounty reroll per expedition"),
+                Description = new Txt("依頼を引き直せる回数が、遠征ごとに1回増えます。", "One more bounty reroll per expedition."),
                 Costs = new[] { (150, 2), (300, 4) },
             },
         };

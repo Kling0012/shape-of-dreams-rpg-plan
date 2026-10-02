@@ -137,6 +137,18 @@ namespace SodRpg.Mod
 
         public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
 
+        /// <summary>ホストが返す取引の失敗理由を、遊ぶ人に分かる文にする。</summary>
+        private static string TradeFailText(string reason)
+        {
+            switch (reason)
+            {
+                case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.");
+                case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
+                case "protocol": return Loc.T("取引できませんでした。ホストと Dreamforge の版が違います。全員が同じ版を入れてください。", "Trade failed: the host runs a different Dreamforge version. Everyone needs the same version.");
+                default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
+            }
+        }
+
         public bool CanEditLoadout => Profile.Run == null || Profile.Run.AwaitingChoice || !InGame;
 
         public bool CanEditTalents => Profile.Run == null || !InGame;
@@ -512,7 +524,7 @@ namespace SodRpg.Mod
                 if (!msg.ok)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, Loc.T("取引できませんでした（" + msg.reason + "）", "Trade failed (" + msg.reason + ")")));
+                    Emit(new GameEvent(EventKind.Warning, TradeFailText(msg.reason)));
                     SaveNow();
                     return;
                 }

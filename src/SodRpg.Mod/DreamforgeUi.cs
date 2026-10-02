@@ -260,8 +260,15 @@ namespace SodRpg.Mod
                 sb.Append('\n').Append(Loc.T("潜行 ", "Delve ")).Append("<color=").Append(heatColor).Append('>')
                     .Append('●', run.Heat).Append('○', Content.MaxHeat - run.Heat).Append("</color>");
                 sb.Append("\n<size=13>").Append(Loc.T(
-                    $"{(compact ? "未確保" : "まだ持ち帰っていない物")}：遺物{run.Satchel.Count}個・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
-                    $"{(compact ? "Unsecured" : "Not yet secured")}: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
+                    $"{(compact ? "未確保" : "まだ持ち帰っていない物")}：遺物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
+                    $"{(compact ? "Unsecured" : "Not yet secured")}: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
+                if (p.LostAndFound.Count > 0 && !run.LostRecovered)
+                {
+                    int rooms = Workshop.RoomsToRecover(p);
+                    sb.Append("\n<size=13><color=#ffb070>").Append(Loc.T(
+                        $"遺失物の回収：戦闘部屋 {Math.Min(run.RoomsCleared, rooms)}/{rooms}",
+                        $"Lost & Found: combat rooms {Math.Min(run.RoomsCleared, rooms)}/{rooms}")).Append("</color></size>");
+                }
                 if (!compact && run.Pacts.Count > 0)
                 {
                     sb.Append("\n<size=13><color=#ff9a7a>").Append(Loc.T("契約：", "Pacts: "));
@@ -315,19 +322,27 @@ namespace SodRpg.Mod
                 GUILayout.EndHorizontal();
             }
             int next = Math.Min(Content.MaxHeat, run.Heat + 1);
+            bool atCap = run.Heat >= Content.MaxHeat;
             GUILayout.Label(UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
                 $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は0に戻ります。",
                 $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve resets to 0."), _st.Small);
+            int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
+            if (run.Satchel.Count > free)
+                GUILayout.Label(Loc.T(
+                    $"保管庫の空きは{free}個です。入りきらない{run.Satchel.Count - free}個は、弱い物から欠片になります。",
+                    $"Your stash has room for {free}. The weakest {run.Satchel.Count - free} will become shards."), _st.Warn);
             GUILayout.Label(UiStyles.Colored(Loc.T("深く潜る：", "Delve: "), "#ffb070") + Loc.T(
-                $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
-                $"Move on without securing; delve becomes {next}. Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found."), _st.Small);
+                (atCap ? $"持ち帰らずに次のゾーンへ進みます。潜行は{next}のままです（これ以上は深くなりません）。" : $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。")
+                + $"遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
+                (atCap ? $"Move on without securing; delve stays at {next} (the maximum)." : $"Move on without securing; delve becomes {next}.")
+                + $" Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found."), _st.Small);
             double nmMult = DailyDream.Get(run.DailyId)?.NightmareMult ?? 1.0;
             int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
             int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
             string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
             GUILayout.Label(UiStyles.Colored(Loc.T(
-                $"潜行{next}では、敵の{nmNormal}%とエリートの{nmElite}%が「悪夢化」して強くなります{nmDay}。倒すとエリートやボス並みの戦利品が出ます。",
-                $"At delve {next}, {nmNormal}% of enemies and {nmElite}% of elites turn into stronger nightmares{nmDay} that drop elite-to-boss loot."), "#ff9ae0"), _st.Small);
+                $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
+                $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0"), _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = !_s.HasPendingTrades;
             if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
@@ -369,7 +384,11 @@ namespace SodRpg.Mod
                 GUILayout.BeginVertical();
                 GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
-                string label = !ok ? why : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)") : Loc.T("この出来事を選ぶ", "Take this event");
+                bool confirm = ok && _confirmEvent == e && DreamEvents.NeedsConfirm(e);
+                string label = !ok ? why
+                    : merchant ? Loc.T($"買う（{_s.MerchantPrice()}G）", $"Buy ({_s.MerchantPrice()}G)")
+                    : confirm ? Loc.T("<color=#ff8080>取り消せません。もう一度押すと確定します</color>", "<color=#ff8080>This can't be undone. Press again to confirm</color>")
+                    : DreamEvents.ActionLabel(e);
                 if (GUILayout.Button(label, _st.Row, GUILayout.Height(32)))
                 {
                     if (merchant)
@@ -377,8 +396,10 @@ namespace SodRpg.Mod
                         string err = _s.BuyFromMerchant();
                         if (err != null) SetStatus(err);
                     }
+                    else if (DreamEvents.NeedsConfirm(e) && _confirmEvent != e) _confirmEvent = e;
                     else
                     {
+                        _confirmEvent = DreamEvent.None;
                         try
                         {
                             foreach (var x in Rules.UseEvent(_s.Profile, e, trades: _s.Trades)) _s.Emit(x);
@@ -410,6 +431,7 @@ namespace SodRpg.Mod
         }
 
         private Vector2 _scrollSecure;
+        private DreamEvent _confirmEvent;
         private static readonly Dictionary<DreamEvent, string> EventArt = new Dictionary<DreamEvent, string>();
 
         private static string EventArtKey(DreamEvent e)
@@ -461,6 +483,9 @@ namespace SodRpg.Mod
         }
 
         private bool _reportDismissed;
+        private RunReport _reportHeightFor;
+        private bool _reportHeightJa;
+        private float _reportHeight;
         private RunReport _shownReport;
 
         private void DrawReport(float w, float h)
@@ -471,29 +496,47 @@ namespace SodRpg.Mod
                 _shownReport = r;
                 _reportDismissed = false;
             }
-            var rect = new Rect(w / 2 - 250, h * 0.16f, 500, r.RelicsLost > 0 || r.EchoShards > 0 ? 270 : 215);
-            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
-            GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
-            GUILayout.Label(Loc.T(
+            string text = Loc.T(
                 $"敵を{r.Kills}体倒し、遺物を{r.RelicsFound}個見つけました。\nそのうち{r.RelicsSecured}個を持ち帰りました（確保{r.SecuredCount}回、欠片{r.ShardsSecured}）。\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>持ち帰れなかった遺物：{r.RelicsLost}個</color>　残響として残った欠片：{r.EchoShards}\n" : "") +
                 $"最も深い潜行 {r.PeakHeat}　依頼 {r.BountiesDone}/{r.BountiesTotal}達成　夢のレベル {r.LevelBefore} → {r.LevelAfter}",
                 $"Kills {r.Kills}   Relics found {r.RelicsFound}\nSecured {r.RelicsSecured} ({r.SecuredCount} secures, {r.ShardsSecured} shards)\n" +
                 (r.RelicsLost > 0 || r.EchoShards > 0 ? $"<color=#ff8080>Lost {r.RelicsLost}</color>   Echo shards {r.EchoShards}\n" : "") +
-                $"Peak delve {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}"), _st.Label);
-            if (r.RelicsLost > 0)
-                GUILayout.Label(Loc.T("持ち帰れなかった遺物は「遺失物」として残ります。次の遠征で戦闘部屋を3つ突破すると、その中で一番良い物を1つ取り戻せます。", "Lost relics wait in Lost & Found. Clear 3 combat rooms next expedition to recover the best one."), _st.Small);
+                $"Peak delve {r.PeakHeat}   Bounties {r.BountiesDone}/{r.BountiesTotal}   Dream Level {r.LevelBefore} -> {r.LevelAfter}");
+            int rooms = Workshop.RoomsToRecover(_s.Profile);
+            string note = r.RelicsLost > 0
+                ? Loc.T($"持ち帰れなかった遺物は「遺失物」として残ります。次の遠征で戦闘部屋を{rooms}つ突破すると、その中で一番良い物を1つ取り戻せます。", $"Lost relics wait in Lost & Found. Clear {rooms} combat rooms next expedition to recover the best one.")
+                : null;
+            const float width = 520;
+            if (_reportHeightFor != r || _reportHeightJa != Loc.Japanese)
+            {
+                _reportHeightFor = r;
+                _reportHeightJa = Loc.Japanese;
+                _reportHeight = 40 + _st.Label.CalcHeight(new GUIContent(text), width - 28) + (note != null ? _st.Small.CalcHeight(new GUIContent(note), width - 28) + 6 : 0) + 30 + 34;
+            }
+            var rect = new Rect(w / 2 - width / 2, h * 0.16f, width, Mathf.Min(_reportHeight, h * 0.8f));
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
+            GUILayout.Label(text, _st.Label);
+            if (note != null) GUILayout.Label(note, _st.Small);
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(Loc.T("閉じる", "Close"), _st.Button, GUILayout.Height(30))) _reportDismissed = true;
             GUILayout.EndArea();
         }
+
+        // ヒントの本文の高さ（ヒントと言語ごとに測って使い回す）。
+        private Hint _hintMeasured;
+        private bool _hintMeasuredJa;
+        private float _hintBodyHeight = -1;
 
         private Rect HintRect(float w, float h)
         {
             bool welcome = _hints.Count > 0 && _hints[0] == Hint.Welcome;
             float pw = welcome ? 640 : 520;
             float ph = welcome ? 330 : 210;
+            if (_hints.Count > 0 && _hintBodyHeight >= 0 && _hintMeasured == _hints[0] && _hintMeasuredJa == Loc.Japanese)
+                ph = Mathf.Clamp(_hintBodyHeight + (welcome ? 100 : 95), 150, h - 60);
             return welcome ? new Rect((w - pw) / 2, (h - ph) / 2, pw, ph) : new Rect((w - pw) / 2, h - ph - 150, pw, ph);
         }
 
@@ -512,7 +555,14 @@ namespace SodRpg.Mod
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.Label(UiStyles.Colored((welcome ? "" : Loc.T("ヒント：", "Tip: ")) + def.Title, "#ffe17a"), welcome ? _st.Title : _st.Header);
-            GUILayout.Label(def.Body.ToString().Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]"), _st.Label);
+            string body = def.Body.ToString().Replace("[F6]", "[" + cfg.menuKey + "]").Replace("[F7]", "[" + cfg.secureKey + "]").Replace("[F8]", "[" + cfg.delveKey + "]");
+            if (_hintBodyHeight < 0 || _hintMeasured != id || _hintMeasuredJa != Loc.Japanese)
+            {
+                _hintMeasured = id;
+                _hintMeasuredJa = Loc.Japanese;
+                _hintBodyHeight = _st.Label.CalcHeight(new GUIContent(body), rect.width - 28);
+            }
+            GUILayout.Label(body, _st.Label);
             GUILayout.FlexibleSpace();
             GUILayout.BeginHorizontal();
             string next = _hints.Count > 1 ? Loc.T($"了解（あと{_hints.Count - 1}）", $"Got it ({_hints.Count - 1} more)") : Loc.T("了解", "Got it");
@@ -591,11 +641,11 @@ namespace SodRpg.Mod
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
             "<b>1回の遠征の流れ</b>\n" +
             "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
-            "2. 拾った物は、まだ持ち帰っていない状態（未確保）です。\n" +
+            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。鞄に入る数には上限があり、あふれると一番弱い物が欠片に変わります。\n" +
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
-            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を3つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
+            "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに主装備・防具・装飾品の3つを装着します。\n" +
             "・鍛冶：欠片で強化し、調律石で特性を引き直します。いらない物は分解して欠片に戻せます。\n" +
@@ -606,11 +656,11 @@ namespace SodRpg.Mod
             "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
             "<b>One expedition</b>\n" +
             "1. Enemies drop relics. In co-op every player gets their own drops, so there is no fighting over loot.\n" +
-            "2. What you pick up is not yet secured.\n" +
+            "2. What you pick up goes into your satchel, not yet secured. The satchel has a limit; when it overflows, the weakest relic turns into shards.\n" +
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +
-            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear 3 combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
+            "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has a weapon, armor and charm slot.\n" +
             "- Forge: enhance with shards, reroll affixes with tuning stones, salvage the rest into shards.\n" +
@@ -635,7 +685,10 @@ namespace SodRpg.Mod
             {
                 if (p.Feats.Contains(f.Id) || !seen.Add(f.Kind)) continue;
                 int prog = Math.Min(Feats.Progress(p, f), f.Target);
-                _openFeats.Add("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>");
+                string reward = f.RewardTuning > 0
+                    ? Loc.T($"欠片{f.RewardShards}・調律石{f.RewardTuning}", $"{f.RewardShards} shards, {f.RewardTuning} tuning")
+                    : Loc.T($"欠片{f.RewardShards}", $"{f.RewardShards} shards");
+                _openFeats.Add("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>  <color=#c9a86a>{reward}</color>");
             }
             return _openFeats;
         }
@@ -696,7 +749,7 @@ namespace SodRpg.Mod
                 case 2: return Loc.T("夢のレベルが上がるともらえるポイントで、旅人ごとに能力を伸ばします。振り直しは無料なので、気軽に試してください。",
                     "Spend the points you earn from Dream Levels to grow each Traveler. Respec is free, so feel free to experiment.");
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
-                    "Spend spare shards and tuning stones on permanent upgrades shared by every Traveler.");
+                    "Spend spare shards and tuning stones on permanent conveniences such as a bigger satchel and stash. They don't make you stronger, but they make expeditions much easier.");
                 default: return Loc.T("遊び方の確認、今回の遠征の様子、これまでの記録と図鑑を見られます。",
                     "Read how to play, check this expedition, and browse your records and codex.");
             }
@@ -754,9 +807,12 @@ namespace SodRpg.Mod
                 int kills = p.Hero(hero).Kills;
                 int lv = Mastery.Level(kills);
                 int next = Mastery.ToNext(kills);
+                bool keyLocked = lv < HeroSigils.KeystoneMastery && HeroSigils.HasTree(hero);
                 GUILayout.Label(Loc.T(
-                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>あと{next}体倒すと上がります</color>" : ""),
-                    $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")), _st.Small);
+                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>あと{next}体倒すと上がります</color>" : "")
+                        + (keyLocked ? $"\n<color=#888>熟練度{HeroSigils.KeystoneMastery}で到達刻印を選べます。</color>" : ""),
+                    $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")
+                        + (keyLocked ? $"\n<color=#888>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : "")), _st.Small);
             }
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
@@ -921,12 +977,15 @@ namespace SodRpg.Mod
                 _seenInit = true;
                 foreach (var r in p.Stash) _seenUids.Add(r.Uid);
             }
-            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count : null;
+            // 装着の変化（▲→★）と言語の切り替えでも作り直す。
+            var h = p.Hero(hero);
+            int equipHash = hero == null ? 0 : hero.GetHashCode();
+            foreach (var u in h.Equipped) equipHash = equipHash * 31 + (u == null ? 0 : u.GetHashCode());
+            string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + (Loc.Japanese ? ":j" : ":e") : null;
             if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
                 return cached;
             if (!_rowCache.TryGetValue(id, out var rows)) _rowCache[id] = rows = new List<string>();
             rows.Clear();
-            var h = p.Hero(hero);
             foreach (var r in list)
             {
                 bool equipped = h.Equipped.Contains(r.Uid);
@@ -970,7 +1029,7 @@ namespace SodRpg.Mod
                     {
                         if (r.Rarity > Rarity.Uncommon || r.Locked || p.IsEquippedAnywhere(r.Uid) || _s.Trades.IsReserved(r.Uid)) continue;
                         got += Rules.SalvageValue(r);
-                        try { Rules.Salvage(p, r.Uid, _s.Trades); done++; }
+                        try { Rules.Salvage(p, r.Uid, _s.Trades, !_s.CanEditLoadout); done++; }
                         catch (InvalidOperationException) { }
                     }
                     if (_selected != null && p.FindStash(_selected) == null) _selected = null;
@@ -1093,16 +1152,23 @@ namespace SodRpg.Mod
                     if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
                         Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
                 }
-                else GUILayout.Label(Loc.T("これ以上は強化できません", "Fully enhanced"), _st.Small);
-                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
-                string sv = _confirmSalvage == sel.Uid
-                    ? Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>")
-                    : Loc.T($"分解（欠片{Rules.SalvageValue(sel)}）", $"Salvage ({Rules.SalvageValue(sel)} shards)");
+                else GUILayout.Label(Loc.T($"強化は+{Content.MaxEnhance}が上限です", $"Enhancement is capped at +{Content.MaxEnhance}"), _st.Small);
+                bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
+                bool salvageBlocked = sel.Locked || (equippedSel && !_s.CanEditLoadout);
+                GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && !salvageBlocked;
+                int svShards = Rules.SalvageValue(sel), svTuning = Content.SalvageTuning(sel.Rarity);
+                string svGain = Loc.T($"欠片{svShards}" + (svTuning > 0 ? $"・調律石{svTuning}" : ""), $"{svShards} shards" + (svTuning > 0 ? $", {svTuning} tuning" : ""));
+                bool weighty = equippedSel || sel.Rarity >= Rarity.Epic;
+                string sv = sel.Locked ? Loc.T("鍵を外すと分解できます", "Unlock to salvage")
+                    : salvageBlocked ? Loc.T("装着中の物は確保地点で分解できます", "Equipped: salvage at a secure point")
+                    : _confirmSalvage != sel.Uid ? Loc.T($"分解（{svGain}）", $"Salvage ({svGain})")
+                    : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"? Press again</color>")
+                    : Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>");
                 if (GUILayout.Button(sv, _st.Button, GUILayout.Height(32)))
                 {
                     if (_confirmSalvage == sel.Uid)
                     {
-                        Act(() => Rules.Salvage(p, sel.Uid, _s.Trades), true);
+                        Act(() => Rules.Salvage(p, sel.Uid, _s.Trades, !_s.CanEditLoadout), true);
                         _selected = null;
                         _confirmSalvage = null;
                     }
@@ -1111,9 +1177,11 @@ namespace SodRpg.Mod
                 GUILayout.EndHorizontal();
                 GUI.enabled = true;
 
-                if (sel.Retunes < Content.MaxRetunes && sel.Affixes.Count > 0)
+                if (sel.Retunes >= Content.MaxRetunes)
+                    GUILayout.Label(Loc.T($"この遺物の再調律は使い切りました（{Content.MaxRetunes}/{Content.MaxRetunes}）。", $"No retunes left on this relic ({Content.MaxRetunes}/{Content.MaxRetunes})."), _st.Small);
+                else if (sel.Affixes.Count > 0)
                 {
-                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選んでください（調律石{Content.RetuneCost(sel.Retunes)}。1つの遺物につき{Content.MaxRetunes}回まで）", $"Retune: choose one affix to reroll ({Content.RetuneCost(sel.Retunes)} tuning; up to {Content.MaxRetunes} times per relic)"), _st.Small);
+                    GUILayout.Label(Loc.T($"再調律：引き直したい特性を1つ選びます（調律石を使います。この遺物はあと{Content.MaxRetunes - sel.Retunes}回）", $"Retune: pick one affix to reroll with tuning stones ({Content.MaxRetunes - sel.Retunes} left on this relic)"), _st.Small);
                     GUILayout.BeginHorizontal();
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
@@ -1121,8 +1189,13 @@ namespace SodRpg.Mod
                         if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonSel : _st.Button)) _retuneIndex = i;
                     }
                     GUILayout.EndHorizontal();
-                    GUI.enabled = _retuneIndex >= 0 && !_s.Trades.IsReserved(sel.Uid);
-                    if (GUILayout.Button(Loc.T("再調律する", "Retune"), _st.Button, GUILayout.Height(30)))
+                    int rtCost = Content.RetuneCost(sel.Retunes);
+                    bool rtAfford = p.Material(Materials.Tuning) >= rtCost;
+                    GUI.enabled = _retuneIndex >= 0 && rtAfford && !_s.Trades.IsReserved(sel.Uid);
+                    string rtLabel = !rtAfford ? Loc.T($"調律石が足りません（{rtCost}必要・所持{p.Material(Materials.Tuning)}）", $"Not enough tuning stones ({rtCost} needed, have {p.Material(Materials.Tuning)})")
+                        : _retuneIndex < 0 ? Loc.T($"上の特性を1つ選んでください（調律石{rtCost}）", $"Pick an affix above ({rtCost} tuning)")
+                        : Loc.T($"再調律する（調律石{rtCost}）", $"Retune ({rtCost} tuning)");
+                    if (GUILayout.Button(rtLabel, _st.Button, GUILayout.Height(30)))
                     {
                         int idx = _retuneIndex;
                         Act(() => Rules.Retune(p, sel.Uid, idx, _s.Trades), true);
@@ -1137,7 +1210,9 @@ namespace SodRpg.Mod
             }
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます（鍵をかけた物と装着中の物は使いません）", "Transmute: turn 3 relics of one rarity into 1 of the next (locked and equipped relics are never used)"), _st.Header);
+            GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます", "Transmute: turn 3 relics of one rarity into 1 of the next"), _st.Header);
+            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に3つを使います。エピック3つからは固有品が生まれます。",
+                "Locked and equipped relics are never used; the 3 weakest of the rest go in. Three Epics become a legendary."), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
@@ -1148,7 +1223,7 @@ namespace SodRpg.Mod
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
-            GUILayout.Label(Loc.T("製作：欠片を使って、これまでに手に入れた最高のアイテムレベルで新しい遺物を作ります", "Craft: spend shards to make a new relic at the highest item level you have reached"), _st.Header);
+            GUILayout.Label(Loc.T($"製作：欠片で新しい遺物を作ります（Lv{Math.Max(1, p.BestItemLevel)}＝これまでの最高）", $"Craft: make a new relic with shards (Lv{Math.Max(1, p.BestItemLevel)}, your best so far)"), _st.Header);
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
                 GUILayout.BeginHorizontal();
@@ -1234,6 +1309,26 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
         }
 
+        /// <summary>到達刻印を選ぶのに、あと何が足りないか。</summary>
+        private static string KeystoneMissing(HeroState hs, string hero, TalentDef t)
+        {
+            int need = Content.KeystoneRouteRequirement;
+            if (t.HeroKey != null)
+            {
+                int ranks = 0;
+                foreach (var kv in hs.Talents)
+                    if (Content.TryGetTalent(kv.Key, out var x) && x.HeroKey == hero && !x.IsKeystone) ranks += kv.Value;
+                int lv = Mastery.Level(hs.Kills);
+                var ja = new List<string>();
+                var en = new List<string>();
+                if (ranks < need) { ja.Add($"このツリーにあと{need - ranks}ポイント"); en.Add($"{need - ranks} more points in this tree"); }
+                if (lv < HeroSigils.KeystoneMastery) { ja.Add($"熟練度を{HeroSigils.KeystoneMastery}に（いま{lv}）"); en.Add($"mastery {HeroSigils.KeystoneMastery} (now {lv})"); }
+                return Loc.T("選ぶには：" + string.Join("・", ja), "Needs " + string.Join(" and ", en));
+            }
+            int route = Rules.RouteRanks(hs, t.Route);
+            return Loc.T($"選ぶには：{Content.LineName(t.Route)}にあと{Math.Max(0, need - route)}ポイント", $"Needs {Math.Max(0, need - route)} more points in {Content.LineName(t.Route)}");
+        }
+
         private void DrawTalentNode(Profile p, string hero, HeroState hs, TalentDef t)
         {
             if (t.IsKeystone)
@@ -1244,9 +1339,10 @@ namespace SodRpg.Mod
                 GUILayout.Label((active ? "<color=#ffe17a>◆</color> " : "◇ ") + "<b>" + t.Name + "</b>" + Loc.T("（到達刻印）", " (Keystone)"), _st.Label);
                 GUILayout.Label(UiStyles.Colored(Content.FormatPower(t.Power, t.PowerValue), "#e0b0ff") + "\n<color=#aab>" + t.Description + "</color>", _st.Small);
                 GUI.enabled = _s.CanEditTalents && (active || unlocked);
-                string btn = active ? Loc.T("刻印を外す", "Remove") : unlocked
-                    ? Loc.T($"刻印する（{Content.KeystoneCost}ポイント）", $"Engrave ({Content.KeystoneCost} points)")
-                    : Loc.T("条件を満たすと選べます", "Locked");
+                string btn = active ? Loc.T("刻印を外す", "Remove")
+                    : !unlocked ? KeystoneMissing(hs, hero, t)
+                    : hs.Keystone != null ? Loc.T("こちらに付け替える（無料）", "Switch to this (free)")
+                    : Loc.T($"刻印する（{Content.KeystoneCost}ポイント）", $"Engrave ({Content.KeystoneCost} points)");
                 if (GUILayout.Button(btn, active ? _st.ButtonSel : _st.Button))
                 {
                     try
@@ -1285,7 +1381,7 @@ namespace SodRpg.Mod
                 int lv = Workshop.Level(p, def.Id);
                 GUILayout.BeginHorizontal();
                 string pips = new string('●', lv) + new string('○', def.MaxLevel - lv);
-                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>\n<color=#aab>{def.Description}</color>", _st.Small, GUILayout.Width(560));
+                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, lv < def.MaxLevel)}\n<color=#aab>{def.Description}</color>", _st.Small, GUILayout.Width(560));
                 if (lv < def.MaxLevel)
                 {
                     var cost = def.Costs[lv];
@@ -1303,6 +1399,27 @@ namespace SodRpg.Mod
             GUILayout.EndVertical();
             if (p.Run != null) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
         }
+
+        /// <summary>工房の強化の「いまの値 → 解放後の値」。</summary>
+        private static string WorkshopValue(Profile p, Upgrade u, bool canRaise)
+        {
+            int now, next;
+            string ja, en;
+            switch (u)
+            {
+                case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = now + 5; ja = "鞄の上限"; en = "Satchel"; break;
+                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = now + 20; ja = "保管庫の上限"; en = "Stash"; break;
+                case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = now + 1; ja = "引き直し"; en = "Rerolls"; break;
+                default: return "";
+            }
+            string arrow = canRaise ? $" → <color=#7cf07c>{next}</color>" : "";
+            return $"<color=#cfd3ee>{Loc.T(ja, en)} {now}{arrow}</color>";
+        }
+
+        private string _confirmDust;
+
+        /// <summary>今日の夢が切り替わる時刻（世界時の0時）を、遊んでいる人の時計で。</summary>
+        private static string DailyRollover() => DateTime.UtcNow.Date.AddDays(1).ToLocalTime().ToString("H:mm");
 
         private void DrawRecordsTab(DreamforgeConfig cfg)
         {
@@ -1341,10 +1458,11 @@ namespace SodRpg.Mod
             var today = DailyDream.Today;
             GUILayout.Label(Loc.T("今日の夢", "Today's dream"), _st.Header);
             GUILayout.Label($"<b>{today.Name}</b>  {today.Description}", _st.Small);
+            GUILayout.Label(Loc.T($"<color=#8a8aa0>次は {DailyRollover()} に切り替わります。</color>", $"<color=#8a8aa0>Changes at {DailyRollover()}.</color>"), _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
-                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nボスがエピック以上を落とす確率：{(int)(Loot.EpicPityChance(p.EpicPity) * 100)}%（エピックが出ないボスを倒すたびに上がります）",
-                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nBoss Epic+ chance: {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}% (rises with each boss that drops no Epic)"), _st.Small);
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\n救済：次のボスでエピック以上が確定する確率 {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}%（エピックが出ないボスを倒すたびに上がり、出ると元に戻ります。普段の抽選とは別です）",
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nPity: next boss guarantees Epic+ at {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}% (rises with each boss that drops no Epic, resets when one does; on top of the normal roll)"), _st.Small);
             if (p.Run != null)
             {
                 GUILayout.Label(Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
@@ -1364,12 +1482,22 @@ namespace SodRpg.Mod
                 foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score).ToList())
                 {
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
+                    IconSlot(r, 28);
+                    GUILayout.Label(UiStyles.RelicTitle(r) + $" <color=#9a9ab0>{Content.RarityName(r.Rarity)} Lv{r.ItemLevel}</color>", _st.Small);
                     GUI.enabled = !_s.Trades.IsReserved(r.Uid);
-                    if (GUILayout.Button(Loc.T($"ドリームダストに分解（+{Economy.SalvageDust(r)}）", $"Salvage for Dream Dust (+{Economy.SalvageDust(r)})"), _st.Button, GUILayout.Width(170)))
+                    bool sure = _confirmDust == r.Uid;
+                    string dustLabel = sure
+                        ? Loc.T("<color=#ff8080>もう一度押すと分解</color>", "<color=#ff8080>Press again</color>")
+                        : Loc.T($"ドリームダストに分解（+{Economy.SalvageDust(r)}）", $"Salvage for Dream Dust (+{Economy.SalvageDust(r)})");
+                    if (GUILayout.Button(dustLabel, _st.Button, GUILayout.Width(190)))
                     {
-                        string err = _s.SalvageUnsecured(r.Uid);
-                        if (err != null) SetStatus(err);
+                        if (!sure) _confirmDust = r.Uid;
+                        else
+                        {
+                            _confirmDust = null;
+                            string err = _s.SalvageUnsecured(r.Uid);
+                            if (err != null) SetStatus(err);
+                        }
                     }
                     GUI.enabled = true;
                     GUILayout.EndHorizontal();

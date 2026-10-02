@@ -649,7 +649,7 @@ namespace SodRpg.Core.Game
             p.Stats.RelicsFound++;
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
-                $"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買った" + (run != null ? "（未確保）" : "（保管庫）"),
+                $"夢の商人から{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を買いました" + (run != null ? "（まだ持ち帰っていません）" : "（保管庫に入りました）"),
                 $"Bought {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" from the merchant" + (run != null ? " (unsecured)" : " (stash)")), relic.Rarity));
             if (run != null)
             {
@@ -671,7 +671,7 @@ namespace SodRpg.Core.Game
             p.Stats.RelicsFound++;
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
-                $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れた（未確保）",
+                $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れました（まだ持ち帰っていません）",
                 $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
             AddToSatchel(p, relic, ev, trades);
             AdvanceRelicBounties(p, relic, ev);
@@ -819,6 +819,9 @@ namespace SodRpg.Core.Game
 
         // ───────────── 装着 ─────────────
 
+        /// <summary>遠征中は確保地点の選択待ちか、ゲームの外でのみ装備を変更できる。</summary>
+        public static bool LoadoutLocked(Profile p, bool inGame) => p.Run != null && !p.Run.AwaitingChoice && inGame;
+
         public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
@@ -847,11 +850,15 @@ namespace SodRpg.Core.Game
             return Content.SalvageShards(r.Rarity) + refund / 2;
         }
 
-        public static GameEvent Salvage(Profile p, string uid, TradeLedger trades = null)
+        public static GameEvent Salvage(Profile p, string uid, TradeLedger trades = null, bool loadoutLocked = false)
         {
             RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は分解できません。", "Locked relics cannot be salvaged."));
+            if (loadoutLocked && p.IsEquippedAnywhere(uid))
+            {
+                throw new InvalidOperationException(Loc.T("装着中の遺物は、確保地点か遠征の外でしか分解できません。", "Equipped relics can only be salvaged at a secure point or outside an expedition."));
+            }
             int shards = SalvageValue(r);
             int tuning = Content.SalvageTuning(r.Rarity);
             p.Stash.Remove(r);

@@ -81,19 +81,19 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.FirstDefeat, Title = new Txt("夢から覚めました", "You awoke"),
-                Body = new Txt("未確保の遺物は「遺失物」に移りました。次の遠征で戦闘部屋を3つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の25%は、残響として戻っています。",
-                    "Your unsecured relics moved to Lost & Found. Clear 3 combat rooms next run to recover the best one. 25% of your unsecured shards came back as echoes."),
+                Body = new Txt($"まだ持ち帰っていなかった遺物は「遺失物」に移りました。次の遠征で戦闘部屋を{Content.RoomsToRecoverLost}つ突破すると、その中で一番良い物を1つ取り戻せます。まだ持ち帰っていなかった欠片の{Workshop.EchoPercent(null)}%は、残響として戻っています。",
+                    $"Your unsecured relics moved to Lost & Found. Clear {Content.RoomsToRecoverLost} combat rooms next run to recover the best one. {Workshop.EchoPercent(null)}% of your unsecured shards came back as echoes."),
             },
             new HintDef
             {
                 Id = Hint.TalentPoints, Title = new Txt("星図のポイントが増えました", "Star map points earned"),
-                Body = new Txt("夢のレベルが上がり、ポイントを得ました。遠征の外で [F6] の「星図」タブを開き、使っている旅人の刻印に振りましょう。本体の旅人には専用の刻印があり、それ以外の旅人は破壊・生命・想像の3つの道に振ります。",
+                Body = new Txt("夢のレベルが上がり、ポイントを得ました。遠征の外で [F6] の「星図」タブを開き、使っている旅人の刻印に振りましょう。本体の旅人には専用の刻印があり、それ以外の旅人は破壊・生命・想像の3つの系統に振ります。",
                     "Your Dream Level rose. Outside a run, open the [F6] Star Map tab and spend points on your Traveler's sigils, which boost that Traveler's own kit."),
             },
             new HintDef
             {
                 Id = Hint.KeystoneReady, Title = new Txt("到達刻印を選べるようになりました", "Keystones unlocked"),
-                Body = new Txt("この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに6ポイント以上振っておく必要もあります。",
+                Body = new Txt($"この旅人の熟練度が上がり、到達刻印を選べるようになりました。選ぶには、この旅人のツリーに{Content.KeystoneRouteRequirement}ポイント以上振っておく必要もあります。",
                     "This Traveler's mastery now allows a keystone. You also need 6+ points in this tree."),
             },
             new HintDef
@@ -111,8 +111,8 @@ namespace SodRpg.Core.Game
             new HintDef
             {
                 Id = Hint.ForgeReady, Title = new Txt("鍛冶を使ってみましょう", "Forge ready"),
-                Body = new Txt("欠片が貯まりました。[F6] の「鍛冶」タブで遺物を強化（+5まで）したり、同じレア度3つを合成したりできます。",
-                    "You have enough shards. In the [F6] Forge tab you can enhance relics (+5 max) or transmute 3 of a rarity into a better one."),
+                Body = new Txt($"欠片が貯まりました。[F6] の「鍛冶」タブで遺物を強化（+{Content.MaxEnhance}まで）したり、同じレア度3つを合成したりできます。",
+                    $"You have enough shards. In the [F6] Forge tab you can enhance relics (+{Content.MaxEnhance} max) or transmute 3 of a rarity into a better one."),
             },
         };
 

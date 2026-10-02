@@ -158,7 +158,7 @@ namespace SodRpg.Core.Game
             },
             new PactDef
             {
-                Id = Pact.Stargazer, Name = new Txt("星見の契約", "Stargazer's Pact"),
+                Id = Pact.Stargazer, Name = new Txt("星読みの契約", "Stargazer's Pact"),
                 CurseStrength = 1, Luck = 0.4, DropBonus = 0.15,
             },
             new PactDef
@@ -215,7 +215,7 @@ namespace SodRpg.Core.Game
             if (ja)
             {
                 string cost = d.CurseStrength >= 3 ? "強い" : d.CurseStrength == 2 ? "中くらいの" : "弱い";
-                string echo = d.NoEcho ? "。全滅したときに戻るはずの欠片（25%）も戻らなくなります" : "";
+                string echo = d.NoEcho ? $"。全滅したときに戻るはずの欠片（{Workshop.EchoPercent(null)}%）も戻らなくなります" : "";
                 return $"代償：{cost}呪いを1つ受けます{echo}。見返り：{string.Join("。", gains)}。";
             }
             string echoEn = d.NoEcho ? ", and no shard echoes if your party falls" : "";

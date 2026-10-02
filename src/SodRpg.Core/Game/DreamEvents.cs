@@ -57,6 +57,30 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>出来事を選ぶボタンの文字。何をするのかが分かる動詞にする。</summary>
+        public static string ActionLabel(DreamEvent e)
+        {
+            switch (e)
+            {
+                case DreamEvent.Fountain: return Loc.T("一番弱い遺物を捧げる", "Offer the weakest relic");
+                case DreamEvent.Chalice: return Loc.T("欠片を賭ける", "Wager the shards");
+                case DreamEvent.Lantern: return Loc.T("遺失物を取り戻す", "Recover a lost relic");
+                case DreamEvent.ForgeShrine: return Loc.T("欠片20を払って強化する", "Pay 20 shards to enhance");
+                case DreamEvent.TwinMirror: return Loc.T("欠片30を払って写し取る", "Pay 30 shards to copy");
+                case DreamEvent.Stargazer: return Loc.T("星を読む", "Read the stars");
+                case DreamEvent.Cauldron: return Loc.T("3つを溶かす", "Melt three relics");
+                case DreamEvent.Tapir: return Loc.T("獏に食べさせる", "Feed the tapir");
+                case DreamEvent.CourageGate: return Loc.T("門をくぐる（潜行が1段深くなる）", "Pass the gate (delve +1)");
+                case DreamEvent.Archive: return Loc.T("記憶を読む", "Read the memories");
+                case DreamEvent.LuckyStar: return Loc.T("星に願う", "Wish upon the star");
+                default: return Loc.T("この出来事を選ぶ", "Take this event");
+            }
+        }
+
+        /// <summary>遺物や欠片を失う、取り返せない出来事。ボタンは2回押しで確定する。</summary>
+        public static bool NeedsConfirm(DreamEvent e) =>
+            e == DreamEvent.Fountain || e == DreamEvent.Chalice || e == DreamEvent.Cauldron || e == DreamEvent.Tapir;
+
         public static string Describe(DreamEvent e, Profile p)
         {
             var run = p.Run;
@@ -140,12 +164,12 @@ namespace SodRpg.Core.Game
                     if (p.LostAndFound.Count == 0) reason = Loc.T("遺失物がありません。", "No lost relics.");
                     break;
                 case DreamEvent.ForgeShrine:
-                    if (run.SatchelShards < 20) reason = Loc.T("未確保の欠片が20必要です。", "Need 20 unsecured shards.");
+                    if (run.SatchelShards < 20) reason = Loc.T($"まだ持ち帰っていない欠片が20必要です（いま{run.SatchelShards}）。", $"Need 20 unsecured shards (you have {run.SatchelShards}).");
                     else if (!run.Satchel.Any(r => r.Enhance < Content.MaxEnhance && (trades == null || !trades.IsReserved(r.Uid))))
                         reason = Loc.T("まだ強化できる未確保の遺物が必要です。", "Need an enhanceable unsecured relic.");
                     break;
                 case DreamEvent.TwinMirror:
-                    if (run.SatchelShards < 30) reason = Loc.T("未確保の欠片が30必要です。", "Need 30 unsecured shards.");
+                    if (run.SatchelShards < 30) reason = Loc.T($"まだ持ち帰っていない欠片が30必要です（いま{run.SatchelShards}）。", $"Need 30 unsecured shards (you have {run.SatchelShards}).");
                     else if (!run.Satchel.Any(r => trades == null || !trades.IsReserved(r.Uid))) reason = Loc.T("未確保の遺物が必要です。", "Need an unsecured relic.");
                     break;
                 case DreamEvent.Cauldron:
