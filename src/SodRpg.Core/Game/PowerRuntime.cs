@@ -40,8 +40,8 @@ namespace SodRpg.Core.Game
         public const int ChainTargets = 2;
         public const float ChainRange = 6f;
         public const float ShatterRadius = 4f;
-        public const float AegisThreshold = 0.2f;
-        public const float AegisCooldown = 20f;
+        public const float AegisThreshold = 0.1f; // v1.28：タンクは最大HPが多く20%の一撃はまれなので10%に
+        public const float AegisCooldown = 12f;
         public const float BloodlustThreshold = 0.5f;
         public const float ConvergenceCooldown = 6f;
         public const float SurgeDuration = 5f;

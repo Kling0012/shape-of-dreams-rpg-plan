@@ -81,10 +81,10 @@ namespace SodRpg.Core.Tests
         public void Aegis_needs_a_big_hit_and_has_a_cooldown()
         {
             var rt = new PowerRuntime(With(Power.Aegis, 25), 0);
-            Assert.Equal(0, rt.TakeAegis(1, 99, 500));        // 20%未満
-            Assert.Equal(125f, rt.TakeAegis(1, 100, 500), 3); // 20%以上
-            Assert.Equal(0, rt.TakeAegis(10, 300, 500));      // クールダウン中
-            Assert.Equal(125f, rt.TakeAegis(21.1f, 300, 500), 3);
+            Assert.Equal(0, rt.TakeAegis(1, 49, 500));        // 10%未満（v1.28：20% → 10%）
+            Assert.Equal(125f, rt.TakeAegis(1, 50, 500), 3);  // 10%以上
+            Assert.Equal(0, rt.TakeAegis(10, 300, 500));      // クールダウン中（12秒）
+            Assert.Equal(125f, rt.TakeAegis(13.1f, 300, 500), 3);
         }
 
         [Fact]

@@ -2954,7 +2954,7 @@ namespace SodRpg.Core.Game
                 case Power.Blaze: return Loc.T($"【{name}】通常攻撃4回ごとに、攻撃力か魔力の高い方の{v}%分の魔法ダメージを追加する", $"[{name}] Every 4th basic attack deals +{v}% of the higher of AD or AP as magic damage");
                 case Power.ChainLightning: return Loc.T($"【{name}】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力か魔力の高い方の{v}%分の魔法ダメージを与える", $"[{name}] Basic attack hits have a 25% chance to deal {v}% of the higher of AD or AP as magic damage to 2 nearby enemies");
                 case Power.Shatter: return Loc.T($"【{name}】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（爆砕で倒した敵からは起きない）", $"[{name}] On kill, deal {v}% of the higher of AD or AP to enemies within 4m (kills by Shatter do not chain)");
-                case Power.Aegis: return Loc.T($"【{name}】最大HPの20%以上の大きな一撃を受けると、最大HPの{v}%分の障壁を6秒間張る（20秒に1回）", $"[{name}] When a single hit deals 20%+ of your max health, gain a shield worth {v}% of max health for 6s (once per 20s)");
+                case Power.Aegis: return Loc.T($"【{name}】最大HPの10%以上の一撃を受けると、最大HPの{v}%分の障壁を6秒間張る（12秒に1回）", $"[{name}] When a single hit deals 10%+ of your max health, gain a shield worth {v}% of max health for 6s (once per 12s)");
                 case Power.Bloodlust: return Loc.T($"【{name}】HPが50%未満の間、攻撃速度が{v}%上がる", $"[{name}] +{v}% attack speed while below 50% health");
                 case Power.Ember: return Loc.T($"【{name}】" + ElementJa(v, "火") + "（火は上限なしで重なる）", $"[{name}] " + ElementEn(v, "Fire") + " (Fire has no stack limit)");
                 case Power.Frost: return Loc.T($"【{name}】通常攻撃が当たると{v}%の確率で、敵を冷気で冷やす（冷気は重ならない）", $"[{name}] Basic attack hits have a {v}% chance to apply Cold (Cold does not stack)");
