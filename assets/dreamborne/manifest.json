@@ -1,0 +1,1125 @@
+{
+  "schemaVersion": 1,
+  "packId": "dreamborne_enemies_vol01",
+  "sourcePackName": "Dreamborne_Enemies_Vol01",
+  "sourceDescription": "Previously created ten-model pack supplied for this project by the requesting user.",
+  "licenseStatus": "No explicit distribution license was supplied with the source pack. Inclusion requested by the user does not establish a general redistribution license.",
+  "authoritativeUnityFormat": "FBX",
+  "runtimeVerified": false,
+  "sanitization": "portable-paths-v1",
+  "models": [
+    {
+      "modelId": "ember_warden",
+      "sourceAssetId": "01_ember_warden",
+      "name": "Ember Warden",
+      "nameJa": "熾火の番人",
+      "designJa": "炉心を抱えた重装ゴーレム。片腕のハンマーで叩きつける",
+      "fbx": "01_ember_warden/01_ember_warden.fbx",
+      "glb": "01_ember_warden/01_ember_warden.glb",
+      "blend": "01_ember_warden/01_ember_warden.blend",
+      "textures": {
+        "baseColor": "01_ember_warden/Textures/BaseColor.png",
+        "emission": "01_ember_warden/Textures/Emission.png",
+        "metallicRoughness": "01_ember_warden/Textures/MetallicRoughness.png"
+      },
+      "triangles": 2712,
+      "bones": 16,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "EmberWarden|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "EmberWarden|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "EmberWarden|Attack",
+          "frameStart": 1,
+          "frameEnd": 43,
+          "fps": 30,
+          "durationSeconds": 1.4,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          2.7628917694091797,
+          1.0113200545310974,
+          2.5999999344348907
+        ],
+        "editableMeshCount": 15,
+        "vertices": 1478,
+        "weighting": "Rigid skinning: one bone per vertex, weight 1.0",
+        "textureAtlasWidth": 128,
+        "textureAtlasHeight": 128,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "mirecap_stomper",
+      "sourceAssetId": "02_mirecap_stomper",
+      "name": "Mirecap Stomper",
+      "nameJa": "沼茸の踏み手",
+      "designJa": "幅広の茸傘と根の脚。低い姿勢から大きく踏み込む",
+      "fbx": "02_mirecap_stomper/02_mirecap_stomper.fbx",
+      "glb": "02_mirecap_stomper/02_mirecap_stomper.glb",
+      "blend": "02_mirecap_stomper/02_mirecap_stomper.blend",
+      "textures": {
+        "baseColor": "02_mirecap_stomper/Textures/BaseColor.png",
+        "emission": "02_mirecap_stomper/Textures/Emission.png",
+        "metallicRoughness": "02_mirecap_stomper/Textures/MetallicRoughness.png"
+      },
+      "triangles": 2340,
+      "bones": 16,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "MirecapStomper|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "MirecapStomper|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "MirecapStomper|Attack",
+          "frameStart": 1,
+          "frameEnd": 43,
+          "fps": 30,
+          "durationSeconds": 1.4,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          1.9128466248512268,
+          1.4416036009788513,
+          1.850000038743019
+        ],
+        "editableMeshCount": 15,
+        "vertices": 1330,
+        "weighting": "Rigid skinning: one bone per vertex, weight 1.0",
+        "textureAtlasWidth": 128,
+        "textureAtlasHeight": 128,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "duskwing_oracle",
+      "sourceAssetId": "03_duskwing_oracle",
+      "name": "Duskwing Oracle",
+      "nameJa": "宵羽の託宣者",
+      "designJa": "鴉の嘴と羽衣を持つ術師。翼を広げて威嚇する",
+      "fbx": "03_duskwing_oracle/03_duskwing_oracle.fbx",
+      "glb": "03_duskwing_oracle/03_duskwing_oracle.glb",
+      "blend": "03_duskwing_oracle/03_duskwing_oracle.blend",
+      "textures": {
+        "baseColor": "03_duskwing_oracle/Textures/BaseColor.png",
+        "emission": "03_duskwing_oracle/Textures/Emission.png",
+        "metallicRoughness": "03_duskwing_oracle/Textures/MetallicRoughness.png"
+      },
+      "triangles": 2100,
+      "bones": 16,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "DuskwingOracle|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "DuskwingOracle|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "DuskwingOracle|Attack",
+          "frameStart": 1,
+          "frameEnd": 43,
+          "fps": 30,
+          "durationSeconds": 1.4,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          2.4266276359558105,
+          1.0927996039390564,
+          2.849999889731407
+        ],
+        "editableMeshCount": 15,
+        "vertices": 1266,
+        "weighting": "Rigid skinning: one bone per vertex, weight 1.0",
+        "textureAtlasWidth": 128,
+        "textureAtlasHeight": 128,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "thorncrown_stag",
+      "sourceAssetId": "04_thorncrown_stag",
+      "name": "Thorncrown Stag",
+      "nameJa": "荊冠の夢鹿",
+      "designJa": "荊の大角を戴く夢の鹿。角を構えて前へ突く",
+      "fbx": "04_thorncrown_stag/04_thorncrown_stag.fbx",
+      "glb": "04_thorncrown_stag/04_thorncrown_stag.glb",
+      "blend": "04_thorncrown_stag/04_thorncrown_stag.blend",
+      "textures": {
+        "baseColor": "04_thorncrown_stag/Textures/BaseColor.png",
+        "emission": "04_thorncrown_stag/Textures/Emission.png",
+        "metallicRoughness": "04_thorncrown_stag/Textures/MetallicRoughness.png",
+        "metallicSmoothness": "04_thorncrown_stag/Textures/MetallicSmoothness.png"
+      },
+      "triangles": 1922,
+      "bones": 18,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "04_thorncrown_stag|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "04_thorncrown_stag|Walk",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "04_thorncrown_stag|Attack",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          2.251453399658203,
+          3.1405447721481323,
+          3.4330713748931885
+        ],
+        "editableMeshCount": 17,
+        "vertices": 1113,
+        "weighting": "One rigid bone per vertex, 1.0; designed faceted articulated segments",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "frostjaw_prowler",
+      "sourceAssetId": "05_frostjaw_prowler",
+      "name": "Frostjaw Prowler",
+      "nameJa": "霜牙の追跡者",
+      "designJa": "氷のたてがみと長い顎を持つ、低く身構えた捕食獣",
+      "fbx": "05_frostjaw_prowler/05_frostjaw_prowler.fbx",
+      "glb": "05_frostjaw_prowler/05_frostjaw_prowler.glb",
+      "blend": "05_frostjaw_prowler/05_frostjaw_prowler.blend",
+      "textures": {
+        "baseColor": "05_frostjaw_prowler/Textures/BaseColor.png",
+        "emission": "05_frostjaw_prowler/Textures/Emission.png",
+        "metallicRoughness": "05_frostjaw_prowler/Textures/MetallicRoughness.png",
+        "metallicSmoothness": "05_frostjaw_prowler/Textures/MetallicSmoothness.png"
+      },
+      "triangles": 2610,
+      "bones": 20,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "05_frostjaw_prowler|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "05_frostjaw_prowler|Walk",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "05_frostjaw_prowler|Attack",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          1.2135210633277893,
+          3.9385383129119873,
+          1.7300000190734863
+        ],
+        "editableMeshCount": 19,
+        "vertices": 1495,
+        "weighting": "One rigid bone per vertex, 1.0; designed faceted articulated segments",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "runestone_tortoise",
+      "sourceAssetId": "06_runestone_tortoise",
+      "name": "Runestone Tortoise",
+      "nameJa": "碑甲の守り亀",
+      "designJa": "分厚い碑文の甲羅と短い四肢を持つ重装の亀",
+      "fbx": "06_runestone_tortoise/06_runestone_tortoise.fbx",
+      "glb": "06_runestone_tortoise/06_runestone_tortoise.glb",
+      "blend": "06_runestone_tortoise/06_runestone_tortoise.blend",
+      "textures": {
+        "baseColor": "06_runestone_tortoise/Textures/BaseColor.png",
+        "emission": "06_runestone_tortoise/Textures/Emission.png",
+        "metallicRoughness": "06_runestone_tortoise/Textures/MetallicRoughness.png",
+        "metallicSmoothness": "06_runestone_tortoise/Textures/MetallicSmoothness.png"
+      },
+      "triangles": 3020,
+      "bones": 19,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "06_runestone_tortoise|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "06_runestone_tortoise|Walk",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "06_runestone_tortoise|Attack",
+          "frameStart": 1,
+          "frameEnd": 41,
+          "fps": 30,
+          "durationSeconds": 1.3333333333333333,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          2.113600015640259,
+          3.0685999393463135,
+          1.5237808227539062
+        ],
+        "editableMeshCount": 17,
+        "vertices": 1836,
+        "weighting": "One rigid bone per vertex, 1.0; designed faceted articulated segments",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "glasswing_moth",
+      "sourceAssetId": "07_glasswing_moth",
+      "name": "Glasswing Moth",
+      "nameJa": "硝羽の夜蛾",
+      "designJa": "硝子のような角張った四枚羽。大きな眼状紋が光る",
+      "fbx": "07_glasswing_moth/07_glasswing_moth.fbx",
+      "glb": "07_glasswing_moth/07_glasswing_moth.glb",
+      "blend": "07_glasswing_moth/07_glasswing_moth.blend",
+      "textures": {
+        "baseColor": "07_glasswing_moth/Textures/07_glasswing_moth_BaseColor.png",
+        "emission": "07_glasswing_moth/Textures/07_glasswing_moth_Emission.png",
+        "metallicRoughness": "07_glasswing_moth/Textures/07_glasswing_moth_MetallicRoughness.png"
+      },
+      "triangles": 1400,
+      "bones": 16,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "07_glasswing_moth|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "07_glasswing_moth|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "07_glasswing_moth|Attack",
+          "frameStart": 1,
+          "frameEnd": 49,
+          "fps": 30,
+          "durationSeconds": 1.6,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "+Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          4.43000054359436,
+          0.7777926325798035,
+          2.8000000715255737
+        ],
+        "editableMeshCount": 15,
+        "vertices": 914,
+        "weighting": "Each vertex bound to exactly one deform bone with weight 1.0",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "obsidian_scorpion",
+      "sourceAssetId": "08_obsidian_scorpion",
+      "name": "Obsidian Scorpion",
+      "nameJa": "黒曜の針蠍",
+      "designJa": "二本の鋏と八本脚。節のある尾の先に琥珀の針",
+      "fbx": "08_obsidian_scorpion/08_obsidian_scorpion.fbx",
+      "glb": "08_obsidian_scorpion/08_obsidian_scorpion.glb",
+      "blend": "08_obsidian_scorpion/08_obsidian_scorpion.blend",
+      "textures": {
+        "baseColor": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_BaseColor.png",
+        "emission": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_Emission.png",
+        "metallicRoughness": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_MetallicRoughness.png"
+      },
+      "triangles": 1936,
+      "bones": 33,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "08_obsidian_scorpion|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "08_obsidian_scorpion|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "08_obsidian_scorpion|Attack",
+          "frameStart": 1,
+          "frameEnd": 49,
+          "fps": 30,
+          "durationSeconds": 1.6,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "+Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          3.48221755027771,
+          3.546954870223999,
+          2.394552528858185
+        ],
+        "editableMeshCount": 32,
+        "vertices": 1162,
+        "weighting": "Each vertex bound to exactly one deform bone with weight 1.0",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "lantern_wisp",
+      "sourceAssetId": "09_lantern_wisp",
+      "name": "Lantern Wisp",
+      "nameJa": "灯籠の迷い火",
+      "designJa": "花冠に包まれた光る単眼。帯を揺らしながら浮遊する",
+      "fbx": "09_lantern_wisp/09_lantern_wisp.fbx",
+      "glb": "09_lantern_wisp/09_lantern_wisp.glb",
+      "blend": "09_lantern_wisp/09_lantern_wisp.blend",
+      "textures": {
+        "baseColor": "09_lantern_wisp/Textures/09_lantern_wisp_BaseColor.png",
+        "emission": "09_lantern_wisp/Textures/09_lantern_wisp_Emission.png",
+        "metallicRoughness": "09_lantern_wisp/Textures/09_lantern_wisp_MetallicRoughness.png"
+      },
+      "triangles": 880,
+      "bones": 29,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "09_lantern_wisp|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "09_lantern_wisp|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "09_lantern_wisp|Attack",
+          "frameStart": 1,
+          "frameEnd": 49,
+          "fps": 30,
+          "durationSeconds": 1.6,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "+Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          1.6047112941741943,
+          1.5907050371170044,
+          2.7050002217292786
+        ],
+        "editableMeshCount": 28,
+        "vertices": 550,
+        "weighting": "Each vertex bound to exactly one deform bone with weight 1.0",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    },
+    {
+      "modelId": "abyssal_bell",
+      "sourceAssetId": "10_abyssal_bell",
+      "name": "Abyssal Bell",
+      "nameJa": "深淵の鈴海月",
+      "designJa": "襞のある鈴型の傘と、多節の触手を持つ浮遊生物",
+      "fbx": "10_abyssal_bell/10_abyssal_bell.fbx",
+      "glb": "10_abyssal_bell/10_abyssal_bell.glb",
+      "blend": "10_abyssal_bell/10_abyssal_bell.blend",
+      "textures": {
+        "baseColor": "10_abyssal_bell/Textures/10_abyssal_bell_BaseColor.png",
+        "emission": "10_abyssal_bell/Textures/10_abyssal_bell_Emission.png",
+        "metallicRoughness": "10_abyssal_bell/Textures/10_abyssal_bell_MetallicRoughness.png"
+      },
+      "triangles": 1642,
+      "bones": 26,
+      "meshCount": 1,
+      "materialCount": 1,
+      "clips": [
+        {
+          "name": "Idle",
+          "takeName": "10_abyssal_bell|Idle",
+          "frameStart": 1,
+          "frameEnd": 61,
+          "fps": 30,
+          "durationSeconds": 2.0,
+          "loop": true
+        },
+        {
+          "name": "Walk",
+          "takeName": "10_abyssal_bell|Walk",
+          "frameStart": 1,
+          "frameEnd": 33,
+          "fps": 30,
+          "durationSeconds": 1.0666666666666667,
+          "loop": true
+        },
+        {
+          "name": "Attack",
+          "takeName": "10_abyssal_bell|Attack",
+          "frameStart": 1,
+          "frameEnd": 49,
+          "fps": 30,
+          "durationSeconds": 1.6,
+          "loop": false
+        }
+      ],
+      "source": {
+        "blenderVersion": "4.3.2",
+        "units": "meters",
+        "forward": "-Y",
+        "up": "+Z",
+        "rootMotion": false,
+        "dimensionsMeters": [
+          2.2783868312835693,
+          2.2735705375671387,
+          2.8900001645088196
+        ],
+        "editableMeshCount": 25,
+        "vertices": 973,
+        "weighting": "Each vertex bound to exactly one deform bone with weight 1.0",
+        "textureAtlasWidth": 256,
+        "textureAtlasHeight": 256,
+        "runtimeVerified": false
+      }
+    }
+  ],
+  "totals": {
+    "models": 10,
+    "meshes": 10,
+    "triangles": 20562,
+    "bones": 209,
+    "clips": 30
+  },
+  "files": [
+    {
+      "path": "01_ember_warden/01_ember_warden.blend",
+      "bytes": 2466469,
+      "sha256": "93fff9befbe6c8b8ee20261f677382f306ee959558a700da2a60786526bb7b16",
+      "sourceSha256": "41ce56bad59ce7e07f1a5746e1027abf8d699abe068e29680365b62f4795d210",
+      "sanitized": true
+    },
+    {
+      "path": "01_ember_warden/01_ember_warden.fbx",
+      "bytes": 494618,
+      "sha256": "53b4158b7cf27c8b3439865b4a73d15444e470a68391310aa00118d355ef8dc1",
+      "sourceSha256": "d03c5ddc14dc1de297e3f2c652a814fc10e62dad57d94d52fd7bc5b6473b8127",
+      "sanitized": true
+    },
+    {
+      "path": "01_ember_warden/01_ember_warden.glb",
+      "bytes": 371036,
+      "sha256": "a25d7dc44fb8048e4bfbff1f6ad6c6cbb914d103cac7705fbfc5454f64d96c68",
+      "sourceSha256": "a25d7dc44fb8048e4bfbff1f6ad6c6cbb914d103cac7705fbfc5454f64d96c68",
+      "sanitized": false
+    },
+    {
+      "path": "01_ember_warden/Textures/BaseColor.png",
+      "bytes": 935,
+      "sha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sourceSha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sanitized": false
+    },
+    {
+      "path": "01_ember_warden/Textures/Emission.png",
+      "bytes": 737,
+      "sha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sourceSha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sanitized": false
+    },
+    {
+      "path": "01_ember_warden/Textures/MetallicRoughness.png",
+      "bytes": 873,
+      "sha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sourceSha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sanitized": false
+    },
+    {
+      "path": "02_mirecap_stomper/02_mirecap_stomper.blend",
+      "bytes": 2446721,
+      "sha256": "c6fc4291b46897c744ec4d61317bf02ab5f1fed53bcf4f2ec9a1c695c75da77b",
+      "sourceSha256": "1591349bcbe3cd620bf2afd59ec28dcc645f3e63b07e87a8c85fc6e33e0d8eab",
+      "sanitized": true
+    },
+    {
+      "path": "02_mirecap_stomper/02_mirecap_stomper.fbx",
+      "bytes": 499527,
+      "sha256": "658fbf95d859b7eac269254df270346255b678e2092df017b635c8c099e68272",
+      "sourceSha256": "ef8fa081334e71c31345987f226172304956eb431629f24537fc6453fffce3a8",
+      "sanitized": true
+    },
+    {
+      "path": "02_mirecap_stomper/02_mirecap_stomper.glb",
+      "bytes": 327032,
+      "sha256": "6965c33a7de1cea5177f5feb5701598fd830e0a332c4db80491c5ed925c58b7c",
+      "sourceSha256": "6965c33a7de1cea5177f5feb5701598fd830e0a332c4db80491c5ed925c58b7c",
+      "sanitized": false
+    },
+    {
+      "path": "02_mirecap_stomper/Textures/BaseColor.png",
+      "bytes": 935,
+      "sha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sourceSha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sanitized": false
+    },
+    {
+      "path": "02_mirecap_stomper/Textures/Emission.png",
+      "bytes": 737,
+      "sha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sourceSha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sanitized": false
+    },
+    {
+      "path": "02_mirecap_stomper/Textures/MetallicRoughness.png",
+      "bytes": 873,
+      "sha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sourceSha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sanitized": false
+    },
+    {
+      "path": "03_duskwing_oracle/03_duskwing_oracle.blend",
+      "bytes": 2443225,
+      "sha256": "61c23180fc9747967038ca98c5aa9b0b087d6ad9bd4c2c6a2ac62a5633c4aafd",
+      "sourceSha256": "5f382b5c4dc5d7820aa2c37d2ce1c19ae804738b93108e0aca975ac88278a33f",
+      "sanitized": true
+    },
+    {
+      "path": "03_duskwing_oracle/03_duskwing_oracle.fbx",
+      "bytes": 495543,
+      "sha256": "6a61ab964ae0cbd11b9c1a27544b3e099404704975c2c9aa369d0b302e0adb68",
+      "sourceSha256": "5b460c9f6249704b1b9c75e4e147b1a6a614a8470d3d9fa562002829ea393936",
+      "sanitized": true
+    },
+    {
+      "path": "03_duskwing_oracle/03_duskwing_oracle.glb",
+      "bytes": 325288,
+      "sha256": "a3e597832f5b6250d15e5f9be3276d72b3ae00cb0ae24492eafdd4d82052b9d3",
+      "sourceSha256": "a3e597832f5b6250d15e5f9be3276d72b3ae00cb0ae24492eafdd4d82052b9d3",
+      "sanitized": false
+    },
+    {
+      "path": "03_duskwing_oracle/Textures/BaseColor.png",
+      "bytes": 935,
+      "sha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sourceSha256": "12a1dc1b72d049e6826325b8a4802c03ba0fa86f2cc85e1fda9e8a06c442727c",
+      "sanitized": false
+    },
+    {
+      "path": "03_duskwing_oracle/Textures/Emission.png",
+      "bytes": 737,
+      "sha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sourceSha256": "d9d494d7130a71902565692168d1416eaf03affdeb04111a819364cf82c6c883",
+      "sanitized": false
+    },
+    {
+      "path": "03_duskwing_oracle/Textures/MetallicRoughness.png",
+      "bytes": 873,
+      "sha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sourceSha256": "f894e5acf54947e45ce7844cb3a8b4583cfdd87edcf5d05bfd5e5aa36c89718b",
+      "sanitized": false
+    },
+    {
+      "path": "04_thorncrown_stag/04_thorncrown_stag.blend",
+      "bytes": 2729429,
+      "sha256": "08b26dcff839853ca22fbdd1c4bcb23ac4a8ff2ffb6e901174710c82941b4da9",
+      "sourceSha256": "762b65b77820fabba3bfffba49970d69c10b1bceef7334ce18e2b39d1a6f14b1",
+      "sanitized": true
+    },
+    {
+      "path": "04_thorncrown_stag/04_thorncrown_stag.fbx",
+      "bytes": 575611,
+      "sha256": "a62f0a503a0071b60953ccf0ef14e829701f1c2cd7e9f8bc9f80e934bed99f20",
+      "sourceSha256": "b07e15267dc7be0a330b3407ca200b9445e5b7f89053291322418c64b8a02604",
+      "sanitized": true
+    },
+    {
+      "path": "04_thorncrown_stag/04_thorncrown_stag.glb",
+      "bytes": 326472,
+      "sha256": "5f8c524307d9ef1795e3d86e39f3b25d51756c5e0e18550f5d139b50de8fc647",
+      "sourceSha256": "5f8c524307d9ef1795e3d86e39f3b25d51756c5e0e18550f5d139b50de8fc647",
+      "sanitized": false
+    },
+    {
+      "path": "04_thorncrown_stag/Textures/BaseColor.png",
+      "bytes": 2046,
+      "sha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sourceSha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sanitized": false
+    },
+    {
+      "path": "04_thorncrown_stag/Textures/Emission.png",
+      "bytes": 1911,
+      "sha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sourceSha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sanitized": false
+    },
+    {
+      "path": "04_thorncrown_stag/Textures/MetallicRoughness.png",
+      "bytes": 2022,
+      "sha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sourceSha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sanitized": false
+    },
+    {
+      "path": "04_thorncrown_stag/Textures/MetallicSmoothness.png",
+      "bytes": 2038,
+      "sha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sourceSha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sanitized": false
+    },
+    {
+      "path": "05_frostjaw_prowler/05_frostjaw_prowler.blend",
+      "bytes": 3018593,
+      "sha256": "aabfdbe0e45850a8abb482ca7d87036ecb69394f480191826c5c3a7ab4806242",
+      "sourceSha256": "a439042cd7ada102461b4f5bf4a25403a1d2010dbec484bd62fae23f9d01d1ce",
+      "sanitized": true
+    },
+    {
+      "path": "05_frostjaw_prowler/05_frostjaw_prowler.fbx",
+      "bytes": 642954,
+      "sha256": "ae318de47a84e822145a1828682ab6cb84c35095318fd5b763f9f97b5d85f336",
+      "sourceSha256": "3780ac67e142069ace7b2ec8424bed7b0edcd1a20ea664e038c7a307b84e0866",
+      "sanitized": true
+    },
+    {
+      "path": "05_frostjaw_prowler/05_frostjaw_prowler.glb",
+      "bytes": 410364,
+      "sha256": "cb3babcc378f0226f9de81b01dcde8a342b6c769c4b50fc3234d267656c6a7b7",
+      "sourceSha256": "cb3babcc378f0226f9de81b01dcde8a342b6c769c4b50fc3234d267656c6a7b7",
+      "sanitized": false
+    },
+    {
+      "path": "05_frostjaw_prowler/Textures/BaseColor.png",
+      "bytes": 2046,
+      "sha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sourceSha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sanitized": false
+    },
+    {
+      "path": "05_frostjaw_prowler/Textures/Emission.png",
+      "bytes": 1911,
+      "sha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sourceSha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sanitized": false
+    },
+    {
+      "path": "05_frostjaw_prowler/Textures/MetallicRoughness.png",
+      "bytes": 2022,
+      "sha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sourceSha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sanitized": false
+    },
+    {
+      "path": "05_frostjaw_prowler/Textures/MetallicSmoothness.png",
+      "bytes": 2038,
+      "sha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sourceSha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sanitized": false
+    },
+    {
+      "path": "06_runestone_tortoise/06_runestone_tortoise.blend",
+      "bytes": 2941485,
+      "sha256": "6a1e6f14dad21918b7dbfed73c0b8a1851926214a0ba8e874ad5117058508153",
+      "sourceSha256": "3b4e6aff6021ea0d6d7eed68bca2251c748ead91d0786869c1ee8833e3bcb6c1",
+      "sanitized": true
+    },
+    {
+      "path": "06_runestone_tortoise/06_runestone_tortoise.fbx",
+      "bytes": 632664,
+      "sha256": "0ee87ebe7ef6d78d354ba1a2d9aa65efb5b5dee783754344a5da4e346e40603e",
+      "sourceSha256": "ae31c3406d052de6cb8634b9c10474ca8d29da6c9bee0c0b8d1ca1eb380ecd68",
+      "sanitized": true
+    },
+    {
+      "path": "06_runestone_tortoise/06_runestone_tortoise.glb",
+      "bytes": 464948,
+      "sha256": "464a2d8e42fb5f82dac22ed9dc915413d8b0b06dfb1146857444df40c4e5e399",
+      "sourceSha256": "464a2d8e42fb5f82dac22ed9dc915413d8b0b06dfb1146857444df40c4e5e399",
+      "sanitized": false
+    },
+    {
+      "path": "06_runestone_tortoise/Textures/BaseColor.png",
+      "bytes": 2046,
+      "sha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sourceSha256": "5bd9a99d2e8ac732b359c9a63e817f5dac5b6fd64994dbfae1a251bcfc94e71a",
+      "sanitized": false
+    },
+    {
+      "path": "06_runestone_tortoise/Textures/Emission.png",
+      "bytes": 1911,
+      "sha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sourceSha256": "c1777db019504e58b68056ab106d7067606f8537e6bfdf8e2fa5901a142dfe19",
+      "sanitized": false
+    },
+    {
+      "path": "06_runestone_tortoise/Textures/MetallicRoughness.png",
+      "bytes": 2022,
+      "sha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sourceSha256": "84a8bca39bc2f0c9bcc8fbe74cb27d34fe36339467139489ff8b44a1d2fbe673",
+      "sanitized": false
+    },
+    {
+      "path": "06_runestone_tortoise/Textures/MetallicSmoothness.png",
+      "bytes": 2038,
+      "sha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sourceSha256": "a4434e420a7a9b6be717a3841fc5f343cac0e934b54fb8623dffeb0359d7333c",
+      "sanitized": false
+    },
+    {
+      "path": "07_glasswing_moth/07_glasswing_moth.blend",
+      "bytes": 2466077,
+      "sha256": "f13a18a68a8905e773d71971812b1d31590e1b0cd2d9dfeb33ecc68762603b74",
+      "sourceSha256": "c2693b937c514994f5c43ed130d6b81d43becda6a353f084033347b4d002d478",
+      "sanitized": true
+    },
+    {
+      "path": "07_glasswing_moth/07_glasswing_moth.fbx",
+      "bytes": 499096,
+      "sha256": "8bf2067e027a130862b456e37710fbcdff8f87f2900b2bf4bc72cd8ee931bab4",
+      "sourceSha256": "9996acf02128d218ea83a39b0c01401ee2133c1855837424ff49e86491e9d5ca",
+      "sanitized": true
+    },
+    {
+      "path": "07_glasswing_moth/07_glasswing_moth.glb",
+      "bytes": 270868,
+      "sha256": "f350af907cb1e5d96502828a94e38ce56a6eaac7e44ba0c142f5b8a65600b17f",
+      "sourceSha256": "f350af907cb1e5d96502828a94e38ce56a6eaac7e44ba0c142f5b8a65600b17f",
+      "sanitized": false
+    },
+    {
+      "path": "07_glasswing_moth/Textures/07_glasswing_moth_BaseColor.png",
+      "bytes": 2049,
+      "sha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sourceSha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sanitized": false
+    },
+    {
+      "path": "07_glasswing_moth/Textures/07_glasswing_moth_Emission.png",
+      "bytes": 1914,
+      "sha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sourceSha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sanitized": false
+    },
+    {
+      "path": "07_glasswing_moth/Textures/07_glasswing_moth_MetallicRoughness.png",
+      "bytes": 2013,
+      "sha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sourceSha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sanitized": false
+    },
+    {
+      "path": "08_obsidian_scorpion/08_obsidian_scorpion.blend",
+      "bytes": 4509753,
+      "sha256": "9d15024f021bc67e8727c9164dd7ea9c1473d7185e4aa8a2aba80ce61426a173",
+      "sourceSha256": "9aa55a9017bf4a7c6cd7147545214e12af00815cc8528ce09aff6fdd1956a52b",
+      "sanitized": true
+    },
+    {
+      "path": "08_obsidian_scorpion/08_obsidian_scorpion.fbx",
+      "bytes": 940213,
+      "sha256": "d5fee4cfcca6842e4737b93651c112b55aa2de75e5de736c0af48dc25cc84e29",
+      "sourceSha256": "a6953fcdcad347af05da565b06b5bb1e6796936c6768bc903b2d64ea740f5b6b",
+      "sanitized": true
+    },
+    {
+      "path": "08_obsidian_scorpion/08_obsidian_scorpion.glb",
+      "bytes": 394292,
+      "sha256": "8751bd5cd5ff76c7dd723c1ffc0e99d523d2b71f18c6f25cb6f74de22b8fecfa",
+      "sourceSha256": "8751bd5cd5ff76c7dd723c1ffc0e99d523d2b71f18c6f25cb6f74de22b8fecfa",
+      "sanitized": false
+    },
+    {
+      "path": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_BaseColor.png",
+      "bytes": 2049,
+      "sha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sourceSha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sanitized": false
+    },
+    {
+      "path": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_Emission.png",
+      "bytes": 1914,
+      "sha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sourceSha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sanitized": false
+    },
+    {
+      "path": "08_obsidian_scorpion/Textures/08_obsidian_scorpion_MetallicRoughness.png",
+      "bytes": 2013,
+      "sha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sourceSha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sanitized": false
+    },
+    {
+      "path": "09_lantern_wisp/09_lantern_wisp.blend",
+      "bytes": 3944981,
+      "sha256": "3b5b94b6f17557c27bcc05fb9169e90ea31e5f0be637c560c847154b15dd6011",
+      "sourceSha256": "92a99d0f6b3067c6025b2172ffbeb293c00cdbf249ac302f9fce33fa24894fb0",
+      "sanitized": true
+    },
+    {
+      "path": "09_lantern_wisp/09_lantern_wisp.fbx",
+      "bytes": 843946,
+      "sha256": "5981a277346cfe6f14f515f4ec9a4db294d100e79e492720e05f454432a83bd0",
+      "sourceSha256": "2e68735582b8e91cb79f80ce210f3483858dc23b2e20cc07a41615318d3cc38f",
+      "sanitized": true
+    },
+    {
+      "path": "09_lantern_wisp/09_lantern_wisp.glb",
+      "bytes": 271808,
+      "sha256": "e2c2d3f11d9302672ced46b0c81b1012f9514b0885186c4986a996c531e0f6ed",
+      "sourceSha256": "e2c2d3f11d9302672ced46b0c81b1012f9514b0885186c4986a996c531e0f6ed",
+      "sanitized": false
+    },
+    {
+      "path": "09_lantern_wisp/Textures/09_lantern_wisp_BaseColor.png",
+      "bytes": 2049,
+      "sha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sourceSha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sanitized": false
+    },
+    {
+      "path": "09_lantern_wisp/Textures/09_lantern_wisp_Emission.png",
+      "bytes": 1914,
+      "sha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sourceSha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sanitized": false
+    },
+    {
+      "path": "09_lantern_wisp/Textures/09_lantern_wisp_MetallicRoughness.png",
+      "bytes": 2013,
+      "sha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sourceSha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sanitized": false
+    },
+    {
+      "path": "10_abyssal_bell/10_abyssal_bell.blend",
+      "bytes": 3668297,
+      "sha256": "80114887fbca6cfefd9735c79fcfb7d38ae1dec03950d2412d1e67b95989f516",
+      "sourceSha256": "773476ca9949dbcecfdbe58d9650476bb58c497b186ac0edc6e8bac66924b762",
+      "sanitized": true
+    },
+    {
+      "path": "10_abyssal_bell/10_abyssal_bell.fbx",
+      "bytes": 788138,
+      "sha256": "867dc4372e93e1edabacc9f0ba3b26e99c069667c96e4ffe11ff7469fefdbf69",
+      "sourceSha256": "0508d3949816a7cf9ccd6f3b8c4e208217d4ef31036b57d97a4de31128d72f3a",
+      "sanitized": true
+    },
+    {
+      "path": "10_abyssal_bell/10_abyssal_bell.glb",
+      "bytes": 370528,
+      "sha256": "d83905acba64ca03acec3f3e2dc92fff333a33a2c8fee3609a30a86fe71f4258",
+      "sourceSha256": "d83905acba64ca03acec3f3e2dc92fff333a33a2c8fee3609a30a86fe71f4258",
+      "sanitized": false
+    },
+    {
+      "path": "10_abyssal_bell/Textures/10_abyssal_bell_BaseColor.png",
+      "bytes": 2049,
+      "sha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sourceSha256": "ed177fbb0befd9c79e35f060c0c2e301fd599e6b6dee8b33da40e3b599158a22",
+      "sanitized": false
+    },
+    {
+      "path": "10_abyssal_bell/Textures/10_abyssal_bell_Emission.png",
+      "bytes": 1914,
+      "sha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sourceSha256": "dcd509030ad43a8bfe21244f8993e49b5c83291a99c3fd4cd71deda3c405d583",
+      "sanitized": false
+    },
+    {
+      "path": "10_abyssal_bell/Textures/10_abyssal_bell_MetallicRoughness.png",
+      "bytes": 2013,
+      "sha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sourceSha256": "f18496b3c82345d368ac53d143fae50d753024b26cbfb195d2dfab6059430e9b",
+      "sanitized": false
+    }
+  ]
+}

@@ -25,6 +25,7 @@ namespace SodRpg.Mod
         private HostAuthority _host;
         private DreamforgeUi _ui;
         private PerformanceTuner _performance;
+        private MobModelSession _mobModels;
         private bool _hasFocus = true;
         private EventSystem _pausedEventSystem;
 
@@ -36,6 +37,7 @@ namespace SodRpg.Mod
                 Loc.Japanese = config.japanese;
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
+                _mobModels = new MobModelSession(mod?.path, config.customMobModels);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
@@ -60,6 +62,7 @@ namespace SodRpg.Mod
         {
             Loc.Japanese = config.japanese;
             _performance?.Configure(config);
+            _mobModels?.Configure(config.customMobModels);
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -80,6 +83,7 @@ namespace SodRpg.Mod
             BlockInputWhileMenuOpen.MenuOpen = block;
             BlockGameUi(block);
             _session.Tick();
+            _mobModels?.Tick();
             try
             {
                 _host.Tick();
@@ -251,6 +255,7 @@ namespace SodRpg.Mod
         private void OnDestroy()
         {
             // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
+            try { _mobModels?.Dispose(); } catch (Exception ex) { Log.Error("Mob models dispose: " + ex); }
             try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Icons dispose: " + ex); }
             try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
             try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
@@ -387,6 +392,14 @@ namespace SodRpg.Mod
         {
             if (!_devCommands) return;
             Rules.ReachSecurePoint(_session.Profile);
+        }
+
+        [ConsoleCommand("Dreamforge: show custom mob pack status and exact build tokens", "dreamforge_mobstatus")]
+        private void MobStatusCommand()
+        {
+            Debug.Log("[DreamforgeRPG] mobs=" + (_mobModels?.Status ?? "unavailable")
+                + " game=" + Application.version + " unity=" + Application.unityVersion
+                + " target=" + MobModelAssets.CurrentTarget());
         }
 
         [ConsoleCommand("Dreamforge: show profile summary", "dreamforge_status")]

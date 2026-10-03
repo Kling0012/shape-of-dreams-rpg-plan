@@ -16,3 +16,18 @@ jobs:
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore
       - run: dotnet test -c Release --no-build --verbosity normal
+
+  mob-adapter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      # Source-asset validation is enabled when the authorized complete archive is published.
+      - run: python -m unittest discover -s tools/MobAssetBuilder/tests -v
+      # Engine doubles compile the actual new adapter, but do not prove Unity/game compatibility.
+      - run: dotnet test tests/MobRuntime.Tests/MobRuntime.Tests.csproj -c Release --verbosity normal
