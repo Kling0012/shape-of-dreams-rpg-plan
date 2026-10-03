@@ -296,11 +296,12 @@ namespace SodRpg.Core.Tests
         {
             var rng = new Rng(31);
             var seen = new HashSet<string>();
-            for (int i = 0; i < 40000; i++) // v1.21 で固有品が増えたので試行を倍に
-            {
-                var r = Loot.RollRelic(rng, (Rarity)(i % 5), 10);
-                seen.Add(r.UniqueId ?? r.BaseId);
-            }
+            // Fixed seed; a bounded sample that scales with the weighted catalogue.
+            for (int i = 0; i < Content.Bases.Count * 30 && seen.Count < Content.Bases.Count; i++)
+                seen.Add(Loot.RollRelic(rng, Rarity.Common, 10).BaseId);
+            int target = Content.Bases.Count + Content.Uniques.Count;
+            for (int i = 0; i < Content.Uniques.Count * 40 && seen.Count < target; i++)
+                seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
             foreach (var b in Content.Bases) Assert.Contains(b.Id, seen);
             foreach (var u in Content.Uniques) Assert.Contains(u.Id, seen);
         }

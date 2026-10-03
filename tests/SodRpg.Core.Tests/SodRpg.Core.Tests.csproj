@@ -17,4 +17,8 @@
     <ProjectReference Include="..\..\src\SodRpg.Core\SodRpg.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../../docs/specs/v1.29-uniques-table.md" Link="ReviewedV129.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

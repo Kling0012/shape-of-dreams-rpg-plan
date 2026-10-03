@@ -14,6 +14,7 @@ namespace SodRpg.Mod
             public readonly GimmickWoundRuntime Wounds = new GimmickWoundRuntime();
             public readonly Dictionary<int, Entity> Victims = new Dictionary<int, Entity>();
             public readonly Dictionary<Actor, long> Casts = new Dictionary<Actor, long>();
+            public readonly Dictionary<long, object> PairActivations = new Dictionary<long, object>();
             public readonly Dictionary<int, GimmickHitContext> LastHits = new Dictionary<int, GimmickHitContext>();
             public readonly List<GimmickWoundRuntime.Tick> Ticks = new List<GimmickWoundRuntime.Tick>();
             public Action<EventInfoCast> CastHandler;
@@ -65,6 +66,30 @@ namespace SodRpg.Mod
                 return serial;
             }
             return 0;
+        }
+
+        private object PairActivation(HeroRuntime rt, Actor actor)
+        {
+            // A summon lives across many attacks; each native primary attack is a separate activation.
+            var basic = BasicAttackContext.Current;
+            if (basic != null && basic.Actor == actor)
+                return basic.Primary ? basic : null;
+            var state = InitializeGimmicksV129(rt);
+            long serial = GimmickActivation(state, actor);
+            if (serial == 0) return null;
+            if (!state.PairActivations.TryGetValue(serial, out var token))
+                state.PairActivations[serial] = token = new object();
+            return token;
+        }
+
+        private static PairComboHitKind PairHitKind(Actor actor)
+        {
+            // Native Dew.Contents types distinguish the direct explosion from aura ticks.
+            if (actor is Ai_R_BaptismOfSun baptism && !baptism.skipBuff)
+                return PairComboHitKind.InitialExplosion;
+            if (actor is Ai_Q_EmbracingTheChill_Explosion)
+                return PairComboHitKind.TerminalExplosion;
+            return PairComboHitKind.Any;
         }
 
         private void FireGimmicksV129(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim,
@@ -281,6 +306,7 @@ namespace SodRpg.Mod
             foreach (var cast in casts)
             {
                 rt.Gimmicks.ForgetActivation(state.Casts[cast]);
+                state.PairActivations.Remove(state.Casts[cast]);
                 state.Casts.Remove(cast);
             }
             state.Ticks.Clear();
@@ -325,10 +351,12 @@ namespace SodRpg.Mod
             foreach (var pair in _gimmickV129)
             {
                 pair.Key.Gimmicks.ClearTransient();
+                pair.Key.PairCombos.ClearTransient();
                 pair.Key.PendingGimmicks.Clear();
                 pair.Value.Wounds.Clear();
                 pair.Value.Victims.Clear();
                 pair.Value.Casts.Clear();
+                pair.Value.PairActivations.Clear();
                 pair.Value.LastHits.Clear();
                 if (pair.Value.Rampart != null && pair.Value.Rampart.isActive) pair.Value.Rampart.Destroy();
                 pair.Value.Rampart = null;

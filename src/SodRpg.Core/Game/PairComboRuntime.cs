@@ -75,6 +75,19 @@ namespace SodRpg.Core.Game
             return state;
         }
 
+        /// <summary>Zone transitions discard marks, windows and cast identities, retaining cooldowns.</summary>
+        public void ClearTransient()
+        {
+            foreach (var state in _states)
+            {
+                state.Marks?.Clear();
+                state.WindowActive = false;
+                state.WindowUntil = 0f;
+                if (state.Entry.Def.OncePerActivation)
+                    state.FiredActivations = new ConditionalWeakTable<object, State>();
+            }
+        }
+
         public void PruneExpired(float now)
         {
             if (!Gimmicks.Finite(now)) return;
@@ -93,7 +106,7 @@ namespace SodRpg.Core.Game
         /// swing, shot or explosion, and a new reference for the next activation. Time is not a key.
         /// Integration point: HostAuthority.OnSkillUse(EventInfoSkillUse) / OnMemoryDamage /
         /// QueueGimmicks must propagate that identity, including passive and summon activations.
-        /// The current host forwards only the memory name, so missing identity fails closed.
+        /// The host forwards native cast or primary attack identity; missing identity fails closed.
         /// Initial/terminal explosion payoffs also require the host's explicit hit kind;
         /// memory attribution alone cannot distinguish initial damage from periodic damage.
         /// </summary>

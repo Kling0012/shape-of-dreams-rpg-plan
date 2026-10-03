@@ -499,5 +499,27 @@ namespace SodRpg.Core.Tests
             Assert.Equal(effect, def.Effect);
         }
 
+        [Fact]
+        public void Zone_transition_clears_marks_and_windows_but_keeps_the_native_interval()
+        {
+            var marked = Def("Vesper", 2); var equipped = Equipped(marked);
+            var runtime = Runtime(Entry(marked));
+            Start(runtime, marked, equipped);
+            runtime.ClearTransient();
+            Assert.Empty(Pay(runtime, marked, equipped, now: 0.1f));
+            Start(runtime, marked, equipped, now: 0.2f);
+            Assert.Single(Pay(runtime, marked, equipped, now: 0.3f));
+
+            var window = Def("Nachia", 2); equipped = Equipped(window);
+            runtime = Runtime(Entry(window));
+            Start(runtime, window, equipped);
+            Assert.Single(Pay(runtime, window, equipped, now: 0.1f));
+            runtime.ClearTransient();
+            Assert.Empty(Pay(runtime, window, equipped, now: 2f));
+            Start(runtime, window, equipped, now: 0.2f);
+            Assert.Empty(Pay(runtime, window, equipped, now: 0.3f));
+            Assert.Single(Pay(runtime, window, equipped, now: 2f));
+        }
+
     }
 }

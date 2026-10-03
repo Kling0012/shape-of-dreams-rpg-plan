@@ -2121,7 +2121,7 @@ namespace SodRpg.Mod
                 rt.PairCombos.Fire((PairComboTrigger)trigger, memory, now,
                     victim != null ? victim.GetInstanceID() : 0, damage,
                     pairGenerated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0,
-                    rt.PairMemories, HasOwnSummons(rt), requests);
+                    rt.PairMemories, HasOwnSummons(rt), requests, PairActivation(rt, actor), PairHitKind(actor));
             }
             QueueGimmickRequests(rt, victim, now);
         }

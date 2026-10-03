@@ -26,7 +26,11 @@ namespace SodRpg.Core.Tests
 
         private static Relic AddRelic(Profile p, Rarity rarity, Slot slot, int seed)
         {
-            var m = Loot.RollRelic(new Rng((ulong)seed), rarity, 5, slot);
+            var rng = new Rng((ulong)seed);
+            Relic m;
+            do { m = Loot.RollRelic(rng, rarity, 5, slot); }
+            while (p.FindStash(m.Uid) != null); // Fixtures must represent distinct physical relics.
+
             p.Stash.Add(m);
             return m;
         }

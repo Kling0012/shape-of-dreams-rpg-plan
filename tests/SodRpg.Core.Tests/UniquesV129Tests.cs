@@ -6,7 +6,7 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>v1.29 パス1：既存の効果と属性の反応だけで組んだ固有品52個とセット4種。新効果P1〜P44と絆の行は docs/specs/v1.29-uniques-deferred.md でパス2待ち。</summary>
+    /// <summary>v1.29 パス1：既存の効果と属性の反応だけで組んだ固有品52個とセット4種。第2回入力の全件照合は ContentTableV129Tests。</summary>
     public class UniquesV129Tests
     {
         /// <summary>パス1で取り込んだ固有品（両方の効果が既存の Power か反応4つ）。</summary>
@@ -80,10 +80,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(14, bySlot(Slot.Hands));
             Assert.Equal(9, bySlot(Slot.Feet));
             Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(623, Content.Uniques.Count); // 559 + 52 + セット部位12
-            Assert.Equal(539, Content.Uniques.Count(u => u.SetId == null)); // 487 + 52
-            Assert.Equal(141, Content.Uniques.Count(u => u.Link != null)); // 133 + 52のうち連携つき8
-            Assert.Equal(28, Content.Sets.Count); // 24 + 4
+            Assert.Equal(1171, Content.Uniques.Count); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(1030, Content.Uniques.Count(u => u.SetId == null)); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(350, Content.Uniques.Count(u => u.Link != null)); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(47, Content.Sets.Count); // v1.29 pass 2; P37 content remains deferred.
             Assert.Equal(12, Content.Uniques.Count(u => u.SetId != null && Pass1SetIds.Contains(u.SetId)));
         }
 

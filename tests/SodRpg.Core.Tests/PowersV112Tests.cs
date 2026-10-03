@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
                     foreach (var pl in u.Powers)
                         Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
             }
-            Assert.Equal(539, Content.Uniques.Count(u => u.SetId == null)); // v1.27.1：+12、v1.29 パス1：既存の効果と反応だけで組んだ固有品 +52
+            Assert.Equal(1030, Content.Uniques.Count(u => u.SetId == null)); // v1.29 pass 2; P37 content remains deferred.
         }
     }
 }

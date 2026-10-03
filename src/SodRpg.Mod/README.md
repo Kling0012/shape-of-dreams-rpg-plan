@@ -52,10 +52,10 @@
 ### v1.30 の合わせ技 / Memory-pair combos
 
 - 枝はロードアウトの順を基に、アイデンティティA → Q-A → R-A → 移動 → アイデンティティB → Q-B → R-B と並ぶ。Bismuthは視界 → 無垢な魂 → 歪な疾走 → 業火物語 → 勇敢なる心 → 歪な精神。星と橋のIDは変更しない。
-- 62組の定義は`PairCombos.cs`に集約。効果量は1段あたりの値×橋の段数。設計表の元の3段分の値も保持するが、非線形の値は発動計算には使わない。
-- 移動の記憶は受け手のみ。設計表で移動を起点にするVesper④・Cetus③④は、定義を残して発動を禁止し、説明に理由を表示する。
-- Equip both memories and allocate at least one rank in the bridge and both adjacent fourth stars. Marks and windows last four seconds. Cooldowns apply only where specified; extra damage cannot start or complete another combo.
-- 通信はProtocol 7（変更前の6から+1）。新しい`c:`セクションは合わせ技IDと橋の段数を運ぶ。旧版は非空の未知セクションを無視できないため、参加者全員の版を合わせる。
+- 62組の定義は`PairCombos.cs`に集約。効果量はレビュー済みの1・2・3段の値をそのまま使う（単純な比例計算にはしない）。
+- 移動の記憶は原則として受け手。ダメージのある重装タックル・フロストチャージは命中だけを起点にできる。回避・移動の使用そのものでは発動しない。
+- Equip both memories and allocate at least one rank in the bridge and both adjacent fourth stars. Marks last four seconds; the Cataclysm and Serpentine Blessing windows last twelve seconds and other windows last four seconds. Cooldowns apply only where specified; extra damage cannot start or complete another combo.
+- 統合後の通信はProtocol 9。新しい`c:`セクションは合わせ技IDと橋の段数を運ぶ。旧版は非空の未知セクションを無視できないため、参加者全員の版を合わせる。
 - 星図の説明は日本語・英語で生成し、2つの記憶の装着条件を✓／・で表示する。Unity内の表示と実戦は未確認。
 
 

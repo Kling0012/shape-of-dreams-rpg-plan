@@ -104,7 +104,8 @@ namespace SodRpg.Core.Tests
             foreach (var id in ids) Assert.True(Content.TryGetUnique(id, out _), id);
             var rng = new Rng(44);
             var seen = new HashSet<string>();
-            for (int i = 0; i < 3000; i++) seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
+            for (int i = 0; i < Content.Uniques.Count * 30 && ids.Any(id => !seen.Contains(id)); i++)
+                seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
             foreach (var id in ids) Assert.Contains(id, seen);
         }
 

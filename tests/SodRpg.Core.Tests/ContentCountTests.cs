@@ -21,8 +21,8 @@ namespace SodRpg.Core.Tests
             var counts = new (string Name, int Count, int Min)[]
             {
                 ("bases", Content.Bases.Count, 360),
-                ("uniques", Content.Uniques.Count, 623), // v1.29 パス1：559 + 52 + セット部位12
-                ("sets", Content.Sets.Count, 28), // v1.29 パス1：24 + 4
+                ("uniques", Content.Uniques.Count, 1171), // v1.29 pass 2; P37 content remains deferred.
+                ("sets", Content.Sets.Count, 47), // v1.29 pass 2; P37 content remains deferred.
                 ("talents", Content.Talents.Count, 15),
                 ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),
                 ("heroSigils", HeroSigils.All.Count, 4),
