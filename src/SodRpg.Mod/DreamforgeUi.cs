@@ -1229,7 +1229,12 @@ namespace SodRpg.Mod
             var rows = RowTexts(list, hero, height);
             _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
             if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
-            for (int i = 0; i < list.Count; i++)
+            // 保管庫は最大420個まで広がるので、見えている行だけを描く（行の高さは一定）。
+            const float rowStep = 37f; // 行36＋余白1（GUILayout は隣り合う余白を重ねる）
+            int first = Math.Max(0, (int)(_scrollList.y / rowStep) - 2);
+            int last = Math.Min(list.Count, first + (int)(height / rowStep) + 5);
+            if (first > 0) GUILayout.Space(first * rowStep);
+            for (int i = first; i < last; i++)
             {
                 var r = list[i];
                 GUILayout.BeginHorizontal();
@@ -1245,6 +1250,7 @@ namespace SodRpg.Mod
                 }
                 GUILayout.EndHorizontal();
             }
+            if (last < list.Count) GUILayout.Space((list.Count - last) * rowStep);
             GUILayout.EndScrollView();
         }
 

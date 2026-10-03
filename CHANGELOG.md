@@ -12,6 +12,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 実装済み / Implemented
 
+- **鞄と保管庫を大きく広げられるようになりました**（工房）：大きな鞄は10段まで（最大80個）、広い保管庫は10段まで（最大420個）。遺物の一覧は見えている行だけを描くので、数が増えても重くなりません。 / **Satchel and stash can grow much larger** (Workshop): satchel up to 80, stash up to 420; the relic list draws only visible rows.
 - **特性を洗い直せるようになりました**（鍛冶タブ）：遺物の特性を全部まとめて引き直します。特性の数・レア度・土台・強化値・限界突破・覚醒・固有品の固有効果はそのままで、新しい遺物を作るときと同じ抽選で引き直ります。費用は同じ遺物で使うたびに上がり、回数は遺物に保存されます。鍵つき・装着中・取引中・再調律の候補が出ている遺物は対象外です。 / **Affix reroll** (Forge tab): redraw every affix on a relic at once; affix count, rarity, base, enhancement, limit breaks, awakening and unique powers are all kept, and the redraw uses the same roll as a freshly made relic. The cost rises with each use on the same relic and the count is stored on the relic. Locked, equipped, trade-pending and retune-offered relics are excluded.
 - **悪夢化「棘皮」と、棘を返す変種を弱めました**：跳ね返すダメージは、与えたダメージの15%で、1回につき攻撃した旅人の最大HPの1.5%まで（夢の圧と潜行で増えます）。同じ敵からは0.4秒に1回までです。火力が上がるほど自分が削られる問題を直しました。 / **Thorned nightmares and thorny variants are weaker**: reflection is 15% of damage dealt, capped at 1.5% of the attacker's max HP per hit (raised by pressure and delve), at most once per 0.4 s per enemy.
 - **まとめて分解するレア度を選べるようになりました**（鍛冶タブ）：コモンまで／アンコモンまで／レアまで／エピックまで。固有品・鍵つき・装着中の遺物は対象外です。レア以上を含むときは、件数を示したうえで2回押しで確定します。 / **Choose the rarity for bulk salvage**: up to Common / Uncommon / Rare / Epic; legendaries, locked and equipped relics are never included.
