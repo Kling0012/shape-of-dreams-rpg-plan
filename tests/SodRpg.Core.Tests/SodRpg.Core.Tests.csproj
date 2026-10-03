@@ -21,4 +21,8 @@
     <None Include="../../docs/specs/v1.29-uniques-table.md" Link="ReviewedV129.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
+  </ItemGroup>
+
 </Project>

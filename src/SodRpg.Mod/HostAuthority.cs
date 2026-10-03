@@ -71,6 +71,7 @@ namespace SodRpg.Mod
             public int ReportedLinks;
             // 星図のエッセンス枠（v1.27）。旅人の最初の枠の数と、前回こちらが足した分。
             public bool GemSlotsCaptured;
+            public HeroSkill GemSlotOwner;
             public int BaseGemIdentity, BaseGemMovement;
             public int AddedGemIdentity, AddedGemMovement;
         }
@@ -1433,62 +1434,9 @@ namespace SodRpg.Mod
             summon.dealtDamageProcessor.Add(processor);
         }
 
-        /// <summary>
-        /// 星図のエッセンス枠（v1.27）。Build の分だけ SetMaxGemCount を広げる。
-        /// 旅人の最初の枠の数は初回だけ覚える。本体や他の効果（混沌の聖堂など）が足した分は
-        /// 「いまの枠 −（元の枠 + 前回こちらが足した分）」として取り出して、壊さずに保つ。
-        /// 枠が減ってはみ出たエッセンスは足元へ落とす（壊さない）。ホストだけで行う。
-        /// </summary>
-        private void ApplyGemSlots(HeroRuntime rt, Build build)
-        {
-            try
-            {
-                var skill = rt.Hero != null ? rt.Hero.Skill : null;
-                if (skill == null) return;
-                if (!rt.GemSlotsCaptured)
-                {
-                    rt.GemSlotsCaptured = true;
-                    rt.BaseGemIdentity = skill.GetMaxGemCount(HeroSkillLocation.Identity);
-                    rt.BaseGemMovement = skill.GetMaxGemCount(HeroSkillLocation.Movement);
-                    rt.AddedGemIdentity = 0;
-                    rt.AddedGemMovement = 0;
-                }
-                int addedIdentity = EssenceSlots.AddedFrom(build, Stat.EssenceSlotIdentity);
-                int addedMovement = EssenceSlots.AddedFrom(build, Stat.EssenceSlotMovement);
-                ApplyGemSlot(rt, skill, HeroSkillLocation.Identity, rt.BaseGemIdentity, rt.AddedGemIdentity, addedIdentity);
-                ApplyGemSlot(rt, skill, HeroSkillLocation.Movement, rt.BaseGemMovement, rt.AddedGemMovement, addedMovement);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Host: gem slots " + ex);
-            }
-        }
-
-        private void ApplyGemSlot(HeroRuntime rt, HeroSkill skill, HeroSkillLocation loc, int original, int previouslyAdded, int added)
-        {
-            int current = skill.GetMaxGemCount(loc);
-            int target = EssenceSlots.TargetMax(original, previouslyAdded, added, current);
-            if (target != current) skill.SetMaxGemCount(loc, target);
-            // 減ったとき、はみ出たエッセンスは番号が大きい枠から旅人の足元へ落とす。
-            int overflow = EssenceSlots.Overflow(skill.GetCurrentGemCount(loc), target);
-            if (overflow > 0)
-            {
-                var slots = new List<KeyValuePair<GemLocation, Gem>>();
-                foreach (var kv in skill.gems)
-                    if (kv.Key.skill == loc && kv.Value != null) slots.Add(kv);
-                slots.Sort((a, b) => b.Key.index.CompareTo(a.Key.index));
-                var dropAt = rt.Hero != null ? rt.Hero.position : default(Vector3);
-                for (int i = 0; i < overflow && i < slots.Count; i++) skill.UnequipGem(slots[i].Key, dropAt);
-            }
-            if (target != current || overflow > 0)
-                Log.Info($"Host: gem slots {rt.HeroKey}/{loc} {current} -> {target} (base {original}, stars +{added})" + (overflow > 0 ? $", dropped {overflow} essence(s) at the hero's feet" : ""));
-            // 次回の「他の効果の分」の計算は、いま設定した状態から。
-            if (loc == HeroSkillLocation.Identity) rt.AddedGemIdentity = added;
-            else rt.AddedGemMovement = added;
-        }
-
         private void Unhook(HeroRuntime rt)
         {
+            RestoreGemSlots(rt);
             UnhookNewPowers(rt);
             UnhookGimmicksV129(rt);
             UnhookGoldSpend(rt);
