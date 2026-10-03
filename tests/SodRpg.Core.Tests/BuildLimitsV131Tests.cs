@@ -40,8 +40,8 @@ namespace SodRpg.Core.Tests
             Assert.True(capacity.GimmickEntries <= BuildLimits.MaxGimmickEntries);
             Assert.True(capacity.LinkEntries + Content.SlotCount <= BuildLimits.MaxLinkEntries);
             Assert.True(capacity.PairComboEntries <= BuildLimits.MaxPairComboEntries);
-            Assert.Equal(StarProgression.MaxPoints, BuildLimits.MaxGimmickEntries);
-            Assert.Equal(StarProgression.MaxPoints + Content.SlotCount, BuildLimits.MaxLinkEntries);
+            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.MaxGimmickEntries);
+            Assert.Equal(StarProgression.MaxSpendablePoints + Content.SlotCount, BuildLimits.MaxLinkEntries);
             Assert.Equal(PairCombos.All.Count, BuildLimits.MaxPairComboEntries);
             Assert.Equal(Enum.GetValues(typeof(Stat)).Length, BuildLimits.MaxStatEntries);
             Assert.Equal(Enum.GetValues(typeof(Power)).Cast<Power>().Count(p => p != Power.None), BuildLimits.MaxPowerEntries);
@@ -54,7 +54,7 @@ namespace SodRpg.Core.Tests
             const string hero = "Hero_Cetus";
             const string memory = "St_D_IcyVeins";
             var anchor = HeroSigils.TreeFor(hero).Single(t => t.Id == "h.cetus.route.icy-veins.4");
-            var stars = Enumerable.Range(0, StarProgression.MaxPoints).Select(i => new ClusterStarDef
+            var stars = Enumerable.Range(0, StarProgression.MaxSpendablePoints).Select(i => new ClusterStarDef
             {
                 Kind = ClusterStarKind.Notable,
                 Name = new Txt("効果", "Effect"),
@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
                 Region = ClusterRegion.Memory(anchor.RouteId), Shape = ClusterShape.Chain, Stars = stars,
             };
             var generated = StarClusters.Generate(new[] { cluster }, new[] { anchor });
-            Assert.Equal(StarProgression.MaxPoints, BuildLimits.Analyze(generated).GimmickEntries);
+            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.Analyze(generated).GimmickEntries);
             Assert.Equal(BuildLimits.MaxGimmickEntries, BuildLimits.Analyze(generated).TotalEntries);
             foreach (var star in stars)
             {
@@ -76,7 +76,7 @@ namespace SodRpg.Core.Tests
                 star.Amount = 1;
             }
             generated = StarClusters.Generate(new[] { cluster }, new[] { anchor });
-            Assert.Equal(StarProgression.MaxPoints, BuildLimits.Analyze(generated).LinkEntries);
+            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.Analyze(generated).LinkEntries);
             Assert.Equal(BuildLimits.MaxLinkEntries, BuildLimits.Analyze(generated).LinkEntries + Content.SlotCount);
         }
 
@@ -115,7 +115,7 @@ namespace SodRpg.Core.Tests
                 for (int requirements = 1; requirements <= BuildLimits.MaxLinkRequirements; requirements++)
                 {
                     decimal fromEquipment = Content.SlotCount * Links.EquippedCap(kind, requirements);
-                    decimal fromStars = StarProgression.MaxPoints * Math.Max(
+                    decimal fromStars = StarProgression.MaxSpendablePoints * Math.Max(
                         Links.EquippedCap(kind, requirements), BuildLimits.Registered.LinkValuePerPoint(kind, requirements));
                     Assert.Equal(1000L * (fromEquipment + fromStars), BuildLimits.MaxLinkValueMilli(kind, requirements));
                     Assert.InRange(BuildLimits.MaxLinkValueMilli(kind, requirements), 1, int.MaxValue);

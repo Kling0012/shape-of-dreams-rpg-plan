@@ -335,7 +335,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>その旅人の星ポイントに、図鑑とテスト設定の共通ボーナスを加える。</summary>
-        public int TalentPoints(string heroKey) => (int)Math.Min(int.MaxValue,
+        public int TalentPoints(string heroKey) => (int)Math.Min(StarProgression.MaxSpendablePoints,
             (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints));
 
         /// <summary>確認用に足す星図ポイント（保存しない）。0〜100。</summary>

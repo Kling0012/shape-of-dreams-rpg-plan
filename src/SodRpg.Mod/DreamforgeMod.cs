@@ -166,6 +166,14 @@ namespace SodRpg.Mod
 
         private bool _devCommands;
 
+        /// <summary>確認用コマンドが使えるか。使えないときは、黙らずにコンソールへ一言出す（何も起きない理由が分かるように）。</summary>
+        private bool DevAllowed()
+        {
+            if (_devCommands) return true;
+            Debug.Log("[DreamforgeRPG] This command is not available.");
+            return false;
+        }
+
         [ConsoleCommand("Dreamforge: show time spent by this mod per frame (Update / OnGUI / save)", "dreamforge_perf")]
         private void PerfCommand()
         {
@@ -184,7 +192,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): travel to the nearest connected combat node (prefers unvisited)", "dreamforge_travelnext")]
         private void TravelNextCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             try
             {
                 var zm = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -272,7 +280,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-300, 0 = off)", "dreamforge_testpoints")]
         private void TestPointsCommand(int points)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             // 保存しない。ゲームを終えれば元に戻る。設定画面には置かない（誰でも触れる所に置かない）。
             Profile.TestBonusPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, points));
             _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points +" + Profile.TestBonusPoints));
@@ -281,7 +289,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: give relics for testing (count, rarity 0-4)", "dreamforge_give")]
         private void GiveCommand(int count, int rarity)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             var rng = p.TakeRng();
             for (int i = 0; i < Math.Max(1, Math.Min(count, 20)); i++)
@@ -299,18 +307,21 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: give legendaries whose id starts with a prefix for testing (e.g. set.cinder)", "dreamforge_giveunique")]
         private void GiveUniqueCommand(string prefix)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             var rng = p.TakeRng();
+            int given = 0;
             foreach (var u in Content.Uniques)
             {
                 if (string.IsNullOrEmpty(prefix) || !u.Id.StartsWith(prefix, StringComparison.Ordinal)) continue;
                 var r = Loot.RollUnique(rng, u, Math.Max(1, p.BestItemLevel));
+                given++;
                 if (p.Run != null) p.Run.Satchel.Add(r);
                 else p.Stash.Add(r);
                 _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + r.DisplayName, r.Rarity));
             }
             p.StoreRng(rng);
+            Debug.Log($"[DreamforgeRPG] giveunique '{prefix}': {given} item(s) added to the {(p.Run != null ? "satchel" : "stash")}.");
             _session.MarkDirty(true);
             _session.SaveNow();
         }
@@ -334,7 +345,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (host test): kill enemies within radius to test drops", "dreamforge_killnear")]
         private void KillNearCommand(float radius)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             if (!MakeSureServer()) return;
             var hero = _session.LocalHero;
             if (hero == null) return;
@@ -350,7 +361,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): simulate kills of a tier (0 lesser,1 normal,2 miniboss,3 boss)", "dreamforge_simkill")]
         private void SimKillCommand(int tier, int count)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             if (_session.Profile.Run == null) { Debug.Log("[DreamforgeRPG] no run"); return; }
             int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.softInstance?.ambientLevel ?? 1);
             for (int i = 0; i < Math.Max(1, Math.Min(count, 500)); i++)
@@ -361,7 +372,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): equip the newest stash relic of every slot on your traveler", "dreamforge_equipnew")]
         private void EquipNewCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             string hero = ClientSession.HeroKeyOf(_session.LocalHero);
             if (hero == null) { Debug.Log("[DreamforgeRPG] no local hero"); return; }
@@ -378,7 +389,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): end the current run in the mod (1 = victory, 0 = defeat)", "dreamforge_endrun")]
         private void EndRunCommand(int victory)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             foreach (var e in Rules.EndRun(_session.Profile, victory != 0, _session.Trades.ReservedSalvageUids())) _ui.Notify(e);
             _session.MarkDirty(true);
             _session.SaveNow();
@@ -387,7 +398,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): open a secure point now", "dreamforge_securepoint")]
         private void SecurePointCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             Rules.ReachSecurePoint(_session.Profile);
         }
 

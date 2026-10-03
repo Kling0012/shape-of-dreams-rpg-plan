@@ -58,7 +58,7 @@ namespace SodRpg.Core.Game
             foreach (var allocation in h.Talents)
                 if (definitions.TryGetValue(allocation.Key, out var talent))
                     spent += (long)Math.Max(0, allocation.Value) * talent.RankCost;
-            if (spent > StarProgression.MaxPoints)
+            if (spent > StarProgression.MaxSpendablePoints)
                 throw new InvalidOperationException("The build exceeds the star point budget.");
             var b = new Build
             {
