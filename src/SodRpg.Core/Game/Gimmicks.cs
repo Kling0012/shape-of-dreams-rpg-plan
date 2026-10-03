@@ -343,7 +343,7 @@ namespace SodRpg.Core.Game
                         : "restore 1 charge to that memory, up to its maximum charges (single-charge memories fully reset their remaining cooldown instead)";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "装着中のほかの通常の記憶の残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティは対象外）"
+                    effect = ja ? "装着中のほかの通常の記憶の残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティは対象外）"
                         : "reduce the remaining cooldown of other equipped normal memories by " + n + "% (excluding Movement, Ultimate, and Identity memories)";
                     break;
                 case GimmickEffect.Quicken:

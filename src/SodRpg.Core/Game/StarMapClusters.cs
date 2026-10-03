@@ -97,7 +97,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 星団の表示名。明示の名前があればそれ、無ければ地域と記憶から作る（記憶なら「氷の血脈の星団」、
-        /// 橋なら「A と B の橋の星団」、外縁・刻印なら代表の星の名前から）。内部のIDは使わない。
+        /// 橋なら「橋の星団「コンボ名」」、外縁・刻印なら代表の星の名前から）。内部のIDは使わない。
         /// </summary>
         public static Txt DisplayNameFor(HeroTreeLayout layout, StarClusterDef def, Txt representative)
         {
@@ -114,13 +114,15 @@ namespace SodRpg.Core.Game
                     return new Txt(representative.Ja + "の星団", representative.En + " Cluster");
                 case ClusterRegionKind.Bridge:
                     var pair = def.Region.Id == null ? null : PairCombos.ForBridge(def.Region.Id);
+                    if (pair != null && pair.Name != null && !string.IsNullOrWhiteSpace(pair.Name.Ja) && !string.IsNullOrWhiteSpace(pair.Name.En))
+                        return new Txt("橋の星団「" + pair.Name.Ja + "」", "Bridge Cluster: " + pair.Name.En);
                     if (pair != null && Links.IsMemory(pair.RouteA) && Links.IsMemory(pair.RouteB))
                     {
                         var a = Links.Name(pair.RouteA);
                         var b = Links.Name(pair.RouteB);
-                        return new Txt(a.Ja + "と" + b.Ja + "の橋の星団", a.En + " & " + b.En + " Bridge Cluster");
+                        return new Txt("橋の星団「" + a.Ja + "×" + b.Ja + "」", "Bridge Cluster: " + a.En + " x " + b.En);
                     }
-                    return new Txt(representative.Ja + "の橋の星団", representative.En + " Bridge Cluster");
+                    return new Txt("橋の星団「" + representative.Ja + "」", "Bridge Cluster: " + representative.En);
                 case ClusterRegionKind.Keystone:
                     return new Txt(representative.Ja + "の刻印星団", representative.En + " Keystone Cluster");
                 default:

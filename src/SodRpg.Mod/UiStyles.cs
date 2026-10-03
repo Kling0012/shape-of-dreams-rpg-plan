@@ -72,7 +72,7 @@ namespace SodRpg.Mod
             Title = MakeLabel(22, FontStyle.Bold, new Color(1f, 0.86f, 0.55f));
             Header = MakeLabel(17, FontStyle.Bold, new Color(0.85f, 0.8f, 1f));
             Label = MakeLabel(15, FontStyle.Normal, new Color(0.92f, 0.92f, 0.96f));
-            Small = MakeLabel(13, FontStyle.Normal, new Color(0.75f, 0.75f, 0.82f));
+            Small = MakeLabel(13, FontStyle.Normal, new Color(0.87f, 0.87f, 0.93f));
             Warn = MakeLabel(14, FontStyle.Bold, new Color(1f, 0.55f, 0.45f));
             Toast = MakeLabel(18, FontStyle.Bold, Color.white); // v1.25.2：小さくて読みにくいという声があったので大きく
             Toast.normal.background = bgHud;

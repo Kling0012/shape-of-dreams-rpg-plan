@@ -197,5 +197,76 @@ namespace SodRpg.Core.Tests
             Assert.InRange(actual.X, expectedX - 0.001f, expectedX + 0.001f);
             Assert.InRange(actual.Y, expectedY - 0.001f, expectedY + 0.001f);
         }
+
+        [Theory]
+        [InlineData(800f, 400f, -300f, 300f, -300f, 300f)]
+        [InlineData(1000f, 700f, -100f, 500f, -400f, 200f)]
+        [InlineData(300f, 900f, -250f, 250f, -250f, 250f)]
+        public void Fit_view_keeps_every_extreme_star_inside_the_margin(float w, float h, float minX, float maxX, float minY, float maxY)
+        {
+            StarMapMath.FitView(w, h, minX, maxX, minY, maxY, 64f, 0.01f, 3f, out float zoom, out var pan);
+            // 表示領域の中心を原点とした画面座標
+            float left = minX * zoom + pan.X, right = maxX * zoom + pan.X, top = minY * zoom + pan.Y, bottom = maxY * zoom + pan.Y;
+            Assert.True(left >= -w / 2f + 64f - 0.01f, "left");
+            Assert.True(right <= w / 2f - 64f + 0.01f, "right");
+            Assert.True(top >= -h / 2f + 64f - 0.01f, "top");
+            Assert.True(bottom <= h / 2f - 64f + 0.01f, "bottom");
+            Assert.InRange(left + right, -0.01f, 0.01f);
+            Assert.InRange(top + bottom, -0.01f, 0.01f);
+        }
+
+        [Fact]
+        public void Fit_view_clamps_zoom_and_survives_tiny_views()
+        {
+            StarMapMath.FitView(10f, 10f, -500f, 500f, -500f, 500f, 64f, 0.15f, 3f, out float small, out _);
+            Assert.Equal(0.15f, small);
+            StarMapMath.FitView(5000f, 5000f, -1f, 1f, -1f, 1f, 64f, 0.15f, 3f, out float large, out _);
+            Assert.Equal(3f, large);
+        }
+
+        [Theory]
+        [InlineData("Hero_Mist", "ミスト", "Mist")]
+        [InlineData("Hero_Cetus", "ケトゥス", "Cetus")]
+        [InlineData("Hero_Husk", "空殻", "Husk")]
+        [InlineData("Hero_Unknown", "Unknown", "Unknown")]
+        public void Hero_names_are_japanese_in_japanese(string key, string ja, string en)
+        {
+            var name = HeroNames.Of(key);
+            Assert.Equal(ja, name.Ja);
+            Assert.Equal(en, name.En);
+        }
+
+        [Fact]
+        public void Every_known_hero_has_a_japanese_name()
+        {
+            foreach (string key in new[] { "Hero_Lacerta", "Hero_Mist", "Hero_Aurena", "Hero_Bismuth", "Hero_Vesper", "Hero_Yubar", "Hero_Nachia", "Hero_Husk", "Hero_Cetus" })
+                Assert.NotEqual(HeroNames.Of(key).En, HeroNames.Of(key).Ja);
+        }
+
+        [Theory]
+        [InlineData(0f, 3f, 20f, 1000f, 300f, 60f)]
+        [InlineData(100f, -3f, 20f, 1000f, 300f, 40f)]
+        [InlineData(10f, -3f, 20f, 1000f, 300f, 0f)]
+        [InlineData(690f, 3f, 20f, 1000f, 300f, 700f)]
+        [InlineData(5f, 3f, 20f, 200f, 300f, 0f)]
+        [InlineData(0f, 3f, 20f, float.PositiveInfinity, 300f, 60f)]
+        public void Wheel_scroll_moves_and_clamps(float current, float delta, float step, float content, float view, float expected)
+        {
+            Assert.Equal(expected, ScrollMath.Wheel(current, delta, step, content, view));
+        }
+
+        [Fact]
+        public void Keystone_header_names_the_traveler_in_both_languages()
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = true;
+                Assert.Equal("ミストの刻印（1つ）：", HeroNames.KeystoneHeader("Hero_Mist"));
+                Loc.Japanese = false;
+                Assert.Equal("Mist keystone (one):", HeroNames.KeystoneHeader("Hero_Mist"));
+            }
+            finally { Loc.Japanese = previous; }
+        }
     }
 }

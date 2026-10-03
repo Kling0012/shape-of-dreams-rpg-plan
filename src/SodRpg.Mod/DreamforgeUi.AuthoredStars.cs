@@ -23,6 +23,7 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] StarClusterSize =
             { GUILayout.Width(270), GUILayout.ExpandHeight(true), GUILayout.MinHeight(160) };
         private static readonly GUILayoutOption[] StarOptionColumn = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] StarCloseWidth = { GUILayout.Width(170) };
         private static readonly GUILayoutOption[] StarTagHeight = { GUILayout.MinHeight(34) };
 
         // Legend: every item has a hover tooltip. Items 0-3 are the region row, 4-6 the colour row.
@@ -179,8 +180,13 @@ namespace SodRpg.Mod
 
         private void DrawStarClusterList()
         {
-            if (!_starClustersOpen || _starClusters.Length == 0) return;
+            if (!_starClustersOpen) return;
             EnsureStarTextStyles();
+            if (_starClusters.Length == 0)
+            {
+                GUILayout.Label(Loc.T("この旅人にはまだ星団がありません。", "This traveler has no clusters yet."), _starHelpStyle);
+                return;
+            }
             Rect area = GUILayoutUtility.GetRect(0, 226, 0, 10000, StarClusterSize);
             if (Event.current.type == EventType.Layout) return;
             float width = Mathf.Max(1, area.width - 18);
@@ -231,9 +237,24 @@ namespace SodRpg.Mod
             _starSumEntries.Add(entry);
         }
 
-        private void DrawStarChoicePicker(Profile p, string hero)
+        // 選択パネルは星図の上に重ねて描く（レイアウトの高さを使わないので、星図が縮まない）。
+        // Layout イベントで開閉を確定し、同じフレームの残りのイベントでは変えない。
+        private bool _starChoiceShown;
+        private Rect _starOverlay;
+        private const float StarChoiceMargin = 8f, StarChoiceMaxHeight = 236f;
+
+        /// <summary>選択パネルを星図の上端に重ねる範囲。開いていなければ空。</summary>
+        private Rect StarChoiceOverlayRect(Rect canvas)
         {
-            if (_starChoiceId == null) return;
+            if (!_starChoiceShown) return Rect.zero;
+            float height = Mathf.Min(StarChoiceMaxHeight, canvas.height - 2f * StarChoiceMargin);
+            return height < 60f ? Rect.zero : new Rect(canvas.x + StarChoiceMargin, canvas.y + StarChoiceMargin, canvas.width - 2f * StarChoiceMargin, height);
+        }
+
+        private void DrawStarChoicePicker(Profile p, string hero, Rect area)
+        {
+            if (!_starChoiceShown || area.width <= 0f) return;
+            if (_starChoiceId == null) { GUIUtility.ExitGUI(); return; }
             EnsureStarTextStyles();
             int index = -1;
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
@@ -243,10 +264,17 @@ namespace SodRpg.Mod
             var t = _starLayout.Nodes[index].Talent;
             var state = _starNodes[index];
             bool canEdit = _s.CanEditTalents && p.Run == null;
-            GUILayout.BeginVertical(_st.Panel);
+            // 二つの列は同じ幅にする（本文の長さで幅が変わらないよう、幅を固定する）。
+            float column = Mathf.Floor((area.width - _st.Panel.padding.horizontal - 2f * (_st.OptionIdle.margin.horizontal)) * 0.5f);
+            var columnWidth = new[] { GUILayout.Width(Mathf.Max(120f, column)) };
+            GUILayout.BeginArea(area, _st.Panel);
             GUILayout.BeginHorizontal();
             GUILayout.Label(state.Name.text + "  " + state.RankLabel.text, _starChoiceHead, StarOptionColumn);
-            if (GUILayout.Button(Loc.T("選択を閉じる", "Close selection"), _st.Button)) _starChoiceId = null;
+            if (GUILayout.Button(Loc.T("選択を閉じる", "Close selection"), _st.Button, StarCloseWidth))
+            {
+                _starChoiceId = null;
+                GUIUtility.ExitGUI();
+            }
             GUILayout.EndHorizontal();
             if (!canEdit)
                 GUILayout.Label(Loc.T("遠征中は選択を変更できません。帰還後は無料で切り替えられます。",
@@ -258,17 +286,17 @@ namespace SodRpg.Mod
                     : Loc.T("二つの効果のうち、1つを選んで取得します（あとから無料で切り替えられます）。",
                         "Pick one of the two effects to acquire (you can switch later for free)."), _starHelpStyle);
             GUILayout.BeginHorizontal();
-            for (int option = 0; option < 2; option++) DrawStarChoiceOption(p, hero, t, state, option, canEdit);
+            for (int option = 0; option < 2; option++) DrawStarChoiceOption(p, hero, t, state, option, canEdit, columnWidth);
             GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
+            GUILayout.EndArea();
         }
 
-        private void DrawStarChoiceOption(Profile p, string hero, TalentDef t, StarNode state, int option, bool canEdit)
+        private void DrawStarChoiceOption(Profile p, string hero, TalentDef t, StarNode state, int option, bool canEdit, GUILayoutOption[] columnWidth)
         {
             bool chosen = state.Allocated && state.Choice == option;
-            GUILayout.BeginVertical(chosen ? _st.OptionChosen : _st.OptionIdle, StarOptionColumn);
+            GUILayout.BeginVertical(chosen ? _st.OptionChosen : _st.OptionIdle, columnWidth);
             GUILayout.Label(chosen ? Loc.T("<color=#ffd36e>✓ 選択中の効果</color>", "<color=#ffd36e>✓ Chosen effect</color>")
-                : state.Allocated ? Loc.T("<color=#9a9ab0>もう一方の効果</color>", "<color=#9a9ab0>The other effect</color>")
+                : state.Allocated ? Loc.T("<color=#d6d6ea>もう一方の効果</color>", "<color=#d6d6ea>The other effect</color>")
                 : option == 0 ? Loc.T("<color=#9fe0ff>効果 A</color>", "<color=#9fe0ff>Effect A</color>")
                 : Loc.T("<color=#9fe0ff>効果 B</color>", "<color=#9fe0ff>Effect B</color>"), _starChoiceHead);
             GUILayout.Label(state.ChoiceOptions[option], _starChoiceBody);

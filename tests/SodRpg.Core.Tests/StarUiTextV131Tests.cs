@@ -59,7 +59,8 @@ namespace SodRpg.Core.Tests
                 var outer = clusters.Single(c => c.Region == ClusterRegionKind.Outer);
                 Assert.Equal(outer.Name.Ja + "の外縁星団", outer.DisplayName.Ja);
                 var bridge = clusters.Single(c => c.Region == ClusterRegionKind.Bridge);
-                Assert.EndsWith("の星団", bridge.DisplayName.Ja);
+                Assert.StartsWith("橋の星団「", bridge.DisplayName.Ja);
+                Assert.DoesNotContain("の橋の星団", bridge.DisplayName.Ja);
             });
         }
 

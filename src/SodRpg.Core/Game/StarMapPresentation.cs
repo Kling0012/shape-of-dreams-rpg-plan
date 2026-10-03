@@ -172,7 +172,7 @@ namespace SodRpg.Core.Game
                 return Content.PowerName(star.RankPower);
             }
             if (!Enum.IsDefined(typeof(Stat), star.Stat)) throw new InvalidOperationException("Unknown stat: " + star.Id);
-            return Loc.T("能力値", "Stat") + ": " + Content.FormatStat(star.Stat, star.PerRank);
+            return Loc.T("能力値", "Stat"); // 値は説明文に出る。ここで繰り返さない。
         }
 
         private static void ValidateChoice(TalentDef star, int chosen)

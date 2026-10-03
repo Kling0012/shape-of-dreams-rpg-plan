@@ -126,7 +126,7 @@ namespace SodRpg.Core.Game
                     effect = ja ? target + "の残りクールダウンを" + n + "%縮める" : "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "Q・W・Eの通常記憶すべての残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティと、発動した記憶自身は対象外）"
+                    effect = ja ? "Q・W・Eの通常記憶すべての残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティと、発動した記憶自身は対象外）"
                         : "reduce the remaining cooldown of all your other normal memories (Q/W/E) by " + n + "% (excluding Movement, Ultimate, Identity and the triggering memory itself)";
                     break;
                 case GimmickEffect.Shield:

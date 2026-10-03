@@ -41,6 +41,19 @@ namespace SodRpg.Core.Game
             return new StarMapPoint(-x * zoom, -y * zoom);
         }
 
+        /// <summary>
+        /// 全体表示：レイアウト上の範囲（minX..maxX, minY..maxY）が、余白 marginPx（画面の単位。星の光輪・文字ぶん）を
+        /// 残して表示領域に収まる倍率と、その範囲の中心を表示領域の中心に置く pan を返す。
+        /// </summary>
+        public static void FitView(float viewWidth, float viewHeight, float minX, float maxX, float minY, float maxY,
+            float marginPx, float minZoom, float maxZoom, out float zoom, out StarMapPoint pan)
+        {
+            float spanX = Math.Max(1f, maxX - minX), spanY = Math.Max(1f, maxY - minY);
+            float availableX = Math.Max(1f, viewWidth - 2f * marginPx), availableY = Math.Max(1f, viewHeight - 2f * marginPx);
+            zoom = Math.Max(minZoom, Math.Min(maxZoom, Math.Min(availableX / spanX, availableY / spanY)));
+            pan = new StarMapPoint(-(minX + maxX) * 0.5f * zoom, -(minY + maxY) * 0.5f * zoom);
+        }
+
         /// <summary>Matches a nonempty query against a nullable name or effect description using ordinal case-insensitive text.</summary>
         public static bool Matches(string name, string description, string query)
         {

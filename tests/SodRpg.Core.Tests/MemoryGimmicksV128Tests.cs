@@ -66,7 +66,7 @@ namespace SodRpg.Core.Tests
                 Assert.Contains(japanese ? "装着中のほかの通常の記憶" : "other equipped normal memories", other);
                 Assert.Contains(japanese ? "残りクールダウン" : "remaining cooldown", other);
                 Assert.Contains(japanese ? "移動" : "Movement", other);
-                Assert.Contains("Ultimate", other);
+                Assert.Contains(japanese ? "奥義" : "Ultimate", other);
                 Assert.Contains(japanese ? "アイデンティティ" : "Identity", other);
             }
             finally { Loc.Japanese = previous; }
