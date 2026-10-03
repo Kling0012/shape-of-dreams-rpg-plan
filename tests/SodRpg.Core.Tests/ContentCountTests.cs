@@ -30,7 +30,7 @@ namespace SodRpg.Core.Tests
                 ("powers", powers, 9),
                 ("pacts", Pacts.All.Count, 40),
                 ("nightmareAffixes", Nightmares.AllAffixes.Length, 20),
-                ("monsterVariants", Variants.All.Count, 26),
+                ("monsterVariants", Variants.All.Count, 30),
                 ("dailyDreams", DailyDream.All.Count, 60),
                 ("dreamEvents", Enum.GetValues(typeof(DreamEvent)).Length, 26),
                 ("bountyKinds", Enum.GetValues(typeof(BountyKind)).Length, 44),

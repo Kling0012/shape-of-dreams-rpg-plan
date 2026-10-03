@@ -93,6 +93,9 @@ namespace SodRpg.Mod
             public bool Sunders;
             public MonsterBehaviorRuntime Behavior;
             public Se_GenericShield_OneShot BehaviorShield;
+            // v1.29 wave 2：弱点・耐性の被ダメージ・与ダメージ処理。
+            public DataProcessor<DamageData, Actor, Entity> TagDamage;
+            public DataProcessor<DamageData, Actor, Entity> TagDealt;
         }
 
         private sealed class SunderRuntime
@@ -452,6 +455,7 @@ namespace SodRpg.Mod
             var m = rt.Monster;
             if (m == null) return;
             RemoveMonsterBehavior(rt);
+            RemoveVariantTags(rt);
             if (rt.PressureApplied)
             {
                 try
@@ -759,6 +763,7 @@ namespace SodRpg.Mod
                 };
                 m.takenDamageProcessor.Add(rt.HitCap);
             }
+            ApplyVariantTags(rt, variant.Tags);
             if (!_loggedVariantSpawn)
             {
                 _loggedVariantSpawn = true;

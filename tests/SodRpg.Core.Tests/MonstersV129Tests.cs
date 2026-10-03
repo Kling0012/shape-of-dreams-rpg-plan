@@ -9,12 +9,12 @@ namespace SodRpg.Core.Tests
     public class MonstersV129Tests
     {
         [Fact]
-        public void Catalog_has_twenty_six_distinct_variants_and_twenty_single_bit_affixes()
+        public void Catalog_has_thirty_distinct_variants_and_twenty_single_bit_affixes()
         {
-            Assert.Equal(26, Variants.All.Count);
-            Assert.Equal(13, Variants.All.Count(Variants.IsExpanded));
-            Assert.Equal(26, Variants.All.Select(v => v.Id).Distinct().Count());
-            Assert.Equal(26, Variants.All.Select(v => v.MonsterType).Distinct().Count());
+            Assert.Equal(30, Variants.All.Count);
+            Assert.Equal(17, Variants.All.Count(Variants.IsExpanded));
+            Assert.Equal(30, Variants.All.Select(v => v.Id).Distinct().Count());
+            Assert.Equal(30, Variants.All.Select(v => v.MonsterType).Distinct().Count());
             Assert.Equal(20, Nightmares.AllAffixes.Length);
             Assert.Equal(20, Nightmares.AllAffixes.Distinct().Count());
             foreach (var affix in Nightmares.AllAffixes)

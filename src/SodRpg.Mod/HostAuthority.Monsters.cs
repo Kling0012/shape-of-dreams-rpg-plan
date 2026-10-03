@@ -264,5 +264,78 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: remove behavior shield " + ex); }
             rt.BehaviorShield = null;
         }
+
+        // ─── 変種の弱点・耐性（v1.29 wave 2）───
+
+        private static VariantElement ToVariantElement(ElementalType? elemental)
+        {
+            switch (elemental)
+            {
+                case ElementalType.Fire: return VariantElement.Fire;
+                case ElementalType.Cold: return VariantElement.Cold;
+                case ElementalType.Light: return VariantElement.Light;
+                case ElementalType.Dark: return VariantElement.Dark;
+                default: return VariantElement.None;
+            }
+        }
+
+        /// <summary>攻撃者の親Actor鎖にいる Hero が障壁を持っているか（SkillTrigger と同じ辿り方）。</summary>
+        private static bool AttackerShielded(Actor actor)
+        {
+            for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
+                if (actor is Hero hero && hero.Status != null && hero.Status.currentShield > 0f) return true;
+            return false;
+        }
+
+        private void ApplyVariantTags(MonsterRuntime rt, VariantTag tags)
+        {
+            if (tags == VariantTag.None) return;
+            var m = rt.Monster;
+            rt.TagDamage = (ref DamageData damage, Actor actor, Entity target) =>
+            {
+                if (!Alive(m) || m.isSleeping || damage.currentAmount <= 0f || m.Status == null) return;
+                // 記憶かどうかの判定は仕掛けの系（MemorySource）と同じ、攻撃者の作成元鎖を使う。
+                bool fromMemory = MemorySource(actor) != null;
+                bool fromSummon = actor != null && actor.FindFirstOfType<Summon>() != null;
+                float mult = MonsterBehavior.WeaknessIncomingMultiplier(tags,
+                    ToVariantElement(damage.elemental),
+                    m.Status.fireStack, m.Status.hasCold, m.Status.lightStack, m.Status.darkStack,
+                    AttackerShielded(actor), fromSummon, fromMemory);
+                if (mult != 1f) damage = damage.ApplyRawMultiplier(mult);
+            };
+            m.takenDamageProcessor.Add(rt.TagDamage);
+            if ((tags & (VariantTag.ShieldBreaker | VariantTag.SummonHunter)) != 0)
+            {
+                rt.TagDealt = (ref DamageData damage, Actor actor, Entity target) =>
+                {
+                    if (!Alive(m) || damage.currentAmount <= 0f || target == null || !target.isActive
+                        || target.Status == null || m.GetRelation(target) != EntityRelation.Enemy) return;
+                    bool shielded = target.Status.currentShield > 0f;
+                    var targetActor = target as Actor;
+                    bool summon = target is Summon
+                        || (targetActor != null && targetActor.FindFirstAncestorOfType<Summon>() != null);
+                    float mult = MonsterBehavior.WeaknessDealtMultiplier(tags, shielded, summon);
+                    if (mult != 1f) damage = damage.ApplyRawMultiplier(mult);
+                };
+                m.dealtDamageProcessor.Add(rt.TagDealt);
+            }
+        }
+
+        private void RemoveVariantTags(MonsterRuntime rt)
+        {
+            var m = rt.Monster;
+            if (rt.TagDamage != null)
+            {
+                try { m.takenDamageProcessor.Remove(rt.TagDamage); }
+                catch (Exception ex) { Log.Error("Host: unhook variant weakness " + ex); }
+                rt.TagDamage = null;
+            }
+            if (rt.TagDealt != null)
+            {
+                try { m.dealtDamageProcessor.Remove(rt.TagDealt); }
+                catch (Exception ex) { Log.Error("Host: unhook variant hunter " + ex); }
+                rt.TagDealt = null;
+            }
+        }
     }
 }

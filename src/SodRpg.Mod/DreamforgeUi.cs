@@ -330,6 +330,9 @@ namespace SodRpg.Mod
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
             else sb.Append(Loc.T("ホストの確認待ち", "awaiting host"));
             sb.Append("</size>");
+            string sectionTags = SectionTagNotice();
+            if (sectionTags != null)
+                sb.Append("\n<size=13><color=#ffd27f>").Append(sectionTags).Append("</color></size>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
@@ -379,6 +382,29 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)")).Append("</color></size>");
             sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// いまの区画に弱点・耐性を持つ変種がいるときの一行知らせ（例：「この区画：火に弱い敵がいる」）。
+        /// 既存の変種通知（DreamforgeVariantMsg → ClientSession.Variant）の結果から作るので、新しい通信は要らない。
+        /// </summary>
+        private string SectionTagNotice()
+        {
+            if (_s.Variant.Count == 0) return null;
+            var hero = _s.LocalHero;
+            var section = hero != null ? hero.section : null;
+            if (section == null) return null;
+            VariantTag tags = VariantTag.None;
+            foreach (var kv in _s.Variant)
+            {
+                var def = Variants.Get(kv.Value);
+                if (def == null || def.Tags == VariantTag.None) continue;
+                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
+                var m = id.GetComponent<Monster>();
+                if (m == null || !m.isActive || m.section != section) continue;
+                tags |= def.Tags;
+            }
+            return tags == VariantTag.None ? null : Variants.ZoneNotice(tags);
         }
 
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
