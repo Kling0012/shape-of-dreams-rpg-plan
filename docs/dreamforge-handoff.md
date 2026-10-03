@@ -129,6 +129,9 @@ tools/make_about_images.py   Workshop 用画像の生成（Pillow）
 - .NET SDK：システムには無い。ユーザー領域 `%LOCALAPPDATA%\dotnet-sdk`（8.0.425）。PowerShell で `$env:DOTNET_ROOT="$env:LOCALAPPDATA/dotnet-sdk"; $env:PATH="$env:DOTNET_ROOT;$env:PATH"` を設定してから `dotnet`。
 - ビルドと配置：`dotnet build src/SodRpg.Mod -c Release -p:GameDir="D:\app\stm\steamapps\common\Shape of Dreams"`（`Mods/DreamforgeRPG` へ自動配置）。
 - 試験：リポジトリ直下で `dotnet test`。
+  - 通常の全件（約2,580件）は約25秒。反復中も終了時もこれで足りる。
+  - 全点を実購入する網羅版（`[Trait("Speed","Slow")]`、約3分）は既定でSkipされる。実行は `SODRPG_SLOW=1 dotnet test tests/SodRpg.Core.Tests --filter "Speed=Slow"`。コストが3乗になる配分検証（`Rules.AddTalentRank` の購入ごとの全段再検証）を触ったときに走らせる。
+  - 速い反復用: `dotnet test tests/SodRpg.Core.Tests --filter "Speed!=Slow"`（Slowは元々Skipなので全件と同じ）。
 - 逆コンパイル：`%LOCALAPPDATA%\sod-decomp\Dew.Core`（ilspycmd 8.2、`%LOCALAPPDATA%\dntools`）。Dew.Contents は一部のみ。
 - GitHub：`gh` は winget で導入済みだが未ログイン。`git credential fill` のトークンをそのコマンドだけ `GH_TOKEN` に渡して使った（保存しない）。
 - Codex CLI：`codex exec -C C:\Temp\sodreview -s read-only` でレビューを並行実行できる（Google Drive 配下は読めないので差分を `C:\Temp` に置く）。Computer Use は Codex デスクトップ専用で CLI からは使えない。Jev CU は Unity 画面に不向き。

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SodRpg.Core.Game;
+using SodRpg.Core.Tests.Testing;
 using Xunit;
 
 namespace SodRpg.Core.Tests
@@ -165,6 +166,44 @@ namespace SodRpg.Core.Tests
             finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
         }
         [Fact]
+        public void Three_hundred_points_with_real_first_purchases_keep_every_recharge_application_inside_fixed_wire_envelope()
+        {
+            var stars = Enumerable.Range(2, 299).Select(n => Node("outer.authoredprobe.s" + n,
+                new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.DirectedRecharge, ChannelId = "probe.bulk." + n,
+                    Source = MemorySelector.Parse("@Q(" + Q + ")"), Recharge = new DirectedRechargeChannel("probe.bulk." + n,
+                        MemorySelector.Parse("@Q(" + Q + ")"), MemoryEventKind.Hit, MemorySelector.Parse("@M(" + Movement + ")"),
+                        new[] { 1 }) })).ToArray();
+            try
+            {
+                var profile = Register();
+                StarClusters.RegisterAuthored(Hero, new[] { RootNode() }.Concat(stars));
+                var hero = profile.Hero(Hero);
+                AuthoredStarContractTests.AllocatePath(hero, HeroSigils.TreeFor(Hero), Root);
+                Rules.AddTalentRank(profile, Hero, Root);
+                int count = 300 - Rules.SpentPoints(hero);
+                // 購入ごとの全段検証は点数の3乗で遅い（300点で約170秒）。先頭だけ実購入し、残りは同じ保存形式で直接振る。
+                // 全点の効果が実際に効いていることは、下の Build の合計（0.9999^count）で検証する。全点を実購入する版は SlowFact 側。
+                int purchased = 0;
+                foreach (var star in stars.Take(count))
+                {
+                    if (purchased++ < 25) Rules.AddTalentRank(profile, Hero, star.LocalStarId);
+                    else hero.Talents[star.LocalStarId] = 1;
+                }
+                Assert.Equal(300, Rules.SpentPoints(hero));
+                var build = Roundtrip(profile);
+                var runtime = new DirectedRechargeRuntime();
+                runtime.SetChannels(build.Mechanisms.Select(e => e.Spec.Recharge));
+                var requests = new List<DirectedRechargeRequest>();
+                runtime.Notify(Hit(Q, 1, 101), Equipment(), new RechargeConditionContext(false, 0), () => 0, requests);
+                float remaining = 100;
+                foreach (var request in requests) remaining -= 100 * request.NativeRatio(remaining, 100);
+                Assert.Equal((float)(100 * Math.Pow(.9999, count)), remaining, 3);
+                Assert.True(remaining < 98);
+            }
+            finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
+        }
+
+        [SlowFact, Trait("Speed", "Slow")]
         public void Three_hundred_real_paid_points_keep_every_recharge_application_inside_fixed_wire_envelope()
         {
             var stars = Enumerable.Range(2, 299).Select(n => Node("outer.authoredprobe.s" + n,

@@ -47,10 +47,19 @@ namespace SodRpg.Core.Tests.Testing
         /// <summary>障害注入なしで、ディスクに今あるものを読み直した結果。</summary>
         public LedgerState PersistedView()
         {
+            // 読み直し結果はディスク上の内容（本体とバックアップ）だけで決まる。内容が変わっていなければ前回の結果を使い回す。
+            string main = Disk.Files.TryGetValue(LedgerPath, out string m) ? m : null;
+            string backup = Disk.Files.TryGetValue(LedgerPath + ".bak", out string b) ? b : null;
+            if (_viewCache != null && string.Equals(_viewMain, main, StringComparison.Ordinal)
+                && string.Equals(_viewBackup, backup, StringComparison.Ordinal)) return _viewCache;
             var s = new LedgerStore(Disk, LedgerPath, Key, _catalog);
             s.Load();
+            _viewMain = main; _viewBackup = backup; _viewCache = s.State;
             return s.State;
         }
+
+        private string _viewMain, _viewBackup;
+        private LedgerState _viewCache;
     }
 
     /// <summary>
