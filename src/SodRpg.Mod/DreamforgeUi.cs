@@ -81,6 +81,7 @@ namespace SodRpg.Mod
         private Vector2 _scrollList, _scrollDetail, _scrollRecords;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
+        private string _confirmAffixReroll;
         private Relic _confirmEnhance;
         private int _confirmEnhanceTarget;
         private bool _forgeAllSlots = true;
@@ -119,7 +120,7 @@ namespace SodRpg.Mod
             Open = !Open;
             if (!Open) CancelStarDrag();
             _confirmSalvage = null;
-            _confirmEnhance = null;
+            _confirmAffixReroll = null;
         }
 
         public void Close()
@@ -374,6 +375,10 @@ namespace SodRpg.Mod
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");
+            if (Mirror.NetworkServer.active ? HostAuthority.AnyGemSlotConflict : _s.GemSlotConflict)
+                sb.Append("\n<size=13><color=#ff7070>").Append(Loc.T(
+                    "ほかのMODがエッセンスの枠を変えているため、星図による枠の追加を止めました",
+                    "Another mod is changing essence slots, so the star map's extra slot is disabled.")).Append("</color></size>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
@@ -897,8 +902,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; }
-            GUILayout.FlexibleSpace();
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
             GUILayout.EndHorizontal();
             DrawProfileSlots();
@@ -1237,6 +1241,7 @@ namespace SodRpg.Mod
                     _retuneIndex = -1;
                     _confirmSalvage = null;
                     _confirmEnhance = null;
+                    _confirmAffixReroll = null;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -1636,6 +1641,30 @@ namespace SodRpg.Mod
                         int idx = _retuneIndex;
                         Act(() => Rules.Retune(p, sel.Uid, idx, _s.Trades), true);
                         _retuneIndex = -1;
+                    }
+                    GUI.enabled = true;
+                }
+
+                // 特性の洗い直し（v1.31）：再調律の下に置く。候補が出ている遺物と、特性のない遺物には出さない。
+                if (sel.Affixes.Count > 0 && !(p.RetuneOffer != null && p.RetuneOffer.Uid == sel.Uid))
+                {
+                    var (rrShards, rrTuning) = Rules.AffixRerollCost(sel);
+                    bool rrAfford = p.Material(Materials.Shard) >= rrShards && p.Material(Materials.Tuning) >= rrTuning;
+                    bool rrConfirm = _confirmAffixReroll == sel.Uid;
+                    GUI.enabled = rrAfford && !_s.Trades.IsReserved(sel.Uid); // 鍵つき・装着中は押したときに理由が表示される
+                    string rrLabel = !rrAfford
+                        ? Loc.T($"素材が足りません（欠片{rrShards}・調律石{rrTuning}必要）", $"Not enough materials ({rrShards} shards and {rrTuning} tuning stones needed)")
+                        : rrConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」の特性を全部引き直します（欠片{rrShards}・調律石{rrTuning}・取り消せません）</color>",
+                            $"<color=#ff8080>Press again to reroll every affix on \"{sel.PlainName}\" ({rrShards} shards, {rrTuning} tuning; cannot be undone)</color>")
+                        : Loc.T($"特性を洗い直す（欠片{rrShards}・調律石{rrTuning}）", $"Reroll all affixes ({rrShards} shards, {rrTuning} tuning)");
+                    if (GUILayout.Button(rrLabel, _st.Button, GUILayout.Height(30)))
+                    {
+                        if (rrConfirm)
+                        {
+                            _confirmAffixReroll = null;
+                            Act(() => Rules.AffixReroll(p, sel.Uid, _s.Trades), true);
+                        }
+                        else _confirmAffixReroll = sel.Uid;
                     }
                     GUI.enabled = true;
                 }

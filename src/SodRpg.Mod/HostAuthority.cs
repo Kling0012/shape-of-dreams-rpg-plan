@@ -72,11 +72,8 @@ namespace SodRpg.Mod
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             public string BountyRunId;
             public int ReportedLinks;
-            // 星図のエッセンス枠（v1.27）。旅人の最初の枠の数と、前回こちらが足した分。
-            public bool GemSlotsCaptured;
+            // Runtime retains only the component reference; ownership lives in its weak-key ledger.
             public HeroSkill GemSlotOwner;
-            public int BaseGemIdentity, BaseGemMovement;
-            public int AddedGemIdentity, AddedGemMovement;
         }
 
         private struct PendingGimmick
@@ -265,6 +262,7 @@ namespace SodRpg.Mod
             RefreshRunModifiers();
             if (_pressureDirty) RefreshPressure();
             PruneAndApplyPending();
+            TickGemSlots();
             SyncWaypointHeroes();
             bool scan = now >= _nextAreaScan;
             if (scan)
@@ -1026,6 +1024,7 @@ namespace SodRpg.Mod
                 Unhook(rt);
             }
             _runtimes.Clear();
+            DetachGemSlots();
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();

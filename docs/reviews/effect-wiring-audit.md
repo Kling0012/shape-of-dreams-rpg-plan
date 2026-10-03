@@ -152,8 +152,8 @@ C = Coreに実装と試験があるが、ホスト・クライアントのどこ
 ### 3.5 エッセンス枠 — A（星図専用）
 
 - 供給は星図の頂点の2種だけ（`EssenceSlotIdentity`／`EssenceSlotMovement`、各上限1）。装備からは来ない。
-- 購読: 常駐ではなく `Apply` のたびに `ApplyGemSlots`（`HostAuthority.cs:1329`）。APIは `HeroSkill.GetMaxGemCount`／`SetMaxGemCount`（`HostAuthority.GemSlots.cs:25,53`。本体は `HeroSkill.cs:1166,1180`）。
-- 解除（`Unhook`）で自分が足した分だけ戻す（`RestoreGemSlots`、`EssenceSlots.TargetMax`）。範囲外になったエッセンスは足元へ落とす（`UnequipGem`）。
+- 適用: `ApplyGemSlots` と1秒ごとの `TickGemSlots`。`HeroSkill` ごとの弱参照台帳を使い、runtime再作成では再加算しない。APIは `HeroSkill.GetMaxGemCount`／`SetMaxGemCount`（本体 `HeroSkill.cs:1166,1180`）。
+- 解除（`Unhook`／`Detach`）は `GemSlotLedger.DecideRemoval` で現在値から自分の寄与だけを引く。非アクティブな本体には書き込まない。上限外のエッセンスは足元へ落とす（`UnequipGem`）。10秒以内に3回連続で外部変更を観測した本体は追加を停止し、ホストと所有者へ表示する。詳細は [v1.31 枠の相互運用](../specs/v1.31-gem-slot-interop.md)。
 
 ### 3.6 固有品の連携（Link）— A（条件つきで効く）
 

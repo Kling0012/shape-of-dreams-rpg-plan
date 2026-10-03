@@ -1457,6 +1457,65 @@ namespace SodRpg.Core.Game
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
+        /// <summary>特性の洗い直しの費用（v1.31）：欠片 60×(レア度+1) と調律石 2×(レア度+1) を、その遺物で済ませた回数ぶん1.5倍（切り上げ）する。</summary>
+        public static (int Shards, int Tuning) AffixRerollCost(Relic r)
+        {
+            int times = Math.Max(0, r.AffixRerolls);
+            return (TimesThreeHalves(60 * ((int)r.Rarity + 1), times), TimesThreeHalves(2 * ((int)r.Rarity + 1), times));
+        }
+
+        /// <summary>value × 1.5^times を 3^times / 2^times の有理数として整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。</summary>
+        private static int TimesThreeHalves(int value, int times)
+        {
+            long num = 1, den = 1;
+            for (int i = 0; i < times; i++)
+            {
+                // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。
+                if (num > long.MaxValue / 3 || den > long.MaxValue / 2 || num > long.MaxValue / Math.Max(1, value)) return int.MaxValue;
+                num *= 3;
+                den *= 2;
+            }
+            return (int)Math.Min(int.MaxValue, ((long)value * num + den - 1) / den);
+        }
+
+        /// <summary>
+        /// 特性の洗い直し（v1.31）：費用を払って、遺物の特性を全部まとめて引き直す。結果はすぐに確定し、取り消せない。
+        /// 特性の数・レア度・土台・強化値・限界突破・覚醒・固有品の固有効果はそのまま、新しい遺物を作るときと同じ抽選で引き直す。
+        /// 鍵つき・装着中・取引の予約中・再調律の候補が出ている遺物は対象外。
+        /// </summary>
+        public static GameEvent AffixReroll(Profile p, string uid, TradeLedger trades = null)
+        {
+            RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
+            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
+            var (shards, tuning) = AffixRerollCost(r);
+            if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed)."));
+            int count = r.Affixes.Count;
+            string sep = Loc.T("、", ", ");
+            var before = r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)).ToList();
+            var rng = p.TakeRng();
+            r.Affixes.Clear();
+            Loot.RollAffixes(rng, r, count); // 新しい遺物と同じ抽選（土台の暗黙値と同じ能力値は避ける）
+            var implicitOnly = new HashSet<Stat> { r.Base.ImplicitStat };
+            while (r.Affixes.Count < count) // 能力値の種類が尽きても数は守る：重複を許して埋める（再調律と同じ扱い）
+            {
+                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, implicitOnly);
+                if (line == null) break;
+                r.Affixes.Add(line);
+            }
+            p.StoreRng(rng);
+            p.AddMaterial(Materials.Shard, -shards);
+            p.AddMaterial(Materials.Tuning, -tuning);
+            r.AffixRerolls++;
+            string after = string.Join(sep, r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)));
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"「{r.PlainName}」の特性を洗い直しました：{string.Join(sep, before)} → {after}",
+                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}"), r.Rarity);
+        }
+
         public static int CraftShardCost(bool fine) => fine ? 150 : 60;
         public static int CraftTuningCost(bool fine) => fine ? 2 : 0;
 

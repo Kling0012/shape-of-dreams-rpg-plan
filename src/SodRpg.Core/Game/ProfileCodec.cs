@@ -218,7 +218,7 @@ namespace SodRpg.Core.Game
             return new JsonObject()
                 .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
-                .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
+                .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("affixRerolls", (long)r.AffixRerolls).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
                 .Add("milestonePowerApplied", r.MilestonePowerApplied)
@@ -535,6 +535,7 @@ namespace SodRpg.Core.Game
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
                 LimitBreaks = limitBreaks,
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
+                AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)

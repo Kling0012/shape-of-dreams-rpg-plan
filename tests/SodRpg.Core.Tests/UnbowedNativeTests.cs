@@ -11,7 +11,7 @@ namespace HarmonyLib
     internal sealed class HarmonyPatch : Attribute { public HarmonyPatch(Type type, string method) { } }
 }
 namespace Mirror { internal static class NetworkServer { public static bool active = true; } }
-namespace UnityEngine { internal static class Time { public static float time; } }
+namespace UnityEngine { internal static class Time { public static float time, unscaledTime; } }
 namespace SodRpg.Mod
 {
     internal enum EntityRelation { Ally, Enemy }

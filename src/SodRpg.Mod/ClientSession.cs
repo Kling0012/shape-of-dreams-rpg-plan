@@ -192,8 +192,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
-                _tickStepNames = new[] { "profile slots", "wire", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
+                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -290,6 +290,7 @@ namespace SodRpg.Mod
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
                     UnregisterHello(_clientRpcOn);
+                    UnregisterGemSlotConflict(_clientRpcOn);
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
@@ -315,6 +316,7 @@ namespace SodRpg.Mod
                 HostConfirmed = false;
                 HostSummary = null;
                 ResetHello();
+                ResetGemSlotConflict();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 ResetRunChoiceConnection();
@@ -334,6 +336,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                     RegisterHello(actor);
+                    RegisterGemSlotConflict(actor);
                 }
             }
         }
@@ -367,6 +370,7 @@ namespace SodRpg.Mod
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     UnregisterHello(_clientRpcOn);
+                    UnregisterGemSlotConflict(_clientRpcOn);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
@@ -385,6 +389,7 @@ namespace SodRpg.Mod
             _clientRpcOn = null;
             HostConfirmed = false;
             HostSummary = null;
+            ResetGemSlotConflict();
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
