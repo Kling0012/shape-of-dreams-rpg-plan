@@ -28,6 +28,15 @@ namespace SodRpg.Mod
         public int protocol;
         public float healthMultiplier;
         public float damageMultiplier;
+        public string runChoices;
+    }
+
+    /// <summary>Host-only shared depth and waypoint choices; also carried by pressure catch-up messages.</summary>
+    [Serializable]
+    public class DreamforgeRunChoicesMsg
+    {
+        public int protocol;
+        public string choices;
     }
 
     internal enum BountyReportKind
@@ -112,7 +121,7 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 6 adds route-star memory gimmicks to the build payload.
-        public const int Version = 6;
+        // Version 7 requires host-authoritative depth/waypoints and adds elemental reaction powers.
+        public const int Version = 7;
     }
 }

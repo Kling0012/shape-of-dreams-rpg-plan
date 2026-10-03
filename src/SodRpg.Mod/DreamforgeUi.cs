@@ -324,7 +324,8 @@ namespace SodRpg.Mod
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
             sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
-            sb.Append("\n<size=13>").Append(Loc.T("夢の圧 ", "Dream pressure "));
+            sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
+                .Append(Loc.T("・夢の圧 ", " · Pressure "));
             if (_s.HostConfirmed)
                 sb.Append("HP×").Append(_s.PressureHealthMultiplier.ToString("0.00"))
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
@@ -336,6 +337,9 @@ namespace SodRpg.Mod
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
+                var waypoint = Waypoints.Get(run.ActiveWaypoint);
+                if (waypoint != null)
+                    sb.Append("\n<size=13><color=#a8e9cd>").Append(Loc.T("道標：", "Waypoint: ")).Append(waypoint.Name).Append("</color></size>");
                 var daily = DailyDream.Get(run.DailyId);
                 if (!compact && (daily != null || run.LimboDepth > 0))
                 {
@@ -412,7 +416,7 @@ namespace SodRpg.Mod
             var run = _s.Profile.Run;
             var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
                 + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades ? 24 : 0)
-                + 24);
+                + 24 + (run.OfferedWaypoints.Count > 0 ? 250 : 44));
             // 前のフレームで測った中身の高さがあれば、それに合わせる（余白も、はみ出しも出さない）。
             if (_secureMeasured > 0) rect.height = _secureMeasured + 28;
             if (rect.height > h - 100) rect.height = h - 100;
@@ -420,6 +424,7 @@ namespace SodRpg.Mod
             GUILayout.BeginArea(rect, _st.Window);
             _scrollSecure = GUILayout.BeginScrollView(_scrollSecure);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
+            DrawWaypointPicker(run);
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
             GUILayout.Label(Loc.T(
@@ -457,7 +462,7 @@ namespace SodRpg.Mod
                 $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
                 $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0"), _st.Small);
             GUILayout.BeginHorizontal();
-            GUI.enabled = !_s.HasPendingTrades;
+            GUI.enabled = _s.CanResolveSecureChoice;
             if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
             if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
             GUI.enabled = true;
@@ -469,6 +474,8 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);
+            else if (!_s.CanResolveSecureChoice)
+                GUILayout.Label(Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve."), _st.Small);
             {
                 int dust = _s.LocalDust;
                 GUI.enabled = dust >= Economy.DustPerBatch && !_s.TradePending(TradeKind.DustToShards);
@@ -529,7 +536,7 @@ namespace SodRpg.Mod
             if (run.OfferedPacts.Count > 0)
             {
                 GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact."), _st.Small);
-                GUI.enabled = !_s.HasPendingTrades;
+                GUI.enabled = _s.CanResolveSecureChoice;
                 foreach (var id in run.OfferedPacts.ToList())
                 {
                     var d = Pacts.Get(id);
@@ -545,6 +552,70 @@ namespace SodRpg.Mod
         }
 
         private float _secureMeasured;
+
+        private readonly Dictionary<Waypoint, string> _waypointCards = new Dictionary<Waypoint, string>();
+        private bool _waypointCardsJapanese;
+        private static readonly string[] DepthLabels = { "0", "1", "2", "3", "4", "5" };
+
+        private void DrawWaypointPicker(RunState run)
+        {
+            GUILayout.Label(Loc.T("道標 ─ 次のゾーンの決まり", "Waypoint ─ a rule for the next zone"), _st.Label);
+            if (!_s.WaypointChoicesReady)
+            {
+                GUILayout.Label(Loc.T("ホストから道標の候補を受け取っています。", "Waiting for the host's waypoint cards."), _st.Small);
+                return;
+            }
+            GUILayout.Label(Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
+            GUILayout.Label(Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
+            if (_waypointCardsJapanese != Loc.Japanese)
+            {
+                _waypointCardsJapanese = Loc.Japanese;
+                _waypointCards.Clear();
+            }
+            for (int i = 0; i < run.OfferedWaypoints.Count; i++)
+            {
+                var id = run.OfferedWaypoints[i];
+                var def = Waypoints.Get(id);
+                if (def == null) continue;
+                if (!_waypointCards.TryGetValue(id, out var label))
+                    _waypointCards[id] = label = $"<b>{def.Name}</b>\n<color=#a8e9cd>{def.Description}</color>";
+                GUI.enabled = _s.CanChooseRunRules;
+                if (GUILayout.Button(label, _st.RowWrap, GUILayout.MinHeight(56)))
+                    SetStatus(_s.ChooseWaypoint(id));
+                GUI.enabled = true;
+            }
+            if (run.OfferedWaypoints.Count > 0)
+            {
+                GUI.enabled = _s.CanChooseRunRules;
+                if (GUILayout.Button(Loc.T("道標を選ばない", "Skip the waypoint"), _st.Button, GUILayout.Height(28)))
+                    SetStatus(_s.ChooseWaypoint(Waypoint.None));
+                GUI.enabled = true;
+            }
+            var chosen = Waypoints.Get(run.PendingWaypoint);
+            GUILayout.Label(run.WaypointChosen
+                ? Loc.T("選択：", "Selected: ") + (chosen != null ? chosen.Name.ToString() : Loc.T("道標なし", "No waypoint"))
+                : Loc.T("未選択（このまま進むと道標なし）", "No selection (continuing skips the waypoint)"), _st.Small);
+        }
+
+        private void DrawDreamDepthChoice()
+        {
+            if (_s.InGame) return;
+            int depth = _s.ChosenDreamDepth;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("夢の深さ", "Dream depth"), _st.Label, GUILayout.Width(110));
+            GUI.enabled = _s.CanChooseDepth;
+            for (int i = 0; i < DepthLabels.Length; i++)
+                if (GUILayout.Button(DepthLabels[i], depth == i ? _st.TabSel : _st.Tab, GUILayout.Width(36)))
+                    SetStatus(_s.ChooseDreamDepth(i));
+            GUI.enabled = true;
+            GUILayout.Label(Loc.T("ホストが選択・遠征中は固定", "Chosen by the host; fixed during the expedition"), _st.Small);
+            GUILayout.EndHorizontal();
+            if (!_s.HasHostRunChoices)
+                GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
+            else GUILayout.Label(Loc.T(
+                $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・レア度の幸運 +{DreamDepth.RarityLuck(depth):0.##}・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}",
+                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · rarity luck +{DreamDepth.RarityLuck(depth):0.##} · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00}"), _st.Small);
+        }
 
         private Vector2 _scrollSecure;
         private DreamEvent _confirmEvent;
@@ -775,6 +846,7 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
 
             var p = _s.Profile;
+            DrawDreamDepthChoice();
             GUILayout.Label(Loc.T(
                 $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
                 $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);

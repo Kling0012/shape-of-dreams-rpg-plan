@@ -43,6 +43,21 @@ namespace SodRpg.Core.Game
         public bool StarSecureRewarded { get; set; }
         /// <summary>夢の深度（0〜5）。確保を見送って潜り続けるほど上がる。</summary>
         public int Heat { get; set; }
+        private int _dreamDepth;
+        /// <summary>Run-start difficulty; independent of delve heat and Limbo.</summary>
+        public int DreamDepth { get => _dreamDepth; set => _dreamDepth = Game.DreamDepth.Clamp(value); }
+        public Waypoint ActiveWaypoint { get; set; }
+        public Waypoint PendingWaypoint { get; set; }
+        public List<Waypoint> OfferedWaypoints { get; } = new List<Waypoint>();
+        public bool WaypointChosen { get; set; }
+        public int WaypointGeneration { get; set; }
+        public int WaypointRoom { get; set; } = -1;
+        public int WaypointRelicsInRoom { get; set; }
+        public HashSet<int> WaypointLootRooms { get; } = new HashSet<int>();
+        public int WaypointSlotCursor { get; set; }
+        public List<Relic> DeferredWaypointRelics { get; } = new List<Relic>();
+        public int DeferredWaypointShards { get; set; }
+        public int DeferredWaypointTuning { get; set; }
         public List<Relic> Satchel { get; } = new List<Relic>();
         /// <summary>このランの依頼。</summary>
         public List<Bounty> Bounties { get; } = new List<Bounty>();
@@ -92,6 +107,16 @@ namespace SodRpg.Core.Game
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
+                DreamDepth = DreamDepth,
+                ActiveWaypoint = ActiveWaypoint,
+                PendingWaypoint = PendingWaypoint,
+                WaypointChosen = WaypointChosen,
+                WaypointGeneration = WaypointGeneration,
+                WaypointRoom = WaypointRoom,
+                WaypointRelicsInRoom = WaypointRelicsInRoom,
+                WaypointSlotCursor = WaypointSlotCursor,
+                DeferredWaypointShards = DeferredWaypointShards,
+                DeferredWaypointTuning = DeferredWaypointTuning,
                 SatchelShards = SatchelShards,
                 SatchelTuning = SatchelTuning,
                 RoomsCleared = RoomsCleared,
@@ -117,6 +142,9 @@ namespace SodRpg.Core.Game
             foreach (var b in Bounties) c.Bounties.Add(b.Clone());
             c.Pacts.AddRange(Pacts);
             c.OfferedPacts.AddRange(OfferedPacts);
+            c.OfferedWaypoints.AddRange(OfferedWaypoints);
+            foreach (int room in WaypointLootRooms) c.WaypointLootRooms.Add(room);
+            foreach (var r in DeferredWaypointRelics) c.DeferredWaypointRelics.Add(r.Clone());
             return c;
         }
     }
@@ -225,6 +253,9 @@ namespace SodRpg.Core.Game
         /// <summary>遠征を始めるときの夢の深度（深淵の段階）。確保できた最高深度まで選べる。</summary>
         public int StartDepth { get; set; }
 
+        private int _lastDreamDepth;
+        public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
+
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
         public List<Relic> LostAndFound { get; } = new List<Relic>();
@@ -325,6 +356,7 @@ namespace SodRpg.Core.Game
                 BestItemLevel = BestItemLevel,
                 Japanese = Japanese,
                 StartDepth = StartDepth,
+                LastDreamDepth = LastDreamDepth,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 Focus = Focus,

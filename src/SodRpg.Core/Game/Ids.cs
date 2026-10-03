@@ -166,6 +166,14 @@ namespace SodRpg.Core.Game
         LucidBoon = 42,
         /// <summary>回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方のX%を上乗せ（重ならず時間を延長）。「瞬歩の刃」</summary>
         ShadowStep = 43,
+        /// <summary>火＋冷気で周囲3mに鈍足と追加ダメージ。属性は消費しない。</summary>
+        Steam = 44,
+        /// <summary>光＋闇で4秒間、自分から受けるダメージを増やす。</summary>
+        Eclipse = 45,
+        /// <summary>火＋闇の敵に印を残し、倒れると周囲4mへ火を1つ付ける。</summary>
+        Cinder = 46,
+        /// <summary>光＋冷気で最大HPのX%の障壁を4秒間得る。</summary>
+        FrostCrystal = 47,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>

@@ -2541,6 +2541,10 @@ namespace SodRpg.Core.Game
                 new PowerRange(Power.Frost, 30, 55),
                 new PowerRange(Power.Umbra, 40, 80),
                 new PowerRange(Power.Convergence, 80, 140),
+                new PowerRange(Power.Steam, 35, 60),
+                new PowerRange(Power.Eclipse, 8, 12),
+                new PowerRange(Power.Cinder, 1, 1),
+                new PowerRange(Power.FrostCrystal, 3, 5),
                 new PowerRange(Power.SoulSiphon, 10, 20),
                 new PowerRange(Power.Whirlwind, 40, 80),
                 new PowerRange(Power.StarShield, 10, 20),
@@ -2555,6 +2559,8 @@ namespace SodRpg.Core.Game
             },
             [Slot.Head] = new[]
             {
+                new PowerRange(Power.Eclipse, 8, 12),
+                new PowerRange(Power.FrostCrystal, 3, 5),
                 new PowerRange(Power.Overload, 10, 20),
                 new PowerRange(Power.UltimateSurge, 15, 25),
                 new PowerRange(Power.StarShield, 10, 20),
@@ -2572,6 +2578,8 @@ namespace SodRpg.Core.Game
             },
             [Slot.Hands] = new[]
             {
+                new PowerRange(Power.Steam, 35, 60),
+                new PowerRange(Power.Cinder, 1, 1),
                 new PowerRange(Power.Executioner, 25, 45),
                 new PowerRange(Power.Blaze, 40, 70),
                 new PowerRange(Power.ChainLightning, 30, 50),
@@ -2677,6 +2685,10 @@ namespace SodRpg.Core.Game
             [Power.PerfectRead] = 40,
             [Power.LucidBoon] = 18,
             [Power.ShadowStep] = 150,
+            [Power.Steam] = 120,
+            [Power.Eclipse] = 25,
+            [Power.Cinder] = 1,
+            [Power.FrostCrystal] = 12,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -2781,7 +2793,7 @@ namespace SodRpg.Core.Game
             [Power.LucidBoon] = new Txt("明晰な", "Lucid"),
         };
 
-        public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : null;
+        public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : ElementReactions.Epithet(p);
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
@@ -3133,6 +3145,10 @@ namespace SodRpg.Core.Game
                 case Power.PerfectRead: return Loc.T("見切り", "Perfect Read");
                 case Power.LucidBoon: return Loc.T("明晰", "Lucid Boon");
                 case Power.ShadowStep: return Loc.T("瞬歩の刃", "Flash-Step Blade");
+                case Power.Steam: return Loc.T("蒸気", "Steam");
+                case Power.Eclipse: return Loc.T("蝕", "Eclipse");
+                case Power.Cinder: return Loc.T("燃え殻", "Cinder");
+                case Power.FrostCrystal: return Loc.T("氷晶", "Frost Crystal");
                 default: return "-";
             }
         }
@@ -3140,6 +3156,7 @@ namespace SodRpg.Core.Game
         public static string FormatPower(Power p, int v)
         {
             string name = PowerName(p);
+            if (ElementReactions.IsPower(p)) return FormatReaction(p, v, name);
             switch (p)
             {
                 case Power.Momentum: return Loc.T($"【{name}】敵を倒すたびに攻撃速度が{v}%上がる（4秒間、5回まで重なる）", $"[{name}] Each kill grants +{v}% attack speed for 4s (stacks up to 5 times)");
@@ -3187,6 +3204,33 @@ namespace SodRpg.Core.Game
                 case Power.ShadowStep: return Loc.T($"【{name}】回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、移動するたびに時間を延長）", $"[{name}] After a dodge, dash or teleport, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each movement refreshes it)");
                 default: return "-";
             }
+        }
+
+        private static string FormatReaction(Power p, int v, string name)
+        {
+            v = Math.Max(0, Math.Min(PowerCap(p), v));
+            string effect;
+            switch (p)
+            {
+                case Power.Steam:
+                    effect = Loc.T($"【{name}】火と冷気のある敵を中心に、3m以内の敵へ攻撃力か魔力の高い方の{v}%分の無属性ダメージを与え、2秒間30%のスロウを付ける（ダメージの合計上限120%）",
+                        $"[{name}] When an enemy has Fire and Cold, deal {v}% of the higher of AD or AP as non-elemental damage to it and enemies within 3m, and slow them by 30% for 2s (damage total capped at 120%)");
+                    break;
+                case Power.Eclipse:
+                    effect = Loc.T($"【{name}】光と闇のある敵は、4秒間 自分から受けるダメージが{v}%増える（合計上限25%。同じ効果は重ならず高い値だけ適用）",
+                        $"[{name}] An enemy with Light and Dark takes {v}% more damage from you for 4s (total capped at 25%; uses the highest Expose effect without stacking)");
+                    break;
+                case Power.Cinder:
+                    effect = Loc.T($"【{name}】火と闇のある敵に印を付け、倒れると周囲4mの敵へ火を1つ付ける（合計上限1つ。印は重ならず、味方の撃破でも発動）",
+                        $"[{name}] Mark an enemy with Fire and Dark. When it dies, apply 1 Fire stack to enemies within 4m (total capped at 1; marks do not stack; ally kills also trigger it)");
+                    break;
+                default:
+                    effect = Loc.T($"【{name}】光と冷気のある敵に反応し、最大HPの{v}%分の障壁を4秒間得る（合計上限12%）",
+                        $"[{name}] When an enemy has Light and Cold, gain a shield worth {v}% of max health for 4s (total capped at 12%)");
+                    break;
+            }
+            return effect + Loc.T("。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。",
+                ". Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.");
         }
     }
 }

@@ -80,6 +80,15 @@ namespace SodRpg.Core.Game
                 run = new JsonObject()
                     .Add("runId", r.RunId).Add("heat", (long)r.Heat).Add("satchel", WriteRelics(r.Satchel))
                     .Add("heroKey", r.HeroKey).Add("starSecureRewarded", r.StarSecureRewarded)
+                    .Add("dreamDepth", (long)r.DreamDepth)
+                    .Add("activeWaypoint", (long)r.ActiveWaypoint).Add("pendingWaypoint", (long)r.PendingWaypoint)
+                    .Add("offeredWaypoints", r.OfferedWaypoints.Select(w => (object)(long)w).ToList())
+                    .Add("waypointChosen", r.WaypointChosen).Add("waypointGeneration", (long)r.WaypointGeneration)
+                    .Add("waypointRoom", (long)r.WaypointRoom).Add("waypointRelicsInRoom", (long)r.WaypointRelicsInRoom)
+                    .Add("waypointLootRooms", r.WaypointLootRooms.OrderBy(x => x).Select(x => (object)(long)x).ToList())
+                    .Add("waypointSlotCursor", (long)r.WaypointSlotCursor)
+                    .Add("deferredWaypointRelics", WriteRelics(r.DeferredWaypointRelics))
+                    .Add("deferredWaypointShards", (long)r.DeferredWaypointShards).Add("deferredWaypointTuning", (long)r.DeferredWaypointTuning)
                     .Add("shards", (long)r.SatchelShards).Add("tuning", (long)r.SatchelTuning)
                     .Add("roomsCleared", (long)r.RoomsCleared).Add("lostRecovered", r.LostRecovered)
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
@@ -102,6 +111,7 @@ namespace SodRpg.Core.Game
                 .Add("japanese", p.Japanese)
                 .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
                 .Add("startDepth", (long)p.StartDepth)
+                .Add("lastDreamDepth", (long)p.LastDreamDepth)
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
@@ -219,6 +229,7 @@ namespace SodRpg.Core.Game
                 Japanese = Bool(b, "japanese", true),
             };
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
+            p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
             long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
             if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)
@@ -333,6 +344,16 @@ namespace SodRpg.Core.Game
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),
+                    DreamDepth = Clamp(Long(rj, "dreamDepth"), 0, DreamDepth.Maximum),
+                    ActiveWaypoint = ReadWaypoint(rj, "activeWaypoint"),
+                    PendingWaypoint = ReadWaypoint(rj, "pendingWaypoint"),
+                    WaypointChosen = Bool(rj, "waypointChosen", false),
+                    WaypointGeneration = Clamp(Long(rj, "waypointGeneration"), 0, int.MaxValue),
+                    WaypointRoom = rj.TryGet("waypointRoom", out _) ? Clamp(Long(rj, "waypointRoom"), -1, int.MaxValue) : -1,
+                    WaypointRelicsInRoom = Clamp(Long(rj, "waypointRelicsInRoom"), 0, int.MaxValue),
+                    WaypointSlotCursor = Clamp(Long(rj, "waypointSlotCursor"), 0, int.MaxValue),
+                    DeferredWaypointShards = Clamp(Long(rj, "deferredWaypointShards"), 0, int.MaxValue),
+                    DeferredWaypointTuning = Clamp(Long(rj, "deferredWaypointTuning"), 0, int.MaxValue),
                     SatchelShards = Clamp(Long(rj, "shards"), 0, int.MaxValue),
                     SatchelTuning = Clamp(Long(rj, "tuning"), 0, int.MaxValue),
                     RoomsCleared = Clamp(Long(rj, "roomsCleared"), 0, int.MaxValue),
@@ -358,6 +379,17 @@ namespace SodRpg.Core.Game
                 ReadBounties(rj, run.Bounties, notes);
                 ReadPacts(rj, "pacts", run.Pacts, notes);
                 ReadPacts(rj, "offeredPacts", run.OfferedPacts, notes);
+                ReadRelics(rj, "deferredWaypointRelics", run.DeferredWaypointRelics, notes);
+                if (rj.TryGet("waypointLootRooms", out object roomsObject) && roomsObject is List<object> lootRooms)
+                    foreach (var room in lootRooms)
+                        if (room is long roomId && roomId >= 0 && roomId <= int.MaxValue && run.WaypointLootRooms.Count < 4096)
+                            run.WaypointLootRooms.Add((int)roomId);
+                if (run.DeferredWaypointRelics.Count > Waypoints.MaximumDeferredRelics)
+                    run.DeferredWaypointRelics.RemoveRange(Waypoints.MaximumDeferredRelics, run.DeferredWaypointRelics.Count - Waypoints.MaximumDeferredRelics);
+                if (rj.TryGet("offeredWaypoints", out object wo) && wo is List<object> waypoints)
+                    foreach (var w in waypoints)
+                        if (w is long id && id > 0 && id <= Waypoints.All.Count && run.OfferedWaypoints.Count < Waypoints.Offered
+                            && !run.OfferedWaypoints.Contains((Waypoint)id)) run.OfferedWaypoints.Add((Waypoint)id);
                 p.Run = run;
             }
             // Preserve connected allocations; refund only this Traveler when the budget or graph is invalid.
@@ -505,6 +537,12 @@ namespace SodRpg.Core.Game
         }
 
         private static string Str(JsonObject o, string key) => o.TryGet(key, out object v) ? v as string : null;
+
+        private static Waypoint ReadWaypoint(JsonObject o, string key)
+        {
+            long value = Long(o, key);
+            return value > 0 && value <= Waypoints.All.Count ? (Waypoint)value : Waypoint.None;
+        }
 
         private static long Long(JsonObject o, string key) => o.TryGet(key, out object v) && v is long l ? l : 0;
 

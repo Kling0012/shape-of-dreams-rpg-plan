@@ -94,7 +94,7 @@ namespace SodRpg.Core.Game
         public const double LimboDropBonus = 0.10;
         public const double LimboLuck = 0.2;
 
-        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null, string heroKey = null)
+        public static List<GameEvent> BeginRun(Profile p, string runId, DailyDream daily = null, int limboDepth = 0, ISet<string> reservedUids = null, string heroKey = null, int? dreamDepth = null)
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
@@ -109,7 +109,7 @@ namespace SodRpg.Core.Game
                 ev.AddRange(EndRun(p, victory: false, reservedUids: reservedUids));
             }
             // 開始深度は v1.1 で廃止（本体の Limbo 深度に統合）。
-            p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth) };
+            p.Run = new RunState { RunId = runId, HeroKey = heroKey, LevelAtStart = p.DreamLevel, DailyId = daily?.Id ?? 0, LimboDepth = Math.Max(0, limboDepth), DreamDepth = dreamDepth ?? p.LastDreamDepth };
             if (limboDepth > 0)
             {
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -136,6 +136,7 @@ namespace SodRpg.Core.Game
             var t = Pacts.Sum(run.Pacts);
             t.DropBonus += LimboDropBonus * run.LimboDepth + run.EventDropBonus;
             t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
+            t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(run.ActiveWaypoint).Luck;
             var d = DailyDream.Get(run.DailyId);
             if (d != null)
             {
@@ -146,7 +147,7 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -160,19 +161,22 @@ namespace SodRpg.Core.Game
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel);
+            if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
+            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
             if (!string.IsNullOrEmpty(heroKey))
             {
                 var hs = p.Hero(heroKey);
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
-                AddStarXp(p, heroKey, StarProgression.KillXp(tier, isNightmare), ev);
-                int points = Content.AwakenPoints(tier, isNightmare);
+                AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev);
+                int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
+                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(run.ActiveWaypoint).AwakeningMultiplier);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
                     if (r == null || r.Rarity != Rarity.Legendary) continue;
                     ReachBounty(p, BountyKind.Awakener, r.AwakenLevel, false, ev);
                     if (r.AwakenLevel >= Content.MaxAwakenLevel) continue;
-                    r.AwakenPoints = Math.Min(Content.AwakenThreshold, r.AwakenPoints + points);
+                    r.AwakenPoints = (int)Math.Min(Content.AwakenThreshold, (long)r.AwakenPoints + points);
                     int level = Content.AwakenLevelFor(r.AwakenPoints);
                     if (level <= r.AwakenLevel) continue;
                     if (r.AwakenLevel == 0) p.Stats.RelicsAwakened++; // 実績は最初の覚醒で数える
@@ -201,7 +205,6 @@ namespace SodRpg.Core.Game
             {
                 p.Stats.VariantsSlain++;
                 ev.Add(new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!")));
-                if (variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
             }
             else if (isNightmare)
             {
@@ -228,7 +231,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-                AddToSatchel(p, relic, ev, trades);
+                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(run.ActiveWaypoint).ShardMultiplier == 0);
                 AddHint(p, Hint.FirstDrop, ev);
                 AdvanceRelicBounties(p, relic, ev);
             }
@@ -250,7 +253,7 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null)
+        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null, bool suppressShards = false)
         {
             var run = p.Run;
             run.Satchel.Add(relic);
@@ -258,8 +261,10 @@ namespace SodRpg.Core.Game
             var worst = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).FirstOrDefault();
             if (worst == null) return; // 全品予約中なら、容量より予約対象の保護を優先する。
             run.Satchel.Remove(worst);
-            run.SatchelShards += Content.SalvageShards(worst.Rarity);
-            ev.Add(new GameEvent(EventKind.Info, Loc.T(
+            if (!suppressShards) run.SatchelShards += Content.SalvageShards(worst.Rarity);
+            ev.Add(new GameEvent(EventKind.Info, suppressShards ? Loc.T(
+                $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を手放しました。道標の効果で欠片は得られません。",
+                $"Satchel full: \"{worst.DisplayName}\" was discarded. The waypoint prevents shard rewards.") : Loc.T(
                 $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を欠片に換えました。",
                 $"Satchel full: \"{worst.DisplayName}\" was turned into shards.")));
         }
@@ -278,11 +283,11 @@ namespace SodRpg.Core.Game
         /// 新しいゾーンに着いたとき確保地点にするか。まだ何も倒しておらず、未確保品も深度もなければ、
         /// 判断することがないので出さない（ラン開始直後の最初のゾーン）。
         /// </summary>
-        public static bool ShouldOfferSecurePoint(Profile p)
+        public static bool ShouldOfferSecurePoint(Profile p, bool traveling = false)
         {
             var run = p.Run;
             if (run == null || run.AwaitingChoice) return false;
-            return run.Kills > 0 || run.HasUnsecured || run.Heat > run.StartDepth;
+            return traveling || run.Kills > 0 || run.HasUnsecured || run.Heat > run.StartDepth;
         }
 
         /// <summary>確保地点（新しいゾーン）に着いた。次の敵を倒すまで装備を整えられる。</summary>
@@ -292,6 +297,8 @@ namespace SodRpg.Core.Game
             var run = p.Run;
             if (run == null) return ev;
             if (run.AwaitingChoice) return ev;
+            Waypoints.Expire(run);
+            if (run.WaypointGeneration < int.MaxValue) run.WaypointGeneration++;
             run.StarSecureRewarded = false;
             run.AwaitingChoice = true;
             run.GearWindow = true;
@@ -299,6 +306,7 @@ namespace SodRpg.Core.Game
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
             run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
+            run.OfferedWaypoints.AddRange(Waypoints.Offer(rng));
             p.StoreRng(rng);
             AddHint(p, Hint.FirstSecurePoint, ev);
             return ev;
@@ -306,6 +314,21 @@ namespace SodRpg.Core.Game
 
         /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
         public static List<GameEvent> Secure(Profile p) => Secure(p, true);
+
+        /// <summary>Choose one offered waypoint, or None, for the zone entered after this secure point.</summary>
+        public static List<GameEvent> PickWaypoint(Profile p, Waypoint waypoint)
+        {
+            var run = p.Run;
+            if (run == null || !run.AwaitingChoice)
+                throw new InvalidOperationException(Loc.T("道標は確保地点で選べます。", "Choose a waypoint at a secure point."));
+            if (waypoint != Waypoint.None && !run.OfferedWaypoints.Contains(waypoint))
+                throw new InvalidOperationException(Loc.T("その道標は提示されていません。", "That waypoint is not on offer."));
+            run.PendingWaypoint = waypoint;
+            run.WaypointChosen = true;
+            return new List<GameEvent> { new GameEvent(EventKind.Info, waypoint == Waypoint.None
+                ? Loc.T("次のゾーンは道標なしで進みます。", "Continue into the next zone without a waypoint.")
+                : Loc.T($"次のゾーンの道標：{Waypoints.Get(waypoint).Name}", $"Next zone waypoint: {Waypoints.Get(waypoint).Name}")) };
+        }
 
         private static List<GameEvent> Secure(Profile p, bool awardStarXp)
         {
@@ -341,6 +364,7 @@ namespace SodRpg.Core.Game
             run.EventDropBonus = 0;
             run.EventLuck = 0;
             run.Heat = run.StartDepth;
+            Waypoints.Activate(run);
             run.AwaitingChoice = false;
             int pacts = run.Pacts.Count;
             run.Pacts.Clear();
@@ -441,6 +465,7 @@ namespace SodRpg.Core.Game
             run.OfferedEvent = DreamEvent.None;
             run.Heat = Loot.ClampHeat(run.Heat + 1);
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
+            Waypoints.Activate(run);
             run.AwaitingChoice = false;
             AddHint(p, Hint.FirstDelve, ev);
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
@@ -533,6 +558,7 @@ namespace SodRpg.Core.Game
             p.LastReport = report;
             run.EventDropBonus = 0;
             run.EventLuck = 0;
+            Waypoints.Expire(run);
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;
@@ -1073,6 +1099,7 @@ namespace SodRpg.Core.Game
         private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev)
         {
             if (string.IsNullOrEmpty(heroKey)) return;
+            amount = DreamDepth.ScaleReward(amount, DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0));
             var hero = p.Hero(heroKey);
             int before = StarProgression.Points(hero.StarXp);
             StarProgression.AddXp(hero, amount);
