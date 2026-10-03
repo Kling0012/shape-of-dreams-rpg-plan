@@ -48,6 +48,9 @@ namespace SodRpg.Mod
 
         private long GimmickActivation(GimmickHostState state, Actor source)
         {
+            long attributed = AttributedActivationSerial(source);
+            // Keep verified C02 serials disjoint from the positive IDs of unmigrated legacy casts.
+            if (attributed != 0) return -attributed;
             // All descendants of the cast's root share one activation, including projectiles and DoT effects.
             Actor root = null;
             for (int depth = 0; source != null && depth < 128; depth++, source = source.parentActor)
@@ -69,6 +72,14 @@ namespace SodRpg.Mod
 
         private object PairActivation(HeroRuntime rt, Actor actor)
         {
+            long attributed = AttributedActivationSerial(actor);
+            if (attributed != 0)
+            {
+                var verifiedState = InitializeGimmicksV129(rt);
+                if (!verifiedState.PairActivations.TryGetValue(-attributed, out var verifiedToken))
+                    verifiedState.PairActivations[-attributed] = verifiedToken = new object();
+                return verifiedToken;
+            }
             // A summon lives across many attacks; each native primary attack is a separate activation.
             var basic = BasicAttackContext.Current;
             if (basic != null && basic.Actor == actor)

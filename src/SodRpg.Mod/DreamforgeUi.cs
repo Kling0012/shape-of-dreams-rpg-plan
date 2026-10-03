@@ -13,7 +13,7 @@ namespace SodRpg.Mod
     using Stat = SodRpg.Core.Game.Stat;
 
     /// <summary>Dreamforge のメニュー（装備・鍛冶・星図・記録）、HUD、確保地点のパネル、通知の描画。</summary>
-    internal sealed class DreamforgeUi
+    internal sealed partial class DreamforgeUi
     {
         private sealed class Toast
         {
@@ -101,6 +101,7 @@ namespace SodRpg.Mod
         {
             _s = session;
             _cfg = cfg;
+            _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
             _seenInit = true;
@@ -124,7 +125,11 @@ namespace SodRpg.Mod
             Open = false;
         }
 
-        public void Dispose() => _st.Dispose();
+        public void Dispose()
+        {
+            _s.ProfileChanged -= ResetProfileView;
+            _st.Dispose();
+        }
 
         public void Notify(GameEvent e)
         {
@@ -885,6 +890,7 @@ namespace SodRpg.Mod
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
             GUILayout.EndHorizontal();
+            DrawProfileSlots();
 
             var p = _s.Profile;
             if (!starTab) DrawDreamDepthChoice();

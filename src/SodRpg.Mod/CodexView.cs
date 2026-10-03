@@ -27,6 +27,9 @@ namespace SodRpg.Mod
         private CodexState _state;
         private string _search = "";
         private bool _dirty = true;
+
+        /// <summary>プロフィールの切り替えなどで、一覧と詳細を作り直させる。</summary>
+        public void Invalidate() => _dirty = true;
         private int _sigCodex = -1, _sigStash = -1, _sigLost = -1, _sigSatchel = -1;
         private bool _sigJa;
 

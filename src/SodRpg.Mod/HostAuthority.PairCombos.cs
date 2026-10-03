@@ -50,7 +50,7 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: OnAttackFired " + ex.Message); }
         }
 
-        private void ApplyExposeDamage(HeroRuntime rt, ref DamageData damage, Entity victim)
+        private void ApplyExposeDamage(HeroRuntime rt, ref DamageData damage, Entity victim, float additionalExposePercent = 0f)
         {
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reactionEffectDepth != 0
                 || damage.IsAmountModifiedBy(typeof(GimmickRuntime)) || IsPairReactionSource(damage.actor)) return;
@@ -61,6 +61,7 @@ namespace SodRpg.Mod
             // Expose sources share the strongest vulnerability; distinct pair IDs do not stack.
             float expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
                 rt.PairCombos.ExposePercent(id, now));
+            expose = Math.Max(expose, additionalExposePercent);
             if (expose > 0) damage.ApplyAmplification(expose / 100f);
         }
 
@@ -288,7 +289,7 @@ namespace SodRpg.Mod
                 if (ReduceMemoryCooldowns(hero, criticalEcho)) LogPowerTrigger(Power.CriticalEcho);
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
                 var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, hero.Status.abilityPower,
-                    ratio, info.isCrit, _rng.NextDouble());
+                    ratio, info.isCrit, _rng.NextDouble(), consumeNextBasic: !rt.Powers.UsesMemoryPreparationLedger);
                 _pairDamageDepth++;
                 try
                 {

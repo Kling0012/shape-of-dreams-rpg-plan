@@ -460,7 +460,7 @@ namespace SodRpg.Core.Game
         /// 烈火・雷鎖・回避の残響・瞬歩の刃は攻撃力と魔力の高い方、処刑・先制は攻撃力で計算する。
         /// </summary>
         public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float abilityPower,
-            float victimHealthRatio, bool isCrit = false, double roll = 1.0)
+            float victimHealthRatio, bool isCrit = false, double roll = 1.0, bool consumeNextBasic = true)
         {
             var r = new HitResult();
             int lifesteal = Build.Get(Power.Lifesteal);
@@ -477,7 +477,7 @@ namespace SodRpg.Core.Game
             int blaze = Build.Get(Power.Blaze);
             if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = higher * blaze / 100f;
             _nextHitIsFourth = false;
-            TakeLargestNextBasic(now, higher, ref r);
+            if (consumeNextBasic) TakeLargestNextBasic(now, higher, ref r);
             r.FireStacks = ElementStacks(Power.Ember);
             r.ColdStacks = ElementStacks(Power.Frost);
             r.LightStacks = ElementStacks(Power.Radiance);

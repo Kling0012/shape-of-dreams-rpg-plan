@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.UnbowedMind.cs" Link="ModUnderTest/HostAuthority.UnbowedMind.cs" />

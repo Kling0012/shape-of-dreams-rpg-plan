@@ -20,7 +20,7 @@ namespace SodRpg.Mod
     /// </summary>
     internal sealed partial class ClientSession
     {
-        private readonly ProfileStore _store;
+        private ProfileStore _store;
         private readonly Action<GameEvent> _notify;
 
         private ZoneManager _zone;
@@ -93,22 +93,7 @@ namespace SodRpg.Mod
         {
             _hostSession = this;
             _notify = notify;
-            string path = Path.Combine(saveDir, "profile.json");
-            ulong seed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|" + DateTime.UtcNow.Ticks);
-            _store = new ProfileStore(new RealFileSystem(), path, seed);
-            try
-            {
-                Profile = _store.Load();
-            }
-            catch (LedgerVersionException ex)
-            {
-                // 新しい版で保存されたデータ。上書きして壊さないよう、読み取り専用の空プロフィールで動く。
-                Profile = Profile.CreateNew(seed);
-                SaveError = "新しい版のMODで保存されたデータです。上書きを防ぐため保存を止めています: " + ex.Message;
-                _store = null;
-            }
-            LoadNotes = _store != null && _store.Notes.Count > 0 ? string.Join("\n", _store.Notes) : null;
-            if (LoadNotes != null) Log.Warn("Profile load notes:\n" + LoadNotes);
+            InitializeProfiles(saveDir);
             _onDeath = OnDeath;
             _onZoneLoaded = OnZoneLoaded;
             _onClearedRoomsChanged = OnClearedRoomsChanged;
@@ -200,6 +185,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                TickProfileSlots();
                 Wire();
                 UpdateVariantVisuals();
                 UpdateMonsterCues();

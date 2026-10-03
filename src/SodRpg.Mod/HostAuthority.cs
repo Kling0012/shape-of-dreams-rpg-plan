@@ -207,6 +207,7 @@ namespace SodRpg.Mod
 
         public HostAuthority(Func<int> dailyIdOfHost)
         {
+            InitializeAssignedMechanisms();
             _dailyIdOfHost = dailyIdOfHost;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
@@ -713,6 +714,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            ClearAssignedMechanismTransients();
             _roomHasVariant = false;
             ClearZoneReactions();
             foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
@@ -1002,6 +1004,7 @@ namespace SodRpg.Mod
                 }
                 _zone = zone;
                 _roomHasVariant = false;
+                ClearAssignedMechanismTransients();
                 ClearZoneReactions();
                 foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
                 if (zone != null)
@@ -1038,6 +1041,7 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
@@ -1362,7 +1366,8 @@ namespace SodRpg.Mod
                     float memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
                         memoryAmpMilli / (float)BuildPrecision.Scale);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
-                    ApplyExposeDamage(captured, ref d, t);
+                    ApplyRelayWindowDamage(captured, ref d, t);
+                    ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));
                 };
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);
                 rt.OnMemoryDamage = info => OnMemoryDamage(captured, info);
@@ -1457,6 +1462,7 @@ namespace SodRpg.Mod
 
         private void Unhook(HeroRuntime rt)
         {
+            ForgetAssignedMechanismOwner(rt.Hero);
             RestoreGemSlots(rt);
             UnhookNewPowers(rt);
             UnhookGimmicksV129(rt);
@@ -2009,6 +2015,7 @@ namespace SodRpg.Mod
         /// <summary>Use the creating actor chain, never guess St_* from an Ai_* name.</summary>
         private string MemorySource(Actor actor)
         {
+            if (TryGetAttributedDamageSource(actor, out string attributed)) return attributed;
             for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
             {
                 // Gems can borrow a skill as their parent; their own damage is not that memory.
@@ -2034,7 +2041,8 @@ namespace SodRpg.Mod
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy || info.damage.amount <= 0f) return;
                 int victimId = info.victim.GetInstanceID();
                 bool generated = _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
-                    || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor);
+                    || (!info.chain.Equals(default(ReactionChain)) && !IsAttributedNativePacket(info.actor, info.victim))
+                    || IsPairReactionSource(info.actor);
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
@@ -2077,7 +2085,8 @@ namespace SodRpg.Mod
             if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
             int id = info.victim.GetInstanceID();
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
-                || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor)) _generatedPairDeaths.Add(id);
+                || (!info.chain.Equals(default(ReactionChain)) && !IsAttributedNativePacket(info.actor, info.victim))
+                || IsPairReactionSource(info.actor)) _generatedPairDeaths.Add(id);
             else _generatedPairDeaths.Remove(id);
         }
 
@@ -2168,6 +2177,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (info.victim is Hero deadHero) OnAssignedMechanismDeath(deadHero);
                 if (!(info.victim is Summon)) OnSupportDeathV129(info);
                 if (!(info.victim is Monster monster)) return;
                 ReportElementalDeath(monster);

@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace SodRpg.Core.Game
 {
     /// <summary>Per-hero pair windows and per-victim marks with non-stacking vulnerability.</summary>
-    public sealed class PairComboRuntime
+    public sealed partial class PairComboRuntime
     {
         private sealed class State
         {
@@ -33,6 +33,8 @@ namespace SodRpg.Core.Game
                 {
                     var entry = PairCombos.Clamp(entries[i]);
                     if (entry == null) throw new ArgumentException("Invalid pair-combo entry.", nameof(entries));
+                    foreach (var success in _successStates)
+                        if (success.Definition.PairId == entry.Def.Id) throw new ArgumentException("A pair cannot have both legacy and success-effect bindings.", nameof(entries));
                     bool duplicate = false;
                     foreach (var added in next) if (added.Entry.Def.Id == entry.Def.Id) { duplicate = true; break; }
                     if (duplicate) throw new ArgumentException("Duplicate pair-combo entry.", nameof(entries));
