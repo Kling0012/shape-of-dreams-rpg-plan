@@ -32,6 +32,9 @@ namespace SodRpg.Mod
             public readonly ElementReactionRuntime Reactions = new ElementReactionRuntime();
             public readonly List<PendingReaction> PendingReactions = new List<PendingReaction>();
             public readonly Dictionary<int, Entity> ReactionVictims = new Dictionary<int, Entity>();
+            public readonly PairComboRuntime PairCombos = new PairComboRuntime();
+            public readonly HashSet<string> PairMemories = new HashSet<string>();
+            public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public Action<EventInfoDamage> OnMemoryDamage;
@@ -75,6 +78,7 @@ namespace SodRpg.Mod
         {
             public GimmickRequest Request;
             public Entity Victim;
+            public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
         }
@@ -145,6 +149,11 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeTradeMsg, DewPlayer> _onTrade;
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
+        private readonly Action<EventInfoDamage> _onPairEnemyDamage;
+        private readonly Action<EventInfoKill> _onPairEnemyDeath;
+        private readonly HashSet<Entity> _pairEntities = new HashSet<Entity>();
+        private readonly HashSet<int> _generatedPairDeaths = new HashSet<int>();
+        private int _pairDamageDepth;
         private readonly Action<EventInfoAttackHit> _onAttackHit;
         private readonly Action<EventInfoApplyElemental> _onApplyElemental;
         private float _nextAreaScan;
@@ -208,6 +217,8 @@ namespace SodRpg.Mod
             _onTrade = OnTrade;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
+            _onPairEnemyDamage = OnPairEnemyDamage;
+            _onPairEnemyDeath = OnPairEnemyDeath;
             _onAttackHit = OnAttackHit;
             _onEntityAdd = OnEntityAdd;
             _onEntityRemove = OnEntityRemove;
@@ -381,6 +392,11 @@ namespace SodRpg.Mod
 
         private void OnEntityAdd(Entity e)
         {
+            if (e != null && _pairEntities.Add(e))
+            {
+                e.EntityEvent_OnTakeDamage += _onPairEnemyDamage;
+                e.EntityEvent_OnDeath += _onPairEnemyDeath;
+            }
             if (!(e is Monster m) || _monsters.ContainsKey(m)) return;
             try
             {
@@ -395,6 +411,12 @@ namespace SodRpg.Mod
 
         private void OnEntityRemove(Entity e)
         {
+            if (e != null && _pairEntities.Remove(e))
+            {
+                e.EntityEvent_OnTakeDamage -= _onPairEnemyDamage;
+                e.EntityEvent_OnDeath -= _onPairEnemyDeath;
+                _generatedPairDeaths.Remove(e.GetInstanceID());
+            }
             if (e is Monster m) RemoveMonster(m);
         }
 
@@ -458,6 +480,14 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _monsters.Values) Unhook(rt);
             _monsters.Clear();
+            foreach (var entity in _pairEntities)
+            {
+                if (entity == null) continue;
+                entity.EntityEvent_OnTakeDamage -= _onPairEnemyDamage;
+                entity.EntityEvent_OnDeath -= _onPairEnemyDeath;
+            }
+            _pairEntities.Clear();
+            _generatedPairDeaths.Clear();
         }
 
         private void Unhook(MonsterRuntime rt)
@@ -1326,6 +1356,8 @@ namespace SodRpg.Mod
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
             rt.Gimmicks.SetBuild(build.Gimmicks);
+            rt.PairCombos.SetBuild(build.PairCombos);
+            rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
@@ -1630,7 +1662,12 @@ namespace SodRpg.Mod
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
                     Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
-                if (r.WhirlwindDamage > 0) DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: hero.Status.abilityPower > hero.Status.attackDamage);
+                if (r.WhirlwindDamage > 0)
+                {
+                    _pairDamageDepth++;
+                    try { DamageAround(hero, hero.agentPosition, PowerRuntime.WhirlwindRadius, r.WhirlwindDamage, null, int.MaxValue, magic: hero.Status.abilityPower > hero.Status.attackDamage); }
+                    finally { _pairDamageDepth--; }
+                }
                 if (hero.Skill == null) return;
                 int slot = info.type == HeroSkillLocation.Q ? 0 : info.type == HeroSkillLocation.W ? 1
                     : info.type == HeroSkillLocation.E ? 2 : -1;
@@ -1768,6 +1805,7 @@ namespace SodRpg.Mod
             dyn.PowerPct += empower;
             // Kill() follows the synchronous hit event; do not retain old victims between frames.
             rt.MemoryHitAmounts.Clear();
+            rt.GeneratedKillVictims.Clear();
             var d = rt.DynBonus;
             // 値が変わったときだけ能力を再計算する（StatBonus は同じ値の代入では汚れない）。
             if (d.attackSpeedPercentage != dyn.AttackSpeedPct || d.attackDamagePercentage != dyn.AttackPct || d.abilityPowerPercentage != dyn.PowerPct
@@ -1977,15 +2015,21 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (_gimmickDamageDepth != 0 || !Alive(rt.Hero) || info.victim == null
+                if (!Alive(rt.Hero) || info.victim == null
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy || info.damage.amount <= 0f) return;
+                int victimId = info.victim.GetInstanceID();
+                bool generated = _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
+                    || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor);
+                if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
+                else rt.GeneratedKillVictims.Remove(victimId);
+                if (_gimmickDamageDepth != 0) return;
                 string memory = MemorySource(info.actor);
                 if (memory == null) return;
-                if (rt.Powers.Build.Gimmicks.Count > 0)
-                    rt.MemoryHitAmounts[info.victim.GetInstanceID()] = info.damage.amount;
-                QueueGimmicks(rt, GimmickTrigger.OnHit, memory, info.victim, info.damage.amount);
+                if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
+                    rt.MemoryHitAmounts[victimId] = info.damage.amount;
+                QueueGimmicks(rt, GimmickTrigger.OnHit, memory, info.victim, info.damage.amount, generated);
                 if (info.damage.HasAttr(DamageAttribute.IsCrit))
-                    QueueGimmicks(rt, GimmickTrigger.OnCrit, memory, info.victim, info.damage.amount);
+                    QueueGimmicks(rt, GimmickTrigger.OnCrit, memory, info.victim, info.damage.amount, generated);
             }
             catch (Exception ex) { Log.Error("Host: memory hit " + ex); }
         }
@@ -1994,25 +2038,47 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (_gimmickDamageDepth != 0 || !Alive(rt.Hero) || info.victim == null
+                if (!Alive(rt.Hero) || info.victim == null
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
-                string memory = MemorySource(info.actor);
                 int victimId = info.victim.GetInstanceID();
+                bool generated = rt.GeneratedKillVictims.Remove(victimId)
+                    || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
+                    || IsPairReactionSource(info.actor);
                 rt.MemoryHitAmounts.TryGetValue(victimId, out float damage);
                 rt.MemoryHitAmounts.Remove(victimId);
-                if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage);
+                if (_gimmickDamageDepth != 0) return;
+                string memory = MemorySource(info.actor);
+                if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage, generated);
             }
             catch (Exception ex) { Log.Error("Host: memory kill " + ex); }
         }
 
-        private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage)
+        private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false)
         {
-            if (rt.Powers.Build.Gimmicks.Count == 0 || FindMemory(rt.Hero, memory) == null) return;
+            var build = rt.Powers.Build;
+            if (build.Gimmicks.Count == 0 && build.PairCombos.Count == 0) return;
             var requests = rt.GimmickRequests;
             requests.Clear();
             float now = Time.time;
-            rt.Gimmicks.Fire(trigger, memory, now, victim != null ? victim.GetInstanceID() : 0,
-                damage, _gimmickDamageDepth != 0, requests);
+            if (build.Gimmicks.Count > 0 && FindMemory(rt.Hero, memory) != null
+                && !(trigger == GimmickTrigger.OnUse
+                    && rt.Hero.Skill.GetSkill(HeroSkillLocation.Movement)?.GetType().Name == memory))
+                rt.Gimmicks.Fire(trigger, memory, now, victim != null ? victim.GetInstanceID() : 0,
+                    damage, _gimmickDamageDepth != 0, requests);
+            if (build.PairCombos.Count > 0)
+            {
+                CollectPairMemories(rt);
+                rt.PairCombos.Fire((PairComboTrigger)trigger, memory, now,
+                    victim != null ? victim.GetInstanceID() : 0, damage,
+                    pairGenerated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0,
+                    rt.PairMemories, HasOwnSummons(rt), requests);
+            }
+            QueueGimmickRequests(rt, victim, now);
+        }
+
+        private void QueueGimmickRequests(HeroRuntime rt, Entity victim, float now)
+        {
+            var requests = rt.GimmickRequests;
             if (requests.Count > 0) SendBountyReport(rt, BountyReportKind.GimmicksTriggered, requests.Count);
             foreach (var request in requests)
             {
@@ -2022,12 +2088,75 @@ namespace SodRpg.Mod
                 {
                     Request = request,
                     Victim = victim,
+                    Pair = PairForRequest(rt, request.Entry.StarId),
                     Center = request.AreaAroundHero ? rt.Hero.agentPosition
                         : victim != null ? victim.position : rt.Hero.agentPosition,
                     Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? 0.3f : 0f),
                 });
             }
             requests.Clear();
+        }
+
+        private static PairComboDef PairForRequest(HeroRuntime rt, string id)
+        {
+            foreach (var entry in rt.Powers.Build.PairCombos)
+                if (entry.Def.Id == id) return entry.Def;
+            return null;
+        }
+
+        private static void CollectPairMemories(HeroRuntime rt)
+        {
+            rt.PairMemories.Clear();
+            if (rt.Hero.Skill == null) return;
+            foreach (var slot in LinkSkills)
+            {
+                var skill = rt.Hero.Skill.GetSkill(slot);
+                if (skill != null) rt.PairMemories.Add(skill.GetType().Name);
+            }
+        }
+
+        private static bool HasOwnSummons(HeroRuntime rt)
+        {
+            foreach (var summon in rt.Hero.summons)
+                if (summon != null && summon.isActive && summon.currentHealth > 0f
+                    && summon.FindFirstAncestorOfType<Hero>() == rt.Hero) return true;
+            return false;
+        }
+
+        private static bool IsPairReactionSource(Actor actor)
+        {
+            for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
+                if (actor is ElementalStatusEffect || actor is Gem
+                    || actor is AbilityInstance instance && instance.gem != null) return true;
+            return false;
+        }
+
+        private void OnPairEnemyDamage(EventInfoDamage info)
+        {
+            if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
+            int id = info.victim.GetInstanceID();
+            if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
+                || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor)) _generatedPairDeaths.Add(id);
+            else _generatedPairDeaths.Remove(id);
+        }
+
+        private void OnPairEnemyDeath(EventInfoKill info)
+        {
+            if (info.victim == null) return;
+            bool generated = _generatedPairDeaths.Remove(info.victim.GetInstanceID());
+            if (generated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
+                || IsPairReactionSource(info.actor)) return;
+            // This server event precedes actor kill propagation and Destroy, unlike the client RPC.
+            foreach (var rt in _runtimes.Values)
+            {
+                if (!Alive(rt.Hero) || rt.Powers.Build.PairCombos.Count == 0
+                    || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy) continue;
+                CollectPairMemories(rt);
+                rt.GimmickRequests.Clear();
+                rt.PairCombos.Fire(PairComboTrigger.OnKill, null, Time.time,
+                    info.victim.GetInstanceID(), 0f, false, rt.PairMemories, HasOwnSummons(rt), rt.GimmickRequests);
+                QueueGimmickRequests(rt, info.victim, Time.time);
+            }
         }
 
         private static SkillTrigger FindMemory(Hero hero, string memory)
@@ -2051,8 +2180,12 @@ namespace SodRpg.Mod
                 var effect = pending[i];
                 if (effect.Due > now) continue;
                 pending.RemoveAt(i);
+                if (effect.Pair != null && (FindMemory(rt.Hero, effect.Pair.RouteA) == null
+                    || FindMemory(rt.Hero, effect.Pair.RouteB) == null)) continue;
+                _pairDamageDepth++;
                 try { ApplyGimmick(rt, effect); }
                 catch (Exception ex) { Log.Error("Host: memory effect " + ex); }
+                finally { _pairDamageDepth--; }
             }
         }
 
@@ -2295,7 +2428,12 @@ namespace SodRpg.Mod
                 bool all = st.fireStack > 0 && st.hasCold && st.lightStack > 0 && st.darkStack > 0;
                 float dmg = rt.Powers.TakeConvergence(Time.time, (int)victim.netId, all,
                     Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower));
-                if (dmg > 0) rt.Hero.PureDamage(dmg, 0f).Dispatch(victim);
+                if (dmg > 0)
+                {
+                    _pairDamageDepth++;
+                    try { rt.Hero.PureDamage(dmg, 0f).Dispatch(victim); }
+                    finally { _pairDamageDepth--; }
+                }
                 if (!_spreadingFire && info.type == ElementalType.Fire && info.addedStack > 0
                     && victim.isActive && victim.GetRelation(rt.Hero) == EntityRelation.Enemy
                     && rt.Powers.Build.Get(Power.Wildfire) > 0 && st.fireStack >= PowerRuntime.WildfireMinStacks)
@@ -2352,34 +2490,48 @@ namespace SodRpg.Mod
                 if (!(info.attacker is Hero hero) || !_runtimes.TryGetValue(hero, out var rt) || !Alive(hero)) return;
                 var victim = info.victim;
                 if (victim == null || !victim.isActive) return;
+                if (_gimmickDamageDepth == 0 && _pairDamageDepth == 0 && rt.HeroKey == "Hero_Nachia"
+                    && rt.Powers.Build.PairCombos.Count > 0 && victim.GetRelation(hero) == EntityRelation.Enemy)
+                {
+                    CollectPairMemories(rt);
+                    rt.GimmickRequests.Clear();
+                    rt.PairCombos.Fire(PairComboTrigger.OnBasicAttack, null, Time.time,
+                        victim.GetInstanceID(), 0f, false, rt.PairMemories, HasOwnSummons(rt), rt.GimmickRequests);
+                    QueueGimmickRequests(rt, victim, Time.time);
+                }
                 float criticalEcho = rt.Powers.TakeCriticalEcho(Time.time, info.isCrit);
                 if (ReduceMemoryCooldowns(hero, criticalEcho)) LogPowerTrigger(Power.CriticalEcho);
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
                 var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, hero.Status.abilityPower,
                     ratio, info.isCrit, _rng.NextDouble());
-                if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);
-                if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
-                if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
-                if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);
-                if (victim.isActive)
+                _pairDamageDepth++;
+                try
                 {
-                    if (r.FireStacks > 0) hero.ApplyElemental(ElementalType.Fire, victim, r.FireStacks);
-                    if (r.ColdStacks > 0) hero.ApplyElemental(ElementalType.Cold, victim, r.ColdStacks);
-                    if (r.LightStacks > 0) hero.ApplyElemental(ElementalType.Light, victim, r.LightStacks);
-                    if (r.DarkStacks > 0) hero.ApplyElemental(ElementalType.Dark, victim, r.DarkStacks);
+                    if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);
+                    if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
+                    if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
+                    if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);
+                    if (victim.isActive)
+                    {
+                        if (r.FireStacks > 0) hero.ApplyElemental(ElementalType.Fire, victim, r.FireStacks);
+                        if (r.ColdStacks > 0) hero.ApplyElemental(ElementalType.Cold, victim, r.ColdStacks);
+                        if (r.LightStacks > 0) hero.ApplyElemental(ElementalType.Light, victim, r.LightStacks);
+                        if (r.DarkStacks > 0) hero.ApplyElemental(ElementalType.Dark, victim, r.DarkStacks);
+                    }
+                    if (r.OpeningDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                        hero.PureDamage(r.OpeningDamage, 0f).Dispatch(victim);
+                    if (r.EchoDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                    {
+                        hero.PureDamage(r.EchoDamage, 0f).Dispatch(victim);
+                        LogPowerTrigger(Power.EchoingDodge);
+                    }
+                    if (r.ShadowStepDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
+                    {
+                        hero.PureDamage(r.ShadowStepDamage, 0f).Dispatch(victim);
+                        LogPowerTrigger(Power.ShadowStep);
+                    }
                 }
-                if (r.OpeningDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
-                    hero.PureDamage(r.OpeningDamage, 0f).Dispatch(victim);
-                if (r.EchoDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
-                {
-                    hero.PureDamage(r.EchoDamage, 0f).Dispatch(victim);
-                    LogPowerTrigger(Power.EchoingDodge);
-                }
-                if (r.ShadowStepDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
-                {
-                    hero.PureDamage(r.ShadowStepDamage, 0f).Dispatch(victim);
-                    LogPowerTrigger(Power.ShadowStep);
-                }
+                finally { _pairDamageDepth--; }
             }
             catch (Exception ex)
             {

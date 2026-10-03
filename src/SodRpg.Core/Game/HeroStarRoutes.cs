@@ -696,7 +696,11 @@ namespace SodRpg.Core.Game
         }
 
         private static void Ring(List<TalentDef> nodes, string hero, string id, string ja, string en, Stat stat, int value)
-            => nodes.Add(new TalentDef("h." + hero.ToLowerInvariant() + ".ring." + id, Line.Resonance,
-                new Txt(ja, en), stat, value, 5) { HeroKey = "Hero_" + hero, Tier = 2, IsDreamRing = true });
+        {
+            bool outer = id == "renewal" || (hero == "Bismuth" && id == "resolve");
+            nodes.Add(new TalentDef("h." + hero.ToLowerInvariant() + ".ring." + id, Line.Resonance,
+                new Txt(ja, en), stat, outer ? value : 0, outer ? 5 : 3)
+                { HeroKey = "Hero_" + hero, Tier = 2, IsDreamRing = true });
+        }
     }
 }

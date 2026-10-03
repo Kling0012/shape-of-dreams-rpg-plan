@@ -40,6 +40,19 @@ namespace SodRpg.Core.Game
         private const float DeepRadius = 330f;
         private const float BranchRadius = 480f;
         private const float BranchStep = 95f;
+        // Loadout A/B order, independent of route registration and persistent node ids.
+        private static readonly Dictionary<string, string[]> BranchOrder = new Dictionary<string, string[]>(StringComparer.Ordinal)
+        {
+            ["Hero_Vesper"] = new[] { "resolve", "cruel-sun", "sanctuary", "charge", "mercy", "discipline", "baptism" },
+            ["Hero_Lacerta"] = new[] { "powder", "hand-cannon", "quick-trigger", "nimble-dodge", "double-tap", "incendiary", "precision" },
+            ["Hero_Cetus"] = new[] { "icy-veins", "embrace-chill", "back-off", "frost-charge", "charged", "boreal-chunk", "frozen-fists" },
+            ["Hero_Yubar"] = new[] { "exotic-matter", "ethereal", "cataclysm", "flicker", "converging-stars", "supernova", "tranquility" },
+            ["Hero_Husk"] = new[] { "killing-flow", "laceration", "annihilation", "flash-step", "wind-scar", "death-mark", "deception" },
+            ["Hero_Mist"] = new[] { "en-garde", "lunge", "determination", "fast-feet", "priorite", "fleche", "parry" },
+            ["Hero_Nachia"] = new[] { "pack-heart", "sylvan-call", "natures-whisper", "dreamy-waltz", "circle-life", "moonlight-pact", "serpent-blessing" },
+            ["Hero_Aurena"] = new[] { "claw", "golden-burst", "dangerous-theory", "feathery-dash", "beautiful-threat", "reduction", "chain-reaction" },
+            ["Hero_Bismuth"] = new[] { "prismatic-eyes", "innocence", "distorting-sprint", "infernal-tales", "valiant-heart", "distorted-mind" },
+        };
         private static readonly Dictionary<string, HeroTreeLayout> Layouts = CreateLayouts();
         private static readonly HeroTreeLayout Generic = Create(Content.Talents, false);
         private readonly Dictionary<string, int> indices;
@@ -137,6 +150,13 @@ namespace SodRpg.Core.Game
                 }
                 else if (talent.Tier == 1 || talent.IsKeystone || talent.Stat == Stat.FourthAttackShift) inner.Add(talent);
                 else deep.Add(talent);
+            }
+            if (branches.Count > 0 && BranchOrder.TryGetValue(branches[0][0].HeroKey, out var branchOrder))
+            {
+                string prefix = "h." + branches[0][0].HeroKey.Substring(5).ToLowerInvariant() + ".route.";
+                var ordered = new List<List<TalentDef>>(branches.Count);
+                foreach (string slug in branchOrder) ordered.Add(branches[routeIndices[prefix + slug]]);
+                branches = ordered;
             }
 
             var innerIndices = new int[inner.Count];

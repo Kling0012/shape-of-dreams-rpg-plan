@@ -21,6 +21,8 @@ namespace SodRpg.Core.Game
         public List<LinkDef> Links { get; } = new List<LinkDef>();
         /// <summary>振ったルートの星が持つ、記憶に反応する仕掛け。</summary>
         public List<GimmickEntry> Gimmicks { get; } = new List<GimmickEntry>();
+        /// <summary>橋と両隣の星を取得した合わせ技。記憶の装備条件は各イベントで判定する。</summary>
+        public List<PairComboEntry> PairCombos { get; } = new List<PairComboEntry>();
         public int Heat { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
         public int DreamLevel { get; set; } = 1;
@@ -88,6 +90,16 @@ namespace SodRpg.Core.Game
                 if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone
                     || !Rules.TalentUnlocked(h, heroKey, t)) continue;
                 int rank = Math.Min(kv.Value, t.MaxRank);
+                var pair = global::SodRpg.Core.Game.PairCombos.ForBridge(t.Id);
+                if (pair != null)
+                {
+                    var entry = global::SodRpg.Core.Game.PairCombos.Activate(pair, h, rank);
+                    if (entry != null && Content.TryGetTalent(pair.StarA, out var starA)
+                        && Content.TryGetTalent(pair.StarB, out var starB)
+                        && Rules.TalentUnlocked(h, heroKey, starA) && Rules.TalentUnlocked(h, heroKey, starB))
+                        b.PairCombos.Add(entry);
+                    continue; // Inner bridges are combos, never their old unconditional ring stats.
+                }
                 if (t.Gimmick != null && t.Gimmick.Value > 0 && b.Gimmicks.Count < global::SodRpg.Core.Game.Gimmicks.MaxEntries)
                 {
                     var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
@@ -165,6 +177,7 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;d:30;a:150;l:3:22:St_X+Gem_Y" の形。
         /// d は夢のレベル、a は使用済み星ポイント。l は「種類:値:条件+条件+条件」。
+        /// c は合わせ技の「ID:段数」。効果は正規の定義から復元し、クライアントからの効果量は受け取らない。
         /// ホストはこれを検証してから能力補正へ変換する。
         /// </summary>
         public string Encode()
@@ -218,6 +231,20 @@ namespace SodRpg.Core.Game
                     .Append(entry.Def.Arg.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture));
             }
+            sb.Append(";c:");
+            first = true;
+            stars.Clear();
+            count = 0;
+            foreach (var raw in PairCombos)
+            {
+                if (count >= global::SodRpg.Core.Game.PairCombos.MaxEntries) break;
+                var entry = global::SodRpg.Core.Game.PairCombos.Clamp(raw);
+                if (entry == null || !stars.Add(entry.Def.Id)) continue;
+                if (!first) sb.Append(',');
+                first = false;
+                count++;
+                sb.Append(entry.Def.Id).Append(':').Append(entry.Ranks.ToString(CultureInfo.InvariantCulture));
+            }
             return sb.ToString();
         }
 
@@ -230,6 +257,7 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(text) || text.Length > 16384) return null;
             var b = new Build();
             var stars = new HashSet<string>(StringComparer.Ordinal);
+            var pairs = new HashSet<string>(StringComparer.Ordinal);
             try
             {
                 foreach (string part in text.Split(';'))
@@ -304,6 +332,22 @@ namespace SodRpg.Core.Game
                                 },
                             });
                             if (entry != null && stars.Add(entry.StarId)) b.Gimmicks.Add(entry);
+                        }
+                        continue;
+                    }
+                    if (kind == "c")
+                    {
+                        if (body.Length == 0) continue;
+                        foreach (string encoded in body.Split(','))
+                        {
+                            if (b.PairCombos.Count >= global::SodRpg.Core.Game.PairCombos.MaxEntries) break;
+                            string[] fields = encoded.Split(':');
+                            if (fields.Length != 2 || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int ranks)) continue;
+                            var entry = global::SodRpg.Core.Game.PairCombos.Clamp(new PairComboEntry
+                            {
+                                Def = global::SodRpg.Core.Game.PairCombos.Get(fields[0]), Ranks = ranks
+                            });
+                            if (entry != null && pairs.Add(entry.Def.Id)) b.PairCombos.Add(entry);
                         }
                         continue;
                     }

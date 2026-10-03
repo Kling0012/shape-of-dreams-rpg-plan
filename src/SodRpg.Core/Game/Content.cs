@@ -197,6 +197,8 @@ namespace SodRpg.Core.Game
         public int Tier { get; set; } = 1;
         /// <summary>記憶の仕掛け（v1.28）。ルートの記憶に反応する。なければ null。</summary>
         public GimmickDef Gimmick { get; set; }
+        /// <summary>隣接する記憶をつなぐ橋の合わせ技。外側の夢の輪には付かない。</summary>
+        public PairComboDef PairCombo => PairCombos.ForBridge(Id);
         /// <summary>1段に要るポイント（ふつうは1。連装・四の型のように強い星だけ高い）。</summary>
         public int RankCost { get; set; } = 1;
         public bool IsKeystone { get; }
@@ -209,6 +211,7 @@ namespace SodRpg.Core.Game
         /// <summary>星図に表示する効果。小ノードは1段あたりの値。</summary>
         public string Describe()
         {
+            if (PairCombo != null) return PairCombos.Describe(PairCombo);
             string effect;
             if (IsKeystone)
                 effect = Content.FormatPower(Power, PowerValue) + "\n" + Description;

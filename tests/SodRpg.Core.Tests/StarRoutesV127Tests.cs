@@ -64,17 +64,16 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Rings_offer_eight_distinct_five_rank_stats_without_route_dependencies()
+        public void Inner_bridges_spend_three_ranks_on_combos_and_outer_bridges_keep_stats()
         {
-            var expected = new[] { Stat.AttackPct, Stat.PowerPct, Stat.MaxHealthPct, Stat.Armor,
-                Stat.MaxHealthFlat, Stat.AttackSpeedPct, Stat.Tenacity, Stat.HealthRegen }; // 記憶加速はエッセンスで手に入りやすいので外した
             foreach (string hero in Memories.Keys)
             {
                 var ring = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.IsDreamRing).ToArray();
-                Assert.Equal(expected.OrderBy(x => x), ring.Select(t => t.Stat).OrderBy(x => x));
+                Assert.Equal(hero == "Hero_Bismuth" ? 6 : 7, ring.Count(t => PairCombos.ForBridge(t.Id) != null));
                 Assert.All(ring, t =>
                 {
-                    Assert.Equal(5, t.MaxRank);
+                    Assert.Equal(PairCombos.ForBridge(t.Id) == null ? 5 : 3, t.MaxRank);
+                    Assert.Equal(PairCombos.ForBridge(t.Id) == null ? 1 : 0, t.PerRank > 0 ? 1 : 0);
                     Assert.Equal(1, t.RankCost);
                     Assert.Equal(2, t.Tier);
                     Assert.Null(t.RouteId);
@@ -83,7 +82,7 @@ namespace SodRpg.Core.Tests
                     Assert.False(t.IsKeystone);
                     Assert.False(t.IsPowerNode);
                 });
-                Assert.Equal(40, ring.Sum(t => t.MaxRank * t.RankCost));
+                Assert.Equal(hero == "Hero_Bismuth" ? 28 : 26, ring.Sum(t => t.MaxRank * t.RankCost));
             }
         }
 
@@ -146,15 +145,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData("Hero_Vesper", 7, 60, 239)]
-        [InlineData("Hero_Lacerta", 7, 60, 239)]
-        [InlineData("Hero_Cetus", 7, 60, 238)]
-        [InlineData("Hero_Yubar", 7, 60, 238)]
-        [InlineData("Hero_Husk", 7, 60, 238)]
-        [InlineData("Hero_Mist", 7, 60, 238)]
-        [InlineData("Hero_Nachia", 7, 60, 238)]
-        [InlineData("Hero_Aurena", 7, 60, 238)]
-        [InlineData("Hero_Bismuth", 6, 52, 212)]
+        [InlineData("Hero_Vesper", 7, 60, 225)]
+        [InlineData("Hero_Lacerta", 7, 60, 225)]
+        [InlineData("Hero_Cetus", 7, 60, 224)]
+        [InlineData("Hero_Yubar", 7, 60, 224)]
+        [InlineData("Hero_Husk", 7, 60, 224)]
+        [InlineData("Hero_Mist", 7, 60, 224)]
+        [InlineData("Hero_Nachia", 7, 60, 224)]
+        [InlineData("Hero_Aurena", 7, 60, 224)]
+        [InlineData("Hero_Bismuth", 6, 52, 200)]
         public void Whole_tree_has_more_choices_than_the_point_budget(string hero, int routes, int addedStars, int capacity)
         {
             var added = HeroStarRoutes.All.Where(t => t.HeroKey == hero).ToArray();
@@ -183,7 +182,7 @@ namespace SodRpg.Core.Tests
                     Assert.True((long)total * 5 <= (long)Content.PowerCap(power.Key) * 4,
                         hero + " / " + power.Key + " = " + total);
                 }
-                foreach (var stat in tree.Where(t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null && t.Stat != Stat.EssenceSlotIdentity).GroupBy(t => t.Stat)) // 枠の星は2本取っても +1 に抑える（EssenceSlots）
+                foreach (var stat in tree.Where(t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null && t.PerRank != 0 && t.Stat != Stat.EssenceSlotIdentity).GroupBy(t => t.Stat)) // 枠の星は2本取っても +1 に抑える（EssenceSlots）
                 {
                     int total = stat.Sum(t => t.PerRank * t.MaxRank);
                     Assert.InRange(total, 1, Content.StatCap(stat.Key));

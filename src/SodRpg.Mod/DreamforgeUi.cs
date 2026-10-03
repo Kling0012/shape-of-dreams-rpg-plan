@@ -1709,7 +1709,7 @@ namespace SodRpg.Mod
         private sealed class StarNode
         {
             public int Rank;
-            public bool Allocated, Available;
+            public bool Allocated, Available, PairEquippedA, PairEquippedB;
             public string Description;
             public float TooltipWidth, TooltipHeight;
             public readonly GUIContent RankLabel = new GUIContent();
@@ -1781,6 +1781,8 @@ namespace SodRpg.Mod
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
                 || _starKeystone != hs.Keystone || _starSpent != spent;
+            var marks = LinkMarks();
+            bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -1790,6 +1792,15 @@ namespace SodRpg.Mod
                 if (n.Rank != rank) changed = true;
                 n.Rank = rank;
                 n.Allocated = rank > 0;
+                var pair = t == null ? null : PairCombos.ForBridge(t.Id);
+                if (pair != null)
+                {
+                    bool a = matchingHero && marks != null && marks(pair.RouteA);
+                    bool b = matchingHero && marks != null && marks(pair.RouteB);
+                    if (n.PairEquippedA != a || n.PairEquippedB != b) changed = true;
+                    n.PairEquippedA = a;
+                    n.PairEquippedB = b;
+                }
             }
             if (!changed) return;
             _starState = hs;
@@ -1836,7 +1847,19 @@ namespace SodRpg.Mod
                     : !unlocked ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
                     : _starFree < cost ? Loc.T("ポイントが足りません。", "Not enough points.")
                     : Loc.T("振れます。", "Available.");
-                n.Tooltip.text = "<b>" + t.Name + "</b>  " + n.RankLabel.text + "\n" + n.Description
+                var pair = PairCombos.ForBridge(t.Id);
+                string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
+                string description = pair == null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                if (pair != null)
+                {
+                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
+                        + Loc.T("を装着", " equipped")
+                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB)
+                        + Loc.T("を装着", " equipped");
+                    condition += Loc.T("\n合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
+                        "\nThe combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped.");
+                }
+                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n" + description
                     + Loc.T($"\n費用：1段 {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} ポイント",
                         $"\nCost: {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} points per rank")
                     + "\n" + condition + "\n" + state
