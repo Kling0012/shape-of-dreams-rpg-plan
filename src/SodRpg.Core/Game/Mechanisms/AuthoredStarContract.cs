@@ -214,7 +214,9 @@ namespace SodRpg.Core.Game
                     var starMemories = new List<IReadOnlyList<string>>(group.Count);
                     foreach (var def in group)
                     {
-                        if (def.Shape != first.Shape || def.Region.Kind != first.Region.Kind || def.Region.Id != first.Region.Id)
+                        // Shapes are per star: one cluster may mix Fan/Ring/Chain geometry
+                        // (compound segments). Region stays a whole-cluster property.
+                        if (def.Region.Kind != first.Region.Kind || def.Region.Id != first.Region.Id)
                             throw Invalid(def.LocalStarId, "Cluster metadata differs between stars.");
                         effects.Add(EffectiveDefinition(def));
                         edges.AddRange(def.Edges);
@@ -224,6 +226,8 @@ namespace SodRpg.Core.Game
                         memories.UnionWith(owned);
                     }
                     var cluster = new StarClusterDef { Id = first.ClusterId, HeroKey = hero, Region = first.Region,
+                        // The cluster's own shape is its entry star's segment; authored stars
+                        // place themselves from their own Shape (HeroTreeLayout compound segments).
                         Anchor = first.AnchorId, Shape = first.Shape, Stars = effects.AsReadOnly(), AuthoredEdges = edges.AsReadOnly(),
                         AuthoredMemories = new List<string>(memories).AsReadOnly() };
                     generatedClusters.Add(cluster.Id, cluster);
@@ -313,11 +317,19 @@ namespace SodRpg.Core.Game
             else
             {
                 if (!string.IsNullOrEmpty(def.Region.Id)) throw Invalid(def.LocalStarId, "Outer has no route ID.");
-                bool validAnchor = existing.TryGetValue(def.AnchorId, out var anchor) && anchor.IsOuterAnchor && anchor.PerRank > 0 && !anchor.IsPowerNode && anchor.Gimmick == null;
+                // v1.31 per-hero outer clusters enter from a hero-owned native route star (typically the
+                // route terminus) or from a star of this hero's authored memory region. Those entrances own
+                // the cluster exactly like the shared outer's effectful Stat root (s1) and the registered
+                // outer anchor stats. NormalizeAuthored inherits the cluster entry anchor, so an outer star
+                // without any resolvable anchor is genuinely ownerless and still rejects.
+                bool validAnchor = def.AnchorId != null && existing.TryGetValue(def.AnchorId, out var anchor)
+                    && (anchor.IsOuterAnchor && anchor.PerRank > 0 && !anchor.IsPowerNode && anchor.Gimmick == null
+                        || anchor.RouteId != null && HeroMemory(anchor.RouteMemory));
                 foreach (var candidate in group)
-                    if (candidate.HeroKey == def.HeroKey && candidate.ClusterId == def.ClusterId && candidate.LocalStarId == def.AnchorId
-                        && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0) validAnchor = true;
-                if (!validAnchor) throw Invalid(def.LocalStarId, "Outer anchor must be an effectful stat star, including the shared s1.");
+                    if (candidate.HeroKey == def.HeroKey && candidate.LocalStarId == def.AnchorId
+                        && (candidate.ClusterId == def.ClusterId && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0
+                            || candidate.Region.Kind == ClusterRegionKind.Memory)) validAnchor = true;
+                if (!validAnchor) throw Invalid(def.LocalStarId, "Outer anchor must be an effectful stat star or a hero-owned route/memory entrance.");
                 foreach (var talent in existing.Values) if (talent.RouteId != null && talent.RouteMemory != null) memories.Add(talent.RouteMemory);
                 foreach (string common in CommonForAuthoring()) memories.Add(common);
                 if (target != null && !Verified(target)) throw Invalid(def.LocalStarId, "Unknown receiver target.");

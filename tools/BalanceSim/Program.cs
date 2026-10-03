@@ -17,9 +17,23 @@ internal static class Program
                 return 0;
             }
             var timer = Stopwatch.StartNew();
+            if (options.Stars)
+            {
+                var stars = new StarSimulation(options);
+                stars.Run();
+                timer.Stop();
+                string starReport = StarReport.Render(options, stars, timer.Elapsed);
+                if (options.Out != null)
+                {
+                    string starPath = Path.GetFullPath(options.Out);
+                    string? starDirectory = Path.GetDirectoryName(starPath);
+                    if (starDirectory != null) Directory.CreateDirectory(starDirectory);
+                    File.WriteAllText(starPath, starReport, new UTF8Encoding(false));
+                }
+                Console.Write(starReport);
+                return 0;
+            }
             var simulation = new Simulation(options);
-            simulation.Run();
-            timer.Stop();
             string report = Report.Render(options, simulation, timer.Elapsed);
             if (options.Out != null)
             {

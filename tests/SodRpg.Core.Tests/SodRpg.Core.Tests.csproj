@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SodRpg.Core\SodRpg.Core.csproj" />
+    <ProjectReference Include="..\..\tools\BalanceSim\BalanceSim.csproj" />
   </ItemGroup>
 
   <ItemGroup>

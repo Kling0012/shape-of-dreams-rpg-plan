@@ -184,6 +184,14 @@ class Compiler:
             self.pairs[bridge] = {"id": "h." + name + ".pair." + str(spec["index"]),
                 "a": memory_of[route_a], "b": memory_of[route_b], "line": "", "payoff": None, "authored": spec, "success": spec["trigger"],
                 "star_a": route_a + "." + str(order_a), "star_b": route_b + "." + str(order_b)}
+        # Registered real outer anchor stats (StarClusters.OuterAnchors): the legacy
+        # contract-accepted outer entrances without an authored Stat root.
+        text = (ROOT / "src/SodRpg.Core/Game/StarClusters.cs").read_text(encoding="utf-8")
+        self.outer_anchors = set()
+        for match in re.finditer(r'new TalentDef\("(h\.[\w.-]+)"[\s\S]*?\{([^}]*)\}', text):
+            hero = re.search(r'HeroKey = "(\w+)"', match.group(2))
+            if hero and "IsOuterAnchor = true" in match.group(2):
+                self.outer_anchors.add((hero.group(1), match.group(1)))
         self.known_memories = set(self.routes)
         contract = (ROOT / "src/SodRpg.Core/Game/Mechanisms/AuthoredStarContract.cs").read_text(encoding="utf-8")
         common = re.search(r"CommonMemories\s*=.*?\{(.*?)\};", contract, re.S)
@@ -710,8 +718,11 @@ class Compiler:
         if row["region"] == "outer":
             group = [s for s in self.rows if s.get("cluster") == row["cluster"]]
             if not any(s["kind"] == "Stat" and s.get("stat") and s["stat"]["perRank"] > 0 for s in group):
-                anchors = sorted({s["anchor"] for s in group if s.get("anchor")})
-                self.fail(sid, "region", "outer", "outer cluster " + row["cluster"] + " has no effectful Stat root; authored entry anchors " + display_value(anchors) + " cannot satisfy AuthoredStarContract.VerifyOwnership; native-route outer ownership needs an out-of-scope contract change")
+                # The effectful Stat root override in NormalizeAuthored is absent, so the
+                # row's own anchor applies; stars without one inherit the cluster entry.
+                anchor = row.get("anchor") or next((s["anchor"] for s in group if s.get("anchor")), None)
+                if not self.outer_anchor_owned(anchor):
+                    self.fail(sid, "region", "outer", "outer cluster " + row["cluster"] + " anchor " + display_value(anchor) + " is neither a same-hero native route star, a same-hero authored memory entrance, a same-cluster effectful Stat root nor a registered outer anchor stat; AuthoredStarContract.VerifyOwnership rejects it")
             return "ClusterRegion.Outer"
         return "new ClusterRegion { Kind = ClusterRegionKind.Keystone }"
 
@@ -720,6 +731,19 @@ class Compiler:
             return None
         anchors = [s.get("anchor") for s in self.rows if s.get("cluster") == row["cluster"] and s.get("anchor")]
         return next((a for a in anchors if a in RECEIVER_ONLY_BRIDGES and a not in self.pairs), None)
+
+    def outer_anchor_owned(self, anchor):
+        """Mirror AuthoredStarContract.VerifyOwnership: the outer entrances the contract owns."""
+        if anchor is None:
+            return False
+        if anchor.startswith("h." + self.name + ".route."):
+            route = anchor.rsplit(".", 1)[0]
+            if any(key.startswith(route + ".") for key in self.route_rows):
+                return True
+        row = self.by_id.get(anchor)
+        if row is not None and row.get("region") == "memory" and anchor.startswith(self.name + "."):
+            return True
+        return (self.hero, anchor) in self.outer_anchors
 
     def star(self, row, seen_edges):
         sid = row["id"]
@@ -781,15 +805,6 @@ class Compiler:
             affected = [owner] if owner in self.by_id else [s["id"] for s in self.rows]
             for sid in affected:
                 self.fail(sid, "canonical", None, error)
-        groups = defaultdict(list)
-        for row in self.rows:
-            if row["region"] != "migration":
-                groups[row["cluster"]].append(row)
-        for cluster, group in groups.items():
-            shapes = sorted({row["shape"] for row in group if row["shape"] is not None})
-            if len(shapes) > 1:
-                for row in group:
-                    self.fail(row["id"], "shape", row["shape"], "cluster " + cluster + " mixes " + display_value(shapes) + "; AuthoredStarContract requires one Shape per ClusterId; preserving this compound geometry needs a contract change")
         seen_edges = set()
         for row in self.rows:
             self.attempt(row["id"], "star", row["id"], lambda r=row: self.star(r, seen_edges))

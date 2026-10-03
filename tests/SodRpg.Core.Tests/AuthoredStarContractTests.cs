@@ -191,6 +191,105 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { a }, Base()));
         }
 
+        [Fact]
+        public void CompoundClusterCarriesPerStarShapesWhileRegionStaysWholeCluster()
+        {
+            AuthoredStarDef Definition(string id, ClusterShape shape, ClusterStarDef effect) => new AuthoredStarDef
+            {
+                HeroKey = Hero, LocalStarId = id, ClusterId = "test.compound", Region = ClusterRegion.Outer,
+                AnchorId = null, Shape = shape, Effect = effect
+            };
+            AuthoredStarDef[] Set() => new[]
+            {
+                Definition("compound.test.s1", ClusterShape.Ring, new ClusterStarDef
+                    { Kind = ClusterStarKind.Stat, Name = Name, Stat = Stat.Armor, Amount = 1 }),
+                Definition("compound.test.s2", ClusterShape.Ring, Damage()),
+                Definition("compound.test.a1", ClusterShape.Fan, Damage()),
+                Definition("compound.test.n1", ClusterShape.Chain, Damage())
+            };
+            var defs = Set();
+            defs[1].Edges = new[] { new AuthoredStarEdge("compound.test.s2", "compound.test.s1") };
+            defs[2].Edges = new[] { new AuthoredStarEdge("compound.test.a1", "compound.test.s1") };
+            defs[3].Edges = new[] { new AuthoredStarEdge("compound.test.n1", "compound.test.a1") };
+            var registry = StarClusters.GenerateAuthored(defs, Base());
+            foreach (string id in new[] { "compound.test.s1", "compound.test.s2", "compound.test.a1", "compound.test.n1" })
+                Assert.True(registry.TryGet(Hero, id, out var node) && node.Id == id);
+            Assert.True(registry.TryGet(Hero, "compound.test.s1", out var root));
+            Assert.Equal(ClusterShape.Ring, root.Cluster.Shape); // the cluster keeps its entry star's segment
+            Assert.True(registry.TryGet(Hero, "compound.test.n1", out var tail));
+            Assert.Equal(ClusterShape.Chain, tail.AuthoredStar.Shape);
+
+            var mixedRegion = Set();
+            mixedRegion[2].Region = ClusterRegion.Memory("h.cetus.route.icy-veins");
+            mixedRegion[1].Edges = new[] { new AuthoredStarEdge("compound.test.s2", "compound.test.s1") };
+            var error = Assert.Throws<InvalidOperationException>(
+                () => StarClusters.GenerateAuthored(mixedRegion, Base()));
+            Assert.Contains("Cluster metadata differs between stars.", error.Message);
+
+            var badShape = Set();
+            badShape[2].Shape = (ClusterShape)99;
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(badShape, Base()));
+        }
+
+        private static AuthoredStarDef Outer(string id, string cluster, string anchor, ClusterStarDef effect) => new AuthoredStarDef
+        {
+            HeroKey = Hero, LocalStarId = id, ClusterId = cluster, Region = ClusterRegion.Outer,
+            AnchorId = anchor, Shape = ClusterShape.Ring, Effect = effect
+        };
+
+        [Fact]
+        public void RouteEntranceOuterClusterIsOwnedAndRejectsForeignOrMissingAnchors()
+        {
+            const string terminus = "h.cetus.route.icy-veins.7";
+            var entry = Outer("outer.route.e1", "outer.route.test", terminus, Damage());
+            var satellite = Outer("outer.route.s1", "outer.route.test", null, Damage());
+            satellite.Edges = new[] { new AuthoredStarEdge(entry.LocalStarId, satellite.LocalStarId) };
+            var registry = StarClusters.GenerateAuthored(new[] { entry, satellite }, Base());
+            // Both the entry and the star that inherits the cluster anchor stay owned by the route.
+            Assert.True(registry.TryGet(Hero, entry.LocalStarId, out var owned));
+            Assert.Equal(Memory, owned.LinkPerRank.Requires[0]);
+            Assert.True(registry.TryGet(Hero, satellite.LocalStarId, out var inherited));
+            Assert.Equal(Memory, inherited.LinkPerRank.Requires[0]);
+            // The wider anchor rule does not widen memory ownership itself.
+            entry.Effect = Damage("St_D_Resolve");
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { entry, satellite }, Base()));
+            entry.Effect = Damage();
+            // A foreign hero's real route star is not this hero's entrance.
+            entry.AnchorId = "h.vesper.route.resolve.7";
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { entry, satellite }, Base()));
+            // A dream ring node of this hero owns no route memory and is not an entrance.
+            entry.AnchorId = "h.cetus.ring.recall";
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { entry, satellite }, Base()));
+            entry.AnchorId = null;
+            satellite.Edges = Array.Empty<AuthoredStarEdge>();
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { entry, satellite }, Base()));
+        }
+
+        [Fact]
+        public void AuthoredMemoryEntranceOuterClusterIsOwnedAndForeignMemoryEntrancesReject()
+        {
+            var memoryEntry = new AuthoredStarDef
+            {
+                HeroKey = Hero, LocalStarId = "test.mem.e1", ClusterId = "test.mem.cluster",
+                Region = ClusterRegion.Memory("h.cetus.route.icy-veins"), AnchorId = "h.cetus.route.icy-veins.7",
+                Shape = ClusterShape.Fan, Effect = Damage()
+            };
+            var entry = Outer("outer.memory.e1", "outer.memory.test", memoryEntry.LocalStarId, Damage());
+            var registry = StarClusters.GenerateAuthored(new[] { memoryEntry, entry }, Base());
+            Assert.True(registry.TryGet(Hero, entry.LocalStarId, out var owned));
+            Assert.Equal(Memory, owned.LinkPerRank.Requires[0]);
+            // Another hero's authored memory star is cross-hero content, not an entrance.
+            var vesperMemory = new AuthoredStarDef
+            {
+                HeroKey = "Hero_Vesper", LocalStarId = "vesper.test.mem.e1", ClusterId = "vesper.test.mem",
+                Region = ClusterRegion.Memory("h.vesper.route.resolve"), AnchorId = "h.vesper.route.resolve.7",
+                Shape = ClusterShape.Fan, Effect = Damage("St_D_Resolve")
+            };
+            entry.AnchorId = vesperMemory.LocalStarId;
+            var bases = Base().Concat(Base("Hero_Vesper")).ToArray();
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { vesperMemory, entry }, bases));
+        }
+
         internal static void AllocatePath(HeroState hero, IReadOnlyList<TalentDef> tree, string target, string excludedId = null)
         {
             var layout = HeroTreeLayout.ForTalents(tree);

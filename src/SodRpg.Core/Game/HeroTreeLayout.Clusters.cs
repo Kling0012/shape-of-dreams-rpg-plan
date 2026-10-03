@@ -140,7 +140,7 @@ namespace SodRpg.Core.Game
                 var cluster = group[0].Cluster;
                 if (!indices.TryGetValue(cluster.Anchor, out int anchor))
                     throw new InvalidOperationException("Cluster anchor missing from layout: " + cluster.Id);
-                var offsets = ClusterOffsets(group, cluster.Shape);
+                var offsets = ClusterOffsets(group, StarShapes(group, cluster));
                 var positions = new StarMapPoint[group.Count];
                 var origin = nodes[anchor];
                 double outward = Math.Atan2(origin.Y, origin.X);
@@ -213,7 +213,52 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private static StarMapPoint[] ClusterOffsets(List<TalentDef> stars, ClusterShape shape)
+        /// <summary>Per-star geometry: authored stars carry their own shape, others use their cluster's shape.</summary>
+        private static ClusterShape[] StarShapes(List<TalentDef> stars, StarClusterDef cluster)
+        {
+            var shapes = new ClusterShape[stars.Count];
+            for (int i = 0; i < stars.Count; i++)
+                shapes[i] = stars[i].AuthoredStar != null ? stars[i].AuthoredStar.Shape : cluster.Shape;
+            return shapes;
+        }
+
+        /// <summary>
+        /// Compound geometry: maximal consecutive same-shape runs become segments. Every segment keeps its
+        /// single-shape offsets; segments are appended along +x with one step of clearance, so stars of
+        /// different segments are always at least one step apart and the unit stays rigid and deterministic.
+        /// Uniform clusters keep their historic single-shape geometry.
+        /// </summary>
+        private static StarMapPoint[] ClusterOffsets(List<TalentDef> stars, ClusterShape[] shapes)
+        {
+            if (shapes.Length == 0) return new StarMapPoint[stars.Count];
+            bool uniform = true;
+            for (int i = 1; i < shapes.Length; i++) if (shapes[i] != shapes[0]) uniform = false;
+            if (uniform) return SegmentOffsets(stars, shapes[0]);
+            const float step = MinimumSpacing * 1.25f;
+            var offsets = new StarMapPoint[stars.Count];
+            var segment = new List<TalentDef>(stars.Count);
+            float advance = 0f;
+            int start = 0;
+            while (start < stars.Count)
+            {
+                int end = start + 1;
+                while (end < stars.Count && shapes[end] == shapes[start]) end++;
+                segment.Clear();
+                for (int i = start; i < end; i++) segment.Add(stars[i]);
+                var local = SegmentOffsets(segment, shapes[start]);
+                float width = 0f;
+                for (int i = 0; i < local.Length; i++)
+                {
+                    if (local[i].X > width) width = local[i].X;
+                    offsets[start + i] = new StarMapPoint(advance + local[i].X, local[i].Y);
+                }
+                advance += width + step;
+                start = end;
+            }
+            return offsets;
+        }
+
+        private static StarMapPoint[] SegmentOffsets(List<TalentDef> stars, ClusterShape shape)
         {
             const float step = MinimumSpacing * 1.25f;
             var offsets = new StarMapPoint[stars.Count];
