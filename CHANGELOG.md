@@ -6,14 +6,33 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v1.31 — 星団エンジン（2026-10-03・未公開）
+## v1.31 — 星図を10倍に（2026-10-03・未公開・作業中）
 
-- 記憶・橋・外縁の星団を、固定ID・扇形/輪形/鎖形の配置と接続判定から生成。既存の星のID・位置は維持し、Cetusに3領域の実効例を追加。 / Cluster generation, validation and collision-free Fan/Ring/Chain layouts preserve existing star IDs and positions; three working Cetus examples cover Memory, Bridge and Outer.
-- 記憶ごとの仕掛けの効果量・持続時間・半径・対象数・属性追加確率を、Buildからホストの既存効果経路まで反映。意味のないパラメータは登録時に拒否。 / Per-memory gimmick value and parameter modifiers reach existing runtime/host paths; unsupported parameters fail registry validation.
-- 選択の星は2効果から選んで取得し、遠征外では無料で切り替え。選択は保存・複製され、払い戻しと振り直しで解除。星図に両候補と選択中の効果を表示。保存形式3は維持、通信は修飾値追加により11へ更新。 / Two-option choice stars support explicit allocation, free switching outside expeditions, persistence, cloning and respec; protocol 11 carries effective gimmick modifiers while profile version 3 remains compatible.
-- データ入力の契約と全種類のC#例： [星団エンジン](docs/specs/v1.31-cluster-engine.md)。700星の本データはこの変更の対象外。実機の画面・戦闘・協力通信は未検証。 / Authoring contract and examples are documented; full 700-star tables and live-game verification are outside this engine change.
-- Core試験1,800件成功・失敗0・スキップ0。独立実行のBuild/仕掛け/選択保存スモークとReleaseビルド成功（既存のUnity非推奨警告2件）。 / All 1,800 Core tests pass; the executable cluster pipeline smoke and Release build pass, with two existing Unity deprecation warnings.
+旅人ごとに星を700個以上へ増やす「星図10倍」の作業中の記録です。**実装済み**と**設計のみ**を分けて書きます。実機での画面・戦闘・協力通信は未検証です。 / Work in progress: the star map grows to 700+ stars per traveler. Implemented and design-only items are listed separately; live-game screens, combat and co-op are unverified.
 
+### 実装済み / Implemented
+
+- **星のポイント上限を300に**（従来150）。経験の曲線は変えず、300個目まで取れるようにしました。あわせて「夢の圧」の星の係数を半分にし、300星で従来の150星と同じ圧になります。 / Star points are capped at 300 (was 150); the XP curve is unchanged. The Dream Pressure star coefficient is halved, so 300 stars give the same pressure that 150 gave before.
+- **大きな星図の描画**：線は1本ごとに回転した四角1枚で描き、画面に見える物だけを処理し、重なる星の名前は間引きます。 / **Large-map rendering**: each line is one rotated quad, only visible items are processed, and overlapping names are thinned out.
+- **星の検索**：名前や効果で該当する星を光らせ、「次の星へ」で順に移動できます。 / **Star search**: matches by name or effect are highlighted, and "Next star" jumps between them.
+- **星団エンジン**：記憶・橋・外縁の星団を固定IDと扇形・輪形・鎖形の配置から生成し、既存の星のIDと位置は維持します。記憶ごとの仕掛けの効果量・持続時間・半径・対象数・属性追加確率をBuildからホストの既存の効果経路まで反映し、意味のないパラメータは登録時に拒否します。選択の星は2効果から選び、遠征の外では無料で切り替えられ、保存・複製され、払い戻しと振り直しで解除されます。Cetusに3領域の実効例があります。仕様は [星団エンジン](docs/specs/v1.31-cluster-engine.md)。 / **Cluster engine**: Memory, Bridge and Outer clusters are generated from fixed IDs with Fan/Ring/Chain layouts that keep existing star IDs and positions; gimmick value/duration/radius/target-count/chance modifiers reach the host effect paths, unsupported parameters fail validation, and two-option choice stars support free switching outside expeditions, persistence, cloning and respec. Three working Cetus examples.
+- **通信の版12（ビルドの集約）**：効果を最大値だけに切り捨てず合算し、端数は1/1000で保持、Mirrorの文字列上限に収まるよう分割して送ります。保存形式3は維持。協力では全員が同じ版を使ってください。仕様は [ビルド集約](docs/specs/v1.31-build-aggregation.md)。 / **Protocol 12 (build aggregation)**: contributions are summed instead of truncated to a maximum, fractions are kept in 1/1000 units, and payloads are split to fit Mirror's string limit. Profile version 3 is unchanged; everyone in co-op needs the same version.
+- **アイコン**：v1.29で増えた土台180種、新しい夢の出来事13種、星図の星の記号30種を追加（これで土台360種すべてに絵が付きました）。 / **Icons**: 180 bases added in v1.29, 13 dream events and 30 star-map symbols (all 360 bases now have icons).
+
+### 設計のみ（まだ遊べません）/ Design only
+
+- **9人分の星団設計表**：旅人ごとの購入できる星は735〜892個、合計7,502個（既存663＋新規5,399＋共有の外縁160を9人分）。刻印は旅人ごとに8〜10（合計82）、全体の能力値だけの星は各4〜5%（合計で4.4%）。内訳は Vesper 878・Cetus 892・Lacerta 878・Husk 879・Mist 885・Yubar 877・Aurena 743・Nachia 735・Bismuth 735。表は `docs/specs/v1.31-clusters-*.md`（旅人9人＋共有の外縁）。 / **Design tables for 9 travelers**: 735–892 purchasable stars per traveler, 7,502 in total, 8–10 keystones each (82 total), global stat-only stars about 4–5% (4.4% overall).
+- **独立レビュー**：表の違反（傷の上限、障壁は最大値、移動の記憶は受け手のみ、帰属など）を修正。IDは消さず、300ポイントで取れるのは全体の3〜4割程度。数値のつり合いは実装後に調整します。 / **Independent review** fixed rule violations in the tables; no IDs are removed, 300 points cover roughly 30–40% of a tree, and balance is tuned after implementation. [設計レビュー](docs/specs/v1.31-design-review.md)
+- **新しい仕組みの正式仕様 C01〜C15**：星の登録、発動の帰属、端数つきの修飾、指定先へのリチャージ、橋の成功効果、MOD障壁、刻印の修飾、スタン元の絞り込み、準備、中継の窓、犠牲の障壁、味方の護り、圧の配当、ビルドの無損失集約、実効配分の検証。C14は版12で実装済みで、ほかは未実装です。 / **Canonical mechanisms C01–C15** are specified; only C14 (lossless build aggregation) is implemented. [新しい仕組み](docs/specs/v1.31-new-mechanisms.md)
+- 星の機械可読マニフェスト（`tools/star-manifest/`）を作成中です。 / A machine-readable star manifest is being written.
+
+### 方針 / Policy
+
+- 実機で確かめていない星や仕組みも、Coreの試験が通れば有効にしてよい（利用者の指示）。実機の確認は後からまとめて行います。 / Stars and mechanisms not yet verified in the live game may be enabled once the Core tests pass; live checks follow later.
+
+### 調べたこと
+
+- **#19 3Dモデルの導入**：環境とAPIの互換性、同じゲームの前例、方式A（実行時にGLBを読む）と方式Bの比較、方式Aのアニメーション・差し替え地点・協力同期の調査をまとめました。実装はまだです。 / **#19**: research only (environment, API compatibility, precedents, approach A vs B, animation and sync for approach A); not implemented. [第1段](docs/specs/issue19-model-import-research.md) / [第2段](docs/specs/issue19-stage2-approach-a.md)
 
 ## v1.30.2 — 不具合の修正と、見やすい星図（2026-10-03・未公開）
 
