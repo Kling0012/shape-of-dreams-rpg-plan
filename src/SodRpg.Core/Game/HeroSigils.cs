@@ -182,17 +182,21 @@ namespace SodRpg.Core.Game
             DeepPower("Hero_Bismuth", "bismuth.deep.umbra", "闇の頁", "Page of Shadow", Power.Umbra, 15),
         };
 
-        /// <summary>核のIDを維持したまま、記憶ルートと夢の輪を加える。</summary>
+        /// <summary>核のIDを維持したまま、記憶ルート・夢の輪・星群を加える。</summary>
         public static readonly IReadOnlyList<TalentDef> All = CreateAll();
         private static readonly Dictionary<string, IReadOnlyList<TalentDef>> Trees = CreateTrees();
 
         private static IReadOnlyList<TalentDef> CreateAll()
         {
             var routes = HeroStarRoutes.All;
-            var all = new TalentDef[Core.Length + routes.Count];
-            Array.Copy(Core, all, Core.Length);
-            for (int i = 0; i < routes.Count; i++) all[Core.Length + i] = routes[i];
-            return all;
+            var anchors = StarClusters.OuterAnchors;
+            var existing = new List<TalentDef>(Core.Length + routes.Count + anchors.Count);
+            existing.AddRange(Core);
+            existing.AddRange(routes);
+            existing.AddRange(anchors);
+            var clusters = StarClusters.Generate(StarClusters.All, existing);
+            existing.AddRange(clusters);
+            return existing.AsReadOnly();
         }
 
         private static Dictionary<string, IReadOnlyList<TalentDef>> CreateTrees()

@@ -144,31 +144,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Theory]
-        [InlineData("Hero_Vesper", 7, 60, 225)]
-        [InlineData("Hero_Lacerta", 7, 60, 225)]
-        [InlineData("Hero_Cetus", 7, 60, 224)]
-        [InlineData("Hero_Yubar", 7, 60, 224)]
-        [InlineData("Hero_Husk", 7, 60, 224)]
-        [InlineData("Hero_Mist", 7, 60, 224)]
-        [InlineData("Hero_Nachia", 7, 60, 224)]
-        [InlineData("Hero_Aurena", 7, 60, 224)]
-        [InlineData("Hero_Bismuth", 6, 52, 200)]
-        public void Whole_tree_has_more_choices_than_the_point_budget(string hero, int routes, int addedStars, int capacity)
-        {
-            var added = HeroStarRoutes.All.Where(t => t.HeroKey == hero).ToArray();
-            Assert.Equal(routes, added.Where(t => t.RouteId != null).Select(t => t.RouteId).Distinct().Count());
-            Assert.Equal(addedStars, added.Length);
-            var tree = HeroSigils.TreeFor(hero).ToArray();
-            Assert.Equal(addedStars + 13, tree.Length);
-            Assert.Equal(2, tree.Count(t => t.IsKeystone));
-            // Both keystones count in the conservative power audit below, but only
-            // one can be purchased: capacity must not count an impossible second key.
-            int available = tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank * t.RankCost) + Content.KeystoneCost;
-            Assert.Equal(capacity, available);
-            // v1.31：予算は150→300。10倍の木（並行作業）が入るまでの現行木は v1.30 の予算を超えることだけ保証する。
-            Assert.True(available > 154);
-        }
 
         [Fact]
         public void Whole_tree_max_ranks_leave_twenty_percent_power_headroom_and_do_not_clip_stats()

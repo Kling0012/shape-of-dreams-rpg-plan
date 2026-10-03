@@ -1723,7 +1723,7 @@ namespace SodRpg.Mod
 
         private sealed class StarNode
         {
-            public int Rank;
+            public int Rank, Choice = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch;
             public string Description, SearchDescription;
             public Texture2D Icon;
@@ -1749,6 +1749,7 @@ namespace SodRpg.Mod
         private float _starZoom = 1f, _starExtent = 1f;
         private bool _starNeedsFit = true;
         private int[] _starKeystones = new int[0];
+        private string _starChoiceId;
         private readonly StarMapView _starView = new StarMapView();
         private string _starSearch = "";
         private bool _starSearchDirty = true;
@@ -1781,6 +1782,7 @@ namespace SodRpg.Mod
         {
             bool newHero = _starHero != hero;
             _starHero = hero;
+            if (newHero) _starChoiceId = null;
             _starJapanese = Loc.Japanese;
             _starLayout = HeroTreeLayout.ForHero(hero);
             _starNodes = new StarNode[_starLayout.Nodes.Count];
@@ -1794,10 +1796,11 @@ namespace SodRpg.Mod
                 var node = _starLayout.Nodes[i];
                 var t = node.Talent;
                 var pair = t == null ? null : PairCombos.ForBridge(t.Id);
+                string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
                     Description = t == null ? null : t.Describe(),
-                    Icon = RelicIcons.For("stars/" + StarIconKey(t)),
+                    Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
                     Pair = pair != null,
                 };
@@ -1852,6 +1855,9 @@ namespace SodRpg.Mod
                 if (n.Rank != rank) changed = true;
                 n.Rank = rank;
                 n.Allocated = rank > 0;
+                int choice = t != null && t.IsChoice && hs.TalentChoices.TryGetValue(t.Id, out int option) ? option : -1;
+                if (n.Choice != choice) changed = true;
+                n.Choice = choice;
                 var pair = t == null ? null : PairCombos.ForBridge(t.Id);
                 if (pair != null)
                 {
@@ -1918,6 +1924,15 @@ namespace SodRpg.Mod
                 var pair = PairCombos.ForBridge(t.Id);
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
                 string description = pair == null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                if (t.IsChoice)
+                {
+                    description = t.Describe();
+                    description += n.Choice >= 0
+                        ? Loc.T($"\n選択中：{n.Choice + 1} — ", $"\nChosen: {n.Choice + 1} — ") + t.Choices[n.Choice].Name
+                        : Loc.T("\n未選択。振るときに効果を選びます。", "\nNo option chosen. Select an effect when allocating.");
+                    condition += Loc.T("\n取得済みの選択の星を左クリックすると無料で切り替えます（遠征外のみ）。",
+                        "\nLeft-click an allocated choice to switch for free (outside expeditions only).");
+                }
                 n.SearchDescription = description;
                 if (pair != null)
                 {
@@ -1967,12 +1982,40 @@ namespace SodRpg.Mod
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
             if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
             DrawKeystoneBar(p, hero);
+            DrawStarChoicePicker(p, hero);
             StarDrawSearch();
             GUILayout.Label(Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　"
                     + "<color=#cc8cff>紫の大きな星＝刻印</color>　<color=#73e6f2>水色＝合わせ技</color>　<color=#ffc952>金＝取得済み</color>",
                 "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   "
                     + "<color=#cc8cff>Large purple = keystone</color>   <color=#73e6f2>Cyan = combo</color>   <color=#ffc952>Gold = acquired</color>"), _st.Small);
             DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
+        }
+
+        private void DrawStarChoicePicker(Profile p, string hero)
+        {
+            if (_starChoiceId == null) return;
+            if (!Content.TryGetTalent(_starChoiceId, out var t) || t.HeroKey != hero || !t.IsChoice)
+            {
+                _starChoiceId = null;
+                return;
+            }
+            GUILayout.Label(t.Name + Loc.T("：効果を選んで振る", ": select an effect to allocate"), _st.Label);
+            GUI.enabled = _s.CanEditTalents && p.Run == null;
+            for (int i = 0; i < t.Choices.Count; i++)
+                if (GUILayout.Button(t.Choices[i].Name + "\n" + t.Choices[i].Describe(), _st.Button))
+                {
+                    try
+                    {
+                        Rules.AddTalentRank(p, hero, t.Id, i);
+                        _starChoiceId = null;
+                        _starDirty = true;
+                        _s.MarkDirty(true);
+                    }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                    GUIUtility.ExitGUI();
+                }
+            GUI.enabled = true;
+            if (GUILayout.Button(Loc.T("選択を閉じる", "Close selection"), _st.Button)) _starChoiceId = null;
         }
         private void StarRefreshSearch()
         {
@@ -2096,6 +2139,12 @@ namespace SodRpg.Mod
                                 {
                                     if (!_starNodes[pressed].Allocated) Rules.SetKeystone(p, hero, t.Id);
                                 }
+                                else if (t.IsChoice)
+                                {
+                                    if (_starNodes[pressed].Allocated)
+                                        Rules.SetTalentChoice(p, hero, t.Id, 1 - p.Hero(hero).TalentChoices[t.Id]);
+                                    else _starChoiceId = t.Id;
+                                }
                                 else Rules.AddTalentRank(p, hero, t.Id);
                                 _starDirty = true;
                                 _s.MarkDirty(true);
@@ -2186,9 +2235,11 @@ namespace SodRpg.Mod
         {
             if (t == null) return "start";
             if (t.IsKeystone) return "keystone";
+            if (t.IsChoice) return "choice";
             if (PairCombos.ForBridge(t.Id) != null) return "pair";
-            if (t.Gimmick != null) return "gimmick";
-            if (t.LinkPerRank != null) return t.LinkPerRank.Kind == LinkKind.MemoryDamage ? "memory" : "link";
+            if (t.Gimmick != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue) return "gimmick";
+            if (t.LinkPerRank != null) return t.LinkPerRank.Kind == LinkKind.MemoryDamage
+                || t.LinkPerRank.Kind == LinkKind.MemoryHaste ? "memory" : "link";
             if (t.IsPowerNode) return "unique";
             switch (t.Stat)
             {

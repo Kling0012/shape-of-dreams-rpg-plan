@@ -188,6 +188,15 @@ namespace SodRpg.Core.Game
         /// <summary>ルートに対応する記憶の型名。</summary>
         public string RouteMemory { get; set; }
         public bool IsDreamRing { get; set; }
+        public bool IsOuterAnchor { get; set; }
+        public StarClusterDef Cluster { get; set; }
+        public ClusterStarDef ClusterStar { get; set; }
+        public int ClusterOrder { get; set; }
+        public bool IsChoice => ClusterStar?.Kind == ClusterStarKind.Choice;
+        public IReadOnlyList<TalentDef> Choices { get; set; } = Array.Empty<TalentDef>();
+        public int GimmickBoost { get; set; }
+        public GimmickParam? GimmickParameter { get; set; }
+        public int GimmickParamAmount { get; set; }
         /// <summary>1段あたりの連携。能力値とは別に、装着条件をホストで判定する。</summary>
         public LinkDef LinkPerRank { get; set; }
         /// <summary>小ノードが1段ごとに伸ばす固有効果。能力値・連携ノードは None。</summary>
@@ -212,11 +221,17 @@ namespace SodRpg.Core.Game
         public string Describe()
         {
             if (PairCombo != null) return PairCombos.Describe(PairCombo);
+            if (IsChoice)
+                return Loc.T("どちらか1つを選択：", "Choose one:") + "\n"
+                    + string.Join("\n", Choices.Select(c => c.Name + ": " + c.Describe()));
             string effect;
             if (IsKeystone)
                 effect = Content.FormatPower(Power, PowerValue) + "\n" + Description;
             else
-                effect = LinkPerRank != null ? Links.Describe(LinkPerRank)
+                effect = GimmickBoost > 0 ? Loc.T($"『{Links.Name(RouteMemory).Ja}』の仕掛けの効果量 +{GimmickBoost}%",
+                        $"{Links.Name(RouteMemory).En} gimmick effect values +{GimmickBoost}%")
+                    : GimmickParameter.HasValue ? DescribeGimmickParameter()
+                    : LinkPerRank != null ? Links.Describe(LinkPerRank)
                     : IsPowerNode ? Content.FormatPower(RankPower, PerRank)
                     : Gimmick != null && PerRank == 0 ? "" : Content.FormatStat(Stat, PerRank);
             string gimmick = Gimmicks.Describe(Gimmick, RouteMemory);
@@ -224,6 +239,23 @@ namespace SodRpg.Core.Game
             if (IsKeystone) return effect;
             if (RankCost > 1) return effect + Loc.T($"（1段まで・{RankCost}ポイント）", $" (1 rank only, costs {RankCost} points)");
             return effect + Loc.T("（1段ごと）", " (per rank)");
+        }
+
+        private string DescribeGimmickParameter()
+        {
+            string memory = Links.Name(RouteMemory).ToString();
+            switch (GimmickParameter.Value)
+            {
+                case GimmickParam.Duration: return Loc.T($"『{memory}』の仕掛けの持続時間 +{GimmickParamAmount}%",
+                    $"{memory} gimmick duration +{GimmickParamAmount}%");
+                case GimmickParam.Radius: return Loc.T($"『{memory}』の仕掛けの半径 +{GimmickParamAmount}%",
+                    $"{memory} gimmick radius +{GimmickParamAmount}%");
+                case GimmickParam.ExtraTargets: return Loc.T($"『{memory}』の仕掛けの追加対象 +{GimmickParamAmount}体",
+                    $"{memory} gimmicks: +{GimmickParamAmount} additional targets");
+                case GimmickParam.Chance: return Loc.T($"『{memory}』の仕掛けの属性追加確率 +{GimmickParamAmount}ポイント",
+                    $"{memory} gimmick extra-element chance +{GimmickParamAmount} percentage points");
+                default: throw new InvalidOperationException("Invalid gimmick parameter for " + Id);
+            }
         }
     }
 

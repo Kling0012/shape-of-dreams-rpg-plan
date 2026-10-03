@@ -1564,7 +1564,7 @@ namespace SodRpg.Core.Game
 
         public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey));
 
-        public static void AddTalentRank(Profile p, string heroKey, string talentId)
+        public static void AddTalentRank(Profile p, string heroKey, string talentId, int? choice = null)
         {
             if (!Content.TryGetTalent(talentId, out var t) || t.IsKeystone) throw new InvalidOperationException("未知のノード: " + talentId);
             if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人のノードではありません。", "That node is not in this Traveler's tree."));
@@ -1577,7 +1577,32 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(t.RankCost > 1
                     ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")
                     : Loc.T("ポイントが足りません。", "Not enough points."));
+            if (t.IsChoice)
+            {
+                if (p.Run != null)
+                    throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
+                if (!choice.HasValue || choice.Value < 0 || choice.Value >= t.Choices.Count)
+                    throw new InvalidOperationException(Loc.T("2つの効果から1つを選んでください。", "Select one of the two effects."));
+                h.TalentChoices[talentId] = choice.Value;
+            }
+            else if (choice.HasValue)
+                throw new InvalidOperationException(Loc.T("選択の星ではありません。", "That is not a choice star."));
             h.Talents[talentId] = cur + 1;
+        }
+
+        /// <summary>Switch an allocated choice for free, only outside expeditions.</summary>
+        public static void SetTalentChoice(Profile p, string heroKey, string talentId, int choice)
+        {
+            if (p.Run != null)
+                throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
+            if (!Content.TryGetTalent(talentId, out var t) || !BelongsTo(t, heroKey) || !t.IsChoice)
+                throw new InvalidOperationException(Loc.T("この旅人の選択の星ではありません。", "That is not a choice star in this Traveler's tree."));
+            var h = p.Hero(heroKey);
+            if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
+                throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
+            if (choice < 0 || choice >= t.Choices.Count)
+                throw new InvalidOperationException(Loc.T("2つの効果から1つを選んでください。", "Select one of the two effects."));
+            h.TalentChoices[talentId] = choice;
         }
 
         /// <summary>1段戻す。最後の1段を外しても、残る星がすべて始まりにつながる必要がある。</summary>
@@ -1596,7 +1621,11 @@ namespace SodRpg.Core.Game
             if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
                 throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
             RequireConnectedRefund(h, heroKey, rank == 1 ? talentId : null, h.Keystone);
-            if (rank == 1) h.Talents.Remove(talentId);
+            if (rank == 1)
+            {
+                h.Talents.Remove(talentId);
+                h.TalentChoices.Remove(talentId);
+            }
             else h.Talents[talentId] = rank - 1;
         }
 
@@ -1639,6 +1668,7 @@ namespace SodRpg.Core.Game
         {
             var h = p.Hero(heroKey);
             h.Talents.Clear();
+            h.TalentChoices.Clear();
             h.Keystone = null;
         }
     }

@@ -119,7 +119,8 @@ namespace SodRpg.Mod
             foreach (var request in requests)
             {
                 if (request.Entry.Def.Effect == GimmickEffect.Sap && victim != null) EnsureSapProcessor(victim);
-                if (request.Entry.Def.Effect == GimmickEffect.Primed) rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.Value);
+                if (request.Entry.Def.Effect == GimmickEffect.Primed)
+                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.Value, Gimmicks.Duration(request.Entry.Def, 5f));
             }
         }
 
@@ -196,21 +197,21 @@ namespace SodRpg.Mod
                         {
                             state.Victims[target.GetInstanceID()] = target;
                             state.Wounds.Apply(target.GetInstanceID(), Time.time, high * def.Value / 100f,
-                                hero.Status.abilityPower > hero.Status.attackDamage);
+                                hero.Status.abilityPower > hero.Status.attackDamage, Gimmicks.Duration(def, 3f));
                         }
                         break;
                     case GimmickEffect.Daze:
-                        if (live && !IsGimmickBoss(target)) hero.CreateBasicEffect(target, new StunEffect(), def.Value / 10f,
+                        if (live && !IsGimmickBoss(target)) hero.CreateBasicEffect(target, new StunEffect(), Gimmicks.Duration(def, def.Value / 10f),
                             "DreamforgeDaze", DuplicateEffectBehavior.UsePrevious);
                         break;
                     case GimmickEffect.Ricochet:
                         if (request.Damage > 0)
                         {
                             ListReturnHandle<Entity> handle;
-                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, 8f, EnemyFilter, hero);
+                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, pending.Center, Gimmicks.Radius(def, 8f), EnemyFilter, hero);
                             try
                             {
-                                int remaining = def.Arg;
+                                int remaining = Gimmicks.TargetLimit(def);
                                 foreach (var enemy in enemies)
                                 {
                                     if (enemy == target || enemy == null || !enemy.isActive || enemy.currentHealth <= 0) continue;
@@ -228,23 +229,25 @@ namespace SodRpg.Mod
                             Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.Value), rt.Powers.Build.Get(Stat.HealPower)));
                         if (heal <= 0) break;
                         support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(hero);
+                        float allyRadius = Gimmicks.Radius(def, 10f);
                         if (def.Arg == 1)
                             foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
-                                    && (ally.agentPosition - hero.agentPosition).sqrMagnitude <= 100f)
+                                    && (ally.agentPosition - hero.agentPosition).sqrMagnitude <= allyRadius * allyRadius)
                                     support.Heal(Math.Min(heal * 0.5f, ally.maxHealth * 0.015f))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(ally);
                         break;
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
-                        float amount = SupportStats.AmplifyShield(hero.maxHealth * def.Value * Math.Min(5, request.TargetCount) / 100f,
-                            rt.Powers.Build.Get(Stat.ShieldPower));
-                        var candidate = support.GiveShield(hero, amount, 4f, false);
+                        float amount = SupportStats.AmplifyShield(hero.maxHealth * def.Value
+                            * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
+                        float shieldDuration = Gimmicks.Duration(def, 4f);
+                        var candidate = support.GiveShield(hero, amount, shieldDuration, false);
                         if (state.Rampart != null && state.Rampart.isActive && state.Rampart.shield != null
                             && candidate != null && candidate.shield != null && state.Rampart.shield.amount > candidate.shield.amount)
                         {
                             candidate.Destroy();
-                            state.Rampart.SetTimer(4f);
+                            state.Rampart.SetTimer(shieldDuration);
                         }
                         else
                         {

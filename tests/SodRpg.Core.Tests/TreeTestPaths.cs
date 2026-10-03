@@ -33,7 +33,7 @@ namespace SodRpg.Core.Tests
             {
                 var node = tree.Nodes[path.Pop()];
                 if (!p.Hero(hero).Talents.TryGetValue(node.Id, out int rank) || rank <= 0)
-                    Rules.AddTalentRank(p, hero, node.Id);
+                    Rules.AddTalentRank(p, hero, node.Id, node.Talent.IsChoice ? 0 : (int?)null);
             }
         }
     }

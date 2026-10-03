@@ -63,7 +63,8 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(prefix + Branches[hero][i] + ".4", def.StarA);
                 Assert.Equal(prefix + Branches[hero][(i + 1) % pairs.Length] + ".4", def.StarB);
                 var bridge = tree.Nodes.Single(n => n.Id == def.BridgeId);
-                Assert.Equal(new[] { def.StarA, def.StarB }.OrderBy(x => x), bridge.Neighbors.Select(n => tree.Nodes[n].Id).OrderBy(x => x));
+                Assert.Contains(bridge.Neighbors, n => tree.Nodes[n].Id == def.StarA);
+                Assert.Contains(bridge.Neighbors, n => tree.Nodes[n].Id == def.StarB);
                 Assert.Equal(3, bridge.Talent.MaxRank);
                 Assert.Equal(0, bridge.Talent.PerRank);
                 Assert.NotEqual(def.RouteA, def.RouteB);

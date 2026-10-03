@@ -6,6 +6,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v1.31 — 星団エンジン（2026-10-03・未公開）
+
+- 記憶・橋・外縁の星団を、固定ID・扇形/輪形/鎖形の配置と接続判定から生成。既存の星のID・位置は維持し、Cetusに3領域の実効例を追加。 / Cluster generation, validation and collision-free Fan/Ring/Chain layouts preserve existing star IDs and positions; three working Cetus examples cover Memory, Bridge and Outer.
+- 記憶ごとの仕掛けの効果量・持続時間・半径・対象数・属性追加確率を、Buildからホストの既存効果経路まで反映。意味のないパラメータは登録時に拒否。 / Per-memory gimmick value and parameter modifiers reach existing runtime/host paths; unsupported parameters fail registry validation.
+- 選択の星は2効果から選んで取得し、遠征外では無料で切り替え。選択は保存・複製され、払い戻しと振り直しで解除。星図に両候補と選択中の効果を表示。保存形式3は維持、通信は修飾値追加により11へ更新。 / Two-option choice stars support explicit allocation, free switching outside expeditions, persistence, cloning and respec; protocol 11 carries effective gimmick modifiers while profile version 3 remains compatible.
+- データ入力の契約と全種類のC#例： [星団エンジン](docs/specs/v1.31-cluster-engine.md)。700星の本データはこの変更の対象外。実機の画面・戦闘・協力通信は未検証。 / Authoring contract and examples are documented; full 700-star tables and live-game verification are outside this engine change.
+- Core試験1,800件成功・失敗0・スキップ0。独立実行のBuild/仕掛け/選択保存スモークとReleaseビルド成功（既存のUnity非推奨警告2件）。 / All 1,800 Core tests pass; the executable cluster pipeline smoke and Release build pass, with two existing Unity deprecation warnings.
+
+
 ## v1.30.2 — 不具合の修正と、見やすい星図（2026-10-03・未公開）
 
 - **星図が見やすくなりました**：開くと木の全体が収まります（「全体を表示」で戻せます）。拡大縮小は0.15〜3倍。星は丸く、種類ごとの記号と段の数を表示します。刻印は紫の大きな星で、上部の「刻印」の一覧から探して選べます。合わせ技の橋は水色です。星図タブではメニューを画面いっぱいに広げます。星をつなぐ線が、画面の拡大率によって別の場所に描かれていた不具合も直しました。 / **Clearer star map**: the whole tree fits on open ("Show all" restores it), zoom 0.15–3x, round stars with type symbols and ranks, keystones as large purple stars plus a keystone bar, combo bridges in cyan, a full-screen window on the star map tab, and connection lines no longer drawn in the wrong place at some UI scales.

@@ -52,6 +52,33 @@ namespace SodRpg.Core.Game
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
             var awakenGains = new Dictionary<Power, int>();
+            var selectedTalents = new List<KeyValuePair<TalentDef, int>>();
+            var modifiers = new Dictionary<string, MemoryModifiers>(StringComparer.Ordinal);
+            foreach (var kv in h.Talents)
+            {
+                if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var talent) || talent.IsKeystone
+                    || !Rules.TalentUnlocked(h, heroKey, talent)) continue;
+                int rank = Math.Min(kv.Value, talent.MaxRank);
+                if (talent.IsChoice)
+                {
+                    if (!h.TalentChoices.TryGetValue(talent.Id, out int choice) || choice < 0 || choice >= talent.Choices.Count)
+                        throw new InvalidOperationException("An allocated choice star requires a valid selection: " + talent.Id);
+                    talent = talent.Choices[choice];
+                }
+                selectedTalents.Add(new KeyValuePair<TalentDef, int>(talent, rank));
+                if (talent.RouteMemory == null || talent.GimmickBoost == 0 && !talent.GimmickParameter.HasValue) continue;
+                if (!modifiers.TryGetValue(talent.RouteMemory, out var modifier))
+                    modifiers.Add(talent.RouteMemory, modifier = new MemoryModifiers());
+                modifier.Boost += (long)talent.GimmickBoost * rank;
+                long amount = (long)talent.GimmickParamAmount * rank;
+                switch (talent.GimmickParameter)
+                {
+                    case GimmickParam.Duration: modifier.Duration += amount; break;
+                    case GimmickParam.Radius: modifier.Radius += amount; break;
+                    case GimmickParam.ExtraTargets: modifier.Targets += amount; break;
+                    case GimmickParam.Chance: modifier.Chance += amount; break;
+                }
+            }
 
             foreach (string uid in h.Equipped)
             {
@@ -97,11 +124,10 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) Add(rawPowers, pw.Power, pw.Value);
             }
-            foreach (var kv in h.Talents)
+            foreach (var selected in selectedTalents)
             {
-                if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var t) || t.IsKeystone
-                    || !Rules.TalentUnlocked(h, heroKey, t)) continue;
-                int rank = Math.Min(kv.Value, t.MaxRank);
+                TalentDef t = selected.Key;
+                int rank = selected.Value;
                 var pair = global::SodRpg.Core.Game.PairCombos.ForBridge(t.Id);
                 if (pair != null)
                 {
@@ -112,20 +138,15 @@ namespace SodRpg.Core.Game
                         b.PairCombos.Add(entry);
                     continue; // Inner bridges are combos, never their old unconditional ring stats.
                 }
-                if (t.Gimmick != null && t.Gimmick.Value > 0 && b.Gimmicks.Count < global::SodRpg.Core.Game.Gimmicks.MaxEntries)
+                if (t.Gimmick != null && t.Gimmick.Value > 0)
                 {
+                    modifiers.TryGetValue(t.RouteMemory, out var modifier);
                     var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
                     {
                         StarId = t.Id,
                         Memory = t.RouteMemory,
-                        Def = new GimmickDef
-                        {
-                            Trigger = t.Gimmick.Trigger,
-                            Effect = t.Gimmick.Effect,
-                            Value = (int)Math.Min(int.MaxValue, (long)t.Gimmick.Value * rank),
-                            Arg = t.Gimmick.Arg,
-                            Cooldown = t.Gimmick.Cooldown,
-                        },
+                        Def = global::SodRpg.Core.Game.Gimmicks.ApplyModifiers(t.Gimmick, rank, modifier?.Boost ?? 0,
+                            modifier?.Duration ?? 0, modifier?.Radius ?? 0, modifier?.Targets ?? 0, modifier?.Chance ?? 0),
                     });
                     if (entry != null) b.Gimmicks.Add(entry);
                 }
@@ -140,7 +161,7 @@ namespace SodRpg.Core.Game
                     if (global::SodRpg.Core.Game.Links.Validate(link)) b.Links.Add(link);
                 }
                 else if (t.IsPowerNode) Add(rawPowers, t.RankPower, t.PerRank * rank);
-                else Add(rawStats, t.Stat, t.PerRank * rank);
+                else if (t.PerRank != 0) Add(rawStats, t.Stat, t.PerRank * rank);
             }
             if (h.Keystone != null && Content.TryGetTalent(h.Keystone, out var key) && key.IsKeystone
                 && Rules.BelongsTo(key, heroKey) && Rules.KeystoneUnlocked(p, heroKey, key))
@@ -187,7 +208,38 @@ namespace SodRpg.Core.Game
                 if (d == null) continue;
                 foreach (var s in d.Penalties) b.Stats[s.Stat] = b.Get(s.Stat) + s.Value;
             }
+            var links = AggregateLinks(b.Links);
+            b.Links.Clear();
+            b.Links.AddRange(links);
             return b;
+        }
+        private sealed class MemoryModifiers
+        {
+            public long Boost, Duration, Radius, Targets, Chance;
+        }
+
+        private static List<LinkDef> AggregateLinks(IEnumerable<LinkDef> links)
+        {
+            var result = new List<LinkDef>();
+            var byKey = new Dictionary<string, LinkDef>(StringComparer.Ordinal);
+            foreach (var link in links)
+            {
+                if (!global::SodRpg.Core.Game.Links.Validate(link)) continue;
+                var requires = new string[link.Requires.Length];
+                for (int i = 0; i < requires.Length; i++) requires[i] = global::SodRpg.Core.Game.Links.Canon(link.Requires[i]);
+                Array.Sort(requires, StringComparer.Ordinal);
+                string key = ((int)link.Kind).ToString(CultureInfo.InvariantCulture) + ":" + string.Join("+", requires);
+                int cap = global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, requires.Length);
+                if (byKey.TryGetValue(key, out var combined))
+                    combined.Value = (int)Math.Min(cap, (long)combined.Value + Math.Max(0, link.Value));
+                else
+                {
+                    combined = new LinkDef { Kind = link.Kind, Requires = requires, Value = Math.Max(0, Math.Min(cap, link.Value)) };
+                    byKey.Add(key, combined);
+                    result.Add(combined);
+                }
+            }
+            return result;
         }
 
         private static void Add<T>(Dictionary<T, int> d, T key, int v)
@@ -238,7 +290,7 @@ namespace SodRpg.Core.Game
             sb.Append(";a:").Append(SpentStarPoints.ToString(CultureInfo.InvariantCulture));
             sb.Append(";l:");
             first = true;
-            foreach (var link in Links)
+            foreach (var link in AggregateLinks(Links))
             {
                 if (!first) sb.Append(',');
                 first = false;
@@ -252,9 +304,10 @@ namespace SodRpg.Core.Game
             int count = 0;
             foreach (var raw in Gimmicks)
             {
-                if (count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) break;
                 var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(raw);
                 if (entry == null || !stars.Add(entry.StarId)) continue;
+                if (count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries)
+                    throw new InvalidOperationException("The build exceeds the gimmick entry security limit.");
                 if (!first) sb.Append(',');
                 first = false;
                 count++;
@@ -263,7 +316,11 @@ namespace SodRpg.Core.Game
                     .Append(((int)entry.Def.Effect).ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Arg.ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture));
+                    .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.DurationPercent.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.RadiusPercent.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.ExtraTargets.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.ChancePercent.ToString(CultureInfo.InvariantCulture));
             }
             sb.Append(";c:");
             first = true;
@@ -288,7 +345,7 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static Build Decode(string text)
         {
-            if (string.IsNullOrEmpty(text) || text.Length > 16384) return null;
+            if (string.IsNullOrEmpty(text) || text.Length > 131072) return null;
             var b = new Build();
             var stars = new HashSet<string>(StringComparer.Ordinal);
             var pairs = new HashSet<string>(StringComparer.Ordinal);
@@ -320,7 +377,6 @@ namespace SodRpg.Core.Game
                         if (body.Length == 0) continue;
                         foreach (string entry in body.Split(','))
                         {
-                            if (b.Links.Count >= global::SodRpg.Core.Game.Links.MaxLinks) break; // 多すぎる分は切り捨てる
                             int c1 = entry.IndexOf(':');
                             int c2 = c1 < 0 ? -1 : entry.IndexOf(':', c1 + 1);
                             if (c2 < 0) return null;
@@ -344,14 +400,19 @@ namespace SodRpg.Core.Game
                         if (body.Length == 0) continue;
                         foreach (string encoded in body.Split(','))
                         {
-                            if (b.Gimmicks.Count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) break;
                             string[] fields = encoded.Split(':');
-                            if (fields.Length != 7
+                            if (fields.Length != 7 && fields.Length != 11
                                 || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int trigger)
                                 || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int effect)
                                 || !int.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
                                 || !int.TryParse(fields[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out int arg)
                                 || !float.TryParse(fields[6], NumberStyles.Float, CultureInfo.InvariantCulture, out float cooldown)) continue;
+                            int duration = 0, radius = 0, targets = 0, chance = 0;
+                            if (fields.Length == 11
+                                && (!int.TryParse(fields[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out duration)
+                                || !int.TryParse(fields[8], NumberStyles.Integer, CultureInfo.InvariantCulture, out radius)
+                                || !int.TryParse(fields[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out targets)
+                                || !int.TryParse(fields[10], NumberStyles.Integer, CultureInfo.InvariantCulture, out chance))) continue;
                             var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
                             {
                                 StarId = fields[0],
@@ -363,9 +424,17 @@ namespace SodRpg.Core.Game
                                     Value = value,
                                     Arg = arg,
                                     Cooldown = cooldown,
+                                    DurationPercent = duration,
+                                    RadiusPercent = radius,
+                                    ExtraTargets = targets,
+                                    ChancePercent = chance,
                                 },
                             });
-                            if (entry != null && stars.Add(entry.StarId)) b.Gimmicks.Add(entry);
+                            if (entry != null && stars.Add(entry.StarId))
+                            {
+                                if (b.Gimmicks.Count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) return null;
+                                b.Gimmicks.Add(entry);
+                            }
                         }
                         continue;
                     }
@@ -424,6 +493,9 @@ namespace SodRpg.Core.Game
                 int minimum = (int)Math.Ceiling(effective * 100d / Content.AwakenPowerPctAt(Content.MaxAwakenLevel));
                 b.ConditionalBasePowers[pw] = Math.Max(minimum, Math.Min(effective, b.ConditionalBasePowers[pw]));
             }
+            var links = AggregateLinks(b.Links);
+            b.Links.Clear();
+            b.Links.AddRange(links);
             return b;
         }
     }

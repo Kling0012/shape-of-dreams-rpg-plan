@@ -37,9 +37,6 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Links
     {
-        /// <summary>遺物6枠と記憶ルートの連携を収める通信上限。</summary>
-        public const int MaxLinks = 40;
-
         /// <summary>絆を満たす、生きている味方旅人までの距離（m）。</summary>
         public const double BondRange = 10;
 

@@ -164,8 +164,7 @@ namespace SodRpg.Mod
             switch (def.Effect)
             {
                 case GimmickEffect.Element:
-                    int stacks = def.Value / 100;
-                    if (_rng.NextDouble() * 100 < def.Value % 100) stacks++;
+                    int stacks = Gimmicks.ElementStacks(def, _rng.NextDouble());
                     if (stacks <= 0) break;
                     var element = def.Arg == 0 ? ElementalType.Fire : def.Arg == 1 ? ElementalType.Cold
                         : def.Arg == 2 ? ElementalType.Light : ElementalType.Dark;
@@ -187,7 +186,7 @@ namespace SodRpg.Mod
                     _gimmickDamageDepth++;
                     try
                     {
-                        DamageAround(hero, pending.Center, 4f,
+                        DamageAround(hero, pending.Center, request.AreaRadius,
                             Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.Value / 100f,
                             null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
                     }
@@ -197,19 +196,20 @@ namespace SodRpg.Mod
                     // The root server actor has no hero ancestors: native support cannot grant Heart of the Pack.
                     // 出どころを変えたので、旅人のシールド量はここで掛ける（v1.27.1 の能力値）。
                     ActorManager.instance.serverActor.GiveShield(hero,
-                        SupportStats.AmplifyShield(hero.maxHealth * def.Value / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), 4f);
+                        SupportStats.AmplifyShield(hero.maxHealth * def.Value / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), Gimmicks.Duration(def, 4f));
                     break;
                 case GimmickEffect.Heal:
                     var support = ActorManager.instance.serverActor;
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
                     int healPower = rt.Powers.Build.Get(Stat.HealPower);
                     support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.Value / 100f, healPower)).Dispatch(hero);
+                    float healRadius = Gimmicks.Radius(def, 10f);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
                         {
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
-                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > 100f) continue;
+                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
                             support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.Value / 100f, healPower)).Dispatch(ally);
                         }
                     break;

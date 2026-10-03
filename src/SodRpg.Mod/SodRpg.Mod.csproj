@@ -25,7 +25,7 @@
 
   <!-- 純C#コアは別DLLにせず同じアセンブリへ取り込む（ゲームは読み込み時にアセンブリ名を書き換えるため、MOD間参照を避ける）。 -->
   <ItemGroup>
-    <Compile Include="..\SodRpg.Core\Game\*.cs" Link="Core\Game\%(Filename)%(Extension)" />
+    <Compile Include="..\SodRpg.Core\Game\**\*.cs" Link="Core\Game\%(RecursiveDir)%(Filename)%(Extension)" />
     <Compile Include="..\SodRpg.Core\Internal\Json.cs" Link="Core\Internal\Json.cs" />
     <Compile Include="..\SodRpg.Core\IFileSystem.cs" Link="Core\IFileSystem.cs" />
     <Compile Include="..\SodRpg.Core\Exceptions.cs" Link="Core\Exceptions.cs" />

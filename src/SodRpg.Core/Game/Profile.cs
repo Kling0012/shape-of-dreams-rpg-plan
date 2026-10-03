@@ -12,6 +12,9 @@ namespace SodRpg.Core.Game
         /// <summary>小ノードの段階。到達ノード（刻印）はここに含めず Keystone に持つ。</summary>
         public SortedDictionary<string, int> Talents { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
 
+        /// <summary>Allocated choice stars: zero-based option indices.</summary>
+        public Dictionary<string, int> TalentChoices { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
         public string Keystone { get; set; }
 
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
@@ -26,6 +29,7 @@ namespace SodRpg.Core.Game
             var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp };
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
+            foreach (var kv in TalentChoices) c.TalentChoices[kv.Key] = kv.Value;
             return c;
         }
     }

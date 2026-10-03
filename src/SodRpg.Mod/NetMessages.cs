@@ -121,8 +121,8 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 10 adds host authority generations to the shared run-choice snapshot wire format.
-        public const int Version = 10;
+        // Version 11 adds cluster duration, radius, target-count and chance modifiers to gimmick build entries.
+        public const int Version = 11;
     }
 
     [Serializable]

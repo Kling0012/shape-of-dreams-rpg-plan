@@ -56,7 +56,10 @@ namespace SodRpg.Core.Game
                 foreach (var uid in h.Equipped) eq.Add(uid);
                 var tal = new JsonObject();
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
-                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp));
+                var choices = new JsonObject();
+                foreach (var choice in h.TalentChoices) choices.Add(choice.Key, (long)choice.Value);
+                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
+                    .Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp));
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -275,6 +278,21 @@ namespace SodRpg.Core.Game
                             else
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
+                    }
+                    if (hj.TryGet("talentChoices", out object choicesObj) && choicesObj is JsonObject choices)
+                        foreach (var choice in choices.Properties)
+                            if (h.Talents.ContainsKey(choice.Key) && Content.TryGetTalent(choice.Key, out var def)
+                                && def.IsChoice && choice.Value is long option && option >= 0 && option < def.Choices.Count)
+                                h.TalentChoices[choice.Key] = (int)option;
+                    // A corrupt/new choice allocation must never silently select an effect.
+                    var invalidChoices = new List<string>();
+                    foreach (var allocation in h.Talents)
+                        if (Content.TryGetTalent(allocation.Key, out var def) && def.IsChoice
+                            && !h.TalentChoices.ContainsKey(allocation.Key)) invalidChoices.Add(allocation.Key);
+                    foreach (string id in invalidChoices)
+                    {
+                        h.Talents.Remove(id);
+                        notes.Add(Loc.T("選択のない星を払い戻しました: ", "Refunded a star without a valid choice: ") + id);
                     }
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     h.StarXp = hj.TryGet("starXp", out object sx)

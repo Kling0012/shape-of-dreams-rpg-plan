@@ -385,21 +385,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Duplicate_stars_across_sections_and_excess_entries_are_not_applied_twice()
+        public void Duplicate_stars_across_sections_are_not_applied_twice()
         {
-            var entries = Enumerable.Range(0, Gimmicks.MaxEntries + 4)
-                .Select(i => "h.test." + i + ":St_Q_Fleche:2:9:25:0:0");
-            var decoded = Build.Decode("g:h.test.0:St_Q_Fleche:2:9:15:0:0;g:" + string.Join(",", entries));
-            Assert.Equal(Gimmicks.MaxEntries, decoded.Gimmicks.Count);
-            Assert.Equal(15, decoded.Gimmicks[0].Def.Value);
-            Assert.Equal(Enumerable.Range(0, Gimmicks.MaxEntries).Select(i => "h.test." + i), decoded.Gimmicks.Select(e => e.StarId));
+            var decoded = Build.Decode("g:h.test.0:St_Q_Fleche:2:9:15:0:0;g:h.test.0:St_Q_Fleche:2:9:25:0:0");
+            Assert.Equal(15, Assert.Single(decoded.Gimmicks).Def.Value);
             var build = new Build();
             build.Gimmicks.Add(Entry(value: 15));
             build.Gimmicks.Add(Entry(value: 35));
-            for (int i = 0; i < Gimmicks.MaxEntries + 1; i++) build.Gimmicks.Add(Entry("h.extra." + i));
             var roundTrip = Build.Decode(build.Encode());
-            Assert.Equal(Gimmicks.MaxEntries, roundTrip.Gimmicks.Count);
-            Assert.Equal(15, roundTrip.Gimmicks[0].Def.Value);
+            Assert.Equal(15, Assert.Single(roundTrip.Gimmicks).Def.Value);
         }
 
         [Theory]

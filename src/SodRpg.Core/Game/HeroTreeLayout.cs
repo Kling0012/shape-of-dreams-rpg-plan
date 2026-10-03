@@ -33,7 +33,7 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>Stable, shared star positions and undirected connections, including the unspent starting star.</summary>
-    public sealed class HeroTreeLayout
+    public sealed partial class HeroTreeLayout
     {
         public const float MinimumSpacing = 80f;
         private const float InnerRadius = 180f;
@@ -78,6 +78,9 @@ namespace SodRpg.Core.Game
         public static HeroTreeLayout ForHero(string heroKey) =>
             heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
 
+        /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
+        public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true);
+
         private static Dictionary<string, HeroTreeLayout> CreateLayouts()
         {
             var layouts = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
@@ -89,6 +92,9 @@ namespace SodRpg.Core.Game
 
         private static HeroTreeNodeKind Kind(TalentDef talent)
         {
+            if (talent.ClusterStar != null)
+                return talent.IsChoice || talent.ClusterStar.Kind == ClusterStarKind.Notable
+                    ? HeroTreeNodeKind.Notable : HeroTreeNodeKind.Small;
             if (talent.IsKeystone || talent.Stat == Stat.FourthAttackShift
                 || talent.Stat == Stat.EssenceSlotIdentity || talent.Stat == Stat.EssenceSlotMovement)
                 return HeroTreeNodeKind.Keystone;
@@ -137,6 +143,7 @@ namespace SodRpg.Core.Game
 
             foreach (var talent in talents)
             {
+                if (talent.Cluster != null || talent.IsOuterAnchor) continue;
                 if (talent.IsDreamRing) ring.Add(talent);
                 else if (talent.RouteId != null)
                 {
@@ -196,6 +203,7 @@ namespace SodRpg.Core.Game
             // Two earlier crossings let travelers change direction before reaching the outer bridges.
             Join(branchNodes[1][2], branchNodes[2][2]);
             Join(branchNodes[4][2], branchNodes[5][2]);
+            PlaceClusters(nodes, neighbors, edges, talents);
             return new HeroTreeLayout(nodes, edges);
         }
 
