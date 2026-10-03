@@ -1364,7 +1364,9 @@ namespace SodRpg.Mod
                                 LogLinkApplied(link);
                             }
                     float memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
-                        memoryAmpMilli / (float)BuildPrecision.Scale);
+                        memoryAmpMilli / (float)BuildPrecision.Scale)
+                        + (FindMemory(captured.Hero, memory) != null
+                            ? FractionalScopedModifiers.NativePercent(captured.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
                     ApplyRelayWindowDamage(captured, ref d, t);
                     ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));
@@ -1700,10 +1702,11 @@ namespace SodRpg.Mod
                 }
                 // 連携（v1.26）：使った記憶が条件に入っている連携だけを発動する。
                 UpdateLinks(rt, true);
-                if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
+                if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    float haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used);
+                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used)
+                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
                     if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {

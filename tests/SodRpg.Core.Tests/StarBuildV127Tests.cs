@@ -97,7 +97,7 @@ namespace SodRpg.Core.Tests
             var p = Ready();
             p.DreamLevel = 21;
             var star = LinkedStar(p);
-            int before = Rules.SpentPoints(p.Hero(Hero));
+            int before = Rules.SpentPoints(p.Hero(Hero), Hero);
             Rules.AddTalentRank(p, Hero, star.Id);
             var b = Build.Compute(p, Hero, 0);
             Assert.Equal(21, b.DreamLevel);

@@ -1140,17 +1140,25 @@ namespace SodRpg.Core.Game
         /// <summary>遠征中は、確保地点の選択待ちか、確保してから次の敵を倒すまでの間だけ、装備を変更できる。</summary>
         public static bool LoadoutLocked(Profile p, bool inGame) => p.Run != null && !p.Run.AwaitingChoice && !p.Run.GearWindow && inGame;
 
-        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null)
+        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
             RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            p.Hero(heroKey).Equipped[(int)r.Slot] = uid;
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Equipment, EquipmentSlot = r.Slot, EquipmentUid = uid,
+            }, approvedRefundIds);
             return Feats.Check(p);
         }
 
-        public static IReadOnlyList<GameEvent> Unequip(Profile p, string heroKey, Slot slot)
+        public static IReadOnlyList<GameEvent> Unequip(Profile p, string heroKey, Slot slot,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
-            p.Hero(heroKey).Equipped[(int)slot] = null;
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Equipment, EquipmentSlot = slot,
+            }, approvedRefundIds);
             return Feats.Check(p);
         }
 
@@ -1502,12 +1510,7 @@ namespace SodRpg.Core.Game
         /// <summary>到達刻印のつながりと段数・熟練度の条件を確かめる。</summary>
         public static bool KeystoneUnlocked(Profile p, string heroKey, TalentDef key)
         {
-            if (key == null || !key.IsKeystone || !BelongsTo(key, heroKey)) return false;
-            var h = p.Hero(heroKey);
-            if (!HeroTreeLayout.ForHero(heroKey).CanReach(h, key)) return false;
-            return key.HeroKey != null
-                ? TreeRanks(h, heroKey) >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery
-                : RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
+            return AllocationValidationForHero(heroKey).KeystoneUnlocked(p.Hero(heroKey), heroKey, key);
         }
 
         /// <summary>装着中の遺物の覚醒の段の合計。段が上がったか（能力の送り直しが要るか）の判定に使う（issue #15）。</summary>
@@ -1528,7 +1531,7 @@ namespace SodRpg.Core.Game
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
+                if (Content.TryGetTalent(heroKey, kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
             return n;
         }
 
@@ -1536,13 +1539,13 @@ namespace SodRpg.Core.Game
         public static bool TalentUnlocked(HeroState h, string heroKey, TalentDef t)
         {
             return h != null && t != null && BelongsTo(t, heroKey)
-                && HeroTreeLayout.ForHero(heroKey).CanReach(h, t);
+                && AllocationValidationForHero(heroKey).CanReach(h, t);
         }
 
         /// <summary>取得済みの星すべてが始まりの星につながっているか。</summary>
         public static bool TalentsConnected(HeroState h, string heroKey)
         {
-            return h != null && HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, null, h.Keystone);
+            return AllocationValidationForHero(heroKey).AllocationsConnected(h);
         }
 
         public static int RouteRanks(HeroState h, Line route)
@@ -1562,100 +1565,108 @@ namespace SodRpg.Core.Game
             return (int)Math.Min(int.MaxValue, n);
         }
 
-        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey));
+        /// <summary>Hero-qualified saved IDs retain their actual rank costs, including shared local Outer IDs.</summary>
+        public static int SpentPoints(HeroState h, string heroKey) => AllocationValidationForHero(heroKey).SpentPoints(h);
 
-        public static void AddTalentRank(Profile p, string heroKey, string talentId, int? choice = null)
+        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey), heroKey);
+
+        private static readonly Dictionary<string, EffectiveAllocationValidation> allocationValidators =
+            new Dictionary<string, EffectiveAllocationValidation>(StringComparer.Ordinal);
+        private static readonly object allocationValidatorLock = new object();
+
+        /// <summary>Install a reusable mechanism policy/engine before its data becomes purchasable. Null restores the canonical tree.</summary>
+        public static void RegisterAllocationValidation(string heroKey, EffectiveAllocationValidation validation)
         {
-            if (!Content.TryGetTalent(talentId, out var t) || t.IsKeystone) throw new InvalidOperationException("未知のノード: " + talentId);
-            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人のノードではありません。", "That node is not in this Traveler's tree."));
-            var h = p.Hero(heroKey);
-            int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
-            if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
-            if (!TalentUnlocked(h, heroKey, t))
-                throw new InvalidOperationException(Loc.T("始まりの星からつながる星に先に振ってください。", "Allocate a connected star leading here from the starting star first."));
-            if (FreePoints(p, heroKey) < t.RankCost)
-                throw new InvalidOperationException(t.RankCost > 1
-                    ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")
-                    : Loc.T("ポイントが足りません。", "Not enough points."));
-            if (t.IsChoice)
+            string key = string.IsNullOrEmpty(heroKey) ? "default" : heroKey;
+            lock (allocationValidatorLock)
             {
-                if (p.Run != null)
-                    throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
-                if (!choice.HasValue || choice.Value < 0 || choice.Value >= t.Choices.Count)
-                    throw new InvalidOperationException(Loc.T("2つの効果から1つを選んでください。", "Select one of the two effects."));
-                h.TalentChoices[talentId] = choice.Value;
+                if (validation == null) allocationValidators.Remove(key);
+                else allocationValidators[key] = validation;
             }
-            else if (choice.HasValue)
-                throw new InvalidOperationException(Loc.T("選択の星ではありません。", "That is not a choice star."));
-            h.Talents[talentId] = cur + 1;
         }
 
-        /// <summary>Switch an allocated choice for free, only outside expeditions.</summary>
-        public static void SetTalentChoice(Profile p, string heroKey, string talentId, int choice)
+        public static EffectiveAllocationValidation AllocationValidationForHero(string heroKey)
         {
-            if (p.Run != null)
+            string key = string.IsNullOrEmpty(heroKey) ? "default" : heroKey;
+            lock (allocationValidatorLock)
+            {
+                if (!allocationValidators.TryGetValue(key, out var validation))
+                    allocationValidators.Add(key, validation = new EffectiveAllocationValidation(HeroSigils.TreeFor(heroKey), null, HeroTreeLayout.ForHero(heroKey)));
+                return validation;
+            }
+        }
+
+        /// <summary>UI/host preview of exact saturated IDs, original-cost refunds and prerequisite cascades. Does not mutate the profile.</summary>
+        public static EffectiveAllocationPlan PreviewAllocationChange(Profile p, string heroKey, AllocationChange change,
+            EffectiveAllocationValidation validation = null)
+        {
+            if (change == null) throw new ArgumentNullException(nameof(change));
+            var engine = validation ?? AllocationValidationForHero(heroKey);
+            var talent = engine.Talent(change.CandidateStarId);
+            if (p.Run != null && (change.Kind == AllocationChangeKind.Choice ||
+                change.Kind == AllocationChangeKind.Purchase && talent?.IsChoice == true))
                 throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
-            if (!Content.TryGetTalent(talentId, out var t) || !BelongsTo(t, heroKey) || !t.IsChoice)
-                throw new InvalidOperationException(Loc.T("この旅人の選択の星ではありません。", "That is not a choice star in this Traveler's tree."));
-            var h = p.Hero(heroKey);
-            if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
-                throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
-            if (choice < 0 || choice >= t.Choices.Count)
-                throw new InvalidOperationException(Loc.T("2つの効果から1つを選んでください。", "Select one of the two effects."));
-            h.TalentChoices[talentId] = choice;
+            return engine.Preview(p, heroKey, change);
         }
 
-        /// <summary>1段戻す。最後の1段を外しても、残る星がすべて始まりにつながる必要がある。</summary>
-        public static void RemoveTalentRank(Profile p, string heroKey, string talentId)
+        public static EffectiveAllocationPlan ApplyAllocationChange(Profile p, string heroKey, AllocationChange change,
+            IReadOnlyCollection<string> approvedRefundIds = null, EffectiveAllocationValidation validation = null)
         {
-            if (!Content.TryGetTalent(talentId, out var t) || !BelongsTo(t, heroKey))
-                throw new InvalidOperationException(Loc.T("この旅人の星ではありません。", "That star is not in this Traveler's tree."));
-            var h = p.Hero(heroKey);
-            if (t.IsKeystone)
-            {
-                if (h.Keystone != talentId)
-                    throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
-                SetKeystone(p, heroKey, null);
-                return;
-            }
-            if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
-                throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
-            RequireConnectedRefund(h, heroKey, rank == 1 ? talentId : null, h.Keystone);
-            if (rank == 1)
-            {
-                h.Talents.Remove(talentId);
-                h.TalentChoices.Remove(talentId);
-            }
-            else h.Talents[talentId] = rank - 1;
+            var engine = validation ?? AllocationValidationForHero(heroKey);
+            var plan = PreviewAllocationChange(p, heroKey, change, engine);
+            engine.Commit(p, plan, approvedRefundIds);
+            return plan;
         }
 
-        private static void RequireConnectedRefund(HeroState h, string heroKey, string removedTalent, string keystone)
+        public static void AddTalentRank(Profile p, string heroKey, string talentId, int? choice = null,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
-            if (!HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, removedTalent, keystone))
-                throw new InvalidOperationException(Loc.T("つながりが切れます。先に外側の星を外してください。",
-                    "That would disconnect allocated stars. Remove the outer stars first."));
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Purchase, CandidateStarId = talentId, SelectedOption = choice,
+            }, approvedRefundIds);
         }
 
-        /// <summary>到達刻印は1つまで。付け替えは追加費用なしで、残る星のつながりを維持する。</summary>
-        public static void SetKeystone(Profile p, string heroKey, string keystoneId)
+        /// <summary>Switch one explicit option for all allocated ranks, only outside expeditions; incompatible refunds need approval.</summary>
+        public static void SetTalentChoice(Profile p, string heroKey, string talentId, int choice,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
-            var h = p.Hero(heroKey);
-            if (keystoneId == null)
+            ApplyAllocationChange(p, heroKey, new AllocationChange
             {
-                RequireConnectedRefund(h, heroKey, null, null);
-                h.Keystone = null;
-                return;
+                Kind = AllocationChangeKind.Choice, CandidateStarId = talentId, SelectedOption = choice,
+            }, approvedRefundIds);
+        }
+
+        /// <summary>The requested rank refund is explicit; any additional dependent refunds require separate approval.</summary>
+        public static void RemoveTalentRank(Profile p, string heroKey, string talentId,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            var approval = approvedRefundIds == null
+                ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
+            approval.Add(talentId);
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Refund, CandidateStarId = talentId,
+            }, approval);
+        }
+
+        /// <summary>One cost-bearing keystone. No substitute is selected; disabled/dependent allocations are refunded atomically.</summary>
+        public static void SetKeystone(Profile p, string heroKey, string keystoneId,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            IReadOnlyCollection<string> approval = approvedRefundIds;
+            string old = p.Hero(heroKey).Keystone;
+            if (keystoneId == null && old != null)
+            {
+                var ids = approvedRefundIds == null
+                    ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
+                ids.Add(old);
+                approval = ids;
             }
-            if (!Content.TryGetTalent(keystoneId, out var t) || !t.IsKeystone) throw new InvalidOperationException("未知の刻印: " + keystoneId);
-            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人の刻印ではありません。", "That keystone is not in this Traveler's tree."));
-            if (!KeystoneUnlocked(p, heroKey, t))
-                throw new InvalidOperationException(t.HeroKey != null
-                    ? Loc.T($"始まりにつながり、このツリーに{Content.KeystoneRouteRequirement}段以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります。", $"Requires a connection to the starting star, {Content.KeystoneRouteRequirement}+ tree ranks and mastery {HeroSigils.KeystoneMastery}+.")
-                    : Loc.T($"始まりにつながり、{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}段以上必要です。", $"Requires a connection to the starting star and {Content.KeystoneRouteRequirement}+ ranks in {Content.LineName(t.Route)}."));
-            if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
-                throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
-            RequireConnectedRefund(h, heroKey, null, keystoneId);
-            h.Keystone = keystoneId;
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Keystone, KeystoneId = keystoneId,
+            }, approval);
         }
 
         /// <summary>ノードがその旅人のツリーに属するか。</summary>

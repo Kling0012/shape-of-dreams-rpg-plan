@@ -79,11 +79,11 @@ namespace SodRpg.Core.Game
             if (pointBudget < 0 || pointBudget > StarProgression.MaxSpendablePoints) throw new ArgumentOutOfRangeException(nameof(pointBudget));
             var result = new BuildCapacity(pointBudget);
             var byHero = new Dictionary<string, List<NodeOutput>>(StringComparer.Ordinal);
-            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var ids = new HashSet<AuthoredStarKey>();
             foreach (var talent in talents)
             {
-                if (talent == null || string.IsNullOrEmpty(talent.Id) || !ids.Add(talent.Id))
-                    throw new ArgumentException("Talents must have distinct nonempty IDs.", nameof(talents));
+                if (talent == null || string.IsNullOrEmpty(talent.Id) || !ids.Add(new AuthoredStarKey(talent.HeroKey, talent.Id)))
+                    throw new ArgumentException("Talents must have distinct nonempty hero/local IDs.", nameof(talents));
                 if (talent.MaxRank < 1 || talent.RankCost < 1)
                     throw new ArgumentException("Talent ranks and costs must be positive.", nameof(talents));
                 result.TalentCount++;
@@ -92,6 +92,7 @@ namespace SodRpg.Core.Game
                 result.MinimumRankCost = Math.Min(result.MinimumRankCost, talent.RankCost);
                 result.MaximumGimmicksPerStar = Math.Max(result.MaximumGimmicksPerStar, output.Gimmicks);
                 result.MaximumLinksPerStar = Math.Max(result.MaximumLinksPerStar, output.Links);
+                result.MaximumNativeModifiersPerStar = Math.Max(result.MaximumNativeModifiersPerStar, output.Native);
                 result.MaximumOutputArity = Math.Max(result.MaximumOutputArity, output.Arity);
                 string hero = talent.HeroKey ?? "";
                 if (!byHero.TryGetValue(hero, out var nodes)) byHero.Add(hero, nodes = new List<NodeOutput>());
@@ -101,6 +102,7 @@ namespace SodRpg.Core.Game
             {
                 result.GimmickEntries = Math.Max(result.GimmickEntries, Maximum(nodes, pointBudget, n => n.Gimmicks));
                 result.LinkEntries = Math.Max(result.LinkEntries, Maximum(nodes, pointBudget, n => n.Links));
+                result.NativeModifierEntries = Math.Max(result.NativeModifierEntries, Maximum(nodes, pointBudget, n => n.Native));
                 result.PairComboEntries = Math.Max(result.PairComboEntries, Maximum(nodes, pointBudget, n => n.Pairs));
                 result.ClusterModifierStars = Math.Max(result.ClusterModifierStars, Maximum(nodes, pointBudget, n => n.Modifiers));
                 result.TotalEntries = Math.Max(result.TotalEntries, Maximum(nodes, pointBudget, n => n.Arity));
@@ -111,7 +113,7 @@ namespace SodRpg.Core.Game
 
         private struct NodeOutput
         {
-            public int Cost, Gimmicks, Links, Pairs, Modifiers, Arity;
+            public int Cost, Gimmicks, Links, Native, Pairs, Modifiers, Arity;
         }
 
         private static NodeOutput Output(TalentDef talent, int cost, BuildCapacity capacity)
@@ -127,6 +129,7 @@ namespace SodRpg.Core.Game
                     var option = Output(choice, cost, capacity);
                     choices.Gimmicks = Math.Max(choices.Gimmicks, option.Gimmicks);
                     choices.Links = Math.Max(choices.Links, option.Links);
+                    choices.Native = Math.Max(choices.Native, option.Native);
                     choices.Pairs = Math.Max(choices.Pairs, option.Pairs);
                     choices.Modifiers = Math.Max(choices.Modifiers, option.Modifiers);
                     choices.Arity = Math.Max(choices.Arity, option.Arity);
@@ -146,9 +149,10 @@ namespace SodRpg.Core.Game
                         throw new ArgumentException("A link requires valid targets and a nonnegative value.", nameof(talent));
                     capacity.RecordLinkValue(link.Kind, link.Requires.Length, (long)Math.Ceiling(link.Value / cost));
                 }
+                if (talent.NativeModifier != null) output.Native = 1;
             }
-            output.Modifiers = talent.GimmickBoost != 0 || talent.GimmickParameter.HasValue ? 1 : 0;
-            output.Arity = output.Gimmicks + output.Links + output.Pairs;
+            output.Modifiers = talent.GimmickBoost != 0 || talent.GimmickParameter.HasValue || talent.ScopedModifier != null ? 1 : 0;
+            output.Arity = output.Gimmicks + output.Links + output.Pairs + output.Native;
             return output;
         }
 
@@ -170,12 +174,14 @@ namespace SodRpg.Core.Game
         public int TalentCount { get; internal set; }
         public int GimmickEntries { get; internal set; }
         public int LinkEntries { get; internal set; }
+        public int NativeModifierEntries { get; internal set; }
         public int PairComboEntries { get; internal set; }
         public int ClusterModifierStars { get; internal set; }
         public int TotalEntries { get; internal set; }
         public int MinimumRankCost { get; internal set; } = int.MaxValue;
         public int MaximumGimmicksPerStar { get; internal set; }
         public int MaximumLinksPerStar { get; internal set; }
+        public int MaximumNativeModifiersPerStar { get; internal set; }
         public int MaximumOutputArity { get; internal set; }
         internal void RecordLinkValue(LinkKind kind, int requires, long value)
         {

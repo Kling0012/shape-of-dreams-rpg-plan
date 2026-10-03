@@ -192,6 +192,10 @@ namespace SodRpg.Core.Game
         public StarClusterDef Cluster { get; set; }
         public ClusterStarDef ClusterStar { get; set; }
         public int ClusterOrder { get; set; }
+        public AuthoredStarDef AuthoredStar { get; set; }
+        public ScopedModifierDef ScopedModifier { get; set; }
+        public EffectChannelDef EffectChannel { get; set; }
+        public NativeMemoryModifierDef NativeModifier { get; set; }
         public bool IsChoice => ClusterStar?.Kind == ClusterStarKind.Choice;
         public IReadOnlyList<TalentDef> Choices { get; set; } = Array.Empty<TalentDef>();
         public int GimmickBoost { get; set; }
@@ -223,12 +227,15 @@ namespace SodRpg.Core.Game
             if (PairCombo != null) return PairCombos.Describe(PairCombo);
             if (IsChoice)
                 return Loc.T("どちらか1つを選択：", "Choose one:") + "\n"
-                    + string.Join("\n", Choices.Select(c => c.Name + ": " + c.Describe()));
+                    + string.Join("\n", Choices.Select(c => c.Name + ": " + c.Describe()))
+                    + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} {(MaxRank == 1 ? "rank" : "ranks")}; {RankCost} {(RankCost == 1 ? "point" : "points")} per rank)");
             string effect;
             if (IsKeystone)
                 effect = Content.FormatPower(Power, PowerValue) + "\n" + Description;
             else
-                effect = GimmickBoost > 0 ? Loc.T($"『{Links.Name(RouteMemory).Ja}』の仕掛けの効果量 +{GimmickBoost}%",
+                effect = ScopedModifier != null ? FractionalScopedModifiers.Describe(ScopedModifier)
+                    : NativeModifier != null ? FractionalScopedModifiers.Describe(NativeModifier)
+                    : GimmickBoost > 0 ? Loc.T($"『{Links.Name(RouteMemory).Ja}』の仕掛けの効果量 +{GimmickBoost}%",
                         $"{Links.Name(RouteMemory).En} gimmick effect values +{GimmickBoost}%")
                     : GimmickParameter.HasValue ? DescribeGimmickParameter()
                     : LinkPerRank != null ? Links.Describe(LinkPerRank)
@@ -237,8 +244,7 @@ namespace SodRpg.Core.Game
             string gimmick = Gimmicks.Describe(Gimmick, RouteMemory);
             if (gimmick.Length > 0) effect = effect.Length == 0 ? gimmick : effect + "\n" + gimmick;
             if (IsKeystone) return effect;
-            if (RankCost > 1) return effect + Loc.T($"（1段まで・{RankCost}ポイント）", $" (1 rank only, costs {RankCost} points)");
-            return effect + Loc.T("（1段ごと）", " (per rank)");
+            return effect + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} {(MaxRank == 1 ? "rank" : "ranks")}; {RankCost} {(RankCost == 1 ? "point" : "points")} per rank)");
         }
 
         private string DescribeGimmickParameter()
@@ -4747,7 +4753,8 @@ namespace SodRpg.Core.Game
 
         private static readonly Dictionary<string, BaseDef> BaseById = Index(Bases, b => b.Id);
         private static readonly Dictionary<string, UniqueDef> UniqueById = Index(Uniques, u => u.Id);
-        private static readonly Dictionary<string, TalentDef> TalentById = Index(Talents.Concat(HeroSigils.All), t => t.Id);
+        private static readonly Dictionary<AuthoredStarKey, TalentDef> TalentByKey = IndexTalents();
+        private static readonly Dictionary<string, TalentDef> UniqueTalentById = IndexUniqueTalents();
 
         private static Dictionary<string, T> Index<T>(IEnumerable<T> items, Func<T, string> key)
         {
@@ -4756,9 +4763,35 @@ namespace SodRpg.Core.Game
             return d;
         }
 
+        private static Dictionary<AuthoredStarKey, TalentDef> IndexTalents()
+        {
+            var nodes = new Dictionary<AuthoredStarKey, TalentDef>();
+            foreach (var talent in Talents.Concat(HeroSigils.All))
+                nodes.Add(new AuthoredStarKey(talent.HeroKey, talent.Id), talent);
+            return nodes;
+        }
+
+        private static Dictionary<string, TalentDef> IndexUniqueTalents()
+        {
+            var nodes = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            foreach (var talent in TalentByKey.Values)
+                if (nodes.ContainsKey(talent.Id)) nodes[talent.Id] = null;
+                else nodes.Add(talent.Id, talent);
+            return nodes;
+        }
+
         public static bool TryGetBase(string id, out BaseDef def) => BaseById.TryGetValue(id ?? string.Empty, out def);
         public static bool TryGetUnique(string id, out UniqueDef def) => UniqueById.TryGetValue(id ?? string.Empty, out def);
-        public static bool TryGetTalent(string id, out TalentDef def) => TalentById.TryGetValue(id ?? string.Empty, out def);
+        public static bool TryGetTalent(string heroKey, string localId, out TalentDef def)
+            => TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);
+
+        /// <summary>Only for globally unique legacy IDs. Shared local IDs require an explicit hero.</summary>
+        public static bool TryGetTalent(string id, out TalentDef def)
+        {
+            if (!UniqueTalentById.TryGetValue(id ?? string.Empty, out def)) return false;
+            if (def == null) throw new InvalidOperationException("A shared star ID requires its hero key: " + id);
+            return true;
+        }
 
         public static BaseDef GetBase(string id)
         {

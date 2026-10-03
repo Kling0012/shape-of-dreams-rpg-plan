@@ -100,9 +100,14 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, hero, route[1].Id));
             TreeTestPaths.Connect(p, hero, route[0].Id);
             foreach (var node in route) Rules.AddTalentRank(p, hero, node.Id);
-            int spent = Rules.SpentPoints(p.Hero(hero));
-            Assert.Throws<InvalidOperationException>(() => Rules.RemoveTalentRank(p, hero, route[0].Id));
-            Assert.Equal(spent, Rules.SpentPoints(p.Hero(hero)));
+            int spent = Rules.SpentPoints(p.Hero(hero), hero);
+            string beforeRefund = ProfileCodec.Write(p);
+            var refund = Rules.PreviewAllocationChange(p, hero,
+                new AllocationChange { Kind = AllocationChangeKind.Refund, CandidateStarId = route[0].Id });
+            Assert.Contains(route.Last().Id, refund.AffectedRefundIds);
+            Assert.NotNull(Record.Exception(() => Rules.RemoveTalentRank(p, hero, route[0].Id)));
+            Assert.Equal(beforeRefund, ProfileCodec.Write(p));
+            Assert.Equal(spent, Rules.SpentPoints(p.Hero(hero), hero));
             Rules.AddTalentRank(p, hero, route[0].Id);
             Rules.RemoveTalentRank(p, hero, route[0].Id);
             Assert.Equal(1, p.Hero(hero).Talents[route[0].Id]);
@@ -112,7 +117,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(p.Hero(hero).Talents.OrderBy(k => k.Key), q.Hero(hero).Talents.OrderBy(k => k.Key));
             Rules.RemoveTalentRank(p, hero, route.Last().Id);
             Assert.False(p.Hero(hero).Talents.ContainsKey(route.Last().Id));
-            Assert.Equal(spent - route.Last().RankCost, Rules.SpentPoints(p.Hero(hero)));
+            Assert.Equal(spent - route.Last().RankCost, Rules.SpentPoints(p.Hero(hero), hero));
         }
         [Fact]
         public void Neighboring_branch_crossing_allows_refund_without_original_predecessor()

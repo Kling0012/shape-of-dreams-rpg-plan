@@ -26,6 +26,8 @@ namespace SodRpg.Core.Game
         public string Anchor { get; set; }
         public ClusterShape Shape { get; set; }
         public IReadOnlyList<ClusterStarDef> Stars { get; set; }
+        internal IReadOnlyList<AuthoredStarEdge> AuthoredEdges { get; set; }
+        internal IReadOnlyList<string> AuthoredMemories { get; set; }
     }
 
     public sealed class ClusterStarDef
@@ -41,6 +43,9 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<ClusterStarDef> Options { get; set; }
         public int MaxRank { get; set; } = 1;
         public int RankCost { get; set; } = 1;
+        public ScopedModifierDef ScopedModifier { get; set; }
+        public EffectChannelDef EffectChannel { get; set; }
+        public NativeMemoryModifierDef NativeModifier { get; set; }
     }
 
     /// <summary>Small authored clusters. Validation uses only the supplied registry, never Content.</summary>
@@ -68,6 +73,10 @@ namespace SodRpg.Core.Game
             var nodes = new List<TalentDef>(count);
             foreach (var cluster in defs)
                 for (int i = 0; i < cluster.Stars.Count; i++) nodes.Add(CreateTalent(cluster, cluster.Stars[i], i + 1));
+            var complete = new List<TalentDef>(existingTalents.Count + nodes.Count);
+            complete.AddRange(existingTalents);
+            complete.AddRange(nodes);
+            FractionalScopedModifiers.ValidateTree(complete);
             return nodes.AsReadOnly();
         }
 
@@ -148,15 +157,16 @@ namespace SodRpg.Core.Game
             if (star.MaxRank <= 0 || star.RankCost <= 0) throw Invalid(id, "Ranks and costs must be positive.");
             if (star.Kind == ClusterStarKind.Choice)
             {
-                if (option || star.MaxRank != 1 || star.Options == null || star.Options.Count != 2)
-                    throw Invalid(id, "A choice requires one rank and exactly two non-choice options.");
-                if (star.Amount != 0 || star.Memory != null || star.Gimmick != null || star.Power != Power.None)
+                if (option || cluster.AuthoredEdges == null && star.MaxRank != 1 || star.Options == null || star.Options.Count != 2)
+                    throw Invalid(id, "A choice requires exactly two non-choice options; ranked choices require the authored path.");
+                if (star.Amount != 0 || star.Memory != null || star.Gimmick != null || star.Power != Power.None
+                    || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null)
                     throw Invalid(id, "A choice carries its effects in its options only.");
                 foreach (var choice in star.Options)
                 {
                     ValidateStar(cluster, choice, id, true, existing);
                     if (choice.MaxRank != star.MaxRank)
-                        throw Invalid(id, "Choice options must have one rank.");
+                        throw Invalid(id, "Choice options must use the parent's rank limit.");
                 }
                 return;
             }
@@ -177,6 +187,23 @@ namespace SodRpg.Core.Game
             }
             if (!Links.IsMemory(star.Memory) || !AllowedMemory(cluster, star.Memory, existing)) throw Invalid(id, "Effect memory is outside its region.");
             if (star.Power != Power.None) throw Invalid(id, "Only power notables carry a power.");
+            if (cluster.AuthoredEdges != null && star.Kind == ClusterStarKind.MemoryHaste
+                && star.Memory.StartsWith("St_M_", StringComparison.Ordinal))
+                throw Invalid(id, "Movement is a receiver, never an OnUse self-haste source.");
+            if (star.ScopedModifier != null || star.NativeModifier != null)
+            {
+                if (star.Amount != 0 || star.Gimmick != null || star.EffectChannel != null
+                    || star.ScopedModifier != null && star.Kind != ClusterStarKind.GimmickBoost && star.Kind != ClusterStarKind.GimmickParam
+                    || star.NativeModifier != null && star.Kind != ClusterStarKind.MemoryDamage && star.Kind != ClusterStarKind.MemoryHaste)
+                    throw Invalid(id, "Typed modifiers require exactly one typed effect and no legacy amount.");
+                if (star.ScopedModifier != null && (star.ScopedModifier.ScopeMemory != star.Memory
+                    || (star.Kind == ClusterStarKind.GimmickParam) != star.ScopedModifier.Param.HasValue)
+                    || star.NativeModifier != null && (star.NativeModifier.Memory != star.Memory
+                        || star.NativeModifier.Kind != (star.Kind == ClusterStarKind.MemoryDamage ? LinkKind.MemoryDamage : LinkKind.MemoryHaste)))
+                    throw Invalid(id, "Typed effect kind or memory does not match the star.");
+                FractionalScopedModifiers.ValidateTalent(CreateTalent(cluster, star, 1, id));
+                return;
+            }
             if (star.Kind == ClusterStarKind.Notable)
             {
                 if (star.Gimmick == null || star.Amount != 0 || star.Memory.StartsWith("St_M_", StringComparison.Ordinal)
@@ -191,6 +218,8 @@ namespace SodRpg.Core.Game
 
         private static bool AllowedMemory(StarClusterDef cluster, string memory, Dictionary<string, TalentDef> existing)
         {
+            if (cluster.AuthoredMemories != null)
+                foreach (string allowed in cluster.AuthoredMemories) if (allowed == memory) return true;
             if (cluster.Region.Kind == ClusterRegionKind.Memory) return existing[cluster.Anchor].RouteMemory == memory;
             if (cluster.Region.Kind == ClusterRegionKind.Bridge)
             {
@@ -210,7 +239,7 @@ namespace SodRpg.Core.Game
                 foreach (var option in star.Options) ValidateParameters(cluster, option, id, defs, existing);
                 return;
             }
-            if (star.Kind != ClusterStarKind.GimmickParam) return;
+            if (star.Kind != ClusterStarKind.GimmickParam || star.ScopedModifier != null) return;
             foreach (var talent in existing)
                 if (talent.HeroKey == cluster.HeroKey && talent.RouteId != null && talent.RouteMemory == star.Memory
                     && Meaningful(talent.Gimmick, star.Param)) return;
@@ -234,11 +263,11 @@ namespace SodRpg.Core.Game
             return star.Kind == ClusterStarKind.Notable && star.Memory == memory && Meaningful(star.Gimmick, param);
         }
 
-        private static TalentDef CreateTalent(StarClusterDef cluster, ClusterStarDef star, int order)
+        private static TalentDef CreateTalent(StarClusterDef cluster, ClusterStarDef star, int order, string authoredId = null)
         {
-            string id = StarId(cluster, order);
+            string id = authoredId ?? StarId(cluster, order);
             TalentDef talent;
-            if (star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste)
+            if ((star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste) && star.NativeModifier == null)
                 talent = new TalentDef(id, Line.Offense, star.Name,
                     new LinkDef { Kind = star.Kind == ClusterStarKind.MemoryDamage ? LinkKind.MemoryDamage : LinkKind.MemoryHaste,
                         Value = star.Amount, Requires = new[] { star.Memory } }, star.MaxRank);
@@ -254,16 +283,19 @@ namespace SodRpg.Core.Game
             talent.ClusterStar = star;
             talent.ClusterOrder = order;
             talent.RouteMemory = star.Memory;
+            talent.ScopedModifier = star.ScopedModifier;
+            talent.EffectChannel = star.EffectChannel;
+            talent.NativeModifier = star.NativeModifier;
             if (star.Gimmick != null) talent.Gimmick = Gimmicks.Clamp(new GimmickEntry { StarId = id, Memory = star.Memory, Def = star.Gimmick }).Def;
             if (star.Kind == ClusterStarKind.GimmickBoost) talent.GimmickBoost = star.Amount;
-            if (star.Kind == ClusterStarKind.GimmickParam)
+            if (star.Kind == ClusterStarKind.GimmickParam && star.ScopedModifier == null)
             {
                 talent.GimmickParameter = star.Param;
                 talent.GimmickParamAmount = star.Amount;
             }
             if (star.Kind == ClusterStarKind.Choice)
             {
-                var choices = new[] { CreateTalent(cluster, star.Options[0], order), CreateTalent(cluster, star.Options[1], order) };
+                var choices = new[] { CreateTalent(cluster, star.Options[0], order, authoredId), CreateTalent(cluster, star.Options[1], order, authoredId) };
                 foreach (var choice in choices) choice.RankCost = talent.RankCost;
                 talent.Choices = Array.AsReadOnly(choices);
             }

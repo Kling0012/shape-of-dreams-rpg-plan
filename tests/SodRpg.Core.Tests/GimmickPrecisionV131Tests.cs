@@ -20,19 +20,19 @@ namespace SodRpg.Core.Tests
         };
 
         [Fact]
-        public void Authoring_and_copying_preserve_exact_thousandths_without_silent_truncation()
+        public void Authoring_and_copying_preserve_exact_values_without_silent_truncation()
         {
             var original = Entry("precision.copy", GimmickEffect.Echo);
             var copy = Gimmicks.Clamp(original);
             Assert.Equal(1020, copy.Def.ValueMilli);
             Assert.Equal(1.02m, copy.Def.Value);
             Assert.Equal(1.02f, copy.Def.ValuePercent);
-            Assert.Throws<ArgumentOutOfRangeException>(() => original.Def.Value = 1.0201m);
-            Assert.Throws<OverflowException>(() => original.Def.Value = int.MaxValue);
+            Assert.Throws<ArgumentOutOfRangeException>(() => original.Def.Value = 1.02000001m);
+            Assert.Throws<OverflowException>(() => original.Def.Value = decimal.MaxValue);
         }
 
         [Fact]
-        public void Cluster_boosts_compute_exact_fractional_values_and_reject_sub_milli_results()
+        public void Cluster_boosts_compute_exact_fractional_values_including_sub_milli_results()
         {
             const string hero = "Hero_Cetus", memory = "St_D_IcyVeins", anchor = "h.cetus.route.icy-veins.4";
             var existing = HeroSigils.TreeFor(hero).Where(t => t.Cluster == null).ToArray();
@@ -59,7 +59,8 @@ namespace SodRpg.Core.Tests
             var build = Build.ComputeForTree(profile, hero, 0, tree);
             Assert.Equal(1020, build.Gimmicks.Single(g => g.StarId == "precision.cluster.2").Def.ValueMilli);
             generated[1].Gimmick.Value = 0.001m;
-            Assert.Throws<ArgumentOutOfRangeException>(() => Build.ComputeForTree(profile, hero, 0, tree));
+            var fine = Build.Decode(Build.ComputeForTree(profile, hero, 0, tree).Encode());
+            Assert.Equal(0.00102m, fine.Gimmicks.Single(g => g.StarId == "precision.cluster.2").Def.Value);
         }
 
         [Fact]

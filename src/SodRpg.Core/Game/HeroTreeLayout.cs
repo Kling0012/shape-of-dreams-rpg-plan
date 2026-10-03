@@ -209,6 +209,7 @@ namespace SodRpg.Core.Game
 
         internal bool CanReach(HeroState hero, TalentDef talent)
         {
+            if (!AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystone)) return false;
             if (!indices.TryGetValue(talent.Id, out int target) || Nodes[target].Talent != talent) return false;
             lock (traversalLock)
             {
@@ -229,8 +230,10 @@ namespace SodRpg.Core.Game
                 Traverse(hero, removed, keystone);
                 foreach (var allocation in hero.Talents)
                     if (allocation.Value > 0 && allocation.Key != removedTalent
-                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated])) return false;
-                return keystone == null || (indices.TryGetValue(keystone, out int key) && reached[key]);
+                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated]
+                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystone))) return false;
+                return keystone == null || (indices.TryGetValue(keystone, out int key) && reached[key]
+                    && AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystone));
             }
         }
 

@@ -25,6 +25,8 @@ namespace SodRpg.Core.Game
         public List<GimmickEntry> Gimmicks { get; } = new List<GimmickEntry>();
         /// <summary>橋と両隣の星を取得した合わせ技。記憶の装備条件は各イベントで判定する。</summary>
         public List<PairComboEntry> PairCombos { get; } = new List<PairComboEntry>();
+        public List<NativeMemoryModifierEntry> NativeModifiers { get; } = new List<NativeMemoryModifierEntry>();
+        internal Dictionary<string, string[]> ScopedWireRecords { get; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
         public int Heat { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
         public int DreamLevel { get; set; } = 1;
@@ -47,17 +49,22 @@ namespace SodRpg.Core.Game
         public static Build ComputeForTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree)
             => ComputeTree(p, heroKey, heat, tree, HeroTreeLayout.ForTalents(tree), null, 0);
 
+        public static Build ComputeForTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree,
+            HeroState allocation, HeroState reachability = null, HeroTreeLayout layout = null)
+            => ComputeTree(p, heroKey, heat, tree, layout ?? HeroTreeLayout.ForTalents(tree), null, 0, allocation, reachability);
+
         private static Build ComputeTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree,
-            HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId)
+            HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId, HeroState allocation = null, HeroState reachability = null)
         {
-            var h = p.Hero(heroKey);
+            var h = allocation ?? p.Hero(heroKey);
+            FractionalScopedModifiers.ValidateTree(tree);
             var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
             foreach (var talent in tree) definitions.Add(talent.Id, talent);
-            bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(h, talent);
+            bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachability ?? h, talent);
             long spent = h.Keystone == null ? 0 : Content.KeystoneCost;
-            foreach (var allocation in h.Talents)
-                if (definitions.TryGetValue(allocation.Key, out var talent))
-                    spent += (long)Math.Max(0, allocation.Value) * talent.RankCost;
+            foreach (var allocated in h.Talents)
+                if (definitions.TryGetValue(allocated.Key, out var talent))
+                    spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
             if (spent > StarProgression.MaxSpendablePoints)
                 throw new InvalidOperationException("The build exceeds the star point budget.");
             var b = new Build
@@ -70,7 +77,6 @@ namespace SodRpg.Core.Game
             var rawPowers = new Dictionary<Power, int>();
             var awakenGains = new Dictionary<Power, int>();
             var selectedTalents = new List<KeyValuePair<TalentDef, int>>();
-            var modifiers = new Dictionary<string, MemoryModifiers>(StringComparer.Ordinal);
             foreach (var kv in h.Talents)
             {
                 if (kv.Value <= 0 || !definitions.TryGetValue(kv.Key, out var talent) || talent.IsKeystone
@@ -83,18 +89,6 @@ namespace SodRpg.Core.Game
                     talent = talent.Choices[choice];
                 }
                 selectedTalents.Add(new KeyValuePair<TalentDef, int>(talent, rank));
-                if (talent.RouteMemory == null || talent.GimmickBoost == 0 && !talent.GimmickParameter.HasValue) continue;
-                if (!modifiers.TryGetValue(talent.RouteMemory, out var modifier))
-                    modifiers.Add(talent.RouteMemory, modifier = new MemoryModifiers());
-                modifier.Boost += (long)talent.GimmickBoost * rank;
-                long amount = (long)talent.GimmickParamAmount * rank;
-                switch (talent.GimmickParameter)
-                {
-                    case GimmickParam.Duration: modifier.Duration += amount; break;
-                    case GimmickParam.Radius: modifier.Radius += amount; break;
-                    case GimmickParam.ExtraTargets: modifier.Targets += amount; break;
-                    case GimmickParam.Chance: modifier.Chance += amount; break;
-                }
             }
 
             foreach (string uid in h.Equipped)
@@ -157,15 +151,20 @@ namespace SodRpg.Core.Game
                 }
                 if (t.Gimmick != null && t.Gimmick.Value > 0)
                 {
-                    modifiers.TryGetValue(t.RouteMemory, out var modifier);
-                    var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
+                    var entry = new GimmickEntry
                     {
-                        StarId = t.Id,
-                        Memory = t.RouteMemory,
-                        Def = global::SodRpg.Core.Game.Gimmicks.ApplyModifiers(t.Gimmick, rank, modifier?.Boost ?? 0,
-                            modifier?.Duration ?? 0, modifier?.Radius ?? 0, modifier?.Targets ?? 0, modifier?.Chance ?? 0),
-                    });
-                    if (entry != null) b.Gimmicks.Add(entry);
+                        StarId = t.Id, Memory = t.RouteMemory, Channel = t.EffectChannel,
+                        ContributorIds = new[] { t.Id },
+                        Def = new GimmickDef
+                        {
+                            Trigger = t.Gimmick.Trigger, Effect = t.Gimmick.Effect,
+                            ValuePrecise = checked(t.Gimmick.ValuePrecise * rank), Arg = t.Gimmick.Arg,
+                            Cooldown = t.Gimmick.Cooldown, DurationUnits = t.Gimmick.DurationUnits,
+                            RadiusUnits = t.Gimmick.RadiusUnits, ExtraTargets = t.Gimmick.ExtraTargets,
+                            ChanceUnits = t.Gimmick.ChanceUnits,
+                        },
+                    };
+                    b.Gimmicks.Add(entry);
                 }
                 if (t.LinkPerRank != null)
                 {
@@ -180,8 +179,21 @@ namespace SodRpg.Core.Game
                 else if (t.IsPowerNode) Add(rawPowers, t.RankPower, t.PerRank * rank);
                 else if (t.PerRank != 0) Add(rawStats, t.Stat, t.PerRank * rank);
             }
-            if (h.Keystone != null && Content.TryGetTalent(h.Keystone, out var key) && key.IsKeystone
-                && Rules.BelongsTo(key, heroKey) && Rules.KeystoneUnlocked(p, heroKey, key))
+            FractionalScopedModifiers.Compose(b, selectedTalents);
+            bool KeyUnlocked(TalentDef candidateKey)
+            {
+                if (!Unlocked(candidateKey)) return false;
+                var gate = reachability ?? h;
+                long ranks = 0;
+                foreach (var kv in gate.Talents)
+                    if (definitions.TryGetValue(kv.Key, out var t) && !t.IsKeystone
+                        && (candidateKey.HeroKey != null ? t.HeroKey == heroKey : t.HeroKey == null && t.Route == candidateKey.Route))
+                        ranks += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
+                return ranks >= Content.KeystoneRouteRequirement
+                    && (candidateKey.HeroKey == null || Mastery.Level(gate.Kills) >= HeroSigils.KeystoneMastery);
+            }
+            if (h.Keystone != null && definitions.TryGetValue(h.Keystone, out var key) && key.IsKeystone
+                && Rules.BelongsTo(key, heroKey) && KeyUnlocked(key))
             {
                 Add(rawPowers, key.Power, key.PowerValue);
             }
@@ -229,10 +241,6 @@ namespace SodRpg.Core.Game
             b.Links.Clear();
             b.Links.AddRange(links);
             return b;
-        }
-        private sealed class MemoryModifiers
-        {
-            public long Boost, Duration, Radius, Targets, Chance;
         }
 
         private static IReadOnlyList<LinkDef> AggregateLinks(IEnumerable<LinkDef> links)
@@ -312,13 +320,13 @@ namespace SodRpg.Core.Game
                 sb.Append(entry.StarId).Append(':').Append(entry.Memory).Append(':')
                     .Append(((int)entry.Def.Trigger).ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(((int)entry.Def.Effect).ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.ValueMilli.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append((entry.Def.ValuePrecise % 10000 == 0 ? entry.Def.ValuePrecise / 10000 : 0).ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Arg.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.DurationPercent.ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.RadiusPercent.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append((entry.Def.DurationUnits / 100).ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append((entry.Def.RadiusUnits / 100).ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.ExtraTargets.ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.ChancePercent.ToString(CultureInfo.InvariantCulture));
+                    .Append((entry.Def.ChanceUnits / 100).ToString(CultureInfo.InvariantCulture));
             }
             sb.Append(";c:");
             first = true;
@@ -336,6 +344,7 @@ namespace SodRpg.Core.Game
                 count++;
                 sb.Append(entry.Def.Id).Append(':').Append(entry.Ranks.ToString(CultureInfo.InvariantCulture));
             }
+            ScopedBuildCodec.Append(sb, this);
             string encoded = sb.ToString();
             if (encoded.Length > BuildLimits.MaxEncodedChars || Encoding.UTF8.GetByteCount(encoded) > BuildLimits.MaxEncodedBytes)
                 throw new InvalidOperationException("The build exceeds the encoded message limit.");
@@ -348,6 +357,7 @@ namespace SodRpg.Core.Game
                 || PairCombos.Count > BuildLimits.MaxPairComboEntries || Stats.Count > BuildLimits.MaxStatEntries
                 || Powers.Count > BuildLimits.MaxPowerEntries || ConditionalBasePowers.Count > BuildLimits.MaxConditionalPowerEntries)
                 throw new InvalidOperationException("The build exceeds its legal entry envelope.");
+            ScopedBuildCodec.Validate(this);
             foreach (var link in AggregateLinks(Links))
                 if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length))
                     throw new InvalidOperationException("The build exceeds its legal link value envelope.");
@@ -389,12 +399,21 @@ namespace SodRpg.Core.Game
                         case "p": limit = BuildLimits.MaxPowerEntries; break;
                         case "u": limit = BuildLimits.MaxConditionalPowerEntries; break;
                         default: return null;
+                        case "f":
+                        case "n":
+                        case "j": limit = BuildLimits.MaxGimmickEntries; break;
+                        case "v": limit = BuildLimits.MaxGimmickEntries; break;
                     }
                     if (body.Length == 0) continue;
                     string[] entries = body.Split(',');
                     if (entries.Length > limit) return null;
                     foreach (string encoded in entries)
                     {
+                        if (kind == "f" || kind == "n" || kind == "j" || kind == "v")
+                        {
+                            ScopedBuildCodec.Read(kind, encoded, b);
+                            continue;
+                        }
                         if (kind == "l")
                         {
                             string[] f = encoded.Split(':');
@@ -410,7 +429,7 @@ namespace SodRpg.Core.Game
                         {
                             string[] f = encoded.Split(':');
                             if (f.Length != 11 || !float.TryParse(f[6], NumberStyles.Float, CultureInfo.InvariantCulture, out float cooldown)) return null;
-                            var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
+                            var entry = new GimmickEntry
                             {
                                 StarId = f[0], Memory = f[1], Def = new GimmickDef
                                 {
@@ -419,8 +438,8 @@ namespace SodRpg.Core.Game
                                     DurationPercent = ParseInt(f[7]), RadiusPercent = ParseInt(f[8]),
                                     ExtraTargets = ParseInt(f[9]), ChancePercent = ParseInt(f[10]),
                                 }
-                            });
-                            if (entry == null || !stars.Add(entry.StarId)) return null;
+                            };
+                            if (!stars.Add(entry.StarId)) return null;
                             b.Gimmicks.Add(entry);
                         }
                         else if (kind == "c")
@@ -463,6 +482,7 @@ namespace SodRpg.Core.Game
                 var links = AggregateLinks(b.Links);
                 b.Links.Clear();
                 b.Links.AddRange(links);
+                ScopedBuildCodec.Apply(b);
                 b.ValidateCounts();
                 return b;
             }

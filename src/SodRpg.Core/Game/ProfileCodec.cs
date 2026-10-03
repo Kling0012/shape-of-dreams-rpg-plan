@@ -59,7 +59,8 @@ namespace SodRpg.Core.Game
                 var choices = new JsonObject();
                 foreach (var choice in h.TalentChoices) choices.Add(choice.Key, (long)choice.Value);
                 heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
-                    .Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp));
+                    .Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion));
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -270,7 +271,7 @@ namespace SodRpg.Core.Game
                     {
                         foreach (var t in tal.Properties)
                         {
-                            if (Content.TryGetTalent(t.Key, out var def) && !def.IsKeystone && t.Value is long rank && rank > 0)
+                            if (Content.TryGetTalent(kv.Key, t.Key, out var def) && !def.IsKeystone && t.Value is long rank && rank > 0)
                             {
                                 if (Rules.BelongsTo(def, kv.Key)) h.Talents[t.Key] = (int)Math.Min(def.MaxRank, rank);
                                 else notes.Add($"{kv.Key}: 旅人の刻印へ移行したため汎用ノードのポイントを戻しました: {t.Key}");
@@ -281,25 +282,39 @@ namespace SodRpg.Core.Game
                     }
                     if (hj.TryGet("talentChoices", out object choicesObj) && choicesObj is JsonObject choices)
                         foreach (var choice in choices.Properties)
-                            if (h.Talents.ContainsKey(choice.Key) && Content.TryGetTalent(choice.Key, out var def)
+                            if (h.Talents.ContainsKey(choice.Key) && Content.TryGetTalent(kv.Key, choice.Key, out var def)
                                 && def.IsChoice && choice.Value is long option && option >= 0 && option < def.Choices.Count)
                                 h.TalentChoices[choice.Key] = (int)option;
-                    // A corrupt/new choice allocation must never silently select an effect.
-                    var invalidChoices = new List<string>();
-                    foreach (var allocation in h.Talents)
-                        if (Content.TryGetTalent(allocation.Key, out var def) && def.IsChoice
-                            && !h.TalentChoices.ContainsKey(allocation.Key)) invalidChoices.Add(allocation.Key);
-                    foreach (string id in invalidChoices)
+                    if (!HeroSigils.HasTree(kv.Key))
                     {
-                        h.Talents.Remove(id);
-                        notes.Add(Loc.T("選択のない星を払い戻しました: ", "Refunded a star without a valid choice: ") + id);
+                        var invalidChoices = new List<string>();
+                        foreach (var allocation in h.Talents)
+                            if (Content.TryGetTalent(kv.Key, allocation.Key, out var def) && def.IsChoice
+                                && !h.TalentChoices.ContainsKey(allocation.Key)) invalidChoices.Add(allocation.Key);
+                        foreach (string id in invalidChoices)
+                        {
+                            Content.TryGetTalent(kv.Key, id, out var def);
+                            int refund = checked(h.Talents[id] * def.RankCost);
+                            h.Talents.Remove(id);
+                            notes.Add(Loc.T($"選択のない星を払い戻しました（{refund}ポイント）: ",
+                                $"Refunded a star without a valid choice ({refund} points): ") + id);
+                        }
                     }
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     h.StarXp = hj.TryGet("starXp", out object sx)
                         ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)
                         : StarProgression.LegacyXp(h.Kills);
+                    h.AuthoredMigrationVersion = Clamp(Long(hj, "authoredMigrationVersion"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
-                    if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (HeroSigils.HasTree(kv.Key))
+                    {
+                        var refund = AuthoredStarMigration.Apply(h, HeroSigils.TreeFor(kv.Key), Array.Empty<LegacyStarMigration>());
+                        if (refund.RefundCost > 0)
+                            notes.Add(Loc.T($"選択または前提が無効な星を払い戻しました（{refund.RefundCost}ポイント）: ",
+                                $"Refunded stars with invalid choices or prerequisites ({refund.RefundCost} points): ")
+                                + string.Join(", ", refund.StarIds));
+                    }
                 }
             }
             if (b.TryGet("codex", out object co) && co is List<object> codex)

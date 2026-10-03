@@ -102,18 +102,18 @@ namespace SodRpg.Core.Tests
             var p = Funded();
             string id = MemoryCluster + ".5";
             TreeTestPaths.Connect(p, Hero, id);
-            int spent = Rules.SpentPoints(p.Hero(Hero));
+            int spent = Rules.SpentPoints(p.Hero(Hero), Hero);
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, id));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, id, 2));
             Assert.Throws<InvalidOperationException>(() => Rules.SetTalentChoice(p, Hero, id, 0));
-            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero)));
+            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero), Hero));
             Rules.AddTalentRank(p, Hero, id, 0);
             Assert.Equal(GimmickEffect.Shield, Entry(Build.Compute(p, Hero, 0), id).Def.Effect);
             Assert.Equal(1.1m, Entry(Build.Compute(p, Hero, 0), id).Def.Value);
-            spent = Rules.SpentPoints(p.Hero(Hero));
+            spent = Rules.SpentPoints(p.Hero(Hero), Hero);
             int barrier = Build.Compute(p, Hero, 0).Get(Power.Barrier);
             Rules.SetTalentChoice(p, Hero, id, 1);
-            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero)));
+            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero), Hero));
             Assert.Equal(barrier + 2, Build.Compute(p, Hero, 0).Get(Power.Barrier));
             var notes = new List<string>();
             var loaded = ProfileCodec.Read(ProfileCodec.Write(p), notes);
@@ -134,7 +134,7 @@ namespace SodRpg.Core.Tests
             Assert.Empty(loaded.Hero(Hero).Talents);
             Assert.Empty(loaded.Hero(Hero).TalentChoices);
             Assert.Empty(Build.Compute(loaded, Hero, 0).Gimmicks);
-            Assert.Equal(0, Rules.SpentPoints(loaded.Hero(Hero)));
+            Assert.Equal(0, Rules.SpentPoints(loaded.Hero(Hero), Hero));
         }
 
         [Fact]
@@ -142,14 +142,21 @@ namespace SodRpg.Core.Tests
         {
             var p = Funded();
             Allocate(p, BridgeCluster + ".3");
-            int spent = Rules.SpentPoints(p.Hero(Hero));
-            Assert.Throws<InvalidOperationException>(() => Rules.RemoveTalentRank(p, Hero, BridgeCluster + ".1"));
-            Assert.Throws<InvalidOperationException>(() => Rules.RemoveTalentRank(p, Hero, "h.cetus.ring.force"));
-            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero)));
+            int spent = Rules.SpentPoints(p.Hero(Hero), Hero);
+            string beforeRefund = ProfileCodec.Write(p);
+            foreach (string id in new[] { BridgeCluster + ".1", "h.cetus.ring.force" })
+            {
+                var refund = Rules.PreviewAllocationChange(p, Hero,
+                    new AllocationChange { Kind = AllocationChangeKind.Refund, CandidateStarId = id });
+                Assert.Contains(BridgeCluster + ".3", refund.AffectedRefundIds);
+                Assert.NotNull(Record.Exception(() => Rules.RemoveTalentRank(p, Hero, id)));
+                Assert.Equal(beforeRefund, ProfileCodec.Write(p));
+            }
+            Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero), Hero));
             Rules.RemoveTalentRank(p, Hero, BridgeCluster + ".3");
             Rules.RemoveTalentRank(p, Hero, BridgeCluster + ".2");
             Rules.RemoveTalentRank(p, Hero, BridgeCluster + ".1");
-            Assert.Equal(spent - 3, Rules.SpentPoints(p.Hero(Hero)));
+            Assert.Equal(spent - 3, Rules.SpentPoints(p.Hero(Hero), Hero));
             Assert.True(Rules.TalentsConnected(p.Hero(Hero), Hero));
         }
 

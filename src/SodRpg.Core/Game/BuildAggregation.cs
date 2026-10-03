@@ -51,9 +51,9 @@ namespace SodRpg.Core.Game
             var d = entry.Def;
             return string.Join(":", entry.Memory, ((int)d.Trigger).ToString(CultureInfo.InvariantCulture),
                 ((int)d.Effect).ToString(CultureInfo.InvariantCulture), d.Arg.ToString(CultureInfo.InvariantCulture),
-                d.Cooldown.ToString("R", CultureInfo.InvariantCulture), d.DurationPercent.ToString(CultureInfo.InvariantCulture),
-                d.RadiusPercent.ToString(CultureInfo.InvariantCulture), d.ExtraTargets.ToString(CultureInfo.InvariantCulture),
-                d.ChancePercent.ToString(CultureInfo.InvariantCulture));
+                d.Cooldown.ToString("R", CultureInfo.InvariantCulture), d.DurationUnits.ToString(CultureInfo.InvariantCulture),
+                d.RadiusUnits.ToString(CultureInfo.InvariantCulture), d.ExtraTargets.ToString(CultureInfo.InvariantCulture),
+                d.ChanceUnits.ToString(CultureInfo.InvariantCulture), entry.Channel == null ? "" : FractionalScopedModifiers.ChannelKey(entry));
         }
 
         public static string GimmickStateKey(GimmickEntry entry) => entry.StarId + ":" + GimmickKey(entry);

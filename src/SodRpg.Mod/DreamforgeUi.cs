@@ -1863,7 +1863,7 @@ namespace SodRpg.Mod
         {
             if (_starHero != hero || _starJapanese != Loc.Japanese) RebuildStarTree(hero);
             if (!_starDirty && Event.current.type != EventType.Layout) return;
-            int spent = Rules.SpentPoints(hs);
+            int spent = Rules.SpentPoints(hs, hero);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
                 || _starKeystone != hs.Keystone || _starSpent != spent;
@@ -2017,7 +2017,7 @@ namespace SodRpg.Mod
         private void DrawStarChoicePicker(Profile p, string hero)
         {
             if (_starChoiceId == null) return;
-            if (!Content.TryGetTalent(_starChoiceId, out var t) || t.HeroKey != hero || !t.IsChoice)
+            if (!Content.TryGetTalent(hero, _starChoiceId, out var t) || t.HeroKey != hero || !t.IsChoice)
             {
                 _starChoiceId = null;
                 return;

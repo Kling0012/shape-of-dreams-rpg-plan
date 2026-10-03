@@ -52,6 +52,7 @@ namespace SodRpg.Core.Game
             }
             void Join(int a, int b)
             {
+                if (neighbors[a].Contains(b)) return;
                 neighbors[a].Add(b);
                 neighbors[b].Add(a);
                 edges.Add(new HeroTreeEdge(a, b));
@@ -97,11 +98,12 @@ namespace SodRpg.Core.Game
                     byCluster.Add(talent.Cluster.Id, group);
                     clusters.Add(new List<TalentDef>());
                 }
-                clusters[group].Add(talent);
+                if (!indices.ContainsKey(talent.Id)) clusters[group].Add(talent);
             }
             foreach (var group in clusters)
             {
                 group.Sort((a, b) => a.ClusterOrder.CompareTo(b.ClusterOrder));
+                if (group.Count == 0) continue;
                 var cluster = group[0].Cluster;
                 if (!indices.TryGetValue(cluster.Anchor, out int anchor))
                     throw new InvalidOperationException("Cluster anchor missing from layout: " + cluster.Id);
@@ -134,6 +136,7 @@ namespace SodRpg.Core.Game
                 }
                 var added = new int[group.Count];
                 for (int i = 0; i < group.Count; i++) added[i] = Add(group[i], positions[i].X, positions[i].Y);
+                if (cluster.AuthoredEdges != null) continue;
                 Join(anchor, added[0]);
                 if (cluster.Shape == ClusterShape.Fan)
                 {
@@ -162,6 +165,17 @@ namespace SodRpg.Core.Game
                 {
                     for (int i = 1; i < added.Length; i++) Join(added[i - 1], added[i]);
                     if (cluster.Shape == ClusterShape.Ring && added.Length > 2) Join(added[added.Length - 1], added[0]);
+                }
+            }
+            // Explicit topology replaces inferred shape edges; cross-cluster endpoints resolve after placement.
+            foreach (var talent in talents)
+            {
+                if (talent.AuthoredStar == null) continue;
+                foreach (var edge in talent.AuthoredStar.Edges)
+                {
+                    if (!indices.TryGetValue(edge.From, out int from) || !indices.TryGetValue(edge.To, out int to))
+                        throw new InvalidOperationException("Authored edge endpoint missing: " + talent.Id);
+                    Join(from, to);
                 }
             }
         }

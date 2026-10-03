@@ -52,6 +52,17 @@ namespace SodRpg.Core.Game
 
         private static readonly Dictionary<string, Txt> MemoryNames = new Dictionary<string, Txt>(StringComparer.Ordinal)
         {
+            // Verified common memories used by the shared Outer authoring contract.
+            ["St_C_GlacialStomp"] = new Txt("氷河ストンプ", "Glacial Stomp"),
+            ["St_C_FlashFreeze"] = new Txt("急速凍結", "Flash Freeze"),
+            ["St_C_BeamOfLight"] = new Txt("光線", "Beam of Light"),
+            ["St_C_Purgatory"] = new Txt("煉獄", "Purgatory"),
+            ["St_C_SparklingWaterGun"] = new Txt("ピリッとする水鉄砲", "Sparkling Water Gun"),
+            ["St_C_Pew"] = new Txt("発砲", "Pew"),
+            ["St_C_Starfall"] = new Txt("流星", "Starfall"),
+            ["St_C_DarkBolt"] = new Txt("闇の矢", "Dark Bolt"),
+            ["St_C_MassProtection"] = new Txt("範囲シールド", "Mass Protection"),
+            ["St_E_MassCleanse"] = new Txt("大規模浄化", "Mass Cleanse"),
             // レジェンダリー・ユニークの記憶
             ["St_L_Blizzard"] = new Txt("吹雪", "Blizzard"),
             ["St_L_ButchersStrike"] = new Txt("屠殺者の一撃", "Butcher's Strike"),

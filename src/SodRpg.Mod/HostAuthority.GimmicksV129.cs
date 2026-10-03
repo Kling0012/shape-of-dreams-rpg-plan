@@ -214,7 +214,7 @@ namespace SodRpg.Mod
                         {
                             state.Victims[target.GetInstanceID()] = target;
                             state.Wounds.Apply(target.GetInstanceID(), Time.time, high * def.ValuePercent / 100f,
-                                hero.Status.abilityPower > hero.Status.attackDamage, Gimmicks.Duration(def, 3f));
+                                hero.Status.abilityPower > hero.Status.attackDamage, Gimmicks.Duration(def, 3f), high * 1.2f);
                         }
                         break;
                     case GimmickEffect.Daze:

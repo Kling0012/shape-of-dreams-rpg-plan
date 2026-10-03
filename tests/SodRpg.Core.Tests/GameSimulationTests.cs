@@ -36,7 +36,7 @@ namespace SodRpg.Core.Tests
             foreach (var entry in p.Heroes)
             {
                 var h = entry.Value;
-                Assert.True(Rules.SpentPoints(h) <= p.TalentPoints(entry.Key));
+                Assert.True(Rules.SpentPoints(h, entry.Key) <= p.TalentPoints(entry.Key));
                 for (int i = 0; i < Content.SlotCount; i++)
                 {
                     if (h.Equipped[i] == null) continue;

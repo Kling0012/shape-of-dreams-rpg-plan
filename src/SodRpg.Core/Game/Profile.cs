@@ -16,6 +16,8 @@ namespace SodRpg.Core.Game
         public Dictionary<string, int> TalentChoices { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
         public string Keystone { get; set; }
+        /// <summary>Last explicit authored-effect migration applied to this hero's saved local IDs.</summary>
+        public int AuthoredMigrationVersion { get; set; }
 
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
         public int Kills { get; set; }
@@ -26,7 +28,7 @@ namespace SodRpg.Core.Game
 
         public HeroState Clone()
         {
-            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp };
+            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp, AuthoredMigrationVersion = AuthoredMigrationVersion };
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
             foreach (var kv in TalentChoices) c.TalentChoices[kv.Key] = kv.Value;

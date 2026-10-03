@@ -44,14 +44,14 @@ namespace SodRpg.Core.Game
 
         private static string DescribeV129(GimmickDef def, string memory, int ranks)
         {
-            decimal value = Math.Min((long)def.ValueMilli * ranks, Cap(def.Effect) * ValueScale) / (decimal)ValueScale;
+            decimal value = Math.Min(def.Value * ranks, Cap(def.Effect));
             bool ja = Loc.Japanese;
-            string n = value.ToString("0.###", CultureInfo.InvariantCulture), text;
-            string duration = Duration(def, BuffDuration).ToString("0.###", CultureInfo.InvariantCulture);
-            string woundDuration = Duration(def, 3f).ToString("0.###", CultureInfo.InvariantCulture);
-            string primedDuration = Duration(def, 5f).ToString("0.###", CultureInfo.InvariantCulture);
-            string ricochetRadius = Radius(def, 8f).ToString("0.###", CultureInfo.InvariantCulture);
-            string allyRadius = Radius(def, 10f).ToString("0.###", CultureInfo.InvariantCulture);
+            string n = value.ToString("0.#######", CultureInfo.InvariantCulture), text;
+            string duration = Duration(def, BuffDuration).ToString("0.#######", CultureInfo.InvariantCulture);
+            string woundDuration = Duration(def, 3f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string primedDuration = Duration(def, 5f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string ricochetRadius = Radius(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
+            string allyRadius = Radius(def, 10f).ToString("0.#######", CultureInfo.InvariantCulture);
             int targets = TargetLimit(def);
             switch (def.Effect)
             {
@@ -59,7 +59,7 @@ namespace SodRpg.Core.Game
                     text = ja ? "当てた敵に3秒あたり攻撃力か魔力の高い方の" + n + "%の継続ダメージを" + woundDuration + "秒間与える（重ならず、大きい方で時間を延長）"
                         : "deal " + n + "% of the higher of attack damage or ability power per 3 seconds to the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
                 case GimmickEffect.Daze:
-                    string seconds = Duration(def, (float)value / 10f).ToString("0.###", CultureInfo.InvariantCulture);
+                    string seconds = Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
                     text = ja ? "当てた敵を" + seconds + "秒スタンさせる（ミニボス・ボスには無効。同じ敵に5秒に1回）"
                         : "stun the hit enemy for " + seconds + " seconds (ineffective against minibosses and bosses; once per enemy every 5 seconds)"; break;
                 case GimmickEffect.Ricochet:
@@ -77,8 +77,8 @@ namespace SodRpg.Core.Game
                     text = ja ? "次の通常攻撃に攻撃力か魔力の高い方の" + n + "%の追加ダメージ（重ならず" + primedDuration + "秒で消える。ほかの次の通常攻撃への上乗せとは最大の1つだけを使い、残りは消費しない）"
                         : "prime the next basic attack for " + n + "% of the higher of attack damage or ability power as extra damage (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
                 case GimmickEffect.Crescendo:
-                    string minimum = Duration(def, 8f).ToString("0.###", CultureInfo.InvariantCulture);
-                    string factor = Duration(def, 1.5f).ToString("0.###", CultureInfo.InvariantCulture);
+                    string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string factor = Duration(def, 1.5f).ToString("0.#######", CultureInfo.InvariantCulture);
                     text = ja ? "その記憶のダメージ+" + n + "%（同じ発動では1回、5回まで、最大40%。" + minimum + "秒かその記憶のクールダウンの" + factor + "倍の長い方だけ続く。ほかの記憶を使っても保持。記憶の冴えとの合計は最大120%）"
                         : "gain +" + n + "% damage for that memory (once per cast, up to 5 stacks and 40%; lasts the longer of " + minimum + " seconds or " + factor + " times that memory's cooldown; retained when using other memories; combined memory damage bonuses are capped at 120%)"; break;
                 case GimmickEffect.ElementEdge:
@@ -100,9 +100,9 @@ namespace SodRpg.Core.Game
                 : def.Trigger == GimmickTrigger.OnCrit ? (ja ? "が会心すると、" : " critically hits: ")
                 : (ja ? "が当たると、" : " hits: ");
             float cd = Math.Max(MinimumCooldown(def.Effect), Math.Min(def.Cooldown, MaxCooldown));
-            string interval = cd > 0 ? (ja ? "。この星全体で" + cd.ToString("0.###", CultureInfo.InvariantCulture) + "秒に1回"
-                : "; once every " + cd.ToString("0.###", CultureInfo.InvariantCulture) + " seconds per star") : "";
-            string maximumStun = Duration(def, 0.8f).ToString("0.###", CultureInfo.InvariantCulture);
+            string interval = cd > 0 ? (ja ? "。この星全体で" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒に1回"
+                : "; once every " + cd.ToString("0.#######", CultureInfo.InvariantCulture) + " seconds per star") : "";
+            string maximumStun = Duration(def, 0.8f).ToString("0.#######", CultureInfo.InvariantCulture);
             string cap = def.Effect == GimmickEffect.Daze ? (ja ? "。スタンは最大" + maximumStun + "秒" : "; stun capped at " + maximumStun + " seconds")
                 : (ja ? "。効果量上限" + Cap(def.Effect) + "%" : "; effect value capped at " + Cap(def.Effect) + "%");
             return name + trigger + text + interval + cap + (ja ? "。仕掛けのダメージからは発動しない" : "; cannot trigger from gimmick damage.");
@@ -172,11 +172,11 @@ namespace SodRpg.Core.Game
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            int result = 0;
+            long result = 0;
             foreach (var state in _entries)
                 if (state.Entry.Memory == memory && state.Entry.Def.Effect == GimmickEffect.Crescendo && state.BuffActive)
-                    result = Math.Max(result, Math.Min(40 * Gimmicks.ValueScale, state.Stacks * state.Entry.Def.ValueMilli));
-            return result / (float)Gimmicks.ValueScale;
+                    result = Math.Max(result, Math.Min(40 * Gimmicks.PreciseValueScale, state.Stacks * state.Entry.Def.ValuePrecise));
+            return result / (float)Gimmicks.PreciseValueScale;
         }
 
         public float CombinedMemoryDamagePercent(string memory, float now, float otherPercent)
@@ -194,12 +194,12 @@ namespace SodRpg.Core.Game
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            int strongest = 0;
+            long strongest = 0;
             foreach (var state in _entries)
                 if (state.Entry.Def.Effect == effect && state.Victims != null)
                     foreach (var victim in state.Victims)
-                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValueMilli);
-            return strongest / (float)Gimmicks.ValueScale;
+                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);
+            return strongest / (float)Gimmicks.PreciseValueScale;
         }
 
         public void ForgetActivation(long activationId)
@@ -236,7 +236,7 @@ namespace SodRpg.Core.Game
     /// <summary>One non-stacking wound per victim. Refreshing preserves its tick phase and the greater damage rate.</summary>
     public sealed class GimmickWoundRuntime
     {
-        private sealed class Wound { public float Amount, Until, NextTick; public bool Magic; }
+        private sealed class Wound { public float Amount, Until, NextTick, Remaining; public bool Magic; }
         private readonly Dictionary<int, Wound> _wounds = new Dictionary<int, Wound>();
         public readonly struct Tick
         {
@@ -245,13 +245,15 @@ namespace SodRpg.Core.Game
             public float Damage { get; }
             public bool Magic { get; }
         }
-        public void Apply(int victimId, float now, float totalDamage, bool magic, float duration = 3f)
+        public void Apply(int victimId, float now, float totalDamage, bool magic, float duration = 3f, float maximumTotalDamage = float.MaxValue)
         {
             if (victimId == 0 || !Gimmicks.Finite(now) || !Gimmicks.Finite(totalDamage) || totalDamage <= 0
                 || !Gimmicks.Finite(duration) || duration <= 0 || duration > 12f) return;
-            if (!_wounds.TryGetValue(victimId, out var wound) || now > wound.Until)
+            if (!Gimmicks.Finite(maximumTotalDamage) || maximumTotalDamage <= 0) return;
+            if (!_wounds.TryGetValue(victimId, out var wound) || now >= wound.Until)
                 _wounds[victimId] = wound = new Wound { NextTick = now + 0.5f };
             if (totalDamage >= wound.Amount) { wound.Amount = totalDamage; wound.Magic = magic; }
+            wound.Remaining = Math.Min(maximumTotalDamage, wound.Amount * duration / 3f);
             wound.Until = now + duration;
         }
         public void Update(float now, List<Tick> ticks)
@@ -263,10 +265,17 @@ namespace SodRpg.Core.Game
                 var wound = pair.Value;
                 while (wound.NextTick <= now && wound.NextTick <= wound.Until)
                 {
-                    ticks.Add(new Tick(pair.Key, wound.Amount / 6f, wound.Magic));
+                    float damage = Math.Min(wound.Amount / 6f, wound.Remaining);
+                    if (damage > 0) ticks.Add(new Tick(pair.Key, damage, wound.Magic));
+                    wound.Remaining = Math.Max(0, wound.Remaining - damage);
                     wound.NextTick += 0.5f;
                 }
-                if (now >= wound.Until) remove.Add(pair.Key);
+                if (now >= wound.Until)
+                {
+                    // Settle the final fractional interval without resetting the half-second tick phase.
+                    if (wound.Remaining > 0) ticks.Add(new Tick(pair.Key, wound.Remaining, wound.Magic));
+                    remove.Add(pair.Key);
+                }
             }
             foreach (int id in remove) _wounds.Remove(id);
         }
