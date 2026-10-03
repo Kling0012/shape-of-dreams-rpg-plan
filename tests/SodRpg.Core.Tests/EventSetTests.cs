@@ -145,13 +145,13 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Every_set_has_three_pieces_one_per_slot()
+        public void Every_set_has_six_pieces_one_per_slot()
         {
             foreach (var set in Content.Sets)
             {
                 var pieces = Content.Uniques.Where(u => u.SetId == set.Id).ToList();
-                Assert.Equal(3, pieces.Count);
-                Assert.Equal(3, pieces.Select(u => Content.GetBase(u.BaseId).Slot).Distinct().Count());
+                Assert.Equal(6, pieces.Count);
+                Assert.Equal(6, pieces.Select(u => Content.GetBase(u.BaseId).Slot).Distinct().Count());
                 Assert.NotEmpty(set.TwoPiece);
                 Assert.NotEmpty(set.ThreePiece);
                 Assert.False(string.IsNullOrWhiteSpace(set.Describe()));

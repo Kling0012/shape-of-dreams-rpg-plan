@@ -11,8 +11,8 @@ namespace SodRpg.Core.Tests
     public class SixPieceSetsCollection { }
 
     /// <summary>
-    /// v1.31：6つ装着の効果（エンジン）。48組のデータが入る前なので、set.gale に合成の4・6部位目を
-    /// 一時的に足して検証する（静的な Content を書き換えるため、他のテストと並列に動かさない）。
+    /// v1.31：6つ装着の効果（エンジン）。実データの set.gale（6部位）の SixPiece を
+    /// 既知の値に一時的に差し替えて検証する（静的な Content を書き換えるため、他のテストと並列に動かさない）。
     /// </summary>
     [Collection("SixPieceSets")]
     public class SixPieceSetTests
@@ -25,32 +25,22 @@ namespace SodRpg.Core.Tests
         {
             private readonly SetDef _set = Content.GetSet(SetId);
             private readonly PowerLine[] _old;
-            private readonly List<string> _added = new List<string>();
-            private readonly Dictionary<string, UniqueDef> _index;
 
             public Patch()
             {
                 _old = _set.SixPiece;
                 _set.SixPiece = Six;
-                _index = (Dictionary<string, UniqueDef>)typeof(Content)
-                    .GetField("UniqueById", BindingFlags.NonPublic | BindingFlags.Static).GetValue(null);
-                Add(new UniqueDef("test.gale.weapon", Content.Bases.First(b => b.Slot == Slot.Weapon).Id, new Txt("試験の剣", "Test Blade"), SetId));
-                Add(new UniqueDef("test.gale.charm", Content.Bases.First(b => b.Slot == Slot.Charm).Id, new Txt("試験の護符", "Test Charm"), SetId));
-                Add(new UniqueDef("test.gale.armor", Content.Bases.First(b => b.Slot == Slot.Armor).Id, new Txt("試験の鎧", "Test Armor"), SetId));
             }
-
-            private void Add(UniqueDef u) { _index[u.Id] = u; _added.Add(u.Id); }
 
             public void Dispose()
             {
                 _set.SixPiece = _old;
-                foreach (var id in _added) _index.Remove(id);
             }
         }
 
         private static readonly string[] PieceIds =
         {
-            "set.gale.head", "set.gale.hands", "set.gale.feet", "test.gale.weapon", "test.gale.armor", "test.gale.charm",
+            "set.gale.head", "set.gale.hands", "set.gale.feet", "set.gale.weapon", "set.gale.armor", "set.gale.charm",
         };
 
         private static Relic Roll(string uniqueId, ulong seed)
@@ -161,9 +151,19 @@ namespace SodRpg.Core.Tests
                 Assert.Contains("あと1つで、3つ装着", set.Progress(2));
             }
             // 6つ装着のデータがないセットは従来どおりの文面
-            var plain = Content.GetSet(SetId);
-            Assert.DoesNotContain("6つ装着", plain.Describe());
-            Assert.Contains("3つそろっています", plain.Progress(3));
+            using (new Patch())
+            {
+                var plain = Content.GetSet(SetId);
+                plain.SixPiece = null;
+                Assert.DoesNotContain("6つ装着", plain.Describe());
+                Assert.Contains("3つそろっています", plain.Progress(3));
+            }
+            // 実データ：全セットが6つ装着を持つ
+            foreach (var real in Content.Sets)
+            {
+                Assert.Contains("6つ装着", real.Describe());
+                Assert.Contains("6つそろっています", real.Progress(6));
+            }
         }
 
         [Fact]

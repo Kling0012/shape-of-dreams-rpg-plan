@@ -8,7 +8,7 @@ namespace SodRpg.Core.Tests
     public class SetsV122Tests
     {
         [Fact]
-        public void There_are_47_sets_and_33_use_the_new_slots()
+        public void There_are_48_sets_and_all_use_the_new_slots()
         {
             Assert.Equal(48, Content.Sets.Count); // Includes all reviewed P37 content.
             int usesNew = 0;
@@ -20,7 +20,7 @@ namespace SodRpg.Core.Tests
                 Assert.InRange(set.ThreePiece.Length, 2, 3); // v1.29 のセットは3効果
                 foreach (var pw in set.ThreePiece) Assert.True(pw.Value <= Content.PowerCap(pw.Power), set.Id);
             }
-            Assert.Equal(34, usesNew);
+            Assert.Equal(48, usesNew); // 6部位化で全セットが頭・手・足を含む
         }
 
         [Fact]
