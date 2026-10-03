@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SodRpg.Core.Game
 {
@@ -10,14 +11,15 @@ namespace SodRpg.Core.Game
         {
             public PairComboEntry Entry;
             public GimmickEntry RequestEntry;
-            public GimmickEntry AlternateQ;
             public List<Mark> Marks;
             public float WindowUntil;
             public bool WindowActive;
             public bool HasFired;
             public float LastFired;
+            // Weak keys retain interleaved casts without retaining expired game activation objects.
+            public ConditionalWeakTable<object, State> FiredActivations;
         }
-        private struct Mark { public int Victim; public float Until; }
+        private struct Mark { public int Victim; public float Until; public bool Paid; }
         private List<State> _states = new List<State>();
 
         public void SetBuild(IReadOnlyList<PairComboEntry> entries)
@@ -37,7 +39,14 @@ namespace SodRpg.Core.Game
                     {
                         if (old.Entry.Def.Id != entry.Def.Id) continue;
                         if (old.Entry.Ranks == entry.Ranks) state = old;
-                        else state = Create(entry, old.HasFired, old.LastFired);
+                        else
+                        {
+                            state = Create(entry, old.HasFired, old.LastFired);
+                            state.FiredActivations = old.FiredActivations;
+                            state.Marks = old.Marks;
+                            state.WindowActive = old.WindowActive;
+                            state.WindowUntil = old.WindowUntil;
+                        }
                         break;
                     }
                     next.Add(state ?? Create(entry, false, 0));
@@ -52,6 +61,7 @@ namespace SodRpg.Core.Game
             var state = new State
             {
                 Entry = entry, HasFired = fired, LastFired = last,
+                FiredActivations = def.OncePerActivation ? new ConditionalWeakTable<object, State>() : null,
                 RequestEntry = new GimmickEntry
                 {
                     StarId = def.Id, Memory = def.RechargeMemory ?? def.PayoffMemory ?? def.TriggerMemory,
@@ -62,11 +72,6 @@ namespace SodRpg.Core.Game
                     }
                 }
             };
-            if (def.RechargeMemory == PairCombos.EquippedQ)
-            {
-                state.RequestEntry.Memory = "St_Q_EtherealInfluence";
-                state.AlternateQ = new GimmickEntry { StarId = def.Id, Memory = "St_Q_SuperNova", Def = state.RequestEntry.Def };
-            }
             return state;
         }
 
@@ -82,16 +87,26 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>Host supplies hero-attributed enemy events or null-memory global deaths; basic attack means the hero's own hit.</summary>
+        /// <summary>
+        /// Host supplies hero-attributed memory events; a null-memory death never pays a combo.
+        /// For guarded payoffs, activation must be the same reference for every hit of one cast,
+        /// swing, shot or explosion, and a new reference for the next activation. Time is not a key.
+        /// Integration point: HostAuthority.OnSkillUse(EventInfoSkillUse) / OnMemoryDamage /
+        /// QueueGimmicks must propagate that identity, including passive and summon activations.
+        /// The current host forwards only the memory name, so missing identity fails closed.
+        /// Initial/terminal explosion payoffs also require the host's explicit hit kind;
+        /// memory attribution alone cannot distinguish initial damage from periodic damage.
+        /// </summary>
         public void Fire(PairComboTrigger trigger, string memory, float now, int victimId, float damage, bool generated,
-            ICollection<string> equipped, bool hasSummons, List<GimmickRequest> results)
+            ICollection<string> equipped, bool hasSummons, List<GimmickRequest> results,
+            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any)
         {
             // Chain rejection precedes all mutations, including refresh and expiry cleanup.
             if (generated || results == null || !Gimmicks.Finite(now)
                 || trigger < PairComboTrigger.OnUse || trigger > PairComboTrigger.OnBasicAttack) return;
             if (trigger == PairComboTrigger.OnBasicAttack && memory == null) memory = "St_D_CircleOfLife";
             if (memory == null ? trigger != PairComboTrigger.OnKill : !Links.IsMemory(memory)) return;
-            if (trigger != PairComboTrigger.OnUse && victimId == 0) return;
+            if (trigger != PairComboTrigger.OnUse && trigger != PairComboTrigger.OnBasicAttack && victimId == 0) return;
             PruneExpired(now);
             foreach (var state in _states)
             {
@@ -116,42 +131,49 @@ namespace SodRpg.Core.Game
                     if (def.Step == PairComboStep.Window)
                     {
                         state.WindowActive = true;
-                        state.WindowUntil = now + PairCombos.Duration;
+                        state.WindowUntil = now + def.WindowDuration;
                     }
                     else
                     {
                         if (state.Marks == null) state.Marks = new List<Mark>();
                         int found = -1;
                         for (int i = 0; i < state.Marks.Count; i++) if (state.Marks[i].Victim == victimId) { found = i; break; }
-                        var mark = new Mark { Victim = victimId, Until = now + PairCombos.Duration };
+                        var mark = new Mark
+                        {
+                            Victim = victimId, Until = now + PairCombos.Duration,
+                            Paid = found >= 0 && state.Marks[found].Paid
+                        };
                         if (found < 0) state.Marks.Add(mark); else state.Marks[found] = mark;
                     }
                     continue;
                 }
                 bool payoff = def.Step == PairComboStep.None ? origin
-                    : def.PayoffTrigger == trigger && (def.PayoffMemory == null ? trigger == PairComboTrigger.OnKill && memory == null : def.PayoffMemory == memory);
+                    : def.PayoffTrigger == trigger && def.PayoffMemory == memory && memory != null;
                 if (!payoff) continue;
+                if (def.PayoffHitKind != PairComboHitKind.Any && hitKind != def.PayoffHitKind) continue;
                 if (def.Step == PairComboStep.Window && !state.WindowActive) continue;
+                int markedIndex = -1;
                 if (def.Step == PairComboStep.Mark)
                 {
                     if (state.Marks == null) continue;
-                    bool marked = false;
-                    foreach (var mark in state.Marks) if (mark.Victim == victimId) { marked = true; break; }
-                    if (!marked) continue;
+                    for (int i = 0; i < state.Marks.Count; i++)
+                        if (state.Marks[i].Victim == victimId) { markedIndex = i; break; }
+                    if (markedIndex < 0 || def.OncePerVictim && state.Marks[markedIndex].Paid) continue;
                 }
                 if (state.HasFired && def.Cooldown > 0 && now < state.LastFired + def.Cooldown) continue;
                 if (def.Effect == GimmickEffect.Echo && (!Gimmicks.Finite(damage) || damage <= 0)) continue;
+                if (def.OncePerActivation
+                    && (activation == null || state.FiredActivations.TryGetValue(activation, out _))) continue;
                 GimmickEntry requestEntry = state.RequestEntry;
-                if (def.RechargeMemory == PairCombos.EquippedQ)
-                {
-                    string target = equipped.Contains("St_Q_EtherealInfluence") ? "St_Q_EtherealInfluence"
-                        : equipped.Contains("St_Q_SuperNova") ? "St_Q_SuperNova" : null;
-                    if (target == null) continue;
-                    // Cached immutable targets keep pending requests stable across loadout changes.
-                    requestEntry = target == "St_Q_SuperNova" ? state.AlternateQ : state.RequestEntry;
-                }
                 state.HasFired = true;
                 state.LastFired = now;
+                if (def.OncePerActivation) state.FiredActivations.Add(activation, state);
+                if (def.OncePerVictim && markedIndex >= 0)
+                {
+                    var mark = state.Marks[markedIndex];
+                    mark.Paid = true;
+                    state.Marks[markedIndex] = mark;
+                }
                 results.Add(new GimmickRequest
                 {
                     Entry = requestEntry, VictimId = victimId,
@@ -160,10 +182,10 @@ namespace SodRpg.Core.Game
                     AreaAroundHero = trigger == PairComboTrigger.OnUse
                 });
             }
-            // Global death precedes the source's kill event: retain source-specific marks until that event.
+            // The global death event precedes the attributed kill event; only the latter consumes marks.
             if (trigger == PairComboTrigger.OnKill)
                 foreach (var state in _states)
-                    if (state.Marks != null && (memory != null || state.Entry.Def.PayoffMemory == null))
+                    if (state.Marks != null && memory != null)
                         for (int i = state.Marks.Count - 1; i >= 0; i--)
                             if (state.Marks[i].Victim == victimId) state.Marks.RemoveAt(i);
         }

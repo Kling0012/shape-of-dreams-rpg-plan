@@ -30,19 +30,22 @@ namespace SodRpg.Core.Tests
             var runtime = new PairComboRuntime(); runtime.SetBuild(entries); return runtime;
         }
         private static List<GimmickRequest> Fire(PairComboRuntime runtime, PairComboTrigger trigger, string memory,
-            float now, int victim, ICollection<string> equipped, float damage = 100, bool generated = false, bool summons = true)
+            float now, int victim, ICollection<string> equipped, float damage = 100, bool generated = false, bool summons = true,
+            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any)
         {
             var requests = new List<GimmickRequest>();
-            runtime.Fire(trigger, memory, now, victim, damage, generated, equipped, summons, requests);
+            runtime.Fire(trigger, memory, now, victim, damage, generated, equipped, summons, requests, activation, hitKind);
             return requests;
         }
         private static string[] Equipped(PairComboDef def) => new[] { def.RouteA, def.RouteB };
         private static void Start(PairComboRuntime runtime, PairComboDef def, ICollection<string> equipped, float now = 0, int victim = 10,
             bool generated = false, bool summons = true) => Fire(runtime, def.Trigger, def.TriggerMemory, now, victim, equipped, generated: generated, summons: summons);
         private static List<GimmickRequest> Pay(PairComboRuntime runtime, PairComboDef def, ICollection<string> equipped,
-            float now = 1, int victim = 10, bool generated = false, bool summons = true) =>
-            def.Step == PairComboStep.None ? Fire(runtime, def.Trigger, def.TriggerMemory, now, victim, equipped, generated: generated, summons: summons)
-                : Fire(runtime, def.PayoffTrigger, def.PayoffMemory, now, victim, equipped, generated: generated, summons: summons);
+            float now = 1, int victim = 10, bool generated = false, bool summons = true, object activation = null) =>
+            def.Step == PairComboStep.None ? Fire(runtime, def.Trigger, def.TriggerMemory, now, victim, equipped,
+                generated: generated, summons: summons, activation: activation ?? new object())
+                : Fire(runtime, def.PayoffTrigger, def.PayoffMemory, now, victim, equipped,
+                    generated: generated, summons: summons, activation: activation ?? new object(), hitKind: def.PayoffHitKind);
 
         [Theory]
         [MemberData(nameof(Heroes))]
@@ -72,22 +75,23 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Original_table_values_are_retained_but_runtime_uses_linear_ranks()
+        public void Revised_table_rank_values_and_common_rule_counts_are_exact()
         {
             Assert.Equal(62, PairCombos.All.Count);
             Assert.Equal(62, PairCombos.All.Select(d => d.Id).Distinct().Count());
-            var shield = Def("Vesper", 1);
-            Assert.Equal(new[] { 3, 5, 7 }, shield.TableRankValues);
-            Assert.Equal(new[] { 3, 6, 9 }, Enumerable.Range(1, 3).Select(r => Entry(shield, r).Value));
-            var element = Def("Cetus", 5);
+            var heal = Def("Vesper", 3);
+            Assert.Equal(new[] { 3, 5, 7 }, Enumerable.Range(1, 3).Select(r => Entry(heal, r).Value));
+            var element = Def("Vesper", 1);
             Assert.Equal(new[] { 100, 150, 200 }, element.TableRankValues);
-            Assert.Equal(300, Entry(element, 3).Value);
+            Assert.Equal(200, Entry(element, 3).Value);
             Assert.Equal(new[] { 2, 3, 5 }, Def("Nachia", 4).TableRankValues);
-            Assert.Equal(6, Entry(Def("Nachia", 4), 3).Value);
-            Assert.All(PairCombos.All, d => Assert.Equal(3, d.TableRankValues.Count));
-            // 重装タックル・フロストチャージはダメージを出すので、「当たったとき」だけは起点にしてよい（v1.30 の決定）
-            Assert.Empty(PairCombos.All.Where(d => d.MovementOrigin));
-            Assert.Equal(13, PairCombos.All.Count(d => d.Cooldown > 0));
+            Assert.Equal(5, Entry(Def("Nachia", 4), 3).Value);
+            Assert.DoesNotContain(PairCombos.All, d => d.MovementOrigin);
+            Assert.Equal(2, PairCombos.All.Count(d => d.Cooldown > 0));
+            Assert.Equal(28, PairCombos.All.Count(d => d.OncePerActivation));
+            Assert.Equal(6, PairCombos.All.Count(d => d.KillByPayoffMemory));
+            Assert.Equal(1.5f, Def("Nachia", 2).Cooldown);
+            Assert.Equal(1f, Def("Nachia", 5).Cooldown);
         }
 
         [Theory]
@@ -96,7 +100,6 @@ namespace SodRpg.Core.Tests
         {
             var def = PairCombos.Get(id);
             string[] equipped = Equipped(def);
-            if (def.RechargeMemory == PairCombos.EquippedQ) equipped = equipped.Concat(new[] { "St_Q_SuperNova" }).ToArray();
             var runtime = Runtime(Entry(def, 3));
             if (def.Step != PairComboStep.None)
             {
@@ -110,7 +113,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Entry(def, 3).Value, output.Entry.Def.Value);
             Assert.Equal(def.Effect, output.Entry.Def.Effect);
             Assert.NotEqual(GimmickEffect.Expose, output.Entry.Def.Effect);
-            string target = def.RechargeMemory == PairCombos.EquippedQ ? "St_Q_SuperNova" : def.RechargeMemory ?? def.PayoffMemory ?? def.TriggerMemory;
+            string target = def.RechargeMemory ?? def.PayoffMemory ?? def.TriggerMemory;
             Assert.Equal(target, output.Entry.Memory);
             foreach (string missing in new[] { def.RouteA, def.RouteB })
             {
@@ -213,7 +216,7 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Pay(runtime, a, equipped, victim: 11));
             Assert.Empty(Pay(runtime, b, equipped, victim: 10));
             var output = Assert.Single(Pay(runtime, a, equipped, now: 2.9f));
-            Assert.Equal(GimmickEffect.Shield, output.Entry.Def.Effect);
+            Assert.Equal(GimmickEffect.Element, output.Entry.Def.Effect);
             Assert.Equal(100f, output.Damage);
             Start(runtime, a, equipped, now: 3, victim: 10);
             Assert.Single(Pay(runtime, a, equipped, now: 6.9f));
@@ -263,7 +266,7 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Pay(runtime, window, equipped, generated: true));
             Assert.Single(Pay(runtime, window, equipped));
             Start(runtime, window, equipped, now: 3, generated: true);
-            Assert.Empty(Pay(runtime, window, equipped, now: 4)); // Generated use cannot extend the window.
+            Assert.Empty(Pay(runtime, window, equipped, now: 12)); // Generated use cannot extend the ultimate window.
         }
 
         [Fact]
@@ -275,13 +278,37 @@ namespace SodRpg.Core.Tests
             Start(runtime, global, equipped); Start(runtime, specific, equipped);
             Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, "St_Q_HandCannon", 0.1f, 10, equipped));
             Start(runtime, global, equipped); Start(runtime, specific, equipped);
-            Assert.Equal(global.Id, Assert.Single(Fire(runtime, PairComboTrigger.OnKill, null, 0.2f, 10, equipped)).Entry.StarId);
+            Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, null, 0.2f, 10, equipped));
             Assert.Equal(specific.Id, Assert.Single(Pay(runtime, specific, equipped, now: 0.3f)).Entry.StarId);
             Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, null, 0.4f, 10, equipped));
         }
 
+        [Theory]
+        [InlineData("Lacerta", 4)]
+        [InlineData("Yubar", 4)]
+        [InlineData("Husk", 4)]
+        [InlineData("Mist", 4)]
+        [InlineData("Aurena", 4)]
+        [InlineData("Bismuth", 3)]
+        public void Revised_marked_kills_require_receiver_damage(string hero, int bridge)
+        {
+            var def = Def(hero, bridge); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def));
+            Start(runtime, def, equipped);
+            Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, null, 0.1f, 10, equipped));
+            Assert.Single(Fire(runtime, PairComboTrigger.OnKill, def.TriggerMemory, 0.2f, 10, equipped));
+            Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, def.TriggerMemory, 0.3f, 10, equipped));
+            foreach (string unrelated in new[] { "St_Q_HandCannon", "St_Q_SylvanCall", "St_D_PrismaticEyes" })
+            {
+                runtime = Runtime(Entry(def));
+                Start(runtime, def, equipped);
+                Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, unrelated, 0.1f, 10, equipped));
+                Assert.Empty(Fire(runtime, PairComboTrigger.OnKill, def.TriggerMemory, 0.2f, 10, equipped));
+            }
+        }
+
         [Fact]
-        public void Both_Nachia_basic_hit_rows_require_summons_and_cannot_use_cast_or_identity_other_than_circle()
+        public void Both_Nachia_basic_attack_rows_require_summons_but_not_a_hit()
         {
             foreach (int bridge in new[] { 4, 5 })
             {
@@ -292,24 +319,23 @@ namespace SodRpg.Core.Tests
                 Assert.Empty(Fire(runtime, PairComboTrigger.OnBasicAttack, "St_D_CircleOfLife", 0.3f, 10, equipped, summons: false));
                 if (def.Step != PairComboStep.None) Start(runtime, def, equipped, now: 0.4f);
                 Assert.Equal(GimmickTrigger.OnHit, Assert.Single(Fire(runtime, PairComboTrigger.OnBasicAttack, null, 0.5f, 10, equipped)).Entry.Def.Trigger);
-                Assert.Empty(Fire(runtime, PairComboTrigger.OnBasicAttack, "St_D_CircleOfLife", 0.6f, 0, equipped));
+                Assert.Single(Fire(runtime, PairComboTrigger.OnBasicAttack, "St_D_CircleOfLife", 1.5f, 0, equipped));
             }
         }
 
         [Fact]
-        public void Recharge_names_target_the_receiver_and_selected_Q_explicitly()
+        public void Revised_recharge_targets_restore_the_other_memory()
         {
-            Assert.Equal("St_M_Charge", Def("Vesper", 4).RechargeMemory);
-            Assert.Equal("St_Q_IncendiaryRounds", Def("Lacerta", 6).RechargeMemory);
-            Assert.Equal("St_Q_Fleche", Def("Mist", 5).RechargeMemory);
-            var def = Def("Yubar", 7); var runtime = Runtime(Entry(def));
-            Start(runtime, def, Equipped(def));
-            Assert.Empty(Pay(runtime, def, Equipped(def)));
-            foreach (string q in new[] { "St_Q_EtherealInfluence", "St_Q_SuperNova" })
+            foreach (var def in new[] { Def("Vesper", 2), Def("Cetus", 1), Def("Cetus", 5),
+                Def("Yubar", 1), Def("Yubar", 5), Def("Nachia", 1), Def("Bismuth", 4) })
             {
-                runtime = Runtime(Entry(def)); var equipped = Equipped(def).Concat(new[] { q }).ToArray();
+                var runtime = Runtime(Entry(def, 3)); var equipped = Equipped(def);
                 Start(runtime, def, equipped);
-                Assert.Equal(q, Assert.Single(Pay(runtime, def, equipped)).Entry.Memory);
+                var output = Assert.Single(Pay(runtime, def, equipped));
+                Assert.Equal(GimmickEffect.Recharge, output.Entry.Def.Effect);
+                Assert.Equal(def.TriggerMemory, output.Entry.Memory);
+                Assert.NotEqual(def.PayoffMemory, output.Entry.Memory);
+                Assert.Equal(def.TableRankValues[2], output.Entry.Def.Value);
             }
         }
 
@@ -359,36 +385,119 @@ namespace SodRpg.Core.Tests
             Assert.Equal(62, Build.Decode(build.Encode()).PairCombos.Count);
         }
 
+        public static IEnumerable<object[]> GuardedDefinitions =>
+            PairCombos.All.Where(d => d.OncePerActivation).Select(d => new object[] { d.Id });
+
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Bilingual_descriptions_explain_condition_steps_scaled_payoff_and_disabled_movement_origin(bool japanese)
+        [MemberData(nameof(GuardedDefinitions))]
+        public void One_activation_pays_once_across_hits_victims_and_interleaved_activations(string id)
         {
-            bool old = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = japanese;
-                var def = Def("Vesper", 1); string text = PairCombos.Describe(def, 3);
-                Assert.Contains(japanese ? Links.Name(def.RouteA).Ja : Links.Name(def.RouteA).En, text);
-                Assert.Contains(japanese ? Links.Name(def.RouteB).Ja : Links.Name(def.RouteB).En, text);
-                Assert.Contains("9%", text); Assert.DoesNotContain("St_", text);
-                Assert.Contains(japanese ? "ダメージは増えない" : "no damage increase", text);
-                Assert.Contains(japanese ? "連鎖なし" : "cannot chain", text);
-                Assert.Contains(japanese ? "4秒" : "4 seconds", text);
-                Assert.Contains(japanese ? "1段以上" : "at least one rank", text);
-                text = PairCombos.Describe(Def("Nachia", 5));
-                Assert.Contains(japanese ? "召喚獣" : "summons", text);
-                Assert.Contains(japanese ? "基本攻撃命中" : "basic-attack hits", text);
-                Assert.Contains(japanese ? "ペア全体" : "per pair", text);
-                Assert.Contains(japanese ? "能力値は上がらない" : "no stat increase", text);
-                text = PairCombos.Describe(Def("Mist", 5), 2);
-                Assert.Contains(japanese ? Links.Name("St_Q_Fleche").Ja : Links.Name("St_Q_Fleche").En, text);
-                Assert.Contains("20%", text);
-                Assert.Contains(japanese ? "味方の撃破" : "ally's kill", PairCombos.Describe(Def("Lacerta", 4)));
-                foreach (var unsupported in PairCombos.All.Where(d => d.MovementOrigin))
-                    Assert.Contains(japanese ? "発動しない" : "Inactive", PairCombos.Describe(unsupported));
-            }
-            finally { Loc.Japanese = old; }
+            var def = PairCombos.Get(id); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def)); var first = new object(); var second = new object();
+            Start(runtime, def, equipped, victim: 10);
+            Start(runtime, def, equipped, victim: 11);
+            Start(runtime, def, equipped, victim: 12);
+            Assert.Single(Pay(runtime, def, equipped, now: 0.1f, victim: 10, activation: first));
+            Assert.Empty(Pay(runtime, def, equipped, now: 0.2f, victim: 11, activation: first));
+            Assert.Single(Pay(runtime, def, equipped, now: 0.2f, victim: 12, activation: second));
+            Start(runtime, def, equipped, now: 2, victim: 13);
+            runtime.SetBuild(new[] { Entry(def, 3) });
+            Assert.Empty(Pay(runtime, def, equipped, now: 2.1f, victim: 13, activation: first));
+            Start(runtime, def, equipped, now: 2.1f, victim: 14);
+            Assert.Single(Pay(runtime, def, equipped, now: 2.1f, victim: 14, activation: new object()));
         }
+
+        [Theory]
+        [MemberData(nameof(GuardedDefinitions))]
+        public void Guard_requires_activation_identity_and_generated_hits_do_not_consume_it(string id)
+        {
+            var def = PairCombos.Get(id); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def)); var activation = new object();
+            Start(runtime, def, equipped);
+            Assert.Empty(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.1f, 10, equipped,
+                hitKind: def.PayoffHitKind));
+            Start(runtime, def, equipped, now: 0.1f, victim: 11);
+            Assert.Empty(Pay(runtime, def, equipped, now: 0.2f, victim: 11, generated: true, activation: activation));
+            Assert.Single(Pay(runtime, def, equipped, now: 0.2f, victim: 11, activation: activation));
+        }
+
+        [Theory]
+        [InlineData("Vesper", 6, PairComboHitKind.InitialExplosion)]
+        [InlineData("Vesper", 7, PairComboHitKind.InitialExplosion)]
+        [InlineData("Cetus", 2, PairComboHitKind.TerminalExplosion)]
+        public void Explosion_payoffs_reject_periodic_damage_and_wrong_explosion_phase(
+            string hero, int bridge, PairComboHitKind phase)
+        {
+            var def = Def(hero, bridge); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def)); var activation = new object();
+            Start(runtime, def, equipped);
+            Assert.Empty(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.1f, 10, equipped, activation: activation));
+            var wrong = phase == PairComboHitKind.InitialExplosion
+                ? PairComboHitKind.TerminalExplosion : PairComboHitKind.InitialExplosion;
+            Assert.Empty(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.2f, 10, equipped,
+                activation: activation, hitKind: wrong));
+            Assert.Single(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.2f, 10, equipped,
+                activation: activation, hitKind: phase));
+            Assert.Empty(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.3f, 10, equipped,
+                activation: activation, hitKind: phase));
+        }
+
+        [Theory]
+        [InlineData("Yubar", 2)]
+        [InlineData("Nachia", 6)]
+        public void Ultimate_windows_last_twelve_seconds_and_refresh_without_stat_requests(string hero, int bridge)
+        {
+            var def = Def(hero, bridge); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def));
+            Assert.Empty(Fire(runtime, def.Trigger, def.TriggerMemory, 0, 0, equipped));
+            Assert.Single(Pay(runtime, def, equipped, now: 11.99f));
+            Assert.Empty(Pay(runtime, def, equipped, now: 12));
+            Start(runtime, def, equipped, now: 12);
+            Assert.Single(Pay(runtime, def, equipped, now: 23.99f));
+            Assert.Empty(Pay(runtime, def, equipped, now: 24));
+        }
+
+        [Fact]
+        public void En_garde_heals_once_per_marked_enemy_without_resetting_on_mark_refresh()
+        {
+            var def = Def("Mist", 1); var equipped = Equipped(def);
+            var runtime = Runtime(Entry(def));
+            Start(runtime, def, equipped);
+            Assert.Single(Pay(runtime, def, equipped, now: 0.1f));
+            Assert.Empty(Pay(runtime, def, equipped, now: 0.2f));
+            Start(runtime, def, equipped, now: 1);
+            runtime.SetBuild(new[] { Entry(def, 3) });
+            Assert.Empty(Pay(runtime, def, equipped, now: 1.1f));
+            Start(runtime, def, equipped, now: 1.2f, victim: 11);
+            Assert.Single(Pay(runtime, def, equipped, now: 1.3f, victim: 11));
+            Start(runtime, def, equipped, now: 5);
+            Assert.Single(Pay(runtime, def, equipped, now: 5.1f));
+        }
+
+        [Theory]
+        [InlineData("Vesper", 1, "燃え移る会心", "Kindling Crit", GimmickEffect.Element)]
+        [InlineData("Vesper", 2, "陽光の継ぎ足し", "Sunlight Carry-Over", GimmickEffect.Recharge)]
+        [InlineData("Cetus", 1, "凍土の呼び戻し", "Frozen Ground Recall", GimmickEffect.Recharge)]
+        [InlineData("Cetus", 5, "氷塊に呼ぶ雷", "Thunder Called to Ice", GimmickEffect.Recharge)]
+        [InlineData("Yubar", 1, "物質の呼び水", "Matter's Lure", GimmickEffect.Recharge)]
+        [InlineData("Yubar", 5, "星の目印の再装填", "Marked-Star Reload", GimmickEffect.Recharge)]
+        [InlineData("Yubar", 6, "凪の光", "Calm Light", GimmickEffect.Element)]
+        [InlineData("Yubar", 7, "静かな爆ぜ", "Quiet Blast", GimmickEffect.Burst)]
+        [InlineData("Mist", 2, "覚醒の光突き", "Awakened Light Thrust", GimmickEffect.Element)]
+        [InlineData("Mist", 5, "追い立ての突き", "Driving Thrust", GimmickEffect.Burst)]
+        [InlineData("Mist", 7, "返しの構え", "Riposte Stance", GimmickEffect.Recharge)]
+        [InlineData("Nachia", 1, "群れの呼び声", "Pack's Call", GimmickEffect.Recharge)]
+        [InlineData("Aurena", 2, "理論の黄金光", "Golden Light of Theory", GimmickEffect.Element)]
+        [InlineData("Aurena", 6, "陣上の金片", "Shards on the Circle", GimmickEffect.Echo)]
+        [InlineData("Bismuth", 4, "炎剣の呼び戻し", "Flame-Blade Recall", GimmickEffect.Recharge)]
+        [InlineData("Bismuth", 5, "矢の癒やし", "Arrow Mending", GimmickEffect.Heal)]
+        public void Revised_names_and_effects_match_the_design(string hero, int bridge, string ja, string en, GimmickEffect effect)
+        {
+            var def = Def(hero, bridge);
+            Assert.Equal(ja, def.Name.Ja);
+            Assert.Equal(en, def.Name.En);
+            Assert.Equal(effect, def.Effect);
+        }
+
     }
 }
