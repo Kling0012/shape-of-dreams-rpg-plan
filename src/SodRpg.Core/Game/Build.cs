@@ -386,7 +386,7 @@ namespace SodRpg.Core.Game
                     if (kind == "d") { b.DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, ParseInt(body))); continue; }
                     if (kind == "a")
                     {
-                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, ParseInt(body)));
+                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxSpendablePoints, ParseInt(body)));
                         continue;
                     }
                     int limit;

@@ -11,12 +11,6 @@ namespace SodRpg.Core.Tests
     public class BuildLimitsV131Tests
     {
         [Fact]
-        public void Native_messages_use_protocol_twelve_for_thousandth_values()
-        {
-            Assert.Equal(12, SodRpg.Mod.Protocol.Version);
-        }
-
-        [Fact]
         public void Registered_tree_maxima_match_independent_first_rank_enumeration()
         {
             var talents = Content.Talents.Concat(HeroSigils.All).ToArray();

@@ -77,7 +77,8 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(-10, -20, 1, 0)]
         [InlineData(17, 93, 17, 93)]
-        [InlineData(int.MaxValue, int.MaxValue, 30, 300)]
+        [InlineData(StarProgression.MaxSpendablePoints, StarProgression.MaxSpendablePoints, 30, StarProgression.MaxSpendablePoints)]
+        [InlineData(int.MaxValue, int.MaxValue, 30, StarProgression.MaxSpendablePoints)]
         public void Build_protocol_round_trips_and_clamps_pressure_metadata(int dream, int stars, int expectedDream, int expectedStars)
         {
             var b = new Build { DreamLevel = dream, SpentStarPoints = stars, Heat = 3 };

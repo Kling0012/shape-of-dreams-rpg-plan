@@ -252,7 +252,6 @@ namespace SodRpg.Core.Tests
             var settings = new JsonSerializerOptions { IncludeFields = true };
             string encoded = JsonSerializer.Serialize(message, settings);
             message = JsonSerializer.Deserialize<DreamforgePressureDividendMsg>(encoded, settings);
-            Assert.Equal(12, message.protocol);
             var decoded = message.ToReward();
             Assert.Equal(reward.SpawnId, decoded.SpawnId);
             Assert.Equal(reward.ZoneId, decoded.ZoneId);

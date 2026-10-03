@@ -161,8 +161,8 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 12 uses exact thousandths and bounded multipart build/acknowledgement transfer.
-        public const int Version = 12;
+        // Version 13 requires canonical allocation/loadout inputs for host reconstruction.
+        public const int Version = 13;
     }
 
     [Serializable]

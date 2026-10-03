@@ -77,7 +77,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Maximum_payload_fits_the_derived_part_count_and_bounded_receiver()
         {
-            string text = new string('x', BuildLimits.MaxEncodedChars);
+            string text = new string('x', HostBuildValidation.MaxSubmissionChars);
             var parts = BuildTransfer.Split(text);
             Assert.Equal(BuildTransfer.MaxParts, parts.Count);
             Assert.All(parts, part => Assert.InRange(part.Data.Length, 1, BuildTransfer.ChunkChars));
@@ -127,7 +127,7 @@ namespace SodRpg.Core.Tests
                 case "wrong-count": bad.Count++; break;
                 case "zero-total": bad.TotalLength = 0; break;
                 case "huge-total": bad.TotalLength = int.MaxValue; break;
-                case "oversized-total": bad.TotalLength = BuildLimits.MaxEncodedChars + 1; break;
+                case "oversized-total": bad.TotalLength = HostBuildValidation.MaxSubmissionChars + 1; break;
                 case "null-data": bad.Data = null; break;
                 case "huge-data": bad.Data += "x"; break;
                 case "short-data": bad.Data = bad.Data.Substring(1); break;

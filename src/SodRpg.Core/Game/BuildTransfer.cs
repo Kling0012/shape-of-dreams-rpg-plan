@@ -27,12 +27,12 @@ namespace SodRpg.Core.Game
             + (7 + 10 + 5 + 5 + 11 + 8 + 9) + 7 * 3 + 4
             + TransferIdChars + 4 * BuildLimits.IntegerChars + 10;
         public const int ChunkChars = (NativeStringBytes - MaxJsonEnvelopeBytes) / MaxJsonCharacterBytes;
-        public static int MaxParts => (BuildLimits.MaxEncodedChars + ChunkChars - 1) / ChunkChars;
+        public static int MaxParts => (HostBuildValidation.MaxSubmissionChars + ChunkChars - 1) / ChunkChars;
 
         public static IReadOnlyList<BuildTransferPart> Split(string text)
         {
             if (text == null) throw new ArgumentNullException(nameof(text));
-            if (text.Length == 0 || text.Length > BuildLimits.MaxEncodedChars || !Ascii(text))
+            if (text.Length == 0 || text.Length > HostBuildValidation.MaxSubmissionChars || !Ascii(text))
                 throw new ArgumentException("A build transfer requires a bounded nonempty ASCII payload.", nameof(text));
             int count = (text.Length + ChunkChars - 1) / ChunkChars;
             string transferId = Guid.NewGuid().ToString("N");
@@ -58,7 +58,7 @@ namespace SodRpg.Core.Game
         internal static bool Valid(BuildTransferPart part)
         {
             if (part == null || part.TransferId == null || part.TransferId.Length != TransferIdChars
-                || part.TotalLength <= 0 || part.TotalLength > BuildLimits.MaxEncodedChars
+                || part.TotalLength <= 0 || part.TotalLength > HostBuildValidation.MaxSubmissionChars
                 || part.Count <= 0 || part.Count > MaxParts || part.Index < 0 || part.Index >= part.Count
                 || part.Count != (part.TotalLength + ChunkChars - 1) / ChunkChars
                 || part.Data == null || part.Data.Length > ChunkChars) return false;

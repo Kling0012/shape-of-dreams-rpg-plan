@@ -929,7 +929,8 @@ namespace SodRpg.Mod
             }
             float now = Time.unscaledTime;
             if (!_buildDirty && now < _nextBuildSend) return;
-            string encoded = CurrentBuild(HeroKeyOf(hero)).Encode();
+            string encoded = HostBuildValidation.Encode(CurrentBuild(HeroKeyOf(hero)), Profile, HeroKeyOf(hero),
+                Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             foreach (var part in BuildTransfer.Split(encoded))
                 _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
             _buildDirty = false;

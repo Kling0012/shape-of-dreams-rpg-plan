@@ -22,6 +22,8 @@ namespace SodRpg.Mod
             public Build Build;
             public string Encoded;
             public string Summary;
+            public string HeroKey;
+            public bool ApplyFailed;
         }
 
         private sealed class HeroRuntime
@@ -218,6 +220,7 @@ namespace SodRpg.Mod
                 {
                     _builds.Remove(player);
                     _incomingBuilds.Remove(player);
+                    RemoveBuildValidationPeer(player);
                 }
                 _pressureDirty = true;
             };
@@ -260,6 +263,7 @@ namespace SodRpg.Mod
             if (_registeredOn == null) return;
             UpdateSacrificeShields();
             float now = Time.time;
+            ProcessBuildUpdates(Time.unscaledTime);
             RefreshRunModifiers();
             if (_pressureDirty) RefreshPressure();
             PruneAndApplyPending();
@@ -313,6 +317,7 @@ namespace SodRpg.Mod
             {
                 _builds.Remove(player);
                 _incomingBuilds.Remove(player);
+                RemoveBuildValidationPeer(player);
             }
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier);
@@ -922,6 +927,7 @@ namespace SodRpg.Mod
                 _runtimes.Clear();
                 _builds.Clear();
                 _incomingBuilds.Clear();
+                ClearBuildValidationPeers();
                 _pressurePlayerCount = -1;
                 _pressureDirty = true;
                 _registeredOn = actor;
@@ -1035,6 +1041,7 @@ namespace SodRpg.Mod
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
             _incomingBuilds.Clear();
+            ClearBuildValidationPeers();
             _pressure = DreamPressure.Neutral;
             _pressurePlayerCount = -1;
             _pressureBuilds.Clear();
@@ -1085,43 +1092,7 @@ namespace SodRpg.Mod
 
         private void OnBuild(DreamforgeBuildMsg msg, DewPlayer caller)
         {
-            try
-            {
-                if (caller == null || msg == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)) return;
-                if (msg.protocol != Protocol.Version)
-                {
-                    Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
-                    return;
-                }
-                if (!_incomingBuilds.TryGetValue(caller, out var transfer))
-                    _incomingBuilds.Add(caller, transfer = new BuildTransferReceiver());
-                if (!transfer.TryAccept(msg.ToPart(), out string encoded) || encoded == null) return;
-                var hero = caller.hero;
-                if (hero != null && !hero.IsNullOrInactive()
-                    && _runtimes.TryGetValue(hero, out var rt) && rt.AppliedBuild != null && rt.AppliedBuild.Encoded == encoded)
-                {
-                    // 定期再送は確認だけ返す。固有効果のスタックやクールダウンをリセットしない。
-                    _builds[caller] = rt.AppliedBuild;
-                    RefreshPressure(true);
-                    SendApplied(caller, hero, rt.AppliedBuild);
-                    return;
-                }
-                var build = Build.Decode(encoded);
-                if (build == null)
-                {
-                    Log.Warn("Host: rejected malformed build from " + caller.playerName);
-                    return;
-                }
-                var received = new ReceivedBuild { Build = build, Encoded = encoded, Summary = build.Encode() };
-                _builds[caller] = received;
-                RefreshPressure(true);
-                if (hero != null && !hero.IsNullOrInactive()) Apply(hero, received);
-                SendApplied(caller, hero, received);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Host: OnBuild failed: " + ex);
-            }
+            ReceiveBuildUpdate(msg, caller);
         }
 
         private void SendApplied(DewPlayer caller, Hero hero, ReceivedBuild build)
@@ -1228,7 +1199,7 @@ namespace SodRpg.Mod
                 if (_applyRetryAt.TryGetValue(hero, out float retry) && now < retry) continue;
                 try
                 {
-                    Apply(hero, kv.Value);
+                    ApplyValidatedBuild(kv.Key, hero, kv.Value);
                     _applyRetryAt.Remove(hero);
                 }
                 catch (Exception ex)
