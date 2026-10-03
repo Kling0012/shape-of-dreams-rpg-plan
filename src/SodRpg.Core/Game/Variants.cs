@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
         None = 0,
         /// <summary>1回で受けるダメージが、最大HPの HitCapPct% までになる。</summary>
         HitCap = 1 << 0,
-        /// <summary>倒れると周りの旅人に、最大HPの DeathBurstPct% のダメージ。</summary>
+        /// <summary>倒れると周りの旅人に、最大HPの DeathBurstPct% のダメージ（夢の圧力・潜行のダメージ倍率の影響を受ける）。</summary>
         DeathBurst = 1 << 1,
         /// <summary>HP70%・40%を下回ると3秒間、被ダメージ+20%。新しい守りより優先する。</summary>
         PhaseOpening = 1 << 2,
@@ -41,7 +41,7 @@ namespace SodRpg.Core.Game
         SummonHunter = 1 << 5,
         /// <summary>光3以上で脆い：光のダメージで被ダメージ+30%（スタックは決して消費しない）。</summary>
         LightEater = 1 << 6,
-        /// <summary>堅甲：通常攻撃（記憶でない攻撃）の被ダメージ −30%。記憶は通常どおり。</summary>
+        /// <summary>堅甲：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）の被ダメージ −30%。記憶は通常どおり。</summary>
         Armored = 1 << 7,
         /// <summary>記憶を弾く：記憶のダメージの被ダメージ −30%。通常攻撃は通常どおり。</summary>
         Spellward = 1 << 8,
@@ -101,7 +101,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.elder_treant", MonsterType = "Mon_Forest_Treant",
                 Name = new Txt("古老の樹人", "Elder Treant"),
-                Description = new Txt("分厚い樹皮の障壁をまとい、殴った相手に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+30%。", "Shielded by thick bark that thorns its attackers. Weak to fire: takes 30% more from fire damage or while burning."),
+                Description = new Txt("分厚い樹皮の障壁をまとい、旅人の攻撃に棘を返す。火に弱い：火のダメージ、または燃えている間は被ダメージ+30%。", "Shielded by thick bark that thorns the travelers who attack it. Weak to fire: takes 30% more from fire damage or while burning."),
                 Stats = new[] { S(Stat.MaxHealthPct, 250), S(Stat.Armor, 30) },
                 Affixes = NightmareAffix.Warded | NightmareAffix.Thorned, Tags = VariantTag.WeakFire, R = 0.25f, G = 0.55f, B = 0.25f, Scale = 1.3f,
             },
@@ -133,7 +133,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.blazing_martyr", MonsterType = "Mon_Despair_UnstableRat",
                 Name = new Txt("焔の殉教者", "Blazing Martyr"),
-                Description = new Txt("倒れると大きく爆ぜ、近くにいた者を焼く。とどめは離れて。", "Explodes on death; finish it from a distance."),
+                Description = new Txt("倒れると大きく爆ぜ、近くにいた者を最大HPの20%ほど焼く（夢の圧力・潜行で増減）。とどめは離れて。", "Explodes on death for about 20% of nearby travelers' max HP (scaled by dream pressure and delve); finish it from a distance."),
                 Stats = new[] { S(Stat.MaxHealthPct, 60), S(Stat.MoveSpeedPct, 40) },
                 Traits = VariantTrait.DeathBurst, R = 1f, G = 0.55f, B = 0.15f, Scale = 1.3f,
             },
@@ -157,7 +157,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.molten_core", MonsterType = "Mon_LavaLand_FireElemental",
                 Name = new Txt("熔けた核", "Molten Core"),
-                Description = new Txt("触れれば焼け、倒れれば爆ぜる。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+30%。", "Burns those who strike it, and bursts when it falls. Weak to cold: takes 30% more from cold damage or while chilled."),
+                Description = new Txt("触れれば焼け、倒れれば最大HPの20%ほどの爆発（夢の圧力・潜行で増減）を起こす。冷気に弱い：冷気のダメージ、または凍ている間は被ダメージ+30%。", "Burns those who strike it, and bursts for about 20% of nearby travelers' max HP when it falls (scaled by dream pressure and delve). Weak to cold: takes 30% more from cold damage or while chilled."),
                 Stats = new[] { S(Stat.MaxHealthPct, 120) },
                 Affixes = NightmareAffix.Thorned, Traits = VariantTrait.DeathBurst, Tags = VariantTag.WeakCold, R = 1f, G = 0.4f, B = 0.1f, Scale = 1.25f,
             },
@@ -245,7 +245,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.rime_sentinel", MonsterType = "Mon_SnowMountain_VikingWarrior",
                 Name = new Txt("霜盾の番兵", "Rime Sentinel"),
-                Description = new Txt("正面120度からの被ダメージを30%軽減。通常攻撃に堅い：通常攻撃のダメージを30%軽減。記憶のダメージは通常どおり。", "Reduces damage from its frontal 120-degree cone by 30%. Armored against basics: reduces basic-attack damage by 30%; memory damage passes through normally."),
+                Description = new Txt("正面120度からの被ダメージを30%軽減。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を30%軽減。記憶のダメージは通常どおり。", "Reduces damage from its frontal 120-degree cone by 30%. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by 30%; memory damage passes through normally."),
                 Stats = new[] { S(Stat.MaxHealthPct, 60) },
                 Affixes = NightmareAffix.Facing, Tags = VariantTag.Armored, R = 0.45f, G = 0.7f, B = 0.95f, Scale = 1.15f,
             },
@@ -312,7 +312,7 @@ namespace SodRpg.Core.Game
             {
                 Id = "var.stardust_shell", MonsterType = "Mon_Sky_StellaMatter",
                 Name = new Txt("星屑の殻", "Stardust Shell"),
-                Description = new Txt("星の欠片が固まった結晶の塊。通常攻撃に堅い：通常攻撃のダメージを30%軽減。記憶のダメージは通常どおり。", "A mass of fused star fragments. Armored against basics: reduces basic-attack damage by 30%; memory damage passes through normally."),
+                Description = new Txt("星の欠片が固まった結晶の塊。記憶以外に堅い：記憶以外のダメージ（通常攻撃・固有効果・仕掛けなど）を30%軽減。記憶のダメージは通常どおり。", "A mass of fused star fragments. Armored against non-memory damage: reduces damage not from memories (basic attacks, innate effects, hazards and so on) by 30%; memory damage passes through normally."),
                 Stats = new[] { S(Stat.MaxHealthPct, 60) },
                 Tags = VariantTag.Armored, R = 0.75f, G = 0.8f, B = 1f, Scale = 1.1f,
             },
@@ -380,7 +380,7 @@ namespace SodRpg.Core.Game
                 case VariantTag.ShieldBreaker: return Loc.T("障壁を割る", "shield-breaking");
                 case VariantTag.SummonHunter: return Loc.T("召喚獣を狩る", "summon-hunting");
                 case VariantTag.LightEater: return Loc.T("光3以上で脆い", "light-frail (3+)");
-                case VariantTag.Armored: return Loc.T("通常攻撃に堅い", "basic-attack-armored");
+                case VariantTag.Armored: return Loc.T("記憶以外に堅い", "non-memory-armored");
                 case VariantTag.Spellward: return Loc.T("記憶を弾く", "memory-warded");
                 default: return "";
             }

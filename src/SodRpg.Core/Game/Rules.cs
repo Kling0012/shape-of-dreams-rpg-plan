@@ -800,8 +800,7 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
                     if (e == DreamEvent.StarOffering)
                     {
-                        StarProgression.AddXp(p.Heroes[run.HeroKey], 40);
-                        ev.Add(new GameEvent(EventKind.Info, Loc.T("この遠征の旅人の星の経験が40増えました。", "This expedition hero gained 40 star experience.")));
+                        AddStarXp(p, run.HeroKey, 40, ev);
                     }
                     else ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
                     break;

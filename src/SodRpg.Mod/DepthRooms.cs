@@ -25,7 +25,9 @@ namespace SodRpg.Mod
             if (zone == null) return;
             // HostRun は NetworkServer.active かつ遠征中のときだけ非 null（夢の圧と同じ深度の源）。
             var run = ClientSession.HostRun;
-            int add = DreamDepth.ZoneNodeOffset(run?.DreamDepth ?? 0, NetworkServer.active, zone.useSpecialGeneration, run != null);
+            // 新しいゲームの最初のゾーンは遠征の開始前に生成されるので、その場合はホストが公開する深度を使う。
+            int add = DreamDepth.ZoneNodeOffsetForGeneration(run?.DreamDepth, ClientSession.HostChosenDepth,
+                __instance.currentZoneIndex, NetworkServer.active, zone.useSpecialGeneration);
             if (add == 0) return;
             DewBuildProfile.current.worldNodeCountOffset += add;
             _added += add;

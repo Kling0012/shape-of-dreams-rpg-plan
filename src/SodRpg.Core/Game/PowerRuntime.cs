@@ -138,13 +138,13 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響・瞬歩の刃の3秒も始める（重ならず延長）。</summary>
-        public void OnSkillUsed(float now, bool isMovement, bool isUltimate)
+        public void OnSkillUsed(float now, bool isMovement, bool isUltimate, bool isIdentity = false)
         {
             if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
             if (isMovement && Build.Get(Power.Sprint) > 0) _sprintUntil = now + SprintDuration;
             if (isMovement && Build.Get(Power.EchoingDodge) > 0) _echoUntil = now + EchoingDodgeWindow;
             if (isMovement) OnSelfMovement(now);
-            if (!isMovement && !isUltimate && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
+            if (!isMovement && !isUltimate && !isIdentity && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
         }
 
         public struct SkillResult
@@ -154,9 +154,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Memory の使用結果。旋風・星の加護の量を返す。旋風は攻撃力と魔力の高い方（attackOrPower）で計算する。</summary>
-        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackOrPower, float maxHealth)
+        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackOrPower, float maxHealth, bool isIdentity = false)
         {
-            OnSkillUsed(now, isMovement, isUltimate);
+            OnSkillUsed(now, isMovement, isUltimate, isIdentity);
             var r = new SkillResult();
             int whirlwind = Build.Get(Power.Whirlwind);
             if (isMovement && whirlwind > 0 && now >= _whirlwindReady)
@@ -427,10 +427,11 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>被弾した。棘で返すダメージ（0なら返さない）を返す。</summary>
-        public float OnDamaged(float now, float amount, bool attackerIsEnemy)
+        public float OnDamaged(float now, float amount, bool attackerIsEnemy, bool? attackedByEnemy = null)
         {
             if (amount <= 0) return 0;
-            if (Build.Get(Power.Retaliation) > 0) _retaliationUntil = now + RetaliationDuration;
+            // 逆襲：敵に攻撃されたときだけ。自傷・味方由来のダメージでは発動しない。
+            if (Build.Get(Power.Retaliation) > 0 && (attackedByEnemy ?? attackerIsEnemy)) _retaliationUntil = now + RetaliationDuration;
             int thorns = Build.Get(Power.Thorns);
             if (thorns <= 0 || !attackerIsEnemy || now < _thornsReady) return 0;
             _thornsReady = now + ThornsInterval;

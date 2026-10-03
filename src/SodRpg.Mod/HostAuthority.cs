@@ -185,7 +185,6 @@ namespace SodRpg.Mod
         private readonly Action<Entity> _onEntityAdd;
         private readonly Action<Entity> _onEntityRemove;
         private readonly Action<EventInfoKill> _onMonsterDeath;
-        private readonly Action<EventInfoStatusEffect> _onEnemyStatusAdded;
         private readonly Action<EventInfoDamage> _onMonsterDamageTaken;
         private readonly Action<EventInfoAttackHit> _onMonsterAttackHit;
         private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
@@ -237,7 +236,6 @@ namespace SodRpg.Mod
             _onEntityAdd = OnEntityAdd;
             _onEntityRemove = OnEntityRemove;
             _onMonsterDeath = OnMonsterDeath;
-            _onEnemyStatusAdded = OnEnemyStatusAdded;
             _onMonsterDamageTaken = OnMonsterDamageTaken;
             _onMonsterAttackHit = OnMonsterAttackHit;
             _onApplyElemental = OnApplyElemental;
@@ -400,7 +398,6 @@ namespace SodRpg.Mod
                 var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time };
                 _monsters[m] = rt;
                 TrackPressureDividendSpawn(m);
-                m.ClientEntityEvent_OnStatusEffectAdded += _onEnemyStatusAdded;
                 m.EntityEvent_OnDeath += _onMonsterDeath;
                 _spawnQueue.Add(new KeyValuePair<Monster, float>(m, rt.QueuedAt));
             }
@@ -514,8 +511,6 @@ namespace SodRpg.Mod
                 rt.PressureApplied = false;
             }
             // Each removal is independent: one failed cleanup must not leave other hooks attached.
-            try { m.ClientEntityEvent_OnStatusEffectAdded -= _onEnemyStatusAdded; }
-            catch (Exception ex) { Log.Error("Host: unhook monster status " + ex); }
             try { m.EntityEvent_OnDeath -= _onMonsterDeath; }
             catch (Exception ex) { Log.Error("Host: unhook monster death " + ex); }
             try { if (rt.Reflects) m.EntityEvent_OnTakeDamage -= _onMonsterDamageTaken; }
@@ -1092,7 +1087,11 @@ namespace SodRpg.Mod
                 if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
                 var hero = caller.hero;
                 if (hero == null || !hero.isActive) return;
-                var strength = msg.strength >= 3 ? HatredStrengthType.Powerful : msg.strength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
+                // Resync (ordinal > 0) is idempotent per player: skip if enough live pact curses already exist.
+                int ordinal = PactCurseSync.Ordinal(msg.strength);
+                if (!PactCurseSync.ShouldApply(ordinal, _pactCurses.CountLive(caller, se => se != null && !se.isDestroyed && se.isActive))) return;
+                int rawStrength = PactCurseSync.Strength(msg.strength);
+                var strength = rawStrength >= 3 ? HatredStrengthType.Powerful : rawStrength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
                 if (_curseCache == null)
                 {
                     _curseCache = new List<CurseStatusEffect>();
@@ -1466,27 +1465,6 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: SpendersWard " + ex); }
         }
 
-        private void OnEnemyStatusAdded(EventInfoStatusEffect info)
-        {
-            try
-            {
-                var effect = info.effect;
-                if (info.victim == null || !info.victim.isActive || effect == null
-                    || !(effect.info.caster is Hero hero) || !Alive(hero)
-                    || info.victim.GetRelation(hero) != EntityRelation.Enemy
-                    || !_runtimes.TryGetValue(hero, out var rt)) return;
-                bool stun = false;
-                foreach (var basic in effect.basicEffects)
-                    if (basic != null && basic.isAlive && (basic.mask & BasicEffectMask.Stun) != 0)
-                    { stun = true; break; }
-                float shield = rt.Powers.TakeStillWater(Time.time, stun, hero.maxHealth);
-                if (shield <= 0) return;
-                hero.GiveShield(hero, shield, PowerRuntime.StillWaterDuration, false, default(ReactionChain));
-                LogPowerTrigger(Power.StillWater);
-            }
-            catch (Exception ex) { Log.Error("Host: StillWater " + ex); }
-        }
-
         private void OnDamageNegated(HeroRuntime rt, EventInfoDamageNegatedByImmunity info)
         {
             try
@@ -1579,7 +1557,8 @@ namespace SodRpg.Mod
                 if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
                     QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.skill != null && info.skill.type == SkillType.Ultimate,
-                    Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
+                    Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth,
+                    info.type == HeroSkillLocation.Identity);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
                 if (r.WhirlwindDamage > 0)
                 {
@@ -1596,7 +1575,7 @@ namespace SodRpg.Mod
                     var ultimate = hero.Skill.GetSkill(HeroSkillLocation.R);
                     if (ultimate != null)
                     {
-                        hero.ApplyCooldownReductionByRatio(ultimate, finale, false);
+                        ReduceNormalMemory(hero, ultimate, finale * 100f);
                         LogPowerTrigger(Power.Finale);
                     }
                 }
@@ -2114,7 +2093,7 @@ namespace SodRpg.Mod
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
                 bool reflected = _reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false));
                 OnNewPowerTaken(rt, info, enemy);
-                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected);
+                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected, enemy);
                 if (reflect > 0)
                 {
                     _reflectingDamage = true;

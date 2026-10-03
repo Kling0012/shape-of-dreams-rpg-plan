@@ -216,7 +216,7 @@ namespace SodRpg.Core.Game
                 case NightmareAffix.Regenerating: return Loc.T("毎秒最大HPの2%回復。攻撃を集中して倒す。", "Heals 2% max HP each second; focus damage to defeat it.");
                 case NightmareAffix.Arcane: return Loc.T("魔力+50%・スキル加速+40。術を避け、発動後に攻める。", "Power +50%, haste +40; evade spells and punish after casting.");
                 case NightmareAffix.Warded: return Loc.T("防御+20、出現時に最大HP25%の障壁。障壁を割って攻める。", "Armor +20 and a spawn shield of 25% max HP; break the barrier.");
-                case NightmareAffix.Thorned: return Loc.T("防御+30、被ダメージの20%を反射。回復を備えて攻める。", "Armor +30; reflects 20% of received damage. Prepare healing before attacking.");
+                case NightmareAffix.Thorned: return Loc.T("防御+30、旅人から受けたダメージの20%をその旅人へ返す（召喚獣の攻撃は返さない）。回復を備えて攻める。", "Armor +30; returns 20% of damage taken from a traveler to that traveler (not to summons). Prepare healing before attacking.");
                 case NightmareAffix.Ravenous: return Loc.T("攻撃力+15%、与ダメージの15%回復。攻撃を避けて回復を防ぐ。", "Attack +15%; heals for 15% of damage dealt. Dodge to deny healing.");
                 case NightmareAffix.Sundering: return Loc.T("攻撃力+10%、命中で防御-20を4秒。追撃を避ける。", "Attack +10%; hits reduce armor by 20 for 4s. Avoid follow-up hits.");
                 case NightmareAffix.Veiled: return Loc.T("6mより遠い攻撃の被ダメージ-30%。6m以内へ近づく。", "Receives 30% less damage from beyond 6m; approach within 6m.");

@@ -138,7 +138,7 @@ namespace SodRpg.Core.Game
         Sprint = 28,
         /// <summary>HP80%以上の間、攻撃力+X%。「不屈」</summary>
         Vigor = 29,
-        /// <summary>Ultimate・回避以外のスキル使用後4秒、魔力+X%（時間だけ延長）。「過負荷」</summary>
+        /// <summary>Q/W/E の記憶使用後4秒（Ultimate・回避・固有スキルでは発動しない）、魔力+X%（時間だけ延長）。「過負荷」</summary>
         Overload = 30,
         /// <summary>Q/W/Eを8秒以内に使うとRの残りクールダウンをX%短縮（10秒に1回）。「終曲」</summary>
         Finale = 31,

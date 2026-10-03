@@ -192,8 +192,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
-                _tickStepNames = new[] { "profile slots", "wire", "variant visuals", "monster cues", "track run", "run choices", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
+                _tickStepNames = new[] { "profile slots", "wire", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -900,11 +900,42 @@ namespace SodRpg.Mod
             Emit(Rules.Delve(Profile, pact));
             var def = Pacts.Get(pact);
             if (def != null && _clientRpcOn != null && NetworkClient.active)
+            {
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg { strength = def.CurseStrength, protocol = Protocol.Version });
+                _curseSyncedKey = CurseKey(); // already applied by this Delve: no resync for the same run/hero/authority
+            }
             _buildDirty = true;
             SaveNow();
             PublishRunChoices();
             return null;
+        }
+
+        private string _curseSyncedKey = "";
+
+        private string CurseKey()
+        {
+            var hero = LocalHero;
+            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return "";
+            return PactCurseSync.Key(ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
+        }
+
+        /// <summary>再起動・ホスト権限の交代・復活のあとも契約が残っていれば、呪いを1回だけ付け直してもらう。</summary>
+        private void TickCurseResync()
+        {
+            var run = Profile.Run;
+            if (run == null || run.Pacts.Count == 0 || LocalHero == null || !LocalHero.isActive) return;
+            string key = CurseKey();
+            if (!PactCurseSync.ShouldResend(run.Pacts.Count, _curseSyncedKey, key)) return;
+            _curseSyncedKey = key;
+            for (int i = 0; i < run.Pacts.Count; i++)
+            {
+                var def = Pacts.Get(run.Pacts[i]);
+                if (def == null) continue;
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg
+                {
+                    strength = PactCurseSync.Encode(def.CurseStrength, i + 1), protocol = Protocol.Version,
+                });
+            }
         }
 
         /// <summary>契約が解けたことをホストへ伝え、潜行で付いた呪いを消してもらう。</summary>

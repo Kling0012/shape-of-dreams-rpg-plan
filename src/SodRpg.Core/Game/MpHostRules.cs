@@ -21,6 +21,14 @@ namespace SodRpg.Core.Game
         public int Count(TKey key) => key != null && _owned.TryGetValue(key, out var list) ? list.Count : 0;
         public int KeyCount => _owned.Count;
 
+        public int CountLive(TKey key, Func<TEffect, bool> isLive)
+        {
+            if (key == null || isLive == null || !_owned.TryGetValue(key, out var list)) return 0;
+            int n = 0;
+            foreach (var e in list) if (e != null && isLive(e)) n++;
+            return n;
+        }
+
         /// <summary>Destroys every still-live effect owned for key, then forgets them. Returns the destroyed count.</summary>
         public int Release(TKey key, Func<TEffect, bool> isLive, Action<TEffect> destroy, Action<Exception> onError = null)
         {

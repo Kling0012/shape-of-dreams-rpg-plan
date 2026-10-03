@@ -20,6 +20,18 @@ namespace SodRpg.Core.Game
         public static int ZoneNodeOffset(int depth, bool isServer, bool specialGeneration, bool runActive)
             => isServer && !specialGeneration && runActive ? ExtraZoneNodes(depth) : 0;
 
+        /// <summary>
+        /// Zone-generation offset. While a run is active use its depth. The first zone of a new game is generated
+        /// before the run exists (runDepth null): then, on the host, use the depth the host will publish (chosenDepth).
+        /// Later zones with no run stay unchanged.
+        /// </summary>
+        public static int ZoneNodeOffsetForGeneration(int? runDepth, int chosenDepth, int zoneIndex, bool isServer, bool specialGeneration)
+        {
+            bool starting = runDepth == null && zoneIndex <= 0;
+            if (runDepth == null && !starting) return 0;
+            return ZoneNodeOffset(runDepth ?? chosenDepth, isServer, specialGeneration, true);
+        }
+
         /// <summary>Round only after all reward multipliers; keep a positive reward positive.</summary>
         public static int ScaleReward(int amount, double multiplier)
         {

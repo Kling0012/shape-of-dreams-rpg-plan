@@ -119,8 +119,8 @@ namespace SodRpg.Core.Game
                     effect = ja ? target + "の残りクールダウンを" + n + "%縮める" : "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "装備中のQ記憶の残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティは対象外）"
-                        : "reduce your equipped Q memory's remaining cooldown by " + n + "% (excluding Movement, Ultimate and Identity)";
+                    effect = ja ? "Q・W・Eの通常記憶すべての残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティと、発動した記憶自身は対象外）"
+                        : "reduce the remaining cooldown of all your other normal memories (Q/W/E) by " + n + "% (excluding Movement, Ultimate, Identity and the triggering memory itself)";
                     break;
                 case GimmickEffect.Shield:
                     effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（4秒）" : "gain a shield equal to " + n + "% of maximum health for 4 seconds";
