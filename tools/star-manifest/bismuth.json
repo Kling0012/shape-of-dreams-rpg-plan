@@ -21346,7 +21346,14 @@
         "upside": "既存Power.Convergence=100。4属性がそろうとAD/APの高い方100%の無属性爆発（同じ敵6秒に1回）",
         "downside": "Pの元ダメージ-15%（x0.85）",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_D_PrismaticEyes",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -21376,7 +21383,14 @@
         "upside": "G(P,Hit,Ricochet,30,2,0.3)。本の実命中ダメージ30%を8mの別の敵2体まで",
         "downside": "Pの元ダメージ-20%（x0.80）",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_D_PrismaticEyes",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

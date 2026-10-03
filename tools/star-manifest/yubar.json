@@ -27524,8 +27524,22 @@
       "keystone": {
         "upside": "XのEcho/Burst/Woundの最終仕掛け値+60%",
         "downside": "Xの本体爆発ダメージ−25%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_ExoticMatter",
+            "effect": "Echo/Burst/Wound",
+            "field": "Value",
+            "pct": 60
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_D_ExoticMatter",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -25
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27561,8 +27575,22 @@
       "keystone": {
         "upside": "SのOnHit由来の無属性仕掛けダメージ+50%",
         "downside": "Sに帰属する強化通常攻撃・跳弾の本体ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_ConvergencePoint",
+            "effect": "Echo/Burst/ElementEdge",
+            "field": "Damage",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_D_ConvergencePoint",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27600,8 +27628,28 @@
       "keystone": {
         "upside": "Eの本体命中ダメージ+35%",
         "downside": "E起点のBurstは生成時半径−50%、Echo/Woundの仕掛け値−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_Q_EtherealInfluence",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": 35
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_Q_EtherealInfluence",
+            "effect": "Burst",
+            "field": "Radius",
+            "pct": -50
+          },
+          {
+            "memory": "St_Q_EtherealInfluence",
+            "effect": "Echo/Wound",
+            "field": "Value",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27637,8 +27685,28 @@
       "keystone": {
         "upside": "N起点のBurstの生成時半径+80%、仕掛け値+40%",
         "downside": "Nの本体ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_Q_SuperNova",
+            "effect": "Burst",
+            "field": "Radius",
+            "pct": 80
+          },
+          {
+            "memory": "St_Q_SuperNova",
+            "effect": "Burst",
+            "field": "Value",
+            "pct": 40
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_Q_SuperNova",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27674,8 +27742,28 @@
       "keystone": {
         "upside": "C起点のEcho/Burst/Woundの最終値+50%、Woundの持続時間+50%",
         "downside": "Cの本体隕石と本体継続ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_R_Cataclysm",
+            "effect": "Echo/Burst/Wound",
+            "field": "Value",
+            "pct": 50
+          },
+          {
+            "memory": "St_R_Cataclysm",
+            "effect": "Wound",
+            "field": "Duration",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_R_Cataclysm",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27715,8 +27803,28 @@
       "keystone": {
         "upside": "Tで開くRWの持続時間を最終2倍、RW値+50%",
         "downside": "T起点のMOD回復・障壁の量−50%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_R_Tranquility",
+            "effect": "RelayWindow",
+            "field": "Duration",
+            "pct": 100
+          },
+          {
+            "memory": "St_R_Tranquility",
+            "effect": "RelayWindow",
+            "field": "Value",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_R_Tranquility",
+            "effect": "Heal/Shield",
+            "field": "Value",
+            "pct": -50
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28755,7 +28863,20 @@
         "upside": "既存Power.UltimateSurge 20：実Ultimate使用後5秒、攻撃力・魔力+20%（最大1窓、更新のみ）",
         "downside": "窓中、実Ultimate以外の本体記憶ダメージ−15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memories": [
+              "St_D_ExoticMatter",
+              "St_Q_EtherealInfluence",
+              "St_D_ConvergencePoint",
+              "St_Q_SuperNova",
+              "St_R_Tranquility"
+            ],
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -28784,7 +28905,14 @@
         "upside": "実Ultimate使用時、最大HPの15%までの障壁、5秒（旧Power.StarShield20を同IDで15へ明示移行、C06普通障壁プール）",
         "downside": "実Ultimateの本体ダメージ−15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_R_Cataclysm",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

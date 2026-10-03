@@ -28128,7 +28128,13 @@
         "upside": "Power.Frost=70（通常攻撃命中時70%で冷気1、敵上限1）",
         "downside": "Q/R本体記憶ダメージ-15%（生成ダメージには二重適用しない）",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -28160,7 +28166,13 @@
         "upside": "Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）",
         "downside": "Q/R本体記憶ダメージ-15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

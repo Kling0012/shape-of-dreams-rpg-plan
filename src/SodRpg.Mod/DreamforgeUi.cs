@@ -186,7 +186,12 @@ namespace SodRpg.Mod
                     _lobbySeen = lobby;
                     _heroSel = lobby;
                 }
-                if (_heroSel == null) _heroSel = _s.Profile.Heroes.Keys.FirstOrDefault(k => k.StartsWith("Hero_")) ?? KnownHeroes[0];
+                if (_heroSel == null)
+                {
+                    foreach (string key in _s.Profile.Heroes.Keys)
+                        if (key.StartsWith("Hero_", StringComparison.Ordinal)) { _heroSel = key; break; }
+                    if (_heroSel == null) _heroSel = KnownHeroes[0];
+                }
                 return _heroSel;
             }
         }
@@ -1078,16 +1083,32 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly List<string> _pickerHeroes = new List<string>();
+        private static readonly GUILayoutOption[] PickerCaptionWidth = { GUILayout.Width(60) };
+        private static readonly GUILayoutOption[] PickerArrowWidth = { GUILayout.Width(30) };
+        private static readonly GUILayoutOption[] PickerNameWidth = { GUILayout.Width(110) };
+        private readonly GUIContent _pickerName = new GUIContent();
+        private string _pickerNamedHero;
         private void HeroPicker()
         {
             if (_s.LocalHero != null) return;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, GUILayout.Width(60));
-            var keys = KnownHeroes.Union(_s.Profile.Heroes.Keys.Where(k => k != "default")).ToList();
-            int idx = Math.Max(0, keys.IndexOf(HeroKey));
-            if (GUILayout.Button("<", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx - 1 + keys.Count) % keys.Count];
-            GUILayout.Label("<b>" + HeroName(HeroKey) + "</b>", _st.Label, GUILayout.Width(110));
-            if (GUILayout.Button(">", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx + 1) % keys.Count];
+            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, PickerCaptionWidth);
+            _pickerHeroes.Clear();
+            _pickerHeroes.AddRange(KnownHeroes);
+            foreach (string key in _s.Profile.Heroes.Keys)
+                if (key != "default" && !_pickerHeroes.Contains(key)) _pickerHeroes.Add(key);
+            int idx = Math.Max(0, _pickerHeroes.IndexOf(HeroKey));
+            if (GUILayout.Button("<", _st.Button, PickerArrowWidth))
+                _heroSel = _pickerHeroes[(idx - 1 + _pickerHeroes.Count) % _pickerHeroes.Count];
+            string selectedHero = HeroKey;
+            if (_pickerNamedHero != selectedHero)
+            {
+                _pickerNamedHero = selectedHero;
+                _pickerName.text = "<b>" + HeroName(selectedHero) + "</b>";
+            }
+            GUILayout.Label(_pickerName, _st.Label, PickerNameWidth);
+            if (GUILayout.Button(">", _st.Button, PickerArrowWidth)) _heroSel = _pickerHeroes[(idx + 1) % _pickerHeroes.Count];
             GUILayout.EndHorizontal();
         }
 
@@ -1857,6 +1878,9 @@ namespace SodRpg.Mod
             public int Rank, Choice = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
             public string Description, SearchDescription;
+            public PairComboDef PairDefinition;
+            public ClusterRegionKind? Region;
+            public GUIContent[] ChoiceOptions;
             public Texture2D Icon;
             public bool Keystone, Pair;
             public float TooltipWidth, TooltipHeight;
@@ -1874,7 +1898,7 @@ namespace SodRpg.Mod
         private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState;
         private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
-        private int _starXp, _starKills, _starCodex, _starTestBonus, _starSpent, _starFree;
+        private int _starXp, _starKills, _starCodex, _starTestBonus, _starFree;
         private int _starPressed = -1, _starMouseButton, _starDragControl;
         private Vector2 _starPan, _starDragOrigin, _starPanOrigin;
         private float _starZoom = 1f, _starExtent = 1f;
@@ -1900,6 +1924,7 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] StarFill = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] StarCanvasSize =
             { GUILayout.MinHeight(160), GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] StarHorizontalSize = { GUILayout.ExpandHeight(true) };
         private static readonly Color StarGold = new Color(1f, 0.79f, 0.32f);
         private static readonly Color StarBright = new Color(0.87f, 0.94f, 1f);
         private static readonly Color StarGrey = new Color(0.36f, 0.39f, 0.46f);
@@ -1910,6 +1935,7 @@ namespace SodRpg.Mod
         private readonly List<StarSumEntry> _starSumEntries = new List<StarSumEntry>();
         private readonly GUIContent _starSumHeader = new GUIContent();
         private GUIStyle _starSumLine, _starSumTitle;
+        private float _starSumWidth = -1f, _starSumHeight;
         private static readonly GUILayoutOption[] StarSumWidth = { GUILayout.Width(360), GUILayout.ExpandHeight(true) };
 
         private sealed class StarSumEntry
@@ -1917,6 +1943,7 @@ namespace SodRpg.Mod
             public readonly GUIContent Content = new GUIContent();
             public int[] Nodes;
             public bool Title;
+            public float Y, Height;
         }
 
         private void CancelStarDrag()
@@ -1948,16 +1975,21 @@ namespace SodRpg.Mod
                 string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
-                    Description = t == null ? null : t.Describe(),
+                    Description = t == null ? null : t.IsKeystone ? StarMapPresentation.KeystoneDescription(t)
+                        : StarMapPresentation.EffectDescription(t),
+                    ChoiceOptions = t != null && t.IsChoice ? new[] { new GUIContent(), new GUIContent() } : null,
                     Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
                     Pair = pair != null,
+                    PairDefinition = pair,
+                    Region = t?.Cluster?.Region.Kind,
                 };
                 _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
                 if (t != null && t.IsKeystone) keystones.Add(i);
                 _starExtent = Mathf.Max(_starExtent, Mathf.Abs(node.X), Mathf.Abs(node.Y));
             }
             _starKeystones = keystones.ToArray();
+            RebuildStarClusters();
             if (newHero) _starNeedsFit = true;
             CancelStarDrag();
             _starDirty = true;
@@ -1987,12 +2019,12 @@ namespace SodRpg.Mod
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
         {
-            if (_starHero != hero || _starJapanese != Loc.Japanese) { RebuildStarTree(hero); _starSumDirty = true; }
+            if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero))
+            { RebuildStarTree(hero); _starSumDirty = true; }
             if (!_starDirty && Event.current.type != EventType.Layout) return;
-            int spent = Rules.SpentPoints(hs, hero);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
-                || _starKeystone != hs.Keystone || _starSpent != spent;
+                || _starKeystone != hs.Keystone;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             if (_starSumOpen)
@@ -2016,7 +2048,7 @@ namespace SodRpg.Mod
                 int choice = t != null && t.IsChoice && hs.TalentChoices.TryGetValue(t.Id, out int option) ? option : -1;
                 if (n.Choice != choice) changed = true;
                 n.Choice = choice;
-                var pair = t == null ? null : PairCombos.ForBridge(t.Id);
+                var pair = n.PairDefinition;
                 if (pair != null)
                 {
                     bool a = matchingHero && marks != null && marks(pair.RouteA);
@@ -2027,13 +2059,13 @@ namespace SodRpg.Mod
                 }
             }
             if (!changed) return;
+            int spent = Rules.SpentPoints(hs, hero);
             _starState = hs;
             _starXp = hs.StarXp;
             _starKills = hs.Kills;
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
             _starKeystone = hs.Keystone;
-            _starSpent = spent;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
             _starSumDirty = true;
@@ -2044,6 +2076,9 @@ namespace SodRpg.Mod
                 + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
+            var reachable = _starLayout.ReachabilitySnapshot(hs);
+            RefreshStarClusters(hs);
+            int oldKeyCost = hs.Keystone == null ? 0 : Rules.AllocationValidationForHero(hero).Talent(hs.Keystone).KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -2056,9 +2091,10 @@ namespace SodRpg.Mod
                         "<b>Starting star</b>\nAlready acquired. Grow along its connections.");
                     continue;
                 }
-                bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : Rules.TalentUnlocked(hs, hero, t);
+                bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
                 n.Unlocked = unlocked;
-                int cost = t.IsKeystone ? (hs.Keystone != null ? 0 : Content.KeystoneCost) : t.RankCost;
+                int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                int cost = t.IsKeystone ? Math.Max(0, keyCost - oldKeyCost) : t.RankCost;
                 if (t.IsKeystone)
                 {
                     string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
@@ -2072,42 +2108,49 @@ namespace SodRpg.Mod
                     "Requires a connection to an acquired star.");
                 if (t.IsKeystone)
                     condition += t.HeroKey != null
-                        ? Loc.T($"\n到達刻印は1つ。ツリーに{Content.KeystoneRouteRequirement}段・熟練度{HeroSigils.KeystoneMastery}が必要（いま熟練度{Mastery.Level(hs.Kills)}）。付け替えは無料。",
-                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} tree ranks and mastery {HeroSigils.KeystoneMastery} (now {Mastery.Level(hs.Kills)}). Switching is free.")
-                        : Loc.T($"\n到達刻印は1つ。この刻印に対応する能力の星に{Content.KeystoneRouteRequirement}段必要（いま{Rules.RouteRanks(hs, t.Route)}段）。付け替えは無料。",
-                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} ranks in its matching attribute stars (now {Rules.RouteRanks(hs, t.Route)}). Switching is free.");
+                        ? Loc.T($"\n刻印は1つ。ツリーに{Content.KeystoneRouteRequirement}段・熟練度{HeroSigils.KeystoneMastery}が必要（現在{Mastery.Level(hs.Kills)}）。",
+                            $"\nSelect one keystone. Requires {Content.KeystoneRouteRequirement} tree ranks and mastery {HeroSigils.KeystoneMastery} (currently {Mastery.Level(hs.Kills)}).")
+                        : Loc.T($"\n刻印は1つ。対応する能力の星に{Content.KeystoneRouteRequirement}段必要（現在{Rules.RouteRanks(hs, t.Route)}段）。",
+                            $"\nSelect one keystone. Requires {Content.KeystoneRouteRequirement} matching attribute ranks (currently {Rules.RouteRanks(hs, t.Route)}).");
                 string state = n.Rank >= t.MaxRank ? Loc.T("最大段です。", "Maximum rank.")
                     : !unlocked ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
                     : _starFree < cost ? Loc.T("ポイントが足りません。", "Not enough points.")
                     : Loc.T("振れます。", "Available.");
-                var pair = PairCombos.ForBridge(t.Id);
+                var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
-                string description = pair == null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                string description = pair == null || t.Mechanism != null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
                 if (t.IsChoice)
                 {
-                    description = t.Describe();
-                    description += n.Choice >= 0
-                        ? Loc.T($"\n選択中：{n.Choice + 1} — ", $"\nChosen: {n.Choice + 1} — ") + t.Choices[n.Choice].Name
-                        : Loc.T("\n未選択。振るときに効果を選びます。", "\nNo option chosen. Select an effect when allocating.");
-                    condition += Loc.T("\n取得済みの選択の星を左クリックすると無料で切り替えます（遠征外のみ）。",
-                        "\nLeft-click an allocated choice to switch for free (outside expeditions only).");
+                    description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
+                    for (int optionIndex = 0; optionIndex < 2; optionIndex++)
+                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionLabel(t, optionIndex, n.Choice);
+                    condition += Loc.T("\n左クリックで選択パネルを開きます。切り替えは無料（遠征外のみ）。",
+                        "\nLeft-click to open the option panel. Switching is free outside expeditions.");
                 }
-                n.SearchDescription = description;
+                n.SearchDescription = StarMapPresentation.MechanismLabel(t) + "\n" + description;
                 if (pair != null)
                 {
                     description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
                         + Loc.T("を装着", " equipped")
                         + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB)
                         + Loc.T("を装着", " equipped");
-                    condition += Loc.T("\n合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
-                        "\nThe combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped.");
+                    condition += pair.AuthoredDefinition != null
+                        ? Loc.T("\n橋と指定された両端の星を取得し、両方の記憶を装着すると有効。",
+                            "\nRequires this bridge, its specified endpoint stars and both memories equipped.")
+                        : Loc.T("\n合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
+                            "\nThe combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped.");
                 }
-                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n" + description
-                    + Loc.T($"\n費用：1段 {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} ポイント",
-                        $"\nCost: {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} points per rank")
+                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n" + StarMapPresentation.MechanismLabel(t)
+                    + "\n" + description
+                    + Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}",
+                        $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}")
                     + "\n" + condition + "\n" + state
-                    + Loc.T("\n左クリック：1段振る　右クリック：1段外す\n残りの星が始まりにつながる場合だけ外せます。",
-                        "\nLeft click: allocate one rank. Right click: refund one rank.\nRefunds require all remaining stars to stay connected to the start.");
+                    + (t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く　右クリック：1段外す",
+                        "\nLeft click: open the option panel. Right click: refund one rank.")
+                        : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
+                            "\nLeft click: allocate one rank. Right click: refund one rank."))
+                    + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
+                        "\nRefunds require all remaining stars to stay connected to the start.");
             }
             _starSearchDirty = true;
         }
@@ -2127,10 +2170,12 @@ namespace SodRpg.Mod
                 _starNeedsFit = true;
                 CancelStarDrag();
             }
+            if (GUILayout.Button(Loc.T("始まりに戻る", "Back to start"), _st.Button))
+                StarJumpTo(_starLayout.StartIndex);
             bool wasOpen = _starSumOpen;
             _starSumOpen = GUILayout.Toggle(_starSumOpen, Loc.T("取得した効果", "Acquired effects"), _st.Button);
             if (_starSumOpen != wasOpen) { _starSumDirty = true; if (!_starSumOpen) StarSumSetHover(-1); CancelStarDrag(); }
-            GUI.enabled = _s.CanEditTalents;
+            GUI.enabled = _s.CanEditTalents && p.Run == null;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
             {
                 Rules.ResetTalents(p, hero);
@@ -2142,15 +2187,17 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             GUILayout.Label(_starProgress, _st.Small);
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
-            if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+            if (!_s.CanEditTalents || p.Run != null) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
             DrawKeystoneBar(p, hero);
             DrawStarChoicePicker(p, hero);
             StarDrawSearch();
+            DrawStarRegionLegend();
             GUILayout.Label(Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　"
                     + "<color=#cc8cff>紫の大きな星＝刻印</color>　<color=#73e6f2>水色＝合わせ技</color>　<color=#ffc952>金＝取得済み</color>",
                 "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   "
                     + "<color=#cc8cff>Large purple = keystone</color>   <color=#73e6f2>Cyan = combo</color>   <color=#ffc952>Gold = acquired</color>"), _st.Small);
-            GUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
+            GUILayout.BeginHorizontal(StarHorizontalSize);
+            DrawStarClusterList();
             DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
             if (_starSumOpen) DrawStarSummaryPanel(p, hero);
             GUILayout.EndHorizontal();
@@ -2182,8 +2229,25 @@ namespace SodRpg.Mod
 
         private void StarSumAddLine(StarSummaryLine line, Dictionary<string, int> indexOf)
         {
+            if (line.StarIds.Count == 1 && indexOf.TryGetValue(line.StarIds[0], out int typedIndex)
+                && _starLayout.Nodes[typedIndex].Talent.Mechanism != null)
+            {
+                var node = _starNodes[typedIndex];
+                string text = node.Name.text + "  " + node.RankLabel.text + "\n" + node.Description;
+                var pair = node.PairDefinition;
+                if (pair != null)
+                    text += "\n" + (node.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA) + Loc.T("を装着", " equipped")
+                        + "\n" + (node.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB) + Loc.T("を装着", " equipped");
+                StarSumAddNode(typedIndex, text);
+                return;
+            }
             var nodes = new List<int>(line.StarIds.Count);
-            foreach (string id in line.StarIds) if (indexOf.TryGetValue(id, out int i)) nodes.Add(i);
+            foreach (string id in line.StarIds)
+            {
+                if (!indexOf.TryGetValue(id, out int i))
+                    throw new InvalidOperationException("Acquired effect references a missing star: " + id);
+                nodes.Add(i);
+            }
             var e = new StarSumEntry { Nodes = nodes.ToArray() };
             e.Content.text = line.Text;
             _starSumEntries.Add(e);
@@ -2196,6 +2260,7 @@ namespace SodRpg.Mod
             _starSumHover = -1;
             _starSumDirty = false;
             _starSumEntries.Clear();
+            _starSumWidth = -1f;
             bool matching = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             var marks = matching ? LinkMarks() : null;
             var sum = StarSummary.Compute(p, hero, marks);
@@ -2203,8 +2268,13 @@ namespace SodRpg.Mod
             for (int i = 0; i < _starLayout.Nodes.Count; i++)
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
             _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
-            if (sum.IsEmpty) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
-            StarSumAdd(sum.Keystone, indexOf, Loc.T("刻印", "Keystone"));
+            if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
+            for (int i = 0; i < _starNodes.Length; i++)
+                if (_starNodes[i].Allocated && _starNodes[i].Keystone)
+                {
+                    StarSumAddTitle(Loc.T("刻印", "Keystone"));
+                    StarSumAddNode(i, _starNodes[i].Name.text + "\n" + _starNodes[i].Description);
+                }
             StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats"));
             StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers"));
             if (sum.Memories.Count > 0)
@@ -2216,7 +2286,24 @@ namespace SodRpg.Mod
                     foreach (var line in g.Lines) StarSumAddLine(line, indexOf);
                 }
             }
-            StarSumAdd(sum.Choices, indexOf, Loc.T("選択の星", "Choice stars"));
+            bool choiceTitle = false, mechanismTitle = false;
+            for (int i = 0; i < _starNodes.Length; i++)
+            {
+                var t = _starLayout.Nodes[i].Talent;
+                var n = _starNodes[i];
+                if (t == null || !n.Allocated || n.Keystone) continue;
+                if (t.IsChoice)
+                {
+                    if (!choiceTitle) { StarSumAddTitle(Loc.T("選択の星", "Choice stars")); choiceTitle = true; }
+                    StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n"
+                        + StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank));
+                }
+                else if (t.Mechanism != null && n.PairDefinition == null)
+                {
+                    if (!mechanismTitle) { StarSumAddTitle(Loc.T("仕掛けの効果", "Mechanism effects")); mechanismTitle = true; }
+                    StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n" + n.Description);
+                }
+            }
         }
 
         private void DrawStarSummaryPanel(Profile p, string hero)
@@ -2229,48 +2316,51 @@ namespace SodRpg.Mod
             if (_starSumDirty && Event.current.type == EventType.Layout) StarSumRebuild(p, hero);
             GUILayout.BeginVertical(_st.Panel, StarSumWidth);
             GUILayout.Label(_starSumHeader, _st.Label);
-            _starSumScroll = GUILayout.BeginScrollView(_starSumScroll);
+            Rect area = GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize);
             int hover = -1;
             bool repaint = Event.current.type == EventType.Repaint;
-            for (int i = 0; i < _starSumEntries.Count; i++)
+            if (Event.current.type != EventType.Layout)
             {
-                var e = _starSumEntries[i];
-                GUILayout.Label(e.Content, e.Title ? _starSumTitle : _starSumLine);
-                if (repaint && !e.Title && e.Nodes != null && e.Nodes.Length > 0
-                    && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) hover = i;
+                float width = Mathf.Max(1, area.width - 18);
+                if (_starSumWidth != width)
+                {
+                    _starSumWidth = width;
+                    _starSumHeight = 0;
+                    for (int i = 0; i < _starSumEntries.Count; i++)
+                    {
+                        var entry = _starSumEntries[i];
+                        entry.Y = _starSumHeight;
+                        entry.Height = (entry.Title ? _starSumTitle : _starSumLine).CalcHeight(entry.Content, width) + 4;
+                        _starSumHeight += entry.Height;
+                    }
+                }
+                _starSumScroll = GUI.BeginScrollView(area, _starSumScroll, new Rect(0, 0, width, _starSumHeight));
+                try
+                {
+                    // Binary-search the first visible row; draw only the viewport's rows.
+                    int lo = 0, hi = _starSumEntries.Count;
+                    while (lo < hi)
+                    {
+                        int mid = lo + (hi - lo) / 2;
+                        var entry = _starSumEntries[mid];
+                        if (entry.Y + entry.Height < _starSumScroll.y) lo = mid + 1;
+                        else hi = mid;
+                    }
+                    for (int i = lo; i < _starSumEntries.Count; i++)
+                    {
+                        var entry = _starSumEntries[i];
+                        if (entry.Y > _starSumScroll.y + area.height) break;
+                        var row = new Rect(0, entry.Y, width, entry.Height);
+                        GUI.Label(row, entry.Content, entry.Title ? _starSumTitle : _starSumLine);
+                        if (repaint && !entry.Title && row.Contains(Event.current.mousePosition)) hover = i;
+                    }
+                }
+                finally { GUI.EndScrollView(); }
             }
-            GUILayout.EndScrollView();
             GUILayout.EndVertical();
             if (repaint) StarSumSetHover(hover);
         }
 
-        private void DrawStarChoicePicker(Profile p, string hero)
-        {
-            if (_starChoiceId == null) return;
-            if (!Content.TryGetTalent(hero, _starChoiceId, out var t) || t.HeroKey != hero || !t.IsChoice)
-            {
-                _starChoiceId = null;
-                return;
-            }
-            GUILayout.Label(t.Name + Loc.T("：効果を選んで振る", ": select an effect to allocate"), _st.Label);
-            GUI.enabled = _s.CanEditTalents && p.Run == null;
-            for (int i = 0; i < t.Choices.Count; i++)
-                if (GUILayout.Button(t.Choices[i].Name + "\n" + t.Choices[i].Describe(), _st.Button))
-                {
-                    try
-                    {
-                        Rules.AddTalentRank(p, hero, t.Id, i);
-                        _starChoiceId = null;
-                        _starDirty = true;
-                        _s.MarkDirty(true);
-                    }
-                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                    GUIUtility.ExitGUI();
-                }
-            GUI.enabled = true;
-            if (GUILayout.Button(Loc.T("選択を閉じる", "Close selection"), _st.Button)) _starChoiceId = null;
-        }
         private void StarRefreshSearch()
         {
             if (!_starSearchDirty) return;
@@ -2381,23 +2471,23 @@ namespace SodRpg.Mod
                     int pressed = _starPressed;
                     CancelStarDrag();
                     e.Use();
-                    if (!_starMoved && inside && hover == pressed && pressed >= 0 && _starMouseButton < 2 && _s.CanEditTalents)
+                    if (!_starMoved && inside && hover == pressed && pressed >= 0 && _starMouseButton < 2)
                     {
                         var t = _starLayout.Nodes[pressed].Talent;
                         if (t != null)
                         {
+                            if (_starMouseButton == 0 && t.IsChoice)
+                            {
+                                _starChoiceId = t.Id;
+                                GUIUtility.ExitGUI();
+                            }
+                            if (!_s.CanEditTalents || p.Run != null) return;
                             try
                             {
                                 if (_starMouseButton == 1) Rules.RemoveTalentRank(p, hero, t.Id);
                                 else if (t.IsKeystone)
                                 {
                                     if (!_starNodes[pressed].Allocated) Rules.SetKeystone(p, hero, t.Id);
-                                }
-                                else if (t.IsChoice)
-                                {
-                                    if (_starNodes[pressed].Allocated)
-                                        Rules.SetTalentChoice(p, hero, t.Id, 1 - p.Hero(hero).TalentChoices[t.Id]);
-                                    else _starChoiceId = t.Id;
                                 }
                                 else Rules.AddTalentRank(p, hero, t.Id);
                                 _starDirty = true;
@@ -2458,6 +2548,8 @@ namespace SodRpg.Mod
                         }
                     }
                     else if (rect.width >= 24f) GUI.Label(rect, n.RankLabel, _starRankStyle);
+                    if (n.Region.HasValue && rect.width >= 20f)
+                        StarDrawDisc(disc, new Rect(rect.xMax - 7f, rect.y - 3f, 8f, 8f), StarRegionColor(n.Region.Value));
                     // Hover takes priority over another label in the same cell.
                     if (i == hover || (_starView.Named[i]
                         && (hover < 0 || _starView.LabelCells[i] != _starView.LabelCells[hover])))
@@ -2554,7 +2646,7 @@ namespace SodRpg.Mod
                 if (pressed)
                 {
                     StarJumpTo(index);
-                    if (!chosen && unlocked && _s.CanEditTalents)
+                    if (!chosen && unlocked && _s.CanEditTalents && p.Run == null)
                     {
                         try
                         {

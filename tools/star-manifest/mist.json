@@ -28223,8 +28223,22 @@
       "keystone": {
         "upside": "EGに帰属するEchoのValueを2倍",
         "downside": "EG本体の追加打撃ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_AstridsMasterpieceEnGarde",
+            "effect": "Echo",
+            "field": "Value",
+            "pct": 100
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_D_AstridsMasterpieceEnGarde",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28260,8 +28274,28 @@
       "keystone": {
         "upside": "PRに帰属するBurstのValueを2倍、半径+25%",
         "downside": "PR本体の追加打撃/爆発ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_AstridsMasterpiecePriorite",
+            "effect": "Burst",
+            "field": "Value",
+            "pct": 100
+          },
+          {
+            "memory": "St_D_AstridsMasterpiecePriorite",
+            "effect": "Burst",
+            "field": "Radius",
+            "pct": 25
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_D_AstridsMasterpiecePriorite",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28297,8 +28331,22 @@
       "keystone": {
         "upside": "FL本体ダメージ+50%（別乗算）",
         "downside": "FLからのEcho/Burst/Wound/Ricochet/ElementEdgeの追加ダメージ−50%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_Q_Fleche",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_Q_Fleche",
+            "effect": "Echo/Burst/Wound/Ricochet/ElementEdge",
+            "field": "Value",
+            "pct": -50
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28334,8 +28382,22 @@
       "keystone": {
         "upside": "LUの仕掛けValue+60%（通常のBとは加算）",
         "downside": "LU本体ダメージ×80%（Dを加算した後の別乗算）",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_Q_Lunge",
+            "effect": "Burst/Echo/Element/ElementEdge/Expose/Heal/Primed/Recharge/Ricochet/Sap/Shield/Wound",
+            "field": "Value",
+            "pct": 60
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_Q_Lunge",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28371,8 +28433,22 @@
       "keystone": {
         "upside": "PA由来EchoのValueを2倍",
         "downside": "PA本体の反撃ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_R_Parry",
+            "effect": "Echo",
+            "field": "Value",
+            "pct": 100
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_R_Parry",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28408,8 +28484,28 @@
       "keystone": {
         "upside": "UD由来EchoのValueを2倍、Woundの総量+50%",
         "downside": "UD本体ダメージ−20%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_R_UnbreakableDetermination",
+            "effect": "Echo",
+            "field": "Value",
+            "pct": 100
+          },
+          {
+            "memory": "St_R_UnbreakableDetermination",
+            "effect": "Wound",
+            "field": "Value",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "memory": "St_R_UnbreakableDetermination",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28450,8 +28546,20 @@
       "keystone": {
         "upside": "星図の Heal Arg1 を2倍",
         "downside": "自分の本体記憶ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "effect": "Heal",
+            "field": "AllyValue",
+            "pct": 100
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28492,8 +28600,20 @@
       "keystone": {
         "upside": "Woundの持続3→6秒、総ダメージ2倍（毎秒量を維持）",
         "downside": "自分の本体記憶ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "effect": "Wound",
+            "field": "Duration",
+            "to": 6
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "mechanisms": [
         "C01",

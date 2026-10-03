@@ -26705,8 +26705,21 @@
       "keystone": {
         "upside": "一歩一殺へ帰属する本体通常攻撃ダメージ×145%",
         "downside": "Q/Rの本体ダメージ×80%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_TheKillingFlow",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": 45
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26742,8 +26755,21 @@
       "keystone": {
         "upside": "風の傷の75%AD追加斬りの最終ダメージ×170%",
         "downside": "通常攻撃の主ダメージ×80%（風の傷の追加斬りは代償対象外）",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "memory": "St_D_ScarOfTheWind",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": 70
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "OnBasicAttack",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26794,7 +26820,14 @@
             }
           }
         ],
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_Q_Laceration",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -25
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26846,7 +26879,14 @@
             }
           }
         ],
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_Q_DeathMark",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -25
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26898,7 +26938,14 @@
             }
           }
         ],
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_R_AnnihilationStance",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -20
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26950,7 +26997,14 @@
             }
           }
         ],
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "memory": "St_R_Deception",
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -25
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -26988,8 +27042,20 @@
       "keystone": {
         "upside": "この星図のElement Valueを×150%（闇5・光5・冷気1は保持、火のみ上限なし）",
         "downside": "星図のBurst/Echo/Wound/ElementEdge/Primedの生成ダメージ×70%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "effect": "Element",
+            "field": "Value",
+            "pct": 50
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "Burst/Echo/Wound/ElementEdge/Primed",
+            "field": "Damage",
+            "pct": -30
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -27025,8 +27091,20 @@
       "keystone": {
         "upside": "星図Woundの毎秒ダメージ×200%（期間は増やさず同敵1傷の規則も維持）",
         "downside": "Q/Rの本体ダメージ×85%",
-        "upsideSpec": null,
-        "downsideSpec": null
+        "upsideSpec": [
+          {
+            "effect": "Wound",
+            "field": "Value",
+            "pct": 100
+          }
+        ],
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "mechanisms": [
         "C01",
@@ -28080,7 +28158,13 @@
         "upside": "Power.Umbra100：通常攻撃で闇1個、会心ならさらに1個",
         "downside": "自分のQ/Rの本体ダメージ×90%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -10
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -28110,7 +28194,13 @@
         "upside": "Power.ShadowStep60：回避・ダッシュ・瞬間移動後3秒以内の次の通常攻撃へ高い方のAD/AP60%を追加",
         "downside": "自分のQ/Rの本体ダメージ×90%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -10
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

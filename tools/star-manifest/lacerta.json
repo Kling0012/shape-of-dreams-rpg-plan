@@ -27052,7 +27052,14 @@
         "upside": "既存Power.Ember60を保持。通常攻撃で60%相当の追加着火",
         "downside": "H/I/Q/Sの直接ダメージ-12%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectDamage",
+            "field": "Damage",
+            "pct": -12,
+            "scope": "HIQS"
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -27081,7 +27088,14 @@
         "upside": "既存Power.OpeningStrike70を保持。HP90%以上への初手基本攻撃を強化",
         "downside": "H/I/Q/Sの直接ダメージ-15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectDamage",
+            "field": "Damage",
+            "pct": -15,
+            "scope": "HIQS"
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

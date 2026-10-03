@@ -20421,11 +20421,7 @@
             "target": "St_Q_SylvanCall",
             "everyN": 2,
             "valuesByRank": [
-              3,
-              6,
-              9,
-              12,
-              15
+              3
             ],
             "replaces": "h.nachia.ring.renewal"
           },
@@ -20447,7 +20443,7 @@
       "rankCost": 1,
       "nameJa": "循環と呼応の連携",
       "nameEn": "Teamwork of Cycle and Call",
-      "notes": "B: 中心を2発ごと3/6/9/12/15%へ置換(上限2、valuesByRank)。 maxCharge=2（チャージ上限）。"
+      "notes": "B: 中心を2発ごと3/6/9/12/15%へ置換(上限2、valuesByRank)。 maxCharge=2（チャージ上限）。 生成器は選択肢星のmaxRank(1)へvaluesByRankの長さを束縛するため、置換表はこの星の全支払段=1段分(3)のみ保持。中心5段の6/9/12/15%はrank1Choiceからは運べず、スキーマ/生成器の判断要。"
     },
     {
       "id": "nachia.key.sheltering-pack",
@@ -20547,10 +20543,10 @@
         ],
         "downsideSpec": [
           {
+            "memory": "St_R_NaturesWhisper",
             "effect": "RechargeTarget",
             "field": "Enabled",
-            "to": 0,
-            "scope": "received from 囁 route / bridges sourced by 囁"
+            "to": 0
           }
         ]
       },
@@ -20614,9 +20610,8 @@
           {
             "memory": "St_Q_MoonlightPact",
             "effect": "Element",
-            "field": "Enabled",
-            "to": 0,
-            "scope": "area -> single target"
+            "field": "ExtraTargets",
+            "to": 1
           }
         ]
       },
@@ -21939,7 +21934,13 @@
         "upside": "Power.Resonance=8を保持。10m内の味方旅人へ攻撃力・魔力+8%、本人も+8%、ソロ本人+4%",
         "downside": "本人に帰属する非召喚の直接記憶ダメージ全体を D後=D前×0.85 にする（追加MD部分だけの減算ではない）",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

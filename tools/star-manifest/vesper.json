@@ -28361,7 +28361,13 @@
         "upside": "既存 Power.Retaliation=25（被弾後3秒、攻撃力・魔力+25%、重ならず更新）を維持",
         "downside": "装備Q/Rの直接ダメージ-10%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -10
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -28390,7 +28396,13 @@
         "upside": "既存 Power.Frenzy=4（6m内の敵1体につき攻撃速度+4%、8体で+32%まで）を維持",
         "downside": "装備Q/Rの直接ダメージ-15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "DirectQR",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
