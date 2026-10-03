@@ -35,6 +35,13 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 - **#19 3Dモデルの導入**：環境とAPIの互換性、同じゲームの前例、方式A（実行時にGLBを読む）と方式Bの比較、方式Aのアニメーション・差し替え地点・協力同期の調査をまとめました。実装はまだです。 / **#19**: research only (environment, API compatibility, precedents, approach A vs B, animation and sync for approach A); not implemented. [第1段](docs/specs/issue19-model-import-research.md) / [第2段](docs/specs/issue19-stage2-approach-a.md)
 
+## v1.30.3 — 協力プレイで参加者に報酬が入らない不具合の修正（2026-10-03・Pre）
+
+- **協力プレイの参加者（ゲスト）に、確保地点が出ず、遺物も星の経験も入らない不具合を直しました。** 参加者の PC ではゲーム本体のゾーン情報がホストより少し遅れて届くことがあり、その間に遠征が始まるとゾーン番号が「不明」のまま記録され、ホストから届く遠征の決まりを適用できずにいました。ゾーン番号が分かってから遠征を始め、すでに始まっていた場合も正しい番号に直します。 / **Fixed co-op participants getting no secure point, relics or star XP.** A participant could start the run before the game's zone info arrived, recording an unknown zone and never applying the host's run rules.
+- **星図のポイントが301〜304点になると、装備画面が開かず装備の効果も送れなくなる不具合を直しました**（図鑑のボーナスを含めた上限は304点）。 / Fixed the gear tab and build sending failing when star points reached 301–304 (codex bonus included).
+- 協力プレイは v1.30.2 のホストとも遊べます（通信の版12のまま）。直るのは参加者側なので、**参加する人は v1.30.3 にしてください**。保存形式は3のままです。 / Compatible with v1.30.2 hosts (protocol 12); participants should update. Save format 3 unchanged.
+- 実機での協力プレイの確認はまだです。Core の試験で、ゾーン番号が遅れて分かった場合に報酬が払われることを確かめています。 / Not yet verified in live co-op; covered by a Core regression test.
+
 ## v1.30.2 — 装備の画像・詳しい図鑑・見やすい星図・不具合の修正（2026-10-03・Pre）
 
 - **装備の画像が足りなかった不具合を直しました**：v1.30.1 までは、v1.29 で増えた装備の土台約180種に画像が付いていませんでした。土台360種すべてに画像が付きます。夢の出来事13種と星図の星の記号30種の画像も追加しました。 / **Fixed missing gear images**: the ~180 bases added in v1.29 had no icon in v1.30.1; all 360 bases now have one, plus 13 dream-event illustrations and 30 star-map symbols.

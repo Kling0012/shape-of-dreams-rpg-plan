@@ -220,6 +220,29 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Participant_that_saw_the_run_before_its_zone_adopts_the_zone_and_receives_rewards()
+        {
+            // v1.30.3: the participant's run began while its ZoneManager was not yet known (zone -1).
+            var progress = new RunChoiceProgress();
+            progress.BeginRun("run", -1);
+            var host = NewProfile(atSecurePoint: false);
+            Assert.True(progress.Receive(Snapshot(host, 0, 1)));
+            var client = NewProfile(atSecurePoint: false);
+            Assert.False(progress.ApplyCurrent(client, 0));
+            progress.BeginRun("run", 0);
+            Assert.Equal(0, progress.ZoneIndex);
+            Assert.True(progress.ApplyCurrent(client, 0));
+            progress.Rewards.Add(new PendingRunKill("run", 0, 1, MonsterTier.Normal, 8, NightmareAffix.None, null, "hero"));
+            Assert.Equal(1, progress.FlushRewards(client, 0, false, _ => { }, kill =>
+                Rules.OnKill(client, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
+                    variantId: kill.VariantId, roomIndex: kill.RoomIndex)));
+            Assert.Equal(1, client.Run.Kills);
+            // A known zone is never overwritten by a later call.
+            progress.BeginRun("run", 3);
+            Assert.Equal(0, progress.ZoneIndex);
+        }
+
+        [Fact]
         public void Snapshot_received_before_local_run_start_is_available_for_its_first_pending_reward()
         {
             var progress = new RunChoiceProgress();
