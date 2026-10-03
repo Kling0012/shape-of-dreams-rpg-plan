@@ -18,7 +18,7 @@ namespace SodRpg.Mod
     /// 各PCで動く処理。自分のプロフィールを読み書きし、撃破・ゾーン移動・勝敗をゲームから受け取って
     /// ルール（SodRpg.Core.Game.Rules）へ流す。協力時も報酬は各自が自分の分だけ抽選して自分の保存へ書く。
     /// </summary>
-    internal sealed class ClientSession
+    internal sealed partial class ClientSession
     {
         private readonly ProfileStore _store;
         private readonly Action<GameEvent> _notify;
@@ -36,6 +36,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgePressureMsg> _onPressure;
         private readonly Action<DreamforgeNightmareMsg> _onNightmare;
         private readonly Action<DreamforgeVariantMsg> _onVariant;
+        private readonly Action<DreamforgeMonsterCueMsg> _onMonsterCue;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly Action<PendingTrade> _onSalvageExpired;
         private readonly TradeLedger _trades = new TradeLedger();
@@ -113,6 +114,7 @@ namespace SodRpg.Mod
             _onPressure = OnPressure;
             _onNightmare = OnNightmare;
             _onVariant = OnVariant;
+            _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onSalvageExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
@@ -194,6 +196,7 @@ namespace SodRpg.Mod
             {
                 Wire();
                 UpdateVariantVisuals();
+                UpdateMonsterCues();
                 TrackRun();
                 if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) > 0)
                 {
@@ -272,6 +275,7 @@ namespace SodRpg.Mod
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                 }
                 _clientRpcOn = actor;
@@ -284,6 +288,7 @@ namespace SodRpg.Mod
                 Nightmare.Clear();
                 NightmareSeenAt.Clear();
                 ClearVariants();
+                ClearMonsterCues();
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
@@ -296,6 +301,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
@@ -329,6 +335,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                 }
             }
@@ -345,6 +352,7 @@ namespace SodRpg.Mod
             Nightmare.Clear();
             NightmareSeenAt.Clear();
             ClearVariants();
+            ClearMonsterCues();
             _loggedVariantVisualFailure = false;
         }
 
@@ -430,6 +438,7 @@ namespace SodRpg.Mod
                 Nightmare.Remove(m.netId);
                 NightmareSeenAt.Remove(m.netId);
                 RemoveVariant(m.netId);
+                RemoveMonsterCue(m.netId);
                 if (!RunActive) return;
                 // ゲーム本体が報酬を出さない敵（演出・召喚・ハンターの追加敵など）は対象外（PickupManager と同じ判定）。
                 if (m.disableLoot) return;

@@ -54,14 +54,13 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Monster_stats_always_include_base_health_and_affix_effects()
+        public void Monster_stats_include_common_health_and_regeneration_when_selected()
         {
             foreach (var a in Nightmares.AllAffixes)
             {
                 var stats = Nightmares.MonsterStats(a, out float regen);
                 Assert.Contains(stats, s => s.Stat == Stat.MaxHealthPct && s.Value == Nightmares.BaseHealthPct);
                 if (a == NightmareAffix.Regenerating) Assert.True(regen > 0);
-                else Assert.True(stats.Count > 1, a.ToString());
             }
         }
 

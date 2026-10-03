@@ -15,7 +15,7 @@ namespace SodRpg.Mod
     /// 固有効果を戦闘イベントから発動する。効果の計算は SodRpg.Core の PowerRuntime が行い、ここはゲームへの作用だけを持つ。
     /// 能力値の変更はホストだけが行う（Mirror の権限モデル）。
     /// </summary>
-    internal sealed class HostAuthority
+    internal sealed partial class HostAuthority
     {
         private sealed class ReceivedBuild
         {
@@ -87,6 +87,8 @@ namespace SodRpg.Mod
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
             public bool Sunders;
+            public MonsterBehaviorRuntime Behavior;
+            public Se_GenericShield_OneShot BehaviorShield;
         }
 
         private sealed class SunderRuntime
@@ -236,6 +238,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
             ProcessSpawns();
             PruneMonsters(now);
+            TickMonsterBehaviors(now);
             ExpireSunders(now);
             if (now >= _nextRegen)
             {
@@ -318,6 +321,8 @@ namespace SodRpg.Mod
                     continue;
                 }
                 _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
+                if (_monsters.TryGetValue(kv.Key, out var nightmareRuntime))
+                    SendMonsterBehaviorCue(nightmareRuntime, true);
             }
             foreach (var rt in _monsters.Values)
             {
@@ -329,6 +334,7 @@ namespace SodRpg.Mod
                     continue;
                 }
                 _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = rt.Variant.Id });
+                SendMonsterBehaviorCue(rt, true);
             }
             foreach (var m in _nightmareScratch) RemoveMonster(m);
         }
@@ -436,6 +442,7 @@ namespace SodRpg.Mod
         {
             var m = rt.Monster;
             if (m == null) return;
+            RemoveMonsterBehavior(rt);
             if (rt.PressureApplied)
             {
                 try
@@ -712,7 +719,8 @@ namespace SodRpg.Mod
             var rt = _monsters[m];
             rt.SpecialBonus = ToMonsterStatBonus(Nightmares.MonsterStats(affix, out float regen));
             m.Status.AddStatBonus(rt.SpecialBonus);
-            AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
+            if (!Nightmares.HasBehavior(affix) || (affix & LegacyNightmareAffixes) != 0)
+                AttachMirageSkin(m, Nightmares.Count(affix) >= 2);
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
@@ -725,7 +733,8 @@ namespace SodRpg.Mod
             rt.Variant = variant;
             rt.SpecialBonus = ToMonsterStatBonus(variant.Stats);
             m.Status.AddStatBonus(rt.SpecialBonus);
-            AttachMirageSkin(m, Nightmares.Count(variant.Affixes) >= 2);
+            if (!Variants.IsExpanded(variant))
+                AttachMirageSkin(m, Nightmares.Count(variant.Affixes) >= 2);
             m.Status.CalculateStatsIfDirty();
             float regen = 0f;
             if ((variant.Affixes & NightmareAffix.Regenerating) != 0)
@@ -775,6 +784,7 @@ namespace SodRpg.Mod
                     3600f, false, default(ReactionChain));
                 if (rt.Ward != null) LogAffixTrigger(NightmareAffix.Warded, "shield granted");
             }
+            ApplyMonsterBehavior(rt, affix);
         }
 
         private List<MirageSkinEffect> _mirageTier0, _mirageTier1;

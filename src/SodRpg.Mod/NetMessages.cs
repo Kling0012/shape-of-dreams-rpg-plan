@@ -46,6 +46,14 @@ namespace SodRpg.Mod
         public string variantId;
     }
 
+    /// <summary>ホスト → 全員：現在の敵側の予告。0なし、1障壁予告、2守り、3隙/減速、4回復。</summary>
+    [Serializable]
+    public class DreamforgeMonsterCueMsg
+    {
+        public uint netId;
+        public int cue;
+    }
+
     /// <summary>クライアント → ホスト：悪夢の契約の代償として、自分のキャラへ本体の呪いを付けてほしい。</summary>
     [Serializable]
     public class DreamforgeCurseMsg

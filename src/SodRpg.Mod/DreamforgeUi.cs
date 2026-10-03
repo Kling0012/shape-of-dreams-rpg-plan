@@ -877,6 +877,12 @@ namespace SodRpg.Mod
                 $"From delve {Variants.MinDepth}, base-game enemies sometimes appear as stronger dream variants (one per room). They drop loot a tier higher."), _st.Small);
             foreach (var v in Variants.All)
                 GUILayout.Label(UiStyles.Colored(v.Name.ToString(), "#ffb347") + "  <color=#aab>" + v.Description + "</color>", _st.Small);
+            GUILayout.Label(Loc.T("悪夢の性質", "Nightmare affixes"), _st.Header);
+            GUILayout.Label(Loc.T("金色は障壁の予告、琥珀色は条件付きの守り、青色は反撃の好機または敵の減速、緑色は傷繕いを示します。距離や向きによる守りは、性質の説明を確かめてください。",
+                "Gold warns of a shield; amber marks a conditional guard; blue marks a punish window or a slowed enemy; green marks recuperation. Read each affix for distance and facing conditions."), _st.Small);
+            foreach (var affix in Nightmares.AllAffixes)
+                GUILayout.Label(UiStyles.Colored(Nightmares.AffixName(affix), "#ff6ad5") + "  <color=#aab>"
+                    + Nightmares.AffixDescription(affix) + "</color>", _st.Small);
         }
 
         /// <summary>各タブの先頭に出す「ここでできること」。</summary>

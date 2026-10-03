@@ -12,6 +12,8 @@ namespace SodRpg.Core.Game
         HitCap = 1 << 0,
         /// <summary>倒れると周りの旅人に、最大HPの DeathBurstPct% のダメージ。</summary>
         DeathBurst = 1 << 1,
+        /// <summary>HP70%・40%を下回ると3秒間、被ダメージ+20%。新しい守りより優先する。</summary>
+        PhaseOpening = 1 << 2,
     }
 
     /// <summary>
@@ -151,6 +153,111 @@ namespace SodRpg.Core.Game
                 Stats = new[] { S(Stat.MaxHealthPct, 200), S(Stat.MoveSpeedPct, 30) },
                 R = 1f, G = 0.85f, B = 0.3f, Scale = 1.2f, ShardBonusPct = 300,
             },
+            new VariantDef
+            {
+                Id = "var.mist_spitter", MonsterType = "Mon_Forest_SpiderSpitter",
+                Name = new Txt("霞吐き蜘蛛", "Mist Spitter"),
+                Description = new Txt("6mより遠い攻撃を30%軽減。吐き出しと後退を避けて6m以内へ。", "Reduces hits from beyond 6m by 30%; dodge its spit and backdash to close within 6m."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Veiled, R = 0.65f, G = 0.85f, B = 0.7f, Scale = 1.1f,
+            },
+            new VariantDef
+            {
+                Id = "var.brood_warden", MonsterType = "Mon_Forest_SpiderWarrior",
+                Name = new Txt("群巣の番蜘蛛", "Brood Warden"),
+                Description = new Txt("同区画5m以内の活動中の味方で被ダメージ-30%。2秒予告後一度だけ最寄りの非ボス味方にHP15%の障壁を6秒（重複不可）。召喚虫を倒すか引き離す。", "An awake ally within 5m in the same section grants 30% reduction. After a 2s warning, once shields the nearest nonboss ally for 15% HP for 6s (nonstacking). Clear its summoned scarabs or separate them."),
+                Stats = new[] { S(Stat.MaxHealthPct, 70) },
+                Affixes = NightmareAffix.Packbound | NightmareAffix.Beacon, R = 0.45f, G = 0.7f, B = 0.25f, Scale = 1.2f,
+            },
+            new VariantDef
+            {
+                Id = "var.hollow_elemental", MonsterType = "Mon_DarkCave_DarkElemental",
+                Name = new Txt("空洞の影精", "Hollow Shade"),
+                Description = new Txt("3m未満の攻撃を30%軽減。弾幕と転移を見て3m以上から攻める。", "Reduces hits from within 3m by 30%; kite its barrage and teleport, then strike from at least 3m."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Hollow, R = 0.4f, G = 0.3f, B = 0.7f, Scale = 1.15f,
+            },
+            new VariantDef
+            {
+                Id = "var.flicker_olm", MonsterType = "Mon_DarkCave_NightOlm",
+                Name = new Txt("明滅する洞竜", "Flicker Olm"),
+                Description = new Txt("最初の2秒は無防備、以後3秒間30%軽減と3秒間無防備。光を見て開いた時に集中攻撃。", "Open for the first 2s, then cycles 3s of 30% reduction and 3s open. Watch its glow and burst in openings instead of blindly pursuing."),
+                Stats = new[] { S(Stat.MaxHealthPct, 50) },
+                Affixes = NightmareAffix.Pulsing, R = 0.3f, G = 0.8f, B = 0.8f, Scale = 1.1f,
+            },
+            new VariantDef
+            {
+                Id = "var.timorous_displacer", MonsterType = "Mon_Despair_Displacer",
+                Name = new Txt("臆病な跳躍獣", "Timorous Displacer"),
+                Description = new Txt("未被弾時は移動+20%、被弾後2秒は-15%。一撃を当てて転移先を追う。", "Moves 20% faster while unhit, but 15% slower for 2s after damage. Tag it, then pursue through its blink."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Skittish, R = 0.7f, G = 0.35f, B = 0.85f, Scale = 1.15f,
+            },
+            new VariantDef
+            {
+                Id = "var.overreaching_bug", MonsterType = "Mon_Despair_DreadBug",
+                Name = new Txt("大振りの恐虫", "Overreaching Dreadbug"),
+                Description = new Txt("詠唱中は30%軽減、攻撃発射後1.5秒は被ダメージ+20%。跳躍や打撃を避けて反撃。", "Reduces damage by 30% while channeling; takes 20% more for 1.5s after firing. Dodge its leap or strike, then punish recovery."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Committed, R = 0.8f, G = 0.4f, B = 0.45f, Scale = 1.2f,
+            },
+            new VariantDef
+            {
+                Id = "var.last_thaw", MonsterType = "Mon_SnowMountain_IceElemental",
+                Name = new Txt("薄氷の核", "Last Thaw"),
+                Description = new Txt("HP35%以下で2秒予告後、一度だけHP15%の障壁を6秒。予告中に集中攻撃するか殻を割る。", "At 35% HP, a 2s warning precedes a once-per-life 15% HP shield for 6s. Save burst for the warning or break its shell."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.LastStand, R = 0.7f, G = 0.9f, B = 1f, Scale = 1.1f,
+            },
+            new VariantDef
+            {
+                Id = "var.rime_sentinel", MonsterType = "Mon_SnowMountain_VikingWarrior",
+                Name = new Txt("霜盾の番兵", "Rime Sentinel"),
+                Description = new Txt("正面120度からの被ダメージを30%軽減。盾を避けて側面や背後へ回る。", "Reduces damage from its frontal 120-degree cone by 30%; flank its shield or strike from behind."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Facing, R = 0.45f, G = 0.7f, B = 0.95f, Scale = 1.15f,
+            },
+            new VariantDef
+            {
+                Id = "var.furnace_ram", MonsterType = "Mon_LavaLand_Magmadon",
+                Name = new Txt("炉殻の突進獣", "Furnace Ram"),
+                Description = new Txt("正面120度と詠唱中は30%軽減（合計上限40%）。発射後1.5秒は被ダメージ+20%が優先。突進を横へ避けて反撃。", "Frontal 120-degree hits and channeling each grant 30% reduction, capped at 40%. After firing, 1.5s of 20% extra damage overrides guards. Flank the charge and punish recovery."),
+                Stats = new[] { S(Stat.MaxHealthPct, 70) },
+                Affixes = NightmareAffix.Facing | NightmareAffix.Committed, R = 1f, G = 0.45f, B = 0.2f, Scale = 1.2f,
+            },
+            new VariantDef
+            {
+                Id = "var.ember_mender", MonsterType = "Mon_LavaLand_InfernoSpider",
+                Name = new Txt("熾火の繕い蜘蛛", "Ember Mender"),
+                Description = new Txt("4秒無傷なら毎秒HP1%回復、一生で10%まで。満タンでは消費しない。溶岩跳躍の合間に当て続ける。", "After 4s without damage heals 1% HP per second, capped at 10% per life with no budget spent at full HP. Keep landing hits between lava jumps."),
+                Stats = new[] { S(Stat.MaxHealthPct, 50) },
+                Affixes = NightmareAffix.Recuperating, R = 0.95f, G = 0.65f, B = 0.3f, Scale = 1.1f,
+            },
+            new VariantDef
+            {
+                Id = "var.mist_tiger", MonsterType = "Mon_Ink_Tiger",
+                Name = new Txt("霞走りの虎", "Mist Tiger"),
+                Description = new Txt("6mより遠い攻撃を30%軽減。移動+20%、被弾後2秒は-15%。6m以内へ寄り、一撃で遅くして影歩き前に追う。", "Reduces hits from beyond 6m by 30%; moves +20%, then -15% for 2s after damage. Close within 6m and tag it before shadow-walk."),
+                Stats = new[] { S(Stat.MaxHealthPct, 60) },
+                Affixes = NightmareAffix.Veiled | NightmareAffix.Skittish, R = 0.65f, G = 0.65f, B = 0.85f, Scale = 1.15f,
+            },
+            new VariantDef
+            {
+                Id = "var.lantern_seed", MonsterType = "Mon_Sky_StarSeed",
+                Name = new Txt("灯籠の星種", "Lantern Seed"),
+                Description = new Txt("3m未満の攻撃を30%軽減。2秒予告後、一度だけ同区画5m以内の最寄りの活動中の非ボス味方へHP15%の障壁を6秒（重複不可）。3〜5mから先に倒し、自爆を避ける。", "Reduces hits within 3m by 30%. After a 2s warning, once shields the nearest awake nonboss ally within 5m in the same section for 15% HP for 6s (nonstacking). Prioritize it from 3–5m and avoid its self-destruct."),
+                Stats = new[] { S(Stat.MaxHealthPct, 40) },
+                Affixes = NightmareAffix.Beacon | NightmareAffix.Hollow, R = 1f, G = 0.85f, B = 0.5f, Scale = 1.05f,
+            },
+            new VariantDef
+            {
+                Id = "var.eclipse_demon", MonsterType = "Mon_Forest_BossDemon",
+                Name = new Txt("月蝕の森魔", "Eclipse Demon"),
+                Description = new Txt("最初の2秒は無防備、以後3秒守り・3秒無防備。ボスの軽減上限20%。HP70%と40%を下回ると3秒間被ダメージ+20%が優先。攻撃を避け、節目に集中攻撃。", "Initially open for 2s, then cycles 3s guarded and 3s open; boss reduction caps at 20%. Crossing 70% and 40% HP overrides guards with 3s of 20% extra damage. Bank burst for these phases and evade its attacks."),
+                Stats = new[] { S(Stat.MaxHealthPct, 20) },
+                Affixes = NightmareAffix.Pulsing, Traits = VariantTrait.PhaseOpening,
+                R = 0.55f, G = 0.3f, B = 0.75f, Scale = 1.2f,
+            },
         };
 
         private static readonly Dictionary<string, VariantDef> ById = new Dictionary<string, VariantDef>();
@@ -168,6 +275,9 @@ namespace SodRpg.Core.Game
         public static VariantDef Get(string id) => id != null && ById.TryGetValue(id, out var v) ? v : null;
 
         public static VariantDef ForMonsterType(string typeName) => typeName != null && ByType.TryGetValue(typeName, out var v) ? v : null;
+
+        public static bool IsExpanded(VariantDef v) => v != null &&
+            (Nightmares.HasBehavior(v.Affixes) || (v.Traits & VariantTrait.PhaseOpening) != 0);
 
         /// <summary>変種になる確率。深度2で6%、深度1ごとに+2%。</summary>
         public static double Chance(int depth)

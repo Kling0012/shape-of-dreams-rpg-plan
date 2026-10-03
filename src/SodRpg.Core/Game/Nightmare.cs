@@ -28,6 +28,16 @@ namespace SodRpg.Core.Game
         Ravenous = 1 << 8,
         /// <summary>破甲：攻撃が当たると、相手の防御を4秒間 20 下げる（v1.24）</summary>
         Sundering = 1 << 9,
+        Veiled = 1 << 10,
+        Hollow = 1 << 11,
+        Facing = 1 << 12,
+        Packbound = 1 << 13,
+        Beacon = 1 << 14,
+        Pulsing = 1 << 15,
+        Committed = 1 << 16,
+        Skittish = 1 << 17,
+        Recuperating = 1 << 18,
+        LastStand = 1 << 19,
     }
 
     /// <summary>
@@ -44,6 +54,9 @@ namespace SodRpg.Core.Game
             NightmareAffix.Ironclad, NightmareAffix.Berserk, NightmareAffix.Colossal,
             NightmareAffix.Swift, NightmareAffix.Regenerating, NightmareAffix.Arcane,
             NightmareAffix.Warded, NightmareAffix.Thorned, NightmareAffix.Ravenous, NightmareAffix.Sundering,
+            NightmareAffix.Veiled, NightmareAffix.Hollow, NightmareAffix.Facing, NightmareAffix.Packbound,
+            NightmareAffix.Beacon, NightmareAffix.Pulsing, NightmareAffix.Committed, NightmareAffix.Skittish,
+            NightmareAffix.Recuperating, NightmareAffix.LastStand,
         };
 
         // ───── v1.24：敵側のつり合い ─────
@@ -114,8 +127,11 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < count && pool.Count > 0; i++)
             {
                 int k = rng.Range(0, pool.Count - 1);
-                result |= pool[k];
+                var selected = pool[k];
+                result |= selected;
                 pool.RemoveAt(k);
+                if (selected == NightmareAffix.Regenerating) pool.Remove(NightmareAffix.Recuperating);
+                else if (selected == NightmareAffix.Recuperating) pool.Remove(NightmareAffix.Regenerating);
             }
             return result;
         }
@@ -173,6 +189,46 @@ namespace SodRpg.Core.Game
                 case NightmareAffix.Thorned: return Loc.T("棘皮", "Thorned");
                 case NightmareAffix.Ravenous: return Loc.T("飢渇", "Ravenous");
                 case NightmareAffix.Sundering: return Loc.T("破甲", "Sundering");
+                case NightmareAffix.Veiled: return Loc.T("霞衣", "Veiled");
+                case NightmareAffix.Hollow: return Loc.T("空洞", "Hollow");
+                case NightmareAffix.Facing: return Loc.T("正面守り", "Facing");
+                case NightmareAffix.Packbound: return Loc.T("群れの守り", "Packbound");
+                case NightmareAffix.Beacon: return Loc.T("灯台", "Beacon");
+                case NightmareAffix.Pulsing: return Loc.T("明滅", "Pulsing");
+                case NightmareAffix.Committed: return Loc.T("大振り", "Committed");
+                case NightmareAffix.Skittish: return Loc.T("臆病", "Skittish");
+                case NightmareAffix.Recuperating: return Loc.T("傷繕い", "Recuperating");
+                case NightmareAffix.LastStand: return Loc.T("最後の殻", "Last Stand");
+                default: return "";
+            }
+        }
+
+        public static bool HasBehavior(NightmareAffix a) => (a & (NightmareAffix)0xFFC00) != 0;
+
+        public static string AffixDescription(NightmareAffix a)
+        {
+            switch (a)
+            {
+                case NightmareAffix.Ironclad: return Loc.T("防御+60。強い一撃で殻を突破。", "Armor +60; use strong hits to breach its shell.");
+                case NightmareAffix.Berserk: return Loc.T("攻撃力+40%・攻撃速度+30%。連撃を避けて反撃。", "Attack +40%, attack speed +30%; dodge its flurry, then retaliate.");
+                case NightmareAffix.Colossal: return Loc.T("最大HP+150%。長期戦に備え、攻撃を避け続ける。", "Max HP +150%; conserve resources and keep dodging.");
+                case NightmareAffix.Swift: return Loc.T("移動+35%・攻撃速度+20%。直線逃走より回避で切り返す。", "Movement +35%, attack speed +20%; dodge and turn rather than flee straight.");
+                case NightmareAffix.Regenerating: return Loc.T("毎秒最大HPの2%回復。攻撃を集中して倒す。", "Heals 2% max HP each second; focus damage to defeat it.");
+                case NightmareAffix.Arcane: return Loc.T("魔力+50%・スキル加速+40。術を避け、発動後に攻める。", "Power +50%, haste +40; evade spells and punish after casting.");
+                case NightmareAffix.Warded: return Loc.T("防御+20、出現時に最大HP25%の障壁。障壁を割って攻める。", "Armor +20 and a spawn shield of 25% max HP; break the barrier.");
+                case NightmareAffix.Thorned: return Loc.T("防御+30、被ダメージの20%を反射。回復を備えて攻める。", "Armor +30; reflects 20% of received damage. Prepare healing before attacking.");
+                case NightmareAffix.Ravenous: return Loc.T("攻撃力+15%、与ダメージの15%回復。攻撃を避けて回復を防ぐ。", "Attack +15%; heals for 15% of damage dealt. Dodge to deny healing.");
+                case NightmareAffix.Sundering: return Loc.T("攻撃力+10%、命中で防御-20を4秒。追撃を避ける。", "Attack +10%; hits reduce armor by 20 for 4s. Avoid follow-up hits.");
+                case NightmareAffix.Veiled: return Loc.T("6mより遠い攻撃の被ダメージ-30%。6m以内へ近づく。", "Receives 30% less damage from beyond 6m; approach within 6m.");
+                case NightmareAffix.Hollow: return Loc.T("3m未満からの被ダメージ-30%。3m以上離れて攻撃。", "Receives 30% less damage from within 3m; strike from at least 3m.");
+                case NightmareAffix.Facing: return Loc.T("正面120度の被ダメージ-30%。側面や背後へ回る。", "Receives 30% less damage in its frontal 120-degree cone; flank or attack from behind.");
+                case NightmareAffix.Packbound: return Loc.T("同区画5m以内に生存し活動中の味方がいると被ダメージ-30%。引き離すか仲間を倒す。", "Receives 30% less damage with a living awake ally within 5m in the same section; separate or clear allies.");
+                case NightmareAffix.Beacon: return Loc.T("2秒の予告後、一生に一度、同区画5m以内の最寄りの活動中の非ボス味方に最大HP15%の障壁を6秒。重複不可。先に倒すか引き離す。", "After a 2s warning, once per life shields the nearest living awake nonboss ally within 5m in the same section for 15% target max HP for 6s; no stacking. Kill support first or separate.");
+                case NightmareAffix.Pulsing: return Loc.T("最初の2秒は無防備。その後3秒間被ダメージ-30%、3秒間無防備を繰り返す。無防備の間に集中攻撃。", "Initially open for 2s, then alternates 3s of 30% damage reduction and 3s open; burst during openings.");
+                case NightmareAffix.Committed: return Loc.T("詠唱中は被ダメージ-30%、攻撃発射後1.5秒は被ダメージ+20%が優先。回避後に反撃。", "Receives 30% less damage while channeling; 1.5s after firing an attack, takes 20% more instead. Dodge then punish recovery.");
+                case NightmareAffix.Skittish: return Loc.T("未被弾時は移動+20%、ダメージを受けると2秒間移動-15%。一撃を当てて追う。", "Movement +20% while unhit; damaging hits slow movement by 15% for 2s. Tag then pursue.");
+                case NightmareAffix.Recuperating: return Loc.T("4秒間無傷なら毎秒最大HP1%回復、一生の上限10%。満タンでは消費しない。攻撃を続ける。", "After 4s without damage heals 1% max HP per second, capped at 10% per life; no budget spent at full HP. Keep pressure.");
+                case NightmareAffix.LastStand: return Loc.T("HP35%以下で2秒予告後、一生に一度、最大HP15%の障壁を6秒。予告中に倒すか殻を割る。", "At 35% HP or less, warns for 2s then shields itself for 15% max HP for 6s, once per life. Finish during warning or break the shell.");
                 default: return "";
             }
         }

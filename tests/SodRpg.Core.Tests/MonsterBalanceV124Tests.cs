@@ -47,7 +47,7 @@ namespace SodRpg.Core.Tests
             var all = NightmareAffix.Warded | NightmareAffix.Thorned | NightmareAffix.Ravenous | NightmareAffix.Sundering;
             Assert.Equal(all, Nightmares.Sanitize((int)all | (1 << 20)));
             foreach (var a in Nightmares.AllAffixes) Assert.False(string.IsNullOrEmpty(Nightmares.AffixName(a)));
-            Assert.Equal(10, Nightmares.AllAffixes.Length);
+            Assert.Equal(20, Nightmares.AllAffixes.Length);
             Assert.Contains("結界", Nightmares.Label(NightmareAffix.Warded));
         }
 
