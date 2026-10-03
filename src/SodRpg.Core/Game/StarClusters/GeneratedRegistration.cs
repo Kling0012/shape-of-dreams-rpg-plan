@@ -10,13 +10,17 @@ namespace SodRpg.Core.Game
         private static bool generatedRegistered;
 
         /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>
-        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[0]);
+        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Vesper" });
 
         /// <summary>Install one generated hero's authored tree, then its migration rules (tests and tools; production uses RegisterAllGenerated).</summary>
         public static void RegisterGeneratedHero(string heroKey)
         {
             switch (heroKey)
             {
+                case "Hero_Vesper":
+                    RegisterAuthored("Hero_Vesper", CreateVesperAuthored());
+                    RegisterMigrations("Hero_Vesper", CreateVesperMigrations());
+                    return;
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
         }
