@@ -1,167 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
+using SodRpg.Core.Game;
 
-namespace SodRpg.Core.Game
+namespace SodRpg.Core.Tests.Testing
 {
-    public enum AllocationChangeKind { Purchase, Choice, Refund, Keystone, Equipment }
-
-    /// <summary>A proposed edit, never an instruction to choose an alternative automatically.</summary>
-    public sealed class AllocationChange
-    {
-        public AllocationChangeKind Kind { get; set; }
-        public string CandidateStarId { get; set; }
-        public int? SelectedOption { get; set; }
-        public string KeystoneId { get; set; }
-        public Slot EquipmentSlot { get; set; }
-        public string EquipmentUid { get; set; }
-    }
-
-    /// <summary>Explicit permanent incompatibilities supplied by a mechanism, not current combat availability.</summary>
-    public sealed class AllocationDisableRule
-    {
-        public string KeystoneId { get; set; }
-        public string EquippedUid { get; set; }
-        public IReadOnlyList<string> StarIds { get; set; } = Array.Empty<string>();
-        public string Memory { get; set; }
-        public GimmickEffect? Effect { get; set; }
-    }
-
-    public sealed class EffectiveAllocationPolicy
-    {
-        public IReadOnlyList<AllocationDisableRule> PermanentDisables { get; set; } = Array.Empty<AllocationDisableRule>();
-    }
-
-    /// <summary>An attainable output under its normal source/event predicates. Magnitudes are exact fixed point.</summary>
-    public sealed class EffectiveAllocationChannel
-    {
-        public string Key { get; internal set; }
-        public string StarId { get; internal set; }
-        public decimal ValueMilli { get; internal set; }
-        public decimal DurationUnits { get; internal set; }
-        public decimal RadiusUnits { get; internal set; }
-        public int ExtraTargets { get; internal set; }
-        public bool Strongest { get; internal set; }
-        public string Memory { get; internal set; }
-        public IReadOnlyList<string> ContributorIds { get; internal set; } = Array.Empty<string>();
-        public long ValueCeiling { get; internal set; }
-        public decimal DurationCeilingUnits { get; internal set; }
-        public decimal RadiusCeilingUnits { get; internal set; }
-        public int TargetCeiling { get; internal set; }
-        public decimal ChanceUnits { get; internal set; }
-        public decimal IntrinsicProbabilityUnits { get; internal set; }
-        public string CapProfileId { get; internal set; }
-        public string PredicateKey { get; internal set; }
-        public float Cooldown { get; internal set; }
-        public GimmickEffect? Effect { get; internal set; }
-    }
-
-    public sealed class AllocationRefund
-    {
-        public string StarId { get; internal set; }
-        public int Ranks { get; internal set; }
-        public int Cost { get; internal set; }
-    }
-
-    public enum AllocationInertReason { Saturated, StrongestDominated, MissingOwnedRecipient, PermanentlyDisabled }
-    public enum AllocationValueUnit { Scalar, Thousandths, Hundredths, Count }
-    public enum AllocationEffectiveField { Value, Duration, Radius, ExtraTargets, Chance }
-
-    public sealed class AllocationSaturation
-    {
-        public string StarId { get; internal set; }
-        public int Rank { get; internal set; }
-        public string ChannelKey { get; internal set; }
-        public AllocationEffectiveField Field { get; internal set; }
-        public AllocationValueUnit Unit { get; internal set; }
-        public decimal EffectiveValue { get; internal set; }
-        public decimal Ceiling { get; internal set; }
-        public decimal DominatingValue { get; internal set; }
-        public string CapProfileId { get; internal set; }
-        public int? DeclaredModifierCeilingUnits { get; internal set; }
-        public AllocationValueUnit DeclaredModifierUnit { get; internal set; }
-        public AllocationInertReason Reason { get; internal set; }
-    }
-
-    public sealed class AllocationHeadroom
-    {
-        public string CandidateStarId { get; internal set; }
-        public int? SelectedOption { get; internal set; }
-        public bool Reachable { get; internal set; }
-        public int AttainableRanks { get; internal set; }
-        public int RankCost { get; internal set; }
-        public IReadOnlyList<AllocationSaturation> SaturationDetails { get; internal set; }
-    }
-
-    /// <summary>Preview and approval are separate. The captured proposal is private so approval cannot alter it.</summary>
-    public sealed class EffectiveAllocationPlan
-    {
-        internal EffectiveAllocationValidation Owner;
-        internal HeroState Original, Proposed;
-        internal string HeroKey;
-        internal string RegistryFingerprint, CapFingerprint;
-        public string CandidateStarId { get; internal set; }
-        public int? SelectedOption { get; internal set; }
-        public IReadOnlyList<EffectiveAllocationChannel> OldEffectiveChannels { get; internal set; }
-        public IReadOnlyList<EffectiveAllocationChannel> NewEffectiveChannels { get; internal set; }
-        public IReadOnlyList<string> PrerequisiteViolations { get; internal set; }
-        public IReadOnlyList<string> SaturatedChannels { get; internal set; }
-        public IReadOnlyList<AllocationSaturation> SaturationDetails { get; internal set; }
-        public IReadOnlyList<string> AffectedRefundIds { get; internal set; }
-        public IReadOnlyList<AllocationRefund> Refunds { get; internal set; }
-        public int RefundCost { get; internal set; }
-        public bool CandidateEffective { get; internal set; }
-        /// <summary>Diagnostics for tests/benchmarks: allocated stars whose marginal check was skipped as independent of the change.</summary>
-        internal int PrunedStars { get; set; }
-        public bool CanApply => CandidateEffective && PrerequisiteViolations.Count == 0;
-    }
-
-    public sealed class AllocationValidationException : InvalidOperationException
-    {
-        public AllocationValidationException(EffectiveAllocationPlan plan)
-            : base(!plan.CanApply
-                ? Loc.T("効果が上限に達している・無効になる、または前提の星が足りません：", "The effect is capped/disabled or star prerequisites are missing: ") +
-                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.PrerequisiteViolations.Count > 0 ? plan.PrerequisiteViolations : plan.SaturatedChannels))
-                : Loc.T("変更の前に、星をまとめて払い戻す承認が必要です（", "Approve the atomic star refund before changing this configuration (") +
-                    plan.RefundCost.ToString(CultureInfo.InvariantCulture) + Loc.T("ポイント）：", " points): ") +
-                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.AffectedRefundIds)))
-        { Plan = plan; }
-
-        /// <summary>内部の星ID（"id#段" の形もある）を、画面に出せる星の名前へ直す。名前が無ければそのまま返す。</summary>
-        private static IEnumerable<string> DisplayNames(EffectiveAllocationPlan plan, IEnumerable<string> ids)
-        {
-            foreach (string raw in ids)
-            {
-                int hash = raw.IndexOf('#');
-                string id = hash < 0 ? raw : raw.Substring(0, hash);
-                var talent = plan.Owner?.Talent(id);
-                if (talent == null) { yield return raw; continue; }
-                string rank = hash < 0 ? null : raw.Substring(hash + 1);
-                yield return talent.Name.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})"));
-            }
-        }
-        public EffectiveAllocationPlan Plan { get; }
-    }
-
+    /// <summary>
+    /// Frozen copy of the pre-optimization EffectiveAllocationValidation (v1.31 before the C15 performance fix).
+    /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
+    /// Deliberately unoptimized (every RankEffective runs two full Build computations). Do not edit its algorithm.
+    /// </summary>
     /// <summary>C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.</summary>
-    public sealed class EffectiveAllocationValidation
+    public sealed class ReferenceEffectiveAllocationValidation
     {
         private readonly IReadOnlyList<TalentDef> tree;
         private readonly HeroTreeLayout layout;
         private readonly Dictionary<string, TalentDef> definitions;
         private readonly EffectiveAllocationPolicy policy;
         private readonly SortedDictionary<string, string[]> hasteScenarios = new SortedDictionary<string, string[]>(StringComparer.Ordinal);
-        /// <summary>
-        /// Test hook. When set, every star the dependency analysis skips is evaluated anyway and the preview throws if skipping it
-        /// would have hidden a refund. Never set in production.
-        /// </summary>
-        internal static bool VerifyPruning;
 
-        // The tree never changes after construction, so its typed-star validation only has to be repeated when the cap registry does.
-        private string validatedCapFingerprint;
-
-        public EffectiveAllocationValidation(IReadOnlyList<TalentDef> tree, EffectiveAllocationPolicy policy = null, HeroTreeLayout layout = null)
+        public ReferenceEffectiveAllocationValidation(IReadOnlyList<TalentDef> tree, EffectiveAllocationPolicy policy = null, HeroTreeLayout layout = null)
         {
             this.tree = tree ?? throw new ArgumentNullException(nameof(tree));
             this.policy = policy ?? new EffectiveAllocationPolicy();
@@ -182,7 +40,6 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<AllocationHeadroom> AnalyzeHeadroom(Profile profile, string heroKey, HeroState attainableAllocation = null)
         {
             var allocation = (attainableAllocation ?? profile.Hero(heroKey)).Clone();
-            var scope = new PreviewScope(this, profile, heroKey);
             var rows = new List<AllocationHeadroom>();
             foreach (var talent in tree)
             {
@@ -199,7 +56,7 @@ namespace SodRpg.Core.Game
                         for (int rank = 1; rank <= talent.MaxRank; rank++)
                         {
                             draft.Talents[talent.Id] = rank;
-                            if (SpentPoints(draft) > StarProgression.MaxSpendablePoints || !RankEffective(scope, draft, talent, rank, details)) break;
+                            if (SpentPoints(draft) > StarProgression.MaxSpendablePoints || !RankEffective(profile, heroKey, draft, talent, rank, details)) break;
                             ranks = rank;
                         }
                     rows.Add(new AllocationHeadroom
@@ -248,14 +105,12 @@ namespace SodRpg.Core.Game
             var proposed = original.Clone();
             var candidate = Talent(change.CandidateStarId);
             ApplyChange(profile, heroKey, proposed, candidate, change);
-            var scope = new PreviewScope(this, profile, heroKey) { Original = original, Proposed = proposed };
-            var oldChannels = scope.Pin(original, original);
+            var oldChannels = Capture(profile, heroKey, original, original);
             var violations = new List<string>();
             var saturated = new List<string>();
             var details = new List<AllocationSaturation>();
             var refunds = new SortedDictionary<string, AllocationRefund>(StringComparer.Ordinal);
-            var channels = scope.Pin(proposed, proposed);
-            scope.BeginChange(change, candidate, original, proposed);
+            var channels = Capture(profile, heroKey, proposed, proposed);
             bool candidateEffective = true;
             if (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice)
             {
@@ -263,7 +118,7 @@ namespace SodRpg.Core.Game
                 int start = change.Kind == AllocationChangeKind.Purchase ? rank : 1;
                 for (int r = start; r <= rank; r++)
                 {
-                    if (RankEffective(scope, proposed, candidate, r, details)) continue;
+                    if (RankEffective(profile, heroKey, proposed, candidate, r, details, channels)) continue;
                     candidateEffective = false;
                     saturated.Add(candidate.Id + "#" + r.ToString(CultureInfo.InvariantCulture));
                     break;
@@ -273,7 +128,7 @@ namespace SodRpg.Core.Game
             {
                 var withoutKey = proposed.Clone();
                 withoutKey.Keystone = null;
-                candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed));
+                candidateEffective = HasPositiveDifference(channels, Capture(profile, heroKey, withoutKey, proposed));
                 if (!candidateEffective) saturated.Add(proposed.Keystone);
             }
             if (candidateEffective)
@@ -287,8 +142,8 @@ namespace SodRpg.Core.Game
                     {
                         if (!proposed.Talents.TryGetValue(id, out int rank) || rank <= 0) continue;
                         var node = Talent(id);
-                        bool wasReachable = node != null && Rules.BelongsTo(node, heroKey) && scope.CanReach(original, node);
-                        if (node == null || !Rules.BelongsTo(node, heroKey) || !scope.CanReach(proposed, node))
+                        bool wasReachable = node != null && Rules.BelongsTo(node, heroKey) && layout.CanReach(original, node);
+                        if (node == null || !Rules.BelongsTo(node, heroKey) || !layout.CanReach(proposed, node))
                         {
                             if (id == change.CandidateStarId && (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice))
                             {
@@ -299,34 +154,23 @@ namespace SodRpg.Core.Game
                             // A transaction is not a saved-profile migration. Unrelated dormant/corrupt ranks stay untouched.
                             if (!wasReachable) continue;
                             Refund(proposed, node, id, rank, refunds);
-                            scope.ProposedChanged(id);
                             changed = true;
                             continue;
                         }
                         if (!wasReachable || id == change.CandidateStarId &&
                             (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice)) continue;
-                        if (scope.IsIndependent(id))
-                        {
-                            // No output this star contributes to depends on a changed star, so its marginal checks are what they were before.
-                            scope.Pruned++;
-                            if (VerifyPruning)
-                                for (int r = 1; r <= rank; r++)
-                                    if (!RankEffective(scope, proposed, node, r) && RankEffective(scope, original, node, r))
-                                        throw new InvalidOperationException(Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ") + id + "#" + r.ToString(CultureInfo.InvariantCulture));
-                            continue;
-                        }
                         int retained = rank;
                         for (int r = 1; r <= rank; r++)
                         {
-                            if (RankEffective(scope, proposed, node, r) || !RankEffective(scope, original, node, r)) continue;
-                            RankEffective(scope, proposed, node, r, details);
+                            if (RankEffective(profile, heroKey, proposed, node, r, fullSnapshot: refunds.Count == 0 ? channels : null) ||
+                                !RankEffective(profile, heroKey, original, node, r, fullSnapshot: oldChannels)) continue;
+                            RankEffective(profile, heroKey, proposed, node, r, details, refunds.Count == 0 ? channels : null);
                             retained = r - 1;
                             break;
                         }
                         if (retained == rank) continue;
                         saturated.Add(id + "#" + (retained + 1).ToString(CultureInfo.InvariantCulture));
                         Refund(proposed, node, id, rank - retained, refunds);
-                        scope.ProposedChanged(id);
                         changed = true;
                     }
                     if (!candidateEffective) break;
@@ -339,7 +183,6 @@ namespace SodRpg.Core.Game
                             { violations.Add(proposed.Keystone); break; }
                             if (original.Keystone != proposed.Keystone || !KeystoneUnlocked(original, heroKey, key)) continue;
                             Refund(proposed, key, proposed.Keystone, 1, refunds);
-                            scope.ProposedChanged(key.Id);
                             changed = true;
                         }
                     }
@@ -347,10 +190,10 @@ namespace SodRpg.Core.Game
                 foreach (var allocation in proposed.Talents)
                 {
                     var node = Talent(allocation.Key);
-                    if (node != null && scope.CanReach(original, node) && !scope.CanReach(proposed, node))
+                    if (node != null && layout.CanReach(original, node) && !layout.CanReach(proposed, node))
                         violations.Add(allocation.Key);
                 }
-                channels = scope.Capture(proposed, proposed);
+                channels = Capture(profile, heroKey, proposed, proposed);
             }
             // Explicitly requested refunds count too, using the original definition's actual cost.
             if (change.Kind == AllocationChangeKind.Refund)
@@ -363,20 +206,20 @@ namespace SodRpg.Core.Game
             foreach (var row in refundRows) cost = checked(cost + row.Cost);
             return new EffectiveAllocationPlan
             {
-                Owner = this, Original = original, Proposed = proposed, HeroKey = heroKey,
+                Original = original, Proposed = proposed, HeroKey = heroKey,
                 RegistryFingerprint = registryFingerprint, CapFingerprint = capFingerprint,
                 CandidateStarId = change.CandidateStarId, SelectedOption = change.SelectedOption,
                 OldEffectiveChannels = oldChannels, NewEffectiveChannels = channels,
                 PrerequisiteViolations = violations.AsReadOnly(), SaturatedChannels = saturated.AsReadOnly(),
                 SaturationDetails = details.AsReadOnly(),
                 AffectedRefundIds = ids.AsReadOnly(), Refunds = refundRows.AsReadOnly(), RefundCost = cost,
-                CandidateEffective = candidateEffective, PrunedStars = scope.Pruned,
+                CandidateEffective = candidateEffective,
             };
         }
 
         public void Commit(Profile profile, EffectiveAllocationPlan plan, IReadOnlyCollection<string> approvedRefundIds = null)
         {
-            if (plan == null || plan.Owner != this) throw new ArgumentException("The plan belongs to a different validation engine.", nameof(plan));
+            if (plan == null) throw new ArgumentException("The plan belongs to a different validation engine.", nameof(plan));
             if (!plan.CanApply) throw new AllocationValidationException(plan);
             if (!SameState(profile.Hero(plan.HeroKey), plan.Original)
                 || plan.RegistryFingerprint != StarClusters.AuthoredRegistryFingerprint || plan.CapFingerprint != FractionalScopedModifiers.CapRegistryFingerprint)
@@ -460,191 +303,18 @@ namespace SodRpg.Core.Game
             if (change.Kind == AllocationChangeKind.Purchase) hero.Talents[talent.Id] = rank + 1;
         }
 
-        /// <summary>
-        /// Does rank <paramref name="rank"/> of the star change an attainable output of <paramref name="hero"/>'s allocation?
-        /// The two compared builds are the allocation with the star at <c>rank</c> and at <c>rank - 1</c>; both are looked up in the
-        /// preview scope first, so a build that is also the other side of the neighbouring rank (or the full snapshot) is computed once.
-        /// </summary>
-        private bool RankEffective(PreviewScope scope, HeroState hero, TalentDef talent, int rank, List<AllocationSaturation> details = null)
+        private bool RankEffective(Profile profile, string heroKey, HeroState hero, TalentDef talent, int rank,
+            List<AllocationSaturation> details = null, IReadOnlyList<EffectiveAllocationChannel> fullSnapshot = null)
         {
-            string baseKey = scope.KeyOf(hero);
-            bool allocated = hero.Talents.TryGetValue(talent.Id, out int allocatedRank);
-            // Setting a star to the rank it already has reproduces the hero exactly, so that build is the full snapshot.
-            string withKey = allocated && allocatedRank == rank ? baseKey : MarginalKey(baseKey, talent.Id, rank);
-            var with = scope.Capture(withKey, baseKey, () =>
-            {
-                var marginal = hero.Clone();
-                marginal.Talents[talent.Id] = rank;
-                return marginal;
-            }, hero);
-            string withoutKey = rank - 1 > 0 && allocated && allocatedRank == rank - 1 ? baseKey : MarginalKey(baseKey, talent.Id, rank - 1);
-            var without = scope.Capture(withoutKey, baseKey, () =>
-            {
-                var marginal = hero.Clone();
-                marginal.Talents[talent.Id] = rank;
-                SetRank(marginal, talent.Id, rank - 1);
-                return marginal;
-            }, hero);
+            var marginal = hero.Clone();
+            marginal.Talents[talent.Id] = rank;
+            var with = fullSnapshot != null && hero.Talents.TryGetValue(talent.Id, out int allocatedRank) && allocatedRank == rank
+                ? fullSnapshot : Capture(profile, heroKey, marginal, hero);
+            SetRank(marginal, talent.Id, rank - 1);
+            var without = Capture(profile, heroKey, marginal, hero);
             bool effective = HasPositiveDifference(with, without);
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
-        }
-
-        private static string MarginalKey(string baseKey, string id, int rank) =>
-            baseKey + "\u0004" + id + "=" + rank.ToString(CultureInfo.InvariantCulture);
-
-        /// <summary>
-        /// Everything one Preview (or one headroom analysis) memoizes. The profile never changes while it lives and a build is a pure
-        /// function of (profile, hero key, tree, policy, allocation, reachability state), so builds are cached under a content key of
-        /// the two allocation states. Caching therefore cannot change any result; it only avoids recomputing identical builds.
-        /// </summary>
-        private sealed class PreviewScope
-        {
-            private readonly EffectiveAllocationValidation owner;
-            private readonly Profile profile;
-            private readonly string heroKey;
-            private string originalKey, proposedKey;
-            private bool proposedKeyValid;
-            private readonly Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>> pinned =
-                new Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>>(StringComparer.Ordinal);
-            private readonly Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>> recent =
-                new Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>>(StringComparer.Ordinal);
-            private readonly Dictionary<string, bool[]> reachability = new Dictionary<string, bool[]>(StringComparer.Ordinal);
-            internal HeroState Original, Proposed;
-            internal int Pruned;
-
-            // Dependency analysis (see StarDependencies). Unused by headroom analysis, which has no single change to compare against.
-            private readonly StarDependencies dependencies = new StarDependencies();
-            private readonly Dictionary<string, KeystoneDefinition> appliedKeystones = new Dictionary<string, KeystoneDefinition>(StringComparer.Ordinal);
-            private readonly HashSet<string> changedStars = new HashSet<string>(StringComparer.Ordinal);
-            private HashSet<string> dirtyRoots;
-            private bool pruning;
-
-            internal PreviewScope(EffectiveAllocationValidation owner, Profile profile, string heroKey)
-            { this.owner = owner; this.profile = profile; this.heroKey = heroKey; }
-
-            /// <summary>The proposed allocation was modified in place (a refund); the star's ranks now differ from what was analysed.</summary>
-            internal void ProposedChanged(string refundedStarId)
-            {
-                proposedKeyValid = false;
-                // The keystone's route gate counts every star's ranks, so once ranks change under a selected keystone nothing is provably local.
-                if (Original.Keystone != null || Proposed.Keystone != null) pruning = false;
-                if (changedStars.Add(refundedStarId)) dirtyRoots = null;
-            }
-
-            /// <summary>
-            /// Decide which stars a change can affect. A change of a single star's rank/choice (no keystone or equipment edit) can only
-            /// affect stars that share an output with a star whose ranks or reachability differ between the original and proposed allocation.
-            /// </summary>
-            internal void BeginChange(AllocationChange change, TalentDef candidate, HeroState original, HeroState proposed)
-            {
-                pruning = (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice
-                        || change.Kind == AllocationChangeKind.Refund)
-                    && candidate != null && !candidate.IsKeystone && original.Keystone == proposed.Keystone;
-                if (!pruning) return;
-                // A keystone that is (un)locked by this change transforms every output.
-                if (original.Keystone != null && !ReferenceEquals(AppliedKeystone(original), AppliedKeystone(proposed))) { pruning = false; return; }
-                changedStars.Add(candidate.Id);
-                var ids = new HashSet<string>(original.Talents.Keys, StringComparer.Ordinal);
-                ids.UnionWith(proposed.Talents.Keys);
-                foreach (string id in ids)
-                {
-                    var node = owner.Talent(id);
-                    if (node == null || !Rules.BelongsTo(node, heroKey)) continue;
-                    // A star that starts or stops contributing to the build because of this change counts as changed too.
-                    if (CanReach(original, node) != CanReach(proposed, node)) changedStars.Add(id);
-                }
-                dirtyRoots = null;
-            }
-
-            private KeystoneDefinition AppliedKeystone(HeroState hero)
-            {
-                appliedKeystones.TryGetValue(KeyOf(hero) + "\u0005" + KeyOf(hero), out var key);
-                return key;
-            }
-
-            internal bool IsIndependent(string starId)
-            {
-                if (!pruning || changedStars.Contains(starId)) return false;
-                if (dirtyRoots == null)
-                {
-                    dirtyRoots = new HashSet<string>(StringComparer.Ordinal);
-                    foreach (string id in changedStars) dirtyRoots.Add(dependencies.Find(id));
-                }
-                return !dirtyRoots.Contains(dependencies.Find(starId));
-            }
-
-            /// <summary>The same decision as <see cref="HeroTreeLayout.CanReach(HeroState, TalentDef)"/>, from a cached snapshot of the state.</summary>
-            internal bool CanReach(HeroState hero, TalentDef node) => owner.layout.CanReach(hero, node, Snapshot(hero, KeyOf(hero)));
-
-            private bool[] Snapshot(HeroState hero, string key)
-            {
-                if (!reachability.TryGetValue(key, out var snapshot))
-                    reachability.Add(key, snapshot = owner.layout.ReachabilitySnapshot(hero));
-                return snapshot;
-            }
-
-            internal string KeyOf(HeroState hero)
-            {
-                if (ReferenceEquals(hero, Original)) return originalKey ?? (originalKey = ContentKey(hero));
-                if (ReferenceEquals(hero, Proposed))
-                {
-                    if (!proposedKeyValid) { proposedKey = ContentKey(hero); proposedKeyValid = true; }
-                    return proposedKey;
-                }
-                return ContentKey(hero);
-            }
-
-            private static string ContentKey(HeroState hero)
-            {
-                var sb = new StringBuilder(64 + hero.Talents.Count * 24);
-                sb.Append(hero.Keystone).Append('\u0001').Append(hero.Kills.ToString(CultureInfo.InvariantCulture))
-                    .Append('\u0001').Append(hero.StarXp.ToString(CultureInfo.InvariantCulture)).Append('\u0001');
-                foreach (string uid in hero.Equipped) sb.Append(uid).Append(',');
-                sb.Append('\u0002');
-                foreach (var rank in hero.Talents) sb.Append(rank.Key).Append('=').Append(rank.Value.ToString(CultureInfo.InvariantCulture)).Append(';');
-                sb.Append('\u0003');
-                var choices = new List<KeyValuePair<string, int>>(hero.TalentChoices);
-                choices.Sort((a, b) => string.CompareOrdinal(a.Key, b.Key));
-                foreach (var choice in choices) sb.Append(choice.Key).Append('=').Append(choice.Value.ToString(CultureInfo.InvariantCulture)).Append(';');
-                return sb.ToString();
-            }
-
-            /// <summary>A snapshot that stays cached for the whole scope (the unchanged and the proposed full allocations).</summary>
-            internal IReadOnlyList<EffectiveAllocationChannel> Pin(HeroState allocation, HeroState reach)
-            {
-                string allocationKey = KeyOf(allocation), reachKey = KeyOf(reach);
-                string key = allocationKey + "\u0005" + reachKey;
-                if (!pinned.TryGetValue(key, out var channels))
-                {
-                    // Pinned snapshots (original and proposed) are the ones whose outputs are compared, so they record dependencies.
-                    dependencies.AppliedKeystone = null;
-                    pinned.Add(key, channels = Compute(allocation, reach, reachKey, dependencies));
-                    appliedKeystones[key] = dependencies.AppliedKeystone;
-                }
-                return channels;
-            }
-
-            internal IReadOnlyList<EffectiveAllocationChannel> Capture(HeroState allocation, HeroState reach)
-            {
-                string allocationKey = KeyOf(allocation), reachKey = KeyOf(reach);
-                return Capture(allocationKey, reachKey, () => allocation, reach);
-            }
-
-            internal IReadOnlyList<EffectiveAllocationChannel> Capture(string allocationKey, string reachKey, Func<HeroState> allocation, HeroState reach)
-            {
-                string key = allocationKey + "\u0005" + reachKey;
-                if (pinned.TryGetValue(key, out var channels) || recent.TryGetValue(key, out channels)) return channels;
-                channels = Compute(allocation(), reach, reachKey);
-                // Consecutive ranks of one star share a build; nothing else is ever looked up again, so a few entries suffice.
-                if (recent.Count >= 8) recent.Clear();
-                recent.Add(key, channels);
-                return channels;
-            }
-
-            private IReadOnlyList<EffectiveAllocationChannel> Compute(HeroState allocation, HeroState reach, string reachKey,
-                StarDependencies record = null) =>
-                owner.Capture(profile, heroKey, allocation, reach, Snapshot(reach, reachKey), record);
         }
 
         private static bool HasPositiveDifference(IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
@@ -694,8 +364,7 @@ namespace SodRpg.Core.Game
         private static bool Comparable(EffectiveAllocationChannel left, EffectiveAllocationChannel right) =>
             left.Key == right.Key || left.Strongest && right.Strongest && left.PredicateKey == right.PredicateKey && left.Cooldown == 0;
 
-        private IReadOnlyList<EffectiveAllocationChannel> Capture(Profile profile, string heroKey, HeroState allocation, HeroState reachability,
-            bool[] reachabilitySnapshot, StarDependencies dependencies = null)
+        private IReadOnlyList<EffectiveAllocationChannel> Capture(Profile profile, string heroKey, HeroState allocation, HeroState reachability)
         {
             var disabled = DisabledIds(allocation);
             HeroState effective = allocation;
@@ -708,13 +377,7 @@ namespace SodRpg.Core.Game
                     if (effective.Keystone == id) effective.Keystone = null;
                 }
             }
-            string capFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
-            if (validatedCapFingerprint != capFingerprint)
-            {
-                FractionalScopedModifiers.ValidateTree(tree);
-                validatedCapFingerprint = capFingerprint;
-            }
-            var build = Build.ComputeForValidatedTree(profile, heroKey, tree, effective, reachability, layout, definitions, reachabilitySnapshot, dependencies);
+            var build = Build.ComputeForTree(profile, heroKey, 0, tree, effective, reachability, layout);
             var result = new List<EffectiveAllocationChannel>();
             foreach (var stat in build.Stats) result.Add(Scalar("stat:" + (int)stat.Key, stat.Value, Content.StatCap(stat.Key)));
             foreach (var power in build.Powers) result.Add(Scalar("power:" + (int)power.Key, power.Value, Content.PowerCap(power.Key)));
@@ -789,14 +452,6 @@ namespace SodRpg.Core.Game
                 result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value));
             foreach (var entry in build.Mechanisms)
                 foreach (var channel in AuthoredMechanisms.EffectiveChannels(entry, build, heroKey)) result.Add(channel);
-            if (dependencies != null)
-                foreach (var channel in result)
-                {
-                    // HasPositiveDifference compares channels of one key, and strongest channels of one predicate, with each other.
-                    if (channel.ContributorIds.Count == 0) continue;
-                    dependencies.Touch("K:" + channel.Key, channel.ContributorIds);
-                    if (channel.Strongest) dependencies.Touch("PK:" + channel.PredicateKey, channel.ContributorIds);
-                }
             return result.AsReadOnly();
         }
 

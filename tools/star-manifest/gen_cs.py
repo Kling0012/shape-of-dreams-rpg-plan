@@ -7,6 +7,11 @@
 Report mode performs the same translation without writing C# or registration files.
 A failed star is counted once, but every field diagnostic is retained. Exit status is
 nonzero whenever any selected hero has an unmapped row, including in report mode.
+
+Output mode writes <Hero>.Generated.cs only for heroes with zero failures (never a partial
+hero), plus GeneratedRegistration.cs: StarClusters.GeneratedHeroes and the one entry point
+StarClusters.RegisterAllGenerated(), which registers each generated hero's authored tree and
+its migration rules.
 """
 import argparse
 from collections import defaultdict
@@ -38,6 +43,15 @@ WARDS = {"AlliedWard", "SummonWard", "AllyWard", "AllyShield"}
 # This is the native capability table, not a claim that every effect of a memory
 # supports every parameter. Explicit targets are checked against concrete rows.
 DURATION = {"Shield", "Empower", "Quicken", "Wound", "Daze", "Rampart", "Primed", "Crescendo", "Sap", "Weakspot"}
+
+# Legacy keystones whose upside is their existing Power, kept unchanged. Only the downside is typed in the manifest.
+RETAINED_POWER_KEYS = {"h.vesper.key", "h.vesper.key2", "h.lacerta.key", "h.lacerta.key2", "h.cetus.key",
+                       "h.yubar.key", "h.husk.key", "h.husk.key2", "h.nachia.key", "h.nachia.key2", "h.bismuth.key",
+                       "h.mist.key", "h.mist.key2"}
+BASELINE_KEYS = {}
+for _hero, _id, _power, _value in re.findall(r'Key\("Hero_(\w+)",\s*"(\w+\.key2?)",\s*"[^"]*",\s*"[^"]*",\s*Power\.(\w+),\s*(\d+)',
+                                            (ROOT / "src/SodRpg.Core/Game/HeroSigils.cs").read_text(encoding="utf-8")):
+    BASELINE_KEYS["h." + _id] = (_power, _value)
 
 
 # Redesigned outer bridges have no PairCombos entry (the 62 legacy pairs stay untouched). A pair is only
@@ -580,15 +594,22 @@ class Compiler:
 
     def keystone(self, sid, row):
         key = row["keystone"]
-        if key["upsideSpec"] is None or key["downsideSpec"] is None:
-            if sid in ("h.vesper.key", "h.vesper.key2"):
-                power = "Power.Retaliation=25" if sid.endswith(".key") else "Power.Frenzy=4"
-                self.fail(sid, "keystone.upsideSpec", None, power + " is a real retained Power upside, but KeystoneDefinition has no retained-Power field and rejects an empty typed upside; requires an out-of-scope schema/compiler contract change")
+        retained = sid in RETAINED_POWER_KEYS and key["upsideSpec"] is None
+        if retained:
+            # The upside is the baseline keystone's own Power. The value is never re-typed here: the C# helper
+            # (ManifestKeystone) reads it from the baseline node. This only confirms the manifest says the Power is kept.
+            baseline = BASELINE_KEYS.get(sid)
+            if baseline is None or not re.search(r"Power\." + baseline[0] + r"\s*=?\s*" + baseline[1] + r"(?!\d)", key["upside"]):
+                self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name the baseline Power " + display_value(baseline))
+                return None
+        if (key["upsideSpec"] is None and not retained) or key["downsideSpec"] is None:
+            if retained:
+                self.fail(sid, "keystone.downsideSpec", None, "retained-Power upside is mapped, but the typed downside has no manifest spec; prose-only downside needs an explicit design-to-typed translation: " + key["downside"])
             else:
                 self.fail(sid, "keystone.upsideSpec" if key["upsideSpec"] is None else "keystone.downsideSpec", None,
                           "prose-only key requires an explicit design-to-typed translation for both sides; no translation for this ID")
             return None
-        up, down = list(key["upsideSpec"]), list(key["downsideSpec"])
+        up, down = ([] if retained else list(key["upsideSpec"])), list(key["downsideSpec"])
         lifetime = next((s for s in down if s["effect"] == "Wound" and s["field"] in ("Duration", "Lifetime") and "pct" in s), None)
         total = next((s for s in up if s["effect"] == "Wound" and s["field"] == "Total"), None)
         if lifetime and total:
@@ -600,7 +621,8 @@ class Compiler:
             sides.append(array(expressions, "AuthoredKeystoneSpec"))
         required = sorted({s["receiver"] for s in up + down if s.get("receiver") and s["receiver"].startswith("St_")})
         cost = "Content.KeystoneCost" if row["region"] == "migration" else whole(row["rankCost"])
-        return "AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", " + array(required) + ", " + ", ".join(sides) + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost + ")"
+        compiler = "ManifestKeystone(" + cs(self.hero) + ", " + cs(sid) + ", " if retained else "AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", "
+        return compiler + array(required) + ", " + ", ".join(sides) + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost + ")"
 
     def effect(self, sid, row, max_rank, cost, option_path=""):
         kind = row["kind"]
@@ -844,6 +866,13 @@ class Compiler:
             lines += ["", "        private static void Fill" + title + "Manifest" + str(i) + "(AuthoredStarDef[] definitions" + (", HeroTreeLayout baselineLayout" if needs_layout else "") + ")", "        {"]
             lines += ["            definitions[" + str(i * 32 + j) + "] = " + expression + ";" for j, expression in enumerate(chunk)]
             lines.append("        }")
+        # One rule per manifest migration row: the star keeps its ID and ranks, its effect changed. Cost is read from the baseline node.
+        migrations = ["ManifestMigration(" + cs(self.hero) + ", " + cs(row["id"]) + ", " + str(row["maxRank"]) + ")"
+                      for row in self.rows if row["region"] == "migration"]
+        lines += ["", "        public static LegacyStarMigration[] Create" + title + "Migrations()", "        {",
+                  "            return new LegacyStarMigration[]", "            {"]
+        lines += ["                " + expression + ("," if i < len(migrations) - 1 else "") for i, expression in enumerate(migrations)]
+        lines += ["            };", "        }"]
         return "\n".join(lines + ["    }", "}", ""])
 
 
@@ -853,12 +882,31 @@ def load(name):
 
 
 def registration(names):
+    """The single production entry point. Heroes are registered in a fixed order, once, under one lock."""
     names = sorted(names)
-    lines = ["// Generated by tools/star-manifest/gen_cs.py; do not edit.", "namespace SodRpg.Core.Game", "{",
-             "    public static partial class StarClusters", "    {", "        public static void RegisterGenerated()", "        {"]
+    heroes = ", ".join(cs("Hero_" + name.title()) for name in names)
+    lines = ["// Generated by tools/star-manifest/gen_cs.py; do not edit.", "using System;", "using System.Collections.Generic;", "",
+             "namespace SodRpg.Core.Game", "{", "    public static partial class StarClusters", "    {",
+             "        private static readonly object GeneratedLock = new object();",
+             "        private static bool generatedRegistered;", "",
+             "        /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>",
+             "        public static readonly IReadOnlyList<string> GeneratedHeroes = " + (
+                 "Array.AsReadOnly(new string[] { " + heroes + " });" if names else "Array.AsReadOnly(new string[0]);"), "",
+             "        /// <summary>Install one generated hero's authored tree, then its migration rules (tests and tools; production uses RegisterAllGenerated).</summary>",
+             "        public static void RegisterGeneratedHero(string heroKey)", "        {", "            switch (heroKey)", "            {"]
     for name in names:
-        lines.append("            RegisterAuthored(" + cs("Hero_" + name.title()) + ", Create" + name.title() + "Authored());")
-    return "\n".join(lines + ["        }", "    }", "}", ""])
+        title = name.title()
+        lines += ["                case " + cs("Hero_" + title) + ":",
+                  "                    RegisterAuthored(" + cs("Hero_" + title) + ", Create" + title + "Authored());",
+                  "                    RegisterMigrations(" + cs("Hero_" + title) + ", Create" + title + "Migrations());",
+                  "                    return;"]
+    lines += ["                default: throw new ArgumentException(\"No generated star map for \" + heroKey);", "            }", "        }", "",
+              "        /// <summary>Install every generated hero's authored tree and its migration rules. Idempotent and thread-safe.</summary>",
+              "        public static void RegisterAllGenerated()", "        {", "            lock (GeneratedLock)", "            {",
+              "                if (generatedRegistered) return;",
+              "                foreach (string hero in GeneratedHeroes) RegisterGeneratedHero(hero);",
+              "                generatedRegistered = true;", "            }", "        }", "    }", "}", ""]
+    return chr(10).join(lines)
 
 
 def report(results):
@@ -869,9 +917,9 @@ def report(results):
     for result in results:
         failed = {f.star.split(".grant", 1)[0] for f in result.failures}
         lines.append(f"| {result.hero} | {len(result.rows) - 160} | 160 | {len(result.mapped)} | {len(failed)} |")
-    lines += ["", "## Pilot admission blocker", "",
-              "`h.vesper.key` must preserve `Power.Retaliation=25`; `h.vesper.key2` must preserve `Power.Frenzy=4`. Both manifest key spec arrays are null. `Build.Compute` already adds the selected retained power independently (`Build.cs:247–252`), but `KeystoneDefinition` rejects an empty typed upside (`Mechanisms/ScopedKeystoneModifiers.cs:239–240`). Its schema/compiler has no retained-Power upside representation. An arbitrary payload flag or inert transform would hide the missing binding and is not generated.", "",
-              "The required schema/compiler change lies outside the listed editing scope. Therefore no Vesper generated file or production registration is published; Vesper registration/reachability/300-point/consumer acceptance remains blocked. Baseline Vesper has 73 purchase nodes; intended complete tree has 73 + 645 private new + 160 outer = **878 purchase stars, plus the layout start node**. Manifest rows include 33 baseline replacements, not 33 extra graph nodes.", ""]
+    lines += ["", "## Retained-Power keystones", "",
+              "A legacy keystone whose manifest upside is its existing Power (`h.<hero>.key` / `key2`) compiles with `ManifestKeystone`, which reads the Power and its value from the baseline node (`KeystoneDefinition.RetainedPower`). `Build.Compute` adds that Power once from the keystone node; the typed downside comes from the manifest. Keys whose Power is replaced, or whose downside has no typed manifest spec, stay failures below.", "",
+              "Baseline Vesper has 73 purchase nodes; the intended complete tree has 73 + 645 private new + 160 outer = **878 purchase stars, plus the layout start node**. Manifest rows include 33 baseline replacements, not 33 extra graph nodes.", ""]
     for result in results:
         lines += ["## " + result.hero, ""]
         groups = defaultdict(list)
@@ -907,20 +955,26 @@ def main(argv=None):
                 print(f"  {failure.star}: {failure.reason}")
         if args.markdown:
             args.markdown.write_text(report(results), encoding="utf-8", newline="\n")
-        if any(result.failures for result in results):
-            print("No generated files written: at least one selected hero cannot be mapped completely.", file=sys.stderr)
-            return 1
-        if not args.report:
-            # Translate all selected rows before the first output mutation. Atomic
-            # failure means an existing good hero/entry point is left untouched.
-            outputs = [(OUTPUT / (r.name.title() + ".Generated.cs"), r.render()) for r in results]
-            available = {name for name in HEROES if (OUTPUT / (name.title() + ".Generated.cs")).is_file()}
-            available.update(r.name for r in results)
-            outputs.append((OUTPUT / "GeneratedRegistration.cs", registration(available)))
-            for path, content in outputs:
-                path.write_text(content, encoding="utf-8", newline="\n")
-                print("Wrote " + path.relative_to(ROOT).as_posix())
-        return 0
+        failed_heroes = [result for result in results if result.failures]
+        if args.report:
+            if failed_heroes:
+                print("Report only: no generated files written; some selected heroes have unmapped rows.", file=sys.stderr)
+            return 1 if failed_heroes else 0
+        # A hero is written only when it compiles with zero failures, never partially. Every selected hero is
+        # translated before the first output mutation, so a render error leaves existing output untouched.
+        clean = [result for result in results if not result.failures]
+        outputs = [(OUTPUT / (r.name.title() + ".Generated.cs"), r.render()) for r in clean]
+        selected_failed = {r.name for r in failed_heroes}
+        available = {name for name in HEROES if (OUTPUT / (name.title() + ".Generated.cs")).is_file() and name not in selected_failed}
+        available.update(r.name for r in clean)
+        outputs.append((OUTPUT / "GeneratedRegistration.cs", registration(available)))
+        for path, content in outputs:
+            path.write_text(content, encoding="utf-8", newline=chr(10))
+            print("Wrote " + path.relative_to(ROOT).as_posix())
+        for result in failed_heroes:
+            stale = OUTPUT / (result.name.title() + ".Generated.cs")
+            print("Not generated: " + result.name + " has unmapped rows" + ("; its older " + stale.name + " is left in place but is NOT registered. Delete it or regenerate." if stale.is_file() else ""), file=sys.stderr)
+        return 1 if failed_heroes else 0
     except (OSError, ValueError, KeyError, TypeError) as error:
         print("Generator failed: " + str(error), file=sys.stderr)
         return 1

@@ -187,6 +187,8 @@ namespace SodRpg.Core.Game
         {
             if (!Loc.Japanese) return AuthoredMechanisms.DescribeKeystone(key, upside);
             var lines = new List<string>();
+            if (upside && key.RetainedPower != Power.None)
+                lines.Add(Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
             foreach (var transform in upside ? key.Upside : key.Downside)
             {
                 string layer = EnumText(transform.TargetLayer, "記憶固有のダメージ", "星による記憶ダメージ", "追加生成ダメージ", "仕掛けの効果");

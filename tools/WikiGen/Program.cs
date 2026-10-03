@@ -281,8 +281,8 @@ int powersListed = 0;
 }
 
 // ============ 星図（v1.31）============
-// 生成済みの星図を登録する入口が Core にあれば先に呼ぶ（なければ現行の星図＝基本ツリー＋例の星群）。
-string? starMapEntry = StarMapWiki.RegisterGeneratedIfPresent();
+// 生成済みの星図を先に登録する（生成された旅人がなければ現行の星図＝基本ツリー＋例の星群のまま）。
+string? starMapEntry = StarMapWiki.RegisterGenerated();
 var starMaps = StarMapWiki.Generate(Write, modVersion);
 
 // ============ start / 追加ブロック ============

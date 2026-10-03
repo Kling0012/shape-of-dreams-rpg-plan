@@ -31,6 +31,7 @@ internal sealed class Simulation
 
     public void Run()
     {
+        StarClusters.RegisterAllGenerated(); // the same star maps the game installs at startup
         var seeds = new Rng(options.Seed);
         for (int player = 0; player < options.Players; player++)
         {

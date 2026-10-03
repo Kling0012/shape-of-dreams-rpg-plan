@@ -216,13 +216,22 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<KeystoneTransform> Downside { get; }
         public IReadOnlyList<KeystonePayloadKind> Payloads { get; }
         public IReadOnlyList<AuthoredMechanismSpec> Grants { get; }
+        /// <summary>
+        /// An existing keystone's Power, kept as its upside (read from the baseline node, never re-typed). Build.Compute adds it
+        /// once from the keystone node; it is a statement of the upside, not a second source of the Power.
+        /// </summary>
+        public Power RetainedPower { get; }
+        public int RetainedPowerValue { get; }
 
         public KeystoneDefinition(string keystoneId, IEnumerable<string> requiredMemories,
             IEnumerable<KeystoneTransform> upside, IEnumerable<KeystoneTransform> downside,
             IEnumerable<string> prerequisites = null, IEnumerable<KeystonePayloadKind> payloads = null, int cost = Content.KeystoneCost,
-            IEnumerable<AuthoredMechanismSpec> grants = null)
+            IEnumerable<AuthoredMechanismSpec> grants = null, Power retainedPower = Power.None, int retainedPowerValue = 0)
         {
             KeystoneValidation.Token(keystoneId);
+            if (!Enum.IsDefined(typeof(Power), retainedPower) || (retainedPower == Power.None) != (retainedPowerValue == 0) || retainedPowerValue < 0)
+                throw new ArgumentException("A retained keystone Power needs both a defined Power and a positive value.");
+            RetainedPower = retainedPower; RetainedPowerValue = retainedPowerValue;
             if (cost <= 0 || cost > StarProgression.MaxSpendablePoints) throw new ArgumentOutOfRangeException(nameof(cost));
             KeystoneId = keystoneId; Cost = cost;
             RequiredMemories = KeystoneValidation.Strings(requiredMemories);
@@ -236,7 +245,7 @@ namespace SodRpg.Core.Game
                 || Upside.Count > StarProgression.MaxSpendablePoints || Downside.Count > StarProgression.MaxSpendablePoints
                 || Grants.Count > StarProgression.MaxSpendablePoints || RequiredMemories.Count > StarProgression.MaxSpendablePoints
                 || Prerequisites.Count > StarProgression.MaxSpendablePoints
-                || Grants.Any(g => g == null) || (Upside.Count == 0 && kinds.Length == 0 && Grants.Count == 0) || Downside.Count == 0)
+                || Grants.Any(g => g == null) || (Upside.Count == 0 && kinds.Length == 0 && Grants.Count == 0 && RetainedPower == Power.None) || Downside.Count == 0)
                 throw new ArgumentException("A cost-bearing keystone requires a typed upside and downside.");
             var admittedKinds = new HashSet<KeystonePayloadKind>(kinds);
             foreach (var grant in Grants)

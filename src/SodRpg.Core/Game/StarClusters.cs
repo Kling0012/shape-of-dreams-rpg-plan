@@ -186,6 +186,9 @@ namespace SodRpg.Core.Game
             {
                 if (star.Kind != ClusterStarKind.Keystone || star.KeystoneDefinition.KeystoneId != id || star.Gimmick != null || star.Mechanism != null)
                     throw Invalid(id, "Invalid authored keystone.");
+                if (star.KeystoneDefinition.RetainedPower != Power.None
+                    && (star.Power != star.KeystoneDefinition.RetainedPower || star.Amount != star.KeystoneDefinition.RetainedPowerValue))
+                    throw Invalid(id, "A retained keystone Power must be carried by its node exactly once.");
                 return;
             }
             if (star.Kind == ClusterStarKind.Stat)

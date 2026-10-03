@@ -29,6 +29,8 @@ namespace SodRpg.Core.Game
         public List<AuthoredMechanismEntry> Mechanisms { get; } = new List<AuthoredMechanismEntry>();
         public SortedDictionary<string, int> MechanismEndpointRanks { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public KeystoneDefinition SelectedKeystone { get; set; }
+        /// <summary>Set only by C15's dependency-aware evaluation; records which stars combine into which outputs.</summary>
+        internal StarDependencies Dependencies { get; set; }
         internal Dictionary<string, string[]> ScopedWireRecords { get; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
         public int Heat { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
@@ -56,15 +58,31 @@ namespace SodRpg.Core.Game
             HeroState allocation, HeroState reachability = null, HeroTreeLayout layout = null)
             => ComputeTree(p, heroKey, heat, tree, layout ?? HeroTreeLayout.ForTalents(tree), null, 0, allocation, reachability);
 
+        /// <summary>
+        /// Identical to the public overload for a tree the caller has already validated, whose id table it owns and whose
+        /// reachability snapshot (for exactly <paramref name="reachability"/>) it has already taken. Used by C15, which evaluates
+        /// the same tree and the same reachability state hundreds of times per preview.
+        /// </summary>
+        internal static Build ComputeForValidatedTree(Profile p, string heroKey, IReadOnlyList<TalentDef> tree,
+            HeroState allocation, HeroState reachability, HeroTreeLayout layout,
+            Dictionary<string, TalentDef> definitions, bool[] reachabilitySnapshot, StarDependencies dependencies = null)
+            => ComputeTree(p, heroKey, 0, tree, layout, null, 0, allocation, reachability, definitions, reachabilitySnapshot, dependencies);
+
         private static Build ComputeTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree,
-            HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId, HeroState allocation = null, HeroState reachability = null)
+            HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId, HeroState allocation = null, HeroState reachability = null,
+            Dictionary<string, TalentDef> validatedDefinitions = null, bool[] reachabilitySnapshot = null,
+            StarDependencies dependencies = null)
         {
             var h = allocation ?? p.Hero(heroKey);
-            FractionalScopedModifiers.ValidateTree(tree);
-            var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
-            foreach (var talent in tree) definitions.Add(talent.Id, talent);
+            Dictionary<string, TalentDef> definitions = validatedDefinitions;
+            if (definitions == null)
+            {
+                FractionalScopedModifiers.ValidateTree(tree);
+                definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+                foreach (var talent in tree) definitions.Add(talent.Id, talent);
+            }
             var reachabilityState = reachability ?? h;
-            var reachable = layout.ReachabilitySnapshot(reachabilityState);
+            var reachable = reachabilitySnapshot ?? layout.ReachabilitySnapshot(reachabilityState);
             bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachabilityState, talent, reachable);
             long spent = h.Keystone != null && definitions.TryGetValue(h.Keystone, out var selectedKey)
                 ? selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost : 0;
@@ -78,6 +96,7 @@ namespace SodRpg.Core.Game
                 Heat = Loot.ClampHeat(heat),
                 DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, p.DreamLevel)),
                 SpentStarPoints = (int)spent,
+                Dependencies = dependencies,
             };
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
@@ -101,6 +120,7 @@ namespace SodRpg.Core.Game
                     if (!h.TalentChoices.TryGetValue(talent.Id, out int choice) || choice < 0 || choice >= talent.Choices.Count)
                         throw new InvalidOperationException("An allocated choice star requires a valid selection: " + talent.Id);
                     talent = talent.Choices[choice];
+                    dependencies?.Alias(talent.Id, kv.Key);
                 }
                 selectedTalents.Add(new KeyValuePair<TalentDef, int>(talent, rank));
             }
@@ -191,6 +211,13 @@ namespace SodRpg.Core.Game
                 if (pair != null && t.Mechanism == null)
                 {
                     var entry = global::SodRpg.Core.Game.PairCombos.Activate(pair, h, rank);
+                    if (dependencies != null)
+                    {
+                        // The combo exists only while both neighbours are allocated, and it removes/gates authored bridge mechanisms of the same pair.
+                        dependencies.Touch("Q:" + pair.Id, t.Id);
+                        dependencies.Touch("Q:" + pair.Id, pair.StarA);
+                        dependencies.Touch("Q:" + pair.Id, pair.StarB);
+                    }
                     if (entry != null && definitions.TryGetValue(pair.StarA, out var starA)
                         && definitions.TryGetValue(pair.StarB, out var starB)
                         && Unlocked(starA) && Unlocked(starB))
@@ -222,10 +249,28 @@ namespace SodRpg.Core.Game
                         Kind = t.LinkPerRank.Kind,
                         ValueMilli = checked(t.LinkPerRank.ValueMilli * rank),
                     };
-                    if (global::SodRpg.Core.Game.Links.Validate(link)) b.Links.Add(link);
+                    if (global::SodRpg.Core.Game.Links.Validate(link))
+                    {
+                        b.Links.Add(link);
+                        if (dependencies != null)
+                        {
+                            // Links of one key add up; haste totals combine every link naming the same memory.
+                            dependencies.Touch("L:" + BuildAggregation.LinkKey(link), t.Id);
+                            if (link.Kind == LinkKind.MemoryHaste)
+                                foreach (string memory in link.Requires) dependencies.Touch("H:" + global::SodRpg.Core.Game.Links.Canon(memory), t.Id);
+                        }
+                    }
                 }
-                else if (t.IsPowerNode) AddPower(t.RankPower, t.PerRank * rank);
-                else if (t.PerRank != 0) Add(rawStats, t.Stat, t.PerRank * rank);
+                else if (t.IsPowerNode)
+                {
+                    AddPower(t.RankPower, t.PerRank * rank);
+                    dependencies?.Touch("P:" + ((int)t.RankPower).ToString(CultureInfo.InvariantCulture), t.Id);
+                }
+                else if (t.PerRank != 0)
+                {
+                    Add(rawStats, t.Stat, t.PerRank * rank);
+                    dependencies?.Touch("S:" + ((int)t.Stat).ToString(CultureInfo.InvariantCulture), t.Id);
+                }
             }
             FractionalScopedModifiers.Compose(b, selectedTalents);
             AuthoredMechanisms.Compose(b, selectedTalents);
@@ -245,6 +290,7 @@ namespace SodRpg.Core.Game
                 && Rules.BelongsTo(key, heroKey) && KeyUnlocked(key))
             {
                 b.SelectedKeystone = key.KeystoneDefinition;
+                if (dependencies != null) dependencies.AppliedKeystone = b.SelectedKeystone;
                 bool migratedStillWater = false;
                 if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
                     foreach (var grant in key.KeystoneDefinition.Grants)

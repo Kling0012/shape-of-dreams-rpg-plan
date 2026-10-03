@@ -34,6 +34,8 @@ namespace SodRpg.Mod
             {
                 instance.isAlteringGameplay = true;
                 Loc.Japanese = config.japanese;
+                // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
+                StarClusters.RegisterAllGenerated();
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");

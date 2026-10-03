@@ -106,7 +106,10 @@ namespace SodRpg.Core.Game
                     + (transform.ExpectedFrom.HasValue ? " (from " + Number(transform.ExpectedFrom.Value) + ")" : "")
                     + (transform.Maximum.HasValue ? " (max " + Number(transform.Maximum.Value) + ")" : "");
             }
-            return string.Join("\n", (upside ? definition.Upside : definition.Downside).Select(Transform)
+            return string.Join("\n", (upside && definition.RetainedPower != Power.None
+                    ? new[] { Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(definition.RetainedPower, definition.RetainedPowerValue) }
+                    : Enumerable.Empty<string>())
+                .Concat((upside ? definition.Upside : definition.Downside).Select(Transform))
                 .Concat(upside ? definition.Grants.Select(Describe) : Enumerable.Empty<string>()));
         }
         internal static void ValidateBindings(IReadOnlyList<TalentDef> tree)
@@ -315,7 +318,17 @@ namespace SodRpg.Core.Game
             List<KeyValuePair<TalentDef, int>> modifiers = null;
             foreach (var row in selected)
             {
-                if (row.Key.Mechanism != null) replaced.UnionWith(row.Key.Mechanism.Replaces);
+                if (row.Key.Mechanism != null)
+                {
+                    replaced.UnionWith(row.Key.Mechanism.Replaces);
+                    // A replaced star's own entry (or mechanism) disappears while its replacer is allocated.
+                    if (build.Dependencies != null)
+                        foreach (string id in row.Key.Mechanism.Replaces)
+                        {
+                            build.Dependencies.Touch("R:" + id, row.Key.Id);
+                            build.Dependencies.Touch("R:" + id, id);
+                        }
+                }
                 if (row.Key.ScopedModifier == null) continue;
                 if (modifiers == null) modifiers = new List<KeyValuePair<TalentDef, int>>();
                 modifiers.Add(row);
@@ -332,6 +345,17 @@ namespace SodRpg.Core.Game
                 var entry = new AuthoredMechanismEntry { StarId = row.Key.Id, ContributorIds = new[] { row.Key.Id }, Spec = authored.Copy() };
                 var spec = entry.Spec;
                 if (spec.Dividend != null) spec.ChannelId = "dividend." + StarClusters.RegistryHash(spec.Dividend.ConditionKey);
+                if (build.Dependencies != null)
+                {
+                    build.Dependencies.Touch("G:" + spec.ChannelId, row.Key.Id);
+                    if (spec.PairId != null) build.Dependencies.Touch("Q:" + spec.PairId, row.Key.Id);
+                    if (spec.Bridge != null)
+                    {
+                        build.Dependencies.Touch("Q:" + spec.Bridge.PairId, row.Key.Id);
+                        // The bridge reads the ranks of its endpoint stars.
+                        foreach (var endpoint in spec.Bridge.Endpoints) build.Dependencies.Touch("G:" + spec.ChannelId, endpoint.StarId);
+                    }
+                }
                 if (spec.ValuesByRank.Length > 0 && row.Value > spec.ValuesByRank.Length) throw new InvalidOperationException("Missing authored rank value.");
                 decimal value = spec.ValuesByRank.Length == 0 ? BaseValue(spec) * row.Value : spec.ValuesByRank[row.Value - 1];
                 if (spec.Bridge != null) ComposeEntry(entry, row.Value, Array.Empty<KeyValuePair<TalentDef, int>>());
@@ -357,12 +381,21 @@ namespace SodRpg.Core.Game
             foreach (var group in groups.Values)
             {
                 if (group.Entry.Spec.Bridge == null) SetValue(group.Entry.Spec, group.Value, group.Entry.ContributorIds);
-                ComposeEntry(group.Entry, 1, appliedModifiers, false);
+                ComposeEntry(group.Entry, 1, appliedModifiers, false, build.Dependencies);
                 build.Mechanisms.Add(group.Entry);
             }
             var admittedPairs = new HashSet<string>(StringComparer.Ordinal);
             foreach (var entry in build.Mechanisms)
                 if (entry.Spec.Bridge != null) admittedPairs.Add(entry.Spec.Bridge.PairId);
+            if (build.Dependencies != null)
+                foreach (var entry in build.Mechanisms)
+                {
+                    // Conditional mechanisms and legacy pair combos exist only while the pair's bridge mechanism is allocated.
+                    if (entry.Spec.Bridge != null) build.Dependencies.Touch("Q:" + entry.Spec.Bridge.PairId, entry.ContributorIds);
+                    if (entry.Spec.Condition != AuthoredMechanismCondition.Always && entry.Spec.PairId != null)
+                        build.Dependencies.Touch("Q:" + entry.Spec.PairId, entry.ContributorIds);
+                    build.Dependencies.Touch("G:" + entry.Spec.ChannelId, entry.ContributorIds);
+                }
             build.Mechanisms.RemoveAll(entry => entry.Spec.Condition != AuthoredMechanismCondition.Always
                 && !admittedPairs.Contains(entry.Spec.PairId));
             foreach (var entry in build.Mechanisms) if (entry.Spec.Bridge != null)
@@ -376,7 +409,8 @@ namespace SodRpg.Core.Game
             return Key(normalized);
         }
 
-        private static void ComposeEntry(AuthoredMechanismEntry entry, int rank, IReadOnlyList<KeyValuePair<TalentDef, int>> selected, bool applyRankValues = true)
+        private static void ComposeEntry(AuthoredMechanismEntry entry, int rank, IReadOnlyList<KeyValuePair<TalentDef, int>> selected, bool applyRankValues = true,
+            StarDependencies dependencies = null)
         {
             var s = entry.Spec;
             s.EveryN = EffectiveEveryN(s);
@@ -388,6 +422,7 @@ namespace SodRpg.Core.Game
                 var t = row.Key;
                 var m = t.ScopedModifier;
                 if (m == null || !Matches(m, entry)) continue;
+                dependencies?.Touch("G:" + s.ChannelId, t.Id);
                 if (m.Param.HasValue && !Supports(s, m.Param.Value)) throw new InvalidOperationException("Unsupported mechanism parameter: " + t.Id);
                 if (m.CapProfileId != null)
                 {

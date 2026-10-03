@@ -371,6 +371,11 @@ namespace SodRpg.Core.Game
                 {
                     var n = t.NativeModifier;
                     string key = ((int)n.Kind).ToString(CultureInfo.InvariantCulture) + ":" + n.Memory;
+                    if (build.Dependencies != null)
+                    {
+                        build.Dependencies.Touch("N:" + key, t.Id);
+                        if (n.Kind == LinkKind.MemoryHaste) build.Dependencies.Touch("H:" + Links.Canon(n.Memory), t.Id);
+                    }
                     if (native.TryGetValue(key, out var e))
                     {
                         if (e.CapProfileId != n.CapProfileId) throw new InvalidOperationException("Conflicting native cap profiles.");
@@ -390,6 +395,7 @@ namespace SodRpg.Core.Game
                 if (entry.Channel != null)
                 {
                     string key = ChannelKey(entry);
+                    build.Dependencies?.Touch("C:" + key, entry.ContributorIds);
                     if (channels.TryGetValue(key, out var same))
                     {
                         same.Def.ValuePrecise = checked(same.Def.ValuePrecise + entry.Def.ValuePrecise);
@@ -407,11 +413,14 @@ namespace SodRpg.Core.Game
                 long boost = 0, duration = 0, radius = 0, chance = 0, targets = 0;
                 bool sourceBoost = false, receiverBoost = false;
                 ScopedModifierCapProfile boostCap = null, durationCap = null, radiusCap = null, chanceCap = null, targetsCap = null;
+                string entryToken = build.Dependencies == null ? null : "E:" + entry.StarId;
+                if (entryToken != null) build.Dependencies.Touch(entryToken, entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds);
                 foreach (var s in selected)
                 {
                     var t = s.Key;
                     if (t.RouteMemory == entry.Memory)
                     {
+                        if (entryToken != null && (t.GimmickBoost != 0 || t.GimmickParameter.HasValue)) build.Dependencies.Touch(entryToken, t.Id);
                         boost += (long)t.GimmickBoost * s.Value * 100;
                         sourceBoost |= t.GimmickBoost != 0;
                         long amount = (long)t.GimmickParamAmount * s.Value;
@@ -425,6 +434,7 @@ namespace SodRpg.Core.Game
                     }
                     var m = t.ScopedModifier;
                     if (m == null || !Matches(m, entry)) continue;
+                    if (entryToken != null) build.Dependencies.Touch(entryToken, t.Id);
                     if (m.Param.HasValue && !Gimmicks.SupportsParameter(entry.Def, m.Param.Value)) throw new InvalidOperationException("Unsupported scoped field: " + t.Id);
                     long value = (long)m.Amount.Units * s.Value;
                     switch (m.Param)

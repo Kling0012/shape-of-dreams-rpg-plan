@@ -18,6 +18,14 @@ namespace SodRpg.Core.Game
             effect.RankCost = original.RankCost;
             if (effect.Options != null)
                 foreach (var option in effect.Options) { option.MaxRank = original.MaxRank; option.RankCost = original.RankCost; }
+            var retainedKey = effect.KeystoneDefinition;
+            if (retainedKey != null && retainedKey.RetainedPower != Power.None)
+            {
+                // The retained Power comes from the baseline node alone; the node keeps carrying it so Build adds it once.
+                if (!original.IsKeystone || original.Power != retainedKey.RetainedPower || original.PowerValue != retainedKey.RetainedPowerValue)
+                    throw new InvalidOperationException("Manifest keystone Power differs from the baseline keystone: " + id);
+                effect.Power = original.Power; effect.Amount = original.PowerValue;
+            }
             // A retained outer bridge that carries a complete authored pair (ManifestNewPair) is a real bridge region too.
             var pair = PairCombos.ForBridge(id);
             bool authoredPair = effect.Mechanism?.Bridge != null;
@@ -37,6 +45,27 @@ namespace SodRpg.Core.Game
                 KeystoneDefinition = effect.KeystoneDefinition,
                 SourceDocument = source, MechanismIds = mechanisms, Notes = notes
             };
+        }
+
+        // A legacy keystone's upside is its existing Power. It is read from the baseline node, never re-typed in the manifest.
+        internal static KeystoneDefinition ManifestKeystone(string hero, string id, IEnumerable<string> requiredMemories,
+            IEnumerable<AuthoredKeystoneSpec> upside, IEnumerable<AuthoredKeystoneSpec> downside,
+            IEnumerable<string> prerequisites, int cost)
+        {
+            var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == id);
+            if (!original.IsKeystone || original.Power == Power.None || original.PowerValue <= 0)
+                throw new InvalidOperationException("Baseline keystone has no retained Power: " + id);
+            return AuthoredKeystoneCompiler.Compile(id, requiredMemories, upside, downside, prerequisites, cost,
+                retainedPower: original.Power, retainedPowerValue: original.PowerValue);
+        }
+
+        // A manifest migration row keeps the star's ID and ranks and changes its effect. The original per-rank cost
+        // (keystones: Content.KeystoneCost) comes from the baseline tree, so a saved profile is refunded at what it paid.
+        internal static LegacyStarMigration ManifestMigration(string hero, string id, int maxRank)
+        {
+            var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == id);
+            if (original.MaxRank != maxRank) throw new InvalidOperationException("Manifest changed retained rank limit: " + id);
+            return new LegacyStarMigration(id, maxRank, original.IsKeystone ? Content.KeystoneCost : original.RankCost, changedEffect: true);
         }
 
         private static MemoryEventKind ManifestPairTrigger(PairComboTrigger trigger)

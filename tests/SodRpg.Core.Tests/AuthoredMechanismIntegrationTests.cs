@@ -181,8 +181,8 @@ namespace SodRpg.Core.Tests
                 AuthoredStarContractTests.AllocatePath(hero, HeroSigils.TreeFor(Hero), Root);
                 Rules.AddTalentRank(profile, Hero, Root);
                 int count = 300 - Rules.SpentPoints(hero);
-                // 購入ごとの全段検証は点数の3乗で遅い（300点で約170秒）。先頭だけ実購入し、残りは同じ保存形式で直接振る。
-                // 全点の効果が実際に効いていることは、下の Build の合計（0.9999^count）で検証する。全点を実購入する版は SlowFact 側。
+                // 先頭だけ実購入し、残りは同じ保存形式で直接振る（短い版）。全点を実購入する版は下の Three_hundred_real_paid_points。
+                // 全点の効果が実際に効いていることは、下の Build の合計（0.9999^count）で検証する。
                 int purchased = 0;
                 foreach (var star in stars.Take(count))
                 {
@@ -203,7 +203,7 @@ namespace SodRpg.Core.Tests
             finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
         }
 
-        [SlowFact, Trait("Speed", "Slow")]
+        [Fact]
         public void Three_hundred_real_paid_points_keep_every_recharge_application_inside_fixed_wire_envelope()
         {
             var stars = Enumerable.Range(2, 299).Select(n => Node("outer.authoredprobe.s" + n,

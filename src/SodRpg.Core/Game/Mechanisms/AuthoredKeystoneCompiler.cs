@@ -26,7 +26,7 @@ namespace SodRpg.Core.Game
         public static KeystoneDefinition Compile(string id, IEnumerable<string> requiredMemories,
             IEnumerable<AuthoredKeystoneSpec> upside, IEnumerable<AuthoredKeystoneSpec> downside,
             IEnumerable<string> prerequisites = null, int cost = Content.KeystoneCost,
-            IEnumerable<KeystonePayloadKind> payloads = null)
+            IEnumerable<KeystonePayloadKind> payloads = null, Power retainedPower = Power.None, int retainedPowerValue = 0)
         {
             var grants = new List<AuthoredMechanismSpec>();
             KeystoneTransform[] CompileSide(IEnumerable<AuthoredKeystoneSpec> specs)
@@ -53,7 +53,8 @@ namespace SodRpg.Core.Game
                 return transforms.ToArray();
             }
             var up = CompileSide(upside); var down = CompileSide(downside);
-            return new KeystoneDefinition(id, requiredMemories, up, down, prerequisites, payloads, cost, grants);
+            return new KeystoneDefinition(id, requiredMemories, up, down, prerequisites, payloads, cost, grants,
+                retainedPower, retainedPowerValue);
         }
 
         /// <summary>All manifest field synonyms resolve explicitly; unknown fields are errors.</summary>

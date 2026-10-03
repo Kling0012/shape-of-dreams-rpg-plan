@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 using SodRpg.Core.Game;
 
@@ -8,28 +7,17 @@ using SodRpg.Core.Game;
 /// </summary>
 internal static class StarMapWiki
 {
-    // 生成された星図を登録する入口（別担当が追加）。見つかった場合だけ、引数なしで1回呼ぶ。
-    // 本番の登録パスが確定したら、ここの名前を1つ足すか、Generate の前に直接呼ぶ1行を書く。
-    private static readonly string[] OptionalEntryPoints =
-        { "RegisterAllGenerated", "RegisterGeneratedTrees", "RegisterGenerated", "RegisterAllAuthored", "RegisterGeneratedStarMaps" };
-
     // 1ページの上限。確認用に環境変数 WIKIGEN_STARMAP_MAX で小さくできる。
     public static readonly int MaxPageBytes = int.TryParse(Environment.GetEnvironmentVariable("WIKIGEN_STARMAP_MAX"), out int m) && m >= 20_000 ? m : 200_000;
     private const string NL = " \\\\ ";
 
     public sealed record HeroSummary(string Key, string Slug, string Name, int Stars, int Keystones, int Pages, string Home);
 
-    /// <summary>登録済みの入口があれば呼ぶ。呼んだ名前（なければ null）を返す。</summary>
-    public static string? RegisterGeneratedIfPresent()
+    /// <summary>生成済みの星図（StarClusters.GeneratedHeroes）をすべて登録する。呼んだ入口名を返す。</summary>
+    public static string RegisterGenerated()
     {
-        foreach (string name in OptionalEntryPoints)
-        {
-            var m = typeof(StarClusters).GetMethod(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static, null, Type.EmptyTypes, null);
-            if (m == null) continue;
-            m.Invoke(null, null);
-            return "StarClusters." + name;
-        }
-        return null;
+        StarClusters.RegisterAllGenerated();
+        return "StarClusters.RegisterAllGenerated";
     }
 
     private enum Region { Core, Memory, Bridge, Outer }

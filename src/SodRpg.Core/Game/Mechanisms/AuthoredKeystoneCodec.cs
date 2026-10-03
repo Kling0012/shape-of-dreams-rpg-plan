@@ -15,13 +15,16 @@ namespace SodRpg.Core.Game
             {
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                 {
-                    writer.Write((byte)1); writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
+                    // Grammar 1 is byte-identical to every keystone without a retained Power; grammar 2 appends it.
+                    bool retained = definition.RetainedPower != Power.None;
+                    writer.Write((byte)(retained ? 2 : 1)); writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
                     Strings(writer, definition.RequiredMemories); Strings(writer, definition.Prerequisites);
                     writer.Write(definition.Payloads.Count); foreach (var payload in definition.Payloads) writer.Write((int)payload);
                     Transforms(writer, definition.Upside); Transforms(writer, definition.Downside);
                     writer.Write(definition.Grants.Count);
                     foreach (var grant in definition.Grants) writer.Write(AuthoredMechanismCodec.Encode(new AuthoredMechanismEntry
                         { StarId = definition.KeystoneId, ContributorIds = new[] { definition.KeystoneId }, Spec = grant }));
+                    if (retained) { writer.Write((int)definition.RetainedPower); writer.Write(definition.RetainedPowerValue); }
                 }
                 if (stream.Length > 65536) throw new InvalidOperationException("Keystone exceeds wire budget.");
                 return Convert.ToBase64String(stream.ToArray());
@@ -33,7 +36,8 @@ namespace SodRpg.Core.Game
             using (var stream = new MemoryStream(Convert.FromBase64String(encoded), false))
             using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
             {
-                if (reader.ReadByte() != 1) throw new FormatException("Unknown keystone grammar.");
+                byte grammar = reader.ReadByte();
+                if (grammar != 1 && grammar != 2) throw new FormatException("Unknown keystone grammar.");
                 string id = Token(reader); int cost = reader.ReadInt32(); var memories = Strings(reader); var prerequisites = Strings(reader);
                 var kinds = new List<KeystonePayloadKind>(); int count = Count(reader);
                 for (int i = 0; i < count; i++) kinds.Add((KeystonePayloadKind)reader.ReadInt32());
@@ -46,8 +50,16 @@ namespace SodRpg.Core.Game
                         throw new FormatException("Invalid keystone grant ownership.");
                     grants.Add(entry.Spec);
                 }
+                var power = Power.None; int powerValue = 0;
+                if (grammar == 2)
+                {
+                    int rawPower = reader.ReadInt32(); powerValue = reader.ReadInt32();
+                    if (!Enum.IsDefined(typeof(Power), rawPower) || rawPower == (int)Power.None || powerValue <= 0)
+                        throw new FormatException("Invalid retained keystone Power.");
+                    power = (Power)rawPower;
+                }
                 if (stream.Position != stream.Length) throw new FormatException("Trailing keystone data.");
-                return new KeystoneDefinition(id, memories, up, down, prerequisites, kinds, cost, grants);
+                return new KeystoneDefinition(id, memories, up, down, prerequisites, kinds, cost, grants, power, powerValue);
             }
         }
         private static void Strings(BinaryWriter writer, IReadOnlyList<string> values)

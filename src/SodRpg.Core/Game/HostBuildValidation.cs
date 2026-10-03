@@ -119,7 +119,8 @@ namespace SodRpg.Core.Game
             spent = 0;
             reason = null;
             if (hero == null || engine == null) return Reject("allocation", out reason);
-            long total = hero.Keystone == null ? 0 : Content.KeystoneCost;
+            // A typed keystone declares its own cost (every other consumer reads KeystoneDefinition.Cost); legacy keys cost Content.KeystoneCost.
+            long total = hero.Keystone == null ? 0 : engine.Talent(hero.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             foreach (var rank in hero.Talents)
             {
                 var def = engine.Talent(rank.Key);
