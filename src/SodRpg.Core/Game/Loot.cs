@@ -53,6 +53,11 @@ namespace SodRpg.Core.Game
         /// <summary>救済の確率 p = min(1, 0.08 + 0.048k)。k は未取得が続いたボス撃破数（付録B4）。</summary>
         public static double EpicPityChance(int k) => Math.Min(1.0, 0.08 + 0.048 * Math.Max(0, k));
 
+        /// <summary>
+        /// 画面に出す「良い遺物の出やすさ」の%。レア度が1段上がるごとに、抽選の重みがこの%だけ多く掛かる（RollRarity の f = 1 + 0.6×luck）。
+        /// </summary>
+        public static double LuckPercent(double luck) => 60.0 * Math.Max(0, luck);
+
         public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common)
         {
             double f = 1.0 + 0.6 * Math.Max(0, luck);
