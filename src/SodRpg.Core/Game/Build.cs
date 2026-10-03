@@ -76,6 +76,14 @@ namespace SodRpg.Core.Game
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
             var awakenGains = new Dictionary<Power, int>();
+            var basePowers = new Dictionary<Power, decimal>();
+            var equippedLinks = new Dictionary<string, (LinkDef Link, decimal Base, decimal Scaled)>(StringComparer.Ordinal);
+            void AddPower(Power power, int value)
+            {
+                Add(rawPowers, power, value);
+                basePowers.TryGetValue(power, out decimal current);
+                basePowers[power] = current + value;
+            }
             var selectedTalents = new List<KeyValuePair<TalentDef, int>>();
             foreach (var kv in h.Talents)
             {
@@ -96,7 +104,18 @@ namespace SodRpg.Core.Game
                 var r = p.FindStash(uid);
                 if (r == null) continue;
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
-                foreach (var pw in r.EffectivePowers()) Add(rawPowers, pw.Power, pw.Value);
+                for (int i = 0; i < r.Powers.Count; i++)
+                {
+                    var pw = r.Powers[i];
+                    int value = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));
+                    if (r.Awakened) value = (int)((long)value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
+                    Add(rawPowers, pw.Power, value);
+                    // The saved first power already includes the one-time +20 bonus.
+                    decimal basis = i == 0 && (r.MilestonePowerApplied || r.EnhanceMilestones >= 5)
+                        ? pw.Value * 100m / Content.LimitBreakPowerPct : pw.Value;
+                    basePowers.TryGetValue(pw.Power, out decimal current);
+                    basePowers[pw.Power] = current + basis;
+                }
                 if (r.Awakened)
                     foreach (var pw in r.Powers)
                     {
@@ -105,18 +124,38 @@ namespace SodRpg.Core.Game
                         int after = (int)((long)before * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
                         Add(awakenGains, pw.Power, after - before);
                     }
-                // 連携（v1.26）：強化では伸びず、覚醒だけが値を掛ける。正しくない定義は無視する。
+                // Equipment link bases share a cap only with matching equipment conditions.
                 var link = r.Link;
-                if (link != null)
+                if (link != null && global::SodRpg.Core.Game.Links.Validate(link))
                 {
-                    decimal scaled = r.Awakened ? link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100m : link.Value;
-                    int value = BuildPrecision.FromDecimal(Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), scaled)));
-                    var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, ValueMilli = value };
-                    if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
+                    decimal scaled = link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100m;
+                    if (link.Kind == LinkKind.MemorySurge)
+                    {
+                        // Surge sources own separate windows; they never add together.
+                        b.Links.Add(new LinkDef
+                        {
+                            Requires = link.Requires, Kind = link.Kind,
+                            ValueMilli = CappedLinkMilli(link.Value, scaled,
+                                global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length)),
+                        });
+                    }
+                    else
+                    {
+                        string linkKey = BuildAggregation.LinkKey(link);
+                        equippedLinks.TryGetValue(linkKey, out var total);
+                        equippedLinks[linkKey] = (link, total.Base + link.Value, total.Scaled + scaled);
+                    }
                 }
                 b.Lines.TryGetValue(r.Base.Line, out int n);
                 b.Lines[r.Base.Line] = n + 1;
             }
+            foreach (var total in equippedLinks.Values)
+                b.Links.Add(new LinkDef
+                {
+                    Requires = total.Link.Requires, Kind = total.Link.Kind,
+                    ValueMilli = CappedLinkMilli(total.Base, total.Scaled,
+                        global::SodRpg.Core.Game.Links.EquippedCap(total.Link.Kind, total.Link.Requires.Length)),
+                });
             foreach (var kv in b.Lines)
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             var setCounts = new Dictionary<string, int>();
@@ -133,7 +172,7 @@ namespace SodRpg.Core.Game
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
-                if (kv.Value >= 3) foreach (var pw in set.ThreePiece) Add(rawPowers, pw.Power, pw.Value);
+                if (kv.Value >= 3) foreach (var pw in set.ThreePiece) AddPower(pw.Power, pw.Value);
             }
             foreach (var selected in selectedTalents)
             {
@@ -176,7 +215,7 @@ namespace SodRpg.Core.Game
                     };
                     if (global::SodRpg.Core.Game.Links.Validate(link)) b.Links.Add(link);
                 }
-                else if (t.IsPowerNode) Add(rawPowers, t.RankPower, t.PerRank * rank);
+                else if (t.IsPowerNode) AddPower(t.RankPower, t.PerRank * rank);
                 else if (t.PerRank != 0) Add(rawStats, t.Stat, t.PerRank * rank);
             }
             FractionalScopedModifiers.Compose(b, selectedTalents);
@@ -195,7 +234,7 @@ namespace SodRpg.Core.Game
             if (h.Keystone != null && definitions.TryGetValue(h.Keystone, out var key) && key.IsKeystone
                 && Rules.BelongsTo(key, heroKey) && KeyUnlocked(key))
             {
-                Add(rawPowers, key.Power, key.PowerValue);
+                AddPower(key.Power, key.PowerValue);
             }
 
             var daily = DailyDream.Get(dailyId);
@@ -205,6 +244,7 @@ namespace SodRpg.Core.Game
                     if (rawPowers.TryGetValue(pw, out int v))
                     {
                         rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
+                        basePowers[pw] += basePowers[pw] * DailyDream.PowerBoostPct / 100m;
                         if (awakenGains.TryGetValue(pw, out int gain))
                         {
                             int before = v - gain;
@@ -227,7 +267,7 @@ namespace SodRpg.Core.Game
             foreach (var kv in rawPowers)
             {
                 int cap = Content.PowerCap(kv.Key);
-                b.Powers[kv.Key] = cap > 0 ? Math.Min(kv.Value, cap) : kv.Value;
+                b.Powers[kv.Key] = cap > 0 ? (int)CappedContribution(basePowers[kv.Key], kv.Value, cap) : kv.Value;
                 if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
                     b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
             }
@@ -245,6 +285,14 @@ namespace SodRpg.Core.Game
 
         private static IReadOnlyList<LinkDef> AggregateLinks(IEnumerable<LinkDef> links)
             => BuildAggregation.LinksForBuild(links);
+
+        // Every source receives the same capped-base share, then keeps its own multiplier.
+        // Summing scaled contributions before applying that share is algebraically identical.
+        private static decimal CappedContribution(decimal basis, decimal scaled, decimal cap)
+            => Math.Min(cap * 2.5m, basis > cap ? scaled * cap / basis : scaled);
+
+        private static int CappedLinkMilli(decimal basis, decimal scaled, decimal cap)
+            => BuildPrecision.FromDecimal(decimal.Round(CappedContribution(basis, scaled, cap), 3, MidpointRounding.AwayFromZero));
 
         private static void Add<T>(Dictionary<T, int> d, T key, int v)
         {
@@ -468,7 +516,8 @@ namespace SodRpg.Core.Game
                                 var power = (Power)id;
                                 var target = kind == "u" ? b.ConditionalBasePowers : b.Powers;
                                 if (target.ContainsKey(power) || kind == "u" && !NewPowersV129.IsConditionalAttribute(power)) return null;
-                                target.Add(power, Math.Max(0, Math.Min(Content.PowerCap(power), value)));
+                                int cap = Content.PowerCap(power);
+                                target.Add(power, Math.Max(0, Math.Min((int)(cap * 2.5m), value)));
                             }
                         }
                     }

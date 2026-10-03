@@ -1236,6 +1236,13 @@ namespace SodRpg.Core.Game
                 $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
         }
 
+        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。上限では0。</summary>
+        public static int EnhanceFailureChance(Relic relic)
+        {
+            if (relic.Enhance >= Content.MaxEnhanceFor(relic)) return 0;
+            return Math.Max(0, (relic.Enhance - 2) * 5);
+        }
+
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
@@ -1245,12 +1252,20 @@ namespace SodRpg.Core.Game
             int cost = Content.EnhanceCost(r.Enhance);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
-            r.Enhance++;
             var rng = p.TakeRng();
+            if (rng.Chance(EnhanceFailureChance(r) / 100.0))
+            {
+                r.Enhance = 0;
+                p.StoreRng(rng);
+                return new GameEvent(EventKind.Info, Loc.T(
+                    $"「{r.PlainName}」の強化に失敗し、強化値が+0に戻りました。欠片{cost}は消費されました。",
+                    $"Enhancement failed for \"{r.PlainName}\" and reset it to +0. The {cost} shards were spent."), r.Rarity);
+            }
+            r.Enhance++;
             string milestone = GrantEnhanceMilestones(rng, r);
             p.StoreRng(rng);
             return WithBountyProgress(p, new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
-                Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
+                Loc.T($"「{r.PlainName}」の強化に成功し、+{r.Enhance}になりました。", $"Successfully enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
         }
 
         private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
@@ -1300,6 +1315,8 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static string GrantEnhanceMilestones(Rng rng, Relic r)
         {
+            if (r.EnhanceMilestones >= 5) r.MilestonePowerApplied = true;
+            if (r.MilestonePowerApplied) r.EnhanceMilestones = 5;
             var notes = new List<string>();
             if (r.Enhance >= Content.EnhanceMilestoneFirst && r.EnhanceMilestones < 1)
             {
@@ -1335,9 +1352,8 @@ namespace SodRpg.Core.Game
                 var line = AddMilestoneAffix(rng, r);
                 if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
             }
-            if (r.Enhance >= Content.EnhanceMilestoneFifth && r.EnhanceMilestones < 5 && r.Rarity == Rarity.Legendary)
+            if (r.Enhance >= Content.EnhanceMilestoneFifth && !r.MilestonePowerApplied && r.Rarity == Rarity.Legendary)
             {
-                r.EnhanceMilestones = 5;
                 var boosted = BoostMilestonePower(r);
                 if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
             }
@@ -1353,15 +1369,15 @@ namespace SodRpg.Core.Game
             return line;
         }
 
-        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の値を1.2倍にする（合計の上限 PowerCap で止まる）。</summary>
+        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の保存値を一度だけ1.2倍にする。</summary>
         private static PowerLine BoostMilestonePower(Relic r)
         {
-            if (r.Powers.Count == 0) return null;
+            if (r.MilestonePowerApplied || r.Powers.Count == 0) return null;
             var first = r.Powers[0];
-            int cap = Content.PowerCap(first.Power);
             int value = Relic.Scale(first.Value, Content.LimitBreakPowerPct);
-            if (cap > 0) value = Math.Min(cap, value);
             r.Powers[0] = new PowerLine(first.Power, value);
+            r.MilestonePowerApplied = true;
+            r.EnhanceMilestones = 5;
             return r.Powers[0];
         }
 

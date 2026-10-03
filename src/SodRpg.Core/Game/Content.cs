@@ -4947,20 +4947,29 @@ namespace SodRpg.Core.Game
             return 100 + 3 * (l - 1);
         }
 
-        /// <summary>
-        /// 強化段階による倍率（%）。+5までは+1ごとに+6%、そこから先（限界突破）は+1ごとに+4%（+20で190%）。
-        /// </summary>
+        /// <summary>強化の累計倍率（%）。1段ごとの伸びは上限に近づくほど小さくなる。</summary>
+        private static readonly int[] EnhanceStatPcts =
+        {
+            100, 106, 111, 116, 121, 126, 129, 132, 135, 138, 140,
+            142, 144, 146, 148, 150, 152, 153, 154, 155, 156
+        };
+
+        private static readonly int[] EnhancePowerPcts =
+        {
+            100, 104, 108, 112, 116, 120, 123, 126, 128, 130, 132,
+            134, 136, 138, 139, 140, 141, 142, 143, 144, 145
+        };
+
+        /// <summary>基礎能力・特性の強化倍率（%）。+5/+10/+15/+20で126/140/150/156%。</summary>
         public static int EnhanceScalePct(int enhance)
         {
-            int h = Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth));
-            return h <= MaxEnhance ? 100 + 6 * h : 100 + 6 * MaxEnhance + 4 * (h - MaxEnhance);
+            return EnhanceStatPcts[Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth))];
         }
 
-        /// <summary>固有効果の強化による倍率（%）。+5までは+1ごとに+5%、そこから先は+1ごとに+3%（+20で170%）。</summary>
+        /// <summary>固有効果の強化倍率（%）。+5/+10/+15/+20で120/132/140/145%。</summary>
         public static int EnhancePowerScalePct(int enhance)
         {
-            int h = Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth));
-            return h <= MaxEnhance ? 100 + 5 * h : 100 + 5 * MaxEnhance + 3 * (h - MaxEnhance);
+            return EnhancePowerPcts[Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth))];
         }
 
         /// <summary>+6以降の強化1回の欠片（+6〜+10が180・230・290・360・440、+11〜+15は1.5倍、+16〜+20は2倍）。</summary>

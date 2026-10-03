@@ -30,8 +30,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(affixes + 1, r.Affixes.Count);
             Assert.Equal(1, r.EnhanceMilestones);
             Assert.Equal(EventKind.LevelUp, e3.Kind);
-            Rules.Enhance(p, r.Uid);
-            Rules.Enhance(p, r.Uid);
+            r.Enhance = 5;
+            Rules.GrantEnhanceMilestones(new Rng(7), r);
             Assert.Single(r.Powers);
             Assert.Equal(2, r.EnhanceMilestones);
             // 固有効果はその枠の候補の下限値
@@ -47,7 +47,8 @@ namespace SodRpg.Core.Tests
         {
             var (p, r) = WithRelic(Rarity.Epic);
             int affixes = r.Affixes.Count, powers = r.Powers.Count;
-            for (int i = 0; i < 5; i++) Rules.Enhance(p, r.Uid);
+            r.Enhance = 5;
+            Rules.GrantEnhanceMilestones(new Rng(7), r);
             Assert.Equal(powers, r.Powers.Count);
             Assert.Equal(affixes + 2, r.Affixes.Count);
         }

@@ -41,6 +41,7 @@ namespace SodRpg.Core.Game
                 : historicalCap >= Content.EnhanceMilestoneFourth ? 4
                 : historicalCap >= Content.EnhanceMilestoneThird ? 3 : 2;
             if (source.EnhanceMilestones > maxMilestones) return false;
+            if (source.MilestonePowerApplied && source.EnhanceMilestones < 5) return false;
 
             // Loot starts Rare/Epic with 1/2 powers, ordinary uniques with their authored powers,
             // and Common/Uncommon/set pieces with none. +5 adds a power only to the latter sources;
@@ -69,6 +70,7 @@ namespace SodRpg.Core.Game
                 Retunes = source.Retunes,
                 Locked = source.Locked,
                 EnhanceMilestones = source.EnhanceMilestones,
+                MilestonePowerApplied = source.MilestonePowerApplied || source.EnhanceMilestones >= 5,
                 AwakenPoints = source.AwakenPoints,
                 AwakenLevel = source.AwakenLevel,
             };
@@ -121,12 +123,9 @@ namespace SodRpg.Core.Game
                 }
                 if (i == 0 && source.EnhanceMilestones >= 5)
                 {
-                    // Rules.BoostMilestonePower affects the first power only and uses PowerCap
-                    // solely as a stop on this SOURCE bonus, not as the raw gear allowance.
-                    int boosted = Relic.Scale(cap, Content.LimitBreakPowerPct);
-                    int aggregateCap = Content.PowerCap(line.Power);
-                    if (aggregateCap > 0) boosted = Math.Min(boosted, aggregateCap);
-                    cap = Math.Max(cap, boosted); // Preserve an unboosted authored roll too.
+                    // The one-time source bonus is stored before enhancement/awakening.
+                    // Aggregate caps belong to Build.Compute, not to individual source values.
+                    cap = Math.Max(cap, Relic.Scale(cap, Content.LimitBreakPowerPct));
                 }
                 result.Powers.Add(new PowerLine(line.Power, ClampAmount(line.Value, cap)));
             }

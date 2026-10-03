@@ -32,14 +32,14 @@ namespace SodRpg.Core.Tests
 
             var local = Build.Compute(p, "Hero_Vesper", 0);
             var link = Assert.Single(local.Links);
-            Assert.True(link.Value <= Links.EquippedCap(link.Kind, link.Requires.Length));
+            Assert.InRange(link.Value, 0, 2.5m * Links.EquippedCap(link.Kind, link.Requires.Length));
             var host = Build.Decode(local.Encode());
             Assert.NotNull(host);
             Assert.Equal(link.Value, Assert.Single(host.Links).Value); // 表示（ローカル）とホストの実効値が同じ
         }
 
         [Fact]
-        public void Awakened_haste_never_reaches_a_full_cooldown_reset()
+        public void Haste_base_cap_remains_bounded_before_awakening()
         {
             for (int n = 1; n <= 3; n++)
                 Assert.True(Links.EquippedCap(LinkKind.MemoryHaste, n) <= Links.MaxHaste);

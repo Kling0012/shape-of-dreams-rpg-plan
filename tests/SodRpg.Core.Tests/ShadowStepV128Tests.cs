@@ -118,7 +118,9 @@ namespace SodRpg.Core.Tests
         [InlineData(-1, 0)]
         [InlineData(60, 60)]
         [InlineData(150, 150)]
-        [InlineData(200, 150)]
+        [InlineData(200, 200)]
+        [InlineData(375, 375)]
+        [InlineData(376, 375)]
         public void Wire_id_is_appended_and_received_values_are_capped(int value, int expected)
         {
             var decoded = Build.Decode("s:;p:6=40,21=80,42=18,43=" + value + ";h:0");

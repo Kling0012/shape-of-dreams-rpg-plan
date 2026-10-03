@@ -146,7 +146,7 @@ namespace SodRpg.Core.Tests
                 foreach (var hero in p.Heroes.Keys)
                 {
                     var b = Build.Compute(p, hero, rng.Range(0, 5));
-                    foreach (var kv in b.Powers) Assert.InRange(kv.Value, 0, Content.PowerCap(kv.Key));
+                    foreach (var kv in b.Powers) Assert.InRange(kv.Value, 0, (int)(2.5m * Content.PowerCap(kv.Key)));
                     var d = Build.Decode(b.Encode());
                     Assert.Equal(b.Stats, d.Stats);
                     Assert.Equal(b.Powers, d.Powers);

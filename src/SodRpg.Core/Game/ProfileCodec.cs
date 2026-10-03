@@ -221,6 +221,7 @@ namespace SodRpg.Core.Game
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
+                .Add("milestonePowerApplied", r.MilestonePowerApplied)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -541,6 +542,11 @@ namespace SodRpg.Core.Game
                     : Bool(j, "awakened", false) ? Content.LegacyAwakenLevel : 0, // v1.26 までの覚醒は覚醒Ⅱ
                 EnhanceMilestones = Clamp(Long(j, "milestones"), 0, Content.MaxEnhanceMilestones),
             };
+            // 古い+20は保存済みの値に倍率が含まれる。再適用せず、履歴として引き継ぐ。
+            r.MilestonePowerApplied = Bool(j, "milestonePowerApplied",
+                r.Enhance >= Content.EnhanceMilestoneFifth || r.EnhanceMilestones >= Content.MaxEnhanceMilestones)
+                || r.EnhanceMilestones >= Content.MaxEnhanceMilestones;
+            if (r.MilestonePowerApplied) r.EnhanceMilestones = Content.MaxEnhanceMilestones;
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
             if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
@@ -570,7 +576,9 @@ namespace SodRpg.Core.Game
                         && pid != 0 && Enum.IsDefined(typeof(Power), (int)pid))
                     {
                         var pw = (Power)(int)pid;
-                        r.Powers.Add(new PowerLine(pw, Clamp(v, 0, Content.PowerCap(pw))));
+                        int cap = Content.PowerCap(pw);
+                        if (r.Powers.Count == 0 && r.MilestonePowerApplied) cap = Relic.Scale(cap, Content.LimitBreakPowerPct);
+                        r.Powers.Add(new PowerLine(pw, Clamp(v, 0, cap)));
                     }
                 }
             }

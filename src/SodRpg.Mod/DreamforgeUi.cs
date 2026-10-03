@@ -81,6 +81,8 @@ namespace SodRpg.Mod
         private Vector2 _scrollList, _scrollDetail, _scrollRecords;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
+        private Relic _confirmEnhance;
+        private int _confirmEnhanceTarget;
         private bool _forgeAllSlots = true;
         private string _status;
         private float _statusUntil;
@@ -117,11 +119,13 @@ namespace SodRpg.Mod
             Open = !Open;
             if (!Open) CancelStarDrag();
             _confirmSalvage = null;
+            _confirmEnhance = null;
         }
 
         public void Close()
         {
             CancelStarDrag();
+            _confirmEnhance = null;
             Open = false;
         }
 
@@ -255,6 +259,7 @@ namespace SodRpg.Mod
 
         public void Draw()
         {
+            ValidateEnhanceConfirmation();
             _st.EnsureBuilt();
             var cfg = _cfg();
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
@@ -892,7 +897,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmBulk = false; _retuneIndex = -1; }
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; }
             GUILayout.FlexibleSpace();
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
             GUILayout.EndHorizontal();
@@ -1231,6 +1236,7 @@ namespace SodRpg.Mod
                     _seenUids.Add(r.Uid);
                     _retuneIndex = -1;
                     _confirmSalvage = null;
+                    _confirmEnhance = null;
                 }
                 GUILayout.EndHorizontal();
             }
@@ -1492,7 +1498,7 @@ namespace SodRpg.Mod
 
             GUILayout.BeginVertical(_st.Panel, GUILayout.Width(360));
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) _forgeAllSlots = true;
+            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) { _forgeAllSlots = true; _confirmEnhance = null; }
             for (int i = 0; i < Content.SlotOrder.Count; i++)
             {
                 if (i == 3)
@@ -1505,6 +1511,7 @@ namespace SodRpg.Mod
                 {
                     _forgeAllSlots = false;
                     _slot = slot;
+                    _confirmEnhance = null;
                 }
             }
             GUILayout.EndHorizontal();
@@ -1522,14 +1529,31 @@ namespace SodRpg.Mod
                 RelicDetail(sel);
                 GUILayout.EndScrollView();
                 GUILayout.Space(4);
+                ValidateEnhanceConfirmation();
+                int failureChance = Rules.EnhanceFailureChance(sel);
+                if (failureChance > 0)
+                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると+0に戻ります）",
+                        $"Failure chance: {failureChance}% (failure resets enhancement to +0)"), "#ff8080"), _st.Small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 int maxEnhance = Content.MaxEnhanceFor(sel);
                 if (sel.Enhance < maxEnhance)
                 {
-                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
-                    if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
-                        Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
+                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.RetuneOffer == null && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
+                    bool confirm = _confirmEnhance == sel && _confirmEnhanceTarget == sel.Enhance + 1;
+                    string enhanceLabel = confirm
+                        ? Loc.T($"<color=#ff8080>もう一度押すと強化 +{sel.Enhance + 1}を確定します（欠片{Content.EnhanceCost(sel.Enhance)}）</color>",
+                            $"<color=#ff8080>Press again to confirm Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)</color>")
+                        : Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)");
+                    if (GUILayout.Button(enhanceLabel, _st.Button, GUILayout.Height(32)))
+                    {
+                        if (failureChance > 0 && !confirm)
+                        {
+                            _confirmEnhance = sel;
+                            _confirmEnhanceTarget = sel.Enhance + 1;
+                        }
+                        else Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
+                    }
                 }
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
@@ -1674,7 +1698,7 @@ namespace SodRpg.Mod
                 return Loc.T($"+{Content.EnhanceMilestoneThird}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneThird}: one more affix.");
             if (r.EnhanceMilestones < 4 && Content.EnhanceMilestoneFourth <= ceiling)
                 return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.");
-            if (r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
+            if (!r.MilestonePowerApplied && r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
                 return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が1.2倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows 1.2x.");
             return null;
         }
@@ -1754,8 +1778,21 @@ namespace SodRpg.Mod
 
         private Vector2 _scrollForge;
 
+        private void ValidateEnhanceConfirmation()
+        {
+            var r = _confirmEnhance;
+            if (r == null) return;
+            var p = _s.Profile;
+            if (!Open || _tab != 1 || _selected != r.Uid || p.FindStash(r.Uid) != r
+                || r.Enhance + 1 != _confirmEnhanceTarget || r.Enhance >= Content.MaxEnhanceFor(r)
+                || p.Material(Materials.Shard) < Content.EnhanceCost(r.Enhance)
+                || _s.Trades.IsReserved(r.Uid) || p.RetuneOffer != null)
+                _confirmEnhance = null;
+        }
+
         private void Act(Func<GameEvent> action, bool affectsBuild)
         {
+            _confirmEnhance = null;
             try
             {
                 var e = action();

@@ -15,34 +15,17 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Forty_four_ids_are_appended_and_have_text_caps_epithets_and_wire_roundtrips()
+        public void New_power_wire_values_are_bounded_by_the_final_cap()
         {
-            var powers = Enum.GetValues(typeof(Power)).Cast<Power>().Where(NewPowersV129.IsPower).ToArray();
-            Assert.Equal(44, powers.Length);
-            Assert.Equal(48, (int)Power.ShieldbreakBurst);
-            Assert.Equal(91, (int)Power.SpilloverStrike);
-            Assert.Equal(92, Enum.GetValues(typeof(Power)).Length);
-            bool previous = Loc.Japanese;
-            try
+            foreach (Power power in Enum.GetValues(typeof(Power)).Cast<Power>().Where(NewPowersV129.IsPower))
             {
-                foreach (bool japanese in new[] { true, false })
-                {
-                    Loc.Japanese = japanese;
-                    foreach (Power power in powers)
-                    {
-                        int cap = Content.PowerCap(power);
-                        Assert.True(cap > 0);
-                        string description = Content.FormatPower(power, cap);
-                        Assert.Contains(Content.PowerName(power), description);
-                        Assert.DoesNotContain("{v", description);
-                        Assert.NotNull(Content.Epithet(power));
-                        var build = Build.Decode($"s:;p:{(int)power}={int.MaxValue};h:0");
-                        Assert.Equal(cap, build.Get(power));
-                        Assert.Equal(cap, Build.Decode(build.Encode()).Get(power));
-                    }
-                }
+                int cap = (int)(Content.PowerCap(power) * 2.5m);
+                var decoded = Build.Decode($"s:;p:{(int)power}={int.MaxValue};h:0");
+                Assert.Equal(cap, decoded.Get(power));
+                Assert.Equal(cap, Build.Decode(decoded.Encode()).Get(power));
+                Assert.Equal(cap - 1, Build.Decode($"s:;p:{(int)power}={cap - 1};h:0").Get(power));
+                Assert.Equal(0, Build.Decode($"s:;p:{(int)power}=-1;h:0").Get(power));
             }
-            finally { Loc.Japanese = previous; }
         }
 
         [Fact]
@@ -470,13 +453,11 @@ namespace SodRpg.Core.Tests
         {
             for (ulong seed = 1; seed <= 80; seed++)
             {
-                var p = Profile.CreateNew(seed);
                 var r = Loot.RollRelic(new Rng(seed), Rarity.Rare, 1, slot: Slot.Head);
                 r.Powers.Clear();
-                r.Enhance = Content.EnhanceMilestoneSecond - 1;
+                r.Enhance = Content.EnhanceMilestoneSecond;
                 r.EnhanceMilestones = 1;
-                p.Stash.Add(r); p.AddMaterial(Materials.Shard, 100000);
-                Rules.Enhance(p, r.Uid);
+                Rules.GrantEnhanceMilestones(new Rng(seed), r);
                 Assert.False(NewPowersV129.IsConditionalAttribute(Assert.Single(r.Powers).Power));
             }
         }

@@ -45,8 +45,10 @@ namespace SodRpg.Core.Game
         public int LimitBreaks { get; set; }
         public int Retunes { get; set; }
         public bool Locked { get; set; }
-        /// <summary>強化の節目をいくつ受け取ったか（0〜5。+3・+5・+10・+15・+20）。</summary>
+        /// <summary>受け取った強化の節目（0〜5）。強化が+0に戻っても履歴は残る。</summary>
         public int EnhanceMilestones { get; set; }
+        /// <summary>+20で1つ目の固有効果に1.2倍を適用済みか。強化の失敗でも失わない。</summary>
+        public bool MilestonePowerApplied { get; set; }
         public int AwakenPoints { get; set; }
         /// <summary>覚醒の段（0〜3）。</summary>
         public int AwakenLevel { get; set; }
@@ -143,6 +145,7 @@ namespace SodRpg.Core.Game
                 Retunes = Retunes,
                 Locked = Locked,
                 EnhanceMilestones = EnhanceMilestones,
+                MilestonePowerApplied = MilestonePowerApplied,
                 AwakenPoints = AwakenPoints,
                 AwakenLevel = AwakenLevel,
             };

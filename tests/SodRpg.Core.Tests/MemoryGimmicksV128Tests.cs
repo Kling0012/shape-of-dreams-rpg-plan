@@ -446,7 +446,7 @@ namespace SodRpg.Core.Tests
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(3)]
-        public void Memory_damage_awakening_uses_exact_equipped_cap_and_round_trips(int requirements)
+        public void Memory_damage_caps_base_before_awakening_and_round_trips(int requirements)
         {
             var unique = Content.Uniques.First(u => u.Link == null);
             var oldLink = unique.Link;
@@ -463,13 +463,13 @@ namespace SodRpg.Core.Tests
                 {
                     relic.AwakenLevel = level;
                     var link = Assert.Single(Build.Compute(p, Hero, 0).Links);
-                    Assert.Equal(Math.Min(Links.EquippedCap(LinkKind.MemoryDamage, requirements), baseCap * Content.AwakenPowerPctAt(level) / 100m), link.Value);
+                    Assert.Equal(baseCap * Content.AwakenPowerPctAt(level) / 100m, link.Value);
                     var build = new Build();
                     build.Links.Add(link);
                     Assert.Equal(link.Value, Assert.Single(Build.Decode(build.Encode()).Links).Value);
                 }
                 unique.Link.ValueMilli = int.MaxValue;
-                Assert.Equal(Links.EquippedCap(LinkKind.MemoryDamage, requirements), Assert.Single(Build.Compute(p, Hero, 0).Links).Value);
+                Assert.Equal(Links.EquippedCap(LinkKind.MemoryDamage, requirements) * 1.8m, Assert.Single(Build.Compute(p, Hero, 0).Links).Value);
             }
             finally { unique.Link = oldLink; }
         }

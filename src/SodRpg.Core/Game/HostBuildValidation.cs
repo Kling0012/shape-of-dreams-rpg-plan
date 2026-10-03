@@ -219,6 +219,8 @@ namespace SodRpg.Core.Game
                                 Rarity = (Rarity)Int(fields[4]), ItemLevel = Int(fields[5]), Enhance = Int(fields[6]),
                                 LimitBreaks = Int(fields[7]), AwakenLevel = Int(fields[8]), AwakenPoints = Int(fields[9]),
                                 EnhanceMilestones = Int(fields[10]),
+                                // The existing milestone history carries the one-time boost on the wire.
+                                MilestonePowerApplied = Int(fields[10]) >= 5,
                             };
                             foreach (string line in Lines(fields[11], StatCount))
                             {

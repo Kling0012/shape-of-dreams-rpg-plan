@@ -56,12 +56,10 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Rare_plus_five_adds_an_affix_because_it_already_has_a_power()
         {
-            var p = Profile.CreateNew(5);
             var r = Loot.RollRelic(new Rng(9), Rarity.Rare, 5, Slot.Charm);
-            p.Stash.Add(r);
-            p.AddMaterial(Materials.Shard, 5000);
             int affixes = r.Affixes.Count;
-            for (int i = 0; i < 5; i++) Rules.Enhance(p, r.Uid);
+            r.Enhance = 5;
+            Rules.GrantEnhanceMilestones(new Rng(5), r);
             Assert.Single(r.Powers);
             Assert.Equal(affixes + 2, r.Affixes.Count);
         }

@@ -228,12 +228,12 @@ namespace SodRpg.Core.Game
             return (int)Math.Round(single * mult, MidpointRounding.AwayFromZero);
         }
 
-        /// <summary>記憶加速は、覚醒しても 90% を超えない（クールダウンが無くならないように）。</summary>
+        /// <summary>記憶加速の装備合計の元値の上限。覚醒倍率はこの上限の後に掛ける。</summary>
         public const int MaxHaste = 90;
 
         /// <summary>
-        /// 装着中の連携に許す上限（v1.27、issue #14）。覚醒Ⅲの倍率まで含め、記憶加速は 90 まで。
-        /// クライアントの Compute とホストの Decode の両方で同じ上限を使い、表示と実効値をそろえる。
+        /// 装着中の同条件の連携の元値合計に許す上限。覚醒倍率は比例配分した元値に掛け、最終値はこの2.5倍まで。
+        /// 星の連携は別に加算し、ホストも Build.Compute で同じ装備計算を行う。
         /// </summary>
         public static decimal EquippedCap(LinkKind kind, int requireCount)
         {

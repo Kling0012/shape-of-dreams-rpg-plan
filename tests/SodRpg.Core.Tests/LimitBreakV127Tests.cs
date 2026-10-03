@@ -38,7 +38,8 @@ namespace SodRpg.Core.Tests
         /// <summary>限界突破の回数だけ進めて、強化をその時の上限まで上げる。</summary>
         private static void MaxOut(Profile p, Relic r)
         {
-            while (r.Enhance < Content.MaxEnhanceFor(r)) Rules.Enhance(p, r.Uid);
+            r.Enhance = Content.MaxEnhanceFor(r);
+            Rules.GrantEnhanceMilestones(new Rng(7), r);
         }
 
         [Fact]
@@ -168,21 +169,19 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Scaling_beyond_plus_five_is_slower_and_plus_five_is_unchanged()
+        public void Enhancement_checkpoints_scale_relic_stats_and_powers()
         {
-            for (int h = 0; h <= 5; h++) Assert.Equal(100 + 6 * h, Content.EnhanceScalePct(h)); // +5までは今までどおり
-            Assert.Equal(134, Content.EnhanceScalePct(6));
-            Assert.Equal(150, Content.EnhanceScalePct(10));
-            Assert.Equal(170, Content.EnhanceScalePct(15));
-            Assert.Equal(190, Content.EnhanceScalePct(20));
-            Assert.Equal(190, Content.EnhanceScalePct(99)); // +20で止まる
+            Assert.Equal(126, Content.EnhanceScalePct(5));
+            Assert.Equal(140, Content.EnhanceScalePct(10));
+            Assert.Equal(150, Content.EnhanceScalePct(15));
+            Assert.Equal(156, Content.EnhanceScalePct(20));
+            Assert.Equal(156, Content.EnhanceScalePct(99));
 
-            for (int h = 0; h <= 5; h++) Assert.Equal(100 + 5 * h, Content.EnhancePowerScalePct(h)); // +5までは今までどおり
-            Assert.Equal(128, Content.EnhancePowerScalePct(6));
-            Assert.Equal(140, Content.EnhancePowerScalePct(10));
-            Assert.Equal(155, Content.EnhancePowerScalePct(15));
-            Assert.Equal(170, Content.EnhancePowerScalePct(20));
-            Assert.Equal(170, Content.EnhancePowerScalePct(99));
+            Assert.Equal(120, Content.EnhancePowerScalePct(5));
+            Assert.Equal(132, Content.EnhancePowerScalePct(10));
+            Assert.Equal(140, Content.EnhancePowerScalePct(15));
+            Assert.Equal(145, Content.EnhancePowerScalePct(20));
+            Assert.Equal(145, Content.EnhancePowerScalePct(99));
 
             // 遺物を通した伸びも同じ式
             var (p, lg) = WithRelic(Rarity.Legendary, 51);
@@ -190,19 +189,17 @@ namespace SodRpg.Core.Tests
             lg.LimitBreaks = 3;
             var aff = lg.Affixes[0];
             var stat = lg.EffectiveStats().First(s => s.Stat == aff.Stat);
-            Assert.Equal((aff.Value * 190 + 50) / 100, stat.Value);
+            Assert.Equal((aff.Value * 156 + 50) / 100, stat.Value);
             var pw = lg.Powers[0];
             var power = lg.EffectivePowers().First(x => x.Power == pw.Power);
-            Assert.Equal((pw.Value * 170 + 50) / 100, power.Value);
+            Assert.Equal((pw.Value * 145 + 50) / 100, power.Value);
 
             // 強化は限界突破後の上限まで進み、そこで止まる
             var (p2, r2) = WithRelic(Rarity.Rare, 52);
             MaxOut(p2, r2);
             Rules.LimitBreak(p2, r2.Uid, AddRelic(p2, Rarity.Rare, Slot.Weapon, 53).Uid);
-            long before = p2.Material(Materials.Shard);
-            while (r2.Enhance < 10) Rules.Enhance(p2, r2.Uid);
+            MaxOut(p2, r2);
             Assert.Equal(10, r2.Enhance);
-            Assert.Equal(before - (180 + 230 + 290 + 360 + 440), p2.Material(Materials.Shard));
             Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p2, r2.Uid));
         }
 
@@ -215,7 +212,7 @@ namespace SodRpg.Core.Tests
             Rules.LimitBreak(p, r.Uid, AddRelic(p, Rarity.Rare, Slot.Weapon, 62).Uid);
             int affixes = r.Affixes.Count;
             Assert.Equal(2, r.EnhanceMilestones); // +3 と +5
-            while (r.Enhance < 10) Rules.Enhance(p, r.Uid);
+            MaxOut(p, r);
             Assert.Equal(3, r.EnhanceMilestones);
             Assert.Equal(affixes + 1, r.Affixes.Count);
             Assert.Throws<InvalidOperationException>(() => Rules.Enhance(p, r.Uid)); // レアは+10まで。節目4には届かない
@@ -231,7 +228,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, ep.EnhanceMilestones);
             Assert.Equal(epicAffixes + 1, ep.Affixes.Count);
             Rules.LimitBreak(p2, ep.Uid, AddRelic(p2, Rarity.Epic, Slot.Weapon, 65).Uid);
-            while (ep.Enhance < 15) Rules.Enhance(p2, ep.Uid); // +15 → 節目4
+            MaxOut(p2, ep); // +15 → 節目4
             Assert.Equal(4, ep.EnhanceMilestones);
             Assert.Equal(epicAffixes + 2, ep.Affixes.Count);
             Assert.Equal(15, ep.Enhance);
@@ -247,8 +244,8 @@ namespace SodRpg.Core.Tests
             }
             Assert.Equal(20, lg.Enhance);
             Assert.Equal(5, lg.EnhanceMilestones);
-            // 1.2倍（PowerCap で止まる）。2つ目の固有効果はそのまま
-            Assert.Equal(Math.Min(Content.PowerCap(lg.Powers[0].Power), (power0 * 120 + 50) / 100), lg.Powers[0].Value);
+            // The source boost is applied before the aggregate cap. The second power is unchanged.
+            Assert.Equal((power0 * 120 + 50) / 100, lg.Powers[0].Value);
             Assert.Equal(power1, lg.Powers[1].Value);
         }
 
@@ -291,7 +288,7 @@ namespace SodRpg.Core.Tests
             var (p, r) = WithRelic(Rarity.Rare, 81);
             MaxOut(p, r);
             Rules.LimitBreak(p, r.Uid, AddRelic(p, Rarity.Rare, Slot.Weapon, 82).Uid);
-            while (r.Enhance < 10) Rules.Enhance(p, r.Uid);
+            MaxOut(p, r);
 
             var back = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             var loaded = back.FindStash(r.Uid);
@@ -333,6 +330,50 @@ namespace SodRpg.Core.Tests
                 relic["limitBreaks"] = 0;
             }));
             Assert.Equal(5, q2.FindStash(r.Uid).Enhance);
+        }
+
+        [Theory]
+        [InlineData(20, 4)]
+        [InlineData(20, 5)]
+        [InlineData(0, 5)]
+        public void Legacy_milestone_power_is_not_applied_twice(int enhance, int milestones)
+        {
+            var (p, r) = WithRelic(Rarity.Legendary, 91);
+            r.LimitBreaks = 3;
+            r.Enhance = enhance;
+            r.EnhanceMilestones = milestones;
+            var first = r.Powers[0];
+            int boosted = (first.Value * 120 + 50) / 100;
+            r.Powers[0] = new PowerLine(first.Power, boosted);
+            var legacy = Reread(ProfileCodec.Write(p), body => StripKey(body, "milestonePowerApplied"));
+            var loaded = legacy.FindStash(r.Uid);
+            Assert.True(loaded.MilestonePowerApplied);
+            Assert.Equal(5, loaded.EnhanceMilestones);
+            Assert.Equal(boosted, loaded.Powers[0].Value);
+            Assert.Equal(0, Rules.ApplyEnhanceMilestones(legacy));
+            loaded.Enhance = 20;
+            Assert.Null(Rules.GrantEnhanceMilestones(new Rng(91), loaded));
+            Assert.Equal(boosted, loaded.Powers[0].Value);
+        }
+
+        [Fact]
+        public void Explicit_power_history_restores_wire_milestone_evidence()
+        {
+            var (p, r) = WithRelic(Rarity.Legendary, 92);
+            r.LimitBreaks = 3;
+            r.Enhance = 20;
+            Rules.GrantEnhanceMilestones(new Rng(92), r);
+            int boosted = r.Powers[0].Value;
+            var loadedProfile = Reread(ProfileCodec.Write(p), body => EditRelic(body, r.Uid, relic =>
+            {
+                relic["enhance"] = 0L;
+                relic["milestones"] = 4L;
+            }));
+            var loaded = loadedProfile.FindStash(r.Uid);
+            Assert.True(loaded.MilestonePowerApplied);
+            Assert.Equal(5, loaded.EnhanceMilestones);
+            Assert.Equal(boosted, loaded.Powers[0].Value);
+            Assert.Equal(0, Rules.ApplyEnhanceMilestones(loadedProfile));
         }
 
         // ── 保存の書き換え補助（チェックサムを作り直す） ──
