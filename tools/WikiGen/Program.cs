@@ -154,7 +154,7 @@ foreach (var slot in slots)
 {
     var sb = new StringBuilder();
     sb.Append(H1("セット装備 (Sets)"));
-    sb.Append("2つ装着・3つ装着でボーナスが付く名前付きの組です。ボーナスの数値は基本値です。\n\n[[dreamforge:start|ホームへ戻る]]\n\n");
+    sb.Append("2つ装着・3つ装着（6部位のセットは6つ装着も）でボーナスが付く名前付きの組です。ボーナスの数値は基本値です。\n\n[[dreamforge:start|ホームへ戻る]]\n\n");
     foreach (var s in Content.Sets)
     {
         sb.Append(H2(TxtBi(s.Name)));
@@ -169,6 +169,12 @@ foreach (var slot in slots)
         sb.Append("  * **3つ装着 (3 pieces)**\n");
         foreach (var p in s.ThreePiece)
             sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
+        if (s.HasSixPiece)
+        {
+            sb.Append("  * **6つ装着 (6 pieces)**\n");
+            foreach (var p in s.SixPiece)
+                sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
+        }
         sb.Append('\n');
     }
     Write("sets", sb.ToString());

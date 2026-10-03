@@ -249,7 +249,7 @@ namespace SodRpg.Core.Game
                 case FeatKind.Pacts: return Loc.T($"悪夢の契約を合計{n}回結ぶ", $"Swear {n} nightmare pacts");
                 case FeatKind.Events: return Loc.T($"夢の出来事を合計{n}回選ぶ", $"Take {n} dream events");
                 case FeatKind.Bounties: return Loc.T($"依頼を合計{n}回達成する", $"Complete {n} bounties");
-                case FeatKind.SetsCompleted: return Loc.T($"セットを{n}種類そろえる（3部位）", $"Complete {n} different sets (3 pieces)");
+                case FeatKind.SetsCompleted: return Loc.T($"セットを{n}種類そろえる（全部位）", $"Complete {n} different sets (all pieces)");
                 case FeatKind.RelicsAwakened: return n == 1
                     ? Loc.T("固有品を1つ覚醒させる", "Awaken 1 legendary relic")
                     : Loc.T($"固有品を合計{n}つ覚醒させる", $"Awaken {n} legendary relics in total");

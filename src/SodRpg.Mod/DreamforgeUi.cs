@@ -1134,7 +1134,7 @@ namespace SodRpg.Mod
             {
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
-                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/{(set.HasSixPiece ? 6 : 3)}", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
             }
             foreach (var kv in build.Lines)
             {

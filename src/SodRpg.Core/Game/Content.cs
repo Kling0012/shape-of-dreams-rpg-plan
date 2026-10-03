@@ -115,25 +115,45 @@ namespace SodRpg.Core.Game
         public LinkDef Link { get; set; }
     }
 
-    /// <summary>名前付きの3点セット（Diablo のセット装備）。2点・3点でボーナス。</summary>
+    /// <summary>名前付きのセット装備。2点・3点でボーナス、6部位のセットは6点で追加効果（v1.31）。</summary>
     public sealed class SetDef
     {
         public string Id;
         public Txt Name;
         public StatLine[] TwoPiece;
         public PowerLine[] ThreePiece;
+        /// <summary>6つ装着の効果（v1.31）。6部位化が済むまでは null / 空。4つ・5つ装着には効果を付けない。</summary>
+        public PowerLine[] SixPiece;
+
+        /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
+        public bool HasSixPiece => SixPiece != null && SixPiece.Length > 0;
 
         public string Describe()
         {
             string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
             string three = string.Join("\n", ThreePiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
-            return Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
+            string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
+            if (HasSixPiece)
+            {
+                string six = string.Join("\n", SixPiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+                text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
+            }
+            return text;
         }
 
         /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>
         public string Progress(int count)
         {
-            if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.");
+            if (HasSixPiece)
+            {
+                if (count >= 6) return Loc.T("6つそろっています。すべての効果が有効です。", "All 6 pieces equipped: every bonus is active.");
+                if (count >= 3)
+                {
+                    int left = 6 - count;
+                    return Loc.T($"あと{left}つで、6つ装着の効果が加わります。", left == 1 ? "One more piece adds the 6-piece bonus." : $"{left} more pieces add the 6-piece bonus.");
+                }
+            }
+            else if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.");
             if (count == 2) return Loc.T("あと1つで、3つ装着の効果が加わります。", "One more piece adds the 3-piece bonus.");
             return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.");
         }
@@ -4254,6 +4274,20 @@ namespace SodRpg.Core.Game
                 TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.MoveSpeedPct, 4) },
                 ThreePiece = new[] { new PowerLine(Power.Breakout, 10), new PowerLine(Power.UnbowedMind, 7), new PowerLine(Power.ImmovableStance, 9) } },
         };
+
+        /// <summary>
+        /// 48組すべてに SixPiece を入れ終えたら true にする（v1.31）。false の間は未入力のセットを許容し、
+        /// true にすると Content の検証テストが SixPiece の無いセットを失敗として報告する。
+        /// </summary>
+        public const bool SixPieceSetsComplete = false;
+
+        /// <summary>セットの部位数（固有品のうち SetId が一致するもの）。</summary>
+        public static int SetPieceCount(string setId)
+        {
+            int n = 0;
+            foreach (var u in Uniques) if (u.SetId == setId) n++;
+            return n;
+        }
 
         public static SetDef GetSet(string id)
         {

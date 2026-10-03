@@ -158,21 +158,24 @@ namespace SodRpg.Core.Game
                 });
             foreach (var kv in b.Lines)
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
-            var setCounts = new Dictionary<string, int>();
+            // 同じ部位（固有品ID）を重複して数えない。6つ装着は6種類の部位がそろった時だけ有効。
+            var setPieces = new Dictionary<string, HashSet<string>>();
             foreach (string uid in h.Equipped)
             {
                 var r = p.FindStash(uid);
                 if (r?.UniqueId == null || !Content.TryGetUnique(r.UniqueId, out var u) || u.SetId == null) continue;
-                setCounts.TryGetValue(u.SetId, out int n);
-                setCounts[u.SetId] = n + 1;
+                if (!setPieces.TryGetValue(u.SetId, out var ids)) setPieces[u.SetId] = ids = new HashSet<string>(StringComparer.Ordinal);
+                ids.Add(u.Id);
             }
-            foreach (var kv in setCounts)
+            foreach (var sp in setPieces)
             {
+                var kv = new KeyValuePair<string, int>(sp.Key, sp.Value.Count);
                 b.Sets[kv.Key] = kv.Value;
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) AddPower(pw.Power, pw.Value);
+                if (kv.Value >= 6 && set.HasSixPiece) foreach (var pw in set.SixPiece) AddPower(pw.Power, pw.Value);
             }
             foreach (var selected in selectedTalents)
             {
