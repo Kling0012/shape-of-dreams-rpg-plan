@@ -17,6 +17,8 @@ namespace SodRpg.Core.Game
         }
         private static readonly object AuthoredLock = new object();
         private static readonly Dictionary<string, InstalledTree> Installed = new Dictionary<string, InstalledTree>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, IReadOnlyList<LegacyStarMigration>> Migrations
+            = new Dictionary<string, IReadOnlyList<LegacyStarMigration>>(StringComparer.Ordinal);
         private static string registryFingerprint = RegistryHash("");
         public static string AuthoredRegistryFingerprint
         {
@@ -24,6 +26,43 @@ namespace SodRpg.Core.Game
             {
                 lock (AuthoredLock) return registryFingerprint;
             }
+        }
+        private static string ComputeRegistryFingerprint()
+        {
+            string trees = string.Join("|", Installed.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + ":" + x.Value.Fingerprint));
+            if (Migrations.Count == 0) return RegistryHash(trees);
+            // Migration rules change what a loaded profile looks like, so peers must agree on them.
+            string rules = string.Join("|", Migrations.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + "=" + string.Join(",",
+                x.Value.OrderBy(r => r.LocalStarId, StringComparer.Ordinal).Select(r => r.LocalStarId + "/" + r.MaxRank + "/" + r.RankCost + "/" + (r.ChangedEffect ? "1" : "0")))));
+            return RegistryHash(trees + "#migrations:" + rules);
+        }
+        /// <summary>
+        /// Declare the existing stars of one hero whose effect was redefined (and the retained ones that keep their ranks).
+        /// Call after <see cref="RegisterAuthored"/> for the same hero; re-registering the hero's authored set clears its rules.
+        /// Applied once per profile on load: redefined stars and keystones are refunded at their original cost.
+        /// </summary>
+        public static void RegisterMigrations(string heroKey, IEnumerable<LegacyStarMigration> rules)
+        {
+            if (!Links.IsTraveler(heroKey) || rules == null) throw new ArgumentException("A registered hero and migration rules are required.");
+            var input = rules.ToArray();
+            var baseline = HeroSigils.BaselineTreeFor(heroKey);
+            foreach (var rule in input)
+                if (rule != null) rule.LegacyWasChoice = baseline.Any(x => x.Id == rule.LocalStarId && x.IsChoice);
+            lock (AuthoredLock)
+            {
+                if (!Installed.TryGetValue(heroKey, out var installed))
+                    throw new InvalidOperationException("Register the authored tree before its migration rules: " + heroKey);
+                // A dry run on an empty hero validates every rule (ID, rank, cost) against the installed tree without side effects.
+                AuthoredStarMigration.Apply(new HeroState(), installed.Tree, input);
+                if (input.Length == 0) Migrations.Remove(heroKey); else Migrations[heroKey] = Array.AsReadOnly(input);
+                registryFingerprint = ComputeRegistryFingerprint();
+            }
+        }
+        /// <summary>The migration rules registered for a hero; empty when none.</summary>
+        public static IReadOnlyList<LegacyStarMigration> MigrationsFor(string heroKey)
+        {
+            lock (AuthoredLock)
+                return heroKey != null && Migrations.TryGetValue(heroKey, out var rules) ? rules : Array.AsReadOnly(new LegacyStarMigration[0]);
         }
         internal static string RegistryHash(string value)
         {
@@ -52,7 +91,8 @@ namespace SodRpg.Core.Game
             {
                 Rules.RegisterAllocationValidation(heroKey, validator);
                 if (input.Length == 0) Installed.Remove(heroKey); else Installed[heroKey] = installed;
-                registryFingerprint = RegistryHash(string.Join("|", Installed.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + ":" + x.Value.Fingerprint)));
+                Migrations.Remove(heroKey); // rules were validated against the previous tree
+                registryFingerprint = ComputeRegistryFingerprint();
             }
             return registry;
         }

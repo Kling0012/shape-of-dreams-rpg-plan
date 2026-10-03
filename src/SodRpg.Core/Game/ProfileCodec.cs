@@ -225,6 +225,12 @@ namespace SodRpg.Core.Game
                 .Add("affixes", aff).Add("powers", pw);
         }
 
+        private static string StarLabel(IReadOnlyList<TalentDef> tree, string id)
+        {
+            foreach (var t in tree) if (t.Id == id) return t.Name + "(" + id + ")";
+            return id;
+        }
+
         private static Profile ReadBody(JsonObject b, List<string> notes)
         {
             var p = new Profile
@@ -318,11 +324,18 @@ namespace SodRpg.Core.Game
                     if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
                     if (HeroSigils.HasTree(kv.Key))
                     {
-                        var refund = AuthoredStarMigration.Apply(h, HeroSigils.TreeFor(kv.Key), System.Array.Empty<LegacyStarMigration>());
-                        if (refund.RefundCost > 0)
-                            notes.Add(Loc.T($"選択または前提が無効な星を払い戻しました（{refund.RefundCost}ポイント）: ",
-                                $"Refunded stars with invalid choices or prerequisites ({refund.RefundCost} points): ")
-                                + string.Join(", ", refund.StarIds));
+                        var tree = HeroSigils.TreeFor(kv.Key);
+                        var refund = AuthoredStarMigration.Apply(h, tree, StarClusters.MigrationsFor(kv.Key));
+                        if (refund.ChangedStarIds.Count > 0)
+                            notes.Add(Loc.T($"{kv.Key}: 効果が変わった星の取得を解除し、使っていたポイントを全額戻しました（{refund.ChangedRefundCost}ポイント）。星の盤で取り直せます: ",
+                                $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ")
+                                + string.Join(", ", refund.ChangedStarIds.Select(id => StarLabel(tree, id))));
+                        int otherCost = refund.RefundCost - refund.ChangedRefundCost;
+                        var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id)).ToList();
+                        if (otherIds.Count > 0)
+                            notes.Add(Loc.T($"{kv.Key}: 選択や前提が無効になった星も払い戻しました（{otherCost}ポイント）: ",
+                                $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ")
+                                + string.Join(", ", otherIds.Select(id => StarLabel(tree, id))));
                     }
                 }
             }

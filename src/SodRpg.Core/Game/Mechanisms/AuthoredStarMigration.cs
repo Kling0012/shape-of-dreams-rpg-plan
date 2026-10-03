@@ -11,17 +11,33 @@ namespace SodRpg.Core.Game
         public int MaxRank { get; }
         public int RankCost { get; }
         public bool ChangedEffect { get; }
+        /// <summary>
+        /// The original star was itself a Choice, so a stored option index belongs to the old effect and cannot be kept.
+        /// Set by StarClusters.RegisterMigrations from the baseline tree; a star that was not a choice but now is keeps an explicit pick.
+        /// </summary>
+        public bool LegacyWasChoice { get; internal set; }
     }
 
     public sealed class StarMigrationRefund
     {
-        internal StarMigrationRefund(List<string> ids, int points) { StarIds = ids.AsReadOnly(); RefundCost = points; }
+        internal StarMigrationRefund(List<string> ids, int points, List<string> changedIds, int changedPoints)
+        {
+            StarIds = ids.AsReadOnly(); RefundCost = points;
+            ChangedStarIds = changedIds.AsReadOnly(); ChangedRefundCost = changedPoints;
+        }
+        /// <summary>Every refunded star or keystone, whatever the reason.</summary>
         public IReadOnlyList<string> StarIds { get; }
         public int RefundCost { get; }
+        /// <summary>Stars and keystones refunded because their effect was redefined (a subset of StarIds).</summary>
+        public IReadOnlyList<string> ChangedStarIds { get; }
+        /// <summary>Points returned for ChangedStarIds only, at the original per-rank cost.</summary>
+        public int ChangedRefundCost { get; }
     }
 
     public static class AuthoredStarMigration
     {
+        /// <summary>The revision stamped on a hero once the registered migration rules have been applied.</summary>
+        public const int CurrentVersion = 1;
         /// <summary>The installed 6+3+4+1 IDs, in original order. No designed replacements are registered here.</summary>
         public static readonly IReadOnlyList<LegacyStarMigration> CetusRetained = Array.AsReadOnly(new[]
         {
@@ -52,11 +68,15 @@ namespace SodRpg.Core.Game
             var costs = new Dictionary<string, LegacyStarMigration>(StringComparer.Ordinal);
             foreach (var rule in migrations)
             {
+                // A keystone keeps its ID and single rank; its old cost is the rule's RankCost (legacy keys cost Content.KeystoneCost).
                 if (rule == null || rule.MaxRank <= 0 || rule.RankCost <= 0 || costs.ContainsKey(rule.LocalStarId)
-                    || !nodes.TryGetValue(rule.LocalStarId, out var node) || node.MaxRank != rule.MaxRank || node.RankCost != rule.RankCost)
+                    || !nodes.TryGetValue(rule.LocalStarId, out var node) || node.MaxRank != rule.MaxRank
+                    || !node.IsKeystone && node.RankCost != rule.RankCost)
                     throw new InvalidOperationException("Migration must retain original ID, rank and cost: " + rule?.LocalStarId);
                 costs.Add(rule.LocalStarId, rule);
             }
+            bool Redefined(string id) => hero.AuthoredMigrationVersion < migrationVersion
+                && costs.TryGetValue(id, out var rule) && rule.ChangedEffect;
             var candidate = new HeroState { Kills = hero.Kills };
             foreach (var allocation in hero.Talents)
             {
@@ -67,23 +87,35 @@ namespace SodRpg.Core.Game
             candidate.Keystone = hero.Keystone;
             foreach (var choice in hero.TalentChoices) candidate.TalentChoices.Add(choice.Key, choice.Value);
             var refunded = new List<string>();
-            int points = 0;
+            var redefinedIds = new List<string>();
+            int points = 0, redefinedPoints = 0;
             void Refund(string id)
             {
                 int rank = candidate.Talents[id];
-                points = checked(points + rank * (costs.TryGetValue(id, out var old) ? old.RankCost : nodes[id].RankCost));
+                int amount = rank * (costs.TryGetValue(id, out var old) ? old.RankCost : nodes[id].RankCost);
+                points = checked(points + amount);
+                if (Redefined(id)) { redefinedPoints = checked(redefinedPoints + amount); redefinedIds.Add(id); }
                 candidate.Talents.Remove(id); candidate.TalentChoices.Remove(id); refunded.Add(id);
             }
             var invalid = new List<string>();
             foreach (var allocation in candidate.Talents)
             {
                 var node = nodes[allocation.Key];
-                bool needsChoice = node.IsChoice || node.AuthoredStar?.RequiresExplicitSelection == true
-                    || hero.AuthoredMigrationVersion < migrationVersion && costs.TryGetValue(node.Id, out var old) && old.ChangedEffect;
+                // A redefined effect never keeps ranks bought under the old meaning. The one exception is a star that became a
+                // Choice: it has no old option index, so an explicit pick already recorded for it is the new design's.
+                if (Redefined(node.Id) && (!node.IsChoice || costs[node.Id].LegacyWasChoice)) { invalid.Add(node.Id); continue; }
+                bool needsChoice = node.IsChoice || node.AuthoredStar?.RequiresExplicitSelection == true || Redefined(node.Id);
                 if (needsChoice && (!node.IsChoice || !candidate.TalentChoices.TryGetValue(node.Id, out int option)
                     || option < 0 || option >= node.Choices.Count)) invalid.Add(node.Id);
             }
             foreach (string id in invalid) Refund(id);
+            if (candidate.Keystone != null && Redefined(candidate.Keystone))
+            {
+                refunded.Add(candidate.Keystone); redefinedIds.Add(candidate.Keystone);
+                int old = costs[candidate.Keystone].RankCost;
+                points = checked(points + old); redefinedPoints = checked(redefinedPoints + old);
+                candidate.Keystone = null;
+            }
             var layout = HeroTreeLayout.ForTalents(tree);
             bool EligibleKey(TalentDef key)
             {
@@ -119,7 +151,7 @@ namespace SodRpg.Core.Game
             foreach (var choice in candidate.TalentChoices) if (hero.Talents.ContainsKey(choice.Key)) hero.TalentChoices.Add(choice.Key, choice.Value);
             hero.Keystone = candidate.Keystone;
             if (migrations.Count > 0) hero.AuthoredMigrationVersion = Math.Max(hero.AuthoredMigrationVersion, migrationVersion);
-            return new StarMigrationRefund(refunded, points);
+            return new StarMigrationRefund(refunded, points, redefinedIds, redefinedPoints);
         }
     }
 }
