@@ -962,6 +962,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
+                    RegisterHello(actor);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -1104,6 +1105,7 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                UnregisterHello(_registeredOn);
                 _registeredOn = null;
             }
         }
@@ -1274,6 +1276,8 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
+
         private void PruneAndApplyPending()
         {
             _scratch.Clear();
@@ -1281,17 +1285,38 @@ namespace SodRpg.Mod
                 if (kv.Key == null || !kv.Key.isActive) _scratch.Add(kv.Key);
             foreach (var h in _scratch)
             {
-                Unhook(_runtimes[h]);
+                try { Unhook(_runtimes[h]); }
+                catch (Exception ex) { Log.Error("Host: unhook " + ex); }
                 _runtimes.Remove(h);
             }
 
             // 新しく生まれたキャラ（ラン開始・復帰）へ、届いている Build を付け直す。
+            // 1人の Build で例外が出ても、ほかの全員のホスト処理は止めない（mp-ui-save #6）。失敗した人は5秒おきに再試行する。
+            float now = Time.time;
             foreach (var kv in _builds)
             {
                 var hero = kv.Key != null ? kv.Key.hero : null;
-                if (hero == null || !hero.isActive) continue;
-                if (!_runtimes.ContainsKey(hero)) Apply(hero, kv.Value);
+                if (hero == null || !hero.isActive || _runtimes.ContainsKey(hero)) continue;
+                if (_applyRetryAt.TryGetValue(hero, out float retry) && now < retry) continue;
+                try
+                {
+                    Apply(hero, kv.Value);
+                    _applyRetryAt.Remove(hero);
+                }
+                catch (Exception ex)
+                {
+                    _applyRetryAt[hero] = now + 5f;
+                    if (_runtimes.TryGetValue(hero, out var partial))
+                    {
+                        try { Unhook(partial); } catch (Exception) { }
+                        _runtimes.Remove(hero);
+                    }
+                    Log.Error("Host: could not apply a player's build (retrying in 5 s): " + ex);
+                }
             }
+            _scratch.Clear();
+            foreach (var h in _applyRetryAt.Keys) if (h == null || !h.isActive) _scratch.Add(h);
+            foreach (var h in _scratch) _applyRetryAt.Remove(h);
             foreach (var rt in _runtimes.Values) BindGoldSpend(rt);
         }
 

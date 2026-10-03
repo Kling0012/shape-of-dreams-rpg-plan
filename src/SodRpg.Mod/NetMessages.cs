@@ -30,6 +30,16 @@ namespace SodRpg.Mod
 
     /// <summary>ホスト → クライアント：ホストがMODを導入済みで、能力を反映したことの通知。</summary>
     [Serializable]
+    /// <summary>
+    /// 版のあいさつ。参加者→ホスト、ホスト→参加者。**この型の名前と欄は今後も変えない**（どの版どうしでも読めて、版違いを利用者に知らせるため）。
+    /// </summary>
+    public class DreamforgeHelloMsg
+    {
+        public int protocol;
+        public string modVer;
+        public string content;
+    }
+
     public class DreamforgeAppliedMsg
     {
         public uint heroNetId;

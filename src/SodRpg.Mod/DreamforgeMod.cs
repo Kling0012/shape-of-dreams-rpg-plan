@@ -49,6 +49,7 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
+                HostAuthority.ModVersion = mod.metadata.modVer ?? "?";
             }
             catch (Exception ex)
             {
@@ -82,7 +83,7 @@ namespace SodRpg.Mod
             _session.Tick();
             try
             {
-                _host.Tick();
+                _host?.Tick();
             }
             catch (Exception ex)
             {
@@ -131,6 +132,7 @@ namespace SodRpg.Mod
         {
             var kb = Keyboard.current;
             if (kb == null) return;
+            if (_ui == null) return;
             if (Pressed(kb, config.menuKey)) _ui.Toggle();
             if (_ui.Open && kb.escapeKey.wasPressedThisFrame) _ui.Close();
             var run = _session.Profile.Run;

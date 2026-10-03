@@ -181,28 +181,47 @@ namespace SodRpg.Mod
             Emit(Feats.Check(Profile));
         }
 
+        // Each step runs on its own: one failing step must not stop Build sending or periodic saving for everyone (mp-ui-save #5).
+        private Action[] _tickSteps;
+        private string[] _tickStepNames;
+        private float[] _tickStepNextLog;
+
         public void Tick()
         {
-            try
+            if (_tickSteps == null)
             {
-                TickProfileSlots();
-                Wire();
-                UpdateVariantVisuals();
-                UpdateMonsterCues();
-                TrackRun();
-                TickRunChoices();
-                if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) > 0)
+                _tickSteps = new Action[] { TickProfileSlots, Wire, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
+                _tickStepNames = new[] { "profile slots", "wire", "variant visuals", "monster cues", "track run", "run choices", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickStepNextLog = new float[_tickSteps.Length];
+            }
+            for (int i = 0; i < _tickSteps.Length; i++)
+            {
+                try
                 {
-                    Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
-                    SaveNow();
+                    _tickSteps[i]();
                 }
-                SendBuildIfNeeded();
-                if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
+                catch (Exception ex)
+                {
+                    // Log at most every 10 s per step so a persistent fault does not flood the log every frame.
+                    if (Time.unscaledTime >= _tickStepNextLog[i])
+                    {
+                        _tickStepNextLog[i] = Time.unscaledTime + 10f;
+                        Log.Error("Client tick (" + _tickStepNames[i] + "): " + ex);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Error("Client tick: " + ex);
-            }
+        }
+
+        private void TickSalvageExpiry()
+        {
+            if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) <= 0) return;
+            Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
+            SaveNow();
+        }
+
+        private void TickPeriodicSave()
+        {
+            if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
         }
 
         private void Wire()
@@ -265,6 +284,7 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
+                    UnregisterHello(_clientRpcOn);
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
@@ -288,6 +308,7 @@ namespace SodRpg.Mod
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
+                ResetHello();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 ResetRunChoiceConnection();
@@ -304,6 +325,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
+                    RegisterHello(actor);
                 }
             }
         }
@@ -333,6 +355,7 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    UnregisterHello(_clientRpcOn);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);

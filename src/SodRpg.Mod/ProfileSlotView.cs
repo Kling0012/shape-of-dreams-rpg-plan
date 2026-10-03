@@ -38,10 +38,22 @@ namespace SodRpg.Mod
             ulong seed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|" + DateTime.UtcNow.Ticks);
             ulong multiSeed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|multi|" + Guid.NewGuid().ToString("N"));
             _profileSlots = new ProfileSlots(new RealFileSystem(), saveDir, seed, multiSeed);
-            _profileSlots.TrySwitch(DetectProfileSession(), FlushOldProfileWriter);
-            Profile = _profileSlots.Profile;
-            _store = _profileSlots.Store;
-            UpdateProfileLoadNotes();
+            try
+            {
+                _profileSlots.TrySwitch(DetectProfileSession(), FlushOldProfileWriter);
+                Profile = _profileSlots.Profile;
+                _store = _profileSlots.Store;
+                UpdateProfileLoadNotes();
+            }
+            catch (Exception ex)
+            {
+                // 読み込めなくても MOD 全体（ホスト処理を含む）は止めない（mp-ui-save #9）。保存は止め、元のファイルには触らない。
+                Profile = Profile.CreateNew(seed);
+                _store = null;
+                SaveError = Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）：",
+                    "Could not load your save. Saving is disabled for this session (your save files were not changed): ") + ex.Message;
+                Log.Error("Profile load failed: " + ex);
+            }
         }
 
         private static ProfileSessionKind DetectProfileSession()

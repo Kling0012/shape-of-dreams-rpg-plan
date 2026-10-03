@@ -363,6 +363,12 @@ namespace SodRpg.Mod
             string sectionTags = SectionTagNotice();
             if (sectionTags != null)
                 sb.Append("\n<size=13><color=#ffd27f>").Append(sectionTags).Append("</color></size>");
+            // 版違いは見落とすと「効果も報酬も入らない」ので、目立つ色で常に出す（mp-ui-save #4）。
+            if (_s.HostVersionWarning != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
+            var hostWarnings = HostAuthority.VersionWarnings;
+            for (int i = 0; i < hostWarnings.Count; i++)
+                sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
