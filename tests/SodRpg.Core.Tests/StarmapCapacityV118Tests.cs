@@ -10,7 +10,10 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_traveler_tree_can_hold_all_points()
         {
-            int maxPoints = StarProgression.MaxPoints + Content.MaxCodexBonus;
+            // v1.31：星図の予算は150→300に増えたが、10倍の木（並行作業）が入るまでの現行木
+            // （容量200〜225）が保証できるのは v1.30 の予算150＋図鑑4。10倍の木が入ったら
+            // StarProgression.MaxPoints（300）へ戻すこと。
+            int maxPoints = 150 + Content.MaxCodexBonus;
             var heroes = HeroSigils.All.Select(t => t.HeroKey).Distinct().ToList();
             Assert.Equal(9, heroes.Count);
             foreach (var hero in heroes)

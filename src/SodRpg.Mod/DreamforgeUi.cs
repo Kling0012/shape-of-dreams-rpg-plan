@@ -1724,14 +1724,15 @@ namespace SodRpg.Mod
         private sealed class StarNode
         {
             public int Rank;
-            public bool Allocated, Available, PairEquippedA, PairEquippedB;
-            public string Description;
+            public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch;
+            public string Description, SearchDescription;
             public Texture2D Icon;
             public bool Keystone, Pair;
             public float TooltipWidth, TooltipHeight;
             public readonly GUIContent Name = new GUIContent();
             public readonly GUIContent RankLabel = new GUIContent();
             public readonly GUIContent Tooltip = new GUIContent();
+            public readonly GUIContent KeystoneLabel = new GUIContent();
         }
 
         // Layout and localized text survive IMGUI events; only state changes rebuild descriptions.
@@ -1748,8 +1749,16 @@ namespace SodRpg.Mod
         private float _starZoom = 1f, _starExtent = 1f;
         private bool _starNeedsFit = true;
         private int[] _starKeystones = new int[0];
-        private GUIStyle _starRankStyle, _starTooltipStyle, _starNameStyle;
-        private static Texture2D _starDisc;
+        private readonly StarMapView _starView = new StarMapView();
+        private string _starSearch = "";
+        private bool _starSearchDirty = true;
+        private int[] _starMatches = new int[0];
+        private int _starMatchCount, _starMatchCursor = -1;
+        private readonly GUIContent _starSearchStatus = new GUIContent();
+        private static readonly GUILayoutOption[] StarRowHeight = { GUILayout.Height(26) };
+        private static readonly GUILayoutOption[] StarKeystoneWidth = { GUILayout.Width(96) };
+        private GUIStyle _starRankStyle, _starTooltipStyle, _starNameStyle, _starSearchStyle;
+        private static Texture2D _starDisc, _starSearchRing;
         private const float StarMinZoom = 0.15f, StarMaxZoom = 3f;
         private static readonly Color StarKeystone = new Color(0.8f, 0.55f, 1f);
         private static readonly Color StarPair = new Color(0.45f, 0.9f, 0.95f);
@@ -1775,6 +1784,9 @@ namespace SodRpg.Mod
             _starJapanese = Loc.Japanese;
             _starLayout = HeroTreeLayout.ForHero(hero);
             _starNodes = new StarNode[_starLayout.Nodes.Count];
+            _starMatches = new int[_starNodes.Length];
+            _starMatchCursor = -1;
+            _starSearchDirty = true;
             _starExtent = 1f;
             var keystones = new List<int>();
             for (int i = 0; i < _starNodes.Length; i++)
@@ -1812,6 +1824,10 @@ namespace SodRpg.Mod
                 {
                     alignment = TextAnchor.UpperCenter, fontSize = 12, wordWrap = false, clipping = TextClipping.Overflow,
                     padding = new RectOffset(0, 0, 0, 0)
+                };
+                _starSearchStyle = new GUIStyle(GUI.skin.textField)
+                {
+                    font = _st.Label.font, fontSize = 16, fixedHeight = 26f, wordWrap = false
                 };
                 _starRankStyle.fontSize = 11;
             }
@@ -1876,7 +1892,15 @@ namespace SodRpg.Mod
                     continue;
                 }
                 bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : Rules.TalentUnlocked(hs, hero, t);
+                n.Unlocked = unlocked;
                 int cost = t.IsKeystone ? (hs.Keystone != null ? 0 : Content.KeystoneCost) : t.RankCost;
+                if (t.IsKeystone)
+                {
+                    string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
+                        : unlocked ? Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>")
+                        : Loc.T("<color=#888>条件未達</color>", "<color=#888>locked</color>");
+                    n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
+                }
                 n.Available = unlocked && n.Rank < t.MaxRank && _starFree >= cost;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
                 string condition = Loc.T("取得済みの星と線でつながると振れます。",
@@ -1894,6 +1918,7 @@ namespace SodRpg.Mod
                 var pair = PairCombos.ForBridge(t.Id);
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
                 string description = pair == null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                n.SearchDescription = description;
                 if (pair != null)
                 {
                     description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
@@ -1910,6 +1935,7 @@ namespace SodRpg.Mod
                     + Loc.T("\n左クリック：1段振る　右クリック：1段外す\n残りの星が始まりにつながる場合だけ外せます。",
                         "\nLeft click: allocate one rank. Right click: refund one rank.\nRefunds require all remaining stars to stay connected to the start.");
             }
+            _starSearchDirty = true;
         }
 
         private void DrawTalentTab()
@@ -1941,27 +1967,70 @@ namespace SodRpg.Mod
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
             if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
             DrawKeystoneBar(p, hero);
+            StarDrawSearch();
             GUILayout.Label(Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　"
                     + "<color=#cc8cff>紫の大きな星＝刻印</color>　<color=#73e6f2>水色＝合わせ技</color>　<color=#ffc952>金＝取得済み</color>",
                 "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   "
                     + "<color=#cc8cff>Large purple = keystone</color>   <color=#73e6f2>Cyan = combo</color>   <color=#ffc952>Gold = acquired</color>"), _st.Small);
             DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
         }
-
-        private Vector2 StarPosition(int index, Rect viewport)
+        private void StarRefreshSearch()
         {
-            var n = _starLayout.Nodes[index];
-            return viewport.center + _starPan + new Vector2(n.X, n.Y) * _starZoom;
+            if (!_starSearchDirty) return;
+            _starSearchDirty = false;
+            _starMatchCount = 0;
+            for (int i = 0; i < _starNodes.Length; i++)
+            {
+                var node = _starNodes[i];
+                node.SearchMatch = StarMapMath.Matches(node.Name.text, node.SearchDescription, _starSearch);
+                if (node.SearchMatch) _starMatches[_starMatchCount++] = i;
+            }
+            if (_starMatchCursor >= _starMatchCount) _starMatchCursor = -1;
+            _starSearchStatus.text = _starSearch.Length == 0 ? ""
+                : Loc.T($"{_starMatchCount} 個の星", $"{_starMatchCount} stars");
         }
 
-        private Rect StarRect(int index, Rect viewport)
+        private void StarDrawSearch()
         {
-            var kind = _starLayout.Nodes[index].Kind;
-            float size = kind == HeroTreeNodeKind.Small ? 36f : kind == HeroTreeNodeKind.Notable ? 46f : 58f;
-            size *= Mathf.Clamp(_starZoom, 0.45f, 1.6f);
-            Vector2 point = StarPosition(index, viewport);
-            return new Rect(point.x - size / 2, point.y - size / 2, size, size);
+            StarRefreshSearch();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("星を探す", "Find star"), _st.Small, StarKeystoneWidth);
+            GUI.SetNextControlName("DreamforgeStarSearch");
+            // Handle Enter before TextField can consume it; leave IME composition to the text field.
+            var e = Event.current;
+            bool next = e.type == EventType.KeyDown && (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
+                && GUI.GetNameOfFocusedControl() == "DreamforgeStarSearch" && Input.compositionString.Length == 0;
+            if (next) e.Use();
+            string query = GUILayout.TextField(_starSearch, _starSearchStyle, StarFill);
+            if (query != _starSearch)
+            {
+                _starSearch = query;
+                _starMatchCursor = -1;
+                _starSearchDirty = true;
+                StarRefreshSearch();
+            }
+            GUILayout.Label(_starSearchStatus, _st.Small, StarKeystoneWidth);
+            bool enabled = GUI.enabled;
+            GUI.enabled = enabled && _starMatchCount > 0;
+            if (GUILayout.Button(Loc.T("次の星へ", "Next star"), _st.Button, StarRowHeight)) next = true;
+            GUI.enabled = enabled;
+            GUILayout.EndHorizontal();
+            if (next && _starMatchCount > 0)
+            {
+                _starMatchCursor = (_starMatchCursor + 1) % _starMatchCount;
+                StarJumpTo(_starMatches[_starMatchCursor]);
+            }
         }
+
+        private void StarJumpTo(int index)
+        {
+            var node = _starLayout.Nodes[index];
+            var pan = StarMapMath.PanToNode(node.X, node.Y, _starZoom);
+            _starPan = new Vector2(pan.X, pan.Y);
+            _starNeedsFit = false;
+            CancelStarDrag();
+        }
+
 
         private void DrawStarCanvas(Rect canvas, Profile p, string hero)
         {
@@ -1982,9 +2051,8 @@ namespace SodRpg.Mod
                 }
                 Vector2 mouse = e.mousePosition;
                 bool inside = viewport.Contains(mouse);
-                if (inside)
-                    for (int i = _starNodes.Length - 1; i >= 0; i--)
-                        if (StarRect(i, viewport).Contains(mouse)) { hover = i; break; }
+                _starView.Update(_starLayout, viewport, _starPan, _starZoom);
+                if (inside) hover = _starView.Hit(mouse);
                 if (inside && e.type == EventType.ScrollWheel)
                 {
                     float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), StarMinZoom, StarMaxZoom);
@@ -2037,24 +2105,30 @@ namespace SodRpg.Mod
                     }
                 }
                 if (e.type != EventType.Repaint) return;
+                _starView.Update(_starLayout, viewport, _starPan, _starZoom);
+                // Pan/zoom events may have changed the geometry since the initial hit check.
+                hover = inside ? _starView.Hit(mouse) : -1;
                 StarFillRect(viewport, new Color(0.035f, 0.045f, 0.075f));
-                for (int i = 0; i < _starLayout.Edges.Count; i++)
+                Matrix4x4 baseMatrix = GUI.matrix;
+                Vector2 unclippedOrigin = StarMapView.UnclippedOrigin(baseMatrix);
+                for (int i = 0; i < _starView.EdgeCount; i++)
                 {
-                    var edge = _starLayout.Edges[i];
+                    var edge = _starView.VisibleEdges[i];
                     var a = _starNodes[edge.A];
                     var b = _starNodes[edge.B];
                     Color color = a.Allocated && b.Allocated ? StarGold
                         : (a.Allocated && b.Available || b.Allocated && a.Available) ? StarBright : StarGrey * 0.55f;
-                    DrawStarEdge(StarPosition(edge.A, viewport), StarPosition(edge.B, viewport), viewport, color);
+                    StarMapView.DrawEdge(edge, unclippedOrigin, baseMatrix, color);
                 }
                 var disc = StarDisc();
-                for (int i = 0; i < _starNodes.Length; i++)
+                for (int v = 0; v < _starView.NodeCount; v++)
                 {
-                    Rect rect = StarRect(i, viewport);
-                    if (!viewport.Overlaps(new Rect(rect.x - 80f, rect.y, rect.width + 160f, rect.height + 26f))) continue;
+                    int i = _starView.VisibleNodes[v];
+                    Rect rect = _starView.NodeRects[i];
                     var n = _starNodes[i];
-                    var kind = _starLayout.Nodes[i].Kind;
                     Color frame = n.Allocated ? StarGold : n.Keystone ? StarKeystone : n.Pair ? StarPair : n.Available ? StarBright : StarGrey;
+                    if (n.SearchMatch)
+                        StarDrawDisc(StarSearchRing(), new Rect(rect.x - 11f, rect.y - 11f, rect.width + 22f, rect.height + 22f), StarGold);
                     if (n.Available && !n.Allocated)
                         StarDrawDisc(disc, new Rect(rect.x - 5f, rect.y - 5f, rect.width + 10f, rect.height + 10f),
                             new Color(StarBright.r, StarBright.g, StarBright.b, 0.22f));
@@ -2080,9 +2154,9 @@ namespace SodRpg.Mod
                         }
                     }
                     else if (rect.width >= 24f) GUI.Label(rect, n.RankLabel, _starRankStyle);
-                    bool named = n.Keystone || n.Pair ? _starZoom >= 0.2f
-                        : kind != HeroTreeNodeKind.Small ? _starZoom >= 0.55f : _starZoom >= 1f;
-                    if (named || i == hover)
+                    // Hover takes priority over another label in the same cell.
+                    if (i == hover || (_starView.Named[i]
+                        && (hover < 0 || _starView.LabelCells[i] != _starView.LabelCells[hover])))
                         GUI.Label(new Rect(rect.center.x - 80f, rect.yMax + 7f, 160f, 18f), n.Name, _starNameStyle);
                 }
             }
@@ -2151,23 +2225,18 @@ namespace SodRpg.Mod
         private void DrawKeystoneBar(Profile p, string hero)
         {
             if (_starKeystones.Length == 0) return;
-            var hs = p.Hero(hero);
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("刻印（1つ）：", "Keystone (one):"), _st.Small, GUILayout.Width(96));
+            GUILayout.Label(Loc.T("刻印（1つ）：", "Keystone (one):"), _st.Small, StarKeystoneWidth);
             for (int k = 0; k < _starKeystones.Length; k++)
             {
                 int index = _starKeystones[k];
                 var t = _starLayout.Nodes[index].Talent;
-                bool chosen = hs.Keystone == t.Id;
-                bool unlocked = Rules.KeystoneUnlocked(p, hero, t);
-                string state = chosen ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
-                    : unlocked ? Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>")
-                    : Loc.T("<color=#888>条件未達</color>", "<color=#888>locked</color>");
-                if (GUILayout.Button("<color=#cc8cff>◆</color> " + t.Name + "  " + state, chosen ? _st.RowSel : _st.Row, GUILayout.Height(26)))
+                var state = _starNodes[index];
+                bool chosen = state.Allocated;
+                bool unlocked = state.Unlocked;
+                if (GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight))
                 {
-                    var node = _starLayout.Nodes[index];
-                    _starPan = -new Vector2(node.X, node.Y) * _starZoom;
-                    CancelStarDrag();
+                    StarJumpTo(index);
                     if (!chosen && unlocked && _s.CanEditTalents)
                     {
                         try
@@ -2201,6 +2270,26 @@ namespace SodRpg.Mod
             _starDisc.Apply();
             return _starDisc;
         }
+        /// <summary>Search halo with a transparent center, generated once and reused for every match.</summary>
+        private static Texture2D StarSearchRing()
+        {
+            if (_starSearchRing != null) return _starSearchRing;
+            const int size = 96;
+            _starSearchRing = new Texture2D(size, size, TextureFormat.RGBA32, false)
+                { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            var pixels = new Color32[size * size];
+            float center = (size - 1) / 2f, radius = size / 2f - 3f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - center, dy = y - center;
+                    float distance = Mathf.Abs(Mathf.Sqrt(dx * dx + dy * dy) - radius);
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(2.5f - distance) * 255f));
+                }
+            _starSearchRing.SetPixels32(pixels);
+            _starSearchRing.Apply();
+            return _starSearchRing;
+        }
 
         private static void StarDrawDisc(Texture2D disc, Rect rect, Color color)
         {
@@ -2218,50 +2307,6 @@ namespace SodRpg.Mod
             GUI.color = old;
         }
 
-        private static void DrawStarEdge(Vector2 a, Vector2 b, Rect viewport, Color color)
-        {
-            // Clip the segment before rotating so offscreen branches never produce giant draw quads.
-            Vector2 delta = b - a;
-            float from = 0f, to = 1f;
-            if (!ClipStarEdge(-delta.x, a.x, ref from, ref to)
-                || !ClipStarEdge(delta.x, viewport.width - a.x, ref from, ref to)
-                || !ClipStarEdge(-delta.y, a.y, ref from, ref to)
-                || !ClipStarEdge(delta.y, viewport.height - a.y, ref from, ref to)) return;
-            b = a + delta * to;
-            a += delta * from;
-            delta = b - a;
-            // RotateAroundPivot misplaces lines inside groups when the UI is scaled, so draw the segment as small
-            // overlapping squares. Only the clipped, visible part is drawn.
-            float length = delta.magnitude;
-            if (length < 0.5f) return;
-            int steps = Mathf.Min(2000, Mathf.CeilToInt(length / 1.5f));
-            var old = GUI.color;
-            GUI.color = color;
-            var tex = Texture2D.whiteTexture;
-            for (int i = 0; i <= steps; i++)
-            {
-                Vector2 point = a + delta * (i / (float)steps);
-                GUI.DrawTexture(new Rect(point.x - 1f, point.y - 1f, 2f, 2f), tex);
-            }
-            GUI.color = old;
-        }
-
-        private static bool ClipStarEdge(float direction, float distance, ref float from, ref float to)
-        {
-            if (Mathf.Abs(direction) < 0.0001f) return distance >= 0f;
-            float ratio = distance / direction;
-            if (direction < 0f)
-            {
-                if (ratio > to) return false;
-                if (ratio > from) from = ratio;
-            }
-            else
-            {
-                if (ratio < from) return false;
-                if (ratio < to) to = ratio;
-            }
-            return true;
-        }
 
         private void DrawWorkshopTab()
         {

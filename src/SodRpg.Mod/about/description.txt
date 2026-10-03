@@ -41,8 +41,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Growth / 成長[/h2]
 [list]
-[*] Each Traveler earns their own star XP and up to 150 points, plus codex bonuses. Added 506 stars: memory-specific routes (7 per Traveler, 6 for Bismuth) and eight dream-ring stars each. Route stars form chains; linked bonuses work only with the matching memory equipped. Respec is free.
-[*] 星の経験とポイントは旅人ごとに独立し、最大150ポイント＋図鑑のボーナスを得ます。記憶ごとのルート（各7本、Bismuthは6本）と夢の輪8星、計506星を追加。ルートは前の星から順に開き、連携の星は対応する記憶を装着中だけ有効です。振り直しは無料です。夢のレベルは工房や夢の圧に使い、星ポイントには使いません。
+[*] Each Traveler earns their own star XP and up to 300 points, plus codex bonuses. Added 506 stars: memory-specific routes (7 per Traveler, 6 for Bismuth) and eight dream-ring stars each. Route stars form chains; linked bonuses work only with the matching memory equipped. Respec is free.
+[*] 星の経験とポイントは旅人ごとに独立し、最大300ポイント＋図鑑のボーナスを得ます。記憶ごとのルート（各7本、Bismuthは6本）と夢の輪8星、計506星を追加。ルートは前の星から順に開き、連携の星は対応する記憶を装着中だけ有効です。振り直しは無料です。夢のレベルは工房や夢の圧に使い、星ポイントには使いません。
 [*] Forge: enhance to +5 (milestones at +3 and +5 add an affix or a power), retune an affix choosing from 3 options, salvage, transmute (pick the result slot) and craft. The workshop unlocks convenience upgrades.
 [*] 鍛冶では強化（+5まで。+3と+5の節目で特性や固有効果が増えます）・再調律（3つの候補から選べます）・分解・合成（結果の枠を選べます）・製作ができます。工房では、鞄や保管庫の拡張などの便利な強化を解放できます。
 [*] 22 kinds of bounties each run, 30 daily dreams, 45 feats with rewards, and traveler mastery.

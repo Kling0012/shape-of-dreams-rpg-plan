@@ -9,8 +9,9 @@ namespace SodRpg.Core.Tests
     {
         [Theory]
         [InlineData(1, 0, 1, 1)]
-        [InlineData(11, 30, 1.3, 1.147)]
-        [InlineData(30, 150, 2.375, 1.675)]
+        [InlineData(11, 30, 1.225, 1.1095)]
+        [InlineData(30, 150, 2.0, 1.4875)]
+        [InlineData(30, 300, 2.375, 1.675)] // v1.31：星の係数を半分にしたので、300星＝旧150星と同じ圧
         [InlineData(-9, -100, 1, 1)]
         [InlineData(int.MinValue, int.MinValue, 1, 1)]
         [InlineData(int.MaxValue, int.MaxValue, 2.375, 1.675)]
@@ -48,8 +49,8 @@ namespace SodRpg.Core.Tests
             var lowJoiner = DreamPressure.Average(new[] { veteran, new Build { DreamLevel = 1, SpentStarPoints = 0 } });
             Assert.Equal(15.5, pressure.AverageDreamLevel);
             Assert.Equal(75, pressure.AverageSpentStarPoints);
-            Assert.Equal(1.6375, pressure.HealthMultiplier, 10);
-            Assert.Equal(1.3135, pressure.DamageMultiplier, 10);
+            Assert.Equal(1.45, pressure.HealthMultiplier, 10);
+            Assert.Equal(1.21975, pressure.DamageMultiplier, 10);
             Assert.Equal(pressure.HealthMultiplier, lowJoiner.HealthMultiplier);
         }
 
@@ -63,8 +64,8 @@ namespace SodRpg.Core.Tests
                 new Build { DreamLevel = 2, SpentStarPoints = 1 }
             });
             Assert.Equal(11, pressure.AverageDreamLevel);
-            Assert.Equal(151.0 / 3, pressure.AverageSpentStarPoints, 10);
-            Assert.Equal(1.15 + 0.005 * 151 / 3, pressure.HealthMultiplier, 10); // 夢のレベルは5を超えた分だけ数える
+            Assert.Equal(301.0 / 3, pressure.AverageSpentStarPoints, 10);
+            Assert.Equal(1.15 + 0.0025 * 301 / 3, pressure.HealthMultiplier, 10); // 夢のレベルは5を超えた分だけ数える
         }
 
         [Fact]
@@ -73,7 +74,7 @@ namespace SodRpg.Core.Tests
             var extreme = new Build { DreamLevel = int.MaxValue, SpentStarPoints = int.MaxValue };
             var pressure = DreamPressure.Average(Enumerable.Repeat(extreme, 100000).ToArray());
             Assert.Equal(30, pressure.AverageDreamLevel);
-            Assert.Equal(150, pressure.AverageSpentStarPoints);
+            Assert.Equal(300, pressure.AverageSpentStarPoints);
             Assert.Equal(2.375, pressure.HealthMultiplier, 10);
             Assert.Equal(1.675, pressure.DamageMultiplier, 10);
         }

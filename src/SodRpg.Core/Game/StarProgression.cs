@@ -5,11 +5,11 @@ namespace SodRpg.Core.Game
     /// <summary>旅人ごとの星の経験。夢のレベルとは別に恒久保存する。</summary>
     public static class StarProgression
     {
-        public const int MaxPoints = 150;
+        public const int MaxPoints = 300;
         public const int SecureXp = 20;
         public const int VictoryXp = 100;
 
-        /// <summary>k個目のポイントに必要な経験（1〜150個目）。</summary>
+        /// <summary>k個目のポイントに必要な経験（1〜300個目）。v1.31 で上限だけ150→300に伸ばし、曲線は不変。</summary>
         public static int CostForPoint(int k)
         {
             if (k < 1 || k > MaxPoints) throw new ArgumentOutOfRangeException(nameof(k));

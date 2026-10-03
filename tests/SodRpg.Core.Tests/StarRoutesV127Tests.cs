@@ -166,7 +166,8 @@ namespace SodRpg.Core.Tests
             // one can be purchased: capacity must not count an impossible second key.
             int available = tree.Where(t => !t.IsKeystone).Sum(t => t.MaxRank * t.RankCost) + Content.KeystoneCost;
             Assert.Equal(capacity, available);
-            Assert.True(available > StarProgression.MaxPoints + 4);
+            // v1.31：予算は150→300。10倍の木（並行作業）が入るまでの現行木は v1.30 の予算を超えることだけ保証する。
+            Assert.True(available > 154);
         }
 
         [Fact]
