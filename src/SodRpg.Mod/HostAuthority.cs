@@ -130,6 +130,7 @@ namespace SodRpg.Mod
         private readonly HashSet<LinkKind> _triggeredLinks = new HashSet<LinkKind>();
 
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
+        private readonly Dictionary<DewPlayer, BuildTransferReceiver> _incomingBuilds = new Dictionary<DewPlayer, BuildTransferReceiver>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
         private readonly List<Hero> _scratch = new List<Hero>();
         private readonly List<Build> _pressureBuilds = new List<Build>();
@@ -211,7 +212,11 @@ namespace SodRpg.Mod
             _onPressurePlayerAdded = player => _pressureDirty = true;
             _onPressurePlayerRemoved = player =>
             {
-                if (!ReferenceEquals(player, null)) _builds.Remove(player);
+                if (!ReferenceEquals(player, null))
+                {
+                    _builds.Remove(player);
+                    _incomingBuilds.Remove(player);
+                }
                 _pressureDirty = true;
             };
             _onBuild = OnBuild;
@@ -298,7 +303,13 @@ namespace SodRpg.Mod
             _departedPlayers.Clear();
             foreach (var player in _builds.Keys)
                 if (!_pressurePlayers.Contains(player)) _departedPlayers.Add(player);
-            foreach (var player in _departedPlayers) _builds.Remove(player);
+            foreach (var player in _incomingBuilds.Keys)
+                if (!_pressurePlayers.Contains(player)) _departedPlayers.Add(player);
+            foreach (var player in _departedPlayers)
+            {
+                _builds.Remove(player);
+                _incomingBuilds.Remove(player);
+            }
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
@@ -929,6 +940,7 @@ namespace SodRpg.Mod
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
                 _builds.Clear();
+                _incomingBuilds.Clear();
                 _pressurePlayerCount = -1;
                 _pressureDirty = true;
                 _registeredOn = actor;
@@ -1037,6 +1049,7 @@ namespace SodRpg.Mod
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
+            _incomingBuilds.Clear();
             _pressure = DreamPressure.Neutral;
             _pressurePlayerCount = -1;
             _pressureBuilds.Clear();
@@ -1094,9 +1107,12 @@ namespace SodRpg.Mod
                     Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
                     return;
                 }
+                if (!_incomingBuilds.TryGetValue(caller, out var transfer))
+                    _incomingBuilds.Add(caller, transfer = new BuildTransferReceiver());
+                if (!transfer.TryAccept(msg.ToPart(), out string encoded) || encoded == null) return;
                 var hero = caller.hero;
                 if (hero != null && !hero.IsNullOrInactive()
-                    && _runtimes.TryGetValue(hero, out var rt) && rt.AppliedBuild != null && rt.AppliedBuild.Encoded == msg.build)
+                    && _runtimes.TryGetValue(hero, out var rt) && rt.AppliedBuild != null && rt.AppliedBuild.Encoded == encoded)
                 {
                     // 定期再送は確認だけ返す。固有効果のスタックやクールダウンをリセットしない。
                     _builds[caller] = rt.AppliedBuild;
@@ -1104,13 +1120,13 @@ namespace SodRpg.Mod
                     SendApplied(caller, hero, rt.AppliedBuild);
                     return;
                 }
-                var build = Build.Decode(msg.build);
+                var build = Build.Decode(encoded);
                 if (build == null)
                 {
                     Log.Warn("Host: rejected malformed build from " + caller.playerName);
                     return;
                 }
-                var received = new ReceivedBuild { Build = build, Encoded = msg.build, Summary = build.Encode() };
+                var received = new ReceivedBuild { Build = build, Encoded = encoded, Summary = build.Encode() };
                 _builds[caller] = received;
                 RefreshPressure(true);
                 if (hero != null && !hero.IsNullOrInactive()) Apply(hero, received);
@@ -1124,11 +1140,9 @@ namespace SodRpg.Mod
 
         private void SendApplied(DewPlayer caller, Hero hero, ReceivedBuild build)
         {
-            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeAppliedMsg
-            {
-                heroNetId = hero != null ? hero.netId : 0,
-                summary = build.Summary,
-            });
+            foreach (var part in BuildTransfer.Split(build.Summary))
+                _registeredOn?.CustomRpc_SendMessageToClient(caller,
+                    DreamforgeAppliedMsg.FromPart(part, hero != null ? hero.netId : 0));
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
@@ -1330,15 +1344,16 @@ namespace SodRpg.Mod
                     if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
                     string memory = MemorySource(d.actor ?? a);
                     d.ApplyAmplification(captured.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(hero, memory), false));
-                    int memoryAmp = 0;
+                    long memoryAmpMilli = 0;
                     if (memory != null)
                         foreach (var link in captured.SatisfiedLinks)
                             if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
                             {
-                                memoryAmp += link.Value;
+                                memoryAmpMilli += link.ValueMilli;
                                 LogLinkApplied(link);
                             }
-                    memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time, memoryAmp);
+                    float memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
+                        memoryAmpMilli / (float)BuildPrecision.Scale);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
                     ApplyExposeDamage(captured, ref d, t);
                 };
@@ -1674,7 +1689,7 @@ namespace SodRpg.Mod
                 if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    int haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used);
+                    float haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used);
                     if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
@@ -1791,7 +1806,7 @@ namespace SodRpg.Mod
             p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
             dyn.AttackSpeedPct += rt.Gimmicks.QuickenPercent(now);
-            int empower = rt.Gimmicks.EmpowerPercent(now);
+            float empower = rt.Gimmicks.EmpowerPercent(now);
             dyn.AttackPct += empower;
             dyn.PowerPct += empower;
             // Kill() follows the synchronous hit event; do not retain old victims between frames.
@@ -1916,7 +1931,7 @@ namespace SodRpg.Mod
                     if (kv.Value != null) essences.Add(kv.Value.GetType().Name);
             }
             rt.SatisfiedLinks.Clear();
-            int attune = 0, guardHealth = 0, guardArmor = 0;
+            long attuneMilli = 0, guardMilli = 0;
             foreach (var link in links)
             {
                 if (!alive || !Links.Satisfied(link, rt.HeroKey, memories, essences, nearbyAllies)) continue;
@@ -1924,20 +1939,19 @@ namespace SodRpg.Mod
                 switch (link.Kind)
                 {
                     case LinkKind.Attune:
-                        attune += link.Value;
+                        attuneMilli += link.ValueMilli;
                         LogLinkApplied(link);
                         break;
                     case LinkKind.Guard:
-                        guardHealth += link.Value;
-                        guardArmor += link.Value;
+                        guardMilli += link.ValueMilli;
                         LogLinkApplied(link);
                         break;
                 }
             }
             p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
-            p.LinkAttunePct = attune;
-            p.LinkGuardHealthPct = guardHealth;
-            p.LinkGuardArmor = guardArmor;
+            p.LinkAttunePct = attuneMilli / (float)BuildPrecision.Scale;
+            p.LinkGuardHealthPct = guardMilli / (float)BuildPrecision.Scale;
+            p.LinkGuardArmor = guardMilli / (float)BuildPrecision.Scale;
             if (rt.SatisfiedLinks.Count > rt.ReportedLinks)
             {
                 rt.ReportedLinks = rt.SatisfiedLinks.Count;

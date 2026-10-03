@@ -6,12 +6,12 @@ namespace SodRpg.Core.Game
     /// <summary>ある時点で付けるべき一時的な補正（表示単位）。</summary>
     public struct DynamicBonus
     {
-        public int AttackSpeedPct;
-        public int AttackPct;
-        public int PowerPct;
+        public float AttackSpeedPct;
+        public float AttackPct;
+        public float PowerPct;
         public int MoveSpeedPct;
-        public int MaxHealthPct;
-        public int Armor;
+        public float MaxHealthPct;
+        public float Armor;
     }
 
     /// <summary>
@@ -176,7 +176,14 @@ namespace SodRpg.Core.Game
             if (v <= 0 || !allFour) return 0;
             if (_convergenceReady.TryGetValue(victimId, out float ready) && now < ready) return 0;
             _convergenceReady[victimId] = now + ConvergenceCooldown;
-            if (_convergenceReady.Count > 200) _convergenceReady.Clear();
+            // Active victim cooldowns must survive large encounters.
+            if (_convergenceReady.Count > 200)
+            {
+                var expired = new List<int>();
+                foreach (var pair in _convergenceReady)
+                    if (now >= pair.Value) expired.Add(pair.Key);
+                foreach (int id in expired) _convergenceReady.Remove(id);
+            }
             return attackOrPower * v / 100f;
         }
 
@@ -197,11 +204,11 @@ namespace SodRpg.Core.Game
         public int EvilDreamCount { get; set; }
 
         /// <summary>連携（同調）：条件を満たしている間の攻撃力・魔力%（ホストの定期走査で更新）。</summary>
-        public int LinkAttunePct { get; set; }
+        public float LinkAttunePct { get; set; }
         /// <summary>連携（守り）：条件を満たしている間の最大HP%（ホストの定期走査で更新）。</summary>
-        public int LinkGuardHealthPct { get; set; }
+        public float LinkGuardHealthPct { get; set; }
         /// <summary>連携（守り）：条件を満たしている間の防御（ホストの定期走査で更新）。</summary>
-        public int LinkGuardArmor { get; set; }
+        public float LinkGuardArmor { get; set; }
 
         /// <summary>余韻は重ならない。発動元ごとに、装着中だけ5秒の期限を延長する。</summary>
         public void OnLinkSurge(float now, LinkDef source)
@@ -226,7 +233,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>使った記憶の連携加速を合計する。1回の発動でクールダウン全量（100%）まで。</summary>
-        public static int LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
+        public static float LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
         {
             long total = 0;
             if (satisfied == null || usedMemory == null) return 0;
@@ -235,10 +242,10 @@ namespace SodRpg.Core.Game
                 var link = satisfied[i];
                 if (link == null || link.Kind != LinkKind.MemoryHaste || link.Requires == null
                     || Array.IndexOf(link.Requires, usedMemory) < 0) continue;
-                total += Math.Max(0, link.Value);
-                if (total >= 100) return 100;
+                total += Math.Max(0, link.ValueMilli);
+                if (total >= 100 * BuildPrecision.Scale) return 100;
             }
-            return (int)total;
+            return total / (float)BuildPrecision.Scale;
         }
 
         /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
@@ -497,10 +504,10 @@ namespace SodRpg.Core.Game
         {
             if (now > _momentumUntil) MomentumStacks = 0;
             // 連携（v1.26）：同調は常時、記憶の余韻は条件の記憶を使った後の5秒間。
-            int linkSurge = 0;
+            float linkSurge = 0;
             foreach (var pair in _linkSurges)
-                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.Value);
-            int linkAttack = LinkAttunePct + linkSurge;
+                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.ValuePercent);
+            float linkAttack = LinkAttunePct + linkSurge;
             int conditionalTotal = ConditionalAttributes(now);
             return new DynamicBonus
             {

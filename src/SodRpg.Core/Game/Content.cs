@@ -159,7 +159,7 @@ namespace SodRpg.Core.Game
         }
 
         public TalentDef(string id, Line route, Txt name, LinkDef linkPerRank, int maxRank)
-            : this(id, route, name, default(Stat), linkPerRank.Value, maxRank)
+            : this(id, route, name, default(Stat), 0, maxRank)
         {
             LinkPerRank = linkPerRank;
         }

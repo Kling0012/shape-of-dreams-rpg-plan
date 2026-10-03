@@ -62,8 +62,16 @@ namespace SodRpg.Core.Game
     {
         public GimmickTrigger Trigger { get; set; }
         public GimmickEffect Effect { get; set; }
-        /// <summary>1段あたりの値。</summary>
-        public int Value { get; set; }
+        /// <summary>Authoritative effect value in thousandths of one percentage point.</summary>
+        public int ValueMilli { get; set; }
+        /// <summary>Exact authoring value. Values that are not multiples of one thousandth are rejected.</summary>
+        public decimal Value
+        {
+            get => ValueMilli / (decimal)Gimmicks.ValueScale;
+            set => ValueMilli = BuildPrecision.FromDecimal(value);
+        }
+        /// <summary>Convert to the game's floating-point percentage only when applying an effect.</summary>
+        public float ValuePercent => ValueMilli / (float)Gimmicks.ValueScale;
         /// <summary>効果の補足（属性の種類、味方も回復するか）。</summary>
         public int Arg { get; set; }
         /// <summary>内部の間隔（秒）。0 なら制限なし。</summary>
@@ -103,8 +111,9 @@ namespace SodRpg.Core.Game
     /// <summary>記憶の仕掛けの説明と、通信・計算で共用する上限。</summary>
     public static partial class Gimmicks
     {
-        public const int MaxEntries = 512;
-        public const int MaxStarIdLength = 96;
+        public const int ValueScale = BuildPrecision.Scale;
+        public static int MaxEntries => BuildLimits.MaxGimmickEntries;
+        public const int MaxStarIdLength = BuildLimits.MaxStarIdLength;
         public const float MaxCooldown = 60f;
         public const float BuffDuration = 4f;
         public const float AreaRadius = 4f;
@@ -142,7 +151,7 @@ namespace SodRpg.Core.Game
         private static bool ValidDef(GimmickDef def)
         {
             if (def == null || def.Trigger < GimmickTrigger.OnUse || def.Trigger > GimmickTrigger.OnCrit
-                || Cap(def.Effect) == 0 || def.Value <= 0 || !Finite(def.Cooldown) || def.Cooldown < 0
+                || Cap(def.Effect) == 0 || def.ValueMilli <= 0 || !Finite(def.Cooldown) || def.Cooldown < 0
                 || def.DurationPercent < 0 || def.RadiusPercent < 0 || def.ExtraTargets < 0 || def.ChancePercent < 0) return false;
             if (IsV129(def.Effect)) return ValidV129Def(def);
             return def.Effect == GimmickEffect.Element ? def.Arg >= 0 && def.Arg <= 3
@@ -168,9 +177,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>残り時間の割合短縮を、本体APIの最大時間基準の比率へ換算する。</summary>
-        public static float RemainingCooldownReductionRatio(float remaining, float maximum, int percent)
+        public static float RemainingCooldownReductionRatio(float remaining, float maximum, float percent)
         {
-            if (!Finite(remaining) || !Finite(maximum) || remaining <= 0f || maximum <= 0f || percent <= 0) return 0f;
+            if (!Finite(remaining) || !Finite(maximum) || !Finite(percent) || remaining <= 0f || maximum <= 0f || percent <= 0) return 0f;
             float ratio = (float)((double)remaining / maximum * Math.Min(percent, 100) / 100);
             return Finite(ratio) ? ratio : 0f;
         }
@@ -204,7 +213,7 @@ namespace SodRpg.Core.Game
                 {
                     Trigger = entry.Def.Trigger,
                     Effect = entry.Def.Effect,
-                    Value = Math.Min(entry.Def.Value, Cap(entry.Def.Effect)),
+                    ValueMilli = Math.Min(entry.Def.ValueMilli, Cap(entry.Def.Effect) * ValueScale),
                     Arg = entry.Def.Arg,
                     Cooldown = Math.Max(MinimumCooldown(entry.Def.Effect), Math.Min(entry.Def.Cooldown, MaxCooldown)),
                     DurationPercent = SupportsParameter(entry.Def, GimmickParam.Duration) ? Math.Min(entry.Def.DurationPercent, MaxParameterPercent) : 0,
@@ -221,8 +230,8 @@ namespace SodRpg.Core.Game
             if (!ValidDef(def) || !Links.IsMemory(memoryTypeName) || ranks <= 0) return "";
             if (IsV129(def.Effect)) return !AllowedOnMemory(def.Effect, memoryTypeName)
                 ? "" : DescribeV129(def, memoryTypeName, ranks);
-            int value = (int)Math.Min((long)def.Value * ranks, Cap(def.Effect));
-            string n = value.ToString(CultureInfo.InvariantCulture);
+            decimal value = Math.Min((long)def.ValueMilli * ranks, Cap(def.Effect) * ValueScale) / (decimal)ValueScale;
+            string n = value.ToString("0.###", CultureInfo.InvariantCulture);
             string duration = Duration(def, BuffDuration).ToString("0.###", CultureInfo.InvariantCulture);
             string radius = Radius(def, AreaRadius).ToString("0.###", CultureInfo.InvariantCulture);
             string healRadius = Radius(def, 10f).ToString("0.###", CultureInfo.InvariantCulture);
@@ -242,11 +251,12 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Element:
                     string element = ja ? (def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇")
                         : (def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness");
-                    int whole = value / 100, chance = Math.Min(100, value % 100 + def.ChancePercent);
+                    int whole = (int)(value / 100);
+                    string chance = Math.Min(100, value % 100 + def.ChancePercent).ToString("0.###", CultureInfo.InvariantCulture);
                     string stacks = ja ? (whole == 0 ? chance + "%の確率で1つ"
-                        : whole + "つ" + (chance == 0 ? "" : "（さらに" + chance + "%の確率でもう1つ）"))
+                        : whole + "つ" + (chance == "0" ? "" : "（さらに" + chance + "%の確率でもう1つ）"))
                         : (whole == 0 ? "1 stack with a " + chance + "% chance"
-                        : whole + (whole == 1 ? " stack" : " stacks") + (chance == 0 ? "" : " (plus a " + chance + "% chance of 1 more)"));
+                        : whole + (whole == 1 ? " stack" : " stacks") + (chance == "0" ? "" : " (plus a " + chance + "% chance of 1 more)"));
                     string targets = def.Trigger == GimmickTrigger.OnUse
                         ? (ja ? "自分の周り" + radius + "mの敵" : "enemies within " + radius + "m of yourself")
                         : def.Trigger == GimmickTrigger.OnKill
@@ -339,17 +349,19 @@ namespace SodRpg.Core.Game
         /// <summary>同じ定義を再設定しても間隔は戻らない。外した星・変更した星の効果は解除する。</summary>
         public void SetBuild(IReadOnlyList<GimmickEntry> entries)
         {
+            if (entries != null && entries.Count > Gimmicks.MaxEntries)
+                throw new ArgumentOutOfRangeException(nameof(entries), "The build exceeds the legal gimmick count.");
             var next = new List<ActiveEntry>();
             if (entries != null)
             {
-                for (int i = 0; i < entries.Count && next.Count < Gimmicks.MaxEntries; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     GimmickEntry entry = Gimmicks.Clamp(entries[i]);
-                    if (entry == null) continue;
+                    if (entry == null) throw new ArgumentException("Invalid gimmick entry.", nameof(entries));
                     bool duplicate = false;
                     for (int j = 0; j < next.Count; j++)
                         if (next[j].Entry.StarId == entry.StarId) { duplicate = true; break; }
-                    if (duplicate) continue;
+                    if (duplicate) throw new ArgumentException("Duplicate gimmick star ID.", nameof(entries));
                     ActiveEntry retained = null;
                     for (int j = 0; j < _entries.Count; j++)
                     {
@@ -370,10 +382,8 @@ namespace SodRpg.Core.Game
         }
 
         private static bool Same(GimmickEntry a, GimmickEntry b) =>
-            a.StarId == b.StarId && a.Memory == b.Memory && a.Def.Trigger == b.Def.Trigger
-            && a.Def.Effect == b.Def.Effect && a.Def.Value == b.Def.Value && a.Def.Arg == b.Def.Arg && a.Def.Cooldown == b.Def.Cooldown
-            && a.Def.DurationPercent == b.Def.DurationPercent && a.Def.RadiusPercent == b.Def.RadiusPercent
-            && a.Def.ExtraTargets == b.Def.ExtraTargets && a.Def.ChancePercent == b.Def.ChancePercent;
+            BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)
+            && a.Def.ValueMilli == b.Def.ValueMilli;
 
         /// <summary>期限ちょうどで効果を解除し、敵ごとの期限も取り除く。</summary>
         public void PruneExpired(float now)
@@ -436,21 +446,21 @@ namespace SodRpg.Core.Game
             }
         }
 
-        public int QuickenPercent(float now) => BuffPercent(GimmickEffect.Quicken, now);
-        public int EmpowerPercent(float now) => BuffPercent(GimmickEffect.Empower, now);
+        public float QuickenPercent(float now) => BuffPercent(GimmickEffect.Quicken, now);
+        public float EmpowerPercent(float now) => BuffPercent(GimmickEffect.Empower, now);
 
-        private int BuffPercent(GimmickEffect effect, float now)
+        private float BuffPercent(GimmickEffect effect, float now)
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             int strongest = 0;
             for (int i = 0; i < _entries.Count; i++)
                 if (_entries[i].BuffActive && _entries[i].Entry.Def.Effect == effect)
-                    strongest = Math.Max(strongest, _entries[i].Entry.Def.Value);
-            return strongest;
+                    strongest = Math.Max(strongest, _entries[i].Entry.Def.ValueMilli);
+            return strongest / (float)Gimmicks.ValueScale;
         }
 
-        public int ExposePercent(int victimId, float now)
+        public float ExposePercent(int victimId, float now)
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
@@ -460,9 +470,9 @@ namespace SodRpg.Core.Game
                 ActiveEntry state = _entries[i];
                 if (state.Entry.Def.Effect != GimmickEffect.Expose || state.Victims == null) continue;
                 for (int j = 0; j < state.Victims.Count; j++)
-                    if (state.Victims[j].VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.Value);
+                    if (state.Victims[j].VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValueMilli);
             }
-            return strongest;
+            return strongest / (float)Gimmicks.ValueScale;
         }
     }
 }

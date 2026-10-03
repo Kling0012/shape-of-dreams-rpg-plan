@@ -1,4 +1,5 @@
 using System;
+using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
@@ -11,6 +12,20 @@ namespace SodRpg.Mod
     {
         public string build;
         public int protocol;
+        public string transferId;
+        public int index;
+        public int count;
+        public int totalLength;
+
+        public static DreamforgeBuildMsg FromPart(BuildTransferPart part) => new DreamforgeBuildMsg
+        {
+            build = part.Data, protocol = Protocol.Version, transferId = part.TransferId,
+            index = part.Index, count = part.Count, totalLength = part.TotalLength,
+        };
+        public BuildTransferPart ToPart() => new BuildTransferPart
+        {
+            Data = build, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength,
+        };
     }
 
     /// <summary>ホスト → クライアント：ホストがMODを導入済みで、能力を反映したことの通知。</summary>
@@ -19,6 +34,21 @@ namespace SodRpg.Mod
     {
         public uint heroNetId;
         public string summary;
+        public int protocol;
+        public string transferId;
+        public int index;
+        public int count;
+        public int totalLength;
+
+        public static DreamforgeAppliedMsg FromPart(BuildTransferPart part, uint heroNetId) => new DreamforgeAppliedMsg
+        {
+            summary = part.Data, protocol = Protocol.Version, transferId = part.TransferId,
+            index = part.Index, count = part.Count, totalLength = part.TotalLength, heroNetId = heroNetId,
+        };
+        public BuildTransferPart ToPart() => new BuildTransferPart
+        {
+            Data = summary, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength,
+        };
     }
 
     /// <summary>ホストが求めた夢の圧。途中参加向けにも定期送信する。</summary>
@@ -121,8 +151,8 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 11 adds cluster duration, radius, target-count and chance modifiers to gimmick build entries.
-        public const int Version = 11;
+        // Version 12 uses exact thousandths and bounded multipart build/acknowledgement transfer.
+        public const int Version = 12;
     }
 
     [Serializable]

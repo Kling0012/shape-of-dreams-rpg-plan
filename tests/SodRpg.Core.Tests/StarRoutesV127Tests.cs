@@ -133,8 +133,8 @@ namespace SodRpg.Core.Tests
                     if (kind.Key == LinkKind.MemoryDamage)
                     {
                         // v1.28：頂点（1段）は Cap を 20 まで超えてよい（予算の詳細は StarRoutesV128Tests）。
-                        int mid = kind.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
-                        int top = kind.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                        decimal mid = kind.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                        decimal top = kind.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
                         Assert.InRange(mid, 0, Links.Cap(LinkKind.MemoryDamage, 1));
                         Assert.InRange(top, 0, 20);
                     }

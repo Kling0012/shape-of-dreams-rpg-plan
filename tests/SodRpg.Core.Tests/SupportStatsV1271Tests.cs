@@ -59,10 +59,11 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(999, 60, 60, 80, 40)]
         [InlineData(-999, -60, -60, -80, -40)]
-        public void Untrusted_support_values_are_capped_and_unknown_ids_are_ignored(
+        public void Untrusted_support_values_are_capped_and_unknown_ids_are_rejected(
             int value, int heal, int shield, int summon, int sacrifice)
         {
-            var decoded = Build.Decode($"s:20={value},21={value},22={value},23={value},999=40;p:");
+            Assert.Null(Build.Decode($"s:20={value},21={value},22={value},23={value},999=40;p:"));
+            var decoded = Build.Decode($"s:20={value},21={value},22={value},23={value};p:");
             Assert.NotNull(decoded);
             Assert.Equal(heal, decoded.Get(Stat.HealPower));
             Assert.Equal(shield, decoded.Get(Stat.ShieldPower));

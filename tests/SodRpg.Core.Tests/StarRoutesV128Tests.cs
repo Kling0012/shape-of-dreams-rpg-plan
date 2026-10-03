@@ -82,8 +82,8 @@ namespace SodRpg.Core.Tests
             foreach (var route in HeroStarRoutes.All.Where(t => t.RouteId != null).GroupBy(t => t.RouteId))
             {
                 var md = route.Where(t => t.LinkPerRank != null && t.LinkPerRank.Kind == LinkKind.MemoryDamage).ToArray();
-                int mid = md.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
-                int top = md.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                decimal mid = md.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
+                decimal top = md.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
                 Assert.InRange(mid, 0, Links.Cap(LinkKind.MemoryDamage, 1)); // 頂点以外で 40 まで
                 Assert.InRange(top, 0, 20);                                  // 頂点はさらに 20 まで
                 foreach (var t in md)

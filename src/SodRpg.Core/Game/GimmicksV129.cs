@@ -44,9 +44,9 @@ namespace SodRpg.Core.Game
 
         private static string DescribeV129(GimmickDef def, string memory, int ranks)
         {
-            int value = (int)Math.Min((long)def.Value * ranks, Cap(def.Effect));
+            decimal value = Math.Min((long)def.ValueMilli * ranks, Cap(def.Effect) * ValueScale) / (decimal)ValueScale;
             bool ja = Loc.Japanese;
-            string n = value.ToString(CultureInfo.InvariantCulture), text;
+            string n = value.ToString("0.###", CultureInfo.InvariantCulture), text;
             string duration = Duration(def, BuffDuration).ToString("0.###", CultureInfo.InvariantCulture);
             string woundDuration = Duration(def, 3f).ToString("0.###", CultureInfo.InvariantCulture);
             string primedDuration = Duration(def, 5f).ToString("0.###", CultureInfo.InvariantCulture);
@@ -59,7 +59,7 @@ namespace SodRpg.Core.Game
                     text = ja ? "当てた敵に3秒あたり攻撃力か魔力の高い方の" + n + "%の継続ダメージを" + woundDuration + "秒間与える（重ならず、大きい方で時間を延長）"
                         : "deal " + n + "% of the higher of attack damage or ability power per 3 seconds to the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
                 case GimmickEffect.Daze:
-                    string seconds = Duration(def, value / 10f).ToString("0.###", CultureInfo.InvariantCulture);
+                    string seconds = Duration(def, (float)value / 10f).ToString("0.###", CultureInfo.InvariantCulture);
                     text = ja ? "当てた敵を" + seconds + "秒スタンさせる（ミニボス・ボスには無効。同じ敵に5秒に1回）"
                         : "stun the hit enemy for " + seconds + " seconds (ineffective against minibosses and bosses; once per enemy every 5 seconds)"; break;
                 case GimmickEffect.Ricochet:
@@ -108,19 +108,22 @@ namespace SodRpg.Core.Game
             return name + trigger + text + interval + cap + (ja ? "。仕掛けのダメージからは発動しない" : "; cannot trigger from gimmick damage.");
         }
 
-        public static float SiphonHeal(float damage, float maximumHealth, int percent)
+        public static float SiphonHeal(float damage, float maximumHealth, float percent)
         {
-            if (!Finite(damage) || !Finite(maximumHealth) || damage <= 0 || maximumHealth <= 0 || percent <= 0) return 0;
+            if (!Finite(damage) || !Finite(maximumHealth) || !Finite(percent) || damage <= 0 || maximumHealth <= 0 || percent <= 0) return 0;
             return Math.Min(damage * Math.Min(Cap(GimmickEffect.Siphon), percent) / 100f, maximumHealth * 0.015f);
         }
 
-        public static float AddedCritProbability(float currentChance, int percent)
+        public static float AddedCritProbability(float currentChance, float percent)
         {
-            if (!Finite(currentChance) || percent <= 0 || currentChance >= 1f) return 0f;
+            if (!Finite(currentChance) || !Finite(percent) || percent <= 0 || currentChance >= 1f) return 0f;
             return Math.Min(1f, Math.Min(Cap(GimmickEffect.Weakspot), percent) / 100f / (1f - Math.Max(0f, currentChance)));
         }
 
         public static int ElementEdgePercent(int value, bool fire, bool cold, bool light, bool dark) =>
+            Math.Max(0, Math.Min(Cap(GimmickEffect.ElementEdge), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
+
+        public static float ElementEdgePercent(float value, bool fire, bool cold, bool light, bool dark) => !Finite(value) ? 0f :
             Math.Max(0, Math.Min(Cap(GimmickEffect.ElementEdge), value)) * ((fire ? 1 : 0) + (cold ? 1 : 0) + (light ? 1 : 0) + (dark ? 1 : 0));
     }
 
@@ -165,29 +168,29 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        public int CrescendoPercent(string memory, float now)
+        public float CrescendoPercent(string memory, float now)
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             int result = 0;
             foreach (var state in _entries)
                 if (state.Entry.Memory == memory && state.Entry.Def.Effect == GimmickEffect.Crescendo && state.BuffActive)
-                    result = Math.Max(result, Math.Min(40, state.Stacks * state.Entry.Def.Value));
-            return result;
+                    result = Math.Max(result, Math.Min(40 * Gimmicks.ValueScale, state.Stacks * state.Entry.Def.ValueMilli));
+            return result / (float)Gimmicks.ValueScale;
         }
 
-        public int CombinedMemoryDamagePercent(string memory, float now, int otherPercent)
+        public float CombinedMemoryDamagePercent(string memory, float now, float otherPercent)
         {
-            int crescendo = CrescendoPercent(memory, now);
+            float crescendo = CrescendoPercent(memory, now);
             // Existing awakened links keep their established caps when Crescendo contributes nothing.
             return crescendo == 0 ? Math.Max(0, otherPercent)
-                : Math.Min(Math.Min(120, Links.EquippedCap(LinkKind.MemoryDamage, 3)), Math.Max(0, otherPercent) + crescendo);
+                : Math.Min(Math.Min(120f, (float)Links.EquippedCap(LinkKind.MemoryDamage, 3)), Math.Max(0, otherPercent) + crescendo);
         }
 
-        public int WeakspotPercent(int victimId, float now) => TargetPercent(GimmickEffect.Weakspot, victimId, now);
+        public float WeakspotPercent(int victimId, float now) => TargetPercent(GimmickEffect.Weakspot, victimId, now);
         public float SapPercent(int victimId, float now, bool boss) => TargetPercent(GimmickEffect.Sap, victimId, now) * (boss ? 0.5f : 1f);
 
-        private int TargetPercent(GimmickEffect effect, int victimId, float now)
+        private float TargetPercent(GimmickEffect effect, int victimId, float now)
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
@@ -195,8 +198,8 @@ namespace SodRpg.Core.Game
             foreach (var state in _entries)
                 if (state.Entry.Def.Effect == effect && state.Victims != null)
                     foreach (var victim in state.Victims)
-                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.Value);
-            return strongest;
+                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValueMilli);
+            return strongest / (float)Gimmicks.ValueScale;
         }
 
         public void ForgetActivation(long activationId)

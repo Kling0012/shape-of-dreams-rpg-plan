@@ -83,6 +83,7 @@ namespace SodRpg.Mod
         public string ActiveRunId { get; private set; }
         public bool HostConfirmed { get; private set; }
         public string HostSummary { get; private set; }
+        private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
         public string LoadNotes { get; private set; }
@@ -300,6 +301,7 @@ namespace SodRpg.Mod
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
+                _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 ResetRunChoiceConnection();
                 _sentDreamLevel = -1;
@@ -359,6 +361,7 @@ namespace SodRpg.Mod
             _clientRpcOn = null;
             HostConfirmed = false;
             HostSummary = null;
+            _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
             if (ReferenceEquals(_hostSession, this)) _hostSession = null;
@@ -782,7 +785,10 @@ namespace SodRpg.Mod
 
         private void OnApplied(DreamforgeAppliedMsg msg)
         {
-            HostSummary = msg?.summary;
+            if (msg == null || msg.protocol != Protocol.Version) return;
+            if (msg.heroNetId != 0 && (LocalHero == null || LocalHero.netId != msg.heroNetId)) return;
+            if (_appliedTransfer.TryAccept(msg.ToPart(), out string summary) && summary != null)
+                HostSummary = summary;
         }
 
         private void OnPressure(DreamforgePressureMsg msg)
@@ -904,7 +910,8 @@ namespace SodRpg.Mod
             float now = Time.unscaledTime;
             if (!_buildDirty && now < _nextBuildSend) return;
             string encoded = CurrentBuild(HeroKeyOf(hero)).Encode();
-            _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildMsg { build = encoded, protocol = Protocol.Version });
+            foreach (var part in BuildTransfer.Split(encoded))
+                _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
             _buildDirty = false;
             _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);

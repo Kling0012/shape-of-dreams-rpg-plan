@@ -26,7 +26,7 @@ namespace SodRpg.Core.Game
         private float _spellsweepUntil = float.NegativeInfinity, _bareReady = float.NegativeInfinity;
         private float _shardReady = float.NegativeInfinity, _lifelineUntil = float.NegativeInfinity;
         private float _primedUntil = float.NegativeInfinity;
-        private int _primedPercent;
+        private float _primedPercent;
         private bool _runUp, _openingReady;
 
         public float ShieldAmount { get; set; }
@@ -69,7 +69,7 @@ namespace SodRpg.Core.Game
         }
 
         private int NewValue(Power p) => Math.Max(0, Math.Min(Content.PowerCap(p), Build.Get(p)));
-        private static float Percent(float amount, int percent) => Math.Max(0, amount) * percent / 100f;
+        private static float Percent(float amount, float percent) => Math.Max(0, amount) * percent / 100f;
         private static bool Gate(Dictionary<int, float> gates, int id, float now, float interval)
         {
             if (gates.TryGetValue(id, out float ready) && now < ready) return false;
@@ -306,20 +306,20 @@ namespace SodRpg.Core.Game
             if (!guaranteedCrit && NewValue(Power.PilingLuck) > 0) _pilingLuck = isCrit ? 0 : Math.Min(10, _pilingLuck + 1);
             return r;
         }
-        public void PrimeNextBasic(float now, int percent, float duration = 5f)
+        public void PrimeNextBasic(float now, float percent, float duration = 5f)
         {
-            if (percent <= 0 || duration <= 0) return;
+            if (!Gimmicks.Finite(now) || !Gimmicks.Finite(percent) || !Gimmicks.Finite(duration) || percent <= 0 || duration <= 0) return;
             if (now >= _primedUntil) _primedPercent = 0;
             _primedPercent = Math.Max(_primedPercent, Math.Min(120, percent));
-            _primedUntil = now + Math.Min(5f, duration);
+            _primedUntil = now + Math.Min(5f * (1f + Gimmicks.MaxParameterPercent / 100f), duration);
         }
         private void TakeLargestNextBasic(float now, float higher, ref HitResult result)
         {
             int echo = now < _echoUntil ? NewValue(Power.EchoingDodge) : 0;
             int shadow = now < _shadowStepUntil ? NewValue(Power.ShadowStep) : 0;
             int run = _runUp ? NewValue(Power.RunUp) : 0;
-            int primed = now < _primedUntil ? _primedPercent : 0;
-            int best = Math.Max(Math.Max(echo, shadow), Math.Max(run, primed));
+            float primed = now < _primedUntil ? _primedPercent : 0;
+            float best = Math.Max(Math.Max(echo, shadow), Math.Max(run, primed));
             if (best <= 0) return;
             if (echo == best) { result.EchoDamage = Percent(higher, best); _echoUntil = float.NegativeInfinity; }
             else if (shadow == best) { result.ShadowStepDamage = Percent(higher, best); _shadowStepUntil = float.NegativeInfinity; }

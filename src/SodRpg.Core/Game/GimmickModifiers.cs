@@ -52,16 +52,18 @@ namespace SodRpg.Core.Game
             (def.Effect == GimmickEffect.Rampart ? 5 : def.Arg) + Math.Max(0, Math.Min(MaxExtraTargets, def.ExtraTargets));
 
         /// <summary>The extra-stack roll is separate from guaranteed whole stacks, including when its base chance is zero.</summary>
-        public static int ElementStacks(GimmickDef def, double roll) => def.Value / 100
-            + (roll >= 0 && roll < 1 && roll * 100 < Math.Min(100, def.Value % 100 + def.ChancePercent) ? 1 : 0);
+        public static int ElementStacks(GimmickDef def, double roll) => def.ValueMilli / (100 * ValueScale)
+            + (roll >= 0 && roll < 1 && roll * 100 * ValueScale
+                < Math.Min(100 * ValueScale, def.ValueMilli % (100 * ValueScale) + def.ChancePercent * ValueScale) ? 1 : 0);
 
         internal static GimmickDef ApplyModifiers(GimmickDef def, int rank, long boost, long duration, long radius, long targets, long chance) =>
             new GimmickDef
             {
                 Trigger = def.Trigger,
                 Effect = def.Effect,
-                Value = (int)Math.Min(Cap(def.Effect), Math.Min(Cap(def.Effect), (long)def.Value * rank)
-                    * (100L + Math.Min(int.MaxValue, Math.Max(0, boost))) / 100),
+                ValueMilli = BuildPrecision.FromDecimal(Math.Min(Cap(def.Effect),
+                    Math.Min(Cap(def.Effect) * ValueScale, (long)def.ValueMilli * rank)
+                    * (100m + Math.Min(int.MaxValue, Math.Max(0, boost))) / (100m * ValueScale))),
                 Arg = def.Arg,
                 Cooldown = def.Cooldown,
                 DurationPercent = BoundedSum(def.DurationPercent, duration, MaxParameterPercent),

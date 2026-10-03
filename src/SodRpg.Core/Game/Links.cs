@@ -28,7 +28,9 @@ namespace SodRpg.Core.Game
     {
         public string[] Requires;
         public LinkKind Kind;
-        public int Value;
+        public int ValueMilli { get; set; }
+        public decimal Value { get => ValueMilli / (decimal)BuildPrecision.Scale; set => ValueMilli = BuildPrecision.FromDecimal(value); }
+        public float ValuePercent => ValueMilli / (float)BuildPrecision.Scale;
     }
 
     /// <summary>
@@ -222,9 +224,9 @@ namespace SodRpg.Core.Game
         /// 装着中の連携に許す上限（v1.27、issue #14）。覚醒Ⅲの倍率まで含め、記憶加速は 90 まで。
         /// クライアントの Compute とホストの Decode の両方で同じ上限を使い、表示と実効値をそろえる。
         /// </summary>
-        public static int EquippedCap(LinkKind kind, int requireCount)
+        public static decimal EquippedCap(LinkKind kind, int requireCount)
         {
-            int cap = (int)((long)Cap(kind, requireCount) * Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100);
+            decimal cap = Cap(kind, requireCount) * Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100m;
             return kind == LinkKind.MemoryHaste ? Math.Min(MaxHaste, cap) : cap;
         }
 
@@ -234,7 +236,7 @@ namespace SodRpg.Core.Game
             if (link == null || link.Requires == null) return false;
             int n = link.Requires.Length;
             if (n < 1 || n > 3) return false;
-            if (link.Kind == LinkKind.None) return false;
+            if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
             {

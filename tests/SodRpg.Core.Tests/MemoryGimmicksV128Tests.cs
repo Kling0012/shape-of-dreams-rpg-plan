@@ -227,12 +227,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Star_identifier_boundary_and_invalid_local_entries_are_sanitized()
+        public void Star_identifier_boundary_is_preserved_and_invalid_local_entries_are_rejected()
         {
             var build = new Build();
-            build.Gimmicks.Add(null);
-            build.Gimmicks.Add(Entry(new string('a', Gimmicks.MaxStarIdLength + 1)));
-            build.Gimmicks.Add(Entry("bad+star"));
+            foreach (var invalid in new[] { null, Entry(new string('a', Gimmicks.MaxStarIdLength + 1)), Entry("bad+star") })
+            {
+                build.Gimmicks.Add(invalid);
+                Assert.Throws<InvalidOperationException>(() => build.Encode());
+                build.Gimmicks.Clear();
+            }
             build.Gimmicks.Add(Entry(new string('a', Gimmicks.MaxStarIdLength)));
             var valid = Assert.Single(Build.Decode(build.Encode()).Gimmicks);
             Assert.Equal(new string('a', Gimmicks.MaxStarIdLength), valid.StarId);
@@ -273,7 +276,7 @@ namespace SodRpg.Core.Tests
             var runtime = new GimmickRuntime();
             runtime.SetBuild(new[] { strong, weak });
             var requests = new List<GimmickRequest>();
-            int Percent(float now, int victim = 11) => effect == GimmickEffect.Quicken ? runtime.QuickenPercent(now)
+            float Percent(float now, int victim = 11) => effect == GimmickEffect.Quicken ? runtime.QuickenPercent(now)
                 : effect == GimmickEffect.Empower ? runtime.EmpowerPercent(now) : runtime.ExposePercent(victim, now);
             runtime.Fire(GimmickTrigger.OnHit, Memory, 0, 11, 10, false, requests);
             runtime.Fire(GimmickTrigger.OnCrit, Memory, 1, 11, 10, false, requests);
@@ -335,33 +338,30 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData("h.test:St_Q_Fleche:99:9:25:0:1")]
-        [InlineData("h.test:St_Q_Fleche:0:9:25:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:99:25:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:0:25:0:1")]
-        [InlineData("h.test:St_X_Unknown:2:9:25:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:1:25:4:1")]
-        [InlineData("h.test:St_Q_Fleche:2:4:25:2:1")]
-        [InlineData("h.test:St_Q_Fleche:2:9:25:1:1")]
-        [InlineData("h.test:St_Q_Fleche:2:9:0:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:9:-5:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:9:25:0:NaN")]
-        [InlineData("h.test:St_Q_Fleche:2:9:25:0:Infinity")]
-        [InlineData("h.test:St_Q_Fleche:2:9:25:0:-1")]
-        [InlineData("h.test:St_Q_Fleche:2:10:1:1:0")]
-        [InlineData("h.test:St_Q_Fleche:2:10:0:0:0")]
-        [InlineData("h.test:St_Q_Fleche:2:11:25:1:0")]
-        [InlineData("h.test:St_Q_Fleche:2:11:-1:0:0")]
-        [InlineData("h bad:St_Q_Fleche:2:9:25:0:1")]
-        [InlineData("h.test:St_Q_Fleche:2:9:abc:0:1")]
+        [InlineData("h.test:St_Q_Fleche:99:9:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:0:9:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:99:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:0:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_X_Unknown:2:9:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:1:25000:4:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:4:25000:2:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:25000:1:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:0:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:-5000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:25000:0:NaN:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:25000:0:Infinity:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:25000:0:-1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:10:1000:1:0:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:10:0:0:0:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:11:25000:1:0:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:11:-1000:0:0:0:0:0:0")]
+        [InlineData("h bad:St_Q_Fleche:2:9:25000:0:1:0:0:0:0")]
+        [InlineData("h.test:St_Q_Fleche:2:9:abc:0:1:0:0:0:0")]
         [InlineData("h.test:St_Q_Fleche:2:9:25")]
-        public void Invalid_gimmicks_are_dropped_without_losing_valid_build_data(string invalid)
+        public void Invalid_gimmicks_reject_the_whole_build_without_partial_application(string invalid)
         {
-            var decoded = Build.Decode("s:0=7;p:;h:2;g:" + invalid + ",h.valid:St_Q_Fleche:2:9:15:0:0");
-            Assert.NotNull(decoded);
-            Assert.Equal(2, decoded.Heat);
-            Assert.Equal(7, decoded.Get((Stat)0));
-            Assert.Equal("h.valid", Assert.Single(decoded.Gimmicks).StarId);
+            var decoded = Build.Decode("s:0=7;p:;h:2;g:" + invalid + ",h.valid:St_Q_Fleche:2:9:15000:0:0:0:0:0:0");
+            Assert.Null(decoded);
         }
 
         [Theory]
@@ -378,7 +378,7 @@ namespace SodRpg.Core.Tests
         [InlineData(GimmickEffect.RechargeOther, 100)]
         public void Wire_caps_value_and_cooldown_by_effect(GimmickEffect effect, int cap)
         {
-            var decoded = Build.Decode("g:h.test:St_Q_Fleche:2:" + (int)effect + ":2147483647:0:999");
+            var decoded = Build.Decode("g:h.test:St_Q_Fleche:2:" + (int)effect + ":2147483647:0:999:0:0:0:0");
             var entry = Assert.Single(decoded.Gimmicks);
             Assert.Equal(cap, entry.Def.Value);
             Assert.Equal(60f, entry.Def.Cooldown);
@@ -387,13 +387,12 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Duplicate_stars_across_sections_are_not_applied_twice()
         {
-            var decoded = Build.Decode("g:h.test.0:St_Q_Fleche:2:9:15:0:0;g:h.test.0:St_Q_Fleche:2:9:25:0:0");
-            Assert.Equal(15, Assert.Single(decoded.Gimmicks).Def.Value);
+            Assert.Null(Build.Decode("g:h.test.0:St_Q_Fleche:2:9:15000:0:0:0:0:0:0;g:h.test.0:St_Q_Fleche:2:9:25000:0:0:0:0:0:0"));
+            Assert.Null(Build.Decode("g:h.test.0:St_Q_Fleche:2:9:15000:0:0:0:0:0:0,h.test.0:St_Q_Fleche:2:9:25000:0:0:0:0:0:0"));
             var build = new Build();
             build.Gimmicks.Add(Entry(value: 15));
             build.Gimmicks.Add(Entry(value: 35));
-            var roundTrip = Build.Decode(build.Encode());
-            Assert.Equal(15, Assert.Single(roundTrip.Gimmicks).Def.Value);
+            Assert.Throws<InvalidOperationException>(() => build.Encode());
         }
 
         [Theory]
@@ -430,25 +429,32 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(1, 40, 72)]
-        [InlineData(2, 64, 115)]
-        [InlineData(3, 88, 158)]
-        public void Memory_damage_caps_scale_conditions_and_clamp_awakened_wire_values(int count, int baseCap, int awakenedCap)
+        [InlineData(2, 64, 115.2)]
+        [InlineData(3, 88, 158.4)]
+        public void Memory_damage_source_caps_and_aggregate_wire_envelope_are_distinct(int count, int baseCap, double awakenedCap)
         {
             var targets = new[] { Memory, "St_R_Parry", "St_Q_HandCannon" }.Take(count).ToArray();
             Assert.Equal(baseCap, Links.Cap(LinkKind.MemoryDamage, count));
-            Assert.Equal(awakenedCap, Links.EquippedCap(LinkKind.MemoryDamage, count));
-            var link = Assert.Single(Build.Decode("l:5:2147483647:" + string.Join("+", targets)).Links);
-            Assert.Equal(awakenedCap, link.Value);
+            Assert.Equal((decimal)awakenedCap, Links.EquippedCap(LinkKind.MemoryDamage, count));
+            int maximum = BuildLimits.MaxLinkValueMilli(LinkKind.MemoryDamage, count);
+            var link = Assert.Single(Build.Decode("l:5:" + maximum + ":" + string.Join("+", targets)).Links);
+            Assert.Equal(maximum, link.ValueMilli);
+            Assert.Null(Build.Decode("l:5:" + (maximum + 1) + ":" + string.Join("+", targets)));
         }
 
-        [Fact]
-        public void Memory_damage_awakening_uses_equipped_cap_and_round_trips()
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        public void Memory_damage_awakening_uses_exact_equipped_cap_and_round_trips(int requirements)
         {
             var unique = Content.Uniques.First(u => u.Link == null);
             var oldLink = unique.Link;
             try
             {
-                unique.Link = new LinkDef { Kind = LinkKind.MemoryDamage, Value = 40, Requires = new[] { Memory } };
+                decimal baseCap = Links.Cap(LinkKind.MemoryDamage, requirements);
+                unique.Link = new LinkDef { Kind = LinkKind.MemoryDamage, Value = baseCap,
+                    Requires = new[] { Memory, "St_R_Parry", "St_Q_HandCannon" }.Take(requirements).ToArray() };
                 var relic = Loot.RollUnique(new Rng(128), unique, 1);
                 var p = Profile.CreateNew(128);
                 p.Stash.Add(relic);
@@ -457,13 +463,13 @@ namespace SodRpg.Core.Tests
                 {
                     relic.AwakenLevel = level;
                     var link = Assert.Single(Build.Compute(p, Hero, 0).Links);
-                    Assert.Equal(Math.Min(Links.EquippedCap(LinkKind.MemoryDamage, 1), 40 * Content.AwakenPowerPctAt(level) / 100), link.Value);
+                    Assert.Equal(Math.Min(Links.EquippedCap(LinkKind.MemoryDamage, requirements), baseCap * Content.AwakenPowerPctAt(level) / 100m), link.Value);
                     var build = new Build();
                     build.Links.Add(link);
                     Assert.Equal(link.Value, Assert.Single(Build.Decode(build.Encode()).Links).Value);
                 }
-                unique.Link.Value = int.MaxValue;
-                Assert.Equal(Links.EquippedCap(LinkKind.MemoryDamage, 1), Assert.Single(Build.Compute(p, Hero, 0).Links).Value);
+                unique.Link.ValueMilli = int.MaxValue;
+                Assert.Equal(Links.EquippedCap(LinkKind.MemoryDamage, requirements), Assert.Single(Build.Compute(p, Hero, 0).Links).Value);
             }
             finally { unique.Link = oldLink; }
         }

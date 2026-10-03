@@ -27,7 +27,7 @@ namespace SodRpg.Core.Tests
             TreeTestPaths.Connect(p, Hero, id);
             Rules.AddTalentRank(p, Hero, id, option);
         }
-        private static int LinkValue(Build build, string memory, LinkKind kind) => build.Links
+        private static decimal LinkValue(Build build, string memory, LinkKind kind) => build.Links
             .Where(l => l.Kind == kind && l.Requires.Contains(memory)).Sum(l => l.Value);
         private static GimmickEntry Entry(Build build, string id) => build.Gimmicks.Single(g => g.StarId == id);
         private static IReadOnlyList<TalentDef> BaseTree(string hero = Hero) => HeroSigils.TreeFor(hero)
@@ -49,7 +49,7 @@ namespace SodRpg.Core.Tests
         {
             var p = Funded();
             TreeTestPaths.Connect(p, Hero, id);
-            int before = LinkValue(Build.Compute(p, Hero, 0), memory, kind);
+            decimal before = LinkValue(Build.Compute(p, Hero, 0), memory, kind);
             Rules.AddTalentRank(p, Hero, id);
             var build = Build.Compute(p, Hero, 0);
             Assert.Equal(before + amount, LinkValue(build, memory, kind));
@@ -66,8 +66,8 @@ namespace SodRpg.Core.Tests
             Allocate(p, MemoryCluster + ".6");
             var build = Build.Compute(p, Hero, 0);
             Assert.Equal(33, Entry(build, "h.cetus.route.icy-veins.2").Def.Value);
-            Assert.Equal(13, Entry(build, BridgeCluster + ".2").Def.Value);
-            Assert.Equal(13, Entry(build, "h.cetus.route.icy-veins.7").Def.Value);
+            Assert.Equal(13.2m, Entry(build, BridgeCluster + ".2").Def.Value);
+            Assert.Equal(13.2m, Entry(build, "h.cetus.route.icy-veins.7").Def.Value);
             Allocate(p, BridgeCluster + ".3");
             Allocate(p, OuterCluster + ".3");
             var decoded = Build.Decode(Build.Compute(p, Hero, 0).Encode());
@@ -109,7 +109,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(spent, Rules.SpentPoints(p.Hero(Hero)));
             Rules.AddTalentRank(p, Hero, id, 0);
             Assert.Equal(GimmickEffect.Shield, Entry(Build.Compute(p, Hero, 0), id).Def.Effect);
-            Assert.Equal(1, Entry(Build.Compute(p, Hero, 0), id).Def.Value);
+            Assert.Equal(1.1m, Entry(Build.Compute(p, Hero, 0), id).Def.Value);
             spent = Rules.SpentPoints(p.Hero(Hero));
             int barrier = Build.Compute(p, Hero, 0).Get(Power.Barrier);
             Rules.SetTalentChoice(p, Hero, id, 1);
@@ -342,9 +342,10 @@ namespace SodRpg.Core.Tests
             runtime.Fire(GimmickTrigger.OnHit, Memory, 0, 10, 1, false, requests);
             Assert.Equal(build.Gimmicks.Select(g => g.StarId), requests.Select(r => r.Entry.StarId));
             string packet = string.Join(",", Enumerable.Range(0, Gimmicks.MaxEntries)
-                .Select(i => "test.limit." + i + ":" + Memory + ":2:8:3:0:0"));
-            Assert.NotNull(Build.Decode("g:" + packet + ";g:test.limit.0:" + Memory + ":2:8:5:0:0"));
-            Assert.Null(Build.Decode("g:" + packet + ";g:test.overflow:" + Memory + ":2:8:5:0:0"));
+                .Select(i => "test.limit." + i + ":" + Memory + ":2:8:3000:0:0:0:0:0:0"));
+            Assert.NotNull(Build.Decode("g:" + packet));
+            Assert.Null(Build.Decode("g:" + packet + ",test.overflow:" + Memory + ":2:8:5000:0:0:0:0:0:0"));
+            Assert.Null(Build.Decode("g:" + packet + ";g:test.limit.0:" + Memory + ":2:8:5000:0:0:0:0:0:0"));
         }
 
         private static string WithoutChoices(string encoded)

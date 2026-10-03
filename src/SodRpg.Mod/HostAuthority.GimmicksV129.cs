@@ -120,7 +120,7 @@ namespace SodRpg.Mod
             {
                 if (request.Entry.Def.Effect == GimmickEffect.Sap && victim != null) EnsureSapProcessor(victim);
                 if (request.Entry.Def.Effect == GimmickEffect.Primed)
-                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.Value, Gimmicks.Duration(request.Entry.Def, 5f));
+                    rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, 5f));
             }
         }
 
@@ -146,7 +146,7 @@ namespace SodRpg.Mod
         {
             if (critical || _gimmickDamageDepth != 0 || hero == null || victim == null || hero.Status == null
                 || !_runtimes.TryGetValue(hero, out var rt) || victim.GetRelation(hero) != EntityRelation.Enemy) return;
-            int bonus = rt.Gimmicks.WeakspotPercent(victim.GetInstanceID(), Time.time);
+            float bonus = rt.Gimmicks.WeakspotPercent(victim.GetInstanceID(), Time.time);
             float originalChance = BasicCritChanceV129(BasicAttackContext.Current?.Actor, hero);
             if (bonus > 0 && _rng.NextDouble() < Gimmicks.AddedCritProbability(originalChance, bonus)) critical = true;
         }
@@ -157,7 +157,7 @@ namespace SodRpg.Mod
                 || actor != null && actor.firstEntity == rt.Hero
                     && (damage.attackEffectType == AttackEffectType.BasicAttackMain || damage.attackEffectType == AttackEffectType.BasicAttackSub)
                 || _gimmickDamageDepth != 0 || damage.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
-            int bonus = rt.Gimmicks.WeakspotPercent(target.GetInstanceID(), Time.time);
+            float bonus = rt.Gimmicks.WeakspotPercent(target.GetInstanceID(), Time.time);
             // Attributed memory damage has no native universal critical roll; Weakspot supplies its own target-only roll.
             if (bonus > 0 && _rng.NextDouble() < bonus / 100f)
             {
@@ -196,12 +196,12 @@ namespace SodRpg.Mod
                         if (live)
                         {
                             state.Victims[target.GetInstanceID()] = target;
-                            state.Wounds.Apply(target.GetInstanceID(), Time.time, high * def.Value / 100f,
+                            state.Wounds.Apply(target.GetInstanceID(), Time.time, high * def.ValuePercent / 100f,
                                 hero.Status.abilityPower > hero.Status.attackDamage, Gimmicks.Duration(def, 3f));
                         }
                         break;
                     case GimmickEffect.Daze:
-                        if (live && !IsGimmickBoss(target)) hero.CreateBasicEffect(target, new StunEffect(), Gimmicks.Duration(def, def.Value / 10f),
+                        if (live && !IsGimmickBoss(target)) hero.CreateBasicEffect(target, new StunEffect(), Gimmicks.Duration(def, def.ValuePercent / 10f),
                             "DreamforgeDaze", DuplicateEffectBehavior.UsePrevious);
                         break;
                     case GimmickEffect.Ricochet:
@@ -215,7 +215,7 @@ namespace SodRpg.Mod
                                 foreach (var enemy in enemies)
                                 {
                                     if (enemy == target || enemy == null || !enemy.isActive || enemy.currentHealth <= 0) continue;
-                                    hero.PureDamage(request.Damage * def.Value / 100f, 0f)
+                                    hero.PureDamage(request.Damage * def.ValuePercent / 100f, 0f)
                                         .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
                                     if (--remaining == 0) break;
                                 }
@@ -226,7 +226,7 @@ namespace SodRpg.Mod
                     case GimmickEffect.Siphon:
                         if (support == null) break;
                         float heal = Math.Min(hero.maxHealth * 0.015f, SupportStats.AmplifyHeal(
-                            Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.Value), rt.Powers.Build.Get(Stat.HealPower)));
+                            Gimmicks.SiphonHeal(request.Damage, hero.maxHealth, def.ValuePercent), rt.Powers.Build.Get(Stat.HealPower)));
                         if (heal <= 0) break;
                         support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(hero);
                         float allyRadius = Gimmicks.Radius(def, 10f);
@@ -239,7 +239,7 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
-                        float amount = SupportStats.AmplifyShield(hero.maxHealth * def.Value
+                        float amount = SupportStats.AmplifyShield(hero.maxHealth * def.ValuePercent
                             * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
                         float shieldDuration = Gimmicks.Duration(def, 4f);
                         var candidate = support.GiveShield(hero, amount, shieldDuration, false);
@@ -260,7 +260,7 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.ElementEdge:
                         if (!live || target.Status == null) break;
-                        int percent = def.Value * request.ElementTypes;
+                        float percent = def.ValuePercent * request.ElementTypes;
                         if (percent > 0) DispatchGimmickDamage(hero, target, high * percent / 100f,
                             hero.Status.abilityPower > hero.Status.attackDamage, false);
                         break;
@@ -271,7 +271,7 @@ namespace SodRpg.Mod
                             if (entity is Summon summon && summon.hero == hero && summon.isActive && summon.currentHealth > 0f)
                                 summons.Add(summon);
                         foreach (var summon in summons)
-                            support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.Value / 100f,
+                            support.Heal(SupportStats.AmplifyHeal(summon.maxHealth * def.ValuePercent / 100f,
                                 rt.Powers.Build.Get(Stat.HealPower))).Dispatch(summon);
                         break;
                     // Crescendo, Sap and Weakspot have already installed their pure-runtime windows.

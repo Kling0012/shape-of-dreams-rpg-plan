@@ -360,7 +360,8 @@ namespace SodRpg.Core.Tests
 
             Assert.Null(Build.Decode("garbage"));
             Assert.Null(Build.Decode("s:x=1"));
-            var clamped = Build.Decode("s:0=99999,999=5;p:1=99999,0=3;h:99");
+            Assert.Null(Build.Decode("s:0=99999,999=5;p:1=99999,0=3;h:99"));
+            var clamped = Build.Decode("s:0=99999;p:1=99999;h:99");
             Assert.Equal(Content.StatCap(Stat.AttackPct), clamped.Get(Stat.AttackPct));
             Assert.Equal(Content.PowerCap(Power.Momentum), clamped.Get(Power.Momentum));
             Assert.Equal(Content.MaxHeat, clamped.Heat);

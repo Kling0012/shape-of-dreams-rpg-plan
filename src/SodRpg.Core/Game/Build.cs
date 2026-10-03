@@ -41,13 +41,30 @@ namespace SodRpg.Core.Game
         public float DamageTakenMultiplier => 1f + DamageTakenPerDelvePct * Heat / 100f;
 
         public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null, int dailyId = 0)
+            => ComputeTree(p, heroKey, heat, HeroSigils.TreeFor(heroKey), HeroTreeLayout.ForHero(heroKey), pacts, dailyId);
+
+        /// <summary>Runs the production build pipeline against an explicitly generated, connected tree.</summary>
+        public static Build ComputeForTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree)
+            => ComputeTree(p, heroKey, heat, tree, HeroTreeLayout.ForTalents(tree), null, 0);
+
+        private static Build ComputeTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree,
+            HeroTreeLayout layout, IEnumerable<Pact> pacts, int dailyId)
         {
             var h = p.Hero(heroKey);
+            var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            foreach (var talent in tree) definitions.Add(talent.Id, talent);
+            bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(h, talent);
+            long spent = h.Keystone == null ? 0 : Content.KeystoneCost;
+            foreach (var allocation in h.Talents)
+                if (definitions.TryGetValue(allocation.Key, out var talent))
+                    spent += (long)Math.Max(0, allocation.Value) * talent.RankCost;
+            if (spent > StarProgression.MaxPoints)
+                throw new InvalidOperationException("The build exceeds the star point budget.");
             var b = new Build
             {
                 Heat = Loot.ClampHeat(heat),
                 DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, p.DreamLevel)),
-                SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, Rules.SpentPoints(h))),
+                SpentStarPoints = (int)spent,
             };
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
@@ -56,8 +73,8 @@ namespace SodRpg.Core.Game
             var modifiers = new Dictionary<string, MemoryModifiers>(StringComparer.Ordinal);
             foreach (var kv in h.Talents)
             {
-                if (kv.Value <= 0 || !Content.TryGetTalent(kv.Key, out var talent) || talent.IsKeystone
-                    || !Rules.TalentUnlocked(h, heroKey, talent)) continue;
+                if (kv.Value <= 0 || !definitions.TryGetValue(kv.Key, out var talent) || talent.IsKeystone
+                    || !Unlocked(talent)) continue;
                 int rank = Math.Min(kv.Value, talent.MaxRank);
                 if (talent.IsChoice)
                 {
@@ -98,9 +115,9 @@ namespace SodRpg.Core.Game
                 var link = r.Link;
                 if (link != null)
                 {
-                    long scaled = r.Awakened ? (long)link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100 : link.Value;
-                    int value = (int)Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), scaled));
-                    var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, Value = value };
+                    decimal scaled = r.Awakened ? link.Value * Content.AwakenPowerPctAt(r.AwakenLevel) / 100m : link.Value;
+                    int value = BuildPrecision.FromDecimal(Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, link.Requires.Length), scaled)));
+                    var equipped = new LinkDef { Requires = link.Requires, Kind = link.Kind, ValueMilli = value };
                     if (global::SodRpg.Core.Game.Links.Validate(equipped)) b.Links.Add(equipped);
                 }
                 b.Lines.TryGetValue(r.Base.Line, out int n);
@@ -132,9 +149,9 @@ namespace SodRpg.Core.Game
                 if (pair != null)
                 {
                     var entry = global::SodRpg.Core.Game.PairCombos.Activate(pair, h, rank);
-                    if (entry != null && Content.TryGetTalent(pair.StarA, out var starA)
-                        && Content.TryGetTalent(pair.StarB, out var starB)
-                        && Rules.TalentUnlocked(h, heroKey, starA) && Rules.TalentUnlocked(h, heroKey, starB))
+                    if (entry != null && definitions.TryGetValue(pair.StarA, out var starA)
+                        && definitions.TryGetValue(pair.StarB, out var starB)
+                        && Unlocked(starA) && Unlocked(starB))
                         b.PairCombos.Add(entry);
                     continue; // Inner bridges are combos, never their old unconditional ring stats.
                 }
@@ -156,7 +173,7 @@ namespace SodRpg.Core.Game
                     {
                         Requires = t.LinkPerRank.Requires,
                         Kind = t.LinkPerRank.Kind,
-                        Value = t.LinkPerRank.Value * rank,
+                        ValueMilli = checked(t.LinkPerRank.ValueMilli * rank),
                     };
                     if (global::SodRpg.Core.Game.Links.Validate(link)) b.Links.Add(link);
                 }
@@ -218,29 +235,8 @@ namespace SodRpg.Core.Game
             public long Boost, Duration, Radius, Targets, Chance;
         }
 
-        private static List<LinkDef> AggregateLinks(IEnumerable<LinkDef> links)
-        {
-            var result = new List<LinkDef>();
-            var byKey = new Dictionary<string, LinkDef>(StringComparer.Ordinal);
-            foreach (var link in links)
-            {
-                if (!global::SodRpg.Core.Game.Links.Validate(link)) continue;
-                var requires = new string[link.Requires.Length];
-                for (int i = 0; i < requires.Length; i++) requires[i] = global::SodRpg.Core.Game.Links.Canon(link.Requires[i]);
-                Array.Sort(requires, StringComparer.Ordinal);
-                string key = ((int)link.Kind).ToString(CultureInfo.InvariantCulture) + ":" + string.Join("+", requires);
-                int cap = global::SodRpg.Core.Game.Links.EquippedCap(link.Kind, requires.Length);
-                if (byKey.TryGetValue(key, out var combined))
-                    combined.Value = (int)Math.Min(cap, (long)combined.Value + Math.Max(0, link.Value));
-                else
-                {
-                    combined = new LinkDef { Kind = link.Kind, Requires = requires, Value = Math.Max(0, Math.Min(cap, link.Value)) };
-                    byKey.Add(key, combined);
-                    result.Add(combined);
-                }
-            }
-            return result;
-        }
+        private static IReadOnlyList<LinkDef> AggregateLinks(IEnumerable<LinkDef> links)
+            => BuildAggregation.LinksForBuild(links);
 
         private static void Add<T>(Dictionary<T, int> d, T key, int v)
         {
@@ -249,13 +245,14 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;d:30;a:150;l:3:22:St_X+Gem_Y" の形。
+        /// 通信用の短い文字列表現。"s:0=12,3=4;p:1=4;h:2;d:30;a:300;l:3:22000:St_X+Gem_Y" の形。
         /// d は夢のレベル、a は使用済み星ポイント。l は「種類:値:条件+条件+条件」。
         /// c は合わせ技の「ID:段数」。効果は正規の定義から復元し、クライアントからの効果量は受け取らない。
         /// ホストはこれを検証してから能力補正へ変換する。
         /// </summary>
         public string Encode()
         {
+            ValidateCounts();
             var sb = new StringBuilder();
             sb.Append("s:");
             bool first = true;
@@ -295,7 +292,7 @@ namespace SodRpg.Core.Game
                 if (!first) sb.Append(',');
                 first = false;
                 sb.Append(((int)link.Kind).ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(link.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(link.ValueMilli.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(string.Join("+", link.Requires));
             }
             sb.Append(";g:");
@@ -305,7 +302,8 @@ namespace SodRpg.Core.Game
             foreach (var raw in Gimmicks)
             {
                 var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(raw);
-                if (entry == null || !stars.Add(entry.StarId)) continue;
+                if (entry == null || !stars.Add(entry.StarId))
+                    throw new InvalidOperationException("Invalid or duplicate gimmick entry.");
                 if (count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries)
                     throw new InvalidOperationException("The build exceeds the gimmick entry security limit.");
                 if (!first) sb.Append(',');
@@ -314,7 +312,7 @@ namespace SodRpg.Core.Game
                 sb.Append(entry.StarId).Append(':').Append(entry.Memory).Append(':')
                     .Append(((int)entry.Def.Trigger).ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(((int)entry.Def.Effect).ToString(CultureInfo.InvariantCulture)).Append(':')
-                    .Append(entry.Def.Value.ToString(CultureInfo.InvariantCulture)).Append(':')
+                    .Append(entry.Def.ValueMilli.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Arg.ToString(CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.Cooldown.ToString("R", CultureInfo.InvariantCulture)).Append(':')
                     .Append(entry.Def.DurationPercent.ToString(CultureInfo.InvariantCulture)).Append(':')
@@ -328,25 +326,41 @@ namespace SodRpg.Core.Game
             count = 0;
             foreach (var raw in PairCombos)
             {
-                if (count >= global::SodRpg.Core.Game.PairCombos.MaxEntries) break;
+                if (count >= global::SodRpg.Core.Game.PairCombos.MaxEntries)
+                    throw new InvalidOperationException("The build exceeds the pair-combo entry limit.");
                 var entry = global::SodRpg.Core.Game.PairCombos.Clamp(raw);
-                if (entry == null || !stars.Add(entry.Def.Id)) continue;
+                if (entry == null || !stars.Add(entry.Def.Id))
+                    throw new InvalidOperationException("Invalid or duplicate pair-combo entry.");
                 if (!first) sb.Append(',');
                 first = false;
                 count++;
                 sb.Append(entry.Def.Id).Append(':').Append(entry.Ranks.ToString(CultureInfo.InvariantCulture));
             }
-            return sb.ToString();
+            string encoded = sb.ToString();
+            if (encoded.Length > BuildLimits.MaxEncodedChars || Encoding.UTF8.GetByteCount(encoded) > BuildLimits.MaxEncodedBytes)
+                throw new InvalidOperationException("The build exceeds the encoded message limit.");
+            return encoded;
         }
 
-        /// <summary>
-        /// Encode の逆。未知のIDは捨て、値は上限で切る（他のクライアントから来た値を信用しすぎない）。
-        /// 形式が壊れていれば null。
-        /// </summary>
+        private void ValidateCounts()
+        {
+            if (Gimmicks.Count > BuildLimits.MaxGimmickEntries || Links.Count > BuildLimits.MaxLinkEntries
+                || PairCombos.Count > BuildLimits.MaxPairComboEntries || Stats.Count > BuildLimits.MaxStatEntries
+                || Powers.Count > BuildLimits.MaxPowerEntries || ConditionalBasePowers.Count > BuildLimits.MaxConditionalPowerEntries)
+                throw new InvalidOperationException("The build exceeds its legal entry envelope.");
+            foreach (var link in AggregateLinks(Links))
+                if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length))
+                    throw new InvalidOperationException("The build exceeds its legal link value envelope.");
+        }
+
+        /// <summary>Decode protocol-12 thousandths. Invalid or oversized packets are rejected atomically.</summary>
         public static Build Decode(string text)
         {
-            if (string.IsNullOrEmpty(text) || text.Length > 131072) return null;
+            if (string.IsNullOrEmpty(text) || text.Length > BuildLimits.MaxEncodedChars) return null;
+            // Identifiers and the wire grammar are ASCII; check before allocating token arrays.
+            foreach (char ch in text) if (ch > 127) return null;
             var b = new Build();
+            var sections = new HashSet<string>(StringComparer.Ordinal);
             var stars = new HashSet<string>(StringComparer.Ordinal);
             var pairs = new HashSet<string>(StringComparer.Ordinal);
             try
@@ -356,147 +370,108 @@ namespace SodRpg.Core.Game
                     int colon = part.IndexOf(':');
                     if (colon < 0) return null;
                     string kind = part.Substring(0, colon);
+                    if (!sections.Add(kind)) return null;
                     string body = part.Substring(colon + 1);
-                    if (kind == "h")
-                    {
-                        b.Heat = Loot.ClampHeat(int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture));
-                        continue;
-                    }
-                    if (kind == "d")
-                    {
-                        b.DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture)));
-                        continue;
-                    }
+                    if (kind == "h") { b.Heat = Loot.ClampHeat(ParseInt(body)); continue; }
+                    if (kind == "d") { b.DreamLevel = Math.Max(1, Math.Min(Content.MaxDreamLevel, ParseInt(body))); continue; }
                     if (kind == "a")
                     {
-                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, int.Parse(body, NumberStyles.Integer, CultureInfo.InvariantCulture)));
+                        b.SpentStarPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, ParseInt(body)));
                         continue;
                     }
-                    if (kind == "l")
+                    int limit;
+                    switch (kind)
                     {
-                        if (body.Length == 0) continue;
-                        foreach (string entry in body.Split(','))
-                        {
-                            int c1 = entry.IndexOf(':');
-                            int c2 = c1 < 0 ? -1 : entry.IndexOf(':', c1 + 1);
-                            if (c2 < 0) return null;
-                            var linkKind = (LinkKind)int.Parse(entry.Substring(0, c1), NumberStyles.Integer, CultureInfo.InvariantCulture);
-                            if (linkKind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), linkKind)) continue;
-                            int v = int.Parse(entry.Substring(c1 + 1, c2 - c1 - 1), NumberStyles.Integer, CultureInfo.InvariantCulture);
-                            string[] targets = entry.Substring(c2 + 1).Split('+');
-                            for (int i = 0; i < targets.Length; i++) targets[i] = global::SodRpg.Core.Game.Links.Canon(targets[i]);
-                            var def = new LinkDef
-                            {
-                                Requires = targets,
-                                Kind = linkKind,
-                                Value = Math.Max(0, Math.Min(global::SodRpg.Core.Game.Links.EquippedCap(linkKind, targets.Length), v)),
-                            };
-                            if (global::SodRpg.Core.Game.Links.Validate(def)) b.Links.Add(def);
-                        }
-                        continue;
-                    }
-                    if (kind == "g")
-                    {
-                        if (body.Length == 0) continue;
-                        foreach (string encoded in body.Split(','))
-                        {
-                            string[] fields = encoded.Split(':');
-                            if (fields.Length != 7 && fields.Length != 11
-                                || !int.TryParse(fields[2], NumberStyles.Integer, CultureInfo.InvariantCulture, out int trigger)
-                                || !int.TryParse(fields[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out int effect)
-                                || !int.TryParse(fields[4], NumberStyles.Integer, CultureInfo.InvariantCulture, out int value)
-                                || !int.TryParse(fields[5], NumberStyles.Integer, CultureInfo.InvariantCulture, out int arg)
-                                || !float.TryParse(fields[6], NumberStyles.Float, CultureInfo.InvariantCulture, out float cooldown)) continue;
-                            int duration = 0, radius = 0, targets = 0, chance = 0;
-                            if (fields.Length == 11
-                                && (!int.TryParse(fields[7], NumberStyles.Integer, CultureInfo.InvariantCulture, out duration)
-                                || !int.TryParse(fields[8], NumberStyles.Integer, CultureInfo.InvariantCulture, out radius)
-                                || !int.TryParse(fields[9], NumberStyles.Integer, CultureInfo.InvariantCulture, out targets)
-                                || !int.TryParse(fields[10], NumberStyles.Integer, CultureInfo.InvariantCulture, out chance))) continue;
-                            var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
-                            {
-                                StarId = fields[0],
-                                Memory = fields[1],
-                                Def = new GimmickDef
-                                {
-                                    Trigger = (GimmickTrigger)trigger,
-                                    Effect = (GimmickEffect)effect,
-                                    Value = value,
-                                    Arg = arg,
-                                    Cooldown = cooldown,
-                                    DurationPercent = duration,
-                                    RadiusPercent = radius,
-                                    ExtraTargets = targets,
-                                    ChancePercent = chance,
-                                },
-                            });
-                            if (entry != null && stars.Add(entry.StarId))
-                            {
-                                if (b.Gimmicks.Count >= global::SodRpg.Core.Game.Gimmicks.MaxEntries) return null;
-                                b.Gimmicks.Add(entry);
-                            }
-                        }
-                        continue;
-                    }
-                    if (kind == "c")
-                    {
-                        if (body.Length == 0) continue;
-                        foreach (string encoded in body.Split(','))
-                        {
-                            if (b.PairCombos.Count >= global::SodRpg.Core.Game.PairCombos.MaxEntries) break;
-                            string[] fields = encoded.Split(':');
-                            if (fields.Length != 2 || !int.TryParse(fields[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int ranks)) continue;
-                            var entry = global::SodRpg.Core.Game.PairCombos.Clamp(new PairComboEntry
-                            {
-                                Def = global::SodRpg.Core.Game.PairCombos.Get(fields[0]), Ranks = ranks
-                            });
-                            if (entry != null && pairs.Add(entry.Def.Id)) b.PairCombos.Add(entry);
-                        }
-                        continue;
+                        case "l": limit = BuildLimits.MaxLinkEntries; break;
+                        case "g": limit = BuildLimits.MaxGimmickEntries; break;
+                        case "c": limit = BuildLimits.MaxPairComboEntries; break;
+                        case "s": limit = BuildLimits.MaxStatEntries; break;
+                        case "p": limit = BuildLimits.MaxPowerEntries; break;
+                        case "u": limit = BuildLimits.MaxConditionalPowerEntries; break;
+                        default: return null;
                     }
                     if (body.Length == 0) continue;
-                    foreach (string pair in body.Split(','))
+                    string[] entries = body.Split(',');
+                    if (entries.Length > limit) return null;
+                    foreach (string encoded in entries)
                     {
-                        int eq = pair.IndexOf('=');
-                        if (eq < 0) return null;
-                        int id = int.Parse(pair.Substring(0, eq), NumberStyles.Integer, CultureInfo.InvariantCulture);
-                        int v = int.Parse(pair.Substring(eq + 1), NumberStyles.Integer, CultureInfo.InvariantCulture);
-                        if (kind == "s" && Enum.IsDefined(typeof(Stat), id))
+                        if (kind == "l")
                         {
-                            var s = (Stat)id;
-                            int cap = Content.StatCap(s);
-                            b.Stats[s] = Math.Max(-cap, Math.Min(cap, v));
+                            string[] f = encoded.Split(':');
+                            if (f.Length != 3) return null;
+                            var linkKind = (LinkKind)ParseInt(f[0]);
+                            int value = ParseInt(f[1]);
+                            var link = new LinkDef { Kind = linkKind, ValueMilli = value, Requires = f[2].Split('+') };
+                            if (!global::SodRpg.Core.Game.Links.Validate(link) || value < 0
+                                || value > BuildLimits.MaxLinkValueMilli(linkKind, link.Requires.Length)) return null;
+                            b.Links.Add(link);
                         }
-                        else if (kind == "u" && Enum.IsDefined(typeof(Power), id) && NewPowersV129.IsConditionalAttribute((Power)id))
+                        else if (kind == "g")
                         {
-                            b.ConditionalBasePowers[(Power)id] = Math.Max(0, Math.Min(Content.PowerCap((Power)id), v));
+                            string[] f = encoded.Split(':');
+                            if (f.Length != 11 || !float.TryParse(f[6], NumberStyles.Float, CultureInfo.InvariantCulture, out float cooldown)) return null;
+                            var entry = global::SodRpg.Core.Game.Gimmicks.Clamp(new GimmickEntry
+                            {
+                                StarId = f[0], Memory = f[1], Def = new GimmickDef
+                                {
+                                    Trigger = (GimmickTrigger)ParseInt(f[2]), Effect = (GimmickEffect)ParseInt(f[3]),
+                                    ValueMilli = ParseInt(f[4]), Arg = ParseInt(f[5]), Cooldown = cooldown,
+                                    DurationPercent = ParseInt(f[7]), RadiusPercent = ParseInt(f[8]),
+                                    ExtraTargets = ParseInt(f[9]), ChancePercent = ParseInt(f[10]),
+                                }
+                            });
+                            if (entry == null || !stars.Add(entry.StarId)) return null;
+                            b.Gimmicks.Add(entry);
                         }
-                        else if (kind == "p" && Enum.IsDefined(typeof(Power), id) && id != 0)
+                        else if (kind == "c")
                         {
-                            var pw = (Power)id;
-                            b.Powers[pw] = Math.Max(0, Math.Min(Content.PowerCap(pw), v));
+                            string[] f = encoded.Split(':');
+                            if (f.Length != 2) return null;
+                            var entry = global::SodRpg.Core.Game.PairCombos.Clamp(new PairComboEntry
+                            { Def = global::SodRpg.Core.Game.PairCombos.Get(f[0]), Ranks = ParseInt(f[1]) });
+                            if (entry == null || !pairs.Add(entry.Def.Id)) return null;
+                            b.PairCombos.Add(entry);
+                        }
+                        else
+                        {
+                            string[] f = encoded.Split('=');
+                            if (f.Length != 2) return null;
+                            int id = ParseInt(f[0]), value = ParseInt(f[1]);
+                            if (kind == "s")
+                            {
+                                if (!Enum.IsDefined(typeof(Stat), id) || b.Stats.ContainsKey((Stat)id)) return null;
+                                int cap = Content.StatCap((Stat)id);
+                                b.Stats.Add((Stat)id, Math.Max(-cap, Math.Min(cap, value)));
+                            }
+                            else
+                            {
+                                if (!Enum.IsDefined(typeof(Power), id) || id == 0) return null;
+                                var power = (Power)id;
+                                var target = kind == "u" ? b.ConditionalBasePowers : b.Powers;
+                                if (target.ContainsKey(power) || kind == "u" && !NewPowersV129.IsConditionalAttribute(power)) return null;
+                                target.Add(power, Math.Max(0, Math.Min(Content.PowerCap(power), value)));
+                            }
                         }
                     }
                 }
+                foreach (var pw in new List<Power>(b.ConditionalBasePowers.Keys))
+                {
+                    int effective = b.Get(pw);
+                    int minimum = (int)Math.Ceiling(effective * 100d / Content.AwakenPowerPctAt(Content.MaxAwakenLevel));
+                    b.ConditionalBasePowers[pw] = Math.Max(minimum, Math.Min(effective, b.ConditionalBasePowers[pw]));
+                }
+                var links = AggregateLinks(b.Links);
+                b.Links.Clear();
+                b.Links.AddRange(links);
+                b.ValidateCounts();
+                return b;
             }
-            catch (FormatException)
-            {
-                return null;
-            }
-            catch (OverflowException)
-            {
-                return null;
-            }
-            foreach (var pw in new List<Power>(b.ConditionalBasePowers.Keys))
-            {
-                int effective = b.Get(pw);
-                int minimum = (int)Math.Ceiling(effective * 100d / Content.AwakenPowerPctAt(Content.MaxAwakenLevel));
-                b.ConditionalBasePowers[pw] = Math.Max(minimum, Math.Min(effective, b.ConditionalBasePowers[pw]));
-            }
-            var links = AggregateLinks(b.Links);
-            b.Links.Clear();
-            b.Links.AddRange(links);
-            return b;
+            catch (FormatException) { return null; }
+            catch (OverflowException) { return null; }
+            catch (ArgumentException) { return null; }
+            catch (InvalidOperationException) { return null; }
         }
+
+        private static int ParseInt(string value) => int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);
     }
 }

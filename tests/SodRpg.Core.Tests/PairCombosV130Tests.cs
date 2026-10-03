@@ -378,12 +378,14 @@ namespace SodRpg.Core.Tests
             Assert.All(decoded.PairCombos, e => { Assert.Equal(3, e.Ranks); Assert.Same(PairCombos.Get(e.Def.Id), e.Def); });
             var defA = Def("Vesper", 1); var defB = Def("Mist", 5);
             decoded = Build.Decode("c:unknown:3," + defA.Id + ":0," + defA.Id + ":-1," + defA.Id + ":bogus," + defA.Id + ":1:999;c:");
-            Assert.NotNull(decoded); Assert.Empty(decoded.PairCombos);
+            Assert.Null(decoded);
             decoded = Build.Decode("c:" + defA.Id + ":2147483647;c:;c:" + defA.Id + ":1," + defB.Id + ":2");
+            Assert.Null(decoded);
+            decoded = Build.Decode("c:" + defA.Id + ":2147483647," + defB.Id + ":2");
             Assert.Equal(new[] { 3, 2 }, decoded.PairCombos.Select(e => e.Ranks));
             Assert.Null(Build.Decode(new string('x', 16385)));
             build.PairCombos.Add(Entry(defA, 1));
-            Assert.Equal(62, Build.Decode(build.Encode()).PairCombos.Count);
+            Assert.Throws<InvalidOperationException>(() => build.Encode());
         }
 
         public static IEnumerable<object[]> GuardedDefinitions =>

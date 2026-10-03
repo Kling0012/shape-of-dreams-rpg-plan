@@ -60,7 +60,7 @@ namespace SodRpg.Core.Game
 
     public static class PairCombos
     {
-        public const int MaxEntries = 62;
+        public static int MaxEntries => BuildLimits.MaxPairComboEntries;
         public const int MaxRanks = 3;
         public const float Duration = 4f;
         private static readonly string[] BridgeSlugs = { "force", "insight", "vessel", "armor", "recall", "rhythm", "resolve" };

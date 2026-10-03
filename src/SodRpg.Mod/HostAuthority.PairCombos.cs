@@ -59,7 +59,7 @@ namespace SodRpg.Mod
             rt.PairCombos.RefreshEquipment(rt.PairMemories);
             int id = victim.GetInstanceID();
             // Expose sources share the strongest vulnerability; distinct pair IDs do not stack.
-            int expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
+            float expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
                 rt.PairCombos.ExposePercent(id, now));
             if (expose > 0) damage.ApplyAmplification(expose / 100f);
         }
@@ -187,7 +187,7 @@ namespace SodRpg.Mod
                     try
                     {
                         DamageAround(hero, pending.Center, request.AreaRadius,
-                            Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.Value / 100f,
+                            Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.ValuePercent / 100f,
                             null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
                     }
                     finally { _gimmickDamageDepth--; }
@@ -196,13 +196,13 @@ namespace SodRpg.Mod
                     // The root server actor has no hero ancestors: native support cannot grant Heart of the Pack.
                     // 出どころを変えたので、旅人のシールド量はここで掛ける（v1.27.1 の能力値）。
                     ActorManager.instance.serverActor.GiveShield(hero,
-                        SupportStats.AmplifyShield(hero.maxHealth * def.Value / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), Gimmicks.Duration(def, 4f));
+                        SupportStats.AmplifyShield(hero.maxHealth * def.ValuePercent / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), Gimmicks.Duration(def, 4f));
                     break;
                 case GimmickEffect.Heal:
                     var support = ActorManager.instance.serverActor;
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
                     int healPower = rt.Powers.Build.Get(Stat.HealPower);
-                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.Value / 100f, healPower)).Dispatch(hero);
+                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(hero);
                     float healRadius = Gimmicks.Radius(def, 10f);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
@@ -210,11 +210,11 @@ namespace SodRpg.Mod
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
                                 || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
-                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.Value / 100f, healPower)).Dispatch(ally);
+                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(ally);
                         }
                     break;
                 case GimmickEffect.Recharge:
-                    ReduceMemoryCooldown(hero, FindMemory(hero, request.Entry.Memory), def.Value);
+                    ReduceMemoryCooldown(hero, FindMemory(hero, request.Entry.Memory), def.ValuePercent);
                     break;
                 case GimmickEffect.Reload:
                     var skill = FindMemory(hero, request.Entry.Memory);
@@ -233,7 +233,7 @@ namespace SodRpg.Mod
                         if (other == null || slot == HeroSkillLocation.Movement) continue;
                         if (Gimmicks.CanRechargeOther(request.Entry.Memory, other.GetType().Name,
                             other.type == SkillType.Normal, slot == HeroSkillLocation.Identity))
-                            ReduceMemoryCooldown(hero, other, def.Value);
+                            ReduceMemoryCooldown(hero, other, def.ValuePercent);
                     }
                     break;
                 case GimmickEffect.Echo:
@@ -242,7 +242,7 @@ namespace SodRpg.Mod
                     try
                     {
                         // Final damage is already armor-adjusted; repeat that amount without a second armor reduction.
-                        hero.PureDamage(request.Damage * def.Value / 100f, 0f)
+                        hero.PureDamage(request.Damage * def.ValuePercent / 100f, 0f)
                             .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
                     }
                     finally { _gimmickDamageDepth--; }
@@ -252,7 +252,7 @@ namespace SodRpg.Mod
             }
         }
 
-        private static void ReduceMemoryCooldown(Hero hero, SkillTrigger skill, int percent)
+        private static void ReduceMemoryCooldown(Hero hero, SkillTrigger skill, float percent)
         {
             if (skill == null) return;
             // The native ratio is a fraction of maximum cooldown, not remaining cooldown.

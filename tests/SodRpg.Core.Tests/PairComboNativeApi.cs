@@ -112,7 +112,6 @@ namespace SodRpg.Mod
         public static ActorManager instance = new ActorManager();
         public Entity serverActor = new Entity();
     }
-    internal enum BountyReportKind { GimmicksTriggered }
     internal sealed class ListReturnHandle<T> { public void Return() { } }
     internal static class DewPhysics
     {
