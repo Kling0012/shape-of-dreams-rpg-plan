@@ -1,0 +1,49 @@
+name: wiki
+
+# 装備のデータ・アイコン・生成ツールが変わったら、DokuWiki 用のページを生成して wiki-pages ブランチへ置く。
+# Wiki のサーバーはこのブランチを定期的に取りに行って反映する（サーバー側の秘密情報は GitHub に置かない）。
+on:
+  push:
+    branches: [claude/dreamforge-playable-v0.1, main]
+    paths:
+      - src/SodRpg.Core/**
+      - src/SodRpg.Mod/icons/**
+      - src/SodRpg.Mod/about/metadata.json
+      - tools/WikiGen/**
+      - .github/workflows/wiki.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-pages
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Generate pages
+        run: dotnet run -c Release --project tools/WikiGen -- "$RUNNER_TEMP/wiki"
+      - name: Add icons (lowercase media names)
+        run: |
+          mkdir -p "$RUNNER_TEMP/wiki/media/dreamforge/icons"
+          for f in src/SodRpg.Mod/icons/*.png; do
+            cp "$f" "$RUNNER_TEMP/wiki/media/dreamforge/icons/$(basename "$f" | tr 'A-Z' 'a-z')"
+          done
+          echo "${GITHUB_SHA}" > "$RUNNER_TEMP/wiki/SOURCE_COMMIT"
+      - name: Publish to wiki-pages branch
+        run: |
+          cd "$RUNNER_TEMP/wiki"
+          git init -q
+          git checkout -q -b wiki-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Wiki pages from ${GITHUB_SHA}"
+          git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" wiki-pages
