@@ -204,7 +204,7 @@ namespace SodRpg.Mod
             var state = InitializeGimmicksV129(rt);
             var support = _am != null ? _am.serverActor : null;
             float high = Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
-            _gimmickDamageDepth++;
+            EnterGenerated(hero);
             try
             {
                 switch (def.Effect)
@@ -251,8 +251,12 @@ namespace SodRpg.Mod
                             foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
                                     && (ally.agentPosition - hero.agentPosition).sqrMagnitude <= allyRadius * allyRadius)
+                                {
+                                    float allyBefore = ally.currentHealth;
                                     support.Heal(Math.Min(heal * 0.5f, ally.maxHealth * 0.015f))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(ally);
+                                    CreditHealRestored(rt, ally, allyBefore);
+                                }
                         break;
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
@@ -284,7 +288,7 @@ namespace SodRpg.Mod
                     // Crescendo, Sap and Weakspot have already installed their pure-runtime windows.
                 }
             }
-            finally { _gimmickDamageDepth--; }
+            finally { ExitGenerated(hero); }
         }
 
         private static void DispatchGimmickDamage(Hero hero, Entity victim, float amount, bool magic, bool overTime)
@@ -321,14 +325,14 @@ namespace SodRpg.Mod
             }
             state.Ticks.Clear();
             state.Wounds.Update(now, state.Ticks);
-            _gimmickDamageDepth++;
+            EnterGenerated(rt.Hero);
             try
             {
                 foreach (var tick in state.Ticks)
                     if (state.Victims.TryGetValue(tick.VictimId, out var victim) && victim != null && victim.isActive && victim.currentHealth > 0)
                         DispatchGimmickDamage(rt.Hero, victim, tick.Damage, tick.Magic, true);
             }
-            finally { _gimmickDamageDepth--; }
+            finally { ExitGenerated(rt.Hero); }
             state.LastHits.Clear();
             var expired = new List<Entity>();
             foreach (var pair in _sapProcessors)

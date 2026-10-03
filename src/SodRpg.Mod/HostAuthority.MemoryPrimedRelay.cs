@@ -140,9 +140,9 @@ namespace SodRpg.Mod
                 SynchronizeMemoryPrimedRelay(hero, state);
                 if (selected.IsMemoryPreparation && (!state.Epochs.TryGetValue(selected.SourceMemory, out long current)
                     || current != sourceEpoch)) return;
-                _gimmickDamageDepth++;
+                EnterGenerated(hero);
                 try { hero.PureDamage(selected.Damage, 0f).SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim); }
-                finally { _gimmickDamageDepth--; }
+                finally { ExitGenerated(hero); }
             });
         }
 

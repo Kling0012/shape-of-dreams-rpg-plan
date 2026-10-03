@@ -63,6 +63,7 @@ namespace SodRpg.Mod
                 bool awarded = _modShieldPools.Apply(key, new NativeModShieldAdapter(_am.serverActor, recipient), rawAmount,
                     recipient.maxHealth, Time.time, duration, currentEpoch, newAwardCapRatio);
                 if (awarded) _modShieldRecipients[key] = new PoolRecipient { Owner = owner, Recipient = recipient };
+                if (awarded) CreditShieldGranted(owner, recipient, rawAmount);
                 return awarded;
             }
             finally { _gimmickDamageDepth--; }

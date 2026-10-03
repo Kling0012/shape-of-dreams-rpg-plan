@@ -553,6 +553,7 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: unhook variant HitCap " + ex); }
             try { if (rt.Ward != null && rt.Ward.isActive) rt.Ward.Destroy(); }
             catch (Exception ex) { Log.Error("Host: remove nightmare Ward " + ex); }
+            ReleaseMirageSkin(m);
             try
             {
                 if (m.Status != null)
@@ -883,35 +884,6 @@ namespace SodRpg.Mod
         /// 悪夢化した敵に本体のエリート効果（MirageSkin：見た目と専用攻撃）を付ける。
         /// 本体がすでに付けている敵には重ねない。深い悪夢（接頭2つ以上）は tier 1 も候補にする。
         /// </summary>
-        private void AttachMirageSkin(Monster m, bool allowTier1)
-        {
-            try
-            {
-                if (m.Status.HasStatusEffect<MirageSkinEffect>()) return;
-                if (_mirageTier0 == null)
-                {
-                    _mirageTier0 = new List<MirageSkinEffect>();
-                    _mirageTier1 = new List<MirageSkinEffect>();
-                    foreach (var e in DewResources.FindAllByType<MirageSkinEffect>())
-                    {
-                        if (e == null) continue;
-                        if (e.tier <= 0) _mirageTier0.Add(e);
-                        else _mirageTier1.Add(e);
-                    }
-                    Log.Info($"MirageSkin pool: tier0={_mirageTier0.Count} tier1={_mirageTier1.Count}");
-                }
-                var pool = new List<MirageSkinEffect>(_mirageTier0);
-                if (allowTier1) pool.AddRange(_mirageTier1);
-                if (pool.Count == 0) return;
-                var pick = pool[_rng.Range(0, pool.Count - 1)];
-                m.CreateStatusEffect(pick.GetType(), m, new CastInfo(m));
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("MirageSkin attach failed: " + ex.Message);
-            }
-        }
-
         private void RegenNightmares()
         {
             if (_regen.Count == 0) return;
@@ -1044,6 +1016,7 @@ namespace SodRpg.Mod
         {
             ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
+            ReleasePowerShields();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearSupportPowerStateV129();
@@ -1067,7 +1040,7 @@ namespace SodRpg.Mod
             _pressureBuilds.Clear();
             _pressurePlayers.Clear();
             _departedPlayers.Clear();
-            _pactCurses.Clear();
+            ReleasePactCurses();
             Unsubscribe();
             UnhookShrines();
             UnhookMonsters();
@@ -1190,7 +1163,7 @@ namespace SodRpg.Mod
         private List<CurseStatusEffect> _curseCache;
 
         // 潜行の契約で付けた呪い（プレイヤーごと）。契約が解けたら（確保・遠征の終わり）まとめて消す。
-        private readonly Dictionary<DewPlayer, List<StatusEffect>> _pactCurses = new Dictionary<DewPlayer, List<StatusEffect>>();
+        private readonly OwnedEffectRegistry<DewPlayer, StatusEffect> _pactCurses = new OwnedEffectRegistry<DewPlayer, StatusEffect>();
 
         private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)
         {
@@ -1232,11 +1205,7 @@ namespace SodRpg.Mod
                 {
                     if (se is CurseStatusEffect curse) curse.currentStrength = strength;
                 });
-                if (effect != null)
-                {
-                    if (!_pactCurses.TryGetValue(caller, out var list)) _pactCurses[caller] = list = new List<StatusEffect>();
-                    list.Add(effect);
-                }
+                if (effect != null) _pactCurses.Add(caller, effect);
                 Log.Info($"Curse: {pick.GetType().Name} ({strength}) on {caller.playerName}");
             }
             catch (Exception ex)
@@ -1251,23 +1220,9 @@ namespace SodRpg.Mod
             try
             {
                 if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
-                if (!_pactCurses.TryGetValue(caller, out var curses) || curses.Count == 0) return;
-                int cleared = 0;
-                foreach (var se in curses)
-                {
-                    // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
-                    if (se == null || se.isDestroyed || !se.isActive) continue;
-                    try
-                    {
-                        se.Destroy();
-                        cleared++;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error("Host: clear pact curse " + ex);
-                    }
-                }
-                curses.Clear();
+                // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
+                int cleared = _pactCurses.Release(caller, se => se != null && !se.isDestroyed && se.isActive, se => se.Destroy(),
+                    ex => Log.Error("Host: clear pact curse " + ex));
                 if (cleared > 0) Log.Info($"pact curses cleared: {cleared}");
             }
             catch (Exception ex)
@@ -1700,7 +1655,7 @@ namespace SodRpg.Mod
                         : info.type == HeroSkillLocation.E ? 2 : info.type == HeroSkillLocation.R ? 3 : -1;
                     if (memorySlot >= 0) SendBountyReport(rt, BountyReportKind.MemoryUsed, memorySlot);
                 }
-                ApplyWaypointMemoryCooldown(rt, info);
+                ApplyWaypointMemoryCooldown(rt.Hero, info);
                 if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
                     QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.skill != null && info.skill.type == SkillType.Ultimate,
@@ -2211,7 +2166,7 @@ namespace SodRpg.Mod
                 ReportElementalDeath(monster);
                 OnReactionDeath(info.victim);
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
-                var rt = RuntimeOf(info.actor);
+                var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
                 var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
                 if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
@@ -2264,7 +2219,7 @@ namespace SodRpg.Mod
             try
             {
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
-                var rt = RuntimeOf(info.actor);
+                var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
                 var victim = info.victim;
                 if (victim == null || !victim.isActive || victim.Status == null

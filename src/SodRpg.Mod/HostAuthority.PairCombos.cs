@@ -185,14 +185,14 @@ namespace SodRpg.Mod
                     else if (liveTarget) hero.ApplyElemental(element, victim, stacks);
                     break;
                 case GimmickEffect.Burst:
-                    _gimmickDamageDepth++;
+                    EnterGenerated(hero);
                     try
                     {
                         DamageAround(hero, pending.Center, request.AreaRadius,
                             Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.ValuePercent / 100f,
                             null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
                     }
-                    finally { _gimmickDamageDepth--; }
+                    finally { ExitGenerated(hero); }
                     break;
                 case GimmickEffect.Shield:
                     ApplyGimmickV129(rt, pending);
@@ -209,7 +209,9 @@ namespace SodRpg.Mod
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
                                 || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
+                            float allyBefore = ally.currentHealth;
                             support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(ally);
+                            CreditHealRestored(rt, ally, allyBefore);
                         }
                     break;
                 case GimmickEffect.Recharge:
@@ -237,14 +239,14 @@ namespace SodRpg.Mod
                     break;
                 case GimmickEffect.Echo:
                     if (!liveTarget || request.Damage <= 0f) break;
-                    _gimmickDamageDepth++;
+                    EnterGenerated(hero);
                     try
                     {
                         // Final damage is already armor-adjusted; repeat that amount without a second armor reduction.
                         hero.PureDamage(request.Damage * def.ValuePercent / 100f, 0f)
                             .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
                     }
-                    finally { _gimmickDamageDepth--; }
+                    finally { ExitGenerated(hero); }
                     break;
                 // Quicken/Empower/Expose windows are registered by the pure runtime.
                 default: ApplyGimmickV129(rt, pending); break;

@@ -145,6 +145,9 @@ namespace SodRpg.Mod
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
         }
         private void SendBountyReport(HeroRuntime rt, BountyReportKind kind, int count) { }
+        private void EnterGenerated(Hero owner) => _gimmickDamageDepth++;
+        private void ExitGenerated(Hero owner) => _gimmickDamageDepth--;
+        private void CreditHealRestored(HeroRuntime rt, Entity target, float healthBefore) { }
         private static object PairActivation(HeroRuntime rt, Actor actor) => actor;
         private static PairComboHitKind PairHitKind(Actor actor) => PairComboHitKind.Any;
         private void FireGimmicksV129(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim,

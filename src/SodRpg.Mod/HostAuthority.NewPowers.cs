@@ -49,7 +49,6 @@ namespace SodRpg.Mod
             internal readonly List<Action> Pending = new List<Action>();
         }
 
-        private readonly Dictionary<long, Se_GenericShield_OneShot> _powerShields = new Dictionary<long, Se_GenericShield_OneShot>();
         private int _powerSupportDepth;
 
         private static IEnumerable<SkillTrigger> NormalMemories(Hero hero)
@@ -144,8 +143,10 @@ namespace SodRpg.Mod
             var support = _am != null ? _am.serverActor : null;
             if (support == null) return;
             _powerSupportDepth++;
+            float before = target.currentHealth;
             try { support.Heal(SupportStats.AmplifyHeal(amount, rt.Powers.Build.Get(Stat.HealPower))).Dispatch(target); }
             finally { _powerSupportDepth--; }
+            CreditHealRestored(rt, target, before);
         }
 
         private void PowerShield(HeroRuntime rt, Entity target, Power power, float amount, float duration)
@@ -160,15 +161,9 @@ namespace SodRpg.Mod
                 var shield = support.GiveShield(target, SupportStats.AmplifyShield(amount,
                     rt.Powers.Build.Get(Stat.ShieldPower)), duration);
                 if (shield == null) return;
-                if (_powerShields.TryGetValue(key, out var old) && old != null && old.isActive && old.shield != null
-                    && shield.shield != null && old.shield.amount >= shield.shield.amount)
-                {
-                    old.SetTimer(duration);
-                    shield.Destroy();
-                    return;
-                }
-                if (old != null && old.isActive) old.Destroy();
-                _powerShields[key] = shield;
+                // The ledger compares exact underlying shields, so a recycled pooled handle is never touched.
+                if (PowerShields.Offer(key, shield, duration) == PowerShieldOutcome.KeptExisting) return;
+                CreditShieldGranted(rt, target, shield.shield != null ? shield.shield.amount : 0f);
                 // Native callbacks were suppressed until the non-stacking winner was known.
                 // Newly accepted personal wards may be shared once; shared wards never reshare.
                 if (power != Power.SharedWard && target is Hero recipient && shield.shield != null)
@@ -183,7 +178,7 @@ namespace SodRpg.Mod
             if (amount <= 0f) return;
             rt.NewPowers.Pending.Add(() =>
             {
-                _gimmickDamageDepth++;
+                EnterGenerated(rt.Hero);
                 try
                 {
                     if (radius > 0f)
@@ -214,7 +209,7 @@ namespace SodRpg.Mod
                         damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
                     }
                 }
-                finally { _gimmickDamageDepth--; }
+                finally { ExitGenerated(rt.Hero); }
             });
         }
 
@@ -279,7 +274,7 @@ namespace SodRpg.Mod
                 rt.NewPowers.PositionKnown = false;
                 ClearUnbowedGuard(rt);
             }
-            _powerShields.Clear();
+            PowerShields.Prune();
         }
 
         private void UpdateNewPowerFacts(HeroRuntime rt, float now)
@@ -411,7 +406,7 @@ namespace SodRpg.Mod
 
         private void OnNewPowerTaken(HeroRuntime rt, EventInfoDamage info, bool enemy)
         {
-            if (!enemy || _gimmickDamageDepth != 0 || info.damage.amount <= 0f) return;
+            if (!enemy || GeneratedDepthFor(rt.Hero) != 0 || info.damage.amount <= 0f) return;
             var hero = rt.Hero;
             var p = rt.Powers;
             var native = NativeDamageContext.Current;
@@ -515,12 +510,12 @@ namespace SodRpg.Mod
         private void OnPersonalDreamEvent(DreamforgeDreamEventStartedMsg message, DewPlayer caller)
         {
             var run = ClientSession.HostRun;
+            // The offer is personal: the host's own Secure/Delve choice (AwaitingChoice) says nothing about this player's offer.
             if (message == null || message.protocol != Protocol.Version || caller == null || run == null
-                || !run.AwaitingChoice || message.runId != run.RunId || message.generation != run.WaypointGeneration
-                || message.dreamEvent == (int)DreamEvent.None || !Enum.IsDefined(typeof(DreamEvent), message.dreamEvent)
                 || !Alive(caller.hero) || !_runtimes.TryGetValue(caller.hero, out var rt)) return;
             var state = rt.NewPowers;
-            if (state.OmenRun == message.runId && state.OmenGeneration >= message.generation) return;
+            if (!DreamOmenGate.Accept(run.RunId, run.WaypointGeneration, message.runId, message.generation,
+                message.dreamEvent, state.OmenRun, state.OmenGeneration)) return;
             state.OmenRun = message.runId; state.OmenGeneration = message.generation;
             ReduceNormalMemories(rt.Hero, rt.Powers.DreamOmenCooldownFraction * 100f);
             PowerShield(rt, rt.Hero, Power.DreamOmen, rt.Powers.DreamOmenShield(rt.Hero.maxHealth), 10f);
