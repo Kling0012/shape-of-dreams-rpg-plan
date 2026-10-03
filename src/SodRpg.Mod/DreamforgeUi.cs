@@ -1772,7 +1772,7 @@ namespace SodRpg.Mod
         private sealed class StarNode
         {
             public int Rank, Choice = -1;
-            public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch;
+            public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
             public string Description, SearchDescription;
             public Texture2D Icon;
             public bool Keystone, Pair;
@@ -1820,6 +1820,21 @@ namespace SodRpg.Mod
         private static readonly Color StarGold = new Color(1f, 0.79f, 0.32f);
         private static readonly Color StarBright = new Color(0.87f, 0.94f, 1f);
         private static readonly Color StarGrey = new Color(0.36f, 0.39f, 0.46f);
+
+        private bool _starSumOpen, _starSumDirty = true;
+        private int _starSumSig, _starSumHover = -1;
+        private Vector2 _starSumScroll;
+        private readonly List<StarSumEntry> _starSumEntries = new List<StarSumEntry>();
+        private readonly GUIContent _starSumHeader = new GUIContent();
+        private GUIStyle _starSumLine, _starSumTitle;
+        private static readonly GUILayoutOption[] StarSumWidth = { GUILayout.Width(360), GUILayout.ExpandHeight(true) };
+
+        private sealed class StarSumEntry
+        {
+            public readonly GUIContent Content = new GUIContent();
+            public int[] Nodes;
+            public bool Title;
+        }
 
         private void CancelStarDrag()
         {
@@ -1889,7 +1904,7 @@ namespace SodRpg.Mod
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
         {
-            if (_starHero != hero || _starJapanese != Loc.Japanese) RebuildStarTree(hero);
+            if (_starHero != hero || _starJapanese != Loc.Japanese) { RebuildStarTree(hero); _starSumDirty = true; }
             if (!_starDirty && Event.current.type != EventType.Layout) return;
             int spent = Rules.SpentPoints(hs, hero);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
@@ -1897,6 +1912,15 @@ namespace SodRpg.Mod
                 || _starKeystone != hs.Keystone || _starSpent != spent;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
+            if (_starSumOpen)
+            {
+                // Equipped memories/allies only change the check marks; a cheap order-free signature avoids per-frame text building.
+                int sig = matchingHero ? 1 : 0;
+                foreach (string m in _linkMemories) sig ^= m.GetHashCode();
+                foreach (string m in _linkEssences) sig += m.GetHashCode();
+                foreach (string m in _linkAllies) sig -= m.GetHashCode();
+                if (sig != _starSumSig) { _starSumSig = sig; _starSumDirty = true; }
+            }
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -1929,6 +1953,7 @@ namespace SodRpg.Mod
             _starSpent = spent;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
+            _starSumDirty = true;
             int earned = StarProgression.Points(hs.StarXp);
             _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}",
                 $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total");
@@ -2019,6 +2044,9 @@ namespace SodRpg.Mod
                 _starNeedsFit = true;
                 CancelStarDrag();
             }
+            bool wasOpen = _starSumOpen;
+            _starSumOpen = GUILayout.Toggle(_starSumOpen, Loc.T("取得した効果", "Acquired effects"), _st.Button);
+            if (_starSumOpen != wasOpen) { _starSumDirty = true; if (!_starSumOpen) StarSumSetHover(-1); CancelStarDrag(); }
             GUI.enabled = _s.CanEditTalents;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
             {
@@ -2039,7 +2067,98 @@ namespace SodRpg.Mod
                     + "<color=#cc8cff>紫の大きな星＝刻印</color>　<color=#73e6f2>水色＝合わせ技</color>　<color=#ffc952>金＝取得済み</color>",
                 "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   "
                     + "<color=#cc8cff>Large purple = keystone</color>   <color=#73e6f2>Cyan = combo</color>   <color=#ffc952>Gold = acquired</color>"), _st.Small);
+            GUILayout.BeginHorizontal(GUILayout.ExpandHeight(true));
             DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
+            if (_starSumOpen) DrawStarSummaryPanel(p, hero);
+            GUILayout.EndHorizontal();
+        }
+
+        private void StarSumSetHover(int index)
+        {
+            if (_starSumHover == index) return;
+            if (_starSumHover >= 0 && _starSumHover < _starSumEntries.Count && _starSumEntries[_starSumHover].Nodes != null)
+                foreach (int i in _starSumEntries[_starSumHover].Nodes) if (i < _starNodes.Length) _starNodes[i].SummaryHover = false;
+            _starSumHover = index;
+            if (index >= 0 && index < _starSumEntries.Count && _starSumEntries[index].Nodes != null)
+                foreach (int i in _starSumEntries[index].Nodes) if (i < _starNodes.Length) _starNodes[i].SummaryHover = true;
+        }
+
+        private void StarSumAdd(List<StarSummaryLine> lines, Dictionary<string, int> indexOf, string title)
+        {
+            if (lines.Count == 0) return;
+            StarSumAddTitle(title);
+            foreach (var line in lines) StarSumAddLine(line, indexOf);
+        }
+
+        private void StarSumAddTitle(string title)
+        {
+            var e = new StarSumEntry { Title = true };
+            e.Content.text = title;
+            _starSumEntries.Add(e);
+        }
+
+        private void StarSumAddLine(StarSummaryLine line, Dictionary<string, int> indexOf)
+        {
+            var nodes = new List<int>(line.StarIds.Count);
+            foreach (string id in line.StarIds) if (indexOf.TryGetValue(id, out int i)) nodes.Add(i);
+            var e = new StarSumEntry { Nodes = nodes.ToArray() };
+            e.Content.text = line.Text;
+            _starSumEntries.Add(e);
+        }
+
+        // Rebuilt only when allocations, keystone, language or equipped memories change.
+        private void StarSumRebuild(Profile p, string hero)
+        {
+            foreach (var n in _starNodes) n.SummaryHover = false;
+            _starSumHover = -1;
+            _starSumDirty = false;
+            _starSumEntries.Clear();
+            bool matching = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
+            var marks = matching ? LinkMarks() : null;
+            var sum = StarSummary.Compute(p, hero, marks);
+            var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < _starLayout.Nodes.Count; i++)
+                if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
+            _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            if (sum.IsEmpty) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
+            StarSumAdd(sum.Keystone, indexOf, Loc.T("刻印", "Keystone"));
+            StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats"));
+            StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers"));
+            if (sum.Memories.Count > 0)
+            {
+                StarSumAddTitle(Loc.T("記憶ごとの効果", "Effects by memory"));
+                foreach (var g in sum.Memories)
+                {
+                    StarSumAddTitle("  " + g.Title);
+                    foreach (var line in g.Lines) StarSumAddLine(line, indexOf);
+                }
+            }
+            StarSumAdd(sum.Choices, indexOf, Loc.T("選択の星", "Choice stars"));
+        }
+
+        private void DrawStarSummaryPanel(Profile p, string hero)
+        {
+            if (_starSumLine == null)
+            {
+                _starSumLine = new GUIStyle(_st.Small) { wordWrap = true, richText = true, padding = new RectOffset(6, 6, 3, 3) };
+                _starSumTitle = new GUIStyle(_st.Label) { wordWrap = true, richText = true, fontStyle = FontStyle.Bold };
+            }
+            if (_starSumDirty && Event.current.type == EventType.Layout) StarSumRebuild(p, hero);
+            GUILayout.BeginVertical(_st.Panel, StarSumWidth);
+            GUILayout.Label(_starSumHeader, _st.Label);
+            _starSumScroll = GUILayout.BeginScrollView(_starSumScroll);
+            int hover = -1;
+            bool repaint = Event.current.type == EventType.Repaint;
+            for (int i = 0; i < _starSumEntries.Count; i++)
+            {
+                var e = _starSumEntries[i];
+                GUILayout.Label(e.Content, e.Title ? _starSumTitle : _starSumLine);
+                if (repaint && !e.Title && e.Nodes != null && e.Nodes.Length > 0
+                    && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition)) hover = i;
+            }
+            GUILayout.EndScrollView();
+            GUILayout.EndVertical();
+            if (repaint) StarSumSetHover(hover);
         }
 
         private void DrawStarChoicePicker(Profile p, string hero)
@@ -2227,7 +2346,7 @@ namespace SodRpg.Mod
                     Rect rect = _starView.NodeRects[i];
                     var n = _starNodes[i];
                     Color frame = n.Allocated ? StarGold : n.Keystone ? StarKeystone : n.Pair ? StarPair : n.Available ? StarBright : StarGrey;
-                    if (n.SearchMatch)
+                    if (n.SearchMatch || n.SummaryHover)
                         StarDrawDisc(StarSearchRing(), new Rect(rect.x - 11f, rect.y - 11f, rect.width + 22f, rect.height + 22f), StarGold);
                     if (n.Available && !n.Allocated)
                         StarDrawDisc(disc, new Rect(rect.x - 5f, rect.y - 5f, rect.width + 10f, rect.height + 10f),
