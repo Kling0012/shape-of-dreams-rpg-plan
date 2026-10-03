@@ -90,6 +90,15 @@ namespace SodRpg.Core.Game
             return ((long)column << 32) | (uint)row;
         }
 
+        /// <summary>Same packing with an explicit cell size (larger label fonts need larger cells).</summary>
+        public static long LabelCell(float x, float y, float cellWidth, float cellHeight)
+        {
+            if (!(cellWidth > 0f) || !(cellHeight > 0f)) throw new ArgumentOutOfRangeException(nameof(cellWidth));
+            int column = (int)Math.Floor(x / cellWidth);
+            int row = (int)Math.Floor(y / cellHeight);
+            return ((long)column << 32) | (uint)row;
+        }
+
         /// <summary>Creates the internal deterministic stress layout: 800 nodes on a centered 40-by-20 grid, 95 layout units apart.</summary>
         internal static StarMapPoint[] BuildSyntheticLayout()
         {

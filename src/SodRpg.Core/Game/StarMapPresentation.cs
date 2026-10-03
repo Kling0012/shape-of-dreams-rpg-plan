@@ -36,6 +36,14 @@ namespace SodRpg.Core.Game
             return star.Mechanism == null ? star.Describe() : DescribeMechanism(star.Mechanism);
         }
 
+        private const string NL = "\n";
+        public const string BenefitHeading = "<color=#9fe0b0><b>利点</b></color>";
+        public const string DrawbackHeading = "<color=#ffb0a0><b>代償</b></color>";
+
+        /// <summary>
+        /// 刻印の効果。利点と代償を見出し付きの別々の段落にする（旧来の刻印は利点のみ・代償なし）。
+        /// 必要ポイントは最後の1行だけで、ツリー側の説明では繰り返さない。
+        /// </summary>
         public static string KeystoneDescription(TalentDef star)
         {
             RequireStar(star);
@@ -43,14 +51,63 @@ namespace SodRpg.Core.Game
             {
                 var key = star.KeystoneDefinition;
                 if (key.Cost <= 0) throw new InvalidOperationException("Invalid keystone cost: " + star.Id);
-                return Loc.T("<color=#9fe0b0><b>恩恵</b></color>", "<color=#9fe0b0><b>Benefit</b></color>") + "\n"
-                    + (star.AuthoredStar?.KeystoneUpside?.ToString() ?? DescribeKeySide(key, true))
-                    + "\n\n" + Loc.T("<color=#ffb0a0><b>代償</b></color>", "<color=#ffb0a0><b>Drawback</b></color>") + "\n"
-                    + (star.AuthoredStar?.KeystoneDownside?.ToString() ?? DescribeKeySide(key, false))
-                    + "\n" + Loc.T($"必要ポイント：{key.Cost}", $"Cost: {key.Cost} points");
+                return KeystoneSections(star.AuthoredStar?.KeystoneUpside?.ToString() ?? DescribeKeySide(key, true),
+                    star.AuthoredStar?.KeystoneDownside?.ToString() ?? DescribeKeySide(key, false), key.Cost);
             }
             if (!star.IsKeystone) throw new InvalidOperationException("Not a keystone: " + star.Id);
-            return star.Describe();
+            // 旧来の刻印：効果の本文が利点。説明文は利点の補足で、代償はない。
+            string benefit = Content.FormatPower(star.Power, star.PowerValue);
+            if (star.Description != null && !string.IsNullOrWhiteSpace(star.Description.ToString())) benefit += NL + star.Description;
+            return KeystoneSections(benefit, null, Content.KeystoneCost);
+        }
+
+        /// <summary>利点・代償・必要ポイントを組み立てる（代償が null か空なら「なし」）。</summary>
+        public static string KeystoneSections(string benefit, string drawback, int cost)
+        {
+            if (string.IsNullOrWhiteSpace(drawback))
+                drawback = Loc.T("なし（この刻印に欠点はありません）", "None (this keystone has no drawback)");
+            return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Benefit</b></color>") + NL + benefit
+                + NL + NL + Loc.T(DrawbackHeading, "<color=#ffb0a0><b>Drawback</b></color>") + NL + drawback
+                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} points");
+        }
+
+        /// <summary>
+        /// 刻印の取得条件を、実際の数字つきの1文にする。
+        /// 例：「この旅人の星を合計6段取得し、熟練度3に達する必要があります（今は星3段・熟練度10）。」
+        /// <paramref name="masteryNeeded"/> が 0 なら熟練度は条件にしない（汎用ツリーの刻印）。
+        /// </summary>
+        public static string KeystoneRequirement(bool heroTree, int ranksNeeded, int ranksHave, int masteryNeeded, int masteryHave, bool connected)
+        {
+            string scopeJa = heroTree ? "この旅人の星" : "同じ系統の星", scopeEn = heroTree ? "this Traveler's stars" : "stars of the same line";
+            string ja = $"{scopeJa}を合計{ranksNeeded}段取得" + (masteryNeeded > 0 ? $"し、熟練度{masteryNeeded}に達する" : "する")
+                + "必要があります（今は星" + ranksHave + "段" + (masteryNeeded > 0 ? "・熟練度" + masteryHave : "") + "）。";
+            string en = $"Acquire {ranksNeeded} ranks of {scopeEn}" + (masteryNeeded > 0 ? $" and reach mastery {masteryNeeded}" : "")
+                + " (now: " + ranksHave + " ranks" + (masteryNeeded > 0 ? ", mastery " + masteryHave : "") + ").";
+            string text = Loc.T(ja, en);
+            if (!connected) text += Loc.T("さらに、取得済みの星と線でつながっている必要があります。", " It must also connect to your acquired stars.");
+            return Loc.T("刻印は1つだけ選べます。", "Only one keystone can be selected. ") + text;
+        }
+
+        /// <summary>
+        /// 星の状態を1文で。条件の説明と「振れます」を重ねて出さないよう、状態はここで1つだけ決める。
+        /// </summary>
+        public static string AllocationStatus(bool keystone, bool maxed, bool unlocked, bool enoughPoints)
+        {
+            if (maxed) return keystone ? Loc.T("選択中です。", "Selected.") : Loc.T("最大段です。", "Maximum rank.");
+            if (!unlocked)
+                return keystone ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
+                    : Loc.T("取得済みの星と線でつながると振れます。", "Requires a connection to an acquired star.");
+            if (!enoughPoints) return Loc.T("ポイントが足りません。", "Not enough points.");
+            return keystone ? Loc.T("選べます。", "Available to select.") : Loc.T("振れます。", "Available.");
+        }
+
+        /// <summary>選択の星の1つの選択肢を、名前と効果の本文で（選択中の印は付けない。印は画面側で色と ✓ で出す）。</summary>
+        public static string ChoiceOptionBody(TalentDef star, int option)
+        {
+            ValidateChoice(star, -1);
+            if (option < 0 || option > 1) throw new ArgumentOutOfRangeException(nameof(option));
+            TalentDef selected = star.Choices[option];
+            return "<b>" + selected.Name + "</b>" + NL + EffectDescription(selected);
         }
 
         public static string MechanismLabel(TalentDef star)

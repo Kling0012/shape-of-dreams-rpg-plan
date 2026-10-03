@@ -43,7 +43,7 @@ namespace SodRpg.Mod
             foreach (var refund in plan.Refunds)
             {
                 var talent = Rules.AllocationValidationForHero(_allocationRefundHero).Talent(refund.StarId);
-                GUILayout.Label((talent?.Name.ToString() ?? refund.StarId) + $" [{refund.StarId}] — {refund.Ranks} × {refund.Cost / refund.Ranks}", _st.Small);
+                GUILayout.Label((talent?.Name.ToString() ?? refund.StarId) + $" — {refund.Ranks} × {refund.Cost / refund.Ranks}", _st.Small);
             }
             GUILayout.EndScrollView();
             GUILayout.BeginHorizontal();

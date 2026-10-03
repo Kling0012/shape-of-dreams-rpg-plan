@@ -8,11 +8,12 @@ namespace SodRpg.Core.Game
         private readonly int[] nodeIndices;
         internal readonly HeroTreeLayout Layout;
 
-        internal StarMapCluster(HeroTreeLayout layout, string id, Txt name, ClusterRegionKind region, int[] indices, float x, float y)
+        internal StarMapCluster(HeroTreeLayout layout, string id, Txt name, Txt displayName, ClusterRegionKind region, int[] indices, float x, float y)
         {
             Layout = layout;
             Id = id;
             Name = name;
+            DisplayName = displayName;
             Region = region;
             nodeIndices = indices;
             X = x;
@@ -22,6 +23,8 @@ namespace SodRpg.Core.Game
         public string Id { get; }
         /// <summary>Localized representative-star name; the authored cluster's identity/name is Id.</summary>
         public Txt Name { get; }
+        /// <summary>画面に出す星団の名前（例：「氷の血脈の星団」）。内部IDは含まない。</summary>
+        public Txt DisplayName { get; }
         public ClusterRegionKind Region { get; }
         public int[] NodeIndices => (int[])nodeIndices.Clone();
         public int NodeCount => nodeIndices.Length;
@@ -80,7 +83,8 @@ namespace SodRpg.Core.Game
                     x += layout.Nodes[index].X;
                     y += layout.Nodes[index].Y;
                 }
-                result[next++] = new StarMapCluster(layout, pair.Key, name, definitions[pair.Key].Region.Kind,
+                result[next++] = new StarMapCluster(layout, pair.Key, name, DisplayNameFor(layout, definitions[pair.Key], name),
+                    definitions[pair.Key].Region.Kind,
                     indices.ToArray(), (float)(x / indices.Count), (float)(y / indices.Count));
             }
             Array.Sort(result, (a, b) =>
@@ -89,6 +93,52 @@ namespace SodRpg.Core.Game
                 return region != 0 ? region : StringComparer.Ordinal.Compare(a.Id, b.Id);
             });
             return result;
+        }
+
+        /// <summary>
+        /// 星団の表示名。明示の名前があればそれ、無ければ地域と記憶から作る（記憶なら「氷の血脈の星団」、
+        /// 橋なら「A と B の橋の星団」、外縁・刻印なら代表の星の名前から）。内部のIDは使わない。
+        /// </summary>
+        public static Txt DisplayNameFor(HeroTreeLayout layout, StarClusterDef def, Txt representative)
+        {
+            if (def.Name != null && !string.IsNullOrWhiteSpace(def.Name.Ja) && !string.IsNullOrWhiteSpace(def.Name.En)) return def.Name;
+            switch (def.Region.Kind)
+            {
+                case ClusterRegionKind.Memory:
+                    string memory = MemoryOf(layout, def);
+                    if (memory != null)
+                    {
+                        var m = Links.Name(memory);
+                        return new Txt(m.Ja + "の星団", m.En + " Cluster");
+                    }
+                    return new Txt(representative.Ja + "の星団", representative.En + " Cluster");
+                case ClusterRegionKind.Bridge:
+                    var pair = def.Region.Id == null ? null : PairCombos.ForBridge(def.Region.Id);
+                    if (pair != null && Links.IsMemory(pair.RouteA) && Links.IsMemory(pair.RouteB))
+                    {
+                        var a = Links.Name(pair.RouteA);
+                        var b = Links.Name(pair.RouteB);
+                        return new Txt(a.Ja + "と" + b.Ja + "の橋の星団", a.En + " & " + b.En + " Bridge Cluster");
+                    }
+                    return new Txt(representative.Ja + "の橋の星団", representative.En + " Bridge Cluster");
+                case ClusterRegionKind.Keystone:
+                    return new Txt(representative.Ja + "の刻印星団", representative.En + " Keystone Cluster");
+                default:
+                    return new Txt(representative.Ja + "の外縁星団", representative.En + " Outer Cluster");
+            }
+        }
+
+        private static string MemoryOf(HeroTreeLayout layout, StarClusterDef def)
+        {
+            string fallback = null;
+            for (int i = 0; i < layout.Nodes.Count; i++)
+            {
+                var talent = layout.Nodes[i].Talent;
+                if (talent == null || !Links.IsMemory(talent.RouteMemory)) continue;
+                if (talent.Id == def.Anchor) return talent.RouteMemory;
+                if (fallback == null && talent.Cluster != null && talent.Cluster.Id == def.Id) fallback = talent.RouteMemory;
+            }
+            return fallback;
         }
 
         public static int AllocatedCount(HeroState state, HeroTreeLayout layout, StarMapCluster cluster)
@@ -116,7 +166,7 @@ namespace SodRpg.Core.Game
                 case ClusterRegionKind.Memory: return Loc.T("記憶", "Memory");
                 case ClusterRegionKind.Bridge: return Loc.T("記憶の橋", "Bridge");
                 case ClusterRegionKind.Outer: return Loc.T("外縁", "Outer");
-                case ClusterRegionKind.Keystone: return Loc.T("要石", "Keystone");
+                case ClusterRegionKind.Keystone: return Loc.T("刻印", "Keystone");
                 default: throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown cluster region.");
             }
         }

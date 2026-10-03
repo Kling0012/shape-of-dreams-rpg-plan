@@ -29,7 +29,7 @@ namespace SodRpg.Mod
         private HeroTreeLayout _layout;
         private Rect _viewport;
         private Vector2 _pan;
-        private float _zoom;
+        private float _zoom, _guiScale;
         private readonly HashSet<long> _labelCells = new HashSet<long>();
         internal Rect[] NodeRects { get; private set; }
         internal long[] LabelCells { get; private set; }
@@ -39,9 +39,14 @@ namespace SodRpg.Mod
         internal int NodeCount { get; private set; }
         internal int EdgeCount { get; private set; }
 
-        internal void Update(HeroTreeLayout layout, Rect viewport, Vector2 pan, float zoom)
+        // Label thresholds were tuned at 1080p (GUI scale 1). On a smaller GUI scale the same text is physically
+        // smaller, so names appear later (hidden rather than unreadably tiny); larger scales keep the 1080p thresholds.
+        private const float LabelCellWidth = 112f, LabelCellHeight = 22f;
+
+        internal void Update(HeroTreeLayout layout, Rect viewport, Vector2 pan, float zoom, float guiScale)
         {
-            if (_layout == layout && _viewport == viewport && _pan == pan && _zoom == zoom) return;
+            guiScale = Mathf.Clamp(guiScale, 0.4f, 1f);
+            if (_layout == layout && _viewport == viewport && _pan == pan && _zoom == zoom && _guiScale == guiScale) return;
             if (_layout != layout)
             {
                 NodeRects = new Rect[layout.Nodes.Count];
@@ -54,6 +59,8 @@ namespace SodRpg.Mod
             _viewport = viewport;
             _pan = pan;
             _zoom = zoom;
+            _guiScale = guiScale;
+            float labelZoom = zoom * guiScale;
             NodeCount = EdgeCount = 0;
             _labelCells.Clear();
             var bounds = new StarMapBounds(viewport.xMin, viewport.yMin, viewport.xMax, viewport.yMax);
@@ -70,10 +77,10 @@ namespace SodRpg.Mod
                 if (!StarMapMath.IsVisible(x, y, half, nodeBounds)) continue;
                 NodeRects[i] = new Rect(x - half, y - half, size, size);
                 VisibleNodes[NodeCount++] = i;
-                long cell = StarMapMath.LabelCell(x, y + half + 7f);
+                long cell = StarMapMath.LabelCell(x, y + half + 7f, LabelCellWidth, LabelCellHeight);
                 LabelCells[i] = cell;
                 bool named = n.Kind == HeroTreeNodeKind.Keystone || (n.Talent != null && PairCombos.ForBridge(n.Talent.Id) != null)
-                    ? zoom >= 0.2f : n.Kind != HeroTreeNodeKind.Small ? zoom >= 0.55f : zoom >= 1f;
+                    ? labelZoom >= 0.2f : n.Kind != HeroTreeNodeKind.Small ? labelZoom >= 0.55f : labelZoom >= 1f;
                 Named[i] = named && _labelCells.Add(cell);
             }
             for (int i = 0; i < layout.Edges.Count; i++)

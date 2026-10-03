@@ -21,6 +21,8 @@ namespace SodRpg.Core.Game
     public sealed class StarClusterDef
     {
         public string Id { get; set; }
+        /// <summary>画面に出す星団の名前。未設定なら、地域と記憶の名前から <see cref="StarMapClusters"/> が自然な名前を作る。ID は表示しない。</summary>
+        public Txt Name { get; set; }
         public string HeroKey { get; set; }
         public ClusterRegion Region { get; set; }
         public string Anchor { get; set; }

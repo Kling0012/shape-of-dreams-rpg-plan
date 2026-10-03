@@ -314,7 +314,7 @@ namespace SodRpg.Core.Game
         {
             if (amount == 0) return;
             long next = (long)Material(id) + amount;
-            if (next < 0) throw new InvalidOperationException("素材が足りません: " + id);
+            if (next < 0) throw new InvalidOperationException(RuleMessages.NotEnoughMaterial.ToString() + id);
             Materials[id] = (int)Math.Min(int.MaxValue, next);
         }
 

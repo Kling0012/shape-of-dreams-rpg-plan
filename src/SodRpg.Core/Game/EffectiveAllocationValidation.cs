@@ -118,12 +118,26 @@ namespace SodRpg.Core.Game
     {
         public AllocationValidationException(EffectiveAllocationPlan plan)
             : base(!plan.CanApply
-                ? Loc.T("効果が上限・無効、または前提の星が足りません: ", "The effect is capped/disabled or star prerequisites are missing: ") +
-                    string.Join(", ", plan.PrerequisiteViolations.Count > 0 ? plan.PrerequisiteViolations : plan.SaturatedChannels)
+                ? Loc.T("効果が上限に達している・無効になる、または前提の星が足りません：", "The effect is capped/disabled or star prerequisites are missing: ") +
+                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.PrerequisiteViolations.Count > 0 ? plan.PrerequisiteViolations : plan.SaturatedChannels))
                 : Loc.T("変更の前に、星をまとめて払い戻す承認が必要です（", "Approve the atomic star refund before changing this configuration (") +
-                    plan.RefundCost.ToString(CultureInfo.InvariantCulture) + Loc.T("ポイント）: ", " points): ") +
-                    string.Join(", ", plan.AffectedRefundIds))
+                    plan.RefundCost.ToString(CultureInfo.InvariantCulture) + Loc.T("ポイント）：", " points): ") +
+                    string.Join(Loc.T("、", ", "), DisplayNames(plan, plan.AffectedRefundIds)))
         { Plan = plan; }
+
+        /// <summary>内部の星ID（"id#段" の形もある）を、画面に出せる星の名前へ直す。名前が無ければそのまま返す。</summary>
+        private static IEnumerable<string> DisplayNames(EffectiveAllocationPlan plan, IEnumerable<string> ids)
+        {
+            foreach (string raw in ids)
+            {
+                int hash = raw.IndexOf('#');
+                string id = hash < 0 ? raw : raw.Substring(0, hash);
+                var talent = plan.Owner?.Talent(id);
+                if (talent == null) { yield return raw; continue; }
+                string rank = hash < 0 ? null : raw.Substring(hash + 1);
+                yield return talent.Name.ToString() + (rank == null ? "" : Loc.T($"（{rank}段目）", $" (rank {rank})"));
+            }
+        }
         public EffectiveAllocationPlan Plan { get; }
     }
 
@@ -192,7 +206,7 @@ namespace SodRpg.Core.Game
             long spent = hero.Keystone == null ? 0 : Talent(hero.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             foreach (var rank in hero.Talents)
             {
-                var talent = Talent(rank.Key) ?? throw new InvalidOperationException("Unknown allocated star: " + rank.Key);
+                var talent = Talent(rank.Key) ?? throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + rank.Key);
                 spent += (long)Math.Max(0, rank.Value) * talent.RankCost;
             }
             return checked((int)spent);
@@ -340,9 +354,9 @@ namespace SodRpg.Core.Game
             if (!plan.CanApply) throw new AllocationValidationException(plan);
             if (!SameState(profile.Hero(plan.HeroKey), plan.Original)
                 || plan.RegistryFingerprint != StarClusters.AuthoredRegistryFingerprint || plan.CapFingerprint != FractionalScopedModifiers.CapRegistryFingerprint)
-                throw new InvalidOperationException("The allocation, equipment or shared mechanism registry changed after this refund preview. Preview again.");
+                throw new InvalidOperationException(RuleMessages.RegistryChanged.ToString());
             if (SpentPoints(plan.Proposed) > profile.TalentPoints(plan.HeroKey))
-                throw new InvalidOperationException("Not enough star points for the proposed allocation.");
+                throw new InvalidOperationException(RuleMessages.NotEnoughStarPoints.ToString());
             var approval = approvedRefundIds == null ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
             if (approval.Count != plan.AffectedRefundIds.Count) throw new AllocationValidationException(plan);
             foreach (string id in plan.AffectedRefundIds) if (!approval.Contains(id)) throw new AllocationValidationException(plan);
@@ -372,8 +386,8 @@ namespace SodRpg.Core.Game
                 if (slot < 0 || slot >= hero.Equipped.Length) throw new ArgumentException("Unknown equipment slot.", nameof(change));
                 if (change.EquipmentUid != null)
                 {
-                    var relic = profile.FindStash(change.EquipmentUid) ?? throw new InvalidOperationException("The relic is not in the stash.");
-                    if ((int)relic.Slot != slot) throw new InvalidOperationException("The relic does not belong to that slot.");
+                    var relic = profile.FindStash(change.EquipmentUid) ?? throw new InvalidOperationException(RuleMessages.RelicNotInStash.ToString());
+                    if ((int)relic.Slot != slot) throw new InvalidOperationException(RuleMessages.RelicWrongSlot.ToString());
                 }
                 hero.Equipped[slot] = change.EquipmentUid;
                 return;
@@ -381,42 +395,42 @@ namespace SodRpg.Core.Game
             if (change.Kind == AllocationChangeKind.Keystone)
             {
                 if (change.KeystoneId != null && !KeystoneUnlocked(hero, heroKey, Talent(change.KeystoneId)))
-                    throw new InvalidOperationException("The keystone's reachability, ranks or mastery prerequisites are not met.");
+                    throw new InvalidOperationException(RuleMessages.KeystoneNotReady.ToString());
                 hero.Keystone = change.KeystoneId;
                 return;
             }
-            if (talent == null || !Rules.BelongsTo(talent, heroKey)) throw new InvalidOperationException("Unknown star in this Traveler's tree: " + change.CandidateStarId);
+            if (talent == null || !Rules.BelongsTo(talent, heroKey)) throw new InvalidOperationException(RuleMessages.UnknownStar.ToString());
             int rank = hero.Talents.TryGetValue(talent.Id, out int current) ? current : 0;
             if (change.Kind == AllocationChangeKind.Refund)
             {
                 if (talent.IsKeystone)
                 {
-                    if (hero.Keystone != talent.Id) throw new InvalidOperationException("That keystone is not allocated.");
+                    if (hero.Keystone != talent.Id) throw new InvalidOperationException(RuleMessages.KeystoneNotAllocated.ToString());
                     hero.Keystone = null;
                 }
                 else
                 {
-                    if (rank <= 0) throw new InvalidOperationException("That star is not allocated.");
+                    if (rank <= 0) throw new InvalidOperationException(RuleMessages.StarNotAllocated.ToString());
                     SetRank(hero, talent.Id, rank - 1);
                 }
                 return;
             }
-            if (talent.IsKeystone) throw new InvalidOperationException("Use a keystone change for a keystone.");
+            if (talent.IsKeystone) throw new InvalidOperationException(RuleMessages.UseKeystoneChange.ToString());
             if (change.Kind == AllocationChangeKind.Purchase)
             {
-                if (rank >= talent.MaxRank) throw new InvalidOperationException("Already at max rank.");
-                if (!layout.CanReach(hero, talent)) throw new InvalidOperationException("Allocate the connected prerequisite stars first.");
+                if (rank >= talent.MaxRank) throw new InvalidOperationException(RuleMessages.AlreadyMaxRank.ToString());
+                if (!layout.CanReach(hero, talent)) throw new InvalidOperationException(RuleMessages.NeedConnectedStars.ToString());
             }
-            else if (rank <= 0 || !talent.IsChoice) throw new InvalidOperationException("That choice star is not allocated.");
+            else if (rank <= 0 || !talent.IsChoice) throw new InvalidOperationException(RuleMessages.ChoiceNotAllocated.ToString());
             if (talent.IsChoice)
             {
                 if (!change.SelectedOption.HasValue || change.SelectedOption.Value < 0 || change.SelectedOption.Value >= talent.Choices.Count)
-                    throw new InvalidOperationException("Explicitly select one of the two effects.");
+                    throw new InvalidOperationException(RuleMessages.SelectOneEffect.ToString());
                 if (change.Kind == AllocationChangeKind.Purchase && rank > 0 && hero.TalentChoices.TryGetValue(talent.Id, out int option) && option != change.SelectedOption.Value)
-                    throw new InvalidOperationException("All ranks of a choice must use the same option. Change the choice explicitly first.");
+                    throw new InvalidOperationException(RuleMessages.SameOptionOnly.ToString());
                 hero.TalentChoices[talent.Id] = change.SelectedOption.Value;
             }
-            else if (change.SelectedOption.HasValue) throw new InvalidOperationException("That is not a choice star.");
+            else if (change.SelectedOption.HasValue) throw new InvalidOperationException(RuleMessages.NotChoiceStar.ToString());
             if (change.Kind == AllocationChangeKind.Purchase) hero.Talents[talent.Id] = rank + 1;
         }
 
@@ -619,12 +633,12 @@ namespace SodRpg.Core.Game
             var ids = new HashSet<string>(StringComparer.Ordinal);
             foreach (var rule in policy.PermanentDisables)
             {
-                if (rule == null) throw new InvalidOperationException("Missing permanent-disable rule.");
+                if (rule == null) throw new InvalidOperationException(RuleMessages.MissingDisableRule.ToString());
                 if (rule.KeystoneId != null && hero.Keystone != rule.KeystoneId) continue;
                 if (rule.EquippedUid != null && Array.IndexOf(hero.Equipped, rule.EquippedUid) < 0) continue;
                 foreach (string id in rule.StarIds)
                 {
-                    if (Talent(id) == null) throw new InvalidOperationException("Unknown permanently disabled star: " + id);
+                    if (Talent(id) == null) throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + id);
                     ids.Add(id);
                 }
                 if (!rule.Effect.HasValue && rule.Memory == null) continue;
@@ -765,7 +779,7 @@ namespace SodRpg.Core.Game
 
         private static void Refund(HeroState hero, TalentDef talent, string id, int ranks, SortedDictionary<string, AllocationRefund> refunds)
         {
-            if (talent == null) throw new InvalidOperationException("Cannot refund an unknown star's original cost: " + id);
+            if (talent == null) throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + id);
             if (talent.IsKeystone) hero.Keystone = null;
             else SetRank(hero, id, hero.Talents[id] - ranks);
             RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost : talent.RankCost)));
