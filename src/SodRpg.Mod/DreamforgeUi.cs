@@ -1758,6 +1758,9 @@ namespace SodRpg.Mod
         private readonly GUIContent _starSearchStatus = new GUIContent();
         private static readonly GUILayoutOption[] StarRowHeight = { GUILayout.Height(26) };
         private static readonly GUILayoutOption[] StarKeystoneWidth = { GUILayout.Width(96) };
+        private const int StarKeystonesPerRow = 5;
+        // Keystone hovered in the bar (repaint of the bar happens before the canvas), shown with the canvas tooltip.
+        private int _starKeystoneHover = -1;
         private GUIStyle _starRankStyle, _starTooltipStyle, _starNameStyle, _starSearchStyle;
         private static Texture2D _starDisc, _starSearchRing;
         private const float StarMinZoom = 0.15f, StarMaxZoom = 3f;
@@ -2211,6 +2214,7 @@ namespace SodRpg.Mod
             }
             finally { GUI.EndGroup(); }
             // Tooltips may extend above the viewport, so long effects remain readable.
+            if (hover < 0 && _starKeystoneHover >= 0 && e.type == EventType.Repaint) hover = _starKeystoneHover;
             if (hover >= 0 && !_starDragging)
             {
                 float width = Mathf.Min(440f, canvas.width - 12f);
@@ -2276,16 +2280,26 @@ namespace SodRpg.Mod
         private void DrawKeystoneBar(Profile p, string hero)
         {
             if (_starKeystones.Length == 0) return;
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("刻印（1つ）：", "Keystone (one):"), _st.Small, StarKeystoneWidth);
+            // v1.31: travelers have 8–10 keystones, so the bar wraps into rows instead of overflowing one line.
+            if (Event.current.type == EventType.Repaint) _starKeystoneHover = -1;
             for (int k = 0; k < _starKeystones.Length; k++)
             {
+                if (k % StarKeystonesPerRow == 0)
+                {
+                    if (k > 0) GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    if (k == 0) GUILayout.Label(Loc.T("刻印（1つ）：", "Keystone (one):"), _st.Small, StarKeystoneWidth);
+                    else GUILayout.Space(100);
+                }
                 int index = _starKeystones[k];
                 var t = _starLayout.Nodes[index].Talent;
                 var state = _starNodes[index];
                 bool chosen = state.Allocated;
                 bool unlocked = state.Unlocked;
-                if (GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight))
+                bool pressed = GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight);
+                if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                    _starKeystoneHover = index;
+                if (pressed)
                 {
                     StarJumpTo(index);
                     if (!chosen && unlocked && _s.CanEditTalents)
