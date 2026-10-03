@@ -150,7 +150,7 @@ namespace SodRpg.Core.Game
                     if (!stats.TryGetValue(t.Stat, out var line)) stats[t.Stat] = line = new StarSummaryLine();
                     line.StarIds.Add(star.Id);
                 }
-                else if (t.ScopedModifier != null || t.NativeModifier != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue)
+                else if (t.Mechanism != null || t.ScopedModifier != null || t.NativeModifier != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue)
                 {
                     var line = new StarSummaryLine
                     {
