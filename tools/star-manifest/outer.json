@@ -34,8 +34,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "防御+3",
-      "nameEn": "Armor +3",
+      "nameJa": "固い甲殻",
+      "nameEn": "Hard Carapace",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -70,8 +70,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "最大HP+2%",
-      "nameEn": "Max Health Pct +2",
+      "nameJa": "屈強な体躯",
+      "nameEn": "Sturdy Frame",
       "notes": ""
     },
     {
@@ -106,8 +106,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "行動妨害耐性+3%",
-      "nameEn": "Tenacity +3",
+      "nameJa": "揺るがぬ歩み",
+      "nameEn": "Unshaken Stride",
       "notes": ""
     },
     {
@@ -141,8 +141,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "障壁量+3%",
-      "nameEn": "Shield Power +3",
+      "nameJa": "厚い障壁",
+      "nameEn": "Thick Barrier",
       "notes": ""
     },
     {
@@ -174,8 +174,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプの再使用短縮+3%",
-      "nameEn": "Glacial Stomp haste +3%",
+      "nameJa": "絶えぬ地響き",
+      "nameEn": "Ceaseless Tremors",
       "notes": ""
     },
     {
@@ -217,8 +217,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプの命中時弱体",
-      "nameEn": "Glacial Stomp Sap on hit",
+      "nameJa": "地に伏す牙",
+      "nameEn": "Fangs to the Ground",
       "notes": ""
     },
     {
@@ -254,8 +254,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプの仕掛け強化+10%",
-      "nameEn": "Glacial Stomp gimmick boost +10%",
+      "nameJa": "深まる振動",
+      "nameEn": "Deepening Tremor",
       "notes": ""
     },
     {
@@ -291,8 +291,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプの持続+15%",
-      "nameEn": "Glacial Stomp Duration +15%",
+      "nameJa": "長く続く揺らぎ",
+      "nameEn": "Lasting Quake",
       "notes": ""
     },
     {
@@ -323,8 +323,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプのダメージ+4%",
-      "nameEn": "Glacial Stomp damage +4%",
+      "nameJa": "重い一踏み",
+      "nameEn": "Heavy Stomp",
       "notes": ""
     },
     {
@@ -363,8 +363,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷河ストンプの命中時防壁",
-      "nameEn": "Glacial Stomp Rampart on hit",
+      "nameJa": "踏み固めた壁",
+      "nameEn": "Packed-Down Wall",
       "notes": ""
     },
     {
@@ -396,8 +396,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の再使用短縮+3%",
-      "nameEn": "Flash Freeze haste +3%",
+      "nameJa": "絶えぬ凍気",
+      "nameEn": "Ceaseless Frost",
       "notes": ""
     },
     {
@@ -439,8 +439,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の命中時弱体",
-      "nameEn": "Flash Freeze Sap on hit",
+      "nameJa": "凍てつく牙",
+      "nameEn": "Frozen Fangs",
       "notes": ""
     },
     {
@@ -476,8 +476,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の仕掛け強化+10%",
-      "nameEn": "Flash Freeze gimmick boost +10%",
+      "nameJa": "深まる冷気",
+      "nameEn": "Deepening Chill",
       "notes": ""
     },
     {
@@ -513,8 +513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の持続+15%",
-      "nameEn": "Flash Freeze Duration +15%",
+      "nameJa": "長く続く寒気",
+      "nameEn": "Lasting Cold Snap",
       "notes": ""
     },
     {
@@ -545,8 +545,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結のダメージ+4%",
-      "nameEn": "Flash Freeze damage +4%",
+      "nameJa": "刺す冷気",
+      "nameEn": "Biting Cold",
       "notes": ""
     },
     {
@@ -585,8 +585,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の命中時防壁",
-      "nameEn": "Flash Freeze Rampart on hit",
+      "nameJa": "凍てつく壁",
+      "nameEn": "Frozen Wall",
       "notes": ""
     },
     {
@@ -620,8 +620,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "障壁破りの反撃+3",
-      "nameEn": "Shieldbreak Burst +3",
+      "nameJa": "割れた壁の返し",
+      "nameEn": "Broken Wall Riposte",
       "notes": ""
     },
     {
@@ -655,8 +655,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "不屈の心+2",
-      "nameEn": "Unbowed Mind +2",
+      "nameJa": "挫けぬ心",
+      "nameEn": "Heart That Won't Bow",
       "notes": ""
     },
     {
@@ -689,8 +689,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "先陣の誓い+5",
-      "nameEn": "Vanguards Oath +5",
+      "nameJa": "先陣の誓い",
+      "nameEn": "Vanguard's Oath",
       "notes": ""
     },
     {
@@ -729,8 +729,8 @@
             "perRank": 3
           },
           "stat": null,
-          "nameJa": "備えの構え+3",
-          "nameEn": "Ready Guard +3"
+          "nameJa": "初撃への備え",
+          "nameEn": "Ready for the First Blow"
         },
         {
           "kind": "Notable",
@@ -745,8 +745,8 @@
             "perRank": 6
           },
           "stat": null,
-          "nameJa": "堅牢+6",
-          "nameEn": "Bulwark +6"
+          "nameJa": "多勢を防ぐ壁",
+          "nameEn": "Bulwark Against the Pack"
         }
       ],
       "keystone": null,
@@ -755,8 +755,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "守りを返す輪の選択：備えの構え+3／堅牢+6",
-      "nameEn": "ward choice: Ready Guard +3 / Bulwark +6",
+      "nameJa": "備えの分かれ道",
+      "nameEn": "Crossroads of Readiness",
       "notes": ""
     },
     {
@@ -791,8 +791,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "回復量+3%",
-      "nameEn": "Heal Power +3",
+      "nameJa": "慈しみの心",
+      "nameEn": "Caring Heart",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -827,8 +827,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "障壁量+3%",
-      "nameEn": "Shield Power +3",
+      "nameJa": "手厚い加護",
+      "nameEn": "Generous Blessing",
       "notes": ""
     },
     {
@@ -863,8 +863,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "最大HP+2%",
-      "nameEn": "Max Health Pct +2",
+      "nameJa": "健やかな体",
+      "nameEn": "Sound Body",
       "notes": ""
     },
     {
@@ -899,8 +899,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "防御+3",
-      "nameEn": "Armor +3",
+      "nameJa": "癒しの胸当て",
+      "nameEn": "Mender's Guard",
       "notes": ""
     },
     {
@@ -932,8 +932,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線の再使用短縮+3%",
-      "nameEn": "Beam of Light haste +3%",
+      "nameJa": "絶えぬ光条",
+      "nameEn": "Unbroken Beam",
       "notes": ""
     },
     {
@@ -975,8 +975,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線の使用時回復",
-      "nameEn": "Beam of Light Heal on use",
+      "nameJa": "光に浴びる仲間",
+      "nameEn": "Allies in the Light",
       "notes": ""
     },
     {
@@ -1012,8 +1012,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線の仕掛け強化+10%",
-      "nameEn": "Beam of Light gimmick boost +10%",
+      "nameJa": "深まる光",
+      "nameEn": "Deepening Light",
       "notes": ""
     },
     {
@@ -1049,8 +1049,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線の範囲+15%",
-      "nameEn": "Beam of Light Radius +15%",
+      "nameJa": "広がる光の輪",
+      "nameEn": "Widening Halo",
       "notes": ""
     },
     {
@@ -1081,8 +1081,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線のダメージ+4%",
-      "nameEn": "Beam of Light damage +4%",
+      "nameJa": "灼く光線",
+      "nameEn": "Searing Beam",
       "notes": ""
     },
     {
@@ -1121,8 +1121,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光線の命中時弱体",
-      "nameEn": "Beam of Light Sap on hit",
+      "nameJa": "光に弱まる牙",
+      "nameEn": "Fangs Faded by Light",
       "notes": ""
     },
     {
@@ -1154,8 +1154,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄の再使用短縮+3%",
-      "nameEn": "Purgatory haste +3%",
+      "nameJa": "絶えぬ煉火",
+      "nameEn": "Unquenchable Pyre",
       "notes": ""
     },
     {
@@ -1197,8 +1197,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄の使用時回復",
-      "nameEn": "Purgatory Heal on use",
+      "nameJa": "煉獄に癒される者",
+      "nameEn": "Healed in the Pyre",
       "notes": ""
     },
     {
@@ -1234,8 +1234,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄の仕掛け強化+10%",
-      "nameEn": "Purgatory gimmick boost +10%",
+      "nameJa": "深まる煉火",
+      "nameEn": "Deepening Pyre",
       "notes": ""
     },
     {
@@ -1271,8 +1271,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄の範囲+15%",
-      "nameEn": "Purgatory Radius +15%",
+      "nameJa": "広がる煉火",
+      "nameEn": "Widening Pyre",
       "notes": ""
     },
     {
@@ -1303,8 +1303,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄のダメージ+4%",
-      "nameEn": "Purgatory damage +4%",
+      "nameJa": "焼き付ける煉獄",
+      "nameEn": "Scorching Purgatory",
       "notes": ""
     },
     {
@@ -1343,8 +1343,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "煉獄の命中時弱体",
-      "nameEn": "Purgatory Sap on hit",
+      "nameJa": "煉火に焼ける牙",
+      "nameEn": "Fangs Scorched by Fire",
       "notes": ""
     },
     {
@@ -1378,8 +1378,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "恩返し+5",
-      "nameEn": "Kindness Returns +5",
+      "nameJa": "施した恩の還り",
+      "nameEn": "Kindness Comes Back",
       "notes": ""
     },
     {
@@ -1413,8 +1413,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "分かち合う加護+8",
-      "nameEn": "Shared Ward +8",
+      "nameJa": "分け合う盾",
+      "nameEn": "The Shared Shield",
       "notes": ""
     },
     {
@@ -1447,8 +1447,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "立て直し+6",
-      "nameEn": "Second Wind +6",
+      "nameJa": "甦る息",
+      "nameEn": "Second Wind",
       "notes": ""
     },
     {
@@ -1487,8 +1487,8 @@
             "perRank": 5
           },
           "stat": null,
-          "nameJa": "見守る手+5",
-          "nameEn": "Watchful Hand +5"
+          "nameJa": "見守る手",
+          "nameEn": "Watchful Hand"
         },
         {
           "kind": "Notable",
@@ -1503,8 +1503,8 @@
             "perRank": 3
           },
           "stat": null,
-          "nameJa": "破片の恵み+3",
-          "nameEn": "Shard Boon +3"
+          "nameJa": "破片の恵み",
+          "nameEn": "Boon of Shards"
         }
       ],
       "keystone": null,
@@ -1513,8 +1513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "癒しの余白の選択：見守る手+5／破片の恵み+3",
-      "nameEn": "mending choice: Watchful Hand +5 / Shard Boon +3",
+      "nameJa": "慈悲の分かれ道",
+      "nameEn": "Crossroads of Mercy",
       "notes": ""
     },
     {
@@ -1549,8 +1549,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "召喚与ダメージ+3%",
-      "nameEn": "Summon Power +3",
+      "nameJa": "強い絆の牙",
+      "nameEn": "Fangs of the Bond",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -1585,8 +1585,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "魔力+2%",
-      "nameEn": "Power Pct +2",
+      "nameJa": "導く魔力",
+      "nameEn": "Guiding Magic",
       "notes": ""
     },
     {
@@ -1621,8 +1621,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "最大HP+2%",
-      "nameEn": "Max Health Pct +2",
+      "nameJa": "たくましい主従",
+      "nameEn": "Sturdy Master and Pack",
       "notes": ""
     },
     {
@@ -1657,8 +1657,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "回復量+3%",
-      "nameEn": "Heal Power +3",
+      "nameJa": "手当ての心得",
+      "nameEn": "Knack for First Aid",
       "notes": ""
     },
     {
@@ -1690,8 +1690,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の再使用短縮+3%",
-      "nameEn": "Small Molten Core haste +3%",
+      "nameJa": "絶えぬ炉の息",
+      "nameEn": "The Furnace Breathes",
       "notes": ""
     },
     {
@@ -1734,8 +1734,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の使用時加護",
-      "nameEn": "Small Molten Core Allied Ward on use",
+      "nameJa": "炉に集う獣",
+      "nameEn": "Beasts at the Furnace",
       "notes": ""
     },
     {
@@ -1771,8 +1771,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の仕掛け強化+10%",
-      "nameEn": "Small Molten Core gimmick boost +10%",
+      "nameJa": "高まる炉熱",
+      "nameEn": "Rising Furnace Heat",
       "notes": ""
     },
     {
@@ -1808,8 +1808,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の持続+20%",
-      "nameEn": "Small Molten Core Duration +20%",
+      "nameJa": "長く保つ炉の守り",
+      "nameEn": "Long Furnace Watch",
       "notes": ""
     },
     {
@@ -1843,8 +1843,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の対象数+1",
-      "nameEn": "Small Molten Core targets +1",
+      "nameJa": "増える獣の輪",
+      "nameEn": "Widening Pack Ring",
       "notes": ""
     },
     {
@@ -1883,8 +1883,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "小さな溶鉱炉の使用時召喚獣の手当て",
-      "nameEn": "Small Molten Core Pack Mend on use",
+      "nameJa": "獣たちの手当て",
+      "nameEn": "Tending the Pack",
       "notes": ""
     },
     {
@@ -1916,8 +1916,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の再使用短縮+3%",
-      "nameEn": "Sparkling Water Gun haste +3%",
+      "nameJa": "絶えぬ水遊び",
+      "nameEn": "Unbroken Water Play",
       "notes": ""
     },
     {
@@ -1960,8 +1960,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の使用時加護",
-      "nameEn": "Sparkling Water Gun Allied Ward on use",
+      "nameJa": "潮に濡れる獣",
+      "nameEn": "Beasts in the Spray",
       "notes": ""
     },
     {
@@ -1997,8 +1997,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の仕掛け強化+10%",
-      "nameEn": "Sparkling Water Gun gimmick boost +10%",
+      "nameJa": "跳ねる水飛沫",
+      "nameEn": "Leaping Spray",
       "notes": ""
     },
     {
@@ -2034,8 +2034,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の範囲+20%",
-      "nameEn": "Sparkling Water Gun Radius +20%",
+      "nameJa": "広がる水しぶき",
+      "nameEn": "Widening Spray",
       "notes": ""
     },
     {
@@ -2069,8 +2069,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の対象数+1",
-      "nameEn": "Sparkling Water Gun targets +1",
+      "nameJa": "増える水の輪",
+      "nameEn": "Widening Water Ring",
       "notes": ""
     },
     {
@@ -2109,8 +2109,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の使用時召喚獣の手当て",
-      "nameEn": "Sparkling Water Gun Pack Mend on use",
+      "nameJa": "清められた獣",
+      "nameEn": "Cleansed Pack",
       "notes": ""
     },
     {
@@ -2144,8 +2144,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの祝宴+2",
-      "nameEn": "Pack Feast +2",
+      "nameJa": "獲物を分け合う夜",
+      "nameEn": "Night of Shared Prey",
       "notes": ""
     },
     {
@@ -2179,8 +2179,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "散り際の花+20",
-      "nameEn": "Death Bloom +20",
+      "nameJa": "散り際の花",
+      "nameEn": "Death Bloom",
       "notes": ""
     },
     {
@@ -2219,8 +2219,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ピリッとする水鉄砲の使用時加護",
-      "nameEn": "Sparkling Water Gun Allied Ward on use",
+      "nameJa": "旅人にも飛ぶ水",
+      "nameEn": "Spray That Reaches All",
       "notes": ""
     },
     {
@@ -2259,8 +2259,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "小さな溶鉱炉の範囲+20%",
-          "nameEn": "Small Molten Core Radius +20%"
+          "nameJa": "広がる炉の見張り",
+          "nameEn": "Widening Furnace Watch"
         },
         {
           "kind": "GimmickParam",
@@ -2275,8 +2275,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "ピリッとする水鉄砲の持続+20%",
-          "nameEn": "Sparkling Water Gun Duration +20%"
+          "nameJa": "長く続く水の加護",
+          "nameEn": "Long Water Blessing"
         }
       ],
       "keystone": null,
@@ -2286,8 +2286,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "召喚獣の休息の選択：小さな溶鉱炉の範囲+20%／ピリッとする水鉄砲の持続+20%",
-      "nameEn": "summons choice: Small Molten Core Radius +20% / Sparkling Water Gun Duration +20%",
+      "nameJa": "世話の分かれ道",
+      "nameEn": "Crossroads of Care",
       "notes": ""
     },
     {
@@ -2322,8 +2322,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "火効果+3%",
-      "nameEn": "Fire Amp +3",
+      "nameJa": "募る熱",
+      "nameEn": "Gathering Heat",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -2358,8 +2358,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "冷気効果+3%",
-      "nameEn": "Cold Amp +3",
+      "nameJa": "冴える霜",
+      "nameEn": "Sharp Frost",
       "notes": ""
     },
     {
@@ -2394,8 +2394,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "防御+3",
-      "nameEn": "Armor +3",
+      "nameJa": "蒸気の鎧",
+      "nameEn": "Steamplate",
       "notes": ""
     },
     {
@@ -2430,8 +2430,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "魔力+2%",
-      "nameEn": "Power Pct +2",
+      "nameJa": "湯気の魔力",
+      "nameEn": "Vapor Magic",
       "notes": ""
     },
     {
@@ -2463,8 +2463,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲の再使用短縮+3%",
-      "nameEn": "Pew haste +3%",
+      "nameJa": "絶えぬ発砲",
+      "nameEn": "Ceaseless Shots",
       "notes": ""
     },
     {
@@ -2506,8 +2506,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲の命中時冷気の付与",
-      "nameEn": "Pew Cold application on hit",
+      "nameJa": "弾丸に纏う霜",
+      "nameEn": "Frost on the Bullet",
       "notes": ""
     },
     {
@@ -2543,8 +2543,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲の仕掛け強化+10%",
-      "nameEn": "Pew gimmick boost +10%",
+      "nameJa": "深まる銃熱",
+      "nameEn": "Deepening Gun Heat",
       "notes": ""
     },
     {
@@ -2580,8 +2580,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲の確率+5ポイント",
-      "nameEn": "Pew chance +5 pts",
+      "nameJa": "霜の確かさ",
+      "nameEn": "Frost Certainty",
       "notes": ""
     },
     {
@@ -2612,8 +2612,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲のダメージ+4%",
-      "nameEn": "Pew damage +4%",
+      "nameJa": "熱い弾道",
+      "nameEn": "Hot Trajectory",
       "notes": ""
     },
     {
@@ -2652,8 +2652,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "発砲の撃破時余波",
-      "nameEn": "Pew Burst on kill",
+      "nameJa": "果てに弾ける湯気",
+      "nameEn": "Vapor Burst at Death",
       "notes": ""
     },
     {
@@ -2685,8 +2685,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の再使用短縮+3%",
-      "nameEn": "Flash Freeze haste +3%",
+      "nameJa": "絶えぬ凍結",
+      "nameEn": "Unending Freeze",
       "notes": ""
     },
     {
@@ -2728,8 +2728,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の命中時火の付与",
-      "nameEn": "Flash Freeze Fire application on hit",
+      "nameJa": "氷に灯る火",
+      "nameEn": "Fire Lit on Ice",
       "notes": ""
     },
     {
@@ -2765,8 +2765,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の仕掛け強化+10%",
-      "nameEn": "Flash Freeze gimmick boost +10%",
+      "nameJa": "高まる冷熱",
+      "nameEn": "Rising Frostfire",
       "notes": ""
     },
     {
@@ -2802,8 +2802,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の確率+10ポイント",
-      "nameEn": "Flash Freeze chance +10 pts",
+      "nameJa": "火の燃え移り",
+      "nameEn": "Catching Fire",
       "notes": ""
     },
     {
@@ -2834,8 +2834,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結のダメージ+4%",
-      "nameEn": "Flash Freeze damage +4%",
+      "nameJa": "凍てつく衝撃",
+      "nameEn": "Freezing Impact",
       "notes": ""
     },
     {
@@ -2874,8 +2874,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の撃破時余波",
-      "nameEn": "Flash Freeze Burst on kill",
+      "nameJa": "果てに溢れる湯",
+      "nameEn": "Boil-Over at Death",
       "notes": ""
     },
     {
@@ -2909,8 +2909,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蒸気+25",
-      "nameEn": "Steam +25",
+      "nameJa": "湯けむりの爆風",
+      "nameEn": "Scalding Blast",
       "notes": ""
     },
     {
@@ -2944,8 +2944,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "足枷+4",
-      "nameEn": "Fetters +4",
+      "nameJa": "重い足枷",
+      "nameEn": "Heavy Fetters",
       "notes": ""
     },
     {
@@ -2978,8 +2978,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "属性の収穫+6",
-      "nameEn": "Elemental Harvest +6",
+      "nameJa": "二色の収穫",
+      "nameEn": "Two-Hued Harvest",
       "notes": ""
     },
     {
@@ -3018,8 +3018,8 @@
             "perRank": 15
           },
           "stat": null,
-          "nameJa": "蒸気+15",
-          "nameEn": "Steam +15"
+          "nameJa": "湯気の猛り",
+          "nameEn": "Fury of the Vapor"
         },
         {
           "kind": "Notable",
@@ -3038,8 +3038,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": "発砲の命中時弱体",
-          "nameEn": "Pew Sap on hit"
+          "nameJa": "弾に怯む敵",
+          "nameEn": "Foes Cowed by Shots"
         }
       ],
       "keystone": null,
@@ -3049,8 +3049,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蒸気の交点の選択：蒸気+15／発砲の命中時弱体",
-      "nameEn": "steam choice: Steam +15 / Pew Sap on hit",
+      "nameJa": "蒸気の分かれ道",
+      "nameEn": "Crossroads of Steam",
       "notes": ""
     },
     {
@@ -3085,8 +3085,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光効果+3%",
-      "nameEn": "Light Amp +3",
+      "nameJa": "満ちる星光",
+      "nameEn": "Waxing Starlight",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -3121,8 +3121,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇効果+3%",
-      "nameEn": "Dark Amp +3",
+      "nameJa": "深まる宵闇",
+      "nameEn": "Deepening Dusk",
       "notes": ""
     },
     {
@@ -3157,8 +3157,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "攻撃力+2%",
-      "nameEn": "Attack Pct +2",
+      "nameJa": "天を射る腕",
+      "nameEn": "Sky-Piercing Arm",
       "notes": ""
     },
     {
@@ -3193,8 +3193,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "魔力+2%",
-      "nameEn": "Power Pct +2",
+      "nameJa": "星影の魔力",
+      "nameEn": "Starshadow Magic",
       "notes": ""
     },
     {
@@ -3226,8 +3226,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星の再使用短縮+3%",
-      "nameEn": "Starfall haste +3%",
+      "nameJa": "絶えぬ流星",
+      "nameEn": "Unbroken Starfall",
       "notes": ""
     },
     {
@@ -3269,8 +3269,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星の命中時闇の付与",
-      "nameEn": "Starfall Dark application on hit",
+      "nameJa": "星に混じる闇",
+      "nameEn": "Dark Mingled With Stars",
       "notes": ""
     },
     {
@@ -3306,8 +3306,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星の仕掛け強化+10%",
-      "nameEn": "Starfall gimmick boost +10%",
+      "nameJa": "深まる流星雨",
+      "nameEn": "Deepening Star Rain",
       "notes": ""
     },
     {
@@ -3343,8 +3343,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星の確率+5ポイント",
-      "nameEn": "Starfall chance +5 pts",
+      "nameJa": "闇の巡り",
+      "nameEn": "Night's Round",
       "notes": ""
     },
     {
@@ -3375,8 +3375,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星のダメージ+4%",
-      "nameEn": "Starfall damage +4%",
+      "nameJa": "墜ちる星の重み",
+      "nameEn": "Weight of Falling Stars",
       "notes": ""
     },
     {
@@ -3415,8 +3415,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "流星の命中時傷痕",
-      "nameEn": "Starfall Wound on hit",
+      "nameJa": "星に抉られた傷",
+      "nameEn": "Star-Gouged Wound",
       "notes": ""
     },
     {
@@ -3448,8 +3448,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の再使用短縮+3%",
-      "nameEn": "Dark Bolt haste +3%",
+      "nameJa": "絶えぬ闇矢",
+      "nameEn": "Unbroken Dark Bolts",
       "notes": ""
     },
     {
@@ -3491,8 +3491,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の命中時光の付与",
-      "nameEn": "Dark Bolt Light application on hit",
+      "nameJa": "闇に差す光",
+      "nameEn": "Light Piercing the Dark",
       "notes": ""
     },
     {
@@ -3528,8 +3528,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の仕掛け強化+10%",
-      "nameEn": "Dark Bolt gimmick boost +10%",
+      "nameJa": "深まる闇の矢",
+      "nameEn": "Deepening Dark Bolt",
       "notes": ""
     },
     {
@@ -3565,8 +3565,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の確率+5ポイント",
-      "nameEn": "Dark Bolt chance +5 pts",
+      "nameJa": "光の兆し",
+      "nameEn": "Sign of Light",
       "notes": ""
     },
     {
@@ -3597,8 +3597,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢のダメージ+4%",
-      "nameEn": "Dark Bolt damage +4%",
+      "nameJa": "昏い矢筋",
+      "nameEn": "Darkened Shaft",
       "notes": ""
     },
     {
@@ -3637,8 +3637,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の命中時傷痕",
-      "nameEn": "Dark Bolt Wound on hit",
+      "nameJa": "闇に刻まれた傷",
+      "nameEn": "Dark-Carved Wound",
       "notes": ""
     },
     {
@@ -3672,8 +3672,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蝕+5",
-      "nameEn": "Eclipse +5",
+      "nameJa": "重なる日と月",
+      "nameEn": "Sun and Moon Align",
       "notes": ""
     },
     {
@@ -3707,8 +3707,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の継承+20",
-      "nameEn": "Umbral Heritage +20",
+      "nameJa": "闇の継承",
+      "nameEn": "Umbral Heritage",
       "notes": ""
     },
     {
@@ -3741,8 +3741,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "星屑の循環+3",
-      "nameEn": "Stardust Cycle +3",
+      "nameJa": "星屑は巡る",
+      "nameEn": "Stardust Goes Round",
       "notes": ""
     },
     {
@@ -3781,8 +3781,8 @@
             "perRank": 3
           },
           "stat": null,
-          "nameJa": "蝕+3",
-          "nameEn": "Eclipse +3"
+          "nameJa": "蝕の深まり",
+          "nameEn": "Deepening Eclipse"
         },
         {
           "kind": "GimmickParam",
@@ -3797,8 +3797,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "流星の持続+20%",
-          "nameEn": "Starfall Duration +20%"
+          "nameJa": "長く降る流星",
+          "nameEn": "Long Starfall"
         }
       ],
       "keystone": null,
@@ -3808,8 +3808,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蝕の交点の選択：蝕+3／流星の持続+20%",
-      "nameEn": "eclipse choice: Eclipse +3 / Starfall Duration +20%",
+      "nameJa": "蝕の分かれ道",
+      "nameEn": "Crossroads of the Eclipse",
       "notes": ""
     },
     {
@@ -3844,8 +3844,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "火効果+3%",
-      "nameEn": "Fire Amp +3",
+      "nameJa": "残り火の熱",
+      "nameEn": "Ember Heat",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -3880,8 +3880,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "冷気効果+3%",
-      "nameEn": "Cold Amp +3",
+      "nameJa": "氷晶の輝き",
+      "nameEn": "Rime Shine",
       "notes": ""
     },
     {
@@ -3916,8 +3916,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "光効果+3%",
-      "nameEn": "Light Amp +3",
+      "nameJa": "雪明かり",
+      "nameEn": "Snow Light",
       "notes": ""
     },
     {
@@ -3952,8 +3952,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇効果+3%",
-      "nameEn": "Dark Amp +3",
+      "nameJa": "灰の翳り",
+      "nameEn": "Ashen Shade",
       "notes": ""
     },
     {
@@ -3985,8 +3985,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の再使用短縮+3%",
-      "nameEn": "Dark Bolt haste +3%",
+      "nameJa": "絶えぬ闇の矢",
+      "nameEn": "Unending Dark Bolt",
       "notes": ""
     },
     {
@@ -4028,8 +4028,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の命中時火の付与",
-      "nameEn": "Dark Bolt Fire application on hit",
+      "nameJa": "闇から燃え移る火",
+      "nameEn": "Fire Caught From Dark",
       "notes": ""
     },
     {
@@ -4065,8 +4065,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の仕掛け強化+10%",
-      "nameEn": "Dark Bolt gimmick boost +10%",
+      "nameJa": "深まる闇火",
+      "nameEn": "Deepening Darkfire",
       "notes": ""
     },
     {
@@ -4102,8 +4102,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の確率+10ポイント",
-      "nameEn": "Dark Bolt chance +10 pts",
+      "nameJa": "燃え移る兆し",
+      "nameEn": "Sign of Catching",
       "notes": ""
     },
     {
@@ -4134,8 +4134,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢のダメージ+4%",
-      "nameEn": "Dark Bolt damage +4%",
+      "nameJa": "灰を撒く矢",
+      "nameEn": "Ash-Scattering Bolt",
       "notes": ""
     },
     {
@@ -4174,8 +4174,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の矢の命中時追撃",
-      "nameEn": "Dark Bolt Echo on hit",
+      "nameJa": "遅れて響く闇",
+      "nameEn": "Late-Echoing Dark",
       "notes": ""
     },
     {
@@ -4207,8 +4207,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の再使用短縮+3%",
-      "nameEn": "Flash Freeze haste +3%",
+      "nameJa": "絶えぬ氷結",
+      "nameEn": "Unending Icebound",
       "notes": ""
     },
     {
@@ -4250,8 +4250,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の命中時光の付与",
-      "nameEn": "Flash Freeze Light application on hit",
+      "nameJa": "氷に宿る光",
+      "nameEn": "Light Dwelling in Ice",
       "notes": ""
     },
     {
@@ -4287,8 +4287,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の仕掛け強化+10%",
-      "nameEn": "Flash Freeze gimmick boost +10%",
+      "nameJa": "深まる氷晶",
+      "nameEn": "Deepening Rime",
       "notes": ""
     },
     {
@@ -4324,8 +4324,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の確率+5ポイント",
-      "nameEn": "Flash Freeze chance +5 pts",
+      "nameJa": "光の宿り",
+      "nameEn": "Where Light Lodges",
       "notes": ""
     },
     {
@@ -4356,8 +4356,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結のダメージ+4%",
-      "nameEn": "Flash Freeze damage +4%",
+      "nameJa": "凍える寒波",
+      "nameEn": "Freezing Cold Wave",
       "notes": ""
     },
     {
@@ -4397,8 +4397,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "急速凍結の使用時障壁",
-      "nameEn": "Flash Freeze Shield on use",
+      "nameJa": "凍てつく外殻",
+      "nameEn": "Rime Carapace",
       "notes": ""
     },
     {
@@ -4432,8 +4432,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "燃え殻+1",
-      "nameEn": "Cinder +1",
+      "nameJa": "果てに残る燃え殻",
+      "nameEn": "Cinders of the Fallen",
       "notes": ""
     },
     {
@@ -4467,8 +4467,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "氷晶+3",
-      "nameEn": "Frost Crystal +3",
+      "nameJa": "光と霜の氷晶",
+      "nameEn": "Crystal of Light and Frost",
       "notes": ""
     },
     {
@@ -4501,8 +4501,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "分かち合う加護+6",
-      "nameEn": "Shared Ward +6",
+      "nameJa": "分け合う氷の盾",
+      "nameEn": "Shared Rime Shield",
       "notes": ""
     },
     {
@@ -4541,8 +4541,8 @@
             "perRank": 8
           },
           "stat": null,
-          "nameJa": "属性の収穫+8",
-          "nameEn": "Elemental Harvest +8"
+          "nameJa": "灰を刈り取る",
+          "nameEn": "Reaping the Ash"
         },
         {
           "kind": "Notable",
@@ -4557,8 +4557,8 @@
             "perRank": 2
           },
           "stat": null,
-          "nameJa": "氷晶+2",
-          "nameEn": "Frost Crystal +2"
+          "nameJa": "厚く茂る氷晶",
+          "nameEn": "Thickening Crystal"
         }
       ],
       "keystone": null,
@@ -4567,8 +4567,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "燃え殻と氷晶の選択：属性の収穫+8／氷晶+2",
-      "nameEn": "cinder-rime choice: Elemental Harvest +8 / Frost Crystal +2",
+      "nameJa": "灰霜の分かれ道",
+      "nameEn": "Crossroads of Ash and Frost",
       "notes": ""
     },
     {
@@ -4603,8 +4603,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "回復量+3%",
-      "nameEn": "Heal Power +3",
+      "nameJa": "手当ての心",
+      "nameEn": "Healer's Heart",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -4639,8 +4639,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "障壁量+3%",
-      "nameEn": "Shield Power +3",
+      "nameJa": "庇いの盾",
+      "nameEn": "Sheltering Shield",
       "notes": ""
     },
     {
@@ -4675,8 +4675,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "行動妨害耐性+3%",
-      "nameEn": "Tenacity +3",
+      "nameJa": "耐え抜く意志",
+      "nameEn": "Will to Endure",
       "notes": ""
     },
     {
@@ -4711,8 +4711,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "最大HP+2%",
-      "nameEn": "Max Health Pct +2",
+      "nameJa": "支え合う体",
+      "nameEn": "Mutual Frame",
       "notes": ""
     },
     {
@@ -4744,8 +4744,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの再使用短縮+3%",
-      "nameEn": "Mass Protection haste +3%",
+      "nameJa": "絶えぬ防壁",
+      "nameEn": "Unbroken Aegis",
       "notes": ""
     },
     {
@@ -4788,8 +4788,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの使用時加護",
-      "nameEn": "Mass Protection Allied Ward on use",
+      "nameJa": "広がる庇い",
+      "nameEn": "Spreading Shelter",
       "notes": ""
     },
     {
@@ -4825,8 +4825,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの仕掛け強化+10%",
-      "nameEn": "Mass Protection gimmick boost +10%",
+      "nameJa": "深まる加護",
+      "nameEn": "Deepening Blessing",
       "notes": ""
     },
     {
@@ -4862,8 +4862,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの持続+20%",
-      "nameEn": "Mass Protection Duration +20%",
+      "nameJa": "長く保つ防壁",
+      "nameEn": "Long-Lasting Aegis",
       "notes": ""
     },
     {
@@ -4897,8 +4897,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの範囲+20%",
-      "nameEn": "Mass Protection Radius +20%",
+      "nameJa": "届く庇いの輪",
+      "nameEn": "Shelter's Widening Ring",
       "notes": ""
     },
     {
@@ -4933,8 +4933,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "範囲シールドの対象数+1",
-      "nameEn": "Mass Protection targets +1",
+      "nameJa": "増える庇う手",
+      "nameEn": "More Helping Hands",
       "notes": ""
     },
     {
@@ -4966,8 +4966,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の再使用短縮+3%",
-      "nameEn": "Mass Cleanse haste +3%",
+      "nameJa": "絶えぬ浄化",
+      "nameEn": "Unbroken Cleansing",
       "notes": ""
     },
     {
@@ -5010,8 +5010,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の使用時加護",
-      "nameEn": "Mass Cleanse Allied Ward on use",
+      "nameJa": "清めと加護",
+      "nameEn": "Cleansing Blessing",
       "notes": ""
     },
     {
@@ -5047,8 +5047,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の仕掛け強化+10%",
-      "nameEn": "Mass Cleanse gimmick boost +10%",
+      "nameJa": "深まる浄め",
+      "nameEn": "Deepening Purity",
       "notes": ""
     },
     {
@@ -5084,8 +5084,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の持続+20%",
-      "nameEn": "Mass Cleanse Duration +20%",
+      "nameJa": "長く続く浄化",
+      "nameEn": "Long-Lasting Purity",
       "notes": ""
     },
     {
@@ -5119,8 +5119,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の範囲+20%",
-      "nameEn": "Mass Cleanse Radius +20%",
+      "nameJa": "広がる浄めの輪",
+      "nameEn": "Widening Pure Ring",
       "notes": ""
     },
     {
@@ -5155,8 +5155,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "大規模浄化の対象数+1",
-      "nameEn": "Mass Cleanse targets +1",
+      "nameJa": "増える清めの手",
+      "nameEn": "More Cleansing Hands",
       "notes": ""
     },
     {
@@ -5190,8 +5190,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "分かち合う加護+8",
-      "nameEn": "Shared Ward +8",
+      "nameJa": "分かち合う城壁",
+      "nameEn": "The Shared Rampart",
       "notes": ""
     },
     {
@@ -5225,8 +5225,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "見守る手+5",
-      "nameEn": "Watchful Hand +5",
+      "nameJa": "危機を察する手",
+      "nameEn": "Hand That Watches",
       "notes": ""
     },
     {
@@ -5259,8 +5259,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "恩返し+5",
-      "nameEn": "Kindness Returns +5",
+      "nameJa": "善意の還流",
+      "nameEn": "Goodness Returns",
       "notes": ""
     },
     {
@@ -5299,8 +5299,8 @@
             "perRank": 5
           },
           "stat": null,
-          "nameJa": "先陣の誓い+5",
-          "nameEn": "Vanguards Oath +5"
+          "nameJa": "先陣に立つ誓い",
+          "nameEn": "Oath of the Vanguard"
         },
         {
           "kind": "Notable",
@@ -5315,8 +5315,8 @@
             "perRank": 3
           },
           "stat": null,
-          "nameJa": "殿の流儀+3",
-          "nameEn": "Rearguards Way +3"
+          "nameJa": "殿を守る流儀",
+          "nameEn": "Way of the Rearguard"
         }
       ],
       "keystone": null,
@@ -5325,8 +5325,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "隣へ届く手の選択：先陣の誓い+5／殿の流儀+3",
-      "nameEn": "support choice: Vanguards Oath +5 / Rearguards Way +3",
+      "nameJa": "陣形の分かれ道",
+      "nameEn": "Crossroads of Formation",
       "notes": ""
     },
     {
@@ -5361,8 +5361,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "最大HP+2%",
-      "nameEn": "Max Health Pct +2",
+      "nameJa": "夢に耐える体",
+      "nameEn": "Dream-Bearing Body",
       "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
     },
     {
@@ -5396,8 +5396,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "防御+3",
-      "nameEn": "Armor +3",
+      "nameJa": "夜の外套",
+      "nameEn": "Night Coat",
       "notes": "設計表の「外周同士は s2–次星団s4」は最後の星団（dream）の次を定義しない。環状に戻すかは要確認で、wrap辺は書いていない。"
     },
     {
@@ -5432,8 +5432,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "攻撃力+2%",
-      "nameEn": "Attack Pct +2",
+      "nameJa": "拾う者の腕",
+      "nameEn": "Gleaner's Arm",
       "notes": ""
     },
     {
@@ -5468,8 +5468,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "魔力+2%",
-      "nameEn": "Power Pct +2",
+      "nameJa": "醒めぬ魔力",
+      "nameEn": "Unwaking Magic",
       "notes": ""
     },
     {
@@ -5501,8 +5501,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストの再使用短縮+3%",
-      "nameEn": "Coin Explosion haste +3%",
+      "nameJa": "絶えぬ散財",
+      "nameEn": "Unbroken Spending",
       "notes": ""
     },
     {
@@ -5545,8 +5545,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストの撃破時夢圧の取り分",
-      "nameEn": "Coin Explosion Pressure Dividend on kill",
+      "nameJa": "夢の取り分",
+      "nameEn": "Share of the Dream",
       "notes": ""
     },
     {
@@ -5582,8 +5582,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストの仕掛け強化+10%",
-      "nameEn": "Coin Explosion gimmick boost +10%",
+      "nameJa": "高まる金運",
+      "nameEn": "Rising Fortune",
       "notes": ""
     },
     {
@@ -5619,8 +5619,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストの確率+5ポイント",
-      "nameEn": "Coin Explosion chance +5 pts",
+      "nameJa": "当たりやすさ",
+      "nameEn": "Easier Windfall",
       "notes": ""
     },
     {
@@ -5651,8 +5651,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストのダメージ+4%",
-      "nameEn": "Coin Explosion damage +4%",
+      "nameJa": "弾ける硬貨",
+      "nameEn": "Bursting Coins",
       "notes": ""
     },
     {
@@ -5691,8 +5691,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "コインバーストの命中時追撃",
-      "nameEn": "Coin Explosion Echo on hit",
+      "nameJa": "転がる追い銭",
+      "nameEn": "Rolling Change",
       "notes": ""
     },
     {
@@ -5724,8 +5724,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮のダメージ+3%",
-      "nameEn": "Shout of Oblivion damage +3%",
+      "nameJa": "轟く咆哮",
+      "nameEn": "Roaring Shout",
       "notes": ""
     },
     {
@@ -5768,8 +5768,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮の撃破時夢圧の取り分",
-      "nameEn": "Shout of Oblivion Pressure Dividend on kill",
+      "nameJa": "忘れられた取り分",
+      "nameEn": "Forgotten Share",
       "notes": ""
     },
     {
@@ -5805,8 +5805,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮の仕掛け強化+10%",
-      "nameEn": "Shout of Oblivion gimmick boost +10%",
+      "nameJa": "満ちる虚無",
+      "nameEn": "Filling Void",
       "notes": ""
     },
     {
@@ -5842,8 +5842,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮の確率+5ポイント",
-      "nameEn": "Shout of Oblivion chance +5 pts",
+      "nameJa": "巡り合わせ",
+      "nameEn": "Stroke of Luck",
       "notes": ""
     },
     {
@@ -5874,8 +5874,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮のダメージ+4%",
-      "nameEn": "Shout of Oblivion damage +4%",
+      "nameJa": "記憶を削る声",
+      "nameEn": "Voice That Whittles",
       "notes": ""
     },
     {
@@ -5915,8 +5915,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "忘却の咆哮の使用時障壁",
-      "nameEn": "Shout of Oblivion Shield on use",
+      "nameJa": "咆哮の残響鎧",
+      "nameEn": "Echo Mail of the Roar",
       "notes": ""
     },
     {
@@ -5950,8 +5950,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢の予兆+8",
-      "nameEn": "Dream Omen +8",
+      "nameJa": "夢の予兆",
+      "nameEn": "Dream Omen",
       "notes": ""
     },
     {
@@ -5985,8 +5985,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "破片の恵み+3",
-      "nameEn": "Shard Boon +3",
+      "nameJa": "破片の恵み",
+      "nameEn": "Shard Boon",
       "notes": ""
     },
     {
@@ -6019,8 +6019,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "浪費の加護+2",
-      "nameEn": "Spenders Ward +2",
+      "nameJa": "散財の護り",
+      "nameEn": "Spender's Ward",
       "notes": ""
     },
     {
@@ -6059,8 +6059,8 @@
             "perRank": 1
           },
           "stat": null,
-          "nameJa": "明晰夢の恩恵+1",
-          "nameEn": "Lucid Boon +1"
+          "nameJa": "明晰夢の恵み",
+          "nameEn": "Lucid Dream Boon"
         },
         {
           "kind": "Notable",
@@ -6075,8 +6075,8 @@
             "perRank": 1
           },
           "stat": null,
-          "nameJa": "獲物の誇り+1",
-          "nameEn": "Prey Pride +1"
+          "nameJa": "狩人の誇り",
+          "nameEn": "Hunter's Pride"
         }
       ],
       "keystone": null,
@@ -6085,8 +6085,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "深い夢の取り分の選択：明晰夢の恩恵+1／獲物の誇り+1",
-      "nameEn": "dream choice: Lucid Boon +1 / Prey Pride +1",
+      "nameJa": "取り分の分かれ道",
+      "nameEn": "Crossroads of the Share",
       "notes": ""
     }
   ]

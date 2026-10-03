@@ -31,8 +31,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 I",
-      "nameEn": "Prismatic Vision Power I",
+      "nameJa": "鋭い頁の刃",
+      "nameEn": "Sharp Page Blades",
       "notes": ""
     },
     {
@@ -69,8 +69,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision Gimmick Boost I",
+      "nameJa": "読書の研鑽",
+      "nameEn": "Reading Discipline",
       "notes": ""
     },
     {
@@ -103,8 +103,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 II",
-      "nameEn": "Prismatic Vision Power II",
+      "nameJa": "重く割る頁撃ち",
+      "nameEn": "Heavy Page Blows",
       "notes": ""
     },
     {
@@ -140,8 +140,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision Gimmick Boost II",
+      "nameJa": "頁のめくりの技",
+      "nameEn": "Art of Page-Turning",
       "notes": ""
     },
     {
@@ -174,8 +174,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 III",
-      "nameEn": "Prismatic Vision Power III",
+      "nameJa": "冴えわたる読撃",
+      "nameEn": "Keen Reading Strikes",
       "notes": ""
     },
     {
@@ -212,8 +212,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision Gimmick Boost III",
+      "nameJa": "深読みの極意",
+      "nameEn": "Secrets of Deep Reading",
       "notes": ""
     },
     {
@@ -254,8 +254,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時残響",
-      "nameEn": "Prismatic Vision: On Hit Echo",
+      "nameJa": "読み直しの余韻",
+      "nameEn": "Echo of Rereading",
       "notes": ""
     },
     {
@@ -296,8 +296,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時傷",
-      "nameEn": "Prismatic Vision: On Hit Wound",
+      "nameJa": "頁の縁の傷",
+      "nameEn": "Wounds on Page Edges",
       "notes": ""
     },
     {
@@ -334,8 +334,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision Gimmick Boost IV",
+      "nameJa": "本の世界の深み",
+      "nameEn": "Depths of the Book-World",
       "notes": ""
     },
     {
@@ -368,8 +368,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 IV",
-      "nameEn": "Prismatic Vision Power IV",
+      "nameJa": "彩に染まる一撃",
+      "nameEn": "Hue-Stained Blows",
       "notes": ""
     },
     {
@@ -406,8 +406,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 V",
-      "nameEn": "Prismatic Vision Gimmick Boost V",
+      "nameJa": "彩の読解力",
+      "nameEn": "Hue Comprehension",
       "notes": ""
     },
     {
@@ -440,8 +440,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 V",
-      "nameEn": "Prismatic Vision Power V",
+      "nameJa": "本の重みの一撃",
+      "nameEn": "Blows of the Book’s Weight",
       "notes": ""
     },
     {
@@ -478,8 +478,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VI",
-      "nameEn": "Prismatic Vision Gimmick Boost VI",
+      "nameJa": "早業のめくり",
+      "nameEn": "Quick Page Turns",
       "notes": ""
     },
     {
@@ -512,8 +512,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 VI",
-      "nameEn": "Prismatic Vision Power VI",
+      "nameJa": "研ぎ澄まされた頁",
+      "nameEn": "Whetted Pages",
       "notes": ""
     },
     {
@@ -550,8 +550,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VII",
-      "nameEn": "Prismatic Vision Gimmick Boost VII",
+      "nameJa": "栞の巧み",
+      "nameEn": "Clever Bookmarks",
       "notes": ""
     },
     {
@@ -584,8 +584,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 VII",
-      "nameEn": "Prismatic Vision Power VII",
+      "nameJa": "鋭角の読み下ろし",
+      "nameEn": "Angular Read-Through",
       "notes": ""
     },
     {
@@ -623,8 +623,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭く読む",
+          "nameEn": "Reading Keenly"
         },
         {
           "kind": "GimmickBoost",
@@ -639,8 +639,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く読む",
+          "nameEn": "Reading Deeply"
         }
       ],
       "keystone": null,
@@ -650,8 +650,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の分岐",
-      "nameEn": "Prismatic Vision Branch",
+      "nameJa": "鋭さか深さか",
+      "nameEn": "Keen or Deep",
       "notes": ""
     },
     {
@@ -683,8 +683,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 I",
-      "nameEn": "Prismatic Vision Power I",
+      "nameJa": "頁嵐の切っ先",
+      "nameEn": "Edge of the Page Storm",
       "notes": ""
     },
     {
@@ -721,8 +721,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision Gimmick Boost I",
+      "nameJa": "頁の滑りの良さ",
+      "nameEn": "Smooth-Running Pages",
       "notes": ""
     },
     {
@@ -755,8 +755,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 II",
-      "nameEn": "Prismatic Vision Power II",
+      "nameJa": "鋭い頁の刃",
+      "nameEn": "Sharp Page Blades",
       "notes": ""
     },
     {
@@ -792,8 +792,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision Gimmick Boost II",
+      "nameJa": "精読の腕前",
+      "nameEn": "Close-Reading Craft",
       "notes": ""
     },
     {
@@ -826,8 +826,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 III",
-      "nameEn": "Prismatic Vision Power III",
+      "nameJa": "重く割る頁撃ち",
+      "nameEn": "Heavy Page Blows",
       "notes": ""
     },
     {
@@ -864,8 +864,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision Gimmick Boost III",
+      "nameJa": "本の魔法の磨き",
+      "nameEn": "Polished Book Magic",
       "notes": ""
     },
     {
@@ -906,8 +906,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時冷気の付与",
-      "nameEn": "Prismatic Vision: On Hit Apply Cold",
+      "nameJa": "欄外の霜",
+      "nameEn": "Margin Frost",
       "notes": ""
     },
     {
@@ -948,8 +948,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時闇の付与",
-      "nameEn": "Prismatic Vision: On Hit Apply Dark",
+      "nameJa": "欄外の影",
+      "nameEn": "Margin Shadows",
       "notes": ""
     },
     {
@@ -986,8 +986,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision Gimmick Boost IV",
+      "nameJa": "彩の読みの深さ",
+      "nameEn": "Depth of Hue-Reading",
       "notes": ""
     },
     {
@@ -1024,8 +1024,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の確率 I",
-      "nameEn": "Prismatic Vision Chance I",
+      "nameJa": "彩の宿る頁",
+      "nameEn": "Pages Where Hues Settle",
       "notes": ""
     },
     {
@@ -1062,8 +1062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 V",
-      "nameEn": "Prismatic Vision Gimmick Boost V",
+      "nameJa": "章立ちの妙",
+      "nameEn": "Marvelous Chaptering",
       "notes": ""
     },
     {
@@ -1100,8 +1100,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の確率 II",
-      "nameEn": "Prismatic Vision Chance II",
+      "nameJa": "欄外の兆し",
+      "nameEn": "Marginal Omens",
       "notes": ""
     },
     {
@@ -1138,8 +1138,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VI",
-      "nameEn": "Prismatic Vision Gimmick Boost VI",
+      "nameJa": "頁の波の寄せ",
+      "nameEn": "Waves of Pages",
       "notes": ""
     },
     {
@@ -1176,8 +1176,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の確率 III",
-      "nameEn": "Prismatic Vision Chance III",
+      "nameJa": "字間の予感",
+      "nameEn": "Omens Between Words",
       "notes": ""
     },
     {
@@ -1214,8 +1214,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VII",
-      "nameEn": "Prismatic Vision Gimmick Boost VII",
+      "nameJa": "愛読の賜物",
+      "nameEn": "Gifts of Devoted Reading",
       "notes": ""
     },
     {
@@ -1252,8 +1252,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の確率 IV",
-      "nameEn": "Prismatic Vision Chance IV",
+      "nameJa": "行末のめばえ",
+      "nameEn": "Shoots at Line’s End",
       "notes": ""
     },
     {
@@ -1291,8 +1291,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鮮やかな一節",
+          "nameEn": "Vivid Passages"
         },
         {
           "kind": "GimmickBoost",
@@ -1307,8 +1307,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "濃い彩の活字",
+          "nameEn": "Ink-Dense Hues"
         }
       ],
       "keystone": null,
@@ -1318,8 +1318,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の分岐",
-      "nameEn": "Prismatic Vision Branch",
+      "nameJa": "彩の読みの岐路",
+      "nameEn": "Crossroads of Hue-Reading",
       "notes": ""
     },
     {
@@ -1351,8 +1351,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 I",
-      "nameEn": "Prismatic Vision Power I",
+      "nameJa": "冴えわたる読撃",
+      "nameEn": "Keen Reading Strikes",
       "notes": ""
     },
     {
@@ -1389,8 +1389,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision Gimmick Boost I",
+      "nameJa": "読書の研鑽",
+      "nameEn": "Reading Discipline",
       "notes": ""
     },
     {
@@ -1423,8 +1423,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 II",
-      "nameEn": "Prismatic Vision Power II",
+      "nameJa": "彩に染まる一撃",
+      "nameEn": "Hue-Stained Blows",
       "notes": ""
     },
     {
@@ -1460,8 +1460,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision Gimmick Boost II",
+      "nameJa": "頁のめくりの技",
+      "nameEn": "Art of Page-Turning",
       "notes": ""
     },
     {
@@ -1494,8 +1494,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 III",
-      "nameEn": "Prismatic Vision Power III",
+      "nameJa": "本の重みの一撃",
+      "nameEn": "Blows of the Book’s Weight",
       "notes": ""
     },
     {
@@ -1532,8 +1532,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision Gimmick Boost III",
+      "nameJa": "深読みの極意",
+      "nameEn": "Secrets of Deep Reading",
       "notes": ""
     },
     {
@@ -1574,8 +1574,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時弱体",
-      "nameEn": "Prismatic Vision: On Hit Sap",
+      "nameJa": "難解な一節",
+      "nameEn": "Inscrutable Passage",
       "notes": ""
     },
     {
@@ -1616,8 +1616,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時目眩まし",
-      "nameEn": "Prismatic Vision: On Hit Daze",
+      "nameJa": "読み流しの眩み",
+      "nameEn": "Skimming Daze",
       "notes": "P.c3.n2のDaze2は本来の既存効果として維持(設計レビュー)。"
     },
     {
@@ -1654,8 +1654,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision Gimmick Boost IV",
+      "nameJa": "本の世界の深み",
+      "nameEn": "Depths of the Book-World",
       "notes": ""
     },
     {
@@ -1692,8 +1692,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 I",
-      "nameEn": "Prismatic Vision Duration I",
+      "nameJa": "長く読ませる一節",
+      "nameEn": "Passages Long Read",
       "notes": ""
     },
     {
@@ -1730,8 +1730,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 V",
-      "nameEn": "Prismatic Vision Gimmick Boost V",
+      "nameJa": "彩の読解力",
+      "nameEn": "Hue Comprehension",
       "notes": ""
     },
     {
@@ -1768,8 +1768,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 II",
-      "nameEn": "Prismatic Vision Duration II",
+      "nameJa": "残る読書の熱",
+      "nameEn": "Heat of Reading Left",
       "notes": ""
     },
     {
@@ -1806,8 +1806,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VI",
-      "nameEn": "Prismatic Vision Gimmick Boost VI",
+      "nameJa": "早業のめくり",
+      "nameEn": "Quick Page Turns",
       "notes": ""
     },
     {
@@ -1844,8 +1844,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 III",
-      "nameEn": "Prismatic Vision Duration III",
+      "nameJa": "栞の長い残り",
+      "nameEn": "Bookmarks Long Kept",
       "notes": ""
     },
     {
@@ -1882,8 +1882,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VII",
-      "nameEn": "Prismatic Vision Gimmick Boost VII",
+      "nameJa": "栞の巧み",
+      "nameEn": "Clever Bookmarks",
       "notes": ""
     },
     {
@@ -1920,8 +1920,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 IV",
-      "nameEn": "Prismatic Vision Duration IV",
+      "nameJa": "物語の長い余韻",
+      "nameEn": "Long Afterglow of Tales",
       "notes": ""
     },
     {
@@ -1959,8 +1959,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "断言の一撃",
+          "nameEn": "Declarative Blow"
         },
         {
           "kind": "GimmickBoost",
@@ -1975,8 +1975,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "解釈の重み",
+          "nameEn": "Weight of Interpretation"
         }
       ],
       "keystone": null,
@@ -1986,8 +1986,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の分岐",
-      "nameEn": "Prismatic Vision Branch",
+      "nameJa": "難読の攻め方",
+      "nameEn": "Tackling Hard Passages",
       "notes": ""
     },
     {
@@ -2019,8 +2019,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 I",
-      "nameEn": "Prismatic Vision Power I",
+      "nameJa": "研ぎ澄まされた頁",
+      "nameEn": "Whetted Pages",
       "notes": ""
     },
     {
@@ -2057,8 +2057,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision Gimmick Boost I",
+      "nameJa": "頁の滑りの良さ",
+      "nameEn": "Smooth-Running Pages",
       "notes": ""
     },
     {
@@ -2091,8 +2091,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 II",
-      "nameEn": "Prismatic Vision Power II",
+      "nameJa": "鋭角の読み下ろし",
+      "nameEn": "Angular Read-Through",
       "notes": ""
     },
     {
@@ -2128,8 +2128,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision Gimmick Boost II",
+      "nameJa": "精読の腕前",
+      "nameEn": "Close-Reading Craft",
       "notes": ""
     },
     {
@@ -2162,8 +2162,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の威力 III",
-      "nameEn": "Prismatic Vision Power III",
+      "nameJa": "頁嵐の切っ先",
+      "nameEn": "Edge of the Page Storm",
       "notes": ""
     },
     {
@@ -2200,8 +2200,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision Gimmick Boost III",
+      "nameJa": "本の魔法の磨き",
+      "nameEn": "Polished Book Magic",
       "notes": ""
     },
     {
@@ -2242,8 +2242,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時爆風",
-      "nameEn": "Prismatic Vision: On Kill Burst",
+      "nameJa": "読了の爆ぜ",
+      "nameEn": "Burst of the Ending",
       "notes": ""
     },
     {
@@ -2285,8 +2285,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時障壁",
-      "nameEn": "Prismatic Vision: On Kill Shield",
+      "nameJa": "表紙を閉じる腕",
+      "nameEn": "Arms That Close the Cover",
       "notes": ""
     },
     {
@@ -2323,8 +2323,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision Gimmick Boost IV",
+      "nameJa": "彩の読みの深さ",
+      "nameEn": "Depth of Hue-Reading",
       "notes": ""
     },
     {
@@ -2361,8 +2361,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の範囲 I",
-      "nameEn": "Prismatic Vision Radius I",
+      "nameJa": "広がる読後の波",
+      "nameEn": "Widening After-Reading Waves",
       "notes": ""
     },
     {
@@ -2399,8 +2399,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 V",
-      "nameEn": "Prismatic Vision Gimmick Boost V",
+      "nameJa": "章立ちの妙",
+      "nameEn": "Marvelous Chaptering",
       "notes": ""
     },
     {
@@ -2437,8 +2437,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の範囲 II",
-      "nameEn": "Prismatic Vision Radius II",
+      "nameJa": "本の広げる輪",
+      "nameEn": "Rings the Book Spreads",
       "notes": ""
     },
     {
@@ -2475,8 +2475,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VI",
-      "nameEn": "Prismatic Vision Gimmick Boost VI",
+      "nameJa": "頁の波の寄せ",
+      "nameEn": "Waves of Pages",
       "notes": ""
     },
     {
@@ -2513,8 +2513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 I",
-      "nameEn": "Prismatic Vision Duration I",
+      "nameJa": "長く読ませる一節",
+      "nameEn": "Passages Long Read",
       "notes": ""
     },
     {
@@ -2551,8 +2551,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の仕掛け強化 VII",
-      "nameEn": "Prismatic Vision Gimmick Boost VII",
+      "nameJa": "愛読の賜物",
+      "nameEn": "Gifts of Devoted Reading",
       "notes": ""
     },
     {
@@ -2589,8 +2589,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の持続 II",
-      "nameEn": "Prismatic Vision Duration II",
+      "nameJa": "残る読書の熱",
+      "nameEn": "Heat of Reading Left",
       "notes": ""
     },
     {
@@ -2628,8 +2628,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い結末",
+          "nameEn": "Sharp Endings"
         },
         {
           "kind": "GimmickBoost",
@@ -2644,8 +2644,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い結末",
+          "nameEn": "Heavy Endings"
         }
       ],
       "keystone": null,
@@ -2655,8 +2655,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界の分岐",
-      "nameEn": "Prismatic Vision Branch",
+      "nameJa": "結末の読み方",
+      "nameEn": "Reading the Ending",
       "notes": ""
     },
     {
@@ -2688,8 +2688,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 I",
-      "nameEn": "Innocence Power I",
+      "nameJa": "鋭い光の弾道",
+      "nameEn": "Sharp Light Trajectories",
       "notes": ""
     },
     {
@@ -2726,8 +2726,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence Gimmick Boost I",
+      "nameJa": "光文の練成",
+      "nameEn": "Refined Light Script",
       "notes": ""
     },
     {
@@ -2760,8 +2760,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転",
-      "nameEn": "Innocence Cadence",
+      "nameJa": "光文の巡りの良さ",
+      "nameEn": "Well-Turning Light Cycles",
       "notes": ""
     },
     {
@@ -2797,8 +2797,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence Gimmick Boost II",
+      "nameJa": "無垢の輝きの深み",
+      "nameEn": "Depths of Innocent Shine",
       "notes": ""
     },
     {
@@ -2831,8 +2831,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 II",
-      "nameEn": "Innocence Power II",
+      "nameJa": "冴えわたる光文",
+      "nameEn": "Keen Light Script",
       "notes": ""
     },
     {
@@ -2869,8 +2869,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence Gimmick Boost III",
+      "nameJa": "光弾の腕前",
+      "nameEn": "Light-Missile Craft",
       "notes": ""
     },
     {
@@ -2911,8 +2911,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時跳弾",
-      "nameEn": "Innocence: On Hit Ricochet",
+      "nameJa": "跳ねる光文",
+      "nameEn": "Skipping Light Script",
       "notes": ""
     },
     {
@@ -2953,8 +2953,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時残響",
-      "nameEn": "Innocence: On Hit Echo",
+      "nameJa": "光文の反響",
+      "nameEn": "Reverb of Light Script",
       "notes": ""
     },
     {
@@ -2991,8 +2991,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 IV",
-      "nameEn": "Innocence Gimmick Boost IV",
+      "nameJa": "注釈の巧み",
+      "nameEn": "Clever Annotations",
       "notes": ""
     },
     {
@@ -3029,8 +3029,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の範囲",
-      "nameEn": "Innocence Radius",
+      "nameJa": "光の届く行",
+      "nameEn": "Lines the Light Reaches",
       "notes": ""
     },
     {
@@ -3067,8 +3067,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の追加対象",
-      "nameEn": "Innocence Extra Targets",
+      "nameJa": "光はもう一体へ",
+      "nameEn": "Light to One More",
       "notes": ""
     },
     {
@@ -3105,8 +3105,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 V",
-      "nameEn": "Innocence Gimmick Boost V",
+      "nameJa": "光文の書き込み",
+      "nameEn": "Light-Script Marginalia",
       "notes": ""
     },
     {
@@ -3143,8 +3143,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VI",
-      "nameEn": "Innocence Gimmick Boost VI",
+      "nameJa": "純白の筆致",
+      "nameEn": "Pure-White Strokes",
       "notes": ""
     },
     {
@@ -3177,8 +3177,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 III",
-      "nameEn": "Innocence Power III",
+      "nameJa": "重い光の一射",
+      "nameEn": "Heavy Light Volley",
       "notes": ""
     },
     {
@@ -3215,8 +3215,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VII",
-      "nameEn": "Innocence Gimmick Boost VII",
+      "nameJa": "光の字体の整い",
+      "nameEn": "Well-Set Light Type",
       "notes": ""
     },
     {
@@ -3249,8 +3249,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 IV",
-      "nameEn": "Innocence Power IV",
+      "nameJa": "純白の閃き",
+      "nameEn": "Pure-White Flashes",
       "notes": ""
     },
     {
@@ -3288,8 +3288,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "眩い一撃",
+          "nameEn": "Dazzling Blow"
         },
         {
           "kind": "GimmickBoost",
@@ -3304,8 +3304,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深い輝き",
+          "nameEn": "Deep Radiance"
         }
       ],
       "keystone": null,
@@ -3315,8 +3315,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の分岐",
-      "nameEn": "Innocence Branch",
+      "nameJa": "光の撃ち方",
+      "nameEn": "Ways of Firing Light",
       "notes": ""
     },
     {
@@ -3348,8 +3348,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 I",
-      "nameEn": "Innocence Power I",
+      "nameJa": "貫く光の雨",
+      "nameEn": "Piercing Light Rain",
       "notes": ""
     },
     {
@@ -3386,8 +3386,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence Gimmick Boost I",
+      "nameJa": "無垢の磨き",
+      "nameEn": "Polished Innocence",
       "notes": ""
     },
     {
@@ -3420,8 +3420,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転",
-      "nameEn": "Innocence Cadence",
+      "nameJa": "速く詠む光文",
+      "nameEn": "Swiftly Chanted Light",
       "notes": ""
     },
     {
@@ -3457,8 +3457,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence Gimmick Boost II",
+      "nameJa": "光弾の早書き",
+      "nameEn": "Swift Light Scribing",
       "notes": ""
     },
     {
@@ -3491,8 +3491,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 II",
-      "nameEn": "Innocence Power II",
+      "nameJa": "研ぎ澄まされた光文",
+      "nameEn": "Whetted Light Script",
       "notes": ""
     },
     {
@@ -3529,8 +3529,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence Gimmick Boost III",
+      "nameJa": "清らかな溢れ",
+      "nameEn": "Pristine Overflow",
       "notes": ""
     },
     {
@@ -3571,8 +3571,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時冷気の付与",
-      "nameEn": "Innocence: On Hit Apply Cold",
+      "nameJa": "無垢な霜",
+      "nameEn": "Innocent Frost",
       "notes": ""
     },
     {
@@ -3613,8 +3613,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時闇の付与",
-      "nameEn": "Innocence: On Hit Apply Dark",
+      "nameJa": "無垢な翳",
+      "nameEn": "Innocent Shade",
       "notes": ""
     },
     {
@@ -3651,8 +3651,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 IV",
-      "nameEn": "Innocence Gimmick Boost IV",
+      "nameJa": "白紙への閃き",
+      "nameEn": "Flashes on Blank Pages",
       "notes": ""
     },
     {
@@ -3689,8 +3689,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の確率 I",
-      "nameEn": "Innocence Chance I",
+      "nameJa": "彩の宿る行間",
+      "nameEn": "Margins Where Hues Settle",
       "notes": ""
     },
     {
@@ -3727,8 +3727,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 V",
-      "nameEn": "Innocence Gimmick Boost V",
+      "nameJa": "光の行間の読み",
+      "nameEn": "Reading Light’s Margins",
       "notes": ""
     },
     {
@@ -3765,8 +3765,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の確率 II",
-      "nameEn": "Innocence Chance II",
+      "nameJa": "光の差す予感",
+      "nameEn": "Omens of Falling Light",
       "notes": ""
     },
     {
@@ -3803,8 +3803,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VI",
-      "nameEn": "Innocence Gimmick Boost VI",
+      "nameJa": "無垢なる筆圧",
+      "nameEn": "Innocent Pen Pressure",
       "notes": ""
     },
     {
@@ -3841,8 +3841,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の確率 III",
-      "nameEn": "Innocence Chance III",
+      "nameJa": "白紙に滲む兆し",
+      "nameEn": "Omens Seeping on White",
       "notes": ""
     },
     {
@@ -3879,8 +3879,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VII",
-      "nameEn": "Innocence Gimmick Boost VII",
+      "nameJa": "光文の重ね書き",
+      "nameEn": "Overwriting Light Script",
       "notes": ""
     },
     {
@@ -3917,8 +3917,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の確率 IV",
-      "nameEn": "Innocence Chance IV",
+      "nameJa": "光のかたびらの兆し",
+      "nameEn": "Omens of Light Vestments",
       "notes": ""
     },
     {
@@ -3956,8 +3956,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "冴える光文",
+          "nameEn": "Keen Light Script"
         },
         {
           "kind": "GimmickBoost",
@@ -3972,8 +3972,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "滲む光文",
+          "nameEn": "Soaking Light Script"
         }
       ],
       "keystone": null,
@@ -3983,8 +3983,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の分岐",
-      "nameEn": "Innocence Branch",
+      "nameJa": "光の彩の岐路",
+      "nameEn": "Crossroads of Light’s Hues",
       "notes": ""
     },
     {
@@ -4016,8 +4016,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 I",
-      "nameEn": "Innocence Power I",
+      "nameJa": "無垢なる一撃",
+      "nameEn": "Innocent Blows",
       "notes": ""
     },
     {
@@ -4054,8 +4054,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence Gimmick Boost I",
+      "nameJa": "輝きの腰の強さ",
+      "nameEn": "Firm-Bodied Shine",
       "notes": ""
     },
     {
@@ -4088,8 +4088,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転",
-      "nameEn": "Innocence Cadence",
+      "nameJa": "光の詠唱の軽さ",
+      "nameEn": "Lightness of Light Chants",
       "notes": ""
     },
     {
@@ -4125,8 +4125,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence Gimmick Boost II",
+      "nameJa": "まぶしい彩の筆",
+      "nameEn": "Dazzling Hue Pen",
       "notes": ""
     },
     {
@@ -4159,8 +4159,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 II",
-      "nameEn": "Innocence Power II",
+      "nameJa": "光矢の冴え",
+      "nameEn": "Keen Light Arrows",
       "notes": ""
     },
     {
@@ -4197,8 +4197,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence Gimmick Boost III",
+      "nameJa": "光文の練成",
+      "nameEn": "Refined Light Script",
       "notes": ""
     },
     {
@@ -4239,8 +4239,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時弱体",
-      "nameEn": "Innocence: On Hit Sap",
+      "nameJa": "優しい光の重さ",
+      "nameEn": "Weight of Gentle Light",
       "notes": ""
     },
     {
@@ -4281,8 +4281,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・命中時傷",
-      "nameEn": "Innocence: On Hit Wound",
+      "nameJa": "光の刺し傷",
+      "nameEn": "Stinging Light Wounds",
       "notes": ""
     },
     {
@@ -4319,8 +4319,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 IV",
-      "nameEn": "Innocence Gimmick Boost IV",
+      "nameJa": "無垢の輝きの深み",
+      "nameEn": "Depths of Innocent Shine",
       "notes": ""
     },
     {
@@ -4357,8 +4357,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の持続 I",
-      "nameEn": "Innocence Duration I",
+      "nameJa": "長く残る白光",
+      "nameEn": "White Light That Lasts",
       "notes": ""
     },
     {
@@ -4395,8 +4395,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 V",
-      "nameEn": "Innocence Gimmick Boost V",
+      "nameJa": "光弾の腕前",
+      "nameEn": "Light-Missile Craft",
       "notes": ""
     },
     {
@@ -4433,8 +4433,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の持続 II",
-      "nameEn": "Innocence Duration II",
+      "nameJa": "残る光の沁み",
+      "nameEn": "Light Stains That Remain",
       "notes": ""
     },
     {
@@ -4471,8 +4471,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VI",
-      "nameEn": "Innocence Gimmick Boost VI",
+      "nameJa": "注釈の巧み",
+      "nameEn": "Clever Annotations",
       "notes": ""
     },
     {
@@ -4505,8 +4505,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 III",
-      "nameEn": "Innocence Power III",
+      "nameJa": "鋭い光の弾道",
+      "nameEn": "Sharp Light Trajectories",
       "notes": ""
     },
     {
@@ -4543,8 +4543,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VII",
-      "nameEn": "Innocence Gimmick Boost VII",
+      "nameJa": "光文の書き込み",
+      "nameEn": "Light-Script Marginalia",
       "notes": ""
     },
     {
@@ -4577,8 +4577,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 IV",
-      "nameEn": "Innocence Power IV",
+      "nameJa": "冴えわたる光文",
+      "nameEn": "Keen Light Script",
       "notes": ""
     },
     {
@@ -4616,8 +4616,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い追撃",
+          "nameEn": "Keen Pursuit"
         },
         {
           "kind": "GimmickBoost",
@@ -4632,8 +4632,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い追撃",
+          "nameEn": "Heavy Pursuit"
         }
       ],
       "keystone": null,
@@ -4643,8 +4643,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の分岐",
-      "nameEn": "Innocence Branch",
+      "nameJa": "減速の攻め方",
+      "nameEn": "Pressing the Slowed",
       "notes": ""
     },
     {
@@ -4676,8 +4676,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 I",
-      "nameEn": "Innocence Power I",
+      "nameJa": "重い光の一射",
+      "nameEn": "Heavy Light Volley",
       "notes": ""
     },
     {
@@ -4714,8 +4714,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence Gimmick Boost I",
+      "nameJa": "純白の筆致",
+      "nameEn": "Pure-White Strokes",
       "notes": ""
     },
     {
@@ -4748,8 +4748,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転 I",
-      "nameEn": "Innocence Cadence I",
+      "nameJa": "光文の巡りの良さ",
+      "nameEn": "Well-Turning Light Cycles",
       "notes": ""
     },
     {
@@ -4785,8 +4785,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence Gimmick Boost II",
+      "nameJa": "光の字体の整い",
+      "nameEn": "Well-Set Light Type",
       "notes": ""
     },
     {
@@ -4819,8 +4819,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の威力 II",
-      "nameEn": "Innocence Power II",
+      "nameJa": "純白の閃き",
+      "nameEn": "Pure-White Flashes",
       "notes": ""
     },
     {
@@ -4857,8 +4857,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence Gimmick Boost III",
+      "nameJa": "無垢の磨き",
+      "nameEn": "Polished Innocence",
       "notes": ""
     },
     {
@@ -4899,8 +4899,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・撃破時再充填",
-      "nameEn": "Innocence: On Kill Recharge",
+      "nameJa": "浄化の後の息",
+      "nameEn": "Breath After Cleansing",
       "notes": ""
     },
     {
@@ -4942,8 +4942,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂・撃破時障壁",
-      "nameEn": "Innocence: On Kill Shield",
+      "nameJa": "聖なる頁の盾",
+      "nameEn": "Shield of Sacred Pages",
       "notes": ""
     },
     {
@@ -4980,8 +4980,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 IV",
-      "nameEn": "Innocence Gimmick Boost IV",
+      "nameJa": "光弾の早書き",
+      "nameEn": "Swift Light Scribing",
       "notes": ""
     },
     {
@@ -5014,8 +5014,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転 II",
-      "nameEn": "Innocence Cadence II",
+      "nameJa": "速く詠む光文",
+      "nameEn": "Swiftly Chanted Light",
       "notes": ""
     },
     {
@@ -5052,8 +5052,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 V",
-      "nameEn": "Innocence Gimmick Boost V",
+      "nameJa": "清らかな溢れ",
+      "nameEn": "Pristine Overflow",
       "notes": ""
     },
     {
@@ -5086,8 +5086,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の回転 III",
-      "nameEn": "Innocence Cadence III",
+      "nameJa": "光の詠唱の軽さ",
+      "nameEn": "Lightness of Light Chants",
       "notes": ""
     },
     {
@@ -5124,8 +5124,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VI",
-      "nameEn": "Innocence Gimmick Boost VI",
+      "nameJa": "白紙への閃き",
+      "nameEn": "Flashes on Blank Pages",
       "notes": ""
     },
     {
@@ -5162,8 +5162,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の持続 I",
-      "nameEn": "Innocence Duration I",
+      "nameJa": "消えぬ光の栞",
+      "nameEn": "Unfading Light Bookmarks",
       "notes": ""
     },
     {
@@ -5200,8 +5200,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の仕掛け強化 VII",
-      "nameEn": "Innocence Gimmick Boost VII",
+      "nameJa": "光の行間の読み",
+      "nameEn": "Reading Light’s Margins",
       "notes": ""
     },
     {
@@ -5238,8 +5238,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の持続 II",
-      "nameEn": "Innocence Duration II",
+      "nameJa": "白い余韻の長さ",
+      "nameEn": "Length of White Afterglow",
       "notes": ""
     },
     {
@@ -5277,8 +5277,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "浄化の冴え",
+          "nameEn": "Keen Cleansing"
         },
         {
           "kind": "GimmickBoost",
@@ -5293,8 +5293,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "浄化の深み",
+          "nameEn": "Depths of Cleansing"
         }
       ],
       "keystone": null,
@@ -5304,8 +5304,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂の分岐",
-      "nameEn": "Innocence Branch",
+      "nameJa": "討ち取りの岐路",
+      "nameEn": "Crossroads of Kills",
       "notes": ""
     },
     {
@@ -5341,8 +5341,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 I",
-      "nameEn": "Distorting Sprint Gimmick Boost I",
+      "nameJa": "頁路の知恵",
+      "nameEn": "Wisdom of Pagepaths",
       "notes": ""
     },
     {
@@ -5379,8 +5379,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 I",
-      "nameEn": "Distorting Sprint Chance I",
+      "nameJa": "退路の兆し",
+      "nameEn": "Omens of the Exit",
       "notes": ""
     },
     {
@@ -5417,8 +5417,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 II",
-      "nameEn": "Distorting Sprint Gimmick Boost II",
+      "nameJa": "退路の読み書き",
+      "nameEn": "Reading and Writing Exits",
       "notes": ""
     },
     {
@@ -5454,8 +5454,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 II",
-      "nameEn": "Distorting Sprint Chance II",
+      "nameJa": "頁のめくれの予感",
+      "nameEn": "Omens of Curling Pages",
       "notes": ""
     },
     {
@@ -5492,8 +5492,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 III",
-      "nameEn": "Distorting Sprint Gimmick Boost III",
+      "nameJa": "疾走の心得",
+      "nameEn": "Sprinter’s Lore",
       "notes": ""
     },
     {
@@ -5530,8 +5530,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint Gimmick Boost IV",
+      "nameJa": "頁の風切りの良さ",
+      "nameEn": "Smooth Page Windcut",
       "notes": ""
     },
     {
@@ -5573,8 +5573,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時退路の短縮",
-      "nameEn": "Prismatic Vision: On Hit Receiver Recharge",
+      "nameJa": "撃ちて開く頁路",
+      "nameEn": "Pagepath Opened by Strikes",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg0条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -5616,8 +5616,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時退路の短縮",
-      "nameEn": "Prismatic Vision: On Kill Receiver Recharge",
+      "nameJa": "仕留めの早業",
+      "nameEn": "Quick Work of Kills",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg0条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -5654,8 +5654,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 V",
-      "nameEn": "Distorting Sprint Gimmick Boost V",
+      "nameJa": "脱兎の歩法",
+      "nameEn": "Hare’s Footwork",
       "notes": ""
     },
     {
@@ -5692,8 +5692,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 III",
-      "nameEn": "Distorting Sprint Chance III",
+      "nameJa": "読みの当たり",
+      "nameEn": "Lucky Reads",
       "notes": ""
     },
     {
@@ -5730,8 +5730,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VI",
-      "nameEn": "Distorting Sprint Gimmick Boost VI",
+      "nameJa": "書架の間の抜け道",
+      "nameEn": "Aisles Between Shelves",
       "notes": ""
     },
     {
@@ -5768,8 +5768,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VII",
-      "nameEn": "Distorting Sprint Gimmick Boost VII",
+      "nameJa": "軽やかな頁送り",
+      "nameEn": "Light Page Forwarding",
       "notes": ""
     },
     {
@@ -5806,8 +5806,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VIII",
-      "nameEn": "Distorting Sprint Gimmick Boost VIII",
+      "nameJa": "逃げ足の研鑽",
+      "nameEn": "Discipline of Flight",
       "notes": ""
     },
     {
@@ -5844,8 +5844,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 IV",
-      "nameEn": "Distorting Sprint Chance IV",
+      "nameJa": "幸運な頁のめくり",
+      "nameEn": "Fortunate Page Turns",
       "notes": ""
     },
     {
@@ -5882,8 +5882,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IX",
-      "nameEn": "Distorting Sprint Gimmick Boost IX",
+      "nameJa": "頁の追い風",
+      "nameEn": "Tailwind of Pages",
       "notes": ""
     },
     {
@@ -5920,8 +5920,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 X",
-      "nameEn": "Distorting Sprint Gimmick Boost X",
+      "nameJa": "読み尽くした道筋",
+      "nameEn": "Well-Read Routes",
       "notes": ""
     },
     {
@@ -5962,8 +5962,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広い退路",
+          "nameEn": "Broad Exits"
         },
         {
           "kind": "GimmickParam",
@@ -5978,8 +5978,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "確かな退路",
+          "nameEn": "Sure Exits"
         }
       ],
       "keystone": null,
@@ -5989,8 +5989,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の分岐",
-      "nameEn": "Distorting Sprint Branch",
+      "nameJa": "退路の整え方",
+      "nameEn": "Ways to Ready the Exit",
       "notes": ""
     },
     {
@@ -6026,8 +6026,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 I",
-      "nameEn": "Distorting Sprint Gimmick Boost I",
+      "nameJa": "疾走の呼吸",
+      "nameEn": "Sprinter’s Breath",
       "notes": ""
     },
     {
@@ -6064,8 +6064,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 I",
-      "nameEn": "Distorting Sprint Chance I",
+      "nameJa": "風の便りの当たり",
+      "nameEn": "Lucky Tidings",
       "notes": ""
     },
     {
@@ -6102,8 +6102,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 II",
-      "nameEn": "Distorting Sprint Gimmick Boost II",
+      "nameJa": "風の栞",
+      "nameEn": "Bookmark of the Wind",
       "notes": ""
     },
     {
@@ -6139,8 +6139,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 II",
-      "nameEn": "Distorting Sprint Chance II",
+      "nameJa": "直感の読み",
+      "nameEn": "Reads of Intuition",
       "notes": ""
     },
     {
@@ -6177,8 +6177,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 III",
-      "nameEn": "Distorting Sprint Gimmick Boost III",
+      "nameJa": "頁の舞う早さ",
+      "nameEn": "Speed of Dancing Pages",
       "notes": ""
     },
     {
@@ -6215,8 +6215,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint Gimmick Boost IV",
+      "nameJa": "駆け抜ける集中",
+      "nameEn": "Sprinting Focus",
       "notes": ""
     },
     {
@@ -6258,8 +6258,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時退路の短縮",
-      "nameEn": "Prismatic Vision: On Hit Receiver Recharge",
+      "nameJa": "彩から逃げる道",
+      "nameEn": "Escape Route of Hues",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg1条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -6301,8 +6301,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時退路の短縮",
-      "nameEn": "Prismatic Vision: On Kill Receiver Recharge",
+      "nameJa": "彩の断ち切り",
+      "nameEn": "Cutting Through Hues",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg1条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -6339,8 +6339,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 V",
-      "nameEn": "Distorting Sprint Gimmick Boost V",
+      "nameJa": "退路のいくつも",
+      "nameEn": "Many a Way Out",
       "notes": ""
     },
     {
@@ -6377,8 +6377,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 III",
-      "nameEn": "Distorting Sprint Chance III",
+      "nameJa": "巡る好機",
+      "nameEn": "Turning Chances",
       "notes": ""
     },
     {
@@ -6415,8 +6415,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VI",
-      "nameEn": "Distorting Sprint Gimmick Boost VI",
+      "nameJa": "素早い頁の畳み",
+      "nameEn": "Quick Page Folding",
       "notes": ""
     },
     {
@@ -6453,8 +6453,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VII",
-      "nameEn": "Distorting Sprint Gimmick Boost VII",
+      "nameJa": "疾風の読書",
+      "nameEn": "Gale Reading",
       "notes": ""
     },
     {
@@ -6491,8 +6491,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VIII",
-      "nameEn": "Distorting Sprint Gimmick Boost VIII",
+      "nameJa": "身軽な装丁",
+      "nameEn": "Nimble Binding",
       "notes": ""
     },
     {
@@ -6529,8 +6529,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 IV",
-      "nameEn": "Distorting Sprint Chance IV",
+      "nameJa": "頁の合図の見極め",
+      "nameEn": "Catching the Page’s Cue",
       "notes": ""
     },
     {
@@ -6567,8 +6567,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IX",
-      "nameEn": "Distorting Sprint Gimmick Boost IX",
+      "nameJa": "頁の道の暗記",
+      "nameEn": "Memorized Page Roads",
       "notes": ""
     },
     {
@@ -6605,8 +6605,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 X",
-      "nameEn": "Distorting Sprint Gimmick Boost X",
+      "nameJa": "速読の脚",
+      "nameEn": "Legs of Speed Reading",
       "notes": ""
     },
     {
@@ -6647,8 +6647,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "彩を蹴って逃げる",
+          "nameEn": "Kicking Off Hues"
         },
         {
           "kind": "GimmickParam",
@@ -6663,8 +6663,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "彩を見て逃げる",
+          "nameEn": "Reading Hues to Flee"
         }
       ],
       "keystone": null,
@@ -6674,8 +6674,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の分岐",
-      "nameEn": "Distorting Sprint Branch",
+      "nameJa": "彩と退路の岐路",
+      "nameEn": "Crossroads of Hues and Exits",
       "notes": ""
     },
     {
@@ -6711,8 +6711,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 I",
-      "nameEn": "Distorting Sprint Gimmick Boost I",
+      "nameJa": "風を見る目",
+      "nameEn": "Eyes That Read the Wind",
       "notes": ""
     },
     {
@@ -6749,8 +6749,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 I",
-      "nameEn": "Distorting Sprint Chance I",
+      "nameJa": "退路の兆し",
+      "nameEn": "Omens of the Exit",
       "notes": ""
     },
     {
@@ -6787,8 +6787,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 II",
-      "nameEn": "Distorting Sprint Gimmick Boost II",
+      "nameJa": "頁路の知恵",
+      "nameEn": "Wisdom of Pagepaths",
       "notes": ""
     },
     {
@@ -6824,8 +6824,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 II",
-      "nameEn": "Distorting Sprint Chance II",
+      "nameJa": "頁のめくれの予感",
+      "nameEn": "Omens of Curling Pages",
       "notes": ""
     },
     {
@@ -6862,8 +6862,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 III",
-      "nameEn": "Distorting Sprint Gimmick Boost III",
+      "nameJa": "退路の読み書き",
+      "nameEn": "Reading and Writing Exits",
       "notes": ""
     },
     {
@@ -6900,8 +6900,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint Gimmick Boost IV",
+      "nameJa": "疾走の心得",
+      "nameEn": "Sprinter’s Lore",
       "notes": ""
     },
     {
@@ -6943,8 +6943,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時退路の短縮",
-      "nameEn": "Prismatic Vision: On Hit Receiver Recharge",
+      "nameJa": "盾の下の抜け道",
+      "nameEn": "Underpass Beneath Shields",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg2条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -6986,8 +6986,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時退路の短縮",
-      "nameEn": "Prismatic Vision: On Kill Receiver Recharge",
+      "nameJa": "守りの隙間の道",
+      "nameEn": "Gap in the Guard",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg2条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -7024,8 +7024,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 V",
-      "nameEn": "Distorting Sprint Gimmick Boost V",
+      "nameJa": "頁の風切りの良さ",
+      "nameEn": "Smooth Page Windcut",
       "notes": ""
     },
     {
@@ -7062,8 +7062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 III",
-      "nameEn": "Distorting Sprint Chance III",
+      "nameJa": "読みの当たり",
+      "nameEn": "Lucky Reads",
       "notes": ""
     },
     {
@@ -7100,8 +7100,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VI",
-      "nameEn": "Distorting Sprint Gimmick Boost VI",
+      "nameJa": "脱兎の歩法",
+      "nameEn": "Hare’s Footwork",
       "notes": ""
     },
     {
@@ -7138,8 +7138,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VII",
-      "nameEn": "Distorting Sprint Gimmick Boost VII",
+      "nameJa": "書架の間の抜け道",
+      "nameEn": "Aisles Between Shelves",
       "notes": ""
     },
     {
@@ -7176,8 +7176,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VIII",
-      "nameEn": "Distorting Sprint Gimmick Boost VIII",
+      "nameJa": "軽やかな頁送り",
+      "nameEn": "Light Page Forwarding",
       "notes": ""
     },
     {
@@ -7214,8 +7214,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 IV",
-      "nameEn": "Distorting Sprint Chance IV",
+      "nameJa": "幸運な頁のめくり",
+      "nameEn": "Fortunate Page Turns",
       "notes": ""
     },
     {
@@ -7252,8 +7252,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IX",
-      "nameEn": "Distorting Sprint Gimmick Boost IX",
+      "nameJa": "逃げ足の研鑽",
+      "nameEn": "Discipline of Flight",
       "notes": ""
     },
     {
@@ -7290,8 +7290,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 X",
-      "nameEn": "Distorting Sprint Gimmick Boost X",
+      "nameJa": "頁の追い風",
+      "nameEn": "Tailwind of Pages",
       "notes": ""
     },
     {
@@ -7332,8 +7332,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "盾を頼りに逃げる",
+          "nameEn": "Fleeing Behind Shields"
         },
         {
           "kind": "GimmickParam",
@@ -7348,8 +7348,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "盾が支える退路",
+          "nameEn": "Shield-Supported Exits"
         }
       ],
       "keystone": null,
@@ -7359,8 +7359,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の分岐",
-      "nameEn": "Distorting Sprint Branch",
+      "nameJa": "盾と退路の岐路",
+      "nameEn": "Crossroads of Shields and Exits",
       "notes": ""
     },
     {
@@ -7396,8 +7396,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 I",
-      "nameEn": "Distorting Sprint Gimmick Boost I",
+      "nameJa": "読み尽くした道筋",
+      "nameEn": "Well-Read Routes",
       "notes": ""
     },
     {
@@ -7434,8 +7434,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 I",
-      "nameEn": "Distorting Sprint Chance I",
+      "nameJa": "風の便りの当たり",
+      "nameEn": "Lucky Tidings",
       "notes": ""
     },
     {
@@ -7472,8 +7472,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 II",
-      "nameEn": "Distorting Sprint Gimmick Boost II",
+      "nameJa": "疾走の呼吸",
+      "nameEn": "Sprinter’s Breath",
       "notes": ""
     },
     {
@@ -7509,8 +7509,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 II",
-      "nameEn": "Distorting Sprint Chance II",
+      "nameJa": "直感の読み",
+      "nameEn": "Reads of Intuition",
       "notes": ""
     },
     {
@@ -7547,8 +7547,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 III",
-      "nameEn": "Distorting Sprint Gimmick Boost III",
+      "nameJa": "風の栞",
+      "nameEn": "Bookmark of the Wind",
       "notes": ""
     },
     {
@@ -7585,8 +7585,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint Gimmick Boost IV",
+      "nameJa": "頁の舞う早さ",
+      "nameEn": "Speed of Dancing Pages",
       "notes": ""
     },
     {
@@ -7628,8 +7628,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・命中時退路の短縮",
-      "nameEn": "Prismatic Vision: On Hit Receiver Recharge",
+      "nameJa": "視線を盗む足",
+      "nameEn": "Steps That Steal Gazes",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg3条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -7671,8 +7671,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界・撃破時退路の短縮",
-      "nameEn": "Prismatic Vision: On Kill Receiver Recharge",
+      "nameJa": "標替えの間隙",
+      "nameEn": "Breach of Shifting Marks",
       "notes": "発生元はP、受け手S(RecipientMemory=S)。Arg3条件、基礎成立確率50%(GP(S,C)で増加)。移動の使用/ダッシュ/回避は購読しない。"
     },
     {
@@ -7709,8 +7709,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 V",
-      "nameEn": "Distorting Sprint Gimmick Boost V",
+      "nameJa": "駆け抜ける集中",
+      "nameEn": "Sprinting Focus",
       "notes": ""
     },
     {
@@ -7747,8 +7747,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 III",
-      "nameEn": "Distorting Sprint Chance III",
+      "nameJa": "巡る好機",
+      "nameEn": "Turning Chances",
       "notes": ""
     },
     {
@@ -7785,8 +7785,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VI",
-      "nameEn": "Distorting Sprint Gimmick Boost VI",
+      "nameJa": "退路のいくつも",
+      "nameEn": "Many a Way Out",
       "notes": ""
     },
     {
@@ -7823,8 +7823,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VII",
-      "nameEn": "Distorting Sprint Gimmick Boost VII",
+      "nameJa": "素早い頁の畳み",
+      "nameEn": "Quick Page Folding",
       "notes": ""
     },
     {
@@ -7861,8 +7861,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 VIII",
-      "nameEn": "Distorting Sprint Gimmick Boost VIII",
+      "nameJa": "疾風の読書",
+      "nameEn": "Gale Reading",
       "notes": ""
     },
     {
@@ -7899,8 +7899,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の確率 IV",
-      "nameEn": "Distorting Sprint Chance IV",
+      "nameJa": "頁の合図の見極め",
+      "nameEn": "Catching the Page’s Cue",
       "notes": ""
     },
     {
@@ -7937,8 +7937,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 IX",
-      "nameEn": "Distorting Sprint Gimmick Boost IX",
+      "nameJa": "身軽な装丁",
+      "nameEn": "Nimble Binding",
       "notes": ""
     },
     {
@@ -7975,8 +7975,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の仕掛け強化 X",
-      "nameEn": "Distorting Sprint Gimmick Boost X",
+      "nameJa": "頁の道の暗記",
+      "nameEn": "Memorized Page Roads",
       "notes": ""
     },
     {
@@ -8017,8 +8017,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "替わる標の利用",
+          "nameEn": "Using Shifting Marks"
         },
         {
           "kind": "GimmickParam",
@@ -8033,8 +8033,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "替わる標を読む",
+          "nameEn": "Reading Shifting Marks"
         }
       ],
       "keystone": null,
@@ -8044,8 +8044,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走の分岐",
-      "nameEn": "Distorting Sprint Branch",
+      "nameJa": "標と退路の岐路",
+      "nameEn": "Crossroads of Marks and Exits",
       "notes": ""
     },
     {
@@ -8077,8 +8077,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 I",
-      "nameEn": "Infernal Tales Power I",
+      "nameJa": "業火の鋭い炎",
+      "nameEn": "Sharp Hellfire Flames",
       "notes": ""
     },
     {
@@ -8115,8 +8115,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 I",
-      "nameEn": "Infernal Tales Gimmick Boost I",
+      "nameJa": "炎文の火力",
+      "nameEn": "Firepower of Fire Script",
       "notes": ""
     },
     {
@@ -8149,8 +8149,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転",
-      "nameEn": "Infernal Tales Cadence",
+      "nameJa": "炎文の巡りの良さ",
+      "nameEn": "Well-Turning Fire Cycles",
       "notes": ""
     },
     {
@@ -8186,8 +8186,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 II",
-      "nameEn": "Infernal Tales Gimmick Boost II",
+      "nameJa": "業火の焚き増し",
+      "nameEn": "Stoked Hellfire",
       "notes": ""
     },
     {
@@ -8220,8 +8220,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 II",
-      "nameEn": "Infernal Tales Power II",
+      "nameJa": "重く燃える業火",
+      "nameEn": "Heavily Burning Hellfire",
       "notes": ""
     },
     {
@@ -8258,8 +8258,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 III",
-      "nameEn": "Infernal Tales Gimmick Boost III",
+      "nameJa": "炎の筆圧",
+      "nameEn": "Fire’s Pen Pressure",
       "notes": ""
     },
     {
@@ -8300,8 +8300,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時傷",
-      "nameEn": "Infernal Tales: On Hit Wound",
+      "nameJa": "燃え残る痛み",
+      "nameEn": "Smoldering Pain",
       "notes": ""
     },
     {
@@ -8342,8 +8342,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時弱体",
-      "nameEn": "Infernal Tales: On Hit Sap",
+      "nameJa": "業火の重圧",
+      "nameEn": "Weight of Hellfire",
       "notes": ""
     },
     {
@@ -8380,8 +8380,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 IV",
-      "nameEn": "Infernal Tales Gimmick Boost IV",
+      "nameJa": "物語の熱のこもり",
+      "nameEn": "Well-Kept Heat of Tales",
       "notes": ""
     },
     {
@@ -8414,8 +8414,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 III",
-      "nameEn": "Infernal Tales Power III",
+      "nameJa": "炎文の鋭い筆致",
+      "nameEn": "Sharp Fire-Script Strokes",
       "notes": ""
     },
     {
@@ -8452,8 +8452,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 V",
-      "nameEn": "Infernal Tales Gimmick Boost V",
+      "nameJa": "炎文の鮮やかさ",
+      "nameEn": "Vivid Fire Script",
       "notes": ""
     },
     {
@@ -8486,8 +8486,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 IV",
-      "nameEn": "Infernal Tales Power IV",
+      "nameJa": "焼けつく一撃",
+      "nameEn": "Scorching Blows",
       "notes": ""
     },
     {
@@ -8524,8 +8524,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VI",
-      "nameEn": "Infernal Tales Gimmick Boost VI",
+      "nameJa": "業火のたきつけ",
+      "nameEn": "Blazing Up Hellfire",
       "notes": ""
     },
     {
@@ -8562,8 +8562,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 I",
-      "nameEn": "Infernal Tales Duration I",
+      "nameJa": "長く燃える章",
+      "nameEn": "Chapters Long Burning",
       "notes": ""
     },
     {
@@ -8600,8 +8600,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VII",
-      "nameEn": "Infernal Tales Gimmick Boost VII",
+      "nameJa": "燃えさかる章立て",
+      "nameEn": "Blazing Chaptering",
       "notes": ""
     },
     {
@@ -8638,8 +8638,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 II",
-      "nameEn": "Infernal Tales Duration II",
+      "nameJa": "残る焼け跡の熱",
+      "nameEn": "Heat of Burnt Traces",
       "notes": ""
     },
     {
@@ -8677,8 +8677,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い炎",
+          "nameEn": "Sharp Flames"
         },
         {
           "kind": "GimmickBoost",
@@ -8693,8 +8693,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深い炎",
+          "nameEn": "Deep Flames"
         }
       ],
       "keystone": null,
@@ -8704,8 +8704,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の分岐",
-      "nameEn": "Infernal Tales Branch",
+      "nameJa": "業火の焚き方",
+      "nameEn": "Ways of Stoking Hellfire",
       "notes": ""
     },
     {
@@ -8737,8 +8737,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 I",
-      "nameEn": "Infernal Tales Power I",
+      "nameJa": "冴えわたる炎色",
+      "nameEn": "Keen Flame Colors",
       "notes": ""
     },
     {
@@ -8775,8 +8775,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 I",
-      "nameEn": "Infernal Tales Gimmick Boost I",
+      "nameJa": "炎の文体の研ぎ",
+      "nameEn": "Whetted Fire Style",
       "notes": ""
     },
     {
@@ -8809,8 +8809,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転",
-      "nameEn": "Infernal Tales Cadence",
+      "nameJa": "速く焚べる炎文",
+      "nameEn": "Swiftly Fed Fire",
       "notes": ""
     },
     {
@@ -8846,8 +8846,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 II",
-      "nameEn": "Infernal Tales Gimmick Boost II",
+      "nameJa": "情熱の筆の運び",
+      "nameEn": "Passionate Pen Strokes",
       "notes": ""
     },
     {
@@ -8880,8 +8880,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 II",
-      "nameEn": "Infernal Tales Power II",
+      "nameJa": "燃え上がる重ね撃ち",
+      "nameEn": "Stacked Burning Volleys",
       "notes": ""
     },
     {
@@ -8918,8 +8918,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 III",
-      "nameEn": "Infernal Tales Gimmick Boost III",
+      "nameJa": "炎文の重ね刷り",
+      "nameEn": "Overprinted Fire Script",
       "notes": ""
     },
     {
@@ -8960,8 +8960,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時冷気の付与",
-      "nameEn": "Infernal Tales: On Hit Apply Cold",
+      "nameJa": "蒸気の白息",
+      "nameEn": "White Breath of Steam",
       "notes": ""
     },
     {
@@ -9002,8 +9002,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時闇の付与",
-      "nameEn": "Infernal Tales: On Hit Apply Dark",
+      "nameJa": "燃え殻の影",
+      "nameEn": "Shadow of Burnt Shells",
       "notes": ""
     },
     {
@@ -9040,8 +9040,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 IV",
-      "nameEn": "Infernal Tales Gimmick Boost IV",
+      "nameJa": "業火の暖まり",
+      "nameEn": "Warming of Hellfire",
       "notes": ""
     },
     {
@@ -9078,8 +9078,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の確率 I",
-      "nameEn": "Infernal Tales Chance I",
+      "nameJa": "燃え移りの兆し",
+      "nameEn": "Omens of Catching Fire",
       "notes": ""
     },
     {
@@ -9116,8 +9116,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 V",
-      "nameEn": "Infernal Tales Gimmick Boost V",
+      "nameJa": "炎の間合いの熾し",
+      "nameEn": "Kindled Fire Range",
       "notes": ""
     },
     {
@@ -9154,8 +9154,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の確率 II",
-      "nameEn": "Infernal Tales Chance II",
+      "nameJa": "火種の巡り",
+      "nameEn": "Rounds of Embers",
       "notes": ""
     },
     {
@@ -9192,8 +9192,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VI",
-      "nameEn": "Infernal Tales Gimmick Boost VI",
+      "nameJa": "物語の炎の勢い",
+      "nameEn": "Momentum of Tale-Fire",
       "notes": ""
     },
     {
@@ -9230,8 +9230,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の確率 III",
-      "nameEn": "Infernal Tales Chance III",
+      "nameJa": "灰の舞う兆し",
+      "nameEn": "Omens of Dancing Ash",
       "notes": ""
     },
     {
@@ -9268,8 +9268,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VII",
-      "nameEn": "Infernal Tales Gimmick Boost VII",
+      "nameJa": "炎文の火力",
+      "nameEn": "Firepower of Fire Script",
       "notes": ""
     },
     {
@@ -9306,8 +9306,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の確率 IV",
-      "nameEn": "Infernal Tales Chance IV",
+      "nameJa": "火の粉の兆し",
+      "nameEn": "Omens of Sparks",
       "notes": ""
     },
     {
@@ -9345,8 +9345,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い火勢",
+          "nameEn": "Keen Fire Force"
         },
         {
           "kind": "GimmickBoost",
@@ -9361,8 +9361,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "熾り立つ火勢",
+          "nameEn": "Kindling Fire Force"
         }
       ],
       "keystone": null,
@@ -9372,8 +9372,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の分岐",
-      "nameEn": "Infernal Tales Branch",
+      "nameJa": "炎の継ぎ方",
+      "nameEn": "Feeding the Flames",
       "notes": ""
     },
     {
@@ -9405,8 +9405,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 I",
-      "nameEn": "Infernal Tales Power I",
+      "nameJa": "業火の鋭い炎",
+      "nameEn": "Sharp Hellfire Flames",
       "notes": ""
     },
     {
@@ -9443,8 +9443,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 I",
-      "nameEn": "Infernal Tales Gimmick Boost I",
+      "nameJa": "業火の焚き増し",
+      "nameEn": "Stoked Hellfire",
       "notes": ""
     },
     {
@@ -9477,8 +9477,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転",
-      "nameEn": "Infernal Tales Cadence",
+      "nameJa": "炎の詠唱の軽さ",
+      "nameEn": "Lightness of Fire Chants",
       "notes": ""
     },
     {
@@ -9514,8 +9514,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 II",
-      "nameEn": "Infernal Tales Gimmick Boost II",
+      "nameJa": "炎の筆圧",
+      "nameEn": "Fire’s Pen Pressure",
       "notes": ""
     },
     {
@@ -9548,8 +9548,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 II",
-      "nameEn": "Infernal Tales Power II",
+      "nameJa": "重く燃える業火",
+      "nameEn": "Heavily Burning Hellfire",
       "notes": ""
     },
     {
@@ -9586,8 +9586,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 III",
-      "nameEn": "Infernal Tales Gimmick Boost III",
+      "nameJa": "物語の熱のこもり",
+      "nameEn": "Well-Kept Heat of Tales",
       "notes": ""
     },
     {
@@ -9628,8 +9628,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時防壁",
-      "nameEn": "Infernal Tales: On Hit Rampart",
+      "nameJa": "炎の幕の壁",
+      "nameEn": "Walls of Flame Curtains",
       "notes": ""
     },
     {
@@ -9670,8 +9670,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・命中時弱体",
-      "nameEn": "Infernal Tales: On Hit Sap",
+      "nameJa": "輪に焼かれる怯え",
+      "nameEn": "Cowering in the Ring",
       "notes": ""
     },
     {
@@ -9708,8 +9708,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 IV",
-      "nameEn": "Infernal Tales Gimmick Boost IV",
+      "nameJa": "炎文の鮮やかさ",
+      "nameEn": "Vivid Fire Script",
       "notes": ""
     },
     {
@@ -9746,8 +9746,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 I",
-      "nameEn": "Infernal Tales Duration I",
+      "nameJa": "炎の尾を引く熱",
+      "nameEn": "Trailing Heat of Flames",
       "notes": ""
     },
     {
@@ -9784,8 +9784,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 V",
-      "nameEn": "Infernal Tales Gimmick Boost V",
+      "nameJa": "業火のたきつけ",
+      "nameEn": "Blazing Up Hellfire",
       "notes": ""
     },
     {
@@ -9822,8 +9822,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 II",
-      "nameEn": "Infernal Tales Duration II",
+      "nameJa": "消えぬ燃え殻",
+      "nameEn": "Unburnt-Out Shells",
       "notes": ""
     },
     {
@@ -9860,8 +9860,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VI",
-      "nameEn": "Infernal Tales Gimmick Boost VI",
+      "nameJa": "燃えさかる章立て",
+      "nameEn": "Blazing Chaptering",
       "notes": ""
     },
     {
@@ -9898,8 +9898,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 III",
-      "nameEn": "Infernal Tales Duration III",
+      "nameJa": "長く燃える章",
+      "nameEn": "Chapters Long Burning",
       "notes": ""
     },
     {
@@ -9936,8 +9936,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VII",
-      "nameEn": "Infernal Tales Gimmick Boost VII",
+      "nameJa": "炎の文体の研ぎ",
+      "nameEn": "Whetted Fire Style",
       "notes": ""
     },
     {
@@ -9974,8 +9974,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の持続 IV",
-      "nameEn": "Infernal Tales Duration IV",
+      "nameJa": "残る焼け跡の熱",
+      "nameEn": "Heat of Burnt Traces",
       "notes": ""
     },
     {
@@ -10013,8 +10013,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い輪",
+          "nameEn": "Keen Ring"
         },
         {
           "kind": "GimmickBoost",
@@ -10029,8 +10029,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い輪",
+          "nameEn": "Heavy Ring"
         }
       ],
       "keystone": null,
@@ -10040,8 +10040,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の分岐",
-      "nameEn": "Infernal Tales Branch",
+      "nameJa": "輪の担ぎ方",
+      "nameEn": "Carrying the Ring",
       "notes": ""
     },
     {
@@ -10073,8 +10073,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 I",
-      "nameEn": "Infernal Tales Power I",
+      "nameJa": "炎文の鋭い筆致",
+      "nameEn": "Sharp Fire-Script Strokes",
       "notes": ""
     },
     {
@@ -10111,8 +10111,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 I",
-      "nameEn": "Infernal Tales Gimmick Boost I",
+      "nameJa": "情熱の筆の運び",
+      "nameEn": "Passionate Pen Strokes",
       "notes": ""
     },
     {
@@ -10145,8 +10145,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転 I",
-      "nameEn": "Infernal Tales Cadence I",
+      "nameJa": "炎文の巡りの良さ",
+      "nameEn": "Well-Turning Fire Cycles",
       "notes": ""
     },
     {
@@ -10182,8 +10182,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 II",
-      "nameEn": "Infernal Tales Gimmick Boost II",
+      "nameJa": "炎文の重ね刷り",
+      "nameEn": "Overprinted Fire Script",
       "notes": ""
     },
     {
@@ -10216,8 +10216,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の威力 II",
-      "nameEn": "Infernal Tales Power II",
+      "nameJa": "焼けつく一撃",
+      "nameEn": "Scorching Blows",
       "notes": ""
     },
     {
@@ -10254,8 +10254,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 III",
-      "nameEn": "Infernal Tales Gimmick Boost III",
+      "nameJa": "業火の暖まり",
+      "nameEn": "Warming of Hellfire",
       "notes": ""
     },
     {
@@ -10296,8 +10296,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・撃破時爆風",
-      "nameEn": "Infernal Tales: On Kill Burst",
+      "nameJa": "灰の花火",
+      "nameEn": "Ash Fireworks",
       "notes": ""
     },
     {
@@ -10338,8 +10338,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語・撃破時再充填",
-      "nameEn": "Infernal Tales: On Kill Recharge",
+      "nameJa": "焼け跡の再燃",
+      "nameEn": "Rekindled Ruins",
       "notes": ""
     },
     {
@@ -10376,8 +10376,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 IV",
-      "nameEn": "Infernal Tales Gimmick Boost IV",
+      "nameJa": "炎の間合いの熾し",
+      "nameEn": "Kindled Fire Range",
       "notes": ""
     },
     {
@@ -10414,8 +10414,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の範囲 I",
-      "nameEn": "Infernal Tales Radius I",
+      "nameJa": "広がる炎の輪",
+      "nameEn": "Widening Fire Rings",
       "notes": ""
     },
     {
@@ -10452,8 +10452,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 V",
-      "nameEn": "Infernal Tales Gimmick Boost V",
+      "nameJa": "物語の炎の勢い",
+      "nameEn": "Momentum of Tale-Fire",
       "notes": ""
     },
     {
@@ -10490,8 +10490,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の範囲 II",
-      "nameEn": "Infernal Tales Radius II",
+      "nameJa": "燃え広がる輪",
+      "nameEn": "Rings of Spread",
       "notes": ""
     },
     {
@@ -10528,8 +10528,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VI",
-      "nameEn": "Infernal Tales Gimmick Boost VI",
+      "nameJa": "炎文の火力",
+      "nameEn": "Firepower of Fire Script",
       "notes": ""
     },
     {
@@ -10562,8 +10562,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転 II",
-      "nameEn": "Infernal Tales Cadence II",
+      "nameJa": "速く焚べる炎文",
+      "nameEn": "Swiftly Fed Fire",
       "notes": ""
     },
     {
@@ -10600,8 +10600,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の仕掛け強化 VII",
-      "nameEn": "Infernal Tales Gimmick Boost VII",
+      "nameJa": "業火の焚き増し",
+      "nameEn": "Stoked Hellfire",
       "notes": ""
     },
     {
@@ -10634,8 +10634,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の回転 III",
-      "nameEn": "Infernal Tales Cadence III",
+      "nameJa": "炎の詠唱の軽さ",
+      "nameEn": "Lightness of Fire Chants",
       "notes": ""
     },
     {
@@ -10673,8 +10673,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い再燃",
+          "nameEn": "Sharp Rekindling"
         },
         {
           "kind": "GimmickBoost",
@@ -10689,8 +10689,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い再燃",
+          "nameEn": "Weighty Rekindling"
         }
       ],
       "keystone": null,
@@ -10700,8 +10700,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語の分岐",
-      "nameEn": "Infernal Tales Branch",
+      "nameJa": "燃え上がりの岐路",
+      "nameEn": "Crossroads of Rekindling",
       "notes": ""
     },
     {
@@ -10733,8 +10733,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 I",
-      "nameEn": "Valiant Heart Power I",
+      "nameJa": "剣文の鋭い一閃",
+      "nameEn": "Sharp Sword-Script Flashes",
       "notes": ""
     },
     {
@@ -10771,8 +10771,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 I",
-      "nameEn": "Valiant Heart Gimmick Boost I",
+      "nameJa": "剣文の鍛錬",
+      "nameEn": "Sword-Script Training",
       "notes": ""
     },
     {
@@ -10805,8 +10805,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転",
-      "nameEn": "Valiant Heart Cadence",
+      "nameJa": "剣文の巡りの良さ",
+      "nameEn": "Well-Turning Sword Cycles",
       "notes": ""
     },
     {
@@ -10842,8 +10842,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 II",
-      "nameEn": "Valiant Heart Gimmick Boost II",
+      "nameJa": "勇気の研ぎ澄まし",
+      "nameEn": "Whetted Courage",
       "notes": ""
     },
     {
@@ -10876,8 +10876,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 II",
-      "nameEn": "Valiant Heart Power II",
+      "nameJa": "重く斬る剣文",
+      "nameEn": "Heavy Sword Script",
       "notes": ""
     },
     {
@@ -10914,8 +10914,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 III",
-      "nameEn": "Valiant Heart Gimmick Boost III",
+      "nameJa": "剣の冴えの研き",
+      "nameEn": "Whetting the Blade",
       "notes": ""
     },
     {
@@ -10956,8 +10956,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時爆風",
-      "nameEn": "Valiant Heart: On Hit Burst",
+      "nameJa": "剣圧の放射",
+      "nameEn": "Sword-Pressure Blast",
       "notes": ""
     },
     {
@@ -10998,8 +10998,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時跳弾",
-      "nameEn": "Valiant Heart: On Hit Ricochet",
+      "nameJa": "剣先のはね返り",
+      "nameEn": "Deflecting Sword Tip",
       "notes": ""
     },
     {
@@ -11036,8 +11036,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 IV",
-      "nameEn": "Valiant Heart Gimmick Boost IV",
+      "nameJa": "魔剣の手入れ",
+      "nameEn": "Caring for the Magic Sword",
       "notes": ""
     },
     {
@@ -11074,8 +11074,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の範囲 I",
-      "nameEn": "Valiant Heart Radius I",
+      "nameJa": "広がる剣圧の波",
+      "nameEn": "Widening Sword Waves",
       "notes": ""
     },
     {
@@ -11112,8 +11112,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 V",
-      "nameEn": "Valiant Heart Gimmick Boost V",
+      "nameJa": "剣文の筆圧",
+      "nameEn": "Sword-Script Pen Pressure",
       "notes": ""
     },
     {
@@ -11150,8 +11150,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の範囲 II",
-      "nameEn": "Valiant Heart Radius II",
+      "nameJa": "剣風の及ぶ先",
+      "nameEn": "Where Sword Winds Reach",
       "notes": ""
     },
     {
@@ -11188,8 +11188,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VI",
-      "nameEn": "Valiant Heart Gimmick Boost VI",
+      "nameJa": "勇ましい章の運び",
+      "nameEn": "Valiant Chaptering",
       "notes": ""
     },
     {
@@ -11226,8 +11226,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の範囲 III",
-      "nameEn": "Valiant Heart Radius III",
+      "nameJa": "斬撃のはねの輪",
+      "nameEn": "Rings of Bouncing Slashes",
       "notes": ""
     },
     {
@@ -11264,8 +11264,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の追加対象",
-      "nameEn": "Valiant Heart Extra Targets",
+      "nameJa": "剣先のもう一体",
+      "nameEn": "One More at the Tip",
       "notes": ""
     },
     {
@@ -11302,8 +11302,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VII",
-      "nameEn": "Valiant Heart Gimmick Boost VII",
+      "nameJa": "剣の切れ味の極み",
+      "nameEn": "Peak Blade Keenness",
       "notes": ""
     },
     {
@@ -11341,8 +11341,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い剣閃",
+          "nameEn": "Sharp Sword Flashes"
         },
         {
           "kind": "GimmickBoost",
@@ -11357,8 +11357,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い剣閃",
+          "nameEn": "Heavy Sword Flashes"
         }
       ],
       "keystone": null,
@@ -11368,8 +11368,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の分岐",
-      "nameEn": "Valiant Heart Branch",
+      "nameJa": "剣の振り方",
+      "nameEn": "Ways of Swinging",
       "notes": ""
     },
     {
@@ -11401,8 +11401,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 I",
-      "nameEn": "Valiant Heart Power I",
+      "nameJa": "勇剣の切っ先",
+      "nameEn": "Edge of the Valiant Blade",
       "notes": ""
     },
     {
@@ -11439,8 +11439,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 I",
-      "nameEn": "Valiant Heart Gimmick Boost I",
+      "nameJa": "心剣の磨き",
+      "nameEn": "Polished Heart-Blade",
       "notes": ""
     },
     {
@@ -11473,8 +11473,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転",
-      "nameEn": "Valiant Heart Cadence",
+      "nameJa": "速く振る剣文",
+      "nameEn": "Swiftly Swung Sword",
       "notes": ""
     },
     {
@@ -11510,8 +11510,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 II",
-      "nameEn": "Valiant Heart Gimmick Boost II",
+      "nameJa": "斬撃の洗練",
+      "nameEn": "Refined Slashes",
       "notes": ""
     },
     {
@@ -11544,8 +11544,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 II",
-      "nameEn": "Valiant Heart Power II",
+      "nameJa": "冴え渡る剣閃",
+      "nameEn": "Keen Sword Flashes",
       "notes": ""
     },
     {
@@ -11582,8 +11582,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 III",
-      "nameEn": "Valiant Heart Gimmick Boost III",
+      "nameJa": "勇気のふくらみ",
+      "nameEn": "Swelling Courage",
       "notes": ""
     },
     {
@@ -11624,8 +11624,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時防壁",
-      "nameEn": "Valiant Heart: On Hit Rampart",
+      "nameJa": "勇気の壁面",
+      "nameEn": "Facade of Courage",
       "notes": ""
     },
     {
@@ -11666,8 +11666,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時弱体",
-      "nameEn": "Valiant Heart: On Hit Sap",
+      "nameJa": "気迫の威圧",
+      "nameEn": "Overawing Spirit",
       "notes": ""
     },
     {
@@ -11704,8 +11704,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 IV",
-      "nameEn": "Valiant Heart Gimmick Boost IV",
+      "nameJa": "剣文の重ね斬り",
+      "nameEn": "Stacked Sword Strokes",
       "notes": ""
     },
     {
@@ -11742,8 +11742,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の持続 I",
-      "nameEn": "Valiant Heart Duration I",
+      "nameJa": "長く保つ剣の守り",
+      "nameEn": "Sword Wards That Last",
       "notes": ""
     },
     {
@@ -11780,8 +11780,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 V",
-      "nameEn": "Valiant Heart Gimmick Boost V",
+      "nameJa": "真っ直ぐな剣筋",
+      "nameEn": "Straight Blade Lines",
       "notes": ""
     },
     {
@@ -11818,8 +11818,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の持続 II",
-      "nameEn": "Valiant Heart Duration II",
+      "nameJa": "残る勇気の名残",
+      "nameEn": "Traces of Courage",
       "notes": ""
     },
     {
@@ -11856,8 +11856,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VI",
-      "nameEn": "Valiant Heart Gimmick Boost VI",
+      "nameJa": "剣の冴えの型",
+      "nameEn": "Forms of Blade Keenness",
       "notes": ""
     },
     {
@@ -11894,8 +11894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の持続 III",
-      "nameEn": "Valiant Heart Duration III",
+      "nameJa": "消えぬ剣の残心",
+      "nameEn": "Unfading Blade Guard",
       "notes": ""
     },
     {
@@ -11932,8 +11932,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VII",
-      "nameEn": "Valiant Heart Gimmick Boost VII",
+      "nameJa": "勇将の構え",
+      "nameEn": "Valiant Guard Stance",
       "notes": ""
     },
     {
@@ -11970,8 +11970,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の持続 IV",
-      "nameEn": "Valiant Heart Duration IV",
+      "nameJa": "長く保つ刃の膜",
+      "nameEn": "Blade Films Long Held",
       "notes": ""
     },
     {
@@ -12009,8 +12009,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い守り",
+          "nameEn": "Keen Defense"
         },
         {
           "kind": "GimmickBoost",
@@ -12025,8 +12025,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "厚い守り",
+          "nameEn": "Thick Defense"
         }
       ],
       "keystone": null,
@@ -12036,8 +12036,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の分岐",
-      "nameEn": "Valiant Heart Branch",
+      "nameJa": "剣の守りの岐路",
+      "nameEn": "Crossroads of Sword Wards",
       "notes": ""
     },
     {
@@ -12069,8 +12069,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 I",
-      "nameEn": "Valiant Heart Power I",
+      "nameJa": "斬り開く一撃",
+      "nameEn": "Cleaving Blows",
       "notes": ""
     },
     {
@@ -12107,8 +12107,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 I",
-      "nameEn": "Valiant Heart Gimmick Boost I",
+      "nameJa": "剣文の鍛錬",
+      "nameEn": "Sword-Script Training",
       "notes": ""
     },
     {
@@ -12141,8 +12141,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転",
-      "nameEn": "Valiant Heart Cadence",
+      "nameJa": "剣の詠唱の軽さ",
+      "nameEn": "Lightness of Sword Chants",
       "notes": ""
     },
     {
@@ -12178,8 +12178,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 II",
-      "nameEn": "Valiant Heart Gimmick Boost II",
+      "nameJa": "勇気の研ぎ澄まし",
+      "nameEn": "Whetted Courage",
       "notes": ""
     },
     {
@@ -12212,8 +12212,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 II",
-      "nameEn": "Valiant Heart Power II",
+      "nameJa": "心のこもった斬撃",
+      "nameEn": "Wholehearted Slashes",
       "notes": ""
     },
     {
@@ -12250,8 +12250,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 III",
-      "nameEn": "Valiant Heart Gimmick Boost III",
+      "nameJa": "剣の冴えの研き",
+      "nameEn": "Whetting the Blade",
       "notes": ""
     },
     {
@@ -12292,8 +12292,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時冷気の付与",
-      "nameEn": "Valiant Heart: On Hit Apply Cold",
+      "nameJa": "剣に纏う霜",
+      "nameEn": "Frost on the Blade",
       "notes": ""
     },
     {
@@ -12334,8 +12334,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・命中時光の付与",
-      "nameEn": "Valiant Heart: On Hit Apply Light",
+      "nameJa": "剣に纏う光",
+      "nameEn": "Light on the Blade",
       "notes": ""
     },
     {
@@ -12372,8 +12372,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 IV",
-      "nameEn": "Valiant Heart Gimmick Boost IV",
+      "nameJa": "魔剣の手入れ",
+      "nameEn": "Caring for the Magic Sword",
       "notes": ""
     },
     {
@@ -12410,8 +12410,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の確率 I",
-      "nameEn": "Valiant Heart Chance I",
+      "nameJa": "剣の光の予感",
+      "nameEn": "Omens of Sword Light",
       "notes": ""
     },
     {
@@ -12448,8 +12448,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 V",
-      "nameEn": "Valiant Heart Gimmick Boost V",
+      "nameJa": "剣文の筆圧",
+      "nameEn": "Sword-Script Pen Pressure",
       "notes": ""
     },
     {
@@ -12486,8 +12486,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の確率 II",
-      "nameEn": "Valiant Heart Chance II",
+      "nameJa": "勝機の閃き",
+      "nameEn": "Flashes of Opportunity",
       "notes": ""
     },
     {
@@ -12524,8 +12524,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VI",
-      "nameEn": "Valiant Heart Gimmick Boost VI",
+      "nameJa": "勇ましい章の運び",
+      "nameEn": "Valiant Chaptering",
       "notes": ""
     },
     {
@@ -12562,8 +12562,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の確率 III",
-      "nameEn": "Valiant Heart Chance III",
+      "nameJa": "刃のひらめき",
+      "nameEn": "Glints of the Edge",
       "notes": ""
     },
     {
@@ -12600,8 +12600,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VII",
-      "nameEn": "Valiant Heart Gimmick Boost VII",
+      "nameJa": "剣の切れ味の極み",
+      "nameEn": "Peak Blade Keenness",
       "notes": ""
     },
     {
@@ -12638,8 +12638,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の確率 IV",
-      "nameEn": "Valiant Heart Chance IV",
+      "nameJa": "抜き時の兆し",
+      "nameEn": "Omens of the Draw",
       "notes": ""
     },
     {
@@ -12677,8 +12677,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "冴える刃",
+          "nameEn": "Keen Edge"
         },
         {
           "kind": "GimmickBoost",
@@ -12693,8 +12693,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "滲む刃",
+          "nameEn": "Soaking Edge"
         }
       ],
       "keystone": null,
@@ -12704,8 +12704,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の分岐",
-      "nameEn": "Valiant Heart Branch",
+      "nameJa": "剣の彩の岐路",
+      "nameEn": "Crossroads of the Blade’s Hues",
       "notes": ""
     },
     {
@@ -12737,8 +12737,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 I",
-      "nameEn": "Valiant Heart Power I",
+      "nameJa": "剣文の鋭い一閃",
+      "nameEn": "Sharp Sword-Script Flashes",
       "notes": ""
     },
     {
@@ -12775,8 +12775,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 I",
-      "nameEn": "Valiant Heart Gimmick Boost I",
+      "nameJa": "心剣の磨き",
+      "nameEn": "Polished Heart-Blade",
       "notes": ""
     },
     {
@@ -12809,8 +12809,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転 I",
-      "nameEn": "Valiant Heart Cadence I",
+      "nameJa": "剣文の巡りの良さ",
+      "nameEn": "Well-Turning Sword Cycles",
       "notes": ""
     },
     {
@@ -12846,8 +12846,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 II",
-      "nameEn": "Valiant Heart Gimmick Boost II",
+      "nameJa": "斬撃の洗練",
+      "nameEn": "Refined Slashes",
       "notes": ""
     },
     {
@@ -12880,8 +12880,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 II",
-      "nameEn": "Valiant Heart Power II",
+      "nameJa": "重く斬る剣文",
+      "nameEn": "Heavy Sword Script",
       "notes": ""
     },
     {
@@ -12918,8 +12918,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 III",
-      "nameEn": "Valiant Heart Gimmick Boost III",
+      "nameJa": "勇気のふくらみ",
+      "nameEn": "Swelling Courage",
       "notes": ""
     },
     {
@@ -12960,8 +12960,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・撃破時再充填",
-      "nameEn": "Valiant Heart: On Kill Recharge",
+      "nameJa": "勝ち鬨の息",
+      "nameEn": "Breath of Victory",
       "notes": ""
     },
     {
@@ -13002,8 +13002,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心・撃破時回復",
-      "nameEn": "Valiant Heart: On Kill Heal",
+      "nameJa": "勇気の息吹",
+      "nameEn": "Breath of Courage",
       "notes": ""
     },
     {
@@ -13040,8 +13040,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 IV",
-      "nameEn": "Valiant Heart Gimmick Boost IV",
+      "nameJa": "剣文の重ね斬り",
+      "nameEn": "Stacked Sword Strokes",
       "notes": ""
     },
     {
@@ -13074,8 +13074,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転 II",
-      "nameEn": "Valiant Heart Cadence II",
+      "nameJa": "速く振る剣文",
+      "nameEn": "Swiftly Swung Sword",
       "notes": ""
     },
     {
@@ -13112,8 +13112,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 V",
-      "nameEn": "Valiant Heart Gimmick Boost V",
+      "nameJa": "真っ直ぐな剣筋",
+      "nameEn": "Straight Blade Lines",
       "notes": ""
     },
     {
@@ -13146,8 +13146,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の回転 III",
-      "nameEn": "Valiant Heart Cadence III",
+      "nameJa": "剣の詠唱の軽さ",
+      "nameEn": "Lightness of Sword Chants",
       "notes": ""
     },
     {
@@ -13184,8 +13184,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VI",
-      "nameEn": "Valiant Heart Gimmick Boost VI",
+      "nameJa": "剣の冴えの型",
+      "nameEn": "Forms of Blade Keenness",
       "notes": ""
     },
     {
@@ -13218,8 +13218,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の威力 III",
-      "nameEn": "Valiant Heart Power III",
+      "nameJa": "勇剣の切っ先",
+      "nameEn": "Edge of the Valiant Blade",
       "notes": ""
     },
     {
@@ -13256,8 +13256,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VII",
-      "nameEn": "Valiant Heart Gimmick Boost VII",
+      "nameJa": "勇将の構え",
+      "nameEn": "Valiant Guard Stance",
       "notes": ""
     },
     {
@@ -13294,8 +13294,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の仕掛け強化 VIII",
-      "nameEn": "Valiant Heart Gimmick Boost VIII",
+      "nameJa": "剣文の鍛錬",
+      "nameEn": "Sword-Script Training",
       "notes": ""
     },
     {
@@ -13333,8 +13333,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い次撃ち",
+          "nameEn": "Keen Follow-Up"
         },
         {
           "kind": "GimmickBoost",
@@ -13349,8 +13349,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い次撃ち",
+          "nameEn": "Heavy Follow-Up"
         }
       ],
       "keystone": null,
@@ -13360,8 +13360,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心の分岐",
-      "nameEn": "Valiant Heart Branch",
+      "nameJa": "次撃ちの備え",
+      "nameEn": "Ready for the Next",
       "notes": ""
     },
     {
@@ -13393,8 +13393,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 I",
-      "nameEn": "Distorted Mind Power I",
+      "nameJa": "歪んだ鋭い矢",
+      "nameEn": "Sharp Warped Arrows",
       "notes": ""
     },
     {
@@ -13431,8 +13431,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 I",
-      "nameEn": "Distorted Mind Gimmick Boost I",
+      "nameJa": "闇文の執筆術",
+      "nameEn": "Authorship of Dark Script",
       "notes": ""
     },
     {
@@ -13465,8 +13465,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の回転",
-      "nameEn": "Distorted Mind Cadence",
+      "nameJa": "闇文の巡りの良さ",
+      "nameEn": "Well-Turning Dark Cycles",
       "notes": ""
     },
     {
@@ -13502,8 +13502,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 II",
-      "nameEn": "Distorted Mind Gimmick Boost II",
+      "nameJa": "歪な精神の深み",
+      "nameEn": "Depths of the Warped Mind",
       "notes": ""
     },
     {
@@ -13536,8 +13536,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 II",
-      "nameEn": "Distorted Mind Power II",
+      "nameJa": "重く刺さる矢文",
+      "nameEn": "Deeply Piercing Arrow-Letters",
       "notes": ""
     },
     {
@@ -13574,8 +13574,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 III",
-      "nameEn": "Distorted Mind Gimmick Boost III",
+      "nameJa": "闇文の濃淡の技",
+      "nameEn": "Art of Dark Shading",
       "notes": ""
     },
     {
@@ -13616,8 +13616,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時残響",
-      "nameEn": "Distorted Mind: On Hit Echo",
+      "nameJa": "思考の反響",
+      "nameEn": "Echo of Thought",
       "notes": ""
     },
     {
@@ -13658,8 +13658,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時傷",
-      "nameEn": "Distorted Mind: On Hit Wound",
+      "nameJa": "心を刺す矢",
+      "nameEn": "Arrows That Pierce Minds",
       "notes": ""
     },
     {
@@ -13696,8 +13696,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 IV",
-      "nameEn": "Distorted Mind Gimmick Boost IV",
+      "nameJa": "精神の矢の研ぎ",
+      "nameEn": "Whetting Mind Arrows",
       "notes": ""
     },
     {
@@ -13730,8 +13730,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 III",
-      "nameEn": "Distorted Mind Power III",
+      "nameJa": "精神の冴えわたる矢",
+      "nameEn": "Keen Arrows of Mind",
       "notes": ""
     },
     {
@@ -13768,8 +13768,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 V",
-      "nameEn": "Distorted Mind Gimmick Boost V",
+      "nameJa": "闇の筆致の鋭さ",
+      "nameEn": "Sharpness of Dark Strokes",
       "notes": ""
     },
     {
@@ -13802,8 +13802,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 IV",
-      "nameEn": "Distorted Mind Power IV",
+      "nameJa": "闇を纏う矢",
+      "nameEn": "Dark-Clad Arrows",
       "notes": ""
     },
     {
@@ -13840,8 +13840,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VI",
-      "nameEn": "Distorted Mind Gimmick Boost VI",
+      "nameJa": "歪んだ思考の重み",
+      "nameEn": "Weight of Warped Thought",
       "notes": ""
     },
     {
@@ -13874,8 +13874,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 V",
-      "nameEn": "Distorted Mind Power V",
+      "nameJa": "貫く精神の矢",
+      "nameEn": "Piercing Mind Arrows",
       "notes": ""
     },
     {
@@ -13912,8 +13912,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VII",
-      "nameEn": "Distorted Mind Gimmick Boost VII",
+      "nameJa": "闇文の重ね書き",
+      "nameEn": "Overlaid Dark Script",
       "notes": ""
     },
     {
@@ -13946,8 +13946,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 VI",
-      "nameEn": "Distorted Mind Power VI",
+      "nameJa": "歪められた鋭鋒",
+      "nameEn": "Warped Sharp Points",
       "notes": ""
     },
     {
@@ -13985,8 +13985,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い矢文",
+          "nameEn": "Sharp Arrow-Letters"
         },
         {
           "kind": "GimmickBoost",
@@ -14001,8 +14001,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い矢文",
+          "nameEn": "Heavy Arrow-Letters"
         }
       ],
       "keystone": null,
@@ -14012,8 +14012,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の分岐",
-      "nameEn": "Distorted Mind Branch",
+      "nameJa": "矢の撃ち方",
+      "nameEn": "Ways of Loosing Arrows",
       "notes": ""
     },
     {
@@ -14045,8 +14045,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 I",
-      "nameEn": "Distorted Mind Power I",
+      "nameJa": "冴え割る闇矢",
+      "nameEn": "Keen-Splitting Dark Arrows",
       "notes": ""
     },
     {
@@ -14083,8 +14083,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 I",
-      "nameEn": "Distorted Mind Gimmick Boost I",
+      "nameJa": "精神の研ぎ澄まし",
+      "nameEn": "Whetted Mind",
       "notes": ""
     },
     {
@@ -14117,8 +14117,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の回転",
-      "nameEn": "Distorted Mind Cadence",
+      "nameJa": "速く綴る闇文",
+      "nameEn": "Swiftly Penned Dark",
       "notes": ""
     },
     {
@@ -14154,8 +14154,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 II",
-      "nameEn": "Distorted Mind Gimmick Boost II",
+      "nameJa": "闇の行間の巧み",
+      "nameEn": "Clever Dark Margins",
       "notes": ""
     },
     {
@@ -14188,8 +14188,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 II",
-      "nameEn": "Distorted Mind Power II",
+      "nameJa": "歪んだ鋭い矢",
+      "nameEn": "Sharp Warped Arrows",
       "notes": ""
     },
     {
@@ -14226,8 +14226,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 III",
-      "nameEn": "Distorted Mind Gimmick Boost III",
+      "nameJa": "矢文の文才",
+      "nameEn": "Literary Gift of Arrow-Letters",
       "notes": ""
     },
     {
@@ -14268,8 +14268,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時跳弾",
-      "nameEn": "Distorted Mind: On Hit Ricochet",
+      "nameJa": "矢のはね石",
+      "nameEn": "Skipping Arrows",
       "notes": ""
     },
     {
@@ -14310,8 +14310,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時爆風",
-      "nameEn": "Distorted Mind: On Hit Burst",
+      "nameJa": "着弾の乱れ咲き",
+      "nameEn": "Burst of Impacts",
       "notes": ""
     },
     {
@@ -14348,8 +14348,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 IV",
-      "nameEn": "Distorted Mind Gimmick Boost IV",
+      "nameJa": "歪みの極意",
+      "nameEn": "Secrets of Warp",
       "notes": ""
     },
     {
@@ -14386,8 +14386,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の範囲 I",
-      "nameEn": "Distorted Mind Radius I",
+      "nameJa": "広がる着弾の輪",
+      "nameEn": "Widening Impact Rings",
       "notes": ""
     },
     {
@@ -14424,8 +14424,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の追加対象",
-      "nameEn": "Distorted Mind Extra Targets",
+      "nameJa": "もう一本の闇矢",
+      "nameEn": "One More Dark Arrow",
       "notes": ""
     },
     {
@@ -14462,8 +14462,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 V",
-      "nameEn": "Distorted Mind Gimmick Boost V",
+      "nameJa": "闇文の研鑽",
+      "nameEn": "Dark Script Discipline",
       "notes": ""
     },
     {
@@ -14500,8 +14500,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VI",
-      "nameEn": "Distorted Mind Gimmick Boost VI",
+      "nameJa": "深淵を覗く筆",
+      "nameEn": "A Pen That Gazes into Depths",
       "notes": ""
     },
     {
@@ -14538,8 +14538,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の範囲 II",
-      "nameEn": "Distorted Mind Radius II",
+      "nameJa": "矢の降りそそぐ輪",
+      "nameEn": "Rings of Falling Arrows",
       "notes": ""
     },
     {
@@ -14576,8 +14576,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VII",
-      "nameEn": "Distorted Mind Gimmick Boost VII",
+      "nameJa": "渦巻く着想",
+      "nameEn": "Swirling Ideas",
       "notes": ""
     },
     {
@@ -14614,8 +14614,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の範囲 III",
-      "nameEn": "Distorted Mind Radius III",
+      "nameJa": "降りそそぐ闇の輪",
+      "nameEn": "Rings of Falling Dark",
       "notes": ""
     },
     {
@@ -14653,8 +14653,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い着弾",
+          "nameEn": "Keen Impacts"
         },
         {
           "kind": "GimmickBoost",
@@ -14669,8 +14669,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い着弾",
+          "nameEn": "Heavy Impacts"
         }
       ],
       "keystone": null,
@@ -14680,8 +14680,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の分岐",
-      "nameEn": "Distorted Mind Branch",
+      "nameJa": "矢の降らせ方",
+      "nameEn": "Ways of Raining Arrows",
       "notes": ""
     },
     {
@@ -14713,8 +14713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 I",
-      "nameEn": "Distorted Mind Power I",
+      "nameJa": "重く刺さる矢文",
+      "nameEn": "Deeply Piercing Arrow-Letters",
       "notes": ""
     },
     {
@@ -14751,8 +14751,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 I",
-      "nameEn": "Distorted Mind Gimmick Boost I",
+      "nameJa": "闇文の執筆術",
+      "nameEn": "Authorship of Dark Script",
       "notes": ""
     },
     {
@@ -14785,8 +14785,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の回転",
-      "nameEn": "Distorted Mind Cadence",
+      "nameJa": "闇の詠唱の軽さ",
+      "nameEn": "Lightness of Dark Chants",
       "notes": ""
     },
     {
@@ -14822,8 +14822,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 II",
-      "nameEn": "Distorted Mind Gimmick Boost II",
+      "nameJa": "歪な精神の深み",
+      "nameEn": "Depths of the Warped Mind",
       "notes": ""
     },
     {
@@ -14856,8 +14856,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 II",
-      "nameEn": "Distorted Mind Power II",
+      "nameJa": "精神の冴えわたる矢",
+      "nameEn": "Keen Arrows of Mind",
       "notes": ""
     },
     {
@@ -14894,8 +14894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 III",
-      "nameEn": "Distorted Mind Gimmick Boost III",
+      "nameJa": "闇文の濃淡の技",
+      "nameEn": "Art of Dark Shading",
       "notes": ""
     },
     {
@@ -14936,8 +14936,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時光の付与",
-      "nameEn": "Distorted Mind: On Hit Apply Light",
+      "nameJa": "行間の光",
+      "nameEn": "Light Between Lines",
       "notes": ""
     },
     {
@@ -14978,8 +14978,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時火の付与",
-      "nameEn": "Distorted Mind: On Hit Apply Fire",
+      "nameJa": "行間の火",
+      "nameEn": "Fire Between Lines",
       "notes": ""
     },
     {
@@ -15016,8 +15016,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 IV",
-      "nameEn": "Distorted Mind Gimmick Boost IV",
+      "nameJa": "精神の矢の研ぎ",
+      "nameEn": "Whetting Mind Arrows",
       "notes": ""
     },
     {
@@ -15054,8 +15054,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の確率 I",
-      "nameEn": "Distorted Mind Chance I",
+      "nameJa": "闇の宿る行間",
+      "nameEn": "Margins Where Dark Settles",
       "notes": ""
     },
     {
@@ -15092,8 +15092,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 V",
-      "nameEn": "Distorted Mind Gimmick Boost V",
+      "nameJa": "闇の筆致の鋭さ",
+      "nameEn": "Sharpness of Dark Strokes",
       "notes": ""
     },
     {
@@ -15130,8 +15130,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の確率 II",
-      "nameEn": "Distorted Mind Chance II",
+      "nameJa": "闇のにじむ予感",
+      "nameEn": "Omens of Seeping Dark",
       "notes": ""
     },
     {
@@ -15168,8 +15168,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VI",
-      "nameEn": "Distorted Mind Gimmick Boost VI",
+      "nameJa": "歪んだ思考の重み",
+      "nameEn": "Weight of Warped Thought",
       "notes": ""
     },
     {
@@ -15206,8 +15206,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の確率 III",
-      "nameEn": "Distorted Mind Chance III",
+      "nameJa": "行間のほの暗さ",
+      "nameEn": "Faint Dark Between Lines",
       "notes": ""
     },
     {
@@ -15244,8 +15244,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VII",
-      "nameEn": "Distorted Mind Gimmick Boost VII",
+      "nameJa": "闇文の重ね書き",
+      "nameEn": "Overlaid Dark Script",
       "notes": ""
     },
     {
@@ -15282,8 +15282,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の確率 IV",
-      "nameEn": "Distorted Mind Chance IV",
+      "nameJa": "闇のささやきの予兆",
+      "nameEn": "Forebodings of Dark Whispers",
       "notes": ""
     },
     {
@@ -15321,8 +15321,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鮮やかな行間",
+          "nameEn": "Vivid Margins"
         },
         {
           "kind": "GimmickBoost",
@@ -15337,8 +15337,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "濃い行間",
+          "nameEn": "Dense Margins"
         }
       ],
       "keystone": null,
@@ -15348,8 +15348,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の分岐",
-      "nameEn": "Distorted Mind Branch",
+      "nameJa": "行間の埋め方",
+      "nameEn": "Filling Between Lines",
       "notes": ""
     },
     {
@@ -15381,8 +15381,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 I",
-      "nameEn": "Distorted Mind Power I",
+      "nameJa": "闇を纏う矢",
+      "nameEn": "Dark-Clad Arrows",
       "notes": ""
     },
     {
@@ -15419,8 +15419,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 I",
-      "nameEn": "Distorted Mind Gimmick Boost I",
+      "nameJa": "精神の研ぎ澄まし",
+      "nameEn": "Whetted Mind",
       "notes": ""
     },
     {
@@ -15453,8 +15453,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の回転",
-      "nameEn": "Distorted Mind Cadence",
+      "nameJa": "闇文の巡りの良さ",
+      "nameEn": "Well-Turning Dark Cycles",
       "notes": ""
     },
     {
@@ -15490,8 +15490,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 II",
-      "nameEn": "Distorted Mind Gimmick Boost II",
+      "nameJa": "闇の行間の巧み",
+      "nameEn": "Clever Dark Margins",
       "notes": ""
     },
     {
@@ -15524,8 +15524,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の威力 II",
-      "nameEn": "Distorted Mind Power II",
+      "nameJa": "貫く精神の矢",
+      "nameEn": "Piercing Mind Arrows",
       "notes": ""
     },
     {
@@ -15562,8 +15562,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 III",
-      "nameEn": "Distorted Mind Gimmick Boost III",
+      "nameJa": "矢文の文才",
+      "nameEn": "Literary Gift of Arrow-Letters",
       "notes": ""
     },
     {
@@ -15604,8 +15604,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・命中時弱体",
-      "nameEn": "Distorted Mind: On Hit Sap",
+      "nameJa": "呪いの重み",
+      "nameEn": "Weight of Curses",
       "notes": ""
     },
     {
@@ -15647,8 +15647,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神・撃破時障壁",
-      "nameEn": "Distorted Mind: On Kill Shield",
+      "nameJa": "闇文の綴じ",
+      "nameEn": "Binding of Dark Script",
       "notes": ""
     },
     {
@@ -15685,8 +15685,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 IV",
-      "nameEn": "Distorted Mind Gimmick Boost IV",
+      "nameJa": "歪みの極意",
+      "nameEn": "Secrets of Warp",
       "notes": ""
     },
     {
@@ -15723,8 +15723,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の持続 I",
-      "nameEn": "Distorted Mind Duration I",
+      "nameJa": "長く残る闇の染み",
+      "nameEn": "Dark Stains That Last",
       "notes": ""
     },
     {
@@ -15761,8 +15761,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 V",
-      "nameEn": "Distorted Mind Gimmick Boost V",
+      "nameJa": "闇文の研鑽",
+      "nameEn": "Dark Script Discipline",
       "notes": ""
     },
     {
@@ -15799,8 +15799,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の持続 II",
-      "nameEn": "Distorted Mind Duration II",
+      "nameJa": "尾を引く呪い",
+      "nameEn": "Curses That Trail",
       "notes": ""
     },
     {
@@ -15837,8 +15837,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VI",
-      "nameEn": "Distorted Mind Gimmick Boost VI",
+      "nameJa": "深淵を覗く筆",
+      "nameEn": "A Pen That Gazes into Depths",
       "notes": ""
     },
     {
@@ -15875,8 +15875,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の持続 III",
-      "nameEn": "Distorted Mind Duration III",
+      "nameJa": "消えぬ闇の文句",
+      "nameEn": "Unfading Dark Phrases",
       "notes": ""
     },
     {
@@ -15913,8 +15913,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の仕掛け強化 VII",
-      "nameEn": "Distorted Mind Gimmick Boost VII",
+      "nameJa": "渦巻く着想",
+      "nameEn": "Swirling Ideas",
       "notes": ""
     },
     {
@@ -15951,8 +15951,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の持続 IV",
-      "nameEn": "Distorted Mind Duration IV",
+      "nameJa": "長く効く闇の毒",
+      "nameEn": "Dark Venom Long Working",
       "notes": ""
     },
     {
@@ -15990,8 +15990,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い止め",
+          "nameEn": "Keen Finish"
         },
         {
           "kind": "GimmickBoost",
@@ -16006,8 +16006,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "確かな止め",
+          "nameEn": "Sure Finish"
         }
       ],
       "keystone": null,
@@ -16017,8 +16017,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神の分岐",
-      "nameEn": "Distorted Mind Branch",
+      "nameJa": "止めの取り方",
+      "nameEn": "Ways of Finishing",
       "notes": ""
     },
     {
@@ -16055,8 +16055,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost I",
+      "nameJa": "読書の研鑽",
+      "nameEn": "Reading Discipline",
       "notes": ""
     },
     {
@@ -16094,8 +16094,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 I",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost I",
+      "nameJa": "無垢なる筆圧",
+      "nameEn": "Innocent Pen Pressure",
       "notes": ""
     },
     {
@@ -16128,8 +16128,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の威力",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Power",
+      "nameJa": "鋭い頁の刃",
+      "nameEn": "Sharp Page Blades",
       "notes": ""
     },
     {
@@ -16163,8 +16163,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の威力",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Power",
+      "nameJa": "貫く光の雨",
+      "nameEn": "Piercing Light Rain",
       "notes": ""
     },
     {
@@ -16207,8 +16207,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界・命中時闇の付与",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision: On Hit Apply Dark",
+      "nameJa": "印に滲む闇",
+      "nameEn": "Dark Seeping into Marks",
       "notes": "PairGimmickBinding: b1の既存の印/成立条件に束縛(条件メモ: 印の敵へP)。"
     },
     {
@@ -16251,8 +16251,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界・命中時弱体",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision: On Hit Sap",
+      "nameJa": "読後の脱力",
+      "nameEn": "Enervated After Reading",
       "notes": "PairGimmickBinding: b1の既存の印/成立条件に束縛(条件メモ: 同条件P)。"
     },
     {
@@ -16290,8 +16290,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost II",
+      "nameJa": "頁のめくりの技",
+      "nameEn": "Art of Page-Turning",
       "notes": ""
     },
     {
@@ -16329,8 +16329,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 II",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost II",
+      "nameJa": "光文の重ね書き",
+      "nameEn": "Overwriting Light Script",
       "notes": ""
     },
     {
@@ -16368,8 +16368,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost III",
+      "nameJa": "深読みの極意",
+      "nameEn": "Secrets of Deep Reading",
       "notes": ""
     },
     {
@@ -16407,8 +16407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 III",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost III",
+      "nameJa": "輝きの腰の強さ",
+      "nameEn": "Firm-Bodied Shine",
       "notes": ""
     },
     {
@@ -16446,8 +16446,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost IV",
+      "nameJa": "まぶしい彩の筆",
+      "nameEn": "Dazzling Hue Pen",
       "notes": ""
     },
     {
@@ -16485,8 +16485,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鮮烈な共演",
+          "nameEn": "Brilliant Duet"
         },
         {
           "kind": "GimmickBoost",
@@ -16501,8 +16501,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深まる共演",
+          "nameEn": "Deepening Duet"
         }
       ],
       "keystone": null,
@@ -16513,8 +16513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂の分岐",
-      "nameEn": "Prismatic Vision x Innocence Branch",
+      "nameJa": "光と本の共演",
+      "nameEn": "Light and Book Together",
       "notes": ""
     },
     {
@@ -16551,8 +16551,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost I",
+      "nameJa": "光文の練成",
+      "nameEn": "Refined Light Script",
       "notes": ""
     },
     {
@@ -16590,8 +16590,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 I",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost I",
+      "nameJa": "速読の脚",
+      "nameEn": "Legs of Speed Reading",
       "notes": ""
     },
     {
@@ -16624,8 +16624,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の威力",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Power",
+      "nameJa": "研ぎ澄まされた光文",
+      "nameEn": "Whetted Light Script",
       "notes": ""
     },
     {
@@ -16663,8 +16663,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 II",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost II",
+      "nameJa": "風を見る目",
+      "nameEn": "Eyes That Read the Wind",
       "notes": "設計表: Sの側はMDを置かずGB(S,2)を指定(受信量の増加)。"
     },
     {
@@ -16708,8 +16708,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂・撃破時退路の短縮",
-      "nameEn": "Innocence x Distorting Sprint: Innocence: On Kill Receiver Recharge",
+      "nameJa": "止めの頁送り",
+      "nameEn": "Page Turned by Kills",
       "notes": "PairGimmickBinding: b2の既存の印/成立条件に束縛(条件メモ: I撃破)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -16754,8 +16754,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂・命中時退路の短縮",
-      "nameEn": "Innocence x Distorting Sprint: Innocence: On Hit Receiver Recharge",
+      "nameJa": "一射の頁のめくり",
+      "nameEn": "Pages Turned per Volley",
       "notes": "PairGimmickBinding: b2の既存の印/成立条件に束縛(条件メモ: Iの1発動で1回)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -16793,8 +16793,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost II",
+      "nameJa": "無垢の輝きの深み",
+      "nameEn": "Depths of Innocent Shine",
       "notes": ""
     },
     {
@@ -16832,8 +16832,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 III",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost III",
+      "nameJa": "頁路の知恵",
+      "nameEn": "Wisdom of Pagepaths",
       "notes": ""
     },
     {
@@ -16871,8 +16871,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost III",
+      "nameJa": "光弾の腕前",
+      "nameEn": "Light-Missile Craft",
       "notes": ""
     },
     {
@@ -16910,8 +16910,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 IV",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost IV",
+      "nameJa": "退路の読み書き",
+      "nameEn": "Reading and Writing Exits",
       "notes": ""
     },
     {
@@ -16949,8 +16949,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 V",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost V",
+      "nameJa": "疾走の心得",
+      "nameEn": "Sprinter’s Lore",
       "notes": ""
     },
     {
@@ -16991,8 +16991,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる退路",
+          "nameEn": "Widening Exits"
         },
         {
           "kind": "GimmickParam",
@@ -17007,8 +17007,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "定まる退路",
+          "nameEn": "Settled Exits"
         }
       ],
       "keystone": null,
@@ -17019,8 +17019,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走の分岐",
-      "nameEn": "Innocence x Distorting Sprint Branch",
+      "nameJa": "光弾からの退路",
+      "nameEn": "Exits by Light Missiles",
       "notes": ""
     },
     {
@@ -17057,8 +17057,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・歪な疾走の仕掛け強化 I",
-      "nameEn": "Distorting Sprint x Infernal Tales: Distorting Sprint Gimmick Boost I",
+      "nameJa": "頁の風切りの良さ",
+      "nameEn": "Smooth Page Windcut",
       "notes": ""
     },
     {
@@ -17096,8 +17096,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語の仕掛け強化 I",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales Gimmick Boost I",
+      "nameJa": "炎の筆圧",
+      "nameEn": "Fire’s Pen Pressure",
       "notes": ""
     },
     {
@@ -17134,8 +17134,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・歪な疾走の仕掛け強化 II",
-      "nameEn": "Distorting Sprint x Infernal Tales: Distorting Sprint Gimmick Boost II",
+      "nameJa": "脱兎の歩法",
+      "nameEn": "Hare’s Footwork",
       "notes": "設計表: Sの側はMDを置かずGB(S,2)を指定(受信量の増加)。"
     },
     {
@@ -17169,8 +17169,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語の威力",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales Power",
+      "nameJa": "冴えわたる炎色",
+      "nameEn": "Keen Flame Colors",
       "notes": ""
     },
     {
@@ -17214,8 +17214,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語・撃破時退路の短縮",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales: On Kill Receiver Recharge",
+      "nameJa": "燃え尽きた先の道",
+      "nameEn": "Road Past the Burnt",
       "notes": "PairGimmickBinding: b3の既存の印/成立条件に束縛(条件メモ: 印の敵のF撃破)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -17260,8 +17260,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語・命中時退路の短縮",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales: On Hit Receiver Recharge",
+      "nameJa": "輪の熱の名残",
+      "nameEn": "Heat Left by the Ring",
       "notes": "PairGimmickBinding: b3の既存の印/成立条件に束縛(条件メモ: 印の敵へF、輪1回で1回)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -17299,8 +17299,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・歪な疾走の仕掛け強化 III",
-      "nameEn": "Distorting Sprint x Infernal Tales: Distorting Sprint Gimmick Boost III",
+      "nameJa": "書架の間の抜け道",
+      "nameEn": "Aisles Between Shelves",
       "notes": ""
     },
     {
@@ -17338,8 +17338,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語の仕掛け強化 II",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales Gimmick Boost II",
+      "nameJa": "物語の熱のこもり",
+      "nameEn": "Well-Kept Heat of Tales",
       "notes": ""
     },
     {
@@ -17377,8 +17377,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・歪な疾走の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint x Infernal Tales: Distorting Sprint Gimmick Boost IV",
+      "nameJa": "軽やかな頁送り",
+      "nameEn": "Light Page Forwarding",
       "notes": ""
     },
     {
@@ -17416,8 +17416,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語の仕掛け強化 III",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales Gimmick Boost III",
+      "nameJa": "炎文の鮮やかさ",
+      "nameEn": "Vivid Fire Script",
       "notes": ""
     },
     {
@@ -17455,8 +17455,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語・業火物語の仕掛け強化 IV",
-      "nameEn": "Distorting Sprint x Infernal Tales: Infernal Tales Gimmick Boost IV",
+      "nameJa": "業火のたきつけ",
+      "nameEn": "Blazing Up Hellfire",
       "notes": ""
     },
     {
@@ -17497,8 +17497,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広い脱路",
+          "nameEn": "Broad Escapes"
         },
         {
           "kind": "GimmickParam",
@@ -17513,8 +17513,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "定まる脱路",
+          "nameEn": "Settled Escapes"
         }
       ],
       "keystone": null,
@@ -17525,8 +17525,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な疾走×業火物語の分岐",
-      "nameEn": "Distorting Sprint x Infernal Tales Branch",
+      "nameJa": "輪火からの退路",
+      "nameEn": "Exits by Ring-Fire",
       "notes": "設計表: b3だけ両端の向きに関わらず受け手Sをqの対象とする。"
     },
     {
@@ -17563,8 +17563,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・業火物語の仕掛け強化 I",
-      "nameEn": "Infernal Tales x Valiant Heart: Infernal Tales Gimmick Boost I",
+      "nameJa": "燃えさかる章立て",
+      "nameEn": "Blazing Chaptering",
       "notes": ""
     },
     {
@@ -17602,8 +17602,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心の仕掛け強化 I",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart Gimmick Boost I",
+      "nameJa": "勇気の研ぎ澄まし",
+      "nameEn": "Whetted Courage",
       "notes": ""
     },
     {
@@ -17636,8 +17636,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・業火物語の威力",
-      "nameEn": "Infernal Tales x Valiant Heart: Infernal Tales Power",
+      "nameJa": "燃え上がる重ね撃ち",
+      "nameEn": "Stacked Burning Volleys",
       "notes": ""
     },
     {
@@ -17671,8 +17671,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心の威力",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart Power",
+      "nameJa": "冴え渡る剣閃",
+      "nameEn": "Keen Sword Flashes",
       "notes": ""
     },
     {
@@ -17716,8 +17716,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心・命中時闇の付与",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart: On Hit Apply Dark",
+      "nameJa": "炎の剣の伏線",
+      "nameEn": "Foreshadow of Flame and Steel",
       "notes": "PairGimmickBinding: b4の既存の印/成立条件に束縛(条件メモ: 印の敵へV、剣1振りで1回)。"
     },
     {
@@ -17762,8 +17762,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心・命中時障壁",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart: On Hit Shield",
+      "nameJa": "剣が受ける火",
+      "nameEn": "Fire the Blade Takes",
       "notes": "PairGimmickBinding: b4の既存の印/成立条件に束縛(条件メモ: 同条件V、剣1振りで1回)。"
     },
     {
@@ -17801,8 +17801,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・業火物語の仕掛け強化 II",
-      "nameEn": "Infernal Tales x Valiant Heart: Infernal Tales Gimmick Boost II",
+      "nameJa": "炎の文体の研ぎ",
+      "nameEn": "Whetted Fire Style",
       "notes": ""
     },
     {
@@ -17840,8 +17840,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心の仕掛け強化 II",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart Gimmick Boost II",
+      "nameJa": "剣の冴えの研き",
+      "nameEn": "Whetting the Blade",
       "notes": ""
     },
     {
@@ -17879,8 +17879,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・業火物語の仕掛け強化 III",
-      "nameEn": "Infernal Tales x Valiant Heart: Infernal Tales Gimmick Boost III",
+      "nameJa": "情熱の筆の運び",
+      "nameEn": "Passionate Pen Strokes",
       "notes": ""
     },
     {
@@ -17918,8 +17918,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心の仕掛け強化 III",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart Gimmick Boost III",
+      "nameJa": "魔剣の手入れ",
+      "nameEn": "Caring for the Magic Sword",
       "notes": ""
     },
     {
@@ -17957,8 +17957,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心・勇敢なる心の仕掛け強化 IV",
-      "nameEn": "Infernal Tales x Valiant Heart: Valiant Heart Gimmick Boost IV",
+      "nameJa": "剣文の筆圧",
+      "nameEn": "Sword-Script Pen Pressure",
       "notes": ""
     },
     {
@@ -17996,8 +17996,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鮮やかな共演",
+          "nameEn": "Vivid Duet"
         },
         {
           "kind": "GimmickBoost",
@@ -18012,8 +18012,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "熱い共演",
+          "nameEn": "Ardent Duet"
         }
       ],
       "keystone": null,
@@ -18024,8 +18024,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "業火物語×勇敢なる心の分岐",
-      "nameEn": "Infernal Tales x Valiant Heart Branch",
+      "nameJa": "炎と剣の共演",
+      "nameEn": "Flame and Blade Together",
       "notes": ""
     },
     {
@@ -18062,8 +18062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・勇敢なる心の仕掛け強化 I",
-      "nameEn": "Valiant Heart x Distorted Mind: Valiant Heart Gimmick Boost I",
+      "nameJa": "勇ましい章の運び",
+      "nameEn": "Valiant Chaptering",
       "notes": ""
     },
     {
@@ -18101,8 +18101,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神の仕掛け強化 I",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind Gimmick Boost I",
+      "nameJa": "闇文の執筆術",
+      "nameEn": "Authorship of Dark Script",
       "notes": ""
     },
     {
@@ -18135,8 +18135,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・勇敢なる心の威力",
-      "nameEn": "Valiant Heart x Distorted Mind: Valiant Heart Power",
+      "nameJa": "斬り開く一撃",
+      "nameEn": "Cleaving Blows",
       "notes": ""
     },
     {
@@ -18170,8 +18170,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神の威力",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind Power",
+      "nameJa": "歪められた鋭鋒",
+      "nameEn": "Warped Sharp Points",
       "notes": ""
     },
     {
@@ -18216,8 +18216,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神・命中時障壁",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind: On Hit Shield",
+      "nameJa": "矢文の返書",
+      "nameEn": "Reply by Arrow",
       "notes": "PairGimmickBinding: b5の既存の印/成立条件に束縛(条件メモ: 印の敵へD、降下1回で1回)。"
     },
     {
@@ -18261,8 +18261,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神・命中時光の付与",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind: On Hit Apply Light",
+      "nameJa": "白紙を照らす光",
+      "nameEn": "Light on Blank Pages",
       "notes": "PairGimmickBinding: b5の既存の印/成立条件に束縛(条件メモ: 同条件D、降下1回で1回)。"
     },
     {
@@ -18300,8 +18300,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・勇敢なる心の仕掛け強化 II",
-      "nameEn": "Valiant Heart x Distorted Mind: Valiant Heart Gimmick Boost II",
+      "nameJa": "剣の切れ味の極み",
+      "nameEn": "Peak Blade Keenness",
       "notes": ""
     },
     {
@@ -18339,8 +18339,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神の仕掛け強化 II",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind Gimmick Boost II",
+      "nameJa": "歪な精神の深み",
+      "nameEn": "Depths of the Warped Mind",
       "notes": ""
     },
     {
@@ -18378,8 +18378,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・勇敢なる心の仕掛け強化 III",
-      "nameEn": "Valiant Heart x Distorted Mind: Valiant Heart Gimmick Boost III",
+      "nameJa": "心剣の磨き",
+      "nameEn": "Polished Heart-Blade",
       "notes": ""
     },
     {
@@ -18417,8 +18417,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神の仕掛け強化 III",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind Gimmick Boost III",
+      "nameJa": "闇文の濃淡の技",
+      "nameEn": "Art of Dark Shading",
       "notes": ""
     },
     {
@@ -18456,8 +18456,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神・歪な精神の仕掛け強化 IV",
-      "nameEn": "Valiant Heart x Distorted Mind: Distorted Mind Gimmick Boost IV",
+      "nameJa": "精神の矢の研ぎ",
+      "nameEn": "Whetting Mind Arrows",
       "notes": ""
     },
     {
@@ -18495,8 +18495,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い共演",
+          "nameEn": "Keen Duet"
         },
         {
           "kind": "GimmickBoost",
@@ -18511,8 +18511,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い共演",
+          "nameEn": "Weighty Duet"
         }
       ],
       "keystone": null,
@@ -18523,8 +18523,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "勇敢なる心×歪な精神の分岐",
-      "nameEn": "Valiant Heart x Distorted Mind Branch",
+      "nameJa": "剣と矢の共演",
+      "nameEn": "Blade and Arrow Together",
       "notes": ""
     },
     {
@@ -18561,8 +18561,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・歪な精神の仕掛け強化 I",
-      "nameEn": "Distorted Mind x Prismatic Vision: Distorted Mind Gimmick Boost I",
+      "nameJa": "闇の筆致の鋭さ",
+      "nameEn": "Sharpness of Dark Strokes",
       "notes": ""
     },
     {
@@ -18600,8 +18600,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界の仕掛け強化 I",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision Gimmick Boost I",
+      "nameJa": "本の世界の深み",
+      "nameEn": "Depths of the Book-World",
       "notes": ""
     },
     {
@@ -18634,8 +18634,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・歪な精神の威力",
-      "nameEn": "Distorted Mind x Prismatic Vision: Distorted Mind Power",
+      "nameJa": "冴え割る闇矢",
+      "nameEn": "Keen-Splitting Dark Arrows",
       "notes": ""
     },
     {
@@ -18669,8 +18669,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界の威力",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision Power",
+      "nameJa": "重く割る頁撃ち",
+      "nameEn": "Heavy Page Blows",
       "notes": ""
     },
     {
@@ -18713,8 +18713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界・撃破時回復",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision: On Kill Heal",
+      "nameJa": "読み終えた慈しみ",
+      "nameEn": "Tenderness of Finishers",
       "notes": "PairGimmickBinding: b6の既存の印/成立条件に束縛(条件メモ: 印の敵のP撃破)。"
     },
     {
@@ -18757,8 +18757,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界・撃破時爆風",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision: On Kill Burst",
+      "nameJa": "結末のはぜ裂き",
+      "nameEn": "Bursting Endings",
       "notes": "PairGimmickBinding: b6の既存の印/成立条件に束縛(条件メモ: 同条件P撃破)。"
     },
     {
@@ -18796,8 +18796,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・歪な精神の仕掛け強化 II",
-      "nameEn": "Distorted Mind x Prismatic Vision: Distorted Mind Gimmick Boost II",
+      "nameJa": "歪んだ思考の重み",
+      "nameEn": "Weight of Warped Thought",
       "notes": ""
     },
     {
@@ -18835,8 +18835,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界の仕掛け強化 II",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision Gimmick Boost II",
+      "nameJa": "彩の読解力",
+      "nameEn": "Hue Comprehension",
       "notes": ""
     },
     {
@@ -18874,8 +18874,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・歪な精神の仕掛け強化 III",
-      "nameEn": "Distorted Mind x Prismatic Vision: Distorted Mind Gimmick Boost III",
+      "nameJa": "闇文の重ね書き",
+      "nameEn": "Overlaid Dark Script",
       "notes": ""
     },
     {
@@ -18913,8 +18913,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界の仕掛け強化 III",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision Gimmick Boost III",
+      "nameJa": "早業のめくり",
+      "nameEn": "Quick Page Turns",
       "notes": ""
     },
     {
@@ -18952,8 +18952,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界・プリズムの視界の仕掛け強化 IV",
-      "nameEn": "Distorted Mind x Prismatic Vision: Prismatic Vision Gimmick Boost IV",
+      "nameJa": "栞の巧み",
+      "nameEn": "Clever Bookmarks",
       "notes": ""
     },
     {
@@ -18991,8 +18991,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鋭い読み合わせ",
+          "nameEn": "Keen Read-Together"
         },
         {
           "kind": "GimmickBoost",
@@ -19007,8 +19007,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深い読み合わせ",
+          "nameEn": "Deep Read-Together"
         }
       ],
       "keystone": null,
@@ -19019,8 +19019,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歪な精神×プリズムの視界の分岐",
-      "nameEn": "Distorted Mind x Prismatic Vision Branch",
+      "nameJa": "矢と本の共演",
+      "nameEn": "Arrow and Book Together",
       "notes": ""
     },
     {
@@ -19057,8 +19057,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 I",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost I",
+      "nameJa": "頁の滑りの良さ",
+      "nameEn": "Smooth-Running Pages",
       "notes": "b7/b8は従来Statだった外側の橋を新しいペア定義へ改訂(5段値は旧ring側)。接続の幹は第6星。"
     },
     {
@@ -19096,8 +19096,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 I",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost I",
+      "nameJa": "注釈の巧み",
+      "nameEn": "Clever Annotations",
       "notes": ""
     },
     {
@@ -19130,8 +19130,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の威力",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Power",
+      "nameJa": "冴えわたる読撃",
+      "nameEn": "Keen Reading Strikes",
       "notes": ""
     },
     {
@@ -19165,8 +19165,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の威力",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Power",
+      "nameJa": "無垢なる一撃",
+      "nameEn": "Innocent Blows",
       "notes": ""
     },
     {
@@ -19210,8 +19210,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂・命中時傷",
-      "nameEn": "Prismatic Vision x Innocence: Innocence: On Hit Wound",
+      "nameJa": "刷り込まれる光",
+      "nameEn": "Light Imprinted",
       "notes": "PairGimmickBinding: b7の既存の印/成立条件に束縛(条件メモ: 印の敵へI、Iの1発動で1回)。"
     },
     {
@@ -19255,8 +19255,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂・命中時目眩まし",
-      "nameEn": "Prismatic Vision x Innocence: Innocence: On Hit Daze",
+      "nameJa": "眩む頁の白",
+      "nameEn": "Dazzling Page White",
       "notes": "PairGimmickBinding: b7の既存の印/成立条件に束縛(条件メモ: 同条件I)。"
     },
     {
@@ -19294,8 +19294,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 II",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost II",
+      "nameJa": "精読の腕前",
+      "nameEn": "Close-Reading Craft",
       "notes": ""
     },
     {
@@ -19333,8 +19333,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 II",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost II",
+      "nameJa": "光文の書き込み",
+      "nameEn": "Light-Script Marginalia",
       "notes": ""
     },
     {
@@ -19372,8 +19372,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・プリズムの視界の仕掛け強化 III",
-      "nameEn": "Prismatic Vision x Innocence: Prismatic Vision Gimmick Boost III",
+      "nameJa": "本の魔法の磨き",
+      "nameEn": "Polished Book Magic",
       "notes": ""
     },
     {
@@ -19411,8 +19411,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 III",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost III",
+      "nameJa": "純白の筆致",
+      "nameEn": "Pure-White Strokes",
       "notes": ""
     },
     {
@@ -19450,8 +19450,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂・無垢な魂の仕掛け強化 IV",
-      "nameEn": "Prismatic Vision x Innocence: Innocence Gimmick Boost IV",
+      "nameJa": "光の字体の整い",
+      "nameEn": "Well-Set Light Type",
       "notes": ""
     },
     {
@@ -19489,8 +19489,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "鮮やかな再演",
+          "nameEn": "Vivid Restage"
         },
         {
           "kind": "GimmickBoost",
@@ -19505,8 +19505,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深い再演",
+          "nameEn": "Deep Restage"
         }
       ],
       "keystone": null,
@@ -19517,8 +19517,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "プリズムの視界×無垢な魂の分岐",
-      "nameEn": "Prismatic Vision x Innocence Branch",
+      "nameJa": "本と光の再演",
+      "nameEn": "Book and Light, Restaged",
       "notes": ""
     },
     {
@@ -19555,8 +19555,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 I",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost I",
+      "nameJa": "無垢の磨き",
+      "nameEn": "Polished Innocence",
       "notes": "b7/b8は従来Statだった外側の橋を新しいペア定義へ改訂(5段値は旧ring側)。接続の幹は第6星。"
     },
     {
@@ -19594,8 +19594,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 I",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost I",
+      "nameJa": "逃げ足の研鑽",
+      "nameEn": "Discipline of Flight",
       "notes": ""
     },
     {
@@ -19628,8 +19628,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の威力",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Power",
+      "nameJa": "光矢の冴え",
+      "nameEn": "Keen Light Arrows",
       "notes": ""
     },
     {
@@ -19667,8 +19667,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 II",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost II",
+      "nameJa": "頁の追い風",
+      "nameEn": "Tailwind of Pages",
       "notes": "設計表: Sの側はMDを置かずGB(S,2)を指定(受信量の増加)。"
     },
     {
@@ -19713,8 +19713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂・命中時退路の短縮",
-      "nameEn": "Innocence x Distorting Sprint: Innocence: On Hit Receiver Recharge",
+      "nameJa": "色重ねの小道",
+      "nameEn": "Path of Layered Hues",
       "notes": "PairGimmickBinding: b8の既存の印/成立条件に束縛(条件メモ: Iの1発動で1回)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -19758,8 +19758,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂・撃破時退路の短縮",
-      "nameEn": "Innocence x Distorting Sprint: Innocence: On Kill Receiver Recharge",
+      "nameJa": "彩の果ての小道",
+      "nameEn": "Path Past the Hues",
       "notes": "PairGimmickBinding: b8の既存の印/成立条件に束縛(条件メモ: I撃破)。 基礎成立確率50%(橋にも共通)。"
     },
     {
@@ -19797,8 +19797,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 II",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost II",
+      "nameJa": "光弾の早書き",
+      "nameEn": "Swift Light Scribing",
       "notes": ""
     },
     {
@@ -19836,8 +19836,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 III",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost III",
+      "nameJa": "読み尽くした道筋",
+      "nameEn": "Well-Read Routes",
       "notes": ""
     },
     {
@@ -19875,8 +19875,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・無垢な魂の仕掛け強化 III",
-      "nameEn": "Innocence x Distorting Sprint: Innocence Gimmick Boost III",
+      "nameJa": "清らかな溢れ",
+      "nameEn": "Pristine Overflow",
       "notes": ""
     },
     {
@@ -19914,8 +19914,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 IV",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost IV",
+      "nameJa": "疾走の呼吸",
+      "nameEn": "Sprinter’s Breath",
       "notes": ""
     },
     {
@@ -19953,8 +19953,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走・歪な疾走の仕掛け強化 V",
-      "nameEn": "Innocence x Distorting Sprint: Distorting Sprint Gimmick Boost V",
+      "nameJa": "風の栞",
+      "nameEn": "Bookmark of the Wind",
       "notes": ""
     },
     {
@@ -19995,8 +19995,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる抜け道",
+          "nameEn": "Widening Underpasses"
         },
         {
           "kind": "GimmickParam",
@@ -20011,8 +20011,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "定まる抜け道",
+          "nameEn": "Settled Underpasses"
         }
       ],
       "keystone": null,
@@ -20023,8 +20023,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "無垢な魂×歪な疾走の分岐",
-      "nameEn": "Innocence x Distorting Sprint Branch",
+      "nameJa": "彩の中の退路",
+      "nameEn": "Exits Amid the Hues",
       "notes": ""
     },
     {
@@ -20448,8 +20448,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：業火物語の威力 +3%",
-      "nameEn": "Migrated: Infernal Tales Damage +3%",
+      "nameJa": "炎の章",
+      "nameEn": "Chapter of Flame",
       "notes": "MD(F,3)、3段（1段あたり+3%）。"
     },
     {
@@ -20480,8 +20480,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：無垢な魂の仕掛け値 +4%",
-      "nameEn": "Migrated: Innocence Gimmick Value +4%",
+      "nameJa": "速読",
+      "nameEn": "Speed Reading",
       "notes": "GB(I,4)、3段（1段あたり+4%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20512,8 +20512,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：本の撃破時に障壁 1%",
-      "nameEn": "Migrated: Book Kill Shield 1%",
+      "nameJa": "厚い装丁",
+      "nameEn": "Thick Binding",
       "notes": "G(P,Kill,Shield,1,0,0)、3段（1段あたりValue1）。旧Stat.MaxHealthPctを廃止。"
     },
     {
@@ -20537,8 +20537,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：歪な精神の威力 +3%",
-      "nameEn": "Migrated: Distorted Mind Damage +3%",
+      "nameJa": "物語の続き",
+      "nameEn": "Next Chapter",
       "notes": "MD(D,3)、3段（1段あたり+3%）。"
     },
     {
@@ -20562,8 +20562,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：プリズムの視界の威力 +3%",
-      "nameEn": "Migrated: Prismatic Vision Damage +3%",
+      "nameJa": "めくる手",
+      "nameEn": "Turning Pages",
       "notes": "MD(P,3)、3段（1段あたり+3%）。旧Stat.AttackSpeedPctを廃止。効果を持つ既存核となり、cold→6本の既存幹第1星への接続を追加（位置・IDは不変）。"
     },
     {
@@ -20594,8 +20594,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な精神の仕掛け値 +4%",
-      "nameEn": "Migrated: Distorted Mind Gimmick Value +4%",
+      "nameJa": "博識",
+      "nameEn": "Erudition",
       "notes": "GB(D,4)、3段（1段あたり+4%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20626,8 +20626,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：無垢な魂の仕掛け値 +4%",
-      "nameEn": "Migrated: Innocence Gimmick Value +4%",
+      "nameJa": "光と闇の章",
+      "nameEn": "Chapters of Light and Dark",
       "notes": "GB(I,4)、3段（1段あたり+4%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20658,8 +20658,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：勇敢なる心の仕掛け値 +4%",
-      "nameEn": "Migrated: Valiant Heart Gimmick Value +4%",
+      "nameJa": "頁の守り",
+      "nameEn": "Page Ward",
       "notes": "GB(V,4)、3段（1段あたり+4%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20690,8 +20690,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：本の撃破時に障壁 1%",
-      "nameEn": "Migrated: Book Kill Shield 1%",
+      "nameJa": "表紙の守り",
+      "nameEn": "Cover Guard",
       "notes": "G(P,Kill,Shield,1,0,0)、3段。旧Power.Barrier（本人通常攻撃依存）を残さない。"
     },
     {
@@ -20722,8 +20722,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：本の命中時に冷気付与",
-      "nameEn": "Migrated: Book On Hit Cold Element",
+      "nameJa": "氷の頁",
+      "nameEn": "Page of Ice",
       "notes": "G(P,Hit,Element,10,1,0)、3段。旧Power.Frostを置換、本人通常攻撃に依存しない。"
     },
     {
@@ -20754,8 +20754,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：本の命中時に闇付与",
-      "nameEn": "Migrated: Book On Hit Dark Element",
+      "nameJa": "闇の頁",
+      "nameEn": "Page of Shadow",
       "notes": "G(P,Hit,Element,15,3,0)、3段。旧Power.Umbraを置換、本人通常攻撃に依存しない。"
     },
     {
@@ -20786,8 +20786,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：プリズムの視界の仕掛け値 +3%",
-      "nameEn": "Migrated: Prismatic Vision Gimmick Value +3%",
+      "nameJa": "頁を送る拍子",
+      "nameEn": "Page-Turning Tempo",
       "notes": "GB(P,3)、3段（1段あたり+3%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。旧Stat.AttackSpeedPctを廃止。"
     },
     {
@@ -20811,8 +20811,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：無垢な魂の威力 +3%",
-      "nameEn": "Migrated: Innocence Damage +3%",
+      "nameJa": "霊弾の余光",
+      "nameEn": "Soul Missile Afterglow",
       "notes": "MD(I,3)、3段（1段あたり+3%）。"
     },
     {
@@ -20843,8 +20843,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：無垢な魂の仕掛け値 +3%",
-      "nameEn": "Migrated: Innocence Gimmick Value +3%",
+      "nameJa": "光文字の濃さ",
+      "nameEn": "Light Script Intensity",
       "notes": "GB(I,3)、3段（1段あたり+3%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20868,8 +20868,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：業火物語の威力 +3%",
-      "nameEn": "Migrated: Infernal Tales Damage +3%",
+      "nameJa": "炎文の余熱",
+      "nameEn": "Fire Script Afterheat",
       "notes": "MD(F,3)、3段（1段あたり+3%）。"
     },
     {
@@ -20900,8 +20900,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：業火物語の仕掛け値 +3%",
-      "nameEn": "Migrated: Infernal Tales Gimmick Value +3%",
+      "nameJa": "火文字の濃さ",
+      "nameEn": "Fire Script Intensity",
       "notes": "GB(F,3)、3段（1段あたり+3%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20925,8 +20925,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：勇敢なる心の威力 +3%",
-      "nameEn": "Migrated: Valiant Heart Damage +3%",
+      "nameJa": "剣閃の余韻",
+      "nameEn": "Sword Flash Echo",
       "notes": "MD(V,3)、3段（1段あたり+3%）。"
     },
     {
@@ -20957,8 +20957,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：勇敢なる心の仕掛け値 +3%",
-      "nameEn": "Migrated: Valiant Heart Gimmick Value +3%",
+      "nameJa": "心を守る装丁",
+      "nameEn": "Heart-Warding Binding",
       "notes": "GB(V,3)、3段（1段あたり+3%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -20982,8 +20982,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：歪な精神の威力 +3%",
-      "nameEn": "Migrated: Distorted Mind Damage +3%",
+      "nameJa": "闇文の蓄積",
+      "nameEn": "Dark Script Accumulation",
       "notes": "MD(D,3)、3段（1段あたり+3%）。"
     },
     {
@@ -21014,8 +21014,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な精神の仕掛け値 +3%",
-      "nameEn": "Migrated: Distorted Mind Gimmick Value +3%",
+      "nameJa": "闇文字の濃さ",
+      "nameEn": "Dark Script Intensity",
       "notes": "GB(D,3)、3段（1段あたり+3%）。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。"
     },
     {
@@ -21047,8 +21047,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：本の命中でSの残りCD短縮 1%",
-      "nameEn": "Migrated: Book Hit Recharges Sprint 1%",
+      "nameJa": "書架の退避",
+      "nameEn": "Bookshelf Retreat",
       "notes": "G(P,Hit,ReceiverRecharge,1,0,0)→S、3段（1段あたり1%）。50%の基礎受信を先に確保。旧LinkKind.Guardを廃止。"
     },
     {
@@ -21079,8 +21079,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な疾走の仕掛け値 +2%",
-      "nameEn": "Migrated: Distorting Sprint Gimmick Value +2%",
+      "nameJa": "駆ける頁の知",
+      "nameEn": "Racing Page Wisdom",
       "notes": "GB(S,2)、3段（1段あたり+2%）。MがSの場合は受信台帳だけが対象。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。Guard・PowerPct・MaxHealthPctを廃止。S幹1/4/7のいずれかが必要。"
     },
     {
@@ -21111,8 +21111,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な疾走の仕掛け値 +2%",
-      "nameEn": "Migrated: Distorting Sprint Gimmick Value +2%",
+      "nameJa": "頁路の再接続",
+      "nameEn": "Pagepath Reconnection",
       "notes": "GB(S,2)、3段（1段あたり+2%）。MがSの場合は受信台帳だけが対象。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。Guard・PowerPct・MaxHealthPctを廃止。S幹1/4/7のいずれかが必要。"
     },
     {
@@ -21143,8 +21143,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な疾走の仕掛け値 +2%",
-      "nameEn": "Migrated: Distorting Sprint Gimmick Value +2%",
+      "nameJa": "疾走の目くらまし",
+      "nameEn": "Sprinting Confusion",
       "notes": "GB(S,2)、3段（1段あたり+2%）。MがSの場合は受信台帳だけが対象。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。Guard・PowerPct・MaxHealthPctを廃止。S幹1/4/7のいずれかが必要。"
     },
     {
@@ -21175,8 +21175,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：歪な疾走の仕掛け値 +2%",
-      "nameEn": "Migrated: Distorting Sprint Gimmick Value +2%",
+      "nameJa": "旅する装丁",
+      "nameEn": "Traveling Binding",
       "notes": "GB(S,2)、3段（1段あたり+2%）。MがSの場合は受信台帳だけが対象。取得条件：対象記憶の仕掛け星を1個以上取得済み（requiresAny）。依存仕掛けを最後の1個まで外す時は本星も同時に返却。Guard・PowerPct・MaxHealthPctを廃止。S幹1/4/7のいずれかが必要。"
     },
     {
@@ -21208,8 +21208,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：本の撃破でSの残りCD短縮 5%",
-      "nameEn": "Migrated: Book Kill Recharges Sprint 5%",
+      "nameJa": "歪む冷気",
+      "nameEn": "Warped Frost",
       "notes": "G(P,Kill,ReceiverRecharge,5,0,0)→S、3段。旧Power.Frostの本人通常攻撃条件を廃止。"
     },
     {
@@ -21242,8 +21242,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：本の命中でSの残りCD短縮 2%",
-      "nameEn": "Migrated: Book Hit Recharges Sprint 2%",
+      "nameJa": "頁の疾風",
+      "nameEn": "Page Gale",
       "notes": "G(P,Hit,ReceiverRecharge,2,0,0)→S、1段。別の受信行として最大1回/実命中（once=1命中1回）。旧LinkKind.Guardを廃止。"
     },
     {
@@ -21284,8 +21284,8 @@
         "C02",
         "C05"
       ],
-      "nameJa": "既存星の移行：P×I 印の敵へIでSap 1〜5%",
-      "nameEn": "Migrated: P x I Marked Enemy Sap 1-5%",
+      "nameJa": "夢輪の不屈",
+      "nameEn": "Dream Ring Resolve",
       "notes": "b7 P×Iの外側。P命中で印→I命中でSap1/2/3/4/5%、Iの1発動で1回（once）。5段。全体Tenacityを保持しない。PairGimmickBinding：ペア条件は印4秒・両記憶装着。Sapは最強1つのみ、時間更新。"
     },
     {
@@ -21325,8 +21325,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：I命中でSの残りCD短縮 1〜5%",
-      "nameEn": "Migrated: Innocence Hit Recharges Sprint 1-5%",
+      "nameJa": "夢輪の再生",
+      "nameEn": "Dream Ring Renewal",
       "notes": "b8 I×Sの外側。I命中→Sの残りCD1/2/3/4/5%短縮、Iの1発動で1回（once）。5段。全体HealthRegenを保持しない。印は使わない。既存中心の確定CD短縮（確定、50%抽選対象外）。両記憶装着が前提のためPairGimmickBinding。"
     },
     {
@@ -21355,8 +21355,8 @@
         "C01",
         "C07"
       ],
-      "nameJa": "既存星の移行：刻印：四つの物語",
-      "nameEn": "Migrated: Keystone: Four Stories",
+      "nameJa": "四つの物語",
+      "nameEn": "Four Tales",
       "notes": "既存核の刻印。既存の4属性検出と連鎖抑止、属性は消費しない。代償だけ新しい記憶限定倍率(B3)。既存の選択状態を同IDで保持。"
     },
     {
@@ -21385,8 +21385,8 @@
         "C01",
         "C07"
       ],
-      "nameJa": "既存星の移行：刻印：雷鳴の章",
-      "nameEn": "Migrated: Keystone: Chapter of Thunder",
+      "nameJa": "雷鳴の章",
+      "nameEn": "Chapter of Thunder",
       "notes": "旧Power.ChainLightningの本人通常攻撃条件を除去し、同IDで本由来命中へ明示改訂。最大2体、0.3秒は多重探索防止。元の25%抽選は使わない。既存の選択状態を同IDで保持。"
     }
   ]

@@ -35,8 +35,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 I",
-      "nameEn": "Heart of the Pack Gimmick Boost I",
+      "nameJa": "団結の高鳴り",
+      "nameEn": "Racing Unity",
       "notes": ""
     },
     {
@@ -73,8 +73,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 I",
-      "nameEn": "Heart of the Pack Chance I",
+      "nameJa": "闇の巡り合わせ",
+      "nameEn": "Dark Coincidences",
       "notes": ""
     },
     {
@@ -113,8 +113,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 II",
-      "nameEn": "Heart of the Pack Gimmick Boost II",
+      "nameJa": "心音の重なり",
+      "nameEn": "Layered Heartbeats",
       "notes": ""
     },
     {
@@ -151,8 +151,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 II",
-      "nameEn": "Heart of the Pack Chance II",
+      "nameJa": "闇の予感",
+      "nameEn": "Dark Omens",
       "notes": ""
     },
     {
@@ -189,8 +189,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 III",
-      "nameEn": "Heart of the Pack Gimmick Boost III",
+      "nameJa": "群れの潮騒",
+      "nameEn": "Roar of the Pack",
       "notes": ""
     },
     {
@@ -227,8 +227,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 III",
-      "nameEn": "Heart of the Pack Chance III",
+      "nameJa": "宿りやすい闇",
+      "nameEn": "Readily Settling Dark",
       "notes": ""
     },
     {
@@ -312,8 +312,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 IV",
-      "nameEn": "Heart of the Pack Gimmick Boost IV",
+      "nameJa": "団結の熟成",
+      "nameEn": "Matured Unity",
       "notes": ""
     },
     {
@@ -350,8 +350,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 IV",
-      "nameEn": "Heart of the Pack Chance IV",
+      "nameJa": "重なる闇の縁",
+      "nameEn": "Edges of Overlapping Dark",
       "notes": ""
     },
     {
@@ -388,8 +388,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 V",
-      "nameEn": "Heart of the Pack Gimmick Boost V",
+      "nameJa": "光爆の練磨",
+      "nameEn": "Tempered Lightbursts",
       "notes": ""
     },
     {
@@ -426,8 +426,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 V",
-      "nameEn": "Heart of the Pack Chance V",
+      "nameJa": "闇のとりこ",
+      "nameEn": "Captured by Dark",
       "notes": ""
     },
     {
@@ -464,8 +464,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VI",
-      "nameEn": "Heart of the Pack Gimmick Boost VI",
+      "nameJa": "心臓の脈打ち",
+      "nameEn": "Pulsing Heart",
       "notes": ""
     },
     {
@@ -502,8 +502,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 VI",
-      "nameEn": "Heart of the Pack Chance VI",
+      "nameJa": "夜の目覚めの兆し",
+      "nameEn": "Omens of Waking Night",
       "notes": ""
     },
     {
@@ -547,8 +547,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "新たな闇の刻み",
+          "nameEn": "Fresh Dark Imprints"
         },
         {
           "kind": "GimmickParam",
@@ -563,8 +563,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "光に滲む闇",
+          "nameEn": "Dark Seeping into Light"
         }
       ],
       "keystone": null,
@@ -574,8 +574,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の分岐",
-      "nameEn": "Heart of the Pack Branch",
+      "nameJa": "闇の宿し方",
+      "nameEn": "Ways Dark Settles",
       "notes": ""
     },
     {
@@ -611,8 +611,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 I",
-      "nameEn": "Heart of the Pack Gimmick Boost I",
+      "nameJa": "団結の深み",
+      "nameEn": "Depths of Unity",
       "notes": ""
     },
     {
@@ -649,8 +649,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 I",
-      "nameEn": "Heart of the Pack Chance I",
+      "nameJa": "闇の巡り合わせ",
+      "nameEn": "Dark Coincidences",
       "notes": ""
     },
     {
@@ -688,8 +688,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 II",
-      "nameEn": "Heart of the Pack Gimmick Boost II",
+      "nameJa": "荒ぶる心音",
+      "nameEn": "Wild Heartbeats",
       "notes": ""
     },
     {
@@ -726,8 +726,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 III",
-      "nameEn": "Heart of the Pack Gimmick Boost III",
+      "nameJa": "群れの気迫",
+      "nameEn": "Pack Fervor",
       "notes": ""
     },
     {
@@ -764,8 +764,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 II",
-      "nameEn": "Heart of the Pack Chance II",
+      "nameJa": "闇の予感",
+      "nameEn": "Dark Omens",
       "notes": ""
     },
     {
@@ -803,8 +803,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 IV",
-      "nameEn": "Heart of the Pack Gimmick Boost IV",
+      "nameJa": "団結の切っ先",
+      "nameEn": "Vanguard of Unity",
       "notes": ""
     },
     {
@@ -884,8 +884,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 V",
-      "nameEn": "Heart of the Pack Gimmick Boost V",
+      "nameJa": "光爆の研き",
+      "nameEn": "Whetted Lightbursts",
       "notes": ""
     },
     {
@@ -922,8 +922,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 I",
-      "nameEn": "Heart of the Pack Duration I",
+      "nameJa": "長く残る弱まり",
+      "nameEn": "Weakness That Lingers",
       "notes": ""
     },
     {
@@ -960,8 +960,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VI",
-      "nameEn": "Heart of the Pack Gimmick Boost VI",
+      "nameJa": "心音の研鑽",
+      "nameEn": "Heartbeat Discipline",
       "notes": ""
     },
     {
@@ -998,8 +998,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 II",
-      "nameEn": "Heart of the Pack Duration II",
+      "nameJa": "尾を引く団結",
+      "nameEn": "Unity That Trails",
       "notes": ""
     },
     {
@@ -1036,8 +1036,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VII",
-      "nameEn": "Heart of the Pack Gimmick Boost VII",
+      "nameJa": "団結の極意",
+      "nameEn": "Secrets of Unity",
       "notes": ""
     },
     {
@@ -1074,8 +1074,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 III",
-      "nameEn": "Heart of the Pack Duration III",
+      "nameJa": "長く響く心音",
+      "nameEn": "Long-Resounding Heartbeats",
       "notes": ""
     },
     {
@@ -1119,8 +1119,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く弱まり",
+          "nameEn": "Weakness That Lasts"
         },
         {
           "kind": "GimmickBoost",
@@ -1135,8 +1135,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く弱まり",
+          "nameEn": "Deep-Working Weakness"
         }
       ],
       "keystone": null,
@@ -1146,8 +1146,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の分岐",
-      "nameEn": "Heart of the Pack Branch",
+      "nameJa": "弱まりの長さか深さか",
+      "nameEn": "Long or Deep Weakening",
       "notes": ""
     },
     {
@@ -1183,8 +1183,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 I",
-      "nameEn": "Heart of the Pack Gimmick Boost I",
+      "nameJa": "咆哮の残響",
+      "nameEn": "Echo of Howls",
       "notes": ""
     },
     {
@@ -1221,8 +1221,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 I",
-      "nameEn": "Heart of the Pack Chance I",
+      "nameJa": "宿りやすい闇",
+      "nameEn": "Readily Settling Dark",
       "notes": ""
     },
     {
@@ -1259,8 +1259,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 II",
-      "nameEn": "Heart of the Pack Gimmick Boost II",
+      "nameJa": "団結の高鳴り",
+      "nameEn": "Racing Unity",
       "notes": ""
     },
     {
@@ -1297,8 +1297,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 II",
-      "nameEn": "Heart of the Pack Chance II",
+      "nameJa": "重なる闇の縁",
+      "nameEn": "Edges of Overlapping Dark",
       "notes": ""
     },
     {
@@ -1335,8 +1335,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 III",
-      "nameEn": "Heart of the Pack Gimmick Boost III",
+      "nameJa": "心音の重なり",
+      "nameEn": "Layered Heartbeats",
       "notes": ""
     },
     {
@@ -1373,8 +1373,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 IV",
-      "nameEn": "Heart of the Pack Gimmick Boost IV",
+      "nameJa": "群れの潮騒",
+      "nameEn": "Roar of the Pack",
       "notes": ""
     },
     {
@@ -1454,8 +1454,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 V",
-      "nameEn": "Heart of the Pack Gimmick Boost V",
+      "nameJa": "団結の熟成",
+      "nameEn": "Matured Unity",
       "notes": ""
     },
     {
@@ -1492,8 +1492,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 I",
-      "nameEn": "Heart of the Pack Duration I",
+      "nameJa": "弱まりの長夜",
+      "nameEn": "Long Night of Weakness",
       "notes": ""
     },
     {
@@ -1530,8 +1530,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VI",
-      "nameEn": "Heart of the Pack Gimmick Boost VI",
+      "nameJa": "光爆の練磨",
+      "nameEn": "Tempered Lightbursts",
       "notes": ""
     },
     {
@@ -1568,8 +1568,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 II",
-      "nameEn": "Heart of the Pack Duration II",
+      "nameJa": "長く残る弱まり",
+      "nameEn": "Weakness That Lingers",
       "notes": ""
     },
     {
@@ -1606,8 +1606,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VII",
-      "nameEn": "Heart of the Pack Gimmick Boost VII",
+      "nameJa": "心臓の脈打ち",
+      "nameEn": "Pulsing Heart",
       "notes": ""
     },
     {
@@ -1644,8 +1644,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の持続 III",
-      "nameEn": "Heart of the Pack Duration III",
+      "nameJa": "尾を引く団結",
+      "nameEn": "Unity That Trails",
       "notes": ""
     },
     {
@@ -1689,8 +1689,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る余熱",
+          "nameEn": "Afterheat That Lasts"
         },
         {
           "kind": "GimmickBoost",
@@ -1705,8 +1705,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く刻む余熱",
+          "nameEn": "Deep-Cut Afterheat"
         }
       ],
       "keystone": null,
@@ -1716,8 +1716,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の分岐",
-      "nameEn": "Heart of the Pack Branch",
+      "nameJa": "余熱の残し方",
+      "nameEn": "Ways Afterheat Remains",
       "notes": ""
     },
     {
@@ -1753,8 +1753,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 I",
-      "nameEn": "Heart of the Pack Gimmick Boost I",
+      "nameJa": "団結の深み",
+      "nameEn": "Depths of Unity",
       "notes": ""
     },
     {
@@ -1791,8 +1791,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 I",
-      "nameEn": "Heart of the Pack Chance I",
+      "nameJa": "闇のとりこ",
+      "nameEn": "Captured by Dark",
       "notes": ""
     },
     {
@@ -1831,8 +1831,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 II",
-      "nameEn": "Heart of the Pack Gimmick Boost II",
+      "nameJa": "荒ぶる心音",
+      "nameEn": "Wild Heartbeats",
       "notes": ""
     },
     {
@@ -1869,8 +1869,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 III",
-      "nameEn": "Heart of the Pack Gimmick Boost III",
+      "nameJa": "群れの気迫",
+      "nameEn": "Pack Fervor",
       "notes": ""
     },
     {
@@ -1907,8 +1907,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の確率 II",
-      "nameEn": "Heart of the Pack Chance II",
+      "nameJa": "夜の目覚めの兆し",
+      "nameEn": "Omens of Waking Night",
       "notes": ""
     },
     {
@@ -1945,8 +1945,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 IV",
-      "nameEn": "Heart of the Pack Gimmick Boost IV",
+      "nameJa": "団結の切っ先",
+      "nameEn": "Vanguard of Unity",
       "notes": ""
     },
     {
@@ -2030,8 +2030,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 V",
-      "nameEn": "Heart of the Pack Gimmick Boost V",
+      "nameJa": "光爆の研き",
+      "nameEn": "Whetted Lightbursts",
       "notes": ""
     },
     {
@@ -2068,8 +2068,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VI",
-      "nameEn": "Heart of the Pack Gimmick Boost VI",
+      "nameJa": "心音の研鑽",
+      "nameEn": "Heartbeat Discipline",
       "notes": ""
     },
     {
@@ -2106,8 +2106,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VII",
-      "nameEn": "Heart of the Pack Gimmick Boost VII",
+      "nameJa": "団結の極意",
+      "nameEn": "Secrets of Unity",
       "notes": ""
     },
     {
@@ -2144,8 +2144,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 VIII",
-      "nameEn": "Heart of the Pack Gimmick Boost VIII",
+      "nameJa": "咆哮の残響",
+      "nameEn": "Echo of Howls",
       "notes": ""
     },
     {
@@ -2182,8 +2182,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 IX",
-      "nameEn": "Heart of the Pack Gimmick Boost IX",
+      "nameJa": "団結の高鳴り",
+      "nameEn": "Racing Unity",
       "notes": ""
     },
     {
@@ -2220,8 +2220,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の仕掛け強化 X",
-      "nameEn": "Heart of the Pack Gimmick Boost X",
+      "nameJa": "心音の重なり",
+      "nameEn": "Layered Heartbeats",
       "notes": ""
     },
     {
@@ -2265,8 +2265,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "四色の深み",
+          "nameEn": "Depths of Four Hues"
         },
         {
           "kind": "GimmickParam",
@@ -2281,8 +2281,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "四色の巡り",
+          "nameEn": "Rounds of Four Hues"
         }
       ],
       "keystone": null,
@@ -2292,8 +2292,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓の分岐",
-      "nameEn": "Heart of the Pack Branch",
+      "nameJa": "四色の数え方",
+      "nameEn": "Counting the Four Hues",
       "notes": ""
     },
     {
@@ -2329,8 +2329,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 I",
-      "nameEn": "Sylvan Call Gimmick Boost I",
+      "nameJa": "呼び声の深まり",
+      "nameEn": "Deepening Calls",
       "notes": ""
     },
     {
@@ -2367,8 +2367,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続",
-      "nameEn": "Sylvan Call Duration",
+      "nameJa": "長く続く守り葉",
+      "nameEn": "Guard-Leaves That Last",
       "notes": ""
     },
     {
@@ -2407,8 +2407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 II",
-      "nameEn": "Sylvan Call Gimmick Boost II",
+      "nameJa": "森の気配",
+      "nameEn": "Presence of the Forest",
       "notes": ""
     },
     {
@@ -2441,8 +2441,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 I",
-      "nameEn": "Sylvan Call Cadence I",
+      "nameJa": "呼び声の軽やかさ",
+      "nameEn": "Lightness of the Call",
       "notes": ""
     },
     {
@@ -2479,8 +2479,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 III",
-      "nameEn": "Sylvan Call Gimmick Boost III",
+      "nameJa": "芽吹きの勢い",
+      "nameEn": "Sprouting Vigor",
       "notes": ""
     },
     {
@@ -2513,8 +2513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 II",
-      "nameEn": "Sylvan Call Cadence II",
+      "nameJa": "森の巡りの良さ",
+      "nameEn": "Well-Turning Forest Cycles",
       "notes": ""
     },
     {
@@ -2598,8 +2598,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 IV",
-      "nameEn": "Sylvan Call Gimmick Boost IV",
+      "nameJa": "呼び声の磨き",
+      "nameEn": "Polished Calls",
       "notes": ""
     },
     {
@@ -2636,8 +2636,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 V",
-      "nameEn": "Sylvan Call Gimmick Boost V",
+      "nameJa": "猟犬の躍動",
+      "nameEn": "Hounds in Motion",
       "notes": ""
     },
     {
@@ -2674,8 +2674,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VI",
-      "nameEn": "Sylvan Call Gimmick Boost VI",
+      "nameJa": "森のめぐみ",
+      "nameEn": "Bounty of the Forest",
       "notes": ""
     },
     {
@@ -2712,8 +2712,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VII",
-      "nameEn": "Sylvan Call Gimmick Boost VII",
+      "nameJa": "若葉の勢い",
+      "nameEn": "Vigor of New Leaves",
       "notes": ""
     },
     {
@@ -2750,8 +2750,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VIII",
-      "nameEn": "Sylvan Call Gimmick Boost VIII",
+      "nameJa": "森の弓鳴り",
+      "nameEn": "Twang of the Forest",
       "notes": ""
     },
     {
@@ -2788,8 +2788,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 IX",
-      "nameEn": "Sylvan Call Gimmick Boost IX",
+      "nameJa": "呼び声の切れ味",
+      "nameEn": "Keenness of the Call",
       "notes": ""
     },
     {
@@ -2833,8 +2833,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く染みる呼び声",
+          "nameEn": "Deep-Soaking Calls"
         },
         {
           "kind": "MemoryHaste",
@@ -2846,8 +2846,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "速く巡る呼び声",
+          "nameEn": "Swift-Cycling Calls"
         }
       ],
       "keystone": null,
@@ -2857,8 +2857,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の分岐",
-      "nameEn": "Sylvan Call Branch",
+      "nameJa": "呼び声の染み方",
+      "nameEn": "Ways the Call Soaks In",
       "notes": ""
     },
     {
@@ -2894,8 +2894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 I",
-      "nameEn": "Sylvan Call Gimmick Boost I",
+      "nameJa": "群れの足取り",
+      "nameEn": "Footwork of the Pack",
       "notes": ""
     },
     {
@@ -2932,8 +2932,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続 I",
-      "nameEn": "Sylvan Call Duration I",
+      "nameJa": "森の長い木陰",
+      "nameEn": "Long Forest Shade",
       "notes": ""
     },
     {
@@ -2971,8 +2971,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 II",
-      "nameEn": "Sylvan Call Gimmick Boost II",
+      "nameJa": "森の深い根",
+      "nameEn": "Deep Roots",
       "notes": ""
     },
     {
@@ -3005,8 +3005,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転",
-      "nameEn": "Sylvan Call Cadence",
+      "nameJa": "速さを増す呼び声",
+      "nameEn": "Quickening Calls",
       "notes": ""
     },
     {
@@ -3043,8 +3043,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 III",
-      "nameEn": "Sylvan Call Gimmick Boost III",
+      "nameJa": "呼び声の研ぎ澄まし",
+      "nameEn": "Whetted Calls",
       "notes": ""
     },
     {
@@ -3082,8 +3082,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続 II",
-      "nameEn": "Sylvan Call Duration II",
+      "nameJa": "残る森の加護",
+      "nameEn": "Lingering Forest Grace",
       "notes": ""
     },
     {
@@ -3163,8 +3163,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 IV",
-      "nameEn": "Sylvan Call Gimmick Boost IV",
+      "nameJa": "芽吹きの極意",
+      "nameEn": "Secrets of Sprouting",
       "notes": ""
     },
     {
@@ -3201,8 +3201,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続 III",
-      "nameEn": "Sylvan Call Duration III",
+      "nameJa": "木陰の長い午後",
+      "nameEn": "Long Afternoons in the Shade",
       "notes": ""
     },
     {
@@ -3239,8 +3239,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 V",
-      "nameEn": "Sylvan Call Gimmick Boost V",
+      "nameJa": "呼び声の深まり",
+      "nameEn": "Deepening Calls",
       "notes": ""
     },
     {
@@ -3277,8 +3277,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続 IV",
-      "nameEn": "Sylvan Call Duration IV",
+      "nameJa": "長く続く葉陰",
+      "nameEn": "Long Leaf Shade",
       "notes": ""
     },
     {
@@ -3315,8 +3315,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VI",
-      "nameEn": "Sylvan Call Gimmick Boost VI",
+      "nameJa": "森の気配",
+      "nameEn": "Presence of the Forest",
       "notes": ""
     },
     {
@@ -3353,8 +3353,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続 V",
-      "nameEn": "Sylvan Call Duration V",
+      "nameJa": "長く続く守り葉",
+      "nameEn": "Guard-Leaves That Last",
       "notes": ""
     },
     {
@@ -3398,8 +3398,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く包囲",
+          "nameEn": "Long Sieges"
         },
         {
           "kind": "GimmickBoost",
@@ -3414,8 +3414,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く包囲",
+          "nameEn": "Deep-Working Sieges"
         }
       ],
       "keystone": null,
@@ -3425,8 +3425,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の分岐",
-      "nameEn": "Sylvan Call Branch",
+      "nameJa": "猟犬の攻めの岐路",
+      "nameEn": "Hound’s Crossroads",
       "notes": ""
     },
     {
@@ -3462,8 +3462,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 I",
-      "nameEn": "Sylvan Call Gimmick Boost I",
+      "nameJa": "芽吹きの勢い",
+      "nameEn": "Sprouting Vigor",
       "notes": ""
     },
     {
@@ -3500,8 +3500,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続",
-      "nameEn": "Sylvan Call Duration",
+      "nameJa": "森の長い木陰",
+      "nameEn": "Long Forest Shade",
       "notes": ""
     },
     {
@@ -3538,8 +3538,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 II",
-      "nameEn": "Sylvan Call Gimmick Boost II",
+      "nameJa": "呼び声の磨き",
+      "nameEn": "Polished Calls",
       "notes": ""
     },
     {
@@ -3572,8 +3572,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 I",
-      "nameEn": "Sylvan Call Cadence I",
+      "nameJa": "呼び声の軽やかさ",
+      "nameEn": "Lightness of the Call",
       "notes": ""
     },
     {
@@ -3610,8 +3610,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 III",
-      "nameEn": "Sylvan Call Gimmick Boost III",
+      "nameJa": "猟犬の躍動",
+      "nameEn": "Hounds in Motion",
       "notes": ""
     },
     {
@@ -3644,8 +3644,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 II",
-      "nameEn": "Sylvan Call Cadence II",
+      "nameJa": "森の巡りの良さ",
+      "nameEn": "Well-Turning Forest Cycles",
       "notes": ""
     },
     {
@@ -3725,8 +3725,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 IV",
-      "nameEn": "Sylvan Call Gimmick Boost IV",
+      "nameJa": "森のめぐみ",
+      "nameEn": "Bounty of the Forest",
       "notes": ""
     },
     {
@@ -3763,8 +3763,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の範囲 I",
-      "nameEn": "Sylvan Call Radius I",
+      "nameJa": "燃え広がる間合い",
+      "nameEn": "Range of the Spread",
       "notes": ""
     },
     {
@@ -3801,8 +3801,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 V",
-      "nameEn": "Sylvan Call Gimmick Boost V",
+      "nameJa": "若葉の勢い",
+      "nameEn": "Vigor of New Leaves",
       "notes": ""
     },
     {
@@ -3839,8 +3839,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の範囲 II",
-      "nameEn": "Sylvan Call Radius II",
+      "nameJa": "火の粉の届く先",
+      "nameEn": "Where Sparks Reach",
       "notes": ""
     },
     {
@@ -3877,8 +3877,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VI",
-      "nameEn": "Sylvan Call Gimmick Boost VI",
+      "nameJa": "森の弓鳴り",
+      "nameEn": "Twang of the Forest",
       "notes": ""
     },
     {
@@ -3915,8 +3915,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の範囲 III",
-      "nameEn": "Sylvan Call Radius III",
+      "nameJa": "燃え広がる縁",
+      "nameEn": "Edge of the Spread",
       "notes": ""
     },
     {
@@ -3960,8 +3960,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる火床",
+          "nameEn": "Widening Pyres"
         },
         {
           "kind": "GimmickBoost",
@@ -3976,8 +3976,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "熾り立つ火床",
+          "nameEn": "Kindling Pyres"
         }
       ],
       "keystone": null,
@@ -3987,8 +3987,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の分岐",
-      "nameEn": "Sylvan Call Branch",
+      "nameJa": "火床の広げ方",
+      "nameEn": "Spreading the Pyre",
       "notes": ""
     },
     {
@@ -4024,8 +4024,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 I",
-      "nameEn": "Sylvan Call Gimmick Boost I",
+      "nameJa": "呼び声の切れ味",
+      "nameEn": "Keenness of the Call",
       "notes": ""
     },
     {
@@ -4062,8 +4062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の持続",
-      "nameEn": "Sylvan Call Duration",
+      "nameJa": "残る森の加護",
+      "nameEn": "Lingering Forest Grace",
       "notes": ""
     },
     {
@@ -4102,8 +4102,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 II",
-      "nameEn": "Sylvan Call Gimmick Boost II",
+      "nameJa": "群れの足取り",
+      "nameEn": "Footwork of the Pack",
       "notes": ""
     },
     {
@@ -4136,8 +4136,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 I",
-      "nameEn": "Sylvan Call Cadence I",
+      "nameJa": "速さを増す呼び声",
+      "nameEn": "Quickening Calls",
       "notes": ""
     },
     {
@@ -4174,8 +4174,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 III",
-      "nameEn": "Sylvan Call Gimmick Boost III",
+      "nameJa": "森の深い根",
+      "nameEn": "Deep Roots",
       "notes": ""
     },
     {
@@ -4208,8 +4208,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の回転 II",
-      "nameEn": "Sylvan Call Cadence II",
+      "nameJa": "呼び声の軽やかさ",
+      "nameEn": "Lightness of the Call",
       "notes": ""
     },
     {
@@ -4293,8 +4293,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 IV",
-      "nameEn": "Sylvan Call Gimmick Boost IV",
+      "nameJa": "呼び声の研ぎ澄まし",
+      "nameEn": "Whetted Calls",
       "notes": ""
     },
     {
@@ -4331,8 +4331,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の確率 I",
-      "nameEn": "Sylvan Call Chance I",
+      "nameJa": "霜の巡り合わせ",
+      "nameEn": "Frost Coincidences",
       "notes": ""
     },
     {
@@ -4369,8 +4369,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 V",
-      "nameEn": "Sylvan Call Gimmick Boost V",
+      "nameJa": "芽吹きの極意",
+      "nameEn": "Secrets of Sprouting",
       "notes": ""
     },
     {
@@ -4407,8 +4407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の確率 II",
-      "nameEn": "Sylvan Call Chance II",
+      "nameJa": "葉先の霜の予感",
+      "nameEn": "Omens of Tip Frost",
       "notes": ""
     },
     {
@@ -4445,8 +4445,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の仕掛け強化 VI",
-      "nameEn": "Sylvan Call Gimmick Boost VI",
+      "nameJa": "呼び声の深まり",
+      "nameEn": "Deepening Calls",
       "notes": ""
     },
     {
@@ -4483,8 +4483,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の確率 III",
-      "nameEn": "Sylvan Call Chance III",
+      "nameJa": "霜の目覚めの兆し",
+      "nameEn": "Omens of Waking Frost",
       "notes": ""
     },
     {
@@ -4528,8 +4528,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "しばしば降る霜",
+          "nameEn": "Oft-Falling Frost"
         },
         {
           "kind": "GimmickBoost",
@@ -4544,8 +4544,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重く降る霜",
+          "nameEn": "Heavy Frost"
         }
       ],
       "keystone": null,
@@ -4555,8 +4555,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応の分岐",
-      "nameEn": "Sylvan Call Branch",
+      "nameJa": "霜の降り方",
+      "nameEn": "Ways Frost Falls",
       "notes": ""
     },
     {
@@ -4592,8 +4592,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 I",
-      "nameEn": "Nature's Whisper Gimmick Boost I",
+      "nameJa": "号令の響き",
+      "nameEn": "Ring of Commands",
       "notes": ""
     },
     {
@@ -4630,8 +4630,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 I",
-      "nameEn": "Nature's Whisper Duration I",
+      "nameJa": "長く続く号令",
+      "nameEn": "Commands That Last",
       "notes": ""
     },
     {
@@ -4670,8 +4670,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 II",
-      "nameEn": "Nature's Whisper Gimmick Boost II",
+      "nameJa": "囁きの浸透",
+      "nameEn": "Seeping Whispers",
       "notes": ""
     },
     {
@@ -4704,8 +4704,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 I",
-      "nameEn": "Nature's Whisper Cadence I",
+      "nameJa": "指揮の軽やかさ",
+      "nameEn": "Lightness of Command",
       "notes": ""
     },
     {
@@ -4742,8 +4742,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 III",
-      "nameEn": "Nature's Whisper Gimmick Boost III",
+      "nameJa": "指揮の熟達",
+      "nameEn": "Mastery of Command",
       "notes": ""
     },
     {
@@ -4776,8 +4776,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 II",
-      "nameEn": "Nature's Whisper Cadence II",
+      "nameJa": "囁きの速さ",
+      "nameEn": "Swift Whispers",
       "notes": ""
     },
     {
@@ -4862,8 +4862,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 IV",
-      "nameEn": "Nature's Whisper Gimmick Boost IV",
+      "nameJa": "静けさの奥の声",
+      "nameEn": "Voice Beneath the Quiet",
       "notes": ""
     },
     {
@@ -4900,8 +4900,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 II",
-      "nameEn": "Nature's Whisper Duration II",
+      "nameJa": "残る森の静けさ",
+      "nameEn": "Lingering Forest Quiet",
       "notes": ""
     },
     {
@@ -4938,8 +4938,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 V",
-      "nameEn": "Nature's Whisper Gimmick Boost V",
+      "nameJa": "号令の切れ味",
+      "nameEn": "Keenness of Commands",
       "notes": ""
     },
     {
@@ -4976,8 +4976,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 III",
-      "nameEn": "Nature's Whisper Duration III",
+      "nameJa": "長く保つ重ね布",
+      "nameEn": "Layered Cloth Long Held",
       "notes": ""
     },
     {
@@ -5014,8 +5014,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 VI",
-      "nameEn": "Nature's Whisper Gimmick Boost VI",
+      "nameJa": "指揮官の胸の内",
+      "nameEn": "The Commander’s Heart",
       "notes": ""
     },
     {
@@ -5052,8 +5052,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 IV",
-      "nameEn": "Nature's Whisper Duration IV",
+      "nameJa": "庇いの長い効き",
+      "nameEn": "Shelters Long Working",
       "notes": ""
     },
     {
@@ -5097,8 +5097,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く羽織る布",
+          "nameEn": "Cloth Long Worn"
         },
         {
           "kind": "GimmickBoost",
@@ -5113,8 +5113,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "厚く重なる布",
+          "nameEn": "Thick-Layered Cloth"
         }
       ],
       "keystone": null,
@@ -5124,8 +5124,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの分岐",
-      "nameEn": "Nature's Whisper Branch",
+      "nameJa": "重ね布の重ね方",
+      "nameEn": "Layering the Cloth",
       "notes": ""
     },
     {
@@ -5161,8 +5161,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 I",
-      "nameEn": "Nature's Whisper Gimmick Boost I",
+      "nameJa": "囁きの深み",
+      "nameEn": "Depths of Whispers",
       "notes": ""
     },
     {
@@ -5199,8 +5199,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続",
-      "nameEn": "Nature's Whisper Duration",
+      "nameJa": "長く続く号令",
+      "nameEn": "Commands That Last",
       "notes": ""
     },
     {
@@ -5238,8 +5238,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 II",
-      "nameEn": "Nature's Whisper Gimmick Boost II",
+      "nameJa": "森の指揮棒",
+      "nameEn": "Baton of the Forest",
       "notes": ""
     },
     {
@@ -5272,8 +5272,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 I",
-      "nameEn": "Nature's Whisper Cadence I",
+      "nameJa": "息の合った指揮",
+      "nameEn": "Command in Tune",
       "notes": ""
     },
     {
@@ -5310,8 +5310,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 III",
-      "nameEn": "Nature's Whisper Gimmick Boost III",
+      "nameJa": "号令の重み",
+      "nameEn": "Weight of Commands",
       "notes": ""
     },
     {
@@ -5345,8 +5345,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 II",
-      "nameEn": "Nature's Whisper Cadence II",
+      "nameJa": "指揮の軽やかさ",
+      "nameEn": "Lightness of Command",
       "notes": ""
     },
     {
@@ -5426,8 +5426,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 IV",
-      "nameEn": "Nature's Whisper Gimmick Boost IV",
+      "nameJa": "静かな号令",
+      "nameEn": "Quiet Commands",
       "notes": ""
     },
     {
@@ -5464,8 +5464,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの範囲 I",
-      "nameEn": "Nature's Whisper Radius I",
+      "nameJa": "遠くへ届く囁き",
+      "nameEn": "Whispers Far Carried",
       "notes": ""
     },
     {
@@ -5502,8 +5502,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 V",
-      "nameEn": "Nature's Whisper Gimmick Boost V",
+      "nameJa": "指揮の円滑さ",
+      "nameEn": "Smooth Command",
       "notes": ""
     },
     {
@@ -5540,8 +5540,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの範囲 II",
-      "nameEn": "Nature's Whisper Radius II",
+      "nameJa": "広がる休符",
+      "nameEn": "Widening Rests",
       "notes": ""
     },
     {
@@ -5578,8 +5578,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 VI",
-      "nameEn": "Nature's Whisper Gimmick Boost VI",
+      "nameJa": "囁きの研き澄まし",
+      "nameEn": "Whetted Whispers",
       "notes": ""
     },
     {
@@ -5616,8 +5616,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの範囲 III",
-      "nameEn": "Nature's Whisper Radius III",
+      "nameJa": "号令の届く輪",
+      "nameEn": "Ring Commands Reach",
       "notes": ""
     },
     {
@@ -5661,8 +5661,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "遠く届く号令",
+          "nameEn": "Far-Carrying Commands"
         },
         {
           "kind": "GimmickBoost",
@@ -5677,8 +5677,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "強く響く号令",
+          "nameEn": "Strong-Sounding Commands"
         }
       ],
       "keystone": null,
@@ -5688,8 +5688,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの分岐",
-      "nameEn": "Nature's Whisper Branch",
+      "nameJa": "号令の届け方",
+      "nameEn": "Delivering the Command",
       "notes": ""
     },
     {
@@ -5725,8 +5725,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 I",
-      "nameEn": "Nature's Whisper Gimmick Boost I",
+      "nameJa": "森の采配",
+      "nameEn": "Discretion of the Forest",
       "notes": ""
     },
     {
@@ -5763,8 +5763,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 I",
-      "nameEn": "Nature's Whisper Duration I",
+      "nameJa": "残る森の静けさ",
+      "nameEn": "Lingering Forest Quiet",
       "notes": ""
     },
     {
@@ -5801,8 +5801,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 II",
-      "nameEn": "Nature's Whisper Gimmick Boost II",
+      "nameJa": "号令の響き",
+      "nameEn": "Ring of Commands",
       "notes": ""
     },
     {
@@ -5835,8 +5835,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 I",
-      "nameEn": "Nature's Whisper Cadence I",
+      "nameJa": "囁きの速さ",
+      "nameEn": "Swift Whispers",
       "notes": ""
     },
     {
@@ -5873,8 +5873,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 III",
-      "nameEn": "Nature's Whisper Gimmick Boost III",
+      "nameJa": "囁きの浸透",
+      "nameEn": "Seeping Whispers",
       "notes": ""
     },
     {
@@ -5907,8 +5907,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 II",
-      "nameEn": "Nature's Whisper Cadence II",
+      "nameJa": "息の合った指揮",
+      "nameEn": "Command in Tune",
       "notes": ""
     },
     {
@@ -5989,8 +5989,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 IV",
-      "nameEn": "Nature's Whisper Gimmick Boost IV",
+      "nameJa": "指揮の熟達",
+      "nameEn": "Mastery of Command",
       "notes": ""
     },
     {
@@ -6027,8 +6027,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 II",
-      "nameEn": "Nature's Whisper Duration II",
+      "nameJa": "長く保つ重ね布",
+      "nameEn": "Layered Cloth Long Held",
       "notes": ""
     },
     {
@@ -6065,8 +6065,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの範囲 I",
-      "nameEn": "Nature's Whisper Radius I",
+      "nameJa": "遠くへ届く囁き",
+      "nameEn": "Whispers Far Carried",
       "notes": ""
     },
     {
@@ -6103,8 +6103,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 V",
-      "nameEn": "Nature's Whisper Gimmick Boost V",
+      "nameJa": "静けさの奥の声",
+      "nameEn": "Voice Beneath the Quiet",
       "notes": ""
     },
     {
@@ -6141,8 +6141,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続 III",
-      "nameEn": "Nature's Whisper Duration III",
+      "nameJa": "庇いの長い効き",
+      "nameEn": "Shelters Long Working",
       "notes": ""
     },
     {
@@ -6179,8 +6179,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの範囲 II",
-      "nameEn": "Nature's Whisper Radius II",
+      "nameJa": "広がる休符",
+      "nameEn": "Widening Rests",
       "notes": ""
     },
     {
@@ -6224,8 +6224,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "もう一頭の庇",
+          "nameEn": "Shelter for One More"
         },
         {
           "kind": "GimmickParam",
@@ -6240,8 +6240,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く庇",
+          "nameEn": "Shelters That Last"
         }
       ],
       "keystone": null,
@@ -6251,8 +6251,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの分岐",
-      "nameEn": "Nature's Whisper Branch",
+      "nameJa": "庇の広げ方",
+      "nameEn": "Extending the Shelter",
       "notes": ""
     },
     {
@@ -6288,8 +6288,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 I",
-      "nameEn": "Nature's Whisper Gimmick Boost I",
+      "nameJa": "号令の切れ味",
+      "nameEn": "Keenness of Commands",
       "notes": ""
     },
     {
@@ -6326,8 +6326,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの持続",
-      "nameEn": "Nature's Whisper Duration",
+      "nameJa": "長く続く号令",
+      "nameEn": "Commands That Last",
       "notes": ""
     },
     {
@@ -6366,8 +6366,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 II",
-      "nameEn": "Nature's Whisper Gimmick Boost II",
+      "nameJa": "指揮官の胸の内",
+      "nameEn": "The Commander’s Heart",
       "notes": ""
     },
     {
@@ -6400,8 +6400,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 I",
-      "nameEn": "Nature's Whisper Cadence I",
+      "nameJa": "指揮の軽やかさ",
+      "nameEn": "Lightness of Command",
       "notes": ""
     },
     {
@@ -6438,8 +6438,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 III",
-      "nameEn": "Nature's Whisper Gimmick Boost III",
+      "nameJa": "囁きの深み",
+      "nameEn": "Depths of Whispers",
       "notes": ""
     },
     {
@@ -6472,8 +6472,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの回転 II",
-      "nameEn": "Nature's Whisper Cadence II",
+      "nameJa": "囁きの速さ",
+      "nameEn": "Swift Whispers",
       "notes": ""
     },
     {
@@ -6559,8 +6559,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 IV",
-      "nameEn": "Nature's Whisper Gimmick Boost IV",
+      "nameJa": "森の指揮棒",
+      "nameEn": "Baton of the Forest",
       "notes": ""
     },
     {
@@ -6597,8 +6597,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 V",
-      "nameEn": "Nature's Whisper Gimmick Boost V",
+      "nameJa": "号令の重み",
+      "nameEn": "Weight of Commands",
       "notes": ""
     },
     {
@@ -6635,8 +6635,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 VI",
-      "nameEn": "Nature's Whisper Gimmick Boost VI",
+      "nameJa": "静かな号令",
+      "nameEn": "Quiet Commands",
       "notes": ""
     },
     {
@@ -6673,8 +6673,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 VII",
-      "nameEn": "Nature's Whisper Gimmick Boost VII",
+      "nameJa": "指揮の円滑さ",
+      "nameEn": "Smooth Command",
       "notes": ""
     },
     {
@@ -6711,8 +6711,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 VIII",
-      "nameEn": "Nature's Whisper Gimmick Boost VIII",
+      "nameJa": "囁きの研き澄まし",
+      "nameEn": "Whetted Whispers",
       "notes": ""
     },
     {
@@ -6749,8 +6749,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの仕掛け強化 IX",
-      "nameEn": "Nature's Whisper Gimmick Boost IX",
+      "nameJa": "森の采配",
+      "nameEn": "Discretion of the Forest",
       "notes": ""
     },
     {
@@ -6794,8 +6794,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広く整う退路",
+          "nameEn": "Broadly Readied Ways"
         },
         {
           "kind": "MemoryHaste",
@@ -6807,8 +6807,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "速く整う退路",
+          "nameEn": "Swiftly Readied Ways"
         }
       ],
       "keystone": null,
@@ -6818,8 +6818,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁きの分岐",
-      "nameEn": "Nature's Whisper Branch",
+      "nameJa": "退路の整え方",
+      "nameEn": "Readying the Way Back",
       "notes": ""
     },
     {
@@ -6855,8 +6855,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 I",
-      "nameEn": "Dreamy Waltz Gimmick Boost I",
+      "nameJa": "舞への誘い",
+      "nameEn": "Invitation to the Waltz",
       "notes": ""
     },
     {
@@ -6893,8 +6893,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 II",
-      "nameEn": "Dreamy Waltz Gimmick Boost II",
+      "nameJa": "再びの舞踏",
+      "nameEn": "Dance Once More",
       "notes": ""
     },
     {
@@ -6933,8 +6933,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 III",
-      "nameEn": "Dreamy Waltz Gimmick Boost III",
+      "nameJa": "円舞の約束",
+      "nameEn": "Promise of the Round",
       "notes": ""
     },
     {
@@ -6971,8 +6971,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IV",
-      "nameEn": "Dreamy Waltz Gimmick Boost IV",
+      "nameJa": "舞姫の呼吸",
+      "nameEn": "Dancer’s Breath",
       "notes": ""
     },
     {
@@ -7009,8 +7009,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 V",
-      "nameEn": "Dreamy Waltz Gimmick Boost V",
+      "nameJa": "楽士の速弾き",
+      "nameEn": "Fiddler’s Quick Bow",
       "notes": ""
     },
     {
@@ -7047,8 +7047,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VI",
-      "nameEn": "Dreamy Waltz Gimmick Boost VI",
+      "nameJa": "踊り続ける理由",
+      "nameEn": "Reason to Keep Dancing",
       "notes": ""
     },
     {
@@ -7134,8 +7134,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VII",
+      "nameJa": "円環の拍手",
+      "nameEn": "Applause of the Ring",
       "notes": ""
     },
     {
@@ -7172,8 +7172,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VIII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VIII",
+      "nameJa": "舞踏の余韻",
+      "nameEn": "Afterglow of the Ball",
       "notes": ""
     },
     {
@@ -7210,8 +7210,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IX",
-      "nameEn": "Dreamy Waltz Gimmick Boost IX",
+      "nameJa": "回転の支え",
+      "nameEn": "Support of the Spin",
       "notes": ""
     },
     {
@@ -7248,8 +7248,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 X",
-      "nameEn": "Dreamy Waltz Gimmick Boost X",
+      "nameJa": "舞いの見取り図",
+      "nameEn": "Map of the Dance",
       "notes": ""
     },
     {
@@ -7286,8 +7286,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XI",
-      "nameEn": "Dreamy Waltz Gimmick Boost XI",
+      "nameJa": "足取りの軽さ",
+      "nameEn": "Lightness of Step",
       "notes": ""
     },
     {
@@ -7324,8 +7324,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XII",
-      "nameEn": "Dreamy Waltz Gimmick Boost XII",
+      "nameJa": "終わらない円舞",
+      "nameEn": "Unending Round Dance",
       "notes": ""
     },
     {
@@ -7374,8 +7374,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "少ない踏みで舞う",
+          "nameEn": "Dancing on Fewer Steps"
         },
         {
           "kind": "Notable",
@@ -7395,8 +7395,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重い踏みで舞う",
+          "nameEn": "Dancing on Heavier Steps"
         }
       ],
       "keystone": null,
@@ -7407,8 +7407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの分岐",
-      "nameEn": "Dreamy Waltz Branch",
+      "nameJa": "踏み数の選び方",
+      "nameEn": "Choosing the Steps",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと回数(everyN)の差し替え。"
     },
     {
@@ -7444,8 +7444,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 I",
-      "nameEn": "Dreamy Waltz Gimmick Boost I",
+      "nameJa": "舞踏会の追奏",
+      "nameEn": "Ballroom Encore",
       "notes": ""
     },
     {
@@ -7482,8 +7482,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 II",
-      "nameEn": "Dreamy Waltz Gimmick Boost II",
+      "nameJa": "裾ひろがる円",
+      "nameEn": "Widening Circle",
       "notes": ""
     },
     {
@@ -7521,8 +7521,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 III",
-      "nameEn": "Dreamy Waltz Gimmick Boost III",
+      "nameJa": "舞の系譜",
+      "nameEn": "Lineage of the Dance",
       "notes": ""
     },
     {
@@ -7559,8 +7559,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IV",
-      "nameEn": "Dreamy Waltz Gimmick Boost IV",
+      "nameJa": "招待状の追刷",
+      "nameEn": "Further Invitations",
       "notes": ""
     },
     {
@@ -7597,8 +7597,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 V",
-      "nameEn": "Dreamy Waltz Gimmick Boost V",
+      "nameJa": "回り舞台の油",
+      "nameEn": "Oil for the Revolve",
       "notes": ""
     },
     {
@@ -7636,8 +7636,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VI",
-      "nameEn": "Dreamy Waltz Gimmick Boost VI",
+      "nameJa": "楽団の合図",
+      "nameEn": "The Band’s Cue",
       "notes": ""
     },
     {
@@ -7719,8 +7719,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VII",
+      "nameJa": "舞踏靴の磨き",
+      "nameEn": "Polished Dancing Shoes",
       "notes": ""
     },
     {
@@ -7757,8 +7757,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VIII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VIII",
+      "nameJa": "円舞の深み",
+      "nameEn": "Depths of the Round",
       "notes": ""
     },
     {
@@ -7795,8 +7795,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IX",
-      "nameEn": "Dreamy Waltz Gimmick Boost IX",
+      "nameJa": "踊りの継ぎ穂",
+      "nameEn": "Graft of the Dance",
       "notes": ""
     },
     {
@@ -7833,8 +7833,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 X",
-      "nameEn": "Dreamy Waltz Gimmick Boost X",
+      "nameJa": "舞い疲れぬ夜",
+      "nameEn": "Night of Endless Dancing",
       "notes": ""
     },
     {
@@ -7871,8 +7871,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XI",
-      "nameEn": "Dreamy Waltz Gimmick Boost XI",
+      "nameJa": "舞への誘い",
+      "nameEn": "Invitation to the Waltz",
       "notes": ""
     },
     {
@@ -7909,8 +7909,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XII",
-      "nameEn": "Dreamy Waltz Gimmick Boost XII",
+      "nameJa": "再びの舞踏",
+      "nameEn": "Dance Once More",
       "notes": ""
     },
     {
@@ -7959,8 +7959,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "一声ごとの舞",
+          "nameEn": "A Dance per Command"
         },
         {
           "kind": "Notable",
@@ -7980,8 +7980,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "呼吸を整えて舞う",
+          "nameEn": "Dancing Settled and Poised"
         }
       ],
       "keystone": null,
@@ -7992,8 +7992,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの分岐",
-      "nameEn": "Dreamy Waltz Branch",
+      "nameJa": "号令と舞の呼吸",
+      "nameEn": "Breath of Command and Dance",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと回数(everyN)の差し替え。"
     },
     {
@@ -8029,8 +8029,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 I",
-      "nameEn": "Dreamy Waltz Gimmick Boost I",
+      "nameJa": "円舞の約束",
+      "nameEn": "Promise of the Round",
       "notes": ""
     },
     {
@@ -8067,8 +8067,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 II",
-      "nameEn": "Dreamy Waltz Gimmick Boost II",
+      "nameJa": "舞姫の呼吸",
+      "nameEn": "Dancer’s Breath",
       "notes": ""
     },
     {
@@ -8105,8 +8105,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 III",
-      "nameEn": "Dreamy Waltz Gimmick Boost III",
+      "nameJa": "楽士の速弾き",
+      "nameEn": "Fiddler’s Quick Bow",
       "notes": ""
     },
     {
@@ -8143,8 +8143,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IV",
-      "nameEn": "Dreamy Waltz Gimmick Boost IV",
+      "nameJa": "踊り続ける理由",
+      "nameEn": "Reason to Keep Dancing",
       "notes": ""
     },
     {
@@ -8181,8 +8181,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 V",
-      "nameEn": "Dreamy Waltz Gimmick Boost V",
+      "nameJa": "円環の拍手",
+      "nameEn": "Applause of the Ring",
       "notes": ""
     },
     {
@@ -8219,8 +8219,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VI",
-      "nameEn": "Dreamy Waltz Gimmick Boost VI",
+      "nameJa": "舞踏の余韻",
+      "nameEn": "Afterglow of the Ball",
       "notes": ""
     },
     {
@@ -8306,8 +8306,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VII",
+      "nameJa": "回転の支え",
+      "nameEn": "Support of the Spin",
       "notes": ""
     },
     {
@@ -8344,8 +8344,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VIII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VIII",
+      "nameJa": "舞いの見取り図",
+      "nameEn": "Map of the Dance",
       "notes": ""
     },
     {
@@ -8382,8 +8382,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IX",
-      "nameEn": "Dreamy Waltz Gimmick Boost IX",
+      "nameJa": "足取りの軽さ",
+      "nameEn": "Lightness of Step",
       "notes": ""
     },
     {
@@ -8420,8 +8420,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 X",
-      "nameEn": "Dreamy Waltz Gimmick Boost X",
+      "nameJa": "終わらない円舞",
+      "nameEn": "Unending Round Dance",
       "notes": ""
     },
     {
@@ -8458,8 +8458,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XI",
-      "nameEn": "Dreamy Waltz Gimmick Boost XI",
+      "nameJa": "舞踏会の追奏",
+      "nameEn": "Ballroom Encore",
       "notes": ""
     },
     {
@@ -8496,8 +8496,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XII",
-      "nameEn": "Dreamy Waltz Gimmick Boost XII",
+      "nameJa": "裾ひろがる円",
+      "nameEn": "Widening Circle",
       "notes": ""
     },
     {
@@ -8546,8 +8546,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "早く満ちる絆",
+          "nameEn": "Bonds Filled Faster"
         },
         {
           "kind": "Notable",
@@ -8567,8 +8567,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "厚く満ちる絆",
+          "nameEn": "Bonds Filled Deeper"
         }
       ],
       "keystone": null,
@@ -8579,8 +8579,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの分岐",
-      "nameEn": "Dreamy Waltz Branch",
+      "nameJa": "絆の数え方",
+      "nameEn": "Counting the Bond",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと回数(everyN)の差し替え。"
     },
     {
@@ -8616,8 +8616,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 I",
-      "nameEn": "Dreamy Waltz Gimmick Boost I",
+      "nameJa": "舞の系譜",
+      "nameEn": "Lineage of the Dance",
       "notes": ""
     },
     {
@@ -8654,8 +8654,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 II",
-      "nameEn": "Dreamy Waltz Gimmick Boost II",
+      "nameJa": "招待状の追刷",
+      "nameEn": "Further Invitations",
       "notes": ""
     },
     {
@@ -8694,8 +8694,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 III",
-      "nameEn": "Dreamy Waltz Gimmick Boost III",
+      "nameJa": "回り舞台の油",
+      "nameEn": "Oil for the Revolve",
       "notes": ""
     },
     {
@@ -8732,8 +8732,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IV",
-      "nameEn": "Dreamy Waltz Gimmick Boost IV",
+      "nameJa": "楽団の合図",
+      "nameEn": "The Band’s Cue",
       "notes": ""
     },
     {
@@ -8770,8 +8770,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 V",
-      "nameEn": "Dreamy Waltz Gimmick Boost V",
+      "nameJa": "舞踏靴の磨き",
+      "nameEn": "Polished Dancing Shoes",
       "notes": ""
     },
     {
@@ -8808,8 +8808,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VI",
-      "nameEn": "Dreamy Waltz Gimmick Boost VI",
+      "nameJa": "円舞の深み",
+      "nameEn": "Depths of the Round",
       "notes": ""
     },
     {
@@ -8895,8 +8895,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VII",
+      "nameJa": "踊りの継ぎ穂",
+      "nameEn": "Graft of the Dance",
       "notes": ""
     },
     {
@@ -8933,8 +8933,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 VIII",
-      "nameEn": "Dreamy Waltz Gimmick Boost VIII",
+      "nameJa": "舞い疲れぬ夜",
+      "nameEn": "Night of Endless Dancing",
       "notes": ""
     },
     {
@@ -8971,8 +8971,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 IX",
-      "nameEn": "Dreamy Waltz Gimmick Boost IX",
+      "nameJa": "舞への誘い",
+      "nameEn": "Invitation to the Waltz",
       "notes": ""
     },
     {
@@ -9009,8 +9009,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 X",
-      "nameEn": "Dreamy Waltz Gimmick Boost X",
+      "nameJa": "再びの舞踏",
+      "nameEn": "Dance Once More",
       "notes": ""
     },
     {
@@ -9047,8 +9047,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XI",
-      "nameEn": "Dreamy Waltz Gimmick Boost XI",
+      "nameJa": "円舞の約束",
+      "nameEn": "Promise of the Round",
       "notes": ""
     },
     {
@@ -9085,8 +9085,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの仕掛け強化 XII",
-      "nameEn": "Dreamy Waltz Gimmick Boost XII",
+      "nameJa": "舞姫の呼吸",
+      "nameEn": "Dancer’s Breath",
       "notes": ""
     },
     {
@@ -9135,8 +9135,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "一討ごとの受け取り",
+          "nameEn": "Taking Every Kill"
         },
         {
           "kind": "Notable",
@@ -9156,8 +9156,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "まとまった受け取り",
+          "nameEn": "Taking Them in Bunches"
         }
       ],
       "keystone": null,
@@ -9168,8 +9168,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツの分岐",
-      "nameEn": "Dreamy Waltz Branch",
+      "nameJa": "討ち果ての受け取り",
+      "nameEn": "Taking the Kills",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと回数(everyN)の差し替え。"
     },
     {
@@ -9205,8 +9205,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life Gimmick Boost I",
+      "nameJa": "巡る命の充実",
+      "nameEn": "Fullness of Circling Life",
       "notes": ""
     },
     {
@@ -9243,8 +9243,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life Gimmick Boost II",
+      "nameJa": "循環の深まり",
+      "nameEn": "Deepening Cycles",
       "notes": ""
     },
     {
@@ -9283,8 +9283,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life Gimmick Boost III",
+      "nameJa": "命の環の厚み",
+      "nameEn": "Thickness of Life’s Ring",
       "notes": ""
     },
     {
@@ -9321,8 +9321,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life Gimmick Boost IV",
+      "nameJa": "巡り続ける力",
+      "nameEn": "Ever-Turning Strength",
       "notes": ""
     },
     {
@@ -9359,8 +9359,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life Gimmick Boost V",
+      "nameJa": "循環の潮",
+      "nameEn": "Tide of the Cycle",
       "notes": ""
     },
     {
@@ -9397,8 +9397,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life Gimmick Boost VI",
+      "nameJa": "命の水路",
+      "nameEn": "Waterways of Life",
       "notes": ""
     },
     {
@@ -9483,8 +9483,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life Gimmick Boost VII",
+      "nameJa": "巡る露の磨き",
+      "nameEn": "Polished Circling Dew",
       "notes": ""
     },
     {
@@ -9521,8 +9521,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の持続 I",
-      "nameEn": "Circle of Life Duration I",
+      "nameJa": "長く保つ命の膜",
+      "nameEn": "Life-Films That Last",
       "notes": ""
     },
     {
@@ -9559,8 +9559,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の範囲 I",
-      "nameEn": "Circle of Life Radius I",
+      "nameJa": "広がる露の輪",
+      "nameEn": "Widening Rings of Dew",
       "notes": ""
     },
     {
@@ -9597,8 +9597,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life Gimmick Boost VIII",
+      "nameJa": "循環の熟成",
+      "nameEn": "Matured Cycles",
       "notes": ""
     },
     {
@@ -9635,8 +9635,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の持続 II",
-      "nameEn": "Circle of Life Duration II",
+      "nameJa": "巡る露の長い光",
+      "nameEn": "Long Shine of Circling Dew",
       "notes": ""
     },
     {
@@ -9673,8 +9673,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の範囲 II",
-      "nameEn": "Circle of Life Radius II",
+      "nameJa": "遠くへ飛ぶ露",
+      "nameEn": "Dew Flung Far",
       "notes": ""
     },
     {
@@ -9718,8 +9718,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "もう一頭の薄衣",
+          "nameEn": "A Veil for One More"
         },
         {
           "kind": "GimmickParam",
@@ -9734,8 +9734,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く纏う薄衣",
+          "nameEn": "A Veil Long Worn"
         }
       ],
       "keystone": null,
@@ -9745,8 +9745,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の分岐",
-      "nameEn": "Circle of Life Branch",
+      "nameJa": "薄衣の広げ方",
+      "nameEn": "Draping the Veil",
       "notes": ""
     },
     {
@@ -9782,8 +9782,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life Gimmick Boost I",
+      "nameJa": "途切れぬ命の輪",
+      "nameEn": "Unbroken Ring of Life",
       "notes": ""
     },
     {
@@ -9820,8 +9820,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life Gimmick Boost II",
+      "nameJa": "深い巡りの呼吸",
+      "nameEn": "Breath of Deep Turning",
       "notes": ""
     },
     {
@@ -9859,8 +9859,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life Gimmick Boost III",
+      "nameJa": "循環の滋け",
+      "nameEn": "Richness of the Cycle",
       "notes": ""
     },
     {
@@ -9897,8 +9897,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life Gimmick Boost IV",
+      "nameJa": "命の環の重み",
+      "nameEn": "Weight of Life’s Ring",
       "notes": ""
     },
     {
@@ -9935,8 +9935,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life Gimmick Boost V",
+      "nameJa": "巡る恵みの味",
+      "nameEn": "Savor of Circling Grace",
       "notes": ""
     },
     {
@@ -9974,8 +9974,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life Gimmick Boost VI",
+      "nameJa": "循環の早瀬",
+      "nameEn": "Rapids of the Cycle",
       "notes": ""
     },
     {
@@ -10055,8 +10055,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life Gimmick Boost VII",
+      "nameJa": "命のせせらぎ",
+      "nameEn": "Babbling Stream of Life",
       "notes": ""
     },
     {
@@ -10093,8 +10093,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life Gimmick Boost VIII",
+      "nameJa": "巡りの極意",
+      "nameEn": "Secrets of Turning",
       "notes": ""
     },
     {
@@ -10131,8 +10131,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IX",
-      "nameEn": "Circle of Life Gimmick Boost IX",
+      "nameJa": "循環の清め",
+      "nameEn": "Purified Cycles",
       "notes": ""
     },
     {
@@ -10169,8 +10169,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 X",
-      "nameEn": "Circle of Life Gimmick Boost X",
+      "nameJa": "命の輪の輝き",
+      "nameEn": "Shine of Life’s Ring",
       "notes": ""
     },
     {
@@ -10207,8 +10207,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XI",
-      "nameEn": "Circle of Life Gimmick Boost XI",
+      "nameJa": "巡り露の極み",
+      "nameEn": "Height of Circling Dew",
       "notes": ""
     },
     {
@@ -10245,8 +10245,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XII",
-      "nameEn": "Circle of Life Gimmick Boost XII",
+      "nameJa": "循環の川面",
+      "nameEn": "Surface of the Cycle",
       "notes": ""
     },
     {
@@ -10291,8 +10291,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "濃い露",
+          "nameEn": "Rich Dew"
         },
         {
           "kind": "GimmickParam",
@@ -10307,8 +10307,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広い露",
+          "nameEn": "Far-Reaching Dew"
         }
       ],
       "keystone": null,
@@ -10318,8 +10318,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の分岐",
-      "nameEn": "Circle of Life Branch",
+      "nameJa": "露の注ぎ方",
+      "nameEn": "Pouring the Dew",
       "notes": "設計表: 循c2は旧幹.4(PackMend)を追加で必須とする。R(s4)はその旧幹.4のRadius。"
     },
     {
@@ -10355,8 +10355,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life Gimmick Boost I",
+      "nameJa": "命の巡りの道筋",
+      "nameEn": "Path of Life’s Rounds",
       "notes": ""
     },
     {
@@ -10393,8 +10393,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life Gimmick Boost II",
+      "nameJa": "循環の真水",
+      "nameEn": "Fresh Water of the Cycle",
       "notes": ""
     },
     {
@@ -10431,8 +10431,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life Gimmick Boost III",
+      "nameJa": "巡る命の充実",
+      "nameEn": "Fullness of Circling Life",
       "notes": ""
     },
     {
@@ -10469,8 +10469,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life Gimmick Boost IV",
+      "nameJa": "循環の深まり",
+      "nameEn": "Deepening Cycles",
       "notes": ""
     },
     {
@@ -10507,8 +10507,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life Gimmick Boost V",
+      "nameJa": "命の環の厚み",
+      "nameEn": "Thickness of Life’s Ring",
       "notes": ""
     },
     {
@@ -10545,8 +10545,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life Gimmick Boost VI",
+      "nameJa": "巡り続ける力",
+      "nameEn": "Ever-Turning Strength",
       "notes": ""
     },
     {
@@ -10628,8 +10628,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life Gimmick Boost VII",
+      "nameJa": "循環の潮",
+      "nameEn": "Tide of the Cycle",
       "notes": ""
     },
     {
@@ -10666,8 +10666,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life Gimmick Boost VIII",
+      "nameJa": "命の水路",
+      "nameEn": "Waterways of Life",
       "notes": ""
     },
     {
@@ -10704,8 +10704,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IX",
-      "nameEn": "Circle of Life Gimmick Boost IX",
+      "nameJa": "巡る露の磨き",
+      "nameEn": "Polished Circling Dew",
       "notes": ""
     },
     {
@@ -10742,8 +10742,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 X",
-      "nameEn": "Circle of Life Gimmick Boost X",
+      "nameJa": "循環の熟成",
+      "nameEn": "Matured Cycles",
       "notes": ""
     },
     {
@@ -10780,8 +10780,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XI",
-      "nameEn": "Circle of Life Gimmick Boost XI",
+      "nameJa": "途切れぬ命の輪",
+      "nameEn": "Unbroken Ring of Life",
       "notes": ""
     },
     {
@@ -10818,8 +10818,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XII",
-      "nameEn": "Circle of Life Gimmick Boost XII",
+      "nameJa": "深い巡りの呼吸",
+      "nameEn": "Breath of Deep Turning",
       "notes": ""
     },
     {
@@ -10868,8 +10868,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "早く満ちる一射",
+          "nameEn": "Shots Filling Faster"
         },
         {
           "kind": "Notable",
@@ -10889,8 +10889,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重く満ちる一射",
+          "nameEn": "Shots Filling Heavier"
         }
       ],
       "keystone": null,
@@ -10901,8 +10901,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の分岐",
-      "nameEn": "Circle of Life Branch",
+      "nameJa": "射撃の蓄え方",
+      "nameEn": "Storing the Shots",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと発数(everyN)の差し替え。"
     },
     {
@@ -10938,8 +10938,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life Gimmick Boost I",
+      "nameJa": "循環の滋け",
+      "nameEn": "Richness of the Cycle",
       "notes": ""
     },
     {
@@ -10976,8 +10976,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life Gimmick Boost II",
+      "nameJa": "命の環の重み",
+      "nameEn": "Weight of Life’s Ring",
       "notes": ""
     },
     {
@@ -11016,8 +11016,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life Gimmick Boost III",
+      "nameJa": "巡る恵みの味",
+      "nameEn": "Savor of Circling Grace",
       "notes": ""
     },
     {
@@ -11054,8 +11054,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life Gimmick Boost IV",
+      "nameJa": "循環の早瀬",
+      "nameEn": "Rapids of the Cycle",
       "notes": ""
     },
     {
@@ -11092,8 +11092,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life Gimmick Boost V",
+      "nameJa": "命のせせらぎ",
+      "nameEn": "Babbling Stream of Life",
       "notes": ""
     },
     {
@@ -11130,8 +11130,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life Gimmick Boost VI",
+      "nameJa": "巡りの極意",
+      "nameEn": "Secrets of Turning",
       "notes": ""
     },
     {
@@ -11217,8 +11217,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life Gimmick Boost VII",
+      "nameJa": "循環の清め",
+      "nameEn": "Purified Cycles",
       "notes": ""
     },
     {
@@ -11255,8 +11255,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life Gimmick Boost VIII",
+      "nameJa": "命の輪の輝き",
+      "nameEn": "Shine of Life’s Ring",
       "notes": ""
     },
     {
@@ -11293,8 +11293,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 IX",
-      "nameEn": "Circle of Life Gimmick Boost IX",
+      "nameJa": "巡り露の極み",
+      "nameEn": "Height of Circling Dew",
       "notes": ""
     },
     {
@@ -11331,8 +11331,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 X",
-      "nameEn": "Circle of Life Gimmick Boost X",
+      "nameJa": "循環の川面",
+      "nameEn": "Surface of the Cycle",
       "notes": ""
     },
     {
@@ -11369,8 +11369,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XI",
-      "nameEn": "Circle of Life Gimmick Boost XI",
+      "nameJa": "命の巡りの道筋",
+      "nameEn": "Path of Life’s Rounds",
       "notes": ""
     },
     {
@@ -11407,8 +11407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の仕掛け強化 XII",
-      "nameEn": "Circle of Life Gimmick Boost XII",
+      "nameJa": "循環の真水",
+      "nameEn": "Fresh Water of the Cycle",
       "notes": ""
     },
     {
@@ -11457,8 +11457,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "早く呼べる輪舞",
+          "nameEn": "Rounds Called Sooner"
         },
         {
           "kind": "Notable",
@@ -11478,8 +11478,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重く呼べる輪舞",
+          "nameEn": "Rounds Called Heavier"
         }
       ],
       "keystone": null,
@@ -11490,8 +11490,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環の分岐",
-      "nameEn": "Circle of Life Branch",
+      "nameJa": "輪舞の呼び方",
+      "nameEn": "Calling the Round",
       "notes": "n1(RechargeTarget)の置換二択: n1を二重発動しない。A/Bは同じ受信路のValueと発数(everyN)の差し替え。"
     },
     {
@@ -11527,8 +11527,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 I",
-      "nameEn": "Moonlight Pact Gimmick Boost I",
+      "nameJa": "月光の研ぎ澄まし",
+      "nameEn": "Whetted Moonlight",
       "notes": ""
     },
     {
@@ -11565,8 +11565,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 I",
-      "nameEn": "Moonlight Pact Duration I",
+      "nameJa": "長く残る月の痕",
+      "nameEn": "Moon Marks That Last",
       "notes": ""
     },
     {
@@ -11605,8 +11605,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 II",
-      "nameEn": "Moonlight Pact Gimmick Boost II",
+      "nameJa": "月獣の勢い",
+      "nameEn": "Vigor of the Moonbeast",
       "notes": ""
     },
     {
@@ -11643,8 +11643,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 II",
-      "nameEn": "Moonlight Pact Duration II",
+      "nameJa": "尾を引く月光",
+      "nameEn": "Moonlight That Trails",
       "notes": ""
     },
     {
@@ -11681,8 +11681,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 III",
-      "nameEn": "Moonlight Pact Gimmick Boost III",
+      "nameJa": "月光の深み",
+      "nameEn": "Depths of Moonlight",
       "notes": ""
     },
     {
@@ -11719,8 +11719,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 III",
-      "nameEn": "Moonlight Pact Duration III",
+      "nameJa": "長い夜の誓い",
+      "nameEn": "Vows of the Long Night",
       "notes": ""
     },
     {
@@ -11804,8 +11804,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 IV",
-      "nameEn": "Moonlight Pact Gimmick Boost IV",
+      "nameJa": "月下の鍛錬",
+      "nameEn": "Training Beneath the Moon",
       "notes": ""
     },
     {
@@ -11842,8 +11842,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 IV",
-      "nameEn": "Moonlight Pact Duration IV",
+      "nameJa": "残る月の冷え",
+      "nameEn": "Lingering Moon Chill",
       "notes": ""
     },
     {
@@ -11880,8 +11880,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 V",
-      "nameEn": "Moonlight Pact Gimmick Boost V",
+      "nameJa": "狼の跳躍の磨き",
+      "nameEn": "Polished Wolf Leaps",
       "notes": ""
     },
     {
@@ -11918,8 +11918,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 V",
-      "nameEn": "Moonlight Pact Duration V",
+      "nameJa": "消えぬ月影",
+      "nameEn": "Unfading Moonshade",
       "notes": ""
     },
     {
@@ -11956,8 +11956,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 VI",
-      "nameEn": "Moonlight Pact Gimmick Boost VI",
+      "nameJa": "月光の冴え渡り",
+      "nameEn": "Full Keenness of Moonlight",
       "notes": ""
     },
     {
@@ -11994,8 +11994,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 VI",
-      "nameEn": "Moonlight Pact Duration VI",
+      "nameJa": "月の長い影法師",
+      "nameEn": "Long Moon Shadows",
       "notes": ""
     },
     {
@@ -12039,8 +12039,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く効く牽制",
+          "nameEn": "Feints That Last"
         },
         {
           "kind": "GimmickBoost",
@@ -12055,8 +12055,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く牽制",
+          "nameEn": "Feints That Bite"
         }
       ],
       "keystone": null,
@@ -12066,8 +12066,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の分岐",
-      "nameEn": "Moonlight Pact Branch",
+      "nameJa": "牽制の長さか深さか",
+      "nameEn": "Long or Deep Feints",
       "notes": ""
     },
     {
@@ -12103,8 +12103,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 I",
-      "nameEn": "Moonlight Pact Gimmick Boost I",
+      "nameJa": "月の引力",
+      "nameEn": "Pull of the Moon",
       "notes": ""
     },
     {
@@ -12141,8 +12141,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 I",
-      "nameEn": "Moonlight Pact Duration I",
+      "nameJa": "夜の長い余韻",
+      "nameEn": "Long Afterglow of Night",
       "notes": ""
     },
     {
@@ -12180,8 +12180,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 II",
-      "nameEn": "Moonlight Pact Gimmick Boost II",
+      "nameJa": "狼牙の切れ味",
+      "nameEn": "Keenness of Wolf Fangs",
       "notes": ""
     },
     {
@@ -12218,8 +12218,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 II",
-      "nameEn": "Moonlight Pact Duration II",
+      "nameJa": "爪痕の長い月夜",
+      "nameEn": "Long Moonlit Nights of Scars",
       "notes": ""
     },
     {
@@ -12256,8 +12256,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 III",
-      "nameEn": "Moonlight Pact Gimmick Boost III",
+      "nameJa": "月光の潮満ち",
+      "nameEn": "Moonlit Tide",
       "notes": ""
     },
     {
@@ -12295,8 +12295,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 III",
-      "nameEn": "Moonlight Pact Duration III",
+      "nameJa": "長く残る月の痕",
+      "nameEn": "Moon Marks That Last",
       "notes": ""
     },
     {
@@ -12377,8 +12377,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 IV",
-      "nameEn": "Moonlight Pact Gimmick Boost IV",
+      "nameJa": "誓約の重み",
+      "nameEn": "Weight of the Pact",
       "notes": ""
     },
     {
@@ -12415,8 +12415,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 IV",
-      "nameEn": "Moonlight Pact Duration IV",
+      "nameJa": "尾を引く月光",
+      "nameEn": "Moonlight That Trails",
       "notes": ""
     },
     {
@@ -12453,8 +12453,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の範囲 I",
-      "nameEn": "Moonlight Pact Radius I",
+      "nameJa": "広がる狼の圏",
+      "nameEn": "Widening Wolf Circle",
       "notes": ""
     },
     {
@@ -12491,8 +12491,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 V",
-      "nameEn": "Moonlight Pact Gimmick Boost V",
+      "nameJa": "月獣の呼吸",
+      "nameEn": "Moonbeast’s Breath",
       "notes": ""
     },
     {
@@ -12529,8 +12529,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 V",
-      "nameEn": "Moonlight Pact Duration V",
+      "nameJa": "長い夜の誓い",
+      "nameEn": "Vows of the Long Night",
       "notes": ""
     },
     {
@@ -12567,8 +12567,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の範囲 II",
-      "nameEn": "Moonlight Pact Radius II",
+      "nameJa": "月陰の広がる先",
+      "nameEn": "Where Moonshade Reaches",
       "notes": ""
     },
     {
@@ -12612,8 +12612,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "もう一頭の覆い",
+          "nameEn": "Cover for One More"
         },
         {
           "kind": "GimmickParam",
@@ -12628,8 +12628,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる覆い",
+          "nameEn": "Widening Cover"
         }
       ],
       "keystone": null,
@@ -12639,8 +12639,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の分岐",
-      "nameEn": "Moonlight Pact Branch",
+      "nameJa": "覆いの広げ方",
+      "nameEn": "Spreading the Cover",
       "notes": ""
     },
     {
@@ -12676,8 +12676,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 I",
-      "nameEn": "Moonlight Pact Gimmick Boost I",
+      "nameJa": "月光の研鑽",
+      "nameEn": "Moonlight Discipline",
       "notes": ""
     },
     {
@@ -12714,8 +12714,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 I",
-      "nameEn": "Moonlight Pact Duration I",
+      "nameJa": "残る月の冷え",
+      "nameEn": "Lingering Moon Chill",
       "notes": ""
     },
     {
@@ -12752,8 +12752,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 II",
-      "nameEn": "Moonlight Pact Gimmick Boost II",
+      "nameJa": "月光の研ぎ澄まし",
+      "nameEn": "Whetted Moonlight",
       "notes": ""
     },
     {
@@ -12790,8 +12790,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 II",
-      "nameEn": "Moonlight Pact Duration II",
+      "nameJa": "消えぬ月影",
+      "nameEn": "Unfading Moonshade",
       "notes": ""
     },
     {
@@ -12828,8 +12828,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 III",
-      "nameEn": "Moonlight Pact Gimmick Boost III",
+      "nameJa": "月獣の勢い",
+      "nameEn": "Vigor of the Moonbeast",
       "notes": ""
     },
     {
@@ -12866,8 +12866,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 III",
-      "nameEn": "Moonlight Pact Duration III",
+      "nameJa": "月の長い影法師",
+      "nameEn": "Long Moon Shadows",
       "notes": ""
     },
     {
@@ -12947,8 +12947,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 IV",
-      "nameEn": "Moonlight Pact Gimmick Boost IV",
+      "nameJa": "月光の深み",
+      "nameEn": "Depths of Moonlight",
       "notes": ""
     },
     {
@@ -12985,8 +12985,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の範囲 I",
-      "nameEn": "Moonlight Pact Radius I",
+      "nameJa": "月の照らす輪",
+      "nameEn": "The Moon-Lit Ring",
       "notes": ""
     },
     {
@@ -13023,8 +13023,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 V",
-      "nameEn": "Moonlight Pact Gimmick Boost V",
+      "nameJa": "月下の鍛錬",
+      "nameEn": "Training Beneath the Moon",
       "notes": ""
     },
     {
@@ -13061,8 +13061,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の範囲 II",
-      "nameEn": "Moonlight Pact Radius II",
+      "nameJa": "広がる狼の圏",
+      "nameEn": "Widening Wolf Circle",
       "notes": ""
     },
     {
@@ -13099,8 +13099,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 VI",
-      "nameEn": "Moonlight Pact Gimmick Boost VI",
+      "nameJa": "狼の跳躍の磨き",
+      "nameEn": "Polished Wolf Leaps",
       "notes": ""
     },
     {
@@ -13137,8 +13137,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の範囲 III",
-      "nameEn": "Moonlight Pact Radius III",
+      "nameJa": "月陰の広がる先",
+      "nameEn": "Where Moonshade Reaches",
       "notes": ""
     },
     {
@@ -13182,8 +13182,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる月陰",
+          "nameEn": "Widening Moonshade"
         },
         {
           "kind": "GimmickBoost",
@@ -13198,8 +13198,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "濃くなる月陰",
+          "nameEn": "Deepening Moonshade"
         }
       ],
       "keystone": null,
@@ -13209,8 +13209,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の分岐",
-      "nameEn": "Moonlight Pact Branch",
+      "nameJa": "月陰の広げ方",
+      "nameEn": "Spreading Moonshade",
       "notes": ""
     },
     {
@@ -13246,8 +13246,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 I",
-      "nameEn": "Moonlight Pact Gimmick Boost I",
+      "nameJa": "月光の冴え渡り",
+      "nameEn": "Full Keenness of Moonlight",
       "notes": ""
     },
     {
@@ -13284,8 +13284,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 I",
-      "nameEn": "Moonlight Pact Duration I",
+      "nameJa": "夜の長い余韻",
+      "nameEn": "Long Afterglow of Night",
       "notes": ""
     },
     {
@@ -13324,8 +13324,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 II",
-      "nameEn": "Moonlight Pact Gimmick Boost II",
+      "nameJa": "月の引力",
+      "nameEn": "Pull of the Moon",
       "notes": ""
     },
     {
@@ -13362,8 +13362,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 II",
-      "nameEn": "Moonlight Pact Duration II",
+      "nameJa": "爪痕の長い月夜",
+      "nameEn": "Long Moonlit Nights of Scars",
       "notes": ""
     },
     {
@@ -13400,8 +13400,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 III",
-      "nameEn": "Moonlight Pact Gimmick Boost III",
+      "nameJa": "狼牙の切れ味",
+      "nameEn": "Keenness of Wolf Fangs",
       "notes": ""
     },
     {
@@ -13438,8 +13438,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 III",
-      "nameEn": "Moonlight Pact Duration III",
+      "nameJa": "長く残る月の痕",
+      "nameEn": "Moon Marks That Last",
       "notes": ""
     },
     {
@@ -13523,8 +13523,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 IV",
-      "nameEn": "Moonlight Pact Gimmick Boost IV",
+      "nameJa": "月光の潮満ち",
+      "nameEn": "Moonlit Tide",
       "notes": ""
     },
     {
@@ -13561,8 +13561,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 IV",
-      "nameEn": "Moonlight Pact Duration IV",
+      "nameJa": "尾を引く月光",
+      "nameEn": "Moonlight That Trails",
       "notes": ""
     },
     {
@@ -13599,8 +13599,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 V",
-      "nameEn": "Moonlight Pact Gimmick Boost V",
+      "nameJa": "誓約の重み",
+      "nameEn": "Weight of the Pact",
       "notes": ""
     },
     {
@@ -13637,8 +13637,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 V",
-      "nameEn": "Moonlight Pact Duration V",
+      "nameJa": "長い夜の誓い",
+      "nameEn": "Vows of the Long Night",
       "notes": ""
     },
     {
@@ -13675,8 +13675,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の仕掛け強化 VI",
-      "nameEn": "Moonlight Pact Gimmick Boost VI",
+      "nameJa": "月獣の呼吸",
+      "nameEn": "Moonbeast’s Breath",
       "notes": ""
     },
     {
@@ -13713,8 +13713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の持続 VI",
-      "nameEn": "Moonlight Pact Duration VI",
+      "nameJa": "残る月の冷え",
+      "nameEn": "Lingering Moon Chill",
       "notes": ""
     },
     {
@@ -13758,8 +13758,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る爪痕",
+          "nameEn": "Clawmarks That Last"
         },
         {
           "kind": "GimmickBoost",
@@ -13774,8 +13774,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く刻む爪痕",
+          "nameEn": "Deep-Cut Clawmarks"
         }
       ],
       "keystone": null,
@@ -13785,8 +13785,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約の分岐",
-      "nameEn": "Moonlight Pact Branch",
+      "nameJa": "爪痕の残し方",
+      "nameEn": "Ways Clawmarks Stay",
       "notes": ""
     },
     {
@@ -13822,8 +13822,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 I",
-      "nameEn": "Serpent's Blessing Gimmick Boost I",
+      "nameJa": "蛇鱗の艶",
+      "nameEn": "Luster of Serpent Scales",
       "notes": ""
     },
     {
@@ -13860,8 +13860,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 I",
-      "nameEn": "Serpent's Blessing Radius I",
+      "nameJa": "広がる祝福の輪",
+      "nameEn": "Widening Blessed Rings",
       "notes": ""
     },
     {
@@ -13900,8 +13900,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 II",
-      "nameEn": "Serpent's Blessing Gimmick Boost II",
+      "nameJa": "祝福の深み",
+      "nameEn": "Depths of the Blessing",
       "notes": ""
     },
     {
@@ -13938,8 +13938,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 II",
-      "nameEn": "Serpent's Blessing Radius II",
+      "nameJa": "飛び散る鱗の波",
+      "nameEn": "Waves of Scattering Scales",
       "notes": ""
     },
     {
@@ -13976,8 +13976,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 III",
-      "nameEn": "Serpent's Blessing Gimmick Boost III",
+      "nameJa": "蛇の優雅さ",
+      "nameEn": "Serpent Grace",
       "notes": ""
     },
     {
@@ -14014,8 +14014,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 III",
-      "nameEn": "Serpent's Blessing Radius III",
+      "nameJa": "祝福の波の及ぶ先",
+      "nameEn": "Where Blessing Waves Reach",
       "notes": ""
     },
     {
@@ -14099,8 +14099,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 IV",
-      "nameEn": "Serpent's Blessing Gimmick Boost IV",
+      "nameJa": "鱗の磨き上げ",
+      "nameEn": "Polished Scales",
       "notes": ""
     },
     {
@@ -14137,8 +14137,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 V",
-      "nameEn": "Serpent's Blessing Gimmick Boost V",
+      "nameJa": "祝福の波の高さ",
+      "nameEn": "Height of Blessed Waves",
       "notes": ""
     },
     {
@@ -14175,8 +14175,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 VI",
-      "nameEn": "Serpent's Blessing Gimmick Boost VI",
+      "nameJa": "蛇の巻きつき",
+      "nameEn": "Coiling of the Serpent",
       "notes": ""
     },
     {
@@ -14213,8 +14213,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 VII",
-      "nameEn": "Serpent's Blessing Gimmick Boost VII",
+      "nameJa": "祝福の熟成",
+      "nameEn": "Matured Blessings",
       "notes": ""
     },
     {
@@ -14251,8 +14251,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 VIII",
-      "nameEn": "Serpent's Blessing Gimmick Boost VIII",
+      "nameJa": "蛇鱗の輝きの極み",
+      "nameEn": "Peak Scale Shine",
       "notes": ""
     },
     {
@@ -14289,8 +14289,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 IX",
-      "nameEn": "Serpent's Blessing Gimmick Boost IX",
+      "nameJa": "脱皮の名残の力",
+      "nameEn": "Strength of the Molt",
       "notes": ""
     },
     {
@@ -14334,8 +14334,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "濃い恵みの露",
+          "nameEn": "Rich Blessed Dew"
         },
         {
           "kind": "GimmickParam",
@@ -14350,8 +14350,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる祝福の波",
+          "nameEn": "Widening Blessed Waves"
         }
       ],
       "keystone": null,
@@ -14361,8 +14361,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の分岐",
-      "nameEn": "Serpent's Blessing Branch",
+      "nameJa": "脱皮の恵みの岐路",
+      "nameEn": "Crossroads of the Molt",
       "notes": ""
     },
     {
@@ -14398,8 +14398,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 I",
-      "nameEn": "Serpent's Blessing Gimmick Boost I",
+      "nameJa": "祝福の巡り",
+      "nameEn": "Rounds of Blessing",
       "notes": ""
     },
     {
@@ -14436,8 +14436,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 I",
-      "nameEn": "Serpent's Blessing Radius I",
+      "nameJa": "蛇の円を描く尾",
+      "nameEn": "The Serpent’s Circling Tail",
       "notes": ""
     },
     {
@@ -14475,8 +14475,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 II",
-      "nameEn": "Serpent's Blessing Gimmick Boost II",
+      "nameJa": "蛇の目の輝き",
+      "nameEn": "Glint of Serpent Eyes",
       "notes": ""
     },
     {
@@ -14513,8 +14513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 II",
-      "nameEn": "Serpent's Blessing Radius II",
+      "nameJa": "広がる追撃の輪",
+      "nameEn": "Widening Pursuit Rings",
       "notes": ""
     },
     {
@@ -14551,8 +14551,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 III",
-      "nameEn": "Serpent's Blessing Gimmick Boost III",
+      "nameJa": "鱗の重なりの技",
+      "nameEn": "Art of Overlaid Scales",
       "notes": ""
     },
     {
@@ -14590,8 +14590,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 III",
-      "nameEn": "Serpent's Blessing Radius III",
+      "nameJa": "広がる祝福の輪",
+      "nameEn": "Widening Blessed Rings",
       "notes": ""
     },
     {
@@ -14671,8 +14671,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 IV",
-      "nameEn": "Serpent's Blessing Gimmick Boost IV",
+      "nameJa": "祝福の研ぎ澄まし",
+      "nameEn": "Whetted Blessings",
       "notes": ""
     },
     {
@@ -14709,8 +14709,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の持続 I",
-      "nameEn": "Serpent's Blessing Duration I",
+      "nameJa": "尾を引く毒",
+      "nameEn": "Venom That Trails",
       "notes": ""
     },
     {
@@ -14747,8 +14747,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 V",
-      "nameEn": "Serpent's Blessing Gimmick Boost V",
+      "nameJa": "蛇鱗の艶",
+      "nameEn": "Luster of Serpent Scales",
       "notes": ""
     },
     {
@@ -14785,8 +14785,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の持続 II",
-      "nameEn": "Serpent's Blessing Duration II",
+      "nameJa": "残る祝福のぬくもり",
+      "nameEn": "Lingering Warmth of Blessing",
       "notes": ""
     },
     {
@@ -14823,8 +14823,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 VI",
-      "nameEn": "Serpent's Blessing Gimmick Boost VI",
+      "nameJa": "祝福の深み",
+      "nameEn": "Depths of the Blessing",
       "notes": ""
     },
     {
@@ -14861,8 +14861,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の持続 III",
-      "nameEn": "Serpent's Blessing Duration III",
+      "nameJa": "蛇の長いまなざし",
+      "nameEn": "The Serpent’s Long Gaze",
       "notes": ""
     },
     {
@@ -14906,8 +14906,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く毒",
+          "nameEn": "Venom That Lasts"
         },
         {
           "kind": "GimmickBoost",
@@ -14922,8 +14922,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く毒",
+          "nameEn": "Venom That Bites"
         }
       ],
       "keystone": null,
@@ -14933,8 +14933,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の分岐",
-      "nameEn": "Serpent's Blessing Branch",
+      "nameJa": "毒の回り方",
+      "nameEn": "Ways Venom Spreads",
       "notes": ""
     },
     {
@@ -14970,8 +14970,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 I",
-      "nameEn": "Serpent's Blessing Gimmick Boost I",
+      "nameJa": "蛇の優雅さ",
+      "nameEn": "Serpent Grace",
       "notes": ""
     },
     {
@@ -15008,8 +15008,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 I",
-      "nameEn": "Serpent's Blessing Radius I",
+      "nameJa": "飛び散る鱗の波",
+      "nameEn": "Waves of Scattering Scales",
       "notes": ""
     },
     {
@@ -15046,8 +15046,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 II",
-      "nameEn": "Serpent's Blessing Gimmick Boost II",
+      "nameJa": "鱗の磨き上げ",
+      "nameEn": "Polished Scales",
       "notes": ""
     },
     {
@@ -15084,8 +15084,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 II",
-      "nameEn": "Serpent's Blessing Radius II",
+      "nameJa": "祝福の波の及ぶ先",
+      "nameEn": "Where Blessing Waves Reach",
       "notes": ""
     },
     {
@@ -15122,8 +15122,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 III",
-      "nameEn": "Serpent's Blessing Gimmick Boost III",
+      "nameJa": "祝福の波の高さ",
+      "nameEn": "Height of Blessed Waves",
       "notes": ""
     },
     {
@@ -15160,8 +15160,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 III",
-      "nameEn": "Serpent's Blessing Radius III",
+      "nameJa": "蛇の円を描く尾",
+      "nameEn": "The Serpent’s Circling Tail",
       "notes": ""
     },
     {
@@ -15241,8 +15241,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 IV",
-      "nameEn": "Serpent's Blessing Gimmick Boost IV",
+      "nameJa": "蛇の巻きつき",
+      "nameEn": "Coiling of the Serpent",
       "notes": ""
     },
     {
@@ -15279,8 +15279,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の確率 I",
-      "nameEn": "Serpent's Blessing Chance I",
+      "nameJa": "光の巡り合わせ",
+      "nameEn": "Light Coincidences",
       "notes": ""
     },
     {
@@ -15317,8 +15317,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 V",
-      "nameEn": "Serpent's Blessing Gimmick Boost V",
+      "nameJa": "祝福の熟成",
+      "nameEn": "Matured Blessings",
       "notes": ""
     },
     {
@@ -15355,8 +15355,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の確率 II",
-      "nameEn": "Serpent's Blessing Chance II",
+      "nameJa": "鱗の瞬きの予感",
+      "nameEn": "Omens of Scale Flashes",
       "notes": ""
     },
     {
@@ -15393,8 +15393,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 VI",
-      "nameEn": "Serpent's Blessing Gimmick Boost VI",
+      "nameJa": "蛇鱗の輝きの極み",
+      "nameEn": "Peak Scale Shine",
       "notes": ""
     },
     {
@@ -15431,8 +15431,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の確率 III",
-      "nameEn": "Serpent's Blessing Chance III",
+      "nameJa": "光の瞬きの予感",
+      "nameEn": "Omens of Light Flashes",
       "notes": ""
     },
     {
@@ -15476,8 +15476,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "しばしば光る鱗",
+          "nameEn": "Oft-Glinting Scales"
         },
         {
           "kind": "GimmickBoost",
@@ -15492,8 +15492,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "強く光る鱗",
+          "nameEn": "Bright-Glinting Scales"
         }
       ],
       "keystone": null,
@@ -15503,8 +15503,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の分岐",
-      "nameEn": "Serpent's Blessing Branch",
+      "nameJa": "鱗の光り方",
+      "nameEn": "Ways Scales Glint",
       "notes": ""
     },
     {
@@ -15540,8 +15540,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 I",
-      "nameEn": "Serpent's Blessing Gimmick Boost I",
+      "nameJa": "脱皮の名残の力",
+      "nameEn": "Strength of the Molt",
       "notes": ""
     },
     {
@@ -15578,8 +15578,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 I",
-      "nameEn": "Serpent's Blessing Radius I",
+      "nameJa": "広がる追撃の輪",
+      "nameEn": "Widening Pursuit Rings",
       "notes": ""
     },
     {
@@ -15618,8 +15618,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 II",
-      "nameEn": "Serpent's Blessing Gimmick Boost II",
+      "nameJa": "祝福の巡り",
+      "nameEn": "Rounds of Blessing",
       "notes": ""
     },
     {
@@ -15656,8 +15656,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 II",
-      "nameEn": "Serpent's Blessing Radius II",
+      "nameJa": "広がる祝福の輪",
+      "nameEn": "Widening Blessed Rings",
       "notes": ""
     },
     {
@@ -15694,8 +15694,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 III",
-      "nameEn": "Serpent's Blessing Gimmick Boost III",
+      "nameJa": "蛇の目の輝き",
+      "nameEn": "Glint of Serpent Eyes",
       "notes": ""
     },
     {
@@ -15732,8 +15732,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 III",
-      "nameEn": "Serpent's Blessing Radius III",
+      "nameJa": "飛び散る鱗の波",
+      "nameEn": "Waves of Scattering Scales",
       "notes": ""
     },
     {
@@ -15818,8 +15818,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 IV",
-      "nameEn": "Serpent's Blessing Gimmick Boost IV",
+      "nameJa": "鱗の重なりの技",
+      "nameEn": "Art of Overlaid Scales",
       "notes": ""
     },
     {
@@ -15856,8 +15856,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の持続 I",
-      "nameEn": "Serpent's Blessing Duration I",
+      "nameJa": "尾を引く毒",
+      "nameEn": "Venom That Trails",
       "notes": ""
     },
     {
@@ -15894,8 +15894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 IV",
-      "nameEn": "Serpent's Blessing Radius IV",
+      "nameJa": "祝福の波の及ぶ先",
+      "nameEn": "Where Blessing Waves Reach",
       "notes": ""
     },
     {
@@ -15932,8 +15932,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の仕掛け強化 V",
-      "nameEn": "Serpent's Blessing Gimmick Boost V",
+      "nameJa": "祝福の研ぎ澄まし",
+      "nameEn": "Whetted Blessings",
       "notes": ""
     },
     {
@@ -15970,8 +15970,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の持続 II",
-      "nameEn": "Serpent's Blessing Duration II",
+      "nameJa": "残る祝福のぬくもり",
+      "nameEn": "Lingering Warmth of Blessing",
       "notes": ""
     },
     {
@@ -16008,8 +16008,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の範囲 V",
-      "nameEn": "Serpent's Blessing Radius V",
+      "nameJa": "蛇の円を描く尾",
+      "nameEn": "The Serpent’s Circling Tail",
       "notes": ""
     },
     {
@@ -16053,8 +16053,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "もう一頭の鱗",
+          "nameEn": "Scales for One More"
         },
         {
           "kind": "GimmickParam",
@@ -16069,8 +16069,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く纏う鱗",
+          "nameEn": "Scales Long Worn"
         }
       ],
       "keystone": null,
@@ -16080,8 +16080,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福の分岐",
-      "nameEn": "Serpent's Blessing Branch",
+      "nameJa": "鱗鎧の広げ方",
+      "nameEn": "Draping the Scale Mail",
       "notes": ""
     },
     {
@@ -16118,8 +16118,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 I",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost I",
+      "nameJa": "群れの潮騒",
+      "nameEn": "Roar of the Pack",
       "notes": "橋payload(target.star=h.nachia.ring.force)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -16157,8 +16157,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 II",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost II",
+      "nameJa": "団結の熟成",
+      "nameEn": "Matured Unity",
       "notes": ""
     },
     {
@@ -16196,8 +16196,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 III",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost III",
+      "nameJa": "光爆の練磨",
+      "nameEn": "Tempered Lightbursts",
       "notes": ""
     },
     {
@@ -16235,8 +16235,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 IV",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost IV",
+      "nameJa": "心臓の脈打ち",
+      "nameEn": "Pulsing Heart",
       "notes": ""
     },
     {
@@ -16274,8 +16274,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 V",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost V",
+      "nameJa": "団結の深み",
+      "nameEn": "Depths of Unity",
       "notes": ""
     },
     {
@@ -16313,8 +16313,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 VI",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost VI",
+      "nameJa": "荒ぶる心音",
+      "nameEn": "Wild Heartbeats",
       "notes": ""
     },
     {
@@ -16357,8 +16357,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・狩りの手当て",
-      "nameEn": "Heart of the Pack x Sylvan Call: Hunt Mending",
+      "nameJa": "狩りの手当て",
+      "nameEn": "Hunt Mending",
       "notes": ""
     },
     {
@@ -16396,8 +16396,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 VII",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost VII",
+      "nameJa": "群れの気迫",
+      "nameEn": "Pack Fervor",
       "notes": ""
     },
     {
@@ -16435,8 +16435,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 VIII",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost VIII",
+      "nameJa": "団結の切っ先",
+      "nameEn": "Vanguard of Unity",
       "notes": ""
     },
     {
@@ -16474,8 +16474,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 IX",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost IX",
+      "nameJa": "光爆の研き",
+      "nameEn": "Whetted Lightbursts",
       "notes": ""
     },
     {
@@ -16513,8 +16513,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 X",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost X",
+      "nameJa": "心音の研鑽",
+      "nameEn": "Heartbeat Discipline",
       "notes": ""
     },
     {
@@ -16552,8 +16552,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応・群れの心臓の仕掛け強化 XI",
-      "nameEn": "Heart of the Pack x Sylvan Call: Heart of the Pack Gimmick Boost XI",
+      "nameJa": "団結の極意",
+      "nameEn": "Secrets of Unity",
       "notes": ""
     },
     {
@@ -16594,8 +16594,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る刻み",
+          "nameEn": "Marks That Last"
         },
         {
           "kind": "GimmickBoost",
@@ -16610,8 +16610,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く刻み",
+          "nameEn": "Marks That Bite"
         }
       ],
       "keystone": null,
@@ -16622,8 +16622,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "群れの心臓×森の呼応の分岐",
-      "nameEn": "Heart of the Pack x Sylvan Call Branch",
+      "nameJa": "団結と呼応の刻み",
+      "nameEn": "Marks of Unity and Call",
       "notes": "中心(旧ring.force)の印Duration+20% / 中心Value+8%。"
     },
     {
@@ -16660,8 +16660,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 I",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost I",
+      "nameJa": "森の気配",
+      "nameEn": "Presence of the Forest",
       "notes": "橋payload(target.star=h.nachia.ring.insight)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -16699,8 +16699,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 II",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost II",
+      "nameJa": "芽吹きの勢い",
+      "nameEn": "Sprouting Vigor",
       "notes": ""
     },
     {
@@ -16738,8 +16738,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 III",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost III",
+      "nameJa": "呼び声の磨き",
+      "nameEn": "Polished Calls",
       "notes": ""
     },
     {
@@ -16777,8 +16777,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 IV",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost IV",
+      "nameJa": "猟犬の躍動",
+      "nameEn": "Hounds in Motion",
       "notes": ""
     },
     {
@@ -16816,8 +16816,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 V",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost V",
+      "nameJa": "森のめぐみ",
+      "nameEn": "Bounty of the Forest",
       "notes": ""
     },
     {
@@ -16855,8 +16855,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 VI",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost VI",
+      "nameJa": "若葉の勢い",
+      "nameEn": "Vigor of New Leaves",
       "notes": ""
     },
     {
@@ -16900,8 +16900,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・号令の庇",
-      "nameEn": "Sylvan Call x Nature's Whisper: Shelter of Command",
+      "nameJa": "号令の庇",
+      "nameEn": "Shelter of Command",
       "notes": ""
     },
     {
@@ -16939,8 +16939,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 VII",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost VII",
+      "nameJa": "森の弓鳴り",
+      "nameEn": "Twang of the Forest",
       "notes": ""
     },
     {
@@ -16978,8 +16978,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 VIII",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost VIII",
+      "nameJa": "呼び声の切れ味",
+      "nameEn": "Keenness of the Call",
       "notes": ""
     },
     {
@@ -17017,8 +17017,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 IX",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost IX",
+      "nameJa": "群れの足取り",
+      "nameEn": "Footwork of the Pack",
       "notes": ""
     },
     {
@@ -17056,8 +17056,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 X",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost X",
+      "nameJa": "森の深い根",
+      "nameEn": "Deep Roots",
       "notes": ""
     },
     {
@@ -17095,8 +17095,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁き・森の呼応の仕掛け強化 XI",
-      "nameEn": "Sylvan Call x Nature's Whisper: Sylvan Call Gimmick Boost XI",
+      "nameJa": "呼び声の研ぎ澄まし",
+      "nameEn": "Whetted Calls",
       "notes": ""
     },
     {
@@ -17137,8 +17137,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く開く窓",
+          "nameEn": "Windows Long Open"
         },
         {
           "kind": "GimmickParam",
@@ -17153,8 +17153,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広く開く窓",
+          "nameEn": "Windows Open Wide"
         }
       ],
       "keystone": null,
@@ -17165,8 +17165,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "森の呼応×自然の囁きの分岐",
-      "nameEn": "Sylvan Call x Nature's Whisper Branch",
+      "nameJa": "呼応と号令の窓",
+      "nameEn": "Window of Call and Command",
       "notes": "中心窓Duration+20% / 中心のBurst Radius+20%。"
     },
     {
@@ -17203,8 +17203,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 I",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost I",
+      "nameJa": "号令の響き",
+      "nameEn": "Ring of Commands",
       "notes": "橋payload(target.star=h.nachia.ring.vessel)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -17242,8 +17242,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 II",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost II",
+      "nameJa": "囁きの浸透",
+      "nameEn": "Seeping Whispers",
       "notes": ""
     },
     {
@@ -17281,8 +17281,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 III",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost III",
+      "nameJa": "指揮の熟達",
+      "nameEn": "Mastery of Command",
       "notes": ""
     },
     {
@@ -17320,8 +17320,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 IV",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost IV",
+      "nameJa": "静けさの奥の声",
+      "nameEn": "Voice Beneath the Quiet",
       "notes": ""
     },
     {
@@ -17359,8 +17359,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 V",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost V",
+      "nameJa": "号令の切れ味",
+      "nameEn": "Keenness of Commands",
       "notes": ""
     },
     {
@@ -17398,8 +17398,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 VI",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost VI",
+      "nameJa": "指揮官の胸の内",
+      "nameEn": "The Commander’s Heart",
       "notes": ""
     },
     {
@@ -17444,8 +17444,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・号令の退路",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Retreat of Command",
+      "nameJa": "号令の退路",
+      "nameEn": "Retreat of Command",
       "notes": ""
     },
     {
@@ -17483,8 +17483,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 VII",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost VII",
+      "nameJa": "囁きの深み",
+      "nameEn": "Depths of Whispers",
       "notes": ""
     },
     {
@@ -17522,8 +17522,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 VIII",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost VIII",
+      "nameJa": "森の指揮棒",
+      "nameEn": "Baton of the Forest",
       "notes": ""
     },
     {
@@ -17561,8 +17561,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 IX",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost IX",
+      "nameJa": "号令の重み",
+      "nameEn": "Weight of Commands",
       "notes": ""
     },
     {
@@ -17600,8 +17600,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 X",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost X",
+      "nameJa": "静かな号令",
+      "nameEn": "Quiet Commands",
       "notes": ""
     },
     {
@@ -17639,8 +17639,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツ・自然の囁きの仕掛け強化 XI",
-      "nameEn": "Nature's Whisper x Dreamy Waltz: Nature's Whisper Gimmick Boost XI",
+      "nameJa": "指揮の円滑さ",
+      "nameEn": "Smooth Command",
       "notes": ""
     },
     {
@@ -17681,8 +17681,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く号令",
+          "nameEn": "Commands That Bite"
         },
         {
           "kind": "Notable",
@@ -17703,8 +17703,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重ねの号令",
+          "nameEn": "Doubled Commands"
         }
       ],
       "keystone": null,
@@ -17717,8 +17717,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "自然の囁き×夢幻のワルツの分岐",
-      "nameEn": "Nature's Whisper x Dreamy Waltz Branch",
+      "nameJa": "号令と舞の歩み",
+      "nameEn": "Path of Command and Dance",
       "notes": "B: 追加路(n1)を2使用12%へ置換(上限2)。置換でありn1との二重発動なし。 maxCharge=2（チャージ上限）。"
     },
     {
@@ -17755,8 +17755,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 I",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost I",
+      "nameJa": "楽士の速弾き",
+      "nameEn": "Fiddler’s Quick Bow",
       "notes": "橋payload(target.star=h.nachia.ring.armor)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -17794,8 +17794,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 II",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost II",
+      "nameJa": "踊り続ける理由",
+      "nameEn": "Reason to Keep Dancing",
       "notes": ""
     },
     {
@@ -17833,8 +17833,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 III",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost III",
+      "nameJa": "円環の拍手",
+      "nameEn": "Applause of the Ring",
       "notes": ""
     },
     {
@@ -17872,8 +17872,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 IV",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost IV",
+      "nameJa": "舞踏の余韻",
+      "nameEn": "Afterglow of the Ball",
       "notes": ""
     },
     {
@@ -17911,8 +17911,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 V",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost V",
+      "nameJa": "回転の支え",
+      "nameEn": "Support of the Spin",
       "notes": ""
     },
     {
@@ -17950,8 +17950,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 VI",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost VI",
+      "nameJa": "舞いの見取り図",
+      "nameEn": "Map of the Dance",
       "notes": ""
     },
     {
@@ -17995,8 +17995,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・射撃の庇",
-      "nameEn": "Dreamy Waltz x Circle of Life: Shot Shelter",
+      "nameJa": "射撃の庇",
+      "nameEn": "Shot Shelter",
       "notes": "F=GimmickTrigger.OnBasicAttack(N1)。"
     },
     {
@@ -18034,8 +18034,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 VII",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost VII",
+      "nameJa": "足取りの軽さ",
+      "nameEn": "Lightness of Step",
       "notes": ""
     },
     {
@@ -18073,8 +18073,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 VIII",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost VIII",
+      "nameJa": "終わらない円舞",
+      "nameEn": "Unending Round Dance",
       "notes": ""
     },
     {
@@ -18112,8 +18112,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 IX",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost IX",
+      "nameJa": "舞踏会の追奏",
+      "nameEn": "Ballroom Encore",
       "notes": ""
     },
     {
@@ -18151,8 +18151,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 X",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost X",
+      "nameJa": "裾ひろがる円",
+      "nameEn": "Widening Circle",
       "notes": ""
     },
     {
@@ -18190,8 +18190,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環・夢幻のワルツの仕掛け強化 XI",
-      "nameEn": "Dreamy Waltz x Circle of Life: Dreamy Waltz Gimmick Boost XI",
+      "nameJa": "舞の系譜",
+      "nameEn": "Lineage of the Dance",
       "notes": ""
     },
     {
@@ -18232,8 +18232,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く守り",
+          "nameEn": "Guards That Last"
         },
         {
           "kind": "GimmickParam",
@@ -18248,8 +18248,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "もう一頭の守り",
+          "nameEn": "Guard for One More"
         }
       ],
       "keystone": null,
@@ -18260,8 +18260,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "夢幻のワルツ×生命の循環の分岐",
-      "nameEn": "Dreamy Waltz x Circle of Life Branch",
+      "nameJa": "射撃と輪舞の守り",
+      "nameEn": "Guard of Shot and Round",
       "notes": "A: 追加WardのDuration+20% / B: 追加WardのExtraTargets+1(上限3)。target.starはn1。"
     },
     {
@@ -18298,8 +18298,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost I",
+      "nameJa": "巡る命の充実",
+      "nameEn": "Fullness of Circling Life",
       "notes": "橋payload(target.star=h.nachia.ring.recall)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -18337,8 +18337,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost II",
+      "nameJa": "循環の深まり",
+      "nameEn": "Deepening Cycles",
       "notes": ""
     },
     {
@@ -18376,8 +18376,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost III",
+      "nameJa": "命の環の厚み",
+      "nameEn": "Thickness of Life’s Ring",
       "notes": ""
     },
     {
@@ -18415,8 +18415,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost IV",
+      "nameJa": "巡り続ける力",
+      "nameEn": "Ever-Turning Strength",
       "notes": ""
     },
     {
@@ -18454,8 +18454,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost V",
+      "nameJa": "循環の潮",
+      "nameEn": "Tide of the Cycle",
       "notes": ""
     },
     {
@@ -18493,8 +18493,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost VI",
+      "nameJa": "命の水路",
+      "nameEn": "Waterways of Life",
       "notes": ""
     },
     {
@@ -18537,8 +18537,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・討伐後の手当て",
-      "nameEn": "Circle of Life x Moonlight Pact: Post-Hunt Mending",
+      "nameJa": "討伐後の手当て",
+      "nameEn": "Post-Hunt Mending",
       "notes": ""
     },
     {
@@ -18576,8 +18576,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost VII",
+      "nameJa": "巡る露の磨き",
+      "nameEn": "Polished Circling Dew",
       "notes": ""
     },
     {
@@ -18615,8 +18615,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost VIII",
+      "nameJa": "循環の熟成",
+      "nameEn": "Matured Cycles",
       "notes": ""
     },
     {
@@ -18654,8 +18654,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 IX",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost IX",
+      "nameJa": "途切れぬ命の輪",
+      "nameEn": "Unbroken Ring of Life",
       "notes": ""
     },
     {
@@ -18693,8 +18693,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 X",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost X",
+      "nameJa": "深い巡りの呼吸",
+      "nameEn": "Breath of Deep Turning",
       "notes": ""
     },
     {
@@ -18732,8 +18732,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約・生命の循環の仕掛け強化 XI",
-      "nameEn": "Circle of Life x Moonlight Pact: Circle of Life Gimmick Boost XI",
+      "nameJa": "循環の滋け",
+      "nameEn": "Richness of the Cycle",
       "notes": ""
     },
     {
@@ -18774,8 +18774,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く灯る窓",
+          "nameEn": "Windows Long Lit"
         },
         {
           "kind": "GimmickParam",
@@ -18790,8 +18790,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広く届く窓",
+          "nameEn": "Windows Reaching Wide"
         }
       ],
       "keystone": null,
@@ -18802,8 +18802,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×月光の誓約の分岐",
-      "nameEn": "Circle of Life x Moonlight Pact Branch",
+      "nameJa": "循環と月光の窓",
+      "nameEn": "Window of Cycle and Moon",
       "notes": "中心窓Duration+20% / 中心のHeal Radius+20%。"
     },
     {
@@ -18840,8 +18840,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 I",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost I",
+      "nameJa": "月光の研鑽",
+      "nameEn": "Moonlight Discipline",
       "notes": "橋payload(target.star=h.nachia.ring.rhythm)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -18879,8 +18879,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 II",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost II",
+      "nameJa": "月光の研ぎ澄まし",
+      "nameEn": "Whetted Moonlight",
       "notes": ""
     },
     {
@@ -18918,8 +18918,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 III",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost III",
+      "nameJa": "月獣の勢い",
+      "nameEn": "Vigor of the Moonbeast",
       "notes": ""
     },
     {
@@ -18957,8 +18957,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 IV",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost IV",
+      "nameJa": "月光の深み",
+      "nameEn": "Depths of Moonlight",
       "notes": ""
     },
     {
@@ -18996,8 +18996,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 V",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost V",
+      "nameJa": "月下の鍛錬",
+      "nameEn": "Training Beneath the Moon",
       "notes": ""
     },
     {
@@ -19035,8 +19035,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 VI",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost VI",
+      "nameJa": "狼の跳躍の磨き",
+      "nameEn": "Polished Wolf Leaps",
       "notes": ""
     },
     {
@@ -19080,8 +19080,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・祝福の庇",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Blessed Shelter",
+      "nameJa": "祝福の庇",
+      "nameEn": "Blessed Shelter",
       "notes": ""
     },
     {
@@ -19119,8 +19119,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 VII",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost VII",
+      "nameJa": "月光の冴え渡り",
+      "nameEn": "Full Keenness of Moonlight",
       "notes": ""
     },
     {
@@ -19158,8 +19158,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 VIII",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost VIII",
+      "nameJa": "月の引力",
+      "nameEn": "Pull of the Moon",
       "notes": ""
     },
     {
@@ -19197,8 +19197,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 IX",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost IX",
+      "nameJa": "狼牙の切れ味",
+      "nameEn": "Keenness of Wolf Fangs",
       "notes": ""
     },
     {
@@ -19236,8 +19236,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 X",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost X",
+      "nameJa": "月光の潮満ち",
+      "nameEn": "Moonlit Tide",
       "notes": ""
     },
     {
@@ -19275,8 +19275,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福・月光の誓約の仕掛け強化 XI",
-      "nameEn": "Moonlight Pact x Serpent's Blessing: Moonlight Pact Gimmick Boost XI",
+      "nameJa": "誓約の重み",
+      "nameEn": "Weight of the Pact",
       "notes": ""
     },
     {
@@ -19317,8 +19317,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く照らす窓",
+          "nameEn": "Windows Long Shining"
         },
         {
           "kind": "GimmickBoost",
@@ -19333,8 +19333,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "深く効く窓",
+          "nameEn": "Windows That Bite"
         }
       ],
       "keystone": null,
@@ -19345,8 +19345,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "月光の誓約×蛇の祝福の分岐",
-      "nameEn": "Moonlight Pact x Serpent's Blessing Branch",
+      "nameJa": "月光と祝福の窓",
+      "nameEn": "Window of Moon and Blessing",
       "notes": "中心窓Duration+20% / 中心Value+8%。"
     },
     {
@@ -19383,8 +19383,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 I",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost I",
+      "nameJa": "蛇鱗の艶",
+      "nameEn": "Luster of Serpent Scales",
       "notes": "橋payload(target.star=h.nachia.ring.resolve)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -19422,8 +19422,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 II",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost II",
+      "nameJa": "祝福の深み",
+      "nameEn": "Depths of the Blessing",
       "notes": ""
     },
     {
@@ -19461,8 +19461,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 III",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost III",
+      "nameJa": "蛇の優雅さ",
+      "nameEn": "Serpent Grace",
       "notes": ""
     },
     {
@@ -19500,8 +19500,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 IV",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost IV",
+      "nameJa": "鱗の磨き上げ",
+      "nameEn": "Polished Scales",
       "notes": ""
     },
     {
@@ -19539,8 +19539,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 V",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost V",
+      "nameJa": "祝福の波の高さ",
+      "nameEn": "Height of Blessed Waves",
       "notes": ""
     },
     {
@@ -19578,8 +19578,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 VI",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost VI",
+      "nameJa": "蛇の巻きつき",
+      "nameEn": "Coiling of the Serpent",
       "notes": ""
     },
     {
@@ -19622,8 +19622,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・団結の手当て",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Unity Mending",
+      "nameJa": "団結の手当て",
+      "nameEn": "Unity Mending",
       "notes": ""
     },
     {
@@ -19661,8 +19661,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 VII",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost VII",
+      "nameJa": "祝福の熟成",
+      "nameEn": "Matured Blessings",
       "notes": ""
     },
     {
@@ -19700,8 +19700,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 VIII",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost VIII",
+      "nameJa": "蛇鱗の輝きの極み",
+      "nameEn": "Peak Scale Shine",
       "notes": ""
     },
     {
@@ -19739,8 +19739,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 IX",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost IX",
+      "nameJa": "脱皮の名残の力",
+      "nameEn": "Strength of the Molt",
       "notes": ""
     },
     {
@@ -19778,8 +19778,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 X",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost X",
+      "nameJa": "祝福の巡り",
+      "nameEn": "Rounds of Blessing",
       "notes": ""
     },
     {
@@ -19817,8 +19817,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓・蛇の祝福の仕掛け強化 XI",
-      "nameEn": "Serpent's Blessing x Heart of the Pack: Serpent's Blessing Gimmick Boost XI",
+      "nameJa": "蛇の目の輝き",
+      "nameEn": "Glint of Serpent Eyes",
       "notes": ""
     },
     {
@@ -19859,8 +19859,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る印",
+          "nameEn": "Seals That Last"
         },
         {
           "kind": "GimmickParam",
@@ -19875,8 +19875,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く盾",
+          "nameEn": "Shields That Last"
         }
       ],
       "keystone": null,
@@ -19887,8 +19887,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "蛇の祝福×群れの心臓の分岐",
-      "nameEn": "Serpent's Blessing x Heart of the Pack Branch",
+      "nameJa": "祝福と団結の刻み",
+      "nameEn": "Marks of Blessing and Unity",
       "notes": "中心印Duration+20% / 中心Shield Duration+20%。"
     },
     {
@@ -19925,8 +19925,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 I",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost I",
+      "nameJa": "命の環の重み",
+      "nameEn": "Weight of Life’s Ring",
       "notes": "橋payload(target.star=h.nachia.ring.renewal)へのGimmickBoost。memoryは便宜上の橋の第一端で、実際の対象は橋の仕掛けpayload(N3)。他のe/l星も同様。"
     },
     {
@@ -19964,8 +19964,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 II",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost II",
+      "nameJa": "巡る恵みの味",
+      "nameEn": "Savor of Circling Grace",
       "notes": ""
     },
     {
@@ -20003,8 +20003,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 III",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost III",
+      "nameJa": "循環の早瀬",
+      "nameEn": "Rapids of the Cycle",
       "notes": ""
     },
     {
@@ -20042,8 +20042,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 IV",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost IV",
+      "nameJa": "命のせせらぎ",
+      "nameEn": "Babbling Stream of Life",
       "notes": ""
     },
     {
@@ -20081,8 +20081,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 V",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost V",
+      "nameJa": "巡りの極意",
+      "nameEn": "Secrets of Turning",
       "notes": ""
     },
     {
@@ -20120,8 +20120,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 VI",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost VI",
+      "nameJa": "循環の清め",
+      "nameEn": "Purified Cycles",
       "notes": ""
     },
     {
@@ -20165,8 +20165,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・呼応の庇",
-      "nameEn": "Circle of Life x Sylvan Call: Shelter of the Call",
+      "nameJa": "呼応の庇",
+      "nameEn": "Shelter of the Call",
       "notes": ""
     },
     {
@@ -20204,8 +20204,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 VII",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost VII",
+      "nameJa": "命の輪の輝き",
+      "nameEn": "Shine of Life’s Ring",
       "notes": ""
     },
     {
@@ -20243,8 +20243,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 VIII",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost VIII",
+      "nameJa": "巡り露の極み",
+      "nameEn": "Height of Circling Dew",
       "notes": ""
     },
     {
@@ -20282,8 +20282,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 IX",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost IX",
+      "nameJa": "循環の川面",
+      "nameEn": "Surface of the Cycle",
       "notes": ""
     },
     {
@@ -20321,8 +20321,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 X",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost X",
+      "nameJa": "命の巡りの道筋",
+      "nameEn": "Path of Life’s Rounds",
       "notes": ""
     },
     {
@@ -20360,8 +20360,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応・生命の循環の仕掛け強化 XI",
-      "nameEn": "Circle of Life x Sylvan Call: Circle of Life Gimmick Boost XI",
+      "nameJa": "循環の真水",
+      "nameEn": "Fresh Water of the Cycle",
       "notes": ""
     },
     {
@@ -20402,8 +20402,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く呼吸",
+          "nameEn": "Breath That Lasts"
         },
         {
           "kind": "Notable",
@@ -20431,8 +20431,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "整った連携",
+          "nameEn": "Poised Teamwork"
         }
       ],
       "keystone": null,
@@ -20445,8 +20445,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "生命の循環×森の呼応の分岐",
-      "nameEn": "Circle of Life x Sylvan Call Branch",
+      "nameJa": "循環と呼応の連携",
+      "nameEn": "Teamwork of Cycle and Call",
       "notes": "B: 中心を2発ごと3/6/9/12/15%へ置換(上限2、valuesByRank)。 maxCharge=2（チャージ上限）。"
     },
     {
@@ -20836,8 +20836,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：団結の仕掛け強化 +2%",
-      "nameEn": "Migrated: Pack Heart Gimmick Boost +2%",
+      "nameJa": "団結の癒やし",
+      "nameEn": "Healing of Unity",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。同幹.2（Element30,Arg2）を取得済みでのみ入れる（requires）。旧Stat.HealPower3を除く。既存.1/.3/.5のMD各段4%、.4のEcho各段10%、.7のMD18%+Echo20%は保持。"
     },
     {
@@ -20873,8 +20873,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：循環の巡る回復 1/2/3%",
-      "nameEn": "Migrated: Circle Pack Mend 1/2/3%",
+      "nameJa": "巡る命の守り",
+      "nameEn": "Life Cycle Guard",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(循,F,PackMend,1,0,0)、段ごと1/2/3%。F=OnBasicAttack（N1：本人の基本攻撃発射通知）。旧LinkKind.Guardを除く。"
     },
     {
@@ -20901,8 +20901,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：生命の循環の仕掛け強化 +2%",
-      "nameEn": "Migrated: Circle of Life Gimmick Boost +2%",
+      "nameJa": "群れに渡す速さ",
+      "nameEn": "Speed Shared with the Pack",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧Stat.AttackSpeedPctを除く。"
     },
     {
@@ -20929,8 +20929,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：生命の循環の仕掛け強化 +2%",
-      "nameEn": "Migrated: Circle of Life Gimmick Boost +2%",
+      "nameJa": "巡る命の壁",
+      "nameEn": "Circling Life Ward",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。"
     },
     {
@@ -20967,8 +20967,8 @@
         "C02",
         "C12"
       ],
-      "nameJa": "既存星の移行：循環の召喚獣障壁 1/2/3%",
-      "nameEn": "Migrated: Circle Summon Ward 1/2/3%",
+      "nameJa": "群れに渡す鎧",
+      "nameEn": "Armor Shared with the Pack",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(循,F,SummonWard,1,0,0)、段ごと1/2/3%。N4（AlliedWard、RecipientMaxHP、OwnedSummon、10m・3秒・基礎1対象、各召喚獣HP3%の別プール）。旧Stat.Armorを除く。"
     },
     {
@@ -20995,8 +20995,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：生命の循環の仕掛け強化 +2%",
-      "nameEn": "Migrated: Circle of Life Gimmick Boost +2%",
+      "nameJa": "共に生きる備え",
+      "nameEn": "Shared Life Readiness",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。"
     },
     {
@@ -21025,8 +21025,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：循環の召喚獣障壁の範囲 +4%",
-      "nameEn": "Migrated: Circle Summon Ward Radius +4%",
+      "nameJa": "巡り続ける恵み",
+      "nameEn": "Ever-Circling Grace",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：R(.4,4)、旧幹.4（SummonWard）のRadius+4%。.4を前提に取得。旧Stat.HealPowerを除く。"
     },
     {
@@ -21053,8 +21053,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：生命の循環の仕掛け強化 +6%",
-      "nameEn": "Migrated: Circle of Life Gimmick Boost +6%",
+      "nameJa": "巡り続ける命脈",
+      "nameEn": "Unbroken Lifeline",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(6)。当該記憶の仕掛けのValueへ+6%（memory-wide GimmickBoost、N3）。旧最大1段を保持。第7星は1段のみ。旧LinkKind.Guard8を除く。"
     },
     {
@@ -21092,8 +21092,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：Qの撃破で舞の残CD短縮 6/12/18%",
-      "nameEn": "Migrated: Q kill recharges Waltz 6/12/18%",
+      "nameJa": "輪舞の守り",
+      "nameEn": "Waltz Guard",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：Recv(Q*,OnKill,6,舞,1)、段ごと6/12/18%。装備中のQ（Qの召喚獣撃破を含む）のOnKillを受信し、舞の残CDを短縮。舞は受信だけ（起点にしない）。旧LinkKind.Guardを除く。"
     },
     {
@@ -21121,8 +21121,8 @@
         "C03",
         "C04"
       ],
-      "nameJa": "既存星の移行：夢幻のワルツの仕掛け強化 +2%",
-      "nameEn": "Migrated: Dreamy Waltz Gimmick Boost +2%",
+      "nameJa": "舞う器",
+      "nameEn": "Dancing Vessel",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧Stat.MaxHealthPctを除く。受け手側（舞宛て）の強化。"
     },
     {
@@ -21150,8 +21150,8 @@
         "C03",
         "C04"
       ],
-      "nameJa": "既存星の移行：夢幻のワルツの仕掛け強化 +2%",
-      "nameEn": "Migrated: Dreamy Waltz Gimmick Boost +2%",
+      "nameJa": "舞い戻る呼吸",
+      "nameEn": "Returning Dance Breath",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。受け手側（舞宛て）の強化。"
     },
     {
@@ -21189,8 +21189,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：Rの使用で舞の残CD短縮 4/8/12%",
-      "nameEn": "Migrated: R use recharges Waltz 4/8/12%",
+      "nameJa": "ワルツの守り",
+      "nameEn": "Waltz Ward",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：Recv(R*,OnUse,4,舞,1)、段ごと4/8/12%。旧Power.Barrierを除き、BarrierやGuardを移動通知に結び直さない。"
     },
     {
@@ -21218,8 +21218,8 @@
         "C03",
         "C04"
       ],
-      "nameJa": "既存星の移行：夢幻のワルツの仕掛け強化 +2%",
-      "nameEn": "Migrated: Dreamy Waltz Gimmick Boost +2%",
+      "nameJa": "舞いの波紋",
+      "nameEn": "Waltz Ripples",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。受け手側（舞宛て）の強化。"
     },
     {
@@ -21247,8 +21247,8 @@
         "C03",
         "C04"
       ],
-      "nameJa": "既存星の移行：夢幻のワルツの仕掛け強化 +2%",
-      "nameEn": "Migrated: Dreamy Waltz Gimmick Boost +2%",
+      "nameJa": "群れを包む薄衣",
+      "nameEn": "Veil Enfolding the Pack",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧Stat.ShieldPowerを除く。受け手側（舞宛て）の強化。"
     },
     {
@@ -21276,8 +21276,8 @@
         "C03",
         "C04"
       ],
-      "nameJa": "既存星の移行：夢幻のワルツの仕掛け強化 +6%",
-      "nameEn": "Migrated: Dreamy Waltz Gimmick Boost +6%",
+      "nameJa": "群れを包む輪舞",
+      "nameEn": "Pack-Enfolding Waltz",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(6)。当該記憶の仕掛けのValueへ+6%（memory-wide GimmickBoost、N3）。旧最大1段を保持。第7星は1段のみ。旧LinkKind.Guard9を除く。受け手側（舞宛て）の強化。"
     },
     {
@@ -21304,8 +21304,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：森の呼応の仕掛け強化 +2%",
-      "nameEn": "Migrated: Sylvan Call Gimmick Boost +2%",
+      "nameJa": "群れの余勢",
+      "nameEn": "Pack Momentum",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.MemorySurgeを除く。.2 Shield1%、.4 Heal2%,Arg1、.5 MD4%、.7 OnKill/Reload1は保持。"
     },
     {
@@ -21332,8 +21332,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：森の呼応の仕掛け強化 +2%",
-      "nameEn": "Migrated: Sylvan Call Gimmick Boost +2%",
+      "nameJa": "若葉の牙",
+      "nameEn": "Fangs of New Leaves",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧Stat.SummonPowerを除く。"
     },
     {
@@ -21360,8 +21360,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：月光の誓約の仕掛け強化 +2%",
-      "nameEn": "Migrated: Moonlight Pact Gimmick Boost +2%",
+      "nameJa": "月光の斬撃の冴え",
+      "nameEn": "Keen Moonlight Slash",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧Stat.SummonPowerを除く。"
     },
     {
@@ -21392,8 +21392,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：月光の撃破時の群れの回復 3%",
-      "nameEn": "Migrated: Moonlight kill Pack Mend 3%",
+      "nameJa": "月下の再跳躍",
+      "nameEn": "Moonlit Re-Leap",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(月,OnKill,PackMend,3,0,0)。旧Recharge（OnKill、残CD20%）を置換。MD18%は保持。一匹狼でも働く（OnUse・自己CD短縮に依存しない）。既存.2 Expose3%、.4 Heal2%,Arg1,CD3秒は保持。"
     },
     {
@@ -21420,8 +21420,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：自然の囁きの仕掛け強化 +2%",
-      "nameEn": "Migrated: Nature Whisper Gimmick Boost +2%",
+      "nameJa": "号令の護り",
+      "nameEn": "Command Ward",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。"
     },
     {
@@ -21457,8 +21457,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：囁きの使用で群れの回復 1/2/3%",
-      "nameEn": "Migrated: Whisper use Pack Mend 1/2/3%",
+      "nameJa": "指揮の昂揚",
+      "nameEn": "Commander’s Elation",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(囁,OnUse,PackMend,1,0,0)。旧Quicken5を置換。段ごと値は表に1と記載のみ（1/2/3%と解釈、要確認）。"
     },
     {
@@ -21487,8 +21487,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：囁きの障壁の持続 +4%",
-      "nameEn": "Migrated: Whisper Shield Duration +4%",
+      "nameJa": "指揮者の守り",
+      "nameEn": "Commander’s Guard",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：T(.2,4)、旧幹.2（Shield1%）のDuration+4%。.2を先に通る接続にする。旧LinkKind.Guardを除く。"
     },
     {
@@ -21517,8 +21517,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：囁きの回復の範囲 +4%",
-      "nameEn": "Migrated: Whisper Heal Radius +4%",
+      "nameJa": "群れの猛威",
+      "nameEn": "Might of the Pack",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：R(.7,4)、旧幹.7（Heal5%,Arg1）のRadius+4%。.7を先に通る別接続を第6星へ設ける。旧Stat.SummonPowerを除く。"
     },
     {
@@ -21547,8 +21547,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：蛇の祝福の仕掛け強化 +2%",
-      "nameEn": "Migrated: Serpentine Blessing Gimmick Boost +2%",
+      "nameJa": "蛇鱗の守り",
+      "nameEn": "Serpent Scale Guard",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.Guardを除く。第2星（Echo6%）を先に取得する接続へ変更（requires）。"
     },
     {
@@ -21577,8 +21577,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：蛇の祝福の仕掛け強化 +2%",
-      "nameEn": "Migrated: Serpentine Blessing Gimmick Boost +2%",
+      "nameJa": "祝福の余韻",
+      "nameEn": "Blessing Echo",
       "notes": "既存星の効果置換（星の追加ではない）。置換後・1段ごと：B(2)。当該記憶の仕掛けのValueへ+2%（memory-wide GimmickBoost、N3）。旧最大3段を保持。旧LinkKind.MemorySurgeを除く。第2星を先に取得する接続へ変更（requires）。第4星Burst25%,CD1.5秒、.5 MD4%、.6 StarShield3、.7 Shield8%は保持。"
     },
     {
@@ -21614,8 +21614,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：団結の光 20/40/60%",
-      "nameEn": "Migrated: Unity Light 20/40/60%",
+      "nameJa": "祝福の光",
+      "nameEn": "Blessed Light",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(心,OnHit,Element,20,2,0)、段ごと20/40/60%。旧Stat.LightAmpを除く。"
     },
     {
@@ -21651,8 +21651,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：循環の巡る回復 1/2/3%",
-      "nameEn": "Migrated: Circle Pack Mend 1/2/3%",
+      "nameJa": "絆の力",
+      "nameEn": "Bond Power",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(循,F,PackMend,1,0,0)、段ごと1/2/3%。旧Stat.PowerPctを除く。F=OnBasicAttack（N1）。"
     },
     {
@@ -21688,8 +21688,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：囁きの使用で群れの回復 1/2/3%",
-      "nameEn": "Migrated: Whisper use Pack Mend 1/2/3%",
+      "nameJa": "呼び声",
+      "nameEn": "Calling",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(囁,OnUse,PackMend,1,0,0)、段ごと1/2/3%。旧Stat.Hasteを除く。"
     },
     {
@@ -21725,8 +21725,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：蛇の祝福の障壁 2/4/6%",
-      "nameEn": "Migrated: Serpent Blessing Shield 2/4/6%",
+      "nameJa": "守護の誓い",
+      "nameEn": "Guardian Vow",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(蛇,OnUse,Shield,2,0,0)、段ごと2/4/6%。旧Stat.MaxHealthPctを除く。"
     },
     {
@@ -21764,8 +21764,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：Qの撃破で舞の残CD短縮 3/6/9%",
-      "nameEn": "Migrated: Q kill recharges Waltz 3/6/9%",
+      "nameJa": "群れの足並み",
+      "nameEn": "Pack Pace",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：Recv(Q*,OnKill,3,舞,1)、段ごと3/6/9%。旧Stat.AttackSpeedPctを除く。舞は受信だけ。"
     },
     {
@@ -21801,8 +21801,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：囁きの使用で回復 1/2/3%",
-      "nameEn": "Migrated: Whisper use Heal 1/2/3%",
+      "nameJa": "癒やしの歌",
+      "nameEn": "Healing Song",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(囁,OnUse,Heal,1,1,0)、段ごと1/2/3%、Arg1。旧Stat.HealPowerを除く。記憶装着時だけ有効。"
     },
     {
@@ -21838,8 +21838,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：森の呼応の使用で群れの回復 1/2/3%",
-      "nameEn": "Migrated: Sylvan Call use Pack Mend 1/2/3%",
+      "nameJa": "仲間を想う心",
+      "nameEn": "Thinking of Friends",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(森,OnUse,PackMend,1,0,0)、段ごと1/2/3%。旧Stat.SummonPowerを除く。記憶装着時だけ有効。"
     },
     {
@@ -21875,8 +21875,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：蛇の祝福の使用で群れの回復 1/2/3%",
-      "nameEn": "Migrated: Serpent Blessing use Pack Mend 1/2/3%",
+      "nameJa": "盾の祈り",
+      "nameEn": "Prayer of Shields",
       "notes": "既存星の効果置換（星の追加ではない）。置換後：G(蛇,OnUse,PackMend,1,0,0)、段ごと1/2/3%。旧Stat.ShieldPowerを除く。記憶装着時だけ有効。"
     },
     {
@@ -21918,8 +21918,8 @@
         "C04",
         "C05"
       ],
-      "nameJa": "既存星の移行：循環×森の呼応：窓中に森の残CD短縮 1〜5%",
-      "nameEn": "Migrated: Circle x Sylvan Call: window recharge of Sylvan Call 1-5%",
+      "nameJa": "夢輪の再生",
+      "nameEn": "Dream Ring Renewal",
       "notes": "既存星の効果置換（星の追加ではない）。橋b8（循×森）の中心へ置換。全体HP再生（Stat.HealthRegen）を廃止。森OnUseで4秒窓を開き、循F[窓]で森の残CDを1/2/3/4/5%短縮（RechargeTarget、CD0）。旧5段を保持。印なし。Statとして外周と二重計数しない。窓の起点（森OnUse、4秒）は橋側の定義。"
     },
     {
@@ -21948,8 +21948,8 @@
         "C01",
         "C07"
       ],
-      "nameJa": "既存星の移行：刻印：共に在る（代償 -15%）",
-      "nameEn": "Migrated: Keystone: Together (cost -15%)",
+      "nameJa": "共に在る",
+      "nameEn": "Together",
       "notes": "既存星の効果置換（星の追加ではない）。既存刻印に代償を明示付与。既存Resonanceの範囲と共存規則を維持。N5でDamageDataの発生元を分類し、味方の元攻撃・召喚獣直接攻撃・MODの追加ダメージには代償を掛けない。同名の無代償版は残さない。"
     },
     {
@@ -21978,8 +21978,8 @@
         "C01",
         "C07"
       ],
-      "nameJa": "既存星の移行：刻印：祈りの過負荷（代償 -15%）",
-      "nameEn": "Migrated: Keystone: Overflowing Prayer (cost -15%)",
+      "nameJa": "祈りの過負荷",
+      "nameEn": "Overflowing Prayer",
       "notes": "既存星の効果置換（星の追加ではない）。既存刻印に代償を明示付与。既存Overloadを維持。N5。本人と召喚獣の役割配分を選ぶ。移動は起点から除外。"
     }
   ]

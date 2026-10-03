@@ -31,8 +31,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の威力",
-      "nameEn": "Claw Power",
+      "nameJa": "研ぎ澄まされた爪",
+      "nameEn": "Whetted Claw",
       "notes": ""
     },
     {
@@ -70,8 +70,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 I",
-      "nameEn": "Claw Gimmick Boost I",
+      "nameJa": "爪業の研鑽",
+      "nameEn": "Clawcraft Discipline",
       "notes": ""
     },
     {
@@ -108,8 +108,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 I",
-      "nameEn": "Claw Duration I",
+      "nameJa": "消えない爪痕",
+      "nameEn": "Lingering Clawmarks",
       "notes": ""
     },
     {
@@ -146,8 +146,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 II",
-      "nameEn": "Claw Gimmick Boost II",
+      "nameJa": "解体の深業",
+      "nameEn": "Deep Art of Dismantling",
       "notes": ""
     },
     {
@@ -184,8 +184,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 II",
-      "nameEn": "Claw Duration II",
+      "nameJa": "深く残る裂傷",
+      "nameEn": "Deep-Set Tears",
       "notes": ""
     },
     {
@@ -222,8 +222,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 III",
-      "nameEn": "Claw Gimmick Boost III",
+      "nameJa": "磨かれた爪さばき",
+      "nameEn": "Polished Clawwork",
       "notes": ""
     },
     {
@@ -264,8 +264,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時傷",
-      "nameEn": "Claw: On Hit Wound",
+      "nameJa": "刻み込む爪紋",
+      "nameEn": "Claw-Etched Wounds",
       "notes": ""
     },
     {
@@ -306,8 +306,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時残響",
-      "nameEn": "Claw: On Hit Echo",
+      "nameJa": "解体の残響",
+      "nameEn": "Echoes of Dismantling",
       "notes": ""
     },
     {
@@ -344,8 +344,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 IV",
-      "nameEn": "Claw Gimmick Boost IV",
+      "nameJa": "解体の型破り",
+      "nameEn": "Unorthodox Dismantling",
       "notes": ""
     },
     {
@@ -382,8 +382,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 III",
-      "nameEn": "Claw Duration III",
+      "nameJa": "爪痕の長い尾",
+      "nameEn": "Long Tail of the Claw",
       "notes": ""
     },
     {
@@ -420,8 +420,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 V",
-      "nameEn": "Claw Gimmick Boost V",
+      "nameJa": "爪の極意",
+      "nameEn": "Secrets of the Claw",
       "notes": ""
     },
     {
@@ -458,8 +458,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 IV",
-      "nameEn": "Claw Duration IV",
+      "nameJa": "癒えない爪跡",
+      "nameEn": "Unhealing Claw Scars",
       "notes": ""
     },
     {
@@ -496,8 +496,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 VI",
-      "nameEn": "Claw Gimmick Boost VI",
+      "nameJa": "深く食い込む爪",
+      "nameEn": "Deep-Biting Claw",
       "notes": ""
     },
     {
@@ -538,8 +538,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重く刻む業",
+          "nameEn": "Carving Deeper"
         },
         {
           "kind": "GimmickParam",
@@ -554,8 +554,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る爪痕",
+          "nameEn": "Clawmarks That Linger"
         }
       ],
       "keystone": null,
@@ -565,8 +565,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の分岐",
-      "nameEn": "Claw Branch",
+      "nameJa": "爪の業の岐路",
+      "nameEn": "Clawcraft Crossroads",
       "notes": ""
     },
     {
@@ -598,8 +598,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の威力",
-      "nameEn": "Claw Power",
+      "nameJa": "重く沈む爪撃",
+      "nameEn": "Heavy Descending Claw",
       "notes": ""
     },
     {
@@ -637,8 +637,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 I",
-      "nameEn": "Claw Gimmick Boost I",
+      "nameJa": "解体の真髄",
+      "nameEn": "Essence of Dismantling",
       "notes": ""
     },
     {
@@ -675,8 +675,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 I",
-      "nameEn": "Claw Duration I",
+      "nameJa": "爪の置き土産",
+      "nameEn": "What the Claw Leaves Behind",
       "notes": ""
     },
     {
@@ -713,8 +713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 II",
-      "nameEn": "Claw Gimmick Boost II",
+      "nameJa": "爪技の昇華",
+      "nameEn": "Refined Claw Technique",
       "notes": ""
     },
     {
@@ -751,8 +751,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 II",
-      "nameEn": "Claw Duration II",
+      "nameJa": "裂傷の長夜",
+      "nameEn": "Long Night of Wounds",
       "notes": ""
     },
     {
@@ -789,8 +789,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 III",
-      "nameEn": "Claw Gimmick Boost III",
+      "nameJa": "解体屋の腕前",
+      "nameEn": "Dismantler’s Touch",
       "notes": ""
     },
     {
@@ -831,8 +831,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時属性の縁",
-      "nameEn": "Claw: On Hit Element Edge",
+      "nameJa": "彩を削る爪",
+      "nameEn": "Hue-Whittling Claw",
       "notes": ""
     },
     {
@@ -873,8 +873,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時闇の付与",
-      "nameEn": "Claw: On Hit Apply Dark",
+      "nameJa": "闇を纏う爪",
+      "nameEn": "Dark-Clad Claw",
       "notes": ""
     },
     {
@@ -911,8 +911,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 IV",
-      "nameEn": "Claw Gimmick Boost IV",
+      "nameJa": "爪の切れ込み",
+      "nameEn": "Bite of the Claw",
       "notes": ""
     },
     {
@@ -949,8 +949,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 III",
-      "nameEn": "Claw Duration III",
+      "nameJa": "残り続ける解体",
+      "nameEn": "Dismantling That Remains",
       "notes": ""
     },
     {
@@ -987,8 +987,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 V",
-      "nameEn": "Claw Gimmick Boost V",
+      "nameJa": "解体の洗練",
+      "nameEn": "Elegant Dismantling",
       "notes": ""
     },
     {
@@ -1025,8 +1025,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 IV",
-      "nameEn": "Claw Duration IV",
+      "nameJa": "消えない爪痕",
+      "nameEn": "Lingering Clawmarks",
       "notes": ""
     },
     {
@@ -1063,8 +1063,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 VI",
-      "nameEn": "Claw Gimmick Boost VI",
+      "nameJa": "万物を解く爪",
+      "nameEn": "Claw That Unravels All",
       "notes": ""
     },
     {
@@ -1105,8 +1105,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "闇を深める業",
+          "nameEn": "Dark-Deepening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -1121,8 +1121,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く灯る彩",
+          "nameEn": "Hues Long Lit"
         }
       ],
       "keystone": null,
@@ -1132,8 +1132,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の分岐",
-      "nameEn": "Claw Branch",
+      "nameJa": "彩と闇の岐路",
+      "nameEn": "Crossroads of Hues and Dark",
       "notes": ""
     },
     {
@@ -1165,8 +1165,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の威力",
-      "nameEn": "Claw Power",
+      "nameJa": "断ち割る一爪",
+      "nameEn": "Cleaving Claw",
       "notes": ""
     },
     {
@@ -1204,8 +1204,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 I",
-      "nameEn": "Claw Gimmick Boost I",
+      "nameJa": "爪研ぎの夜",
+      "nameEn": "Night of Whetstones",
       "notes": ""
     },
     {
@@ -1242,8 +1242,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 I",
-      "nameEn": "Claw Duration I",
+      "nameJa": "深く残る裂傷",
+      "nameEn": "Deep-Set Tears",
       "notes": ""
     },
     {
@@ -1280,8 +1280,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 II",
-      "nameEn": "Claw Gimmick Boost II",
+      "nameJa": "爪業の研鑽",
+      "nameEn": "Clawcraft Discipline",
       "notes": ""
     },
     {
@@ -1318,8 +1318,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 II",
-      "nameEn": "Claw Duration II",
+      "nameJa": "爪痕の長い尾",
+      "nameEn": "Long Tail of the Claw",
       "notes": ""
     },
     {
@@ -1356,8 +1356,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 III",
-      "nameEn": "Claw Gimmick Boost III",
+      "nameJa": "解体の深業",
+      "nameEn": "Deep Art of Dismantling",
       "notes": ""
     },
     {
@@ -1398,8 +1398,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時防壁",
-      "nameEn": "Claw: On Hit Rampart",
+      "nameJa": "削って築く壁",
+      "nameEn": "Wall Built by Carving",
       "notes": ""
     },
     {
@@ -1440,8 +1440,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・命中時弱体",
-      "nameEn": "Claw: On Hit Sap",
+      "nameJa": "力を削ぐ爪",
+      "nameEn": "Strength-Sapping Claw",
       "notes": ""
     },
     {
@@ -1478,8 +1478,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 IV",
-      "nameEn": "Claw Gimmick Boost IV",
+      "nameJa": "磨かれた爪さばき",
+      "nameEn": "Polished Clawwork",
       "notes": ""
     },
     {
@@ -1516,8 +1516,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 III",
-      "nameEn": "Claw Duration III",
+      "nameJa": "癒えない爪跡",
+      "nameEn": "Unhealing Claw Scars",
       "notes": ""
     },
     {
@@ -1554,8 +1554,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 V",
-      "nameEn": "Claw Gimmick Boost V",
+      "nameJa": "解体の型破り",
+      "nameEn": "Unorthodox Dismantling",
       "notes": ""
     },
     {
@@ -1592,8 +1592,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 IV",
-      "nameEn": "Claw Duration IV",
+      "nameJa": "爪の置き土産",
+      "nameEn": "What the Claw Leaves Behind",
       "notes": ""
     },
     {
@@ -1630,8 +1630,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 VI",
-      "nameEn": "Claw Gimmick Boost VI",
+      "nameJa": "爪の極意",
+      "nameEn": "Secrets of the Claw",
       "notes": ""
     },
     {
@@ -1672,8 +1672,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "守りの業に磨き",
+          "nameEn": "Polished Ward Craft"
         },
         {
           "kind": "GimmickParam",
@@ -1688,8 +1688,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "守りの長い尾",
+          "nameEn": "Long Tail of Wards"
         }
       ],
       "keystone": null,
@@ -1699,8 +1699,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の分岐",
-      "nameEn": "Claw Branch",
+      "nameJa": "守りを深める岐路",
+      "nameEn": "Crossroads of Deeper Guard",
       "notes": ""
     },
     {
@@ -1732,8 +1732,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の威力",
-      "nameEn": "Claw Power",
+      "nameJa": "解体の一閃",
+      "nameEn": "Dismantling Flash",
       "notes": ""
     },
     {
@@ -1771,8 +1771,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 I",
-      "nameEn": "Claw Gimmick Boost I",
+      "nameJa": "深く食い込む爪",
+      "nameEn": "Deep-Biting Claw",
       "notes": ""
     },
     {
@@ -1809,8 +1809,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 I",
-      "nameEn": "Claw Duration I",
+      "nameJa": "裂傷の長夜",
+      "nameEn": "Long Night of Wounds",
       "notes": ""
     },
     {
@@ -1847,8 +1847,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 II",
-      "nameEn": "Claw Gimmick Boost II",
+      "nameJa": "解体の真髄",
+      "nameEn": "Essence of Dismantling",
       "notes": ""
     },
     {
@@ -1885,8 +1885,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の持続 II",
-      "nameEn": "Claw Duration II",
+      "nameJa": "残り続ける解体",
+      "nameEn": "Dismantling That Remains",
       "notes": ""
     },
     {
@@ -1923,8 +1923,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 III",
-      "nameEn": "Claw Gimmick Boost III",
+      "nameJa": "爪技の昇華",
+      "nameEn": "Refined Claw Technique",
       "notes": ""
     },
     {
@@ -1965,8 +1965,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・撃破時爆風",
-      "nameEn": "Claw: On Kill Burst",
+      "nameJa": "断末魔の爆ぜ",
+      "nameEn": "Burst of Last Breath",
       "notes": ""
     },
     {
@@ -2007,8 +2007,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪・撃破時火の付与",
-      "nameEn": "Claw: On Kill Apply Fire",
+      "nameJa": "燎原の火種",
+      "nameEn": "Seeds of Wildfire",
       "notes": ""
     },
     {
@@ -2045,8 +2045,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 IV",
-      "nameEn": "Claw Gimmick Boost IV",
+      "nameJa": "解体屋の腕前",
+      "nameEn": "Dismantler’s Touch",
       "notes": ""
     },
     {
@@ -2083,8 +2083,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の範囲 I",
-      "nameEn": "Claw Radius I",
+      "nameJa": "広がる破片飛沫",
+      "nameEn": "Widening Debris Spray",
       "notes": ""
     },
     {
@@ -2121,8 +2121,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 V",
-      "nameEn": "Claw Gimmick Boost V",
+      "nameJa": "爪の切れ込み",
+      "nameEn": "Bite of the Claw",
       "notes": ""
     },
     {
@@ -2159,8 +2159,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の範囲 II",
-      "nameEn": "Claw Radius II",
+      "nameJa": "弾ける飛沫の輪",
+      "nameEn": "Ring of Scattering Spray",
       "notes": ""
     },
     {
@@ -2197,8 +2197,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の仕掛け強化 VI",
-      "nameEn": "Claw Gimmick Boost VI",
+      "nameJa": "解体の洗練",
+      "nameEn": "Elegant Dismantling",
       "notes": ""
     },
     {
@@ -2239,8 +2239,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる爆焔",
+          "nameEn": "Spreading Blaze"
         },
         {
           "kind": "GimmickBoost",
@@ -2255,8 +2255,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "熾り立つ火業",
+          "nameEn": "Kindling Craft"
         }
       ],
       "keystone": null,
@@ -2266,8 +2266,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪の分岐",
-      "nameEn": "Claw Branch",
+      "nameJa": "業火の広げ方",
+      "nameEn": "How the Fire Spreads",
       "notes": ""
     },
     {
@@ -2299,8 +2299,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の威力",
-      "nameEn": "Beautiful Threat Power",
+      "nameJa": "鋭さを増す羽撃ち",
+      "nameEn": "Sharpened Feather Strikes",
       "notes": ""
     },
     {
@@ -2338,8 +2338,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat Gimmick Boost I",
+      "nameJa": "羽さばきの熟達",
+      "nameEn": "Masterful Featherplay",
       "notes": ""
     },
     {
@@ -2376,8 +2376,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat Duration I",
+      "nameJa": "羽音の余韻",
+      "nameEn": "Afterglow of Wingbeats",
       "notes": ""
     },
     {
@@ -2414,8 +2414,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat Gimmick Boost II",
+      "nameJa": "金羽の艶やかさ",
+      "nameEn": "Luster of Golden Plumes",
       "notes": ""
     },
     {
@@ -2452,8 +2452,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat Duration II",
+      "nameJa": "長く残る羽の冷え",
+      "nameEn": "Lingering Feather Chill",
       "notes": ""
     },
     {
@@ -2490,8 +2490,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 III",
-      "nameEn": "Beautiful Threat Gimmick Boost III",
+      "nameJa": "羽の精度",
+      "nameEn": "Precision of Feathers",
       "notes": ""
     },
     {
@@ -2534,8 +2534,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時跳弾",
-      "nameEn": "Beautiful Threat: On Hit Ricochet",
+      "nameJa": "跳ねる金羽",
+      "nameEn": "Leaping Golden Feathers",
       "notes": ""
     },
     {
@@ -2576,8 +2576,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時傷",
-      "nameEn": "Beautiful Threat: On Hit Wound",
+      "nameJa": "羽先の刺傷",
+      "nameEn": "Feather-Tip Wounds",
       "notes": ""
     },
     {
@@ -2614,8 +2614,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 IV",
-      "nameEn": "Beautiful Threat Gimmick Boost IV",
+      "nameJa": "磨き上げた羽先",
+      "nameEn": "Burnished Feather Tips",
       "notes": ""
     },
     {
@@ -2652,8 +2652,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の範囲 I",
-      "nameEn": "Beautiful Threat Radius I",
+      "nameJa": "羽の届く空",
+      "nameEn": "Skies Feathers Reach",
       "notes": ""
     },
     {
@@ -2690,8 +2690,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 V",
-      "nameEn": "Beautiful Threat Gimmick Boost V",
+      "nameJa": "美技の羽返し",
+      "nameEn": "Graceful Feather Return",
       "notes": ""
     },
     {
@@ -2730,8 +2730,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の範囲 II",
-      "nameEn": "Beautiful Threat Radius II",
+      "nameJa": "広がる羽の輪",
+      "nameEn": "Widening Feather Ring",
       "notes": "設計表の指示により、n2側のR枝(l4)も範囲効果を持つn1へ接続しn1を前提に含める(n2は範囲効果なし)。"
     },
     {
@@ -2768,8 +2768,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 VI",
-      "nameEn": "Beautiful Threat Gimmick Boost VI",
+      "nameJa": "羽の切れ味の極み",
+      "nameEn": "Peak of the Featheredge",
       "notes": ""
     },
     {
@@ -2813,8 +2813,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "羽はもう一体へ",
+          "nameEn": "Feathers to One More"
         },
         {
           "kind": "GimmickParam",
@@ -2829,8 +2829,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "羽の広がる空",
+          "nameEn": "Feather-Filled Skies"
         }
       ],
       "keystone": null,
@@ -2840,8 +2840,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の分岐",
-      "nameEn": "Beautiful Threat Branch",
+      "nameJa": "羽の飛び先",
+      "nameEn": "Where Feathers Fly",
       "notes": "R枝/Ricochet枝がn1のRicochet/範囲効果を参照するためn1を前提に追加。 Xはaurena.key.feather-fanと同時購入不可(設計表: K4/Xの排他)。X=ExtraTargetsはC03 EffectChannel scope(Ricochetのみ)。"
     },
     {
@@ -2873,8 +2873,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の威力",
-      "nameEn": "Beautiful Threat Power",
+      "nameJa": "重い羽の一射",
+      "nameEn": "Weighted Feather Volley",
       "notes": ""
     },
     {
@@ -2912,8 +2912,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat Gimmick Boost I",
+      "nameJa": "脅威の演出",
+      "nameEn": "Staging the Threat",
       "notes": ""
     },
     {
@@ -2950,8 +2950,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat Duration I",
+      "nameJa": "羽の置き霜",
+      "nameEn": "Frost Left by Feathers",
       "notes": ""
     },
     {
@@ -2988,8 +2988,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat Gimmick Boost II",
+      "nameJa": "羽の密やかな業",
+      "nameEn": "Quiet Art of Feathers",
       "notes": ""
     },
     {
@@ -3026,8 +3026,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat Duration II",
+      "nameJa": "消えぬ羽の気配",
+      "nameEn": "Feather Presence Unfading",
       "notes": ""
     },
     {
@@ -3064,8 +3064,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 III",
-      "nameEn": "Beautiful Threat Gimmick Boost III",
+      "nameJa": "黄金の羽手入れ",
+      "nameEn": "Grooming Golden Feathers",
       "notes": ""
     },
     {
@@ -3106,8 +3106,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時冷気の付与",
-      "nameEn": "Beautiful Threat: On Hit Apply Cold",
+      "nameJa": "羽に宿る霜",
+      "nameEn": "Frost Resting on Feathers",
       "notes": ""
     },
     {
@@ -3148,8 +3148,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時属性の縁",
-      "nameEn": "Beautiful Threat: On Hit Element Edge",
+      "nameJa": "色を裂く風切",
+      "nameEn": "Hue-Splitting Pinion",
       "notes": ""
     },
     {
@@ -3186,8 +3186,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 IV",
-      "nameEn": "Beautiful Threat Gimmick Boost IV",
+      "nameJa": "羽撃ちの間合い",
+      "nameEn": "Feather-Strike Range",
       "notes": ""
     },
     {
@@ -3224,8 +3224,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 III",
-      "nameEn": "Beautiful Threat Duration III",
+      "nameJa": "羽跡の長い影",
+      "nameEn": "Long Shadow of Feather Trails",
       "notes": ""
     },
     {
@@ -3262,8 +3262,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 V",
-      "nameEn": "Beautiful Threat Gimmick Boost V",
+      "nameJa": "磨滅せぬ羽輝",
+      "nameEn": "Fadeless Feather Shine",
       "notes": ""
     },
     {
@@ -3300,8 +3300,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 IV",
-      "nameEn": "Beautiful Threat Duration IV",
+      "nameJa": "残る羽の重み",
+      "nameEn": "Weight That Feathers Leave",
       "notes": ""
     },
     {
@@ -3338,8 +3338,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 VI",
-      "nameEn": "Beautiful Threat Gimmick Boost VI",
+      "nameJa": "羽の深業",
+      "nameEn": "Deep Art of Feathers",
       "notes": ""
     },
     {
@@ -3380,8 +3380,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "霜を深める業",
+          "nameEn": "Frost-Deepening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -3396,8 +3396,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く降る霜",
+          "nameEn": "Long-Falling Frost"
         }
       ],
       "keystone": null,
@@ -3407,8 +3407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の分岐",
-      "nameEn": "Beautiful Threat Branch",
+      "nameJa": "霜の質の岐路",
+      "nameEn": "Crossroads of Frost",
       "notes": ""
     },
     {
@@ -3440,8 +3440,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の威力",
-      "nameEn": "Beautiful Threat Power",
+      "nameJa": "貫く風切羽",
+      "nameEn": "Piercing Pinions",
       "notes": ""
     },
     {
@@ -3479,8 +3479,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat Gimmick Boost I",
+      "nameJa": "完璧な羽さばき",
+      "nameEn": "Flawless Featherwork",
       "notes": ""
     },
     {
@@ -3517,8 +3517,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat Duration I",
+      "nameJa": "羽の微塵の名残",
+      "nameEn": "Traces of Feather Motes",
       "notes": ""
     },
     {
@@ -3555,8 +3555,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat Gimmick Boost II",
+      "nameJa": "羽さばきの熟達",
+      "nameEn": "Masterful Featherplay",
       "notes": ""
     },
     {
@@ -3593,8 +3593,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat Duration II",
+      "nameJa": "羽音の余韻",
+      "nameEn": "Afterglow of Wingbeats",
       "notes": ""
     },
     {
@@ -3631,8 +3631,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 III",
-      "nameEn": "Beautiful Threat Gimmick Boost III",
+      "nameJa": "金羽の艶やかさ",
+      "nameEn": "Luster of Golden Plumes",
       "notes": ""
     },
     {
@@ -3673,8 +3673,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時弱体",
-      "nameEn": "Beautiful Threat: On Hit Sap",
+      "nameJa": "脅しの重圧",
+      "nameEn": "Weight of the Threat",
       "notes": ""
     },
     {
@@ -3715,8 +3715,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時防壁",
-      "nameEn": "Beautiful Threat: On Hit Rampart",
+      "nameJa": "羽の下の庇護",
+      "nameEn": "Refuge Under Feathers",
       "notes": ""
     },
     {
@@ -3753,8 +3753,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 IV",
-      "nameEn": "Beautiful Threat Gimmick Boost IV",
+      "nameJa": "羽の精度",
+      "nameEn": "Precision of Feathers",
       "notes": ""
     },
     {
@@ -3791,8 +3791,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 III",
-      "nameEn": "Beautiful Threat Duration III",
+      "nameJa": "長く残る羽の冷え",
+      "nameEn": "Lingering Feather Chill",
       "notes": ""
     },
     {
@@ -3829,8 +3829,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 V",
-      "nameEn": "Beautiful Threat Gimmick Boost V",
+      "nameJa": "磨き上げた羽先",
+      "nameEn": "Burnished Feather Tips",
       "notes": ""
     },
     {
@@ -3867,8 +3867,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 IV",
-      "nameEn": "Beautiful Threat Duration IV",
+      "nameJa": "羽の置き霜",
+      "nameEn": "Frost Left by Feathers",
       "notes": ""
     },
     {
@@ -3905,8 +3905,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 VI",
-      "nameEn": "Beautiful Threat Gimmick Boost VI",
+      "nameJa": "美技の羽返し",
+      "nameEn": "Graceful Feather Return",
       "notes": ""
     },
     {
@@ -3947,8 +3947,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く脅し",
+          "nameEn": "Lasting Menace"
         },
         {
           "kind": "GimmickBoost",
@@ -3963,8 +3963,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "美しさに磨き",
+          "nameEn": "Polished Beauty"
         }
       ],
       "keystone": null,
@@ -3974,8 +3974,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の分岐",
-      "nameEn": "Beautiful Threat Branch",
+      "nameJa": "脅しの岐路",
+      "nameEn": "Crossroads of the Threat",
       "notes": ""
     },
     {
@@ -4007,8 +4007,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の威力",
-      "nameEn": "Beautiful Threat Power",
+      "nameJa": "冴えわたる羽嵐",
+      "nameEn": "Keen Feather Storm",
       "notes": ""
     },
     {
@@ -4046,8 +4046,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat Gimmick Boost I",
+      "nameJa": "羽の切れ味の極み",
+      "nameEn": "Peak of the Featheredge",
       "notes": ""
     },
     {
@@ -4084,8 +4084,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat Duration I",
+      "nameJa": "消えぬ羽の気配",
+      "nameEn": "Feather Presence Unfading",
       "notes": ""
     },
     {
@@ -4122,8 +4122,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat Gimmick Boost II",
+      "nameJa": "脅威の演出",
+      "nameEn": "Staging the Threat",
       "notes": ""
     },
     {
@@ -4160,8 +4160,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat Duration II",
+      "nameJa": "羽跡の長い影",
+      "nameEn": "Long Shadow of Feather Trails",
       "notes": ""
     },
     {
@@ -4198,8 +4198,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 III",
-      "nameEn": "Beautiful Threat Gimmick Boost III",
+      "nameJa": "羽の密やかな業",
+      "nameEn": "Quiet Art of Feathers",
       "notes": ""
     },
     {
@@ -4242,8 +4242,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・撃破時爆風",
-      "nameEn": "Beautiful Threat: On Kill Burst",
+      "nameJa": "止めの羽嵐",
+      "nameEn": "Killing Feather Storm",
       "notes": ""
     },
     {
@@ -4284,8 +4284,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威・命中時闇の付与",
-      "nameEn": "Beautiful Threat: On Hit Apply Dark",
+      "nameJa": "影を落とす羽",
+      "nameEn": "Shadow-Casting Feather",
       "notes": ""
     },
     {
@@ -4322,8 +4322,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 IV",
-      "nameEn": "Beautiful Threat Gimmick Boost IV",
+      "nameJa": "黄金の羽手入れ",
+      "nameEn": "Grooming Golden Feathers",
       "notes": ""
     },
     {
@@ -4360,8 +4360,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の範囲 I",
-      "nameEn": "Beautiful Threat Radius I",
+      "nameJa": "羽の届く空",
+      "nameEn": "Skies Feathers Reach",
       "notes": ""
     },
     {
@@ -4398,8 +4398,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 V",
-      "nameEn": "Beautiful Threat Gimmick Boost V",
+      "nameJa": "羽撃ちの間合い",
+      "nameEn": "Feather-Strike Range",
       "notes": ""
     },
     {
@@ -4438,8 +4438,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の範囲 II",
-      "nameEn": "Beautiful Threat Radius II",
+      "nameJa": "広がる羽の輪",
+      "nameEn": "Widening Feather Ring",
       "notes": "設計表の指示により、n2側のR枝(l4)も範囲効果を持つn1へ接続しn1を前提に含める(n2は範囲効果なし)。"
     },
     {
@@ -4476,8 +4476,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の仕掛け強化 VI",
-      "nameEn": "Beautiful Threat Gimmick Boost VI",
+      "nameJa": "磨滅せぬ羽輝",
+      "nameEn": "Fadeless Feather Shine",
       "notes": ""
     },
     {
@@ -4521,8 +4521,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる羽嵐",
+          "nameEn": "Widening Feather Storm"
         },
         {
           "kind": "GimmickBoost",
@@ -4537,8 +4537,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "嵐を強める業",
+          "nameEn": "Storm-Strengthening Craft"
         }
       ],
       "keystone": null,
@@ -4548,8 +4548,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威の分岐",
-      "nameEn": "Beautiful Threat Branch",
+      "nameJa": "止めの余波の行方",
+      "nameEn": "Where Kill-Waves Go",
       "notes": "R枝/Ricochet枝がn1のRicochet/範囲効果を参照するためn1を前提に追加。"
     },
     {
@@ -4581,8 +4581,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの威力",
-      "nameEn": "Golden Burst Power",
+      "nameJa": "冴え渡る金光",
+      "nameEn": "Keen Golden Light",
       "notes": ""
     },
     {
@@ -4620,8 +4620,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Golden Burst Gimmick Boost I",
+      "nameJa": "金光の練磨",
+      "nameEn": "Tempered Golden Light",
       "notes": ""
     },
     {
@@ -4658,8 +4658,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 I",
-      "nameEn": "Golden Burst Duration I",
+      "nameJa": "残照の長さ",
+      "nameEn": "Length of the Afterglow",
       "notes": ""
     },
     {
@@ -4696,8 +4696,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Golden Burst Gimmick Boost II",
+      "nameJa": "連閃の手腕",
+      "nameEn": "Flurry Craftsmanship",
       "notes": ""
     },
     {
@@ -4734,8 +4734,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 II",
-      "nameEn": "Golden Burst Duration II",
+      "nameJa": "金の残り香",
+      "nameEn": "Lingering Gold Scent",
       "notes": ""
     },
     {
@@ -4772,8 +4772,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Golden Burst Gimmick Boost III",
+      "nameJa": "黄金の弾け方",
+      "nameEn": "The Way Gold Bursts",
       "notes": ""
     },
     {
@@ -4814,8 +4814,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時傷",
-      "nameEn": "Golden Burst: On Hit Wound",
+      "nameJa": "残る金光の傷",
+      "nameEn": "Wounds of Lingering Gold",
       "notes": ""
     },
     {
@@ -4856,8 +4856,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時残響",
-      "nameEn": "Golden Burst: On Hit Echo",
+      "nameJa": "連閃の残響",
+      "nameEn": "Echo of the Flurry",
       "notes": ""
     },
     {
@@ -4894,8 +4894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 IV",
-      "nameEn": "Golden Burst Gimmick Boost IV",
+      "nameJa": "磨かれた光の粒",
+      "nameEn": "Polished Motes of Light",
       "notes": ""
     },
     {
@@ -4932,8 +4932,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 III",
-      "nameEn": "Golden Burst Duration III",
+      "nameJa": "光の名残",
+      "nameEn": "Remnants of Light",
       "notes": ""
     },
     {
@@ -4970,8 +4970,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 V",
-      "nameEn": "Golden Burst Gimmick Boost V",
+      "nameJa": "金光の深み",
+      "nameEn": "Depths of Golden Light",
       "notes": ""
     },
     {
@@ -5008,8 +5008,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 IV",
-      "nameEn": "Golden Burst Duration IV",
+      "nameJa": "長く照らす輝き",
+      "nameEn": "Long-Shining Glow",
       "notes": ""
     },
     {
@@ -5046,8 +5046,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 VI",
-      "nameEn": "Golden Burst Gimmick Boost VI",
+      "nameJa": "連打の洗練",
+      "nameEn": "Refined Flurries",
       "notes": ""
     },
     {
@@ -5088,8 +5088,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る金光",
+          "nameEn": "Lingering Golden Light"
         },
         {
           "kind": "GimmickBoost",
@@ -5104,8 +5104,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "連閃に磨き",
+          "nameEn": "Polished Flurries"
         }
       ],
       "keystone": null,
@@ -5115,8 +5115,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの分岐",
-      "nameEn": "Golden Burst Branch",
+      "nameJa": "連閃の残し方",
+      "nameEn": "What Flurries Leave",
       "notes": ""
     },
     {
@@ -5148,8 +5148,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの威力",
-      "nameEn": "Golden Burst Power",
+      "nameJa": "炸裂の極み",
+      "nameEn": "Height of the Blast",
       "notes": ""
     },
     {
@@ -5187,8 +5187,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Golden Burst Gimmick Boost I",
+      "nameJa": "輝きの極意",
+      "nameEn": "Secrets of Radiance",
       "notes": ""
     },
     {
@@ -5225,8 +5225,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 I",
-      "nameEn": "Golden Burst Duration I",
+      "nameJa": "消えない閃き",
+      "nameEn": "Unfading Flashes",
       "notes": ""
     },
     {
@@ -5263,8 +5263,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Golden Burst Gimmick Boost II",
+      "nameJa": "光の密度",
+      "nameEn": "Density of Light",
       "notes": ""
     },
     {
@@ -5301,8 +5301,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 II",
-      "nameEn": "Golden Burst Duration II",
+      "nameJa": "金光の余韻",
+      "nameEn": "Golden Afterglow",
       "notes": ""
     },
     {
@@ -5339,8 +5339,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Golden Burst Gimmick Boost III",
+      "nameJa": "金の業の熟成",
+      "nameEn": "Matured Gold Craft",
       "notes": ""
     },
     {
@@ -5381,8 +5381,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時防壁",
-      "nameEn": "Golden Burst: On Hit Rampart",
+      "nameJa": "連撃の薄鎧",
+      "nameEn": "Thin Mail of the Flurry",
       "notes": ""
     },
     {
@@ -5423,8 +5423,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時弱体",
-      "nameEn": "Golden Burst: On Hit Sap",
+      "nameJa": "目を灼く輝き",
+      "nameEn": "Blinding Radiance",
       "notes": ""
     },
     {
@@ -5461,8 +5461,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 IV",
-      "nameEn": "Golden Burst Gimmick Boost IV",
+      "nameJa": "連閃の呼吸",
+      "nameEn": "Breath of the Flurry",
       "notes": ""
     },
     {
@@ -5499,8 +5499,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 III",
-      "nameEn": "Golden Burst Duration III",
+      "nameJa": "残り火の明かり",
+      "nameEn": "Light of Embers",
       "notes": ""
     },
     {
@@ -5537,8 +5537,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 V",
-      "nameEn": "Golden Burst Gimmick Boost V",
+      "nameJa": "尽きせぬ金光",
+      "nameEn": "Unexhausted Golden Light",
       "notes": ""
     },
     {
@@ -5575,8 +5575,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 IV",
-      "nameEn": "Golden Burst Duration IV",
+      "nameJa": "残照の長さ",
+      "nameEn": "Length of the Afterglow",
       "notes": ""
     },
     {
@@ -5613,8 +5613,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 VI",
-      "nameEn": "Golden Burst Gimmick Boost VI",
+      "nameJa": "光の切れ味",
+      "nameEn": "Keenness of Light",
       "notes": ""
     },
     {
@@ -5655,8 +5655,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "薄鎧を固める業",
+          "nameEn": "Mail-Hardening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -5671,8 +5671,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く纏う鎧",
+          "nameEn": "Mail Long Worn"
         }
       ],
       "keystone": null,
@@ -5682,8 +5682,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの分岐",
-      "nameEn": "Golden Burst Branch",
+      "nameJa": "薄鎧の岐路",
+      "nameEn": "Crossroads of Thin Mail",
       "notes": ""
     },
     {
@@ -5715,8 +5715,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの威力",
-      "nameEn": "Golden Burst Power",
+      "nameJa": "重ねる金光の閃",
+      "nameEn": "Layered Golden Flashes",
       "notes": ""
     },
     {
@@ -5754,8 +5754,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Golden Burst Gimmick Boost I",
+      "nameJa": "黄金の手ほどき",
+      "nameEn": "Golden Tutelage",
       "notes": ""
     },
     {
@@ -5792,8 +5792,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 I",
-      "nameEn": "Golden Burst Duration I",
+      "nameJa": "金の残り香",
+      "nameEn": "Lingering Gold Scent",
       "notes": ""
     },
     {
@@ -5830,8 +5830,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Golden Burst Gimmick Boost II",
+      "nameJa": "金光の練磨",
+      "nameEn": "Tempered Golden Light",
       "notes": ""
     },
     {
@@ -5868,8 +5868,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 II",
-      "nameEn": "Golden Burst Duration II",
+      "nameJa": "光の名残",
+      "nameEn": "Remnants of Light",
       "notes": ""
     },
     {
@@ -5906,8 +5906,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Golden Burst Gimmick Boost III",
+      "nameJa": "連閃の手腕",
+      "nameEn": "Flurry Craftsmanship",
       "notes": ""
     },
     {
@@ -5948,8 +5948,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時闇の付与",
-      "nameEn": "Golden Burst: On Hit Apply Dark",
+      "nameJa": "蝕を呼ぶ光",
+      "nameEn": "Light That Calls Eclipse",
       "notes": ""
     },
     {
@@ -5990,8 +5990,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時属性の縁",
-      "nameEn": "Golden Burst: On Hit Element Edge",
+      "nameJa": "彩を焦がす光",
+      "nameEn": "Hue-Searing Light",
       "notes": ""
     },
     {
@@ -6028,8 +6028,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 IV",
-      "nameEn": "Golden Burst Gimmick Boost IV",
+      "nameJa": "黄金の弾け方",
+      "nameEn": "The Way Gold Bursts",
       "notes": ""
     },
     {
@@ -6066,8 +6066,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 III",
-      "nameEn": "Golden Burst Duration III",
+      "nameJa": "長く照らす輝き",
+      "nameEn": "Long-Shining Glow",
       "notes": ""
     },
     {
@@ -6104,8 +6104,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 V",
-      "nameEn": "Golden Burst Gimmick Boost V",
+      "nameJa": "磨かれた光の粒",
+      "nameEn": "Polished Motes of Light",
       "notes": ""
     },
     {
@@ -6142,8 +6142,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 IV",
-      "nameEn": "Golden Burst Duration IV",
+      "nameJa": "消えない閃き",
+      "nameEn": "Unfading Flashes",
       "notes": ""
     },
     {
@@ -6180,8 +6180,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 VI",
-      "nameEn": "Golden Burst Gimmick Boost VI",
+      "nameJa": "金光の深み",
+      "nameEn": "Depths of Golden Light",
       "notes": ""
     },
     {
@@ -6222,8 +6222,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "蝕を深める業",
+          "nameEn": "Eclipse-Deepening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -6238,8 +6238,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く灯す光",
+          "nameEn": "Light Long Kept"
         }
       ],
       "keystone": null,
@@ -6249,8 +6249,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの分岐",
-      "nameEn": "Golden Burst Branch",
+      "nameJa": "光と蝕の岐路",
+      "nameEn": "Crossroads of Light and Eclipse",
       "notes": ""
     },
     {
@@ -6282,8 +6282,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの威力",
-      "nameEn": "Golden Burst Power",
+      "nameJa": "輝きの切っ先",
+      "nameEn": "Cutting Edge of Radiance",
       "notes": ""
     },
     {
@@ -6321,8 +6321,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Golden Burst Gimmick Boost I",
+      "nameJa": "連打の洗練",
+      "nameEn": "Refined Flurries",
       "notes": ""
     },
     {
@@ -6359,8 +6359,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 I",
-      "nameEn": "Golden Burst Duration I",
+      "nameJa": "金光の余韻",
+      "nameEn": "Golden Afterglow",
       "notes": ""
     },
     {
@@ -6397,8 +6397,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Golden Burst Gimmick Boost II",
+      "nameJa": "輝きの極意",
+      "nameEn": "Secrets of Radiance",
       "notes": ""
     },
     {
@@ -6435,8 +6435,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの持続 II",
-      "nameEn": "Golden Burst Duration II",
+      "nameJa": "残り火の明かり",
+      "nameEn": "Light of Embers",
       "notes": ""
     },
     {
@@ -6473,8 +6473,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Golden Burst Gimmick Boost III",
+      "nameJa": "光の密度",
+      "nameEn": "Density of Light",
       "notes": ""
     },
     {
@@ -6515,8 +6515,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・撃破時爆風",
-      "nameEn": "Golden Burst: On Kill Burst",
+      "nameJa": "撃ち砕く金華",
+      "nameEn": "Golden Bloom of Ruin",
       "notes": ""
     },
     {
@@ -6559,8 +6559,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト・命中時共有障壁",
-      "nameEn": "Golden Burst: On Hit Allied Ward",
+      "nameJa": "分け合う光膜",
+      "nameEn": "Light-Film Shared",
       "notes": "one=OncePerActivation(AU2、同じ星・同じactivationIdにつき1回、時間CDなし)。"
     },
     {
@@ -6597,8 +6597,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 IV",
-      "nameEn": "Golden Burst Gimmick Boost IV",
+      "nameJa": "金の業の熟成",
+      "nameEn": "Matured Gold Craft",
       "notes": ""
     },
     {
@@ -6635,8 +6635,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの範囲 I",
-      "nameEn": "Golden Burst Radius I",
+      "nameJa": "広がる爆光",
+      "nameEn": "Widening Blast Light",
       "notes": ""
     },
     {
@@ -6673,8 +6673,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 V",
-      "nameEn": "Golden Burst Gimmick Boost V",
+      "nameJa": "連閃の呼吸",
+      "nameEn": "Breath of the Flurry",
       "notes": ""
     },
     {
@@ -6711,8 +6711,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの範囲 II",
-      "nameEn": "Golden Burst Radius II",
+      "nameJa": "弾ける光の輪",
+      "nameEn": "Bursting Ring of Light",
       "notes": ""
     },
     {
@@ -6749,8 +6749,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの仕掛け強化 VI",
-      "nameEn": "Golden Burst Gimmick Boost VI",
+      "nameJa": "尽きせぬ金光",
+      "nameEn": "Unexhausted Golden Light",
       "notes": ""
     },
     {
@@ -6791,8 +6791,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "大きく咲く金華",
+          "nameEn": "Broadly Blooming Gold"
         },
         {
           "kind": "GimmickParam",
@@ -6807,8 +6807,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く咲く金の華",
+          "nameEn": "Golden Blooms That Last"
         }
       ],
       "keystone": null,
@@ -6818,8 +6818,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバーストの分岐",
-      "nameEn": "Golden Burst Branch",
+      "nameJa": "金華の咲き方",
+      "nameEn": "How the Gold Blooms",
       "notes": ""
     },
     {
@@ -6851,8 +6851,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の威力",
-      "nameEn": "Reduction Power",
+      "nameJa": "冴えた金片の弾道",
+      "nameEn": "Keen Shard Trajectory",
       "notes": ""
     },
     {
@@ -6890,8 +6890,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 I",
-      "nameEn": "Reduction Gimmick Boost I",
+      "nameJa": "還元の手際",
+      "nameEn": "Deft Hands of Reduction",
       "notes": ""
     },
     {
@@ -6928,8 +6928,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 I",
-      "nameEn": "Reduction Duration I",
+      "nameJa": "残る金片の傷",
+      "nameEn": "Wounds the Shards Leave",
       "notes": ""
     },
     {
@@ -6966,8 +6966,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 II",
-      "nameEn": "Reduction Gimmick Boost II",
+      "nameJa": "金片の練成",
+      "nameEn": "Refined Golden Shards",
       "notes": ""
     },
     {
@@ -7004,8 +7004,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 II",
-      "nameEn": "Reduction Duration II",
+      "nameJa": "長く刺さる欠片",
+      "nameEn": "Shards Long Embedded",
       "notes": ""
     },
     {
@@ -7042,8 +7042,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 III",
-      "nameEn": "Reduction Gimmick Boost III",
+      "nameJa": "欠片の精度",
+      "nameEn": "Shard Precision",
       "notes": ""
     },
     {
@@ -7084,8 +7084,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時跳弾",
-      "nameEn": "Reduction: On Hit Ricochet",
+      "nameJa": "欠片の跳ね返り",
+      "nameEn": "Skipping Shards",
       "notes": ""
     },
     {
@@ -7126,8 +7126,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時傷",
-      "nameEn": "Reduction: On Hit Wound",
+      "nameJa": "貫通の刺傷",
+      "nameEn": "Piercing Wounds",
       "notes": ""
     },
     {
@@ -7164,8 +7164,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 IV",
-      "nameEn": "Reduction Gimmick Boost IV",
+      "nameJa": "還元の巧み",
+      "nameEn": "Cunning of Reduction",
       "notes": ""
     },
     {
@@ -7202,8 +7202,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の範囲 I",
-      "nameEn": "Reduction Radius I",
+      "nameJa": "広がる金片の雨",
+      "nameEn": "Widening Shard Rain",
       "notes": ""
     },
     {
@@ -7240,8 +7240,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 V",
-      "nameEn": "Reduction Gimmick Boost V",
+      "nameJa": "金片の切れ上がり",
+      "nameEn": "Rising Shard Edge",
       "notes": ""
     },
     {
@@ -7278,8 +7278,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の範囲 II",
-      "nameEn": "Reduction Radius II",
+      "nameJa": "飛び散る金塵",
+      "nameEn": "Scattering Gold Dust",
       "notes": ""
     },
     {
@@ -7316,8 +7316,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 VI",
-      "nameEn": "Reduction Gimmick Boost VI",
+      "nameJa": "還流の技芸",
+      "nameEn": "Craft of the Return Flow",
       "notes": ""
     },
     {
@@ -7358,8 +7358,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "欠片はもう一体へ",
+          "nameEn": "Shards to One More"
         },
         {
           "kind": "GimmickParam",
@@ -7374,8 +7374,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "降り注ぐ金片の雨",
+          "nameEn": "Raining Gold Shards"
         }
       ],
       "keystone": null,
@@ -7385,8 +7385,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の分岐",
-      "nameEn": "Reduction Branch",
+      "nameJa": "欠片の跳び先",
+      "nameEn": "Where Shards Skip",
       "notes": ""
     },
     {
@@ -7418,8 +7418,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の威力",
-      "nameEn": "Reduction Power",
+      "nameJa": "還元の重い一撃",
+      "nameEn": "Weighted Reduction Blow",
       "notes": ""
     },
     {
@@ -7457,8 +7457,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 I",
-      "nameEn": "Reduction Gimmick Boost I",
+      "nameJa": "欠片研ぎの技",
+      "nameEn": "Art of Shard-Whetting",
       "notes": ""
     },
     {
@@ -7495,8 +7495,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 I",
-      "nameEn": "Reduction Duration I",
+      "nameJa": "金の残響",
+      "nameEn": "Golden Reverberation",
       "notes": ""
     },
     {
@@ -7533,8 +7533,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 II",
-      "nameEn": "Reduction Gimmick Boost II",
+      "nameJa": "還元の熟達",
+      "nameEn": "Mastery of Reduction",
       "notes": ""
     },
     {
@@ -7571,8 +7571,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 II",
-      "nameEn": "Reduction Duration II",
+      "nameJa": "消えぬ貫通痕",
+      "nameEn": "Unfading Piercing Marks",
       "notes": ""
     },
     {
@@ -7609,8 +7609,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 III",
-      "nameEn": "Reduction Gimmick Boost III",
+      "nameJa": "金片の極意",
+      "nameEn": "Secrets of the Shards",
       "notes": ""
     },
     {
@@ -7651,8 +7651,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時防壁",
-      "nameEn": "Reduction: On Hit Rampart",
+      "nameJa": "貫きで得る鎧",
+      "nameEn": "Mail Earned by Piercing",
       "notes": ""
     },
     {
@@ -7693,8 +7693,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時弱体",
-      "nameEn": "Reduction: On Hit Sap",
+      "nameJa": "鈍らせる金片",
+      "nameEn": "Blunting Shards",
       "notes": ""
     },
     {
@@ -7731,8 +7731,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 IV",
-      "nameEn": "Reduction Gimmick Boost IV",
+      "nameJa": "還し撃ちの真髄",
+      "nameEn": "Essence of the Return Shot",
       "notes": ""
     },
     {
@@ -7769,8 +7769,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 III",
-      "nameEn": "Reduction Duration III",
+      "nameJa": "欠片の長い輝き",
+      "nameEn": "Long Shine of Shards",
       "notes": ""
     },
     {
@@ -7807,8 +7807,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 V",
-      "nameEn": "Reduction Gimmick Boost V",
+      "nameJa": "磨かれた欠片",
+      "nameEn": "Polished Shards",
       "notes": ""
     },
     {
@@ -7845,8 +7845,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 IV",
-      "nameEn": "Reduction Duration IV",
+      "nameJa": "還元の余韻",
+      "nameEn": "Afterglow of Reduction",
       "notes": ""
     },
     {
@@ -7883,8 +7883,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 VI",
-      "nameEn": "Reduction Gimmick Boost VI",
+      "nameJa": "還元の型",
+      "nameEn": "Forms of Reduction",
       "notes": ""
     },
     {
@@ -7925,8 +7925,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る金の傷",
+          "nameEn": "Long-Lasting Gold Wounds"
         },
         {
           "kind": "GimmickBoost",
@@ -7941,8 +7941,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "金片に磨きを",
+          "nameEn": "Polished Shardwork"
         }
       ],
       "keystone": null,
@@ -7952,8 +7952,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の分岐",
-      "nameEn": "Reduction Branch",
+      "nameJa": "金片の残し方",
+      "nameEn": "What Shards Leave",
       "notes": ""
     },
     {
@@ -7985,8 +7985,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の威力",
-      "nameEn": "Reduction Power",
+      "nameJa": "貫く金片",
+      "nameEn": "Piercing Shards",
       "notes": ""
     },
     {
@@ -8024,8 +8024,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 I",
-      "nameEn": "Reduction Gimmick Boost I",
+      "nameJa": "金片の深業",
+      "nameEn": "Deep Art of Shards",
       "notes": ""
     },
     {
@@ -8062,8 +8062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 I",
-      "nameEn": "Reduction Duration I",
+      "nameJa": "残る金片の傷",
+      "nameEn": "Wounds the Shards Leave",
       "notes": ""
     },
     {
@@ -8100,8 +8100,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 II",
-      "nameEn": "Reduction Gimmick Boost II",
+      "nameJa": "還元の手際",
+      "nameEn": "Deft Hands of Reduction",
       "notes": ""
     },
     {
@@ -8138,8 +8138,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 II",
-      "nameEn": "Reduction Duration II",
+      "nameJa": "長く刺さる欠片",
+      "nameEn": "Shards Long Embedded",
       "notes": ""
     },
     {
@@ -8176,8 +8176,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 III",
-      "nameEn": "Reduction Gimmick Boost III",
+      "nameJa": "金片の練成",
+      "nameEn": "Refined Golden Shards",
       "notes": ""
     },
     {
@@ -8218,8 +8218,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時冷気の付与",
-      "nameEn": "Reduction: On Hit Apply Cold",
+      "nameJa": "冷たく光る欠片",
+      "nameEn": "Cold-Glinting Shards",
       "notes": ""
     },
     {
@@ -8260,8 +8260,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・命中時属性の縁",
-      "nameEn": "Reduction: On Hit Element Edge",
+      "nameJa": "彩を映す欠片",
+      "nameEn": "Shards Mirroring Hues",
       "notes": ""
     },
     {
@@ -8298,8 +8298,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 IV",
-      "nameEn": "Reduction Gimmick Boost IV",
+      "nameJa": "欠片の精度",
+      "nameEn": "Shard Precision",
       "notes": ""
     },
     {
@@ -8336,8 +8336,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 III",
-      "nameEn": "Reduction Duration III",
+      "nameJa": "金の残響",
+      "nameEn": "Golden Reverberation",
       "notes": ""
     },
     {
@@ -8374,8 +8374,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 V",
-      "nameEn": "Reduction Gimmick Boost V",
+      "nameJa": "還元の巧み",
+      "nameEn": "Cunning of Reduction",
       "notes": ""
     },
     {
@@ -8412,8 +8412,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 IV",
-      "nameEn": "Reduction Duration IV",
+      "nameJa": "消えぬ貫通痕",
+      "nameEn": "Unfading Piercing Marks",
       "notes": ""
     },
     {
@@ -8450,8 +8450,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 VI",
-      "nameEn": "Reduction Gimmick Boost VI",
+      "nameJa": "金片の切れ上がり",
+      "nameEn": "Rising Shard Edge",
       "notes": ""
     },
     {
@@ -8492,8 +8492,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "冷気を深める業",
+          "nameEn": "Cold-Deepening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -8508,8 +8508,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く光る冷気",
+          "nameEn": "Cold Long Glinting"
         }
       ],
       "keystone": null,
@@ -8519,8 +8519,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の分岐",
-      "nameEn": "Reduction Branch",
+      "nameJa": "冷光の岐路",
+      "nameEn": "Crossroads of Cold Light",
       "notes": ""
     },
     {
@@ -8552,8 +8552,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の威力",
-      "nameEn": "Reduction Power",
+      "nameJa": "研ぎ澄まされた還元",
+      "nameEn": "Whetted Reduction",
       "notes": ""
     },
     {
@@ -8591,8 +8591,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 I",
-      "nameEn": "Reduction Gimmick Boost I",
+      "nameJa": "還流の技芸",
+      "nameEn": "Craft of the Return Flow",
       "notes": ""
     },
     {
@@ -8629,8 +8629,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 I",
-      "nameEn": "Reduction Duration I",
+      "nameJa": "欠片の長い輝き",
+      "nameEn": "Long Shine of Shards",
       "notes": ""
     },
     {
@@ -8667,8 +8667,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 II",
-      "nameEn": "Reduction Gimmick Boost II",
+      "nameJa": "欠片研ぎの技",
+      "nameEn": "Art of Shard-Whetting",
       "notes": ""
     },
     {
@@ -8705,8 +8705,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の持続 II",
-      "nameEn": "Reduction Duration II",
+      "nameJa": "還元の余韻",
+      "nameEn": "Afterglow of Reduction",
       "notes": ""
     },
     {
@@ -8743,8 +8743,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 III",
-      "nameEn": "Reduction Gimmick Boost III",
+      "nameJa": "還元の熟達",
+      "nameEn": "Mastery of Reduction",
       "notes": ""
     },
     {
@@ -8786,8 +8786,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・使用時共有障壁",
-      "nameEn": "Reduction: On Use Allied Ward",
+      "nameJa": "射ると広がる膜",
+      "nameEn": "Film Spread by Firing",
       "notes": ""
     },
     {
@@ -8828,8 +8828,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元・撃破時爆風",
-      "nameEn": "Reduction: On Kill Burst",
+      "nameJa": "砕け散る金塵",
+      "nameEn": "Burst of Gold Dust",
       "notes": ""
     },
     {
@@ -8866,8 +8866,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 IV",
-      "nameEn": "Reduction Gimmick Boost IV",
+      "nameJa": "金片の極意",
+      "nameEn": "Secrets of the Shards",
       "notes": ""
     },
     {
@@ -8904,8 +8904,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の範囲 I",
-      "nameEn": "Reduction Radius I",
+      "nameJa": "広がる金片の雨",
+      "nameEn": "Widening Shard Rain",
       "notes": ""
     },
     {
@@ -8942,8 +8942,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 V",
-      "nameEn": "Reduction Gimmick Boost V",
+      "nameJa": "還し撃ちの真髄",
+      "nameEn": "Essence of the Return Shot",
       "notes": ""
     },
     {
@@ -8980,8 +8980,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の範囲 II",
-      "nameEn": "Reduction Radius II",
+      "nameJa": "飛び散る金塵",
+      "nameEn": "Scattering Gold Dust",
       "notes": ""
     },
     {
@@ -9018,8 +9018,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の仕掛け強化 VI",
-      "nameEn": "Reduction Gimmick Boost VI",
+      "nameJa": "磨かれた欠片",
+      "nameEn": "Polished Shards",
       "notes": ""
     },
     {
@@ -9060,8 +9060,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる射界",
+          "nameEn": "Widening Field of Fire"
         },
         {
           "kind": "GimmickParam",
@@ -9076,8 +9076,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "膜の長い効き",
+          "nameEn": "Long-Working Film"
         }
       ],
       "keystone": null,
@@ -9087,8 +9087,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元の分岐",
-      "nameEn": "Reduction Branch",
+      "nameJa": "射ち出す輪の岐路",
+      "nameEn": "Crossroads of the Ring",
       "notes": ""
     },
     {
@@ -9120,8 +9120,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の威力",
-      "nameEn": "Dangerous Theory Power",
+      "nameJa": "冴えきった理論",
+      "nameEn": "Fully Keen Theory",
       "notes": ""
     },
     {
@@ -9159,8 +9159,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 I",
-      "nameEn": "Dangerous Theory Gimmick Boost I",
+      "nameJa": "理論の精緻化",
+      "nameEn": "Sharpened Theories",
       "notes": ""
     },
     {
@@ -9197,8 +9197,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 I",
-      "nameEn": "Dangerous Theory Duration I",
+      "nameJa": "尾を引く理屈",
+      "nameEn": "Theories with Long Tails",
       "notes": ""
     },
     {
@@ -9235,8 +9235,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 II",
-      "nameEn": "Dangerous Theory Gimmick Boost II",
+      "nameJa": "危険な練磨",
+      "nameEn": "Dangerous Tempering",
       "notes": ""
     },
     {
@@ -9273,8 +9273,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 II",
-      "nameEn": "Dangerous Theory Duration II",
+      "nameJa": "長く残る証拠",
+      "nameEn": "Long-Lasting Evidence",
       "notes": ""
     },
     {
@@ -9311,8 +9311,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 III",
-      "nameEn": "Dangerous Theory Gimmick Boost III",
+      "nameJa": "証明の腕前",
+      "nameEn": "Proof by Craft",
       "notes": ""
     },
     {
@@ -9353,8 +9353,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時残響",
-      "nameEn": "Dangerous Theory: On Hit Echo",
+      "nameJa": "後を引く理屈",
+      "nameEn": "Theories That Linger",
       "notes": ""
     },
     {
@@ -9395,8 +9395,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時傷",
-      "nameEn": "Dangerous Theory: On Hit Wound",
+      "nameJa": "検証の傷跡",
+      "nameEn": "Wounds of Proof",
       "notes": ""
     },
     {
@@ -9433,8 +9433,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 IV",
-      "nameEn": "Dangerous Theory Gimmick Boost IV",
+      "nameJa": "理論の深掘り",
+      "nameEn": "Digging Deeper",
       "notes": ""
     },
     {
@@ -9471,8 +9471,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 III",
-      "nameEn": "Dangerous Theory Duration III",
+      "nameJa": "消えぬ論証",
+      "nameEn": "Proofs That Persist",
       "notes": ""
     },
     {
@@ -9509,8 +9509,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 V",
-      "nameEn": "Dangerous Theory Gimmick Boost V",
+      "nameJa": "閃きの精度",
+      "nameEn": "Precision of Insight",
       "notes": ""
     },
     {
@@ -9547,8 +9547,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 IV",
-      "nameEn": "Dangerous Theory Duration IV",
+      "nameJa": "理論の余韻",
+      "nameEn": "Afterglow of Theory",
       "notes": ""
     },
     {
@@ -9585,8 +9585,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 VI",
-      "nameEn": "Dangerous Theory Gimmick Boost VI",
+      "nameJa": "検証の積み重ね",
+      "nameEn": "Accrued Verification",
       "notes": ""
     },
     {
@@ -9627,8 +9627,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "理論に厚みを",
+          "nameEn": "Weightier Theories"
         },
         {
           "kind": "GimmickParam",
@@ -9643,8 +9643,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "尾を引く理屈",
+          "nameEn": "Theories That Trail"
         }
       ],
       "keystone": null,
@@ -9654,8 +9654,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の分岐",
-      "nameEn": "Dangerous Theory Branch",
+      "nameJa": "理論の深め方",
+      "nameEn": "How Theories Deepen",
       "notes": ""
     },
     {
@@ -9687,8 +9687,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の威力",
-      "nameEn": "Dangerous Theory Power",
+      "nameJa": "重い結論の一撃",
+      "nameEn": "Heavy Handed Conclusion",
       "notes": ""
     },
     {
@@ -9726,8 +9726,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 I",
-      "nameEn": "Dangerous Theory Gimmick Boost I",
+      "nameJa": "理論武装",
+      "nameEn": "Armed with Theory",
       "notes": ""
     },
     {
@@ -9764,8 +9764,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 I",
-      "nameEn": "Dangerous Theory Duration I",
+      "nameJa": "残る検証の傷",
+      "nameEn": "Wounds of Verification",
       "notes": ""
     },
     {
@@ -9802,8 +9802,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 II",
-      "nameEn": "Dangerous Theory Gimmick Boost II",
+      "nameJa": "思索の熟成",
+      "nameEn": "Matured Contemplation",
       "notes": ""
     },
     {
@@ -9840,8 +9840,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 II",
-      "nameEn": "Dangerous Theory Duration II",
+      "nameJa": "仮説の長い影",
+      "nameEn": "Long Shadow of Hypotheses",
       "notes": ""
     },
     {
@@ -9878,8 +9878,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 III",
-      "nameEn": "Dangerous Theory Gimmick Boost III",
+      "nameJa": "危険な洞察",
+      "nameEn": "Perilous Insight",
       "notes": ""
     },
     {
@@ -9920,8 +9920,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時闇の付与",
-      "nameEn": "Dangerous Theory: On Hit Apply Dark",
+      "nameJa": "闇の仮説",
+      "nameEn": "Hypothesis of Dark",
       "notes": ""
     },
     {
@@ -9962,8 +9962,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時属性の縁",
-      "nameEn": "Dangerous Theory: On Hit Element Edge",
+      "nameJa": "彩の反証",
+      "nameEn": "Counterproof in Color",
       "notes": ""
     },
     {
@@ -10000,8 +10000,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 IV",
-      "nameEn": "Dangerous Theory Gimmick Boost IV",
+      "nameJa": "理詰めの極意",
+      "nameEn": "Secrets of Pure Logic",
       "notes": ""
     },
     {
@@ -10038,8 +10038,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 III",
-      "nameEn": "Dangerous Theory Duration III",
+      "nameJa": "長く残る定理",
+      "nameEn": "Theorems Long Remembered",
       "notes": ""
     },
     {
@@ -10076,8 +10076,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 V",
-      "nameEn": "Dangerous Theory Gimmick Boost V",
+      "nameJa": "仮説の洗練",
+      "nameEn": "Refined Hypotheses",
       "notes": ""
     },
     {
@@ -10114,8 +10114,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 IV",
-      "nameEn": "Dangerous Theory Duration IV",
+      "nameJa": "尾を引く理屈",
+      "nameEn": "Theories with Long Tails",
       "notes": ""
     },
     {
@@ -10152,8 +10152,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 VI",
-      "nameEn": "Dangerous Theory Gimmick Boost VI",
+      "nameJa": "論の切れ味",
+      "nameEn": "Keenness of Argument",
       "notes": ""
     },
     {
@@ -10194,8 +10194,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "闇理の深み",
+          "nameEn": "Depths of Dark Logic"
         },
         {
           "kind": "GimmickParam",
@@ -10210,8 +10210,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く反証",
+          "nameEn": "Long-Running Counterproofs"
         }
       ],
       "keystone": null,
@@ -10221,8 +10221,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の分岐",
-      "nameEn": "Dangerous Theory Branch",
+      "nameJa": "闇の理の岐路",
+      "nameEn": "Crossroads of Dark Logic",
       "notes": ""
     },
     {
@@ -10254,8 +10254,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の威力",
-      "nameEn": "Dangerous Theory Power",
+      "nameJa": "鋭利な仮説",
+      "nameEn": "Sharp Hypothesis",
       "notes": ""
     },
     {
@@ -10293,8 +10293,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 I",
-      "nameEn": "Dangerous Theory Gimmick Boost I",
+      "nameJa": "知の深淵",
+      "nameEn": "Abyss of Knowledge",
       "notes": ""
     },
     {
@@ -10331,8 +10331,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 I",
-      "nameEn": "Dangerous Theory Duration I",
+      "nameJa": "長く残る証拠",
+      "nameEn": "Long-Lasting Evidence",
       "notes": ""
     },
     {
@@ -10369,8 +10369,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 II",
-      "nameEn": "Dangerous Theory Gimmick Boost II",
+      "nameJa": "理論の精緻化",
+      "nameEn": "Sharpened Theories",
       "notes": ""
     },
     {
@@ -10407,8 +10407,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 II",
-      "nameEn": "Dangerous Theory Duration II",
+      "nameJa": "消えぬ論証",
+      "nameEn": "Proofs That Persist",
       "notes": ""
     },
     {
@@ -10445,8 +10445,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 III",
-      "nameEn": "Dangerous Theory Gimmick Boost III",
+      "nameJa": "危険な練磨",
+      "nameEn": "Dangerous Tempering",
       "notes": ""
     },
     {
@@ -10487,8 +10487,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時冷気の付与",
-      "nameEn": "Dangerous Theory: On Hit Apply Cold",
+      "nameJa": "冷徹な演繹",
+      "nameEn": "Cold Deduction",
       "notes": ""
     },
     {
@@ -10529,8 +10529,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時防壁",
-      "nameEn": "Dangerous Theory: On Hit Rampart",
+      "nameJa": "理論の防壁",
+      "nameEn": "Bulwark of Theory",
       "notes": ""
     },
     {
@@ -10567,8 +10567,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 IV",
-      "nameEn": "Dangerous Theory Gimmick Boost IV",
+      "nameJa": "証明の腕前",
+      "nameEn": "Proof by Craft",
       "notes": ""
     },
     {
@@ -10605,8 +10605,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 III",
-      "nameEn": "Dangerous Theory Duration III",
+      "nameJa": "理論の余韻",
+      "nameEn": "Afterglow of Theory",
       "notes": ""
     },
     {
@@ -10643,8 +10643,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 V",
-      "nameEn": "Dangerous Theory Gimmick Boost V",
+      "nameJa": "理論の深掘り",
+      "nameEn": "Digging Deeper",
       "notes": ""
     },
     {
@@ -10681,8 +10681,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 IV",
-      "nameEn": "Dangerous Theory Duration IV",
+      "nameJa": "残る検証の傷",
+      "nameEn": "Wounds of Verification",
       "notes": ""
     },
     {
@@ -10719,8 +10719,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 VI",
-      "nameEn": "Dangerous Theory Gimmick Boost VI",
+      "nameJa": "閃きの精度",
+      "nameEn": "Precision of Insight",
       "notes": ""
     },
     {
@@ -10761,8 +10761,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く効く冷え",
+          "nameEn": "Chill That Lasts"
         },
         {
           "kind": "GimmickBoost",
@@ -10777,8 +10777,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "防壁を練る業",
+          "nameEn": "Bulwark-Honing Craft"
         }
       ],
       "keystone": null,
@@ -10788,8 +10788,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の分岐",
-      "nameEn": "Dangerous Theory Branch",
+      "nameJa": "冷静と防壁の岐路",
+      "nameEn": "Coolness or Bulwarks",
       "notes": ""
     },
     {
@@ -10821,8 +10821,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の威力",
-      "nameEn": "Dangerous Theory Power",
+      "nameJa": "研摩された論証",
+      "nameEn": "Polished Proof",
       "notes": ""
     },
     {
@@ -10860,8 +10860,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 I",
-      "nameEn": "Dangerous Theory Gimmick Boost I",
+      "nameJa": "検証の積み重ね",
+      "nameEn": "Accrued Verification",
       "notes": ""
     },
     {
@@ -10898,8 +10898,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 I",
-      "nameEn": "Dangerous Theory Duration I",
+      "nameJa": "仮説の長い影",
+      "nameEn": "Long Shadow of Hypotheses",
       "notes": ""
     },
     {
@@ -10936,8 +10936,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 II",
-      "nameEn": "Dangerous Theory Gimmick Boost II",
+      "nameJa": "理論武装",
+      "nameEn": "Armed with Theory",
       "notes": ""
     },
     {
@@ -10974,8 +10974,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の持続 II",
-      "nameEn": "Dangerous Theory Duration II",
+      "nameJa": "長く残る定理",
+      "nameEn": "Theorems Long Remembered",
       "notes": ""
     },
     {
@@ -11012,8 +11012,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 III",
-      "nameEn": "Dangerous Theory Gimmick Boost III",
+      "nameJa": "思索の熟成",
+      "nameEn": "Matured Contemplation",
       "notes": ""
     },
     {
@@ -11054,8 +11054,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・命中時爆風",
-      "nameEn": "Dangerous Theory: On Hit Burst",
+      "nameJa": "結論の爆縮",
+      "nameEn": "Imploding Conclusion",
       "notes": ""
     },
     {
@@ -11096,8 +11096,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論・撃破時火の付与",
-      "nameEn": "Dangerous Theory: On Kill Apply Fire",
+      "nameJa": "焼き付く証左",
+      "nameEn": "Searing Evidence",
       "notes": ""
     },
     {
@@ -11134,8 +11134,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 IV",
-      "nameEn": "Dangerous Theory Gimmick Boost IV",
+      "nameJa": "危険な洞察",
+      "nameEn": "Perilous Insight",
       "notes": ""
     },
     {
@@ -11172,8 +11172,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の範囲 I",
-      "nameEn": "Dangerous Theory Radius I",
+      "nameJa": "広がる結論の波",
+      "nameEn": "Widening Wave of Conclusions",
       "notes": ""
     },
     {
@@ -11210,8 +11210,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 V",
-      "nameEn": "Dangerous Theory Gimmick Boost V",
+      "nameJa": "理詰めの極意",
+      "nameEn": "Secrets of Pure Logic",
       "notes": ""
     },
     {
@@ -11248,8 +11248,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の範囲 II",
-      "nameEn": "Dangerous Theory Radius II",
+      "nameJa": "弾む理論の飛沫",
+      "nameEn": "Splashing Theory",
       "notes": ""
     },
     {
@@ -11286,8 +11286,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の仕掛け強化 VI",
-      "nameEn": "Dangerous Theory Gimmick Boost VI",
+      "nameJa": "仮説の洗練",
+      "nameEn": "Refined Hypotheses",
       "notes": ""
     },
     {
@@ -11328,8 +11328,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "大きく広がる結論",
+          "nameEn": "Broadly Reaching Conclusions"
         },
         {
           "kind": "GimmickBoost",
@@ -11344,8 +11344,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "結論に重みを",
+          "nameEn": "Weightier Conclusions"
         }
       ],
       "keystone": null,
@@ -11355,8 +11355,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論の分岐",
-      "nameEn": "Dangerous Theory Branch",
+      "nameJa": "結論の波及",
+      "nameEn": "Reach of the Conclusion",
       "notes": ""
     },
     {
@@ -11388,8 +11388,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の威力",
-      "nameEn": "Chain Reaction Power",
+      "nameJa": "冴えわたる連鎖環",
+      "nameEn": "Keen Chain Rings",
       "notes": ""
     },
     {
@@ -11427,8 +11427,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 I",
-      "nameEn": "Chain Reaction Gimmick Boost I",
+      "nameJa": "陣形の熟達",
+      "nameEn": "Mastery of the Array",
       "notes": ""
     },
     {
@@ -11465,8 +11465,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 I",
-      "nameEn": "Chain Reaction Duration I",
+      "nameJa": "陣に残る傷跡",
+      "nameEn": "Scars Left in the Array",
       "notes": ""
     },
     {
@@ -11503,8 +11503,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 II",
-      "nameEn": "Chain Reaction Gimmick Boost II",
+      "nameJa": "連鎖の連なり",
+      "nameEn": "Chain upon Chain",
       "notes": ""
     },
     {
@@ -11541,8 +11541,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 II",
-      "nameEn": "Chain Reaction Duration II",
+      "nameJa": "続く連鎖の余韻",
+      "nameEn": "Lingering Chain Afterglow",
       "notes": ""
     },
     {
@@ -11579,8 +11579,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 III",
-      "nameEn": "Chain Reaction Gimmick Boost III",
+      "nameJa": "環の練磨",
+      "nameEn": "Tempered Rings",
       "notes": ""
     },
     {
@@ -11621,8 +11621,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時傷",
-      "nameEn": "Chain Reaction: On Hit Wound",
+      "nameJa": "陣に残る傷",
+      "nameEn": "Wounds Left in the Array",
       "notes": ""
     },
     {
@@ -11663,8 +11663,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時残響",
-      "nameEn": "Chain Reaction: On Hit Echo",
+      "nameJa": "環の残響",
+      "nameEn": "Echo of the Ring",
       "notes": ""
     },
     {
@@ -11701,8 +11701,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 IV",
-      "nameEn": "Chain Reaction Gimmick Boost IV",
+      "nameJa": "陣の精緻な布石",
+      "nameEn": "Precise Array Stones",
       "notes": ""
     },
     {
@@ -11739,8 +11739,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 III",
-      "nameEn": "Chain Reaction Duration III",
+      "nameJa": "消えぬ陣の跡",
+      "nameEn": "Unfading Array Traces",
       "notes": ""
     },
     {
@@ -11777,8 +11777,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 V",
-      "nameEn": "Chain Reaction Gimmick Boost V",
+      "nameJa": "連鎖の深業",
+      "nameEn": "Deep Art of Chains",
       "notes": ""
     },
     {
@@ -11815,8 +11815,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 IV",
-      "nameEn": "Chain Reaction Duration IV",
+      "nameJa": "環の長い残響",
+      "nameEn": "Long Echo of the Ring",
       "notes": ""
     },
     {
@@ -11853,8 +11853,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 VI",
-      "nameEn": "Chain Reaction Gimmick Boost VI",
+      "nameJa": "陣の研き澄まし",
+      "nameEn": "Polished Arraycraft",
       "notes": ""
     },
     {
@@ -11895,8 +11895,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く残る陣傷",
+          "nameEn": "Array Wounds That Last"
         },
         {
           "kind": "GimmickBoost",
@@ -11911,8 +11911,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "陣を練る業",
+          "nameEn": "Array-Honing Craft"
         }
       ],
       "keystone": null,
@@ -11922,8 +11922,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の分岐",
-      "nameEn": "Chain Reaction Branch",
+      "nameJa": "陣の残し方",
+      "nameEn": "What the Array Leaves",
       "notes": ""
     },
     {
@@ -11955,8 +11955,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の威力",
-      "nameEn": "Chain Reaction Power",
+      "nameJa": "陣の重い一撃",
+      "nameEn": "Heavy Blow of the Array",
       "notes": ""
     },
     {
@@ -11994,8 +11994,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 I",
-      "nameEn": "Chain Reaction Gimmick Boost I",
+      "nameJa": "環々の極意",
+      "nameEn": "Secrets of the Rings",
       "notes": ""
     },
     {
@@ -12032,8 +12032,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 I",
-      "nameEn": "Chain Reaction Duration I",
+      "nameJa": "陣の長い効き",
+      "nameEn": "Long Working of the Array",
       "notes": ""
     },
     {
@@ -12070,8 +12070,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 II",
-      "nameEn": "Chain Reaction Gimmick Boost II",
+      "nameJa": "連鎖の手綱",
+      "nameEn": "Reins of the Chain",
       "notes": ""
     },
     {
@@ -12108,8 +12108,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 II",
-      "nameEn": "Chain Reaction Duration II",
+      "nameJa": "残る連鎖の爪痕",
+      "nameEn": "Clawmarks of the Chain",
       "notes": ""
     },
     {
@@ -12146,8 +12146,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 III",
-      "nameEn": "Chain Reaction Gimmick Boost III",
+      "nameJa": "陣の深読み",
+      "nameEn": "Deep Reading of the Array",
       "notes": ""
     },
     {
@@ -12188,8 +12188,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時弱体",
-      "nameEn": "Chain Reaction: On Hit Sap",
+      "nameJa": "陣の重苦",
+      "nameEn": "Oppressive Array",
       "notes": ""
     },
     {
@@ -12230,8 +12230,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時防壁",
-      "nameEn": "Chain Reaction: On Hit Rampart",
+      "nameJa": "陣の城壁",
+      "nameEn": "Ramparts of the Array",
       "notes": ""
     },
     {
@@ -12268,8 +12268,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 IV",
-      "nameEn": "Chain Reaction Gimmick Boost IV",
+      "nameJa": "連鎖反応の洗練",
+      "nameEn": "Refined Reactions",
       "notes": ""
     },
     {
@@ -12306,8 +12306,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 III",
-      "nameEn": "Chain Reaction Duration III",
+      "nameJa": "陣に残る傷跡",
+      "nameEn": "Scars Left in the Array",
       "notes": ""
     },
     {
@@ -12344,8 +12344,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 V",
-      "nameEn": "Chain Reaction Gimmick Boost V",
+      "nameJa": "環の切れ回り",
+      "nameEn": "Keen Turning Rings",
       "notes": ""
     },
     {
@@ -12382,8 +12382,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 IV",
-      "nameEn": "Chain Reaction Duration IV",
+      "nameJa": "続く連鎖の余韻",
+      "nameEn": "Lingering Chain Afterglow",
       "notes": ""
     },
     {
@@ -12420,8 +12420,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 VI",
-      "nameEn": "Chain Reaction Gimmick Boost VI",
+      "nameJa": "陣の熟成",
+      "nameEn": "Matured Array",
       "notes": ""
     },
     {
@@ -12462,8 +12462,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く守り",
+          "nameEn": "Wards That Endure"
         },
         {
           "kind": "GimmickBoost",
@@ -12478,8 +12478,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "守りに厚みを",
+          "nameEn": "Weightier Wards"
         }
       ],
       "keystone": null,
@@ -12489,8 +12489,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の分岐",
-      "nameEn": "Chain Reaction Branch",
+      "nameJa": "陣の守りの岐路",
+      "nameEn": "Crossroads of Array Wards",
       "notes": ""
     },
     {
@@ -12522,8 +12522,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の威力",
-      "nameEn": "Chain Reaction Power",
+      "nameJa": "研ぎ澄まされた陣形",
+      "nameEn": "Whetted Array",
       "notes": ""
     },
     {
@@ -12561,8 +12561,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 I",
-      "nameEn": "Chain Reaction Gimmick Boost I",
+      "nameJa": "連鎖の真髄",
+      "nameEn": "Essence of Chains",
       "notes": ""
     },
     {
@@ -12599,8 +12599,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 I",
-      "nameEn": "Chain Reaction Duration I",
+      "nameJa": "消えぬ陣の跡",
+      "nameEn": "Unfading Array Traces",
       "notes": ""
     },
     {
@@ -12637,8 +12637,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 II",
-      "nameEn": "Chain Reaction Gimmick Boost II",
+      "nameJa": "陣形の熟達",
+      "nameEn": "Mastery of the Array",
       "notes": ""
     },
     {
@@ -12675,8 +12675,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 II",
-      "nameEn": "Chain Reaction Duration II",
+      "nameJa": "環の長い残響",
+      "nameEn": "Long Echo of the Ring",
       "notes": ""
     },
     {
@@ -12713,8 +12713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 III",
-      "nameEn": "Chain Reaction Gimmick Boost III",
+      "nameJa": "連鎖の連なり",
+      "nameEn": "Chain upon Chain",
       "notes": ""
     },
     {
@@ -12755,8 +12755,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時闇の付与",
-      "nameEn": "Chain Reaction: On Hit Apply Dark",
+      "nameJa": "闇を重ねる陣",
+      "nameEn": "Array Layered in Dark",
       "notes": ""
     },
     {
@@ -12797,8 +12797,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・命中時属性の縁",
-      "nameEn": "Chain Reaction: On Hit Element Edge",
+      "nameJa": "彩の交差点",
+      "nameEn": "Crossing of Colors",
       "notes": ""
     },
     {
@@ -12835,8 +12835,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 IV",
-      "nameEn": "Chain Reaction Gimmick Boost IV",
+      "nameJa": "環の練磨",
+      "nameEn": "Tempered Rings",
       "notes": ""
     },
     {
@@ -12873,8 +12873,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 III",
-      "nameEn": "Chain Reaction Duration III",
+      "nameJa": "陣の長い効き",
+      "nameEn": "Long Working of the Array",
       "notes": ""
     },
     {
@@ -12911,8 +12911,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 V",
-      "nameEn": "Chain Reaction Gimmick Boost V",
+      "nameJa": "陣の精緻な布石",
+      "nameEn": "Precise Array Stones",
       "notes": ""
     },
     {
@@ -12949,8 +12949,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 IV",
-      "nameEn": "Chain Reaction Duration IV",
+      "nameJa": "残る連鎖の爪痕",
+      "nameEn": "Clawmarks of the Chain",
       "notes": ""
     },
     {
@@ -12987,8 +12987,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 VI",
-      "nameEn": "Chain Reaction Gimmick Boost VI",
+      "nameJa": "連鎖の深業",
+      "nameEn": "Deep Art of Chains",
       "notes": ""
     },
     {
@@ -13029,8 +13029,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "重ねる光と闇",
+          "nameEn": "Layered Light and Dark"
         },
         {
           "kind": "GimmickParam",
@@ -13045,8 +13045,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く重なる彩",
+          "nameEn": "Hues Long Overlaid"
         }
       ],
       "keystone": null,
@@ -13056,8 +13056,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の分岐",
-      "nameEn": "Chain Reaction Branch",
+      "nameJa": "光と闇の重ね方",
+      "nameEn": "Layering Light and Dark",
       "notes": ""
     },
     {
@@ -13089,8 +13089,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の威力",
-      "nameEn": "Chain Reaction Power",
+      "nameJa": "鋭い連鎖の牙",
+      "nameEn": "Sharp Fangs of the Chain",
       "notes": ""
     },
     {
@@ -13128,8 +13128,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 I",
-      "nameEn": "Chain Reaction Gimmick Boost I",
+      "nameJa": "陣の研き澄まし",
+      "nameEn": "Polished Arraycraft",
       "notes": ""
     },
     {
@@ -13166,8 +13166,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 I",
-      "nameEn": "Chain Reaction Duration I",
+      "nameJa": "陣に残る傷跡",
+      "nameEn": "Scars Left in the Array",
       "notes": ""
     },
     {
@@ -13204,8 +13204,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 II",
-      "nameEn": "Chain Reaction Gimmick Boost II",
+      "nameJa": "環々の極意",
+      "nameEn": "Secrets of the Rings",
       "notes": ""
     },
     {
@@ -13242,8 +13242,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の持続 II",
-      "nameEn": "Chain Reaction Duration II",
+      "nameJa": "続く連鎖の余韻",
+      "nameEn": "Lingering Chain Afterglow",
       "notes": ""
     },
     {
@@ -13280,8 +13280,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 III",
-      "nameEn": "Chain Reaction Gimmick Boost III",
+      "nameJa": "連鎖の手綱",
+      "nameEn": "Reins of the Chain",
       "notes": ""
     },
     {
@@ -13323,8 +13323,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・使用時共有障壁",
-      "nameEn": "Chain Reaction: On Use Allied Ward",
+      "nameJa": "陣の加護",
+      "nameEn": "Blessing of the Array",
       "notes": ""
     },
     {
@@ -13365,8 +13365,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応・撃破時爆風",
-      "nameEn": "Chain Reaction: On Kill Burst",
+      "nameJa": "連鎖の幕引き",
+      "nameEn": "Chain’s Curtain Call",
       "notes": ""
     },
     {
@@ -13403,8 +13403,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 IV",
-      "nameEn": "Chain Reaction Gimmick Boost IV",
+      "nameJa": "陣の深読み",
+      "nameEn": "Deep Reading of the Array",
       "notes": ""
     },
     {
@@ -13441,8 +13441,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の範囲 I",
-      "nameEn": "Chain Reaction Radius I",
+      "nameJa": "広がる陣の輪郭",
+      "nameEn": "Widening Array Outline",
       "notes": ""
     },
     {
@@ -13479,8 +13479,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 V",
-      "nameEn": "Chain Reaction Gimmick Boost V",
+      "nameJa": "連鎖反応の洗練",
+      "nameEn": "Refined Reactions",
       "notes": ""
     },
     {
@@ -13517,8 +13517,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の範囲 II",
-      "nameEn": "Chain Reaction Radius II",
+      "nameJa": "波及する連鎖の輪",
+      "nameEn": "Rippling Chain Rings",
       "notes": ""
     },
     {
@@ -13555,8 +13555,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の仕掛け強化 VI",
-      "nameEn": "Chain Reaction Gimmick Boost VI",
+      "nameJa": "環の切れ回り",
+      "nameEn": "Keen Turning Rings",
       "notes": ""
     },
     {
@@ -13597,8 +13597,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "広がる陣の波",
+          "nameEn": "Widening Array Waves"
         },
         {
           "kind": "GimmickParam",
@@ -13613,8 +13613,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "長く続く加護",
+          "nameEn": "Blessings That Last"
         }
       ],
       "keystone": null,
@@ -13624,8 +13624,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応の分岐",
-      "nameEn": "Chain Reaction Branch",
+      "nameJa": "陣の果ての岐路",
+      "nameEn": "Crossroads of the Array’s End",
       "notes": ""
     },
     {
@@ -13661,8 +13661,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Feathery Dash Gimmick Boost I",
+      "nameJa": "帰路の呼び声",
+      "nameEn": "Call of the Way Home",
       "notes": ""
     },
     {
@@ -13699,8 +13699,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Feathery Dash Gimmick Boost II",
+      "nameJa": "追い風の約束",
+      "nameEn": "Promise of Tailwinds",
       "notes": ""
     },
     {
@@ -13738,8 +13738,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Feathery Dash Gimmick Boost III",
+      "nameJa": "風を読む翼",
+      "nameEn": "Wind-Reading Wings",
       "notes": ""
     },
     {
@@ -13776,8 +13776,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Feathery Dash Gimmick Boost IV",
+      "nameJa": "戻り道の地図",
+      "nameEn": "Map of the Way Back",
       "notes": ""
     },
     {
@@ -13814,8 +13814,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 V",
-      "nameEn": "Feathery Dash Gimmick Boost V",
+      "nameJa": "羽ばたきの名残",
+      "nameEn": "Echo of Wingbeats",
       "notes": ""
     },
     {
@@ -13852,8 +13852,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VI",
-      "nameEn": "Feathery Dash Gimmick Boost VI",
+      "nameJa": "風の便り",
+      "nameEn": "Tidings on the Wind",
       "notes": ""
     },
     {
@@ -13896,8 +13896,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のQ記憶・命中時再充填",
-      "nameEn": "Equipped Q: On Hit Recharge",
+      "nameJa": "命中が呼ぶ帰路",
+      "nameEn": "Hits That Call the Way Home",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。 one=OncePerActivation(AU2、時間CDなし)。"
     },
     {
@@ -13939,8 +13939,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のQ記憶・撃破時再充填",
-      "nameEn": "Equipped Q: On Kill Recharge",
+      "nameJa": "討てば開く帰路",
+      "nameEn": "Kills That Open the Way",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -13977,8 +13977,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VII",
-      "nameEn": "Feathery Dash Gimmick Boost VII",
+      "nameJa": "翼の記憶",
+      "nameEn": "Memory of Wings",
       "notes": ""
     },
     {
@@ -14015,8 +14015,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VIII",
-      "nameEn": "Feathery Dash Gimmick Boost VIII",
+      "nameJa": "羽の導き",
+      "nameEn": "Guidance of Feathers",
       "notes": ""
     },
     {
@@ -14053,8 +14053,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IX",
-      "nameEn": "Feathery Dash Gimmick Boost IX",
+      "nameJa": "風のおくりもの",
+      "nameEn": "Gift of the Wind",
       "notes": ""
     },
     {
@@ -14091,8 +14091,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 X",
-      "nameEn": "Feathery Dash Gimmick Boost X",
+      "nameJa": "軽やかな足取り",
+      "nameEn": "Light Steps",
       "notes": ""
     },
     {
@@ -14129,8 +14129,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 XI",
-      "nameEn": "Feathery Dash Gimmick Boost XI",
+      "nameJa": "風切りの極意",
+      "nameEn": "Secrets of Windcutting",
       "notes": ""
     },
     {
@@ -14176,8 +14176,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "撃って帰る風",
+          "nameEn": "Wind Won by Strikes"
         },
         {
           "kind": "Notable",
@@ -14196,8 +14196,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "討って帰る風",
+          "nameEn": "Wind Won by Kills"
         }
       ],
       "keystone": null,
@@ -14208,8 +14208,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの分岐",
-      "nameEn": "Feathery Dash Branch",
+      "nameJa": "帰路の作り方",
+      "nameEn": "Ways to Forge the Way Home",
       "notes": "選択肢2つはいずれも追加のRecv(n1/n2とは別の受信行)。n1/n2との加算関係は設計表に明記なし。source記憶は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -14245,8 +14245,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Feathery Dash Gimmick Boost I",
+      "nameJa": "黄金の風路",
+      "nameEn": "Golden Windpath",
       "notes": ""
     },
     {
@@ -14283,8 +14283,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Feathery Dash Gimmick Boost II",
+      "nameJa": "羽音の残る空",
+      "nameEn": "Sky of Lingering Wingbeats",
       "notes": ""
     },
     {
@@ -14322,8 +14322,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Feathery Dash Gimmick Boost III",
+      "nameJa": "風のお返し",
+      "nameEn": "Wind’s Repayment",
       "notes": ""
     },
     {
@@ -14360,8 +14360,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Feathery Dash Gimmick Boost IV",
+      "nameJa": "翼を休めぬ旅",
+      "nameEn": "Journey Without Resting Wings",
       "notes": ""
     },
     {
@@ -14398,8 +14398,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 V",
-      "nameEn": "Feathery Dash Gimmick Boost V",
+      "nameJa": "舞い戻る約束",
+      "nameEn": "Promise of the Return",
       "notes": ""
     },
     {
@@ -14436,8 +14436,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VI",
-      "nameEn": "Feathery Dash Gimmick Boost VI",
+      "nameJa": "羽の道標",
+      "nameEn": "Feather Waymarks",
       "notes": ""
     },
     {
@@ -14480,8 +14480,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のR記憶・命中時再充填",
-      "nameEn": "Equipped R: On Hit Recharge",
+      "nameJa": "撃って湧く追風",
+      "nameEn": "Tailwind Raised by Strikes",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。 one=OncePerActivation(AU2、時間CDなし)。"
     },
     {
@@ -14523,8 +14523,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のR記憶・撃破時再充填",
-      "nameEn": "Equipped R: On Kill Recharge",
+      "nameJa": "仕留めて得る風",
+      "nameEn": "Wind Won by the Kill",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -14561,8 +14561,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VII",
-      "nameEn": "Feathery Dash Gimmick Boost VII",
+      "nameJa": "疾風の心得",
+      "nameEn": "Gust Lore",
       "notes": ""
     },
     {
@@ -14599,8 +14599,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VIII",
-      "nameEn": "Feathery Dash Gimmick Boost VIII",
+      "nameJa": "風の循環",
+      "nameEn": "Circulation of Winds",
       "notes": ""
     },
     {
@@ -14637,8 +14637,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IX",
-      "nameEn": "Feathery Dash Gimmick Boost IX",
+      "nameJa": "帰りゆく風",
+      "nameEn": "Homeward Wind",
       "notes": ""
     },
     {
@@ -14675,8 +14675,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 X",
-      "nameEn": "Feathery Dash Gimmick Boost X",
+      "nameJa": "羽ばたきの重ね",
+      "nameEn": "Layered Wingbeats",
       "notes": ""
     },
     {
@@ -14713,8 +14713,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 XI",
-      "nameEn": "Feathery Dash Gimmick Boost XI",
+      "nameJa": "帰路の呼び声",
+      "nameEn": "Call of the Way Home",
       "notes": ""
     },
     {
@@ -14760,8 +14760,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "撃ちての追風",
+          "nameEn": "Tailwind of Strikes"
         },
         {
           "kind": "Notable",
@@ -14780,8 +14780,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "果てての追風",
+          "nameEn": "Tailwind of Kills"
         }
       ],
       "keystone": null,
@@ -14792,8 +14792,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの分岐",
-      "nameEn": "Feathery Dash Branch",
+      "nameJa": "理論からの追風",
+      "nameEn": "Tailwind from Theory",
       "notes": "選択肢2つはいずれも追加のRecv(n1/n2とは別の受信行)。n1/n2との加算関係は設計表に明記なし。source記憶は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -14829,8 +14829,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Feathery Dash Gimmick Boost I",
+      "nameJa": "追い風の約束",
+      "nameEn": "Promise of Tailwinds",
       "notes": ""
     },
     {
@@ -14867,8 +14867,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Feathery Dash Gimmick Boost II",
+      "nameJa": "風を読む翼",
+      "nameEn": "Wind-Reading Wings",
       "notes": ""
     },
     {
@@ -14906,8 +14906,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Feathery Dash Gimmick Boost III",
+      "nameJa": "戻り道の地図",
+      "nameEn": "Map of the Way Back",
       "notes": ""
     },
     {
@@ -14944,8 +14944,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Feathery Dash Gimmick Boost IV",
+      "nameJa": "羽ばたきの名残",
+      "nameEn": "Echo of Wingbeats",
       "notes": ""
     },
     {
@@ -14982,8 +14982,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 V",
-      "nameEn": "Feathery Dash Gimmick Boost V",
+      "nameJa": "風の便り",
+      "nameEn": "Tidings on the Wind",
       "notes": ""
     },
     {
@@ -15020,8 +15020,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VI",
-      "nameEn": "Feathery Dash Gimmick Boost VI",
+      "nameJa": "翼の記憶",
+      "nameEn": "Memory of Wings",
       "notes": ""
     },
     {
@@ -15064,8 +15064,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のIdentity記憶・命中時再充填",
-      "nameEn": "Equipped Identity: On Hit Recharge",
+      "nameJa": "己の型が呼ぶ風",
+      "nameEn": "Wind Called by One’s Form",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。 one=OncePerActivation(AU2、時間CDなし)。"
     },
     {
@@ -15107,8 +15107,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のIdentity記憶・撃破時再充填",
-      "nameEn": "Equipped Identity: On Kill Recharge",
+      "nameJa": "獲物の果ての風",
+      "nameEn": "Wind When Prey Falls",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -15145,8 +15145,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VII",
-      "nameEn": "Feathery Dash Gimmick Boost VII",
+      "nameJa": "羽の導き",
+      "nameEn": "Guidance of Feathers",
       "notes": ""
     },
     {
@@ -15183,8 +15183,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VIII",
-      "nameEn": "Feathery Dash Gimmick Boost VIII",
+      "nameJa": "風のおくりもの",
+      "nameEn": "Gift of the Wind",
       "notes": ""
     },
     {
@@ -15221,8 +15221,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IX",
-      "nameEn": "Feathery Dash Gimmick Boost IX",
+      "nameJa": "軽やかな足取り",
+      "nameEn": "Light Steps",
       "notes": ""
     },
     {
@@ -15259,8 +15259,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 X",
-      "nameEn": "Feathery Dash Gimmick Boost X",
+      "nameJa": "風切りの極意",
+      "nameEn": "Secrets of Windcutting",
       "notes": ""
     },
     {
@@ -15297,8 +15297,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 XI",
-      "nameEn": "Feathery Dash Gimmick Boost XI",
+      "nameJa": "黄金の風路",
+      "nameEn": "Golden Windpath",
       "notes": ""
     },
     {
@@ -15344,8 +15344,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "術撃ちの帰風",
+          "nameEn": "Homeward Wind of Arts"
         },
         {
           "kind": "Notable",
@@ -15364,8 +15364,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "仕留めの帰風",
+          "nameEn": "Homeward Wind of Kills"
         }
       ],
       "keystone": null,
@@ -15376,8 +15376,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの分岐",
-      "nameEn": "Feathery Dash Branch",
+      "nameJa": "己の術の帰り道",
+      "nameEn": "Homeward by One’s Own Art",
       "notes": "選択肢2つはいずれも追加のRecv(n1/n2とは別の受信行)。n1/n2との加算関係は設計表に明記なし。source記憶は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -15413,8 +15413,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Feathery Dash Gimmick Boost I",
+      "nameJa": "羽音の残る空",
+      "nameEn": "Sky of Lingering Wingbeats",
       "notes": ""
     },
     {
@@ -15451,8 +15451,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Feathery Dash Gimmick Boost II",
+      "nameJa": "風のお返し",
+      "nameEn": "Wind’s Repayment",
       "notes": ""
     },
     {
@@ -15490,8 +15490,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Feathery Dash Gimmick Boost III",
+      "nameJa": "翼を休めぬ旅",
+      "nameEn": "Journey Without Resting Wings",
       "notes": ""
     },
     {
@@ -15528,8 +15528,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Feathery Dash Gimmick Boost IV",
+      "nameJa": "舞い戻る約束",
+      "nameEn": "Promise of the Return",
       "notes": ""
     },
     {
@@ -15566,8 +15566,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 V",
-      "nameEn": "Feathery Dash Gimmick Boost V",
+      "nameJa": "羽の道標",
+      "nameEn": "Feather Waymarks",
       "notes": ""
     },
     {
@@ -15604,8 +15604,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VI",
-      "nameEn": "Feathery Dash Gimmick Boost VI",
+      "nameJa": "疾風の心得",
+      "nameEn": "Gust Lore",
       "notes": ""
     },
     {
@@ -15647,8 +15647,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のQ記憶・使用時再充填",
-      "nameEn": "Equipped Q: On Use Recharge",
+      "nameJa": "速射の合間の翼",
+      "nameEn": "Wings Between Volleys",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -15690,8 +15690,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "装着中のR記憶・使用時再充填",
-      "nameEn": "Equipped R: On Use Recharge",
+      "nameJa": "術の後の翼",
+      "nameEn": "Wings After the Art",
       "notes": "記憶欄は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -15728,8 +15728,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VII",
-      "nameEn": "Feathery Dash Gimmick Boost VII",
+      "nameJa": "風の循環",
+      "nameEn": "Circulation of Winds",
       "notes": ""
     },
     {
@@ -15766,8 +15766,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 VIII",
-      "nameEn": "Feathery Dash Gimmick Boost VIII",
+      "nameJa": "帰りゆく風",
+      "nameEn": "Homeward Wind",
       "notes": ""
     },
     {
@@ -15804,8 +15804,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 IX",
-      "nameEn": "Feathery Dash Gimmick Boost IX",
+      "nameJa": "羽ばたきの重ね",
+      "nameEn": "Layered Wingbeats",
       "notes": ""
     },
     {
@@ -15842,8 +15842,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 X",
-      "nameEn": "Feathery Dash Gimmick Boost X",
+      "nameJa": "帰路の呼び声",
+      "nameEn": "Call of the Way Home",
       "notes": ""
     },
     {
@@ -15880,8 +15880,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの仕掛け強化 XI",
-      "nameEn": "Feathery Dash Gimmick Boost XI",
+      "nameJa": "追い風の約束",
+      "nameEn": "Promise of Tailwinds",
       "notes": ""
     },
     {
@@ -15926,8 +15926,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "詠じて整う風",
+          "nameEn": "Wind Set by Chants"
         },
         {
           "kind": "Notable",
@@ -15946,8 +15946,8 @@
           },
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "解き放つ風",
+          "nameEn": "Wind of Release"
         }
       ],
       "keystone": null,
@@ -15958,8 +15958,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "フェザーダッシュの分岐",
-      "nameEn": "Feathery Dash Branch",
+      "nameJa": "術のちの整え",
+      "nameEn": "Settling After the Art",
       "notes": "選択肢2つはいずれも追加のRecv(n1/n2とは別の受信行)。n1/n2との加算関係は設計表に明記なし。source記憶は集合記法(装着中の1記憶へ定義生成時に束縛。同枠の両方を要求しない)。"
     },
     {
@@ -15992,8 +15992,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の威力",
-      "nameEn": "Claw x Golden Burst: Claw Power",
+      "nameJa": "研ぎ澄まされた爪",
+      "nameEn": "Whetted Claw",
       "notes": ""
     },
     {
@@ -16031,8 +16031,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の仕掛け強化 I",
-      "nameEn": "Claw x Golden Burst: Claw Gimmick Boost I",
+      "nameJa": "万物を解く爪",
+      "nameEn": "Claw That Unravels All",
       "notes": ""
     },
     {
@@ -16070,8 +16070,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の持続 I",
-      "nameEn": "Claw x Golden Burst: Claw Duration I",
+      "nameJa": "消えない爪痕",
+      "nameEn": "Lingering Clawmarks",
       "notes": ""
     },
     {
@@ -16104,8 +16104,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの威力",
-      "nameEn": "Claw x Golden Burst: Golden Burst Power",
+      "nameJa": "冴え渡る金光",
+      "nameEn": "Keen Golden Light",
       "notes": ""
     },
     {
@@ -16143,8 +16143,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost I",
+      "nameJa": "光の切れ味",
+      "nameEn": "Keenness of Light",
       "notes": ""
     },
     {
@@ -16182,8 +16182,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの持続 I",
-      "nameEn": "Claw x Golden Burst: Golden Burst Duration I",
+      "nameJa": "残照の長さ",
+      "nameEn": "Length of the Afterglow",
       "notes": ""
     },
     {
@@ -16228,8 +16228,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪・命中時共有障壁",
-      "nameEn": "Claw x Golden Burst: Claw: On Hit Allied Ward",
+      "nameJa": "爪と金の盾",
+      "nameEn": "Shield of Claw and Gold",
       "notes": "PairResolved=B1(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 one=OncePerActivation(AU2)。"
     },
     {
@@ -16272,8 +16272,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪・命中時目眩まし",
-      "nameEn": "Claw x Golden Burst: Claw: On Hit Daze",
+      "nameJa": "金印の目眩し",
+      "nameEn": "Gilded Daze",
       "notes": "PairResolved=B1(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -16311,8 +16311,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の仕掛け強化 II",
-      "nameEn": "Claw x Golden Burst: Claw Gimmick Boost II",
+      "nameJa": "爪研ぎの夜",
+      "nameEn": "Night of Whetstones",
       "notes": ""
     },
     {
@@ -16350,8 +16350,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost II",
+      "nameJa": "黄金の手ほどき",
+      "nameEn": "Golden Tutelage",
       "notes": ""
     },
     {
@@ -16389,8 +16389,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の持続 II",
-      "nameEn": "Claw x Golden Burst: Claw Duration II",
+      "nameJa": "深く残る裂傷",
+      "nameEn": "Deep-Set Tears",
       "notes": ""
     },
     {
@@ -16428,8 +16428,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの持続 II",
-      "nameEn": "Claw x Golden Burst: Golden Burst Duration II",
+      "nameJa": "金の残り香",
+      "nameEn": "Lingering Gold Scent",
       "notes": ""
     },
     {
@@ -16467,8 +16467,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost III",
+      "nameJa": "金光の練磨",
+      "nameEn": "Tempered Golden Light",
       "notes": ""
     },
     {
@@ -16509,8 +16509,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "爪業に磨きを",
+          "nameEn": "Polished Clawcraft"
         },
         {
           "kind": "GimmickParam",
@@ -16525,8 +16525,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "金光の長い尾",
+          "nameEn": "Long Tail of Golden Light"
         }
       ],
       "keystone": null,
@@ -16537,8 +16537,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバーストの分岐",
-      "nameEn": "Claw x Golden Burst Branch",
+      "nameJa": "爪と金の歩み",
+      "nameEn": "Path of Claw and Gold",
       "notes": ""
     },
     {
@@ -16571,8 +16571,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバーストの威力",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst Power",
+      "nameJa": "炸裂の極み",
+      "nameEn": "Height of the Blast",
       "notes": ""
     },
     {
@@ -16610,8 +16610,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst Gimmick Boost I",
+      "nameJa": "連閃の手腕",
+      "nameEn": "Flurry Craftsmanship",
       "notes": ""
     },
     {
@@ -16649,8 +16649,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバーストの持続 I",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst Duration I",
+      "nameJa": "光の名残",
+      "nameEn": "Remnants of Light",
       "notes": ""
     },
     {
@@ -16683,8 +16683,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の威力",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Power",
+      "nameJa": "冴えきった理論",
+      "nameEn": "Fully Keen Theory",
       "notes": ""
     },
     {
@@ -16722,8 +16722,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の仕掛け強化 I",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Gimmick Boost I",
+      "nameJa": "論の切れ味",
+      "nameEn": "Keenness of Argument",
       "notes": ""
     },
     {
@@ -16761,8 +16761,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の持続 I",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Duration I",
+      "nameJa": "尾を引く理屈",
+      "nameEn": "Theories with Long Tails",
       "notes": ""
     },
     {
@@ -16805,8 +16805,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバースト・命中時目眩まし",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst: On Hit Daze",
+      "nameJa": "閃光の目眩し",
+      "nameEn": "Flashing Daze",
       "notes": "PairResolved=B2(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -16849,8 +16849,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバースト・命中時火の付与",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst: On Hit Apply Fire",
+      "nameJa": "導火の輝き",
+      "nameEn": "Igniting Glow",
       "notes": "PairResolved=B2(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -16888,8 +16888,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst Gimmick Boost II",
+      "nameJa": "黄金の弾け方",
+      "nameEn": "The Way Gold Bursts",
       "notes": ""
     },
     {
@@ -16927,8 +16927,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の仕掛け強化 II",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Gimmick Boost II",
+      "nameJa": "知の深淵",
+      "nameEn": "Abyss of Knowledge",
       "notes": ""
     },
     {
@@ -16966,8 +16966,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・ゴールデンバーストの持続 II",
-      "nameEn": "Golden Burst x Dangerous Theory: Golden Burst Duration II",
+      "nameJa": "長く照らす輝き",
+      "nameEn": "Long-Shining Glow",
       "notes": ""
     },
     {
@@ -17005,8 +17005,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の持続 II",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Duration II",
+      "nameJa": "長く残る証拠",
+      "nameEn": "Long-Lasting Evidence",
       "notes": ""
     },
     {
@@ -17044,8 +17044,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論・危険な理論の仕掛け強化 III",
-      "nameEn": "Golden Burst x Dangerous Theory: Dangerous Theory Gimmick Boost III",
+      "nameJa": "理論の精緻化",
+      "nameEn": "Sharpened Theories",
       "notes": ""
     },
     {
@@ -17086,8 +17086,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "輝きに厚みを",
+          "nameEn": "Weightier Radiance"
         },
         {
           "kind": "GimmickParam",
@@ -17102,8 +17102,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "理論の長い余韻",
+          "nameEn": "Theory’s Long Afterglow"
         }
       ],
       "keystone": null,
@@ -17114,8 +17114,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "ゴールデンバースト×危険な理論の分岐",
-      "nameEn": "Golden Burst x Dangerous Theory Branch",
+      "nameJa": "金と理の歩み",
+      "nameEn": "Path of Gold and Theory",
       "notes": ""
     },
     {
@@ -17152,8 +17152,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Dangerous Theory x Feathery Dash: Feathery Dash Gimmick Boost I",
+      "nameJa": "風を読む翼",
+      "nameEn": "Wind-Reading Wings",
       "notes": "旧b0の既存50%受信はB(M)の対象外(設計表)。B(M)は新受信成分にだけ作用。"
     },
     {
@@ -17191,8 +17191,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の仕掛け強化 I",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Gimmick Boost I",
+      "nameJa": "危険な練磨",
+      "nameEn": "Dangerous Tempering",
       "notes": ""
     },
     {
@@ -17230,8 +17230,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の持続 I",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Duration I",
+      "nameJa": "消えぬ論証",
+      "nameEn": "Proofs That Persist",
       "notes": ""
     },
     {
@@ -17268,8 +17268,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Dangerous Theory x Feathery Dash: Feathery Dash Gimmick Boost II",
+      "nameJa": "戻り道の地図",
+      "nameEn": "Map of the Way Back",
       "notes": ""
     },
     {
@@ -17307,8 +17307,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の仕掛け強化 II",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Gimmick Boost II",
+      "nameJa": "証明の腕前",
+      "nameEn": "Proof by Craft",
       "notes": ""
     },
     {
@@ -17346,8 +17346,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の持続 II",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Duration II",
+      "nameJa": "理論の余韻",
+      "nameEn": "Afterglow of Theory",
       "notes": ""
     },
     {
@@ -17391,8 +17391,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論・撃破時再充填 I",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory: On Kill Recharge I",
+      "nameJa": "理論の後の羽ばたき",
+      "nameEn": "Wingbeat After Theory",
       "notes": "PairResolved=B3(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 受け手=フェザーダッシュ。旧b0の既存50%はB(M)対象外で、この受信値だけ別成分として積算。"
     },
     {
@@ -17436,8 +17436,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論・撃破時再充填 II",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory: On Kill Recharge II",
+      "nameJa": "撃破の余勢の翼",
+      "nameEn": "Wings on Kill’s Momentum",
       "notes": "PairResolved=B3(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 受け手=フェザーダッシュ。旧b0の既存50%はB(M)対象外で、この受信値だけ別成分として積算。"
     },
     {
@@ -17475,8 +17475,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Dangerous Theory x Feathery Dash: Feathery Dash Gimmick Boost III",
+      "nameJa": "羽ばたきの名残",
+      "nameEn": "Echo of Wingbeats",
       "notes": ""
     },
     {
@@ -17514,8 +17514,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の仕掛け強化 III",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Gimmick Boost III",
+      "nameJa": "理論の深掘り",
+      "nameEn": "Digging Deeper",
       "notes": ""
     },
     {
@@ -17553,8 +17553,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の持続 III",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Duration III",
+      "nameJa": "残る検証の傷",
+      "nameEn": "Wounds of Verification",
       "notes": ""
     },
     {
@@ -17592,8 +17592,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Dangerous Theory x Feathery Dash: Feathery Dash Gimmick Boost IV",
+      "nameJa": "風の便り",
+      "nameEn": "Tidings on the Wind",
       "notes": ""
     },
     {
@@ -17631,8 +17631,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュ・危険な理論の仕掛け強化 IV",
-      "nameEn": "Dangerous Theory x Feathery Dash: Dangerous Theory Gimmick Boost IV",
+      "nameJa": "閃きの精度",
+      "nameEn": "Precision of Insight",
       "notes": ""
     },
     {
@@ -17673,8 +17673,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "翼を強める風",
+          "nameEn": "Wind That Strengthens Wings"
         },
         {
           "kind": "GimmickParam",
@@ -17689,8 +17689,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "理屈の尾を引かせ",
+          "nameEn": "Let Theories Trail"
         }
       ],
       "keystone": null,
@@ -17701,8 +17701,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "危険な理論×フェザーダッシュの分岐",
-      "nameEn": "Dangerous Theory x Feathery Dash Branch",
+      "nameJa": "理論と翼の歩み",
+      "nameEn": "Path of Theory and Wings",
       "notes": ""
     },
     {
@@ -17739,8 +17739,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・フェザーダッシュの仕掛け強化 I",
-      "nameEn": "Beautiful Threat x Feathery Dash: Feathery Dash Gimmick Boost I",
+      "nameJa": "翼の記憶",
+      "nameEn": "Memory of Wings",
       "notes": "旧b0の既存50%受信はB(M)の対象外(設計表)。B(M)は新受信成分にだけ作用。"
     },
     {
@@ -17778,8 +17778,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Gimmick Boost I",
+      "nameJa": "羽の深業",
+      "nameEn": "Deep Art of Feathers",
       "notes": ""
     },
     {
@@ -17817,8 +17817,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Duration I",
+      "nameJa": "残る羽の重み",
+      "nameEn": "Weight That Feathers Leave",
       "notes": ""
     },
     {
@@ -17855,8 +17855,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・フェザーダッシュの仕掛け強化 II",
-      "nameEn": "Beautiful Threat x Feathery Dash: Feathery Dash Gimmick Boost II",
+      "nameJa": "羽の導き",
+      "nameEn": "Guidance of Feathers",
       "notes": ""
     },
     {
@@ -17894,8 +17894,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Gimmick Boost II",
+      "nameJa": "完璧な羽さばき",
+      "nameEn": "Flawless Featherwork",
       "notes": ""
     },
     {
@@ -17933,8 +17933,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Duration II",
+      "nameJa": "羽の微塵の名残",
+      "nameEn": "Traces of Feather Motes",
       "notes": ""
     },
     {
@@ -17978,8 +17978,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威・撃破時再充填 I",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat: On Kill Recharge I",
+      "nameJa": "羽根が開く退路",
+      "nameEn": "Escape the Feathers Open",
       "notes": "PairResolved=B4(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 受け手=フェザーダッシュ。旧b0の既存50%はB(M)対象外で、この受信値だけ別成分として積算。"
     },
     {
@@ -18023,8 +18023,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威・撃破時再充填 II",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat: On Kill Recharge II",
+      "nameJa": "止めの羽の帰道",
+      "nameEn": "Homeward Path of the Kill",
       "notes": "PairResolved=B4(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 受け手=フェザーダッシュ。旧b0の既存50%はB(M)対象外で、この受信値だけ別成分として積算。"
     },
     {
@@ -18062,8 +18062,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・フェザーダッシュの仕掛け強化 III",
-      "nameEn": "Beautiful Threat x Feathery Dash: Feathery Dash Gimmick Boost III",
+      "nameJa": "風のおくりもの",
+      "nameEn": "Gift of the Wind",
       "notes": ""
     },
     {
@@ -18101,8 +18101,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の仕掛け強化 III",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Gimmick Boost III",
+      "nameJa": "羽さばきの熟達",
+      "nameEn": "Masterful Featherplay",
       "notes": ""
     },
     {
@@ -18140,8 +18140,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の持続 III",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Duration III",
+      "nameJa": "羽音の余韻",
+      "nameEn": "Afterglow of Wingbeats",
       "notes": ""
     },
     {
@@ -18179,8 +18179,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・フェザーダッシュの仕掛け強化 IV",
-      "nameEn": "Beautiful Threat x Feathery Dash: Feathery Dash Gimmick Boost IV",
+      "nameJa": "軽やかな足取り",
+      "nameEn": "Light Steps",
       "notes": ""
     },
     {
@@ -18218,8 +18218,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュ・美しい脅威の仕掛け強化 IV",
-      "nameEn": "Beautiful Threat x Feathery Dash: Beautiful Threat Gimmick Boost IV",
+      "nameJa": "金羽の艶やかさ",
+      "nameEn": "Luster of Golden Plumes",
       "notes": ""
     },
     {
@@ -18260,8 +18260,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "追い風の強め",
+          "nameEn": "Strengthened Tailwinds"
         },
         {
           "kind": "GimmickParam",
@@ -18276,8 +18276,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "羽の長い余韻",
+          "nameEn": "Long Afterglow of Feathers"
         }
       ],
       "keystone": null,
@@ -18288,8 +18288,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×フェザーダッシュの分岐",
-      "nameEn": "Beautiful Threat x Feathery Dash Branch",
+      "nameJa": "翼と羽の歩み",
+      "nameEn": "Path of Wings and Plumes",
       "notes": ""
     },
     {
@@ -18322,8 +18322,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威の威力",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat Power",
+      "nameJa": "鋭さを増す羽撃ち",
+      "nameEn": "Sharpened Feather Strikes",
       "notes": ""
     },
     {
@@ -18361,8 +18361,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威の仕掛け強化 I",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat Gimmick Boost I",
+      "nameJa": "羽の精度",
+      "nameEn": "Precision of Feathers",
       "notes": ""
     },
     {
@@ -18400,8 +18400,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威の持続 I",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat Duration I",
+      "nameJa": "長く残る羽の冷え",
+      "nameEn": "Lingering Feather Chill",
       "notes": ""
     },
     {
@@ -18434,8 +18434,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の威力",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Power",
+      "nameJa": "冴えた金片の弾道",
+      "nameEn": "Keen Shard Trajectory",
       "notes": ""
     },
     {
@@ -18473,8 +18473,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の仕掛け強化 I",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Gimmick Boost I",
+      "nameJa": "還元の型",
+      "nameEn": "Forms of Reduction",
       "notes": ""
     },
     {
@@ -18512,8 +18512,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の持続 I",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Duration I",
+      "nameJa": "残る金片の傷",
+      "nameEn": "Wounds the Shards Leave",
       "notes": ""
     },
     {
@@ -18556,8 +18556,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威・命中時目眩まし",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat: On Hit Daze",
+      "nameJa": "遠印の目眩し",
+      "nameEn": "Dazing Distance Mark",
       "notes": "PairResolved=B5(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -18602,8 +18602,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威・命中時共有障壁",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat: On Hit Allied Ward",
+      "nameJa": "羽と欠片の傘",
+      "nameEn": "Umbrella of Plume and Shard",
       "notes": "PairResolved=B5(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。 one=OncePerActivation(AU2)。"
     },
     {
@@ -18641,8 +18641,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威の仕掛け強化 II",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat Gimmick Boost II",
+      "nameJa": "磨き上げた羽先",
+      "nameEn": "Burnished Feather Tips",
       "notes": ""
     },
     {
@@ -18680,8 +18680,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の仕掛け強化 II",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Gimmick Boost II",
+      "nameJa": "金片の深業",
+      "nameEn": "Deep Art of Shards",
       "notes": ""
     },
     {
@@ -18719,8 +18719,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・美しい脅威の持続 II",
-      "nameEn": "Beautiful Threat x Reduction: Beautiful Threat Duration II",
+      "nameJa": "羽の置き霜",
+      "nameEn": "Frost Left by Feathers",
       "notes": ""
     },
     {
@@ -18758,8 +18758,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の持続 II",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Duration II",
+      "nameJa": "長く刺さる欠片",
+      "nameEn": "Shards Long Embedded",
       "notes": ""
     },
     {
@@ -18797,8 +18797,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元・還元の仕掛け強化 III",
-      "nameEn": "Beautiful Threat x Reduction: Reduction Gimmick Boost III",
+      "nameJa": "還元の手際",
+      "nameEn": "Deft Hands of Reduction",
       "notes": ""
     },
     {
@@ -18839,8 +18839,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "羽技に磨きを",
+          "nameEn": "Polished Featherwork"
         },
         {
           "kind": "GimmickParam",
@@ -18855,8 +18855,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "金片の長い残り",
+          "nameEn": "Long-Lasting Shards"
         }
       ],
       "keystone": null,
@@ -18867,8 +18867,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "美しい脅威×還元の分岐",
-      "nameEn": "Beautiful Threat x Reduction Branch",
+      "nameJa": "羽と欠片の歩み",
+      "nameEn": "Path of Plumes and Shards",
       "notes": ""
     },
     {
@@ -18901,8 +18901,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元の威力",
-      "nameEn": "Reduction x Chain Reaction: Reduction Power",
+      "nameJa": "還元の重い一撃",
+      "nameEn": "Weighted Reduction Blow",
       "notes": ""
     },
     {
@@ -18940,8 +18940,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元の仕掛け強化 I",
-      "nameEn": "Reduction x Chain Reaction: Reduction Gimmick Boost I",
+      "nameJa": "金片の練成",
+      "nameEn": "Refined Golden Shards",
       "notes": ""
     },
     {
@@ -18979,8 +18979,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元の持続 I",
-      "nameEn": "Reduction x Chain Reaction: Reduction Duration I",
+      "nameJa": "金の残響",
+      "nameEn": "Golden Reverberation",
       "notes": ""
     },
     {
@@ -19013,8 +19013,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の威力",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Power",
+      "nameJa": "冴えわたる連鎖環",
+      "nameEn": "Keen Chain Rings",
       "notes": ""
     },
     {
@@ -19052,8 +19052,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の仕掛け強化 I",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Gimmick Boost I",
+      "nameJa": "陣の熟成",
+      "nameEn": "Matured Array",
       "notes": ""
     },
     {
@@ -19091,8 +19091,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の持続 I",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Duration I",
+      "nameJa": "消えぬ陣の跡",
+      "nameEn": "Unfading Array Traces",
       "notes": ""
     },
     {
@@ -19135,8 +19135,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元・命中時目眩まし",
-      "nameEn": "Reduction x Chain Reaction: Reduction: On Hit Daze",
+      "nameJa": "欠片の目眩し",
+      "nameEn": "Shard Daze",
       "notes": "PairResolved=B6(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -19179,8 +19179,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元・命中時闇の付与",
-      "nameEn": "Reduction x Chain Reaction: Reduction: On Hit Apply Dark",
+      "nameJa": "欠片が運ぶ影",
+      "nameEn": "Shadows Carried by Shards",
       "notes": "PairResolved=B6(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -19218,8 +19218,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元の仕掛け強化 II",
-      "nameEn": "Reduction x Chain Reaction: Reduction Gimmick Boost II",
+      "nameJa": "欠片の精度",
+      "nameEn": "Shard Precision",
       "notes": ""
     },
     {
@@ -19257,8 +19257,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の仕掛け強化 II",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Gimmick Boost II",
+      "nameJa": "連鎖の真髄",
+      "nameEn": "Essence of Chains",
       "notes": ""
     },
     {
@@ -19296,8 +19296,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・還元の持続 II",
-      "nameEn": "Reduction x Chain Reaction: Reduction Duration II",
+      "nameJa": "消えぬ貫通痕",
+      "nameEn": "Unfading Piercing Marks",
       "notes": ""
     },
     {
@@ -19335,8 +19335,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の持続 II",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Duration II",
+      "nameJa": "環の長い残響",
+      "nameEn": "Long Echo of the Ring",
       "notes": ""
     },
     {
@@ -19374,8 +19374,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応・連鎖反応の仕掛け強化 III",
-      "nameEn": "Reduction x Chain Reaction: Chain Reaction Gimmick Boost III",
+      "nameJa": "陣形の熟達",
+      "nameEn": "Mastery of the Array",
       "notes": ""
     },
     {
@@ -19416,8 +19416,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "欠片の研ぎ込み",
+          "nameEn": "Whetted Shards"
         },
         {
           "kind": "GimmickParam",
@@ -19432,8 +19432,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "陣の長い効き",
+          "nameEn": "Array’s Long Working"
         }
       ],
       "keystone": null,
@@ -19444,8 +19444,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "還元×連鎖反応の分岐",
-      "nameEn": "Reduction x Chain Reaction Branch",
+      "nameJa": "欠片と陣の歩み",
+      "nameEn": "Path of Shards and Array",
       "notes": ""
     },
     {
@@ -19478,8 +19478,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応の威力",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction Power",
+      "nameJa": "陣の重い一撃",
+      "nameEn": "Heavy Blow of the Array",
       "notes": ""
     },
     {
@@ -19517,8 +19517,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応の仕掛け強化 I",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction Gimmick Boost I",
+      "nameJa": "連鎖の連なり",
+      "nameEn": "Chain upon Chain",
       "notes": ""
     },
     {
@@ -19556,8 +19556,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応の持続 I",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction Duration I",
+      "nameJa": "陣の長い効き",
+      "nameEn": "Long Working of the Array",
       "notes": ""
     },
     {
@@ -19590,8 +19590,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の威力",
-      "nameEn": "Chain Reaction x Claw: Claw Power",
+      "nameJa": "重く沈む爪撃",
+      "nameEn": "Heavy Descending Claw",
       "notes": ""
     },
     {
@@ -19629,8 +19629,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の仕掛け強化 I",
-      "nameEn": "Chain Reaction x Claw: Claw Gimmick Boost I",
+      "nameJa": "爪業の研鑽",
+      "nameEn": "Clawcraft Discipline",
       "notes": ""
     },
     {
@@ -19668,8 +19668,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の持続 I",
-      "nameEn": "Chain Reaction x Claw: Claw Duration I",
+      "nameJa": "爪痕の長い尾",
+      "nameEn": "Long Tail of the Claw",
       "notes": ""
     },
     {
@@ -19712,8 +19712,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応・撃破時爆風",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction: On Kill Burst",
+      "nameJa": "陣で刈る波",
+      "nameEn": "Wave Reaped by the Array",
       "notes": "PairResolved=B7(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -19756,8 +19756,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応・撃破時火の付与",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction: On Kill Apply Fire",
+      "nameJa": "陣に撒く火",
+      "nameEn": "Fire Sown in the Array",
       "notes": "PairResolved=B7(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -19795,8 +19795,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応の仕掛け強化 II",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction Gimmick Boost II",
+      "nameJa": "環の練磨",
+      "nameEn": "Tempered Rings",
       "notes": ""
     },
     {
@@ -19834,8 +19834,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の仕掛け強化 II",
-      "nameEn": "Chain Reaction x Claw: Claw Gimmick Boost II",
+      "nameJa": "解体の深業",
+      "nameEn": "Deep Art of Dismantling",
       "notes": ""
     },
     {
@@ -19873,8 +19873,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・連鎖反応の持続 II",
-      "nameEn": "Chain Reaction x Claw: Chain Reaction Duration II",
+      "nameJa": "残る連鎖の爪痕",
+      "nameEn": "Clawmarks of the Chain",
       "notes": ""
     },
     {
@@ -19912,8 +19912,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の持続 II",
-      "nameEn": "Chain Reaction x Claw: Claw Duration II",
+      "nameJa": "癒えない爪跡",
+      "nameEn": "Unhealing Claw Scars",
       "notes": ""
     },
     {
@@ -19951,8 +19951,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪・爪の仕掛け強化 III",
-      "nameEn": "Chain Reaction x Claw: Claw Gimmick Boost III",
+      "nameJa": "磨かれた爪さばき",
+      "nameEn": "Polished Clawwork",
       "notes": ""
     },
     {
@@ -19993,8 +19993,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "環を固める業",
+          "nameEn": "Ring-Strengthening Craft"
         },
         {
           "kind": "GimmickParam",
@@ -20009,8 +20009,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "爪痕を長く",
+          "nameEn": "Clawmarks Made Long"
         }
       ],
       "keystone": null,
@@ -20021,8 +20021,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "連鎖反応×爪の分岐",
-      "nameEn": "Chain Reaction x Claw Branch",
+      "nameJa": "陣と爪の歩み",
+      "nameEn": "Path of Array and Claw",
       "notes": ""
     },
     {
@@ -20055,8 +20055,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の威力",
-      "nameEn": "Claw x Golden Burst: Claw Power",
+      "nameJa": "断ち割る一爪",
+      "nameEn": "Cleaving Claw",
       "notes": "B8は旧ring.renewalの新しい代替橋(AlliedWardの旧HP再生除去)。b0の段別値は旧ID側。"
     },
     {
@@ -20094,8 +20094,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の仕掛け強化 I",
-      "nameEn": "Claw x Golden Burst: Claw Gimmick Boost I",
+      "nameJa": "解体の型破り",
+      "nameEn": "Unorthodox Dismantling",
       "notes": ""
     },
     {
@@ -20133,8 +20133,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の持続 I",
-      "nameEn": "Claw x Golden Burst: Claw Duration I",
+      "nameJa": "爪の置き土産",
+      "nameEn": "What the Claw Leaves Behind",
       "notes": ""
     },
     {
@@ -20167,8 +20167,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの威力",
-      "nameEn": "Claw x Golden Burst: Golden Burst Power",
+      "nameJa": "重ねる金光の閃",
+      "nameEn": "Layered Golden Flashes",
       "notes": ""
     },
     {
@@ -20206,8 +20206,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 I",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost I",
+      "nameJa": "磨かれた光の粒",
+      "nameEn": "Polished Motes of Light",
       "notes": ""
     },
     {
@@ -20245,8 +20245,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの持続 I",
-      "nameEn": "Claw x Golden Burst: Golden Burst Duration I",
+      "nameJa": "消えない閃き",
+      "nameEn": "Unfading Flashes",
       "notes": ""
     },
     {
@@ -20289,8 +20289,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪・命中時残響",
-      "nameEn": "Claw x Golden Burst: Claw: On Hit Echo",
+      "nameJa": "再生の残響",
+      "nameEn": "Echo of Renewal",
       "notes": "PairResolved=B8(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -20333,8 +20333,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪・命中時冷気の付与",
-      "nameEn": "Claw x Golden Burst: Claw: On Hit Apply Cold",
+      "nameJa": "再生の冷気",
+      "nameEn": "Cold of Renewal",
       "notes": "PairResolved=B8(元の合わせ技が成立した時だけ出力。記憶単体の発動として実装しない)。"
     },
     {
@@ -20372,8 +20372,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の仕掛け強化 II",
-      "nameEn": "Claw x Golden Burst: Claw Gimmick Boost II",
+      "nameJa": "爪の極意",
+      "nameEn": "Secrets of the Claw",
       "notes": ""
     },
     {
@@ -20411,8 +20411,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 II",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost II",
+      "nameJa": "金光の深み",
+      "nameEn": "Depths of Golden Light",
       "notes": ""
     },
     {
@@ -20450,8 +20450,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・爪の持続 II",
-      "nameEn": "Claw x Golden Burst: Claw Duration II",
+      "nameJa": "裂傷の長夜",
+      "nameEn": "Long Night of Wounds",
       "notes": ""
     },
     {
@@ -20489,8 +20489,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの持続 II",
-      "nameEn": "Claw x Golden Burst: Golden Burst Duration II",
+      "nameJa": "金光の余韻",
+      "nameEn": "Golden Afterglow",
       "notes": ""
     },
     {
@@ -20528,8 +20528,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバースト・ゴールデンバーストの仕掛け強化 III",
-      "nameEn": "Claw x Golden Burst: Golden Burst Gimmick Boost III",
+      "nameJa": "連打の洗練",
+      "nameEn": "Refined Flurries",
       "notes": ""
     },
     {
@@ -20570,8 +20570,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "爪の長い残響",
+          "nameEn": "Long Echo of the Claw"
         },
         {
           "kind": "GimmickBoost",
@@ -20586,8 +20586,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": null,
-          "nameEn": null
+          "nameJa": "金光に厚みを",
+          "nameEn": "Weightier Golden Light"
         }
       ],
       "keystone": null,
@@ -20598,8 +20598,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "爪×ゴールデンバーストの分岐",
-      "nameEn": "Claw x Golden Burst Branch",
+      "nameJa": "金と爪の再会",
+      "nameEn": "Gold and Claw Reunited",
       "notes": ""
     },
     {
@@ -20993,8 +20993,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "分解の爪の威力 +2%",
-          "nameEn": "Disintegrating Claw Damage +2%"
+          "nameJa": "爪の冴え",
+          "nameEn": "Keenness of the Claw"
         },
         {
           "kind": "MemoryDamage",
@@ -21006,8 +21006,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "美しい脅威の威力 +2%",
-          "nameEn": "Beautiful Threat Damage +2%"
+          "nameJa": "羽根の冴え",
+          "nameEn": "Keenness of Feathers"
         }
       ],
       "keystone": null,
@@ -21018,8 +21018,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：分解の爪の威力 +2%／美しい脅威の威力 +2%",
-      "nameEn": "Migrated: Choice: Disintegrating Claw Damage +2% / Beautiful Threat Damage +2%",
+      "nameJa": "羽ばたき",
+      "nameEn": "Wingbeat",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(C,2/4/6)またはD(F,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21045,8 +21045,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "分解の爪の威力 +2%",
-          "nameEn": "Disintegrating Claw Damage +2%"
+          "nameJa": "解体の切っ先",
+          "nameEn": "Edge of Dismantling"
         },
         {
           "kind": "MemoryDamage",
@@ -21058,8 +21058,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "美しい脅威の威力 +2%",
-          "nameEn": "Beautiful Threat Damage +2%"
+          "nameJa": "金羽の切っ先",
+          "nameEn": "Edge of Golden Plumes"
         }
       ],
       "keystone": null,
@@ -21070,8 +21070,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：分解の爪の威力 +2%／美しい脅威の威力 +2%",
-      "nameEn": "Migrated: Choice: Disintegrating Claw Damage +2% / Beautiful Threat Damage +2%",
+      "nameJa": "黄金の光",
+      "nameEn": "Golden Light",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(C,2/4/6)またはD(F,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21097,8 +21097,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "分解の爪の威力 +2%",
-          "nameEn": "Disintegrating Claw Damage +2%"
+          "nameJa": "爪の重さ",
+          "nameEn": "Weight of the Claw"
         },
         {
           "kind": "MemoryDamage",
@@ -21110,8 +21110,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "美しい脅威の威力 +2%",
-          "nameEn": "Beautiful Threat Damage +2%"
+          "nameJa": "羽の重さ",
+          "nameEn": "Weight of Feathers"
         }
       ],
       "keystone": null,
@@ -21122,8 +21122,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：分解の爪の威力 +2%／美しい脅威の威力 +2%",
-      "nameEn": "Migrated: Choice: Disintegrating Claw Damage +2% / Beautiful Threat Damage +2%",
+      "nameJa": "黄金の爪",
+      "nameEn": "Golden Claw",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(C,2/4/6)またはD(F,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21149,8 +21149,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "ゴールデンバーストの威力 +2%",
-          "nameEn": "Golden Burst Damage +2%"
+          "nameJa": "金光の冴え",
+          "nameEn": "Keenness of Golden Light"
         },
         {
           "kind": "MemoryDamage",
@@ -21162,8 +21162,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "還元の威力 +2%",
-          "nameEn": "Reduction Damage +2%"
+          "nameJa": "金片の冴え",
+          "nameEn": "Keenness of Shards"
         }
       ],
       "keystone": null,
@@ -21174,8 +21174,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：ゴールデンバーストの威力 +2%／還元の威力 +2%",
-      "nameEn": "Migrated: Choice: Golden Burst Damage +2% / Reduction Damage +2%",
+      "nameJa": "献身",
+      "nameEn": "Devotion",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(G,2/4/6)またはD(D,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21201,8 +21201,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "ゴールデンバーストの威力 +2%",
-          "nameEn": "Golden Burst Damage +2%"
+          "nameJa": "炸裂の切っ先",
+          "nameEn": "Edge of the Blast"
         },
         {
           "kind": "MemoryDamage",
@@ -21214,8 +21214,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "還元の威力 +2%",
-          "nameEn": "Reduction Damage +2%"
+          "nameJa": "還元の切っ先",
+          "nameEn": "Edge of Reduction"
         }
       ],
       "keystone": null,
@@ -21226,8 +21226,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：ゴールデンバーストの威力 +2%／還元の威力 +2%",
-      "nameEn": "Migrated: Choice: Golden Burst Damage +2% / Reduction Damage +2%",
+      "nameJa": "揺るがぬ祈り",
+      "nameEn": "Steadfast Prayer",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(G,2/4/6)またはD(D,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21253,8 +21253,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "ゴールデンバーストの威力 +2%",
-          "nameEn": "Golden Burst Damage +2%"
+          "nameJa": "連閃の重み",
+          "nameEn": "Weight of Flurries"
         },
         {
           "kind": "MemoryDamage",
@@ -21266,8 +21266,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "還元の威力 +2%",
-          "nameEn": "Reduction Damage +2%"
+          "nameJa": "欠片の重み",
+          "nameEn": "Weight of Shards"
         }
       ],
       "keystone": null,
@@ -21278,8 +21278,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：ゴールデンバーストの威力 +2%／還元の威力 +2%",
-      "nameEn": "Migrated: Choice: Golden Burst Damage +2% / Reduction Damage +2%",
+      "nameJa": "聖杯の叡智",
+      "nameEn": "Chalice Wisdom",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(G,2/4/6)またはD(D,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21305,8 +21305,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "危険な理論の威力 +2%",
-          "nameEn": "Dangerous Theory Damage +2%"
+          "nameJa": "理論の冴え",
+          "nameEn": "Keenness of Theory"
         },
         {
           "kind": "MemoryDamage",
@@ -21318,8 +21318,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "連鎖反応の威力 +2%",
-          "nameEn": "Chain Reaction Damage +2%"
+          "nameJa": "連鎖の冴え",
+          "nameEn": "Keenness of Chains"
         }
       ],
       "keystone": null,
@@ -21330,8 +21330,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：危険な理論の威力 +2%／連鎖反応の威力 +2%",
-      "nameEn": "Migrated: Choice: Dangerous Theory Damage +2% / Chain Reaction Damage +2%",
+      "nameJa": "聖杯の守り",
+      "nameEn": "Chalice Guard",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(T,2/4/6)またはD(A,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21357,8 +21357,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "危険な理論の威力 +2%",
-          "nameEn": "Dangerous Theory Damage +2%"
+          "nameJa": "思索の切っ先",
+          "nameEn": "Edge of Thought"
         },
         {
           "kind": "MemoryDamage",
@@ -21370,8 +21370,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "連鎖反応の威力 +2%",
-          "nameEn": "Chain Reaction Damage +2%"
+          "nameJa": "陣の切っ先",
+          "nameEn": "Edge of the Array"
         }
       ],
       "keystone": null,
@@ -21382,8 +21382,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：危険な理論の威力 +2%／連鎖反応の威力 +2%",
-      "nameEn": "Migrated: Choice: Dangerous Theory Damage +2% / Chain Reaction Damage +2%",
+      "nameJa": "再生の循環",
+      "nameEn": "Cycle of Renewal",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(T,2/4/6)またはD(A,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21409,8 +21409,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "危険な理論の威力 +2%",
-          "nameEn": "Dangerous Theory Damage +2%"
+          "nameJa": "一撃の重み",
+          "nameEn": "Weight of a Single Blow"
         },
         {
           "kind": "MemoryDamage",
@@ -21422,8 +21422,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "連鎖反応の威力 +2%",
-          "nameEn": "Chain Reaction Damage +2%"
+          "nameJa": "円環の重み",
+          "nameEn": "Weight of the Ring"
         }
       ],
       "keystone": null,
@@ -21434,8 +21434,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：危険な理論の威力 +2%／連鎖反応の威力 +2%",
-      "nameEn": "Migrated: Choice: Dangerous Theory Damage +2% / Chain Reaction Damage +2%",
+      "nameJa": "最後の祈り",
+      "nameEn": "Last Prayer",
       "notes": "旧効果(旧Stat)を置換。1/2/3段=D(T,2/4/6)またはD(A,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21461,8 +21461,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "分解の爪の威力 +2%",
-          "nameEn": "Disintegrating Claw Damage +2%"
+          "nameJa": "引き裂く冴え",
+          "nameEn": "Tearing Keenness"
         },
         {
           "kind": "MemoryDamage",
@@ -21474,8 +21474,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "美しい脅威の威力 +2%",
-          "nameEn": "Beautiful Threat Damage +2%"
+          "nameJa": "羽撃ちの冴え",
+          "nameEn": "Striking Keenness"
         }
       ],
       "keystone": null,
@@ -21486,8 +21486,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：分解の爪の威力 +2%／美しい脅威の威力 +2%",
-      "nameEn": "Migrated: Choice: Disintegrating Claw Damage +2% / Beautiful Threat Damage +2%",
+      "nameJa": "血の羽ばたき",
+      "nameEn": "Bloodied Wings",
       "notes": "旧効果(汎用攻撃速度のBloodlust)を置換。1/2/3段=D(C,2/4/6)またはD(F,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21513,8 +21513,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "ゴールデンバーストの威力 +2%",
-          "nameEn": "Golden Burst Damage +2%"
+          "nameJa": "光の弾け",
+          "nameEn": "Burst of Light"
         },
         {
           "kind": "MemoryDamage",
@@ -21526,8 +21526,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "還元の威力 +2%",
-          "nameEn": "Reduction Damage +2%"
+          "nameJa": "欠片の弾け",
+          "nameEn": "Burst of Shards"
         }
       ],
       "keystone": null,
@@ -21538,8 +21538,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：選択：ゴールデンバーストの威力 +2%／還元の威力 +2%",
-      "nameEn": "Migrated: Choice: Golden Burst Damage +2% / Reduction Damage +2%",
+      "nameJa": "命を啜る",
+      "nameEn": "Drink of Life",
       "notes": "旧効果(汎用撃破回復のSoulSiphon)を置換。1/2/3段=D(G,2/4/6)またはD(D,2/4/6)の2択。旧複数段Choice(C01 RankedLegacyChoice)。未選択の旧保存は影響段の点を返却。"
     },
     {
@@ -21566,8 +21566,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：分解の爪の仕掛け +2%",
-      "nameEn": "Migrated: Disintegrating Claw Gimmick +2%",
+      "nameJa": "傷を塞ぐ爪",
+      "nameEn": "Wound-Mending Claw",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(C,2)=2/4/6%。"
     },
     {
@@ -21594,8 +21594,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：美しい脅威の仕掛け +2%",
-      "nameEn": "Migrated: Beautiful Threat Gimmick +2%",
+      "nameJa": "命を返す羽根",
+      "nameEn": "Life-Restoring Feather",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(F,2)=2/4/6%。"
     },
     {
@@ -21622,8 +21622,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：ゴールデンバーストの仕掛け +2%",
-      "nameEn": "Migrated: Golden Burst Gimmick +2%",
+      "nameJa": "緩やかな献身",
+      "nameEn": "Gentle Devotion",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(G,2)=2/4/6%。"
     },
     {
@@ -21650,8 +21650,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：還元の仕掛け +2%",
-      "nameEn": "Migrated: Reduction Gimmick +2%",
+      "nameJa": "欠片に残す命",
+      "nameEn": "Life Spared in the Shards",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(D,2)=2/4/6%。"
     },
     {
@@ -21678,8 +21678,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：危険な理論の仕掛け +2%",
-      "nameEn": "Migrated: Dangerous Theory Gimmick +2%",
+      "nameJa": "命を戻す知",
+      "nameEn": "Life-Restoring Wisdom",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(T,2)=2/4/6%。"
     },
     {
@@ -21706,8 +21706,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：連鎖反応の仕掛け +2%",
-      "nameEn": "Migrated: Chain Reaction Gimmick +2%",
+      "nameJa": "陣を巡る命",
+      "nameEn": "Life Circling the Array",
       "notes": "旧HealPower/SacrificeReductionの全体Statを除去。置換後・1段ごと B(A,2)=2/4/6%。"
     },
     {
@@ -21734,8 +21734,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：ゴールデンバーストの仕掛け +2%",
-      "nameEn": "Migrated: Golden Burst Gimmick +2%",
+      "nameJa": "爆光の余力",
+      "nameEn": "Golden Blast Reserve",
       "notes": "旧MemorySurgeによる全体AD/AP強化を除去。置換後・1段ごと B(G,2)=2/4/6%。"
     },
     {
@@ -21762,8 +21762,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：還元の仕掛け +2%",
-      "nameEn": "Migrated: Reduction Gimmick +2%",
+      "nameJa": "還流の余力",
+      "nameEn": "Return Flow Reserve",
       "notes": "旧MemorySurgeによる全体AD/AP強化を除去。置換後・1段ごと B(D,2)=2/4/6%。"
     },
     {
@@ -21790,8 +21790,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：危険な理論の仕掛け +2%",
-      "nameEn": "Migrated: Dangerous Theory Gimmick +2%",
+      "nameJa": "論証の余波",
+      "nameEn": "Proof Aftershock",
       "notes": "旧MemorySurgeによる全体AD/AP強化を除去。置換後・1段ごと B(T,2)=2/4/6%。"
     },
     {
@@ -21818,8 +21818,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：連鎖反応の仕掛け +2%",
-      "nameEn": "Migrated: Chain Reaction Gimmick +2%",
+      "nameJa": "連鎖の余光",
+      "nameEn": "Chain Afterglow",
       "notes": "旧MemorySurgeによる全体AD/AP強化を除去。置換後・1段ごと B(A,2)=2/4/6%。"
     },
     {
@@ -21850,8 +21850,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：理論の命中時に攻撃低下",
-      "nameEn": "Migrated: Theory On Hit Sap",
+      "nameJa": "危険な副作用",
+      "nameEn": "Dangerous Side Effect",
       "notes": "G(T,OnHit,Sap,2/4/6,0,0)。旧OnCrit Heal2(現在HPを押し上げる回復)から移す。Tの確定会心/回復は本体のまま。値は1段ごと2/4/6、Sap上限15%。"
     },
     {
@@ -21882,8 +21882,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：理論の閃き（命中時）",
-      "nameEn": "Migrated: Flash of Theory (On Hit)",
+      "nameJa": "理論の閃き",
+      "nameEn": "Flash of Theory",
       "notes": "旧OnCrit Element30,Arg2(光)をOnHitへ移行。値30/60/90。強化通常攻撃の会心を追加payloadの確定会心と混同しない。ID/最大段/費用は維持。"
     },
     {
@@ -21914,8 +21914,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：危険な結論（命中時）",
-      "nameEn": "Migrated: Dangerous Conclusion (On Hit)",
+      "nameJa": "危険な結論",
+      "nameEn": "Dangerous Conclusion",
       "notes": "旧OnCrit Burst110をOnHitへ移行(1段)。強化通常攻撃の会心を追加payloadの確定会心と混同しない。ID/最大段/費用は維持。"
     },
     {
@@ -21948,8 +21948,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：装着Qの命中でフェザーダッシュ再充填",
-      "nameEn": "Migrated: Equipped Q On Hit Recharges Feathery Dash",
+      "nameJa": "羽ばたきの備え",
+      "nameEn": "Wingbeat Readiness",
       "notes": "Recv(Q*,OnHit,1/2/3) one(AU2、時間CDなし)。旧Guardを除去。Q*=装着中のG/Dの1記憶へ束縛。初期受信源。受け手=フェザーダッシュ(移動は受信のみ)。"
     },
     {
@@ -21978,8 +21978,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：フェザーダッシュの受信 +2%",
-      "nameEn": "Migrated: Feathery Dash Receive +2%",
+      "nameJa": "飛翔の魔力",
+      "nameEn": "Flight Power",
       "notes": "B(M,2/4/6)=1段ごと2%。旧Guard/Statを除去。route.feathery-dash.1を必要条件に含める。M向け固有B(受信量を伸ばす)。"
     },
     {
@@ -22008,8 +22008,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：フェザーダッシュの受信 +2%",
-      "nameEn": "Migrated: Feathery Dash Receive +2%",
+      "nameJa": "羽根の舞い戻り",
+      "nameEn": "Returning Feather Dance",
       "notes": "B(M,2/4/6)=1段ごと2%。旧Guard/Statを除去。route.feathery-dash.1を必要条件に含める。M向け固有B(受信量を伸ばす)。"
     },
     {
@@ -22038,8 +22038,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：フェザーダッシュの受信 +2%",
-      "nameEn": "Migrated: Feathery Dash Receive +2%",
+      "nameJa": "羽ばたきのかく乱",
+      "nameEn": "Fluttering Confusion",
       "notes": "B(M,2/4/6)=1段ごと2%。旧Guard/Statを除去。route.feathery-dash.1を必要条件に含める。M向け固有B(受信量を伸ばす)。"
     },
     {
@@ -22068,8 +22068,8 @@
         "C01",
         "C03"
       ],
-      "nameJa": "既存星の移行：フェザーダッシュの受信 +2%",
-      "nameEn": "Migrated: Feathery Dash Receive +2%",
+      "nameJa": "羽根の加速",
+      "nameEn": "Feather Haste",
       "notes": "B(M,2/4/6)=1段ごと2%。旧Guard/Statを除去。route.feathery-dash.1を必要条件に含める。M向け固有B(受信量を伸ばす)。"
     },
     {
@@ -22102,8 +22102,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：装着Rの命中でフェザーダッシュ再充填",
-      "nameEn": "Migrated: Equipped R On Hit Recharges Feathery Dash",
+      "nameJa": "舞い降りる光",
+      "nameEn": "Descending Light",
       "notes": "Recv(R*,OnHit,2/4/6) one。旧汎用Radiance(Power)を除去。R*=装着中のT/Aの1記憶。受け手=フェザーダッシュ。"
     },
     {
@@ -22135,8 +22135,8 @@
         "C02",
         "C04"
       ],
-      "nameJa": "既存星の移行：装着Identityの撃破でフェザーダッシュ再充填",
-      "nameEn": "Migrated: Equipped Identity On Kill Recharges Feathery Dash",
+      "nameJa": "黄金の風切り",
+      "nameEn": "Golden Windcut",
       "notes": "Recv(I*,OnKill,5)、1段。旧Guard6を除去。I*=装着中のC/Fの1記憶。移動は受信のみ。"
     },
     {
@@ -22175,8 +22175,8 @@
         "C02",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B1（夢輪の剛力）",
-      "nameEn": "Migrated: Pair Combo B1 (Dream Ring Strength)",
+      "nameJa": "夢輪の剛力",
+      "nameEn": "Dream Ring Strength",
       "notes": "B1の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。P(C,G): G OnHitで印→C OnHit、基本攻撃1回につき1回。Burst 40/70/100, Arg0, CD0。C装着時専用。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22215,8 +22215,8 @@
         "C02",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B2（夢輪の叡智）",
-      "nameEn": "Migrated: Pair Combo B2 (Dream Ring Wisdom)",
+      "nameJa": "夢輪の叡智",
+      "nameEn": "Dream Ring Wisdom",
       "notes": "B2の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。P(G,T): T追加payload OnHitで印(旧OnCrit→OnHitへ明示移行)→G OnHit、G1発動1回。Element 100/150/200, Arg2(光), CD0。両Identity成立。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22256,8 +22256,8 @@
         "C04",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B3（夢輪の器）",
-      "nameEn": "Migrated: Pair Combo B3 (Dream Ring Vessel)",
+      "nameJa": "夢輪の器",
+      "nameEn": "Dream Ring Vessel",
       "notes": "B3の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。V(s=T): T OnKill→M受信、印なし。Recharge(M) 30/40/50, Arg0, CD0。受け手=フェザーダッシュ。Mを送り手にしない。旧b0の最大50%はB(M)対象外。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22297,8 +22297,8 @@
         "C04",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B4（夢輪の鎧）",
-      "nameEn": "Migrated: Pair Combo B4 (Dream Ring Armor)",
+      "nameJa": "夢輪の鎧",
+      "nameEn": "Dream Ring Armor",
       "notes": "B4の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。V(s=F): F OnHitで印→F自身OnKill→M。Recharge(M) 30/40/50, Arg0, CD0。Fのとどめに限る。旧b0の最大50%はB(M)対象外。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22337,8 +22337,8 @@
         "C02",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B5（夢輪の生命）",
-      "nameEn": "Migrated: Pair Combo B5 (Dream Ring Life)",
+      "nameJa": "夢輪の生命",
+      "nameEn": "Dream Ring Life",
       "notes": "B5の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。P(F,D): D OnHitで印→F OnHit。Echo 15/25/35, Arg0, CD0。羽根/欠片の個数は不変。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22377,8 +22377,8 @@
         "C02",
         "C05"
       ],
-      "nameJa": "既存星の移行：合わせ技B6（夢輪の鼓動）",
-      "nameEn": "Migrated: Pair Combo B6 (Dream Ring Rhythm)",
+      "nameJa": "夢輪の鼓動",
+      "nameEn": "Dream Ring Rhythm",
       "notes": "B6の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。P(D,A): A OnHitで印→D OnHit、欠片1発1回。Echo 15/25/35, Arg0, CD0。両Identity成立。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22418,8 +22418,8 @@
         "C05",
         "C06"
       ],
-      "nameJa": "既存星の移行：合わせ技B7（夢輪の不屈）",
-      "nameEn": "Migrated: Pair Combo B7 (Dream Ring Resolve)",
+      "nameJa": "夢輪の不屈",
+      "nameEn": "Dream Ring Resolve",
       "notes": "B7の既存合わせ技と3段値を保持(旧Statの値0は実効果として数えない)。P(A,C): C OnHitで印→A OnKill、敵1体1回。Shield 3/5/7, Arg0, CD0。自己回復を追加せず障壁で保護。 印はExpose2/3/4%・4秒・最大1つ・消費なし。出力は元の合わせ技が成立した時のみ(BridgeSuccess)。B(.)は出力に作用するが印のExpose値には掛けない。"
     },
     {
@@ -22461,8 +22461,8 @@
         "C05",
         "C12"
       ],
-      "nameJa": "既存星の移行：合わせ技B8（夢輪の再生）",
-      "nameEn": "Migrated: Pair Combo B8 (Dream Ring Renewal)",
+      "nameJa": "夢輪の再生",
+      "nameEn": "Dream Ring Renewal",
       "notes": "B8: P(C,G): G OnHitで印→C OnHit、基本攻撃1回につき1回(元のC/G接続を維持)。新しい代替橋 AlliedWard 4/5/6/7/8, Arg0, CD0、5段維持。旧HealthRegenを除去(HP再生は除去)。AU3 AlliedWard(C12)。B1/B8の印は互いに独立。"
     },
     {
@@ -22493,8 +22493,8 @@
         "C01",
         "C06"
       ],
-      "nameJa": "既存星の移行：黄金の被膜（再発動待ちなし）",
-      "nameEn": "Migrated: Golden Film (no cooldown)",
+      "nameJa": "黄金の被膜",
+      "nameEn": "Golden Film",
       "notes": "値・発動は維持しCDだけ変更: G OnUse Shield(1段ごと2), Arg0, CD 4秒→0。通常Shieldの有限1枚管理(AU4/C06)で無限加算の理由がなくなるため。"
     },
     {
@@ -22525,8 +22525,8 @@
         "C01",
         "C06"
       ],
-      "nameJa": "既存星の移行：金片の薄衣（再発動待ちなし）",
-      "nameEn": "Migrated: Shard Veil (no cooldown)",
+      "nameJa": "金片の薄衣",
+      "nameEn": "Shard Veil",
       "notes": "値・発動は維持しCDだけ変更: D OnHit Shield(1段ごと1), Arg0, CD 3秒→0。通常Shieldの有限1枚管理(AU4/C06)のため。"
     },
     {
@@ -22557,8 +22557,8 @@
         "C01",
         "C02"
       ],
-      "nameJa": "既存星の移行：分解の光（再発動待ちなし）",
-      "nameEn": "Migrated: Dismantle Light (no cooldown)",
+      "nameJa": "分解の光",
+      "nameEn": "Dismantle Light",
       "notes": "値・発動は維持しCDだけ変更: A OnHit Element 30/60/90, Arg2(光), CD 1秒→0。光上限5を守る。"
     },
     {
@@ -22589,8 +22589,8 @@
         "C07",
         "C15"
       ],
-      "nameJa": "既存星の移行：血の献身",
-      "nameEn": "Migrated: Devotion of Blood",
+      "nameJa": "血の献身",
+      "nameEn": "Blood Devotion",
       "notes": "既存刻印K1の同ID再設計(核位置不変、1段)。旧Overloadの汎用AD/AP上昇を除去し、補正源別倍率(AU5)へ置換。"
     },
     {
@@ -22623,8 +22623,8 @@
         "C11",
         "C15"
       ],
-      "nameJa": "既存星の移行：満ちた聖杯",
-      "nameEn": "Migrated: Overflowing Chalice",
+      "nameJa": "満ちた聖杯",
+      "nameEn": "Brimming Chalice",
       "notes": "既存IDの再設計K2(AU6/C11、核位置不変、1段)。旧OverflowingLifeの高HP/超過回復前提を除去。犠牲0なら発生0で、別の効果には置き換えない。"
     }
   ]
