@@ -39,7 +39,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeMonsterCueMsg> _onMonsterCue;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly Action<DreamforgeBountyReportMsg> _onBountyReport;
-        private readonly Action<PendingTrade> _onSalvageExpired;
+        private readonly Action<PendingTrade> _onTradeExpired;
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
         public bool HasPendingTrades => _trades.PendingCount > 0;
@@ -107,7 +107,7 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
-            _onSalvageExpired = RestoreSalvageTrade;
+            _onTradeExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -161,6 +161,7 @@ namespace SodRpg.Mod
                 case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.");
                 case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
                 case "protocol": return Loc.T("取引できませんでした。ホストと Dreamforge の版が違います。全員が同じ版を入れてください。", "Trade failed: the host runs a different Dreamforge version. Everyone needs the same version.");
+                case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -214,8 +215,11 @@ namespace SodRpg.Mod
 
         private void TickSalvageExpiry()
         {
-            if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) <= 0) return;
-            Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
+            // GLM (mp-ui-save #7): every pending trade times out and is rolled back, not only salvage.
+            if (_trades.Expire(Time.unscaledTime, _onTradeExpired) <= 0) return;
+            Emit(new GameEvent(EventKind.Warning, Loc.T(
+                "取引の応答がなかったため、待ちを解除しました。ゴールドとドリームダストの増減をご確認ください。",
+                "No trade response; the pending trade was released. Please check your gold and Dream Dust.")));
             SaveNow();
         }
 
@@ -582,7 +586,7 @@ namespace SodRpg.Mod
             if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
-            return SendTrade(_trades.Begin(TradeKind.MerchantGold, price, 0, 0));
+            return SendTrade(_trades.BeginMerchant(Profile.Run?.Heat ?? 0, price, Time.unscaledTime));
         }
 
         public string ConvertDust()
@@ -591,7 +595,7 @@ namespace SodRpg.Mod
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
             if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
             if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
-            return SendTrade(_trades.Begin(TradeKind.DustToShards, 0, Math.Min(dust, Economy.DustPerBatch * 10), 0));
+            return SendTrade(_trades.BeginDustToShards(Math.Min(dust / Economy.DustPerBatch, Economy.MaxBatchesPerTrade), Time.unscaledTime));
         }
 
         private string SendTrade(PendingTrade t)
@@ -603,9 +607,10 @@ namespace SodRpg.Mod
             }
             try
             {
+                TradeWire.Encode(t, out int spendGold, out int spendDust, out int earnDust);
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
                 {
-                    token = t.Token, spendGold = t.SpendGold, spendDust = t.SpendDust, earnDust = t.EarnDust, protocol = Protocol.Version,
+                    token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
                 });
             }
             catch (Exception ex)
@@ -667,7 +672,7 @@ namespace SodRpg.Mod
                     return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
                 var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
-                return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid, Time.unscaledTime));
+                return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
             }
             catch (InvalidOperationException ex)
             {

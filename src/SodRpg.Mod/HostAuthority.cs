@@ -1132,33 +1132,6 @@ namespace SodRpg.Mod
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
-        /// <summary>本体の通貨での取引。残高を確かめて支払い・受け取りを行い、結果を返す（通貨を動かすのはホストだけ）。</summary>
-        private void OnTrade(DreamforgeTradeMsg msg, DewPlayer caller)
-        {
-            if (caller == null || msg == null) return;
-            bool ok = false;
-            string reason = null;
-            try
-            {
-                if (msg.protocol != Protocol.Version) reason = "protocol";
-                else if (msg.spendGold < 0 || msg.spendDust < 0 || msg.earnDust < 0 || msg.earnDust > Economy.MaxDustEarnPerTrade) reason = "invalid";
-                else if (caller.gold < msg.spendGold) reason = "gold";
-                else if (caller.dreamDust < msg.spendDust) reason = "dust";
-                else
-                {
-                    if (msg.spendGold > 0) caller.SpendGold(msg.spendGold);
-                    if (msg.spendDust > 0) caller.SpendDreamDust(msg.spendDust);
-                    if (msg.earnDust > 0) caller.EarnDreamDust(msg.earnDust);
-                    ok = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                reason = "error";
-                Log.Error("Host: OnTrade " + ex.Message);
-            }
-            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeTradeResultMsg { token = msg.token, ok = ok, reason = reason });
-        }
 
         private List<CurseStatusEffect> _curseCache;
 
