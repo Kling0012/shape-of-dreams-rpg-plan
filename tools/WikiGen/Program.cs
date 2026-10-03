@@ -293,9 +293,8 @@ string PageLinks(Slot slot, List<string> names) =>
     Write("start", sb.ToString());
 
     var pe = new StringBuilder();
-    pe.Append("^ ウィキ ^ 内容 ^\n");
-    pe.Append($"|Dreamforge RPG|[[dreamforge:start|⚔ Dreamforge RPG を開く]]|\n");
-    pe.Append($"|収録数|土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {allPowers.Count}（v{modVersion}）|\n");
+    // 総合ポータルの表の1行（行の中の改行は DokuWiki の「\\ 」）。
+    pe.Append($"|**Dreamforge RPG**\\\\ Shape of Dreams の MOD|[[dreamforge:start|⚔ Dreamforge RPG を開く]]\\\\ 収録数：土台 {Content.Bases.Count} / 固有品 {Content.Uniques.Count} / セット {Content.Sets.Count} / 固有効果 {allPowers.Count}（v{modVersion}）|\n");
     WriteRaw("portal_extra.txt", pe.ToString());
 
     var se = new StringBuilder();
