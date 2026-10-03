@@ -106,6 +106,11 @@ namespace SodRpg.Mod
             _seenInit = true;
         }
 
+        private bool _secureHidden;
+
+        /// <summary>確保地点の画面を隠す／出す。何度でも切り替えられる。次の確保地点では出し直しになる。</summary>
+        public void ToggleSecurePanel() => _secureHidden = !_secureHidden;
+
         public void Toggle()
         {
             Open = !Open;
@@ -267,7 +272,13 @@ namespace SodRpg.Mod
                         DrawNightmareLabels(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
-                    if (layout && !Open && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
+                    bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
+                    if (!secureWait) _secureHidden = false;
+                    if (layout && !Open && secureWait)
+                    {
+                        if (_secureHidden) DrawSecureCollapsed(w, cfg);
+                        else DrawSecurePrompt(w, h, cfg);
+                    }
                 }
                 if (repaint) DrawToasts(w, h);
                 // メニューを開いている間は、確保地点と遠征結果のパネルを隠す（重なった下のボタンを押せないように）。
@@ -424,6 +435,18 @@ namespace SodRpg.Mod
             return tags == VariantTag.None ? null : Variants.ZoneNotice(tags);
         }
 
+        /// <summary>確保地点の画面を隠している間の、小さな呼び出しボタン。</summary>
+        private void DrawSecureCollapsed(float w, DreamforgeConfig cfg)
+        {
+            var rect = new Rect(w / 2 - 190, 12, 380, 44);
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            if (GUILayout.Button(Loc.T($"確保地点を開く [{cfg.securePanelKey}]　（確保 [{cfg.secureKey}]・潜行 [{cfg.delveKey}]）",
+                    $"Open secure point [{cfg.securePanelKey}]  (Secure [{cfg.secureKey}] · Delve [{cfg.delveKey}])"), _st.Button, GUILayout.Height(28)))
+                _secureHidden = false;
+            GUILayout.EndArea();
+        }
+
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
             var run = _s.Profile.Run;
@@ -484,6 +507,8 @@ namespace SodRpg.Mod
                 Open = true;
                 _tab = 0;
             }
+            if (GUILayout.Button(Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]"), _st.Button, GUILayout.Height(34)))
+                _secureHidden = true;
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);

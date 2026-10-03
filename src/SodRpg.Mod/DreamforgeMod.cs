@@ -134,6 +134,8 @@ namespace SodRpg.Mod
             if (Pressed(kb, config.menuKey)) _ui.Toggle();
             if (_ui.Open && kb.escapeKey.wasPressedThisFrame) _ui.Close();
             var run = _session.Profile.Run;
+            // 確保地点の画面は、隠して戦場を見たり、また出したりを何度でもできる（ゾーンを進むたびに出し直しになる）。
+            if (run != null && run.AwaitingChoice && _session.ActiveRunId != null && Pressed(kb, config.securePanelKey)) _ui.ToggleSecurePanel();
             if (run != null && run.AwaitingChoice && _session.ActiveRunId != null && !_session.HasPendingTrades)
             {
                 if (Pressed(kb, config.secureKey)) _ui.SetStatus(_session.Secure());

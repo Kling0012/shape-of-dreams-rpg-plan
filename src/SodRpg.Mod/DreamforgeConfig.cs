@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         [LabelText("Delve key / 深く潜るキー")]
         public Key delveKey = Key.F8;
 
+        [LabelText("Secure point panel key / 確保地点の画面を隠す・出すキー")]
+        public Key securePanelKey = Key.F9;
+
         [LabelText("Japanese UI / 日本語表示")]
         public bool japanese = true;
 
