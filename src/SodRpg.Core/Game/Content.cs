@@ -308,6 +308,17 @@ namespace SodRpg.Core.Game
         public const int RetuneChoices = 3;
         /// <summary>合成の結果の枠を選ぶときの欠片の倍率（%）。</summary>
         public const int TransmuteTargetCostPct = 150;
+        /// <summary>合成に必要な同じレア度の遺物の数（r → r+1）。</summary>
+        public static int TransmuteInputs(Rarity r)
+        {
+            switch (r)
+            {
+                case Rarity.Common: return 5;
+                case Rarity.Uncommon: return 5;
+                case Rarity.Rare: return 6;
+                default: return 8;
+            }
+        }
         /// <summary>覚醒の段の数（v1.27 で1段から3段に）。</summary>
         public const int MaxAwakenLevel = 3;
         private static readonly int[] AwakenThresholds = { 0, 2000, 6000, 15000 }; // 1回の遠征で約460溜まる（BalanceSim の前提）。約4・13・32回

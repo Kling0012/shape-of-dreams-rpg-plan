@@ -111,6 +111,7 @@ namespace SodRpg.Core.Game
                 .Add("dreamLevel", (long)p.DreamLevel)
                 .Add("dreamXp", (long)p.DreamXp)
                 .Add("epicPity", (long)p.EpicPity)
+                .Add("bulkSalvageMax", (long)p.BulkSalvageMaxRarity)
                 .Add("bestItemLevel", (long)p.BestItemLevel)
                 .Add("japanese", p.Japanese)
                 .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
@@ -229,6 +230,7 @@ namespace SodRpg.Core.Game
                 DreamLevel = Clamp(Long(b, "dreamLevel"), 1, Content.MaxDreamLevel),
                 DreamXp = Clamp(Long(b, "dreamXp"), 0, int.MaxValue),
                 EpicPity = Clamp(Long(b, "epicPity"), 0, 1000),
+                BulkSalvageMaxRarity = b.TryGet("bulkSalvageMax", out object bsm) && bsm is long bsl ? (Rarity)Clamp(bsl, (int)Rarity.Common, (int)Rarity.Epic) : Rarity.Uncommon,
                 BestItemLevel = Clamp(Long(b, "bestItemLevel"), 1, Content.MaxItemLevel),
                 Japanese = Bool(b, "japanese", true),
             };

@@ -1199,11 +1199,17 @@ namespace SodRpg.Core.Game
                 $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
         }
 
-        /// <summary>まとめて分解の対象（コモンとアンコモンで、鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
+        /// <summary>まとめて分解の対象（設定したレア度まで。鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
         public static List<Relic> BulkSalvageCandidates(Profile p, TradeLedger trades = null)
         {
             string offered = p.RetuneOffer?.Uid;
-            return p.Stash.Where(x => x.Rarity <= Rarity.Uncommon && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).ToList();
+            return p.Stash.Where(x => x.Rarity <= p.BulkSalvageMaxRarity && x.Rarity < Rarity.Legendary && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).ToList();
+        }
+
+        public static void SetBulkSalvageMaxRarity(Profile p, Rarity r)
+        {
+            if (r < Rarity.Common || r > Rarity.Epic) throw new ArgumentOutOfRangeException(nameof(r), Loc.T("まとめて分解はコモンからエピックまでです。", "Bulk salvage covers Common to Epic only."));
+            p.BulkSalvageMaxRarity = r;
         }
 
         /// <summary>候補を全部分解する。成功した物だけを数えて、得た欠片と調律石は素材の実際の増分で測る。</summary>
@@ -1458,7 +1464,10 @@ namespace SodRpg.Core.Game
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
         }
 
-        public static int TransmuteCost(Rarity r) => 10 * ((int)r + 1);
+        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? 150 : 10 * ((int)r + 1);
+
+        /// <summary>合成で要る調律石（固有品への合成だけ）。</summary>
+        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? 2 : 0;
 
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
         public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)
@@ -1467,20 +1476,24 @@ namespace SodRpg.Core.Game
             return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).OrderBy(x => x.Score).ToList();
         }
 
-        /// <summary>同じレア度の遺物3つ（弱い順）を1つ上のレア度の遺物1つにする。エピック3つからは固有品。</summary>
+        /// <summary>同じレア度の遺物 Content.TransmuteInputs 個（弱い順）を1つ上のレア度の遺物1つにする。エピックからは固有品。</summary>
         /// <summary>合成の費用。結果の枠を選ぶと TransmuteTargetCostPct 倍。</summary>
         public static int TransmuteCost(Rarity r, bool targeted) => targeted ? TransmuteCost(r) * Content.TransmuteTargetCostPct / 100 : TransmuteCost(r);
 
         public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null, Slot? target = null)
         {
             if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
-            var parts = TransmuteCandidates(p, r, trades).Take(3).ToList();
-            if (parts.Count < 3) throw new InvalidOperationException(Loc.T("材料が3つ足りません（鍵なし・未装着の同じレア度）。", "Need 3 unlocked, unequipped relics of the same rarity."));
+            int need = Content.TransmuteInputs(r);
+            var parts = TransmuteCandidates(p, r, trades).Take(need).ToList();
+            if (parts.Count < need) throw new InvalidOperationException(Loc.T($"材料が足りません（鍵なし・未装着の同じレア度が{need}つ必要）。", $"Need {need} unlocked, unequipped relics of the same rarity."));
             int cost = TransmuteCost(r, target != null);
+            int tuningCost = TransmuteTuning(r);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
+            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
             int ilvl = parts.Max(x => x.ItemLevel);
             foreach (var x in parts) p.Stash.Remove(x);
             p.AddMaterial(Materials.Shard, -cost);
+            if (tuningCost > 0) p.AddMaterial(Materials.Tuning, -tuningCost);
             var rng = p.TakeRng();
             var result = Loot.RollRelic(rng, r + 1, ilvl, target, p.Focus, p.Stash, p.Run?.Satchel);
             p.StoreRng(rng);

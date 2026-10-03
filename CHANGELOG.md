@@ -12,6 +12,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ### 実装済み / Implemented
 
+- **まとめて分解するレア度を選べるようになりました**（鍛冶タブ）：コモンまで／アンコモンまで／レアまで／エピックまで。固有品・鍵つき・装着中の遺物は対象外です。レア以上を含むときは、件数を示したうえで2回押しで確定します。 / **Choose the rarity for bulk salvage**: up to Common / Uncommon / Rare / Epic; legendaries, locked and equipped relics are never included.
 - **夢の深さで部屋が増える**：深さ1ごとに各ゾーンの部屋（ノード）を2個ずつ増やします（深さ5で+10）。ホストのゾーン生成時にだけ一時的にゲーム側のノード数オフセットへ足し、生成が例外で終わっても必ず元に戻します。特別生成のゾーンと深さ0は変わりません。 / **Depth adds rooms**: each depth step adds 2 rooms (world nodes) per zone (+10 at depth 5). The host adds to the game's node-count offset only for the duration of zone generation and restores it even if generation throws; special-generation zones and depth 0 are unchanged.
 - **星のポイント上限を300に**（従来150）。経験の曲線は変えず、300個目まで取れるようにしました。あわせて「夢の圧」の星の係数を半分にし、300星で従来の150星と同じ圧になります。 / Star points are capped at 300 (was 150); the XP curve is unchanged. The Dream Pressure star coefficient is halved, so 300 stars give the same pressure that 150 gave before.
 - **大きな星図の描画**：線は1本ごとに回転した四角1枚で描き、画面に見える物だけを処理し、重なる星の名前は間引きます。 / **Large-map rendering**: each line is one rotated quad, only visible items are processed, and overlapping names are thinned out.

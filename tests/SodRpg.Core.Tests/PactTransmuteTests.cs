@@ -168,8 +168,8 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Transmute_consumes_three_weakest_and_yields_next_rarity()
         {
-            var p = WithStash(Rarity.Rare, 5);
-            var weakest = Rules.TransmuteCandidates(p, Rarity.Rare).Take(3).Select(x => x.Uid).ToList();
+            var p = WithStash(Rarity.Rare, Content.TransmuteInputs(Rarity.Rare) + 2);
+            var weakest = Rules.TransmuteCandidates(p, Rarity.Rare).Take(Content.TransmuteInputs(Rarity.Rare)).Select(x => x.Uid).ToList();
             Rules.Transmute(p, Rarity.Rare);
             Assert.Equal(3, p.Stash.Count);
             Assert.DoesNotContain(p.Stash, x => weakest.Contains(x.Uid));
@@ -180,18 +180,19 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Transmute_skips_locked_and_equipped_relics()
         {
-            var p = WithStash(Rarity.Common, 4);
+            var p = WithStash(Rarity.Common, Content.TransmuteInputs(Rarity.Common) + 1);
             Rules.ToggleLock(p, p.Stash[0].Uid);
             Rules.Equip(p, "H", p.Stash[1].Uid);
-            Assert.Equal(2, Rules.TransmuteCandidates(p, Rarity.Common).Count);
+            Assert.Equal(Content.TransmuteInputs(Rarity.Common) - 1, Rules.TransmuteCandidates(p, Rarity.Common).Count);
             Assert.Throws<InvalidOperationException>(() => Rules.Transmute(p, Rarity.Common));
-            Assert.Equal(4, p.Stash.Count);
+            Assert.Equal(Content.TransmuteInputs(Rarity.Common) + 1, p.Stash.Count);
         }
 
         [Fact]
-        public void Three_epics_become_a_legendary_and_legendaries_cannot_transmute()
+        public void Epics_become_a_legendary_and_legendaries_cannot_transmute()
         {
-            var p = WithStash(Rarity.Epic, 3);
+            var p = WithStash(Rarity.Epic, Content.TransmuteInputs(Rarity.Epic));
+            p.AddMaterial(Materials.Tuning, Rules.TransmuteTuning(Rarity.Epic));
             Rules.Transmute(p, Rarity.Epic);
             var r = Assert.Single(p.Stash);
             Assert.Equal(Rarity.Legendary, r.Rarity);
@@ -203,10 +204,10 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Transmute_needs_shards()
         {
-            var p = WithStash(Rarity.Uncommon, 3);
+            var p = WithStash(Rarity.Uncommon, Content.TransmuteInputs(Rarity.Uncommon));
             p.Materials.Clear();
             Assert.Throws<InvalidOperationException>(() => Rules.Transmute(p, Rarity.Uncommon));
-            Assert.Equal(3, p.Stash.Count);
+            Assert.Equal(Content.TransmuteInputs(Rarity.Uncommon), p.Stash.Count);
         }
 
         [Fact]

@@ -1337,10 +1337,30 @@ namespace SodRpg.Mod
             var parts = Rules.BulkSalvageCandidates(p, _s.Trades);
             int shards = 0;
             foreach (var r in parts) shards += Rules.SalvageValue(r);
+            int high = 0;
+            foreach (var r in parts) if (r.Rarity >= Rarity.Rare) high++;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("分解するレア度：", "Salvage up to:"), _st.Small, GUILayout.Width(110));
+            var names = new[] { Loc.T("コモンまで", "Common"), Loc.T("アンコモンまで", "Uncommon"), Loc.T("レアまで", "Rare"), Loc.T("エピックまで", "Epic") };
+            int cur = (int)p.BulkSalvageMaxRarity;
+            int pick = GUILayout.SelectionGrid(Math.Max(0, Math.Min(3, cur)), names, 4, _st.Button);
+            if (pick != cur)
+            {
+                Rules.SetBulkSalvageMaxRarity(p, (Rarity)pick);
+                _confirmBulk = false;
+                _s.MarkDirty(true);
+                _s.SaveNow();
+                parts = Rules.BulkSalvageCandidates(p, _s.Trades);
+                shards = 0; high = 0;
+                foreach (var r in parts) { shards += Rules.SalvageValue(r); if (r.Rarity >= Rarity.Rare) high++; }
+            }
+            GUILayout.EndHorizontal();
+            if (high > 0)
+                GUILayout.Label(Loc.T($"<color=#ff8080>注意：レア以上が{high}個含まれます。2回押して確定します。</color>", $"<color=#ff8080>Warning: {high} Rare or better relics are included. Press twice to confirm.</color>"), _st.Small);
             GUI.enabled = parts.Count > 0 && (p.Run == null || !_s.InGame);
             string label = _confirmBulk
-                ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics</color>")
-                : Loc.T($"コモンとアンコモンをまとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({parts.Count} relics, {shards} shards)");
+                ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します" + (high > 0 ? $"（レア以上{high}個）" : "") + "</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics" + (high > 0 ? $" ({high} Rare+)" : "") + "</color>")
+                : Loc.T($"まとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage in bulk ({parts.Count} relics, {shards} shards)");
             if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
             {
                 if (!_confirmBulk) _confirmBulk = true;
@@ -1602,18 +1622,20 @@ namespace SodRpg.Mod
             }
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます", "Transmute: turn 3 relics of one rarity into 1 of the next"), _st.Header);
-            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に3つを使います。エピック3つからは固有品が生まれます。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
-                "Locked and equipped relics are never used; the 3 weakest of the rest go in. Three Epics become a legendary. Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
+            GUILayout.Label(Loc.T("合成：同じレア度の遺物を決まった個数集めて、1つ上のレア度の遺物1つに変えます", "Transmute: turn a set number of relics of one rarity into 1 of the next"), _st.Header);
+            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に必要な個数を使います。エピックからは固有品が生まれます（欠片と調律石が要ります）。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
+                "Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
                 int n = TransmuteCount(r);
                 Slot? target = _forgeAllSlots ? (Slot?)null : _slot;
                 int tcost = Rules.TransmuteCost(r, target != null);
-                GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= tcost;
-                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n"
-                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}", $"→{Content.SlotName(target.Value)}, {tcost} shards") : Loc.T($"欠片{tcost}", $"{tcost} shards"));
+                int need = Content.TransmuteInputs(r), ttune = Rules.TransmuteTuning(r);
+                GUI.enabled = n >= need && p.Material(Materials.Shard) >= tcost && p.Material(Materials.Tuning) >= ttune;
+                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "";
+                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/{need}\n"
+                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}"));
                 if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }

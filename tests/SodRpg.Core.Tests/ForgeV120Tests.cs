@@ -125,7 +125,7 @@ namespace SodRpg.Core.Tests
         public void Offered_relic_is_not_used_as_transmute_material()
         {
             var p = Profile.CreateNew(3);
-            for (int i = 0; i < 4; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(40 + i)), Rarity.Common, 2));
+            for (int i = 0; i < Content.TransmuteInputs(Rarity.Common) + 1; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(40 + i)), Rarity.Common, 2));
             p.AddMaterial(Materials.Tuning, 10);
             var weakest = Rules.TransmuteCandidates(p, Rarity.Common).First();
             Rules.Retune(p, weakest.Uid, 0);
@@ -138,7 +138,7 @@ namespace SodRpg.Core.Tests
             foreach (var slot in new[] { Slot.Weapon, Slot.Armor, Slot.Charm })
             {
                 var p = Profile.CreateNew(11);
-                for (int i = 0; i < 3; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(60 + i)), Rarity.Uncommon, 2));
+                for (int i = 0; i < Content.TransmuteInputs(Rarity.Uncommon); i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(60 + i)), Rarity.Uncommon, 2));
                 p.AddMaterial(Materials.Shard, 1000);
                 int before = p.Material(Materials.Shard);
                 Rules.Transmute(p, Rarity.Uncommon, target: slot);

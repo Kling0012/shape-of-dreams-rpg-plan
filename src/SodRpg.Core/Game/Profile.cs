@@ -258,6 +258,8 @@ namespace SodRpg.Core.Game
         public int DreamLevel { get; set; } = 1;
         public int DreamXp { get; set; }
         public int EpicPity { get; set; }
+        /// <summary>まとめて分解の対象にする最高のレア度（コモン〜エピック。固有品は入らない）。</summary>
+        public Rarity BulkSalvageMaxRarity { get; set; } = Rarity.Uncommon;
         public int BestItemLevel { get; set; } = 1;
         public bool Japanese { get; set; } = true;
         /// <summary>遠征を始めるときの夢の深度（深淵の段階）。確保できた最高深度まで選べる。</summary>
@@ -363,6 +365,7 @@ namespace SodRpg.Core.Game
                 DreamLevel = DreamLevel,
                 DreamXp = DreamXp,
                 EpicPity = EpicPity,
+                BulkSalvageMaxRarity = BulkSalvageMaxRarity,
                 BestItemLevel = BestItemLevel,
                 Japanese = Japanese,
                 StartDepth = StartDepth,
