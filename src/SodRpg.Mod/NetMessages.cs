@@ -121,7 +121,16 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 8: host-authoritative depth/waypoints, elemental reaction powers, and memory-pair allocations in the build payload.
-        public const int Version = 8;
+        // Version 9 combines memory pairs, personal dream events, and the pre-awakening power budget.
+        public const int Version = 9;
+    }
+
+    [Serializable]
+    public class DreamforgeDreamEventStartedMsg
+    {
+        public int protocol;
+        public string runId;
+        public int generation;
+        public int dreamEvent;
     }
 }

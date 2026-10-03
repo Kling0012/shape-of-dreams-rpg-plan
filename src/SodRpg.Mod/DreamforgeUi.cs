@@ -87,6 +87,7 @@ namespace SodRpg.Mod
         // 連携（v1.26）：ローカルの旅人の装着は0.5秒に1回だけ見る（OnGUI は1フレームに何度も走るため）。
         private readonly HashSet<string> _linkMemories = new HashSet<string>();
         private readonly HashSet<string> _linkEssences = new HashSet<string>();
+        private readonly HashSet<string> _linkAllies = new HashSet<string>();
         private string _linkHeroKey;
         private Func<string, bool> _linkMarks;
         private float _nextLinkCheck;
@@ -196,6 +197,7 @@ namespace SodRpg.Mod
                 _linkHeroKey = key;
                 _linkMemories.Clear();
                 _linkEssences.Clear();
+                _linkAllies.Clear();
                 if (hero.Skill != null)
                 {
                     foreach (var loc in LinkSkillSlots)
@@ -208,7 +210,18 @@ namespace SodRpg.Mod
                 }
                 var memories = _linkMemories;
                 var essences = _linkEssences;
-                _linkMarks = t => Links.RequirementSatisfied(t, key, memories, essences);
+                // Replicated positions are a display estimate; the host applies the authoritative 10 m check.
+                var actors = NetworkedManagerBase<ActorManager>.softInstance;
+                if (actors != null)
+                    foreach (var ally in actors.allHeroes)
+                    {
+                        if (ally == null || ally == hero) continue;
+                        if (Links.IsBondAlly(ally.isActive && ally.isAlive && !ally.isKnockedOut,
+                            ally.GetRelation(hero) == EntityRelation.Ally,
+                            Vector3.Distance(hero.agentPosition, ally.agentPosition)))
+                            _linkAllies.Add(ally.GetType().Name);
+                    }
+                _linkMarks = t => Links.RequirementSatisfied(t, key, memories, essences, _linkAllies);
             }
             return _linkMarks;
         }
@@ -1098,7 +1111,7 @@ namespace SodRpg.Mod
             {
                 foreach (var active in build.Links)
                 {
-                    if (!Links.Satisfied(active, _linkHeroKey, _linkMemories, _linkEssences)) continue;
+                    if (!Links.Satisfied(active, _linkHeroKey, _linkMemories, _linkEssences, _linkAllies)) continue;
                     GUILayout.Label(UiStyles.Colored(Links.Describe(active, marks), "#7fd8ff"), _st.Small);
                 }
             }

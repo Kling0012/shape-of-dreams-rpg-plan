@@ -28,6 +28,7 @@ namespace SodRpg.Mod
         {
             public Hero Hero;
             public PowerRuntime Powers;
+            public readonly NewPowerHostState NewPowers = new NewPowerHostState();
             public readonly GimmickRuntime Gimmicks = new GimmickRuntime();
             public readonly ElementReactionRuntime Reactions = new ElementReactionRuntime();
             public readonly List<PendingReaction> PendingReactions = new List<PendingReaction>();
@@ -147,6 +148,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeCurseMsg, DewPlayer> _onCurse;
         private readonly Action<DreamforgeCurseClearMsg, DewPlayer> _onCurseClear;
         private readonly Action<DreamforgeTradeMsg, DewPlayer> _onTrade;
+        private readonly Action<DreamforgeDreamEventStartedMsg, DewPlayer> _onPersonalDreamEvent;
         private readonly Action<EventInfoKill> _onDeath;
         private readonly Action<EventInfoDamage> _onTakeDamage;
         private readonly Action<EventInfoDamage> _onPairEnemyDamage;
@@ -215,6 +217,7 @@ namespace SodRpg.Mod
             _onCurse = OnCurse;
             _onCurseClear = OnCurseClear;
             _onTrade = OnTrade;
+            _onPersonalDreamEvent = OnPersonalDreamEvent;
             _onDeath = OnDeath;
             _onTakeDamage = OnTakeDamage;
             _onPairEnemyDamage = OnPairEnemyDamage;
@@ -245,6 +248,7 @@ namespace SodRpg.Mod
                 return;
             }
             EnsureRegistered();
+            NativeInstance = this;
             if (_registeredOn == null) return;
             float now = Time.time;
             RefreshRunModifiers();
@@ -257,8 +261,10 @@ namespace SodRpg.Mod
                 _nextAreaScan = now + 0.25f;
                 ScanArea();
             }
+            foreach (var rt in _runtimes.Values) FlushNewPowers(rt);
             foreach (var rt in _runtimes.Values) UpdateReactions(rt);
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
+            foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
             ProcessSpawns();
             PruneMonsters(now);
@@ -397,6 +403,7 @@ namespace SodRpg.Mod
                 e.EntityEvent_OnTakeDamage += _onPairEnemyDamage;
                 e.EntityEvent_OnDeath += _onPairEnemyDeath;
             }
+            if (e != null && _nativeDeathEntities.Add(e)) e.EntityEvent_OnDeath += _onDeath;
             if (!(e is Monster m) || _monsters.ContainsKey(m)) return;
             try
             {
@@ -417,6 +424,9 @@ namespace SodRpg.Mod
                 e.EntityEvent_OnDeath -= _onPairEnemyDeath;
                 _generatedPairDeaths.Remove(e.GetInstanceID());
             }
+            if (e != null)
+                foreach (var heroRuntime in _runtimes.Values) heroRuntime.Powers.ForgetNewPowerTarget(e.GetInstanceID());
+            if (!ReferenceEquals(e, null) && _nativeDeathEntities.Remove(e)) e.EntityEvent_OnDeath -= _onDeath;
             if (e is Monster m) RemoveMonster(m);
         }
 
@@ -646,12 +656,15 @@ namespace SodRpg.Mod
         private void OnActorRemove(Actor actor)
         {
             if (actor is Summon summon)
+            {
+                UnhookSupportSummonV129(summon);
                 foreach (var rt in _runtimes.Values)
                     if (rt.Summons.TryGetValue(summon, out var processor))
                     {
                         summon.dealtDamageProcessor.Remove(processor);
                         rt.Summons.Remove(summon);
                     }
+            }
             if (actor is Monster m) RemoveMonster(m);
             if (actor is Shrine shrine && _shrines.Remove(shrine))
                 shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
@@ -683,7 +696,7 @@ namespace SodRpg.Mod
         {
             _roomHasVariant = false;
             ClearZoneReactions();
-            foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
+            foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
             UnhookShrines();
             ScanShrines();
         }
@@ -910,6 +923,7 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
                 }
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
@@ -925,6 +939,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseMsg>(nameof(DreamforgeCurseMsg), _onCurse);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -941,6 +956,7 @@ namespace SodRpg.Mod
                 UnhookShrines();
                 UnhookMonsters();
                 ClearSunders();
+                ClearNativeDeathHooks();
                 _am = am;
                 _spawnQueue.Clear();
                 _regen.Clear();
@@ -967,7 +983,7 @@ namespace SodRpg.Mod
                 _zone = zone;
                 _roomHasVariant = false;
                 ClearZoneReactions();
-                foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded();
+                foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
                 if (zone != null)
                 {
                     zone.ClientEvent_OnZoneLoaded += _onZoneLoaded;
@@ -981,9 +997,7 @@ namespace SodRpg.Mod
                 _cem = cem;
                 if (cem != null)
                 {
-                    cem.OnDeath += _onDeath;
-                    cem.OnTakeDamage += _onTakeDamage;
-                    cem.OnApplyElemental += _onApplyElemental;
+                    // Combat powers use synchronous native callbacks; client RPCs cannot retain source scopes.
                 }
             }
         }
@@ -1004,6 +1018,11 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            if (NativeInstance == this) NativeInstance = null;
+            ClearNewPowerZone();
+            ClearZoneGimmicksV129();
+            ClearSupportPowerStateV129();
+            ClearNativeDeathHooks();
             ClearWaypointHeroes();
             DewPlayer.onGamePlayerAdded -= _onPressurePlayerAdded;
             DewPlayer.onGamePlayerRemoved -= _onPressurePlayerRemoved;
@@ -1059,6 +1078,7 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseMsg>(_onCurse); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
                 _registeredOn = null;
             }
         }
@@ -1263,10 +1283,16 @@ namespace SodRpg.Mod
                 // Actor.DoBasicAttackHit は、この同期イベントの後で DealDamage を呼ぶ。
                 // RPC 通知の配信時点に依存せず、命中前の HP で判定する。
                 hero.EntityEvent_OnAttackHit += rt.OnHit;
-                hero.ClientHeroEvent_OnSkillUse += rt.OnSkill;
-                rt.OnTeleport = (from, to) => OnHeroTeleport(captured);
+                // NativeMemoryUse dispatches authoritative casts, including allies without a build.
+                rt.OnTeleport = (from, to) =>
+                {
+                    captured.NewPowers.PositionKnown = false;
+                    captured.NewPowers.SpecialMovementUntil = Time.time + .1f;
+                    OnHeroTeleport(captured);
+                };
                 rt.OnDisplacement = disp =>
                 {
+                    captured.NewPowers.SpecialMovementUntil = Time.time + .1f;
                     // Displacement has no source: the game's own Husk crit effects use isFriendly.
                     if (disp != null && disp.isFriendly) OnHeroSelfMovement(captured);
                 };
@@ -1276,6 +1302,8 @@ namespace SodRpg.Mod
                 {
                     if (a != null && a.firstEntity != null && a.firstEntity.GetRelation(captured.Hero) == EntityRelation.Enemy)
                         EnsureWaypointCombatChoice();
+                    float reduction = captured.Powers.IncomingDamageReduction(Time.time);
+                    if (reduction > 0f) d.ApplyReduction(reduction);
                     float mult = captured.Powers.Build.DamageTakenMultiplier;
                     if (mult > 1f) d.ApplyAmplification(mult - 1f);
                     // These verified sources dispatch HP sacrifice as self-damage, not enemy attacks.
@@ -1284,6 +1312,8 @@ namespace SodRpg.Mod
                             captured.Powers.Build.Get(Stat.SacrificeReduction)));
                 };
                 hero.takenDamageProcessor.Add(rt.DamageTaken);
+                InitializeNewPowers(rt);
+                InitializeGimmicksV129(rt);
                 rt.DamageDealt = (ref DamageData d, Actor a, Entity t) =>
                 {
                     if (!Alive(captured.Hero) || t == null || !t.isActive || t.Status == null
@@ -1298,6 +1328,7 @@ namespace SodRpg.Mod
                     }
                     if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
                     string memory = MemorySource(d.actor ?? a);
+                    d.ApplyAmplification(captured.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(hero, memory), false));
                     int memoryAmp = 0;
                     if (memory != null)
                         foreach (var link in captured.SatisfiedLinks)
@@ -1306,6 +1337,7 @@ namespace SodRpg.Mod
                                 memoryAmp += link.Value;
                                 LogLinkApplied(link);
                             }
+                    memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time, memoryAmp);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
                     int expose = Math.Max(captured.Gimmicks.ExposePercent(t.GetInstanceID(), Time.time),
                         captured.Reactions.ExposePercent(t.GetInstanceID(), Time.time));
@@ -1318,6 +1350,7 @@ namespace SodRpg.Mod
                 hero.ActorEvent_OnKill += rt.OnMemoryKill;
                 rt.OnSupportHeal = info =>
                 {
+                    OnSupportHealingV129(captured, info);
                     var target = info.target as Hero;
                     if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
                         && info.amount > 0f && !float.IsNaN(info.amount) && !float.IsInfinity(info.amount))
@@ -1392,8 +1425,11 @@ namespace SodRpg.Mod
                 damage.ApplyAmplification(SupportStats.AmplifySummonDamage(1f,
                     rt.Powers.Build.Get(Stat.SummonPower)) - 1f);
                 damage.ApplyAmplification((float)ActiveWaypointTotals.SummonPowerMultiplier - 1f);
+                if (_gimmickDamageDepth == 0 && !damage.IsAmountModifiedBy(typeof(GimmickRuntime)))
+                    damage.ApplyAmplification(rt.Powers.OutgoingDamageAmplification(Time.time, false, true));
             };
             rt.Summons.Add(summon, processor);
+            HookSupportSummonV129(summon);
             summon.dealtDamageProcessor.Add(processor);
         }
 
@@ -1451,11 +1487,17 @@ namespace SodRpg.Mod
             else rt.AddedGemMovement = added;
         }
 
-        private static void Unhook(HeroRuntime rt)
+        private void Unhook(HeroRuntime rt)
         {
+            UnhookNewPowers(rt);
+            UnhookGimmicksV129(rt);
             UnhookGoldSpend(rt);
             foreach (var summon in rt.Summons)
-                if (summon.Key != null) summon.Key.dealtDamageProcessor.Remove(summon.Value);
+                if (summon.Key != null)
+                {
+                    summon.Key.dealtDamageProcessor.Remove(summon.Value);
+                    UnhookSupportSummonV129(summon.Key);
+                }
             rt.Summons.Clear();
             var hero = rt.Hero;
             if (hero == null) return;
@@ -1659,7 +1701,7 @@ namespace SodRpg.Mod
                 ApplyWaypointMemoryCooldown(rt, info);
                 if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
                     QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
-                var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
+                var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.skill != null && info.skill.type == SkillType.Ultimate,
                     Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
                 if (r.WhirlwindDamage > 0)
@@ -1723,6 +1765,8 @@ namespace SodRpg.Mod
             {
                 var hero = rt.Hero;
                 if (!Alive(hero) || info.target != hero) return;
+                OnPotionHealV129(rt, info);
+                rt.Powers.OnOverheal(Time.time, info.discardedAmount);
                 float shield = rt.Powers.TakeOverflowingLife(info.discardedAmount, hero.maxHealth);
                 if (shield <= 0) return;
                 hero.GiveShield(hero, shield, PowerRuntime.OverflowingLifeDuration);
@@ -1796,6 +1840,7 @@ namespace SodRpg.Mod
         {
             var hero = rt.Hero;
             if (!Alive(hero) || rt.DynBonus == null) return;
+            UpdateNewPowerFacts(rt, now);
             var p = rt.Powers;
             p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
@@ -1867,6 +1912,7 @@ namespace SodRpg.Mod
                 if (alive && p.Build.Get(Power.PreyPride) > 0 && huntLevel > 0)
                     LogPowerTrigger(Power.PreyPride);
                 UpdateLinks(rt, alive);
+                ScanNewPowerFacts(rt, Time.time);
             }
 
             // DistributeResonance は配列全体を使うため、人数が変わったときだけ長さを合わせる。
@@ -1910,6 +1956,7 @@ namespace SodRpg.Mod
             var hero = rt.Hero;
             var memories = rt.LinkMemories;
             var essences = rt.LinkEssences;
+            var nearbyAllies = CollectNearbyBondHeroes(hero, alive);
             memories.Clear();
             essences.Clear();
             if (alive && hero.Skill != null)
@@ -1926,7 +1973,7 @@ namespace SodRpg.Mod
             int attune = 0, guardHealth = 0, guardArmor = 0;
             foreach (var link in links)
             {
-                if (!Links.Satisfied(link, rt.HeroKey, memories, essences)) continue;
+                if (!alive || !Links.Satisfied(link, rt.HeroKey, memories, essences, nearbyAllies)) continue;
                 rt.SatisfiedLinks.Add(link);
                 switch (link.Kind)
                 {
@@ -2022,14 +2069,15 @@ namespace SodRpg.Mod
                     || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor);
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
-                if (_gimmickDamageDepth != 0) return;
+                if (generated) return;
+                OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
                 if (memory == null) return;
                 if (rt.Powers.Build.Gimmicks.Count > 0 || rt.Powers.Build.PairCombos.Count > 0)
                     rt.MemoryHitAmounts[victimId] = info.damage.amount;
-                QueueGimmicks(rt, GimmickTrigger.OnHit, memory, info.victim, info.damage.amount, generated);
+                QueueGimmicks(rt, GimmickTrigger.OnHit, memory, info.victim, info.damage.amount, generated, info.actor, !info.damage.HasAttr(DamageAttribute.DamageOverTime));
                 if (info.damage.HasAttr(DamageAttribute.IsCrit))
-                    QueueGimmicks(rt, GimmickTrigger.OnCrit, memory, info.victim, info.damage.amount, generated);
+                    QueueGimmicks(rt, GimmickTrigger.OnCrit, memory, info.victim, info.damage.amount, generated, info.actor, !info.damage.HasAttr(DamageAttribute.DamageOverTime));
             }
             catch (Exception ex) { Log.Error("Host: memory hit " + ex); }
         }
@@ -2046,25 +2094,27 @@ namespace SodRpg.Mod
                     || IsPairReactionSource(info.actor);
                 rt.MemoryHitAmounts.TryGetValue(victimId, out float damage);
                 rt.MemoryHitAmounts.Remove(victimId);
-                if (_gimmickDamageDepth != 0) return;
+                if (generated) return;
+                OnNewPowerKill(rt, info);
                 string memory = MemorySource(info.actor);
-                if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage, generated);
+                if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage, generated, info.actor);
             }
             catch (Exception ex) { Log.Error("Host: memory kill " + ex); }
         }
 
-        private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false)
+        private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false,
+            Actor actor = null, bool direct = true)
         {
             var build = rt.Powers.Build;
             if (build.Gimmicks.Count == 0 && build.PairCombos.Count == 0) return;
             var requests = rt.GimmickRequests;
             requests.Clear();
             float now = Time.time;
-            if (build.Gimmicks.Count > 0 && FindMemory(rt.Hero, memory) != null
+            if (build.Gimmicks.Count > 0 && !pairGenerated && _pairDamageDepth == 0
+                && FindMemory(rt.Hero, memory) != null
                 && !(trigger == GimmickTrigger.OnUse
                     && rt.Hero.Skill.GetSkill(HeroSkillLocation.Movement)?.GetType().Name == memory))
-                rt.Gimmicks.Fire(trigger, memory, now, victim != null ? victim.GetInstanceID() : 0,
-                    damage, _gimmickDamageDepth != 0, requests);
+                FireGimmicksV129(rt, trigger, memory, victim, damage, actor, direct, requests);
             if (build.PairCombos.Count > 0)
             {
                 CollectPairMemories(rt);
@@ -2284,6 +2334,7 @@ namespace SodRpg.Mod
                     finally { _gimmickDamageDepth--; }
                     break;
                 // Quicken/Empower/Expose windows are registered by the pure runtime.
+                default: ApplyGimmickV129(rt, pending); break;
             }
         }
 
@@ -2362,6 +2413,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (!(info.victim is Summon)) OnSupportDeathV129(info);
                 if (!(info.victim is Monster monster)) return;
                 ReportElementalDeath(monster);
                 OnReactionDeath(info.victim);
@@ -2392,6 +2444,7 @@ namespace SodRpg.Mod
                 var attacker = info.actor != null ? (info.actor as Entity ?? info.actor.firstEntity) : null;
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
                 bool reflected = _reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false));
+                OnNewPowerTaken(rt, info, enemy);
                 float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected);
                 if (reflect > 0)
                 {
@@ -2423,6 +2476,7 @@ namespace SodRpg.Mod
                 var victim = info.victim;
                 if (victim == null || !victim.isActive || victim.Status == null
                     || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
+                OnNewPowerElement(rt, info);
                 QueueElementReactions(rt, victim);
                 var st = victim.Status;
                 bool all = st.fireStack > 0 && st.hasCold && st.lightStack > 0 && st.darkStack > 0;
@@ -2490,6 +2544,8 @@ namespace SodRpg.Mod
                 if (!(info.attacker is Hero hero) || !_runtimes.TryGetValue(hero, out var rt) || !Alive(hero)) return;
                 var victim = info.victim;
                 if (victim == null || !victim.isActive) return;
+                if (victim.GetRelation(hero) != EntityRelation.Enemy || _gimmickDamageDepth != 0 || _pairDamageDepth != 0
+                    || BasicAttackContext.Current != null && !BasicAttackContext.Current.Primary) return;
                 if (_gimmickDamageDepth == 0 && _pairDamageDepth == 0 && rt.HeroKey == "Hero_Nachia"
                     && rt.Powers.Build.PairCombos.Count > 0 && victim.GetRelation(hero) == EntityRelation.Enemy)
                 {
@@ -2520,16 +2576,8 @@ namespace SodRpg.Mod
                     }
                     if (r.OpeningDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
                         hero.PureDamage(r.OpeningDamage, 0f).Dispatch(victim);
-                    if (r.EchoDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
-                    {
-                        hero.PureDamage(r.EchoDamage, 0f).Dispatch(victim);
-                        LogPowerTrigger(Power.EchoingDodge);
-                    }
-                    if (r.ShadowStepDamage > 0 && victim.isActive && victim.GetRelation(hero) == EntityRelation.Enemy)
-                    {
-                        hero.PureDamage(r.ShadowStepDamage, 0f).Dispatch(victim);
-                        LogPowerTrigger(Power.ShadowStep);
-                    }
+                    QueuePowerDamage(rt, victim, victim.position, 0f,
+                        r.EchoDamage + r.ShadowStepDamage + r.RunUpDamage + r.PrimedDamage, pure: true);
                 }
                 finally { _pairDamageDepth--; }
             }

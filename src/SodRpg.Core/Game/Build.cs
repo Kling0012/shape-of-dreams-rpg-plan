@@ -13,6 +13,8 @@ namespace SodRpg.Core.Game
     {
         public SortedDictionary<Stat, int> Stats { get; } = new SortedDictionary<Stat, int>();
         public SortedDictionary<Power, int> Powers { get; } = new SortedDictionary<Power, int>();
+        /// <summary>Conditional power values before awakening, used for the shared 120% budget. Missing means unawakened.</summary>
+        public SortedDictionary<Power, int> ConditionalBasePowers { get; } = new SortedDictionary<Power, int>();
         /// <summary>系統ごとの装着数（2以上でセット効果）。表示用で、通信には含めない。</summary>
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         /// <summary>セット遺物の装着数（表示用）。</summary>
@@ -30,6 +32,7 @@ namespace SodRpg.Core.Game
 
         public int Get(Stat s) => Stats.TryGetValue(s, out int v) ? v : 0;
         public int Get(Power p) => Powers.TryGetValue(p, out int v) ? v : 0;
+        public int ConditionalBase(Power p) => ConditionalBasePowers.TryGetValue(p, out int v) ? v : Get(p);
 
         /// <summary>潜行1段ごとの被ダメージ増加（%）。本体 Limbo の「被ダメージ増加」と同じ表現。</summary>
         public const int DamageTakenPerDelvePct = 6;
@@ -48,6 +51,7 @@ namespace SodRpg.Core.Game
             };
             var rawStats = new Dictionary<Stat, int>();
             var rawPowers = new Dictionary<Power, int>();
+            var awakenGains = new Dictionary<Power, int>();
 
             foreach (string uid in h.Equipped)
             {
@@ -55,6 +59,14 @@ namespace SodRpg.Core.Game
                 if (r == null) continue;
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
                 foreach (var pw in r.EffectivePowers()) Add(rawPowers, pw.Power, pw.Value);
+                if (r.Awakened)
+                    foreach (var pw in r.Powers)
+                    {
+                        if (!NewPowersV129.IsConditionalAttribute(pw.Power)) continue;
+                        int before = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));
+                        int after = (int)((long)before * Content.AwakenPowerPctAt(r.AwakenLevel) / 100);
+                        Add(awakenGains, pw.Power, after - before);
+                    }
                 // 連携（v1.26）：強化では伸びず、覚醒だけが値を掛ける。正しくない定義は無視する。
                 var link = r.Link;
                 if (link != null)
@@ -140,7 +152,15 @@ namespace SodRpg.Core.Game
             if (daily != null)
             {
                 foreach (var pw in daily.BoostedPowers)
-                    if (rawPowers.TryGetValue(pw, out int v)) rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
+                    if (rawPowers.TryGetValue(pw, out int v))
+                    {
+                        rawPowers[pw] = v + v * DailyDream.PowerBoostPct / 100;
+                        if (awakenGains.TryGetValue(pw, out int gain))
+                        {
+                            int before = v - gain;
+                            awakenGains[pw] = rawPowers[pw] - (before + before * DailyDream.PowerBoostPct / 100);
+                        }
+                    }
             }
             var pactList = pacts != null ? new List<Pact>(pacts) : new List<Pact>();
             foreach (var id in pactList)
@@ -158,6 +178,8 @@ namespace SodRpg.Core.Game
             {
                 int cap = Content.PowerCap(kv.Key);
                 b.Powers[kv.Key] = cap > 0 ? Math.Min(kv.Value, cap) : kv.Value;
+                if (NewPowersV129.IsConditionalAttribute(kv.Key) && awakenGains.TryGetValue(kv.Key, out int gain))
+                    b.ConditionalBasePowers[kv.Key] = Math.Min(b.Powers[kv.Key], Math.Max(0, kv.Value - gain));
             }
             foreach (var id in pactList)
             {
@@ -200,6 +222,18 @@ namespace SodRpg.Core.Game
                 sb.Append((int)kv.Key).Append('=').Append(kv.Value.ToString(CultureInfo.InvariantCulture));
             }
             sb.Append(";h:").Append(Heat.ToString(CultureInfo.InvariantCulture));
+            if (ConditionalBasePowers.Count > 0)
+            {
+                sb.Append(";u:");
+                first = true;
+                foreach (var kv in ConditionalBasePowers)
+                {
+                    if (!NewPowersV129.IsConditionalAttribute(kv.Key)) continue;
+                    if (!first) sb.Append(',');
+                    first = false;
+                    sb.Append((int)kv.Key).Append('=').Append(kv.Value.ToString(CultureInfo.InvariantCulture));
+                }
+            }
             sb.Append(";d:").Append(DreamLevel.ToString(CultureInfo.InvariantCulture));
             sb.Append(";a:").Append(SpentStarPoints.ToString(CultureInfo.InvariantCulture));
             sb.Append(";l:");
@@ -364,6 +398,10 @@ namespace SodRpg.Core.Game
                             int cap = Content.StatCap(s);
                             b.Stats[s] = Math.Max(-cap, Math.Min(cap, v));
                         }
+                        else if (kind == "u" && Enum.IsDefined(typeof(Power), id) && NewPowersV129.IsConditionalAttribute((Power)id))
+                        {
+                            b.ConditionalBasePowers[(Power)id] = Math.Max(0, Math.Min(Content.PowerCap((Power)id), v));
+                        }
                         else if (kind == "p" && Enum.IsDefined(typeof(Power), id) && id != 0)
                         {
                             var pw = (Power)id;
@@ -379,6 +417,12 @@ namespace SodRpg.Core.Game
             catch (OverflowException)
             {
                 return null;
+            }
+            foreach (var pw in new List<Power>(b.ConditionalBasePowers.Keys))
+            {
+                int effective = b.Get(pw);
+                int minimum = (int)Math.Ceiling(effective * 100d / Content.AwakenPowerPctAt(Content.MaxAwakenLevel));
+                b.ConditionalBasePowers[pw] = Math.Max(minimum, Math.Min(effective, b.ConditionalBasePowers[pw]));
             }
             return b;
         }

@@ -112,6 +112,7 @@ namespace SodRpg.Mod
 
         private void TickRunChoices()
         {
+            NotifyPersonalDreamEvent();
             if (NetworkServer.active)
             {
                 string before = _encodedRunChoices;
@@ -174,6 +175,7 @@ namespace SodRpg.Mod
             _secureArrivalPending = false;
             if (!Rules.ShouldOfferSecurePoint(Profile, traveling: true)) return;
             Emit(Rules.ReachSecurePoint(Profile, _trades));
+            _nextDreamEventNotice = 0f;
             _appliedRunChoices = null;
             ApplyHostRunChoices();
             PublishRunChoices();

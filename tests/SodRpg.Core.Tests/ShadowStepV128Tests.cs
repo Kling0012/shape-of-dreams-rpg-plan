@@ -96,10 +96,10 @@ namespace SodRpg.Core.Tests
             var runtime = new PowerRuntime(With((Power.ShadowStep, 60), (Power.EchoingDodge, 80)), 0);
             runtime.OnSkillUsed(10, isMovement: true, isUltimate: false);
             var hit = runtime.OnAttackHit(11, 500, 100, 200, 1);
-            Assert.Equal(120f, hit.ShadowStepDamage);
+            Assert.Equal(0f, hit.ShadowStepDamage);
             Assert.Equal(160f, hit.EchoDamage);
             var next = runtime.OnAttackHit(11.1f, 500, 100, 200, 1);
-            Assert.Equal(0f, next.ShadowStepDamage);
+            Assert.Equal(120f, next.ShadowStepDamage);
             Assert.Equal(0f, next.EchoDamage);
         }
 

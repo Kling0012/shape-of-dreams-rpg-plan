@@ -44,6 +44,17 @@ namespace SodRpg.Core.Game
         Reload = 10,
         /// <summary>装着中のほかの記憶の残りクールダウンを Value% 縮める（回避・Ultimate・アイデンティティは対象外。v1.28）。</summary>
         RechargeOther = 11,
+        Wound = 12,
+        Daze = 13,
+        Ricochet = 14,
+        Siphon = 15,
+        Rampart = 16,
+        Primed = 17,
+        Crescendo = 18,
+        ElementEdge = 19,
+        PackMend = 20,
+        Sap = 21,
+        Weakspot = 22,
     }
 
     /// <summary>記憶の仕掛け1つ分の定義（v1.28）。</summary>
@@ -77,10 +88,15 @@ namespace SodRpg.Core.Game
         public float AreaRadius { get; set; }
         /// <summary>範囲の中心が使用者か。false は VictimId の敵の発動時の位置。</summary>
         public bool AreaAroundHero { get; set; }
+        /// <summary>Unique targets from this cast, capped at five, for Rampart.</summary>
+        public int TargetCount { get; set; }
+        public long ActivationId { get; set; }
+        /// <summary>Element types present at the triggering hit, before deferred dispatch.</summary>
+        public int ElementTypes { get; set; }
     }
 
     /// <summary>記憶の仕掛けの説明と、通信・計算で共用する上限。</summary>
-    public static class Gimmicks
+    public static partial class Gimmicks
     {
         public const int MaxEntries = 32;
         public const int MaxStarIdLength = 96;
@@ -97,6 +113,17 @@ namespace SodRpg.Core.Game
                 case GimmickEffect.Burst:
                 case GimmickEffect.Echo: return 1000;
                 case GimmickEffect.Empower: return 200;
+                case GimmickEffect.Wound:
+                case GimmickEffect.Primed: return 120;
+                case GimmickEffect.Daze:
+                case GimmickEffect.Crescendo:
+                case GimmickEffect.PackMend: return 8;
+                case GimmickEffect.Ricochet: return 50;
+                case GimmickEffect.Siphon: return 10;
+                case GimmickEffect.Rampart: return 2;
+                case GimmickEffect.ElementEdge: return 40;
+                case GimmickEffect.Sap: return 15;
+                case GimmickEffect.Weakspot: return 25;
                 case GimmickEffect.Shield:
                 case GimmickEffect.Heal:
                 case GimmickEffect.Recharge:
@@ -111,6 +138,7 @@ namespace SodRpg.Core.Game
         {
             if (def == null || def.Trigger < GimmickTrigger.OnUse || def.Trigger > GimmickTrigger.OnCrit
                 || Cap(def.Effect) == 0 || def.Value <= 0 || !Finite(def.Cooldown) || def.Cooldown < 0) return false;
+            if (IsV129(def.Effect)) return ValidV129Def(def);
             return def.Effect == GimmickEffect.Element ? def.Arg >= 0 && def.Arg <= 3
                 : def.Effect == GimmickEffect.Heal ? def.Arg >= 0 && def.Arg <= 1 : def.Arg == 0;
         }
@@ -159,7 +187,9 @@ namespace SodRpg.Core.Game
         /// <summary>不正な条件は拒否し、効果量と間隔を共通上限へ収めた独立したコピーを返す。</summary>
         public static GimmickEntry Clamp(GimmickEntry entry)
         {
-            if (entry == null || !ValidStarId(entry.StarId) || !Links.IsMemory(entry.Memory) || !ValidDef(entry.Def)) return null;
+            if (entry == null || !ValidStarId(entry.StarId) || !Links.IsMemory(entry.Memory) || !ValidDef(entry.Def)
+                || !AllowedOnMemory(entry.Def.Effect, entry.Memory)
+                || entry.Def.Effect == GimmickEffect.Primed && entry.StarId.StartsWith("h.bismuth.", StringComparison.Ordinal)) return null;
             return new GimmickEntry
             {
                 StarId = entry.StarId,
@@ -170,7 +200,7 @@ namespace SodRpg.Core.Game
                     Effect = entry.Def.Effect,
                     Value = Math.Min(entry.Def.Value, Cap(entry.Def.Effect)),
                     Arg = entry.Def.Arg,
-                    Cooldown = Math.Min(entry.Def.Cooldown, MaxCooldown)
+                    Cooldown = Math.Max(MinimumCooldown(entry.Def.Effect), Math.Min(entry.Def.Cooldown, MaxCooldown))
                 }
             };
         }
@@ -179,6 +209,8 @@ namespace SodRpg.Core.Game
         public static string Describe(GimmickDef def, string memoryTypeName, int ranks = 1)
         {
             if (!ValidDef(def) || !Links.IsMemory(memoryTypeName) || ranks <= 0) return "";
+            if (IsV129(def.Effect)) return !AllowedOnMemory(def.Effect, memoryTypeName)
+                ? "" : DescribeV129(def, memoryTypeName, ranks);
             int value = (int)Math.Min((long)def.Value * ranks, Cap(def.Effect));
             string n = value.ToString(CultureInfo.InvariantCulture);
             bool ja = Loc.Japanese;
@@ -265,7 +297,7 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>1人分の間隔と4秒の非加算効果。時計と対象の寿命はホストから渡す。</summary>
-    public sealed class GimmickRuntime
+    public sealed partial class GimmickRuntime
     {
         private sealed class ActiveEntry
         {
@@ -275,6 +307,9 @@ namespace SodRpg.Core.Game
             public bool BuffActive;
             public float BuffUntil;
             public List<VictimWindow> Victims;
+            public readonly Dictionary<long, HashSet<int>> CastVictims = new Dictionary<long, HashSet<int>>();
+            public readonly Dictionary<long, float> SeenCasts = new Dictionary<long, float>();
+            public int Stacks;
         }
 
         private struct VictimWindow
@@ -337,7 +372,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>該当する発動を末尾へ追加。追加ダメージは起点にならず、間隔は星全体で共有する。</summary>
-        public void Fire(GimmickTrigger trigger, string memory, float now, int victimId, float damage, bool generated, List<GimmickRequest> results)
+        public void Fire(GimmickTrigger trigger, string memory, float now, int victimId, float damage, bool generated, List<GimmickRequest> results,
+            long activationId = 0, float memoryCooldown = 0f, bool directDamage = true, bool boss = false, int elementTypes = 0)
         {
             if (generated || results == null || !Gimmicks.Finite(now) || trigger < GimmickTrigger.OnUse || trigger > GimmickTrigger.OnCrit) return;
             PruneExpired(now);
@@ -347,6 +383,7 @@ namespace SodRpg.Core.Game
                 GimmickDef def = state.Entry.Def;
                 if (def.Trigger != trigger || state.Entry.Memory != memory) continue;
                 if (state.HasFired && def.Cooldown > 0 && now < state.LastFired + def.Cooldown) continue;
+                if (!AcceptV129(state, now, victimId, damage, activationId, memoryCooldown, directDamage, boss, out int targetCount)) continue;
                 if ((def.Effect == GimmickEffect.Expose || def.Effect == GimmickEffect.Echo) && victimId == 0) continue;
                 if (def.Effect == GimmickEffect.Echo && (!Gimmicks.Finite(damage) || damage <= 0)) continue;
                 state.HasFired = true;
@@ -356,7 +393,7 @@ namespace SodRpg.Core.Game
                     state.BuffActive = true;
                     state.BuffUntil = now + Gimmicks.BuffDuration;
                 }
-                else if (def.Effect == GimmickEffect.Expose)
+                else if (def.Effect == GimmickEffect.Expose || def.Effect == GimmickEffect.Sap || def.Effect == GimmickEffect.Weakspot)
                 {
                     if (state.Victims == null) state.Victims = new List<VictimWindow>();
                     int found = -1;
@@ -374,6 +411,9 @@ namespace SodRpg.Core.Game
                     AreaRadius = def.Effect == GimmickEffect.Burst || def.Effect == GimmickEffect.Element
                         && (trigger == GimmickTrigger.OnUse || trigger == GimmickTrigger.OnKill) ? Gimmicks.AreaRadius : 0f,
                     AreaAroundHero = trigger == GimmickTrigger.OnUse
+                    ,TargetCount = targetCount,
+                    ActivationId = activationId,
+                    ElementTypes = Math.Max(0, Math.Min(4, elementTypes))
                 });
             }
         }

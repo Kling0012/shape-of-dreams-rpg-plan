@@ -22,6 +22,9 @@ namespace SodRpg.Mod
 
         private void ClearZoneReactions()
         {
+            ClearNewPowerZone();
+            ClearZoneGimmicksV129();
+            ClearSupportPowerStateV129();
             // Captured positions and target IDs belong to this zone's entity lifetimes.
             foreach (var rt in _runtimes.Values)
             {

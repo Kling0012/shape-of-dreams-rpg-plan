@@ -85,8 +85,9 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Entity), nameof(Entity.ProcessReceivedDamage))]
     internal static class GimmickDamageIsolation
     {
-        private static void Postfix(ref DamageData data)
+        private static void Postfix(Entity __instance, Actor actor, ref DamageData data)
         {
+            HostAuthority.NativeInstance?.ApplyFinalGimmickDamageV129(__instance, actor, ref data);
             if (!data.IsAmountModifiedBy(typeof(SodRpg.Core.Game.GimmickRuntime))) return;
             data = data.SetElemental(null).DoAttackEffect(AttackEffectType.Others, 0f);
         }

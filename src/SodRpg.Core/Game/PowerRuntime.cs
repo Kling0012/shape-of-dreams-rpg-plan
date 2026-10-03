@@ -18,7 +18,7 @@ namespace SodRpg.Core.Game
     /// 1キャラ分の固有効果の状態（スタック・残り時間・クールダウン）。時刻は呼び出し側が渡す（秒）。
     /// ゲームへの作用（回復・ダメージ・障壁）は戻り値で知らせ、実行は接続層が行う。
     /// </summary>
-    public sealed class PowerRuntime
+    public sealed partial class PowerRuntime
     {
         public const int MomentumMaxStacks = 5;
         public const float MomentumDuration = 4f;
@@ -122,6 +122,7 @@ namespace SodRpg.Core.Game
             Build = build ?? new Build();
             _nextBarrier = now + 3f;
             _rng = new Rng(seed);
+            _lastCombat = now;
         }
 
         /// <summary>本体の通常攻撃が放たれた。4発目なら次の命中で烈火が発動する（Vesper・Lacerta の4発目と連動）。</summary>
@@ -334,9 +335,11 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        public void OnZoneLoaded()
+        public void OnZoneLoaded(float now = 0)
         {
             DevotionStacks = 0;
+            ResetNewPowersForZone();
+            _lastCombat = now;
         }
 
         /// <summary>飛び火：火3重以上からの伝播判定。同じ敵からは成功後2秒待つ。</summary>
@@ -360,6 +363,7 @@ namespace SodRpg.Core.Game
         public void SetBuild(Build build)
         {
             Build = build ?? new Build();
+            RetainEquippedNewPowerState();
             // 連携の状態は装備に紐付くので、Build が変わったらやり直す（判定は次の走査で）。
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
@@ -438,6 +442,8 @@ namespace SodRpg.Core.Game
             public float EchoDamage;
             /// <summary>瞬歩の刃：本体の移動後3秒以内の次の通常攻撃に上乗せるダメージ（その命中で消費）。</summary>
             public float ShadowStepDamage;
+            public float RunUpDamage;
+            public float PrimedDamage;
             /// <summary>付与する属性のスタック数（火・冷気・光・闇の順）。</summary>
             public int FireStacks, ColdStacks, LightStacks, DarkStacks;
         }
@@ -464,18 +470,7 @@ namespace SodRpg.Core.Game
             int blaze = Build.Get(Power.Blaze);
             if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = higher * blaze / 100f;
             _nextHitIsFourth = false;
-            int echo = Build.Get(Power.EchoingDodge);
-            if (echo > 0 && now < _echoUntil)
-            {
-                r.EchoDamage = higher * echo / 100f;
-                _echoUntil = float.NegativeInfinity; // この命中で消費する
-            }
-            int shadowStep = Build.Get(Power.ShadowStep);
-            if (shadowStep > 0 && now < _shadowStepUntil)
-            {
-                r.ShadowStepDamage = higher * shadowStep / 100f;
-                _shadowStepUntil = float.NegativeInfinity;
-            }
+            TakeLargestNextBasic(now, higher, ref r);
             r.FireStacks = ElementStacks(Power.Ember);
             r.ColdStacks = ElementStacks(Power.Frost);
             r.LightStacks = ElementStacks(Power.Radiance);
@@ -506,26 +501,15 @@ namespace SodRpg.Core.Game
             foreach (var pair in _linkSurges)
                 if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.Value);
             int linkAttack = LinkAttunePct + linkSurge;
-            int resonance = ResonanceSelf + ResonanceShared + (now < _surgeUntil ? Build.Get(Power.UltimateSurge) : 0);
-            // 逆襲・万全は攻撃力・魔力の両方を上げる（v1.27）。
-            int retaliation = now < _retaliationUntil ? Build.Get(Power.Retaliation) : 0;
-            int vigor = HealthRatio >= VigorThreshold ? Math.Max(0, Build.Get(Power.Vigor)) : 0;
-            int conditional = Math.Max(0, Build.Get(Power.CrystalResonance))
-                    * Math.Min(CrystalResonanceMaxTiers, Math.Max(0, GemQualityTotal) / 100)
-                + Math.Max(0, Build.Get(Power.PreyPride)) * Math.Min(PreyPrideMaxLevel, Math.Max(0, HuntLevel))
-                + Math.Max(0, Build.Get(Power.Devotion)) * DevotionStacks
-                + (int)Math.Min(Content.PowerCap(Power.LucidBoon),
-                    (long)Math.Max(0, Build.Get(Power.LucidBoon)) * Math.Min(LucidBoonMaxDreams, Math.Max(0, EvilDreamCount)));
+            int conditionalTotal = ConditionalAttributes(now);
             return new DynamicBonus
             {
                 AttackSpeedPct = Build.Get(Power.Momentum) * MomentumStacks + (HealthRatio < BloodlustThreshold ? Build.Get(Power.Bloodlust) : 0)
                     + Math.Max(0, Build.Get(Power.Frenzy)) * Math.Min(FrenzyMaxEnemies, Math.Max(0, NearbyEnemies))
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0)
                     + (now < _perfectReadUntil ? Math.Min(Content.PowerCap(Power.PerfectRead), Math.Max(0, Build.Get(Power.PerfectRead))) : 0),
-                AttackPct = retaliation + vigor + resonance + conditional + linkAttack
-                    + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0), // v1.27：過負荷は攻撃力にも
-                PowerPct = retaliation + vigor + resonance
-                    + (now < _overloadUntil ? Math.Max(0, Build.Get(Power.Overload)) : 0) + conditional + linkAttack,
+                AttackPct = conditionalTotal + linkAttack,
+                PowerPct = conditionalTotal + linkAttack,
                 MoveSpeedPct = (now < _tailwindUntil ? Build.Get(Power.Tailwind) : 0)
                     + (now < _sprintUntil ? Math.Max(0, Build.Get(Power.Sprint)) : 0),
                 MaxHealthPct = LinkGuardHealthPct,
@@ -558,6 +542,7 @@ namespace SodRpg.Core.Game
             {
                 h.ResonanceSelf = 0;
                 h.ResonanceShared = 0;
+                h._resonanceSharedBase = 0;
             }
             for (int i = 0; i < heroes.Length; i++)
             {
@@ -568,7 +553,11 @@ namespace SodRpg.Core.Game
                 {
                     if (i == j || !near(i, j)) continue;
                     anyAlly = true;
-                    heroes[j].ResonanceShared = Math.Max(heroes[j].ResonanceShared, v / 2);
+                    if (v / 2 > heroes[j].ResonanceShared)
+                    {
+                        heroes[j].ResonanceShared = v / 2;
+                        heroes[j]._resonanceSharedBase = heroes[i].Build.ConditionalBase(Power.Resonance) / 2f;
+                    }
                 }
                 heroes[i].ResonanceSelf = anyAlly ? v : v / 2;
             }

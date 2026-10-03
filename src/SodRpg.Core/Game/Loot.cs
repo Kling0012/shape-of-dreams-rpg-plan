@@ -149,7 +149,7 @@ namespace SodRpg.Core.Game
         {
             var candidates = new List<PowerRange>();
             foreach (var pr in pool)
-                if (!r.Powers.Exists(x => x.Power == pr.Power)) candidates.Add(pr);
+                if (Content.PowerAllowedForRarity(pr.Power, r.Rarity) && !r.Powers.Exists(x => x.Power == pr.Power)) candidates.Add(pr);
             if (candidates.Count == 0) return;
             var pick = candidates[rng.Range(0, candidates.Count - 1)];
             int top = Math.Max(pick.Min, pick.Min + (pick.Max - pick.Min) / 2);

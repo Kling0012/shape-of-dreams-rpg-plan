@@ -40,6 +40,13 @@ namespace SodRpg.Core.Game
         /// <summary>遺物6枠と記憶ルートの連携を収める通信上限。</summary>
         public const int MaxLinks = 40;
 
+        /// <summary>絆を満たす、生きている味方旅人までの距離（m）。</summary>
+        public const double BondRange = 10;
+
+        /// <summary>距離や生存判定はホストが渡す。無効な距離や敵の旅人は絆に数えない。</summary>
+        public static bool IsBondAlly(bool living, bool allied, double distance) =>
+            living && allied && distance >= 0 && distance <= BondRange;
+
         /// <summary>導きの羅針盤の正規形（充電前後で型が違うが、連携では同じエッセンスとして数える）。</summary>
         public const string Compass = "Gem_U_GuidingCompass_NotCharged";
         private const string CompassCharged = "Gem_U_GuidingCompass_Charged";
@@ -244,11 +251,13 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        /// <summary>条件を1つだけ判定。旅人は旅人の型名、記憶とエッセンスは装着中の型名と比べる。</summary>
-        public static bool RequirementSatisfied(string target, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences)
+        /// <summary>旅人は自分か10m以内の生きている味方。装着条件は自分の記憶・エッセンスだけを見る。</summary>
+        public static bool RequirementSatisfied(string target, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences,
+            ICollection<string> nearbyAllyHeroes = null)
         {
             target = Canon(target);
-            if (TravelerNames.ContainsKey(target)) return heroKey == target;
+            if (target == null) return false;
+            if (TravelerNames.ContainsKey(target)) return heroKey == target || (nearbyAllyHeroes != null && nearbyAllyHeroes.Contains(target));
             if (MemoryNames.ContainsKey(target)) return equippedMemories != null && equippedMemories.Contains(target);
             if (EssenceNames.ContainsKey(target))
             {
@@ -261,12 +270,23 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>連携の条件をすべて満たしているか。ホストの定期走査と画面の印で使う。</summary>
-        public static bool Satisfied(LinkDef link, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences)
+        public static bool Satisfied(LinkDef link, string heroKey, ICollection<string> equippedMemories, ICollection<string> equippedEssences,
+            ICollection<string> nearbyAllyHeroes = null)
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return false;
+            int travelers = 0;
+            bool includesSelf = false;
             foreach (string t in link.Requires)
-                if (!RequirementSatisfied(t, heroKey, equippedMemories, equippedEssences)) return false;
-            return true;
+            {
+                if (IsTraveler(t))
+                {
+                    travelers++;
+                    if (t == heroKey) includesSelf = true;
+                }
+                if (!RequirementSatisfied(t, heroKey, equippedMemories, equippedEssences, nearbyAllyHeroes)) return false;
+            }
+            // 2種類以上の旅人の絆は、その組の一員としてだけ受けられる。
+            return travelers < 2 || includesSelf;
         }
 
         /// <summary>
@@ -303,26 +323,24 @@ namespace SodRpg.Core.Game
 
         private static string ConditionJa(LinkDef link, Func<string, bool> isSatisfied, bool memoryKind)
         {
-            string traveler = null, travelerMark = "";
+            var travelers = new List<string>();
             var items = new List<string>(link.Requires.Length);
             foreach (string t in link.Requires)
             {
                 if (IsTraveler(Canon(t)))
                 {
-                    traveler = Name(t).Ja;
-                    travelerMark = Mark(t, isSatisfied);
+                    travelers.Add(Name(t).Ja + Mark(t, isSatisfied));
                 }
                 else items.Add("『" + Name(t).Ja + "』" + Mark(t, isSatisfied));
             }
-            string tail = memoryKind ? "装着しているとき" : "装着していると";
-            string cond;
-            if (items.Count == 0) cond = traveler + travelerMark + " で遊んでいると";
-            else if (traveler != null) cond = JoinJa(items) + " を" + tail; // 「Vesper で、『エルの慈悲』と『完璧』を装着していると」
-            else if (items.Count == 1) cond = items[0] + " を" + tail;
-            else if (items.Count == 2) cond = items[0] + " と" + items[1] + " を両方" + tail;
-            else cond = string.Join(" と", items) + " をすべて" + tail;
-            if (traveler != null) cond = traveler + travelerMark + " で、" + cond;
-            return cond;
+            var conditions = new List<string>();
+            if (travelers.Count == 1)
+                conditions.Add("自分が " + travelers[0] + " であるか、近くに " + travelers[0] + " がいるとき（生きている味方・10m以内）");
+            else if (travelers.Count > 1)
+                conditions.Add(string.Join(" と ", travelers) + " のうち1人で、ほかの旅人が近くにいるとき（生きている味方・10m以内）");
+            if (items.Count > 0)
+                conditions.Add(JoinJa(items) + " を" + (items.Count > 1 ? "すべて" : "") + "装着しているとき");
+            return string.Join("、かつ", conditions);
         }
 
         private static string JoinJa(List<string> items) =>
@@ -377,24 +395,24 @@ namespace SodRpg.Core.Game
 
         private static string ConditionEn(LinkDef link, Func<string, bool> isSatisfied, bool memoryKind)
         {
-            string traveler = null, travelerMark = "";
+            var travelers = new List<string>();
             var items = new List<string>(link.Requires.Length);
             foreach (string t in link.Requires)
             {
                 if (IsTraveler(Canon(t)))
                 {
-                    traveler = Name(t).En;
-                    travelerMark = Mark(t, isSatisfied);
+                    travelers.Add(Name(t).En + Mark(t, isSatisfied));
                 }
                 else items.Add(Name(t).En + (Mark(t, isSatisfied).Length == 0 ? "" : " " + Mark(t, isSatisfied)));
             }
-            string cond;
-            if (items.Count == 0) cond = "when playing " + traveler + travelerMark + ", ";
-            else if (items.Count == 1) cond = "with " + items[0] + " equipped, ";
-            else if (items.Count == 2) cond = "with " + items[0] + " and " + items[1] + " both equipped, ";
-            else cond = "with " + string.Join(", ", items) + " all equipped, ";
-            if (traveler != null) cond = "as " + traveler + travelerMark + ", " + cond;
-            return cond;
+            var conditions = new List<string>();
+            if (travelers.Count == 1)
+                conditions.Add("while playing " + travelers[0] + " or with a living allied " + travelers[0] + " within 10 m");
+            else if (travelers.Count > 1)
+                conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within 10 m");
+            if (items.Count > 0)
+                conditions.Add("with " + string.Join(" and ", items) + (items.Count > 1 ? " all" : "") + " equipped");
+            return string.Join(", and ", conditions) + ", ";
         }
 
         private static string DescribeEn(LinkDef link, Func<string, bool> isSatisfied, string value)

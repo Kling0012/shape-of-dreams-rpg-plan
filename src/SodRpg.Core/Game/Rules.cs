@@ -705,7 +705,9 @@ namespace SodRpg.Core.Game
                 case DreamEvent.PowerCrucible:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
-                    var pool = DreamEvents.ReplacementPowers(target).ToList();
+                    var pool = DreamEvents.ReplacementPowers(target)
+                        .Where(x => Content.PowerAllowedForRarity(x.Power, target.Rarity)).ToList();
+                    if (pool.Count == 0) throw new InvalidOperationException(Loc.T("別の固有効果を付けられません。", "No different power is available."));
                     var chosen = pool[rng.Range(0, pool.Count - 1)];
                     var replacement = new PowerLine(chosen.Power, rng.Range(chosen.Min, chosen.Max));
                     var old = target.Powers[0];
@@ -1290,7 +1292,7 @@ namespace SodRpg.Core.Game
                 r.EnhanceMilestones = 2;
                 if (r.Powers.Count == 0)
                 {
-                    var pool = Content.PowerPool(r.Slot);
+                    var pool = Content.PowerPool(r.Slot).Where(x => Content.PowerAllowedForRarity(x.Power, r.Rarity)).ToList();
                     var pr = pool[rng.Range(0, pool.Count - 1)];
                     r.Powers.Add(new PowerLine(pr.Power, pr.Min));
                     notes.Add(Loc.T($"固有効果「{Content.PowerName(pr.Power)}」が宿りました。", $"gained the power \"{Content.PowerName(pr.Power)}\"."));

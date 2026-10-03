@@ -2696,6 +2696,24 @@ namespace SodRpg.Core.Game
         {
             [Slot.Weapon] = new[]
             {
+                new PowerRange(Power.ShieldBash, 30, 60),
+                new PowerRange(Power.WanderersEdge, 15, 30),
+                new PowerRange(Power.FocusFire, 40, 80),
+                new PowerRange(Power.DuelistsWay, 20, 40),
+                new PowerRange(Power.RunUp, 40, 80),
+                new PowerRange(Power.BrittleIce, 30, 60),
+                new PowerRange(Power.ElementalHarvest, 20, 35),
+                new PowerRange(Power.Medley, 3, 6),
+                new PowerRange(Power.Spellsweep, 30, 60),
+                new PowerRange(Power.BareHandedPride, 1, 2),
+                new PowerRange(Power.OpeningSalvo, 15, 30),
+                new PowerRange(Power.PileOn, 20, 40),
+                new PowerRange(Power.AceInHand, 8, 16),
+                new PowerRange(Power.PilingLuck, 1, 2),
+                new PowerRange(Power.WeakPointWound, 60, 120),
+                new PowerRange(Power.CritSplash, 20, 40),
+                new PowerRange(Power.ReturningBlade, 10, 20),
+                new PowerRange(Power.SpilloverStrike, 40, 80),
                 new PowerRange(Power.Momentum, 3, 5),
                 new PowerRange(Power.Lifesteal, 5, 10),
                 new PowerRange(Power.Executioner, 25, 45),
@@ -2716,6 +2734,19 @@ namespace SodRpg.Core.Game
             },
             [Slot.Armor] = new[]
             {
+                new PowerRange(Power.ShieldbreakBurst, 6, 12),
+                new PowerRange(Power.SharedWard, 20, 40),
+                new PowerRange(Power.TriumphSong, 4, 8),
+                new PowerRange(Power.WatchfulHand, 15, 25),
+                new PowerRange(Power.Breakout, 6, 12),
+                new PowerRange(Power.ImmovableStance, 6, 12),
+                new PowerRange(Power.VanguardsOath, 15, 30),
+                new PowerRange(Power.DeathBloom, 60, 120),
+                new PowerRange(Power.DreamOmen, 15, 30),
+                new PowerRange(Power.RearguardsWay, 6, 12),
+                new PowerRange(Power.TollOfGrudge, 15, 30),
+                new PowerRange(Power.ReadyGuard, 6, 12),
+                new PowerRange(Power.Apothecary, 10, 20),
                 new PowerRange(Power.Retaliation, 15, 25),
                 new PowerRange(Power.Bulwark, 15, 30),
                 new PowerRange(Power.Thorns, 15, 30),
@@ -2732,6 +2763,29 @@ namespace SodRpg.Core.Game
             },
             [Slot.Charm] = new[]
             {
+                new PowerRange(Power.ShieldbreakBurst, 6, 12),
+                new PowerRange(Power.SharedWard, 20, 40),
+                new PowerRange(Power.GleamingWard, 6, 12),
+                new PowerRange(Power.CoStar, 10, 20),
+                new PowerRange(Power.TriumphSong, 4, 8),
+                new PowerRange(Power.WatchfulHand, 15, 25),
+                new PowerRange(Power.KindnessReturns, 15, 30),
+                new PowerRange(Power.RelayHand, 5, 10),
+                new PowerRange(Power.UmbralHeritage, 40, 80),
+                new PowerRange(Power.ElementalHarvest, 20, 35),
+                new PowerRange(Power.PackFeast, 2, 5),
+                new PowerRange(Power.VanguardsOath, 15, 30),
+                new PowerRange(Power.Medley, 3, 6),
+                new PowerRange(Power.BareHandedPride, 1, 2),
+                new PowerRange(Power.AceInHand, 8, 16),
+                new PowerRange(Power.CrystalCircuit, 8, 15),
+                new PowerRange(Power.ShardBoon, 5, 10),
+                new PowerRange(Power.Lifeline, 3, 6),
+                new PowerRange(Power.DreamOmen, 15, 30),
+                new PowerRange(Power.RearguardsWay, 6, 12),
+                new PowerRange(Power.ReadyGuard, 6, 12),
+                new PowerRange(Power.Apothecary, 10, 20),
+                new PowerRange(Power.SpilloverStrike, 40, 80),
                 new PowerRange(Power.Resonance, 5, 9),
                 new PowerRange(Power.Tailwind, 15, 25),
                 new PowerRange(Power.SecondWind, 20, 30),
@@ -2757,6 +2811,24 @@ namespace SodRpg.Core.Game
             },
             [Slot.Head] = new[]
             {
+                new PowerRange(Power.GleamingWard, 6, 12),
+                new PowerRange(Power.CoStar, 10, 20),
+                new PowerRange(Power.FocusFire, 40, 80),
+                new PowerRange(Power.DuelistsWay, 20, 40),
+                new PowerRange(Power.ImmovableStance, 6, 12),
+                new PowerRange(Power.StardustCycle, 10, 20),
+                new PowerRange(Power.PrismShift, 1, 3),
+                new PowerRange(Power.PackFeast, 2, 5),
+                new PowerRange(Power.Medley, 3, 6),
+                new PowerRange(Power.OpeningSalvo, 15, 30),
+                new PowerRange(Power.PileOn, 20, 40),
+                new PowerRange(Power.AceInHand, 8, 16),
+                new PowerRange(Power.CrystalCircuit, 8, 15),
+                new PowerRange(Power.Lifeline, 3, 6),
+                new PowerRange(Power.DreamOmen, 15, 30),
+                new PowerRange(Power.RearguardsWay, 6, 12),
+                new PowerRange(Power.PilingLuck, 1, 2),
+                new PowerRange(Power.ReturningBlade, 10, 20),
                 new PowerRange(Power.Eclipse, 8, 12),
                 new PowerRange(Power.FrostCrystal, 3, 5),
                 new PowerRange(Power.Overload, 10, 20),
@@ -2776,6 +2848,29 @@ namespace SodRpg.Core.Game
             },
             [Slot.Hands] = new[]
             {
+                new PowerRange(Power.ShieldBash, 30, 60),
+                new PowerRange(Power.KindnessReturns, 15, 30),
+                new PowerRange(Power.WanderersEdge, 15, 30),
+                new PowerRange(Power.FocusFire, 40, 80),
+                new PowerRange(Power.DuelistsWay, 20, 40),
+                new PowerRange(Power.RunUp, 40, 80),
+                new PowerRange(Power.StrafeShot, 15, 30),
+                new PowerRange(Power.RelayHand, 5, 10),
+                new PowerRange(Power.StardustCycle, 10, 20),
+                new PowerRange(Power.UmbralHeritage, 40, 80),
+                new PowerRange(Power.BrittleIce, 30, 60),
+                new PowerRange(Power.ElementalHarvest, 20, 35),
+                new PowerRange(Power.PrismShift, 1, 3),
+                new PowerRange(Power.DeathBloom, 60, 120),
+                new PowerRange(Power.Spellsweep, 30, 60),
+                new PowerRange(Power.BareHandedPride, 1, 2),
+                new PowerRange(Power.PileOn, 20, 40),
+                new PowerRange(Power.PilingLuck, 1, 2),
+                new PowerRange(Power.WeakPointWound, 60, 120),
+                new PowerRange(Power.CritSplash, 20, 40),
+                new PowerRange(Power.ReturningBlade, 10, 20),
+                new PowerRange(Power.Apothecary, 10, 20),
+                new PowerRange(Power.SpilloverStrike, 40, 80),
                 new PowerRange(Power.Steam, 35, 60),
                 new PowerRange(Power.Cinder, 1, 1),
                 new PowerRange(Power.Executioner, 25, 45),
@@ -2797,6 +2892,17 @@ namespace SodRpg.Core.Game
             },
             [Slot.Feet] = new[]
             {
+                new PowerRange(Power.ShieldbreakBurst, 6, 12),
+                new PowerRange(Power.WatchfulHand, 15, 25),
+                new PowerRange(Power.Breakout, 6, 12),
+                new PowerRange(Power.ImmovableStance, 6, 12),
+                new PowerRange(Power.RunUp, 40, 80),
+                new PowerRange(Power.StrafeShot, 15, 30),
+                new PowerRange(Power.VanguardsOath, 15, 30),
+                new PowerRange(Power.DeathBloom, 60, 120),
+                new PowerRange(Power.ShardBoon, 5, 10),
+                new PowerRange(Power.TollOfGrudge, 15, 30),
+                new PowerRange(Power.ReadyGuard, 6, 12),
                 new PowerRange(Power.Sprint, 10, 25),
                 new PowerRange(Power.Tailwind, 15, 25),
                 new PowerRange(Power.Whirlwind, 40, 80),
@@ -2887,6 +2993,50 @@ namespace SodRpg.Core.Game
             [Power.Eclipse] = 25,
             [Power.Cinder] = 1,
             [Power.FrostCrystal] = 12,
+            [Power.ShieldbreakBurst] = 20,
+            [Power.SharedWard] = 60,
+            [Power.ShieldBash] = 90,
+            [Power.GleamingWard] = 18,
+            [Power.CoStar] = 30,
+            [Power.TriumphSong] = 12,
+            [Power.WatchfulHand] = 30,
+            [Power.KindnessReturns] = 30,
+            [Power.WanderersEdge] = 50,
+            [Power.FocusFire] = 120,
+            [Power.Breakout] = 18,
+            [Power.DuelistsWay] = 60,
+            [Power.ImmovableStance] = 20,
+            [Power.RunUp] = 120,
+            [Power.StrafeShot] = 40,
+            [Power.RelayHand] = 15,
+            [Power.StardustCycle] = 30,
+            [Power.UmbralHeritage] = 100,
+            [Power.BrittleIce] = 90,
+            [Power.ElementalHarvest] = 60,
+            [Power.PrismShift] = 5,
+            [Power.PackFeast] = 8,
+            [Power.VanguardsOath] = 45,
+            [Power.DeathBloom] = 160,
+            [Power.Medley] = 10,
+            [Power.Spellsweep] = 90,
+            [Power.BareHandedPride] = 3,
+            [Power.OpeningSalvo] = 45,
+            [Power.PileOn] = 60,
+            [Power.AceInHand] = 24,
+            [Power.CrystalCircuit] = 25,
+            [Power.ShardBoon] = 15,
+            [Power.Lifeline] = 12,
+            [Power.DreamOmen] = 50,
+            [Power.RearguardsWay] = 18,
+            [Power.TollOfGrudge] = 40,
+            [Power.UnbowedMind] = 12,
+            [Power.PilingLuck] = 3,
+            [Power.WeakPointWound] = 160,
+            [Power.CritSplash] = 60,
+            [Power.ReturningBlade] = 30,
+            [Power.ReadyGuard] = 18,
+            [Power.Apothecary] = 30,
+            [Power.SpilloverStrike] = 120,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -2944,6 +3094,12 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<AffixDef> AffixPool(Slot slot) => AffixPools[slot];
         public static IReadOnlyList<PowerRange> PowerPool(Slot slot) => PowerPools[slot];
 
+        /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
+        public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
+            && power != Power.None && power != Power.ShadowStep && power != Power.UnbowedMind;
+        public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
+            && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
+
         /// <summary>エピックの銘（1つ目の固有効果から）。v1.22。</summary>
         private static readonly Dictionary<Power, Txt> Epithets = new Dictionary<Power, Txt>
         {
@@ -2991,7 +3147,7 @@ namespace SodRpg.Core.Game
             [Power.LucidBoon] = new Txt("明晰な", "Lucid"),
         };
 
-        public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : ElementReactions.Epithet(p);
+        public static Txt Epithet(Power p) => Epithets.TryGetValue(p, out var t) ? t : NewPowersV129.IsPower(p) ? NewPowersV129.Epithet(p) : ElementReactions.Epithet(p);
 
         public static int PowerCap(Power p) => PowerCaps.TryGetValue(p, out int c) ? c : 0;
         public static int StatCap(Stat s) => StatCaps.TryGetValue(s, out int c) ? c : 0;
@@ -3298,6 +3454,7 @@ namespace SodRpg.Core.Game
 
         public static string PowerName(Power p)
         {
+            if (NewPowersV129.IsPower(p)) return NewPowersV129.Name(p);
             switch (p)
             {
                 case Power.Momentum: return Loc.T("連撃", "Momentum");
@@ -3354,6 +3511,7 @@ namespace SodRpg.Core.Game
         public static string FormatPower(Power p, int v)
         {
             string name = PowerName(p);
+            if (NewPowersV129.IsPower(p)) return NewPowersV129.Describe(p, v);
             if (ElementReactions.IsPower(p)) return FormatReaction(p, v, name);
             switch (p)
             {
@@ -3377,7 +3535,7 @@ namespace SodRpg.Core.Game
                 case Power.Radiance: return Loc.T($"【{name}】" + ElementJa(v, "光") + "（光は5つまで。3つ重なると光のダメージは必ず会心）", $"[{name}] " + ElementEn(v, "Light") + " (up to 5; at 3, light damage always crits)");
                 case Power.Umbra: return Loc.T($"【{name}】" + ElementJa(v, "闇") + "。会心で当たればもう1つ（闇は5つまで）", $"[{name}] " + ElementEn(v, "Dark") + "; a critical hit adds 1 more (up to 5)");
                 case Power.Convergence: return Loc.T($"【{name}】敵に火・冷気・光・闇がそろった瞬間、攻撃力か魔力の高い方の{v}%分の爆発を起こす（同じ敵には6秒に1回）", $"[{name}] When an enemy has Fire, Cold, Light and Dark at once, it bursts for {v}% of the higher of AD or AP (once per 6s per enemy)");
-                case Power.EchoingDodge: return Loc.T($"【{name}】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、回避するたびに時間を延長）", $"[{name}] After a dodge, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each dodge refreshes it)");
+                case Power.EchoingDodge: return Loc.T($"【{name}】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、回避するたびに時間を延長。次の通常攻撃への上乗せは最大の1つだけを消費し、残りは保持）", $"[{name}] After a dodge, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each dodge refreshes it; only the largest next-basic bonus is consumed, others remain)");
                 case Power.UltimateSurge: return Loc.T($"【{name}】Ultimateを使った後の5秒間、攻撃力・魔力が{v}%上がる（重ならず時間を延長）", $"[{name}] +{v}% AD/AP for 5s after using your Ultimate (refreshes, does not stack)");
                 case Power.SoulSiphon: return Loc.T($"【{name}】敵を倒すと、最大HPの{v / 10f:0.0}%を回復する（0.5秒に1回まで）", $"[{name}] Kills heal you for {v / 10f:0.0}% of max health (at most once per 0.5s)");
                 case Power.Whirlwind: return Loc.T($"【{name}】回避すると、周囲4mの敵に攻撃力か魔力の高い方の{v}%分のダメージを与える（2秒に1回）", $"[{name}] Dodging deals {v}% of the higher of AD or AP to enemies within 4m (once per 2s)");
@@ -3399,7 +3557,7 @@ namespace SodRpg.Core.Game
                 case Power.SpendersWard: return Loc.T($"【{name}】ゴールドを100使うごとに、最大HPの{v}%分の障壁を10秒間張る（3回分まで重なる）", $"[{name}] Each 100 gold spent grants a {v}% max-health shield for 10s (up to 3 stacks)");
                 case Power.PerfectRead: return Loc.T($"【{name}】無敵でダメージを実際に無効化すると、4秒間 攻撃速度が{v}%上がる（1.5秒に1回、重ならず時間を延長）", $"[{name}] Negating damage with invulnerability grants +{v}% attack speed for 4s (once per 1.5s; refreshes without stacking)");
                 case Power.LucidBoon: return Loc.T($"【{name}】有効な邪悪な明晰夢1つにつき、攻撃力・魔力が{v}%上がる（6つまで、合計18%まで）", $"[{name}] +{v}% AD/AP per active Evil lucid dream (up to 6 dreams and +18% total)");
-                case Power.ShadowStep: return Loc.T($"【{name}】回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、移動するたびに時間を延長）", $"[{name}] After a dodge, dash or teleport, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each movement refreshes it)");
+                case Power.ShadowStep: return Loc.T($"【{name}】回避・ダッシュ・瞬間移動の後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の{v}%分のダメージを上乗せする（重ならず、移動するたびに時間を延長。次の通常攻撃への上乗せは最大の1つだけを消費し、残りは保持）", $"[{name}] After a dodge, dash or teleport, your next basic attack within 3s deals +{v}% of the higher of AD or AP (does not stack; each movement refreshes it; only the largest next-basic bonus is consumed, others remain)");
                 default: return "-";
             }
         }
