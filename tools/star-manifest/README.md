@@ -71,6 +71,11 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 ### 4. 橋に条件づく仕掛け：`gimmick.condition`
 `"BridgeSuccess:<橋ID>"`（合わせ技の成立）、`"BridgeMark:<橋ID>"`（橋の印を読む）、`"BridgeWindow:<橋ID>"`（橋の窓）。大文字小文字はこのとおり、`<橋ID>` は同じ旅人の `h.<hero>.ring.<force|insight|vessel|armor|recall|rhythm|resolve|renewal>`。橋の条件でない発動単位の補足（「印なし」「撃破は条件にしない」「基本攻撃1回につき1回」など）は `notes` に書く。橋の成立条件がない星（Mist の renewal）は `condition` を付けない。
 
+`PairCombos` の既存62個に無い橋は `gen_cs.py` の表で扱う（`PairCombos` は増やさない）。
+- `AUTHORED_PAIRS`：設計表が両端と成立条件を全部決めている新ペア（現在は Bismuth `h.bismuth.ring.renewal` = I×S の直接受信、5段）。中心の行が `ManifestNewDirectRechargePair`（型付きの `BridgeSuccessDefinition`）になり、橋の領域と `condition` はこのペアIDに結び付く。
+- `RECEIVER_ONLY_BRIDGES`：ペアを作らない橋（Mist の `h.mist.ring.renewal`）。星団の全星が `ReceiverOnlyBridge = true` と、設計表のA/B（FL/LU）を宣言した `MemoryOwnership` を持つ。宣言外の記憶を使う星は生成エラー。
+- `UNRESOLVED_BRIDGES`：設計の未決事項があり実ペアを登録できない橋（Aurena renewal / Bismuth resolve / Nachia renewal）。該当星は理由つきで失敗のままにする。
+
 ### 5. gimmick の欄
 必須：`trigger, effect, value, arg, cooldown, target`。任意（ある星だけ、この順）：
 

@@ -8,7 +8,7 @@ namespace SodRpg.Core.Game
     {
         // Migration rows intentionally omit layout/rank-cost data. Read the original tree,
         // never the currently installed tree, so regeneration cannot move saved nodes.
-        private static AuthoredStarDef ManifestRetained(string hero, string id, ClusterStarDef effect,
+        internal static AuthoredStarDef ManifestRetained(string hero, string id, ClusterStarDef effect,
             string[] required, string[] requiredAny, AuthoredStarEdge[] edges, MemoryOwnership ownership,
             string source, string[] mechanisms, string notes)
         {
@@ -18,13 +18,15 @@ namespace SodRpg.Core.Game
             effect.RankCost = original.RankCost;
             if (effect.Options != null)
                 foreach (var option in effect.Options) { option.MaxRank = original.MaxRank; option.RankCost = original.RankCost; }
+            // A retained outer bridge that carries a complete authored pair (ManifestNewPair) is a real bridge region too.
             var pair = PairCombos.ForBridge(id);
+            bool authoredPair = effect.Mechanism?.Bridge != null;
             return new AuthoredStarDef
             {
                 HeroKey = hero, LocalStarId = id,
                 ClusterId = original.Cluster?.Id ?? id + ".migration",
                 Region = original.Cluster?.Region ?? (original.RouteId != null ? ClusterRegion.Memory(original.RouteId)
-                    : pair != null ? ClusterRegion.Bridge(id)
+                    : pair != null || authoredPair ? ClusterRegion.Bridge(id)
                     : new ClusterRegion { Kind = ClusterRegionKind.Keystone }),
                 AnchorId = original.Cluster?.Anchor ?? (original.RouteId != null
                     ? HeroSigils.BaselineTreeFor(hero).First(x => x.RouteId == original.RouteId).Id : id),
@@ -96,6 +98,30 @@ namespace SodRpg.Core.Game
                 Source = definition.PayoffSource, Trigger = payoffTrigger, Budget = budget,
                 Bridge = definition, ValuesByRank = values, Once = pair.OncePerActivation,
                 RequiredMemories = new[] { pair.RouteA, pair.RouteB }
+            };
+        }
+
+        // A newly authored real pair for a redesigned outer bridge whose original node never was a PairCombos entry
+        // (Bismuth renewal). It owns exactly two distinct hero route endpoints with explicit star ids, and the
+        // direct-receiver gate has no mark, so the three-rank mark limit does not apply to its retained ranks.
+        internal static AuthoredMechanismSpec ManifestNewDirectRechargePair(string hero, string bridgeId, string pairId,
+            string starA, string memoryA, string starB, string memoryB,
+            string source, MemoryEventKind trigger, string recipient, int[] rankValues, bool oncePerActivation)
+        {
+            if (rankValues == null || rankValues.Length == 0) throw new InvalidOperationException("A retained bridge receiver requires its exact rank table: " + bridgeId);
+            var budget = trigger == MemoryEventKind.Kill ? AttributionBudget.PerKill
+                : trigger == MemoryEventKind.OwnedBasicAttackFired ? AttributionBudget.PerOwnedBasicAttack : AttributionBudget.PerActivation;
+            var payload = new BridgePayload(bridgeId, BridgePayloadKind.Recharge, new[] { rankValues[0] }, recipient: MemorySelector.Parse(recipient));
+            var definition = new BridgeSuccessDefinition(pairId,
+                new[] { new BridgeEndpointRequirement(starA, memoryA), new BridgeEndpointRequirement(starB, memoryB) },
+                1, BridgeGateKind.DirectReceiver, MemorySelector.Parse(source), trigger, MemorySelector.Parse(source), trigger,
+                payload, Array.Empty<BridgePayload>(), budget);
+            return new AuthoredMechanismSpec
+            {
+                Kind = AuthoredMechanismKind.BridgeSuccess, ChannelId = bridgeId,
+                Source = definition.PayoffSource, Trigger = trigger, Budget = budget,
+                Bridge = definition, ValuesByRank = rankValues, Once = oncePerActivation,
+                RequiredMemories = new[] { memoryA, memoryB }
             };
         }
 

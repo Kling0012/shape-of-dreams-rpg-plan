@@ -40,6 +40,32 @@ WARDS = {"AlliedWard", "SummonWard", "AllyWard", "AllyShield"}
 DURATION = {"Shield", "Empower", "Quicken", "Wound", "Daze", "Rampart", "Primed", "Crescendo", "Sap", "Weakspot"}
 
 
+# Redesigned outer bridges have no PairCombos entry (the 62 legacy pairs stay untouched). A pair is only
+# authored when the design fixes both endpoints and every gate field; the endpoint stars come from the layout
+# (b7/b8 sit on the sixth stars of the two routes they join: HeroTreeLayout, order 5).
+AUTHORED_PAIRS = {
+    # Bismuth b8 (docs/specs/v1.31-clusters-bismuth.md, bridge table): I x S, I hit -> S remaining cooldown 1/2/3/4/5%,
+    # once per I activation, five retained ranks, no mark (direct receiver gate).
+    "h.bismuth.ring.renewal": {"index": 8, "endpoints": (("innocence", 6), ("distorting-sprint", 6)),
+                               "source": "St_QR_Innocence", "trigger": "OnHit", "recipient": "St_M_Sprint"},
+}
+# A bridge anchor that is a migrated receiver boost, never a pair: its cluster declares the two memories it owns.
+# Mist renewal: "FL / LU" (docs/specs/v1.31-clusters-mist.md); "no new pair" and "not an eighth existing combo".
+RECEIVER_ONLY_BRIDGES = {"h.mist.ring.renewal": ("St_Q_Fleche", "St_Q_Lunge")}
+# Design-table gaps that must be answered by the design owner before a real pair can be registered.
+UNRESOLVED_BRIDGES = {
+    "h.aurena.ring.renewal": "Aurena B8 is a Mark pair with five retained ranks (AlliedWard 4/5/6/7/8). Open questions: "
+        "(1) what Expose does the mark give at ranks 4 and 5 (the design fixes only 2/3/4% for ranks 1-3, BridgeSuccessDefinition rejects a marked rank above 3, "
+        "and the mark Expose is rank+1)? (2) BridgePayloadKind has no AlliedWard payload, so a pair whose base payoff is AlliedWard needs a new engine payload kind",
+    "h.bismuth.ring.resolve": "Bismuth b7 is a Mark pair (P x I, Sap 1/2/3/4/5%) with five retained ranks. Open question: "
+        "what Expose does the mark give at ranks 4 and 5 (the design fixes only 2/3/4% for ranks 1-3, BridgeSuccessDefinition rejects a marked rank above 3, "
+        "and the mark Expose is rank+1)?",
+    "h.nachia.ring.renewal": "Nachia b8 is a Window pair (Sylvan Call use opens the window, Circle of Life basic attack inside it recharges Sylvan Call 1/2/3/4/5%). Open questions: "
+        "(1) which route star of Circle of Life is the endpoint (the layout places the bridge between pack-heart.6 and sylvan-call.6, not next to circle-life; existing pairs use the fourth stars)? "
+        "(2) BridgeSuccessDefinition rejects a non-direct gate above rank 3: may a window pair keep its five retained ranks?",
+}
+
+
 def cs(value):
     return "null" if value is None else json.dumps(value, ensure_ascii=False)
 
@@ -138,6 +164,15 @@ class Compiler:
                 self.pairs[bridge] = {"id": "h." + name + ".pair." + str(index),
                     "a": match[4], "b": match[6], "line": line,
                     "payoff": next((e for _, _, _, e in tokens if e), None)}
+        memory_of = {route: memory for memory, route in self.routes.items()}
+        for bridge, spec in AUTHORED_PAIRS.items():
+            if not bridge.startswith("h." + name + "."):
+                continue
+            (slug_a, order_a), (slug_b, order_b) = spec["endpoints"]
+            route_a, route_b = "h." + name + ".route." + slug_a, "h." + name + ".route." + slug_b
+            self.pairs[bridge] = {"id": "h." + name + ".pair." + str(spec["index"]),
+                "a": memory_of[route_a], "b": memory_of[route_b], "line": "", "payoff": None, "authored": spec,
+                "star_a": route_a + "." + str(order_a), "star_b": route_b + "." + str(order_b)}
         self.known_memories = set(self.routes)
         contract = (ROOT / "src/SodRpg.Core/Game/Mechanisms/AuthoredStarContract.cs").read_text(encoding="utf-8")
         common = re.search(r"CommonMemories\s*=.*?\{(.*?)\};", contract, re.S)
@@ -223,13 +258,21 @@ class Compiler:
         e, source = g["effect"], row.get("memory")
         trigger = TRIGGERS[g["trigger"]]
         budget = "PerKill" if trigger == "Kill" else "PerOwnedBasicAttack" if trigger == "OwnedBasicAttackFired" else "PerActivationVictim" if trigger in ("Hit", "CriticalHit") and e in ("Sap", "Wound", "Expose", "Daze", "Rampart") and not g.get("once") else "PerActivation"
+        pair = self.pairs.get(sid)
+        if pair and pair.get("authored"):
+            return self.authored_pair_center(sid, row, g, prefix, pair)
         members = {"ChannelId": cs(sid), "Source": selector(source), "Trigger": "MemoryEventKind." + trigger,
                    "Budget": "AttributionBudget." + budget}
         if "condition" in g:
             condition, bridge = g["condition"].split(":", 1)
             if bridge not in self.pairs:
-                self.fail(sid, prefix + ".condition", g["condition"], "no registered real pair or complete authored pair definition")
+                self.fail(sid, prefix + ".condition", g["condition"], UNRESOLVED_BRIDGES.get(bridge, "no registered real pair or complete authored pair definition"))
             else:
+                authored = self.pairs[bridge].get("authored")
+                if condition == "BridgeSuccess" and authored and g["trigger"] != authored["trigger"]:
+                    self.fail(sid, prefix + ".condition", g["condition"], "the pair succeeds on " + authored["trigger"] + " but this star triggers on " + g["trigger"]
+                              + ": a BridgeSuccess channel is dispatched only from the success transaction of the same event kind, so it could never fire. "
+                              "The design table lists it without a pair condition; the manifest row needs that condition removed (manifests are not edited here)")
                 members.update(Condition="AuthoredMechanismCondition." + condition, PairId=cs(self.pairs[bridge]["id"]))
                 members["RequiredMemories"] = array([self.pairs[bridge]["a"], self.pairs[bridge]["b"]])
         for key, field in (("once", "Once"), ("everyN", "EveryN")):
@@ -315,6 +358,21 @@ class Compiler:
         if e not in RECHARGE and e not in ORDINARY and g["cooldown"] != 0:
             self.fail(sid, prefix + ".cooldown", g["cooldown"], "typed payload has no seconds-cooldown field")
         return obj("AuthoredMechanismSpec", members)
+
+    def authored_pair_center(self, sid, row, g, prefix, pair):
+        """The retained center of a newly authored pair is the typed base binding of that pair."""
+        spec = pair["authored"]
+        recipient = g.get("target")
+        if g["effect"] != "ReceiverRecharge" or g["arg"] != 0 or g["cooldown"] != 0 or "condition" in g:
+            self.fail(sid, prefix, g, "the authored direct-receiver pair base is a deterministic ReceiverRecharge (Arg 0, CD0, no pair condition)")
+        if row.get("memory") != spec["source"] or recipient != spec["recipient"] or row.get("receiver") != spec["recipient"] \
+                or g["trigger"] != spec["trigger"] or spec["source"] not in (pair["a"], pair["b"]) or spec["recipient"] != pair["b"]:
+            self.fail(sid, prefix, g, "center source/trigger/recipient differ from the design table pair " + display_value(spec))
+        if not g.get("once") or len(g.get("valuesByRank", [])) != row.get("maxRank", 1):
+            self.fail(sid, prefix + ".valuesByRank", g.get("valuesByRank"), "the retained pair base needs its once-per-activation flag and an exact table for every retained rank")
+        return ("ManifestNewDirectRechargePair(" + cs(self.hero) + ", " + cs(sid) + ", " + cs(pair["id"]) + ", " + cs(pair["star_a"]) + ", " + cs(pair["a"]) + ", "
+                + cs(pair["star_b"]) + ", " + cs(pair["b"]) + ", " + cs(spec["source"]) + ", MemoryEventKind." + TRIGGERS[spec["trigger"]] + ", " + cs(spec["recipient"]) + ", "
+                + array([units(x) for x in g.get("valuesByRank", [])], "int") + ", true)")
 
     def key_spec(self, sid, spec, path, wound_lifetime=None):
         effect, field = spec["effect"], spec["field"]
@@ -555,9 +613,11 @@ class Compiler:
             return "ClusterRegion.Memory(" + cs(route) + ")"
         if row["region"] == "bridge":
             anchors = [s.get("anchor") for s in self.rows if s.get("cluster") == row["cluster"] and s.get("anchor")]
-            bridge = next((a for a in anchors if a in self.pairs), None)
+            bridge = next((a for a in anchors if a in self.pairs or a in RECEIVER_ONLY_BRIDGES), None)
             if bridge is None:
-                self.fail(sid, "anchor", anchors, "bridge region has no registered real pair or explicit receiver-only ownership definition")
+                unresolved = next((a for a in anchors if a in UNRESOLVED_BRIDGES), None)
+                self.fail(sid, "anchor", anchors, UNRESOLVED_BRIDGES[unresolved] if unresolved
+                          else "bridge region has no registered real pair or explicit receiver-only ownership definition")
                 return None
             return "ClusterRegion.Bridge(" + cs(bridge) + ")"
         if row["region"] == "outer":
@@ -567,6 +627,12 @@ class Compiler:
                 self.fail(sid, "region", "outer", "outer cluster " + row["cluster"] + " has no effectful Stat root; authored entry anchors " + display_value(anchors) + " cannot satisfy AuthoredStarContract.VerifyOwnership; native-route outer ownership needs an out-of-scope contract change")
             return "ClusterRegion.Outer"
         return "new ClusterRegion { Kind = ClusterRegionKind.Keystone }"
+
+    def receiver_only_bridge(self, row):
+        if row["region"] != "bridge":
+            return None
+        anchors = [s.get("anchor") for s in self.rows if s.get("cluster") == row["cluster"] and s.get("anchor")]
+        return next((a for a in anchors if a in RECEIVER_ONLY_BRIDGES and a not in self.pairs), None)
 
     def star(self, row, seen_edges):
         sid = row["id"]
@@ -593,6 +659,13 @@ class Compiler:
         if row.get("receiver") and row["receiver"].startswith("St_"):
             sources = sorted({m for m in re.findall(r"St_\w+", row.get("memory") or "") if m in self.known_memories})
             ownership = obj("MemoryOwnership", {"TargetMemory": cs(row["receiver"]), "SourceMemories": array(sources)})
+        receiver_only = self.receiver_only_bridge(row)
+        if receiver_only:
+            owned = RECEIVER_ONLY_BRIDGES[receiver_only]
+            used = set(re.findall(r"St_\w+", json.dumps([row.get(k) for k in ("memory", "receiver", "target", "gimmick", "options")], ensure_ascii=False)))
+            if not used or not used <= set(owned):
+                self.fail(sid, "memory", sorted(used), "a receiver-only bridge star may only use the memories its cluster declares: " + display_value(owned))
+            ownership = obj("MemoryOwnership", {"TargetMemory": cs(owned[0]), "SourceMemories": array(list(owned[1:]))})
         if row["region"] == "migration":
             expression = "ManifestRetained(" + cs(self.hero) + ", " + cs(sid) + ", " + expression + ", " + array(row["requires"]) + ", " + array(row["requiresAny"]) + ", " + array(edges, "AuthoredStarEdge") + ", " + ownership + ", " + cs(self.sources[sid]) + ", " + array(row["mechanisms"]) + ", " + cs(row["notes"]) + ")"
         else:
@@ -602,6 +675,7 @@ class Compiler:
                 "RequiredStarIds": array(row["requires"]), "RequiredAnyStarIds": array(row["requiresAny"]),
                 "Edges": array(edges, "AuthoredStarEdge"), "MemoryOwnership": ownership, "Effect": expression,
                 "RequiresExplicitSelection": str(row["kind"] == "Choice").lower(),
+                **({"ReceiverOnlyBridge": "true"} if receiver_only else {}),
                 "SourceDocument": cs(self.sources[sid]), "MechanismIds": array(row["mechanisms"]), "Notes": cs(row["notes"])}
             expression = obj("AuthoredStarDef", members)
         if len(self.failures) == start_failures:
