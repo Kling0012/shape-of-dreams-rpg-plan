@@ -94,7 +94,7 @@ namespace SodRpg.Mod
             if (result.Shield > 0f)
             {
                 // Keep native support notifications off the hero's parent chain, as in v1.28 gimmicks.
-                var support = ActorManager.instance != null ? ActorManager.instance.serverActor : null;
+                var support = _am != null ? _am.serverActor : null;
                 if (support != null)
                     support.GiveShield(hero, SupportStats.AmplifyShield(result.Shield, rt.Powers.Build.Get(Stat.ShieldPower)),
                         ElementReactionRuntime.ShieldDuration);

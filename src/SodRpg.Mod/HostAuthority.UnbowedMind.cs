@@ -39,6 +39,7 @@ namespace SodRpg.Mod
                     source != hero && source.GetRelation(hero) == EntityRelation.Enemy,
                     stun: true, immune: hero.Status.hasCrowdControlImmunity);
                 if (amount <= 0f) return;
+                ClearUnbowedGuard(rt);
                 // Independent native timers: breaking the shield must not end CC immunity.
                 rt.NewPowers.UnbowedGuard = _am.serverActor.CreateBasicEffect(hero,
                     new UnstoppableEffect(), PowerRuntime.UnbowedMindDuration, UnbowedGuardId);

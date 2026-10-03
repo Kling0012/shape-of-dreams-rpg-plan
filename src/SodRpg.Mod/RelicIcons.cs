@@ -28,9 +28,12 @@ namespace SodRpg.Mod
             try
             {
                 foreach (var f in Directory.GetFiles(_dir, "*.png")) For(Path.GetFileNameWithoutExtension(f));
-                string ev = Path.Combine(_dir, "events");
-                if (Directory.Exists(ev))
-                    foreach (var f in Directory.GetFiles(ev, "*.png")) For("events/" + Path.GetFileNameWithoutExtension(f));
+                foreach (string sub in new[] { "events", "stars" })
+                {
+                    string dir = Path.Combine(_dir, sub);
+                    if (Directory.Exists(dir))
+                        foreach (var f in Directory.GetFiles(dir, "*.png")) For(sub + "/" + Path.GetFileNameWithoutExtension(f));
+                }
             }
             catch (Exception ex) { Log.Warn("Icon preload: " + ex.Message); }
         }

@@ -7,8 +7,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 360 bases, 1,171 legendary relics including 141 pieces across 47 sets. v1.30 adds 43 active powers, 62 memory-pair combos, waypoints, dream depth and elemental reactions.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台360種、固有品1,171個（セット部位141個を含む）、セット47種。v1.30では固有効果43個、合わせ技62個、道標、夢の深さ、属性の反応を追加しました。
+[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 360 bases, 1,190 legendary relics and 48 sets. v1.30 adds 44 new powers, 62 memory-pair combos, waypoints, dream depth and elemental reactions.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台360種、固有品1,190個、セット48種。v1.30では新しい固有効果44個、合わせ技62個、道標、夢の深さ、属性の反応を追加しました。
 [*] Rare relics carry a minor power; Epics carry two and an epithet named after their first power.
 [*] レアは弱い固有効果を1つ、エピックは固有効果を2つと、1つ目の固有効果にちなんだ銘を持ちます。
 [*] Powers that react to the base game: Q/W/E rotations, critical hits, stuns and slows, overhealing, Essence quality, hunters, shrines and spreading fire.
@@ -23,8 +23,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [list]
 [*] New loot starts unsecured. Each new zone is a secure point: Secure to bank everything, or Delve for more and better drops, while you take 6% more damage per delve level. Delving deeper also raises the shard bonus when you finally secure.
 [*] 拾った物は、まだ持ち帰っていない状態です。新しいゾーンに着くと確保地点が開き、「確保する」で保管庫に入れるか、「深く潜る」で遺物を多く・良くするかを選びます。潜行が1段深くなるごとに、受けるダメージが6%増えます。深く潜ってから確保すると、欠片のボーナスも増えます。
-[*] 12 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 20 nightmare pacts trade a game curse for bigger rewards.
-[*] 確保地点には12種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
+[*] 25 dream events may appear at secure points (merchant, forge shrine, twin mirror, cauldron, gate of courage…), and 20 nightmare pacts trade a game curse for bigger rewards.
+[*] 確保地点には25種類の「夢の出来事」（夢の商人・鍛冶の祠・双子の鏡・錬金の釜・勇気の門など）が現れることがあります。20種類の「悪夢の契約」では、本体の呪いと引き換えに見返りを得られます。
 [*] Wiped? Unsecured relics go to Lost & Found. Clear 3 combat rooms next run to recover the best one.
 [*] 全滅すると、まだ持ち帰っていない遺物は遺失物になります。次の遠征で戦闘部屋を3つ突破すると、一番良い物を1つ取り戻せます。
 [/list]

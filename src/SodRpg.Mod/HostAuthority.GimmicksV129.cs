@@ -184,7 +184,7 @@ namespace SodRpg.Mod
             var target = pending.Victim;
             bool live = target != null && target.isActive && target.currentHealth > 0 && target.GetRelation(hero) == EntityRelation.Enemy;
             var state = InitializeGimmicksV129(rt);
-            var support = ActorManager.instance != null ? ActorManager.instance.serverActor : null;
+            var support = _am != null ? _am.serverActor : null;
             float high = Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
             _gimmickDamageDepth++;
             try
@@ -229,7 +229,7 @@ namespace SodRpg.Mod
                         if (heal <= 0) break;
                         support.Heal(heal).SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(hero);
                         if (def.Arg == 1)
-                            foreach (var ally in ActorManager.instance.allHeroes)
+                            foreach (var ally in _am.allHeroes)
                                 if (ally != hero && Alive(ally) && ally.GetRelation(hero) == EntityRelation.Ally
                                     && (ally.agentPosition - hero.agentPosition).sqrMagnitude <= 100f)
                                     support.Heal(Math.Min(heal * 0.5f, ally.maxHealth * 0.015f))
@@ -264,7 +264,7 @@ namespace SodRpg.Mod
                     case GimmickEffect.PackMend:
                         if (support == null) break;
                         var summons = new List<Summon>();
-                        foreach (var entity in ActorManager.instance.allEntities)
+                        foreach (var entity in _am.allEntities)
                             if (entity is Summon summon && summon.hero == hero && summon.isActive && summon.currentHealth > 0f)
                                 summons.Add(summon);
                         foreach (var summon in summons)
