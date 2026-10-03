@@ -51,7 +51,11 @@ namespace SodRpg.Core.Game
                     if (main == null) Notes.Add("保存データが読めず、残っていたのはリセット前のデータだけでした。新しいプロフィールで始めます（前のデータの写しは残っています）。");
                 }
             }
-            if (main != null && (bak == null || main.Revision >= bak.Revision)) return main;
+            if (main != null && (bak == null || main.Revision >= bak.Revision))
+            {
+                PreserveBeforeExclusion(_path, _mainExcluded);
+                return main;
+            }
             if (bak != null)
             {
                 Notes.Add("本体が読めないため、バックアップから復旧しました（rev " + bak.Revision + "）。");
@@ -116,6 +120,7 @@ namespace SodRpg.Core.Game
                 var notes = new List<string>();
                 var p = ProfileCodec.Read(_fs.ReadAllText(path), notes);
                 foreach (var n in notes) Notes.Add(label + ": " + n);
+                if (path == _path) _mainExcluded = notes.Exists(n => n.Contains("除外"));
                 return p;
             }
             catch (LedgerVersionException)
@@ -159,6 +164,31 @@ namespace SodRpg.Core.Game
             }
             Notes.Add("大きな更新のため、プロフィールを新しく始めました。前のデータは " + System.IO.Path.GetFileName(archive) + " に残しています。");
             return true;
+        }
+
+        private bool _mainExcluded;
+
+        /// <summary>
+        /// 読み込みで知らない星・遺物などを除外したときは、上書きで失われる前に元のファイルを一度だけ写して残す
+        /// （別の版のMODで開いた場合など）。写しは profile.excluded-日時.json。写せなくても読み込みは続ける。
+        /// </summary>
+        private void PreserveBeforeExclusion(string path, bool excluded)
+        {
+            if (!excluded || !_fs.Exists(path)) return;
+            string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
+            string dir = System.IO.Path.GetDirectoryName(path) ?? "";
+            string name = System.IO.Path.GetFileNameWithoutExtension(path);
+            string copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + ".json");
+            for (int i = 2; _fs.Exists(copy); i++) copy = System.IO.Path.Combine(dir, name + ".excluded-" + stamp + "-" + i + ".json");
+            try
+            {
+                _fs.Copy(path, copy, overwrite: false);
+                Notes.Add("知らない内容を除外する前のデータを " + System.IO.Path.GetFileName(copy) + " に残しました。");
+            }
+            catch (IOException ex)
+            {
+                Notes.Add("除外する前のデータの写しを作れませんでした: " + ex.Message);
+            }
         }
 
         private const string BlockedMessage = "前のデータの写しを作れていないため、保存を止めています。次に起動したときにもう一度試します。";
