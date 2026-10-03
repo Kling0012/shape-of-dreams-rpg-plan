@@ -848,7 +848,8 @@ namespace SodRpg.Mod
         {
             // The star map needs room: it uses most of the screen and hides the expedition-only rows.
             bool starTab = _tab == 2;
-            float ww = Mathf.Min(starTab ? 1720 : 1060, w - 20), wh = Mathf.Min(starTab ? 1000 : 720, h - 20);
+            bool codexTab = _tab == 4 && _codexOpen; // 図鑑は一覧が見やすいよう、少し大きく開く
+            float ww = Mathf.Min(starTab ? 1720 : codexTab ? 1180 : 1060, w - 20), wh = Mathf.Min(starTab ? 1000 : codexTab ? 900 : 720, h - 20);
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
@@ -893,7 +894,7 @@ namespace SodRpg.Mod
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
-            "・星図：旅人ごとの星の経験で最大150ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
+            "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
             "<b>What this mod adds</b>\n" +
@@ -909,7 +910,7 @@ namespace SodRpg.Mod
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
-            "- Star Map: each Traveler earns up to 150 points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
+            "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
@@ -938,20 +939,8 @@ namespace SodRpg.Mod
             return _openFeats;
         }
 
-        private readonly List<string> _foundUniques = new List<string>();
-        private int _foundUniquesCodex = -1;
-        private bool _foundUniquesJa;
-
-        private List<string> FoundUniques(Profile p)
-        {
-            if (p.Codex.Count == _foundUniquesCodex && _foundUniquesJa == Loc.Japanese) return _foundUniques;
-            _foundUniquesCodex = p.Codex.Count;
-            _foundUniquesJa = Loc.Japanese;
-            _foundUniques.Clear();
-            foreach (var u in Content.Uniques)
-                if (p.Codex.Contains(u.Id)) _foundUniques.Add(UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)));
-            return _foundUniques;
-        }
+        private readonly CodexView _codex = new CodexView();
+        private bool _codexOpen;
 
         private void DrawFeats(Profile p)
         {
@@ -2425,6 +2414,11 @@ namespace SodRpg.Mod
         private void DrawRecordsTab(DreamforgeConfig cfg)
         {
             var p = _s.Profile;
+            if (_codexOpen)
+            {
+                if (_codex.Draw(p, _st)) _codexOpen = false;
+                return;
+            }
             _scrollRecords = GUILayout.BeginScrollView(_scrollRecords);
             GUILayout.BeginHorizontal();
 
@@ -2509,14 +2503,12 @@ namespace SodRpg.Mod
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             DrawFeats(p);
             DrawVariantBook(p);
-            GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
-            var found = FoundUniques(p);
-            foreach (var line in found) GUILayout.Label(line, _st.Small);
-            int foundUniques = found.Count;
-            int missingUniques = Content.Uniques.Count - foundUniques;
+            GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
+            GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
+            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果）", "Open the codex (bases, legendaries, sets, powers)"), _st.Button)) _codexOpen = true;
             GUILayout.Label(Loc.T(
-                $"<color=#8a8aa0>見つけた固有品 {foundUniques}／{Content.Uniques.Count}種。まだ見つけていない物が{missingUniques}種あります。</color>",
-                $"<color=#8a8aa0>Legendaries found: {foundUniques}/{Content.Uniques.Count}. {missingUniques} still undiscovered.</color>"), _st.Small);
+                "<color=#8a8aa0>見つけていない固有品・セット・固有効果は、見つけるまで名前も効果も伏せられています。</color>",
+                "<color=#8a8aa0>Unfound legendaries, sets and powers stay hidden until you find them.</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
