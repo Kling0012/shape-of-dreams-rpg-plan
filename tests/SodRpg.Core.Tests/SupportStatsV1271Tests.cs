@@ -144,7 +144,7 @@ namespace SodRpg.Core.Tests
         {
             var added = Content.Uniques.Where(u => u.Id.StartsWith("unique.support_", StringComparison.Ordinal)).ToArray();
             Assert.Equal(12, added.Length);
-            Assert.Equal(559, Content.Uniques.Count);
+            Assert.Equal(623, Content.Uniques.Count); // v1.29 パス1：559 + 52 + セット部位12
             foreach (var unique in added)
             {
                 Assert.Single(Content.Uniques, u => u.Id == unique.Id);

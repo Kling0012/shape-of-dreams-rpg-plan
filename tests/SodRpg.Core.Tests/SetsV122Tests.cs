@@ -8,19 +8,19 @@ namespace SodRpg.Core.Tests
     public class SetsV122Tests
     {
         [Fact]
-        public void There_are_24_sets_and_12_use_the_new_slots()
+        public void There_are_28_sets_and_15_use_the_new_slots()
         {
-            Assert.Equal(24, Content.Sets.Count);
+            Assert.Equal(28, Content.Sets.Count); // v1.22：24、v1.29 パス1：+4
             int usesNew = 0;
             foreach (var set in Content.Sets)
             {
                 var slots = Content.Uniques.Where(u => u.SetId == set.Id).Select(u => Content.GetBase(u.BaseId).Slot).ToList();
                 if (slots.Any(s => s == Slot.Head || s == Slot.Hands || s == Slot.Feet)) usesNew++;
                 Assert.Equal(2, set.TwoPiece.Length);
-                Assert.Equal(2, set.ThreePiece.Length);
+                Assert.InRange(set.ThreePiece.Length, 2, 3); // v1.29 のセットは3効果
                 foreach (var pw in set.ThreePiece) Assert.True(pw.Value <= Content.PowerCap(pw.Power), set.Id);
             }
-            Assert.Equal(12, usesNew);
+            Assert.Equal(15, usesNew);
         }
 
         [Fact]

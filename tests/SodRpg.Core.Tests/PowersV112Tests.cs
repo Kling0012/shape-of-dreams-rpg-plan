@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
                     foreach (var pl in u.Powers)
                         Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
             }
-            Assert.Equal(487, Content.Uniques.Count(u => u.SetId == null)); // v1.27.1：支援を題材にした固有品 +12
+            Assert.Equal(539, Content.Uniques.Count(u => u.SetId == null)); // v1.27.1：+12、v1.29 パス1：既存の効果と反応だけで組んだ固有品 +52
         }
     }
 }

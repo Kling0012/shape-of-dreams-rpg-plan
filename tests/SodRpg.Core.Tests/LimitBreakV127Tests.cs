@@ -15,7 +15,9 @@ namespace SodRpg.Core.Tests
         private static (Profile P, Relic R) WithRelic(Rarity rarity, int seed = 7, Slot slot = Slot.Weapon)
         {
             var p = Profile.CreateNew((ulong)seed);
-            var r = Loot.RollRelic(new Rng((ulong)seed), rarity, 5, slot);
+            Relic r;
+            do { r = Loot.RollRelic(new Rng((ulong)seed++), rarity, 5, slot); }
+            while (rarity == Rarity.Legendary && r.Powers.Count == 0); // v1.29：レジェンドはセットの部位（固有効果なし）も引くので、評価には普通の固有品を使う
             p.Stash.Add(r);
             p.AddMaterial(Materials.Shard, 100000);
             p.AddMaterial(Materials.Tuning, 100);
