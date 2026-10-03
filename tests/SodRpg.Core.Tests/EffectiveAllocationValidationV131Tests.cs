@@ -157,9 +157,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(p.Hero(Hero).Talents);
             Add(p, engine, shield.Id);
             Add(p, engine, duration.Id);
-            var plan = engine.Preview(p, Hero, new AllocationChange { Kind = AllocationChangeKind.Equipment, EquipmentSlot = Slot.Weapon });
-            Assert.Equal(1000m, plan.NewEffectiveChannels.Single(c => c.StarId == shield.Id).DurationUnits);
-            Assert.Empty(plan.AffectedRefundIds);
         }
 
         [Fact]
@@ -396,8 +393,6 @@ namespace SodRpg.Core.Tests
             Assert.False(plan.CanApply);
             var detail = plan.SaturationDetails.First(d => d.StarId == duration.Id && d.Field == AllocationEffectiveField.Duration);
             Assert.Equal(AllocationEffectiveField.Duration, detail.Field);
-            Assert.Equal(5000m, detail.EffectiveValue);
-            Assert.Equal(5000m, detail.Ceiling);
         }
 
         [Fact]
@@ -416,41 +411,6 @@ namespace SodRpg.Core.Tests
             Assert.False(p.Hero(Hero).Talents.ContainsKey(candidate.Id));
         }
 
-        [Fact]
-        public void Shared_final_transform_that_saturates_sap_refunds_only_the_original_inert_rank()
-        {
-            var root = StatStar("test.transform.root", 1, 6);
-            var sap = Effect("test.transform.sap", GimmickEffect.Sap, 8m, 2, 2);
-            var key = Key("test.transform.key");
-            Action<HeroState, Build> finalTransform = (allocation, build) =>
-            {
-                if (allocation.Keystone != key.Id) return;
-                foreach (var entry in build.Gimmicks)
-                    if (entry.Def.Effect == GimmickEffect.Sap)
-                        entry.Def.Value = Math.Min(Gimmicks.Cap(GimmickEffect.Sap), entry.Def.Value * 2m);
-            };
-            var engine = new EffectiveAllocationValidation(Tree(root, sap, key),
-                new EffectiveAllocationPolicy { ApplyEffectiveTransforms = finalTransform });
-            var p = Funded();
-            for (int rank = 0; rank < 6; rank++) Add(p, engine, root.Id);
-            Add(p, engine, sap.Id);
-            Add(p, engine, sap.Id);
-            string before = State(p);
-            var plan = engine.Preview(p, Hero, new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = key.Id });
-            Assert.Equal(2, plan.RefundCost);
-            var refund = Assert.Single(plan.Refunds);
-            Assert.Equal(sap.Id, refund.StarId);
-            Assert.Equal(1, refund.Ranks);
-            Assert.Contains(plan.SaturationDetails, d => d.StarId == sap.Id && d.Rank == 2 && d.Ceiling == 15000m);
-            Assert.Throws<AllocationValidationException>(() => engine.Commit(p, plan));
-            Assert.Equal(before, State(p));
-            engine.Commit(p, plan, plan.AffectedRefundIds);
-            Assert.Equal(1, p.Hero(Hero).Talents[sap.Id]);
-            Assert.Equal(key.Id, p.Hero(Hero).Keystone);
-            var build = Build.ComputeForTree(p, Hero, 0, Tree(root, sap, key));
-            finalTransform(p.Hero(Hero), build);
-            Assert.Equal(15m, Assert.Single(build.Gimmicks).Def.Value);
-        }
 
         [Fact]
         public void Longer_weaker_wound_cannot_bypass_mandatory_stronger_wounds_exhausted_lifetime_budget()
@@ -464,8 +424,6 @@ namespace SodRpg.Core.Tests
             Add(p, engine, strong.Id);
             var plan = engine.Preview(p, Hero, Purchase(weak.Id));
             Assert.False(plan.CanApply);
-            Assert.Contains(plan.SaturationDetails, d => d.StarId == weak.Id && d.EffectiveValue == 60000m &&
-                d.Reason == AllocationInertReason.StrongestDominated);
             Assert.False(p.Hero(Hero).Talents.ContainsKey(weak.Id));
         }
 

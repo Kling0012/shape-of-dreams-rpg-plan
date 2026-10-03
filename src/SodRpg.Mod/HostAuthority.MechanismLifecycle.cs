@@ -7,6 +7,8 @@ namespace SodRpg.Mod
             InitializeDirectedRecharge();
             InitializeBridgeSuccessEffects();
             InitializeMemoryPrimedRelay();
+            MemoryActivationPublished += OnAuthoredMechanismEvent;
+            MemoryAttributionEquipmentChanged += OnAuthoredMechanismEquipmentChanged;
         }
 
         private void ClearAssignedMechanismTransients()
@@ -16,6 +18,8 @@ namespace SodRpg.Mod
             foreach (var state in _bridgeSuccessEffects.Values) state.Runtime.ClearSuccessEffectsTransient();
             foreach (var binding in _calmBindings.Values) binding.Filter.Reset();
             ClearMemoryPrimedRelay();
+            ClearAuthoredMechanismTransients();
+            _nativePressureLootSpawns.Clear();
         }
 
         private void OnAssignedMechanismDeath(Hero hero)
@@ -26,6 +30,7 @@ namespace SodRpg.Mod
             ClearDirectedRecharge(hero);
             ClearBridgeSuccessEffects(hero);
             ClearMemoryPrimedRelay(hero);
+            ClearAuthoredMechanismTransients(hero);
             if (_calmBindings.TryGetValue(hero, out var binding)) binding.Filter.Reset();
         }
 
@@ -37,15 +42,19 @@ namespace SodRpg.Mod
             _bridgeSuccessEffects.Remove(hero);
             _calmBindings.Remove(hero);
             RemoveMemoryPrimedRelay(hero);
+            ClearAuthoredKeystone(hero);
+            _authoredMechanisms.Remove(hero);
         }
 
         private void ClearAssignedMechanismSession()
         {
             ClearAssignedMechanismTransients();
+            foreach (var hero in _authoredMechanisms.Keys) ClearAuthoredKeystone(hero);
             _directedRecharges.Clear();
             _bridgeSuccessEffects.Clear();
             ClearCalmStunBindings();
             _memoryPrimedRelay.Clear();
+            _authoredMechanisms.Clear();
             // Subscriptions belong to this HostAuthority instance and survive reconnects.
         }
     }

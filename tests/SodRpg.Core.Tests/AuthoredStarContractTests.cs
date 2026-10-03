@@ -204,7 +204,7 @@ namespace SodRpg.Core.Tests
                 foreach (int next in layout.Nodes[current].Neighbors)
                 {
                     var talent = layout.Nodes[next].Talent;
-                    if (predecessor.ContainsKey(next) || talent?.IsKeystone == true || talent?.Id == excludedId) continue;
+                    if (predecessor.ContainsKey(next) || talent?.IsKeystone == true && talent.Id != target || talent?.Id == excludedId) continue;
                     predecessor.Add(next, current); queue.Enqueue(next);
                 }
             }

@@ -14,6 +14,12 @@ namespace SodRpg.Mod
         internal static string ModVersion = "?";
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
+        private readonly Dictionary<DewPlayer, string> _acceptedMechanismContent = new Dictionary<DewPlayer, string>();
+
+        private bool MechanismHandshakeAccepted(DewPlayer caller) => caller != null
+            && (caller == DewPlayer.local
+                || _acceptedMechanismContent.TryGetValue(caller, out string content)
+                    && string.Equals(content, ContentFingerprint.Value, StringComparison.Ordinal));
         private static readonly List<string> MismatchScratch = new List<string>();
 
         /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
@@ -32,6 +38,7 @@ namespace SodRpg.Mod
             if (_onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             _versionMismatches.Clear();
+            _acceptedMechanismContent.Clear();
             RebuildMismatchList();
         }
 
@@ -41,9 +48,14 @@ namespace SodRpg.Mod
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
                 bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
-                if (same) _versionMismatches.Remove(caller);
+                if (same)
+                {
+                    _versionMismatches.Remove(caller);
+                    _acceptedMechanismContent[caller] = msg.content;
+                }
                 else
                 {
+                    _acceptedMechanismContent.Remove(caller);
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     _versionMismatches[caller] = Loc.T(
                         $"{caller.playerName} の Dreamforge の版が違います（ホスト {ModVersion} / 相手 {theirs}）。この人の装備の効果は反映されません。",

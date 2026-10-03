@@ -13,15 +13,30 @@ namespace SodRpg.Core.Game
         public const int IntegerChars = 11;
         public const int FloatChars = 24;
 
-        private static readonly Lazy<BuildCapacity> RegisteredCapacity = new Lazy<BuildCapacity>(() =>
+        private static readonly object CapacityLock = new object();
+        private static BuildCapacity registeredCapacity;
+        private static string registeredFingerprint;
+        public static BuildCapacity Registered
         {
-            var talents = new List<TalentDef>(Content.Talents);
-            talents.AddRange(HeroSigils.All);
-            return Analyze(talents);
-        });
-
-        public static BuildCapacity Registered => RegisteredCapacity.Value;
-        public static int MaxGimmickEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumGimmicksPerStar));
+            get
+            {
+                string fingerprint = StarClusters.AuthoredRegistryFingerprint;
+                lock (CapacityLock)
+                {
+                    if (registeredCapacity == null || fingerprint != registeredFingerprint)
+                    {
+                        var talents = new List<TalentDef>(Content.Talents);
+                        talents.AddRange(HeroSigils.All);
+                        registeredCapacity = Analyze(talents);
+                        registeredFingerprint = fingerprint;
+                    }
+                    return registeredCapacity;
+                }
+            }
+        }
+        public const int EffectiveChannelSecurityLimit = 512;
+        public static int MaxGimmickEntries => Math.Min(EffectiveChannelSecurityLimit,
+            Math.Max(StarProgression.MaxSpendablePoints, Registered.GimmickEntries));
         public static int MaxLinkEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
         public static int MaxPairComboEntries => PairCombos.All.Count;
         public static int MaxStatEntries => Enum.GetValues(typeof(Stat)).Length;
@@ -57,16 +72,19 @@ namespace SodRpg.Core.Game
         }
 
         // Every list item includes its separator, including the final item, giving a conservative bound.
-        public static int MaxEncodedChars => checked(
-            9 * 3 + 3 * IntegerChars
-            + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (2 * IntegerChars + 2)
-            + MaxLinkEntries * (2 * IntegerChars + MaxLinkRequirements * MaxTokenLength + MaxLinkRequirements + 2)
-            + MaxGimmickEntries * (MaxStarIdLength + MaxTokenLength + 8 * IntegerChars + FloatChars + 11)
-            + MaxPairComboEntries * (MaxPairIdLength + IntegerChars + 2));
+        public const int MaxEncodedChars = 195820;
 
         /// <summary>Build identifiers and separators are ASCII; UTF-8 bytes equal characters.</summary>
         public static int MaxEncodedBytes => MaxEncodedChars;
 
+        public static void ValidateAuthoredProducer(IReadOnlyList<TalentDef> tree)
+        {
+            var capacity = Analyze(tree);
+            int fixedFields = checked(64 + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (IntegerChars * 2 + 2)
+                + Content.SlotCount * (IntegerChars * 2 + MaxLinkRequirements * (MaxTokenLength + 1) + 4));
+            if (capacity.GimmickEntries > EffectiveChannelSecurityLimit || capacity.MaximumEncodedTalentChars + fixedFields > MaxEncodedChars)
+                throw new InvalidOperationException("The authored registry can exceed the fixed 300-point channel or wire envelope.");
+        }
         /// <summary>
         /// Exact first-rank entry maxima per hero under the point budget, before aggregation.
         /// Connectivity and pair prerequisites are deliberately relaxed, so this is a safe upper bound.
@@ -87,7 +105,7 @@ namespace SodRpg.Core.Game
                 if (talent.MaxRank < 1 || talent.RankCost < 1)
                     throw new ArgumentException("Talent ranks and costs must be positive.", nameof(talents));
                 result.TalentCount++;
-                if (talent.IsKeystone) continue;
+                // A selected cost-bearing key may grant several typed channels. Include it in capacity analysis.
                 var output = Output(talent, talent.RankCost, result);
                 result.MinimumRankCost = Math.Min(result.MinimumRankCost, talent.RankCost);
                 result.MaximumGimmicksPerStar = Math.Max(result.MaximumGimmicksPerStar, output.Gimmicks);
@@ -106,6 +124,7 @@ namespace SodRpg.Core.Game
                 result.PairComboEntries = Math.Max(result.PairComboEntries, Maximum(nodes, pointBudget, n => n.Pairs));
                 result.ClusterModifierStars = Math.Max(result.ClusterModifierStars, Maximum(nodes, pointBudget, n => n.Modifiers));
                 result.TotalEntries = Math.Max(result.TotalEntries, Maximum(nodes, pointBudget, n => n.Arity));
+                result.MaximumEncodedTalentChars = Math.Max(result.MaximumEncodedTalentChars, Maximum(nodes, pointBudget, n => n.WireChars));
             }
             if (result.MinimumRankCost == int.MaxValue) result.MinimumRankCost = 0;
             return result;
@@ -113,7 +132,8 @@ namespace SodRpg.Core.Game
 
         private struct NodeOutput
         {
-            public int Cost, Gimmicks, Links, Native, Pairs, Modifiers, Arity;
+            public int Cost, Gimmicks, Links, Native, Pairs, Modifiers, Arity, WireChars;
+            public bool IsKeystone;
         }
 
         private static NodeOutput Output(TalentDef talent, int cost, BuildCapacity capacity)
@@ -133,14 +153,52 @@ namespace SodRpg.Core.Game
                     choices.Pairs = Math.Max(choices.Pairs, option.Pairs);
                     choices.Modifiers = Math.Max(choices.Modifiers, option.Modifiers);
                     choices.Arity = Math.Max(choices.Arity, option.Arity);
+                    choices.WireChars = Math.Max(choices.WireChars, option.WireChars);
                 }
                 return choices;
             }
-            var output = new NodeOutput { Cost = cost };
-            if (PairCombos.ForBridge(talent.Id) != null) output.Pairs = 1;
+            var output = new NodeOutput { Cost = talent.KeystoneDefinition?.Cost ?? cost, IsKeystone = talent.IsKeystone };
+            int MechanismChars(AuthoredMechanismSpec spec)
+            {
+                var entry = new AuthoredMechanismEntry { StarId = talent.Id, ContributorIds = new[] { talent.Id }, Spec = spec };
+                int chars = AuthoredMechanismCodec.Encode(entry).Length + 192;
+                if (spec.Bridge != null)
+                {
+                    chars = checked(chars + (spec.Bridge.Extras.Count + 1) * 192);
+                    foreach (var endpoint in spec.Bridge.Endpoints) chars = checked(chars + endpoint.StarId.Length + IntegerChars + 2);
+                }
+                return chars;
+            }
+            if (talent.KeystoneDefinition != null)
+            {
+                foreach (var grant in talent.KeystoneDefinition.Grants) output.Gimmicks = checked(output.Gimmicks + AuthoredMechanisms.ChannelCount(grant));
+                output.WireChars = AuthoredKeystoneCodec.Encode(talent.KeystoneDefinition).Length + 4;
+                foreach (var grant in talent.KeystoneDefinition.Grants) output.WireChars = checked(output.WireChars + MechanismChars(grant));
+            }
+            else if (PairCombos.ForBridge(talent.Id) != null && talent.Mechanism == null)
+            {
+                output.Pairs = 1;
+                output.WireChars = MaxStarIdLength + IntegerChars + 2;
+            }
             else
             {
-                if (talent.Gimmick != null) output.Gimmicks = 1;
+                if (talent.Gimmick != null || talent.Mechanism != null) output.Gimmicks = 1;
+                var mechanism = talent.Mechanism ?? (FractionalScopedModifiers.RequiresMechanismRoute(talent.EffectChannel)
+                    ? AuthoredMechanisms.FromChannel(talent.EffectChannel, talent.Gimmick) : null);
+                if (mechanism != null) output.Gimmicks = AuthoredMechanisms.ChannelCount(mechanism);
+                if (mechanism != null) output.WireChars = MechanismChars(mechanism);
+                else if (talent.Gimmick != null)
+                {
+                    output.WireChars = talent.Id.Length * 4 + (talent.RouteMemory?.Length ?? 0) + IntegerChars * 15 + FloatChars + 20;
+                    output.WireChars = checked(output.WireChars + talent.Id.Length + 1 + ((GimmickRawCodec.MaxBytes + 2) / 3) * 4 + 4);
+                    var c = talent.EffectChannel;
+                    if (c != null)
+                    {
+                        output.WireChars = checked(output.WireChars + c.ChannelId.Length + c.OwnerId.Length + c.SourceMemory.Length
+                            + c.ReceiverMemory.Length + (c.PairSuccessId?.Length ?? 0) + c.ActivationBudget.Length + c.ClockPolicy.Length + 16);
+                        foreach (string required in c.EquipmentRequirements) output.WireChars = checked(output.WireChars + required.Length + 1);
+                    }
+                }
                 if (talent.LinkPerRank != null)
                 {
                     output.Links = 1;
@@ -148,8 +206,14 @@ namespace SodRpg.Core.Game
                     if (link.Requires == null || link.Requires.Length < 1 || link.Requires.Length > MaxLinkRequirements || link.Value < 0)
                         throw new ArgumentException("A link requires valid targets and a nonnegative value.", nameof(talent));
                     capacity.RecordLinkValue(link.Kind, link.Requires.Length, (long)Math.Ceiling(link.Value / cost));
+                    output.WireChars = checked(output.WireChars + IntegerChars * 2 + 5);
+                    foreach (string required in link.Requires) output.WireChars = checked(output.WireChars + required.Length + 1);
                 }
-                if (talent.NativeModifier != null) output.Native = 1;
+                if (talent.NativeModifier != null)
+                {
+                    output.Native = 1;
+                    output.WireChars = checked(output.WireChars + talent.NativeModifier.Memory.Length + talent.NativeModifier.CapProfileId.Length + IntegerChars * 2 + 4);
+                }
             }
             output.Modifiers = talent.GimmickBoost != 0 || talent.GimmickParameter.HasValue || talent.ScopedModifier != null ? 1 : 0;
             output.Arity = output.Gimmicks + output.Links + output.Pairs + output.Native;
@@ -160,9 +224,13 @@ namespace SodRpg.Core.Game
         {
             var best = new int[budget + 1];
             foreach (var node in nodes)
-                for (int cost = budget; cost >= node.Cost; cost--)
-                    best[cost] = Math.Max(best[cost], best[cost - node.Cost] + value(node));
-            return best[budget];
+                if (!node.IsKeystone)
+                    for (int cost = budget; cost >= node.Cost; cost--)
+                        best[cost] = Math.Max(best[cost], checked(best[cost - node.Cost] + value(node)));
+            int maximum = best[budget];
+            foreach (var key in nodes)
+                if (key.IsKeystone && key.Cost <= budget) maximum = Math.Max(maximum, checked(best[budget - key.Cost] + value(key)));
+            return maximum;
         }
     }
 
@@ -178,6 +246,7 @@ namespace SodRpg.Core.Game
         public int PairComboEntries { get; internal set; }
         public int ClusterModifierStars { get; internal set; }
         public int TotalEntries { get; internal set; }
+        public int MaximumEncodedTalentChars { get; internal set; }
         public int MinimumRankCost { get; internal set; } = int.MaxValue;
         public int MaximumGimmicksPerStar { get; internal set; }
         public int MaximumLinksPerStar { get; internal set; }

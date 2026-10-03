@@ -8,12 +8,23 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         /// <summary>Payload sink for a C02-admitted activation; registry/codec producers supply the explicit typed definition.</summary>
-        private int DispatchAdmittedWard(HeroRuntime owner, AlliedWardDefinition definition, string sourceMemory, long shieldEquipmentEpoch)
+        private int DispatchAdmittedWard(HeroRuntime owner, AlliedWardDefinition definition, string sourceMemory, long shieldEquipmentEpoch,
+            Func<bool> admit = null, AuthoredMechanismSpec authored = null, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory)
         {
             if (!NetworkServer.active) throw new InvalidOperationException("Allied wards require host authority.");
             if (definition == null) throw new ArgumentNullException(nameof(definition));
             if (!Alive(owner.Hero) || FindMemory(owner.Hero, sourceMemory) == null
                 || shieldEquipmentEpoch != ModShieldEquipmentEpoch(owner)) return 0;
+            var payload = authored != null ? AuthoredKeystoneComposer.MechanismPayload(authored)
+                : AuthoredKeystoneComposer.MechanismPayload(new AuthoredMechanismSpec
+                    { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = definition.ChannelId, Ward = definition });
+            var transformed = TransformAuthoredPayload(owner.Hero, payload, sourceMemory, null, sourceKind,
+                definition.RecipientKind == WardRecipientKind.OwnedSummons ? KeystoneRecipientKind.OwnedSummon : KeystoneRecipientKind.AlliedHero);
+            if (transformed.Disabled || transformed.Value <= 0 || transformed.TargetCount < 1) return 0;
+            definition = new AlliedWardDefinition(definition.ChannelId, definition.RecipientKind, definition.AmountBasis,
+                definition.PoolKind, transformed.Value * 100m, definition.IncludeOwner, (float)transformed.RadiusMetres,
+                (float)transformed.DurationSeconds, definition.BaseTargets,
+                Math.Max(0, transformed.TargetCount - definition.BaseTargets), definition.MaxTargets, definition.Limits, definition.Budget);
             var entities = new Dictionary<long, Entity>();
             if (definition.RecipientKind == WardRecipientKind.AlliedTravelers)
             {
@@ -39,6 +50,7 @@ namespace SodRpg.Mod
             }
             var awards = AlliedWard.Select(definition, owner.Hero.GetInstanceID(), true,
                 owner.Hero.Status.attackDamage, owner.Hero.Status.abilityPower, candidates);
+            if (awards.Count == 0 || admit != null && !admit()) return 0;
             int count = 0;
             foreach (var award in awards)
             {
@@ -49,7 +61,7 @@ namespace SodRpg.Mod
                     || recipient is Summon summon && summon.hero != owner.Hero
                     || (recipient.agentPosition - owner.Hero.agentPosition).sqrMagnitude > definition.RadiusMetres * definition.RadiusMetres) continue;
                 float raw = definition.AmountBasis == WardAmountBasis.RecipientMaxHP
-                    ? recipient.maxHealth * (definition.ValueUnits / 10000f) : award.RawAmount;
+                    ? recipient.maxHealth * (float)(definition.ValueUnits / 10000m) : award.RawAmount;
                 if (AwardModShield(owner, recipient, definition.PoolKind,
                     SupportStats.AmplifyShield(raw, owner.Powers.Build.Get(SodRpg.Core.Game.Stat.ShieldPower)),
                     definition.DurationSeconds, sourceMemory, shieldEquipmentEpoch)) count++;

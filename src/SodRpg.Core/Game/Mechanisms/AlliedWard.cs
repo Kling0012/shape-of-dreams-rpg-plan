@@ -16,7 +16,7 @@ namespace SodRpg.Core.Game
         public WardAmountBasis AmountBasis { get; }
         public ModShieldPoolKind PoolKind { get; }
         public WardLimitProfile Limits { get; }
-        public int ValueUnits { get; }
+        public decimal ValueUnits { get; }
         public bool IncludeOwner { get; }
         public float RadiusMetres { get; }
         public float DurationSeconds { get; }
@@ -26,7 +26,7 @@ namespace SodRpg.Core.Game
         public WardActivationBudget Budget { get; }
 
         public AlliedWardDefinition(string channelId, WardRecipientKind recipientKind, WardAmountBasis amountBasis,
-            ModShieldPoolKind poolKind, int valueUnits, bool includeOwner, float radiusMetres = 10f,
+            ModShieldPoolKind poolKind, decimal valueUnits, bool includeOwner, float radiusMetres = 10f,
             float durationSeconds = 4f, int baseTargets = 3, int extraTargets = 0, int? maxTargets = null,
             WardLimitProfile limits = WardLimitProfile.Standard, WardActivationBudget budget = WardActivationBudget.PerActivation)
         {
@@ -111,7 +111,7 @@ namespace SodRpg.Core.Game
                 var recipient = eligible[i];
                 float basis = definition.AmountBasis == WardAmountBasis.RecipientMaxHP ? recipient.MaxHealth
                     : Math.Max(0f, Math.Max(casterAttackDamage, casterAbilityPower));
-                awards.Add(new WardAward(recipient.InstanceId, basis * (definition.ValueUnits / 10000f)));
+                awards.Add(new WardAward(recipient.InstanceId, basis * (float)(definition.ValueUnits / 10000m)));
             }
             return awards.AsReadOnly();
         }

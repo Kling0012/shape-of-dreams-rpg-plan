@@ -84,6 +84,10 @@ namespace SodRpg.Mod
             public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
+            public Func<bool> AuthoredIsCurrent;
+            public Func<GimmickDef> AuthoredDefinition;
+            public string AuthoredChannelId;
+            public float QueuedAt;
         }
 
         private sealed class MonsterRuntime
@@ -1214,6 +1218,8 @@ namespace SodRpg.Mod
         private void Apply(Hero hero, ReceivedBuild received)
         {
             var build = received.Build;
+            ValidateAuthoredHostBuild(build);
+            ValidateAuthoredSacrificeBinding(hero, build);
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
@@ -1283,6 +1289,7 @@ namespace SodRpg.Mod
                         memoryAmpMilli / (float)BuildPrecision.Scale)
                         + (FindMemory(captured.Hero, memory) != null
                             ? FractionalScopedModifiers.NativePercent(captured.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
+                    memoryAmp = TransformAuthoredMemoryDamage(captured.Hero, memory, memoryAmp);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
                     ApplyRelayWindowDamage(captured, ref d, t);
                     ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));
@@ -1332,7 +1339,6 @@ namespace SodRpg.Mod
             rt.LinkMemories.Clear();
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
-            rt.Gimmicks.SetBuild(build.Gimmicks);
             rt.PairCombos.SetBuild(build.PairCombos);
             rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
@@ -1342,6 +1348,8 @@ namespace SodRpg.Mod
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
             rt.AppliedBuild = received;
+            ConfigureAuthoredKeystone(hero, build);
+            ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
             // Builds can arrive after a persistent summon (for example Fenrir) has spawned.

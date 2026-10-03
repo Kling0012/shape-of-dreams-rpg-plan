@@ -81,8 +81,17 @@ namespace SodRpg.Core.Game
                 ValuePrecise = checked((long)units);
             }
         }
+        /// <summary>Exact postordinary input retained when the legacy fields cannot carry it before C07.</summary>
+        public decimal? UncappedValue { get; set; }
+        public long? UncappedDurationUnits { get; set; }
+        public long? UncappedRadiusUnits { get; set; }
+        public long? UncappedExtraTargets { get; set; }
+        public long? UncappedChanceUnits { get; set; }
+        /// <summary>Runtime magnitude; unlike pristine authored fine units, composed decimals have no fixed scale.</summary>
+        public decimal? EffectiveValue { get; set; }
+        public decimal EffectiveValueOrAuthored => EffectiveValue ?? Value;
         /// <summary>Convert only at the native application boundary.</summary>
-        public float ValuePercent => ValuePrecise / (float)Gimmicks.PreciseValueScale;
+        public float ValuePercent => (float)EffectiveValueOrAuthored;
         /// <summary>効果の補足（属性の種類、味方も回復するか）。</summary>
         public int Arg { get; set; }
         /// <summary>内部の間隔（秒）。0 なら制限なし。</summary>
@@ -95,6 +104,15 @@ namespace SodRpg.Core.Game
         public int ExtraTargets { get; set; }
         public int ChanceUnits { get; set; }
         public int ChancePercent { get => UnitConversion.WholePercent(ChanceUnits); set => ChanceUnits = checked(value * 100); }
+        /// <summary>Host-derived C07 values, after ordinary modifiers; never authored or transmitted.</summary>
+        public float? EffectiveDurationSeconds { get; set; }
+        public float? EffectiveRadiusMetres { get; set; }
+        public float? EffectiveDelaySeconds { get; set; }
+        public int? EffectiveTargetCount { get; set; }
+        public bool EffectiveWoundTotal { get; set; }
+        public decimal? EffectiveAllyValuePercent { get; set; }
+        public decimal? EffectiveChanceProbabilityUnits { get; set; }
+        internal GimmickDef Copy() => (GimmickDef)MemberwiseClone();
     }
 
     /// <summary>装着中の星の仕掛け。Def.Value は取得した段数を掛けた値。</summary>
@@ -105,6 +123,8 @@ namespace SodRpg.Core.Game
         public GimmickDef Def { get; set; }
         public EffectChannelDef Channel { get; set; }
         public string[] ContributorIds { get; set; } = Array.Empty<string>();
+        /// <summary>Host-only channel: Fire requires an explicit C02 filter and resolves the actual source at admission.</summary>
+        public bool AdmittedSource { get; set; }
     }
 
     /// <summary>ホストへ渡す発動。対象の解決と追加ダメージの連鎖防止はホストが行う。</summary>
@@ -113,6 +133,7 @@ namespace SodRpg.Core.Game
         public GimmickEntry Entry { get; set; }
         public int VictimId { get; set; }
         public float Damage { get; set; }
+        public KeystoneSourceKind? SourceKind { get; set; }
         /// <summary>周囲へ作用する半径（m）。0 は単体への作用。</summary>
         public float AreaRadius { get; set; }
         /// <summary>範囲の中心が使用者か。false は VictimId の敵の発動時の位置。</summary>
@@ -165,11 +186,12 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private static bool ValidDef(GimmickDef def)
+        public static bool ValidDef(GimmickDef def)
         {
             if (def == null || def.Trigger < GimmickTrigger.OnUse || def.Trigger > GimmickTrigger.OnCrit
                 || Cap(def.Effect) == 0 || def.ValuePrecise <= 0 || !Finite(def.Cooldown) || def.Cooldown < 0
-                || def.DurationUnits < 0 || def.RadiusUnits < 0 || def.ExtraTargets < 0 || def.ChanceUnits < 0) return false;
+                || def.DurationUnits < 0 || def.RadiusUnits < 0 || def.ExtraTargets < 0 || def.ChanceUnits < 0
+                || !GimmickRawCodec.Valid(def)) return false;
             if (IsV129(def.Effect)) return ValidV129Def(def);
             return def.Effect == GimmickEffect.Element ? def.Arg >= 0 && def.Arg <= 3
                 : def.Effect == GimmickEffect.Heal ? def.Arg >= 0 && def.Arg <= 1 : def.Arg == 0;
@@ -219,8 +241,8 @@ namespace SodRpg.Core.Game
         /// <summary>不正な条件は拒否し、効果量と間隔を共通上限へ収めた独立したコピーを返す。</summary>
         public static GimmickEntry Clamp(GimmickEntry entry)
         {
-            if (entry == null || !ValidStarId(entry.StarId) || !Links.IsMemory(entry.Memory) || !ValidDef(entry.Def)
-                || !AllowedOnMemory(entry.Def.Effect, entry.Memory)
+            if (entry == null || !ValidStarId(entry.StarId) || !ValidDef(entry.Def)
+                || !entry.AdmittedSource && (!Links.IsMemory(entry.Memory) || !AllowedOnMemory(entry.Def.Effect, entry.Memory))
                 || entry.Def.Effect == GimmickEffect.Primed && entry.StarId.StartsWith("h.bismuth.", StringComparison.Ordinal)) return null;
             return new GimmickEntry
             {
@@ -228,17 +250,31 @@ namespace SodRpg.Core.Game
                 Memory = entry.Memory,
                 Channel = entry.Channel,
                 ContributorIds = entry.ContributorIds,
+                AdmittedSource = entry.AdmittedSource,
                 Def = new GimmickDef
                 {
                     Trigger = entry.Def.Trigger,
                     Effect = entry.Def.Effect,
                     ValuePrecise = Math.Min(entry.Def.ValuePrecise, Cap(entry.Def.Effect) * PreciseValueScale),
+                    UncappedValue = entry.Def.UncappedValue,
+                    UncappedDurationUnits = entry.Def.UncappedDurationUnits,
+                    UncappedRadiusUnits = entry.Def.UncappedRadiusUnits,
+                    UncappedExtraTargets = entry.Def.UncappedExtraTargets,
+                    UncappedChanceUnits = entry.Def.UncappedChanceUnits,
+                    EffectiveValue = Math.Min(entry.Def.EffectiveValueOrAuthored, Cap(entry.Def.Effect)),
                     Arg = entry.Def.Arg,
                     Cooldown = Math.Max(MinimumCooldown(entry.Def.Effect), Math.Min(entry.Def.Cooldown, MaxCooldown)),
                     DurationUnits = SupportsParameter(entry.Def, GimmickParam.Duration) ? Math.Min(entry.Def.DurationUnits, MaxParameterPercent * 100) : 0,
                     RadiusUnits = SupportsParameter(entry.Def, GimmickParam.Radius) ? Math.Min(entry.Def.RadiusUnits, MaxParameterPercent * 100) : 0,
                     ExtraTargets = SupportsParameter(entry.Def, GimmickParam.ExtraTargets) ? Math.Min(entry.Def.ExtraTargets, MaxExtraTargets) : 0,
-                    ChanceUnits = SupportsParameter(entry.Def, GimmickParam.Chance) ? Math.Min(entry.Def.ChanceUnits, 10000) : 0
+                    ChanceUnits = SupportsParameter(entry.Def, GimmickParam.Chance) ? Math.Min(entry.Def.ChanceUnits, 10000) : 0,
+                    EffectiveDurationSeconds = entry.Def.EffectiveDurationSeconds,
+                    EffectiveRadiusMetres = entry.Def.EffectiveRadiusMetres,
+                    EffectiveDelaySeconds = entry.Def.EffectiveDelaySeconds,
+                    EffectiveTargetCount = entry.Def.EffectiveTargetCount,
+                    EffectiveWoundTotal = entry.Def.EffectiveWoundTotal,
+                    EffectiveAllyValuePercent = entry.Def.EffectiveAllyValuePercent,
+                    EffectiveChanceProbabilityUnits = SupportsParameter(entry.Def, GimmickParam.Chance) ? ChanceProbabilityUnits(entry.Def) : (decimal?)null
                 }
             };
         }
@@ -271,7 +307,7 @@ namespace SodRpg.Core.Game
                     string element = ja ? (def.Arg == 0 ? "火" : def.Arg == 1 ? "冷気" : def.Arg == 2 ? "光" : "闇")
                         : (def.Arg == 0 ? "fire" : def.Arg == 1 ? "cold" : def.Arg == 2 ? "light" : "darkness");
                     int whole = (int)(value / 100);
-                    string chance = Math.Min(100, value % 100 + def.ChanceUnits / 100m).ToString("0.#######", CultureInfo.InvariantCulture);
+                    string chance = Math.Min(100, value % 100 + ChanceProbabilityUnits(def) / 100m).ToString("0.#######", CultureInfo.InvariantCulture);
                     string stacks = ja ? (whole == 0 ? chance + "%の確率で1つ"
                         : whole + "つ" + (chance == "0" ? "" : "（さらに" + chance + "%の確率でもう1つ）"))
                         : (whole == 0 ? "1 stack with a " + chance + "% chance"
@@ -347,6 +383,8 @@ namespace SodRpg.Core.Game
         private sealed class ActiveEntry
         {
             public GimmickEntry Entry;
+            public GimmickEntry ConfiguredEntry;
+            public readonly Dictionary<string, ActiveEntry> SourceStates = new Dictionary<string, ActiveEntry>(StringComparer.Ordinal);
             public bool HasFired;
             public float LastFired;
             public bool BuffActive;
@@ -393,31 +431,39 @@ namespace SodRpg.Core.Game
                     {
                         ActiveEntry previous = _entries[j];
                         if (previous.Entry.StarId != entry.StarId) continue;
-                        retained = Same(previous.Entry, entry) ? previous : new ActiveEntry
+                        retained = Same(previous.ConfiguredEntry ?? previous.Entry, entry) ? previous : new ActiveEntry
                         {
                             Entry = entry,
+                            ConfiguredEntry = entry,
                             HasFired = previous.HasFired,
                             LastFired = previous.LastFired
                         };
                         break;
                     }
-                    next.Add(retained ?? new ActiveEntry { Entry = entry });
+                    next.Add(retained ?? new ActiveEntry { Entry = entry, ConfiguredEntry = entry });
                 }
             }
             _entries = next;
+            _activeStates.Clear();
+            foreach (var state in _entries)
+            {
+                _activeStates.Add(state);
+                _activeStates.AddRange(state.SourceStates.Values);
+            }
         }
+        private readonly List<ActiveEntry> _activeStates = new List<ActiveEntry>();
+        private IReadOnlyList<ActiveEntry> ActiveStates() => _activeStates;
 
         private static bool Same(GimmickEntry a, GimmickEntry b) =>
-            BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)
+            a.AdmittedSource == b.AdmittedSource && BuildAggregation.GimmickStateKey(a) == BuildAggregation.GimmickStateKey(b)
             && a.Def.ValuePrecise == b.Def.ValuePrecise;
 
         /// <summary>期限ちょうどで効果を解除し、敵ごとの期限も取り除く。</summary>
         public void PruneExpired(float now)
         {
             if (!Gimmicks.Finite(now)) return;
-            for (int i = 0; i < _entries.Count; i++)
+            foreach (ActiveEntry state in ActiveStates())
             {
-                ActiveEntry state = _entries[i];
                 if (state.BuffActive && now >= state.BuffUntil) state.BuffActive = false;
                 if (state.Victims == null) continue;
                 for (int j = state.Victims.Count - 1; j >= 0; j--)
@@ -427,21 +473,41 @@ namespace SodRpg.Core.Game
 
         /// <summary>該当する発動を末尾へ追加。追加ダメージは起点にならず、間隔は星全体で共有する。</summary>
         public void Fire(GimmickTrigger trigger, string memory, float now, int victimId, float damage, bool generated, List<GimmickRequest> results,
-            long activationId = 0, float memoryCooldown = 0f, bool directDamage = true, bool boss = false, int elementTypes = 0)
+            long activationId = 0, float memoryCooldown = 0f, bool directDamage = true, bool boss = false, int elementTypes = 0,
+            Func<GimmickEntry, bool> filter = null, Func<GimmickEntry, bool> admit = null,
+            Func<GimmickEntry, GimmickDef> transform = null)
         {
             if (generated || results == null || !Gimmicks.Finite(now) || trigger < GimmickTrigger.OnUse || trigger > GimmickTrigger.OnCrit) return;
             PruneExpired(now);
             for (int i = 0; i < _entries.Count; i++)
             {
-                ActiveEntry state = _entries[i];
-                GimmickDef def = state.Entry.Def;
-                if (def.Trigger != trigger || state.Entry.Memory != memory) continue;
-                if (state.HasFired && def.Cooldown > 0 && now < state.LastFired + def.Cooldown) continue;
+                ActiveEntry parent = _entries[i];
+                var configured = parent.ConfiguredEntry ?? parent.Entry;
+                if (configured.Def.Trigger != trigger || !configured.AdmittedSource && configured.Memory != memory
+                    || configured.AdmittedSource && filter == null) continue;
+                if (filter != null && !filter(configured)) continue;
+                var def = transform != null ? transform(configured) : configured.Def;
+                if (def == null) continue;
+                if (parent.HasFired && def.Cooldown > 0 && now < parent.LastFired + def.Cooldown) continue;
+                ActiveEntry state = parent;
+                if (configured.AdmittedSource && def.Effect == GimmickEffect.Crescendo)
+                {
+                    if (!parent.SourceStates.TryGetValue(memory, out state))
+                    {
+                        parent.SourceStates.Add(memory, state = new ActiveEntry());
+                        _activeStates.Add(state);
+                    }
+                }
+                state.Entry = configured.AdmittedSource || def != configured.Def ? new GimmickEntry
+                    { StarId = configured.StarId, Memory = configured.AdmittedSource ? memory : configured.Memory,
+                        Def = def, ContributorIds = configured.ContributorIds } : configured;
                 if (!AcceptV129(state, now, victimId, damage, activationId, memoryCooldown, directDamage, boss, out int targetCount)) continue;
                 if ((def.Effect == GimmickEffect.Expose || def.Effect == GimmickEffect.Echo) && victimId == 0) continue;
                 if (def.Effect == GimmickEffect.Echo && (!Gimmicks.Finite(damage) || damage <= 0)) continue;
+                if (admit != null && !admit(configured)) continue;
                 state.HasFired = true;
                 state.LastFired = now;
+                parent.HasFired = true; parent.LastFired = now;
                 if (def.Effect == GimmickEffect.Quicken || def.Effect == GimmickEffect.Empower)
                 {
                     state.BuffActive = true;
@@ -480,9 +546,9 @@ namespace SodRpg.Core.Game
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             long strongest = 0;
-            for (int i = 0; i < _entries.Count; i++)
-                if (_entries[i].BuffActive && _entries[i].Entry.Def.Effect == effect)
-                    strongest = Math.Max(strongest, _entries[i].Entry.Def.ValuePrecise);
+            foreach (var state in ActiveStates())
+                if (state.BuffActive && state.Entry.Def.Effect == effect)
+                    strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);
             return strongest / (float)Gimmicks.PreciseValueScale;
         }
 
@@ -491,9 +557,8 @@ namespace SodRpg.Core.Game
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             long strongest = 0;
-            for (int i = 0; i < _entries.Count; i++)
+            foreach (ActiveEntry state in ActiveStates())
             {
-                ActiveEntry state = _entries[i];
                 if (state.Entry.Def.Effect != GimmickEffect.Expose || state.Victims == null) continue;
                 for (int j = 0; j < state.Victims.Count; j++)
                     if (state.Victims[j].VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);

@@ -21,6 +21,11 @@ namespace SodRpg.Mod
                     RejectBuildOnce(caller, "protocol");
                     return;
                 }
+                if (!MechanismHandshakeAccepted(caller))
+                {
+                    _incomingBuilds.Remove(caller);
+                    return;
+                }
                 if (!_incomingBuilds.TryGetValue(caller, out var transfer))
                     _incomingBuilds.Add(caller, transfer = new BuildTransferReceiver());
                 if (!transfer.TryAccept(msg.ToPart(), out string encoded))

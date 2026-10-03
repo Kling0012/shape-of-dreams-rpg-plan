@@ -106,7 +106,7 @@ namespace SodRpg.Core.Game
                     || !layout.CanReach(candidate, key) || !EligibleKey(key)))
                 {
                     refunded.Add(candidate.Keystone);
-                    points = checked(points + Content.KeystoneCost);
+                    points = checked(points + (key?.KeystoneDefinition?.Cost ?? Content.KeystoneCost));
                     candidate.Keystone = null;
                     changed = true;
                 }

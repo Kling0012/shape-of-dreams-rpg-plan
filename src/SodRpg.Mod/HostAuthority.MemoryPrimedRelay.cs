@@ -122,8 +122,11 @@ namespace SodRpg.Mod
                 || !_memoryAttribution.IsCurrent(notification)) return;
             SynchronizeMemoryPrimedRelay(hero, state);
             var source = WithPreparationEpoch(notification, state);
-            state.Primed.OnSourceEvent(source, Time.time);
-            state.Relay.OnSourceEvent(source, Time.time);
+            if (!_authoredMechanisms.ContainsKey(hero))
+            {
+                state.Primed.OnSourceEvent(source, Time.time);
+                state.Relay.OnSourceEvent(source, Time.time);
+            }
             if (!state.HasPreparations || notification.EventKind != MemoryEventKind.OwnedBasicAttackHit || nativeDamage <= 0
                 || victim == null || !_runtimes.TryGetValue(hero, out var rt)) return;
             var candidates = new List<NextBasicBonusCandidate>();
@@ -141,7 +144,8 @@ namespace SodRpg.Mod
                 if (selected.IsMemoryPreparation && (!state.Epochs.TryGetValue(selected.SourceMemory, out long current)
                     || current != sourceEpoch)) return;
                 EnterGenerated(hero);
-                try { hero.PureDamage(selected.Damage, 0f).SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim); }
+                try { hero.PureDamage(TransformAuthoredGeneratedDamage(hero, selected.Damage, selected.SourceMemory,
+                    selected.ChannelId, GimmickEffect.Primed), 0f).SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim); }
                 finally { ExitGenerated(hero); }
             });
         }

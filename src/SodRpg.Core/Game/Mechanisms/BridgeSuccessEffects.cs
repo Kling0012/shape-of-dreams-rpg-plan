@@ -5,7 +5,7 @@ namespace SodRpg.Core.Game
 {
     public enum BridgeGateKind { Mark, Window, DirectReceiver }
     public enum BridgeSourcePhase { Any, InitialExplosion, EndingExplosion }
-    public enum BridgePayloadKind { Damage, Recharge, OrdinaryShield }
+    public enum BridgePayloadKind { Damage, Recharge, OrdinaryShield, Gimmick }
     public enum BridgeDamageBasis { MaximumOffense, NativeHit }
 
     public sealed class BridgeEndpointRequirement
@@ -25,13 +25,21 @@ namespace SodRpg.Core.Game
     {
         public string ChannelId { get; }
         public BridgePayloadKind Kind { get; }
-        public decimal ValueUnits { get; }
+        public decimal ValueUnits { get; private set; }
+        public int CapUnits { get; private set; }
+        public decimal DurationCapSeconds { get; private set; }
+        public decimal? UncappedValueUnits { get; private set; }
+        public decimal? UncappedProbabilityUnits { get; private set; }
+        public decimal? UncappedDurationSeconds { get; private set; }
+        public decimal? UncappedRadiusMetres { get; private set; }
+        public int? UncappedTargetCount { get; private set; }
         public MemorySelector Recipient { get; }
         public BridgeDamageBasis DamageBasis { get; }
         public float DurationSeconds { get; }
+        public GimmickDef Gimmick { get; }
         public BridgePayload(string channelId, BridgePayloadKind kind, IEnumerable<int> valueContributions,
             int modifierUnits = 0, int capUnits = 10000, MemorySelector recipient = null,
-            BridgeDamageBasis damageBasis = BridgeDamageBasis.MaximumOffense, float durationSeconds = 0)
+            BridgeDamageBasis damageBasis = BridgeDamageBasis.MaximumOffense, float durationSeconds = 0, GimmickDef gimmick = null)
         {
             if (string.IsNullOrWhiteSpace(channelId) || !Enum.IsDefined(typeof(BridgePayloadKind), kind)
                 || !Enum.IsDefined(typeof(BridgeDamageBasis), damageBasis) || valueContributions == null
@@ -40,14 +48,61 @@ namespace SodRpg.Core.Game
                 || (kind == BridgePayloadKind.Recharge) != (recipient != null)
                 || !Gimmicks.Finite(durationSeconds) || (kind == BridgePayloadKind.OrdinaryShield ? durationSeconds <= 0 : durationSeconds != 0))
                 throw new ArgumentException("Invalid bridge payload.");
+            if ((kind == BridgePayloadKind.Gimmick) != (gimmick != null) || gimmick != null && !Gimmicks.ValidDef(gimmick))
+                throw new ArgumentException("A typed bridge gimmick requires a supported payload.");
             int sum = 0;
             foreach (int value in valueContributions) { if (value <= 0) throw new ArgumentException("Bridge contributions must be positive."); sum = checked(sum + value); }
             if (sum == 0) throw new ArgumentException("Bridge payload must have a positive value.");
             ChannelId = channelId; Kind = kind; ValueUnits = Math.Min(capUnits, sum * (1m + modifierUnits / 10000m));
+            CapUnits = capUnits;
+            DurationCapSeconds = (decimal)durationSeconds * (1m + Gimmicks.MaxParameterPercent / 100m);
             Recipient = recipient; DamageBasis = damageBasis; DurationSeconds = durationSeconds;
+            Gimmick = gimmick;
         }
         internal string Key => ChannelId + ":" + Kind + ":" + ValueUnits.ToString(System.Globalization.CultureInfo.InvariantCulture)
-            + ":" + Recipient?.Key + ":" + DamageBasis + ":" + DurationSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            + ":" + Recipient?.Key + ":" + DamageBasis + ":" + DurationSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+            + ":" + (Gimmick == null ? "" : BuildAggregation.GimmickKey(new GimmickEntry { StarId = ChannelId, Memory = "", Def = Gimmick })
+                + ":" + Gimmick.ValuePrecise.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            + ":" + UncappedValueUnits?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            + ":" + UncappedProbabilityUnits?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            + ":" + CapUnits + ":" + UncappedDurationSeconds?.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            + ":" + UncappedRadiusMetres?.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + UncappedTargetCount
+            + ":" + DurationCapSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        public static BridgePayload FromEffective(string channelId, BridgePayloadKind kind, decimal valueUnits,
+            MemorySelector recipient = null, BridgeDamageBasis damageBasis = BridgeDamageBasis.MaximumOffense,
+            float durationSeconds = 0, GimmickDef gimmick = null,
+            decimal? uncappedValueUnits = null, decimal? uncappedProbabilityUnits = null, int? finalCapUnits = null,
+            decimal? uncappedDurationSeconds = null, decimal? uncappedRadiusMetres = null, int? uncappedTargetCount = null,
+            decimal? finalDurationCapSeconds = null)
+        {
+            if (valueUnits <= 0 || valueUnits > int.MaxValue
+                || kind == BridgePayloadKind.Recharge && valueUnits > 10000
+                || kind == BridgePayloadKind.OrdinaryShield && valueUnits > 1500)
+                throw new ArgumentOutOfRangeException(nameof(valueUnits));
+            if (uncappedValueUnits.HasValue && uncappedValueUnits <= 0
+                || uncappedProbabilityUnits.HasValue && uncappedProbabilityUnits < 0)
+                throw new ArgumentOutOfRangeException(nameof(uncappedValueUnits));
+            int cap = finalCapUnits ?? (kind == BridgePayloadKind.OrdinaryShield ? 1500 : 10000);
+            if (cap <= 0 || valueUnits > cap
+                || uncappedDurationSeconds.HasValue && uncappedDurationSeconds < 0
+                || uncappedRadiusMetres.HasValue && uncappedRadiusMetres < 0
+                || uncappedTargetCount.HasValue && uncappedTargetCount < 0
+                || finalDurationCapSeconds.HasValue && (finalDurationCapSeconds < 0
+                    || kind == BridgePayloadKind.OrdinaryShield && finalDurationCapSeconds <= 0
+                    || (decimal)durationSeconds > finalDurationCapSeconds))
+                throw new ArgumentOutOfRangeException(nameof(finalCapUnits));
+            int ceiling = checked((int)decimal.Ceiling(valueUnits));
+            var payload = new BridgePayload(channelId, kind, new[] { ceiling }, capUnits: cap,
+                recipient: recipient, damageBasis: damageBasis, durationSeconds: durationSeconds, gimmick: gimmick);
+            payload.ValueUnits = valueUnits;
+            payload.UncappedValueUnits = uncappedValueUnits;
+            payload.UncappedProbabilityUnits = uncappedProbabilityUnits;
+            payload.UncappedDurationSeconds = uncappedDurationSeconds;
+            payload.UncappedRadiusMetres = uncappedRadiusMetres;
+            payload.UncappedTargetCount = uncappedTargetCount;
+            if (finalDurationCapSeconds.HasValue) payload.DurationCapSeconds = finalDurationCapSeconds.Value;
+            return payload;
+        }
     }
 
     public sealed class BridgeSuccessDefinition
@@ -65,13 +120,20 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<BridgePayload> Extras { get; }
         public int Rank { get; }
         public bool UsesNativeWindowLifetime { get; }
+        public float CooldownSeconds { get; }
+        public float WindowSeconds { get; }
         public BridgeSuccessDefinition(string pairId, IEnumerable<BridgeEndpointRequirement> endpoints, int rank,
             BridgeGateKind gateKind, MemorySelector openingSource, MemoryEventKind openingTrigger,
             MemorySelector payoffSource, MemoryEventKind payoffTrigger, BridgePayload basePayoff,
             IEnumerable<BridgePayload> extras, AttributionBudget budget = AttributionBudget.PerActivation,
-            BridgeSourcePhase sourcePhase = BridgeSourcePhase.Any, bool usesNativeWindowLifetime = false)
+            BridgeSourcePhase sourcePhase = BridgeSourcePhase.Any, bool usesNativeWindowLifetime = false,
+            float cooldownSeconds = 0, float windowSeconds = 4)
         {
-            if (string.IsNullOrWhiteSpace(pairId) || endpoints == null || rank < 1 || rank > 3 || openingSource == null || payoffSource == null
+            if (!Gimmicks.Finite(cooldownSeconds) || cooldownSeconds < 0 || cooldownSeconds > Gimmicks.MaxCooldown
+                || !Gimmicks.Finite(windowSeconds) || windowSeconds <= 0 || windowSeconds > 60)
+                throw new ArgumentException("Invalid bridge interval or window.");
+            if (string.IsNullOrWhiteSpace(pairId) || endpoints == null || rank < 1
+                || rank > (gateKind == BridgeGateKind.DirectReceiver ? StarProgression.MaxSpendablePoints : 3) || openingSource == null || payoffSource == null
                 || basePayoff == null || extras == null || !Enum.IsDefined(typeof(BridgeGateKind), gateKind)
                 || !Enum.IsDefined(typeof(MemoryEventKind), openingTrigger) || !Enum.IsDefined(typeof(MemoryEventKind), payoffTrigger)
                 || !Enum.IsDefined(typeof(AttributionBudget), budget) || !Enum.IsDefined(typeof(BridgeSourcePhase), sourcePhase)
@@ -107,13 +169,16 @@ namespace SodRpg.Core.Game
             PairId = pairId; Endpoints = endpointCopy.AsReadOnly(); Rank = rank; GateKind = gateKind; OpeningSource = openingSource;
             OpeningTrigger = openingTrigger; PayoffSource = payoffSource; PayoffTrigger = payoffTrigger; BasePayoff = basePayoff;
             Extras = extraCopy.AsReadOnly(); Budget = budget; SourcePhase = sourcePhase; UsesNativeWindowLifetime = usesNativeWindowLifetime;
+            CooldownSeconds = cooldownSeconds; WindowSeconds = windowSeconds;
         }
         internal string Key
         {
             get
             {
                 string key = PairId + "|" + Rank + "|" + GateKind + "|" + OpeningSource.Key + "|" + OpeningTrigger + "|" + PayoffSource.Key
-                    + "|" + PayoffTrigger + "|" + Budget + "|" + SourcePhase + "|" + UsesNativeWindowLifetime + "|" + BasePayoff.Key;
+                    + "|" + PayoffTrigger + "|" + Budget + "|" + SourcePhase + "|" + UsesNativeWindowLifetime + "|" + BasePayoff.Key
+                    + "|" + CooldownSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                    + "|" + WindowSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
                 foreach (var endpoint in Endpoints) key += "|" + endpoint.StarId + ":" + endpoint.MinimumRank + ":" + endpoint.Memory;
                 foreach (var extra in Extras) key += "|" + extra.Key;
                 return key;
@@ -184,7 +249,9 @@ namespace SodRpg.Core.Game
             public long Generation;
             public bool Available;
             public readonly Dictionary<long, float> Marks = new Dictionary<long, float>();
+            public readonly Dictionary<long, string> MarkSources = new Dictionary<long, string>();
             public float WindowUntil;
+            public float ReadyAt;
             public readonly HashSet<string> Paid = new HashSet<string>(StringComparer.Ordinal);
             public readonly HashSet<string> OpenedNotifications = new HashSet<string>(StringComparer.Ordinal);
         }
@@ -212,7 +279,8 @@ namespace SodRpg.Core.Game
         }
         private void InvalidateSuccessState(SuccessState state)
         {
-            state.Marks.Clear(); state.WindowUntil = 0; state.Paid.Clear(); state.OpenedNotifications.Clear();
+            state.ReadyAt = 0;
+            state.Marks.Clear(); state.MarkSources.Clear(); state.WindowUntil = 0; state.Paid.Clear(); state.OpenedNotifications.Clear();
             state.Available = false; state.Generation = checked(++_successGeneration);
         }
         public void CloseNativeBridgeWindow(string pairId)
@@ -252,15 +320,37 @@ namespace SodRpg.Core.Game
                 if (state.Definition.PairId == pairId) return state.Available && state.Generation == generation;
             return false;
         }
-        public int BridgeExposeUnits(long victimId, float now, MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks)
+        public decimal BridgeExposeUnits(long victimId, float now, MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks,
+            Func<string, string, decimal, decimal> transform = null)
         {
             if (equipment == null || endpointRanks == null || !Gimmicks.Finite(now)) throw new ArgumentException("Invalid bridge query.");
             RefreshSuccessPrerequisites(equipment, endpointRanks);
-            int result = 0;
+            decimal result = 0;
             foreach (var state in _successStates)
                 if (state.Available && state.Marks.TryGetValue(victimId, out float until) && now < until)
-                    result = Math.Max(result, (state.Definition.Rank + 1) * 100);
+                {
+                    decimal value = (state.Definition.Rank + 1) * 100m;
+                    if (transform != null) value = transform(state.MarkSources[victimId], state.Definition.PairId + ".Expose", value);
+                    result = Math.Max(result, value);
+                }
             return result;
+        }
+        public bool HasBridgeMark(string pairId, long victimId, float now, MechanismEquipment equipment,
+            IReadOnlyDictionary<string, int> endpointRanks)
+            => HasBridgeGate(pairId, victimId, now, equipment, endpointRanks, BridgeGateKind.Mark);
+        public bool HasBridgeWindow(string pairId, float now, MechanismEquipment equipment,
+            IReadOnlyDictionary<string, int> endpointRanks)
+            => HasBridgeGate(pairId, 0, now, equipment, endpointRanks, BridgeGateKind.Window);
+        private bool HasBridgeGate(string pairId, long victimId, float now, MechanismEquipment equipment,
+            IReadOnlyDictionary<string, int> endpointRanks, BridgeGateKind kind)
+        {
+            if (equipment == null || endpointRanks == null || !Gimmicks.Finite(now)) return false;
+            RefreshSuccessPrerequisites(equipment, endpointRanks);
+            foreach (var state in _successStates)
+                if (state.Available && state.Definition.PairId == pairId && state.Definition.GateKind == kind)
+                    return kind == BridgeGateKind.Window ? now < state.WindowUntil
+                        : state.Marks.TryGetValue(victimId, out float until) && now < until;
+            return false;
         }
         /// <summary>Resolve the real pair once; base and extras share this success, phase, equipment and quota.</summary>
         public void FireAttributed(MemoryActivationEvent notification, float now, float nativeDamage, MechanismEquipment equipment,
@@ -280,7 +370,7 @@ namespace SodRpg.Core.Game
                 if (!state.Available) continue;
                 var expired = new List<long>();
                 foreach (var mark in state.Marks) if (now >= mark.Value) expired.Add(mark.Key);
-                foreach (long victim in expired) state.Marks.Remove(victim);
+                foreach (long victim in expired) { state.Marks.Remove(victim); state.MarkSources.Remove(victim); }
                 bool isEndpoint = false;
                 foreach (var endpoint in definition.Endpoints) if (endpoint.Memory == source.Memory) isEndpoint = true;
                 if (!isEndpoint) continue;
@@ -291,7 +381,8 @@ namespace SodRpg.Core.Game
                     if (state.OpenedNotifications.Contains(openingKey)) continue;
                     if (definition.GateKind == BridgeGateKind.Mark)
                     {
-                        if (notification.VictimId != 0) state.Marks[notification.VictimId] = now + 4f;
+                        if (notification.VictimId != 0)
+                        { state.Marks[notification.VictimId] = now + 4f; state.MarkSources[notification.VictimId] = source.Memory; }
                     }
                     else if (definition.UsesNativeWindowLifetime)
                     {
@@ -299,7 +390,7 @@ namespace SodRpg.Core.Game
                             throw new InvalidOperationException("A native-lifetime bridge requires a verified native ending time.");
                         state.WindowUntil = nativeWindowUntil;
                     }
-                    else state.WindowUntil = now + 4f;
+                    else state.WindowUntil = now + definition.WindowSeconds;
                     state.OpenedNotifications.Add(openingKey);
                     continue;
                 }
@@ -307,6 +398,7 @@ namespace SodRpg.Core.Game
                     || definition.SourcePhase != BridgeSourcePhase.Any && definition.SourcePhase != phase) continue;
                 if (definition.GateKind == BridgeGateKind.Window && now >= state.WindowUntil) continue;
                 if (definition.GateKind == BridgeGateKind.Mark && (!state.Marks.TryGetValue(notification.VictimId, out float until) || now >= until)) continue;
+                if (now < state.ReadyAt) continue;
                 bool allPayloadsReady = true;
                 var payloads = new List<BridgePayload> { definition.BasePayoff }; payloads.AddRange(definition.Extras);
                 foreach (var payload in payloads)
@@ -323,6 +415,7 @@ namespace SodRpg.Core.Game
                 if (!allPayloadsReady) continue;
                 string key = MechanismAdmission.Key(definition.Budget, notification);
                 if (key == null || !state.Paid.Add(key)) continue;
+                state.ReadyAt = now + definition.CooldownSeconds;
                 results.Add(new BridgeSuccessTransaction(definition, checked(++_successSerial), notification, phase, nativeDamage, equipment, this, state.Generation));
             }
         }

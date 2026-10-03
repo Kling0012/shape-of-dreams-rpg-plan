@@ -38,7 +38,7 @@ namespace SodRpg.Core.Game
         public string SourceMemory { get; }
         public IReadOnlyList<string> RequiredMemories { get; }
         public IReadOnlyList<string> ContributorIds { get; }
-        public int ProbabilityUnits { get; }
+        public decimal ProbabilityUnits { get; }
         public string ConditionKey { get; }
 
         /// <summary>One equivalent condition is composed before its one GB multiplier and Chance addition.</summary>
@@ -64,10 +64,24 @@ namespace SodRpg.Core.Game
             }
             decimal modified = (decimal)sum * (10000m + boostModifierUnits) / 10000m + chanceProbabilityUnits;
             modified = Math.Min(MaximumProbabilityUnits, Math.Max(0m, modified));
-            if (decimal.Truncate(modified) != modified)
-                throw new ArgumentException("Pressure dividend probability must be representable in hundredths of a percent.");
-            ProbabilityUnits = (int)modified;
+            ProbabilityUnits = modified;
             ContributorIds = Array.AsReadOnly(ids.OrderBy(x => x, StringComparer.Ordinal).ToArray());
+        }
+        private PressureDividendChannel(string source, IReadOnlyList<string> required, IReadOnlyList<string> contributors, decimal probability)
+        {
+            SourceMemory = source; RequiredMemories = required; ContributorIds = contributors;
+            ProbabilityUnits = probability; ConditionKey = source + ":" + string.Join("+", required);
+        }
+        public static PressureDividendChannel FromEffective(string source, IEnumerable<string> required, IEnumerable<string> contributors, decimal probability)
+        {
+            if (!Links.IsMemory(source) || source.StartsWith("St_M_", StringComparison.Ordinal) || probability < 0 || probability > MaximumProbabilityUnits
+                || required == null || contributors == null) throw new ArgumentException("Invalid effective dividend.");
+            var memories = required.OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            var ids = contributors.OrderBy(x => x, StringComparer.Ordinal).ToArray();
+            if (memories.Any(x => !Links.IsMemory(x)) || memories.Distinct(StringComparer.Ordinal).Count() != memories.Length
+                || ids.Length == 0 || ids.Any(x => !Gimmicks.ValidStarId(x)) || ids.Distinct(StringComparer.Ordinal).Count() != ids.Length)
+                throw new ArgumentException("Invalid dividend identities.");
+            return new PressureDividendChannel(source, Array.AsReadOnly(memories), Array.AsReadOnly(ids), probability);
         }
 
         public bool Matches(string sourceMemory, ISet<string> equippedMemories) => SourceMemory == sourceMemory
@@ -188,7 +202,7 @@ namespace SodRpg.Core.Game
         /// <summary>One host roll for one run/zone/spawn/owner. Build retransmission never resets this ledger.</summary>
         public PressureDividendReward TryAward(PressureDividendDeath death, PressureDividendAttribution attribution,
             IReadOnlyList<PressureDividendChannel> channels, ISet<string> equippedMemories,
-            Func<int> rollUnits, Func<string> createNonce)
+            Func<decimal> rollUnits, Func<string> createNonce)
         {
             if (death == null || attribution == null || channels == null || rollUnits == null || createNonce == null)
                 throw new ArgumentNullException("Pressure dividend admission requires complete facts and host services.");
@@ -209,7 +223,7 @@ namespace SodRpg.Core.Game
             string key = death.RunId + ":" + death.ZoneId.ToString(CultureInfo.InvariantCulture) + ":"
                 + death.SpawnId.ToString(CultureInfo.InvariantCulture) + ":" + attribution.OwnerId;
             if (!_rolled.Add(key)) return null;
-            int roll = rollUnits();
+            decimal roll = rollUnits();
             if (roll < 0 || roll >= 10000) throw new InvalidOperationException("Host probability roll must be in [0, 10000).");
             if (roll >= selected.ProbabilityUnits) return null;
             return new PressureDividendReward(death.RunId, death.ZoneId, death.SpawnId, attribution.OwnerId, createNonce());

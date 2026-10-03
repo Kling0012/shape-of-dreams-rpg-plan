@@ -49,8 +49,11 @@ namespace SodRpg.Mod
             }
         }
         private void OnDirectedRechargeEvent(MemoryActivationEvent notification, Hero hero, Entity victim, float nativeDamage)
+            => DispatchDirectedRechargeEvent(notification, hero, victim, nativeDamage, null);
+        private void DispatchDirectedRechargeEvent(MemoryActivationEvent notification, Hero hero, Entity victim, float nativeDamage, string channelId)
         {
             if (!NetworkServer.active || !Alive(hero) || !_directedRecharges.TryGetValue(hero, out var runtime)) return;
+            if (channelId == null && _authoredMechanisms.ContainsKey(hero)) return;
             var equipment = CollectMechanismEquipment(hero, notification.OwnerId);
             int elements = 0;
             if (victim != null)
@@ -62,7 +65,19 @@ namespace SodRpg.Mod
             }
             var requests = new List<DirectedRechargeRequest>();
             bool summons = _runtimes.TryGetValue(hero, out var rt) && HasOwnSummons(rt);
-            runtime.Notify(notification, equipment, new RechargeConditionContext(hero.Status.currentShield > 0f, elements, summons), _rng.NextDouble, requests);
+            AuthoredMechanismSpec spec = null;
+            if (channelId != null && _authoredMechanisms.TryGetValue(hero, out var authored) && authored.Channels.TryGetValue(channelId, out var channel))
+                spec = channel.Entry.Spec;
+            var source = equipment.ResolveEventSource(notification, summons);
+            var kind = notification.NativePayloadKind == NativePayloadKind.MainBasicAttack ? KeystoneSourceKind.OwnedBasicAttack
+                : notification.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
+            var effective = spec != null && source != null ? TransformAuthoredPayload(hero, AuthoredKeystoneComposer.MechanismPayload(spec),
+                source.Memory, null, kind) : null;
+            if (effective != null && effective.Disabled) return;
+            runtime.Notify(notification, equipment, new RechargeConditionContext(hero.Status.currentShield > 0f, elements, summons), _rng.NextDouble, requests,
+                candidate => channelId == null || candidate.ChannelId == channelId, channelId != null,
+                candidate => effective?.EveryN ?? candidate.EveryN,
+                candidate => effective != null ? effective.ProbabilityPercent * 100m : candidate.ProbabilityUnits);
             foreach (var request in requests) ApplyDirectedRecharge(hero, request);
         }
         private void ApplyDirectedRecharge(Hero hero, DirectedRechargeRequest request)
@@ -72,7 +87,25 @@ namespace SodRpg.Mod
             var skill = FindMemory(hero, request.RecipientMemory);
             if (skill == null || skill.GetInstanceID() != request.RecipientInstanceId) return;
             // One current-config ratio; native code applies it to all reducible config maxima and owns charges/processors.
-            float ratio = request.NativeRatio(skill.currentConfigUnscaledCooldownTime, skill.currentConfigUnscaledMaxCooldownTime);
+            KeystonePayload payload = new KeystonePayload(KeystoneLayer.ModEffect, request.ValueUnits / 100m,
+                new KeystoneCaps(100), KeystonePayloadKind.DirectedRecharge, GimmickEffect.Recharge, request.ChannelId);
+            if (_authoredMechanisms.TryGetValue(hero, out var owner))
+                foreach (var channel in owner.Channels.Values)
+                {
+                    var spec = channel.Entry.Spec;
+                    if (spec.Recharge != null && spec.ChannelId == request.ChannelId)
+                    { payload = AuthoredKeystoneComposer.MechanismPayload(spec); break; }
+                    if (spec.Bridge == null) continue;
+                    if (spec.Bridge.BasePayoff.ChannelId == request.ChannelId)
+                    { payload = AuthoredKeystoneComposer.BridgePayload(spec.Bridge.BasePayoff); break; }
+                    foreach (var extra in spec.Bridge.Extras)
+                        if (extra.ChannelId == request.ChannelId) { payload = AuthoredKeystoneComposer.BridgePayload(extra); break; }
+                }
+            var transformed = TransformAuthoredPayload(hero, payload, request.SourceMemory, request.RecipientMemory,
+                request.RequiresOwnedSummon ? KeystoneSourceKind.OwnedBasicAttack : KeystoneSourceKind.NativeMemory);
+            if (transformed.Disabled) return;
+            float ratio = Gimmicks.RemainingCooldownReductionRatio(skill.currentConfigUnscaledCooldownTime,
+                skill.currentConfigUnscaledMaxCooldownTime, (float)transformed.Value);
             if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
         private void ClearDirectedRecharge(Hero hero)

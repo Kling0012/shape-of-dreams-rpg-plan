@@ -71,14 +71,84 @@ namespace SodRpg.Core.Game
     {
         public MemorySelectorKind Kind { get; }
         public string Memory { get; }
+        public IReadOnlyList<string> AllowedMemories { get; }
+        public IReadOnlyList<MemorySelector> Alternatives { get; }
+        public string Expression { get; }
         public MemorySelector(MemorySelectorKind kind, string memory = null)
+            : this(kind, memory, Array.Empty<string>(), Array.Empty<MemorySelector>()) { }
+        private MemorySelector(MemorySelectorKind kind, string memory, IReadOnlyList<string> allowed, IReadOnlyList<MemorySelector> alternatives)
         {
             if (!Enum.IsDefined(typeof(MemorySelectorKind), kind) || (kind == MemorySelectorKind.Memory) != !string.IsNullOrWhiteSpace(memory))
                 throw new ArgumentException("An exact memory is required only for the Memory selector.");
-            Kind = kind; Memory = memory;
+            Kind = kind; Memory = memory; AllowedMemories = allowed; Alternatives = alternatives;
+            Expression = alternatives.Count > 0 ? string.Join("|", System.Linq.Enumerable.Select(alternatives, x => x.Expression))
+                : kind == MemorySelectorKind.Memory ? memory : SlotToken(kind) + (allowed.Count == 0 ? "" : "(" + string.Join("|", allowed) + ")");
+        }
+        private static string SlotToken(MemorySelectorKind kind)
+        {
+            switch (kind)
+            {
+                case MemorySelectorKind.EquippedIdentity: return "@ID";
+                case MemorySelectorKind.EquippedQ: return "@Q";
+                case MemorySelectorKind.EquippedR: return "@R";
+                case MemorySelectorKind.EquippedMovement: return "@M";
+                case MemorySelectorKind.EquippedQOrR: return "@Q|@R";
+                case MemorySelectorKind.OtherNormal: return "@OTHER";
+                default: throw new ArgumentException("Invalid slot selector.");
+            }
+        }
+        public static MemorySelector Parse(string expression)
+        {
+            if (string.IsNullOrEmpty(expression) || expression.Length > 4096) throw new ArgumentException("Invalid memory selector.");
+            var terms = new List<MemorySelector>();
+            int start = 0, depth = 0;
+            for (int i = 0; i <= expression.Length; i++)
+            {
+                if (i < expression.Length && expression[i] == '(') { if (++depth != 1) throw new ArgumentException("Nested selector filter."); }
+                if (i < expression.Length && expression[i] == ')') { if (--depth != 0) throw new ArgumentException("Unbalanced selector filter."); }
+                if (i != expression.Length && (expression[i] != '|' || depth != 0)) continue;
+                if (depth != 0 || i == start) throw new ArgumentException("Invalid selector union.");
+                string term = expression.Substring(start, i - start); start = i + 1;
+                int open = term.IndexOf('(');
+                string token = open < 0 ? term : term.Substring(0, open);
+                var filter = new List<string>();
+                if (open >= 0)
+                {
+                    if (!term.EndsWith(")", StringComparison.Ordinal)) throw new ArgumentException("Invalid selector filter.");
+                    foreach (string id in term.Substring(open + 1, term.Length - open - 2).Split('|'))
+                    {
+                        if (!Links.IsMemory(id) || filter.Contains(id)) throw new ArgumentException("Invalid or duplicate selector memory.");
+                        filter.Add(id);
+                    }
+                    filter.Sort(StringComparer.Ordinal);
+                }
+                MemorySelectorKind kind;
+                switch (token)
+                {
+                    case "@ID": kind = MemorySelectorKind.EquippedIdentity; break;
+                    case "@Q": kind = MemorySelectorKind.EquippedQ; break;
+                    case "@R": kind = MemorySelectorKind.EquippedR; break;
+                    case "@M": kind = MemorySelectorKind.EquippedMovement; break;
+                    case "@OTHER": kind = MemorySelectorKind.OtherNormal; break;
+                    default:
+                        if (open >= 0 || !Links.IsMemory(token)) throw new ArgumentException("Unknown memory selector.");
+                        kind = MemorySelectorKind.Memory; break;
+                }
+                terms.Add(new MemorySelector(kind, kind == MemorySelectorKind.Memory ? token : null, filter.AsReadOnly(), Array.Empty<MemorySelector>()));
+            }
+            terms.Sort((a, b) => StringComparer.Ordinal.Compare(a.Expression, b.Expression));
+            for (int i = 1; i < terms.Count; i++) if (terms[i].Expression == terms[i - 1].Expression) throw new ArgumentException("Duplicate selector term.");
+            return terms.Count == 1 ? terms[0] : new MemorySelector(MemorySelectorKind.EquippedQOrR, null, Array.Empty<string>(), terms.AsReadOnly());
         }
         public bool Matches(EquippedMechanismMemory item, string sourceMemory = null)
         {
+            if (item == null) return false;
+            if (Alternatives.Count > 0)
+            {
+                foreach (var alternative in Alternatives) if (alternative.Matches(item, sourceMemory)) return true;
+                return false;
+            }
+            if (AllowedMemories.Count > 0 && !System.Linq.Enumerable.Contains(AllowedMemories, item.Memory)) return false;
             switch (Kind)
             {
                 case MemorySelectorKind.Memory: return item.Memory == Memory;
@@ -92,7 +162,7 @@ namespace SodRpg.Core.Game
                 default: throw new InvalidOperationException("Unknown selector.");
             }
         }
-        internal string Key => ((int)Kind) + ":" + Memory;
+        internal string Key => Expression;
     }
 
     public readonly struct RechargeConditionContext
@@ -114,10 +184,10 @@ namespace SodRpg.Core.Game
         public MemorySelector Source { get; }
         public MemorySelector Recipient { get; }
         public MemoryEventKind SourceTrigger { get; }
-        public int ValueUnits { get; }
+        public decimal ValueUnits { get; }
         public int ModifierUnits { get; }
         public int CapUnits { get; }
-        public int ProbabilityUnits { get; }
+        public decimal ProbabilityUnits { get; }
         public int EveryN { get; }
         public RechargeConditionKind Condition { get; }
         public int RequiredElementTypes { get; }
@@ -128,9 +198,16 @@ namespace SodRpg.Core.Game
             IEnumerable<int> valueContributions, AttributionBudget budget = AttributionBudget.PerActivation, int probabilityUnits = 10000,
             int everyN = 1, RechargeConditionKind condition = RechargeConditionKind.Always, int requiredElementTypes = 0,
             int modifierUnits = 0, RechargeModifierScope modifierScope = RechargeModifierScope.SourceChannel, int capUnits = 10000)
+            : this(channelId, source, sourceTrigger, recipient,
+                valueContributions == null ? null : System.Linq.Enumerable.Select(valueContributions, x => (decimal)x),
+                budget, probabilityUnits, everyN, condition, requiredElementTypes, modifierUnits, modifierScope, capUnits) { }
+        public DirectedRechargeChannel(string channelId, MemorySelector source, MemoryEventKind sourceTrigger, MemorySelector recipient,
+            IEnumerable<decimal> valueContributions, AttributionBudget budget = AttributionBudget.PerActivation, decimal probabilityUnits = 10000,
+            int everyN = 1, RechargeConditionKind condition = RechargeConditionKind.Always, int requiredElementTypes = 0,
+            int modifierUnits = 0, RechargeModifierScope modifierScope = RechargeModifierScope.SourceChannel, int capUnits = 10000)
         {
             if (string.IsNullOrWhiteSpace(channelId) || source == null || recipient == null || valueContributions == null
-                || source.Kind == MemorySelectorKind.EquippedMovement || source.Kind == MemorySelectorKind.OtherNormal
+                || !AuthoredMechanisms.CanBeSource(source)
                 || !Enum.IsDefined(typeof(MemoryEventKind), sourceTrigger) || !Enum.IsDefined(typeof(AttributionBudget), budget)
                 || !Enum.IsDefined(typeof(RechargeConditionKind), condition) || !Enum.IsDefined(typeof(RechargeModifierScope), modifierScope)
                 || probabilityUnits < 0 || probabilityUnits > 10000 || everyN < 1 || modifierUnits < 0
@@ -141,8 +218,8 @@ namespace SodRpg.Core.Game
             if (!MechanismAdmission.HasVictim(sourceTrigger)
                 && (condition == RechargeConditionKind.ChangedTarget || condition == RechargeConditionKind.ElementTypesAtLeast))
                 throw new ArgumentException("A target condition requires a notification with a victim.");
-            int sum = 0;
-            foreach (int value in valueContributions) { if (value <= 0) throw new ArgumentException("Recharge contributions must be positive."); sum = checked(sum + value); }
+            decimal sum = 0;
+            foreach (decimal value in valueContributions) { if (value <= 0) throw new ArgumentException("Recharge contributions must be positive."); sum = checked(sum + value); }
             if (sum == 0) throw new ArgumentException("A recharge channel needs an effectful contribution.");
             ChannelId = channelId; Source = source; SourceTrigger = sourceTrigger; Recipient = recipient; ValueUnits = sum;
             Budget = budget; ProbabilityUnits = probabilityUnits; EveryN = everyN; Condition = condition; RequiredElementTypes = requiredElementTypes;
@@ -215,7 +292,9 @@ namespace SodRpg.Core.Game
             foreach (var state in _states) { state.Count = 0; state.PreviousVictim = 0; state.Notifications.Clear(); state.TargetObservations.Clear(); }
         }
         public void Notify(MemoryActivationEvent notification, MechanismEquipment equipment, RechargeConditionContext context,
-            Func<double> roll, List<DirectedRechargeRequest> results)
+            Func<double> roll, List<DirectedRechargeRequest> results, Func<DirectedRechargeChannel, bool> filter = null,
+            bool triggerAlreadyAdmitted = false, Func<DirectedRechargeChannel, int> cadence = null,
+            Func<DirectedRechargeChannel, decimal> probabilityUnits = null)
         {
             if (equipment == null || results == null || roll == null) throw new ArgumentNullException();
             if (_owner != equipment.OwnerId || _epoch != equipment.EquipmentEpoch)
@@ -226,7 +305,8 @@ namespace SodRpg.Core.Game
             foreach (var state in _states)
             {
                 var channel = state.Channel;
-                if (channel.SourceTrigger != notification.EventKind || !channel.Source.Matches(source)) continue;
+                if (filter != null && !filter(channel)) continue;
+                if (!triggerAlreadyAdmitted && channel.SourceTrigger != notification.EventKind || !channel.Source.Matches(source)) continue;
                 if (channel.Condition == RechargeConditionKind.ChangedTarget
                     && !state.TargetObservations.Add(notification.ActivationId + ":" + notification.DamagePacketId + ":" + notification.VictimId)) continue;
                 bool condition = channel.Condition == RechargeConditionKind.Always
@@ -244,9 +324,9 @@ namespace SodRpg.Core.Game
                 if (double.IsNaN(chance) || chance < 0 || chance >= 1) throw new ArgumentOutOfRangeException(nameof(roll));
                 state.Notifications.Add(key);
                 state.Count++;
-                if (state.Count < channel.EveryN) continue;
+                if (state.Count < (cadence != null ? cadence(channel) : channel.EveryN)) continue;
                 state.Count = 0;
-                if (chance * 10000 >= channel.ProbabilityUnits) continue;
+                if ((decimal)chance * 10000m >= (probabilityUnits != null ? probabilityUnits(channel) : channel.ProbabilityUnits)) continue;
                 foreach (var recipient in recipients) results.Add(new DirectedRechargeRequest(channel.ChannelId, notification, source, recipient, channel.EffectiveValueUnits));
             }
         }

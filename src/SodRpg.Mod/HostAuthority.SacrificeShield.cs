@@ -18,6 +18,10 @@ namespace SodRpg.Mod
         private static readonly MethodInfo PureDamage = AccessTools.Method(typeof(Actor), nameof(Actor.PureDamage), new[] { typeof(float), typeof(float) });
         private static readonly MethodInfo SetAttr = AccessTools.Method(typeof(DamageData), nameof(DamageData.SetAttr));
         private static readonly MethodInfo Wrapper = AccessTools.Method(typeof(NativeSacrificeShieldDispatch), nameof(DispatchPayment));
+        internal static bool GoldenBound { get; private set; }
+        internal static bool ReductionBound { get; private set; }
+        internal static bool IsBoundFor(string memory) => memory == "St_Q_GoldenBurst" ? GoldenBound
+            : memory == "St_Q_Reduction" && ReductionBound;
 
         private static IEnumerable<MethodBase> TargetMethods()
         {
@@ -40,6 +44,7 @@ namespace SodRpg.Mod
             bool golden = original == NativeIterator(typeof(Ai_Q_GoldenBurst));
             if (!golden && original != NativeIterator(typeof(Ai_Q_Reduction_Spawner)))
                 throw new InvalidOperationException("Unverified sacrifice method.");
+            if (golden) GoldenBound = false; else ReductionBound = false;
             int pureIndex = -1, pureCount = 0, dispatchIndex = -1, dispatchCount = 0;
             for (int i = 0; i < code.Count; i++)
             {
@@ -68,6 +73,7 @@ namespace SodRpg.Mod
             // Instance struct call consumes DamageData&, Entity, ReactionChain; the static wrapper has exactly that signature.
             code[dispatchIndex].opcode = OpCodes.Call;
             code[dispatchIndex].operand = Wrapper;
+            if (golden) GoldenBound = true; else ReductionBound = true;
             return code;
         }
 

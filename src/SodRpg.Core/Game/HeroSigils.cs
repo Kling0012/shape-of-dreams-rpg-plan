@@ -183,7 +183,8 @@ namespace SodRpg.Core.Game
         };
 
         /// <summary>核のIDを維持したまま、記憶ルート・夢の輪・星群を加える。</summary>
-        public static readonly IReadOnlyList<TalentDef> All = CreateAll();
+        private static readonly IReadOnlyList<TalentDef> BaselineAll = CreateAll();
+        public static IReadOnlyList<TalentDef> All => StarClusters.InstalledTalents(BaselineAll);
         private static readonly Dictionary<string, IReadOnlyList<TalentDef>> Trees = CreateTrees();
 
         private static IReadOnlyList<TalentDef> CreateAll()
@@ -202,7 +203,7 @@ namespace SodRpg.Core.Game
         private static Dictionary<string, IReadOnlyList<TalentDef>> CreateTrees()
         {
             var groups = new Dictionary<string, List<TalentDef>>(StringComparer.Ordinal);
-            foreach (var t in All)
+            foreach (var t in BaselineAll)
             {
                 if (!groups.TryGetValue(t.HeroKey, out var tree))
                 {
@@ -220,6 +221,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>旅人ごとに一度だけ分類する。未知の旅人は従来の汎用ツリー。</summary>
         public static IReadOnlyList<TalentDef> TreeFor(string heroKey) =>
+            StarClusters.TryGetRegisteredTree(heroKey, out var registered) ? registered : BaselineTreeFor(heroKey);
+        internal static IReadOnlyList<TalentDef> BaselineTreeFor(string heroKey) =>
             heroKey != null && Trees.TryGetValue(heroKey, out var tree) ? tree : Content.Talents;
     }
 }

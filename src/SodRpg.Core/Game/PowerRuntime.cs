@@ -369,7 +369,9 @@ namespace SodRpg.Core.Game
         }
         public void SetBuild(Build build)
         {
-            Build = build ?? new Build();
+            var replacement = build ?? new Build();
+            RetainGimmickPrimedForBuild(replacement);
+            Build = replacement;
             RetainEquippedNewPowerState();
             // 連携の状態は装備に紐付くので、Build が変わったらやり直す（判定は次の走査で）。
             LinkAttunePct = 0;

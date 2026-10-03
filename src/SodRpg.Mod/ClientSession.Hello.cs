@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         private Action<DreamforgeHelloMsg> _onHello;
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
+        private string _acceptedHostContent;
+        private bool MechanismHandshakeAccepted => NetworkServer.active
+            || _helloAnswered && string.Equals(_acceptedHostContent, ContentFingerprint.Value, StringComparison.Ordinal);
 
         /// <summary>ホストと版が違う／ホストから返事がないときの説明。問題なければ null。</summary>
         public string HostVersionWarning { get; private set; }
@@ -35,6 +38,7 @@ namespace SodRpg.Mod
             _helloFirstSent = -1f;
             _nextHello = 0f;
             _helloAnswered = false;
+            _acceptedHostContent = null;
             HostVersionWarning = null;
         }
 
@@ -43,7 +47,7 @@ namespace SodRpg.Mod
             // ホスト自身はあいさつ不要（自分の版なので必ず一致する）。
             if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active || LocalHero == null) return;
             float now = Time.unscaledTime;
-            if (!_helloAnswered && now >= _nextHello)
+            if (now >= _nextHello)
             {
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeHelloMsg
                 {
@@ -62,8 +66,10 @@ namespace SodRpg.Mod
         {
             if (msg == null) return;
             _helloAnswered = true;
+            bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+            _acceptedHostContent = same ? msg.content : null;
             string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
-            HostVersionWarning = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version) ? null : Loc.T(
+            HostVersionWarning = same ? null : Loc.T(
                 $"ホストと Dreamforge の版が違います（ホスト {theirs} / 自分 {HostAuthority.ModVersion}）。装備の効果が反映されず、報酬も入りません。全員同じ版にしてください。",
                 $"Your Dreamforge version differs from the host (host {theirs} / yours {HostAuthority.ModVersion}). Gear bonuses and rewards will not work. Everyone must use the same version.");
         }

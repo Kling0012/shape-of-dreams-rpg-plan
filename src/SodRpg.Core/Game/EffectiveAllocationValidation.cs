@@ -30,8 +30,6 @@ namespace SodRpg.Core.Game
     public sealed class EffectiveAllocationPolicy
     {
         public IReadOnlyList<AllocationDisableRule> PermanentDisables { get; set; } = Array.Empty<AllocationDisableRule>();
-        /// <summary>The same final, capped transform used by the production mechanism. Null means no transform, never an approximation.</summary>
-        public Action<HeroState, Build> ApplyEffectiveTransforms { get; set; }
     }
 
     /// <summary>An attainable output under its normal source/event predicates. Magnitudes are exact fixed point.</summary>
@@ -41,21 +39,20 @@ namespace SodRpg.Core.Game
         public string StarId { get; internal set; }
         public decimal ValueMilli { get; internal set; }
         public decimal DurationUnits { get; internal set; }
-        public int RadiusUnits { get; internal set; }
+        public decimal RadiusUnits { get; internal set; }
         public int ExtraTargets { get; internal set; }
         public bool Strongest { get; internal set; }
         public string Memory { get; internal set; }
         public IReadOnlyList<string> ContributorIds { get; internal set; } = Array.Empty<string>();
         public long ValueCeiling { get; internal set; }
         public decimal DurationCeilingUnits { get; internal set; }
-        public int RadiusCeilingUnits { get; internal set; }
+        public decimal RadiusCeilingUnits { get; internal set; }
         public int TargetCeiling { get; internal set; }
         public decimal ChanceUnits { get; internal set; }
         public decimal IntrinsicProbabilityUnits { get; internal set; }
         public string CapProfileId { get; internal set; }
         public string PredicateKey { get; internal set; }
         public float Cooldown { get; internal set; }
-        public long LifetimeBudgetMilli { get; internal set; }
         public GimmickEffect? Effect { get; internal set; }
     }
 
@@ -102,6 +99,7 @@ namespace SodRpg.Core.Game
         internal EffectiveAllocationValidation Owner;
         internal HeroState Original, Proposed;
         internal string HeroKey;
+        internal string RegistryFingerprint, CapFingerprint;
         public string CandidateStarId { get; internal set; }
         public int? SelectedOption { get; internal set; }
         public IReadOnlyList<EffectiveAllocationChannel> OldEffectiveChannels { get; internal set; }
@@ -191,7 +189,7 @@ namespace SodRpg.Core.Game
 
         public int SpentPoints(HeroState hero)
         {
-            long spent = hero.Keystone == null ? 0 : Content.KeystoneCost;
+            long spent = hero.Keystone == null ? 0 : Talent(hero.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             foreach (var rank in hero.Talents)
             {
                 var talent = Talent(rank.Key) ?? throw new InvalidOperationException("Unknown allocated star: " + rank.Key);
@@ -218,6 +216,8 @@ namespace SodRpg.Core.Game
         {
             if (profile == null) throw new ArgumentNullException(nameof(profile));
             if (change == null) throw new ArgumentNullException(nameof(change));
+            string registryFingerprint = StarClusters.AuthoredRegistryFingerprint;
+            string capFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
             var original = profile.Hero(heroKey).Clone();
             var proposed = original.Clone();
             var candidate = Talent(change.CandidateStarId);
@@ -235,7 +235,7 @@ namespace SodRpg.Core.Game
                 int start = change.Kind == AllocationChangeKind.Purchase ? rank : 1;
                 for (int r = start; r <= rank; r++)
                 {
-                    if (RankEffective(profile, heroKey, proposed, candidate, r, details)) continue;
+                    if (RankEffective(profile, heroKey, proposed, candidate, r, details, channels)) continue;
                     candidateEffective = false;
                     saturated.Add(candidate.Id + "#" + r.ToString(CultureInfo.InvariantCulture));
                     break;
@@ -279,9 +279,9 @@ namespace SodRpg.Core.Game
                         int retained = rank;
                         for (int r = 1; r <= rank; r++)
                         {
-                            if (RankEffective(profile, heroKey, proposed, node, r) ||
-                                !RankEffective(profile, heroKey, original, node, r)) continue;
-                            RankEffective(profile, heroKey, proposed, node, r, details);
+                            if (RankEffective(profile, heroKey, proposed, node, r, fullSnapshot: refunds.Count == 0 ? channels : null) ||
+                                !RankEffective(profile, heroKey, original, node, r, fullSnapshot: oldChannels)) continue;
+                            RankEffective(profile, heroKey, proposed, node, r, details, refunds.Count == 0 ? channels : null);
                             retained = r - 1;
                             break;
                         }
@@ -314,9 +314,9 @@ namespace SodRpg.Core.Game
             }
             // Explicitly requested refunds count too, using the original definition's actual cost.
             if (change.Kind == AllocationChangeKind.Refund)
-                RecordRefund(refunds, candidate.Id, 1, candidate.IsKeystone ? Content.KeystoneCost : candidate.RankCost);
+                RecordRefund(refunds, candidate.Id, 1, candidate.IsKeystone ? candidate.KeystoneDefinition?.Cost ?? Content.KeystoneCost : candidate.RankCost);
             if (change.Kind == AllocationChangeKind.Keystone && original.Keystone != null && proposed.Keystone == null && !refunds.ContainsKey(original.Keystone))
-                RecordRefund(refunds, original.Keystone, 1, Content.KeystoneCost);
+                RecordRefund(refunds, original.Keystone, 1, Talent(original.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
             var ids = new List<string>(refunds.Keys);
             var refundRows = new List<AllocationRefund>(refunds.Values);
             int cost = 0;
@@ -324,6 +324,7 @@ namespace SodRpg.Core.Game
             return new EffectiveAllocationPlan
             {
                 Owner = this, Original = original, Proposed = proposed, HeroKey = heroKey,
+                RegistryFingerprint = registryFingerprint, CapFingerprint = capFingerprint,
                 CandidateStarId = change.CandidateStarId, SelectedOption = change.SelectedOption,
                 OldEffectiveChannels = oldChannels, NewEffectiveChannels = channels,
                 PrerequisiteViolations = violations.AsReadOnly(), SaturatedChannels = saturated.AsReadOnly(),
@@ -337,8 +338,9 @@ namespace SodRpg.Core.Game
         {
             if (plan == null || plan.Owner != this) throw new ArgumentException("The plan belongs to a different validation engine.", nameof(plan));
             if (!plan.CanApply) throw new AllocationValidationException(plan);
-            if (!SameState(profile.Hero(plan.HeroKey), plan.Original))
-                throw new InvalidOperationException("The allocation or equipment changed after this refund preview. Preview again.");
+            if (!SameState(profile.Hero(plan.HeroKey), plan.Original)
+                || plan.RegistryFingerprint != StarClusters.AuthoredRegistryFingerprint || plan.CapFingerprint != FractionalScopedModifiers.CapRegistryFingerprint)
+                throw new InvalidOperationException("The allocation, equipment or shared mechanism registry changed after this refund preview. Preview again.");
             if (SpentPoints(plan.Proposed) > profile.TalentPoints(plan.HeroKey))
                 throw new InvalidOperationException("Not enough star points for the proposed allocation.");
             var approval = approvedRefundIds == null ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
@@ -419,11 +421,12 @@ namespace SodRpg.Core.Game
         }
 
         private bool RankEffective(Profile profile, string heroKey, HeroState hero, TalentDef talent, int rank,
-            List<AllocationSaturation> details = null)
+            List<AllocationSaturation> details = null, IReadOnlyList<EffectiveAllocationChannel> fullSnapshot = null)
         {
             var marginal = hero.Clone();
             marginal.Talents[talent.Id] = rank;
-            var with = Capture(profile, heroKey, marginal, hero);
+            var with = fullSnapshot != null && hero.Talents.TryGetValue(talent.Id, out int allocatedRank) && allocatedRank == rank
+                ? fullSnapshot : Capture(profile, heroKey, marginal, hero);
             SetRank(marginal, talent.Id, rank - 1);
             var without = Capture(profile, heroKey, marginal, hero);
             bool effective = HasPositiveDifference(with, without);
@@ -433,12 +436,37 @@ namespace SodRpg.Core.Game
 
         private static bool HasPositiveDifference(IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
         {
+            var exact = new Dictionary<string, int>(without.Count, StringComparer.Ordinal);
+            Dictionary<string, int> strongest = null;
+            var nextExact = new int[without.Count];
+            int[] nextStrongest = null;
+            for (int i = 0; i < without.Count; i++)
+            {
+                var channel = without[i];
+                nextExact[i] = exact.TryGetValue(channel.Key, out int previous) ? previous : -1;
+                exact[channel.Key] = i;
+                if (!channel.Strongest || channel.Cooldown != 0) continue;
+                if (strongest == null)
+                {
+                    strongest = new Dictionary<string, int>(StringComparer.Ordinal);
+                    nextStrongest = new int[without.Count];
+                }
+                nextStrongest[i] = strongest.TryGetValue(channel.PredicateKey, out previous) ? previous : -1;
+                strongest[channel.PredicateKey] = i;
+            }
             foreach (var channel in with)
             {
+                if (channel.ValueMilli <= 0 && channel.DurationUnits <= 0 && channel.RadiusUnits <= 0
+                    && channel.ExtraTargets <= 0 && channel.ChanceUnits <= 0) continue;
                 bool dominated = false;
-                foreach (var previous in without)
-                    if (Comparable(previous, channel) && Dominates(previous, channel)) { dominated = true; break; }
-                if (!dominated && (channel.ValueMilli > 0 || channel.DurationUnits > 0 || channel.RadiusUnits > 0 || channel.ExtraTargets > 0)) return true;
+                if (exact.TryGetValue(channel.Key, out int index))
+                    for (; index >= 0; index = nextExact[index])
+                        if (Dominates(without[index], channel)) { dominated = true; break; }
+                if (!dominated && channel.Strongest && strongest != null
+                    && strongest.TryGetValue(channel.PredicateKey, out index))
+                    for (; index >= 0; index = nextStrongest[index])
+                        if (Dominates(without[index], channel)) { dominated = true; break; }
+                if (!dominated) return true;
             }
             return false;
         }
@@ -446,10 +474,8 @@ namespace SodRpg.Core.Game
         private static bool Dominates(EffectiveAllocationChannel left, EffectiveAllocationChannel right)
         {
             decimal duration = right.DurationUnits;
-            if (left.LifetimeBudgetMilli > 0 && left.ValueMilli >= right.ValueMilli && left.ValueMilli > 0)
-                duration = Math.Min(duration, Math.Max(0m, left.LifetimeBudgetMilli * 10000m / left.ValueMilli - 10000m));
             return left.ValueMilli >= right.ValueMilli && left.DurationUnits >= duration &&
-                left.RadiusUnits >= right.RadiusUnits && left.ExtraTargets >= right.ExtraTargets;
+                left.RadiusUnits >= right.RadiusUnits && left.ExtraTargets >= right.ExtraTargets && left.ChanceUnits >= right.ChanceUnits;
         }
 
         private static bool Comparable(EffectiveAllocationChannel left, EffectiveAllocationChannel right) =>
@@ -469,7 +495,6 @@ namespace SodRpg.Core.Game
                 }
             }
             var build = Build.ComputeForTree(profile, heroKey, 0, tree, effective, reachability, layout);
-            policy.ApplyEffectiveTransforms?.Invoke(allocation, build);
             var result = new List<EffectiveAllocationChannel>();
             foreach (var stat in build.Stats) result.Add(Scalar("stat:" + (int)stat.Key, stat.Value, Content.StatCap(stat.Key)));
             foreach (var power in build.Powers) result.Add(Scalar("power:" + (int)power.Key, power.Value, Content.PowerCap(power.Key)));
@@ -480,31 +505,49 @@ namespace SodRpg.Core.Game
             }
             foreach (var native in build.NativeModifiers)
                 if (native.Kind != LinkKind.MemoryHaste)
+                foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, native.Memory))
                     result.Add(new EffectiveAllocationChannel
                     {
-                        Key = "native:" + native.Memory + ":" + (int)native.Kind + ":" + native.CapProfileId,
-                        Memory = native.Memory, ValueMilli = native.ValueMilli,
+                        Key = "native:" + native.Memory + "@" + sourceSlot + ":" + (int)native.Kind + ":" + native.CapProfileId,
+                        Memory = native.Memory, ValueMilli = AuthoredKeystoneComposer.TransformAllocationPayload(build,
+                            new KeystonePayload(KeystoneLayer.StarMemoryDamage, native.ValueMilli / 1000m,
+                                new KeystoneCaps(FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId) / 1000m)), native.Memory,
+                            sourceSlot: sourceSlot, heroKey: heroKey).Value * 1000m,
                         ValueCeiling = FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId), CapProfileId = native.CapProfileId,
                     });
             CaptureHaste(build, result);
             foreach (var entry in build.Gimmicks)
-            {
-                var def = entry.Def;
+                foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
+                {
+                var payload = AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId);
+                var transformed = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, entry.Memory,
+                    sourceSlot: sourceSlot, heroKey: heroKey);
+                var def = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def, transformed);
+                if (def == null) continue;
                 bool strongest = def.Effect == GimmickEffect.Expose || def.Effect == GimmickEffect.Sap ||
                     def.Effect == GimmickEffect.Wound || def.Effect == GimmickEffect.Weakspot || def.Effect == GimmickEffect.Quicken ||
                     def.Effect == GimmickEffect.Empower || def.Effect == GimmickEffect.Primed || def.Effect == GimmickEffect.Crescendo;
-                string predicate = "gimmick:" + entry.Memory + ":" + (int)def.Trigger + ":" + (int)def.Effect + ":" + def.Arg + ":";
+                string predicate = "gimmick:" + entry.Memory + "@" + sourceSlot + ":" + (int)def.Trigger + ":" + (int)def.Effect + ":" + def.Arg + ":";
                 string key = predicate + def.Cooldown.ToString("R", CultureInfo.InvariantCulture) +
                     (strongest ? "" : entry.Channel == null ? ":" + entry.StarId : ":channel:" + entry.Channel.ChannelId);
-                decimal value = def.Value * BuildPrecision.Scale;
+                decimal value = def.EffectiveValueOrAuthored * BuildPrecision.Scale;
+                if (AuthoredMechanisms.GeneratedDamageEffect(def.Effect))
+                {
+                    var generated = AuthoredKeystoneComposer.TransformAllocationPayload(build,
+                        new KeystonePayload(KeystoneLayer.GeneratedDamage, value / BuildPrecision.Scale,
+                            new KeystoneCaps(decimal.MaxValue), effect: def.Effect, effectId: entry.StarId), entry.Memory,
+                        sourceKind: KeystoneSourceKind.Generated, sourceSlot: sourceSlot, heroKey: heroKey);
+                    if (generated.Disabled) continue;
+                    value = generated.Value * BuildPrecision.Scale;
+                }
                 if (def.Effect == GimmickEffect.Element)
                 {
                     const int stack = 100 * BuildPrecision.Scale;
-                    value = decimal.Floor(value / stack) * stack + Math.Min(stack, value % stack + def.ChanceUnits * 10m);
+                    value = decimal.Floor(value / stack) * stack + Math.Min(stack, value % stack + Gimmicks.ChanceProbabilityUnits(def) * 10m);
                 }
-                decimal duration = def.DurationUnits;
-                if (def.Effect == GimmickEffect.Wound)
-                    duration = Math.Min(duration, Math.Max(0m, 120m * 10000m / def.Value - 10000m));
+                decimal duration = transformed.DurationSeconds * 100m;
+                if (def.Effect == GimmickEffect.Wound && build.SelectedKeystone == null && !entry.Def.EffectiveWoundTotal)
+                    duration = Math.Min(duration, 36000m / entry.Def.EffectiveValueOrAuthored);
                 result.Add(new EffectiveAllocationChannel
                 {
                     Key = key, StarId = entry.StarId, ValueMilli = value, Strongest = strongest,
@@ -512,21 +555,20 @@ namespace SodRpg.Core.Game
                     PredicateKey = predicate, Cooldown = def.Cooldown,
                     Memory = entry.Memory, ContributorIds = entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds,
                     ValueCeiling = (long)Gimmicks.Cap(def.Effect) * BuildPrecision.Scale,
-                    LifetimeBudgetMilli = def.Effect == GimmickEffect.Wound ? 120L * BuildPrecision.Scale : 0,
-                    DurationCeilingUnits = def.Effect == GimmickEffect.Wound
-                        ? Math.Min(Gimmicks.MaxParameterPercent * 100m, Math.Max(0m, 120m * 10000m / def.Value - 10000m))
-                        : Gimmicks.MaxParameterPercent * 100,
-                    RadiusCeilingUnits = Gimmicks.MaxParameterPercent * 100, TargetCeiling = Gimmicks.MaxExtraTargets,
-                    ChanceUnits = def.Effect == GimmickEffect.Element ? Math.Min(10000m, def.Value * BuildPrecision.Scale % (100 * BuildPrecision.Scale) / 10m + def.ChanceUnits) : 0,
+                    DurationCeilingUnits = payload.Caps.DurationSeconds * 100m,
+                    RadiusCeilingUnits = payload.Caps.RadiusMetres * 100m, TargetCeiling = payload.Caps.TargetCount,
+                    ChanceUnits = def.Effect == GimmickEffect.Element ? Math.Min(10000m, def.EffectiveValueOrAuthored * BuildPrecision.Scale % (100 * BuildPrecision.Scale) / 10m + Gimmicks.ChanceProbabilityUnits(def)) : 0,
                     IntrinsicProbabilityUnits = def.Effect == GimmickEffect.Element
-                        ? def.Value * BuildPrecision.Scale % (100 * BuildPrecision.Scale) / 10m : 0,
+                        ? def.EffectiveValueOrAuthored * BuildPrecision.Scale % (100 * BuildPrecision.Scale) / 10m : 0,
                     DurationUnits = Gimmicks.SupportsParameter(def, GimmickParam.Duration) ? duration : 0,
-                    RadiusUnits = Gimmicks.SupportsParameter(def, GimmickParam.Radius) ? def.RadiusUnits : 0,
-                    ExtraTargets = Gimmicks.SupportsParameter(def, GimmickParam.ExtraTargets) ? def.ExtraTargets : 0,
+                    RadiusUnits = Gimmicks.SupportsParameter(def, GimmickParam.Radius) ? transformed.RadiusMetres * 100m : 0,
+                    ExtraTargets = Gimmicks.SupportsParameter(def, GimmickParam.ExtraTargets) ? transformed.TargetCount : 0,
                 });
             }
             foreach (var pair in build.PairCombos)
                 result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value));
+            foreach (var entry in build.Mechanisms)
+                foreach (var channel in AuthoredMechanisms.EffectiveChannels(entry, build, heroKey)) result.Add(channel);
             return result.AsReadOnly();
         }
 
@@ -726,7 +768,7 @@ namespace SodRpg.Core.Game
             if (talent == null) throw new InvalidOperationException("Cannot refund an unknown star's original cost: " + id);
             if (talent.IsKeystone) hero.Keystone = null;
             else SetRank(hero, id, hero.Talents[id] - ranks);
-            RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? Content.KeystoneCost : talent.RankCost)));
+            RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost : talent.RankCost)));
         }
 
         private static bool SameState(HeroState a, HeroState b)

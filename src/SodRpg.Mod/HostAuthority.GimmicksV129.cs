@@ -102,6 +102,21 @@ namespace SodRpg.Mod
             return PairComboHitKind.Any;
         }
 
+        private GimmickDef TransformLegacyGimmick(HeroRuntime runtime, GimmickDef definition, string memory,
+            KeystoneSourceKind sourceKind, string effectId, float? sourceCooldown = null)
+        {
+            if (definition == null) return null;
+            if (!_authoredKeystones.ContainsKey(runtime.Hero)) return definition;
+            if (sourceKind == KeystoneSourceKind.MovementEvent)
+            {
+                var source = CollectMechanismEquipment(runtime.Hero, runtime.Hero.GetInstanceID()).Find(memory);
+                if (runtime.Powers.Build.SelectedKeystone?.KeystoneId != "h.husk.key2"
+                    || source == null || source.Slot != MechanismMemorySlot.Movement) return definition;
+            }
+            return TransformAuthoredGimmick(runtime.Hero, definition, memory, memory, sourceKind, effectId,
+                sourceCooldown: sourceCooldown ?? FindMemory(runtime.Hero, memory)?.currentConfigMaxCooldownTime ?? 0f);
+        }
+
         private void FireGimmicksV129(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim,
             float damage, Actor actor, bool direct, List<GimmickRequest> requests)
         {
@@ -121,19 +136,34 @@ namespace SodRpg.Mod
                 }
             }
             var skill = FindMemory(rt.Hero, memory);
-            var status = victim != null ? victim.Status : null;
-            int elements = status == null ? 0 : Gimmicks.ElementEdgePercent(1, status.fireStack > 0,
-                status.hasCold, status.lightStack > 0, status.darkStack > 0);
+            int elements = CountGimmickElements(victim);
+            var sourceKind = skill != null && rt.Hero.Skill.GetSkill(HeroSkillLocation.Movement) == skill
+                ? KeystoneSourceKind.MovementEvent : KeystoneSourceKind.NativeMemory;
+            if (sourceKind != KeystoneSourceKind.MovementEvent && actor != null && TryGetMemoryActivation(actor, out var native))
+                sourceKind = native.NativePayloadKind == NativePayloadKind.MainBasicAttack ? KeystoneSourceKind.OwnedBasicAttack
+                    : native.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
             rt.Gimmicks.Fire(trigger, memory, Time.time, id, damage, _gimmickDamageDepth != 0, requests,
-                GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements);
-            foreach (var request in requests)
+                GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
+                filter: entry => !IsAuthoredGimmick(rt.Hero, entry),
+                transform: entry => TransformLegacyGimmick(rt, entry.Def, memory, sourceKind, entry.StarId,
+                    skill != null ? skill.currentConfigMaxCooldownTime : 0f));
+            for (int i = 0; i < requests.Count; i++)
             {
+                var request = requests[i];
+                request.SourceKind = sourceKind;
+                requests[i] = request;
                 if (request.Entry.Def.Effect == GimmickEffect.Sap && victim != null) EnsureSapProcessor(victim);
                 if (request.Entry.Def.Effect == GimmickEffect.Primed)
                     rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, 5f));
             }
         }
 
+        private static int CountGimmickElements(Entity victim)
+        {
+            var status = victim != null ? victim.Status : null;
+            return status == null ? 0 : Gimmicks.ElementEdgePercent(1, status.fireStack > 0,
+                status.hasCold, status.lightStack > 0, status.darkStack > 0);
+        }
         private static bool IsGimmickBoss(Entity entity) => entity is Monster monster
             && (monster.type == Monster.MonsterType.MiniBoss || monster.type == Monster.MonsterType.Boss);
 
@@ -213,8 +243,11 @@ namespace SodRpg.Mod
                         if (live)
                         {
                             state.Victims[target.GetInstanceID()] = target;
-                            state.Wounds.Apply(target.GetInstanceID(), Time.time, high * def.ValuePercent / 100f,
-                                hero.Status.abilityPower > hero.Status.attackDamage, Gimmicks.Duration(def, 3f), high * 1.2f);
+                            float lifetime = Gimmicks.Duration(def, 3f);
+                            float threeSecondAmount = high * def.ValuePercent / 100f * (def.EffectiveWoundTotal ? 3f / lifetime : 1f);
+                            state.Wounds.Apply(target.GetInstanceID(), Time.time, threeSecondAmount,
+                                hero.Status.abilityPower > hero.Status.attackDamage, lifetime, high * 1.2f,
+                                request.Entry.Memory, pending.AuthoredChannelId);
                         }
                         break;
                     case GimmickEffect.Daze:
@@ -232,8 +265,9 @@ namespace SodRpg.Mod
                                 foreach (var enemy in enemies)
                                 {
                                     if (enemy == target || enemy == null || !enemy.isActive || enemy.currentHealth <= 0) continue;
-                                    hero.PureDamage(request.Damage * def.ValuePercent / 100f, 0f)
-                                        .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
+                                    hero.PureDamage(TransformAuthoredGeneratedDamage(hero, request.Damage * def.ValuePercent / 100f,
+                                        request.Entry.Memory, pending.AuthoredChannelId, def.Effect), 0f)
+                                        .SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
                                     if (--remaining == 0) break;
                                 }
                             }
@@ -253,7 +287,10 @@ namespace SodRpg.Mod
                                     && (ally.agentPosition - hero.agentPosition).sqrMagnitude <= allyRadius * allyRadius)
                                 {
                                     float allyBefore = ally.currentHealth;
-                                    support.Heal(Math.Min(heal * 0.5f, ally.maxHealth * 0.015f))
+                                    float allyCoefficient = (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored);
+                                    float allyHeal = SupportStats.AmplifyHeal(Gimmicks.SiphonHeal(request.Damage, hero.maxHealth,
+                                        allyCoefficient), rt.Powers.Build.Get(Stat.HealPower)) * 0.5f;
+                                    support.Heal(Math.Min(allyHeal, ally.maxHealth * 0.015f))
                                         .SetAmountModifiedBy(typeof(GimmickSiphonLimit)).Dispatch(ally);
                                     CreditHealRestored(rt, ally, allyBefore);
                                 }
@@ -272,7 +309,8 @@ namespace SodRpg.Mod
                     case GimmickEffect.ElementEdge:
                         if (!live || target.Status == null) break;
                         float percent = def.ValuePercent * request.ElementTypes;
-                        if (percent > 0) DispatchGimmickDamage(hero, target, high * percent / 100f,
+                        if (percent > 0) DispatchGimmickDamage(hero, target, TransformAuthoredGeneratedDamage(hero,
+                            high * percent / 100f, request.Entry.Memory, pending.AuthoredChannelId, def.Effect),
                             hero.Status.abilityPower > hero.Status.attackDamage, false);
                         break;
                     case GimmickEffect.PackMend:
@@ -296,7 +334,7 @@ namespace SodRpg.Mod
             if (amount <= 0f) return;
             var damage = magic ? hero.MagicDamage(amount, 0f) : hero.PhysicalDamage(amount, 0f);
             if (overTime) damage.SetAttr(DamageAttribute.DamageOverTime);
-            damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
+            damage.SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
         }
 
         private void UpdateGimmicksV129(HeroRuntime rt, float now)
@@ -330,7 +368,8 @@ namespace SodRpg.Mod
             {
                 foreach (var tick in state.Ticks)
                     if (state.Victims.TryGetValue(tick.VictimId, out var victim) && victim != null && victim.isActive && victim.currentHealth > 0)
-                        DispatchGimmickDamage(rt.Hero, victim, tick.Damage, tick.Magic, true);
+                        DispatchGimmickDamage(rt.Hero, victim, TransformAuthoredGeneratedDamage(rt.Hero,
+                            tick.Damage, tick.SourceMemory, tick.EffectId, GimmickEffect.Wound), tick.Magic, true);
             }
             finally { ExitGenerated(rt.Hero); }
             state.LastHits.Clear();

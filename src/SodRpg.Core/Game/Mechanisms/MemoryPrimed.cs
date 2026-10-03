@@ -8,12 +8,12 @@ namespace SodRpg.Core.Game
         public string ChannelId { get; }
         public string SourceMemory { get; }
         public MemoryEventKind Trigger { get; }
-        public int ValueUnits { get; }
+        public decimal ValueUnits { get; }
         public float DurationSeconds { get; }
         public AttributionBudget Budget { get; }
 
         public MemoryPrimedDefinition(string channelId, string sourceMemory, MemoryEventKind trigger,
-            int valueUnits, float durationSeconds = 5f, AttributionBudget budget = AttributionBudget.PerActivation)
+            decimal valueUnits, float durationSeconds = 5f, AttributionBudget budget = AttributionBudget.PerActivation)
         {
             if (string.IsNullOrWhiteSpace(channelId) || string.IsNullOrWhiteSpace(sourceMemory))
                 throw new ArgumentException("A preparation requires a channel and source memory.");
@@ -69,6 +69,9 @@ namespace SodRpg.Core.Game
             internal MemoryPrimedDefinition Definition;
             internal float ExpiresAt;
             internal long Epoch;
+            internal long SourceActivationId;
+            internal MemoryPrimedDefinition PreviousDefinition;
+            internal float PreviousExpiresAt;
         }
         private readonly long _ownerId;
         private SortedDictionary<string, MemoryPrimedDefinition> _definitions = new SortedDictionary<string, MemoryPrimedDefinition>(StringComparer.Ordinal);
@@ -116,7 +119,8 @@ namespace SodRpg.Core.Game
             foreach (var entry in equipment) _equipment.Add(entry.Key, entry.Value);
         }
 
-        public bool OnSourceEvent(MemoryActivationEvent notification, float now)
+        public bool OnSourceEvent(MemoryActivationEvent notification, float now, Func<MemoryPrimedDefinition, bool> filter = null,
+            bool triggerAlreadyAdmitted = false)
         {
             if (!Gimmicks.Finite(now)) throw new ArgumentOutOfRangeException(nameof(now));
             Prune(now);
@@ -127,7 +131,8 @@ namespace SodRpg.Core.Game
             bool armed = false;
             foreach (var definition in _definitions.Values)
             {
-                if (definition.SourceMemory != notification.SourceMemory || definition.Trigger != notification.EventKind) continue;
+                if (filter != null && !filter(definition)) continue;
+                if (definition.SourceMemory != notification.SourceMemory || !triggerAlreadyAdmitted && definition.Trigger != notification.EventKind) continue;
                 if (definition.Budget == AttributionBudget.PerKill && notification.EventKind != MemoryEventKind.Kill
                     || definition.Budget != AttributionBudget.PerActivation && notification.VictimId == 0) continue;
                 var grantKey = (definition.ChannelId, definition.Budget == AttributionBudget.PerKill ? 0 : notification.ActivationId,
@@ -137,11 +142,15 @@ namespace SodRpg.Core.Game
                 if (!Gimmicks.Finite(expires)) throw new ArgumentOutOfRangeException(nameof(now));
                 if (!_slots.TryGetValue(definition.SourceMemory, out var slot))
                     _slots.Add(definition.SourceMemory, slot = new Slot { Definition = definition, Epoch = epoch });
-                else if (definition.ValueUnits > slot.Definition.ValueUnits
-                    || definition.ValueUnits == slot.Definition.ValueUnits
-                        && string.CompareOrdinal(definition.ChannelId, slot.Definition.ChannelId) < 0)
-                    slot.Definition = definition;
+                else
+                {
+                    if (slot.SourceActivationId != notification.ActivationId)
+                    { slot.PreviousDefinition = slot.Definition; slot.PreviousExpiresAt = slot.ExpiresAt; }
+                    if (definition.ValueUnits > slot.Definition.ValueUnits || definition.ValueUnits == slot.Definition.ValueUnits
+                        && string.CompareOrdinal(definition.ChannelId, slot.Definition.ChannelId) < 0) slot.Definition = definition;
+                }
                 slot.ExpiresAt = expires;
+                slot.SourceActivationId = notification.ActivationId;
                 armed = true;
             }
             return armed;
@@ -168,11 +177,21 @@ namespace SodRpg.Core.Game
                     Consider(candidate);
                 }
             foreach (var pair in _slots)
-                Consider(new NextBasicBonusCandidate(pair.Value.Definition.ChannelId,
-                    higherOffense * pair.Value.Definition.ValueUnits / 10000f, pair.Value.ExpiresAt, pair.Key));
+            {
+                var slot = pair.Value;
+                var definition = slot.SourceActivationId == hit.ActivationId ? slot.PreviousDefinition : slot.Definition;
+                if (definition != null)
+                    Consider(new NextBasicBonusCandidate(definition.ChannelId, (float)((double)higherOffense * (double)(definition.ValueUnits / 10000m)),
+                        slot.SourceActivationId == hit.ActivationId ? slot.PreviousExpiresAt : slot.ExpiresAt, pair.Key));
+            }
             selected = winner;
             _recipientAttacks.Add(hit.ActivationId);
-            if (found && selected.IsMemoryPreparation) _slots.Remove(selected.SourceMemory);
+            if (found && selected.IsMemoryPreparation)
+            {
+                var slot = _slots[selected.SourceMemory];
+                if (slot.SourceActivationId == hit.ActivationId) slot.PreviousDefinition = null;
+                else _slots.Remove(selected.SourceMemory);
+            }
             return found;
 
             void Consider(NextBasicBonusCandidate candidate)

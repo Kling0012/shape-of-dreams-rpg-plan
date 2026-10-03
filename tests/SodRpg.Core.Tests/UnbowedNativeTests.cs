@@ -8,7 +8,11 @@ using Xunit;
 // Exercise the production native adapter, using only the API surface it calls.
 namespace HarmonyLib
 {
-    internal sealed class HarmonyPatch : Attribute { public HarmonyPatch(Type type, string method) { } }
+    internal sealed class HarmonyPatch : Attribute
+    {
+        public HarmonyPatch() { }
+        public HarmonyPatch(Type type, string method) { }
+    }
 }
 namespace Mirror { internal static class NetworkServer { public static bool active = true; } }
 namespace UnityEngine { internal static class Time { public static float time, unscaledTime; } }
@@ -30,8 +34,8 @@ namespace SodRpg.Mod
     internal sealed class StunEffect : BasicEffect { }
     internal sealed class SlowEffect : BasicEffect { }
     internal sealed class UnstoppableEffect : BasicEffect { }
-    internal sealed class CastInfo { public Entity caster; }
-    internal class StatusEffect : Actor { public CastInfo info = new CastInfo(); }
+    internal sealed partial class CastInfo { public Entity caster; }
+    internal partial class StatusEffect : Actor { public CastInfo info = new CastInfo(); }
     internal sealed class Se_GenericEffectContainer : StatusEffect
     {
         public Entity victim;
@@ -46,7 +50,7 @@ namespace SodRpg.Mod
         internal static HostAuthority NativeInstance;
         private ActorManager _am = new ActorManager();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
-        internal sealed class NewPowerHostState { public Se_GenericEffectContainer UnbowedGuard; }
+        internal sealed partial class NewPowerHostState { public Se_GenericEffectContainer UnbowedGuard; }
         internal sealed partial class HeroRuntime
         {
             public NewPowerHostState NewPowers = new NewPowerHostState();

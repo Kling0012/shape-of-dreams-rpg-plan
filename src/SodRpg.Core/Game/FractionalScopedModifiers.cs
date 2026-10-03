@@ -98,6 +98,13 @@ namespace SodRpg.Core.Game
     {
         private static readonly ConcurrentDictionary<string, NativeStarCapProfile> Profiles = new ConcurrentDictionary<string, NativeStarCapProfile>(StringComparer.Ordinal);
         private static readonly ConcurrentDictionary<string, ScopedModifierCapProfile> ScopedProfiles = new ConcurrentDictionary<string, ScopedModifierCapProfile>(StringComparer.Ordinal);
+        private static readonly object CapLock = new object();
+        private static string capFingerprint = StarClusters.RegistryHash("");
+        public static string CapRegistryFingerprint { get { lock (CapLock) return capFingerprint; } }
+        private static void RefreshCapFingerprint() => capFingerprint = StarClusters.RegistryHash(string.Join("|",
+            Profiles.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => "n:" + x.Key + ":" + (int)x.Value.Kind + ":" + x.Value.Maximum.Units)
+            .Concat(ScopedProfiles.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => "s:" + x.Key + ":" + x.Value.Param + ":"
+                + x.Value.MaximumModifier.Units + ":" + x.Value.MaximumProbability.Units + ":" + x.Value.MaximumTargets))));
 
         public static void RegisterScopedCapProfile(ScopedModifierCapProfile profile)
         {
@@ -109,8 +116,12 @@ namespace SodRpg.Core.Game
                     : profile.MaximumModifier.Units <= 0 || profile.MaximumProbability.Units != 0 || profile.MaximumTargets != 0
                         || profile.Param.HasValue && profile.MaximumModifier.Units > Gimmicks.MaxParameterPercent * 100))
                 throw new InvalidOperationException("Invalid scoped modifier cap profile.");
-            if (!ScopedProfiles.TryAdd(profile.Id, CopyProfile(profile)))
-                throw new InvalidOperationException("Duplicate scoped modifier cap profile: " + profile.Id);
+            lock (CapLock)
+            {
+                if (!ScopedProfiles.TryAdd(profile.Id, CopyProfile(profile)))
+                    throw new InvalidOperationException("Duplicate scoped modifier cap profile: " + profile.Id);
+                RefreshCapFingerprint();
+            }
         }
 
         private static ScopedModifierCapProfile CopyProfile(ScopedModifierCapProfile profile) =>
@@ -143,8 +154,12 @@ namespace SodRpg.Core.Game
             if (profile == null || !Gimmicks.ValidStarId(profile.Id) || !NativeKind(profile.Kind) || profile.Maximum.Units <= 0
                 || profile.Kind == LinkKind.MemoryHaste && profile.Maximum.Units > 10000)
                 throw new InvalidOperationException("Invalid native star cap profile.");
-            if (!Profiles.TryAdd(profile.Id, new NativeStarCapProfile { Id = profile.Id, Kind = profile.Kind, Maximum = profile.Maximum }))
-                throw new InvalidOperationException("Duplicate native star cap profile: " + profile.Id);
+            lock (CapLock)
+            {
+                if (!Profiles.TryAdd(profile.Id, new NativeStarCapProfile { Id = profile.Id, Kind = profile.Kind, Maximum = profile.Maximum }))
+                    throw new InvalidOperationException("Duplicate native star cap profile: " + profile.Id);
+                RefreshCapFingerprint();
+            }
         }
         private static bool NativeKind(LinkKind kind) => kind == LinkKind.MemoryDamage || kind == LinkKind.MemoryHaste;
         public static int NativeCapValueMilli(string profileId) => Profiles.TryGetValue(profileId ?? "", out var profile)
@@ -264,15 +279,20 @@ namespace SodRpg.Core.Game
                     throw new InvalidOperationException("Invalid native star modifier or undeclared cap profile: " + talent.Id);
             }
             if (talent.EffectChannel != null) ValidateChannel(talent.EffectChannel, talent.Gimmick, talent.RouteMemory);
+            if (talent.Mechanism != null) AuthoredMechanisms.Validate(talent.Mechanism);
         }
+        internal static bool RequiresMechanismRoute(EffectChannelDef c) => c != null && (c.SourceMemory != c.ReceiverMemory
+            || c.PairSuccessId != null || c.ActivationBudget != "notification");
         private static void ValidateChannel(EffectChannelDef c, GimmickDef def, string memory)
         {
             if (def == null || !Links.IsMemory(memory) || memory.StartsWith("St_M_", StringComparison.Ordinal)
                 || !Gimmicks.ValidStarId(c.ChannelId) || c.OwnerId != "self" || c.SourceMemory != memory
-                || c.ReceiverMemory != memory || c.PairSuccessId != null || c.ActivationBudget != "notification"
+                || !Links.IsMemory(c.ReceiverMemory) || c.PairSuccessId != null && PairCombos.Get(c.PairSuccessId) == null && PairCombos.ForBridge(c.PairSuccessId) == null
                 || c.ClockPolicy != "channel" || !Enum.IsDefined(typeof(ScopeKind), c.ScopeKind)
-                || c.EquipmentRequirements == null || c.EquipmentRequirements.Any(r => r != memory))
-                throw new InvalidOperationException("Channel requires an unsupported C02/C04/C05 adapter or invalid identity.");
+                || c.EquipmentRequirements == null || c.EquipmentRequirements.Any(r => !Links.IsMemory(r))
+                || c.ActivationBudget != "notification" && !Enum.TryParse<AttributionBudget>(c.ActivationBudget, false, out _))
+                throw new InvalidOperationException("Invalid routed authored channel identity.");
+            if (RequiresMechanismRoute(c)) AuthoredMechanisms.Validate(AuthoredMechanisms.FromChannel(c, def));
         }
         public static string ChannelKey(GimmickEntry entry)
         {
@@ -298,9 +318,9 @@ namespace SodRpg.Core.Game
             bool typed = false;
             foreach (var t in tree)
             {
-                typed |= t.ScopedModifier != null || t.NativeModifier != null || t.EffectChannel != null;
+                typed |= t.ScopedModifier != null || t.NativeModifier != null || t.EffectChannel != null || t.Mechanism != null;
                 foreach (var option in t.Choices)
-                    typed |= option.ScopedModifier != null || option.NativeModifier != null || option.EffectChannel != null;
+                    typed |= option.ScopedModifier != null || option.NativeModifier != null || option.EffectChannel != null || option.Mechanism != null;
             }
             if (!typed) return;
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();
@@ -309,14 +329,16 @@ namespace SodRpg.Core.Game
             {
                 if (t.ScopedModifier == null) continue;
                 var m = t.ScopedModifier;
-                var targets = all.Where(n => n.HeroKey == t.HeroKey && n.Gimmick != null
-                    && Matches(m, new GimmickEntry { StarId = n.Id, Memory = n.RouteMemory, Def = n.Gimmick, Channel = n.EffectChannel })).ToArray();
-                if (targets.Length == 0 || targets.Any(n => m.Param.HasValue ? !Gimmicks.SupportsParameter(n.Gimmick, m.Param.Value)
-                    : n.Gimmick.Effect == GimmickEffect.Reload)) throw new InvalidOperationException("Scoped modifier has no meaningful recipient: " + t.Id);
+                var targets = all.Where(n => n.HeroKey == t.HeroKey && (n.Gimmick != null
+                    && Matches(m, new GimmickEntry { StarId = n.Id, Memory = n.RouteMemory, Def = n.Gimmick, Channel = n.EffectChannel })
+                    || n.Mechanism != null && AuthoredMechanisms.Matches(m, new AuthoredMechanismEntry { StarId = n.Id, ContributorIds = new[] { n.Id }, Spec = n.Mechanism }))).ToArray();
+                if (targets.Length == 0 || targets.Any(n => m.Param.HasValue
+                    ? n.Mechanism != null ? !AuthoredMechanisms.Supports(n.Mechanism, m.Param.Value) : !Gimmicks.SupportsParameter(n.Gimmick, m.Param.Value)
+                    : n.Gimmick?.Effect == GimmickEffect.Reload)) throw new InvalidOperationException("Scoped modifier has no meaningful recipient: " + t.Id);
                 foreach (string id in m.TargetEffectIds) if (!targets.Any(n => n.Id == id)) throw new InvalidOperationException("Unknown scoped recipient: " + id);
                 if (m.CapProfileId != null && m.Param.HasValue)
                     foreach (var target in targets)
-                        CapAdded(0, BaseParameterUnits(target.Gimmick, m.Param.Value), ScopedCapMaximumUnits(m.CapProfileId));
+                        if (target.Gimmick != null) CapAdded(0, BaseParameterUnits(target.Gimmick, m.Param.Value), ScopedCapMaximumUnits(m.CapProfileId));
             }
         }
 

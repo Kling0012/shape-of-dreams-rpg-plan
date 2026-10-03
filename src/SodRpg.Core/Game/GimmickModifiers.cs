@@ -43,48 +43,65 @@ namespace SodRpg.Core.Game
         }
 
         public static float Duration(GimmickDef def, float seconds) =>
-            seconds * (1f + Math.Max(0, Math.Min(MaxParameterPercent * 100, def.DurationUnits)) / 10000f);
+            def.EffectiveDurationSeconds ?? seconds * (1f + Math.Max(0, Math.Min(MaxParameterPercent * 100, def.DurationUnits)) / 10000f);
 
         public static float Radius(GimmickDef def, float meters) =>
-            meters * (1f + Math.Max(0, Math.Min(MaxParameterPercent * 100, def.RadiusUnits)) / 10000f);
+            def.EffectiveRadiusMetres ?? meters * (1f + Math.Max(0, Math.Min(MaxParameterPercent * 100, def.RadiusUnits)) / 10000f);
 
         public static int TargetLimit(GimmickDef def) =>
-            (def.Effect == GimmickEffect.Rampart ? 5 : def.Arg) + Math.Max(0, Math.Min(MaxExtraTargets, def.ExtraTargets));
+            def.EffectiveTargetCount ?? (def.Effect == GimmickEffect.Rampart ? 5 : def.Arg) + Math.Max(0, Math.Min(MaxExtraTargets, def.ExtraTargets));
+
+        public static decimal ChanceProbabilityUnits(GimmickDef def) =>
+            Math.Max(0m, Math.Min(10000m, def.EffectiveChanceProbabilityUnits ?? def.ChanceUnits));
 
         /// <summary>The extra-stack roll is separate from guaranteed whole stacks, including when its base chance is zero.</summary>
-        public static int ElementStacks(GimmickDef def, double roll) => (int)(def.ValuePrecise / (100 * PreciseValueScale))
-            + (roll >= 0 && roll < 1 && roll * 100 * PreciseValueScale
-                < Math.Min(100 * PreciseValueScale, def.ValuePrecise % (100 * PreciseValueScale)
-                    + def.ChanceUnits * (PreciseValueScale / 100)) ? 1 : 0);
+        public static int ElementStacks(GimmickDef def, double roll)
+        {
+            decimal value = def.EffectiveValueOrAuthored;
+            return (int)(value / 100m) + (roll >= 0 && roll < 1
+                && (decimal)roll * 100m < Math.Min(100m, value % 100m + ChanceProbabilityUnits(def) / 100m) ? 1 : 0);
+        }
 
         internal static GimmickDef ApplyModifiers(GimmickDef def, int rank, long boost, long duration, long radius, long targets, long chance) =>
-            new GimmickDef
-            {
-                Trigger = def.Trigger,
-                Effect = def.Effect,
-                Value = Math.Min(Cap(def.Effect), Math.Min(Cap(def.Effect), def.Value * rank)
-                    * (100m + Math.Min(int.MaxValue, Math.Max(0, boost))) / 100m),
-                Arg = def.Arg,
-                Cooldown = def.Cooldown,
-                DurationUnits = BoundedSum(def.DurationUnits, duration * 100, MaxParameterPercent * 100),
-                RadiusUnits = BoundedSum(def.RadiusUnits, radius * 100, MaxParameterPercent * 100),
-                ExtraTargets = BoundedSum(def.ExtraTargets, targets, MaxExtraTargets),
-                ChanceUnits = BoundedSum(def.ChanceUnits, chance * 100, 10000),
-            };
+            ComposeOrdinary(def, (def.UncappedValue ?? def.Value) * rank
+                * (100m + Math.Min(int.MaxValue, Math.Max(0, boost))) / 100m,
+                checked((def.UncappedDurationUnits ?? def.DurationUnits) + duration * 100),
+                checked((def.UncappedRadiusUnits ?? def.RadiusUnits) + radius * 100),
+                checked((def.UncappedExtraTargets ?? def.ExtraTargets) + targets),
+                checked((def.UncappedChanceUnits ?? def.ChanceUnits) + chance * 100));
 
         internal static GimmickDef ApplyModifierUnits(GimmickDef def, long boost, long duration, long radius, long targets, long chance) =>
-            new GimmickDef
+            ComposeOrdinary(def, (def.UncappedValue ?? def.Value) * (10000m + boost) / 10000m,
+                checked((def.UncappedDurationUnits ?? def.DurationUnits) + duration),
+                checked((def.UncappedRadiusUnits ?? def.RadiusUnits) + radius),
+                checked((def.UncappedExtraTargets ?? def.ExtraTargets) + targets),
+                checked((def.UncappedChanceUnits ?? def.ChanceUnits) + chance));
+
+        private static GimmickDef ComposeOrdinary(GimmickDef def, decimal value, long duration, long radius, long targets, long chance)
+        {
+            decimal bounded = Math.Min(Cap(def.Effect), value), precise = bounded * PreciseValueScale;
+            var result = new GimmickDef
             {
                 Trigger = def.Trigger, Effect = def.Effect, Arg = def.Arg, Cooldown = def.Cooldown,
-                Value = Math.Min(Cap(def.Effect), def.Value * (10000m + boost) / 10000m),
-                DurationUnits = BoundedSum(def.DurationUnits, duration, MaxParameterPercent * 100),
-                RadiusUnits = BoundedSum(def.RadiusUnits, radius, MaxParameterPercent * 100),
-                ExtraTargets = BoundedSum(def.ExtraTargets, targets, MaxExtraTargets),
-                ChanceUnits = BoundedSum(def.ChanceUnits, chance, 10000),
+                // Finer runtime decimals stay in typed metadata; pristine fine units are never rounded.
+                ValuePrecise = precise == decimal.Truncate(precise) ? checked((long)precise)
+                    : Math.Min(def.ValuePrecise, Cap(def.Effect) * PreciseValueScale),
+                EffectiveValue = bounded,
+                UncappedValue = value != bounded || precise != decimal.Truncate(precise) ? value : (decimal?)null,
+                DurationUnits = Bounded(duration, MaxParameterPercent * 100),
+                RadiusUnits = Bounded(radius, MaxParameterPercent * 100),
+                ExtraTargets = Bounded(targets, MaxExtraTargets),
+                ChanceUnits = Bounded(chance, 10000),
+                UncappedDurationUnits = duration > MaxParameterPercent * 100 ? duration : (long?)null,
+                UncappedRadiusUnits = radius > MaxParameterPercent * 100 ? radius : (long?)null,
+                UncappedExtraTargets = targets > MaxExtraTargets ? targets : (long?)null,
+                UncappedChanceUnits = chance > 10000 ? chance : (long?)null,
             };
+            GimmickRawCodec.Validate(result);
+            return result;
+        }
 
 
-        private static int BoundedSum(int current, long added, int maximum) =>
-            (int)Math.Max(0, Math.Min(maximum, current + added));
+        private static int Bounded(long value, int maximum) => (int)Math.Max(0, Math.Min(maximum, value));
     }
 }

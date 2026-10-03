@@ -6,11 +6,11 @@ namespace SodRpg.Core.Game
 {
     /// <summary>Distinct application layers; native damage modifiers never touch generated damage.</summary>
     public enum KeystoneLayer { NativeDamage, StarMemoryDamage, GeneratedDamage, ModEffect }
-    public enum KeystonePayloadKind { None, Gimmick, DirectedRecharge, MemoryPrimed, RelayWindow, SacrificeShield, AlliedWard }
-    public enum KeystoneField { Value, Duration, Radius, Delay, TargetCount, EveryN, Probability }
+    public enum KeystonePayloadKind { None, Gimmick, DirectedRecharge, MemoryPrimed, RelayWindow, SacrificeShield, AlliedWard, BridgeSuccess, PressureDividend }
+    public enum KeystoneField { Value, Duration, Radius, Delay, TargetCount, EveryN, Probability, Argument }
     public enum KeystoneSourceKind { NativeMemory, OwnedBasicAttack, OwnedSummon, Generated, MovementEvent }
     public enum KeystoneRecipientKind { Any, Self, AlliedHero, OwnedSummon }
-    public enum KeystoneOperation { Scale, SetSeconds, AddTargets, SetEveryN, Disable, RedistributeWound }
+    public enum KeystoneOperation { Scale, SetSeconds, AddTargets, SetEveryN, Disable, RedistributeWound, Set, Add }
 
     /// <summary>C07 percentages use hundredths of a percent, independently of legacy Build milli values.</summary>
     public readonly struct KeystoneMagnitude
@@ -42,11 +42,14 @@ namespace SodRpg.Core.Game
         public KeystonePayloadKind PayloadKind { get; }
         public int? Argument { get; }
         public KeystoneSourceKind? SourceKind { get; }
+        public IReadOnlyList<MemorySelector> SourceSelectors { get; }
+        public IReadOnlyList<MemorySelector> ReceiverSelectors { get; }
 
         public KeystoneScope(IEnumerable<string> targetMemorySet = null, IEnumerable<GimmickEffect> targetEffectSet = null,
             IEnumerable<string> targetEffectIds = null, IEnumerable<string> receiverMemorySet = null,
             KeystoneRecipientKind recipient = KeystoneRecipientKind.Any, KeystonePayloadKind payloadKind = KeystonePayloadKind.None,
-            int? argument = null, KeystoneSourceKind? sourceKind = null)
+            int? argument = null, KeystoneSourceKind? sourceKind = null,
+            IEnumerable<MemorySelector> sourceSelectors = null, IEnumerable<MemorySelector> receiverSelectors = null)
         {
             TargetMemorySet = KeystoneValidation.Strings(targetMemorySet);
             TargetEffectIds = KeystoneValidation.Strings(targetEffectIds);
@@ -62,6 +65,9 @@ namespace SodRpg.Core.Game
             PayloadKind = payloadKind;
             Argument = argument;
             SourceKind = sourceKind;
+            SourceSelectors = Array.AsReadOnly((sourceSelectors ?? Array.Empty<MemorySelector>()).ToArray());
+            ReceiverSelectors = Array.AsReadOnly((receiverSelectors ?? Array.Empty<MemorySelector>()).ToArray());
+            if (SourceSelectors.Concat(ReceiverSelectors).Any(s => s == null)) throw new ArgumentException("Missing selector.");
         }
 
         internal bool Matches(KeystonePayload payload, KeystoneContext context) =>
@@ -72,7 +78,50 @@ namespace SodRpg.Core.Game
             && (Recipient == KeystoneRecipientKind.Any || Recipient == context.Recipient)
             && (PayloadKind == KeystonePayloadKind.None || PayloadKind == payload.Kind)
             && (!Argument.HasValue || Argument.Value == payload.Argument)
-            && (!SourceKind.HasValue || SourceKind.Value == context.SourceKind);
+            && (!SourceKind.HasValue || SourceKind.Value == context.SourceKind)
+            && MatchesSelectors(SourceSelectors, context.SourceMemory, context)
+            && MatchesSelectors(ReceiverSelectors, context.ReceiverMemory, context, true);
+
+        private static bool MatchesSelectors(IReadOnlyList<MemorySelector> selectors, string memory, KeystoneContext context, bool receiver = false)
+        {
+            if (selectors.Count == 0) return true;
+            foreach (var selector in selectors)
+            {
+                if (selector.Kind == MemorySelectorKind.Memory && selector.Alternatives.Count == 0)
+                { if (selector.Memory == memory) return true; continue; }
+                if (context.Equipment != null)
+                { if (context.Equipment.Find(memory) is EquippedMechanismMemory item && selector.Matches(item, context.SourceMemory)) return true; }
+                else if (ProjectedSelectorMatches(selector, memory, context, receiver)) return true;
+            }
+            return false;
+        }
+
+        private static bool ProjectedSelectorMatches(MemorySelector selector, string memory, KeystoneContext context, bool receiver)
+        {
+            MechanismMemorySlot? slot = receiver ? context.RecipientSlot : context.SourceSlot;
+            if (selector.Alternatives.Count > 0)
+            {
+                foreach (var term in selector.Alternatives) if (ProjectedSelectorMatches(term, memory, context, receiver)) return true;
+                return false;
+            }
+            if (selector.Kind == MemorySelectorKind.Memory) return memory != null && selector.Memory == memory;
+            if (!slot.HasValue || selector.AllowedMemories.Count > 0
+                && (memory == null || !selector.AllowedMemories.Contains(memory))) return false;
+            switch (selector.Kind)
+            {
+                case MemorySelectorKind.EquippedQ: return slot == MechanismMemorySlot.Q;
+                case MemorySelectorKind.EquippedR: return slot == MechanismMemorySlot.R;
+                case MemorySelectorKind.EquippedIdentity: return slot == MechanismMemorySlot.Identity;
+                case MemorySelectorKind.EquippedQOrR: return slot == MechanismMemorySlot.Q || slot == MechanismMemorySlot.R;
+                case MemorySelectorKind.EquippedMovement: return slot == MechanismMemorySlot.Movement;
+                case MemorySelectorKind.OtherNormal:
+                    return receiver && memory != null && memory != context.SourceMemory
+                        && slot != MechanismMemorySlot.Identity && slot != MechanismMemorySlot.Movement
+                        && VerifiedMechanismSlots.TryGetCategory(context.HeroKey, memory, out var category)
+                        && category == VerifiedMechanismMemoryCategory.Normal;
+                default: return false;
+            }
+        }
     }
 
     public sealed class KeystoneTransform
@@ -85,9 +134,12 @@ namespace SodRpg.Core.Game
         public KeystoneMagnitude WoundDurationUnits { get; }
         public decimal Seconds { get; }
         public int Count { get; }
+        public decimal? Maximum { get; }
+        public decimal? ExpectedFrom { get; }
 
         private KeystoneTransform(KeystoneLayer layer, KeystoneField field, KeystoneScope scope, KeystoneOperation operation,
-            KeystoneMagnitude magnitude = default, decimal seconds = 0m, int count = 0, KeystoneMagnitude woundDuration = default)
+            KeystoneMagnitude magnitude = default, decimal seconds = 0m, int count = 0, KeystoneMagnitude woundDuration = default,
+            decimal? maximum = null, decimal? expectedFrom = null)
         {
             if (!Enum.IsDefined(typeof(KeystoneLayer), layer) || !Enum.IsDefined(typeof(KeystoneField), field))
                 throw new ArgumentException("Invalid keystone layer or field.");
@@ -95,11 +147,12 @@ namespace SodRpg.Core.Game
                 throw new ArgumentException("Damage layers only support value transforms.");
             TargetLayer = layer; Field = field; Scope = scope ?? throw new ArgumentNullException(nameof(scope));
             Operation = operation; MagnitudeUnits = magnitude; Seconds = seconds; Count = count; WoundDurationUnits = woundDuration;
+            Maximum = maximum; ExpectedFrom = expectedFrom;
         }
 
         public static KeystoneTransform Scale(KeystoneLayer layer, KeystoneField field, KeystoneMagnitude magnitude, KeystoneScope scope)
         {
-            if (field == KeystoneField.TargetCount || field == KeystoneField.EveryN)
+            if (field == KeystoneField.TargetCount || field == KeystoneField.EveryN || field == KeystoneField.Argument)
                 throw new ArgumentException("Integer counts cannot be percentage scaled.");
             if (magnitude.Units == -10000) throw new ArgumentException("Use Disable with explicit incompatible-allocation validation.");
             return new KeystoneTransform(layer, field, scope, KeystoneOperation.Scale, magnitude);
@@ -134,6 +187,23 @@ namespace SodRpg.Core.Game
             return new KeystoneTransform(KeystoneLayer.ModEffect, KeystoneField.Value, scope,
                 KeystoneOperation.RedistributeWound, total, woundDuration: duration);
         }
+        public static KeystoneTransform Set(KeystoneLayer layer, KeystoneField field, decimal value, KeystoneScope scope,
+            decimal? expectedFrom = null) => Numeric(layer, field, KeystoneOperation.Set, value, scope, null, expectedFrom);
+        public static KeystoneTransform Add(KeystoneLayer layer, KeystoneField field, decimal delta, KeystoneScope scope,
+            decimal? maximum = null) => Numeric(layer, field, KeystoneOperation.Add, delta, scope, maximum, null);
+        private static KeystoneTransform Numeric(KeystoneLayer layer, KeystoneField field, KeystoneOperation operation,
+            decimal value, KeystoneScope scope, decimal? maximum, decimal? expectedFrom)
+        {
+            bool integer = field == KeystoneField.TargetCount || field == KeystoneField.EveryN || field == KeystoneField.Argument;
+            if (operation == KeystoneOperation.Set && (value < 0 || field == KeystoneField.EveryN && value < 1
+                    || field == KeystoneField.Duration && value <= 0) || maximum < 0 || expectedFrom < 0
+                || maximum.HasValue && (field == KeystoneField.EveryN && maximum < 1 || field == KeystoneField.Duration && maximum <= 0)
+                || integer && (value != decimal.Truncate(value) || value < int.MinValue || value > int.MaxValue
+                    || maximum.HasValue && (maximum != decimal.Truncate(maximum.Value) || maximum > int.MaxValue)
+                    || expectedFrom.HasValue && (expectedFrom != decimal.Truncate(expectedFrom.Value) || expectedFrom > int.MaxValue)))
+                throw new ArgumentException("Invalid absolute or additive keystone transform.");
+            return new KeystoneTransform(layer, field, scope, operation, seconds: value, maximum: maximum, expectedFrom: expectedFrom);
+        }
     }
 
     public sealed class KeystoneDefinition
@@ -145,24 +215,56 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<KeystoneTransform> Upside { get; }
         public IReadOnlyList<KeystoneTransform> Downside { get; }
         public IReadOnlyList<KeystonePayloadKind> Payloads { get; }
+        public IReadOnlyList<AuthoredMechanismSpec> Grants { get; }
 
         public KeystoneDefinition(string keystoneId, IEnumerable<string> requiredMemories,
             IEnumerable<KeystoneTransform> upside, IEnumerable<KeystoneTransform> downside,
-            IEnumerable<string> prerequisites = null, IEnumerable<KeystonePayloadKind> payloads = null, int cost = Content.KeystoneCost)
+            IEnumerable<string> prerequisites = null, IEnumerable<KeystonePayloadKind> payloads = null, int cost = Content.KeystoneCost,
+            IEnumerable<AuthoredMechanismSpec> grants = null)
         {
             KeystoneValidation.Token(keystoneId);
-            if (cost <= 0) throw new ArgumentOutOfRangeException(nameof(cost));
+            if (cost <= 0 || cost > StarProgression.MaxSpendablePoints) throw new ArgumentOutOfRangeException(nameof(cost));
             KeystoneId = keystoneId; Cost = cost;
             RequiredMemories = KeystoneValidation.Strings(requiredMemories);
             Prerequisites = KeystoneValidation.Strings(prerequisites);
             Upside = Array.AsReadOnly((upside ?? throw new ArgumentNullException(nameof(upside))).ToArray());
             Downside = Array.AsReadOnly((downside ?? throw new ArgumentNullException(nameof(downside))).ToArray());
+            Grants = Array.AsReadOnly((grants ?? Array.Empty<AuthoredMechanismSpec>()).ToArray());
             var kinds = (payloads ?? Array.Empty<KeystonePayloadKind>()).ToArray();
             if (kinds.Any(p => p == KeystonePayloadKind.None || !Enum.IsDefined(typeof(KeystonePayloadKind), p))
                 || kinds.Distinct().Count() != kinds.Length || Upside.Concat(Downside).Any(t => t == null)
-                || (Upside.Count == 0 && kinds.Length == 0) || Downside.Count == 0)
+                || Upside.Count > StarProgression.MaxSpendablePoints || Downside.Count > StarProgression.MaxSpendablePoints
+                || Grants.Count > StarProgression.MaxSpendablePoints || RequiredMemories.Count > StarProgression.MaxSpendablePoints
+                || Prerequisites.Count > StarProgression.MaxSpendablePoints
+                || Grants.Any(g => g == null) || (Upside.Count == 0 && kinds.Length == 0 && Grants.Count == 0) || Downside.Count == 0)
                 throw new ArgumentException("A cost-bearing keystone requires a typed upside and downside.");
-            Payloads = Array.AsReadOnly(kinds);
+            var admittedKinds = new HashSet<KeystonePayloadKind>(kinds);
+            foreach (var grant in Grants)
+            {
+                AuthoredMechanisms.Validate(grant);
+                switch (grant.Kind)
+                {
+                    case AuthoredMechanismKind.Gimmick: admittedKinds.Add(KeystonePayloadKind.Gimmick); break;
+                    case AuthoredMechanismKind.DirectedRecharge: admittedKinds.Add(KeystonePayloadKind.DirectedRecharge); break;
+                    case AuthoredMechanismKind.MemoryPrimed: admittedKinds.Add(KeystonePayloadKind.MemoryPrimed); break;
+                    case AuthoredMechanismKind.RelayWindow: admittedKinds.Add(KeystonePayloadKind.RelayWindow); break;
+                    case AuthoredMechanismKind.SacrificeShield: admittedKinds.Add(KeystonePayloadKind.SacrificeShield); break;
+                    case AuthoredMechanismKind.AlliedWard: admittedKinds.Add(KeystonePayloadKind.AlliedWard); break;
+                    case AuthoredMechanismKind.BridgeSuccess: admittedKinds.Add(KeystonePayloadKind.BridgeSuccess); break;
+                    case AuthoredMechanismKind.PressureDividend: admittedKinds.Add(KeystonePayloadKind.PressureDividend); break;
+                }
+            }
+            Payloads = Array.AsReadOnly(admittedKinds.OrderBy(k => k).ToArray());
+        }
+
+        public bool HasNativeDownside(KeystoneContext context)
+        {
+            if (context == null) return false;
+            var payload = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(decimal.MaxValue));
+            foreach (var transform in Downside)
+                if (transform.TargetLayer == KeystoneLayer.NativeDamage && transform.Operation == KeystoneOperation.Scale
+                    && transform.MagnitudeUnits.Units < 0 && transform.Scope.Matches(payload, context)) return true;
+            return false;
         }
     }
 
@@ -173,18 +275,30 @@ namespace SodRpg.Core.Game
         public string ReceiverMemory { get; }
         public KeystoneSourceKind SourceKind { get; }
         public KeystoneRecipientKind Recipient { get; }
+        public MechanismEquipment Equipment { get; }
+        public MechanismMemorySlot? SourceSlot { get; }
+        public MechanismMemorySlot? RecipientSlot { get; }
+        public string HeroKey { get; }
         public KeystoneContext(long equipmentEpoch, string sourceMemory, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory,
-            string receiverMemory = null, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self)
+            string receiverMemory = null, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self, MechanismEquipment equipment = null,
+            MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null)
         {
             if (equipmentEpoch < 0 || !Enum.IsDefined(typeof(KeystoneSourceKind), sourceKind)
                 || !Enum.IsDefined(typeof(KeystoneRecipientKind), recipient) || recipient == KeystoneRecipientKind.Any)
                 throw new ArgumentException("Invalid keystone event context.");
             if (sourceMemory != null) KeystoneValidation.Token(sourceMemory);
             if (receiverMemory != null) KeystoneValidation.Token(receiverMemory);
+            if (sourceSlot.HasValue && !Enum.IsDefined(typeof(MechanismMemorySlot), sourceSlot.Value)
+                || recipientSlot.HasValue && !Enum.IsDefined(typeof(MechanismMemorySlot), recipientSlot.Value))
+                throw new ArgumentException("Invalid projected slot.");
             EquipmentEpoch = equipmentEpoch; SourceMemory = sourceMemory; ReceiverMemory = receiverMemory;
             SourceKind = sourceKind; Recipient = recipient;
+            Equipment = equipment;
+            SourceSlot = sourceSlot; RecipientSlot = recipientSlot;
+            HeroKey = heroKey;
         }
-        internal KeystoneContext AtEpoch(long epoch) => new KeystoneContext(epoch, SourceMemory, SourceKind, ReceiverMemory, Recipient);
+        internal KeystoneContext AtEpoch(long epoch) => new KeystoneContext(epoch, SourceMemory, SourceKind, ReceiverMemory, Recipient,
+            Equipment, SourceSlot, RecipientSlot, HeroKey);
     }
 
     /// <summary>Pristine values after ordinary additive, boost and parameter layers, before C07 and final caps.</summary>
@@ -211,7 +325,7 @@ namespace SodRpg.Core.Game
                 || !Enum.IsDefined(typeof(GimmickEffect), effect) || value < 0 || durationSeconds < 0 || radiusMetres < 0
                 || delaySeconds < 0 || targetCount < 0 || everyN < 1 || probabilityPercent < 0)
                 throw new ArgumentException("Invalid pre-keystone payload.");
-            if (effect == GimmickEffect.Wound && (layer != KeystoneLayer.ModEffect || durationSeconds <= 0))
+            if (effect == GimmickEffect.Wound && layer == KeystoneLayer.ModEffect && durationSeconds <= 0)
                 throw new ArgumentException("Wound requires a lifetime and a final-total effect payload.");
             if (layer != KeystoneLayer.ModEffect && (durationSeconds != 0 || radiusMetres != 0 || delaySeconds != 0
                 || targetCount != 0 || everyN != 1 || probabilityPercent != 100))
@@ -234,7 +348,7 @@ namespace SodRpg.Core.Game
         public KeystoneCaps(decimal value, decimal durationSeconds = decimal.MaxValue,
             int targetCount = int.MaxValue, decimal probabilityPercent = 100m, decimal radiusMetres = decimal.MaxValue)
         {
-            if (value < 0 || durationSeconds <= 0 || targetCount < 0 || probabilityPercent < 0 || probabilityPercent > 100 || radiusMetres < 0)
+            if (value < 0 || durationSeconds < 0 || targetCount < 0 || probabilityPercent < 0 || probabilityPercent > 100 || radiusMetres < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
             Value = value; DurationSeconds = durationSeconds; TargetCount = targetCount; ProbabilityPercent = probabilityPercent; RadiusMetres = radiusMetres;
         }
@@ -249,10 +363,15 @@ namespace SodRpg.Core.Game
         public decimal DurationSeconds { get; internal set; }
         public decimal RadiusMetres { get; internal set; }
         public decimal DelaySeconds { get; internal set; }
-        public int TargetCount { get; internal set; }
-        public int EveryN { get; internal set; }
+        public int TargetCount { get => checked((int)TargetWorking); internal set => TargetWorking = value; }
+        public int EveryN { get => checked((int)EveryNWorking); internal set => EveryNWorking = value; }
         public decimal ProbabilityPercent { get; internal set; }
+        public int Argument { get => checked((int)ArgumentWorking); internal set => ArgumentWorking = value; }
         public bool Disabled { get; internal set; }
+        internal decimal? ValueMaximum, DurationMaximum, RadiusMaximum, DelayMaximum, ProbabilityMaximum;
+        internal int? TargetMaximum, EveryNMaximum, ArgumentMaximum;
+        internal long TargetWorking, EveryNWorking, ArgumentWorking;
+        internal bool DurationAbsolute;
         public decimal WoundRatePerSecond => DurationSeconds > 0 ? Value / DurationSeconds : 0;
     }
 
@@ -297,8 +416,14 @@ namespace SodRpg.Core.Game
 
         public bool HasPayload(KeystonePayloadKind kind) => Active && _selected.Payloads.Contains(kind);
 
+        public bool HasNativeDownside(KeystoneContext context)
+        {
+            if (!Active || context == null || context.EquipmentEpoch != EquipmentEpoch) return false;
+            return _selected.HasNativeDownside(context);
+        }
+
         public void Configure(IEnumerable<string> selectedKeystoneIds, long equipmentEpoch, IEnumerable<string> equippedMemories,
-            IEnumerable<string> allocatedStarIds, IEnumerable<KeystoneAllocatedEffect> allocatedEffects)
+            IEnumerable<string> allocatedStarIds, IEnumerable<KeystoneAllocatedEffect> allocatedEffects, bool enabled = true)
         {
             if (equipmentEpoch < 0) throw new ArgumentOutOfRangeException(nameof(equipmentEpoch));
             var selected = KeystoneValidation.Strings(selectedKeystoneIds);
@@ -320,11 +445,11 @@ namespace SodRpg.Core.Game
                         if (disable.TargetLayer == effect.Payload.Layer && disable.Scope.Matches(effect.Payload, effect.Context))
                             throw new InvalidOperationException("Refund incompatible allocation before selection: " + effect.StarId);
             string configuration = string.Join("|", selected) + ";" + string.Join("|", equipment.OrderBy(s => s, StringComparer.Ordinal))
-                + ";" + string.Join("|", allocated.OrderBy(s => s, StringComparer.Ordinal));
+                + ";" + string.Join("|", allocated.OrderBy(s => s, StringComparer.Ordinal)) + ";" + (enabled ? "1" : "0");
             if (_configuration != null && (equipmentEpoch < EquipmentEpoch || (configuration != _configuration && equipmentEpoch == EquipmentEpoch)))
                 throw new InvalidOperationException("Selection or equipment changes require a new epoch.");
             _configuration = configuration; _selected = definition; _equipped = equipment; EquipmentEpoch = equipmentEpoch;
-            Active = definition != null && definition.RequiredMemories.All(equipment.Contains);
+            Active = enabled && definition != null && definition.RequiredMemories.All(equipment.Contains);
         }
 
         public KeystoneResult Apply(KeystonePayload payload, KeystoneContext context)
@@ -332,42 +457,87 @@ namespace SodRpg.Core.Game
             if (payload == null || context == null) throw new ArgumentNullException(payload == null ? nameof(payload) : nameof(context));
             if (context.EquipmentEpoch != EquipmentEpoch) throw new InvalidOperationException("Pending payload must be recomputed for the current epoch.");
             if (context.SourceKind == KeystoneSourceKind.NativeMemory && (context.SourceMemory == null
-                || context.SourceMemory.StartsWith("St_M_", StringComparison.Ordinal)))
+                    && (context.Equipment != null || !context.SourceSlot.HasValue || context.SourceSlot == MechanismMemorySlot.Movement)
+                || context.SourceMemory != null && context.SourceMemory.StartsWith("St_M_", StringComparison.Ordinal)))
                 throw new InvalidOperationException("Native memory sources require a verified non-movement identity.");
             if (payload.Layer == KeystoneLayer.NativeDamage && (context.SourceKind == KeystoneSourceKind.Generated
                 || context.SourceKind == KeystoneSourceKind.MovementEvent))
                 throw new InvalidOperationException("Native transforms require a verified native damage source.");
             if (payload.Layer == KeystoneLayer.GeneratedDamage && context.SourceKind != KeystoneSourceKind.Generated)
                 throw new InvalidOperationException("Generated damage requires explicit generated provenance.");
-            var result = new KeystoneResult { EquipmentEpoch = EquipmentEpoch, Value = payload.Value, DurationSeconds = payload.DurationSeconds,
+            var result = new KeystoneResult { EquipmentEpoch = EquipmentEpoch,
+                Value = payload.Kind == KeystonePayloadKind.PressureDividend ? payload.ProbabilityPercent : payload.Value, DurationSeconds = payload.DurationSeconds,
                 RadiusMetres = payload.RadiusMetres, DelaySeconds = payload.DelaySeconds, TargetCount = payload.TargetCount,
-                EveryN = payload.EveryN, ProbabilityPercent = payload.ProbabilityPercent };
+                EveryN = payload.EveryN, ProbabilityPercent = payload.ProbabilityPercent, Argument = payload.Argument };
             bool sourceEquipped = context.SourceMemory == null || _equipped.Contains(context.SourceMemory);
             bool receiverEquipped = context.ReceiverMemory == null || _equipped.Contains(context.ReceiverMemory);
             if (Active && sourceEquipped && receiverEquipped)
             {
-                if (context.SourceKind == KeystoneSourceKind.MovementEvent && _selected.KeystoneId != "h.husk.key")
+                if (context.SourceKind == KeystoneSourceKind.MovementEvent && _selected.KeystoneId != "h.husk.key2")
                     throw new InvalidOperationException("Only the existing movement keystone may consume a movement event.");
                 result.KeystoneId = _selected.KeystoneId;
-                var matching = _selected.Upside.Concat(_selected.Downside)
-                    .Where(t => t.TargetLayer == payload.Layer && t.Scope.Matches(payload, context)).ToArray();
-                if (matching.Count(t => t.Operation == KeystoneOperation.RedistributeWound) > 1
-                    || (matching.Any(t => t.Operation == KeystoneOperation.RedistributeWound)
-                        && matching.Any(t => t.Field == KeystoneField.Duration)))
+                int woundTransforms = 0; bool durationTransform = false;
+                foreach (var transform in _selected.Upside)
+                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
+                    { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
+                foreach (var transform in _selected.Downside)
+                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
+                    { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
+                if (woundTransforms > 1 || woundTransforms > 0 && durationTransform)
                     throw new InvalidOperationException("Wound redistribution must be one final total/lifetime transform.");
-                foreach (var transform in matching) ApplyTransform(payload, result, transform);
+                foreach (var transform in _selected.Upside)
+                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
+                foreach (var transform in _selected.Downside)
+                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
+                if (result.Disabled) result.Value = 0;
             }
-            decimal cappedDuration = Math.Min(result.DurationSeconds, payload.Caps.DurationSeconds);
+            return ApplyCaps(payload, result);
+        }
+
+        public static KeystoneResult ApplyUnmodified(KeystonePayload payload)
+        {
+            if (payload == null) throw new ArgumentNullException(nameof(payload));
+            return ApplyCaps(payload, new KeystoneResult {
+                Value = payload.Kind == KeystonePayloadKind.PressureDividend ? payload.ProbabilityPercent : payload.Value, DurationSeconds = payload.DurationSeconds,
+                RadiusMetres = payload.RadiusMetres, DelaySeconds = payload.DelaySeconds, TargetCount = payload.TargetCount,
+                EveryN = payload.EveryN, ProbabilityPercent = payload.ProbabilityPercent, Argument = payload.Argument });
+        }
+
+        private static KeystoneResult ApplyCaps(KeystonePayload payload, KeystoneResult result)
+        {
+            decimal valueCap = Math.Min(payload.Caps.Value, result.ValueMaximum ?? decimal.MaxValue);
+            if (payload.Layer == KeystoneLayer.ModEffect && payload.Effect != GimmickEffect.None
+                && (payload.Kind == KeystonePayloadKind.Gimmick || payload.Kind == KeystonePayloadKind.None))
+                valueCap = Math.Min(valueCap, Gimmicks.Cap(payload.Effect));
+            if (payload.Kind == KeystonePayloadKind.MemoryPrimed) valueCap = Math.Min(valueCap, 120m);
+            bool daze = payload.Layer == KeystoneLayer.ModEffect && payload.Effect == GimmickEffect.Daze;
+            if (daze)
+            {
+                decimal beforeValue = result.Value;
+                result.Value = Math.Min(result.Value, valueCap);
+                CoupleDazeValue(payload, result, beforeValue);
+            }
+            decimal cappedDuration = Math.Min(result.DurationSeconds, Math.Min(payload.Caps.DurationSeconds, result.DurationMaximum ?? decimal.MaxValue));
             if (payload.Effect == GimmickEffect.Wound && cappedDuration < result.DurationSeconds)
                 result.Value *= cappedDuration / result.DurationSeconds;
             result.DurationSeconds = cappedDuration;
-            result.Value = Math.Min(result.Value, payload.Caps.Value);
-            result.TargetCount = Math.Min(result.TargetCount, payload.Caps.TargetCount);
-            result.RadiusMetres = Math.Min(result.RadiusMetres, payload.Caps.RadiusMetres);
-            result.ProbabilityPercent = Math.Min(result.ProbabilityPercent, payload.Caps.ProbabilityPercent);
-            if (payload.Layer == KeystoneLayer.ModEffect && payload.Effect != GimmickEffect.None)
-                result.Value = Math.Min(result.Value, Gimmicks.Cap(payload.Effect));
-            if (payload.Kind == KeystonePayloadKind.MemoryPrimed) result.Value = Math.Min(result.Value, 120m);
+            if (!daze) result.Value = Math.Min(result.Value, valueCap);
+            result.RadiusMetres = Math.Min(result.RadiusMetres, Math.Min(payload.Caps.RadiusMetres, result.RadiusMaximum ?? decimal.MaxValue));
+            result.ProbabilityPercent = Math.Min(result.ProbabilityPercent, Math.Min(payload.Caps.ProbabilityPercent, result.ProbabilityMaximum ?? decimal.MaxValue));
+            result.DelaySeconds = Math.Min(result.DelaySeconds, result.DelayMaximum ?? decimal.MaxValue);
+            result.EveryNWorking = Math.Min(result.EveryNWorking, result.EveryNMaximum ?? int.MaxValue);
+            long originalArgument = result.ArgumentWorking;
+            result.ArgumentWorking = Math.Min(result.ArgumentWorking, result.ArgumentMaximum ?? int.MaxValue);
+            if (payload.Effect == GimmickEffect.Ricochet && payload.Kind == KeystonePayloadKind.Gimmick)
+            {
+                result.ArgumentWorking = Math.Max(1L, Math.Min(2L, result.ArgumentWorking));
+                result.TargetWorking = checked(result.TargetWorking + result.ArgumentWorking - originalArgument);
+            }
+            result.TargetWorking = Math.Min(result.TargetWorking, Math.Min(payload.Caps.TargetCount, result.TargetMaximum ?? int.MaxValue));
+            if (payload.Effect == GimmickEffect.Ricochet && payload.Kind == KeystonePayloadKind.Gimmick)
+                result.TargetWorking = Math.Min(result.TargetWorking, result.ArgumentWorking + Gimmicks.MaxExtraTargets);
+            if (payload.Kind == KeystonePayloadKind.PressureDividend)
+                result.Value = result.ProbabilityPercent = Math.Min(result.Value, result.ProbabilityPercent);
             return result;
         }
 
@@ -388,31 +558,104 @@ namespace SodRpg.Core.Game
             return finalNativeHit * echo.Value / 100m;
         }
 
+        private static void CoupleDazeValue(KeystonePayload payload, KeystoneResult result, decimal beforeValue)
+        {
+            if (payload.Effect == GimmickEffect.Daze && payload.Layer == KeystoneLayer.ModEffect
+                && !result.DurationAbsolute && beforeValue > 0)
+                result.DurationSeconds *= result.Value / beforeValue;
+        }
+
+        private static void SynchronizeProbability(KeystonePayload payload, KeystoneResult result, KeystoneField changedField)
+        {
+            if (payload.Kind != KeystonePayloadKind.PressureDividend) return;
+            if (changedField == KeystoneField.Value) result.ProbabilityPercent = result.Value;
+            else if (changedField == KeystoneField.Probability) result.Value = result.ProbabilityPercent;
+        }
+
         private static void ApplyTransform(KeystonePayload payload, KeystoneResult result, KeystoneTransform transform)
         {
-            if (transform.Operation == KeystoneOperation.Disable) { result.Value = 0; result.Disabled = true; return; }
+            if (transform.Operation == KeystoneOperation.Disable)
+            {
+                result.Value = 0; result.Disabled = true;
+                SynchronizeProbability(payload, result, KeystoneField.Value);
+                return;
+            }
             if (transform.Operation == KeystoneOperation.RedistributeWound)
             {
                 if (payload.Effect != GimmickEffect.Wound) throw new InvalidOperationException("Wound transform applied outside Wound.");
                 result.Value *= transform.MagnitudeUnits.Multiplier; result.DurationSeconds *= transform.WoundDurationUnits.Multiplier; return;
             }
-            if (transform.Operation == KeystoneOperation.AddTargets)
+            if (transform.Operation == KeystoneOperation.Set || transform.Operation == KeystoneOperation.Add)
             {
-                if (result.TargetCount == 0) throw new InvalidOperationException("Target modifier has no target-count recipient.");
-                result.TargetCount = checked(result.TargetCount + transform.Count);
-                if (result.TargetCount <= 0) throw new InvalidOperationException("A target transform would disable its recipient.");
+                decimal current = transform.Field == KeystoneField.Value ? result.Value
+                    : transform.Field == KeystoneField.Duration ? result.DurationSeconds
+                    : transform.Field == KeystoneField.Radius ? result.RadiusMetres
+                    : transform.Field == KeystoneField.Delay ? result.DelaySeconds
+                    : transform.Field == KeystoneField.TargetCount ? result.TargetWorking
+                    : transform.Field == KeystoneField.EveryN ? result.EveryNWorking
+                    : transform.Field == KeystoneField.Argument ? result.ArgumentWorking : result.ProbabilityPercent;
+                // 'from' records authoring baseline, never a runtime equality check after ordinary modifiers.
+                decimal value = transform.Operation == KeystoneOperation.Set ? transform.Seconds : current + transform.Seconds;
+                if (transform.Maximum.HasValue)
+                {
+                    decimal max = transform.Maximum.Value;
+                    switch (transform.Field)
+                    {
+                        case KeystoneField.Value: result.ValueMaximum = Math.Min(result.ValueMaximum ?? decimal.MaxValue, max); break;
+                        case KeystoneField.Duration: result.DurationMaximum = Math.Min(result.DurationMaximum ?? decimal.MaxValue, max); break;
+                        case KeystoneField.Radius: result.RadiusMaximum = Math.Min(result.RadiusMaximum ?? decimal.MaxValue, max); break;
+                        case KeystoneField.Delay: result.DelayMaximum = Math.Min(result.DelayMaximum ?? decimal.MaxValue, max); break;
+                        case KeystoneField.TargetCount: result.TargetMaximum = Math.Min(result.TargetMaximum ?? int.MaxValue, checked((int)max)); break;
+                        case KeystoneField.EveryN: result.EveryNMaximum = Math.Min(result.EveryNMaximum ?? int.MaxValue, checked((int)max)); break;
+                        case KeystoneField.Probability: result.ProbabilityMaximum = Math.Min(result.ProbabilityMaximum ?? decimal.MaxValue, max); break;
+                        case KeystoneField.Argument:
+                            result.ArgumentMaximum = Math.Min(result.ArgumentMaximum ?? int.MaxValue, checked((int)max));
+                            break;
+                    }
+                }
+                if (value < 0) throw new InvalidOperationException("Transform made a negative recipient.");
+                switch (transform.Field)
+                {
+                    case KeystoneField.Value:
+                        result.Value = value; CoupleDazeValue(payload, result, current); break;
+                    case KeystoneField.Duration:
+                        if (payload.Effect == GimmickEffect.Wound && current > 0) result.Value *= value / current;
+                        result.DurationSeconds = value;
+                        if (transform.Operation == KeystoneOperation.Set) result.DurationAbsolute = true;
+                        break;
+                    case KeystoneField.Radius: result.RadiusMetres = value; break;
+                    case KeystoneField.Delay: result.DelaySeconds = value; break;
+                    case KeystoneField.TargetCount: result.TargetWorking = checked((long)value); break;
+                    case KeystoneField.EveryN: if (value < 1) throw new InvalidOperationException("EveryN must be positive."); result.EveryNWorking = checked((long)value); break;
+                    case KeystoneField.Argument:
+                        if (payload.Effect == GimmickEffect.Ricochet) result.TargetWorking = checked(result.TargetWorking + (long)value - result.ArgumentWorking);
+                        result.ArgumentWorking = checked((long)value); break;
+                    case KeystoneField.Probability: result.ProbabilityPercent = value; break;
+                }
+                SynchronizeProbability(payload, result, transform.Field);
                 return;
             }
-            if (transform.Operation == KeystoneOperation.SetEveryN) { result.EveryN = transform.Count; return; }
+            if (transform.Operation == KeystoneOperation.AddTargets)
+            {
+                if (result.TargetWorking == 0) throw new InvalidOperationException("Target modifier has no target-count recipient.");
+                result.TargetWorking = checked(result.TargetWorking + transform.Count);
+                if (result.TargetWorking <= 0) throw new InvalidOperationException("A target transform would disable its recipient.");
+                return;
+            }
+            if (transform.Operation == KeystoneOperation.SetEveryN) { result.EveryNWorking = transform.Count; return; }
             decimal factor = transform.MagnitudeUnits.Multiplier;
             switch (transform.Field)
             {
-                case KeystoneField.Value: result.Value *= factor; break;
+                case KeystoneField.Value:
+                    decimal oldValue = result.Value;
+                    result.Value *= factor; CoupleDazeValue(payload, result, oldValue); break;
                 case KeystoneField.Duration:
                     if (result.DurationSeconds <= 0) throw new InvalidOperationException("Duration modifier has no duration recipient.");
                     decimal duration = transform.Operation == KeystoneOperation.SetSeconds ? transform.Seconds : result.DurationSeconds * factor;
                     if (payload.Effect == GimmickEffect.Wound) result.Value *= duration / result.DurationSeconds;
-                    result.DurationSeconds = duration; break;
+                    result.DurationSeconds = duration;
+                    if (transform.Operation == KeystoneOperation.SetSeconds) result.DurationAbsolute = true;
+                    break;
                 case KeystoneField.Radius:
                     if (result.RadiusMetres <= 0) throw new InvalidOperationException("Radius modifier has no radius recipient.");
                     result.RadiusMetres *= factor; break;
@@ -422,6 +665,7 @@ namespace SodRpg.Core.Game
                 case KeystoneField.Probability: result.ProbabilityPercent *= factor; break;
                 default: throw new InvalidOperationException("Unsupported typed keystone transform.");
             }
+            SynchronizeProbability(payload, result, transform.Field);
         }
     }
 

@@ -57,8 +57,27 @@ namespace SodRpg.Core.Game
                 neighbors[b].Add(a);
                 edges.Add(new HeroTreeEdge(a, b));
             }
+            Dictionary<string, TalentDef> definitions = null;
+            bool HasExplicitOuterAttachment(TalentDef talent)
+            {
+                if (talent.AuthoredStar == null) return false;
+                foreach (var edge in talent.AuthoredStar.Edges)
+                {
+                    string other = edge.From == talent.Id ? edge.To : edge.To == talent.Id ? edge.From : null;
+                    if (other == null) continue;
+                    if (definitions == null)
+                    {
+                        definitions = new Dictionary<string, TalentDef>(talents.Count, StringComparer.Ordinal);
+                        foreach (var definition in talents) definitions.Add(definition.Id, definition);
+                    }
+                    if (definitions.TryGetValue(other, out var endpoint)
+                        && (endpoint.AuthoredStar?.ClusterId ?? endpoint.Cluster?.Id) != talent.AuthoredStar.ClusterId)
+                        return true;
+                }
+                return false;
+            }
 
-            // Outer anchors are real, refundable stat stars. Attach each to the closest trunk tip.
+            // Only implicit roots attach to the closest trunk; authored roots retain their exact access edge.
             int originalCount = nodes.Count;
             int outerOrder = 0;
             foreach (var talent in talents)
@@ -73,6 +92,11 @@ namespace SodRpg.Core.Game
                     y = (float)(radius * Math.Sin(angle));
                     radius += MinimumSpacing;
                 } while (!grid.Free(x, y));
+                if (HasExplicitOuterAttachment(talent))
+                {
+                    Add(talent, x, y);
+                    continue;
+                }
                 int closest = -1;
                 float best = float.MaxValue;
                 for (int i = 1; i < originalCount; i++)
@@ -100,8 +124,17 @@ namespace SodRpg.Core.Game
                 }
                 if (!indices.ContainsKey(talent.Id)) clusters[group].Add(talent);
             }
-            foreach (var group in clusters)
+            for (int groupIndex = 0; groupIndex < clusters.Count; groupIndex++)
             {
+                // Preserve author order among ready groups; an anchor may live in a later cluster.
+                int ready = groupIndex;
+                while (ready < clusters.Count && clusters[ready].Count != 0
+                    && !indices.ContainsKey(clusters[ready][0].Cluster.Anchor)) ready++;
+                if (ready == clusters.Count)
+                    throw new InvalidOperationException("Cluster anchor is missing or cyclic: " + clusters[groupIndex][0].Cluster.Id);
+                var group = clusters[ready];
+                for (int i = ready; i > groupIndex; i--) clusters[i] = clusters[i - 1];
+                clusters[groupIndex] = group;
                 group.Sort((a, b) => a.ClusterOrder.CompareTo(b.ClusterOrder));
                 if (group.Count == 0) continue;
                 var cluster = group[0].Cluster;

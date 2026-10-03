@@ -168,6 +168,7 @@ namespace SodRpg.Mod
     {
         // Version 13 requires canonical allocation/loadout inputs for host reconstruction.
         // Version 13 requires replayable authoritative death facts; version 12 cannot settle unknown dead classifications.
+        // Version 13 adds authored mechanisms, scoped keystones and registry negotiation.
         public const int Version = 13;
     }
 

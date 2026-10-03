@@ -922,6 +922,7 @@ namespace SodRpg.Mod
                 case 3: DrawWorkshopTab(); break;
                 default: DrawRecordsTab(cfg); break;
             }
+            DrawAllocationRefund();
             GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
             GUILayout.EndArea();
         }
@@ -1195,13 +1196,23 @@ namespace SodRpg.Mod
                 bool equipped = cur != null && cur.Uid == sel.Uid;
                 if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
                 {
-                    foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
-                    _s.MarkDirty(true);
+                    try
+                    {
+                        foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
+                        _s.MarkDirty(true);
+                    }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                 }
                 if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
                 {
-                    foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
-                    _s.MarkDirty(true);
+                    try
+                    {
+                        foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
+                        _s.MarkDirty(true);
+                    }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                 }
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
@@ -2253,6 +2264,7 @@ namespace SodRpg.Mod
                         _starDirty = true;
                         _s.MarkDirty(true);
                     }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                     catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                     GUIUtility.ExitGUI();
                 }
@@ -2391,6 +2403,7 @@ namespace SodRpg.Mod
                                 _starDirty = true;
                                 _s.MarkDirty(true);
                             }
+                            catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                             catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                         }
                     }
@@ -2549,6 +2562,7 @@ namespace SodRpg.Mod
                             _starDirty = true;
                             _s.MarkDirty(true);
                         }
+                        catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                         catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                     }
                 }

@@ -209,11 +209,20 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Unsupported_adapter_predicates_and_malformed_optional_records_fail_loudly()
+        public void Attributed_budget_routes_through_real_recharge_and_malformed_records_reject()
         {
-            var effect = Effect(GimmickEffect.Recharge, 1m, "recharge.native");
-            effect.EffectChannel.ActivationBudget = "activation";
-            Assert.Throws<InvalidOperationException>(() => Tree(effect));
+            var effect = Effect(GimmickEffect.Recharge, 20m, "recharge.native");
+            effect.EffectChannel.ActivationBudget = nameof(AttributionBudget.PerActivation);
+            var decoded = Build.Decode(Compute(Tree(effect)).Encode());
+            var channel = Assert.Single(decoded.Mechanisms).Spec.Recharge;
+            var runtime = new DirectedRechargeRuntime(); runtime.SetChannels(new[] { channel });
+            var equipment = new MechanismEquipment(1, 1, new[] { new EquippedMechanismMemory(Memory, 10, MechanismMemorySlot.Q, true, false) });
+            var requests = new List<DirectedRechargeRequest>();
+            runtime.Notify(new MemoryActivationEvent(1, Memory, 5, 11, 7, MemoryEventKind.Hit, NativePayloadKind.Skill, GeneratedOrigin.None, 1),
+                equipment, new RechargeConditionContext(false, 0), () => 0, requests);
+            runtime.Notify(new MemoryActivationEvent(1, Memory, 5, 12, 8, MemoryEventKind.Hit, NativePayloadKind.Skill, GeneratedOrigin.None, 1),
+                equipment, new RechargeConditionContext(false, 0), () => 0, requests);
+            Assert.Equal(8f, 10f - 20f * Assert.Single(requests).NativeRatio(10, 20), 5);
             var packet = Compute(Tree(Effect(GimmickEffect.Shield, 1m))).Encode();
             Assert.Null(Build.Decode(packet + ";f:unknown:1:0:0"));
             Assert.Null(Build.Decode(packet + ";n:" + Memory + ":5:250:unknown.profile"));

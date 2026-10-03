@@ -26,6 +26,9 @@ namespace SodRpg.Core.Game
         /// <summary>橋と両隣の星を取得した合わせ技。記憶の装備条件は各イベントで判定する。</summary>
         public List<PairComboEntry> PairCombos { get; } = new List<PairComboEntry>();
         public List<NativeMemoryModifierEntry> NativeModifiers { get; } = new List<NativeMemoryModifierEntry>();
+        public List<AuthoredMechanismEntry> Mechanisms { get; } = new List<AuthoredMechanismEntry>();
+        public SortedDictionary<string, int> MechanismEndpointRanks { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        public KeystoneDefinition SelectedKeystone { get; set; }
         internal Dictionary<string, string[]> ScopedWireRecords { get; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
         public int Heat { get; set; }
         /// <summary>夢の圧へ送る進行度。欠けている旧データは夢1・星0。</summary>
@@ -60,8 +63,11 @@ namespace SodRpg.Core.Game
             FractionalScopedModifiers.ValidateTree(tree);
             var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
             foreach (var talent in tree) definitions.Add(talent.Id, talent);
-            bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachability ?? h, talent);
-            long spent = h.Keystone == null ? 0 : Content.KeystoneCost;
+            var reachabilityState = reachability ?? h;
+            var reachable = layout.ReachabilitySnapshot(reachabilityState);
+            bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachabilityState, talent, reachable);
+            long spent = h.Keystone != null && definitions.TryGetValue(h.Keystone, out var selectedKey)
+                ? selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost : 0;
             foreach (var allocated in h.Talents)
                 if (definitions.TryGetValue(allocated.Key, out var talent))
                     spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
@@ -182,7 +188,7 @@ namespace SodRpg.Core.Game
                 TalentDef t = selected.Key;
                 int rank = selected.Value;
                 var pair = global::SodRpg.Core.Game.PairCombos.ForBridge(t.Id);
-                if (pair != null)
+                if (pair != null && t.Mechanism == null)
                 {
                     var entry = global::SodRpg.Core.Game.PairCombos.Activate(pair, h, rank);
                     if (entry != null && definitions.TryGetValue(pair.StarA, out var starA)
@@ -191,7 +197,7 @@ namespace SodRpg.Core.Game
                         b.PairCombos.Add(entry);
                     continue; // Inner bridges are combos, never their old unconditional ring stats.
                 }
-                if (t.Gimmick != null && t.Gimmick.Value > 0)
+                if (t.Gimmick != null && t.Gimmick.Value > 0 && !FractionalScopedModifiers.RequiresMechanismRoute(t.EffectChannel))
                 {
                     var entry = new GimmickEntry
                     {
@@ -222,6 +228,7 @@ namespace SodRpg.Core.Game
                 else if (t.PerRank != 0) Add(rawStats, t.Stat, t.PerRank * rank);
             }
             FractionalScopedModifiers.Compose(b, selectedTalents);
+            AuthoredMechanisms.Compose(b, selectedTalents);
             bool KeyUnlocked(TalentDef candidateKey)
             {
                 if (!Unlocked(candidateKey)) return false;
@@ -237,8 +244,14 @@ namespace SodRpg.Core.Game
             if (h.Keystone != null && definitions.TryGetValue(h.Keystone, out var key) && key.IsKeystone
                 && Rules.BelongsTo(key, heroKey) && KeyUnlocked(key))
             {
-                AddPower(key.Power, key.PowerValue);
+                b.SelectedKeystone = key.KeystoneDefinition;
+                bool migratedStillWater = false;
+                if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
+                    foreach (var grant in key.KeystoneDefinition.Grants)
+                        if (grant.Kind == AuthoredMechanismKind.StunSourceFilter) { migratedStillWater = true; break; }
+                if (key.Power != Power.None && !migratedStillWater) AddPower(key.Power, key.PowerValue);
             }
+            AuthoredKeystoneComposer.Apply(b);
 
             var daily = DailyDream.Get(dailyId);
             if (daily != null)
@@ -404,9 +417,10 @@ namespace SodRpg.Core.Game
 
         private void ValidateCounts()
         {
-            if (Gimmicks.Count > BuildLimits.MaxGimmickEntries || Links.Count > BuildLimits.MaxLinkEntries
+            if (Gimmicks.Count + Mechanisms.Count > BuildLimits.MaxGimmickEntries || Links.Count > BuildLimits.MaxLinkEntries
                 || PairCombos.Count > BuildLimits.MaxPairComboEntries || Stats.Count > BuildLimits.MaxStatEntries
-                || Powers.Count > BuildLimits.MaxPowerEntries || ConditionalBasePowers.Count > BuildLimits.MaxConditionalPowerEntries)
+                || Powers.Count > BuildLimits.MaxPowerEntries || ConditionalBasePowers.Count > BuildLimits.MaxConditionalPowerEntries
+                || MechanismEndpointRanks.Count > StarProgression.MaxSpendablePoints)
                 throw new InvalidOperationException("The build exceeds its legal entry envelope.");
             ScopedBuildCodec.Validate(this);
             foreach (var link in AggregateLinks(Links))
@@ -454,13 +468,17 @@ namespace SodRpg.Core.Game
                         case "n":
                         case "j": limit = BuildLimits.MaxGimmickEntries; break;
                         case "v": limit = BuildLimits.MaxGimmickEntries; break;
+                        case "r": limit = BuildLimits.MaxGimmickEntries; break;
+                        case "m": limit = BuildLimits.MaxGimmickEntries; break;
+                        case "e": limit = StarProgression.MaxSpendablePoints; break;
+                        case "k": limit = 1; break;
                     }
                     if (body.Length == 0) continue;
                     string[] entries = body.Split(',');
                     if (entries.Length > limit) return null;
                     foreach (string encoded in entries)
                     {
-                        if (kind == "f" || kind == "n" || kind == "j" || kind == "v")
+                        if (kind == "f" || kind == "n" || kind == "j" || kind == "v" || kind == "r" || kind == "m" || kind == "e" || kind == "k")
                         {
                             ScopedBuildCodec.Read(kind, encoded, b);
                             continue;
@@ -542,6 +560,7 @@ namespace SodRpg.Core.Game
             catch (OverflowException) { return null; }
             catch (ArgumentException) { return null; }
             catch (InvalidOperationException) { return null; }
+            catch (System.IO.IOException) { return null; }
         }
 
         private static int ParseInt(string value) => int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture);

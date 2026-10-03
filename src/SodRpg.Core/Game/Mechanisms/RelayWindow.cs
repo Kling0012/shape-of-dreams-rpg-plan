@@ -8,13 +8,14 @@ namespace SodRpg.Core.Game
         public const string SourceMemory = "St_R_Tranquility";
         public string ChannelId { get; }
         public string TargetMemory { get; }
-        public int ValueUnits { get; }
+        public decimal ValueUnits { get; }
         public int DurationModifierUnits { get; }
         public bool QuietRelay { get; }
-        public float DurationSeconds => 4f * (1f + DurationModifierUnits / 10000f) * (QuietRelay ? 2f : 1f);
+        public float? EffectiveDurationSeconds { get; }
+        public float DurationSeconds => EffectiveDurationSeconds ?? 4f * (1f + DurationModifierUnits / 10000f) * (QuietRelay ? 2f : 1f);
 
         /// <summary>Value is the final scoped value. QuietRelay applies its duration transform exactly once.</summary>
-        public RelayWindowDefinition(string channelId, string targetMemory, int valueUnits,
+        public RelayWindowDefinition(string channelId, string targetMemory, decimal valueUnits,
             int durationModifierUnits = 0, bool quietRelay = false)
         {
             if (string.IsNullOrWhiteSpace(channelId) || string.IsNullOrWhiteSpace(targetMemory))
@@ -25,10 +26,18 @@ namespace SodRpg.Core.Game
             ChannelId = channelId; TargetMemory = targetMemory; ValueUnits = valueUnits;
             DurationModifierUnits = durationModifierUnits; QuietRelay = quietRelay;
         }
+        private RelayWindowDefinition(string id, string target, decimal value, float duration)
+            : this(id, target, value)
+        {
+            if (!Gimmicks.Finite(duration) || duration <= 0 || duration > 16f) throw new ArgumentOutOfRangeException(nameof(duration));
+            EffectiveDurationSeconds = duration;
+        }
+        public static RelayWindowDefinition FromEffective(string id, string target, decimal valueUnits, float durationSeconds)
+            => new RelayWindowDefinition(id, target, valueUnits, durationSeconds);
 
         internal bool Same(RelayWindowDefinition other) => other != null && ChannelId == other.ChannelId
             && TargetMemory == other.TargetMemory && ValueUnits == other.ValueUnits
-            && DurationModifierUnits == other.DurationModifierUnits && QuietRelay == other.QuietRelay;
+            && DurationSeconds == other.DurationSeconds;
     }
 
     /// <summary>C10: one target window, with contributor expiries retained when their duration scopes differ.</summary>
@@ -78,7 +87,7 @@ namespace SodRpg.Core.Game
             _sourceEpoch = sourceEpoch; _targetQ = targetQ; _targetEpoch = targetEpoch;
         }
 
-        public bool OnSourceEvent(MemoryActivationEvent use, float now)
+        public bool OnSourceEvent(MemoryActivationEvent use, float now, Func<RelayWindowDefinition, bool> filter = null)
         {
             if (!Gimmicks.Finite(now)) throw new ArgumentOutOfRangeException(nameof(now));
             if (use.OwnerId != _ownerId || use.EventKind != MemoryEventKind.ConfirmedUse
@@ -88,6 +97,7 @@ namespace SodRpg.Core.Game
             bool opened = false;
             foreach (var definition in _definitions.Values)
             {
+                if (filter != null && !filter(definition)) continue;
                 if (definition.TargetMemory != _targetQ) continue;
                 float expires = now + definition.DurationSeconds;
                 if (!Gimmicks.Finite(expires)) throw new ArgumentOutOfRangeException(nameof(now));
@@ -107,7 +117,7 @@ namespace SodRpg.Core.Game
                 || nativeDamage.EventKind != MemoryEventKind.Hit && nativeDamage.EventKind != MemoryEventKind.CriticalHit
                 || nativeDamage.NativePayloadKind == NativePayloadKind.MainBasicAttack
                 || nativeDamage.NativePayloadKind == NativePayloadKind.SummonAttack) return 0;
-            long units = 0;
+            decimal units = 0;
             var expired = new List<string>();
             foreach (var entry in _window)
             {
@@ -115,7 +125,7 @@ namespace SodRpg.Core.Game
                 else units += entry.Value.Definition.ValueUnits;
             }
             foreach (string channel in expired) _window.Remove(channel);
-            return Math.Min(4000, units) / 10000f;
+            return (float)(Math.Min(4000, units) / 10000m);
         }
 
         public void Clear() { _window.Clear(); _uses.Clear(); }

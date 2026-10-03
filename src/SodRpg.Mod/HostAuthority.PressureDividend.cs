@@ -1,17 +1,35 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
 
 namespace SodRpg.Mod
 {
+    // This exact encounter method uses serverActor/creep and returns the actual room-spawned entity.
+    // Boss-created actors outside this native contract remain Unknown, not guessed loot enemies.
+    [HarmonyPatch(typeof(RoomMonsters), "SpawnMonsterImp")]
+    internal static class NativePressureDividendLootSpawn
+    {
+        private static void Postfix(Entity __result)
+        {
+            if (NetworkServer.active && __result is Monster monster)
+                HostAuthority.NativeInstance?.MarkPressureDividendLootSpawn(monster);
+        }
+    }
     internal sealed partial class HostAuthority
     {
         private readonly Dictionary<Monster, PressureDividendEnemy> _pressureDividendSpawns = new Dictionary<Monster, PressureDividendEnemy>();
         private readonly PressureDividendRuntime _pressureDividends = new PressureDividendRuntime();
         private long _nextPressureDividendSpawn;
+        private readonly HashSet<PressureDividendEnemy> _nativePressureLootSpawns = new HashSet<PressureDividendEnemy>();
+        internal void MarkPressureDividendLootSpawn(Monster monster)
+        {
+            TrackPressureDividendSpawn(monster);
+            if (_pressureDividendSpawns.TryGetValue(monster, out var spawn)) _nativePressureLootSpawns.Add(spawn);
+        }
 
         private void TrackPressureDividendSpawn(Monster monster)
         {
@@ -67,7 +85,7 @@ namespace SodRpg.Mod
             if (!_pressureDividendSpawns.TryGetValue(victim, out var spawn) || spawn.Death == null
                 || spawn.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return null;
             var reward = _pressureDividends.TryAward(spawn.Death, attribution, channels, equippedMemories,
-                () => UnityEngine.Random.Range(0, 10000), () => Guid.NewGuid().ToString("N"));
+                () => (decimal)_rng.NextDouble() * 10000m, () => Guid.NewGuid().ToString("N"));
             if (reward != null)
                 _registeredOn.CustomRpc_SendMessageToClient(owner, DreamforgePressureDividendMsg.FromReward(reward, hero.netId));
             return reward;

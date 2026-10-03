@@ -31,17 +31,7 @@ namespace SodRpg.Mod
                 if (_runtimes.TryGetValue(hero, out var runtime))
                     foreach (var legacy in runtime.Powers.Build.PairCombos)
                         if (legacy.Def.Id == definition.PairId) throw new InvalidOperationException("The legacy pair binding must be migrated before a success-effect replacement is registered.");
-                if (definition.UsesNativeWindowLifetime)
-                    throw new InvalidOperationException("This bridge requires an exact native Ultimate-lifetime adapter that is not bound.");
-                if (definition.SourcePhase != BridgeSourcePhase.Any
-                    && (definition.PayoffSource.Kind != MemorySelectorKind.Memory
-                        || definition.PayoffSource.Memory != nameof(St_R_BaptismOfSun)))
-                    throw new InvalidOperationException("This bridge source has no verified native explosion-phase adapter.");
-                if (definition.PayoffTrigger == MemoryEventKind.Kill && (definition.BasePayoff.Kind == BridgePayloadKind.Damage
-                    || HasDamageExtra(definition)))
-                    throw new InvalidOperationException("A kill-triggered damage bridge requires an explicitly bound area or surviving-target selector.");
-                ValidateBridgePayloadBinding(definition.BasePayoff);
-                foreach (var extra in definition.Extras) ValidateBridgePayloadBinding(extra);
+                ValidateBridgeNativeDefinition(definition);
                 copy.Add(definition);
             }
             var ranks = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -51,10 +41,17 @@ namespace SodRpg.Mod
             state.Runtime.RefreshSuccessPrerequisites(CollectMechanismEquipment(hero, hero.GetInstanceID()), ranks);
             _bridgeSuccessEffects[hero] = state;
         }
-        private static void ValidateBridgePayloadBinding(BridgePayload payload)
+        private static void ValidateBridgeNativeDefinition(BridgeSuccessDefinition definition)
         {
-            if (payload.Kind == BridgePayloadKind.OrdinaryShield)
-                throw new InvalidOperationException("Bridge shields require the C06 ordinary shield-pool binding.");
+            if (definition.UsesNativeWindowLifetime)
+                throw new InvalidOperationException("This bridge requires an exact native Ultimate-lifetime adapter that is not bound.");
+            if (definition.SourcePhase != BridgeSourcePhase.Any
+                && (definition.PayoffSource.Kind != MemorySelectorKind.Memory
+                    || definition.PayoffSource.Memory != nameof(St_R_BaptismOfSun)))
+                throw new InvalidOperationException("This bridge source has no verified native explosion-phase adapter.");
+            if (definition.PayoffTrigger == MemoryEventKind.Kill && (definition.BasePayoff.Kind == BridgePayloadKind.Damage
+                || HasDamageExtra(definition)))
+                throw new InvalidOperationException("A kill-triggered damage bridge requires an explicitly bound area or surviving-target selector.");
         }
         private static bool HasDamageExtra(BridgeSuccessDefinition definition)
         {
@@ -92,7 +89,7 @@ namespace SodRpg.Mod
             if (!Alive(hero) || !_bridgeSuccessEffects.TryGetValue(hero, out var state)
                 || !transaction.IsCurrent(state.Runtime, equipment, state.EndpointRanks)) return;
             if (transaction.Notification.EventKind == MemoryEventKind.OwnedBasicAttackFired
-                && (!_runtimes.TryGetValue(hero, out var rt) || !HasOwnSummons(rt))) return;
+                && (!_runtimes.TryGetValue(hero, out var firedOwner) || !HasOwnSummons(firedOwner))) return;
             foreach (var payload in transaction.Payloads)
                 if (payload.Kind == BridgePayloadKind.Damage && !BridgeDamageTargetReady(hero, victim)) return;
             var recharge = new List<DirectedRechargeRequest>();
@@ -100,11 +97,32 @@ namespace SodRpg.Mod
             foreach (var request in recharge) ApplyDirectedRecharge(hero, request);
             foreach (var payload in transaction.Payloads)
             {
+                if (!transaction.IsCurrent(state.Runtime, CollectMechanismEquipment(hero, transaction.Notification.OwnerId), state.EndpointRanks)) return;
+                if (!_runtimes.TryGetValue(hero, out var owner)) return;
+                if (payload.Kind == BridgePayloadKind.OrdinaryShield)
+                {
+                    var shield = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
+                        transaction.Notification.SourceMemory, null, KeystoneSourceKind.NativeMemory);
+                    if (shield.Disabled) continue;
+                    AwardModShield(owner, hero, ModShieldPoolKind.Ordinary,
+                        SupportStats.AmplifyShield(hero.maxHealth * (float)(shield.Value / 100m), owner.Powers.Build.Get(Stat.ShieldPower)),
+                        (float)shield.DurationSeconds, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner));
+                    continue;
+                }
+                if (payload.Kind == BridgePayloadKind.Gimmick)
+                {
+                    DispatchBridgeGimmick(owner, victim, transaction, payload);
+                    continue;
+                }
                 if (payload.Kind != BridgePayloadKind.Damage) continue;
                 if (!transaction.IsCurrent(state.Runtime, CollectMechanismEquipment(hero, transaction.Notification.OwnerId), state.EndpointRanks)) return;
                 if (!BridgeDamageTargetReady(hero, victim)) continue;
                 float basis = payload.DamageBasis == BridgeDamageBasis.NativeHit ? transaction.NativeDamage : Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
-                float amount = basis * (float)(payload.ValueUnits / 10000m);
+                var effective = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
+                    transaction.Notification.SourceMemory, null, KeystoneSourceKind.NativeMemory);
+                if (effective.Disabled) continue;
+                float amount = TransformAuthoredGeneratedDamage(hero, basis * (float)(effective.Value / 100m),
+                    transaction.Notification.SourceMemory, payload.ChannelId, GimmickEffect.None);
                 _pairDamageDepth++;
                 try
                 {
@@ -114,6 +132,7 @@ namespace SodRpg.Mod
                 }
                 finally { _pairDamageDepth--; }
             }
+            DispatchAuthoredBridgeChannels(hero, victim, transaction);
         }
         private static bool BridgeDamageTargetReady(Hero hero, Entity victim) => victim != null && victim.isActive
             && victim.currentHealth > 0f && victim.GetRelation(hero) == EntityRelation.Enemy;
@@ -124,8 +143,15 @@ namespace SodRpg.Mod
         private float BridgeSuccessExposePercent(Hero hero, Entity victim)
         {
             if (!_bridgeSuccessEffects.TryGetValue(hero, out var state)) return 0;
-            return state.Runtime.BridgeExposeUnits(AttributedVictimLifetime(victim), Time.time,
-                CollectMechanismEquipment(hero, hero.GetInstanceID()), state.EndpointRanks) / 100f;
+            return (float)(state.Runtime.BridgeExposeUnits(AttributedVictimLifetime(victim), Time.time,
+                CollectMechanismEquipment(hero, hero.GetInstanceID()), state.EndpointRanks,
+                (source, channel, units) =>
+                {
+                    var result = TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.ModEffect, units / 100m,
+                        new KeystoneCaps(100), KeystonePayloadKind.Gimmick, GimmickEffect.Expose, channel),
+                        source, null, KeystoneSourceKind.NativeMemory);
+                    return !result.Disabled ? result.Value * 100m : 0m;
+                }) / 100m);
         }
     }
 }

@@ -4,10 +4,10 @@ using System.Globalization;
 
 namespace SodRpg.Core.Game
 {
-    public enum ClusterStarKind { MemoryDamage, MemoryHaste, GimmickBoost, GimmickParam, Notable, Choice, Stat }
+    public enum ClusterStarKind { MemoryDamage, MemoryHaste, GimmickBoost, GimmickParam, Notable, Choice, Stat, Keystone }
     public enum GimmickParam { Duration, Radius, ExtraTargets, Chance }
     public enum ClusterShape { Fan, Ring, Chain }
-    public enum ClusterRegionKind { Memory, Bridge, Outer }
+    public enum ClusterRegionKind { Memory, Bridge, Outer, Keystone }
 
     public sealed class ClusterRegion
     {
@@ -46,6 +46,8 @@ namespace SodRpg.Core.Game
         public ScopedModifierDef ScopedModifier { get; set; }
         public EffectChannelDef EffectChannel { get; set; }
         public NativeMemoryModifierDef NativeModifier { get; set; }
+        public AuthoredMechanismSpec Mechanism { get; set; }
+        public KeystoneDefinition KeystoneDefinition { get; set; }
     }
 
     /// <summary>Small authored clusters. Validation uses only the supplied registry, never Content.</summary>
@@ -160,7 +162,7 @@ namespace SodRpg.Core.Game
                 if (option || cluster.AuthoredEdges == null && star.MaxRank != 1 || star.Options == null || star.Options.Count != 2)
                     throw Invalid(id, "A choice requires exactly two non-choice options; ranked choices require the authored path.");
                 if (star.Amount != 0 || star.Memory != null || star.Gimmick != null || star.Power != Power.None
-                    || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null)
+                    || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null || star.Mechanism != null || star.KeystoneDefinition != null)
                     throw Invalid(id, "A choice carries its effects in its options only.");
                 foreach (var choice in star.Options)
                 {
@@ -171,6 +173,19 @@ namespace SodRpg.Core.Game
                 return;
             }
             if (star.Options != null && star.Options.Count != 0) throw Invalid(id, "Only choice stars have options.");
+            if (star.Mechanism != null)
+            {
+                if (star.Kind != ClusterStarKind.Notable || star.Gimmick != null || star.Power != Power.None || star.Amount != 0)
+                    throw Invalid(id, "A typed mechanism is an independent notable, not a legacy substitute.");
+                AuthoredMechanisms.Validate(star.Mechanism);
+                return;
+            }
+            if (star.KeystoneDefinition != null)
+            {
+                if (star.Kind != ClusterStarKind.Keystone || star.KeystoneDefinition.KeystoneId != id || star.Gimmick != null || star.Mechanism != null)
+                    throw Invalid(id, "Invalid authored keystone.");
+                return;
+            }
             if (star.Kind == ClusterStarKind.Stat)
             {
                 if (cluster.Region.Kind != ClusterRegionKind.Outer || !Enum.IsDefined(typeof(Stat), star.Stat)
@@ -267,6 +282,9 @@ namespace SodRpg.Core.Game
         {
             string id = authoredId ?? StarId(cluster, order);
             TalentDef talent;
+            if (star.KeystoneDefinition != null)
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, star.Amount, new Txt("", ""));
+            else
             if ((star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste) && star.NativeModifier == null)
                 talent = new TalentDef(id, Line.Offense, star.Name,
                     new LinkDef { Kind = star.Kind == ClusterStarKind.MemoryDamage ? LinkKind.MemoryDamage : LinkKind.MemoryHaste,
@@ -286,6 +304,8 @@ namespace SodRpg.Core.Game
             talent.ScopedModifier = star.ScopedModifier;
             talent.EffectChannel = star.EffectChannel;
             talent.NativeModifier = star.NativeModifier;
+            talent.Mechanism = star.Mechanism;
+            talent.KeystoneDefinition = star.KeystoneDefinition;
             if (star.Gimmick != null) talent.Gimmick = Gimmicks.Clamp(new GimmickEntry { StarId = id, Memory = star.Memory, Def = star.Gimmick }).Def;
             if (star.Kind == ClusterStarKind.GimmickBoost) talent.GimmickBoost = star.Amount;
             if (star.Kind == ClusterStarKind.GimmickParam && star.ScopedModifier == null)

@@ -304,9 +304,9 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Movement_event_exception_is_confined_to_the_existing_named_key()
         {
-            var runtime = Runtime(Definition(), Definition(id: "h.husk.key"));
+            var runtime = Runtime(Definition(), Definition(id: "h.husk.key2"));
             Assert.Throws<InvalidOperationException>(() => runtime.Apply(Payload(), Context(source: KeystoneSourceKind.MovementEvent)));
-            Configure(runtime, "h.husk.key", 2);
+            Configure(runtime, "h.husk.key2", 2);
             Assert.Equal(80m, runtime.Apply(Payload(), Context(2, KeystoneSourceKind.MovementEvent)).Value);
             Configure(runtime, "test.key", 3);
             Assert.Throws<InvalidOperationException>(() => runtime.Apply(Payload(), Context(3, KeystoneSourceKind.MovementEvent)));

@@ -172,11 +172,11 @@ namespace SodRpg.Core.Game
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            long result = 0;
-            foreach (var state in _entries)
+            decimal result = 0;
+            foreach (var state in ActiveStates())
                 if (state.Entry.Memory == memory && state.Entry.Def.Effect == GimmickEffect.Crescendo && state.BuffActive)
-                    result = Math.Max(result, Math.Min(40 * Gimmicks.PreciseValueScale, state.Stacks * state.Entry.Def.ValuePrecise));
-            return result / (float)Gimmicks.PreciseValueScale;
+                    result = Math.Max(result, Math.Min(40m, state.Stacks * state.Entry.Def.EffectiveValueOrAuthored));
+            return (float)result;
         }
 
         public float CombinedMemoryDamagePercent(string memory, float now, float otherPercent)
@@ -194,17 +194,17 @@ namespace SodRpg.Core.Game
         {
             if (!Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
-            long strongest = 0;
-            foreach (var state in _entries)
+            decimal strongest = 0;
+            foreach (var state in ActiveStates())
                 if (state.Entry.Def.Effect == effect && state.Victims != null)
                     foreach (var victim in state.Victims)
-                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.ValuePrecise);
-            return strongest / (float)Gimmicks.PreciseValueScale;
+                        if (victim.VictimId == victimId) strongest = Math.Max(strongest, state.Entry.Def.EffectiveValueOrAuthored);
+            return (float)strongest;
         }
 
         public void ForgetActivation(long activationId)
         {
-            foreach (var state in _entries)
+            foreach (var state in ActiveStates())
             {
                 state.CastVictims.Remove(activationId);
                 state.SeenCasts.Remove(activationId);
@@ -214,14 +214,14 @@ namespace SodRpg.Core.Game
         public void ForgetVictim(int victimId)
         {
             _dazeUntil.Remove(victimId);
-            foreach (var state in _entries)
+            foreach (var state in ActiveStates())
                 state.Victims?.RemoveAll(v => v.VictimId == victimId);
         }
 
         public void ClearTransient()
         {
             _dazeUntil.Clear();
-            foreach (var state in _entries)
+            foreach (var state in ActiveStates())
             {
                 state.HasFired = false;
                 state.BuffActive = false;
@@ -236,23 +236,28 @@ namespace SodRpg.Core.Game
     /// <summary>One non-stacking wound per victim. Refreshing preserves its tick phase and the greater damage rate.</summary>
     public sealed class GimmickWoundRuntime
     {
-        private sealed class Wound { public float Amount, Until, NextTick, Remaining; public bool Magic; }
+        private sealed class Wound { public float Amount, Until, NextTick, Remaining; public bool Magic; public string SourceMemory, EffectId; }
         private readonly Dictionary<int, Wound> _wounds = new Dictionary<int, Wound>();
         public readonly struct Tick
         {
-            public Tick(int victimId, float damage, bool magic) { VictimId = victimId; Damage = damage; Magic = magic; }
+            public Tick(int victimId, float damage, bool magic, string sourceMemory = null, string effectId = null)
+            { VictimId = victimId; Damage = damage; Magic = magic; SourceMemory = sourceMemory; EffectId = effectId; }
             public int VictimId { get; }
             public float Damage { get; }
             public bool Magic { get; }
+            public string SourceMemory { get; }
+            public string EffectId { get; }
         }
-        public void Apply(int victimId, float now, float totalDamage, bool magic, float duration = 3f, float maximumTotalDamage = float.MaxValue)
+        public void Apply(int victimId, float now, float totalDamage, bool magic, float duration = 3f, float maximumTotalDamage = float.MaxValue,
+            string sourceMemory = null, string effectId = null)
         {
             if (victimId == 0 || !Gimmicks.Finite(now) || !Gimmicks.Finite(totalDamage) || totalDamage <= 0
                 || !Gimmicks.Finite(duration) || duration <= 0 || duration > 12f) return;
             if (!Gimmicks.Finite(maximumTotalDamage) || maximumTotalDamage <= 0) return;
             if (!_wounds.TryGetValue(victimId, out var wound) || now >= wound.Until)
                 _wounds[victimId] = wound = new Wound { NextTick = now + 0.5f };
-            if (totalDamage >= wound.Amount) { wound.Amount = totalDamage; wound.Magic = magic; }
+            if (totalDamage >= wound.Amount)
+            { wound.Amount = totalDamage; wound.Magic = magic; wound.SourceMemory = sourceMemory; wound.EffectId = effectId; }
             wound.Remaining = Math.Min(maximumTotalDamage, wound.Amount * duration / 3f);
             wound.Until = now + duration;
         }
@@ -266,14 +271,14 @@ namespace SodRpg.Core.Game
                 while (wound.NextTick <= now && wound.NextTick <= wound.Until)
                 {
                     float damage = Math.Min(wound.Amount / 6f, wound.Remaining);
-                    if (damage > 0) ticks.Add(new Tick(pair.Key, damage, wound.Magic));
+                    if (damage > 0) ticks.Add(new Tick(pair.Key, damage, wound.Magic, wound.SourceMemory, wound.EffectId));
                     wound.Remaining = Math.Max(0, wound.Remaining - damage);
                     wound.NextTick += 0.5f;
                 }
                 if (now >= wound.Until)
                 {
                     // Settle the final fractional interval without resetting the half-second tick phase.
-                    if (wound.Remaining > 0) ticks.Add(new Tick(pair.Key, wound.Remaining, wound.Magic));
+                    if (wound.Remaining > 0) ticks.Add(new Tick(pair.Key, wound.Remaining, wound.Magic, wound.SourceMemory, wound.EffectId));
                     remove.Add(pair.Key);
                 }
             }

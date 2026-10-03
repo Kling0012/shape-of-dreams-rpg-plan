@@ -97,20 +97,58 @@ namespace SodRpg.Mod
             {
                 var effect = request.Entry.Def.Effect;
                 if (effect == GimmickEffect.Quicken || effect == GimmickEffect.Empower || effect == GimmickEffect.Expose) continue;
-                rt.PendingGimmicks.Add(new PendingGimmick
+                var pending = new PendingGimmick
                 {
                     ShieldEquipmentEpoch = rt.ShieldEquipmentEpoch,
+                    QueuedAt = now,
                     Request = request,
                     Victim = victim,
                     Pair = PairForRequest(rt, request.Entry.StarId),
                     Center = request.AreaAroundHero ? rt.Hero.agentPosition
                         : victim != null ? victim.position : rt.Hero.agentPosition,
-                    Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? 0.3f : 0f),
-                });
+                    Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? request.Entry.Def.EffectiveDelaySeconds ?? 0.3f : 0f),
+                };
+                var configured = LegacyGimmickForRequest(rt, request.Entry.StarId);
+                if (configured != null)
+                {
+                    long epoch = RefreshMemoryAttributionEquipment(rt.Hero);
+                    string key = BuildAggregation.GimmickStateKey(configured);
+                    bool hadKey = rt.Powers.Build.SelectedKeystone != null;
+                    pending.AuthoredChannelId = configured.StarId;
+                    pending.AuthoredIsCurrent = () => epoch == RefreshMemoryAttributionEquipment(rt.Hero)
+                        && LegacyGimmickForRequest(rt, configured.StarId) is GimmickEntry current
+                        && (BuildAggregation.GimmickStateKey(current) == key
+                            || hadKey && rt.Powers.Build.SelectedKeystone == null && SameLegacyPendingBaseline(configured, current));
+                    pending.AuthoredDefinition = () => TransformLegacyGimmick(rt,
+                        LegacyGimmickForRequest(rt, configured.StarId)?.Def, request.Entry.Memory,
+                        request.SourceKind ?? KeystoneSourceKind.NativeMemory, configured.StarId);
+                }
+                rt.PendingGimmicks.Add(pending);
             }
             requests.Clear();
         }
 
+        private static GimmickEntry LegacyGimmickForRequest(HeroRuntime rt, string id)
+        {
+            foreach (var entry in rt.Powers.Build.Gimmicks) if (entry.StarId == id) return entry;
+            return null;
+        }
+
+        private static bool SameLegacyPendingBaseline(GimmickEntry before, GimmickEntry after)
+        {
+            var a = before.Def; var b = after.Def;
+            return before.Memory == after.Memory && a.Trigger == b.Trigger && a.Effect == b.Effect
+                && a.Arg == b.Arg && a.Cooldown == b.Cooldown && a.ValuePrecise == b.ValuePrecise
+                && a.DurationUnits == b.DurationUnits && a.RadiusUnits == b.RadiusUnits
+                && a.ExtraTargets == b.ExtraTargets && a.ChanceUnits == b.ChanceUnits
+                && (!b.UncappedValue.HasValue || a.UncappedValue == b.UncappedValue)
+                && (!b.UncappedDurationUnits.HasValue || a.UncappedDurationUnits == b.UncappedDurationUnits)
+                && (!b.UncappedRadiusUnits.HasValue || a.UncappedRadiusUnits == b.UncappedRadiusUnits)
+                && (!b.UncappedExtraTargets.HasValue || a.UncappedExtraTargets == b.UncappedExtraTargets)
+                && (!b.UncappedChanceUnits.HasValue || a.UncappedChanceUnits == b.UncappedChanceUnits)
+                && (before.Channel == null) == (after.Channel == null)
+                && (before.Channel == null || FractionalScopedModifiers.ChannelKey(before) == FractionalScopedModifiers.ChannelKey(after));
+        }
         private static PairComboDef PairForRequest(HeroRuntime rt, string id)
         {
             foreach (var entry in rt.Powers.Build.PairCombos)
@@ -144,7 +182,18 @@ namespace SodRpg.Mod
             for (int i = pending.Count - 1; i >= 0; i--)
             {
                 var effect = pending[i];
-                if (effect.Due > now) continue;
+                if (effect.AuthoredIsCurrent != null && !effect.AuthoredIsCurrent()) { pending.RemoveAt(i); continue; }
+                if (effect.AuthoredDefinition != null)
+                {
+                    var effective = effect.AuthoredDefinition();
+                    if (effective == null) { pending.RemoveAt(i); continue; }
+                    effect.Request.Entry = new GimmickEntry { StarId = effect.Request.Entry.StarId, Memory = effect.Request.Entry.Memory, Def = effective };
+                    if (effective.Effect == GimmickEffect.Burst || effect.Request.AreaRadius > 0)
+                        effect.Request.AreaRadius = Gimmicks.Radius(effective, Gimmicks.AreaRadius);
+                    if (effective.Effect == GimmickEffect.Echo)
+                        effect.Due = effect.QueuedAt + (effective.EffectiveDelaySeconds ?? 0.3f);
+                }
+                if (effect.Due > now) { pending[i] = effect; continue; }
                 pending.RemoveAt(i);
                 if (effect.Pair != null && (FindMemory(rt.Hero, effect.Pair.RouteA) == null
                     || FindMemory(rt.Hero, effect.Pair.RouteB) == null)) continue;
@@ -189,7 +238,8 @@ namespace SodRpg.Mod
                     try
                     {
                         DamageAround(hero, pending.Center, request.AreaRadius,
-                            Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.ValuePercent / 100f,
+                            TransformAuthoredGeneratedDamage(hero, Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.ValuePercent / 100f,
+                                request.Entry.Memory, pending.AuthoredChannelId ?? request.Entry.StarId, GimmickEffect.Burst),
                             null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
                     }
                     finally { ExitGenerated(hero); }
@@ -210,7 +260,7 @@ namespace SodRpg.Mod
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
                                 || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
                             float allyBefore = ally.currentHealth;
-                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(ally);
+                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)).Dispatch(ally);
                             CreditHealRestored(rt, ally, allyBefore);
                         }
                     break;
@@ -243,7 +293,8 @@ namespace SodRpg.Mod
                     try
                     {
                         // Final damage is already armor-adjusted; repeat that amount without a second armor reduction.
-                        hero.PureDamage(request.Damage * def.ValuePercent / 100f, 0f)
+                        hero.PureDamage(TransformAuthoredGeneratedDamage(hero, request.Damage * def.ValuePercent / 100f,
+                            request.Entry.Memory, pending.AuthoredChannelId ?? request.Entry.StarId, GimmickEffect.Echo), 0f)
                             .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
                     }
                     finally { ExitGenerated(hero); }

@@ -833,7 +833,7 @@ namespace SodRpg.Mod
 
         private void OnApplied(DreamforgeAppliedMsg msg)
         {
-            if (msg == null || msg.protocol != Protocol.Version) return;
+            if (msg == null || msg.protocol != Protocol.Version || !MechanismHandshakeAccepted) return;
             if (msg.heroNetId != 0 && (LocalHero == null || LocalHero.netId != msg.heroNetId)) return;
             if (_appliedTransfer.TryAccept(msg.ToPart(), out string summary) && summary != null)
                 HostSummary = summary;
@@ -976,6 +976,7 @@ namespace SodRpg.Mod
         {
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
+            if (!MechanismHandshakeAccepted) return;
             if (_sentDreamLevel != Profile.DreamLevel)
             {
                 _buildDirty = true;

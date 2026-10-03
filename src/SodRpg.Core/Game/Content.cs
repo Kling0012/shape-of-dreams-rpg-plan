@@ -216,6 +216,8 @@ namespace SodRpg.Core.Game
         public ScopedModifierDef ScopedModifier { get; set; }
         public EffectChannelDef EffectChannel { get; set; }
         public NativeMemoryModifierDef NativeModifier { get; set; }
+        public AuthoredMechanismSpec Mechanism { get; set; }
+        public KeystoneDefinition KeystoneDefinition { get; set; }
         public bool IsChoice => ClusterStar?.Kind == ClusterStarKind.Choice;
         public IReadOnlyList<TalentDef> Choices { get; set; } = Array.Empty<TalentDef>();
         public int GimmickBoost { get; set; }
@@ -244,6 +246,11 @@ namespace SodRpg.Core.Game
         /// <summary>星図に表示する効果。小ノードは1段あたりの値。</summary>
         public string Describe()
         {
+            if (Mechanism != null) return AuthoredMechanisms.Describe(Mechanism)
+                + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
+            if (KeystoneDefinition != null) return (AuthoredStar?.KeystoneUpside?.ToString() ?? AuthoredMechanisms.DescribeKeystone(KeystoneDefinition, true)) + "\n"
+                + (AuthoredStar?.KeystoneDownside?.ToString() ?? AuthoredMechanisms.DescribeKeystone(KeystoneDefinition, false))
+                + Loc.T($"（{KeystoneDefinition.Cost}ポイント）", $" ({KeystoneDefinition.Cost} points)");
             if (PairCombo != null) return PairCombos.Describe(PairCombo);
             if (IsChoice)
                 return Loc.T("どちらか1つを選択：", "Choose one:") + "\n"
@@ -5020,11 +5027,19 @@ namespace SodRpg.Core.Game
         public static bool TryGetBase(string id, out BaseDef def) => BaseById.TryGetValue(id ?? string.Empty, out def);
         public static bool TryGetUnique(string id, out UniqueDef def) => UniqueById.TryGetValue(id ?? string.Empty, out def);
         public static bool TryGetTalent(string heroKey, string localId, out TalentDef def)
-            => TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);
+        {
+            if (StarClusters.TryGetRegisteredTree(heroKey, out var tree))
+            {
+                foreach (var node in tree) if (node.Id == localId) { def = node; return true; }
+                def = null; return false;
+            }
+            return TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);
+        }
 
         /// <summary>Only for globally unique legacy IDs. Shared local IDs require an explicit hero.</summary>
         public static bool TryGetTalent(string id, out TalentDef def)
         {
+            if (StarClusters.TryGetRegisteredTalent(id, out def)) return true;
             if (!UniqueTalentById.TryGetValue(id ?? string.Empty, out def)) return false;
             if (def == null) throw new InvalidOperationException("A shared star ID requires its hero key: " + id);
             return true;

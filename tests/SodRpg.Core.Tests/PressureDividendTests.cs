@@ -76,8 +76,11 @@ namespace SodRpg.Core.Tests
             Assert.False(channel.Matches("St_D_IcyVeins", new HashSet<string> { "St_Q_CruelSun" }));
             Assert.True(channel.Matches("St_D_IcyVeins", new HashSet<string> { "St_D_IcyVeins", "St_R_BaptismOfSun", "St_Q_CruelSun" }));
             Assert.False(channel.Matches("St_D_Resolve", new HashSet<string> { "St_D_IcyVeins", "St_R_BaptismOfSun", "St_Q_CruelSun" }));
-            Assert.Throws<ArgumentException>(() => new PressureDividendChannel(new[]
-            { new PressureDividendContribution("synthetic.a", "St_D_IcyVeins", 1) }, boostModifierUnits: 1));
+            var fractional = new PressureDividendChannel(new[]
+            { new PressureDividendContribution("synthetic.a", "St_D_IcyVeins", 1) }, boostModifierUnits: 1);
+            var runtime = new PressureDividendRuntime();
+            Assert.NotNull(runtime.TryAward(Death(spawn: 8), Native(), new[] { fractional }, Equipped(), () => 1.00005m, () => "below"));
+            Assert.Null(runtime.TryAward(Death(spawn: 9), Native(), new[] { fractional }, Equipped(), () => 1.0001m, () => "boundary"));
         }
 
         [Fact]
@@ -159,7 +162,7 @@ namespace SodRpg.Core.Tests
         {
             var runtime = new PressureDividendRuntime();
             int rolls = 0;
-            Func<int> random = () => { rolls++; return roll; };
+            Func<decimal> random = () => { rolls++; return roll; };
             Assert.Equal(success, runtime.TryAward(Death(), Native(), new[] { Channel() }, Equipped(), random, () => "nonce") != null);
             // Equivalent rebuilt channels cannot reset a successful or failed roll.
             Assert.Null(runtime.TryAward(Death(), Native(), new[] { Channel() }, Equipped(), random, () => "new-nonce"));

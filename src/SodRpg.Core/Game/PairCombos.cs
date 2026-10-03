@@ -12,6 +12,7 @@ namespace SodRpg.Core.Game
     {
         public string Id { get; internal set; }
         public string HeroKey { get; internal set; }
+        public BridgeSuccessDefinition AuthoredDefinition { get; internal set; }
         public int BridgeIndex { get; internal set; }
         public string BridgeId { get; internal set; }
         public string RouteA { get; internal set; }
@@ -44,7 +45,7 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// 回避そのものは起点にしない。ただしダメージを出す移動の記憶（重装タックル・フロストチャージ）の「当たったとき」だけは例外（v1.30 の決定）。
         /// </summary>
-        public bool MovementOrigin => TriggerMemory.StartsWith("St_M_", StringComparison.Ordinal)
+        public bool MovementOrigin => AuthoredDefinition == null && TriggerMemory != null && TriggerMemory.StartsWith("St_M_", StringComparison.Ordinal)
             && !(Trigger == PairComboTrigger.OnHit && DamagingMovement.Contains(TriggerMemory));
 
         private static readonly HashSet<string> DamagingMovement = new HashSet<string>(StringComparer.Ordinal) { "St_M_Charge", "St_M_FrostyCharge" };
@@ -74,12 +75,15 @@ namespace SodRpg.Core.Game
             foreach (var def in All) result.Add(id ? def.Id : def.BridgeId, def);
             return result;
         }
-        public static PairComboDef ForBridge(string bridgeId) => bridgeId != null && ByBridge.TryGetValue(bridgeId, out var def) ? def : null;
-        public static PairComboDef Get(string id) => id != null && ById.TryGetValue(id, out var def) ? def : null;
+        public static IReadOnlyList<PairComboDef> RegisteredAll => StarClusters.RegisteredPairs(All);
+        public static PairComboDef ForBridge(string bridgeId) => bridgeId != null && ByBridge.TryGetValue(bridgeId, out var def) ? def
+            : StarClusters.RegisteredPair(bridgeId, true);
+        public static PairComboDef Get(string id) => id != null && ById.TryGetValue(id, out var def) ? def
+            : StarClusters.RegisteredPair(id, false);
         public static PairComboEntry Clamp(PairComboEntry entry)
         {
             var def = entry?.Def == null ? null : Get(entry.Def.Id);
-            return def == null || entry.Ranks <= 0 ? null : new PairComboEntry { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks) };
+            return def == null || def.AuthoredDefinition != null || entry.Ranks <= 0 ? null : new PairComboEntry { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks) };
         }
         public static PairComboEntry Activate(PairComboDef def, HeroState hero, int bridgeRanks)
         {
@@ -93,6 +97,9 @@ namespace SodRpg.Core.Game
 
         public static string Describe(PairComboDef def, int ranks = 1)
         {
+            if (def?.AuthoredDefinition != null)
+                return AuthoredMechanisms.Describe(new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.BridgeSuccess,
+                    ChannelId = def.Id, Bridge = def.AuthoredDefinition });
             var entry = Clamp(new PairComboEntry { Def = def, Ranks = ranks });
             if (entry == null) return "";
             def = entry.Def;

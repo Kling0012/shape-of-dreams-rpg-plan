@@ -53,10 +53,15 @@ namespace SodRpg.Core.Game
                 ((int)d.Effect).ToString(CultureInfo.InvariantCulture), d.Arg.ToString(CultureInfo.InvariantCulture),
                 d.Cooldown.ToString("R", CultureInfo.InvariantCulture), d.DurationUnits.ToString(CultureInfo.InvariantCulture),
                 d.RadiusUnits.ToString(CultureInfo.InvariantCulture), d.ExtraTargets.ToString(CultureInfo.InvariantCulture),
-                d.ChanceUnits.ToString(CultureInfo.InvariantCulture), entry.Channel == null ? "" : FractionalScopedModifiers.ChannelKey(entry));
+                d.ChanceUnits.ToString(CultureInfo.InvariantCulture), d.UncappedDurationUnits?.ToString(CultureInfo.InvariantCulture) ?? "",
+                d.UncappedRadiusUnits?.ToString(CultureInfo.InvariantCulture) ?? "", d.UncappedExtraTargets?.ToString(CultureInfo.InvariantCulture) ?? "",
+                d.UncappedChanceUnits?.ToString(CultureInfo.InvariantCulture) ?? "",
+                entry.Channel == null ? "" : FractionalScopedModifiers.ChannelKey(entry));
         }
 
-        public static string GimmickStateKey(GimmickEntry entry) => entry.StarId + ":" + GimmickKey(entry);
+        public static string GimmickStateKey(GimmickEntry entry) => entry.StarId + ":" + GimmickKey(entry)
+            + ":" + (entry.Def.UncappedValue?.ToString(CultureInfo.InvariantCulture) ?? "")
+            + ":" + entry.Def.EffectiveValueOrAuthored.ToString(CultureInfo.InvariantCulture);
 
         /// <summary>Bridge, trigger, payoff and explicit cooldown beneficiary are never interchangeable.</summary>
         public static string PairKey(PairComboEntry entry)

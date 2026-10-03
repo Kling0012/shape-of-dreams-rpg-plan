@@ -12,7 +12,7 @@ namespace SodRpg.Mod
     internal enum HeroSkillLocation { Identity, Movement, Q, W, E, R }
     internal struct GemLocation { public HeroSkillLocation skill; public int index; }
     internal sealed class Gem : Actor { }
-    internal sealed partial class Hero : Entity { public HeroSkill Skill = new HeroSkill(); }
+    internal partial class Hero : Entity { public HeroSkill Skill = new HeroSkill(); }
     internal sealed partial class HeroSkill
     {
         public readonly Dictionary<GemLocation, Gem> gems = new Dictionary<GemLocation, Gem>();
@@ -40,7 +40,7 @@ namespace SodRpg.Mod
             for (int i = 0; i < GetMaxGemCount(location); i++) gems[new GemLocation { skill = location, index = i }] = new Gem();
         }
     }
-    internal static class Log { public static void Info(string text) { } public static void Error(string text) { } public static void Warn(string text) { } }
+    internal static partial class Log { public static void Info(string text) { } public static void Error(string text) { } }
     internal sealed partial class HostAuthority
     {
         internal sealed partial class HeroRuntime

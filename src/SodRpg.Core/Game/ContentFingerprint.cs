@@ -5,15 +5,34 @@ namespace SodRpg.Core.Game
 {
     /// <summary>
     /// 遊びの内容（星・遺物・固有効果など）の指紋。同じ通信の版でも内容が違う MOD どうしを見分けるために使う
-    /// （マルチプレイのレビュー mp-ui-save #4）。ID の並びから決まるので、同じ版のビルドなら必ず一致する。
+    /// 内容のIDと機構・上限・検証済み記憶属性から決まる。登録が変われば同じ通信の版でも再交渉する。
     /// </summary>
     public static class ContentFingerprint
     {
         private static string _value;
+        private static string _capIdentity, _authoredIdentity;
+        private static readonly object Gate = new object();
 
-        public static string Value => _value ?? (_value = Compute());
+        public static string Value
+        {
+            get
+            {
+                string caps = FractionalScopedModifiers.CapRegistryFingerprint;
+                string authored = StarClusters.AuthoredRegistryFingerprint;
+                lock (Gate)
+                {
+                    if (_value == null || _capIdentity != caps || _authoredIdentity != authored)
+                    {
+                        _value = Compute(caps, authored);
+                        _capIdentity = caps;
+                        _authoredIdentity = authored;
+                    }
+                    return _value;
+                }
+            }
+        }
 
-        private static string Compute()
+        private static string Compute(string caps, string authored)
         {
             var ids = new List<string>();
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
@@ -25,6 +44,8 @@ namespace SodRpg.Core.Game
             ids.Add("power:" + Enum.GetValues(typeof(Power)).Length);
             ids.Add("stat:" + Enum.GetValues(typeof(Stat)).Length);
             ids.Add("gimmick:" + Enum.GetValues(typeof(GimmickEffect)).Length);
+            ids.Add("mechanisms:v13:" + caps + "/" + authored);
+            ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
             ids.Sort(StringComparer.Ordinal);
             ulong hash = 1469598103934665603UL; // FNV-1a 64
             foreach (string id in ids)

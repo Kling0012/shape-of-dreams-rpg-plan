@@ -37,6 +37,24 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Attack_rearming_source_consumes_previous_preparation_but_retains_its_new_preparation()
+        {
+            var runtime = Runtime(new MemoryPrimedDefinition("a", "source.a", MemoryEventKind.Hit, 2000));
+            Assert.True(runtime.OnSourceEvent(Event("source.a", 1, MemoryEventKind.Hit, victim: 1), 0));
+            Assert.True(runtime.OnSourceEvent(Event("source.a", 2, MemoryEventKind.Hit, victim: 1,
+                payload: NativePayloadKind.MainBasicAttack), 1));
+            Assert.True(runtime.TryConsume(Hit(2), 1, 100, null, out var previous));
+            Assert.Equal(20, previous.Damage);
+            Assert.Equal(5, previous.ExpiresAt);
+            Assert.Equal(1, runtime.ArmedSourceCount);
+            Assert.False(runtime.TryConsume(Hit(2, 2), 1, 100, null, out _));
+            Assert.True(runtime.TryConsume(Hit(3), 1, 100, null, out var next));
+            Assert.Equal(20, next.Damage);
+            Assert.Equal(6, next.ExpiresAt);
+            Assert.Equal(0, runtime.ArmedSourceCount);
+        }
+
+        [Fact]
         public void Candidate_comparison_uses_resolved_damage_not_coefficient()
         {
             var runtime = Runtime(Def("a", "source.a", 2000));

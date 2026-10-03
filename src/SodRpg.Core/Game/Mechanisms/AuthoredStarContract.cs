@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SodRpg.Core.Game
 {
@@ -45,6 +46,14 @@ namespace SodRpg.Core.Game
         public ScopedModifierDef ScopedModifier { get; set; }
         public EffectChannelDef EffectChannel { get; set; }
         public NativeMemoryModifierDef NativeModifier { get; set; }
+        public AuthoredMechanismSpec Mechanism { get; set; }
+        public KeystoneDefinition KeystoneDefinition { get; set; }
+        public bool ReceiverOnlyBridge { get; set; }
+        public string SourceDocument { get; set; }
+        public IReadOnlyList<string> MechanismIds { get; set; } = Array.Empty<string>();
+        public string Notes { get; set; }
+        public Txt KeystoneUpside { get; set; }
+        public Txt KeystoneDownside { get; set; }
         public AuthoredStarKey Key => new AuthoredStarKey(HeroKey, LocalStarId);
     }
 
@@ -147,6 +156,7 @@ namespace SodRpg.Core.Game
         public static AuthoredStarRegistry GenerateAuthored(IReadOnlyList<AuthoredStarDef> definitions, IReadOnlyList<TalentDef> existingTalents)
         {
             if (definitions == null || existingTalents == null) throw Invalid("registry", "Missing authored definitions or existing talents.");
+            definitions = NormalizeAuthored(definitions, existingTalents);
             var result = new Dictionary<AuthoredStarKey, TalentDef>();
             var heroes = new HashSet<string>(StringComparer.Ordinal);
             foreach (var talent in existingTalents)
@@ -166,8 +176,8 @@ namespace SodRpg.Core.Game
                     || !Enum.IsDefined(typeof(ClusterShape), def.Shape) || def.Effect == null || def.Edges == null
                     || def.RequiredStarIds == null || def.RequiredAnyStarIds == null)
                     throw Invalid(def?.LocalStarId ?? "registry", "Incomplete authored star.");
-                if (!def.RetainedLegacy && (def.Effect.MaxRank != 1 || def.Effect.RankCost != 1))
-                    throw Invalid(def.LocalStarId, "New stars have one rank and cost one point.");
+                if (!def.RetainedLegacy && (def.Effect.MaxRank != 1 || def.Effect.RankCost != (def.Effect.KeystoneDefinition?.Cost ?? 1)))
+                    throw Invalid(def.LocalStarId, "New stars have one rank and their declared point cost.");
                 if (def.RequiresExplicitSelection && def.Effect.Kind != ClusterStarKind.Choice)
                     throw Invalid(def.LocalStarId, "Explicit selection requires a two-option choice.");
                 if (!authoredKeys.Add(def.Key)) throw Invalid(def.LocalStarId, "Duplicate hero/local ID.");
@@ -204,12 +214,12 @@ namespace SodRpg.Core.Game
                     var starMemories = new List<IReadOnlyList<string>>(group.Count);
                     foreach (var def in group)
                     {
-                        if (def.AnchorId != first.AnchorId || def.Shape != first.Shape || def.Region.Kind != first.Region.Kind || def.Region.Id != first.Region.Id)
+                        if (def.Shape != first.Shape || def.Region.Kind != first.Region.Kind || def.Region.Id != first.Region.Id)
                             throw Invalid(def.LocalStarId, "Cluster metadata differs between stars.");
                         effects.Add(EffectiveDefinition(def));
                         edges.AddRange(def.Edges);
                         var owned = new HashSet<string>(StringComparer.Ordinal);
-                        VerifyOwnership(def, existing, group, owned);
+                        VerifyOwnership(def, existing, definitions, owned);
                         starMemories.Add(new List<string>(owned).AsReadOnly());
                         memories.UnionWith(owned);
                     }
@@ -246,6 +256,7 @@ namespace SodRpg.Core.Game
                 foreach (var node in result) if (node.Key.HeroKey == hero) tree.Add(node.Value);
                 AuthoredStarContract.ValidateReferences(tree);
                 FractionalScopedModifiers.ValidateTree(tree);
+                AuthoredMechanisms.ValidateBindings(tree);
                 var clusterDefs = new List<StarClusterDef>(generatedClusters.Values);
                 foreach (var node in tree)
                     if (node.AuthoredStar != null && node.ScopedModifier == null)
@@ -254,7 +265,7 @@ namespace SodRpg.Core.Game
             return new AuthoredStarRegistry(result);
         }
 
-        private static void VerifyOwnership(AuthoredStarDef def, Dictionary<string, TalentDef> existing, List<AuthoredStarDef> group, HashSet<string> memories)
+        private static void VerifyOwnership(AuthoredStarDef def, Dictionary<string, TalentDef> existing, IReadOnlyList<AuthoredStarDef> group, HashSet<string> memories)
         {
             bool HeroMemory(string memory)
             {
@@ -274,18 +285,35 @@ namespace SodRpg.Core.Game
             }
             else if (def.Region.Kind == ClusterRegionKind.Bridge)
             {
-                var pair = PairCombos.ForBridge(def.Region.Id);
-                if (pair == null || pair.HeroKey != def.HeroKey || def.AnchorId != pair.BridgeId)
-                    throw Invalid(def.LocalStarId, "Bridge requires a registered real pair.");
-                memories.Add(pair.RouteA); memories.Add(pair.RouteB);
-                if (target != null && target != pair.RouteA && target != pair.RouteB) throw Invalid(def.LocalStarId, "Receiver target is outside its pair.");
+                if (def.ReceiverOnlyBridge)
+                {
+                    if (!Verified(target) || def.MemoryOwnership?.SourceMemories == null || def.MemoryOwnership.SourceMemories.Count == 0
+                        || !existing.ContainsKey(def.AnchorId) && !group.Any(x => x.HeroKey == def.HeroKey && x.LocalStarId == def.AnchorId))
+                        throw Invalid(def.LocalStarId, "Receiver-only bridge requires its real anchor, target and verified sources.");
+                    memories.Add(target);
+                }
+                else
+                {
+                    var pair = PairCombos.ForBridge(def.Region.Id) ?? ResolveAuthoredPair(def.HeroKey, def.Region.Id, group);
+                    if (pair == null || pair.HeroKey != def.HeroKey || def.AnchorId != pair.BridgeId)
+                        throw Invalid(def.LocalStarId, "Bridge requires a registered real pair.");
+                    memories.Add(pair.RouteA); memories.Add(pair.RouteB);
+                    if (target != null && target != pair.RouteA && target != pair.RouteB) throw Invalid(def.LocalStarId, "Receiver target is outside its pair.");
+                }
+            }
+            else if (def.Region.Kind == ClusterRegionKind.Keystone)
+            {
+                foreach (var talent in existing.Values) if (talent.RouteMemory != null) memories.Add(talent.RouteMemory);
+                foreach (string common in CommonForAuthoring()) memories.Add(common);
+                return;
             }
             else
             {
                 if (!string.IsNullOrEmpty(def.Region.Id)) throw Invalid(def.LocalStarId, "Outer has no route ID.");
                 bool validAnchor = existing.TryGetValue(def.AnchorId, out var anchor) && anchor.IsOuterAnchor && anchor.PerRank > 0 && !anchor.IsPowerNode && anchor.Gimmick == null;
                 foreach (var candidate in group)
-                    if (candidate.LocalStarId == def.AnchorId && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0) validAnchor = true;
+                    if (candidate.HeroKey == def.HeroKey && candidate.ClusterId == def.ClusterId && candidate.LocalStarId == def.AnchorId
+                        && candidate.Effect.Kind == ClusterStarKind.Stat && candidate.Effect.Amount > 0) validAnchor = true;
                 if (!validAnchor) throw Invalid(def.LocalStarId, "Outer anchor must be an effectful stat star, including the shared s1.");
                 foreach (var talent in existing.Values) if (talent.RouteId != null && talent.RouteMemory != null) memories.Add(talent.RouteMemory);
                 foreach (string common in CommonForAuthoring()) memories.Add(common);
@@ -312,7 +340,7 @@ namespace SodRpg.Core.Game
             }
             if (node.IsChoice)
             {
-                if (node.NativeModifier != null || node.ScopedModifier != null || node.EffectChannel != null)
+                if (node.NativeModifier != null || node.ScopedModifier != null || node.EffectChannel != null || node.Mechanism != null || node.KeystoneDefinition != null)
                     throw Invalid(node.Id, "Choice metadata belongs to its selected option, not the parent.");
                 foreach (var option in node.Choices) ValidateAuthoredMetadata(option, def, owned, existing);
                 return;
@@ -325,15 +353,47 @@ namespace SodRpg.Core.Game
             if (channel != null && (!Permitted(channel.SourceMemory) || !Permitted(channel.ReceiverMemory)
                 || target != null && channel.ReceiverMemory != target))
                 throw Invalid(node.Id, "Channel source and receiver must have explicit verified ownership.");
+            bool Declares(MemorySelector selector, string value)
+            {
+                if (selector == null) return false;
+                if (selector.Memory == value) return true;
+                foreach (string allowed in selector.AllowedMemories) if (allowed == value) return true;
+                foreach (var alternative in selector.Alternatives) if (Declares(alternative, value)) return true;
+                return false;
+            }
             if (def.Region.Kind == ClusterRegionKind.Memory && memory != null && memory != target
-                && (channel == null || channel.SourceMemory != memory || channel.ReceiverMemory != target))
+                && (channel == null || channel.SourceMemory != memory || channel.ReceiverMemory != target)
+                && (node.Mechanism?.Recharge == null || !Declares(node.Mechanism.Recharge.Source, memory) || !Declares(node.Mechanism.Recharge.Recipient, target)))
                 throw Invalid(node.Id, "Only an explicit cross-source receiver may refer outside the region's target.");
+            void VerifySpec(AuthoredMechanismSpec spec)
+            {
+                void VerifySelector(MemorySelector selector)
+                {
+                    if (selector == null) return;
+                    if (selector.Memory != null && !Permitted(selector.Memory)) throw Invalid(node.Id, "Mechanism memory is outside verified ownership.");
+                    foreach (string allowed in selector.AllowedMemories) if (!Permitted(allowed)) throw Invalid(node.Id, "Selector filter is outside verified ownership.");
+                    foreach (var alternative in selector.Alternatives) VerifySelector(alternative);
+                }
+                VerifySelector(spec.Source); VerifySelector(spec.Recharge?.Source); VerifySelector(spec.Recharge?.Recipient);
+                foreach (string required in spec.RequiredMemories) if (!Permitted(required)) throw Invalid(node.Id, "Mechanism equipment predicate lacks verified ownership.");
+                foreach (string identity in spec.TriggerByIdentity.Keys) if (!Permitted(identity)) throw Invalid(node.Id, "Identity trigger lacks verified ownership.");
+                if (spec.Primed != null && !Permitted(spec.Primed.SourceMemory) || spec.Dividend != null && !Permitted(spec.Dividend.SourceMemory)
+                    || spec.Relay != null && (!Permitted(RelayWindowDefinition.SourceMemory) || !Permitted(spec.Relay.TargetMemory)))
+                    throw Invalid(node.Id, "Mechanism source/target lacks verified ownership.");
+            }
+            if (node.Mechanism != null) VerifySpec(node.Mechanism);
+            if (node.KeystoneDefinition != null)
+            {
+                foreach (string required in node.KeystoneDefinition.RequiredMemories)
+                    if (!Permitted(required)) throw Invalid(node.Id, "Keystone equipment predicate lacks verified ownership.");
+                foreach (var grant in node.KeystoneDefinition.Grants) VerifySpec(grant);
+            }
         }
 
         private static ClusterStarDef EffectiveDefinition(AuthoredStarDef def)
         {
             var effect = def.Effect;
-            if (def.ScopedModifier == null && def.EffectChannel == null && def.NativeModifier == null) return effect;
+            if (def.ScopedModifier == null && def.EffectChannel == null && def.NativeModifier == null && def.Mechanism == null && def.KeystoneDefinition == null) return effect;
             return new ClusterStarDef
             {
                 Kind = effect.Kind, Name = effect.Name, Memory = effect.Memory, Amount = effect.Amount,
@@ -341,7 +401,9 @@ namespace SodRpg.Core.Game
                 Options = effect.Options, MaxRank = effect.MaxRank, RankCost = effect.RankCost,
                 ScopedModifier = def.ScopedModifier ?? effect.ScopedModifier,
                 EffectChannel = def.EffectChannel ?? effect.EffectChannel,
-                NativeModifier = def.NativeModifier ?? effect.NativeModifier
+                NativeModifier = def.NativeModifier ?? effect.NativeModifier,
+                Mechanism = def.Mechanism ?? effect.Mechanism,
+                KeystoneDefinition = def.KeystoneDefinition ?? effect.KeystoneDefinition
             };
         }
 
