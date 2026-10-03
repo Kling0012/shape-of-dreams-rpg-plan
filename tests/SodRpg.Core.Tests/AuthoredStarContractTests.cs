@@ -160,6 +160,34 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { star }, Base()));
         }
 
+        private static AuthoredStarDef CrossRegionReceiver(string[] sources)
+        {
+            const string id = "test.cross.receiver";
+            return new AuthoredStarDef
+            {
+                HeroKey = Hero, LocalStarId = id, ClusterId = "test.cross", Region = ClusterRegion.Memory("h.cetus.route.icy-veins"),
+                AnchorId = "h.cetus.route.icy-veins.4", Shape = ClusterShape.Chain,
+                Effect = new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = Name, MaxRank = 1, RankCost = 1, Mechanism = new AuthoredMechanismSpec
+                    { ChannelId = id, Source = MemorySelector.Parse(Memory), Trigger = MemoryEventKind.Hit, Budget = AttributionBudget.PerActivation,
+                      Kind = AuthoredMechanismKind.DirectedRecharge, Recharge = new DirectedRechargeChannel(id, MemorySelector.Parse(Memory), MemoryEventKind.Hit,
+                          MemorySelector.Parse("St_M_FrostyCharge"), new[] { 100 }, AttributionBudget.PerActivation) } },
+                MemoryOwnership = new MemoryOwnership { TargetMemory = "St_M_FrostyCharge", SourceMemories = sources },
+                Edges = new[] { new AuthoredStarEdge("h.cetus.route.icy-veins.4", id) }
+            };
+        }
+
+        [Fact]
+        public void ARegionStarMayReceiveIntoAnotherHeroMemoryOnlyWhenTheRegionMemoryIsItsExplicitSource()
+        {
+            // Recv(Icy, ..., Frosty): the star lives in its source's region, the receiver is another verified hero memory.
+            Assert.NotNull(StarClusters.GenerateAuthored(new[] { CrossRegionReceiver(new[] { Memory }) }, Base()).TreeFor(Hero));
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { CrossRegionReceiver(new[] { "St_D_ChargedAnguillian" }) }, Base()));
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { CrossRegionReceiver(Array.Empty<string>()) }, Base()));
+            var foreign = CrossRegionReceiver(new[] { Memory });
+            foreign.MemoryOwnership.TargetMemory = "St_Q_NotAHeroMemory";
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(new[] { foreign }, Base()));
+        }
+
         [Fact]
         public void ChangedNonChoiceMigrationRevisionPersistsAndFreshPurchasesAreNotRefundedAgain()
         {

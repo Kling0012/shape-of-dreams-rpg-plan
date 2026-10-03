@@ -193,7 +193,7 @@ namespace SodRpg.Core.Tests
                     if (rank >= talent.MaxRank || talent.RankCost > Rules.FreePoints(profile, hero) - reserve) continue;
                     if (skipped.Contains(talent.Id + "#" + rank) || !layout.CanReach(state, talent, snapshot)) continue;
                     var change = new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = talent.Id,
-                        SelectedOption = talent.IsChoice && rank == 0 ? 0 : (int?)null };
+                        SelectedOption = !talent.IsChoice ? (int?)null : rank == 0 ? 0 : state.TalentChoices[talent.Id] }; // a ranked Choice keeps its option
                     var plan = Rules.PreviewAllocationChange(profile, hero, change);
                     if (!plan.CanApply || plan.AffectedRefundIds.Count > 0)
                     {
@@ -208,7 +208,7 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        private static Profile ThreeHundredPointProfile(string hero, out string keystone, out List<string> refused)
+        internal static Profile ThreeHundredPointProfile(string hero, out string keystone, out List<string> refused)
         {
             var profile = Profile.CreateNew(1331);
             var state = profile.Hero(hero);

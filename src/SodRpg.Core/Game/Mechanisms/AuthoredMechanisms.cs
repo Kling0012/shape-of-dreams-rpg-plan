@@ -441,7 +441,7 @@ namespace SodRpg.Core.Game
                     default: boost += amount; sourceBoost |= m.ScopeKind != ScopeKind.Receiver; receiverBoost |= m.ScopeKind == ScopeKind.Receiver; break;
                 }
             }
-            if (sourceBoost && receiverBoost) throw new InvalidOperationException("Source/receiver double boost is forbidden.");
+            if (sourceBoost && receiverBoost) throw new InvalidOperationException("Source/receiver double boost is forbidden: " + s.ChannelId);
             if (caps.TryGetValue(-1, out var bc)) boost = Math.Min(boost, bc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Duration, out var dc)) duration = Math.Min(duration, dc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Radius, out var rc)) radius = Math.Min(radius, rc.MaximumModifier.Units);

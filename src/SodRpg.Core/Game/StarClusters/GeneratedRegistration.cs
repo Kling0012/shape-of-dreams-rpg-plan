@@ -10,17 +10,52 @@ namespace SodRpg.Core.Game
         private static bool generatedRegistered;
 
         /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>
-        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Vesper" });
+        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Husk", "Hero_Lacerta", "Hero_Vesper" });
+
+        /// <summary>Every hero whose manifest compiled to C# (a superset of GeneratedHeroes; used by the registration diagnostics).</summary>
+        public static readonly IReadOnlyList<string> CompiledHeroes = Array.AsReadOnly(new string[] { "Hero_Husk", "Hero_Lacerta", "Hero_Vesper" });
 
         /// <summary>Install one generated hero's authored tree, then its migration rules (tests and tools; production uses RegisterAllGenerated).</summary>
         public static void RegisterGeneratedHero(string heroKey)
         {
             switch (heroKey)
             {
+                case "Hero_Husk":
+                    RegisterAuthored("Hero_Husk", CreateHuskAuthored());
+                    RegisterMigrations("Hero_Husk", CreateHuskMigrations());
+                    return;
+                case "Hero_Lacerta":
+                    RegisterAuthored("Hero_Lacerta", CreateLacertaAuthored());
+                    RegisterMigrations("Hero_Lacerta", CreateLacertaMigrations());
+                    return;
                 case "Hero_Vesper":
                     RegisterAuthored("Hero_Vesper", CreateVesperAuthored());
                     RegisterMigrations("Hero_Vesper", CreateVesperMigrations());
                     return;
+                default: throw new ArgumentException("No generated star map for " + heroKey);
+            }
+        }
+
+        /// <summary>The generated authored of one compiled hero (registration diagnostics).</summary>
+        public static AuthoredStarDef[] CreateGeneratedAuthored(string heroKey)
+        {
+            switch (heroKey)
+            {
+                case "Hero_Husk": return CreateHuskAuthored();
+                case "Hero_Lacerta": return CreateLacertaAuthored();
+                case "Hero_Vesper": return CreateVesperAuthored();
+                default: throw new ArgumentException("No generated star map for " + heroKey);
+            }
+        }
+
+        /// <summary>The generated migrations of one compiled hero (registration diagnostics).</summary>
+        public static LegacyStarMigration[] CreateGeneratedMigrations(string heroKey)
+        {
+            switch (heroKey)
+            {
+                case "Hero_Husk": return CreateHuskMigrations();
+                case "Hero_Lacerta": return CreateLacertaMigrations();
+                case "Hero_Vesper": return CreateVesperMigrations();
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
         }

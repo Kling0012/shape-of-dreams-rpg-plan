@@ -9,9 +9,16 @@ A failed star is counted once, but every field diagnostic is retained. Exit stat
 nonzero whenever any selected hero has an unmapped row, including in report mode.
 
 Output mode writes <Hero>.Generated.cs only for heroes with zero failures (never a partial
-hero), plus GeneratedRegistration.cs: StarClusters.GeneratedHeroes and the one entry point
-StarClusters.RegisterAllGenerated(), which registers each generated hero's authored tree and
-its migration rules.
+hero), plus GeneratedRegistration.cs: StarClusters.CompiledHeroes (every hero with generated C#),
+StarClusters.GeneratedHeroes (only the heroes listed in registered.txt, i.e. verified to pass the
+real StarClusters.RegisterAuthored; a hero that fails registration must never be listed because the
+game would crash at startup) and the one entry point StarClusters.RegisterAllGenerated(), which
+registers each generated hero's authored tree and its migration rules.
+
+    python tools/star-manifest/gen_cs.py --all --diagnostic
+
+additionally writes guarded, test-only maps (tests/SodRpg.Core.Tests/Diagnostics, git-ignored) for
+RegistrationDiagnostics, which lists every registration rejection of every hero.
 """
 import argparse
 from collections import defaultdict
@@ -28,6 +35,7 @@ import validate as canonical
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 OUTPUT = ROOT / "src/SodRpg.Core/Game/StarClusters"
+DIAGNOSTICS = ROOT / "tests/SodRpg.Core.Tests/Diagnostics"
 HEROES = tuple(sorted(name for name in canonical.EXPECTED if name != "outer"))
 TRIGGERS = {"OnUse": "ConfirmedUse", "OnHit": "Hit", "OnKill": "Kill",
             "OnCrit": "CriticalHit", "OnBasicAttack": "OwnedBasicAttackFired"}
@@ -251,7 +259,59 @@ class Compiler:
                 resolved.append(concrete)
         return array(["GimmickEffect." + e for e in resolved], "GimmickEffect")
 
-    def supporting_rows(self, memory, effect_ids, effects, param):
+    def payoff_memory(self, bridge):
+        """The memory whose events pay a bridge off (AuthoredMechanisms.SourceMemory of its BridgeSuccess spec)."""
+        pair = self.pairs[bridge]
+        if pair.get("authored"):
+            return pair["authored"]["source"]
+        table = pair["table"]
+        if table is None:
+            raise ValueError("no pair table row for " + bridge)
+        return table[4] if table[3] != "None" else table[1]
+
+    def boost_recipients(self, sid, path, memory):
+        """None when a whole-memory boost of this memory may use the plain Memory scope; otherwise (ids, effect names) of the exact
+        recipients: the memory's own gimmicks, without its Reload effects and without its Recv recharges delivered to another memory."""
+        included, excluded, included_effects, excluded_effects = [], set(), [], set()
+        for sid_, (kind, args, mem) in self.route_rows.items():
+            if sid_ in self.by_id or mem != memory or kind not in ("G", "CapG"):
+                continue
+            match = re.search(r"GimmickEffect\.(\w+)", args)
+            if not match:
+                continue
+            if match[1] == "Reload":
+                excluded_effects.add("Reload")
+            else:
+                included.append(sid_)
+                included_effects.append(match[1])
+        for row in self.rows:
+            for option in [row] + (row.get("options") or []):
+                g = option.get("gimmick")
+                if not g or option.get("memory") != memory:
+                    continue
+                foreign = bool(option.get("receiver")) and option["receiver"] != memory
+                if g["effect"] == "Reload" or foreign:
+                    excluded.add(row["id"])
+                    excluded_effects.add("Reload" if g["effect"] == "Reload" else g["effect"])
+                else:
+                    included.append(row["id"])
+                    included_effects.append(g["effect"])
+        if not excluded_effects:
+            return None
+        ids = sorted(set(included))
+        if not ids:
+            self.fail(sid, path + "memory", memory, "whole-memory boost: the memory has no effect that is neither Reload nor a Recv delivered elsewhere, so no meaningful recipient")
+            return None
+        mixed = excluded & set(ids)
+        effects = []
+        if mixed:
+            # A Choice's options share the star ID: only the effect set can tell the included option from the excluded one.
+            effects = sorted(set(included_effects))
+            if set(effects) & excluded_effects:
+                self.fail(sid, path + "memory", memory, "a Choice mixes an included and an excluded option of the same effect; the boost cannot name only one")
+        return ids, effects
+
+    def supporting_rows(self, memory, effect_ids, effects, param, with_detail=False):
         def supports(g):
             e, t = g["effect"], g["trigger"]
             if e in WARDS:
@@ -265,7 +325,7 @@ class Compiler:
             if param == "Radius":
                 return e in ("Burst", "Ricochet") or e == "Element" and t in ("OnUse", "OnKill") or e in ("Heal", "Siphon") and g["arg"] == 1
             return e in ("Ricochet", "Rampart") if param == "ExtraTargets" else e == "Element"
-        found = []
+        found, detail, mixed = [], set(), set()
         for row in self.rows:
             if effect_ids and row["id"] not in effect_ids:
                 continue
@@ -274,12 +334,20 @@ class Compiler:
                 if g and (option.get("receiver") or option.get("memory")) == memory and (not effects or g["effect"] in effects):
                     if param is None or supports(g):
                         found.append(row["id"])
+                        detail.add((row["id"], g["effect"]))
+                    else:
+                        mixed.add(row["id"])
+                elif g and option.get("memory") == memory:
+                    mixed.add(row["id"])  # sourced by this memory, delivered elsewhere (a directed recharge): never a recipient of the field
         for sid, (kind, args, mem) in self.route_rows.items():
             if sid in self.by_id or mem != memory or effect_ids and sid not in effect_ids or kind not in ("G", "CapG"):
                 continue
             match = re.search(r"GimmickTrigger\.(\w+),\s*GimmickEffect\.(\w+),\s*\d+(?:,\s*(\d+))?", args)
             if match and (not effects or match[2] in effects) and (param is None or supports({"effect": match[2], "trigger": match[1], "arg": int(match[3] or 0)})):
                 found.append(sid)
+                detail.add((sid, match[2]))
+        if with_detail:
+            return sorted(set(found)), sorted({e for i, e in detail}), sorted(mixed & set(found))
         return sorted(set(found))
 
     def mechanism(self, sid, row, prefix="gimmick"):
@@ -372,7 +440,7 @@ class Compiler:
             if basis not in ("CasterMaxOffense", "RecipientMaxHP") or pool not in ("Allied", "Ordinary"):
                 self.fail(sid, prefix, g, "unknown ward basis or pool")
             health = summoned and basis == "RecipientMaxHP"
-            members.update(Kind="AuthoredMechanismKind.AlliedWard", Ward="new AlliedWardDefinition(" + cs(sid) + ", WardRecipientKind." + ("OwnedSummons" if summoned else "AlliedTravelers") + ", WardAmountBasis." + basis + ", ModShieldPoolKind." + pool + ", " + units(g["value"]) + ", " + ("true" if e == "AllyShield" or e == "AlliedWard" and self.name == "aurena" else "false") + (", durationSeconds: 3f, baseTargets: 1, limits: WardLimitProfile.SummonRecipientHealth" if health else "") + ")")
+            members.update(Kind="AuthoredMechanismKind.AlliedWard", Ward="new AlliedWardDefinition(" + cs(sid) + ", WardRecipientKind." + ("OwnedSummons" if summoned else "AlliedTravelers") + ", WardAmountBasis." + basis + ", ModShieldPoolKind." + pool + ", " + units(g["value"]) + ", " + ("true" if e == "AllyShield" or e == "AlliedWard" and self.name == "aurena" and not summoned else "false") + (", durationSeconds: 3f, baseTargets: 1, limits: WardLimitProfile.SummonRecipientHealth" if health else "") + ")")
         elif e == "PressureDividend":
             if source not in ("St_L_CoinExplosion", "St_U_ShoutOfOblivion") or trigger != "Kill":
                 self.fail(sid, prefix, g, "dividend requires verified CoinExplosion/Shout native kill provenance")
@@ -651,7 +719,13 @@ class Compiler:
             ids = [target["star"]] if target["star"] else []
             effects = target["effect"].split("/") if target["effect"] else []
             scope = "Receiver" if row.get("receiver") else "EffectChannel" if ids else "Memory"
-            if memory is None and ids and ids[0] in self.pairs:
+            if ids and ids[0] in self.pairs and not target["effect"]:
+                # B/T/R of a retained bridge modify that bridge's own payoff payload (design N3: effectId = the old ring ID), never the memory as a
+                # whole and never a receiver. The scoped memory is the pair's real payoff source: the row's memory/receiver is only the design
+                # table's convenience label (for example ring.resolve names the mark side, its payoff source is the other endpoint).
+                memory = self.payoff_memory(ids[0])
+                scope = "EffectChannel"
+            elif memory is None and ids and ids[0] in self.pairs:
                 pair = self.pairs[ids[0]]
                 # Only the named pair payoff is modified; opening memory GB is not a substitute.
                 memory = next((m for m in (pair["a"], pair["b"]) if re.search(r'PairComboStep\.\w+,\s*"' + re.escape(m) + r'"', pair["line"])), None)
@@ -665,11 +739,25 @@ class Compiler:
             # authored target is broad. It means recharge receipt, not movement use.
             if scope == "Receiver" and not effects and not ids:
                 effects = ["Recharge"]
+            # A whole-memory boost must not reach (a) a Reload, whose 1-charge value no percentage changes (FractionalScopedModifiers.ValidateTree
+            # rejects it), nor (b) a directed Recv recharge delivered to another memory: that entry is boosted by its receiver-scope stars only,
+            # and one entry may never take both a source and a receiver boost (AuthoredMechanisms.ComposeEntry). When the memory has either,
+            # the boost names its exact recipients (like untargeted parameters do) instead of the whole memory.
+            if kind == "GimmickBoost" and not ids and not effects and scope == "Memory":
+                restricted = self.boost_recipients(sid, option_path, memory)
+                if restricted is not None:
+                    ids, effects = restricted
+                    scope = "EffectChannel"
             # Untargeted parameters apply to meaningful fields, not every effect
             # that happens to use this memory. Bind exact supported IDs once.
             if param and not ids and scope != "Receiver":
-                ids = self.supporting_rows(memory, [], effects, param)
+                ids, supported, mixed = self.supporting_rows(memory, [], effects, param, with_detail=True)
                 scope = "EffectChannel"
+                # A Choice's options share the star ID. When one option supports the field and a sibling does not (a Shield option next to
+                # a Recharge option), the ID alone would also reach the sibling, which has no meaningful recipient for the field: name
+                # the supported effects too, so only the options that carry them are recipients.
+                if mixed and not effects:
+                    effects = supported
                 if not ids:
                     self.fail(sid, option_path + "param", param, "no concrete supporting authored or retained native effect for this memory")
             if target["effect"] and any(e in WARDS or e in RECHARGE or e in ("RelayWindow", "PressureDividend") for e in effects) and not ids:
@@ -789,9 +877,16 @@ class Compiler:
             if sid in ("h.vesper.route.charge.2", "h.vesper.route.charge.4", "h.vesper.route.charge.7"):
                 edges.append("ManifestRouteEntry(baselineLayout, " + cs(sid) + ")")
         ownership = "null"
-        if row.get("receiver") and row["receiver"].startswith("St_"):
-            sources = sorted({m for m in re.findall(r"St_\w+", row.get("memory") or "") if m in self.known_memories})
-            ownership = obj("MemoryOwnership", {"TargetMemory": cs(row["receiver"]), "SourceMemories": array(sources)})
+        # A Choice carries its effects in its options: the receiver and every source memory of every option are owned by the star.
+        effects = [row] + list(row.get("options") or [])
+        receivers = sorted({e["receiver"] for e in effects if e.get("receiver") and e["receiver"].startswith("St_")})
+        if receivers:
+            # One target memory per star; the further receivers of a Choice's other options are owned as explicit cross-sources.
+            # Identity-triggered payloads (an "@ID" memory) name the identities that start them: those are owned memories too.
+            identities = {m for e in effects for m in ((e.get("gimmick") or {}).get("triggerByIdentity") or {})}
+            sources = sorted({m for e in effects for m in re.findall(r"St_\w+", e.get("memory") or "") if m in self.known_memories}
+                             | set(receivers[1:]) | identities)
+            ownership = obj("MemoryOwnership", {"TargetMemory": cs(receivers[0]), "SourceMemories": array(sources)})
         receiver_only = self.receiver_only_bridge(row)
         if receiver_only:
             owned = RECEIVER_ONLY_BRIDGES[receiver_only]
@@ -847,6 +942,10 @@ class Compiler:
                 condition = (effect.get("gimmick") or {}).get("condition")
                 if condition:
                     bridges.add(condition.split(":", 1)[1])
+                # A star that modifies a retained bridge's payload (target.star = h.<hero>.ring.*) needs that bridge's typed base binding.
+                modified = (effect.get("target") or {}).get("star")
+                if modified in self.pairs:
+                    bridges.add(modified)
         rows = list(self.mapped.values())
         rows.extend("ManifestBaselinePair(" + cs(self.hero) + ", " + cs(bridge) + ")"
                     for bridge in sorted(bridges) if bridge not in self.by_id)
@@ -876,22 +975,86 @@ class Compiler:
         return "\n".join(lines + ["    }", "}", ""])
 
 
+def render_diagnostic(result):
+    """tests/SodRpg.Core.Tests/Diagnostics/<Hero>.cs: every compilable row, each guarded so that a definition whose construction throws
+    (a typed payload constructor rejecting its arguments) is reported per star instead of aborting the hero. Failed rows are omitted.
+    Test-only and git-ignored: the registration diagnostics find it by reflection."""
+    title = result.name.title()
+    failed_ids = sorted({f.star.split(".grant", 1)[0] for f in result.failures})
+    bridges = set()
+    for row in result.rows:
+        for effect in [row] + (row.get("options") or []):
+            condition = (effect.get("gimmick") or {}).get("condition")
+            if condition:
+                bridges.add(condition.split(":", 1)[1])
+            modified = (effect.get("target") or {}).get("star")
+            if modified in result.pairs:
+                bridges.add(modified)
+    rows = list(result.mapped.items())
+    rows.extend((bridge, "ManifestBaselinePair(" + cs(result.hero) + ", " + cs(bridge) + ")") for bridge in sorted(bridges) if bridge not in result.by_id)
+    needs_layout = any("ManifestRouteEntry(" in expression for _, expression in rows)
+    layout_arg = ", baselineLayout" if needs_layout else ""
+    chunks = [rows[i:i + 32] for i in range(0, len(rows), 32)]
+    lines = ["// Generated by tools/star-manifest/gen_cs.py --diagnostic; do not edit. Test-only (git-ignored).",
+             "using System;", "using System.Collections.Generic;", "using SodRpg.Core.Game;", "using static SodRpg.Core.Game.StarClusters;", "",
+             "namespace SodRpg.Core.Tests.DiagnosticMaps", "{", "    public static class " + title, "    {",
+             "        public static readonly string[] Omitted = " + array(failed_ids) + ";", "",
+             "        private static AuthoredStarDef Guard(List<string> failures, string id, Func<AuthoredStarDef> create)",
+             "        {", "            try { return create(); }", "            catch (Exception error) { failures.Add(id + \": \" + error.GetType().Name + \": \" + error.Message); return null; }", "        }", "",
+             "        public static AuthoredStarDef[] Create(List<string> constructionFailures)", "        {",
+             "            var definitions = new AuthoredStarDef[" + str(len(rows)) + "];"]
+    if needs_layout:
+        lines.append("            var baselineLayout = HeroTreeLayout.ForTalents(HeroSigils.BaselineTreeFor(" + cs(result.hero) + "));")
+    for i in range(len(chunks)):
+        lines.append("            Fill" + str(i) + "(definitions, constructionFailures" + layout_arg + ");")
+    lines += ["            return Array.FindAll(definitions, d => d != null);", "        }"]
+    for i, chunk in enumerate(chunks):
+        lines += ["", "        private static void Fill" + str(i) + "(AuthoredStarDef[] definitions, List<string> failures" + (", HeroTreeLayout baselineLayout" if needs_layout else "") + ")", "        {"]
+        lines += ["            definitions[" + str(i * 32 + j) + "] = Guard(failures, " + cs(sid) + ", () => " + expression + ");" for j, (sid, expression) in enumerate(chunk)]
+        lines.append("        }")
+    migrations = ["ManifestMigration(" + cs(result.hero) + ", " + cs(row["id"]) + ", " + str(row["maxRank"]) + ")"
+                  for row in result.rows if row["region"] == "migration" and row["id"] not in failed_ids]
+    lines += ["", "        public static LegacyStarMigration[] Migrations()", "        {", "            return new LegacyStarMigration[]", "            {"]
+    lines += ["                " + expression + ("," if i < len(migrations) - 1 else "") for i, expression in enumerate(migrations)]
+    lines += ["            };", "        }", "    }", "}", ""]
+    return chr(10).join(lines)
+
+
 def load(name):
     with (HERE / (name + ".json")).open(encoding="utf-8") as stream:
         return json.load(stream)
 
 
-def registration(names):
-    """The single production entry point. Heroes are registered in a fixed order, once, under one lock."""
-    names = sorted(names)
-    heroes = ", ".join(cs("Hero_" + name.title()) for name in names)
+def registered_heroes():
+    """Heroes whose generated map passed the real registration (tools/star-manifest/registered.txt, one hero per line)."""
+    path = HERE / "registered.txt"
+    if not path.is_file():
+        return set()
+    return {line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip() and not line.startswith("#")}
+
+
+def registration(compiled):
+    """The single production entry point. Every compiled hero can be registered by RegisterGeneratedHero (tests and the
+    registration diagnostics); only heroes listed in registered.txt (verified to register cleanly) are in GeneratedHeroes
+    and so installed in the game. A hero that fails real registration must never be listed."""
+    compiled = sorted(compiled)
+    allowed = registered_heroes()
+    unknown = allowed - set(compiled)
+    if unknown:
+        raise ValueError("registered.txt lists heroes without generated C#: " + ", ".join(sorted(unknown)))
+    names = compiled
+    heroes = ", ".join(cs("Hero_" + name.title()) for name in names if name in allowed)
+    all_heroes = ", ".join(cs("Hero_" + name.title()) for name in names)
     lines = ["// Generated by tools/star-manifest/gen_cs.py; do not edit.", "using System;", "using System.Collections.Generic;", "",
              "namespace SodRpg.Core.Game", "{", "    public static partial class StarClusters", "    {",
              "        private static readonly object GeneratedLock = new object();",
              "        private static bool generatedRegistered;", "",
              "        /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>",
              "        public static readonly IReadOnlyList<string> GeneratedHeroes = " + (
-                 "Array.AsReadOnly(new string[] { " + heroes + " });" if names else "Array.AsReadOnly(new string[0]);"), "",
+                 "Array.AsReadOnly(new string[] { " + heroes + " });" if heroes else "Array.AsReadOnly(new string[0]);"), "",
+             "        /// <summary>Every hero whose manifest compiled to C# (a superset of GeneratedHeroes; used by the registration diagnostics).</summary>",
+             "        public static readonly IReadOnlyList<string> CompiledHeroes = " + (
+                 "Array.AsReadOnly(new string[] { " + all_heroes + " });" if all_heroes else "Array.AsReadOnly(new string[0]);"), "",
              "        /// <summary>Install one generated hero's authored tree, then its migration rules (tests and tools; production uses RegisterAllGenerated).</summary>",
              "        public static void RegisterGeneratedHero(string heroKey)", "        {", "            switch (heroKey)", "            {"]
     for name in names:
@@ -900,7 +1063,14 @@ def registration(names):
                   "                    RegisterAuthored(" + cs("Hero_" + title) + ", Create" + title + "Authored());",
                   "                    RegisterMigrations(" + cs("Hero_" + title) + ", Create" + title + "Migrations());",
                   "                    return;"]
-    lines += ["                default: throw new ArgumentException(\"No generated star map for \" + heroKey);", "            }", "        }", "",
+    lines += ["                default: throw new ArgumentException(\"No generated star map for \" + heroKey);", "            }", "        }", ""]
+    for what in ("Authored", "Migrations"):
+        lines += ["        /// <summary>The generated " + what.lower() + " of one compiled hero (registration diagnostics).</summary>",
+                  "        public static " + ("AuthoredStarDef[]" if what == "Authored" else "LegacyStarMigration[]") + " CreateGenerated" + what + "(string heroKey)",
+                  "        {", "            switch (heroKey)", "            {"]
+        lines += ["                case " + cs("Hero_" + name.title()) + ": return Create" + name.title() + what + "();" for name in names]
+        lines += ["                default: throw new ArgumentException(\"No generated star map for \" + heroKey);", "            }", "        }", ""]
+    lines += [
               "        /// <summary>Install every generated hero's authored tree and its migration rules. Idempotent and thread-safe.</summary>",
               "        public static void RegisterAllGenerated()", "        {", "            lock (GeneratedLock)", "            {",
               "                if (generatedRegistered) return;",
@@ -939,6 +1109,7 @@ def main(argv=None):
     parser.add_argument("hero", nargs="?", choices=HEROES)
     parser.add_argument("--all", action="store_true", help="compile every concrete hero")
     parser.add_argument("--report", action="store_true", help="report only; never write generated C#")
+    parser.add_argument("--diagnostic", action="store_true", help="also write the guarded test-only maps used by RegistrationDiagnostics (tests/SodRpg.Core.Tests/Diagnostics, git-ignored)")
     parser.add_argument("--markdown", type=Path, help="write the report (requires --report)")
     args = parser.parse_args(argv)
     if bool(args.hero) == bool(args.all):
@@ -968,7 +1139,10 @@ def main(argv=None):
         available = {name for name in HEROES if (OUTPUT / (name.title() + ".Generated.cs")).is_file() and name not in selected_failed}
         available.update(r.name for r in clean)
         outputs.append((OUTPUT / "GeneratedRegistration.cs", registration(available)))
+        if args.diagnostic:
+            outputs.extend((DIAGNOSTICS / (r.name.title() + ".cs"), render_diagnostic(r)) for r in results)
         for path, content in outputs:
+            path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8", newline=chr(10))
             print("Wrote " + path.relative_to(ROOT).as_posix())
         for result in failed_heroes:

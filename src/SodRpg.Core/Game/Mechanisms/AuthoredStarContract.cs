@@ -287,7 +287,12 @@ namespace SodRpg.Core.Game
                 if (!existing.TryGetValue(def.AnchorId, out var anchor) || anchor.RouteId != def.Region.Id || !HeroMemory(anchor.RouteMemory))
                     throw Invalid(def.LocalStarId, "Memory anchor must own the real route.");
                 target = target ?? anchor.RouteMemory;
-                if (target != anchor.RouteMemory) throw Invalid(def.LocalStarId, "Receiver target does not own this region.");
+                // A region owns its route memory. A star may also receive into another verified hero memory (a design's cross-region
+                // receiver such as Recv(Whisper, ..., Dance)); then the region's own memory must be an explicit source of the star, and
+                // the receiver stays bound to a matching recharge channel by ValidateAuthoredMetadata.
+                if (target != anchor.RouteMemory && !(Verified(target) && def.MemoryOwnership?.SourceMemories != null
+                    && def.MemoryOwnership.SourceMemories.Contains(anchor.RouteMemory)))
+                    throw Invalid(def.LocalStarId, "Receiver target does not own this region.");
                 memories.Add(target);
             }
             else if (def.Region.Kind == ClusterRegionKind.Bridge)

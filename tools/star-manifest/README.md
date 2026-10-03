@@ -139,3 +139,8 @@ python tools/star-manifest/validate.py            # 全部
 python tools/star-manifest/validate.py cetus      # 1人
 ```
 上記の正準形を厳密に確かめる：キー集合と順序が完全一致（旧欄は不可）、新規ID数がレビューの表（New private IDs、外縁は160）と一致、IDの重複なし、kind ごとの必須欄、Choice の2択、Stat は outer と移行行だけ、選択子の文法、受け手の規則（`receiver` = `gimmick.target`）、`target` の整合、gimmick の欄と `condition` の書式、Spec の書式、グラフ（`anchor` か `edges`、`edges` の対称・星団内、刻印は `edges: []`）、**参照整合**（上記6）、**移行行のIDが既存IDであること**、mechanisms が C01〜C15、移動の記憶が起点になっていないこと、`仮置き:` の使い方。OK のとき、`仮置き:` の刻印数も表示する。
+
+## 生成・登録・診断
+
+- `python tools/star-manifest/gen_cs.py --all` は、全星がC#に写せた旅人だけ `<Hero>.Generated.cs` を出す（部分的な旅人は出さない）。`GeneratedRegistration.cs` の `CompiledHeroes` は生成できた旅人、`GeneratedHeroes` は **`registered.txt` に書いた旅人だけ**（実際の `StarClusters.RegisterAuthored` を通り、`GeneratedHeroAcceptanceTests` が通ることを確認したもの）。登録に失敗する旅人を載せるとゲームが起動時に落ちるので、`registered.txt` には確認済みの旅人だけを足す。
+- `--diagnostic` は鍵の行などの失敗行を除いた診断用の写しを `tests/SodRpg.Core.Tests/Diagnostics/`（git管理外）に作る。`RegistrationDiagnostics`（環境変数 `DREAMFORGE_REG_REPORT` で出力先を指定）が全旅人の登録拒否を全件集め、`docs/specs/v1.31-registration-report.md` を作る。前文は `registration-report-preamble.md`（`DREAMFORGE_REG_PREAMBLE`）。

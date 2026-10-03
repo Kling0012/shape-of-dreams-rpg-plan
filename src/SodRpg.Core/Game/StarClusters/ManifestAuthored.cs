@@ -34,6 +34,7 @@ namespace SodRpg.Core.Game
                 HeroKey = hero, LocalStarId = id,
                 ClusterId = original.Cluster?.Id ?? id + ".migration",
                 Region = original.Cluster?.Region ?? (original.RouteId != null ? ClusterRegion.Memory(original.RouteId)
+                    : original.IsOuterAnchor ? ClusterRegion.Outer // a registered outer anchor stat keeps its outer region (it is its own anchor)
                     : pair != null || authoredPair ? ClusterRegion.Bridge(id)
                     : new ClusterRegion { Kind = ClusterRegionKind.Keystone }),
                 AnchorId = original.Cluster?.Anchor ?? (original.RouteId != null
@@ -192,7 +193,7 @@ namespace SodRpg.Core.Game
             };
         }
 
-        private static AuthoredStarDef ManifestBaselinePair(string hero, string bridgeId)
+        internal static AuthoredStarDef ManifestBaselinePair(string hero, string bridgeId)
         {
             var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == bridgeId);
             var effect = new ClusterStarDef { Kind = ClusterStarKind.Notable, Name = original.Name,
@@ -201,7 +202,7 @@ namespace SodRpg.Core.Game
                 Array.Empty<AuthoredStarEdge>(), null, "src/SodRpg.Core/Game/PairCombos.cs", new[] { "C05" }, "");
         }
 
-        private static AuthoredStarEdge ManifestRouteEntry(HeroTreeLayout baselineLayout, string targetId)
+        internal static AuthoredStarEdge ManifestRouteEntry(HeroTreeLayout baselineLayout, string targetId)
         {
             var target = baselineLayout.Nodes.Single(x => x.Id == targetId).Talent;
             var entry = baselineLayout.Nodes.Single(x => x.Talent?.RouteId == target.RouteId && x.Talent.RouteOrder == 1);
