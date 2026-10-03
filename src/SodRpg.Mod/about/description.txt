@@ -1,11 +1,14 @@
+[b]v1.30.0 Pre: save format 3; older profiles are archived and restarted. Protocol 9; update all co-op players. Restart the game after updating.[/b]
+[b]保存形式3より古いプロフィールは写しを残して再開始します。協力は全員同じ版へ更新し、ゲームを再起動してください。追加分は実機未検証です。[/b]
+
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
 すべての遠征を、長いRPGの旅の一部にするMODです。持ち帰れる装備「遺物」、ゾーンごとの「確保するか、深く潜るか」の決断、旅人ごとの星図、鍛冶、長く遊ぶための目標を加えます。協力プレイにも対応しています。
 
 [h2]Relics / 遺物[/h2]
 [list]
-[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 180 bases, 354 legendaries and 24 sets (72 set pieces), 42 kinds of powers.
-[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台は180種、固有品は354種、セットは24種（72部位）、固有効果は42種類あります。
+[*] Enemies drop personal relics for every player (weapon / head / armor / hands / feet / charm), each with its own hand-painted icon. 6 slots, 5 rarities, 360 bases, 1,171 legendary relics including 141 pieces across 47 sets. v1.30 adds 43 active powers, 62 memory-pair combos, waypoints, dream depth and elemental reactions.
+[*] 敵を倒すと、プレイヤーごとに別々の遺物が落ちます（主装備・頭・防具・手・足・装飾品の6枠）。遺物には1つずつ絵が付いています。レア度は5段階、土台360種、固有品1,171個（セット部位141個を含む）、セット47種。v1.30では固有効果43個、合わせ技62個、道標、夢の深さ、属性の反応を追加しました。
 [*] Rare relics carry a minor power; Epics carry two and an epithet named after their first power.
 [*] レアは弱い固有効果を1つ、エピックは固有効果を2つと、1つ目の固有効果にちなんだ銘を持ちます。
 [*] Powers that react to the base game: Q/W/E rotations, critical hits, stuns and slows, overhealing, Essence quality, hunters, shrines and spreading fire.
