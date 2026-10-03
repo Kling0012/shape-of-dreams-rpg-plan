@@ -12,7 +12,7 @@ namespace SodRpg.Mod
     internal enum HeroSkillLocation { Identity, Movement }
     internal struct GemLocation { public HeroSkillLocation skill; public int index; }
     internal sealed class Gem { }
-    internal sealed class Hero { public HeroSkill Skill = new HeroSkill(); public UnityEngine.Vector3 position = default; }
+    internal sealed class Hero : Entity { public HeroSkill Skill = new HeroSkill(); public UnityEngine.Vector3 position = default; }
     internal sealed class HeroSkill
     {
         public readonly Dictionary<GemLocation, Gem> gems = new Dictionary<GemLocation, Gem>();
@@ -41,7 +41,7 @@ namespace SodRpg.Mod
     internal static class Log { public static void Info(string text) { } public static void Error(string text) { } }
     internal sealed partial class HostAuthority
     {
-        internal sealed class HeroRuntime
+        internal sealed partial class HeroRuntime
         {
             public Hero Hero;
             public string HeroKey = "Hero_Cetus";

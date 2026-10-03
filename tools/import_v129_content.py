@@ -1,4 +1,4 @@
-"""Import reviewed v1.29 tables; fail on unknown effects and defer unimplemented P37."""
+"""Import reviewed v1.29 tables; fail on unknown effects."""
 import argparse
 import json
 import re
@@ -22,8 +22,8 @@ def generate(write=False):
     pieces = [r for r in rows if len(r) == 5 and r[0].startswith("set.")]
     assert (len(uniques), len(sets), len(pieces)) == (559, 24, 72)
     assert len({r[0] for r in uniques + pieces}) == 631
-    deferred = [r[0] for r in uniques if "P37" in (r[6], r[8])]
-    deferred_sets = [r[0] for r in sets if "P37 " in r[5]]
+    deferred = []
+    deferred_sets = []
     quote = lambda value: json.dumps(value, ensure_ascii=False)
     new_uniques, new_sets = [], []
     for r in uniques:

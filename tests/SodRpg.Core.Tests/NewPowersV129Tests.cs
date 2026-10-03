@@ -63,7 +63,7 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain(Content.PowerPool(Slot.Weapon), p => p.Power == Power.GleamingWard);
             Assert.Contains(Content.PowerPool(Slot.Weapon), p => p.Power == Power.Medley && p.Min == 3 && p.Max == 6);
             Assert.DoesNotContain(Content.PowerPool(Slot.Armor), p => p.Power == Power.Medley);
-            Assert.DoesNotContain(Content.SlotOrder.SelectMany(Content.PowerPool), p => p.Power == Power.UnbowedMind);
+            Assert.Equal(new[] { Slot.Armor, Slot.Feet }, Content.SlotOrder.Where(s => Content.PowerPool(s).Any(p => p.Power == Power.UnbowedMind)).ToArray());
             Assert.Contains(Content.SlotOrder.SelectMany(Content.PowerPool), p => p.Power == Power.PilingLuck);
         }
 
@@ -80,7 +80,24 @@ namespace SodRpg.Core.Tests
                 }
             Assert.True(Content.PowerAllowedForRarity(Power.GleamingWard, Rarity.Epic));
             Assert.True(Content.PowerAllowedForRarity(Power.Medley, Rarity.Legendary));
-            Assert.False(Content.PowerAllowedForRarity(Power.UnbowedMind, Rarity.Epic));
+            Assert.True(Content.PowerAllowedForRarity(Power.UnbowedMind, Rarity.Epic));
+        }
+
+        [Fact]
+        public void Unbowed_only_accepts_enemy_stuns_and_does_not_spend_cooldown_on_rejected_control()
+        {
+            var rt = With((Power.UnbowedMind, 8));
+            Assert.Equal(0, rt.TakeUnbowedMind(0, 1000, false, true)); // self / ally / unknown
+            Assert.Equal(0, rt.TakeUnbowedMind(0, 1000, true, false)); // slow / knockback
+            Assert.Equal(0, rt.TakeUnbowedMind(0, 1000, true, true, true)); // already immune
+            Assert.Equal(0, rt.TakeUnbowedMind(0, 0, true, true));
+            Assert.Equal(80, rt.TakeUnbowedMind(0, 1000, true, true));
+            Assert.Equal(0, rt.TakeUnbowedMind(4, 1000, true, true));
+            Assert.Equal(0, rt.TakeUnbowedMind(7.999f, 1000, true, true));
+            Assert.Equal(80, rt.TakeUnbowedMind(8, 1000, true, true));
+            Assert.Equal(4f, PowerRuntime.UnbowedMindDuration);
+            Assert.Equal(8f, PowerRuntime.UnbowedMindCooldown);
+            Assert.Equal(0, With().TakeUnbowedMind(0, 1000, true, true));
         }
 
         [Fact]

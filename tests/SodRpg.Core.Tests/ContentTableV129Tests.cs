@@ -31,8 +31,6 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(16, rows.Count(r => r[6] == "P37" || r[8] == "P37"));
                 foreach (var r in rows)
                 {
-                    if (r[6] == "P37" || r[8] == "P37")
-                    { Assert.False(Content.TryGetUnique(r[0], out _), r[0]); continue; }
                     Assert.True(Content.TryGetUnique(r[0], out var u), r[0]);
                     Assert.Equal(r[1], u.BaseId);
                     Assert.Equal(r[2], u.Name.Ja); Assert.Equal(r[3], u.Name.En);
@@ -71,8 +69,6 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(24, sets.Length);
                 foreach (var r in sets)
                 {
-                    if (r[5].Contains("P37 "))
-                    { Assert.DoesNotContain(Content.Sets, s => s.Id == r[0]); continue; }
                     var set = Assert.Single(Content.Sets, s => s.Id == r[0]);
                     Assert.Equal(r[1], set.Name.Ja); Assert.Equal(r[2], set.Name.En);
                     var effects = r[5].Split(';').Select(x => x.Trim().Split(' ')).ToArray();
@@ -98,8 +94,8 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_distributed_power_is_implemented_and_every_bond_can_be_satisfied()
         {
-            Assert.All(Content.Uniques, u => Assert.DoesNotContain(u.Powers, p => p.Power == Power.UnbowedMind));
-            Assert.All(Content.Sets, s => Assert.DoesNotContain(s.ThreePiece, p => p.Power == Power.UnbowedMind));
+            Assert.Equal(16, Content.Uniques.Count(u => u.Powers.Any(p => p.Power == Power.UnbowedMind)));
+            Assert.Single(Content.Sets, s => s.ThreePiece.Any(p => p.Power == Power.UnbowedMind));
             var bonds = Content.Uniques.Where(u => u.Link != null && u.Link.Requires.Count(x => x.StartsWith("Hero_")) >= 2).ToArray();
             Assert.Equal(18, bonds.Length);
             foreach (var u in bonds)

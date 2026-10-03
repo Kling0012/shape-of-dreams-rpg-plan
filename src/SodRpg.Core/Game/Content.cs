@@ -3919,6 +3919,57 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.prismdance.hands", "hands.star_rings", new Txt("舞い星の環", "Dancing-Star Rings"), "set.prismdance"),
             new UniqueDef("set.prismdance.head", "head.star_diadem", new Txt("舞い星の冠", "Dancing-Star Diadem"), "set.prismdance"),
             new UniqueDef("set.prismdance.feet", "feet.dancer_shoes", new Txt("舞い星の踊り靴", "Dancing-Star Shoes"), "set.prismdance"),
+            new UniqueDef("unique.a_frostembrace_coat", "armor.frost_coat", new Txt("寒気抱きの外衣", "Chillembrace Coat"),
+                new Txt("氷を抱いた腕の中では、盾が先に砕ける。", "In arms that embrace ice, the shield breaks first."),
+                Power.ShieldbreakBurst, 8, Power.UnbowedMind, 6) { Link = new LinkDef { Requires = new[] { "Hero_Cetus", "St_Q_EmbracingTheChill" }, Kind = LinkKind.Guard, Value = 30 } },
+            new UniqueDef("unique.a_prison_plate", "armor.citadel_plate", new Txt("牢の砦胸甲", "Gaol Citadel Plate"),
+                new Txt("捕らわれても、動じなければ砦になる。", "Even when caged, the unflinching become a fortress."),
+                Power.Breakout, 8, Power.UnbowedMind, 6) { Link = new LinkDef { Requires = new[] { "Gem_U_SoulPrison" }, Kind = LinkKind.Guard, Value = 20 } },
+            new UniqueDef("unique.a_resolve_scale", "armor.scale_coat", new Txt("決意の竜鱗", "Resolve Dragonscale"),
+                new Txt("決意した者が先に立つのは、竜の掟。", "It is the dragon's law that the resolved stand first."),
+                Power.VanguardsOath, 24, Power.UnbowedMind, 6) { Link = new LinkDef { Requires = new[] { "Hero_Vesper", "St_D_Resolve", "St_Q_Discipline" }, Kind = LinkKind.Guard, Value = 40 } },
+            new UniqueDef("unique.a_deception_jacket", "armor.duskweave_jacket", new Txt("撹乱の影上着", "Deception Duskweave Jacket"),
+                new Txt("包囲を抜けた後、影が一つ多く残っている。", "After breaking out, one extra shadow remains."),
+                Power.UnbowedMind, 6, Power.Umbra, 80) { Link = new LinkDef { Requires = new[] { "Hero_Husk", "St_R_Deception", "St_Q_DeathMark" }, Kind = LinkKind.MemorySurge, Value = 50 } },
+            new UniqueDef("unique.a_unbowed_cuirass", "armor.basalt_cuirass", new Txt("不撓の玄武胸甲", "Unbowed Basalt Cuirass"),
+                new Txt("押されても、玄武は元の場所へ戻る。", "Pushed aside, the basalt returns to its place."),
+                Power.UnbowedMind, 6, Power.Barrier, 10),
+            new UniqueDef("unique.a_unbowed_plate", "armor.guardian_plate", new Txt("撓まぬ護り胸当て", "Springback Guardian Plate"),
+                new Txt("ふっ飛ばされるほど、護りは強く立つ。", "The farther you are thrown, the stronger the ward stands."),
+                Power.UnbowedMind, 7, Power.Aegis, 22),
+            new UniqueDef("unique.a_unbowed_vest", "armor.ironbark_vest", new Txt("転ばぬ鉄樹衣", "Steadfast Ironbark Vest"),
+                new Txt("転んでも、木の根は抜けない。", "Even when you stumble, the roots do not pull out."),
+                Power.UnbowedMind, 5, Power.Bulwark, 28),
+            new UniqueDef("unique.a_unbowed_ready", "armor.buckler_vest", new Txt("撓まぬ備えの小盾衣", "Springback Ready Vest"),
+                new Txt("倒されても、立ち上がりに間はいらない。", "Even when knocked down, there is no delay in rising."),
+                Power.UnbowedMind, 6, Power.ReadyGuard, 8),
+            new UniqueDef("unique.f_resolve_greaves", "feet.guard_sabatons", new Txt("決意の前衛靴", "Resolute Vanguard Sabatons"),
+                new Txt("最前列は、最初に決めた者の席。", "The front row belongs to the first to decide."),
+                Power.VanguardsOath, 20, Power.UnbowedMind, 6) { Link = new LinkDef { Requires = new[] { "Hero_Vesper", "St_M_Charge", "St_D_Resolve" }, Kind = LinkKind.MemoryDamage, Value = 50 } },
+            new UniqueDef("unique.f_wary_shoes", "feet.mist_shoes", new Txt("疑心の忍び足", "Wary Footfalls"),
+                new Txt("疑い深い足は、危険の一歩手前で止まる。", "Wary feet stop one step before danger."),
+                Power.UnbowedMind, 6, Power.Retaliation, 28) { Link = new LinkDef { Requires = new[] { "Gem_L_Paranoia", "St_M_FastFeet" }, Kind = LinkKind.MemoryHaste, Value = 60 } },
+            new UniqueDef("unique.f_faith_boots", "feet.stone_boots", new Txt("信仰の石靴", "Faithstone Boots"),
+                new Txt("祈りの数だけ、根を張る。", "It roots itself once for every prayer."),
+                Power.UnbowedMind, 6, Power.StillWater, 8) { Link = new LinkDef { Requires = new[] { "Gem_L_DivineFaith", "Hero_Vesper" }, Kind = LinkKind.Guard, Value = 30 } },
+            new UniqueDef("unique.f_unbowed_boots", "feet.ballast_boots", new Txt("不撓の重し靴", "Unbowed Ballast Boots"),
+                new Txt("突き飛ばされても、立ち上がる速さは変わらない。", "Knocked down, you rise just as fast."),
+                Power.UnbowedMind, 6, Power.Barrier, 10),
+            new UniqueDef("unique.f_unbowed_greaves", "feet.rampart_greaves", new Txt("揺るがぬ砦脛", "Steadfast Rampart Greaves"),
+                new Txt("押されても、足は元の場所を覚えている。", "Pushed aside, the feet remember where they stood."),
+                Power.UnbowedMind, 7, Power.Aegis, 22),
+            new UniqueDef("unique.f_unbowed_stone", "feet.stone_boots", new Txt("転ばぬ石靴", "Stonestep Boots"),
+                new Txt("転んだ数だけ、次の一歩は慎重になる。", "Each fall makes the next step more careful."),
+                Power.UnbowedMind, 5, Power.Bulwark, 28),
+            new UniqueDef("unique.f_sentry_boots", "feet.winterhide_boots", new Txt("歩哨の冬靴", "Sentry Winterboots"),
+                new Txt("凍える夜の見張りは、最後に報われる。", "The watch on a freezing night is rewarded in the end."),
+                Power.Breakout, 8, Power.UnbowedMind, 6),
+            new UniqueDef("unique.f_unbowed_runup", "feet.gale_greaves", new Txt("撓まぬ助走靴", "Springback Runup Greaves"),
+                new Txt("押し返された距離が、次の助走になる。", "The distance you were pushed back becomes the next run-up."),
+                Power.UnbowedMind, 6, Power.RunUp, 52),
+            new UniqueDef("set.breakoutcorps.armor", "armor.stormfront_vest", new Txt("突破隊の嵐衣", "Breakout Stormvest"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.feet", "feet.iron_greaves", new Txt("突破隊の鉄脛", "Breakout Greaves"), "set.breakoutcorps"),
+            new UniqueDef("set.breakoutcorps.head", "head.iron_coif", new Txt("突破隊の鎖頭巾", "Breakout Coif"), "set.breakoutcorps"),
         };
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
@@ -4150,6 +4201,9 @@ namespace SodRpg.Core.Game
             new SetDef { Id = "set.prismdance", Name = new Txt("七彩の舞", "Prismatic Dance"),
                 TwoPiece = new[] { new StatLine(Stat.Haste, 8), new StatLine(Stat.PowerPct, 5) },
                 ThreePiece = new[] { new PowerLine(Power.PrismShift, 3), new PowerLine(Power.ElementalHarvest, 30), new PowerLine(Power.StardustCycle, 14) } },
+            new SetDef { Id = "set.breakoutcorps", Name = new Txt("包囲突破隊", "Breakout Corps"),
+                TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.MoveSpeedPct, 4) },
+                ThreePiece = new[] { new PowerLine(Power.Breakout, 10), new PowerLine(Power.UnbowedMind, 7), new PowerLine(Power.ImmovableStance, 9) } },
         };
 
         public static SetDef GetSet(string id)
@@ -4321,6 +4375,7 @@ namespace SodRpg.Core.Game
             },
             [Slot.Armor] = new[]
             {
+                new PowerRange(Power.UnbowedMind, 4, 8),
                 new PowerRange(Power.ShieldbreakBurst, 6, 12),
                 new PowerRange(Power.SharedWard, 20, 40),
                 new PowerRange(Power.TriumphSong, 4, 8),
@@ -4479,6 +4534,7 @@ namespace SodRpg.Core.Game
             },
             [Slot.Feet] = new[]
             {
+                new PowerRange(Power.UnbowedMind, 4, 8),
                 new PowerRange(Power.ShieldbreakBurst, 6, 12),
                 new PowerRange(Power.WatchfulHand, 15, 25),
                 new PowerRange(Power.Breakout, 6, 12),
@@ -4683,7 +4739,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
         public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
-            && power != Power.None && power != Power.ShadowStep && power != Power.UnbowedMind;
+            && power != Power.None && power != Power.ShadowStep;
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
 

@@ -96,7 +96,7 @@ namespace SodRpg.Core.Tests
                     foreach (var pl in u.Powers)
                         Assert.True(pl.Value <= Content.PowerCap(pl.Power), u.Id);
             }
-            Assert.Equal(1030, Content.Uniques.Count(u => u.SetId == null)); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
         }
     }
 }

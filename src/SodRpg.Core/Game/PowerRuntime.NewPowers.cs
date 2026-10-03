@@ -190,11 +190,14 @@ namespace SodRpg.Core.Game
             _toll -= bursts * maxHealth * .6f;
             return Percent(maxHealth, v) * bursts;
         }
-        public float TakeUnbowedMind(float now, float maxHealth, bool enemyControl)
+        public const float UnbowedMindDuration = 4f;
+        public const float UnbowedMindCooldown = 8f;
+
+        public float TakeUnbowedMind(float now, float maxHealth, bool enemySource, bool stun = true, bool immune = false)
         {
             int v = NewValue(Power.UnbowedMind);
-            if (!enemyControl || v <= 0 || maxHealth <= 0 || now < _unbowedReady) return 0;
-            _unbowedReady = now + 8f;
+            if (!enemySource || !stun || immune || v <= 0 || maxHealth <= 0 || now < _unbowedReady) return 0;
+            _unbowedReady = now + UnbowedMindCooldown;
             return Percent(maxHealth, v);
         }
         /// <summary>Call only for actual outgoing or incoming hostile damage, including shield absorption.</summary>

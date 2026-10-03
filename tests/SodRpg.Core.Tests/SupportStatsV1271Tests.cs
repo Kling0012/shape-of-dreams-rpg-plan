@@ -144,7 +144,7 @@ namespace SodRpg.Core.Tests
         {
             var added = Content.Uniques.Where(u => u.Id.StartsWith("unique.support_", StringComparison.Ordinal)).ToArray();
             Assert.Equal(12, added.Length);
-            Assert.Equal(1171, Content.Uniques.Count); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(1190, Content.Uniques.Count); // Includes all reviewed P37 content.
             foreach (var unique in added)
             {
                 Assert.Single(Content.Uniques, u => u.Id == unique.Id);

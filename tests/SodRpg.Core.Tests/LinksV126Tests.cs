@@ -170,7 +170,7 @@ namespace SodRpg.Core.Tests
         public void Sample_link_uniques_are_valid_and_well_formed()
         {
             var linked = Content.Uniques.Where(u => u.Link != null).ToList();
-            Assert.Equal(350, linked.Count); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(357, linked.Count); // Includes all reviewed P37 content.
             Assert.All(linked, u => Assert.True(Links.Validate(u.Link), u.Id));
             Assert.All(linked, u => Assert.True(u.Link.Value <= Links.Cap(u.Link.Kind, u.Link.Requires.Length), u.Id));
             Assert.All(linked, u => Assert.Equal(2, u.Powers.Count)); // 通常どおり2つの固有効果

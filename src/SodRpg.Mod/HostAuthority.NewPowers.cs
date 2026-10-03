@@ -36,6 +36,7 @@ namespace SodRpg.Mod
 
         private sealed class NewPowerHostState
         {
+            internal Se_GenericEffectContainer UnbowedGuard;
             internal Vector3 Position;
             internal float SampleTime;
             internal bool PositionKnown;
@@ -258,6 +259,7 @@ namespace SodRpg.Mod
 
         private void UnhookNewPowers(HeroRuntime rt)
         {
+            ClearUnbowedGuard(rt);
             if (rt.Hero != null)
             {
                 rt.Hero.EntityEvent_OnTakeShield -= rt.NewPowers.TakeShield;
@@ -275,6 +277,7 @@ namespace SodRpg.Mod
                 rt.NewPowers.Pending.Clear();
                 rt.NewPowers.Overkill.Clear();
                 rt.NewPowers.PositionKnown = false;
+                ClearUnbowedGuard(rt);
             }
             _powerShields.Clear();
         }

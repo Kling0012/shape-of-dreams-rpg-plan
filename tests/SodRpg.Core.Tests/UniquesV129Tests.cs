@@ -80,10 +80,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(14, bySlot(Slot.Hands));
             Assert.Equal(9, bySlot(Slot.Feet));
             Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(1171, Content.Uniques.Count); // v1.29 pass 2; P37 content remains deferred.
-            Assert.Equal(1030, Content.Uniques.Count(u => u.SetId == null)); // v1.29 pass 2; P37 content remains deferred.
-            Assert.Equal(350, Content.Uniques.Count(u => u.Link != null)); // v1.29 pass 2; P37 content remains deferred.
-            Assert.Equal(47, Content.Sets.Count); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(1190, Content.Uniques.Count); // Includes all reviewed P37 content.
+            Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
+            Assert.Equal(357, Content.Uniques.Count(u => u.Link != null)); // Includes all reviewed P37 content.
+            Assert.Equal(48, Content.Sets.Count); // Includes all reviewed P37 content.
             Assert.Equal(12, Content.Uniques.Count(u => u.SetId != null && Pass1SetIds.Contains(u.SetId)));
         }
 

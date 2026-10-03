@@ -10,7 +10,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void There_are_47_sets_and_33_use_the_new_slots()
         {
-            Assert.Equal(47, Content.Sets.Count); // v1.29 pass 2; P37 content remains deferred.
+            Assert.Equal(48, Content.Sets.Count); // Includes all reviewed P37 content.
             int usesNew = 0;
             foreach (var set in Content.Sets)
             {
@@ -20,7 +20,7 @@ namespace SodRpg.Core.Tests
                 Assert.InRange(set.ThreePiece.Length, 2, 3); // v1.29 のセットは3効果
                 foreach (var pw in set.ThreePiece) Assert.True(pw.Value <= Content.PowerCap(pw.Power), set.Id);
             }
-            Assert.Equal(33, usesNew);
+            Assert.Equal(34, usesNew);
         }
 
         [Fact]
