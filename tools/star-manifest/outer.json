@@ -1,0 +1,5801 @@
+{
+ "hero": "shared",
+ "source": "docs/specs/v1.31-clusters-outer.md",
+ "conventions": {
+  "edges": "edgesはクラスタ内の隣接（双方向）。s1-s2-s3-s4-s1の輪、s1-a1-a2、s3-b1-b2、a2→a3..a6、b2→b3..b6、a6-n1-c1-n2-b6、c1-n3。外周同士は s2 と次星団の s4 を結ぶ。",
+  "memories": "A/Bは各星団の節に書かれた共通記憶ID。Stat以外のa*/b*列はa=A記憶、b=B記憶。",
+  "requires": "a3/a4はa2、b3/b4はb2の取得を必須（設計表の「仕掛け修飾星は該当a2/b2も取得必須」）。",
+  "choice": "c1は1星でA/Bのどちらか1つだけ有効（options[0]=A, options[1]=B）。",
+  "power": "P(Name,V) は power={name,perRank}、S(Name,V) は stat={name,perRank}（value=perRank）。"
+ },
+ "stars": [
+  {
+   "id": "outer.ward.s1",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s2",
+    "outer.ward.s4",
+    "outer.ward.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Armor",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "防御+3",
+   "nameEn": "Armor +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.ward.s2",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s1",
+    "outer.ward.s3",
+    "outer.mending.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "MaxHealthPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "最大HP+2%",
+   "nameEn": "Max Health Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.s3",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s2",
+    "outer.ward.s4",
+    "outer.ward.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Tenacity",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "行動妨害耐性+3%",
+   "nameEn": "Tenacity +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.s4",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s3",
+    "outer.ward.s1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "ShieldPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "障壁量+3%",
+   "nameEn": "Shield Power +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a1",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s1",
+    "outer.ward.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_GlacialStomp",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプの再使用短縮+3%",
+   "nameEn": "Glacial Stomp haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a2",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a1",
+    "outer.ward.a3",
+    "outer.ward.a4",
+    "outer.ward.a5",
+    "outer.ward.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_GlacialStomp",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Sap",
+    "value": 3,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプの命中時弱体",
+   "nameEn": "Glacial Stomp Sap on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a3",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a2"
+   ],
+   "requires": [
+    "outer.ward.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_GlacialStomp",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプの仕掛け強化+10%",
+   "nameEn": "Glacial Stomp gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a4",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a2"
+   ],
+   "requires": [
+    "outer.ward.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_GlacialStomp",
+   "value": 15,
+   "param": "Duration",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプの持続+15%",
+   "nameEn": "Glacial Stomp Duration +15%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a5",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_GlacialStomp",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプのダメージ+4%",
+   "nameEn": "Glacial Stomp damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.a6",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a2",
+    "outer.ward.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_GlacialStomp",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Rampart",
+    "value": 1,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷河ストンプの命中時防壁",
+   "nameEn": "Glacial Stomp Rampart on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b1",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.s3",
+    "outer.ward.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_FlashFreeze",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の再使用短縮+3%",
+   "nameEn": "Flash Freeze haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b2",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.b1",
+    "outer.ward.b3",
+    "outer.ward.b4",
+    "outer.ward.b5",
+    "outer.ward.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Sap",
+    "value": 3,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の命中時弱体",
+   "nameEn": "Flash Freeze Sap on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b3",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.b2"
+   ],
+   "requires": [
+    "outer.ward.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_FlashFreeze",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の仕掛け強化+10%",
+   "nameEn": "Flash Freeze gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b4",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.b2"
+   ],
+   "requires": [
+    "outer.ward.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_FlashFreeze",
+   "value": 15,
+   "param": "Duration",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の持続+15%",
+   "nameEn": "Flash Freeze Duration +15%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b5",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_FlashFreeze",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結のダメージ+4%",
+   "nameEn": "Flash Freeze damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.b6",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.ward.b2",
+    "outer.ward.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Rampart",
+    "value": 1,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の命中時防壁",
+   "nameEn": "Flash Freeze Rampart on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.n1",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.ward.a6",
+    "outer.ward.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "ShieldbreakBurst",
+    "perRank": 3
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "障壁破りの反撃+3",
+   "nameEn": "Shieldbreak Burst +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.n2",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.ward.c1",
+    "outer.ward.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "UnbowedMind",
+    "perRank": 2
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "不屈の心+2",
+   "nameEn": "Unbowed Mind +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.n3",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.ward.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "VanguardsOath",
+    "perRank": 5
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "先陣の誓い+5",
+   "nameEn": "Vanguards Oath +5",
+   "notes": ""
+  },
+  {
+   "id": "outer.ward.c1",
+   "region": "outer",
+   "cluster": "outer.ward",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.ward.n1",
+    "outer.ward.n2",
+    "outer.ward.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "ReadyGuard",
+      "perRank": 3
+     },
+     "stat": null,
+     "nameJa": "備えの構え+3",
+     "nameEn": "Ready Guard +3"
+    },
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "Bulwark",
+      "perRank": 6
+     },
+     "stat": null,
+     "nameJa": "堅牢+6",
+     "nameEn": "Bulwark +6"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "守りを返す輪の選択：備えの構え+3／堅牢+6",
+   "nameEn": "ward choice: Ready Guard +3 / Bulwark +6",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.s1",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s2",
+    "outer.mending.s4",
+    "outer.mending.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "HealPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "回復量+3%",
+   "nameEn": "Heal Power +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.mending.s2",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s1",
+    "outer.mending.s3",
+    "outer.summons.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "ShieldPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "障壁量+3%",
+   "nameEn": "Shield Power +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.s3",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s2",
+    "outer.mending.s4",
+    "outer.mending.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "MaxHealthPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "最大HP+2%",
+   "nameEn": "Max Health Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.s4",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s3",
+    "outer.mending.s1",
+    "outer.ward.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Armor",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "防御+3",
+   "nameEn": "Armor +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a1",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s1",
+    "outer.mending.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_BeamOfLight",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線の再使用短縮+3%",
+   "nameEn": "Beam of Light haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a2",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a1",
+    "outer.mending.a3",
+    "outer.mending.a4",
+    "outer.mending.a5",
+    "outer.mending.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_BeamOfLight",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "Heal",
+    "value": 1,
+    "arg": 1,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線の使用時回復",
+   "nameEn": "Beam of Light Heal on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a3",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a2"
+   ],
+   "requires": [
+    "outer.mending.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_BeamOfLight",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線の仕掛け強化+10%",
+   "nameEn": "Beam of Light gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a4",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a2"
+   ],
+   "requires": [
+    "outer.mending.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_BeamOfLight",
+   "value": 15,
+   "param": "Radius",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線の範囲+15%",
+   "nameEn": "Beam of Light Radius +15%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a5",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_BeamOfLight",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線のダメージ+4%",
+   "nameEn": "Beam of Light damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.a6",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a2",
+    "outer.mending.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_BeamOfLight",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Sap",
+    "value": 3,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光線の命中時弱体",
+   "nameEn": "Beam of Light Sap on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b1",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.s3",
+    "outer.mending.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_Purgatory",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄の再使用短縮+3%",
+   "nameEn": "Purgatory haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b2",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.b1",
+    "outer.mending.b3",
+    "outer.mending.b4",
+    "outer.mending.b5",
+    "outer.mending.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Purgatory",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "Heal",
+    "value": 1,
+    "arg": 1,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄の使用時回復",
+   "nameEn": "Purgatory Heal on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b3",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.b2"
+   ],
+   "requires": [
+    "outer.mending.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_Purgatory",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄の仕掛け強化+10%",
+   "nameEn": "Purgatory gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b4",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.b2"
+   ],
+   "requires": [
+    "outer.mending.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_Purgatory",
+   "value": 15,
+   "param": "Radius",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄の範囲+15%",
+   "nameEn": "Purgatory Radius +15%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b5",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_Purgatory",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄のダメージ+4%",
+   "nameEn": "Purgatory damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.b6",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.mending.b2",
+    "outer.mending.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Purgatory",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Sap",
+    "value": 3,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "煉獄の命中時弱体",
+   "nameEn": "Purgatory Sap on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.n1",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.mending.a6",
+    "outer.mending.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "KindnessReturns",
+    "perRank": 5
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "恩返し+5",
+   "nameEn": "Kindness Returns +5",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.n2",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.mending.c1",
+    "outer.mending.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "SharedWard",
+    "perRank": 8
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "分かち合う加護+8",
+   "nameEn": "Shared Ward +8",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.n3",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.mending.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "SecondWind",
+    "perRank": 6
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "立て直し+6",
+   "nameEn": "Second Wind +6",
+   "notes": ""
+  },
+  {
+   "id": "outer.mending.c1",
+   "region": "outer",
+   "cluster": "outer.mending",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.mending.n1",
+    "outer.mending.n2",
+    "outer.mending.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "WatchfulHand",
+      "perRank": 5
+     },
+     "stat": null,
+     "nameJa": "見守る手+5",
+     "nameEn": "Watchful Hand +5"
+    },
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "ShardBoon",
+      "perRank": 3
+     },
+     "stat": null,
+     "nameJa": "破片の恵み+3",
+     "nameEn": "Shard Boon +3"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "癒しの余白の選択：見守る手+5／破片の恵み+3",
+   "nameEn": "mending choice: Watchful Hand +5 / Shard Boon +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.s1",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s2",
+    "outer.summons.s4",
+    "outer.summons.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "SummonPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "召喚与ダメージ+3%",
+   "nameEn": "Summon Power +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.summons.s2",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s1",
+    "outer.summons.s3",
+    "outer.steam.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "PowerPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "魔力+2%",
+   "nameEn": "Power Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.s3",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s2",
+    "outer.summons.s4",
+    "outer.summons.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "MaxHealthPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "最大HP+2%",
+   "nameEn": "Max Health Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.s4",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s3",
+    "outer.summons.s1",
+    "outer.mending.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "HealPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "回復量+3%",
+   "nameEn": "Heal Power +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a1",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s1",
+    "outer.summons.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_L_SmallMoltenCore",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の再使用短縮+3%",
+   "nameEn": "Small Molten Core haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a2",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a1",
+    "outer.summons.a3",
+    "outer.summons.a4",
+    "outer.summons.a5",
+    "outer.summons.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_L_SmallMoltenCore",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "AlliedWard",
+    "value": 20,
+    "arg": 1,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C12"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の使用時加護",
+   "nameEn": "Small Molten Core Allied Ward on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a3",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a2"
+   ],
+   "requires": [
+    "outer.summons.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_L_SmallMoltenCore",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の仕掛け強化+10%",
+   "nameEn": "Small Molten Core gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a4",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a2"
+   ],
+   "requires": [
+    "outer.summons.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_L_SmallMoltenCore",
+   "value": 20,
+   "param": "Duration",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の持続+20%",
+   "nameEn": "Small Molten Core Duration +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a5",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_L_SmallMoltenCore",
+   "value": 1,
+   "param": "ExtraTargets",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の対象数+1",
+   "nameEn": "Small Molten Core targets +1",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.a6",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a2",
+    "outer.summons.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_L_SmallMoltenCore",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "PackMend",
+    "value": 2,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "小さな溶鉱炉の使用時召喚獣の手当て",
+   "nameEn": "Small Molten Core Pack Mend on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b1",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.s3",
+    "outer.summons.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_SparklingWaterGun",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の再使用短縮+3%",
+   "nameEn": "Sparkling Water Gun haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b2",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.b1",
+    "outer.summons.b3",
+    "outer.summons.b4",
+    "outer.summons.b5",
+    "outer.summons.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_SparklingWaterGun",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "AlliedWard",
+    "value": 20,
+    "arg": 1,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C12"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の使用時加護",
+   "nameEn": "Sparkling Water Gun Allied Ward on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b3",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.b2"
+   ],
+   "requires": [
+    "outer.summons.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_SparklingWaterGun",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の仕掛け強化+10%",
+   "nameEn": "Sparkling Water Gun gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b4",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.b2"
+   ],
+   "requires": [
+    "outer.summons.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_SparklingWaterGun",
+   "value": 20,
+   "param": "Radius",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の範囲+20%",
+   "nameEn": "Sparkling Water Gun Radius +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b5",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_SparklingWaterGun",
+   "value": 1,
+   "param": "ExtraTargets",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の対象数+1",
+   "nameEn": "Sparkling Water Gun targets +1",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.b6",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.summons.b2",
+    "outer.summons.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_SparklingWaterGun",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "PackMend",
+    "value": 2,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の使用時召喚獣の手当て",
+   "nameEn": "Sparkling Water Gun Pack Mend on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.n1",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.summons.a6",
+    "outer.summons.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "PackFeast",
+    "perRank": 2
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "群れの祝宴+2",
+   "nameEn": "Pack Feast +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.n2",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.summons.c1",
+    "outer.summons.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "DeathBloom",
+    "perRank": 20
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "散り際の花+20",
+   "nameEn": "Death Bloom +20",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.n3",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.summons.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_SparklingWaterGun",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "AlliedWard",
+    "value": 15,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C12"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "ピリッとする水鉄砲の使用時加護",
+   "nameEn": "Sparkling Water Gun Allied Ward on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.summons.c1",
+   "region": "outer",
+   "cluster": "outer.summons",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.summons.n1",
+    "outer.summons.n2",
+    "outer.summons.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "GimmickParam",
+     "memory": "St_L_SmallMoltenCore",
+     "value": 20,
+     "param": "Radius",
+     "receiver": null,
+     "gimmick": null,
+     "power": null,
+     "stat": null,
+     "nameJa": "小さな溶鉱炉の範囲+20%",
+     "nameEn": "Small Molten Core Radius +20%"
+    },
+    {
+     "kind": "GimmickParam",
+     "memory": "St_C_SparklingWaterGun",
+     "value": 20,
+     "param": "Duration",
+     "receiver": null,
+     "gimmick": null,
+     "power": null,
+     "stat": null,
+     "nameJa": "ピリッとする水鉄砲の持続+20%",
+     "nameEn": "Sparkling Water Gun Duration +20%"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "召喚獣の休息の選択：小さな溶鉱炉の範囲+20%／ピリッとする水鉄砲の持続+20%",
+   "nameEn": "summons choice: Small Molten Core Radius +20% / Sparkling Water Gun Duration +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.s1",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s2",
+    "outer.steam.s4",
+    "outer.steam.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "FireAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "火効果+3%",
+   "nameEn": "Fire Amp +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.steam.s2",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s1",
+    "outer.steam.s3",
+    "outer.eclipse.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "ColdAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "冷気効果+3%",
+   "nameEn": "Cold Amp +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.s3",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s2",
+    "outer.steam.s4",
+    "outer.steam.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Armor",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "防御+3",
+   "nameEn": "Armor +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.s4",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s3",
+    "outer.steam.s1",
+    "outer.summons.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "PowerPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "魔力+2%",
+   "nameEn": "Power Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a1",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s1",
+    "outer.steam.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_Pew",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲の再使用短縮+3%",
+   "nameEn": "Pew haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a2",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a1",
+    "outer.steam.a3",
+    "outer.steam.a4",
+    "outer.steam.a5",
+    "outer.steam.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Pew",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 50,
+    "arg": 1,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲の命中時冷気の付与",
+   "nameEn": "Pew Cold application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a3",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a2"
+   ],
+   "requires": [
+    "outer.steam.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_Pew",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲の仕掛け強化+10%",
+   "nameEn": "Pew gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a4",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a2"
+   ],
+   "requires": [
+    "outer.steam.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_Pew",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲の確率+5ポイント",
+   "nameEn": "Pew chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a5",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_Pew",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲のダメージ+4%",
+   "nameEn": "Pew damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.a6",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a2",
+    "outer.steam.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Pew",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnKill",
+    "effect": "Burst",
+    "value": 35,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "発砲の撃破時余波",
+   "nameEn": "Pew Burst on kill",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b1",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.s3",
+    "outer.steam.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_FlashFreeze",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の再使用短縮+3%",
+   "nameEn": "Flash Freeze haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b2",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.b1",
+    "outer.steam.b3",
+    "outer.steam.b4",
+    "outer.steam.b5",
+    "outer.steam.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 100,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の命中時火の付与",
+   "nameEn": "Flash Freeze Fire application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b3",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.b2"
+   ],
+   "requires": [
+    "outer.steam.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_FlashFreeze",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の仕掛け強化+10%",
+   "nameEn": "Flash Freeze gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b4",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.b2"
+   ],
+   "requires": [
+    "outer.steam.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_FlashFreeze",
+   "value": 10,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の確率+10ポイント",
+   "nameEn": "Flash Freeze chance +10 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b5",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_FlashFreeze",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結のダメージ+4%",
+   "nameEn": "Flash Freeze damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.b6",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.steam.b2",
+    "outer.steam.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnKill",
+    "effect": "Burst",
+    "value": 35,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の撃破時余波",
+   "nameEn": "Flash Freeze Burst on kill",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.n1",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.steam.a6",
+    "outer.steam.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "Steam",
+    "perRank": 25
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "蒸気+25",
+   "nameEn": "Steam +25",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.n2",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.steam.c1",
+    "outer.steam.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "Fetters",
+    "perRank": 4
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "足枷+4",
+   "nameEn": "Fetters +4",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.n3",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.steam.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "ElementalHarvest",
+    "perRank": 6
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "属性の収穫+6",
+   "nameEn": "Elemental Harvest +6",
+   "notes": ""
+  },
+  {
+   "id": "outer.steam.c1",
+   "region": "outer",
+   "cluster": "outer.steam",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.steam.n1",
+    "outer.steam.n2",
+    "outer.steam.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "Steam",
+      "perRank": 15
+     },
+     "stat": null,
+     "nameJa": "蒸気+15",
+     "nameEn": "Steam +15"
+    },
+    {
+     "kind": "Notable",
+     "memory": "St_C_Pew",
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": {
+      "trigger": "OnHit",
+      "effect": "Sap",
+      "value": 3,
+      "arg": 0,
+      "cooldown": 0,
+      "target": null
+     },
+     "power": null,
+     "stat": null,
+     "nameJa": "発砲の命中時弱体",
+     "nameEn": "Pew Sap on hit"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "蒸気の交点の選択：蒸気+15／発砲の命中時弱体",
+   "nameEn": "steam choice: Steam +15 / Pew Sap on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.s1",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s2",
+    "outer.eclipse.s4",
+    "outer.eclipse.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "LightAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光効果+3%",
+   "nameEn": "Light Amp +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.eclipse.s2",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s1",
+    "outer.eclipse.s3",
+    "outer.cinder-rime.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "DarkAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇効果+3%",
+   "nameEn": "Dark Amp +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.s3",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s2",
+    "outer.eclipse.s4",
+    "outer.eclipse.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "AttackPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "攻撃力+2%",
+   "nameEn": "Attack Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.s4",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s3",
+    "outer.eclipse.s1",
+    "outer.steam.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "PowerPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "魔力+2%",
+   "nameEn": "Power Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a1",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s1",
+    "outer.eclipse.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_Starfall",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星の再使用短縮+3%",
+   "nameEn": "Starfall haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a2",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a1",
+    "outer.eclipse.a3",
+    "outer.eclipse.a4",
+    "outer.eclipse.a5",
+    "outer.eclipse.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Starfall",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 50,
+    "arg": 3,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星の命中時闇の付与",
+   "nameEn": "Starfall Dark application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a3",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a2"
+   ],
+   "requires": [
+    "outer.eclipse.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_Starfall",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星の仕掛け強化+10%",
+   "nameEn": "Starfall gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a4",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a2"
+   ],
+   "requires": [
+    "outer.eclipse.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_Starfall",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星の確率+5ポイント",
+   "nameEn": "Starfall chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a5",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_Starfall",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星のダメージ+4%",
+   "nameEn": "Starfall damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.a6",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a2",
+    "outer.eclipse.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_Starfall",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Wound",
+    "value": 25,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "流星の命中時傷痕",
+   "nameEn": "Starfall Wound on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b1",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.s3",
+    "outer.eclipse.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_DarkBolt",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の再使用短縮+3%",
+   "nameEn": "Dark Bolt haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b2",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.b1",
+    "outer.eclipse.b3",
+    "outer.eclipse.b4",
+    "outer.eclipse.b5",
+    "outer.eclipse.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_DarkBolt",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 50,
+    "arg": 2,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の命中時光の付与",
+   "nameEn": "Dark Bolt Light application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b3",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.b2"
+   ],
+   "requires": [
+    "outer.eclipse.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_DarkBolt",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の仕掛け強化+10%",
+   "nameEn": "Dark Bolt gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b4",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.b2"
+   ],
+   "requires": [
+    "outer.eclipse.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_DarkBolt",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の確率+5ポイント",
+   "nameEn": "Dark Bolt chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b5",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_DarkBolt",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢のダメージ+4%",
+   "nameEn": "Dark Bolt damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.b6",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.b2",
+    "outer.eclipse.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_DarkBolt",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Wound",
+    "value": 25,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の命中時傷痕",
+   "nameEn": "Dark Bolt Wound on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.n1",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.a6",
+    "outer.eclipse.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "Eclipse",
+    "perRank": 5
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "蝕+5",
+   "nameEn": "Eclipse +5",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.n2",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.c1",
+    "outer.eclipse.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "UmbralHeritage",
+    "perRank": 20
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の継承+20",
+   "nameEn": "Umbral Heritage +20",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.n3",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "StardustCycle",
+    "perRank": 3
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "星屑の循環+3",
+   "nameEn": "Stardust Cycle +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.eclipse.c1",
+   "region": "outer",
+   "cluster": "outer.eclipse",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.eclipse.n1",
+    "outer.eclipse.n2",
+    "outer.eclipse.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "Eclipse",
+      "perRank": 3
+     },
+     "stat": null,
+     "nameJa": "蝕+3",
+     "nameEn": "Eclipse +3"
+    },
+    {
+     "kind": "GimmickParam",
+     "memory": "St_C_Starfall",
+     "value": 20,
+     "param": "Duration",
+     "receiver": null,
+     "gimmick": null,
+     "power": null,
+     "stat": null,
+     "nameJa": "流星の持続+20%",
+     "nameEn": "Starfall Duration +20%"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "蝕の交点の選択：蝕+3／流星の持続+20%",
+   "nameEn": "eclipse choice: Eclipse +3 / Starfall Duration +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.s1",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s2",
+    "outer.cinder-rime.s4",
+    "outer.cinder-rime.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "FireAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "火効果+3%",
+   "nameEn": "Fire Amp +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.cinder-rime.s2",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s1",
+    "outer.cinder-rime.s3",
+    "outer.support.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "ColdAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "冷気効果+3%",
+   "nameEn": "Cold Amp +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.s3",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s2",
+    "outer.cinder-rime.s4",
+    "outer.cinder-rime.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "LightAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "光効果+3%",
+   "nameEn": "Light Amp +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.s4",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s3",
+    "outer.cinder-rime.s1",
+    "outer.eclipse.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "DarkAmp",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇効果+3%",
+   "nameEn": "Dark Amp +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a1",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s1",
+    "outer.cinder-rime.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_DarkBolt",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の再使用短縮+3%",
+   "nameEn": "Dark Bolt haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a2",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a1",
+    "outer.cinder-rime.a3",
+    "outer.cinder-rime.a4",
+    "outer.cinder-rime.a5",
+    "outer.cinder-rime.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_DarkBolt",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 100,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の命中時火の付与",
+   "nameEn": "Dark Bolt Fire application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a3",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a2"
+   ],
+   "requires": [
+    "outer.cinder-rime.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_DarkBolt",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の仕掛け強化+10%",
+   "nameEn": "Dark Bolt gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a4",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a2"
+   ],
+   "requires": [
+    "outer.cinder-rime.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_DarkBolt",
+   "value": 10,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の確率+10ポイント",
+   "nameEn": "Dark Bolt chance +10 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a5",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_DarkBolt",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢のダメージ+4%",
+   "nameEn": "Dark Bolt damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.a6",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a2",
+    "outer.cinder-rime.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_DarkBolt",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Echo",
+    "value": 8,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "闇の矢の命中時追撃",
+   "nameEn": "Dark Bolt Echo on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b1",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.s3",
+    "outer.cinder-rime.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_FlashFreeze",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の再使用短縮+3%",
+   "nameEn": "Flash Freeze haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b2",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.b1",
+    "outer.cinder-rime.b3",
+    "outer.cinder-rime.b4",
+    "outer.cinder-rime.b5",
+    "outer.cinder-rime.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Element",
+    "value": 50,
+    "arg": 2,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の命中時光の付与",
+   "nameEn": "Flash Freeze Light application on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b3",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.b2"
+   ],
+   "requires": [
+    "outer.cinder-rime.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_FlashFreeze",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の仕掛け強化+10%",
+   "nameEn": "Flash Freeze gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b4",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.b2"
+   ],
+   "requires": [
+    "outer.cinder-rime.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_FlashFreeze",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の確率+5ポイント",
+   "nameEn": "Flash Freeze chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b5",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_C_FlashFreeze",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結のダメージ+4%",
+   "nameEn": "Flash Freeze damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.b6",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.b2",
+    "outer.cinder-rime.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_FlashFreeze",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "Shield",
+    "value": 2,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C06"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "急速凍結の使用時障壁",
+   "nameEn": "Flash Freeze Shield on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.n1",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.a6",
+    "outer.cinder-rime.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "Cinder",
+    "perRank": 1
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "燃え殻+1",
+   "nameEn": "Cinder +1",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.n2",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.c1",
+    "outer.cinder-rime.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "FrostCrystal",
+    "perRank": 3
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "氷晶+3",
+   "nameEn": "Frost Crystal +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.n3",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "SharedWard",
+    "perRank": 6
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "分かち合う加護+6",
+   "nameEn": "Shared Ward +6",
+   "notes": ""
+  },
+  {
+   "id": "outer.cinder-rime.c1",
+   "region": "outer",
+   "cluster": "outer.cinder-rime",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.cinder-rime.n1",
+    "outer.cinder-rime.n2",
+    "outer.cinder-rime.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "ElementalHarvest",
+      "perRank": 8
+     },
+     "stat": null,
+     "nameJa": "属性の収穫+8",
+     "nameEn": "Elemental Harvest +8"
+    },
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "FrostCrystal",
+      "perRank": 2
+     },
+     "stat": null,
+     "nameJa": "氷晶+2",
+     "nameEn": "Frost Crystal +2"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "燃え殻と氷晶の選択：属性の収穫+8／氷晶+2",
+   "nameEn": "cinder-rime choice: Elemental Harvest +8 / Frost Crystal +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.s1",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.support.s2",
+    "outer.support.s4",
+    "outer.support.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "HealPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "回復量+3%",
+   "nameEn": "Heal Power +3",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.support.s2",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.support.s1",
+    "outer.support.s3",
+    "outer.dream.s4"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "ShieldPower",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "障壁量+3%",
+   "nameEn": "Shield Power +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.s3",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.support.s2",
+    "outer.support.s4",
+    "outer.support.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Tenacity",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "行動妨害耐性+3%",
+   "nameEn": "Tenacity +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.s4",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.support.s3",
+    "outer.support.s1",
+    "outer.cinder-rime.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "MaxHealthPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "最大HP+2%",
+   "nameEn": "Max Health Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a1",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.s1",
+    "outer.support.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_C_MassProtection",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの再使用短縮+3%",
+   "nameEn": "Mass Protection haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a2",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.a1",
+    "outer.support.a3",
+    "outer.support.a4",
+    "outer.support.a5",
+    "outer.support.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_C_MassProtection",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "AlliedWard",
+    "value": 20,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C12"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの使用時加護",
+   "nameEn": "Mass Protection Allied Ward on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a3",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.a2"
+   ],
+   "requires": [
+    "outer.support.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_C_MassProtection",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの仕掛け強化+10%",
+   "nameEn": "Mass Protection gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a4",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.a2"
+   ],
+   "requires": [
+    "outer.support.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_MassProtection",
+   "value": 20,
+   "param": "Duration",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの持続+20%",
+   "nameEn": "Mass Protection Duration +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a5",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_MassProtection",
+   "value": 20,
+   "param": "Radius",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの範囲+20%",
+   "nameEn": "Mass Protection Radius +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.a6",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.a2",
+    "outer.support.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_C_MassProtection",
+   "value": 1,
+   "param": "ExtraTargets",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "範囲シールドの対象数+1",
+   "nameEn": "Mass Protection targets +1",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b1",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.s3",
+    "outer.support.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_E_MassCleanse",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の再使用短縮+3%",
+   "nameEn": "Mass Cleanse haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b2",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.b1",
+    "outer.support.b3",
+    "outer.support.b4",
+    "outer.support.b5",
+    "outer.support.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_E_MassCleanse",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "AlliedWard",
+    "value": 20,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C12"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の使用時加護",
+   "nameEn": "Mass Cleanse Allied Ward on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b3",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.b2"
+   ],
+   "requires": [
+    "outer.support.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_E_MassCleanse",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の仕掛け強化+10%",
+   "nameEn": "Mass Cleanse gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b4",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.b2"
+   ],
+   "requires": [
+    "outer.support.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_E_MassCleanse",
+   "value": 20,
+   "param": "Duration",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の持続+20%",
+   "nameEn": "Mass Cleanse Duration +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b5",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_E_MassCleanse",
+   "value": 20,
+   "param": "Radius",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の範囲+20%",
+   "nameEn": "Mass Cleanse Radius +20%",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.b6",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.support.b2",
+    "outer.support.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_E_MassCleanse",
+   "value": 1,
+   "param": "ExtraTargets",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "大規模浄化の対象数+1",
+   "nameEn": "Mass Cleanse targets +1",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.n1",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.support.a6",
+    "outer.support.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "SharedWard",
+    "perRank": 8
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "分かち合う加護+8",
+   "nameEn": "Shared Ward +8",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.n2",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.support.c1",
+    "outer.support.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "WatchfulHand",
+    "perRank": 5
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "見守る手+5",
+   "nameEn": "Watchful Hand +5",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.n3",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.support.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "KindnessReturns",
+    "perRank": 5
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "恩返し+5",
+   "nameEn": "Kindness Returns +5",
+   "notes": ""
+  },
+  {
+   "id": "outer.support.c1",
+   "region": "outer",
+   "cluster": "outer.support",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.support.n1",
+    "outer.support.n2",
+    "outer.support.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "VanguardsOath",
+      "perRank": 5
+     },
+     "stat": null,
+     "nameJa": "先陣の誓い+5",
+     "nameEn": "Vanguards Oath +5"
+    },
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "RearguardsWay",
+      "perRank": 3
+     },
+     "stat": null,
+     "nameJa": "殿の流儀+3",
+     "nameEn": "Rearguards Way +3"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "隣へ届く手の選択：先陣の誓い+5／殿の流儀+3",
+   "nameEn": "support choice: Vanguards Oath +5 / Rearguards Way +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.s1",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s2",
+    "outer.dream.s4",
+    "outer.dream.a1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "MaxHealthPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "最大HP+2%",
+   "nameEn": "Max Health Pct +2",
+   "notes": "設計表は「外周入口→s1」と書くが外周入口の星IDを示さない。既存の効果入口（Stat anchor）をs1が兼ねるためanchorは空、隣接のみ記載。"
+  },
+  {
+   "id": "outer.dream.s2",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s1",
+    "outer.dream.s3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "Armor",
+    "perRank": 3
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "防御+3",
+   "nameEn": "Armor +3",
+   "notes": "設計表の「外周同士は s2–次星団s4」は最後の星団（dream）の次を定義しない。環状に戻すかは要確認で、wrap辺は書いていない。"
+  },
+  {
+   "id": "outer.dream.s3",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s2",
+    "outer.dream.s4",
+    "outer.dream.b1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "AttackPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "攻撃力+2%",
+   "nameEn": "Attack Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.s4",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "ring",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s3",
+    "outer.dream.s1",
+    "outer.support.s2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Stat",
+   "memory": null,
+   "value": 2,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": {
+    "name": "PowerPct",
+    "perRank": 2
+   },
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "魔力+2%",
+   "nameEn": "Power Pct +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a1",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s1",
+    "outer.dream.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryHaste",
+   "memory": "St_L_CoinExplosion",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストの再使用短縮+3%",
+   "nameEn": "Coin Explosion haste +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a2",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a1",
+    "outer.dream.a3",
+    "outer.dream.a4",
+    "outer.dream.a5",
+    "outer.dream.a6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_L_CoinExplosion",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnKill",
+    "effect": "PressureDividend",
+    "value": 10,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C13"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストの撃破時夢圧の取り分",
+   "nameEn": "Coin Explosion Pressure Dividend on kill",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a3",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a2"
+   ],
+   "requires": [
+    "outer.dream.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_L_CoinExplosion",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストの仕掛け強化+10%",
+   "nameEn": "Coin Explosion gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a4",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a2"
+   ],
+   "requires": [
+    "outer.dream.a2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_L_CoinExplosion",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストの確率+5ポイント",
+   "nameEn": "Coin Explosion chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a5",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_L_CoinExplosion",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストのダメージ+4%",
+   "nameEn": "Coin Explosion damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.a6",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a2",
+    "outer.dream.n1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_L_CoinExplosion",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnHit",
+    "effect": "Echo",
+    "value": 8,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "コインバーストの命中時追撃",
+   "nameEn": "Coin Explosion Echo on hit",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b1",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.s3",
+    "outer.dream.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": 3,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮のダメージ+3%",
+   "nameEn": "Shout of Oblivion damage +3%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b2",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.b1",
+    "outer.dream.b3",
+    "outer.dream.b4",
+    "outer.dream.b5",
+    "outer.dream.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnKill",
+    "effect": "PressureDividend",
+    "value": 10,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C13"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮の撃破時夢圧の取り分",
+   "nameEn": "Shout of Oblivion Pressure Dividend on kill",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b3",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.b2"
+   ],
+   "requires": [
+    "outer.dream.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickBoost",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": 10,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮の仕掛け強化+10%",
+   "nameEn": "Shout of Oblivion gimmick boost +10%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b4",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.b2"
+   ],
+   "requires": [
+    "outer.dream.b2"
+   ],
+   "requiresAny": [],
+   "kind": "GimmickParam",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": 5,
+   "param": "Chance",
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮の確率+5ポイント",
+   "nameEn": "Shout of Oblivion chance +5 pts",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b5",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.b2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "MemoryDamage",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": 4,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C03"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮のダメージ+4%",
+   "nameEn": "Shout of Oblivion damage +4%",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.b6",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "fan",
+   "anchor": null,
+   "edges": [
+    "outer.dream.b2",
+    "outer.dream.n2"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": "St_U_ShoutOfOblivion",
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": {
+    "trigger": "OnUse",
+    "effect": "Shield",
+    "value": 2,
+    "arg": 0,
+    "cooldown": 0,
+    "target": null
+   },
+   "power": null,
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01",
+    "C02",
+    "C06"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "忘却の咆哮の使用時障壁",
+   "nameEn": "Shout of Oblivion Shield on use",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.n1",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.dream.a6",
+    "outer.dream.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "DreamOmen",
+    "perRank": 8
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "夢の予兆+8",
+   "nameEn": "Dream Omen +8",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.n2",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.dream.c1",
+    "outer.dream.b6"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "ShardBoon",
+    "perRank": 3
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "破片の恵み+3",
+   "nameEn": "Shard Boon +3",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.n3",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.dream.c1"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Notable",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": {
+    "name": "SpendersWard",
+    "perRank": 2
+   },
+   "stat": null,
+   "options": null,
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "浪費の加護+2",
+   "nameEn": "Spenders Ward +2",
+   "notes": ""
+  },
+  {
+   "id": "outer.dream.c1",
+   "region": "outer",
+   "cluster": "outer.dream",
+   "shape": "chain",
+   "anchor": null,
+   "edges": [
+    "outer.dream.n1",
+    "outer.dream.n2",
+    "outer.dream.n3"
+   ],
+   "requires": [],
+   "requiresAny": [],
+   "kind": "Choice",
+   "memory": null,
+   "value": null,
+   "param": null,
+   "receiver": null,
+   "gimmick": null,
+   "power": null,
+   "stat": null,
+   "options": [
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "LucidBoon",
+      "perRank": 1
+     },
+     "stat": null,
+     "nameJa": "明晰夢の恩恵+1",
+     "nameEn": "Lucid Boon +1"
+    },
+    {
+     "kind": "Notable",
+     "memory": null,
+     "value": null,
+     "param": null,
+     "receiver": null,
+     "gimmick": null,
+     "power": {
+      "name": "PreyPride",
+      "perRank": 1
+     },
+     "stat": null,
+     "nameJa": "獲物の誇り+1",
+     "nameEn": "Prey Pride +1"
+    }
+   ],
+   "keystone": null,
+   "mechanisms": [
+    "C01"
+   ],
+   "maxRank": 1,
+   "rankCost": 1,
+   "nameJa": "深い夢の取り分の選択：明晰夢の恩恵+1／獲物の誇り+1",
+   "nameEn": "dream choice: Lucid Boon +1 / Prey Pride +1",
+   "notes": ""
+  }
+ ]
+}
