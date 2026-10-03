@@ -544,6 +544,17 @@ namespace SodRpg.Mod
             foreach (var m in _monsterScratch) RemoveMonster(m);
         }
 
+        private readonly Dictionary<KeyValuePair<Monster, Hero>, float> _thornsNextReflect = new Dictionary<KeyValuePair<Monster, Hero>, float>();
+        private readonly List<KeyValuePair<Monster, Hero>> _thornsScratch = new List<KeyValuePair<Monster, Hero>>();
+
+        private void PruneThornsTimers(float now)
+        {
+            _thornsScratch.Clear();
+            foreach (var kv in _thornsNextReflect)
+                if (kv.Value < now || kv.Key.Key == null || kv.Key.Value == null) _thornsScratch.Add(kv.Key);
+            foreach (var k in _thornsScratch) _thornsNextReflect.Remove(k);
+        }
+
         private void OnMonsterDamageTaken(EventInfoDamage info)
         {
             try
@@ -553,10 +564,17 @@ namespace SodRpg.Mod
                     || !_monsters.TryGetValue(m, out var rt) || !rt.Reflects) return;
                 var attacker = info.actor != null ? info.actor as Entity ?? info.actor.firstEntity : null;
                 if (!(attacker is Hero hero) || !Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy) return;
+                float now = Time.time;
+                var key = new KeyValuePair<Monster, Hero>(m, hero);
+                if (_thornsNextReflect.TryGetValue(key, out float next) && now < next) return;
+                _thornsNextReflect[key] = now + Nightmares.ThornsReflectInterval;
+                if (_thornsNextReflect.Count > 256) PruneThornsTimers(now);
+                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth);
+                if (amount <= 0f) return;
                 _reflectingDamage = true;
                 try
                 {
-                    m.PureDamage(info.damage.amount * Nightmares.ThornsReflectPct / 100f, 0f)
+                    m.PureDamage(amount, 0f)
                         .Dispatch(hero, _registeredOn != null ? info.chain.New(_registeredOn) : info.chain);
                     LogAffixTrigger(NightmareAffix.Thorned, "reflected");
                 }

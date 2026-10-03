@@ -63,8 +63,22 @@ namespace SodRpg.Core.Game
 
         /// <summary>結界：出現時の障壁（最大HPに対する%）。</summary>
         public const int WardShieldPct = 25;
-        /// <summary>棘皮：受けたダメージを返す割合（%）。</summary>
-        public const int ThornsReflectPct = 20;
+        /// <summary>棘皮：受けたダメージを返す割合（%）。v1.31 で20→15、さらに1回の上限を設けた。</summary>
+        public const int ThornsReflectPct = 15;
+        /// <summary>棘皮：1回に返す量の上限（攻撃した旅人の最大HPに対する%、夢の圧・潜行の倍率を掛ける前）。</summary>
+        public const float ThornsReflectMaxHealthPct = 1.5f;
+        /// <summary>棘皮：同じ敵から同じ旅人へ返す間隔（秒）。多段攻撃・連打で何度も返さない。</summary>
+        public const float ThornsReflectInterval = 0.4f;
+
+        /// <summary>
+        /// 棘皮で返す量。プレイヤーの火力は HP よりずっと伸びやすいので、与えたダメージの割合だけで返すと
+        /// 強くなるほど自滅する（v1.31、利用者の指摘）。攻撃した旅人の最大HPの割合で頭打ちにする。
+        /// </summary>
+        public static float ThornsReflectAmount(float damageDealt, float attackerMaxHealth)
+        {
+            if (damageDealt <= 0f || attackerMaxHealth <= 0f) return 0f;
+            return Math.Min(damageDealt * ThornsReflectPct / 100f, attackerMaxHealth * ThornsReflectMaxHealthPct / 100f);
+        }
         /// <summary>飢渇：与えたダメージのうち回復する割合（%）。</summary>
         public const int RavenousLeechPct = 15;
         /// <summary>破甲：当たったプレイヤーの防御を下げる量と秒数。</summary>
@@ -216,7 +230,7 @@ namespace SodRpg.Core.Game
                 case NightmareAffix.Regenerating: return Loc.T("毎秒最大HPの2%回復。攻撃を集中して倒す。", "Heals 2% max HP each second; focus damage to defeat it.");
                 case NightmareAffix.Arcane: return Loc.T("魔力+50%・スキル加速+40。術を避け、発動後に攻める。", "Power +50%, haste +40; evade spells and punish after casting.");
                 case NightmareAffix.Warded: return Loc.T("防御+20、出現時に最大HP25%の障壁。障壁を割って攻める。", "Armor +20 and a spawn shield of 25% max HP; break the barrier.");
-                case NightmareAffix.Thorned: return Loc.T("防御+30、旅人から受けたダメージの20%をその旅人へ返す（召喚獣の攻撃は返さない）。回復を備えて攻める。", "Armor +30; returns 20% of damage taken from a traveler to that traveler (not to summons). Prepare healing before attacking.");
+                case NightmareAffix.Thorned: return Loc.T("防御+30。旅人から受けたダメージの15%をその旅人へ返す（1回につき最大HPの1.5%まで、夢の圧と潜行で増える。0.4秒に1回まで。召喚獣の攻撃は返さない）。", "Armor +30. Returns 15% of damage taken from a traveler to that traveler (at most 1.5% of their max HP per hit, raised by dream pressure and delve; once per 0.4 s; not to summons).");
                 case NightmareAffix.Ravenous: return Loc.T("攻撃力+15%、与ダメージの15%回復。攻撃を避けて回復を防ぐ。", "Attack +15%; heals for 15% of damage dealt. Dodge to deny healing.");
                 case NightmareAffix.Sundering: return Loc.T("攻撃力+10%、命中で防御-20を4秒。追撃を避ける。", "Attack +10%; hits reduce armor by 20 for 4s. Avoid follow-up hits.");
                 case NightmareAffix.Veiled: return Loc.T("6mより遠い攻撃の被ダメージ-30%。6m以内へ近づく。", "Receives 30% less damage from beyond 6m; approach within 6m.");
