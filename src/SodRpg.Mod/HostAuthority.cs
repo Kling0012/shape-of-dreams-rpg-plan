@@ -101,6 +101,7 @@ namespace SodRpg.Mod
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
+            public string KillEventId;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -196,7 +197,6 @@ namespace SodRpg.Mod
         private Dictionary<string, LucidDreamType> _lucidTypes;
         private readonly List<KeyValuePair<Monster, float>> _spawnQueue = new List<KeyValuePair<Monster, float>>();
         private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
-        private readonly List<Monster> _nightmareScratch = new List<Monster>();
         private float _nextNightmareSync;
         private readonly Func<int> _dailyIdOfHost;
         private readonly Dictionary<Monster, float> _regen = new Dictionary<Monster, float>();
@@ -292,7 +292,7 @@ namespace SodRpg.Mod
             if (now >= _nextNightmareSync)
             {
                 _nextNightmareSync = now + 5f;
-                ResyncNightmares();
+                ResyncMonsterClassifications();
                 SendPressure();
             }
         }
@@ -366,37 +366,6 @@ namespace SodRpg.Mod
             monster.Status.CalculateStatsIfDirty();
         }
 
-        /// <summary>生きている悪夢・変種を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
-        private void ResyncNightmares()
-        {
-            if (_registeredOn == null) return;
-            _nightmareScratch.Clear();
-            foreach (var kv in _nightmares)
-            {
-                if (kv.Key == null || !kv.Key.isActive)
-                {
-                    _nightmareScratch.Add(kv.Key);
-                    continue;
-                }
-                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
-                if (_monsters.TryGetValue(kv.Key, out var nightmareRuntime))
-                    SendMonsterBehaviorCue(nightmareRuntime, true);
-            }
-            foreach (var rt in _monsters.Values)
-            {
-                if (rt.Variant == null) continue;
-                var m = rt.Monster;
-                if (m == null || !m.isActive)
-                {
-                    _nightmareScratch.Add(m);
-                    continue;
-                }
-                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = rt.Variant.Id });
-                SendMonsterBehaviorCue(rt, true);
-            }
-            foreach (var m in _nightmareScratch) RemoveMonster(m);
-        }
-
         /// <summary>パーティの最大の夢の深度（MOD導入者の Build から）。</summary>
         private int PartyDepth()
         {
@@ -458,6 +427,7 @@ namespace SodRpg.Mod
             if (!(info.victim is Monster m)) return;
             try
             {
+                CaptureAuthoritativeRunKill(m);
                 CapturePressureDividendDeath(m);
                 if (!_monsters.TryGetValue(m, out var rt) || rt.Variant == null
                     || (rt.Variant.Traits & VariantTrait.DeathBurst) == 0 || rt.DeathBurstTriggered) return;
@@ -819,7 +789,10 @@ namespace SodRpg.Mod
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
+            {
+                netId = m.netId, affixes = (int)affix, authorityGeneration = ClientSession.HostAuthorityGeneration,
+            });
         }
 
         private void MakeVariant(MonsterRuntime rt, VariantDef variant)
@@ -851,7 +824,10 @@ namespace SodRpg.Mod
                 _loggedVariantSpawn = true;
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
             }
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = variant.Id });
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
+            {
+                netId = m.netId, variantId = variant.Id, authorityGeneration = ClientSession.HostAuthorityGeneration,
+            });
         }
 
         private void ApplyMonsterAffixes(MonsterRuntime rt, NightmareAffix affix, float regen)
@@ -2107,6 +2083,7 @@ namespace SodRpg.Mod
                 if (info.victim is Hero deadHero) OnAssignedMechanismDeath(deadHero);
                 if (!(info.victim is Summon)) OnSupportDeathV129(info);
                 if (!(info.victim is Monster monster)) return;
+                CaptureAuthoritativeRunKill(monster);
                 ReportElementalDeath(monster);
                 OnReactionDeath(info.victim);
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;

@@ -293,6 +293,9 @@ namespace SodRpg.Core.Game
         public List<string> StarterUids { get; } = new List<string>();
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
+        public string CompletedRunId { get; set; }
+        public RunRecoveryState RunRecovery { get; set; }
+        public KillClassificationCheckpoint KillClassification { get; set; }
 
         /// <summary>狙い系統。設定するとその系統の装備が出やすくなる。null は狙いなし。</summary>
         public Line? Focus { get; set; }
@@ -372,6 +375,9 @@ namespace SodRpg.Core.Game
                 LastDreamDepth = LastDreamDepth,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
+                CompletedRunId = CompletedRunId,
+                RunRecovery = RunRecovery?.Clone(),
+                KillClassification = KillClassification?.Clone(),
                 Focus = Focus,
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),

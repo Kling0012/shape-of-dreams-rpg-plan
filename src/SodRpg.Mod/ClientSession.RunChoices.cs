@@ -25,6 +25,8 @@ namespace SodRpg.Mod
         internal static int HostChosenDepth => NetworkServer.active && _hostSession != null
             ? DreamDepth.Clamp(HostRun?.DreamDepth ?? _hostSession.Profile.LastDreamDepth) : 0;
         internal static string HostRunChoices => NetworkServer.active ? _hostSession?.EncodeRunChoices() : null;
+        internal static ulong HostAuthorityGeneration => NetworkServer.active && _hostSession != null
+            ? _hostSession._choicePublisher.AuthorityGeneration : 0;
         internal static bool CommitHostCombatChoice() => NetworkServer.active && _hostSession != null
             && _hostSession.CommitCombatChoice();
 
@@ -72,6 +74,7 @@ namespace SodRpg.Mod
                 protocol = Protocol.Version, choices = EncodeRunChoices(),
             });
             _nextChoicesSync = Time.unscaledTime + 5f;
+            PublishRunChoiceHistory();
         }
 
         private void PublishRunChoicesForZone(int zoneIndex)
@@ -122,7 +125,7 @@ namespace SodRpg.Mod
 
         private void TryFinishSecureArrival()
         {
-            if (!RunActive || _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades,
+            if (!RunActive || HasPendingKillClassification || _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades,
                 Emit, _grantPendingKill, PublishRunChoicesForZone) == 0) return;
             MarkDirty(true);
             _nextDreamEventNotice = 0f;
@@ -152,18 +155,25 @@ namespace SodRpg.Mod
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)
         {
             if (msg == null || msg.protocol != Protocol.Version) return;
-            ReceiveRunChoices(msg.choices);
+            ReceiveRunChoices(msg.choices, msg.terminal ? (bool?)msg.victory : null);
         }
 
-        private void ReceiveRunChoices(string encoded)
+        private void ReceiveRunChoices(string encoded, bool? victory = null)
         {
             if (NetworkServer.active || !RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (!string.IsNullOrEmpty(snapshot.RunId) && !string.IsNullOrEmpty(gameRunId) && snapshot.RunId != gameRunId) return;
             if (!string.IsNullOrEmpty(snapshot.RunId) && snapshot.RunId == _completedRunId) return;
+            if (!ObserveMonsterAuthority(snapshot.AuthorityGeneration)) return;
             // Preserve the final zone's committed rules until its last rewards and result have been settled.
             if (string.IsNullOrEmpty(snapshot.RunId) && (RunActive || _pendingRunRewards.Count > 0)) return;
-            if (!_runChoiceProgress.Receive(snapshot)) return;
+            bool received = _runChoiceProgress.Receive(snapshot);
+            if (victory.HasValue && _runChoiceProgress.AcceptsResult(snapshot))
+            {
+                _pendingRunVictory = victory;
+                _pendingResultRunId = snapshot.RunId;
+            }
+            if (!received) return;
             TryFinishSecureArrival();
             ApplyHostRunChoices();
         }
@@ -186,10 +196,18 @@ namespace SodRpg.Mod
 
         private void TryConcludeRun()
         {
-            if (!_pendingRunVictory.HasValue || !RunActive || ActiveRunId != _pendingResultRunId) return;
-            if (!_runChoiceProgress.CanConclude(ActiveRunId)) return;
+            if (!_pendingRunVictory.HasValue || !RunActive || HasPendingKillClassification || ActiveRunId != _pendingResultRunId) return;
+            if (CanChooseRunRules)
+            {
+                CommitCombatChoice(publish: false);
+                FlushPendingRunRewards();
+            }
+            if (!_runChoiceProgress.CanConclude(ActiveRunId, ChoiceZoneIndex, CanChooseRunRules)) return;
             bool victory = _pendingRunVictory.Value;
             _completedRunId = ActiveRunId;
+            Profile.CompletedRunId = _completedRunId;
+            if (NetworkServer.active)
+                _choicePublisher.CaptureTerminal(Profile.Run, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex, victory);
             _pendingRunVictory = null;
             _pendingResultRunId = null;
             int pacts = Profile.Run.Pacts.Count;

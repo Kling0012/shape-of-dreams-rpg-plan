@@ -12,7 +12,7 @@ namespace SodRpg.Core.Game
     /// プロフィールの保存形式。{"format","version","checksum","body"} の形で、checksum は body の
     /// 正規化済みJSONの sha256。読めない遺物（未知の基礎IDなど）は捨てずに Notes へ記録して除外する。
     /// </summary>
-    public static class ProfileCodec
+    public static partial class ProfileCodec
     {
         public const string Format = "sodrpg.profile";
 
@@ -133,6 +133,9 @@ namespace SodRpg.Core.Game
                 .Add("starterV119Granted", p.StarterV119Granted)
                 .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
                 .Add("stats", stats)
+                .Add("completedRunId", p.CompletedRunId)
+                .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
+                .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
         }
 
@@ -236,6 +239,9 @@ namespace SodRpg.Core.Game
             };
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
+            p.CompletedRunId = Str(b, "completedRunId");
+            p.RunRecovery = ReadRunRecovery(b);
+            p.KillClassification = ReadKillClassification(b);
             long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
             if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)
@@ -311,7 +317,7 @@ namespace SodRpg.Core.Game
                     if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
                     if (HeroSigils.HasTree(kv.Key))
                     {
-                        var refund = AuthoredStarMigration.Apply(h, HeroSigils.TreeFor(kv.Key), Array.Empty<LegacyStarMigration>());
+                        var refund = AuthoredStarMigration.Apply(h, HeroSigils.TreeFor(kv.Key), System.Array.Empty<LegacyStarMigration>());
                         if (refund.RefundCost > 0)
                             notes.Add(Loc.T($"選択または前提が無効な星を払い戻しました（{refund.RefundCost}ポイント）: ",
                                 $"Refunded stars with invalid choices or prerequisites ({refund.RefundCost} points): ")

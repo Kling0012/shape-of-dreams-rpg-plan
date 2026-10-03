@@ -3,7 +3,7 @@ using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
-    /// <summary>Optional protocol-12 host TargetRpc; it does not change the existing Build grammar.</summary>
+    /// <summary>Optional host TargetRpc; it does not change the existing Build grammar.</summary>
     [Serializable]
     public sealed class DreamforgePressureDividendMsg
     {

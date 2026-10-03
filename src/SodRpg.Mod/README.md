@@ -2,6 +2,8 @@
 
 現在の配布版は **v1.30.3（プレリリース）**。星のポイント上限300・通信はProtocol 12（協力は全員同じ版へ）。更新内容と保存形式3への切替は [更新履歴](../../CHANGELOG.md) を確認してください。旧プロフィールのアーカイブと再開始を伴うため、更新前に保存フォルダをバックアップし、ゲームを終了して差し替えてください。
 
+開発中の v1.31 では再接続・途中参加・再読み込みの修正により **Protocol 13** を使います。協力する全員を同じ版へ更新してください。保存形式3は変わりません。 / Development builds of v1.31 use **protocol 13** for reconnect, late-join and reload fixes. Update every co-op participant together; profile format 3 is unchanged. [修正・検証記録](../../docs/specs/v1.31-mpfix-sol2.md)
+
 計画書 Ver1.0 を目安に、最初に遊べる形へまとめたMOD。計画書の全要素ではなく、「持ち帰る装備」「帰還（確保）の決断」「自分の戦い方」「協力」の4本を、本作の既存ループ（ゾーン→ボス）の上に載せた。
 
 ## 遊び

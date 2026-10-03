@@ -262,17 +262,11 @@ namespace SodRpg.Mod
 
         private void OnDestroy()
         {
-            // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
+            // 未精算の報酬と遠征の結果を保存してから、登録・補正・パッチを外す。
             try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Icons dispose: " + ex); }
             try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
-            try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }
-            try
-            {
-                _session?.SaveNow();
-                _session?.FlushSaves();
-            }
-            catch (Exception ex) { Log.Error("Save on destroy: " + ex); }
+            try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             BlockInputWhileMenuOpen.MenuOpen = false;
             BlockGameUi(false);
             try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }

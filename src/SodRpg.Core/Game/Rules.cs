@@ -98,6 +98,7 @@ namespace SodRpg.Core.Game
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
+            if (runId == p.CompletedRunId) return ev;
             if (p.Run != null && p.Run.RunId == runId)
             {
                 if (string.IsNullOrEmpty(p.Run.HeroKey) && !string.IsNullOrEmpty(heroKey)) p.Run.HeroKey = heroKey;
@@ -559,6 +560,7 @@ namespace SodRpg.Core.Game
             run.EventDropBonus = 0;
             run.EventLuck = 0;
             Waypoints.Expire(run);
+            p.CompletedRunId = run.RunId;
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;

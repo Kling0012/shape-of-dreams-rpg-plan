@@ -94,6 +94,7 @@ namespace SodRpg.Mod
             _hostSession = this;
             _notify = notify;
             InitializeProfiles(saveDir);
+            RestoreRunDurability();
             _onDeath = OnDeath;
             _onZoneLoaded = OnZoneLoaded;
             _onClearedRoomsChanged = OnClearedRoomsChanged;
@@ -294,6 +295,7 @@ namespace SodRpg.Mod
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport); } catch (Exception) { }
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -316,6 +318,7 @@ namespace SodRpg.Mod
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 ResetRunChoiceConnection();
+                ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
                 _buildDirty = true;
                 if (actor != null)
@@ -326,6 +329,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -346,6 +350,9 @@ namespace SodRpg.Mod
 
         public void Unwire()
         {
+            SaveNow();
+            FlushSaves();
+            _runDurabilityDetached = true;
             try
             {
                 if (_zone != null)
@@ -365,6 +372,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -380,6 +388,7 @@ namespace SodRpg.Mod
             _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
+            ResetMonsterAuthorityConnection();
             if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _pendingRunRewards.Clear();
             _pendingPressureDividends.Clear();
@@ -401,12 +410,14 @@ namespace SodRpg.Mod
                 return;
             }
             string runId = gm.runId;
-            if (string.IsNullOrEmpty(runId) || runId == ActiveRunId || runId == _completedRunId) return;
+            if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
+            if (_zone != null && _zone.isInAnyTransition) return;
             // 参加者の PC では ZoneManager が遅れて届くことがある。ゾーン番号が分かるまで遠征を始めない（v1.30.3）。
             if (ChoiceZoneIndex < 0) return;
             // Remember zone history even while the initial host rules are still in transit.
             _runChoiceProgress.BeginRun(runId, ChoiceZoneIndex);
+            if (runId == ActiveRunId) return;
             // The first reward must use the host's depth, including clients who join during an expedition.
             if (!CanChooseRunRules && (_receivedRunChoices == null || _receivedRunChoices.RunId != runId)) return;
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
@@ -479,12 +490,11 @@ namespace SodRpg.Mod
             try
             {
                 if (!(info.victim is Monster m)) return;
-                Nightmare.TryGetValue(m.netId, out var nightmare);
-                Variant.TryGetValue(m.netId, out var variantId);
                 Nightmare.Remove(m.netId);
                 NightmareSeenAt.Remove(m.netId);
                 RemoveVariant(m.netId);
                 RemoveMonsterCue(m.netId);
+                _monsterAuthority.Remove(m.netId);
                 // ゲーム本体が報酬を出さない敵（演出・召喚・ハンターの追加敵など）は対象外（PickupManager と同じ判定）。
                 if (m.disableLoot) return;
                 if (m.Status != null && m.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter) && !hunter.enableGoldAndExpDrops) return;
@@ -500,9 +510,8 @@ namespace SodRpg.Mod
                 if (gm.runId == _completedRunId) return;
                 _runChoiceProgress.BeginRun(gm.runId, ChoiceZoneIndex);
                 if (CanChooseRunRules) CommitCombatChoice();
-                _pendingRunRewards.Add(new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
-                    tier, level, nightmare, variantId, heroKey));
-                FlushPendingRunRewards();
+                CaptureNativeKill(m.netId, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
+                    tier, level, NightmareAffix.None, null, heroKey));
             }
             catch (Exception ex)
             {
@@ -682,9 +691,16 @@ namespace SodRpg.Mod
 
         private void OnNightmare(DreamforgeNightmareMsg msg)
         {
-            if (msg == null) return;
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
+                || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
             var a = Nightmares.Sanitize(msg.affixes);
-            if (a == NightmareAffix.None) return;
+            if (a == NightmareAffix.None)
+            {
+                Nightmare.Remove(msg.netId);
+                NightmareSeenAt.Remove(msg.netId);
+                RemoveVariant(msg.netId);
+                return;
+            }
             RemoveVariant(msg.netId);
             Nightmare[msg.netId] = a;
             NightmareSeenAt[msg.netId] = Time.unscaledTime;
@@ -697,9 +713,16 @@ namespace SodRpg.Mod
 
         private void OnVariant(DreamforgeVariantMsg msg)
         {
-            if (msg == null) return;
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
+                || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             var def = Variants.Get(msg.variantId);
-            if (def == null) return;
+            if (def == null)
+            {
+                Nightmare.Remove(msg.netId);
+                NightmareSeenAt.Remove(msg.netId);
+                RemoveVariant(msg.netId);
+                return;
+            }
             if (Variant.TryGetValue(msg.netId, out var previous) && previous != def.Id)
                 RemoveVariant(msg.netId);
             Nightmare.Remove(msg.netId);
@@ -928,12 +951,13 @@ namespace SodRpg.Mod
                 _buildDirty = true;
             }
             float now = Time.unscaledTime;
-            if (!_buildDirty && now < _nextBuildSend) return;
+            if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
             string encoded = HostBuildValidation.Encode(CurrentBuild(HeroKeyOf(hero)), Profile, HeroKeyOf(hero),
                 Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
             foreach (var part in BuildTransfer.Split(encoded))
                 _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
             _buildDirty = false;
+            _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
@@ -948,6 +972,7 @@ namespace SodRpg.Mod
         /// <summary>保存を予約する（ディスクへの書き込みは別スレッド）。</summary>
         public void SaveNow()
         {
+            PersistRunDurability();
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
             if (_store == null) return;

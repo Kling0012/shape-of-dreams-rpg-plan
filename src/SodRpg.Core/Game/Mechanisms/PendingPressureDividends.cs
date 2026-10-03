@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SodRpg.Core.Game
 {
     /// <summary>Receipts enter only after host transport and local run/owner identity checks.</summary>
-    public sealed class PendingPressureDividends
+    public sealed partial class PendingPressureDividends
     {
         private readonly Queue<PressureDividendReward> _pending = new Queue<PressureDividendReward>();
         private readonly HashSet<string> _nonces = new HashSet<string>(StringComparer.Ordinal);

@@ -96,6 +96,7 @@ namespace SodRpg.Mod
 
         private void FlushOldProfileWriter()
         {
+            PersistRunDurability();
             if (_writer != null && !_writer.Flush())
                 throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish."));
             // ProfileSlots.Save synchronously retries the complete current snapshot after draining.
@@ -148,6 +149,7 @@ namespace SodRpg.Mod
                 SaveError = null;
                 _profileCopyRevision = -1;
                 ResetProfileSession();
+                RestoreRunDurability();
                 UpdateProfileLoadNotes();
                 ProfileChanged?.Invoke();
                 FirstLaunch();
