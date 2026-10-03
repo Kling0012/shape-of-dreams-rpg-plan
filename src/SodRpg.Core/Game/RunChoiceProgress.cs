@@ -20,7 +20,14 @@ namespace SodRpg.Core.Game
 
         public void BeginRun(string runId, int zoneIndex)
         {
-            if (_runId == runId) return;
+            if (_runId == runId)
+            {
+                // v1.30.3: a participant can see the run id before the native ZoneManager reaches it (zone -1).
+                // Adopt the real zone once it is known; otherwise host snapshots for that zone never apply and
+                // the participant gets no rewards and no secure point.
+                if (ZoneIndex < 0 && zoneIndex >= 0 && _arrivals.Count == 0) ZoneIndex = _lastArrival = zoneIndex;
+                return;
+            }
             _runId = runId;
             ZoneIndex = _lastArrival = zoneIndex;
             _arrivals.Clear();

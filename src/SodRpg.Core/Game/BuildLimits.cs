@@ -21,8 +21,8 @@ namespace SodRpg.Core.Game
         });
 
         public static BuildCapacity Registered => RegisteredCapacity.Value;
-        public static int MaxGimmickEntries => checked(StarProgression.MaxPoints * Math.Max(1, Registered.MaximumGimmicksPerStar));
-        public static int MaxLinkEntries => checked(StarProgression.MaxPoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
+        public static int MaxGimmickEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumGimmicksPerStar));
+        public static int MaxLinkEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
         public static int MaxPairComboEntries => PairCombos.All.Count;
         public static int MaxStatEntries => Enum.GetValues(typeof(Stat)).Length;
         public static int MaxPowerEntries => Enum.GetValues(typeof(Power)).Length - 1;
@@ -53,7 +53,7 @@ namespace SodRpg.Core.Game
                 || !Enum.IsDefined(typeof(LinkKind), kind)) return 0;
             decimal equipped = Links.EquippedCap(kind, requireCount);
             decimal perPoint = Math.Max(equipped, Registered.LinkValuePerPoint(kind, requireCount));
-            return BuildPrecision.FromDecimal(perPoint * StarProgression.MaxPoints + equipped * Content.SlotCount);
+            return BuildPrecision.FromDecimal(perPoint * StarProgression.MaxSpendablePoints + equipped * Content.SlotCount);
         }
 
         // Every list item includes its separator, including the final item, giving a conservative bound.
@@ -73,10 +73,10 @@ namespace SodRpg.Core.Game
         /// Additional ranks change values, never entry counts; a choice contributes its best one option.
         /// The generic tree is a separate tree, matching HeroSigils.TreeFor.
         /// </summary>
-        public static BuildCapacity Analyze(IEnumerable<TalentDef> talents, int pointBudget = StarProgression.MaxPoints)
+        public static BuildCapacity Analyze(IEnumerable<TalentDef> talents, int pointBudget = StarProgression.MaxSpendablePoints)
         {
             if (talents == null) throw new ArgumentNullException(nameof(talents));
-            if (pointBudget < 0 || pointBudget > StarProgression.MaxPoints) throw new ArgumentOutOfRangeException(nameof(pointBudget));
+            if (pointBudget < 0 || pointBudget > StarProgression.MaxSpendablePoints) throw new ArgumentOutOfRangeException(nameof(pointBudget));
             var result = new BuildCapacity(pointBudget);
             var byHero = new Dictionary<string, List<NodeOutput>>(StringComparer.Ordinal);
             var ids = new HashSet<string>(StringComparer.Ordinal);

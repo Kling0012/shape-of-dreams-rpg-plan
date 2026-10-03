@@ -390,6 +390,8 @@ namespace SodRpg.Mod
             string runId = gm.runId;
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId || runId == _completedRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
+            // 参加者の PC では ZoneManager が遅れて届くことがある。ゾーン番号が分かるまで遠征を始めない（v1.30.3）。
+            if (ChoiceZoneIndex < 0) return;
             // Remember zone history even while the initial host rules are still in transit.
             _runChoiceProgress.BeginRun(runId, ChoiceZoneIndex);
             // The first reward must use the host's depth, including clients who join during an expedition.

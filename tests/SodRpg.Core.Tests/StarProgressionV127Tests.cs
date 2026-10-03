@@ -74,7 +74,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(14, p.TalentPoints(Other));
                 Assert.Equal(21, p.TalentPoints(Hero));
                 Profile.TestBonusPoints = int.MaxValue;
-                Assert.Equal(int.MaxValue, p.TalentPoints(Hero));
+                Assert.Equal(StarProgression.MaxSpendablePoints, p.TalentPoints(Hero));
                 Profile.TestBonusPoints = -1;
                 Assert.Equal(12, p.TalentPoints(Hero));
             }
