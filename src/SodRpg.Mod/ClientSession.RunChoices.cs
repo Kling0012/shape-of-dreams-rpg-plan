@@ -105,6 +105,7 @@ namespace SodRpg.Mod
         private void FlushPendingRunRewards()
         {
             if (!RunActive) return;
+            FlushPendingPressureDividends();
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
 

@@ -127,6 +127,7 @@ namespace SodRpg.Mod
         private int _gimmickDamageDepth, _pairDamageDepth, _reactionEffectDepth;
         internal struct PendingGimmick
         {
+            public long ShieldEquipmentEpoch;
             public GimmickRequest Request;
             public Entity Victim;
             public PairComboDef Pair;
@@ -135,6 +136,7 @@ namespace SodRpg.Mod
         }
         internal sealed partial class HeroRuntime
         {
+            public long ShieldEquipmentEpoch;
             public readonly GimmickRuntime Gimmicks = new GimmickRuntime();
             public readonly ElementReactionRuntime Reactions = new ElementReactionRuntime();
             public readonly PairComboRuntime PairCombos = new PairComboRuntime();

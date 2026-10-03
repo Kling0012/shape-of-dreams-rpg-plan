@@ -286,6 +286,7 @@ namespace SodRpg.Mod
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport); } catch (Exception) { }
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
                 _clientRpcOn = actor;
                 _trades.Clear();
@@ -316,6 +317,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
             }
         }
@@ -352,6 +354,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
             }
             catch (Exception) { }
@@ -366,6 +369,7 @@ namespace SodRpg.Mod
             ResetRunChoiceConnection(resetHistory: true);
             if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _pendingRunRewards.Clear();
+            _pendingPressureDividends.Clear();
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();

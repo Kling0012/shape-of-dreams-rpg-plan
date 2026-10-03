@@ -44,7 +44,7 @@ namespace SodRpg.Core.Game
     /// プロフィールに対する操作（遠征・鍛冶・装着・専門化）。すべて純粋なデータ操作で、
     /// 失敗時は InvalidOperationException を投げ、プロフィールを変更しない。
     /// </summary>
-    public static class Rules
+    public static partial class Rules
     {
         /// <summary>まだ見ていないヒントなら通知に加える。</summary>
         internal static void AddHint(Profile p, Hint h, List<GameEvent> ev)

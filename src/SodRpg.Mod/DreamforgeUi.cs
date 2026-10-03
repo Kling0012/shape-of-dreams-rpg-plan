@@ -626,8 +626,8 @@ namespace SodRpg.Mod
             if (!_s.HasHostRunChoices)
                 GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
             else GUILayout.Label(Loc.T(
-                $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}",
-                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00}"), _st.Small);
+                $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}・部屋 +{DreamDepth.ExtraZoneNodes(depth)}",
+                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
         }
 
         private Vector2 _scrollSecure;

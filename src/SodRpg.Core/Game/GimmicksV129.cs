@@ -71,8 +71,8 @@ namespace SodRpg.Core.Game
                         : "heal for " + n + "% of that memory's direct damage (excluding damage over time; at most 1.5% of your maximum health per heal)"
                         + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at 1.5% of their own maximum health" : ""); break;
                 case GimmickEffect.Rampart:
-                    text = ja ? "同じ発動で当たった敵1体につき最大HPの" + n + "%の障壁を" + duration + "秒間張る（" + targets + "体まで。最大" + 2 * targets + "%。同時には大きい方だけ）"
-                        : "gain a " + duration + "-second shield equal to " + n + "% of maximum health per distinct enemy hit by this cast (up to " + targets + " enemies and " + 2 * targets + "%; only the stronger shield remains)"; break;
+                    text = ja ? "同じ発動で当たった敵1体につき最大HPの" + n + "%の障壁を" + duration + "秒間張る（" + targets + "体まで、1体につき最大2%。通常の星の障壁とは別に1つまで、残量と新しい量の大きい方を維持して時間を更新。増幅後も最大HPの10%が上限）"
+                        : "gain a " + duration + "-second shield equal to " + n + "% of maximum health per distinct enemy hit by this cast (up to " + targets + " enemies and 2% per enemy; one Rampart pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration; capped at 10% of maximum health after amplification)"; break;
                 case GimmickEffect.Primed:
                     text = ja ? "次の通常攻撃に攻撃力か魔力の高い方の" + n + "%の追加ダメージ（重ならず" + primedDuration + "秒で消える。ほかの次の通常攻撃への上乗せとは最大の1つだけを使い、残りは消費しない）"
                         : "prime the next basic attack for " + n + "% of the higher of attack damage or ability power as extra damage (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;

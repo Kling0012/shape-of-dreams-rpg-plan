@@ -98,6 +98,7 @@ namespace SodRpg.Mod
                 if (effect == GimmickEffect.Quicken || effect == GimmickEffect.Empower || effect == GimmickEffect.Expose) continue;
                 rt.PendingGimmicks.Add(new PendingGimmick
                 {
+                    ShieldEquipmentEpoch = rt.ShieldEquipmentEpoch,
                     Request = request,
                     Victim = victim,
                     Pair = PairForRequest(rt, request.Entry.StarId),
@@ -193,10 +194,7 @@ namespace SodRpg.Mod
                     finally { _gimmickDamageDepth--; }
                     break;
                 case GimmickEffect.Shield:
-                    // The root server actor has no hero ancestors: native support cannot grant Heart of the Pack.
-                    // 出どころを変えたので、旅人のシールド量はここで掛ける（v1.27.1 の能力値）。
-                    ActorManager.instance.serverActor.GiveShield(hero,
-                        SupportStats.AmplifyShield(hero.maxHealth * def.ValuePercent / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), Gimmicks.Duration(def, 4f));
+                    ApplyGimmickV129(rt, pending);
                     break;
                 case GimmickEffect.Heal:
                     var support = ActorManager.instance.serverActor;

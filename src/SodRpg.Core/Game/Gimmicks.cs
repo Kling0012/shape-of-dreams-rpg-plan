@@ -273,8 +273,8 @@ namespace SodRpg.Core.Game
                             + center + " (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Shield:
-                    effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（" + duration + "秒）"
-                        : "gain a shield equal to " + n + "% of maximum health for " + duration + " seconds";
+                    effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（" + duration + "秒。同じ付与者の通常の星の障壁は1つまで、残量と新しい量の大きい方を維持して時間を更新。受け手の最大HPの15%が上限）"
+                        : "gain a shield equal to " + n + "% of maximum health for " + duration + " seconds (one ordinary star shield per owner and recipient; keeps the larger of the remaining and new amounts, refreshes duration, and caps at 15% of the recipient's maximum health)";
                     break;
                 case GimmickEffect.Heal:
                     effect = ja ? "自分" + (def.Arg == 1 ? "と" + healRadius + "m以内の味方" : "") + "を最大HPの" + n + "%回復"

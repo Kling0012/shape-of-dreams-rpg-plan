@@ -18,7 +18,6 @@ namespace SodRpg.Mod
             public readonly Dictionary<int, GimmickHitContext> LastHits = new Dictionary<int, GimmickHitContext>();
             public readonly List<GimmickWoundRuntime.Tick> Ticks = new List<GimmickWoundRuntime.Tick>();
             public Action<EventInfoCast> CastHandler;
-            public Se_GenericShield_OneShot Rampart;
         }
 
         private struct GimmickHitContext
@@ -180,6 +179,13 @@ namespace SodRpg.Mod
         {
             var request = pending.Request;
             var def = request.Entry.Def;
+            if (def.Effect == GimmickEffect.Shield)
+            {
+                AwardModShield(rt, rt.Hero, ModShieldPoolKind.Ordinary,
+                    SupportStats.AmplifyShield(rt.Hero.maxHealth * def.ValuePercent / 100f, rt.Powers.Build.Get(Stat.ShieldPower)),
+                    Gimmicks.Duration(def, 4f), request.Entry.Memory, pending.ShieldEquipmentEpoch);
+                return;
+            }
             if (!Gimmicks.IsV129(def.Effect)) return;
             var hero = rt.Hero;
             var target = pending.Victim;
@@ -239,21 +245,11 @@ namespace SodRpg.Mod
                         break;
                     case GimmickEffect.Rampart:
                         if (support == null || request.TargetCount <= 0) break;
-                        float amount = SupportStats.AmplifyShield(hero.maxHealth * def.ValuePercent
+                        float amount = SupportStats.AmplifyShield(hero.maxHealth * Math.Min(2f, def.ValuePercent)
                             * Math.Min(Gimmicks.TargetLimit(def), request.TargetCount) / 100f, rt.Powers.Build.Get(Stat.ShieldPower));
                         float shieldDuration = Gimmicks.Duration(def, 4f);
-                        var candidate = support.GiveShield(hero, amount, shieldDuration, false);
-                        if (state.Rampart != null && state.Rampart.isActive && state.Rampart.shield != null
-                            && candidate != null && candidate.shield != null && state.Rampart.shield.amount > candidate.shield.amount)
-                        {
-                            candidate.Destroy();
-                            state.Rampart.SetTimer(shieldDuration);
-                        }
-                        else
-                        {
-                            if (state.Rampart != null && state.Rampart.isActive) state.Rampart.Destroy();
-                            state.Rampart = candidate;
-                        }
+                        AwardModShield(rt, hero, ModShieldPoolKind.Rampart, amount, shieldDuration,
+                            request.Entry.Memory, pending.ShieldEquipmentEpoch);
                         break;
                     case GimmickEffect.Primed:
                         // Armed synchronously on acceptance; a delayed dispatch must not rearm a consumed strike.
@@ -341,9 +337,10 @@ namespace SodRpg.Mod
 
         private void UnhookGimmicksV129(HeroRuntime rt)
         {
+            ClearSacrificeShields(rt);
+            ClearModShieldPools(rt);
             if (!_gimmickV129.TryGetValue(rt, out var state)) return;
             if (rt.Hero != null) rt.Hero.EntityEvent_OnCastCompleteBeforePrepare -= state.CastHandler;
-            if (state.Rampart != null && state.Rampart.isActive) state.Rampart.Destroy();
             state.Wounds.Clear();
             _gimmickV129.Remove(rt);
             rt.Gimmicks.ClearTransient();
@@ -351,6 +348,8 @@ namespace SodRpg.Mod
 
         private void ClearZoneGimmicksV129()
         {
+            ClearSacrificeShields();
+            ClearModShieldPools();
             foreach (var pair in _gimmickV129)
             {
                 pair.Key.Gimmicks.ClearTransient();
@@ -361,8 +360,6 @@ namespace SodRpg.Mod
                 pair.Value.Casts.Clear();
                 pair.Value.PairActivations.Clear();
                 pair.Value.LastHits.Clear();
-                if (pair.Value.Rampart != null && pair.Value.Rampart.isActive) pair.Value.Rampart.Destroy();
-                pair.Value.Rampart = null;
             }
             foreach (var pair in _sapProcessors)
                 if (pair.Key != null) pair.Key.dealtDamageProcessor.Remove(pair.Value);

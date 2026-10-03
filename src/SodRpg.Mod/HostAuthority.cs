@@ -38,6 +38,7 @@ namespace SodRpg.Mod
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public long ShieldEquipmentEpoch;
             public Action<EventInfoDamage> OnMemoryDamage;
             public Action<EventInfoKill> OnMemoryKill;
             public readonly Dictionary<int, float> MemoryHitAmounts = new Dictionary<int, float>();
@@ -78,6 +79,7 @@ namespace SodRpg.Mod
 
         private struct PendingGimmick
         {
+            public long ShieldEquipmentEpoch;
             public GimmickRequest Request;
             public Entity Victim;
             public PairComboDef Pair;
@@ -93,6 +95,7 @@ namespace SodRpg.Mod
             public StatBonus DepthBonus;
             public StatBonus SpecialBonus;
             public bool PressureApplied;
+            public DataProcessor<FinalStats> PressureHealth;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
@@ -138,7 +141,6 @@ namespace SodRpg.Mod
         private readonly List<DewPlayer> _departedPlayers = new List<DewPlayer>();
         private DreamPressure _pressure = DreamPressure.Neutral;
         private int _pressurePlayerCount = -1;
-        private readonly DataProcessor<FinalStats> _pressureHealth;
         private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
@@ -206,7 +208,6 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> dailyIdOfHost)
         {
             _dailyIdOfHost = dailyIdOfHost;
-            _pressureHealth = (ref FinalStats stats) => stats.maxHealth *= (float)_pressure.HealthMultiplier;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
             _onPressurePlayerAdded = player => _pressureDirty = true;
@@ -256,6 +257,7 @@ namespace SodRpg.Mod
             EnsureRegistered();
             NativeInstance = this;
             if (_registeredOn == null) return;
+            UpdateSacrificeShields();
             float now = Time.time;
             RefreshRunModifiers();
             if (_pressureDirty) RefreshPressure();
@@ -272,6 +274,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
             foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
+            UpdateModShieldPools(now);
             ProcessSpawns();
             PruneMonsters(now);
             TickMonsterBehaviors(now);
@@ -351,7 +354,7 @@ namespace SodRpg.Mod
             if (rt.PressureApplied) return;
             var monster = rt.Monster;
             // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
-            monster.Status.finalStatsProcessors.Add(_pressureHealth, int.MaxValue);
+            InstallPressureHealthProcessor(rt);
             monster.dealtDamageProcessor.Add(_pressureDamage);
             rt.PressureApplied = true;
             monster.Status.CalculateStatsIfDirty();
@@ -421,6 +424,7 @@ namespace SodRpg.Mod
             {
                 var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time };
                 _monsters[m] = rt;
+                TrackPressureDividendSpawn(m);
                 m.ClientEntityEvent_OnStatusEffectAdded += _onEnemyStatusAdded;
                 m.EntityEvent_OnDeath += _onMonsterDeath;
                 _spawnQueue.Add(new KeyValuePair<Monster, float>(m, rt.QueuedAt));
@@ -440,6 +444,7 @@ namespace SodRpg.Mod
                 foreach (var heroRuntime in _runtimes.Values) heroRuntime.Powers.ForgetNewPowerTarget(e.GetInstanceID());
             if (!ReferenceEquals(e, null) && _nativeDeathEntities.Remove(e)) e.EntityEvent_OnDeath -= _onDeath;
             if (e is Monster m) RemoveMonster(m);
+            if (e is Monster removedMonster) _pressureDividendSpawns.Remove(removedMonster);
         }
 
         private void OnMonsterDeath(EventInfoKill info)
@@ -447,6 +452,7 @@ namespace SodRpg.Mod
             if (!(info.victim is Monster m)) return;
             try
             {
+                CapturePressureDividendDeath(m);
                 if (!_monsters.TryGetValue(m, out var rt) || rt.Variant == null
                     || (rt.Variant.Traits & VariantTrait.DeathBurst) == 0 || rt.DeathBurstTriggered) return;
                 rt.DeathBurstTriggered = true;
@@ -502,6 +508,7 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _monsters.Values) Unhook(rt);
             _monsters.Clear();
+            _pressureDividendSpawns.Clear();
             foreach (var entity in _pairEntities)
             {
                 if (entity == null) continue;
@@ -522,7 +529,7 @@ namespace SodRpg.Mod
             {
                 try
                 {
-                    m.Status.finalStatsProcessors.Remove(_pressureHealth);
+                    m.Status.finalStatsProcessors.Remove(rt.PressureHealth);
                     m.Status.CalculateStatsIfDirty();
                 }
                 catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
@@ -1406,6 +1413,7 @@ namespace SodRpg.Mod
             rt.PairCombos.SetBuild(build.PairCombos);
             rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
+            ModShieldEquipmentEpoch(rt);
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
