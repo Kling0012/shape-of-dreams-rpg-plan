@@ -280,6 +280,11 @@ int powersListed = 0;
     Write("basics", sb.ToString());
 }
 
+// ============ 星図（v1.31）============
+// 生成済みの星図を登録する入口が Core にあれば先に呼ぶ（なければ現行の星図＝基本ツリー＋例の星群）。
+string? starMapEntry = StarMapWiki.RegisterGeneratedIfPresent();
+var starMaps = StarMapWiki.Generate(Write, modVersion);
+
 // ============ start / 追加ブロック ============
 string PageLinks(Slot slot, List<string> names) =>
     string.Join(" / ", names.Select((nm, i) => Link(nm, $"{SlotJa(slot)}{(names.Count > 1 ? $" {i + 1}" : "")}")));
@@ -291,8 +296,10 @@ string PageLinks(Slot slot, List<string> names) =>
     sb.Append($"  * 土台 (Bases): {Content.Bases.Count}\n  * 固有品 (Uniques): {Content.Uniques.Count}\n  * セット (Sets): {Content.Sets.Count}\n  * 固有効果 (Powers): {allPowers.Count}（うち装備の抽選で出るもの {poolRanges.Count}）\n");
     sb.Append($"  * 特性 (Affixes): {slots.Sum(s => Content.AffixPool(s).Count)}（部位別の合計）\n\n");
     sb.Append(H2("ページ"));
-    sb.Append($"  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n\n");
-    sb.Append(H2("土台"));
+    sb.Append($"  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n  * {Link("starmap", "星図（旅人別）")}\n\n");
+    sb.Append(H2("星図（旅人別）"));
+    foreach (var sm in starMaps) sb.Append($"  * {Link(sm.Home, sm.Name)}（星 {sm.Stars} / 到達刻印 {sm.Keystones}）\n");
+    sb.Append('\n').Append(H2("土台"));
     foreach (var (slot, n, names) in baseLinks) sb.Append($"  * {PageLinks(slot, names)}（{n}）\n");
     sb.Append('\n').Append(H2("固有品"));
     foreach (var (slot, n, names) in uniqueLinks) sb.Append($"  * {PageLinks(slot, names)}（{n}）\n");
@@ -305,7 +312,8 @@ string PageLinks(Slot slot, List<string> names) =>
 
     var se = new StringBuilder();
     se.Append("**Dreamforge RPG**\n\n");
-    se.Append($"  * {Link("start", "ホーム")}\n  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n");
+    se.Append($"  * {Link("start", "ホーム")}\n  * {Link("basics", "装備の基本")}\n  * {Link("powers", "固有効果")}\n  * {Link("affixes", "特性")}\n  * {Link("sets", "セット装備")}\n  * {Link("starmap", "星図（旅人別）")}\n");
+    foreach (var sm in starMaps) se.Append($"  * {Link(sm.Home, "星図: " + sm.Name)}\n");
     foreach (var (slot, _, names) in baseLinks) se.Append($"  * {Link(names[0], "土台: " + SlotJa(slot))}\n");
     foreach (var (slot, _, names) in uniqueLinks) se.Append($"  * {Link(names[0], "固有品: " + SlotJa(slot))}\n");
     WriteRaw("sidebar_extra.txt", se.ToString());
@@ -321,6 +329,7 @@ foreach (var (f, _) in written)
 }
 
 foreach (var (f, b) in written.OrderBy(x => x.File, StringComparer.Ordinal)) Console.WriteLine($"{f}\t{b} bytes");
+Console.WriteLine($"starmap heroes={starMaps.Count} stars={starMaps.Sum(x => x.Stars)} pages={starMaps.Sum(x => x.Pages) + 1} entry={starMapEntry ?? "(none)"}");
 Console.WriteLine($"bases={Content.Bases.Count} uniques={Content.Uniques.Count} sets={Content.Sets.Count} powers={allPowers.Count} listed={powersListed}");
 return 0;
 
