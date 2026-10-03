@@ -6,7 +6,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v1.31 — 星図を10倍に（2026-10-03・未公開・作業中）
+## v1.31 — 星図を10倍に（2026-10-03・未公開・作業中。実装済みの一部は v1.30.2 に入っています）
 
 旅人ごとに星を700個以上へ増やす「星図10倍」の作業中の記録です。**実装済み**と**設計のみ**を分けて書きます。実機での画面・戦闘・協力通信は未検証です。 / Work in progress: the star map grows to 700+ stars per traveler. Implemented and design-only items are listed separately; live-game screens, combat and co-op are unverified.
 
@@ -35,8 +35,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 - **#19 3Dモデルの導入**：環境とAPIの互換性、同じゲームの前例、方式A（実行時にGLBを読む）と方式Bの比較、方式Aのアニメーション・差し替え地点・協力同期の調査をまとめました。実装はまだです。 / **#19**: research only (environment, API compatibility, precedents, approach A vs B, animation and sync for approach A); not implemented. [第1段](docs/specs/issue19-model-import-research.md) / [第2段](docs/specs/issue19-stage2-approach-a.md)
 
-## v1.30.2 — 不具合の修正と、見やすい星図（2026-10-03・未公開）
+## v1.30.2 — 装備の画像・詳しい図鑑・見やすい星図・不具合の修正（2026-10-03・Pre）
 
+- **装備の画像が足りなかった不具合を直しました**：v1.30.1 までは、v1.29 で増えた装備の土台約180種に画像が付いていませんでした。土台360種すべてに画像が付きます。夢の出来事13種と星図の星の記号30種の画像も追加しました。 / **Fixed missing gear images**: the ~180 bases added in v1.29 had no icon in v1.30.1; all 360 bases now have one, plus 13 dream-event illustrations and 30 star-map symbols.
+- **図鑑が詳しくなりました**（記録タブ→「図鑑を開く」）：固有品・土台・セット・固有効果を、枠・系統・発見状態で絞り込み、名前や効果で検索できます。右に詳細（効果・特性・セットの部位）を出します。未発見の固有品・セット・固有効果は「？？？」で伏せます。 / **Detailed codex**: filter by slot, line and found state, search by name or effect, with a detail pane; unfound legendaries, sets and powers stay hidden.
+- **夢の深さで部屋が増えます**：深さ1段につき各ゾーンの部屋が2つ増えます（深さ5で+10）。深さの表示に「部屋 +N」を出します。 / **Dream depth adds rooms**: +2 rooms per zone per depth level.
+- **「レア度の幸運」の表記を「良い遺物の出やすさ +X%」に直しました**（抽選の中身は同じです）。 / The "rarity luck" label is now "better relics +X%" (same underlying roll).
+- **星のポイントの上限が300になりました**（旅人ごと）。夢の圧の星の係数は半分にして、300振っても以前の150と同じ強さです。 / Star points per traveler now cap at 300; the pressure coefficient per star is halved.
+- **協力は全員この版へ更新してください**：通信の版が12になりました（ビルドの集約と分割送信）。保存形式は3のままで、プロフィールの初期化はありません。 / **All co-op players must update**: protocol 12; save format 3 unchanged, no reset.
 - **星図が見やすくなりました**：開くと木の全体が収まります（「全体を表示」で戻せます）。拡大縮小は0.15〜3倍。星は丸く、種類ごとの記号と段の数を表示します。刻印は紫の大きな星で、上部の「刻印」の一覧から探して選べます。合わせ技の橋は水色です。星図タブではメニューを画面いっぱいに広げます。星をつなぐ線が、画面の拡大率によって別の場所に描かれていた不具合も直しました。 / **Clearer star map**: the whole tree fits on open ("Show all" restores it), zoom 0.15–3x, round stars with type symbols and ranks, keystones as large purple stars plus a keystone bar, combo bridges in cyan, a full-screen window on the star map tab, and connection lines no longer drawn in the wrong place at some UI scales.
 - **アイコンの追加**：v1.29で増えた装備の土台と、新しい夢の出来事に絵を付けました（順次）。 / **New icons** for the bases and dream events added in v1.29.
 - **#20：確保地点の確定が遅れたままゾーンを移ると**、撃破の報酬と遠征の精算が止まることがありました。前のゾーンの報酬をそのゾーンの決まりで払ってから、次の確保地点を開きます。 / **#20**: moving zones while a secure-point confirmation was delayed could stall kill rewards and run settlement. The previous zone is now paid under its own rules before the next secure point opens.
