@@ -101,9 +101,11 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Only_capacity_and_reroll_upgrades_remain()
+        public void Six_convenience_upgrades_are_available()
         {
-            Assert.Equal(new[] { Upgrade.BigSatchel, Upgrade.WideStash, Upgrade.BountyReroll }, Workshop.All.Select(d => d.Id).ToArray());
+            Assert.Equal(
+                new[] { Upgrade.BigSatchel, Upgrade.WideStash, Upgrade.BountyReroll, Upgrade.EchoLantern, Upgrade.LostMap, Upgrade.PactStars },
+                Workshop.All.Select(d => d.Id).ToArray());
         }
 
         [Fact]

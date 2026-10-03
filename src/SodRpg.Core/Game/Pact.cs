@@ -35,6 +35,46 @@ namespace SodRpg.Core.Game
         Wanderer = 18,
         Miser = 19,
         BloodMoon = 20,
+        /// <summary>塩の契約：本体の呪い / 欠片×1.4・レア度の幸運+0.5</summary>
+        SaltOath = 21,
+        /// <summary>白紙の地図：本体の呪い / 調律石の入手+2（エリート・ボス）</summary>
+        BlankMap = 22,
+        /// <summary>蜜の鎖：本体の呪い / 経験値×1.8</summary>
+        HoneyedChains = 23,
+        /// <summary>星屑の負債：本体の呪い / 遺物ドロップ率+100%</summary>
+        StardustDebt = 24,
+        /// <summary>骨の賽子：本体の呪い / レア度の幸運+2.0</summary>
+        BoneDice = 25,
+        /// <summary>帳の夜：本体の呪い / 闇属性効果+12%</summary>
+        NightOfVeils = 26,
+        /// <summary>夜明けの誓い：本体の呪い / 光属性効果+12%</summary>
+        OathOfDawn = 27,
+        /// <summary>灰の杯：本体の呪い / 最大HP+50</summary>
+        AshenChalice = 28,
+        /// <summary>鏡の割れ：本体の呪い / 会心率+4%</summary>
+        CrackedMirror = 29,
+        /// <summary>早鐘の心：本体の呪い / 攻撃速度+10%</summary>
+        ClangoringHeart = 30,
+        /// <summary>灯火の重ね：本体の呪い / 与えるシールド+12%</summary>
+        LayeredLamps = 31,
+        /// <summary>苔むす契約：本体の呪い / HP回復+4/秒</summary>
+        MossboundPact = 32,
+        /// <summary>糸繰りの契約：本体の呪い / 召喚獣の与ダメージ+20%</summary>
+        PuppetStrings = 33,
+        /// <summary>慈雨の契約：本体の呪い / 与える回復+12%</summary>
+        GraciousRain = 34,
+        /// <summary>淀んだ泉：本体の呪い / 欠片×1.75・全滅時の残響なし</summary>
+        StagnantSpring = 35,
+        /// <summary>砂時計の嘘：本体の呪い / 経験値×1.6・全滅時の残響なし</summary>
+        HourglassLie = 36,
+        /// <summary>遠回りの契約：本体の呪い / 経験値×1.4・遺物ドロップ率+25%</summary>
+        LongWayRound = 37,
+        /// <summary>貝殻の約定：本体の呪い / 遺物ドロップ率+30%・欠片×1.2</summary>
+        ShellBargain = 38,
+        /// <summary>深泥の約束：本体の呪い / 潜行ボーナス2倍・調律石の入手+1（エリート・ボス）</summary>
+        DeepmirePromise = 39,
+        /// <summary>金箔の傷：本体の呪い / 攻撃力+10・魔力+10</summary>
+        GildedWound = 40,
     }
 
     public sealed class PactDef
@@ -176,6 +216,116 @@ namespace SodRpg.Core.Game
                 Id = Pact.BloodMoon, Name = new Txt("血月の契約", "Blood Moon Pact"),
                 CurseStrength = 3,
                 Boons = new[] { new StatLine(Stat.AttackPct, 20), new StatLine(Stat.PowerPct, 20) },
+            },
+            new PactDef
+            {
+                Id = Pact.SaltOath, Name = new Txt("塩の契約", "Salt Oath"),
+                CurseStrength = 2, ShardMult = 1.4, Luck = 0.5,
+            },
+            new PactDef
+            {
+                Id = Pact.BlankMap, Name = new Txt("白紙の地図", "Blank Map"),
+                CurseStrength = 2, TuningOnElite = 2,
+            },
+            new PactDef
+            {
+                Id = Pact.HoneyedChains, Name = new Txt("蜜の鎖", "Honeyed Chains"),
+                CurseStrength = 2, XpMult = 1.8,
+            },
+            new PactDef
+            {
+                Id = Pact.StardustDebt, Name = new Txt("星屑の負債", "Stardust Debt"),
+                CurseStrength = 3, DropBonus = 1.0,
+            },
+            new PactDef
+            {
+                Id = Pact.BoneDice, Name = new Txt("骨の賽子", "Bone Dice"),
+                CurseStrength = 3, Luck = 2.0,
+            },
+            new PactDef
+            {
+                Id = Pact.NightOfVeils, Name = new Txt("帳の夜", "Night of Veils"),
+                CurseStrength = 1,
+                Boons = new[] { new StatLine(Stat.DarkAmp, 12) },
+            },
+            new PactDef
+            {
+                Id = Pact.OathOfDawn, Name = new Txt("夜明けの誓い", "Oath of Dawn"),
+                CurseStrength = 1,
+                Boons = new[] { new StatLine(Stat.LightAmp, 12) },
+            },
+            new PactDef
+            {
+                Id = Pact.AshenChalice, Name = new Txt("灰の杯", "Ashen Chalice"),
+                CurseStrength = 2,
+                Boons = new[] { new StatLine(Stat.MaxHealthFlat, 50) },
+            },
+            new PactDef
+            {
+                Id = Pact.CrackedMirror, Name = new Txt("鏡の割れ", "Cracked Mirror"),
+                CurseStrength = 3,
+                Boons = new[] { new StatLine(Stat.CritChancePct, 4) },
+            },
+            new PactDef
+            {
+                Id = Pact.ClangoringHeart, Name = new Txt("早鐘の心", "Clangoring Heart"),
+                CurseStrength = 2,
+                Boons = new[] { new StatLine(Stat.AttackSpeedPct, 10) },
+            },
+            new PactDef
+            {
+                Id = Pact.LayeredLamps, Name = new Txt("灯火の重ね", "Layered Lamps"),
+                CurseStrength = 2,
+                Boons = new[] { new StatLine(Stat.ShieldPower, 12) },
+            },
+            new PactDef
+            {
+                Id = Pact.MossboundPact, Name = new Txt("苔むす契約", "Mossbound Pact"),
+                CurseStrength = 1,
+                Boons = new[] { new StatLine(Stat.HealthRegen, 4) },
+            },
+            new PactDef
+            {
+                Id = Pact.PuppetStrings, Name = new Txt("糸繰りの契約", "Puppet Strings"),
+                CurseStrength = 2,
+                Boons = new[] { new StatLine(Stat.SummonPower, 20) },
+            },
+            new PactDef
+            {
+                Id = Pact.GraciousRain, Name = new Txt("慈雨の契約", "Gracious Rain"),
+                CurseStrength = 1,
+                Boons = new[] { new StatLine(Stat.HealPower, 12) },
+            },
+            new PactDef
+            {
+                Id = Pact.StagnantSpring, Name = new Txt("淀んだ泉", "Stagnant Spring"),
+                CurseStrength = 2, ShardMult = 1.75, NoEcho = true,
+            },
+            new PactDef
+            {
+                Id = Pact.HourglassLie, Name = new Txt("砂時計の嘘", "Hourglass Lie"),
+                CurseStrength = 2, XpMult = 1.6, NoEcho = true,
+            },
+            new PactDef
+            {
+                Id = Pact.LongWayRound, Name = new Txt("遠回りの契約", "Long Way Round"),
+                CurseStrength = 2, XpMult = 1.4, DropBonus = 0.25,
+            },
+            new PactDef
+            {
+                Id = Pact.ShellBargain, Name = new Txt("貝殻の約定", "Shell Bargain"),
+                CurseStrength = 1, DropBonus = 0.3, ShardMult = 1.2,
+            },
+            new PactDef
+            {
+                Id = Pact.DeepmirePromise, Name = new Txt("深泥の約束", "Deepmire Promise"),
+                CurseStrength = 3, DoubleDepthBonus = true, TuningOnElite = 1,
+            },
+            new PactDef
+            {
+                Id = Pact.GildedWound, Name = new Txt("金箔の傷", "Gilded Wound"),
+                CurseStrength = 3,
+                Boons = new[] { new StatLine(Stat.AttackFlat, 10), new StatLine(Stat.PowerFlat, 10) },
             },
         };
 

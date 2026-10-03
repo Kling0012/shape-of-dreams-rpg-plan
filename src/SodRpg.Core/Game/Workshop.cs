@@ -12,6 +12,12 @@ namespace SodRpg.Core.Game
         LostLantern = 3,
         EchoAmp = 4,
         PactEye = 5,
+        /// <summary>残響の灯：全滅時の残響が増える（v1.29）。</summary>
+        EchoLantern = 6,
+        /// <summary>遺失物の地図：遺失物の回収が早くなる（v1.29）。</summary>
+        LostMap = 7,
+        /// <summary>契約の星座：契約の選択肢が増える（v1.29）。</summary>
+        PactStars = 8,
     }
 
     public sealed class UpgradeDef
@@ -88,6 +94,27 @@ namespace SodRpg.Core.Game
                 Description = new Txt("依頼を引き直せる回数が、遠征ごとに1回増えます。", "One more bounty reroll per expedition."),
                 Costs = new[] { (150, 2), (300, 4) },
             },
+            new UpgradeDef
+            {
+                Id = Upgrade.EchoLantern, Key = "echoLantern",
+                Name = new Txt("残響の灯", "Echo Lantern"),
+                Description = new Txt("全滅したときに戻ってくる欠片が、段階ごとに5%増えます。", "Shard echoes rise by 5% per level if your party falls."),
+                Costs = new[] { (200, 2), (400, 5) },
+            },
+            new UpgradeDef
+            {
+                Id = Upgrade.LostMap, Key = "lostMap",
+                Name = new Txt("遺失物の地図", "Map of the Lost"),
+                Description = new Txt("遺失物を取り戻すのに必要な戦闘部屋が1つ減ります。", "Clear one fewer combat room to recover a lost relic."),
+                Costs = new[] { (250, 3) },
+            },
+            new UpgradeDef
+            {
+                Id = Upgrade.PactStars, Key = "pactStars",
+                Name = new Txt("契約の星座", "Pact Constellation"),
+                Description = new Txt("深く潜るときの契約の選択肢が1つ増えます。", "One more pact to choose from when you delve deeper."),
+                Costs = new[] { (350, 6) },
+            },
         };
 
         public static UpgradeDef Get(Upgrade u)
@@ -117,9 +144,9 @@ namespace SodRpg.Core.Game
 
         public static int SatchelCapacity(Profile p) => Content.SatchelCapacity + 5 * Level(p, Upgrade.BigSatchel);
         public static int StashCapacity(Profile p) => Content.StashCapacity + 20 * Level(p, Upgrade.WideStash);
-        public static int RoomsToRecover(Profile p) => Content.RoomsToRecoverLost;
-        public static int EchoPercent(Profile p) => 25;
-        public static int PactsOffered(Profile p) => Pacts.Offered;
+        public static int RoomsToRecover(Profile p) => Math.Max(2, Content.RoomsToRecoverLost - Level(p, Upgrade.LostMap));
+        public static int EchoPercent(Profile p) => 25 + 5 * (p == null ? 0 : Level(p, Upgrade.EchoLantern));
+        public static int PactsOffered(Profile p) => Pacts.Offered + (p == null ? 0 : Level(p, Upgrade.PactStars));
         public static int RerollsPerRun(Profile p) => Level(p, Upgrade.BountyReroll);
 
         /// <summary>全滅時に持ち帰る欠片（切り上げ、1以上ある場合は最低1）。</summary>
