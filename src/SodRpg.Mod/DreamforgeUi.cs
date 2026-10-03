@@ -846,7 +846,9 @@ namespace SodRpg.Mod
 
         private void DrawWindow(float w, float h, DreamforgeConfig cfg)
         {
-            float ww = Mathf.Min(1060, w - 20), wh = Mathf.Min(720, h - 20);
+            // The star map needs room: it uses most of the screen and hides the expedition-only rows.
+            bool starTab = _tab == 2;
+            float ww = Mathf.Min(starTab ? 1720 : 1060, w - 20), wh = Mathf.Min(starTab ? 1000 : 720, h - 20);
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
@@ -859,8 +861,8 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
 
             var p = _s.Profile;
-            DrawDreamDepthChoice();
-            GUILayout.Label(Loc.T(
+            if (!starTab) DrawDreamDepthChoice();
+            if (!starTab) GUILayout.Label(Loc.T(
                 $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
                 $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
             GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
@@ -2078,8 +2080,8 @@ namespace SodRpg.Mod
                         }
                     }
                     else if (rect.width >= 24f) GUI.Label(rect, n.RankLabel, _starRankStyle);
-                    bool named = kind == HeroTreeNodeKind.Keystone ? _starZoom >= 0.3f
-                        : kind == HeroTreeNodeKind.Notable ? _starZoom >= 0.6f : _starZoom >= 1.05f;
+                    bool named = n.Keystone || n.Pair ? _starZoom >= 0.2f
+                        : kind != HeroTreeNodeKind.Small ? _starZoom >= 0.55f : _starZoom >= 1f;
                     if (named || i == hover)
                         GUI.Label(new Rect(rect.center.x - 80f, rect.yMax + 7f, 160f, 18f), n.Name, _starNameStyle);
                 }
@@ -2228,10 +2230,20 @@ namespace SodRpg.Mod
             b = a + delta * to;
             a += delta * from;
             delta = b - a;
-            var matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg, a);
-            StarFillRect(new Rect(a.x, a.y - 1f, delta.magnitude, 2f), color);
-            GUI.matrix = matrix;
+            // RotateAroundPivot misplaces lines inside groups when the UI is scaled, so draw the segment as small
+            // overlapping squares. Only the clipped, visible part is drawn.
+            float length = delta.magnitude;
+            if (length < 0.5f) return;
+            int steps = Mathf.Min(2000, Mathf.CeilToInt(length / 1.5f));
+            var old = GUI.color;
+            GUI.color = color;
+            var tex = Texture2D.whiteTexture;
+            for (int i = 0; i <= steps; i++)
+            {
+                Vector2 point = a + delta * (i / (float)steps);
+                GUI.DrawTexture(new Rect(point.x - 1f, point.y - 1f, 2f, 2f), tex);
+            }
+            GUI.color = old;
         }
 
         private static bool ClipStarEdge(float direction, float distance, ref float from, ref float to)
