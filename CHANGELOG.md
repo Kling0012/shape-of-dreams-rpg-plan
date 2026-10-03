@@ -6,6 +6,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v1.30.2 — 不具合の修正と、見やすい星図（2026-10-03・未公開）
+
+- **星図が見やすくなりました**：開くと木の全体が収まります（「全体を表示」で戻せます）。拡大縮小は0.15〜3倍。星は丸く、種類ごとの記号と段の数を表示します。刻印は紫の大きな星で、上部の「刻印」の一覧から探して選べます。合わせ技の橋は水色です。星図タブではメニューを画面いっぱいに広げます。星をつなぐ線が、画面の拡大率によって別の場所に描かれていた不具合も直しました。 / **Clearer star map**: the whole tree fits on open ("Show all" restores it), zoom 0.15–3x, round stars with type symbols and ranks, keystones as large purple stars plus a keystone bar, combo bridges in cyan, a full-screen window on the star map tab, and connection lines no longer drawn in the wrong place at some UI scales.
+- **アイコンの追加**：v1.29で増えた装備の土台と、新しい夢の出来事に絵を付けました（順次）。 / **New icons** for the bases and dream events added in v1.29.
+- **#20：確保地点の確定が遅れたままゾーンを移ると**、撃破の報酬と遠征の精算が止まることがありました。前のゾーンの報酬をそのゾーンの決まりで払ってから、次の確保地点を開きます。 / **#20**: moving zones while a secure-point confirmation was delayed could stall kill rewards and run settlement. The previous zone is now paid under its own rules before the next secure point opens.
+- **#21：ホストだけMODを読み直すと**、参加者が新しい道標を受け取れなくなることがありました。ホストごとの世代番号を付け、新しいホストの選択をすぐ反映し、古い通知では戻らないようにしました（通信の版10）。 / **#21**: after a host-only reload, participants could ignore new waypoint choices. Snapshots now carry a host generation (protocol 10).
+- **#22：連携印の脆さ**が通常ダメージへ反映されます。4秒間の2/3/4%で、同じ旅人から同じ敵への連携印・仕掛け・属性反応のExposeは最大値だけを使います。追加生成ダメージは増幅せず、装備解除やゾーン移動で印を消します。 / **#22: Combo-mark vulnerability** now affects normal damage for four seconds at 2/3/4%. Only the strongest Expose from that hero's combo marks, gimmicks, or elemental reactions applies to each enemy. Generated damage is excluded; unequipping either memory or changing zones clears the marks.
+- **#23：ナキアの「輪舞の呼吸」「狼の見守り」**は、本人が基本攻撃を撃ったときに働きます。空振りでも発動し、多段命中で回数は増えません。召喚獣の存在、狼の見守りの4秒間の発動窓と1秒間隔は維持します。 / **#23: Nachia's Round Dance Breath and Wolf's Watch** now trigger when she fires a basic attack, including misses, without extra triggers from multiple hits. The summon requirement, Wolf's Watch's four-second window, and its one-second interval remain unchanged.
+- **#24：「夢の圧」の依頼**を引き直した後も、現在の圧が条件を満たしていれば次の報告で達成します。同じ圧の報告が続いても報酬は一度だけで、新しい遠征へ前回の圧は持ち越しません。 / **#24: Dream Pressure bounties** rerolled during an expedition now complete on the next report if the current pressure meets their target. Repeated reports grant rewards only once, and a new expedition does not inherit the previous pressure.
+- 試験1,699件すべて成功、Releaseビルド成功。実機での戦闘・協力通信は未検証です。 / All 1,699 tests and the Release build pass. Live combat and co-op are not yet verified.
+
 ## v1.30.1 — 不撓の心：スタンから立て直す（2026-10-03・Pre）
 
 - **不撓の心**を「敵からスタンを受けると、最大HPの4〜8%の障壁とアンストッパブルを各4秒間得る（8秒に1回）」へ変更して有効化。装備を重ねた通常の合計上限は12%。障壁が壊れてもアンストッパブルは4秒間持続します。

@@ -13,18 +13,21 @@ namespace SodRpg.Core.Game
         public int ZoneIndex { get; set; } = -1;
         public int Generation { get; set; }
         public int Revision { get; set; }
+        public ulong AuthorityGeneration { get; set; }
         public Waypoint Active { get; set; }
         public Waypoint Pending { get; set; }
         public bool Chosen { get; set; }
         public bool Settled { get; set; }
         public List<Waypoint> Offers { get; } = new List<Waypoint>();
 
-        public static RunChoiceSnapshot Capture(RunState run, int selectedDepth, int zoneIndex, int revision)
+        public static RunChoiceSnapshot Capture(RunState run, int selectedDepth, int zoneIndex, int revision,
+            ulong authorityGeneration = 0)
         {
             var snapshot = new RunChoiceSnapshot
             {
                 RunId = run?.RunId ?? "", Depth = DreamDepth.Clamp(run?.DreamDepth ?? selectedDepth),
                 ZoneIndex = run == null ? -1 : zoneIndex, Revision = Math.Max(0, revision),
+                AuthorityGeneration = authorityGeneration,
                 Generation = run?.WaypointGeneration ?? 0, Active = run?.ActiveWaypoint ?? Waypoint.None,
                 Pending = run?.PendingWaypoint ?? Waypoint.None, Chosen = run?.WaypointChosen ?? false,
                 Settled = run != null && run.WaypointGeneration > 0 && !run.AwaitingChoice,
@@ -36,7 +39,7 @@ namespace SodRpg.Core.Game
         public string Encode()
         {
             var text = new StringBuilder(128);
-            text.Append("1|").Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(RunId ?? "")))
+            text.Append("2|").Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(RunId ?? "")))
                 .Append('|').Append(DreamDepth.Clamp(Depth).ToString(CultureInfo.InvariantCulture))
                 .Append('|').Append(ZoneIndex.ToString(CultureInfo.InvariantCulture))
                 .Append('|').Append(Generation.ToString(CultureInfo.InvariantCulture))
@@ -49,7 +52,7 @@ namespace SodRpg.Core.Game
                 if (i > 0) text.Append(',');
                 text.Append(((int)Offers[i]).ToString(CultureInfo.InvariantCulture));
             }
-            return text.ToString();
+            return text.Append('|').Append(AuthorityGeneration.ToString(CultureInfo.InvariantCulture)).ToString();
         }
 
         public static bool TryDecode(string encoded, out RunChoiceSnapshot snapshot)
@@ -57,7 +60,8 @@ namespace SodRpg.Core.Game
             snapshot = null;
             if (string.IsNullOrEmpty(encoded) || encoded.Length > 2048) return false;
             var parts = encoded.Split('|');
-            if (parts.Length != 11 || parts[0] != "1") return false;
+            if (parts.Length != 12 || parts[0] != "2"
+                || !ulong.TryParse(parts[11], NumberStyles.None, CultureInfo.InvariantCulture, out ulong authorityGeneration)) return false;
             var numbers = new int[9];
             for (int i = 2; i < 10; i++)
                 if (!int.TryParse(parts[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out numbers[i - 2])) return false;
@@ -72,6 +76,7 @@ namespace SodRpg.Core.Game
             {
                 RunId = runId, Depth = DreamDepth.Clamp(numbers[0]), ZoneIndex = numbers[1],
                 Generation = numbers[2], Revision = numbers[3], Active = (Waypoint)numbers[4], Pending = (Waypoint)numbers[5],
+                AuthorityGeneration = authorityGeneration,
                 Chosen = numbers[6] == 1, Settled = numbers[7] == 1,
             };
             if (parts[10].Length > 0)
@@ -97,8 +102,9 @@ namespace SodRpg.Core.Game
         public bool AppliesTo(RunState run, int zoneIndex) =>
             run != null && !string.IsNullOrEmpty(RunId) && RunId == run.RunId && ZoneIndex == zoneIndex;
 
+        /// <summary>Compare admitted snapshots; use RunChoiceSnapshotStream to reject superseded authorities first.</summary>
         public bool IsNewerThan(RunChoiceSnapshot previous) => previous == null
-            || RunId != previous.RunId || Revision > previous.Revision;
+            || RunId != previous.RunId || AuthorityGeneration != previous.AuthorityGeneration || Revision > previous.Revision;
 
         public bool ApplyTo(RunState run, int zoneIndex)
         {

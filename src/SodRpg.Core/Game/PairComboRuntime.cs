@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>Per-hero pair windows and per-victim markers. Markers never amplify damage.</summary>
+    /// <summary>Per-hero pair windows and per-victim marks with non-stacking vulnerability.</summary>
     public sealed class PairComboRuntime
     {
         private sealed class State
@@ -19,7 +19,7 @@ namespace SodRpg.Core.Game
             // Weak keys retain interleaved casts without retaining expired game activation objects.
             public ConditionalWeakTable<object, State> FiredActivations;
         }
-        private struct Mark { public int Victim; public float Until; public bool Paid; }
+        private struct Mark { public int Victim; public float Until; public int Expose; public bool Paid; }
         private List<State> _states = new List<State>();
 
         public void SetBuild(IReadOnlyList<PairComboEntry> entries)
@@ -88,6 +88,21 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>Discard unavailable pairs' marks and windows before an event or damage query.</summary>
+        public void RefreshEquipment(ICollection<string> equipped)
+        {
+            foreach (var state in _states) RefreshEquipment(state, equipped);
+        }
+
+        private static bool RefreshEquipment(State state, ICollection<string> equipped)
+        {
+            if (PairCombos.Equipped(state.Entry.Def, equipped)) return true;
+            state.WindowActive = false;
+            state.WindowUntil = 0f;
+            state.Marks?.Clear();
+            return false;
+        }
+
         public void PruneExpired(float now)
         {
             if (!Gimmicks.Finite(now)) return;
@@ -98,6 +113,22 @@ namespace SodRpg.Core.Game
                 for (int i = state.Marks.Count - 1; i >= 0; i--)
                     if (now >= state.Marks[i].Until) state.Marks.RemoveAt(i);
             }
+        }
+
+        /// <summary>Maximum live pair-mark vulnerability owned by this hero, in percentage points.</summary>
+        public int ExposePercent(int victimId, float now)
+        {
+            if (victimId == 0 || !Gimmicks.Finite(now)) return 0;
+            PruneExpired(now);
+            int max = 0;
+            foreach (var state in _states)
+            {
+                if (state.Marks == null) continue;
+                foreach (var mark in state.Marks)
+                    if (mark.Victim == victimId && mark.Expose > max)
+                        max = mark.Expose;
+            }
+            return max;
         }
 
         /// <summary>
@@ -124,12 +155,7 @@ namespace SodRpg.Core.Game
             foreach (var state in _states)
             {
                 var def = state.Entry.Def;
-                if (!PairCombos.Equipped(def, equipped))
-                {
-                    state.WindowActive = false;
-                    state.Marks?.Clear();
-                    continue;
-                }
+                if (!RefreshEquipment(state, equipped)) continue;
                 if (def.MovementOrigin) continue;
                 bool basic = def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack;
                 if (basic && !hasSummons)
@@ -154,6 +180,7 @@ namespace SodRpg.Core.Game
                         var mark = new Mark
                         {
                             Victim = victimId, Until = now + PairCombos.Duration,
+                            Expose = state.Entry.Ranks + 1,
                             Paid = found >= 0 && state.Marks[found].Paid
                         };
                         if (found < 0) state.Marks.Add(mark); else state.Marks[found] = mark;

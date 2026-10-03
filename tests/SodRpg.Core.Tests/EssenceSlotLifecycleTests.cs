@@ -6,14 +6,14 @@ using SodRpg.Mod;
 using Xunit;
 
 // Compile the production HostAuthority.GemSlots.cs adapter itself against a narrow native API double.
-namespace UnityEngine { public struct Vector3 { } }
+namespace UnityEngine { public partial struct Vector3 { } }
 namespace SodRpg.Mod
 {
-    internal enum HeroSkillLocation { Identity, Movement }
+    internal enum HeroSkillLocation { Identity, Movement, Q, W, E, R }
     internal struct GemLocation { public HeroSkillLocation skill; public int index; }
-    internal sealed class Gem { }
-    internal sealed class Hero : Entity { public HeroSkill Skill = new HeroSkill(); public UnityEngine.Vector3 position = default; }
-    internal sealed class HeroSkill
+    internal sealed class Gem : Actor { }
+    internal sealed partial class Hero : Entity { public HeroSkill Skill = new HeroSkill(); }
+    internal sealed partial class HeroSkill
     {
         public readonly Dictionary<GemLocation, Gem> gems = new Dictionary<GemLocation, Gem>();
         public readonly List<Gem> Dropped = new List<Gem>();

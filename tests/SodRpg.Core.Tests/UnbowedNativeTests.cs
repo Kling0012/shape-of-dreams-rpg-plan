@@ -15,7 +15,7 @@ namespace UnityEngine { internal static class Time { public static float time; }
 namespace SodRpg.Mod
 {
     internal enum EntityRelation { Ally, Enemy }
-    internal class Entity
+    internal partial class Entity : Actor
     {
         public bool isActive = true;
         public float maxHealth = 1000;
@@ -25,13 +25,13 @@ namespace SodRpg.Mod
         public Se_GenericEffectContainer CreateBasicEffect(Entity victim, BasicEffect effect, float duration, string id)
             => new Se_GenericEffectContainer { victim = victim, duration = duration, id = id, effect = effect };
     }
-    internal sealed class EntityStatus { public bool hasCrowdControlImmunity; }
+    internal sealed partial class EntityStatus { public bool hasCrowdControlImmunity; }
     internal class BasicEffect { public Entity victim; public StatusEffect parent; public bool isAlive = true; }
     internal sealed class StunEffect : BasicEffect { }
     internal sealed class SlowEffect : BasicEffect { }
     internal sealed class UnstoppableEffect : BasicEffect { }
     internal sealed class CastInfo { public Entity caster; }
-    internal class StatusEffect { public CastInfo info = new CastInfo(); }
+    internal class StatusEffect : Actor { public CastInfo info = new CastInfo(); }
     internal sealed class Se_GenericEffectContainer : StatusEffect
     {
         public Entity victim;
@@ -44,7 +44,6 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
-        private sealed class ActorManager { public Entity serverActor = new Entity(); }
         private ActorManager _am = new ActorManager();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
         internal sealed class NewPowerHostState { public Se_GenericEffectContainer UnbowedGuard; }

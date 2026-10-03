@@ -98,25 +98,43 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Older_or_duplicate_revision_cannot_overwrite_latest_selection()
         {
-            var current = new RunChoiceSnapshot { RunId = "run", Revision = 9 };
-            Assert.False(new RunChoiceSnapshot { RunId = "run", Revision = 8 }.IsNewerThan(current));
-            Assert.False(new RunChoiceSnapshot { RunId = "run", Revision = 9 }.IsNewerThan(current));
-            Assert.True(new RunChoiceSnapshot { RunId = "run", Revision = 10 }.IsNewerThan(current));
+            var current = new RunChoiceSnapshot { RunId = "run", Revision = 9, AuthorityGeneration = 42 };
+            Assert.False(new RunChoiceSnapshot { RunId = "run", Revision = 8, AuthorityGeneration = 42 }.IsNewerThan(current));
+            Assert.False(new RunChoiceSnapshot { RunId = "run", Revision = 9, AuthorityGeneration = 42 }.IsNewerThan(current));
+            Assert.True(new RunChoiceSnapshot { RunId = "run", Revision = 10, AuthorityGeneration = 42 }.IsNewerThan(current));
+            Assert.True(new RunChoiceSnapshot { RunId = "run", Revision = 1, AuthorityGeneration = 43 }.IsNewerThan(current));
             Assert.True(new RunChoiceSnapshot { RunId = "other", Revision = 1 }.IsNewerThan(current));
+        }
+
+        [Theory]
+        [InlineData(0UL)]
+        [InlineData(1UL)]
+        [InlineData(ulong.MaxValue)]
+        public void Authority_generation_round_trip_preserves_all_64_bits(ulong generation)
+        {
+            var sent = RunChoiceSnapshot.Capture(new RunState { RunId = "run" }, 0, 0, 1, generation);
+            Assert.True(RunChoiceSnapshot.TryDecode(sent.Encode(), out var received));
+            Assert.Equal(generation, received.AuthorityGeneration);
+            Assert.Equal(1, received.Revision);
         }
 
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        [InlineData("1|%%%|0|0|0|0|0|0|0|0|")]
-        [InlineData("1||0|-2|0|0|0|0|0|0|")]
-        [InlineData("1||0|0|-1|0|0|0|0|0|")]
-        [InlineData("1||0|0|0|0|99999|0|0|0|")]
-        [InlineData("1||0|0|0|0|0|0|2|0|")]
-        [InlineData("1||0|0|0|0|0|0|0|0|1,1")]
-        [InlineData("1||0|0|0|0|0|0|0|0|1,2,3,4")]
-        [InlineData("1||0|0|0|0|0|1|1|0|2,3,4")]
+        [InlineData("2|%%%|0|0|0|0|0|0|0|0||1")]
+        [InlineData("2||0|-2|0|0|0|0|0|0||1")]
+        [InlineData("2||0|0|-1|0|0|0|0|0||1")]
+        [InlineData("2||0|0|0|0|99999|0|0|0||1")]
+        [InlineData("2||0|0|0|0|0|0|2|0||1")]
+        [InlineData("2||0|0|0|0|0|0|0|0|1,1|1")]
+        [InlineData("2||0|0|0|0|0|0|0|0|1,2,3,4|1")]
+        [InlineData("2||0|0|0|0|0|1|1|0|2,3,4|1")]
+        [InlineData("1||0|0|0|0|0|0|0|0|")]
         [InlineData("2||0|0|0|0|0|0|0|0|")]
+        [InlineData("2||0|0|0|0|0|0|0|0||")]
+        [InlineData("2||0|0|0|0|0|0|0|0||-1")]
+        [InlineData("2||0|0|0|0|0|0|0|0||18446744073709551616")]
+        [InlineData("3||0|0|0|0|0|0|0|0||1")]
         public void Invalid_payload_is_rejected(string encoded) => Assert.False(RunChoiceSnapshot.TryDecode(encoded, out _));
 
         [Fact]

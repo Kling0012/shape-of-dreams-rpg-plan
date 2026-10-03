@@ -121,8 +121,8 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 9 combines memory pairs, personal dream events, and the pre-awakening power budget.
-        public const int Version = 9;
+        // Version 10 adds host authority generations to the shared run-choice snapshot wire format.
+        public const int Version = 10;
     }
 
     [Serializable]

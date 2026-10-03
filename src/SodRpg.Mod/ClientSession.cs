@@ -78,7 +78,6 @@ namespace SodRpg.Mod
         private float _nextBuildSend;
         private int _sentDreamLevel = -1;
         private Hero _lastHero;
-        private int _reportedPressurePercent;
 
         public Profile Profile { get; private set; }
         public string ActiveRunId { get; private set; }
@@ -384,13 +383,14 @@ namespace SodRpg.Mod
             string runId = gm.runId;
             if (string.IsNullOrEmpty(runId) || runId == ActiveRunId || runId == _completedRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
+            // Remember zone history even while the initial host rules are still in transit.
+            _runChoiceProgress.BeginRun(runId, ChoiceZoneIndex);
             // The first reward must use the host's depth, including clients who join during an expedition.
             if (!CanChooseRunRules && (_receivedRunChoices == null || _receivedRunChoices.RunId != runId)) return;
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
-            _reportedPressurePercent = 0;
-            _lastChoiceZoneIndex = ChoiceZoneIndex;
+            PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             ApplyHostRunChoices();
@@ -475,6 +475,8 @@ namespace SodRpg.Mod
                 if (gm != null) level = Math.Max(level, gm.ambientLevel);
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 string heroKey = HeroKeyOf(hero);
+                if (gm.runId == _completedRunId) return;
+                _runChoiceProgress.BeginRun(gm.runId, ChoiceZoneIndex);
                 if (CanChooseRunRules) CommitCombatChoice();
                 _pendingRunRewards.Add(new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
                     tier, level, nightmare, variantId, heroKey));
@@ -490,11 +492,11 @@ namespace SodRpg.Mod
         {
             try
             {
-                if (!RunActive || info.isLoadingFromSave) return;
-                if (!info.isTraveling) return;
-                Emit(Rules.OnZoneTravelled(Profile));
-                if (!Rules.ShouldOfferSecurePoint(Profile)) return;
-                _secureArrivalPending = true;
+                if (info.isLoadingFromSave || !info.isTraveling) return;
+                string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+                if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;
+                _runChoiceProgress.BeginRun(runId, ChoiceZoneIndex);
+                _runChoiceProgress.Arrive(runId, ChoiceZoneIndex);
                 TryFinishSecureArrival();
             }
             catch (Exception ex)
@@ -795,11 +797,7 @@ namespace SodRpg.Mod
 
         private void ReportPressureProgress()
         {
-            if (!RunActive || float.IsNaN(PressureHealthMultiplier) || float.IsInfinity(PressureHealthMultiplier)) return;
-            double percent = Math.Floor(PressureHealthMultiplier * 100d + 0.0001d);
-            if (percent <= _reportedPressurePercent || percent <= 100 || percent > int.MaxValue) return;
-            _reportedPressurePercent = (int)percent;
-            Emit(Rules.OnPressureReached(Profile, _reportedPressurePercent));
+            Emit(Rules.OnPressureReported(Profile, ActiveRunId, PressureHealthMultiplier));
         }
 
         private void OnBountyReport(DreamforgeBountyReportMsg msg)

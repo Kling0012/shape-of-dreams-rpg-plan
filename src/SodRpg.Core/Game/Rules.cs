@@ -969,10 +969,15 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        public static List<GameEvent> OnPressureReached(Profile p, int healthPercent)
+        /// <summary>現在の遠征の圧力を毎回評価する。達成済みの依頼は報酬を重複して受け取らない。</summary>
+        public static List<GameEvent> OnPressureReported(Profile p, string activeRunId, float healthMultiplier)
         {
             var ev = new List<GameEvent>();
-            if (healthPercent > 100) ReachBounty(p, BountyKind.PressureDiver, healthPercent, false, ev);
+            if (p.Run == null || activeRunId == null || p.Run.RunId != activeRunId ||
+                float.IsNaN(healthMultiplier) || float.IsInfinity(healthMultiplier)) return ev;
+            double percent = Math.Floor(healthMultiplier * 100d + 0.0001d);
+            if (percent <= 100 || percent > int.MaxValue) return ev;
+            ReachBounty(p, BountyKind.PressureDiver, (int)percent, false, ev);
             return ev;
         }
 

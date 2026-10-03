@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -10,17 +9,13 @@ namespace SodRpg.Mod
     {
         private static ClientSession _hostSession;
         private readonly Action<DreamforgeRunChoicesMsg> _onRunChoices;
-        private RunChoiceSnapshot _receivedRunChoices;
-        private RunChoiceSnapshot _appliedRunChoices;
-        private RunChoiceSnapshot _encodedChoicesState;
+        private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
+        private RunChoiceSnapshot _receivedRunChoices => _runChoiceProgress.Received;
+        private readonly RunChoicePublisher _choicePublisher = new RunChoicePublisher();
         private string _encodedRunChoices;
-        private int _choiceRevision;
         private float _nextChoicesSync;
-        private readonly PendingRunRewards _pendingRunRewards = new PendingRunRewards();
+        private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
         private readonly Action<PendingRunKill> _grantPendingKill;
-        private int _lastChoiceZoneIndex = -1;
-        private readonly Dictionary<int, RunChoiceSnapshot> _committedZoneChoices = new Dictionary<int, RunChoiceSnapshot>();
-        private bool _secureArrivalPending;
         private bool? _pendingRunVictory;
         private string _pendingResultRunId;
         private string _completedRunId;
@@ -38,13 +33,11 @@ namespace SodRpg.Mod
         public int ChosenDreamDepth => RunActive ? Profile.Run.DreamDepth
             : CanChooseRunRules ? DreamDepth.Clamp(Profile.LastDreamDepth) : _receivedRunChoices?.Depth ?? 0;
         public bool HasHostRunChoices => CanChooseRunRules || _receivedRunChoices != null;
-        public bool WaypointChoicesReady => CanChooseRunRules || (_receivedRunChoices != null
-            && ReferenceEquals(_receivedRunChoices, _appliedRunChoices) && _receivedRunChoices.AppliesTo(Profile.Run, ChoiceZoneIndex));
+        public bool WaypointChoicesReady => CanChooseRunRules || _runChoiceProgress.ChoicesReady(Profile.Run, ChoiceZoneIndex);
         private int ChoiceZoneIndex => _zone != null ? _zone.currentZoneIndex : -1;
 
-        public bool CanResolveSecureChoice => RunActive && Profile.Run.AwaitingChoice && !HasPendingTrades
-            && (CanChooseRunRules || (WaypointChoicesReady && _receivedRunChoices != null
-                && _receivedRunChoices.AppliesTo(Profile.Run, ChoiceZoneIndex) && _receivedRunChoices.Settled));
+        public bool CanResolveSecureChoice => RunActive && !HasPendingTrades
+            && _runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules);
 
         public string ChooseDreamDepth(int depth)
         {
@@ -68,26 +61,8 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private string EncodeRunChoices()
-        {
-            var run = RunActive ? Profile.Run : null;
-            int depth = DreamDepth.Clamp(run?.DreamDepth ?? Profile.LastDreamDepth);
-            int zone = run == null ? -1 : ChoiceZoneIndex;
-            var old = _encodedChoicesState;
-            bool unchanged = old != null && old.RunId == (run?.RunId ?? "") && old.Depth == depth
-                && old.ZoneIndex == zone && old.Generation == (run?.WaypointGeneration ?? 0)
-                && old.Active == (run?.ActiveWaypoint ?? Waypoint.None)
-                && old.Pending == (run?.PendingWaypoint ?? Waypoint.None)
-                && old.Chosen == (run?.WaypointChosen ?? false)
-                && old.Settled == (run != null && run.WaypointGeneration > 0 && !run.AwaitingChoice)
-                && old.Offers.Count == (run?.OfferedWaypoints.Count ?? 0);
-            if (unchanged && run != null)
-                for (int i = 0; i < old.Offers.Count; i++)
-                    if (old.Offers[i] != run.OfferedWaypoints[i]) { unchanged = false; break; }
-            if (unchanged) return _encodedRunChoices;
-            _encodedChoicesState = RunChoiceSnapshot.Capture(run, depth, zone, ++_choiceRevision);
-            return _encodedRunChoices = _encodedChoicesState.Encode();
-        }
+        private string EncodeRunChoices() => _encodedRunChoices = _choicePublisher.Encode(
+            RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
 
         private void PublishRunChoices()
         {
@@ -102,17 +77,17 @@ namespace SodRpg.Mod
         private void PublishRunChoicesForZone(int zoneIndex)
         {
             if (!NetworkServer.active || _clientRpcOn == null || !RunActive) return;
-            var snapshot = RunChoiceSnapshot.Capture(Profile.Run, Profile.LastDreamDepth, zoneIndex, ++_choiceRevision);
             _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
             {
-                protocol = Protocol.Version, choices = snapshot.Encode(),
+                protocol = Protocol.Version,
+                choices = _choicePublisher.EncodeFinalizedZone(Profile.Run, Profile.LastDreamDepth, zoneIndex),
             });
-            _encodedChoicesState = null;
         }
 
         private void TickRunChoices()
         {
             NotifyPersonalDreamEvent();
+            TryFinishSecureArrival();
             if (NetworkServer.active)
             {
                 string before = _encodedRunChoices;
@@ -121,28 +96,21 @@ namespace SodRpg.Mod
             }
             else
             {
-                TryFinishSecureArrival();
                 ApplyHostRunChoices();
             }
             FlushPendingRunRewards();
             TryConcludeRun();
         }
 
-        private bool CanGrantRunRewards => RunActive && (CanChooseRunRules
-            ? !Profile.Run.AwaitingChoice
-            : WaypointChoicesReady && (_receivedRunChoices.Generation == 0 || _receivedRunChoices.Settled));
-
         private void FlushPendingRunRewards()
         {
-            if (_pendingRunRewards.HasFor(ActiveRunId, ChoiceZoneIndex) && CanGrantRunRewards)
-                CommitCombatChoice();
-            if (CanGrantRunRewards) _pendingRunRewards.Drain(ActiveRunId, ChoiceZoneIndex, _grantPendingKill);
+            if (!RunActive) return;
+            _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
 
         private bool CommitCombatChoice(bool publish = true)
         {
-            if (!RunActive || !Profile.Run.AwaitingChoice) return false;
-            if (!CanChooseRunRules && (!WaypointChoicesReady || !_receivedRunChoices.Settled)) return false;
+            if (!RunActive || !_runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules)) return false;
             // Continuing combat chooses no pact. Delve leaves inventory and reserved trades untouched.
             Emit(Rules.Delve(Profile, Pact.None));
             MarkDirty(true);
@@ -153,30 +121,10 @@ namespace SodRpg.Mod
 
         private void TryFinishSecureArrival()
         {
-            if (!_secureArrivalPending || !RunActive) return;
-            if (!CanChooseRunRules)
-            {
-                if (!_committedZoneChoices.TryGetValue(_lastChoiceZoneIndex, out var prior)
-                    || prior.RunId != ActiveRunId) return;
-                prior.ApplyTo(Profile.Run, _lastChoiceZoneIndex);
-            }
-            if (Profile.Run.AwaitingChoice)
-            {
-                // Leaving the zone commits its pending selection before the next offer expires it.
-                Emit(Rules.Delve(Profile, Pact.None));
-                MarkDirty(true);
-            }
-            if (_lastChoiceZoneIndex >= 0)
-            {
-                _pendingRunRewards.Drain(ActiveRunId, _lastChoiceZoneIndex, _grantPendingKill);
-                PublishRunChoicesForZone(_lastChoiceZoneIndex);
-            }
-            _lastChoiceZoneIndex = ChoiceZoneIndex;
-            _secureArrivalPending = false;
-            if (!Rules.ShouldOfferSecurePoint(Profile, traveling: true)) return;
-            Emit(Rules.ReachSecurePoint(Profile, _trades));
+            if (!RunActive || _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades,
+                Emit, _grantPendingKill, PublishRunChoicesForZone) == 0) return;
+            MarkDirty(true);
             _nextDreamEventNotice = 0f;
-            _appliedRunChoices = null;
             ApplyHostRunChoices();
             PublishRunChoices();
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
@@ -214,48 +162,31 @@ namespace SodRpg.Mod
             if (!string.IsNullOrEmpty(snapshot.RunId) && snapshot.RunId == _completedRunId) return;
             // Preserve the final zone's committed rules until its last rewards and result have been settled.
             if (string.IsNullOrEmpty(snapshot.RunId) && (RunActive || _pendingRunRewards.Count > 0)) return;
-            if (snapshot.Generation == 0 || snapshot.Settled)
-            {
-                if (!_committedZoneChoices.TryGetValue(snapshot.ZoneIndex, out var prior)
-                    || snapshot.IsNewerThan(prior)) _committedZoneChoices[snapshot.ZoneIndex] = snapshot;
-            }
-            if (!snapshot.IsNewerThan(_receivedRunChoices))
-            {
-                // An older global revision can still be the missing commit for the preceding zone.
-                TryFinishSecureArrival();
-                return;
-            }
-            _receivedRunChoices = snapshot;
+            if (!_runChoiceProgress.Receive(snapshot)) return;
             TryFinishSecureArrival();
             ApplyHostRunChoices();
         }
 
         private void ApplyHostRunChoices()
         {
-            if (_receivedRunChoices == null || ReferenceEquals(_appliedRunChoices, _receivedRunChoices)
-                || !RunActive || _secureArrivalPending || (_zone != null && _zone.isInAnyTransition)) return;
-            if (!_receivedRunChoices.ApplyTo(Profile.Run, ChoiceZoneIndex)) return;
-            _appliedRunChoices = _receivedRunChoices;
+            if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
+            if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
             MarkDirty(true);
             SaveNow();
         }
 
         private void ResetRunChoiceConnection(bool resetHistory = false)
         {
-            _receivedRunChoices = _appliedRunChoices = _encodedChoicesState = null;
+            _runChoiceProgress.ResetConnection(resetHistory);
+            _choicePublisher.Invalidate();
             _encodedRunChoices = null;
             _nextChoicesSync = 0;
-            if (resetHistory)
-            {
-                _committedZoneChoices.Clear();
-                _secureArrivalPending = false;
-            }
         }
 
         private void TryConcludeRun()
         {
             if (!_pendingRunVictory.HasValue || !RunActive || ActiveRunId != _pendingResultRunId) return;
-            if (_pendingRunRewards.Count > 0) return;
+            if (!_runChoiceProgress.CanConclude(ActiveRunId)) return;
             bool victory = _pendingRunVictory.Value;
             _completedRunId = ActiveRunId;
             _pendingRunVictory = null;
@@ -264,8 +195,7 @@ namespace SodRpg.Mod
             Emit(Rules.EndRun(Profile, victory, _trades.ReservedSalvageUids()));
             if (pacts > 0) SendCurseClear();
             ActiveRunId = null;
-            _committedZoneChoices.Clear();
-            _secureArrivalPending = false;
+            _runChoiceProgress.ClearRun();
             PublishRunChoices();
             SaveNow();
         }

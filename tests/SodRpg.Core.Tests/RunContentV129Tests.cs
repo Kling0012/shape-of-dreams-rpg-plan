@@ -185,17 +185,128 @@ namespace SodRpg.Core.Tests
             Rules.OnLinksSatisfied(p, 2);
             Rules.OnLinksSatisfied(p, 2);
             Rules.OnLinksSatisfied(p, 1);
-            Rules.OnPressureReached(p, 130);
-            Rules.OnPressureReached(p, 130);
-            Rules.OnPressureReached(p, 120);
+            Rules.OnPressureReported(p, p.Run.RunId, 1.3f);
+            Rules.OnPressureReported(p, p.Run.RunId, 1.3f);
+            Rules.OnPressureReported(p, p.Run.RunId, 1.2f);
             Assert.Equal(new[] { 1, 2, 2, 130 }, p.Run.Bounties.Select(b => b.Progress));
             string saved = ProfileCodec.Write(p);
             p = ProfileCodec.Read(saved, new List<string>());
             Rules.OnLinksSatisfied(p, 3);
-            Rules.OnPressureReached(p, 140);
+            Rules.OnPressureReported(p, p.Run.RunId, 1.4f);
             Assert.True(p.Run.Bounties[2].Done);
             Assert.True(p.Run.Bounties[3].Done);
             Assert.Equal(2, p.Run.SatchelTuning);
+        }
+
+        [Fact]
+        public void Repeated_current_pressure_completes_a_rerolled_bounty_only_once()
+        {
+            var p = WithBounties(BountyKind.Slayer);
+            string runId = p.Run.RunId;
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.75f));
+            Assert.Equal(0, p.Run.Bounties[0].Progress);
+
+            p.Upgrades[Upgrade.BountyReroll] = 1;
+            p.RngState = 29;
+            Rules.RerollBounty(p, 0);
+            var bounty = p.Run.Bounties[0];
+            Assert.Equal(BountyKind.PressureDiver, bounty.Kind);
+            Assert.False(bounty.Done);
+
+            Assert.Single(Rules.OnPressureReported(p, runId, 1.75f), e => e.Kind == EventKind.Bounty);
+            Assert.True(bounty.Done);
+            Assert.Equal(bounty.Target, bounty.Progress);
+            int xp = p.DreamXp;
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.75f));
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.5f));
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.75f));
+            Assert.Equal(bounty.RewardShards, p.Run.SatchelShards);
+            Assert.Equal(bounty.RewardTuning, p.Run.SatchelTuning);
+            Assert.Equal(xp, p.DreamXp);
+            Assert.Equal(1, p.Stats.BountiesDone);
+        }
+
+        [Fact]
+        public void A_lower_current_pressure_after_bounty_replacement_does_not_block_the_old_value()
+        {
+            var p = WithBounties(BountyKind.Slayer);
+            string runId = p.Run.RunId;
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.75f));
+            p.Run.Bounties.Clear();
+            var bounty = new Bounty { Kind = BountyKind.PressureDiver, Target = 175, RewardShards = 10, RewardTuning = 1 };
+            p.Run.Bounties.Add(bounty);
+
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.5f));
+            Assert.Equal(150, bounty.Progress);
+            Assert.False(bounty.Done);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Single(Rules.OnPressureReported(p, runId, 1.75f), e => e.Kind == EventKind.Bounty);
+            Assert.True(bounty.Done);
+            Assert.Empty(Rules.OnPressureReported(p, runId, 1.75f));
+            Assert.Equal(10, p.Run.SatchelShards);
+            Assert.Equal(1, p.Run.SatchelTuning);
+            Assert.Equal(1, p.Stats.BountiesDone);
+        }
+
+        [Fact]
+        public void A_new_run_does_not_keep_pressure_progress_or_completion_from_the_previous_run()
+        {
+            var p = WithBounties(BountyKind.PressureDiver);
+            string oldRunId = p.Run.RunId;
+            p.Run.Bounties[0].Target = 175;
+            Rules.OnPressureReported(p, oldRunId, 1.75f);
+            Assert.True(p.Run.Bounties[0].Done);
+
+            Rules.BeginRun(p, "pressure-next");
+            p.Run.Bounties.Clear();
+            var bounty = new Bounty { Kind = BountyKind.PressureDiver, Target = 175, RewardShards = 10, RewardTuning = 1 };
+            p.Run.Bounties.Add(bounty);
+            Assert.Empty(Rules.OnPressureReported(p, oldRunId, 1.75f));
+            Assert.Empty(Rules.OnPressureReported(p, p.Run.RunId, 1f));
+            Assert.Equal(0, bounty.Progress);
+            Assert.False(bounty.Done);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Equal(0, p.Run.SatchelTuning);
+            Assert.Single(Rules.OnPressureReported(p, p.Run.RunId, 1.75f), e => e.Kind == EventKind.Bounty);
+            Assert.True(bounty.Done);
+            Assert.Empty(Rules.OnPressureReported(p, p.Run.RunId, 1.75f));
+            Assert.Equal(10, p.Run.SatchelShards);
+            Assert.Equal(1, p.Run.SatchelTuning);
+            Assert.Equal(2, p.Stats.BountiesDone);
+        }
+
+        [Theory]
+        [InlineData(float.NaN)]
+        [InlineData(float.PositiveInfinity)]
+        [InlineData(float.NegativeInfinity)]
+        [InlineData(float.MaxValue)]
+        [InlineData(-1f)]
+        [InlineData(0f)]
+        [InlineData(1f)]
+        public void Invalid_or_base_pressure_does_not_advance_a_bounty(float multiplier)
+        {
+            var p = WithBounties(BountyKind.PressureDiver);
+            p.Run.Bounties[0].Target = 175;
+            Assert.Empty(Rules.OnPressureReported(p, p.Run.RunId, multiplier));
+            Assert.Equal(0, p.Run.Bounties[0].Progress);
+            Assert.False(p.Run.Bounties[0].Done);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Equal(0, p.Run.SatchelTuning);
+        }
+
+        [Fact]
+        public void Pressure_reports_require_the_active_profile_run()
+        {
+            var p = WithBounties(BountyKind.PressureDiver);
+            p.Run.Bounties[0].Target = 175;
+            Assert.Empty(Rules.OnPressureReported(p, null, 1.75f));
+            Assert.Empty(Rules.OnPressureReported(p, "another-run", 1.75f));
+            Assert.Equal(0, p.Run.Bounties[0].Progress);
+            Assert.False(p.Run.Bounties[0].Done);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Equal(0, p.Run.SatchelTuning);
+            p.Run = null;
+            Assert.Empty(Rules.OnPressureReported(p, "counter-path", 1.75f));
         }
 
         [Fact]

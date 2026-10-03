@@ -207,12 +207,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Pair_marks_are_independent_per_victim_pair_and_expire_or_refresh_without_damage_amp()
+        public void Pair_marks_are_independent_per_victim_pair_and_expire_or_refresh_without_extra_requests()
         {
             var a = Def("Vesper", 1); var b = Def("Vesper", 2);
             var equipped = Equipped(a).Concat(Equipped(b)).Distinct().ToArray();
             var runtime = Runtime(Entry(a), Entry(b));
-            Assert.Empty(Fire(runtime, a.Trigger, a.TriggerMemory, 0, 10, equipped)); // A marker emits no effect or damage-amplification request.
+            Assert.Empty(Fire(runtime, a.Trigger, a.TriggerMemory, 0, 10, equipped)); // A marker emits no effect request.
             Assert.Empty(Pay(runtime, a, equipped, victim: 11));
             Assert.Empty(Pay(runtime, b, equipped, victim: 10));
             var output = Assert.Single(Pay(runtime, a, equipped, now: 2.9f));
