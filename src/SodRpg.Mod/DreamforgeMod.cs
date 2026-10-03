@@ -267,12 +267,12 @@ namespace SodRpg.Mod
             try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
         }
 
-        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-100, 0 = off)", "dreamforge_testpoints")]
+        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-300, 0 = off)", "dreamforge_testpoints")]
         private void TestPointsCommand(int points)
         {
             if (!_devCommands) return;
             // 保存しない。ゲームを終えれば元に戻る。設定画面には置かない（誰でも触れる所に置かない）。
-            Profile.TestBonusPoints = Math.Max(0, Math.Min(100, points));
+            Profile.TestBonusPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, points));
             _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points +" + Profile.TestBonusPoints));
         }
 
