@@ -183,6 +183,13 @@ namespace SodRpg.Core.Game
             durationOverride = durationOverride ?? payload.UncappedDurationSeconds;
             radiusOverride = radiusOverride ?? payload.UncappedRadiusMetres;
             targetOverride = targetOverride ?? payload.UncappedTargetCount;
+            if (payload.Ward != null)
+                return new KeystonePayload(KeystoneLayer.ModEffect, valueOverride ?? payload.Ward.ValueUnits / 100m,
+                    new KeystoneCaps(100, payload.Ward.Limits == WardLimitProfile.SummonRecipientHealth ? 9 : 8, payload.Ward.MaxTargets, radiusMetres: 15),
+                    KeystonePayloadKind.AlliedWard, GimmickEffect.Shield, payload.ChannelId,
+                    durationSeconds: durationOverride ?? (decimal)payload.Ward.DurationSeconds,
+                    radiusMetres: radiusOverride ?? (decimal)payload.Ward.RadiusMetres,
+                    targetCount: targetOverride ?? payload.Ward.Targets, everyN: everyN);
             if (payload.Gimmick != null) return GimmickPayload(payload.Gimmick, payload.ChannelId, everyN, valueOverride,
                 probabilityOverride, durationOverride, radiusOverride, targetOverride, durationBaseOverride);
             switch (payload.Kind)

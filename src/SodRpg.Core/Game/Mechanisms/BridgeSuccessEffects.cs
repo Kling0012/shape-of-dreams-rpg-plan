@@ -5,7 +5,7 @@ namespace SodRpg.Core.Game
 {
     public enum BridgeGateKind { Mark, Window, DirectReceiver }
     public enum BridgeSourcePhase { Any, InitialExplosion, EndingExplosion }
-    public enum BridgePayloadKind { Damage, Recharge, OrdinaryShield, Gimmick }
+    public enum BridgePayloadKind { Damage, Recharge, OrdinaryShield, Gimmick, AlliedWard }
     public enum BridgeDamageBasis { MaximumOffense, NativeHit }
 
     public sealed class BridgeEndpointRequirement
@@ -37,9 +37,12 @@ namespace SodRpg.Core.Game
         public BridgeDamageBasis DamageBasis { get; }
         public float DurationSeconds { get; }
         public GimmickDef Gimmick { get; }
+        /// <summary>The C12 definition of an AlliedWard payload: same recipients, caps, durations and pools as a standalone ward.</summary>
+        public AlliedWardDefinition Ward { get; private set; }
         public BridgePayload(string channelId, BridgePayloadKind kind, IEnumerable<int> valueContributions,
             int modifierUnits = 0, int capUnits = 10000, MemorySelector recipient = null,
-            BridgeDamageBasis damageBasis = BridgeDamageBasis.MaximumOffense, float durationSeconds = 0, GimmickDef gimmick = null)
+            BridgeDamageBasis damageBasis = BridgeDamageBasis.MaximumOffense, float durationSeconds = 0, GimmickDef gimmick = null,
+            AlliedWardDefinition ward = null)
         {
             if (string.IsNullOrWhiteSpace(channelId) || !Enum.IsDefined(typeof(BridgePayloadKind), kind)
                 || !Enum.IsDefined(typeof(BridgeDamageBasis), damageBasis) || valueContributions == null
@@ -50,6 +53,7 @@ namespace SodRpg.Core.Game
                 throw new ArgumentException("Invalid bridge payload.");
             if ((kind == BridgePayloadKind.Gimmick) != (gimmick != null) || gimmick != null && !Gimmicks.ValidDef(gimmick))
                 throw new ArgumentException("A typed bridge gimmick requires a supported payload.");
+            if ((kind == BridgePayloadKind.AlliedWard) != (ward != null)) throw new ArgumentException("A typed bridge ward requires its ward definition.");
             int sum = 0;
             foreach (int value in valueContributions) { if (value <= 0) throw new ArgumentException("Bridge contributions must be positive."); sum = checked(sum + value); }
             if (sum == 0) throw new ArgumentException("Bridge payload must have a positive value.");
@@ -57,10 +61,12 @@ namespace SodRpg.Core.Game
             CapUnits = capUnits;
             DurationCapSeconds = (decimal)durationSeconds * (1m + Gimmicks.MaxParameterPercent / 100m);
             Recipient = recipient; DamageBasis = damageBasis; DurationSeconds = durationSeconds;
-            Gimmick = gimmick;
+            Gimmick = gimmick; Ward = ward;
         }
         internal string Key => ChannelId + ":" + Kind + ":" + ValueUnits.ToString(System.Globalization.CultureInfo.InvariantCulture)
             + ":" + Recipient?.Key + ":" + DamageBasis + ":" + DurationSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+            + ":" + (Ward == null ? "" : Ward.RecipientKind + "/" + Ward.AmountBasis + "/" + Ward.PoolKind + "/" + Ward.IncludeOwner + "/" + Ward.RadiusMetres.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                + "/" + Ward.DurationSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "/" + Ward.BaseTargets + "/" + Ward.Targets + "/" + Ward.MaxTargets + "/" + Ward.Limits + "/" + Ward.Budget)
             + ":" + (Gimmick == null ? "" : BuildAggregation.GimmickKey(new GimmickEntry { StarId = ChannelId, Memory = "", Def = Gimmick })
                 + ":" + Gimmick.ValuePrecise.ToString(System.Globalization.CultureInfo.InvariantCulture))
             + ":" + UncappedValueUnits?.ToString(System.Globalization.CultureInfo.InvariantCulture)
@@ -73,7 +79,7 @@ namespace SodRpg.Core.Game
             float durationSeconds = 0, GimmickDef gimmick = null,
             decimal? uncappedValueUnits = null, decimal? uncappedProbabilityUnits = null, int? finalCapUnits = null,
             decimal? uncappedDurationSeconds = null, decimal? uncappedRadiusMetres = null, int? uncappedTargetCount = null,
-            decimal? finalDurationCapSeconds = null)
+            decimal? finalDurationCapSeconds = null, AlliedWardDefinition ward = null)
         {
             if (valueUnits <= 0 || valueUnits > int.MaxValue
                 || kind == BridgePayloadKind.Recharge && valueUnits > 10000
@@ -93,7 +99,7 @@ namespace SodRpg.Core.Game
                 throw new ArgumentOutOfRangeException(nameof(finalCapUnits));
             int ceiling = checked((int)decimal.Ceiling(valueUnits));
             var payload = new BridgePayload(channelId, kind, new[] { ceiling }, capUnits: cap,
-                recipient: recipient, damageBasis: damageBasis, durationSeconds: durationSeconds, gimmick: gimmick);
+                recipient: recipient, damageBasis: damageBasis, durationSeconds: durationSeconds, gimmick: gimmick, ward: ward);
             payload.ValueUnits = valueUnits;
             payload.UncappedValueUnits = uncappedValueUnits;
             payload.UncappedProbabilityUnits = uncappedProbabilityUnits;
@@ -122,18 +128,21 @@ namespace SodRpg.Core.Game
         public bool UsesNativeWindowLifetime { get; }
         public float CooldownSeconds { get; }
         public float WindowSeconds { get; }
+        /// <summary>The one documented exception to the three-rank limit: the center is a retained legacy ring star with five ranks and a per-rank table. Mark Expose is rank + 1 percent (2/3/4/5/6).</summary>
+        public bool RetainedFiveRanks { get; }
         public BridgeSuccessDefinition(string pairId, IEnumerable<BridgeEndpointRequirement> endpoints, int rank,
             BridgeGateKind gateKind, MemorySelector openingSource, MemoryEventKind openingTrigger,
             MemorySelector payoffSource, MemoryEventKind payoffTrigger, BridgePayload basePayoff,
             IEnumerable<BridgePayload> extras, AttributionBudget budget = AttributionBudget.PerActivation,
             BridgeSourcePhase sourcePhase = BridgeSourcePhase.Any, bool usesNativeWindowLifetime = false,
-            float cooldownSeconds = 0, float windowSeconds = 4)
+            float cooldownSeconds = 0, float windowSeconds = 4, bool retainedFiveRanks = false)
         {
             if (!Gimmicks.Finite(cooldownSeconds) || cooldownSeconds < 0 || cooldownSeconds > Gimmicks.MaxCooldown
                 || !Gimmicks.Finite(windowSeconds) || windowSeconds <= 0 || windowSeconds > 60)
                 throw new ArgumentException("Invalid bridge interval or window.");
             if (string.IsNullOrWhiteSpace(pairId) || endpoints == null || rank < 1
-                || rank > (gateKind == BridgeGateKind.DirectReceiver ? StarProgression.MaxSpendablePoints : 3) || openingSource == null || payoffSource == null
+                || retainedFiveRanks && gateKind == BridgeGateKind.DirectReceiver
+                || rank > (gateKind == BridgeGateKind.DirectReceiver ? StarProgression.MaxSpendablePoints : retainedFiveRanks ? 5 : 3) || openingSource == null || payoffSource == null
                 || basePayoff == null || extras == null || !Enum.IsDefined(typeof(BridgeGateKind), gateKind)
                 || !Enum.IsDefined(typeof(MemoryEventKind), openingTrigger) || !Enum.IsDefined(typeof(MemoryEventKind), payoffTrigger)
                 || !Enum.IsDefined(typeof(AttributionBudget), budget) || !Enum.IsDefined(typeof(BridgeSourcePhase), sourcePhase)
@@ -169,7 +178,7 @@ namespace SodRpg.Core.Game
             PairId = pairId; Endpoints = endpointCopy.AsReadOnly(); Rank = rank; GateKind = gateKind; OpeningSource = openingSource;
             OpeningTrigger = openingTrigger; PayoffSource = payoffSource; PayoffTrigger = payoffTrigger; BasePayoff = basePayoff;
             Extras = extraCopy.AsReadOnly(); Budget = budget; SourcePhase = sourcePhase; UsesNativeWindowLifetime = usesNativeWindowLifetime;
-            CooldownSeconds = cooldownSeconds; WindowSeconds = windowSeconds;
+            CooldownSeconds = cooldownSeconds; WindowSeconds = windowSeconds; RetainedFiveRanks = retainedFiveRanks;
         }
         internal string Key
         {
@@ -178,7 +187,7 @@ namespace SodRpg.Core.Game
                 string key = PairId + "|" + Rank + "|" + GateKind + "|" + OpeningSource.Key + "|" + OpeningTrigger + "|" + PayoffSource.Key
                     + "|" + PayoffTrigger + "|" + Budget + "|" + SourcePhase + "|" + UsesNativeWindowLifetime + "|" + BasePayoff.Key
                     + "|" + CooldownSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
-                    + "|" + WindowSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+                    + "|" + WindowSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "|" + RetainedFiveRanks;
                 foreach (var endpoint in Endpoints) key += "|" + endpoint.StarId + ":" + endpoint.MinimumRank + ":" + endpoint.Memory;
                 foreach (var extra in Extras) key += "|" + extra.Key;
                 return key;

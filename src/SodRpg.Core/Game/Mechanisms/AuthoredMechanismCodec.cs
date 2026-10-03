@@ -115,7 +115,7 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.BridgeSuccess:
                     var b = s.Bridge; w.Write(b.PairId); w.Write(b.Rank); w.Write((int)b.GateKind); Selector(w, b.OpeningSource); w.Write((int)b.OpeningTrigger);
                     Selector(w, b.PayoffSource); w.Write((int)b.PayoffTrigger); w.Write((int)b.Budget); w.Write((int)b.SourcePhase); w.Write(b.UsesNativeWindowLifetime);
-                    w.Write(b.CooldownSeconds); w.Write(b.WindowSeconds);
+                    w.Write(b.CooldownSeconds); w.Write(b.WindowSeconds); w.Write(b.RetainedFiveRanks);
                     w.Write(b.Endpoints.Count); foreach (var endpoint in b.Endpoints.OrderBy(x => x.StarId, StringComparer.Ordinal))
                     { w.Write(endpoint.StarId); w.Write(endpoint.Memory); w.Write(endpoint.MinimumRank); }
                     Payload(w, b.BasePayoff); w.Write(b.Extras.Count); foreach (var extra in b.Extras.OrderBy(x => x.ChannelId, StringComparer.Ordinal)) Payload(w, extra); break;
@@ -158,12 +158,12 @@ namespace SodRpg.Core.Game
                     string pair = Text(r); int rank = r.ReadInt32(); var gate = (BridgeGateKind)r.ReadInt32(); var opening = Selector(r);
                     var openingTrigger = (MemoryEventKind)r.ReadInt32(); var payoff = Selector(r); var payoffTrigger = (MemoryEventKind)r.ReadInt32();
                     var budget = (AttributionBudget)r.ReadInt32(); var phase = (BridgeSourcePhase)r.ReadInt32(); bool nativeLifetime = r.ReadBoolean();
-                    float cooldown = r.ReadSingle(), window = r.ReadSingle();
+                    float cooldown = r.ReadSingle(), window = r.ReadSingle(); bool fiveRanks = r.ReadBoolean();
                     var endpoints = new List<BridgeEndpointRequirement>(); int endpointCount = Count(r);
                     for (int i = 0; i < endpointCount; i++) endpoints.Add(new BridgeEndpointRequirement(Text(r), Text(r), r.ReadInt32()));
                     var basePayoff = Payload(r); var extras = new List<BridgePayload>(); int extraCount = Count(r);
                     for (int i = 0; i < extraCount; i++) extras.Add(Payload(r));
-                    s.Bridge = new BridgeSuccessDefinition(pair, endpoints, rank, gate, opening, openingTrigger, payoff, payoffTrigger, basePayoff, extras, budget, phase, nativeLifetime, cooldown, window); break;
+                    s.Bridge = new BridgeSuccessDefinition(pair, endpoints, rank, gate, opening, openingTrigger, payoff, payoffTrigger, basePayoff, extras, budget, phase, nativeLifetime, cooldown, window, fiveRanks); break;
                 case AuthoredMechanismKind.SacrificeShield: case AuthoredMechanismKind.StunSourceFilter: break;
                 default: throw new FormatException("Unknown mechanism kind.");
             }
@@ -191,6 +191,13 @@ namespace SodRpg.Core.Game
             OptionalDecimal(w, p.UncappedValueUnits); OptionalDecimal(w, p.UncappedProbabilityUnits);
             OptionalDecimal(w, p.UncappedDurationSeconds); OptionalDecimal(w, p.UncappedRadiusMetres); OptionalInt(w, p.UncappedTargetCount);
             w.Write(p.Gimmick != null); if (p.Gimmick != null) Gimmick(w, p.Gimmick);
+            w.Write(p.Ward != null);
+            if (p.Ward != null)
+            {
+                var ward = p.Ward; w.Write((int)ward.RecipientKind); w.Write((int)ward.AmountBasis); w.Write((int)ward.PoolKind);
+                w.Write(ward.ValueUnits); w.Write(ward.IncludeOwner); w.Write(ward.RadiusMetres); w.Write(ward.DurationSeconds);
+                w.Write(ward.BaseTargets); w.Write(ward.Targets - ward.BaseTargets); w.Write(ward.MaxTargets); w.Write((int)ward.Limits); w.Write((int)ward.Budget);
+            }
         }
         private static BridgePayload Payload(BinaryReader r)
         {
@@ -200,8 +207,13 @@ namespace SodRpg.Core.Game
             decimal? raw = OptionalDecimal(r), probability = OptionalDecimal(r), durationRaw = OptionalDecimal(r), radiusRaw = OptionalDecimal(r);
             int? targets = OptionalInt(r);
             var gimmick = r.ReadBoolean() ? Gimmick(r) : null;
+            AlliedWardDefinition ward = null;
+            if (r.ReadBoolean())
+                ward = new AlliedWardDefinition(id, (WardRecipientKind)r.ReadInt32(), (WardAmountBasis)r.ReadInt32(), (ModShieldPoolKind)r.ReadInt32(),
+                    r.ReadDecimal(), r.ReadBoolean(), r.ReadSingle(), r.ReadSingle(), r.ReadInt32(), r.ReadInt32(), r.ReadInt32(),
+                    (WardLimitProfile)r.ReadInt32(), (WardActivationBudget)r.ReadInt32());
             return BridgePayload.FromEffective(id, kind, units, recipient, basis, duration, gimmick, raw, probability, cap,
-                durationRaw, radiusRaw, targets, durationCap);
+                durationRaw, radiusRaw, targets, durationCap, ward);
         }
     }
 }

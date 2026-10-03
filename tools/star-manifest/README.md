@@ -72,9 +72,11 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 `"BridgeSuccess:<橋ID>"`（合わせ技の成立）、`"BridgeMark:<橋ID>"`（橋の印を読む）、`"BridgeWindow:<橋ID>"`（橋の窓）。大文字小文字はこのとおり、`<橋ID>` は同じ旅人の `h.<hero>.ring.<force|insight|vessel|armor|recall|rhythm|resolve|renewal>`。橋の条件でない発動単位の補足（「印なし」「撃破は条件にしない」「基本攻撃1回につき1回」など）は `notes` に書く。橋の成立条件がない星（Mist の renewal）は `condition` を付けない。
 
 `PairCombos` の既存62個に無い橋は `gen_cs.py` の表で扱う（`PairCombos` は増やさない）。
-- `AUTHORED_PAIRS`：設計表が両端と成立条件を全部決めている新ペア（現在は Bismuth `h.bismuth.ring.renewal` = I×S の直接受信、5段）。中心の行が `ManifestNewDirectRechargePair`（型付きの `BridgeSuccessDefinition`）になり、橋の領域と `condition` はこのペアIDに結び付く。
+- `AUTHORED_PAIRS`：設計表が両端と成立条件を決めている新ペア（Bismuth renewal=I×S直接受信、Bismuth resolve=P×I印、Aurena renewal=C×G印+AlliedWard、Nachia renewal=循×森の窓）。中心の行が型付きの `BridgeSuccessDefinition`（`ManifestNewPair` / `ManifestNewDirectRechargePair`）になり、橋の領域と `condition` はこのペアIDに結び付く。印/窓の5段中心は「旧リング中心（MaxRank 5）だけが5段を保持できる」唯一の例外（`RetainedFiveRanks`）。印のExposeは段+1%（2/3/4/5/6%）。
 - `RECEIVER_ONLY_BRIDGES`：ペアを作らない橋（Mist の `h.mist.ring.renewal`）。星団の全星が `ReceiverOnlyBridge = true` と、設計表のA/B（FL/LU）を宣言した `MemoryOwnership` を持つ。宣言外の記憶を使う星は生成エラー。
-- `UNRESOLVED_BRIDGES`：設計の未決事項があり実ペアを登録できない橋（Aurena renewal / Bismuth resolve / Nachia renewal）。該当星は理由つきで失敗のままにする。
+- `UNRESOLVED_BRIDGES`：設計の未決事項で実ペアを登録できない橋（現在は空）。
+- 既存7ペアの中心行は `ManifestPair`（登録済みペアの型付きbase）として出力する。設計が直接受信へ変えた行（Vesper vessel/armor、Cetus vessel/armor）は行が定義し、Aurena B2 の印起点 Crit→Hit は `LEGACY_OPENING_OVERRIDES`。
+- `condition = BridgeSuccess:…` の星の `trigger` はペアの成立トリガーと一致していなければならない（不一致は生成エラー。成立イベントからしか dispatch されず、決して発動しないため）。
 
 ### 5. gimmick の欄
 必須：`trigger, effect, value, arg, cooldown, target`。任意（ある星だけ、この順）：

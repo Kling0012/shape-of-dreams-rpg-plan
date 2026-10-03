@@ -54,9 +54,9 @@ namespace SodRpg.Core.Game
 
         // Reuse the real baseline pair, including endpoints, phase, interval and rank table.
         // A migrated direct receiver changes the gate/source explicitly; it is not a mark.
-        private static AuthoredMechanismSpec ManifestPair(string hero, string bridgeId,
+        internal static AuthoredMechanismSpec ManifestPair(string hero, string bridgeId,
             string directSource = null, string directRecipient = null, MemoryEventKind directTrigger = MemoryEventKind.ConfirmedUse,
-            int[] directRankValues = null)
+            int[] directRankValues = null, MemoryEventKind? openingOverride = null)
         {
             var pair = PairCombos.ForBridge(bridgeId);
             if (pair == null || pair.HeroKey != hero) throw new InvalidOperationException("Unknown manifest pair: " + bridgeId);
@@ -65,7 +65,8 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("Incomplete manifest direct-receiver pair: " + bridgeId);
             string opening = direct ? directSource : pair.TriggerMemory;
             string payoff = direct ? directSource : pair.Step == PairComboStep.None ? pair.TriggerMemory : pair.PayoffMemory;
-            var openingTrigger = direct ? directTrigger : ManifestPairTrigger(pair.Trigger);
+            // openingOverride is a design-table migration of the mark trigger (Aurena B2: Crit -> Hit).
+            var openingTrigger = direct ? directTrigger : openingOverride ?? ManifestPairTrigger(pair.Trigger);
             var payoffTrigger = direct ? directTrigger : ManifestPairTrigger(pair.Step == PairComboStep.None ? pair.Trigger : pair.PayoffTrigger);
             var budget = payoffTrigger == MemoryEventKind.Kill ? AttributionBudget.PerKill
                 : payoffTrigger == MemoryEventKind.OwnedBasicAttackFired ? AttributionBudget.PerOwnedBasicAttack
@@ -120,6 +121,43 @@ namespace SodRpg.Core.Game
             {
                 Kind = AuthoredMechanismKind.BridgeSuccess, ChannelId = bridgeId,
                 Source = definition.PayoffSource, Trigger = trigger, Budget = budget,
+                Bridge = definition, ValuesByRank = rankValues, Once = oncePerActivation,
+                RequiredMemories = new[] { memoryA, memoryB }
+            };
+        }
+
+        // A newly authored pair for a redesigned outer ring star that never was a PairCombos entry (Aurena renewal,
+        // Bismuth resolve, Nachia renewal). Two distinct hero route endpoints with explicit star ids; the center is a
+        // retained legacy ring star, so a five-rank marked/window pair keeps its retained ranks (Expose 2/3/4/5/6%).
+        internal static AuthoredMechanismSpec ManifestNewPair(string hero, string bridgeId, string pairId,
+            string starA, string memoryA, string starB, string memoryB, BridgeGateKind gate,
+            string opening, MemoryEventKind openingTrigger, string payoff, MemoryEventKind payoffTrigger,
+            BridgePayloadKind payloadKind, string recipient, GimmickEffect effect, int arg, int[] rankValues, bool oncePerActivation)
+        {
+            if (rankValues == null || rankValues.Length == 0) throw new InvalidOperationException("A retained bridge requires its exact rank table: " + bridgeId);
+            var budget = payoffTrigger == MemoryEventKind.Kill ? AttributionBudget.PerKill
+                : payoffTrigger == MemoryEventKind.OwnedBasicAttackFired ? AttributionBudget.PerOwnedBasicAttack : AttributionBudget.PerActivation;
+            BridgePayload payload;
+            switch (payloadKind)
+            {
+                case BridgePayloadKind.Recharge:
+                    payload = new BridgePayload(bridgeId, payloadKind, new[] { rankValues[0] }, recipient: MemorySelector.Parse(recipient)); break;
+                case BridgePayloadKind.AlliedWard:
+                    payload = new BridgePayload(bridgeId, payloadKind, new[] { rankValues[0] }, ward: new AlliedWardDefinition(bridgeId,
+                        WardRecipientKind.AlliedTravelers, WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, rankValues[0], true)); break;
+                case BridgePayloadKind.Gimmick:
+                    payload = new BridgePayload(bridgeId, payloadKind, new[] { rankValues[0] }, capUnits: checked(Gimmicks.Cap(effect) * 100),
+                        gimmick: new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = effect, Value = rankValues[0] / 100m, Arg = arg }); break;
+                default: throw new InvalidOperationException("Unsupported authored pair payload: " + payloadKind);
+            }
+            var definition = new BridgeSuccessDefinition(pairId,
+                new[] { new BridgeEndpointRequirement(starA, memoryA), new BridgeEndpointRequirement(starB, memoryB) },
+                1, gate, MemorySelector.Parse(opening), openingTrigger, MemorySelector.Parse(payoff), payoffTrigger,
+                payload, Array.Empty<BridgePayload>(), budget, retainedFiveRanks: gate != BridgeGateKind.DirectReceiver && rankValues.Length == 5);
+            return new AuthoredMechanismSpec
+            {
+                Kind = AuthoredMechanismKind.BridgeSuccess, ChannelId = bridgeId,
+                Source = definition.PayoffSource, Trigger = payoffTrigger, Budget = budget,
                 Bridge = definition, ValuesByRank = rankValues, Once = oncePerActivation,
                 RequiredMemories = new[] { memoryA, memoryB }
             };

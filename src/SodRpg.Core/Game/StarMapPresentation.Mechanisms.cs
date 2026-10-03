@@ -190,6 +190,9 @@ namespace SodRpg.Core.Game
                         + Number(payload.DurationSeconds) + Loc.T("秒・通常の障壁枠）。", "s, ordinary pool).");
                 case BridgePayloadKind.Gimmick:
                     return EffectText(payload.Gimmick.Effect) + Loc.T("：効果量", ": value ") + Number(payload.Gimmick.Value) + "%";
+                case BridgePayloadKind.AlliedWard:
+                    return Loc.T("自分と近くの味方旅人へ、攻撃力・魔力の高い方の", "Ally ward: higher offense × ") + Percent(payload.Ward.ValueUnits)
+                        + Loc.T("の障壁（", " (") + Number(payload.Ward.DurationSeconds) + Loc.T("秒・最大", "s, up to ") + payload.Ward.Targets + Loc.T("体）。", " allies).");
                 default: throw new InvalidOperationException("Unknown bridge payload: " + payload.Kind);
             }
         }

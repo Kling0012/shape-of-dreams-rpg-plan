@@ -19149,8 +19149,7 @@
         "value": 4,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_Charge",
-        "condition": "BridgeSuccess:h.vesper.ring.vessel"
+        "target": "St_M_Charge"
       },
       "power": null,
       "stat": null,
@@ -19222,8 +19221,7 @@
             "value": 2,
             "arg": 0,
             "cooldown": 0,
-            "target": "St_M_Charge",
-            "condition": "BridgeSuccess:h.vesper.ring.vessel"
+            "target": "St_M_Charge"
           },
           "power": null,
           "stat": null,
@@ -19740,8 +19738,7 @@
         "value": 3,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_Charge",
-        "condition": "BridgeSuccess:h.vesper.ring.armor"
+        "target": "St_M_Charge"
       },
       "power": null,
       "stat": null,
@@ -19813,8 +19810,7 @@
             "value": 1,
             "arg": 0,
             "cooldown": 0,
-            "target": "St_M_Charge",
-            "condition": "BridgeSuccess:h.vesper.ring.armor"
+            "target": "St_M_Charge"
           },
           "power": null,
           "stat": null,

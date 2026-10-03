@@ -18427,8 +18427,7 @@
         "value": 10,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FrostyCharge",
-        "condition": "BridgeSuccess:h.cetus.ring.vessel"
+        "target": "St_M_FrostyCharge"
       },
       "power": null,
       "stat": null,
@@ -18478,8 +18477,7 @@
         "value": 4,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FrostyCharge",
-        "condition": "BridgeSuccess:h.cetus.ring.vessel"
+        "target": "St_M_FrostyCharge"
       },
       "power": null,
       "stat": null,
@@ -18535,8 +18533,7 @@
             "value": 4,
             "arg": 0,
             "cooldown": 0,
-            "target": "St_M_FrostyCharge",
-            "condition": "BridgeSuccess:h.cetus.ring.vessel"
+            "target": "St_M_FrostyCharge"
           },
           "power": null,
           "stat": null,
@@ -18556,8 +18553,7 @@
             "value": 1,
             "arg": 0,
             "cooldown": 0,
-            "target": "St_M_FrostyCharge",
-            "condition": "BridgeSuccess:h.cetus.ring.vessel"
+            "target": "St_M_FrostyCharge"
           },
           "power": null,
           "stat": null,
@@ -19006,8 +19002,7 @@
         "value": 10,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FrostyCharge",
-        "condition": "BridgeSuccess:h.cetus.ring.armor"
+        "target": "St_M_FrostyCharge"
       },
       "power": null,
       "stat": null,
@@ -19114,8 +19109,7 @@
             "value": 4,
             "arg": 0,
             "cooldown": 0,
-            "target": "St_M_FrostyCharge",
-            "condition": "BridgeSuccess:h.cetus.ring.armor"
+            "target": "St_M_FrostyCharge"
           },
           "power": null,
           "stat": null,

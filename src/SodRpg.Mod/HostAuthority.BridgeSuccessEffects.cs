@@ -109,6 +109,16 @@ namespace SodRpg.Mod
                         (float)shield.DurationSeconds, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner));
                     continue;
                 }
+                if (payload.Kind == BridgePayloadKind.AlliedWard)
+                {
+                    // The success transaction already spent the pair's quota; the ward uses the C12 recipient, cap and pool rules.
+                    var authored = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = payload.ChannelId, Ward = payload.Ward,
+                        UncappedValueUnits = payload.UncappedValueUnits, UncappedDurationSeconds = payload.UncappedDurationSeconds,
+                        UncappedRadiusMetres = payload.UncappedRadiusMetres, UncappedTargetCount = payload.UncappedTargetCount };
+                    DispatchAdmittedWard(owner, payload.Ward, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner),
+                        authored: authored, sourceKind: KeystoneSourceKind.NativeMemory);
+                    continue;
+                }
                 if (payload.Kind == BridgePayloadKind.Gimmick)
                 {
                     DispatchBridgeGimmick(owner, victim, transaction, payload);

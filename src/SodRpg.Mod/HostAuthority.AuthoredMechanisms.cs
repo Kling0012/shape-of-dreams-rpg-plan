@@ -67,6 +67,12 @@ namespace SodRpg.Mod
                 }
                 if (spec.Bridge == null) continue;
                 ValidateBridgeNativeDefinition(spec.Bridge);
+                if (spec.Bridge.RetainedFiveRanks)
+                {
+                    var registered = PairCombos.Get(spec.Bridge.PairId);
+                    if (registered?.AuthoredDefinition == null || !registered.AuthoredDefinition.RetainedFiveRanks)
+                        throw new InvalidOperationException("Only a registered retained five-rank pair may declare five ranks.");
+                }
                 foreach (var legacy in build.PairCombos)
                     if (legacy.Def.Id == spec.Bridge.PairId)
                         throw new InvalidOperationException("A bridge cannot retain its legacy payoff.");

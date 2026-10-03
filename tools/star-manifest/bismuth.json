@@ -16739,7 +16739,6 @@
         "arg": 0,
         "cooldown": 0,
         "target": "St_M_Sprint",
-        "condition": "BridgeSuccess:h.bismuth.ring.insight",
         "once": true
       },
       "power": null,
@@ -19743,8 +19742,7 @@
         "value": 10,
         "arg": 1,
         "cooldown": 0,
-        "target": "St_M_Sprint",
-        "condition": "BridgeSuccess:h.bismuth.ring.renewal"
+        "target": "St_M_Sprint"
       },
       "power": null,
       "stat": null,

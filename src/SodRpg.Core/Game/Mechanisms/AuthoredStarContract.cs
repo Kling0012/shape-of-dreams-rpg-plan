@@ -240,6 +240,9 @@ namespace SodRpg.Core.Game
                             var original = existing[def.LocalStarId];
                             node.RouteId = original.RouteId;
                             node.RouteOrder = original.RouteOrder;
+                            // A retained route star keeps the memory identity of its route even when its new effect names no memory
+                            // (a receiver or mechanism row): pair endpoints and ownership are defined by that identity.
+                            if (node.RouteMemory == null) node.RouteMemory = original.RouteMemory;
                             node.IsDreamRing = original.IsDreamRing;
                             node.IsOuterAnchor = original.IsOuterAnchor;
                             node.Tier = original.Tier;

@@ -46,24 +46,30 @@ DURATION = {"Shield", "Empower", "Quicken", "Wound", "Daze", "Rampart", "Primed"
 AUTHORED_PAIRS = {
     # Bismuth b8 (docs/specs/v1.31-clusters-bismuth.md, bridge table): I x S, I hit -> S remaining cooldown 1/2/3/4/5%,
     # once per I activation, five retained ranks, no mark (direct receiver gate).
-    "h.bismuth.ring.renewal": {"index": 8, "endpoints": (("innocence", 6), ("distorting-sprint", 6)),
-                               "source": "St_QR_Innocence", "trigger": "OnHit", "recipient": "St_M_Sprint"},
+    "h.bismuth.ring.renewal": {"index": 8, "endpoints": (("innocence", 6), ("distorting-sprint", 6)), "gate": "DirectReceiver",
+                               "source": "St_QR_Innocence", "trigger": "OnHit", "recipient": "St_M_Sprint", "payload": "Recharge"},
+    # Bismuth b7: P x I, P hit marks (4 s), I hit on the marked enemy Sap 1/2/3/4/5%, once per I activation, five retained ranks.
+    "h.bismuth.ring.resolve": {"index": 7, "endpoints": (("prismatic-eyes", 6), ("innocence", 6)), "gate": "Mark",
+                               "opening": ("St_D_PrismaticEyes", "OnHit"), "source": "St_QR_Innocence", "trigger": "OnHit",
+                               "payload": "Gimmick", "effect": "Sap", "arg": 0},
+    # Aurena B8: P(C,G), G hit marks, C hit on the marked enemy AlliedWard 4/5/6/7/8, five retained ranks (the original C/G connection: sixth stars).
+    "h.aurena.ring.renewal": {"index": 8, "endpoints": (("claw", 6), ("golden-burst", 6)), "gate": "Mark",
+                              "opening": ("St_Q_GoldenBurst", "OnHit"), "source": "St_D_DisintegratingClaw", "trigger": "OnHit",
+                              "payload": "AlliedWard"},
+    # Nachia b8: Circle of Life x Sylvan Call (the two memories named by the design; endpoints are the fourth route stars like every pair).
+    # Sylvan Call use opens a 4 s window; a Circle of Life owned basic attack inside it recharges Sylvan Call 1/2/3/4/5%.
+    "h.nachia.ring.renewal": {"index": 8, "endpoints": (("circle-life", 4), ("sylvan-call", 4)), "gate": "Window",
+                              "opening": ("St_Q_SylvanCall", "OnUse"), "source": "St_D_CircleOfLife", "trigger": "OnBasicAttack",
+                              "recipient": "St_Q_SylvanCall", "payload": "Recharge"},
 }
 # A bridge anchor that is a migrated receiver boost, never a pair: its cluster declares the two memories it owns.
 # Mist renewal: "FL / LU" (docs/specs/v1.31-clusters-mist.md); "no new pair" and "not an eighth existing combo".
+# Design-table migrations of a registered pair's mark trigger. Aurena B2: the Dangerous Theory payload is not a guaranteed crit,
+# so the mark opens on Hit instead of Crit (docs/specs/v1.31-clusters-aurena.md, section B).
+LEGACY_OPENING_OVERRIDES = {"h.aurena.ring.insight": "OnHit"}
 RECEIVER_ONLY_BRIDGES = {"h.mist.ring.renewal": ("St_Q_Fleche", "St_Q_Lunge")}
 # Design-table gaps that must be answered by the design owner before a real pair can be registered.
-UNRESOLVED_BRIDGES = {
-    "h.aurena.ring.renewal": "Aurena B8 is a Mark pair with five retained ranks (AlliedWard 4/5/6/7/8). Open questions: "
-        "(1) what Expose does the mark give at ranks 4 and 5 (the design fixes only 2/3/4% for ranks 1-3, BridgeSuccessDefinition rejects a marked rank above 3, "
-        "and the mark Expose is rank+1)? (2) BridgePayloadKind has no AlliedWard payload, so a pair whose base payoff is AlliedWard needs a new engine payload kind",
-    "h.bismuth.ring.resolve": "Bismuth b7 is a Mark pair (P x I, Sap 1/2/3/4/5%) with five retained ranks. Open question: "
-        "what Expose does the mark give at ranks 4 and 5 (the design fixes only 2/3/4% for ranks 1-3, BridgeSuccessDefinition rejects a marked rank above 3, "
-        "and the mark Expose is rank+1)?",
-    "h.nachia.ring.renewal": "Nachia b8 is a Window pair (Sylvan Call use opens the window, Circle of Life basic attack inside it recharges Sylvan Call 1/2/3/4/5%). Open questions: "
-        "(1) which route star of Circle of Life is the endpoint (the layout places the bridge between pack-heart.6 and sylvan-call.6, not next to circle-life; existing pairs use the fourth stars)? "
-        "(2) BridgeSuccessDefinition rejects a non-direct gate above rank 3: may a window pair keep its five retained ranks?",
-}
+UNRESOLVED_BRIDGES = {}
 
 
 def cs(value):
@@ -161,9 +167,14 @@ class Compiler:
                 bridge = "h." + name + ".ring." + slugs[index - 1]
                 tail = line[match.end():]
                 tokens = re.findall(r'"([^"]*)"|PairComboTrigger\.(\w+)|PairComboStep\.(\w+)|GimmickEffect\.(\w+)', tail)
-                self.pairs[bridge] = {"id": "h." + name + ".pair." + str(index),
+                seq = [a or b for _, a, b, _ in tokens if a or b]
+                table = re.search(r'"[^"]*",\s*"[^"]*",\s*"([^"]*)",\s*PairComboTrigger\.(\w+),\s*PairComboStep\.(\w+),\s*(?:"([^"]*)"|null),\s*PairComboTrigger\.(\w+),\s*'
+                                  r'GimmickEffect\.(\w+),\s*(\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+))?(?:,\s*[\d.]+f)?(?:,\s*(?:"([^"]*)"|null))?', tail)
+                self.pairs[bridge] = {"table": table, "once": "oncePerActivation: true" in line, "id": "h." + name + ".pair." + str(index),
                     "a": match[4], "b": match[6], "line": line,
-                    "payoff": next((e for _, _, _, e in tokens if e), None)}
+                    "payoff": next((e for _, _, _, e in tokens if e), None),
+                    # opening trigger, step, payoff trigger: a pair without a step succeeds on its opening trigger
+                    "success": seq[2] if seq[1] != "None" else seq[0]}
         memory_of = {route: memory for memory, route in self.routes.items()}
         for bridge, spec in AUTHORED_PAIRS.items():
             if not bridge.startswith("h." + name + "."):
@@ -171,7 +182,7 @@ class Compiler:
             (slug_a, order_a), (slug_b, order_b) = spec["endpoints"]
             route_a, route_b = "h." + name + ".route." + slug_a, "h." + name + ".route." + slug_b
             self.pairs[bridge] = {"id": "h." + name + ".pair." + str(spec["index"]),
-                "a": memory_of[route_a], "b": memory_of[route_b], "line": "", "payoff": None, "authored": spec,
+                "a": memory_of[route_a], "b": memory_of[route_b], "line": "", "payoff": None, "authored": spec, "success": spec["trigger"],
                 "star_a": route_a + "." + str(order_a), "star_b": route_b + "." + str(order_b)}
         self.known_memories = set(self.routes)
         contract = (ROOT / "src/SodRpg.Core/Game/Mechanisms/AuthoredStarContract.cs").read_text(encoding="utf-8")
@@ -261,6 +272,14 @@ class Compiler:
         pair = self.pairs.get(sid)
         if pair and pair.get("authored"):
             return self.authored_pair_center(sid, row, g, prefix, pair)
+        if pair and not pair.get("authored"):
+            kind, _, why = self.legacy_center(sid)
+            if kind == "mismatch":
+                self.fail(sid, prefix, g, "the center row cannot be bound to registered pair " + pair["id"] + ": " + ", ".join(why))
+                return None
+            if kind == "baseline":
+                override = LEGACY_OPENING_OVERRIDES.get(sid)
+                return "ManifestPair(" + cs(self.hero) + ", " + cs(sid) + (", openingOverride: MemoryEventKind." + TRIGGERS[override] if override else "") + ")"
         members = {"ChannelId": cs(sid), "Source": selector(source), "Trigger": "MemoryEventKind." + trigger,
                    "Budget": "AttributionBudget." + budget}
         if "condition" in g:
@@ -268,9 +287,9 @@ class Compiler:
             if bridge not in self.pairs:
                 self.fail(sid, prefix + ".condition", g["condition"], UNRESOLVED_BRIDGES.get(bridge, "no registered real pair or complete authored pair definition"))
             else:
-                authored = self.pairs[bridge].get("authored")
-                if condition == "BridgeSuccess" and authored and g["trigger"] != authored["trigger"]:
-                    self.fail(sid, prefix + ".condition", g["condition"], "the pair succeeds on " + authored["trigger"] + " but this star triggers on " + g["trigger"]
+                success = self.pair_success(bridge)
+                if condition == "BridgeSuccess" and g["trigger"] != success:
+                    self.fail(sid, prefix + ".condition", g["condition"], "the pair succeeds on " + success + " but this star triggers on " + g["trigger"]
                               + ": a BridgeSuccess channel is dispatched only from the success transaction of the same event kind, so it could never fire. "
                               "The design table lists it without a pair condition; the manifest row needs that condition removed (manifests are not edited here)")
                 members.update(Condition="AuthoredMechanismCondition." + condition, PairId=cs(self.pairs[bridge]["id"]))
@@ -331,7 +350,7 @@ class Compiler:
             if basis not in ("CasterMaxOffense", "RecipientMaxHP") or pool not in ("Allied", "Ordinary"):
                 self.fail(sid, prefix, g, "unknown ward basis or pool")
             health = summoned and basis == "RecipientMaxHP"
-            members.update(Kind="AuthoredMechanismKind.AlliedWard", Ward="new AlliedWardDefinition(" + cs(sid) + ", WardRecipientKind." + ("OwnedSummons" if summoned else "AlliedTravelers") + ", WardAmountBasis." + basis + ", ModShieldPoolKind." + pool + ", " + units(g["value"]) + ", " + ("true" if e == "AllyShield" else "false") + (", durationSeconds: 3f, baseTargets: 1, limits: WardLimitProfile.SummonRecipientHealth" if health else "") + ")")
+            members.update(Kind="AuthoredMechanismKind.AlliedWard", Ward="new AlliedWardDefinition(" + cs(sid) + ", WardRecipientKind." + ("OwnedSummons" if summoned else "AlliedTravelers") + ", WardAmountBasis." + basis + ", ModShieldPoolKind." + pool + ", " + units(g["value"]) + ", " + ("true" if e == "AllyShield" or e == "AlliedWard" and self.name == "aurena" else "false") + (", durationSeconds: 3f, baseTargets: 1, limits: WardLimitProfile.SummonRecipientHealth" if health else "") + ")")
         elif e == "PressureDividend":
             if source not in ("St_L_CoinExplosion", "St_U_ShoutOfOblivion") or trigger != "Kill":
                 self.fail(sid, prefix, g, "dividend requires verified CoinExplosion/Shout native kill provenance")
@@ -359,20 +378,88 @@ class Compiler:
             self.fail(sid, prefix + ".cooldown", g["cooldown"], "typed payload has no seconds-cooldown field")
         return obj("AuthoredMechanismSpec", members)
 
+    def pair_success(self, bridge):
+        pair = self.pairs[bridge]
+        if pair.get("authored"):
+            return pair["success"]
+        kind, success, _ = self.legacy_center(bridge)
+        return success if kind in ("baseline", "direct") else pair["success"]
+
+    def legacy_center(self, bridge):
+        """Classify the manifest center row of a registered legacy pair.
+
+        ("baseline", success, [])  the row restates the registered pair, which is emitted as its typed base (ManifestPair)
+        ("direct", trigger, [])    the design changed the pair into a direct receiver (no mark): the row defines it
+        ("mismatch", None, why)    neither; the row cannot be bound to the registered pair
+        """
+        pair = self.pairs[bridge]
+        row = self.by_id.get(bridge)
+        match = pair["table"]
+        g = row.get("gimmick") if row else None
+        if match and row is None:
+            # No migration row: the implicit registered pair is bound by ManifestBaselinePair.
+            return ("baseline", match.group(5) if match.group(3) != "None" else match.group(2), [])
+        if not match or not g:
+            return ("mismatch", None, ["no registered pair table or center gimmick"])
+        origin, trigger, step, payoff, payoff_trigger, effect, v1, v2, v3, arg = match.groups()[:10]
+        recharge = match.group(11)
+        success = payoff_trigger if step != "None" else trigger
+        source = payoff if step != "None" else origin
+        family = {"Recharge", "RechargeTarget", "ReceiverRecharge"}
+        same_effect = g["effect"] == effect or effect == "Recharge" and g["effect"] in family
+        wrong = []
+        if not same_effect:
+            wrong.append("effect " + g["effect"] + " vs " + effect)
+        if [number(x) for x in g.get("valuesByRank", [])] != [Decimal(v1), Decimal(v2), Decimal(v3)]:
+            wrong.append("rank table")
+        if g["arg"] != int(arg or 0):
+            wrong.append("arg")
+        if g["cooldown"] != 0:
+            wrong.append("cooldown")
+        if effect == "Recharge" and g.get("target") != recharge:
+            wrong.append("recipient")
+        if g["trigger"] == success and row.get("memory") == source and not wrong:
+            # The design text states that the mark was removed and the pair became a direct receiver ("直接Recv").
+            if step != "None" and "直接" in row.get("notes", ""):
+                return ("direct", g["trigger"], [])
+            return ("baseline", success, [])
+        if g["effect"] in family | {"RechargeOther"}:
+            # The design redefined this pair as a direct receiver; the center row (source, trigger, recipient, table) defines it.
+            return ("direct", g["trigger"], [])
+        wrong.append("trigger/source " + g["trigger"] + "/" + str(row.get("memory")) + " vs " + success + "/" + str(source))
+        return ("mismatch", None, wrong)
+
     def authored_pair_center(self, sid, row, g, prefix, pair):
         """The retained center of a newly authored pair is the typed base binding of that pair."""
         spec = pair["authored"]
+        gate = spec["gate"]
+        effects = {"Recharge": ("ReceiverRecharge", "RechargeTarget", "Recharge"), "Gimmick": (spec.get("effect"),), "AlliedWard": ("AlliedWard",)}[spec["payload"]]
         recipient = g.get("target")
-        if g["effect"] != "ReceiverRecharge" or g["arg"] != 0 or g["cooldown"] != 0 or "condition" in g:
-            self.fail(sid, prefix, g, "the authored direct-receiver pair base is a deterministic ReceiverRecharge (Arg 0, CD0, no pair condition)")
-        if row.get("memory") != spec["source"] or recipient != spec["recipient"] or row.get("receiver") != spec["recipient"] \
-                or g["trigger"] != spec["trigger"] or spec["source"] not in (pair["a"], pair["b"]) or spec["recipient"] != pair["b"]:
-            self.fail(sid, prefix, g, "center source/trigger/recipient differ from the design table pair " + display_value(spec))
-        if not g.get("once") or len(g.get("valuesByRank", [])) != row.get("maxRank", 1):
-            self.fail(sid, prefix + ".valuesByRank", g.get("valuesByRank"), "the retained pair base needs its once-per-activation flag and an exact table for every retained rank")
-        return ("ManifestNewDirectRechargePair(" + cs(self.hero) + ", " + cs(sid) + ", " + cs(pair["id"]) + ", " + cs(pair["star_a"]) + ", " + cs(pair["a"]) + ", "
-                + cs(pair["star_b"]) + ", " + cs(pair["b"]) + ", " + cs(spec["source"]) + ", MemoryEventKind." + TRIGGERS[spec["trigger"]] + ", " + cs(spec["recipient"]) + ", "
-                + array([units(x) for x in g.get("valuesByRank", [])], "int") + ", true)")
+        bad = []
+        if g["effect"] not in effects or g["arg"] != spec.get("arg", 0) or g["cooldown"] != 0:
+            bad.append("effect/arg/cooldown")
+        if "condition" in g and g["condition"].split(":", 1)[1] != sid:
+            bad.append("condition names a different bridge")
+        if g["trigger"] != spec["trigger"] or row.get("memory") != spec["source"] or spec["source"] not in (pair["a"], pair["b"]):
+            bad.append("source/trigger")
+        if spec["payload"] == "Recharge" and (recipient != spec["recipient"] or row.get("receiver") != spec["recipient"] or spec["recipient"] not in (pair["a"], pair["b"])):
+            bad.append("recipient")
+        if gate == "DirectReceiver" and "condition" in g:
+            bad.append("a direct receiver base has no pair condition")
+        if bad:
+            self.fail(sid, prefix, g, "center differs from the design table pair " + display_value(spec) + ": " + ", ".join(bad))
+        if (gate == "DirectReceiver" and not g.get("once")) or len(g.get("valuesByRank", [])) != row.get("maxRank", 1):
+            self.fail(sid, prefix + ".valuesByRank", g.get("valuesByRank"), "the retained pair base needs an exact table for every retained rank (and its once flag when direct)")
+        values = array([units(x) for x in g.get("valuesByRank", [])], "int")
+        head = cs(self.hero) + ", " + cs(sid) + ", " + cs(pair["id"]) + ", " + cs(pair["star_a"]) + ", " + cs(pair["a"]) + ", " + cs(pair["star_b"]) + ", " + cs(pair["b"])
+        if gate == "DirectReceiver":
+            return ("ManifestNewDirectRechargePair(" + head + ", " + cs(spec["source"]) + ", MemoryEventKind." + TRIGGERS[spec["trigger"]] + ", "
+                    + cs(spec["recipient"]) + ", " + values + ", true)")
+        opening, opening_trigger = spec["opening"]
+        return ("ManifestNewPair(" + head + ", BridgeGateKind." + gate + ", " + cs(opening) + ", MemoryEventKind." + TRIGGERS[opening_trigger] + ", "
+                + cs(spec["source"]) + ", MemoryEventKind." + TRIGGERS[spec["trigger"]] + ", BridgePayloadKind." + {"Recharge": "Recharge", "Gimmick": "Gimmick", "AlliedWard": "AlliedWard"}[spec["payload"]]
+                + ", " + cs(spec.get("recipient")) + ", GimmickEffect." + (spec.get("effect") or "None") + ", " + str(spec.get("arg", 0)) + ", " + values + ", "
+                + ("true" if g.get("once") else "false") + ")")
 
     def key_spec(self, sid, spec, path, wound_lifetime=None):
         effect, field = spec["effect"], spec["field"]

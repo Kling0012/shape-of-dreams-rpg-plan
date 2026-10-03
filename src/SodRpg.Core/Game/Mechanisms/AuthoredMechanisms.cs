@@ -132,6 +132,13 @@ namespace SodRpg.Core.Game
                 }
                 if (spec.Bridge != null)
                 {
+                    var star = node.AuthoredStar;
+                    bool retainedFive = star != null && star.RetainedLegacy && node.IsDreamRing && node.MaxRank == 5 && star.Region.Kind == ClusterRegionKind.Bridge
+                        && star.Region.Id == node.Id && spec.ValuesByRank.Length == 5;
+                    if (spec.Bridge.RetainedFiveRanks && (!retainedFive || spec.Bridge.GateKind == BridgeGateKind.DirectReceiver))
+                        throw new InvalidOperationException("Only a retained legacy five-rank ring center with a per-rank table may keep five ranks on a marked or window pair: " + node.Id);
+                    if (spec.Bridge.GateKind != BridgeGateKind.DirectReceiver && node.MaxRank > 3 && !spec.Bridge.RetainedFiveRanks)
+                        throw new InvalidOperationException("A marked or window pair above three ranks needs the retained five-rank exception: " + node.Id);
                     var pair = PairCombos.Get(spec.Bridge.PairId);
                     if (pair == null && (node.AuthoredStar?.Region.Kind != ClusterRegionKind.Bridge || !Gimmicks.ValidStarId(node.AuthoredStar.Region.Id)))
                         throw new InvalidOperationException("A new real pair requires its explicit authored bridge region.");
@@ -256,7 +263,8 @@ namespace SodRpg.Core.Game
             if (s.Gimmick != null) return Gimmicks.SupportsParameter(s.Gimmick, param);
             if (s.Bridge != null)
             {
-                bool SupportsPayload(BridgePayload payload) => payload.Gimmick != null
+                bool SupportsPayload(BridgePayload payload) => payload.Ward != null ? param == GimmickParam.Duration || param == GimmickParam.Radius || param == GimmickParam.ExtraTargets
+                    : payload.Gimmick != null
                     ? Gimmicks.SupportsParameter(payload.Gimmick, param)
                     : payload.Kind == BridgePayloadKind.OrdinaryShield && param == GimmickParam.Duration;
                 return SupportsPayload(s.Bridge.BasePayoff) || s.Bridge.Extras.Any(SupportsPayload);
@@ -486,13 +494,24 @@ namespace SodRpg.Core.Game
                     int? rawTargets = p.Gimmick != null && Gimmicks.SupportsParameter(p.Gimmick, GimmickParam.ExtraTargets)
                         ? checked((p.Gimmick.Effect == GimmickEffect.Ricochet ? Math.Max(1, Math.Min(2, p.Gimmick.Arg)) : 5)
                             + (int)(p.Gimmick.UncappedExtraTargets ?? p.Gimmick.ExtraTargets) + (int)targets) : (int?)null;
+                    AlliedWardDefinition ward = null;
+                    if (p.Ward != null)
+                    {
+                        var w = p.Ward;
+                        rawDuration = (p.UncappedDurationSeconds ?? (decimal)w.DurationSeconds) * (1m + duration / 10000m);
+                        rawRadius = (p.UncappedRadiusMetres ?? (decimal)w.RadiusMetres) * (1m + radius / 10000m);
+                        rawTargets = checked((p.UncappedTargetCount ?? w.Targets) + (int)targets);
+                        ward = new AlliedWardDefinition(w.ChannelId, w.RecipientKind, w.AmountBasis, w.PoolKind, Math.Min(10000, Math.Min(p.CapUnits, raw)), w.IncludeOwner,
+                            (float)Math.Min(15m, rawRadius.Value), (float)Math.Min(w.Limits == WardLimitProfile.SummonRecipientHealth ? 9m : 8m, rawDuration.Value),
+                            w.BaseTargets, Math.Max(0, rawTargets.Value - w.BaseTargets), w.MaxTargets, w.Limits, w.Budget);
+                    }
                     return BridgePayload.FromEffective(p.ChannelId, p.Kind, Math.Min(p.CapUnits, raw),
                         p.Recipient, p.DamageBasis, p.DurationSeconds == 0 ? 0 : (float)Math.Min(p.DurationCapSeconds, rawDuration.Value),
                         p.Gimmick == null ? null : Gimmicks.ApplyModifierUnits(p.Gimmick, boost, duration, radius, targets, chance),
-                        raw, rawProbability, p.CapUnits, rawDuration, rawRadius, rawTargets, p.DurationCapSeconds);
+                        raw, rawProbability, p.CapUnits, rawDuration, rawRadius, rawTargets, p.DurationCapSeconds, ward);
                 }
                 s.Bridge = new BridgeSuccessDefinition(b.PairId, b.Endpoints, applyRankValues ? rank : b.Rank, b.GateKind, b.OpeningSource, b.OpeningTrigger,
-                    b.PayoffSource, b.PayoffTrigger, Payload(b.BasePayoff), b.Extras.Select(Payload), b.Budget, b.SourcePhase, b.UsesNativeWindowLifetime, b.CooldownSeconds, b.WindowSeconds);
+                    b.PayoffSource, b.PayoffTrigger, Payload(b.BasePayoff), b.Extras.Select(Payload), b.Budget, b.SourcePhase, b.UsesNativeWindowLifetime, b.CooldownSeconds, b.WindowSeconds, b.RetainedFiveRanks);
             }
             Validate(s);
         }
@@ -614,7 +633,9 @@ namespace SodRpg.Core.Game
                 foreach (var payoff in new[] { bridge.BasePayoff }.Concat(bridge.Extras))
                     foreach (var channel in ProjectPayload(entry, build, AuthoredKeystoneComposer.BridgePayload(payoff),
                         bridge.PayoffSource, payoff.Recipient, discriminator: bridge.PairId + ":" + payoff.ChannelId,
-                        trigger: bridge.PayoffTrigger, heroKey: heroKey)) yield return channel;
+                        trigger: bridge.PayoffTrigger, heroKey: heroKey,
+                        recipient: payoff.Ward == null ? KeystoneRecipientKind.Self
+                            : payoff.Ward.RecipientKind == WardRecipientKind.OwnedSummons ? KeystoneRecipientKind.OwnedSummon : KeystoneRecipientKind.AlliedHero)) yield return channel;
                 yield break;
             }
             var payload = AuthoredKeystoneComposer.MechanismPayload(s);

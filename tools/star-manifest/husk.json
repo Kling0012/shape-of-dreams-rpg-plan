@@ -11997,8 +11997,7 @@
         "value": 0.5,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FlashStep",
-        "condition": "BridgeSuccess:h.husk.ring.vessel"
+        "target": "St_M_FlashStep"
       },
       "power": null,
       "stat": null,
