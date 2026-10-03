@@ -26716,7 +26716,7 @@
       "rankCost": 1,
       "nameJa": "一刀専心",
       "nameEn": "Single-Minded Blade",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。一歩一殺（F）装備時のみ選択可能。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。一歩一殺（F）装備時のみ選択可能。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.wind-cut",
@@ -26753,7 +26753,7 @@
       "rankCost": 1,
       "nameJa": "風傷の芯",
       "nameEn": "Core of the Wind Scar",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。風の傷（W）装備時のみ。回復量は増減しない。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。風の傷（W）装備時のみ。回復量は増減しない。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.delayed-slash",
@@ -26805,7 +26805,7 @@
       "rankCost": 1,
       "nameJa": "遅れて裂ける刃",
       "nameEn": "Delayed Rend",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。"
     },
     {
       "id": "husk.key.fractured-wedge",
@@ -26857,7 +26857,7 @@
       "rankCost": 1,
       "nameJa": "砕ける楔",
       "nameEn": "Fractured Wedge",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。楔1発で同じ敵へのBurst追加ダメージは1回まで。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。楔1発で同じ敵へのBurst追加ダメージは1回まで。"
     },
     {
       "id": "husk.key.aura-prism",
@@ -26909,7 +26909,7 @@
       "rankCost": 1,
       "nameJa": "剣気の色",
       "nameEn": "Prism of Aura",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。"
     },
     {
       "id": "husk.key.hidden-rampart",
@@ -26962,7 +26962,7 @@
       "rankCost": 1,
       "nameJa": "薄闇の護身",
       "nameEn": "Shadowed Bulwark",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。C06の最大15%・最大残量1障壁。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。C06の最大15%・最大残量1障壁。"
     },
     {
       "id": "husk.key.element-weave",
@@ -26999,7 +26999,7 @@
       "rankCost": 1,
       "nameJa": "闇を編む",
       "nameEn": "Weave of Darkness",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。利点・代償は星図全体（特定記憶なし）。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。利点・代償は星図全体（特定記憶なし）。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.lingering-wound",
@@ -27036,7 +27036,7 @@
       "rankCost": 1,
       "nameJa": "残傷の契約",
       "nameEn": "Lingering Wound Pact",
-      "notes": "仮置き: 設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。Wound最終Value120%以内を検証。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に仮置き（要確認）。Wound最終Value120%以内を検証。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "h.husk.dark",
