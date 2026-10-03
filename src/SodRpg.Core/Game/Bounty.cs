@@ -49,6 +49,28 @@ namespace SodRpg.Core.Game
         SetHunter = 20,
         /// <summary>悪夢の契約を Target 個以上結んだまま確保する。</summary>
         PactKeeper = 21,
+        FireHunter = 22,
+        ColdHunter = 23,
+        LightHunter = 24,
+        DarkHunter = 25,
+        ShieldGiver = 26,
+        AllyHealer = 27,
+        MemoryQ = 28,
+        MemoryW = 29,
+        MemoryE = 30,
+        MemoryR = 31,
+        ZoneTraveler = 32,
+        RelicEnhancer = 33,
+        LimitBreaker = 34,
+        Awakener = 35,
+        LinkWeaver = 36,
+        GimmickUser = 37,
+        PressureDiver = 38,
+        VariantHunter = 39,
+        VeilHunter = 40,
+        PackHunter = 41,
+        PulseHunter = 42,
+        LastStandHunter = 43,
     }
 
     /// <summary>
@@ -93,6 +115,28 @@ namespace SodRpg.Core.Game
                 case BountyKind.Delver: return Loc.T($"「深く潜る」を{t}回選ぶ", $"Delve {t} time(s)");
                 case BountyKind.SetHunter: return Loc.T($"セット品を{t}個見つける", $"Find {t} set piece(s)");
                 case BountyKind.PactKeeper: return Loc.T($"悪夢の契約を{t}つ結んだまま確保する", $"Secure while bound by {t}+ nightmare pact(s)");
+                case BountyKind.FireHunter: return Loc.T($"火が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Fire");
+                case BountyKind.ColdHunter: return Loc.T($"冷気を受けた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Cold");
+                case BountyKind.LightHunter: return Loc.T($"光が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Light");
+                case BountyKind.DarkHunter: return Loc.T($"闇が付いた敵を{t}体倒す", $"Defeat {t} enemies afflicted with Dark");
+                case BountyKind.ShieldGiver: return Loc.T($"自分か味方に障壁を{t}回付ける", $"Grant shields to yourself or allies {t} times");
+                case BountyKind.AllyHealer: return Loc.T($"別の旅人のHPを{t}回回復する", $"Restore another traveler's health {t} times");
+                case BountyKind.MemoryQ: return Loc.T($"Q枠の記憶を{t}回使う", $"Use a Memory in the Q slot {t} times");
+                case BountyKind.MemoryW: return Loc.T($"W枠の記憶を{t}回使う", $"Use a Memory in the W slot {t} times");
+                case BountyKind.MemoryE: return Loc.T($"E枠の記憶を{t}回使う", $"Use a Memory in the E slot {t} times");
+                case BountyKind.MemoryR: return Loc.T($"R枠の記憶を{t}回使う", $"Use a Memory in the R slot {t} times");
+                case BountyKind.ZoneTraveler: return Loc.T($"次のゾーンへ{t}回進む", $"Travel to the next zone {t} times");
+                case BountyKind.RelicEnhancer: return Loc.T($"遺物の強化を{t}回行う", $"Enhance relics {t} times");
+                case BountyKind.LimitBreaker: return Loc.T($"遺物を{t}回限界突破する", $"Limit break relics {t} times");
+                case BountyKind.Awakener: return Loc.T($"装備した固有品の覚醒を{t}段まで進める", $"Reach Awakening {t} on an equipped legendary relic");
+                case BountyKind.LinkWeaver: return Loc.T($"連携を同時に{t}つ成立させる", $"Satisfy {t} links at once");
+                case BountyKind.GimmickUser: return Loc.T($"記憶の仕掛けを{t}回発動する", $"Trigger Memory gimmicks {t} times");
+                case BountyKind.PressureDiver: return Loc.T($"夢の圧による敵のHP倍率を{t}%以上にする", $"Reach {t}% enemy health from Dream Pressure");
+                case BountyKind.VariantHunter: return Loc.T($"夢の変種を{t}体倒す", $"Defeat {t} dream variants");
+                case BountyKind.VeilHunter: return Loc.T($"霞衣の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Veiled trait");
+                case BountyKind.PackHunter: return Loc.T($"群れの守りの性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Packbound trait");
+                case BountyKind.PulseHunter: return Loc.T($"明滅の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Pulsing trait");
+                case BountyKind.LastStandHunter: return Loc.T($"最後の殻の性質を持つ敵を{t}体倒す", $"Defeat {t} enemies with the Last Stand trait");
                 default: return Loc.T($"戦闘部屋を{t}個突破する", $"Clear {t} combat rooms");
             }
         }
@@ -141,6 +185,28 @@ namespace SodRpg.Core.Game
             new Template { Kind = BountyKind.Delver, Min = 1, Max = 3, Shards = 25, Tuning = 1, Xp = 50 },
             new Template { Kind = BountyKind.SetHunter, Min = 1, Max = 1, Shards = 40, Tuning = 1, Xp = 70 },
             new Template { Kind = BountyKind.PactKeeper, Min = 1, Max = 2, Shards = 35, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.FireHunter, Min = 12, Max = 24, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.ColdHunter, Min = 12, Max = 24, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.LightHunter, Min = 12, Max = 24, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.DarkHunter, Min = 12, Max = 24, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.ShieldGiver, Min = 6, Max = 12, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.AllyHealer, Min = 4, Max = 8, Shards = 25, Xp = 45 },
+            new Template { Kind = BountyKind.MemoryQ, Min = 12, Max = 24, Shards = 15, Xp = 30 },
+            new Template { Kind = BountyKind.MemoryW, Min = 12, Max = 24, Shards = 15, Xp = 30 },
+            new Template { Kind = BountyKind.MemoryE, Min = 12, Max = 24, Shards = 15, Xp = 30 },
+            new Template { Kind = BountyKind.MemoryR, Min = 3, Max = 6, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.ZoneTraveler, Min = 2, Max = 4, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.RelicEnhancer, Min = 2, Max = 4, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.LimitBreaker, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.Awakener, Min = 1, Max = 3, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.LinkWeaver, Min = 1, Max = 2, Shards = 25, Xp = 50 },
+            new Template { Kind = BountyKind.GimmickUser, Min = 8, Max = 16, Shards = 20, Xp = 40 },
+            new Template { Kind = BountyKind.PressureDiver, Min = 125, Max = 175, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.VariantHunter, Min = 1, Max = 3, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.VeilHunter, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.PackHunter, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.PulseHunter, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
+            new Template { Kind = BountyKind.LastStandHunter, Min = 1, Max = 2, Shards = 30, Tuning = 1, Xp = 60 },
         };
 
         /// <summary>種類の重ならない依頼を count 個作る。目標が大きいほど報酬も増える。</summary>

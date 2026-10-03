@@ -34,6 +34,8 @@ namespace SodRpg.Core.Game
         public Rarity? Rarity { get; }
         /// <summary>Kind が Hint のときのヒント。</summary>
         public Hint? HintId { get; set; }
+        /// <summary>単独の結果に付随する依頼報酬・レベルアップの通知。</summary>
+        public IReadOnlyList<GameEvent> AdditionalEvents { get; internal set; }
 
         public override string ToString() => Text;
     }
@@ -167,12 +169,15 @@ namespace SodRpg.Core.Game
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
-                    if (r == null || r.Rarity != Rarity.Legendary || r.AwakenLevel >= Content.MaxAwakenLevel) continue;
+                    if (r == null || r.Rarity != Rarity.Legendary) continue;
+                    ReachBounty(p, BountyKind.Awakener, r.AwakenLevel, false, ev);
+                    if (r.AwakenLevel >= Content.MaxAwakenLevel) continue;
                     r.AwakenPoints = Math.Min(Content.AwakenThreshold, r.AwakenPoints + points);
                     int level = Content.AwakenLevelFor(r.AwakenPoints);
                     if (level <= r.AwakenLevel) continue;
                     if (r.AwakenLevel == 0) p.Stats.RelicsAwakened++; // 実績は最初の覚醒で数える
                     r.AwakenLevel = level;
+                    ReachBounty(p, BountyKind.Awakener, level, false, ev);
                     string powerMult = (Content.AwakenPowerPctAt(level) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
                     string affixMult = (Content.AwakenAffixPctAt(level) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
                     string numeral = Content.AwakenNumeral(level);
@@ -228,6 +233,12 @@ namespace SodRpg.Core.Game
                 AdvanceRelicBounties(p, relic, ev);
             }
             if (isNightmare) AdvanceBounty(p, BountyKind.NightmareHunter, 1, false, ev);
+            if (variant != null) AdvanceBounty(p, BountyKind.VariantHunter, 1, false, ev);
+            var traits = nightmare | (variant?.Affixes ?? NightmareAffix.None);
+            if ((traits & NightmareAffix.Veiled) != 0) AdvanceBounty(p, BountyKind.VeilHunter, 1, false, ev);
+            if ((traits & NightmareAffix.Packbound) != 0) AdvanceBounty(p, BountyKind.PackHunter, 1, false, ev);
+            if ((traits & NightmareAffix.Pulsing) != 0) AdvanceBounty(p, BountyKind.PulseHunter, 1, false, ev);
+            if ((traits & NightmareAffix.LastStand) != 0) AdvanceBounty(p, BountyKind.LastStandHunter, 1, false, ev);
             switch (tier)
             {
                 case MonsterTier.MiniBoss: AdvanceBounty(p, BountyKind.EliteHunter, 1, false, ev); break;
@@ -275,7 +286,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>確保地点（新しいゾーン）に着いた。次の敵を倒すまで装備を整えられる。</summary>
-        public static List<GameEvent> ReachSecurePoint(Profile p)
+        public static List<GameEvent> ReachSecurePoint(Profile p, TradeLedger trades = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -287,7 +298,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
-            run.OfferedEvent = DreamEvents.Roll(rng, p);
+            run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
             p.StoreRng(rng);
             AddHint(p, Hint.FirstSecurePoint, ev);
             return ev;
@@ -367,7 +378,7 @@ namespace SodRpg.Core.Game
             foreach (var b in p.Run.Bounties)
             {
                 if (b.Kind != kind || b.Done) continue;
-                b.Progress = Math.Min(b.Target, b.Progress + amount);
+                b.Progress = (int)Math.Min(b.Target, (long)b.Progress + amount);
                 if (b.Progress >= b.Target) CompleteBounty(p, b, secured, ev);
             }
         }
@@ -566,6 +577,7 @@ namespace SodRpg.Core.Game
                     string fountainMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"泉に「{sacrifice.DisplayName}」を捧げると、「{target.PlainName}」が+{target.Enhance}に強化されました。",
                         $"Offered \"{sacrifice.DisplayName}\"; \"{target.PlainName}\" was enhanced to +{target.Enhance}.") + MilestoneSuffix(fountainMilestone), target.Rarity));
+                    AdvanceBounty(p, BountyKind.RelicEnhancer, 1, false, ev);
                     break;
                 }
                 case DreamEvent.Chalice:
@@ -600,6 +612,7 @@ namespace SodRpg.Core.Game
                     string shrineMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.PlainName}」を+{target.Enhance}に強化しました。",
                         $"The Forge Shrine enhanced \"{target.PlainName}\" to +{target.Enhance}.") + MilestoneSuffix(shrineMilestone), target.Rarity));
+                    AdvanceBounty(p, BountyKind.RelicEnhancer, 1, false, ev);
                     break;
                 }
                 case DreamEvent.TwinMirror:
@@ -662,6 +675,141 @@ namespace SodRpg.Core.Game
                     run.EventLuck += DreamEvents.LuckyStarLuck;
                     ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
                     break;
+                case DreamEvent.MemoryWell:
+                case DreamEvent.PowerCrucible:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    var pool = DreamEvents.ReplacementPowers(target).ToList();
+                    var chosen = pool[rng.Range(0, pool.Count - 1)];
+                    var replacement = new PowerLine(chosen.Power, rng.Range(chosen.Min, chosen.Max));
+                    var old = target.Powers[0];
+                    if (e == DreamEvent.MemoryWell) p.AddMaterial(Materials.Tuning, -1);
+                    else target.Powers.RemoveAt(target.Powers.Count - 1);
+                    target.Powers[0] = replacement;
+                    ev.Add(new GameEvent(e == DreamEvent.MemoryWell ? EventKind.LevelUp : EventKind.Info, Loc.T(
+                        $"「{target.PlainName}」の固有効果「{Content.PowerName(old.Power)}」を失い、「{Content.PowerName(replacement.Power)}」へ交換しました。",
+                        $"\"{target.PlainName}\" lost \"{Content.PowerName(old.Power)}\" and gained \"{Content.PowerName(replacement.Power)}\"."), target.Rarity));
+                    break;
+                }
+                case DreamEvent.ShadowExchange:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target));
+                    if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available."));
+                    var old = target.Affixes[0];
+                    run.SatchelShards -= 25;
+                    target.Retunes++;
+                    target.Affixes[0] = replacement;
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                        $"「{target.PlainName}」の特性を交換しました：{Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}",
+                        $"\"{target.PlainName}\" exchanged an affix: {Content.FormatStat(old.Stat, old.Value)} → {Content.FormatStat(replacement.Stat, replacement.Value)}"), target.Rarity));
+                    break;
+                }
+                case DreamEvent.LostMausoleum:
+                {
+                    var recovered = DreamEvents.LostCandidates(p, trades).ToList();
+                    run.SatchelShards -= 60;
+                    foreach (var relic in recovered)
+                    {
+                        p.LostAndFound.Remove(relic);
+                        relic.Enhance = 0;
+                        ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
+                            $"霊廟から「{relic.PlainName}」を回収しました。強化は0になり、まだ持ち帰っていません。",
+                            $"Recovered \"{relic.PlainName}\" from the mausoleum with enhancement reset to 0 (unsecured)."), relic.Rarity));
+                        AddToSatchel(p, relic, ev, trades);
+                    }
+                    break;
+                }
+                case DreamEvent.RelicWager:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    if (rng.Chance(0.5))
+                    {
+                        var replacement = Loot.RollBaseRelic(rng, target.Base, target.Rarity + 1, target.ItemLevel);
+                        run.Satchel.Remove(target);
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに勝ち、「{target.DisplayName}」を新品へ交換しました。", $"Won the wager and exchanged \"{target.DisplayName}\" for a fresh relic.")));
+                        RecordEventRelic(p, replacement, ev, trades);
+                    }
+                    else
+                    {
+                        int shards = SalvageValue(target);
+                        run.Satchel.Remove(target);
+                        run.SatchelShards += shards;
+                        ev.Add(new GameEvent(EventKind.Lost, Loc.T($"賭けに負け、「{target.DisplayName}」は未確保の欠片{shards}になりました。", $"Lost the wager: \"{target.DisplayName}\" became {shards} unsecured shards.")));
+                    }
+                    break;
+                }
+                case DreamEvent.TemperingAltar:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    var lost = target.Affixes[0];
+                    target.Affixes.RemoveAt(0);
+                    target.Enhance += 2;
+                    string milestone = GrantEnhanceMilestones(rng, target);
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                        $"「{target.PlainName}」は特性「{Content.FormatStat(lost.Stat, lost.Value)}」を失い、+{target.Enhance}に強化されました。",
+                        $"\"{target.PlainName}\" lost \"{Content.FormatStat(lost.Stat, lost.Value)}\" and was enhanced to +{target.Enhance}.") + MilestoneSuffix(milestone), target.Rarity));
+                    AdvanceBounty(p, BountyKind.RelicEnhancer, 1, false, ev);
+                    break;
+                }
+                case DreamEvent.StoneBroker:
+                    run.SatchelShards -= 35;
+                    run.SatchelTuning += 2;
+                    ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
+                    break;
+                case DreamEvent.ShardKiln:
+                    run.SatchelTuning -= 2;
+                    run.SatchelShards += 45;
+                    ev.Add(new GameEvent(EventKind.Info, DreamEvents.Describe(e, p)));
+                    break;
+                case DreamEvent.StarOffering:
+                case DreamEvent.DreamOffering:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    run.Satchel.Remove(target);
+                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
+                    if (e == DreamEvent.StarOffering)
+                    {
+                        StarProgression.AddXp(p.Heroes[run.HeroKey], 40);
+                        ev.Add(new GameEvent(EventKind.Info, Loc.T("この遠征の旅人の星の経験が40増えました。", "This expedition hero gained 40 star experience.")));
+                    }
+                    else ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
+                    break;
+                }
+                case DreamEvent.AbyssalChest:
+                {
+                    var relic = Loot.RollRelic(rng, Rarity.Epic, p.BestItemLevel, null,
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                    run.SatchelShards -= 30;
+                    run.Heat++;
+                    run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
+                    ev.Add(new GameEvent(EventKind.Delved, Loc.T($"宝箱を開き、潜行が{run.Heat}になりました。", $"Opened the chest; delve is now {run.Heat}.")));
+                    RecordEventRelic(p, relic, ev, trades);
+                    AdvanceBounty(p, BountyKind.Delver, 1, false, ev);
+                    break;
+                }
+                case DreamEvent.RelicExchange:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    var slot = (Slot)(((int)target.Slot + 1) % Content.SlotCount);
+                    var relic = Loot.RollRelic(rng, target.Rarity, target.ItemLevel, slot,
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                    run.Satchel.Remove(target);
+                    ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を別の枠の遺物と交換しました。", $"Exchanged \"{target.DisplayName}\" for a relic in another slot."), target.Rarity));
+                    RecordEventRelic(p, relic, ev, trades);
+                    break;
+                }
+                case DreamEvent.SealedVault:
+                {
+                    var target = DreamEvents.TradeTarget(p, e, trades);
+                    run.SatchelShards -= 40;
+                    run.Satchel.Remove(target);
+                    p.Stash.Add(target);
+                    run.RelicsSecured++;
+                    ev.Add(new GameEvent(EventKind.Secured, Loc.T($"「{target.DisplayName}」を保管庫へ送りました。他の荷物は未確保のままです。", $"Sent \"{target.DisplayName}\" to the stash; other cargo remains unsecured."), target.Rarity));
+                    AdvanceBounty(p, BountyKind.Collector, 1, true, ev);
+                    break;
+                }
             }
             p.Stats.EventsUsed++;
             p.StoreRng(rng);
@@ -728,8 +876,85 @@ namespace SodRpg.Core.Game
         {
             var ev = new List<GameEvent>();
             if (p.Run == null) return ev;
+            switch (action)
+            {
+                case BountyKind.ChaosSeeker:
+                case BountyKind.Patron:
+                case BountyKind.Refiner:
+                case BountyKind.Alchemist:
+                case BountyKind.Recycler:
+                case BountyKind.HunterBait: break;
+                default: return ev;
+            }
             AdvanceBounty(p, action, 1, false, ev);
             return ev;
+        }
+
+        /// <summary>ホストが撃破時に採取した、敵の元素状態。</summary>
+        public static List<GameEvent> OnElementalKill(Profile p, bool fire, bool cold, bool light, bool dark)
+        {
+            var ev = new List<GameEvent>();
+            if (fire) AdvanceBounty(p, BountyKind.FireHunter, 1, false, ev);
+            if (cold) AdvanceBounty(p, BountyKind.ColdHunter, 1, false, ev);
+            if (light) AdvanceBounty(p, BountyKind.LightHunter, 1, false, ev);
+            if (dark) AdvanceBounty(p, BountyKind.DarkHunter, 1, false, ev);
+            return ev;
+        }
+
+        /// <summary>確定後の有効量が正の支援だけを数える。回復は他の旅人へのもの。</summary>
+        public static List<GameEvent> OnSupportApplied(Profile p, bool shield, bool ally, float effectiveAmount)
+        {
+            var ev = new List<GameEvent>();
+            if (float.IsNaN(effectiveAmount) || float.IsInfinity(effectiveAmount) || effectiveAmount <= 0) return ev;
+            if (shield || ally) AdvanceBounty(p, shield ? BountyKind.ShieldGiver : BountyKind.AllyHealer, 1, false, ev);
+            return ev;
+        }
+
+        /// <summary>Q・W・E・R の枠番号（0〜3）。装備した記憶の使用だけをホストが報告する。</summary>
+        public static List<GameEvent> OnMemoryUsed(Profile p, int slotIndex)
+        {
+            var ev = new List<GameEvent>();
+            if (slotIndex >= 0 && slotIndex <= 3)
+                AdvanceBounty(p, (BountyKind)((int)BountyKind.MemoryQ + slotIndex), 1, false, ev);
+            return ev;
+        }
+
+        public static List<GameEvent> OnZoneTravelled(Profile p)
+        {
+            var ev = new List<GameEvent>();
+            AdvanceBounty(p, BountyKind.ZoneTraveler, 1, false, ev);
+            return ev;
+        }
+
+        public static List<GameEvent> OnLinksSatisfied(Profile p, int count)
+        {
+            var ev = new List<GameEvent>();
+            if (count > 0) ReachBounty(p, BountyKind.LinkWeaver, count, false, ev);
+            return ev;
+        }
+
+        /// <summary>条件と間隔を通過して実際に発動した仕掛けの数。</summary>
+        public static List<GameEvent> OnGimmicksTriggered(Profile p, int count)
+        {
+            var ev = new List<GameEvent>();
+            AdvanceBounty(p, BountyKind.GimmickUser, count, false, ev);
+            return ev;
+        }
+
+        public static List<GameEvent> OnPressureReached(Profile p, int healthPercent)
+        {
+            var ev = new List<GameEvent>();
+            if (healthPercent > 100) ReachBounty(p, BountyKind.PressureDiver, healthPercent, false, ev);
+            return ev;
+        }
+
+        private static GameEvent WithBountyProgress(Profile p, GameEvent result, BountyKind kind)
+        {
+            if (p.Run == null) return result;
+            var ev = new List<GameEvent>();
+            AdvanceBounty(p, kind, 1, false, ev);
+            if (ev.Count > 0) result.AdditionalEvents = ev;
+            return result;
         }
 
         /// <summary>確保地点でドリームダストを欠片へ換える（ダストはホストが支払い済み）。欠片はそのまま保管庫側へ。</summary>
@@ -975,8 +1200,8 @@ namespace SodRpg.Core.Game
             var rng = p.TakeRng();
             string milestone = GrantEnhanceMilestones(rng, r);
             p.StoreRng(rng);
-            return new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
-                Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity);
+            return WithBountyProgress(p, new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
+                Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
         }
 
         private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
@@ -1014,9 +1239,9 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, -shardCost);
             p.Stash.Remove(material);
             r.LimitBreaks = n;
-            return new GameEvent(EventKind.LevelUp, Loc.T(
+            return WithBountyProgress(p, new GameEvent(EventKind.LevelUp, Loc.T(
                 $"「{r.PlainName}」を限界突破しました（{n}/{maxBreaks}。素材「{material.PlainName}」。強化上限+{Content.MaxEnhanceFor(r)}）。",
-                $"Limit broke \"{r.PlainName}\" ({n}/{maxBreaks}, used \"{material.PlainName}\". Enhancement cap +{Content.MaxEnhanceFor(r)})."), r.Rarity);
+                $"Limit broke \"{r.PlainName}\" ({n}/{maxBreaks}, used \"{material.PlainName}\". Enhancement cap +{Content.MaxEnhanceFor(r)})."), r.Rarity), BountyKind.LimitBreaker);
         }
 
         /// <summary>

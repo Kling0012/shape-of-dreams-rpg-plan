@@ -38,6 +38,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeVariantMsg> _onVariant;
         private readonly Action<DreamforgeMonsterCueMsg> _onMonsterCue;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
+        private readonly Action<DreamforgeBountyReportMsg> _onBountyReport;
         private readonly Action<PendingTrade> _onSalvageExpired;
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
@@ -77,6 +78,7 @@ namespace SodRpg.Mod
         private float _nextBuildSend;
         private int _sentDreamLevel = -1;
         private Hero _lastHero;
+        private int _reportedPressurePercent;
 
         public Profile Profile { get; private set; }
         public string ActiveRunId { get; private set; }
@@ -116,6 +118,7 @@ namespace SodRpg.Mod
             _onVariant = OnVariant;
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
+            _onBountyReport = OnBountyReport;
             _onSalvageExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
@@ -277,6 +280,7 @@ namespace SodRpg.Mod
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport); } catch (Exception) { }
                 }
                 _clientRpcOn = actor;
                 _trades.Clear();
@@ -303,6 +307,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                 }
             }
         }
@@ -337,6 +342,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                 }
             }
             catch (Exception) { }
@@ -370,6 +376,7 @@ namespace SodRpg.Mod
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
             int pacts = Profile.Run != null && Profile.Run.RunId != runId ? Profile.Run.Pacts.Count : 0;
             ActiveRunId = runId;
+            _reportedPressurePercent = 0;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero)));
             if (pacts > 0) SendCurseClear();
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
@@ -421,9 +428,10 @@ namespace SodRpg.Mod
         public void Emit(GameEvent e)
         {
             _dirty = true;
-            // 勇気の門を含む潜行の変更は、次の送信に新しい Build を使う。
-            if (e.Kind == EventKind.Delved) MarkDirty(true);
+            // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
+            if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
             _notify?.Invoke(e);
+            if (e.AdditionalEvents != null) Emit(e.AdditionalEvents);
         }
 
         private bool RunActive => Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId;
@@ -475,8 +483,9 @@ namespace SodRpg.Mod
             {
                 if (!RunActive || info.isLoadingFromSave) return;
                 if (!info.isTraveling) return;
+                Emit(Rules.OnZoneTravelled(Profile));
                 if (!Rules.ShouldOfferSecurePoint(Profile)) return;
-                Emit(Rules.ReachSecurePoint(Profile));
+                Emit(Rules.ReachSecurePoint(Profile, _trades));
                 _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                     "確保地点に到着。未確保の戦利品を「確保」するか、「深く潜る」かを選んでください。",
                     "Secure point reached. Choose to Secure your loot or Delve deeper.")));
@@ -777,6 +786,46 @@ namespace SodRpg.Mod
             PressureHealthMultiplier = msg.healthMultiplier;
             PressureDamageMultiplier = msg.damageMultiplier;
             HostConfirmed = true;
+            ReportPressureProgress();
+        }
+
+        private void ReportPressureProgress()
+        {
+            if (!RunActive || float.IsNaN(PressureHealthMultiplier) || float.IsInfinity(PressureHealthMultiplier)) return;
+            double percent = Math.Floor(PressureHealthMultiplier * 100d + 0.0001d);
+            if (percent <= _reportedPressurePercent || percent <= 100 || percent > int.MaxValue) return;
+            _reportedPressurePercent = (int)percent;
+            Emit(Rules.OnPressureReached(Profile, _reportedPressurePercent));
+        }
+
+        private void OnBountyReport(DreamforgeBountyReportMsg msg)
+        {
+            if (msg == null || msg.protocol != Protocol.Version || !RunActive || msg.runId != ActiveRunId) return;
+            var hero = LocalHero;
+            if (hero == null || msg.heroNetId != hero.netId) return;
+            switch ((BountyReportKind)msg.report)
+            {
+                case BountyReportKind.ElementalKill:
+                    if (msg.value <= 0 || msg.value > 15) return;
+                    Emit(Rules.OnElementalKill(Profile, (msg.value & 1) != 0, (msg.value & 2) != 0,
+                        (msg.value & 4) != 0, (msg.value & 8) != 0));
+                    break;
+                case BountyReportKind.ShieldGranted:
+                    if (msg.value == 1) Emit(Rules.OnSupportApplied(Profile, true, false, 1f));
+                    break;
+                case BountyReportKind.AllyHealed:
+                    if (msg.value == 1) Emit(Rules.OnSupportApplied(Profile, false, true, 1f));
+                    break;
+                case BountyReportKind.MemoryUsed:
+                    Emit(Rules.OnMemoryUsed(Profile, msg.value));
+                    break;
+                case BountyReportKind.LinksSatisfied:
+                    Emit(Rules.OnLinksSatisfied(Profile, msg.value));
+                    break;
+                case BountyReportKind.GimmicksTriggered:
+                    Emit(Rules.OnGimmicksTriggered(Profile, msg.value));
+                    break;
+            }
         }
 
         public string Secure()

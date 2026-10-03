@@ -43,6 +43,8 @@ namespace SodRpg.Mod
             public Action<Vector3, Vector3> OnTeleport;
             public Action<Displacement> OnDisplacement;
             public Action<EventInfoHeal> OnHeal;
+            public Action<EventInfoHeal> OnSupportHeal;
+            public Action<EventInfoShield> OnSupportShield;
             public Action<EventInfoDamageNegatedByImmunity> OnImmunity;
             public DewPlayer Player;
             public Action<int> OnSpendGold;
@@ -58,6 +60,8 @@ namespace SodRpg.Mod
             public readonly HashSet<string> LinkMemories = new HashSet<string>();
             public readonly HashSet<string> LinkEssences = new HashSet<string>();
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
+            public string BountyRunId;
+            public int ReportedLinks;
             // 星図のエッセンス枠（v1.27）。旅人の最初の枠の数と、前回こちらが足した分。
             public bool GemSlotsCaptured;
             public int BaseGemIdentity, BaseGemMovement;
@@ -295,6 +299,11 @@ namespace SodRpg.Mod
                 healthMultiplier = (float)_pressure.HealthMultiplier,
                 damageMultiplier = (float)_pressure.DamageMultiplier
             });
+            // Reuse the infrequent state resync for players whose run started after the first report.
+            var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            foreach (var rt in _runtimes.Values)
+                if (rt.BountyRunId == runId && rt.ReportedLinks > 0)
+                    SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
         }
 
         private void ApplyPressure(MonsterRuntime rt)
@@ -1253,6 +1262,22 @@ namespace SodRpg.Mod
                 rt.OnMemoryKill = info => OnMemoryKill(captured, info);
                 hero.ActorEvent_OnDealDamage += rt.OnMemoryDamage;
                 hero.ActorEvent_OnKill += rt.OnMemoryKill;
+                rt.OnSupportHeal = info =>
+                {
+                    var target = info.target as Hero;
+                    if (target != null && target != hero && target.GetRelation(hero) == EntityRelation.Ally
+                        && info.amount > 0f && !float.IsNaN(info.amount) && !float.IsInfinity(info.amount))
+                        SendBountyReport(captured, BountyReportKind.AllyHealed, 1);
+                };
+                rt.OnSupportShield = info =>
+                {
+                    var target = info.target;
+                    if (target != null && (target == hero || target.GetRelation(hero) == EntityRelation.Ally)
+                        && info.finalAmount > 0f && !float.IsNaN(info.finalAmount) && !float.IsInfinity(info.finalAmount))
+                        SendBountyReport(captured, BountyReportKind.ShieldGranted, 1);
+                };
+                hero.ActorEvent_OnDoHeal += rt.OnSupportHeal;
+                hero.ActorEvent_OnGiveShield += rt.OnSupportShield;
                 // Actor walks its ancestor processors, including for Heal().Dispatch and GiveShield.
                 // Mod-created recovery therefore uses these hooks too; do not multiply at call sites.
                 rt.HealDealt = (ref HealData heal, Actor a, Entity t) =>
@@ -1388,6 +1413,8 @@ namespace SodRpg.Mod
                 if (rt.OnHit != null) hero.EntityEvent_OnAttackHit -= rt.OnHit;
                 if (rt.OnMemoryDamage != null) hero.ActorEvent_OnDealDamage -= rt.OnMemoryDamage;
                 if (rt.OnMemoryKill != null) hero.ActorEvent_OnKill -= rt.OnMemoryKill;
+                if (rt.OnSupportHeal != null) hero.ActorEvent_OnDoHeal -= rt.OnSupportHeal;
+                if (rt.OnSupportShield != null) hero.ActorEvent_OnGiveShield -= rt.OnSupportShield;
                 if (rt.OnSkill != null) hero.ClientHeroEvent_OnSkillUse -= rt.OnSkill;
                 if (rt.OnTeleport != null) hero.Control.ClientEvent_OnTeleport -= rt.OnTeleport;
                 if (rt.OnDisplacement != null) hero.Control.ClientEvent_OnDisplacementStarted -= rt.OnDisplacement;
@@ -1413,6 +1440,8 @@ namespace SodRpg.Mod
             rt.OnSummon = null;
             rt.OnMemoryDamage = null;
             rt.OnMemoryKill = null;
+            rt.OnSupportHeal = null;
+            rt.OnSupportShield = null;
             rt.PendingGimmicks.Clear();
         }
 
@@ -1561,6 +1590,12 @@ namespace SodRpg.Mod
             {
                 var hero = rt.Hero;
                 if (!Alive(hero)) return;
+                if (_gimmickDamageDepth == 0 && info.skill != null && Links.IsMemory(info.skill.GetType().Name))
+                {
+                    int memorySlot = info.type == HeroSkillLocation.Q ? 0 : info.type == HeroSkillLocation.W ? 1
+                        : info.type == HeroSkillLocation.E ? 2 : info.type == HeroSkillLocation.R ? 3 : -1;
+                    if (memorySlot >= 0) SendBountyReport(rt, BountyReportKind.MemoryUsed, memorySlot);
+                }
                 if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
                     QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.type == HeroSkillLocation.R,
@@ -1785,6 +1820,12 @@ namespace SodRpg.Mod
         /// </summary>
         private void UpdateLinks(HeroRuntime rt, bool alive)
         {
+            var runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            if (rt.BountyRunId != runId)
+            {
+                rt.BountyRunId = runId;
+                rt.ReportedLinks = 0;
+            }
             var p = rt.Powers;
             var links = p.Build.Links;
             if (links.Count == 0 && p.Build.Gimmicks.Count == 0)
@@ -1837,6 +1878,11 @@ namespace SodRpg.Mod
             p.LinkAttunePct = attune;
             p.LinkGuardHealthPct = guardHealth;
             p.LinkGuardArmor = guardArmor;
+            if (rt.SatisfiedLinks.Count > rt.ReportedLinks)
+            {
+                rt.ReportedLinks = rt.SatisfiedLinks.Count;
+                SendBountyReport(rt, BountyReportKind.LinksSatisfied, rt.ReportedLinks);
+            }
         }
 
         /// <summary>連携が最初に効いたときだけ、種類ごとに1行ログを残す。</summary>
@@ -1938,6 +1984,7 @@ namespace SodRpg.Mod
             float now = Time.time;
             rt.Gimmicks.Fire(trigger, memory, now, victim != null ? victim.GetInstanceID() : 0,
                 damage, _gimmickDamageDepth != 0, requests);
+            if (requests.Count > 0) SendBountyReport(rt, BountyReportKind.GimmicksTriggered, requests.Count);
             foreach (var request in requests)
             {
                 var effect = request.Entry.Def.Effect;
@@ -2119,11 +2166,42 @@ namespace SodRpg.Mod
             return e is Hero h && _runtimes.TryGetValue(h, out var rt) ? rt : null;
         }
 
+        private void SendBountyReport(HeroRuntime rt, BountyReportKind kind, int value)
+        {
+            var hero = rt.Hero;
+            var player = hero != null ? hero.owner : null;
+            if (player == null || !player.isHumanPlayer || player.hero != hero) return;
+            _registeredOn?.CustomRpc_SendMessageToClient(player, new DreamforgeBountyReportMsg
+            {
+                protocol = Protocol.Version,
+                heroNetId = hero.netId,
+                runId = NetworkedManagerBase<GameManager>.softInstance?.runId,
+                report = (int)kind,
+                value = value,
+            });
+        }
+
+        private void ReportElementalDeath(Monster monster)
+        {
+            if (monster.disableLoot || monster.Status == null) return;
+            if (monster.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter) && !hunter.enableGoldAndExpDrops) return;
+            var status = monster.Status;
+            int mask = (status.fireStack > 0 ? 1 : 0) | (status.hasCold ? 2 : 0)
+                | (status.lightStack > 0 ? 4 : 0) | (status.darkStack > 0 ? 8 : 0);
+            if (mask == 0) return;
+            // Like shared kill loot, every participating enemy-facing player receives this kill.
+            // The synchronous server death event runs before Destroy clears the victim's state.
+            foreach (var rt in _runtimes.Values)
+                if (rt.Hero != null && monster.GetRelation(rt.Hero) == EntityRelation.Enemy)
+                    SendBountyReport(rt, BountyReportKind.ElementalKill, mask);
+        }
+
         private void OnDeath(EventInfoKill info)
         {
             try
             {
-                if (!(info.victim is Monster)) return;
+                if (!(info.victim is Monster monster)) return;
+                ReportElementalDeath(monster);
                 var rt = RuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
                 var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);

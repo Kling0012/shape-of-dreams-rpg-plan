@@ -30,6 +30,27 @@ namespace SodRpg.Mod
         public float damageMultiplier;
     }
 
+    internal enum BountyReportKind
+    {
+        ElementalKill,
+        ShieldGranted,
+        AllyHealed,
+        MemoryUsed,
+        LinksSatisfied,
+        GimmicksTriggered,
+    }
+
+    /// <summary>ホスト → 対象の遊び手：確定した行動か、成立条件の最高値。</summary>
+    [Serializable]
+    public class DreamforgeBountyReportMsg
+    {
+        public int protocol;
+        public uint heroNetId;
+        public string runId;
+        public int report;
+        public int value;
+    }
+
     /// <summary>ホスト → 全員：この敵が悪夢化した（接頭効果のビット集合）。</summary>
     [Serializable]
     public class DreamforgeNightmareMsg
