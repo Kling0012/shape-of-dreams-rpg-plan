@@ -30,11 +30,8 @@ namespace SodRpg.Mod
         }
         private static void ProcessReceived(Entity target, ref DamageData damage, Actor actor)
         {
-            // M6 conditional key downsides read the victim's health immediately before the hit (HP90%判定は命中直前).
-            float healthBefore = target.currentHealth, maxHealthBefore = target.maxHealth;
             target.ProcessReceivedDamage(ref damage, actor);
-            if (NetworkServer.active) HostAuthority.NativeInstance?.ApplyAuthoredFinalNativeDamage(ref damage, actor, target,
-                healthBefore, maxHealthBefore);
+            if (NetworkServer.active) HostAuthority.NativeInstance?.ApplyAuthoredFinalNativeDamage(ref damage, actor, target);
         }
     }
 
@@ -105,7 +102,7 @@ namespace SodRpg.Mod
             binding.Epoch = checked(++_authoredKeystoneEpoch); binding.Equipment = equipment;
             var prerequisites = keys.SelectMany(key => key.Prerequisites).Distinct(StringComparer.Ordinal);
             binding.Runtime.Configure(keys.Select(key => key.KeystoneId), binding.Epoch, equipment.Memories.Select(m => m.Memory),
-                prerequisites, Array.Empty<KeystoneAllocatedEffect>(), true, admission);
+                prerequisites, true, admission);
             foreach (var key in keys)
                 if (key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
                 {
@@ -123,10 +120,6 @@ namespace SodRpg.Mod
                 if (key.KeystoneId != "h.aurena.key2") throw new InvalidOperationException("C11 requires its named authored keystone.");
                 var equipment = CollectMechanismEquipment(hero, hero.GetInstanceID());
                 foreach (string required in key.RequiredMemories) if (equipment.Find(required) == null) return;
-                foreach (var memory in equipment.Memories)
-                    if (IsSacrificeMemory(memory.Memory) && !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch,
-                        memory.Memory, equipment: equipment)))
-                        throw new InvalidOperationException("C11 requires the simultaneous downside on its exact equipped sacrifice source.");
                 // Missing verified host adapters disable the whole key through Configure, never just its shield half.
             }
         }
@@ -142,8 +135,7 @@ namespace SodRpg.Mod
             {
                 if (!IsSacrificeMemory(memory.Memory)) continue;
                 source = true;
-                if (!NativeSacrificeShieldDispatch.IsBoundFor(memory.Memory)
-                    || !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch, memory.Memory, equipment: equipment))) return false;
+                if (!NativeSacrificeShieldDispatch.IsBoundFor(memory.Memory)) return false;
             }
             return source;
         }
@@ -176,14 +168,13 @@ namespace SodRpg.Mod
         }
 
         internal KeystoneResult TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver,
-            KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self,
-            float? targetHealthPercent = null, bool? retaliationWindowOpen = null)
+            KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self)
         {
             RefreshAuthoredKeystone(hero);
             if (!_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.Active)
                 return ScopedKeystoneModifiers.ApplyUnmodified(payload);
             return binding.Runtime.Apply(payload, new KeystoneContext(binding.Epoch, source, sourceKind, receiver, recipient,
-                binding.Equipment, targetHealthPercent: targetHealthPercent, retaliationWindowOpen: retaliationWindowOpen));
+                binding.Equipment));
         }
 
         internal float TransformAuthoredMemoryDamage(Hero hero, string memory, float percent)
@@ -193,8 +184,7 @@ namespace SodRpg.Mod
                 new KeystoneCaps(decimal.MaxValue)), memory, null, KeystoneSourceKind.NativeMemory).Value;
         }
 
-        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target,
-            float targetHealthBefore = float.NaN, float targetMaxHealthBefore = float.NaN)
+        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target)
         {
             var packet = NativeAttributedDamagePacket.Current;
             if (packet == null || packet.Actor != actor || packet.Victim != target || !packet.Admitted
@@ -210,13 +200,7 @@ namespace SodRpg.Mod
                 && family.Memory == identity.SourceMemory) effectId = family.EffectId;
             var payload = new KeystonePayload(KeystoneLayer.NativeDamage, (decimal)damage.currentAmount,
                 new KeystoneCaps(decimal.MaxValue), effectId: effectId);
-            // Typed event facts: the victim's pre-hit health percent and the owner's existing Retaliation window (M6).
-            float? healthPercent = targetMaxHealthBefore > 0f && !float.IsNaN(targetHealthBefore) && !float.IsNaN(targetMaxHealthBefore)
-                ? (float?)(targetHealthBefore / targetMaxHealthBefore * 100f) : null;
-            bool? retaliation = _runtimes.TryGetValue(hero, out var ownerRuntime)
-                ? (bool?)ownerRuntime.Powers.WithinRetaliationWindow(UnityEngine.Time.time) : null;
-            var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind,
-                targetHealthPercent: healthPercent, retaliationWindowOpen: retaliation);
+            var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind);
             float ratio = (float)(result.Value / payload.Value);
             if (ratio < 1f) damage.ApplyReduction(1f - ratio);
             else if (ratio > 1f) damage.ApplyAmplification(ratio - 1f);

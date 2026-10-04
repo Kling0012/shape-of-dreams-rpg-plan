@@ -1757,7 +1757,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 刻印を選ぶ。keystoneId は最初の空き枠に入る（重複不可・枠は星のレベルで増える）。
-        /// null なら選んでいる刻印をすべて外す。代償で星が無効になる場合は C15 の承認（approvedRefundIds）が要る。
+        /// null なら選んでいる刻印をすべて外す。変更で依存する星の払い戻しが必要な場合は C15 の承認（approvedRefundIds）が要る。
         /// </summary>
         public static void SetKeystone(Profile p, string heroKey, string keystoneId,
             IReadOnlyCollection<string> approvedRefundIds = null)

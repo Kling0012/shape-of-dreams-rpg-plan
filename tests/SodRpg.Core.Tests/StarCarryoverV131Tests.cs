@@ -262,6 +262,34 @@ namespace SodRpg.Core.Tests
             }
             finally { Unregister(); }
         }
+        [Fact]
+        public void Previous_format_four_save_keystone_id_resolves_to_the_generated_upside_only_definition()
+        {
+            var profile = V130Profile();
+            var state = profile.Hero(Cetus);
+            state.AuthoredMigrationVersion = AuthoredStarMigration.CurrentVersion;
+            string keyId = state.Keystone;
+            StarClusters.RegisterGeneratedHero(Cetus);
+            try
+            {
+                // A pre-#47 save has already undergone the independent v1.31 choice migration.
+                foreach (string id in state.Talents.Keys)
+                    if (Content.TryGetTalent(Cetus, id, out var talent) && talent.IsChoice)
+                        state.TalentChoices[id] = 0;
+                // Before #47, format 4 stored the selected ID, not a serialized downside definition.
+                string text = ProfileCodec.Write(profile);
+                var loaded = ProfileCodec.Read(text, new List<string>());
+                Assert.Equal(keyId, loaded.Hero(Cetus).Keystone);
+                Assert.True(Content.TryGetTalent(Cetus, keyId, out var node));
+                Assert.NotNull(node.KeystoneDefinition);
+                var build = Build.Compute(loaded, Cetus, 0);
+                Assert.Equal(node.KeystoneDefinition.KeystoneId, build.SelectedKeystone.KeystoneId);
+                Assert.Equal(node.KeystoneDefinition.RetainedPower, build.SelectedKeystone.RetainedPower);
+                Assert.Equal(node.KeystoneDefinition.RetainedPowerValue, build.SelectedKeystone.RetainedPowerValue);
+            }
+            finally { Unregister(); }
+        }
+
 
         [Fact]
         public void New_stars_are_bought_only_with_earned_points_and_never_exceed_the_cap()

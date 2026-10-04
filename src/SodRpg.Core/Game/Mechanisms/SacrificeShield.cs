@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
 
         public int PendingCount => _pending.Count;
 
-        // Bind this state to the same C07 selection/equipment transaction as the native downside.
+        // Bind this state to the same C07 selection/equipment transaction as the keystone's admission.
         public void Configure(long ownerId, long equipmentEpoch, bool enabled)
         {
             if (ownerId == 0 || equipmentEpoch < 0) throw new ArgumentOutOfRangeException();

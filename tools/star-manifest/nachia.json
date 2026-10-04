@@ -20468,7 +20468,6 @@
       "options": null,
       "keystone": {
         "upside": "SummonWardの対象数+2(最大3体)、Ward量+50%。各召喚獣HP3%プール上限は維持",
-        "downside": "星図記憶MDを全て0(装備/本体記憶レベルのMDは維持)",
         "upsideSpec": [
           {
             "effect": "SummonWard",
@@ -20480,14 +20479,6 @@
             "effect": "SummonWard",
             "field": "Value",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "MemoryDamage",
-            "field": "Enabled",
-            "to": 0,
-            "scope": "star-map MD only"
           }
         ]
       },
@@ -20526,7 +20517,6 @@
       "options": null,
       "keystone": {
         "upside": "囁の星図由来Shield/SummonWardの持続+100%(同ID1重、最終持続は基礎の3倍まで)",
-        "downside": "囁ルートと囁を送信元とする橋から受けるCD短縮を0にする",
         "upsideSpec": [
           {
             "memory": "St_R_NaturesWhisper",
@@ -20539,14 +20529,6 @@
             "effect": "SummonWard",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_NaturesWhisper",
-            "effect": "RechargeTarget",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -20585,7 +20567,6 @@
       "options": null,
       "keystone": {
         "upside": "月のWound・Sap・Exposeの星図持続+100%(最大各基礎3倍)",
-        "downside": "月の星図由来Elementの範囲を単体へ固定。OnKillは倒した敵の位置から最寄りの生存敵1体(基礎4m内)だけ",
         "upsideSpec": [
           {
             "memory": "St_Q_MoonlightPact",
@@ -20604,14 +20585,6 @@
             "effect": "Expose",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_MoonlightPact",
-            "effect": "Element",
-            "field": "ExtraTargets",
-            "to": 1
           }
         ]
       },
@@ -20650,21 +20623,12 @@
       "options": null,
       "keystone": {
         "upside": "舞への星図受信RechargeのValue+60%",
-        "downside": "星図が与える自分自身への追加障壁量-50%(本体ワルツの味方障壁は維持)",
         "upsideSpec": [
           {
             "memory": "St_M_DreamyWaltz",
             "effect": "RechargeTarget",
             "field": "Value",
             "pct": 60
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Shield",
-            "field": "Value",
-            "pct": -50,
-            "scope": "star-map added self shield"
           }
         ]
       },
@@ -20703,7 +20667,6 @@
       "options": null,
       "keystone": {
         "upside": "心・蛇の星図EchoのValue+70%(Echo合計上限は命中量100%)",
-        "downside": "心・蛇の星図MDを0にし、この星図のElementEdgeを発動しない",
         "upsideSpec": [
           {
             "memories": [
@@ -20713,23 +20676,6 @@
             "effect": "Echo",
             "field": "Value",
             "pct": 70
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memories": [
-              "St_D_HeartOfThePack",
-              "St_R_SerpentineBlessing"
-            ],
-            "effect": "MemoryDamage",
-            "field": "Enabled",
-            "to": 0
-          },
-          {
-            "effect": "ElementEdge",
-            "field": "Enabled",
-            "to": 0,
-            "scope": "all star-map ElementEdge"
           }
         ]
       },
@@ -20768,7 +20714,6 @@
       "options": null,
       "keystone": {
         "upside": "循のPackMend/SummonWardのValue+100%",
-        "downside": "循の星図のF起点効果は本人の基本攻撃2発ごとだけ(カウンター上限2)",
         "upsideSpec": [
           {
             "memory": "St_D_CircleOfLife",
@@ -20781,15 +20726,6 @@
             "effect": "SummonWard",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_CircleOfLife",
-            "effect": "OnBasicAttack",
-            "field": "EveryN",
-            "to": 2,
-            "scope": "star-map F effects fire every 2 shots"
           }
         ]
       },
@@ -21932,15 +21868,7 @@
       "options": null,
       "keystone": {
         "upside": "Power.Resonance=8を保持。10m内の味方旅人へ攻撃力・魔力+8%、本人も+8%、ソロ本人+4%",
-        "downside": "本人に帰属する非召喚の直接記憶ダメージ全体を D後=D前×0.85 にする（追加MD部分だけの減算ではない）",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -21951,7 +21879,7 @@
       ],
       "nameJa": "共に在る",
       "nameEn": "Together",
-      "notes": "既存星の効果置換（星の追加ではない）。既存刻印に代償を明示付与。既存Resonanceの範囲と共存規則を維持。N5でDamageDataの発生元を分類し、味方の元攻撃・召喚獣直接攻撃・MODの追加ダメージには代償を掛けない。同名の無代償版は残さない。"
+      "notes": "既存星の効果置換（星の追加ではない）。既存Resonanceの範囲と共存規則を維持（代償は #47 で撤廃）。N5でDamageDataの発生元を分類。"
     },
     {
       "id": "h.nachia.key2",
@@ -21968,15 +21896,7 @@
       "options": null,
       "keystone": {
         "upside": "Power.Overload=20を保持。通常の非移動記憶使用で4秒魔力+20%、1重、時間更新",
-        "downside": "自分の召喚獣による直接ダメージを最終-15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "SummonDirectDamage",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -21987,7 +21907,7 @@
       ],
       "nameJa": "祈りの過負荷",
       "nameEn": "Overflowing Prayer",
-      "notes": "既存星の効果置換（星の追加ではない）。既存刻印に代償を明示付与。既存Overloadを維持。N5。本人と召喚獣の役割配分を選ぶ。移動は起点から除外。"
+      "notes": "既存星の効果置換（星の追加ではない）。既存Overloadを維持（代償は #47 で撤廃）。N5。移動は起点から除外。"
     }
   ]
 }

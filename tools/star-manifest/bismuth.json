@@ -20048,7 +20048,6 @@
       "options": null,
       "keystone": {
         "upside": "G(I,Hit,Sap,15)とG(I,Hit,Daze,8)。通常敵の与ダメージ-15%、ボス-7.5%、0.8秒スタン(ボス無効)",
-        "downside": "Iの元ダメージ-30%(x0.70)",
         "upsideSpec": [
           {
             "memory": "St_QR_Innocence",
@@ -20075,14 +20074,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_QR_Innocence",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -30
           }
         ]
       },
@@ -20121,7 +20112,6 @@
       "options": null,
       "keystone": {
         "upside": "G(F,Kill,Burst,160)。この刻印の爆発半径6m",
-        "downside": "Fの元ダメージ-25%(x0.75)",
         "upsideSpec": [
           {
             "memory": "St_QR_InfernalTales",
@@ -20141,14 +20131,6 @@
             "effect": "Burst",
             "field": "Radius",
             "to": 6
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_QR_InfernalTales",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -20187,7 +20169,6 @@
       "options": null,
       "keystone": {
         "upside": "G(V,Hit,Rampart,2)。1振りで異なる敵1体につき最大HP2%、5体・合計10%まで、4秒",
-        "downside": "Vの元ダメージ-15%(x0.85)",
         "upsideSpec": [
           {
             "memory": "St_QR_ValiantHeart",
@@ -20201,14 +20182,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_QR_ValiantHeart",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
           }
         ]
       },
@@ -20247,7 +20220,6 @@
       "options": null,
       "keystone": {
         "upside": "G(D,Hit,Wound,45)、Duration+100%で6秒・毎秒15%、最終総量90%(GB後も総量120%上限)",
-        "downside": "Dの元ダメージ-25%(x0.75)",
         "upsideSpec": [
           {
             "memory": "St_QR_DistortedMind",
@@ -20267,14 +20239,6 @@
             "effect": "Wound",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_QR_DistortedMind",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -20314,7 +20278,6 @@
       "options": null,
       "keystone": {
         "upside": "G(P,Hit,ElementEdge,40)。対象の属性1種類につきAD/APの高い方40%、4種類・160%まで",
-        "downside": "Pの元ダメージ-30%(x0.70)",
         "upsideSpec": [
           {
             "memory": "St_D_PrismaticEyes",
@@ -20328,14 +20291,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_PrismaticEyes",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -30
           }
         ]
       },
@@ -20374,7 +20329,6 @@
       "options": null,
       "keystone": {
         "upside": "G(P,Hit,ReceiverRecharge,8)->S。この刻印の受信確率100%、1命中1回",
-        "downside": "装着中のI/F/V/Dの元ダメージ各-20%(x0.80)",
         "upsideSpec": [
           {
             "memory": "St_D_PrismaticEyes",
@@ -20396,19 +20350,6 @@
             "field": "Chance",
             "to": 100,
             "receiver": "St_M_Sprint"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memories": [
-              "St_QR_Innocence",
-              "St_QR_InfernalTales",
-              "St_QR_ValiantHeart",
-              "St_QR_DistortedMind"
-            ],
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -21342,16 +21283,7 @@
       "options": null,
       "keystone": {
         "upside": "既存Power.Convergence=100。4属性がそろうとAD/APの高い方100%の無属性爆発（同じ敵6秒に1回）",
-        "downside": "Pの元ダメージ-15%（x0.85）",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "memory": "St_D_PrismaticEyes",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -21362,7 +21294,7 @@
       ],
       "nameJa": "四つの物語",
       "nameEn": "Four Tales",
-      "notes": "既存核の刻印。既存の4属性検出と連鎖抑止、属性は消費しない。代償だけ新しい記憶限定倍率(B3)。既存の選択状態を同IDで保持。"
+      "notes": "既存核の刻印。既存の4属性検出と連鎖抑止、属性は消費しない。既存の選択状態を同IDで保持（代償は #47 で撤廃）。"
     },
     {
       "id": "h.bismuth.key2",
@@ -21379,7 +21311,6 @@
       "options": null,
       "keystone": {
         "upside": "G(P,Hit,Ricochet,30,2,0.3)。本の実命中ダメージ30%を8mの別の敵2体まで",
-        "downside": "Pの元ダメージ-20%（x0.80）",
         "upsideSpec": [
           {
             "memory": "St_D_PrismaticEyes",
@@ -21393,14 +21324,6 @@
               "cooldown": 0.3,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_PrismaticEyes",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },

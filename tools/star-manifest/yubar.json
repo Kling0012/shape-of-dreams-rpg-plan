@@ -27521,21 +27521,12 @@
       "options": null,
       "keystone": {
         "upside": "XのEcho/Burst/Woundの最終仕掛け値+60%",
-        "downside": "Xの本体爆発ダメージ−25%",
         "upsideSpec": [
           {
             "memory": "St_D_ExoticMatter",
             "effect": "Echo/Burst/Wound",
             "field": "Value",
             "pct": 60
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_ExoticMatter",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -27547,7 +27538,7 @@
       "rankCost": 1,
       "nameJa": "散る星の記録",
       "nameEn": "Scattered Star Record",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "yubar.key.returning-orbit",
@@ -27572,21 +27563,12 @@
       "options": null,
       "keystone": {
         "upside": "SのOnHit由来の無属性仕掛けダメージ+50%",
-        "downside": "Sに帰属する強化通常攻撃・跳弾の本体ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_D_ConvergencePoint",
             "effect": "Echo/Burst/ElementEdge",
             "field": "Damage",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_ConvergencePoint",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -27598,7 +27580,7 @@
       "rankCost": 1,
       "nameJa": "巡る軌道",
       "nameEn": "Returning Orbit",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "yubar.key.single-star",
@@ -27625,27 +27607,12 @@
       "options": null,
       "keystone": {
         "upside": "Eの本体命中ダメージ+35%",
-        "downside": "E起点のBurstは生成時半径−50%、Echo/Woundの仕掛け値−20%",
         "upsideSpec": [
           {
             "memory": "St_Q_EtherealInfluence",
             "effect": "NativeDamage",
             "field": "Damage",
             "pct": 35
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_EtherealInfluence",
-            "effect": "Burst",
-            "field": "Radius",
-            "pct": -50
-          },
-          {
-            "memory": "St_Q_EtherealInfluence",
-            "effect": "Echo/Wound",
-            "field": "Value",
-            "pct": -20
           }
         ]
       },
@@ -27657,7 +27624,7 @@
       "rankCost": 1,
       "nameJa": "一点の星",
       "nameEn": "Single Star",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。Echo/Burstの両Notable(E.c2.n1/n2)の取得が前提（設計表）。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。Echo/Burstの両Notable(E.c2.n1/n2)の取得が前提（設計表）。"
     },
     {
       "id": "yubar.key.wide-supernova",
@@ -27682,7 +27649,6 @@
       "options": null,
       "keystone": {
         "upside": "N起点のBurstの生成時半径+80%、仕掛け値+40%",
-        "downside": "Nの本体ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_Q_SuperNova",
@@ -27696,14 +27662,6 @@
             "field": "Value",
             "pct": 40
           }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_SuperNova",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
-          }
         ]
       },
       "mechanisms": [
@@ -27714,7 +27672,7 @@
       "rankCost": 1,
       "nameJa": "遠い星雲",
       "nameEn": "Distant Nebula",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "yubar.key.meteor-residue",
@@ -27739,7 +27697,6 @@
       "options": null,
       "keystone": {
         "upside": "C起点のEcho/Burst/Woundの最終値+50%、Woundの持続時間+50%",
-        "downside": "Cの本体隕石と本体継続ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_R_Cataclysm",
@@ -27753,14 +27710,6 @@
             "field": "Duration",
             "pct": 50
           }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_Cataclysm",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
-          }
         ]
       },
       "mechanisms": [
@@ -27771,7 +27720,7 @@
       "rankCost": 1,
       "nameJa": "星雨の記憶",
       "nameEn": "Memory of Meteor Rain",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "yubar.key.quiet-relay",
@@ -27800,7 +27749,6 @@
       "options": null,
       "keystone": {
         "upside": "Tで開くRWの持続時間を最終2倍、RW値+50%",
-        "downside": "T起点のMOD回復・障壁の量−50%",
         "upsideSpec": [
           {
             "memory": "St_R_Tranquility",
@@ -27814,14 +27762,6 @@
             "field": "Value",
             "pct": 50
           }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_Tranquility",
-            "effect": "Heal/Shield",
-            "field": "Value",
-            "pct": -50
-          }
         ]
       },
       "mechanisms": [
@@ -27833,7 +27773,7 @@
       "rankCost": 1,
       "nameJa": "凪の継承",
       "nameEn": "Calm Relay",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。「T.c1.xまたはT.c2.xの奥」を requiresAny、「T.c3.n1/n2も必要」を両方必須(requires)と解釈。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。「T.c1.xまたはT.c2.xの奥」を requiresAny、「T.c3.n1/n2も必要」を両方必須(requires)と解釈。"
     },
     {
       "id": "h.yubar.haste",
@@ -28859,22 +28799,7 @@
       "options": null,
       "keystone": {
         "upside": "既存Power.UltimateSurge 20：実Ultimate使用後5秒、攻撃力・魔力+20%（最大1窓、更新のみ）",
-        "downside": "窓中、実Ultimate以外の本体記憶ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "memories": [
-              "St_D_ExoticMatter",
-              "St_Q_EtherealInfluence",
-              "St_D_ConvergencePoint",
-              "St_Q_SuperNova",
-              "St_R_Tranquility"
-            ],
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28884,7 +28809,7 @@
       ],
       "nameJa": "収束する星",
       "nameEn": "Converging Light",
-      "notes": "設計表C：既存IDと利点を維持し、代償をv1.31で追加。利点=既存Power.UltimateSurge 20、実Ultimate使用後5秒、攻撃力・魔力+20%（最大1窓、更新のみ）。代償=窓中、実Ultimate以外の本体記憶ダメージ−15%（Cは実Ultimateなので対象外、平静では発動しない）。機構K=C07。"
+      "notes": "設計表C：既存IDのPower.UltimateSurge 20を維持。代償は #47 で撤廃。機構K=C07。"
     },
     {
       "id": "h.yubar.key2",
@@ -28904,16 +28829,7 @@
       "options": null,
       "keystone": {
         "upside": "実Ultimate使用時、最大HPの15%までの障壁、5秒（旧Power.StarShield20を同IDで15へ明示移行、C06普通障壁プール）",
-        "downside": "実Ultimateの本体ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "memory": "St_R_Cataclysm",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28924,7 +28840,7 @@
       ],
       "nameJa": "星の盾",
       "nameEn": "Stellar Ward",
-      "notes": "設計表C：既存IDと利点を維持し、代償をv1.31で追加。旧Power.StarShield20を同IDで15へ明示移行（最大HPの15%、C06普通障壁プール1枚、本体の別障壁は制限しない）。代償=実Ultimateの本体ダメージ−15%。機構K=C07。"
+      "notes": "設計表C：既存IDとPowerを維持。旧Power.StarShield20を同IDで15へ明示移行（最大HPの15%、C06普通障壁プール1枚、本体の別障壁は制限しない）。代償は #47 で撤廃。機構K=C07。"
     }
   ]
 }

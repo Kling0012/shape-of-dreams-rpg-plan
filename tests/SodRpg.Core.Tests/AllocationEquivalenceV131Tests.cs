@@ -252,8 +252,7 @@ namespace SodRpg.Core.Tests
             s.Key2 = new TalentDef("eq.key2", Line.Offense, new Txt("試験核2", "Test Key 2"), Power.Aegis, 3, new Txt("試験効果2", "Test effect 2")) { HeroKey = SynHero };
             s.Key2.KeystoneDefinition = new KeystoneDefinition("eq.key2", Array.Empty<string>(),
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, KeystoneMagnitude.FromPercent(100),
-                    new KeystoneScope(targetEffectIds: new[] { s.KeyStrong.Id })) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, KeystoneMagnitude.FromPercent(-10), new KeystoneScope()) });
+                    new KeystoneScope(targetEffectIds: new[] { s.KeyStrong.Id })) });
             s.Tree = HeroSigils.TreeFor(SynHero).Where(t => t.Cluster == null).Concat(new[]
             {
                 s.Root, s.Sap, s.Strong, s.Weak, s.Shield, s.Boost, s.Duration, s.Echo, s.Leaf, s.Other, s.Pick, s.Armor, s.Key,

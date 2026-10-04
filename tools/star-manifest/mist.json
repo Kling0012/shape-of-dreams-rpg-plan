@@ -28222,21 +28222,12 @@
       "options": null,
       "keystone": {
         "upside": "EGに帰属するEchoのValueを2倍",
-        "downside": "EG本体の追加打撃ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_D_AstridsMasterpieceEnGarde",
             "effect": "Echo",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_AstridsMasterpieceEnGarde",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -28248,7 +28239,7 @@
       "rankCost": 1,
       "nameJa": "三撃の反響",
       "nameEn": "Echo of Three Strikes",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.priorite-wave",
@@ -28273,7 +28264,6 @@
       "options": null,
       "keystone": {
         "upside": "PRに帰属するBurstのValueを2倍、半径+25%",
-        "downside": "PR本体の追加打撃/爆発ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_D_AstridsMasterpiecePriorite",
@@ -28287,14 +28277,6 @@
             "field": "Radius",
             "pct": 25
           }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_AstridsMasterpiecePriorite",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
-          }
         ]
       },
       "mechanisms": [
@@ -28305,7 +28287,7 @@
       "rankCost": 1,
       "nameJa": "標的の波紋",
       "nameEn": "Ripple of the Mark",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.fleche-point",
@@ -28330,21 +28312,12 @@
       "options": null,
       "keystone": {
         "upside": "FL本体ダメージ+50%（別乗算）",
-        "downside": "FLからのEcho/Burst/Wound/Ricochet/ElementEdgeの追加ダメージ−50%",
         "upsideSpec": [
           {
             "memory": "St_Q_Fleche",
             "effect": "NativeDamage",
             "field": "Damage",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_Fleche",
-            "effect": "Echo/Burst/Wound/Ricochet/ElementEdge",
-            "field": "Value",
-            "pct": -50
           }
         ]
       },
@@ -28356,7 +28329,7 @@
       "rankCost": 1,
       "nameJa": "研ぎ澄ました突剣",
       "nameEn": "Honed Rapier",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.lunge-artifice",
@@ -28381,21 +28354,12 @@
       "options": null,
       "keystone": {
         "upside": "LUの仕掛けValue+60%（通常のBとは加算）",
-        "downside": "LU本体ダメージ×80%（Dを加算した後の別乗算）",
         "upsideSpec": [
           {
             "memory": "St_Q_Lunge",
             "effect": "Burst/Echo/Element/ElementEdge/Expose/Heal/Primed/Recharge/Ricochet/Sap/Shield/Wound",
             "field": "Value",
             "pct": 60
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_Lunge",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -28407,7 +28371,7 @@
       "rankCost": 1,
       "nameJa": "仕掛けの刺突",
       "nameEn": "Lunge Artifice",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.parry-needle",
@@ -28432,21 +28396,12 @@
       "options": null,
       "keystone": {
         "upside": "PA由来EchoのValueを2倍",
-        "downside": "PA本体の反撃ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_R_Parry",
             "effect": "Echo",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_Parry",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -28458,7 +28413,7 @@
       "rankCost": 1,
       "nameJa": "一点の返し",
       "nameEn": "Needle Riposte",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.determination-afterimage",
@@ -28483,7 +28438,6 @@
       "options": null,
       "keystone": {
         "upside": "UD由来EchoのValueを2倍、Woundの総量+50%",
-        "downside": "UD本体ダメージ−20%",
         "upsideSpec": [
           {
             "memory": "St_R_UnbreakableDetermination",
@@ -28497,14 +28451,6 @@
             "field": "Value",
             "pct": 50
           }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_UnbreakableDetermination",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
-          }
         ]
       },
       "mechanisms": [
@@ -28515,7 +28461,7 @@
       "rankCost": 1,
       "nameJa": "覚醒の残像",
       "nameEn": "Afterimage of Resolve",
-      "notes": "利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
+      "notes": "効果は倍率修飾（C07）で、Gimmick/Powerとして表せる記述が設計表に無いため keystone 欄のみ。"
     },
     {
       "id": "mist.key.shared-victory",
@@ -28545,19 +28491,11 @@
       "options": null,
       "keystone": {
         "upside": "星図の Heal Arg1 を2倍",
-        "downside": "自分の本体記憶ダメージ−15%",
         "upsideSpec": [
           {
             "effect": "Heal",
             "field": "AllyValue",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
           }
         ]
       },
@@ -28569,7 +28507,7 @@
       "rankCost": 1,
       "nameJa": "勝利の分配",
       "nameEn": "Shared Victory",
-      "notes": "配置は「shared-rest奥」だけで6レーン(EG,PR,LU,UD,FL,PA)のどれかが不明。先頭レーンをanchor、6レーンのxを辺とした。利点・代償は倍率修飾（C07）。"
+      "notes": "配置は「shared-rest奥」だけで6レーン(EG,PR,LU,UD,FL,PA)のどれかが不明。先頭レーンをanchor、6レーンのxを辺とした。効果は倍率修飾（C07）。"
     },
     {
       "id": "mist.key.long-wound",
@@ -28599,19 +28537,11 @@
       "options": null,
       "keystone": {
         "upside": "Woundの持続3→6秒、総ダメージ2倍（毎秒量を維持）",
-        "downside": "自分の本体記憶ダメージ−15%",
         "upsideSpec": [
           {
             "effect": "Wound",
             "field": "Duration",
             "to": 6
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15
           }
         ]
       },
@@ -28623,7 +28553,7 @@
       "rankCost": 1,
       "nameJa": "長く残る切先",
       "nameEn": "Lingering Edge",
-      "notes": "配置は「last-ripple奥」だけで6レーン(EG,PR,LU,UD,FL,PA)のどれかが不明。先頭レーンをanchor、6レーンのxを辺とした。利点・代償は倍率修飾（C07）。"
+      "notes": "配置は「last-ripple奥」だけで6レーン(EG,PR,LU,UD,FL,PA)のどれかが不明。先頭レーンをanchor、6レーンのxを辺とした。効果は倍率修飾（C07）。"
     },
     {
       "id": "mist.run.g1",
@@ -29827,22 +29757,7 @@
       "options": null,
       "keystone": {
         "upside": "既存 Power.OpeningStrike 70：HP90%以上の敵への基本攻撃に攻撃力70%の追加",
-        "downside": "HP90%未満の敵への自分の本体ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15,
-            "condition": "TargetHealthBelow:90"
-          },
-          {
-            "effect": "DirectBasicAttack",
-            "field": "Damage",
-            "pct": -15,
-            "condition": "TargetHealthBelow:90"
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -29853,7 +29768,7 @@
       ],
       "nameJa": "先手の型",
       "nameEn": "Form of the First Strike",
-      "notes": "既存刻印。既存ID/Power値は保持し代償をM6で追加。元Powerは「最初の一撃」限定ではなくHP90%以上が正しい。初回表示で利点/代償の更新を示す。"
+      "notes": "既存刻印。既存ID/Power値は保持。元Powerは「最初の一撃」限定ではなくHP90%以上が正しい（代償は #47 で撤廃）。"
     },
     {
       "id": "h.mist.key2",
@@ -29870,16 +29785,7 @@
       "options": null,
       "keystone": {
         "upside": "既存 Power.Retaliation 25：被弾後3秒、攻撃力/魔力+25%（上限1重・再被弾で更新）",
-        "downside": "被弾後3秒以外の本体記憶ダメージ−15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15,
-            "condition": "OutsideRetaliationWindow"
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -29890,7 +29796,7 @@
       ],
       "nameJa": "受けて返す型",
       "nameEn": "Form of the Counter",
-      "notes": "既存刻印。既存ID/Power値は保持し代償をM6で追加。回避成功・PA成功を被弾と読み替えない。"
+      "notes": "既存刻印。既存ID/Power値は保持（代償は #47 で撤廃）。回避成功・PA成功を被弾と読み替えない。"
     }
   ]
 }

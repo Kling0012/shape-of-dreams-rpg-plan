@@ -14,8 +14,7 @@ namespace SodRpg.Core.Tests
                 new[] { new AuthoredKeystoneSpec { Percent = 100,
                     Scope = new KeystoneScope(
                         sourceSelectors: receiver ? null : new[] { MemorySelector.Parse(selector) },
-                        receiverSelectors: receiver ? new[] { MemorySelector.Parse(selector) } : null) } },
-                new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -10 } });
+                        receiverSelectors: receiver ? new[] { MemorySelector.Parse(selector) } : null) } });
             return new Build { SelectedKeystone = AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(key)) };
         }
 

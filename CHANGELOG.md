@@ -6,6 +6,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.0.3 — 刻印からデバフを撤廃（2026-10-05）
+
+刻印（星図の紫の大星）に付いていたデバフ（代償）を、説明文だけでなく実効果からもすべて撤廃しました（#47）。残る効果の説明は対象・条件つきで自動生成され、効果一覧・選択画面・実効果が同じソースから作られるため、食い違いが起きません。 / Every keystone drawback is removed from the actual effects, not just the text (#47). The remaining effect text is generated from the same typed data the game applies, so descriptions, the selection screen and the effect list cannot disagree.
+
+### 更新前に確認 / Before updating
+
+- **保存データはそのまま引き継げます**（保存形式4）。刻印の選択はそのまま残り、振り直しは不要です。 / Saves carry over (format 4); keystone selections are kept, no respec needed.
+- **協力プレイは全員を同じ版に**してください（通信の版15）。 / Everyone in co-op must use the same version (protocol 15).
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 変更 / Changes
+
+- **刻印**: 82個すべての刻印からデバフ（ダメージ減少・効果の無効化・持続時間の伸びによる実質弱体化など）を撤廃しました。効果と必要ポイントだけが適用されます。C11「満ちた聖杯」のHP支払い→障壁変換はそのまま残ります。 / All 82 keystones lose their drawbacks (damage reductions, effect disables, duration trades); only the effect and its point cost apply. Aurena's sacrifice-to-shield conversion (Brimming Chalice) keeps working.
+- **説明**: 刻印の説明は「効果／必要ポイント」の2段だけになり、効果本文は実効果の型付きデータから自動生成します。凡例の「利点と代償の両方があります」は削除しました。 / Keystone descriptions now show only the effect and cost, with the body text generated from the typed effect data. The legend line about benefits and drawbacks is gone.
+- 照合表（刻印ごとの残る効果と撤廃したデバフ）: [docs/specs/issue-47-sigils.md](docs/specs/issue-47-sigils.md)。 / Per-keystone reconciliation table: [docs/specs/issue-47-sigils.md](docs/specs/issue-47-sigils.md).
+
+
 ## 未リリース — 高レア装備と合成の難易度調整（2026-10-05）
 
 - **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.053個/遠征。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.053 per expedition, preserving low-rarity supply and boss reward counts.

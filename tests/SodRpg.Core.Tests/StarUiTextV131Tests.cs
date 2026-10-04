@@ -137,7 +137,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void Every_keystone_in_every_tree_has_labelled_benefit_and_drawback_sections(bool japanese) => WithLanguage(japanese, () =>
+        public void Every_keystone_in_every_tree_displays_effect_and_cost_without_drawback_sections(bool japanese) => WithLanguage(japanese, () =>
         {
             int keys = 0;
             foreach (string hero in Heroes)
@@ -145,28 +145,16 @@ namespace SodRpg.Core.Tests
                 {
                     keys++;
                     string text = StarMapPresentation.KeystoneDescription(node.Talent);
-                    int benefit = text.IndexOf(japanese ? "利点" : "Benefit", StringComparison.Ordinal);
-                    int drawback = text.IndexOf(japanese ? "代償" : "Drawback", StringComparison.Ordinal);
-                    Assert.True(benefit >= 0 && drawback > benefit, node.Id);
+                    Assert.DoesNotContain("代償", text, StringComparison.Ordinal);
+                    Assert.DoesNotContain("Drawback", text, StringComparison.OrdinalIgnoreCase);
+                    if (node.Talent.KeystoneDefinition == null)
+                        Assert.Contains(Content.FormatPower(node.Talent.Power, node.Talent.PowerValue), text);
                     // 必要ポイントの行は1回だけ（ツリー側の説明で繰り返さない）。
                     Assert.Single(Regex.Matches(text, japanese ? "必要ポイント" : "Cost:").Cast<Match>());
                 }
             Assert.True(keys > 0);
         });
 
-        [Fact]
-        public void Legacy_keystone_has_benefit_text_and_an_explicit_no_drawback_line()
-        {
-            WithLanguage(true, () =>
-            {
-                var key = HeroSigils.TreeFor("Hero_Cetus").First(t => t.IsKeystone && t.KeystoneDefinition == null);
-                string text = StarMapPresentation.KeystoneDescription(key);
-                Assert.Contains("利点", text);
-                Assert.Contains(Content.FormatPower(key.Power, key.PowerValue), text);
-                string drawback = text.Substring(text.IndexOf("代償", StringComparison.Ordinal));
-                Assert.Contains("なし", drawback);
-            });
-        }
 
         [Fact]
         public void Choice_option_body_has_name_and_effect_without_state_marker()

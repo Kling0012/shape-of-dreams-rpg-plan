@@ -9,7 +9,7 @@ namespace SodRpg.Core.Tests
     /// <summary>
     /// v2.0.2 multi-keystones: a traveler holds up to three keystones depending on the star level
     /// (1 below 200, 2 from 200, 3 from 400). Every keystone keeps its own requirements and cost,
-    /// no duplicates, and the C15 approval path works for the 2nd/3rd exactly like the 1st.
+    /// and duplicates are rejected.
     /// </summary>
     public sealed class MultiKeystoneTests
     {
@@ -18,24 +18,14 @@ namespace SodRpg.Core.Tests
         private static readonly KeystoneScope Echo = new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo });
 
         // key1 doubles Echo and key2 adds +50% on top, so a build with both proves every selected keystone applies.
-        // key3 carries a grant plus a plain downside; keyRefund's drawback disables Echo stars, so selecting it
-        // after buying the echo star must go through the C15 refund approval exactly like the 1st keystone would.
         private static KeystoneDefinition Key1() => AuthoredKeystoneCompiler.Compile("test.multi.key1", new[] { Source },
-            new[] { new AuthoredKeystoneSpec { Percent = 100, Scope = Echo } },
-            new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -10 } }, cost: 3);
+            new[] { new AuthoredKeystoneSpec { Percent = 100, Scope = Echo } }, cost: 3);
         private static KeystoneDefinition Key2() => AuthoredKeystoneCompiler.Compile("test.multi.key2", new[] { Source },
-            new[] { new AuthoredKeystoneSpec { Percent = 50, Scope = Echo } },
-            new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -20 } }, cost: 5);
+            new[] { new AuthoredKeystoneSpec { Percent = 50, Scope = Echo } }, cost: 5);
         private static KeystoneDefinition Key3() => AuthoredKeystoneCompiler.Compile("test.multi.key3", new[] { Source },
             new[] { new AuthoredKeystoneSpec { Grant = new AuthoredMechanismSpec {
                 Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.multi.key3.heal", Source = MemorySelector.Parse(Source),
-                Trigger = MemoryEventKind.Hit, Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Heal, Value = 1m } } } },
-            new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -30 } }, cost: 7);
-        private static KeystoneDefinition KeyRefund() => AuthoredKeystoneCompiler.Compile("test.multi.keyrefund", new[] { Source },
-            new[] { new AuthoredKeystoneSpec { Grant = new AuthoredMechanismSpec {
-                Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.multi.refund.heal", Source = MemorySelector.Parse(Source),
-                Trigger = MemoryEventKind.Hit, Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Heal, Value = 2m } } } },
-            new[] { new AuthoredKeystoneSpec { Disable = true, Scope = Echo } }, cost: 9);
+                Trigger = MemoryEventKind.Hit, Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Heal, Value = 1m } } } }, cost: 7);
 
         /// <summary>The Cetus route star carrying the test source memory; authored keystones anchor to it.</summary>
         private static string RouteAnchor() => HeroSigils.TreeFor(Hero).First(t => t.RouteMemory == Source && t.RouteOrder == 7).Id;
@@ -149,35 +139,6 @@ namespace SodRpg.Core.Tests
                 state.StarXp = StarProgression.TotalXpForPoints(400);
                 Rules.SetKeystone(p, Hero, refund.KeystoneId);
                 Assert.Equal(3, state.KeystoneCount);
-            }
-            finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
-        }
-
-        [Fact]
-        public void Second_keystone_drawback_refunds_need_the_same_c15_approval_as_the_first()
-        {
-            try
-            {
-                var key1 = Key1(); var refund = KeyRefund();
-                var p = ProfileAt(400, key1, refund);
-                var state = p.Hero(Hero);
-                Rules.SetKeystone(p, Hero, key1.KeystoneId);
-                // echo 星は ProfileAt で購入済み。2つ目の代償がそれを無効にする場合は、1つ目と同じ承認が要る。
-                int spent = Rules.SpentPoints(state, Hero);
-                int echoCost = HeroSigils.TreeFor(Hero).First(t => t.Id == "outer.multi.echo").RankCost;
-
-                var change = new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = refund.KeystoneId };
-                var plan = Rules.PreviewAllocationChange(p, Hero, change);
-                Assert.True(plan.CanApply);
-                Assert.Contains("outer.multi.echo", plan.AffectedRefundIds);
-                // 承認なしでは適用できず、プロフィールは変わらない。
-                Assert.Throws<AllocationValidationException>(() => Rules.ApplyAllocationChange(p, Hero, change));
-                Assert.Equal(spent, Rules.SpentPoints(state, Hero));
-                // 1つ目と同じ承認の経路で、2つ目も適用できる。
-                Rules.SetKeystone(p, Hero, refund.KeystoneId, plan.AffectedRefundIds);
-                Assert.Equal(2, state.KeystoneCount);
-                Assert.False(state.Talents.ContainsKey("outer.multi.echo"));
-                Assert.Equal(spent - echoCost + refund.Cost, Rules.SpentPoints(state, Hero));
             }
             finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
         }

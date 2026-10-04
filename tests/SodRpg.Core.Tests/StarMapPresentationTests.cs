@@ -54,26 +54,20 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void Compiled_key_keeps_benefit_drawback_and_actual_cost_separate_with_or_without_authored_text(bool japanese)
+        public void Compiled_key_displays_typed_effect_scope_magnitude_and_actual_cost(bool japanese)
         {
             bool previous = Loc.Japanese;
             try
             {
                 Loc.Japanese = japanese;
                 var key = AuthoredKeystoneCompiler.Compile("test.presentation.key", new[] { Memory },
-                    new[] { new AuthoredKeystoneSpec { Percent = 100, Scope = new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo }) } },
-                    new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -20 } }, cost: 7);
+                    new[] { new AuthoredKeystoneSpec { Percent = 100, Scope = new KeystoneScope(
+                        targetMemorySet: new[] { Memory }, targetEffectSet: new[] { GimmickEffect.Echo }) } }, cost: 7);
                 var star = Star();
                 star.KeystoneDefinition = key;
                 string text = StarMapPresentation.KeystoneDescription(star);
-                int split = text.IndexOf("\n\n", StringComparison.Ordinal);
-                Assert.True(split > 0);
-                string benefit = text.Substring(0, split);
-                string drawback = text.Substring(split + 2);
-                Assert.Contains("100%", benefit);
-                Assert.DoesNotContain("-20%", benefit);
-                Assert.Contains("-20%", drawback);
-                Assert.DoesNotContain("100%", drawback);
+                Assert.Contains("100%", text);
+                Assert.Contains(Links.Name(Memory).ToString(), text);
                 Assert.Contains(japanese ? "必要ポイント：7" : "Cost: 7 points", text);
                 if (japanese)
                 {
@@ -81,18 +75,6 @@ namespace SodRpg.Core.Tests
                     Assert.DoesNotContain("ModEffect", text);
                     Assert.DoesNotContain("Scale", text);
                 }
-                star.AuthoredStar = new AuthoredStarDef {
-                    KeystoneUpside = new Txt("反響の効果量が2倍", "Double echo effect values"),
-                    KeystoneDownside = new Txt("固有ダメージが20%低下", "Native damage reduced by 20%") };
-                text = StarMapPresentation.KeystoneDescription(star);
-                Assert.Contains(star.AuthoredStar.KeystoneUpside.ToString(), text);
-                Assert.Contains(star.AuthoredStar.KeystoneDownside.ToString(), text);
-                Assert.True(text.IndexOf(star.AuthoredStar.KeystoneUpside.ToString(), StringComparison.Ordinal)
-                    < text.IndexOf(star.AuthoredStar.KeystoneDownside.ToString(), StringComparison.Ordinal));
-                Assert.DoesNotContain("100%", text);
-                Assert.DoesNotContain("-20%", text);
-                star.AuthoredStar.KeystoneDownside = null;
-                Assert.Contains("-20%", StarMapPresentation.KeystoneDescription(star));
             }
             finally { Loc.Japanese = previous; }
         }

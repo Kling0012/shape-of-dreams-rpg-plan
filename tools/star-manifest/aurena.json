@@ -20625,7 +20625,6 @@
       "options": null,
       "keystone": {
         "upside": "CのWound総量+100%、持続+50%。効果量上限120%を維持",
-        "downside": "CのMOD由来Echoを無効化",
         "upsideSpec": [
           {
             "memory": "St_D_DisintegratingClaw",
@@ -20638,14 +20637,6 @@
             "effect": "Wound",
             "field": "Duration",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_DisintegratingClaw",
-            "effect": "Echo",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -20684,7 +20675,6 @@
       "options": null,
       "keystone": {
         "upside": "FのRicochetを基礎2体、範囲+50%",
-        "downside": "FのMOD由来Echoを無効化",
         "upsideSpec": [
           {
             "memory": "St_D_BeautifulThreat",
@@ -20698,14 +20688,6 @@
             "effect": "Ricochet",
             "field": "Radius",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_BeautifulThreat",
-            "effect": "Echo",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -20744,7 +20726,6 @@
       "options": null,
       "keystone": {
         "upside": "G/D/AのWound総量+80%、持続+100%。同時1傷、値上限120%",
-        "downside": "同じ3記憶のMOD由来Burstを無効化",
         "upsideSpec": [
           {
             "memories": [
@@ -20765,18 +20746,6 @@
             "effect": "Wound",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memories": [
-              "St_Q_GoldenBurst",
-              "St_Q_Reduction",
-              "St_R_ChainReaction"
-            ],
-            "effect": "Burst",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -20815,27 +20784,12 @@
       "options": null,
       "keystone": {
         "upside": "TのBurst範囲+100%",
-        "downside": "TのMOD由来EchoとWoundを無効化",
         "upsideSpec": [
           {
             "memory": "St_R_DangerousTheory",
             "effect": "Burst",
             "field": "Radius",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_DangerousTheory",
-            "effect": "Echo",
-            "field": "Enabled",
-            "to": 0
-          },
-          {
-            "memory": "St_R_DangerousTheory",
-            "effect": "Wound",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -20876,7 +20830,6 @@
       "options": null,
       "keystone": {
         "upside": "AlliedWardの自分を含む全対象への量+100%、持続+50%。各自最大HP3%上限は維持",
-        "downside": "自分専用のMOD由来Shield/Rampartを無効化。味方や本体からの障壁は維持",
         "upsideSpec": [
           {
             "effect": "AlliedWard",
@@ -20887,20 +20840,6 @@
             "effect": "AlliedWard",
             "field": "Duration",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Shield",
-            "field": "Enabled",
-            "to": 0,
-            "scope": "self-only MOD"
-          },
-          {
-            "effect": "Rampart",
-            "field": "Enabled",
-            "to": 0,
-            "scope": "self-only MOD"
           }
         ]
       },
@@ -20939,7 +20878,6 @@
       "options": null,
       "keystone": {
         "upside": "全ての新RecvのValue+100%。既存B3/B4 b0は対象外、各受信条項80%上限維持",
-        "downside": "全新RecvのOnKill登録を無効化し、OnHit/OnUse受信だけにする",
         "upsideSpec": [
           {
             "memory": "St_M_FeatheryDash",
@@ -20947,14 +20885,6 @@
             "field": "Value",
             "pct": 100,
             "scope": "all new Recv; excludes B3/B4 b0"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_M_FeatheryDash",
-            "effect": "Recv.OnKill",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -22576,21 +22506,12 @@
       "options": null,
       "keystone": {
         "upside": "装着Qの仕掛けValue+100%(他のBと別の最終倍率2倍、各効果上限は維持)",
-        "downside": "装着QのMemoryDamage由来補正は0%。装備や本体記憶の倍率は消さない",
         "upsideSpec": [
           {
             "memory": "@Q",
             "effect": "AlliedWard/Burst/Daze/Echo/Element/ElementEdge/Expose/Rampart/Ricochet/Sap/Shield/Wound",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "@Q",
-            "effect": "MemoryDamage",
-            "field": "Enabled",
-            "to": 0
           }
         ]
       },
@@ -22622,7 +22543,6 @@
       "options": null,
       "keystone": {
         "upside": "G/Dで実際に失ったHPの50%を4秒の障壁へ(1回最大HP10%、C06通常プール15%内で大きい方更新)",
-        "downside": "G/DのMOD由来Echo/Burst/ElementEdge/Ricochetの最終ダメージを40%減らす",
         "upsideSpec": [
           {
             "field": "Grant",
@@ -22635,17 +22555,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memories": [
-              "St_Q_GoldenBurst",
-              "St_Q_Reduction"
-            ],
-            "effect": "Echo/Burst/ElementEdge/Ricochet",
-            "field": "Value",
-            "pct": -40
           }
         ]
       },

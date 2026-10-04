@@ -91,6 +91,16 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## #47 刻印の代償撤廃の回帰確認
+
+- `GeneratedHeroAcceptanceTests` は全82刻印の型付き効果、ダメージ・傷の非弱体化、
+  日英説明に「代償／Drawback」がないこと、通信版15のビルド往復を確認する。
+- `StarCarryoverV131Tests` は従来の形式3/4互換に加え、v1.31移行済みの形式4で
+  保存した刻印IDが現在の生成定義に解決され、保持するPowerが引き継がれることを確認する。
+  v1.31未移行の保存には、別仕様の効果変更時返却が引き続き適用される。
+- C11のHP支払い→障壁変換、C15の装備・選択変更の明示承認は既存テストを維持する。
+- テストクラス間の並列実行は `AssemblyInfo.cs` の設定で無効。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを

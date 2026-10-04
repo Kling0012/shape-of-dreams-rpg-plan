@@ -52,8 +52,6 @@ namespace SodRpg.Core.Game
         public string SourceDocument { get; set; }
         public IReadOnlyList<string> MechanismIds { get; set; } = Array.Empty<string>();
         public string Notes { get; set; }
-        public Txt KeystoneUpside { get; set; }
-        public Txt KeystoneDownside { get; set; }
         public AuthoredStarKey Key => new AuthoredStarKey(HeroKey, LocalStarId);
     }
 

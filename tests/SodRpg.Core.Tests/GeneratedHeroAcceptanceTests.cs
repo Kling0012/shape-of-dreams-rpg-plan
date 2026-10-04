@@ -143,6 +143,55 @@ namespace SodRpg.Core.Tests
             Assert.NotEmpty(StarClusters.GeneratedHeroes);
             Assert.Equal(StarClusters.GeneratedHeroes.Count, StarClusters.GeneratedHeroes.Distinct().Count());
         }
+        [Fact]
+        public void All_82_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
+        {
+            int count = 0;
+            bool previous = Loc.Japanese;
+            try
+            {
+                foreach (string hero in StarClusters.GeneratedHeroes)
+                    WithHero(hero, tree =>
+                    {
+                        foreach (var star in tree.Where(t => t.IsKeystone))
+                        {
+                            count++;
+                            var key = star.KeystoneDefinition;
+                            Assert.NotNull(key);
+                            Assert.All(key.Upside.Where(t => t.Operation == KeystoneOperation.Scale),
+                                t => Assert.True(t.MagnitudeUnits.Percent >= 0, star.Id + " contains a percentage penalty"));
+                            var build = new Build { SelectedKeystone = key };
+                            var sources = tree.Select(t => t.RouteMemory)
+                                .Concat(key.RequiredMemories)
+                                .Concat(key.Upside.SelectMany(t => t.Scope.TargetMemorySet))
+                                .Append("St_C_GlacialStomp")
+                                .Where(m => m != null && !m.StartsWith("St_M_", StringComparison.Ordinal))
+                                .Distinct(StringComparer.Ordinal);
+                            foreach (string source in sources)
+                            {
+                                var damage = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000));
+                                Assert.True(AuthoredKeystoneComposer.TransformAllocationPayload(build, damage, source,
+                                    heroKey: hero).Value >= damage.Value, star.Id + " penalizes " + source);
+                                var wound = new KeystonePayload(KeystoneLayer.ModEffect, 10, new KeystoneCaps(120, 60),
+                                    KeystonePayloadKind.Gimmick, GimmickEffect.Wound, durationSeconds: 3);
+                                var result = AuthoredKeystoneComposer.TransformAllocationPayload(build, wound, source, heroKey: hero);
+                                Assert.True(result.Value >= wound.Value && result.DurationSeconds >= wound.DurationSeconds,
+                                    star.Id + " disables or weakens Wound for " + source);
+                            }
+                            foreach (bool japanese in new[] { true, false })
+                            {
+                                Loc.Japanese = japanese;
+                                string text = StarMapPresentation.KeystoneDescription(star);
+                                Assert.DoesNotContain("代償", text, StringComparison.Ordinal);
+                                Assert.DoesNotContain("Drawback", text, StringComparison.OrdinalIgnoreCase);
+                            }
+                        }
+                    });
+                Assert.Equal(82, count);
+            }
+            finally { Loc.Japanese = previous; }
+        }
+
 
         [Theory, MemberData(nameof(Heroes))]
         public void Registration_succeeds_with_zero_rejections_and_installs_the_migration_rules(string hero)
@@ -201,6 +250,12 @@ namespace SodRpg.Core.Tests
                     var current = tree.Single(t => t.Id == node.Id);
                     Assert.Equal(node.MaxRank, current.MaxRank);
                     Assert.Equal(node.IsKeystone, current.IsKeystone);
+                    if (node.IsKeystone)
+                    {
+                        Assert.True(Content.TryGetTalent(hero, node.Id, out var resolved));
+                        Assert.NotNull(resolved.KeystoneDefinition);
+                        Assert.Equal(current.KeystoneDefinition.KeystoneId, resolved.KeystoneDefinition.KeystoneId);
+                    }
                 }
             });
         }
@@ -281,10 +336,9 @@ namespace SodRpg.Core.Tests
                 if (keystones.Count >= state.KeystoneSlotCount) break;
                 try
                 {
-                    // C15/C07: a keystone whose drawback disables already-bought stars is selectable only through
-                    // the explicit approval path. Preview, approve exactly the previewed refund set, apply (SetKeystone),
-                    // then verify the refund: every refunded rank is gone and the points moved by exactly its cost.
-                    // v2.0.2: 2つ目・3つ目も同じ経路で選ぶ（重複と枠の超過は Rules.SetKeystone が拒否する）。
+                    // C15: an upside that saturates already-bought stars still needs explicit refund approval.
+                    // Approve exactly the previewed set, then verify removed ranks and refunded points.
+                    // Every keystone slot follows the same path; duplicates and slot overflow remain rejected.
                     var plan = Rules.PreviewAllocationChange(profile, hero,
                         new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = node.Id });
                     if (!plan.CanApply)
@@ -326,7 +380,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory, MemberData(nameof(Heroes))]
-        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_within_protocol_13(string hero)
+        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_within_protocol_15(string hero)
         {
             WithHero(hero, tree =>
             {
@@ -349,6 +403,7 @@ namespace SodRpg.Core.Tests
                         + refused.Count(r => r.StartsWith("keystone ", StringComparison.Ordinal)));
 
                 var build = Build.Compute(profile, hero, 0);
+                Assert.Equal(15, SodRpg.Mod.Protocol.Version);
                 Assert.Equal(spent, build.SpentStarPoints);
                 string encoded = build.Encode();
                 Assert.InRange(encoded.Length, 1, BuildLimits.MaxEncodedChars);
@@ -359,7 +414,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(build.SelectedKeystones.Select(k => k.KeystoneId).ToList(), decoded.SelectedKeystones.Select(k => k.KeystoneId).ToList());
                 Assert.Equal(build.Mechanisms.Count, decoded.Mechanisms.Count);
 
-                // The host's protocol-13 envelope accepts the same build and recomputes an identical result.
+                // The host accepts the same upside-only build and recomputes an identical result.
                 string submission = HostBuildValidation.Encode(build, profile, hero, 0);
                 Assert.InRange(submission.Length, 1, HostBuildValidation.MaxSubmissionChars);
                 Assert.True(HostBuildValidation.TryAccept(submission, hero, out var accepted, out string reason), "Host rejected the build: " + reason);

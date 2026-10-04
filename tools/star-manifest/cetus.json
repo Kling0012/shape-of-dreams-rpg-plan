@@ -26006,20 +26006,11 @@
       "options": null,
       "keystone": {
         "upside": "6非移動記憶のMOD Shield/Rampart値+80%",
-        "downside": "同じ6記憶の本体ダメージ-15%",
         "upsideSpec": [
           {
             "effect": "Shield/Rampart",
             "field": "Value",
             "pct": 80,
-            "scope": "nonMovement6"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -15,
             "scope": "nonMovement6"
           }
         ]
@@ -26055,20 +26046,11 @@
       "options": null,
       "keystone": {
         "upside": "6非移動記憶のBurst/Echo/Wound/ElementEdgeダメージ+70%",
-        "downside": "同じ記憶のMOD Shield/Rampart/Heal量-60%",
         "upsideSpec": [
           {
             "effect": "Burst/Echo/Wound/ElementEdge",
             "field": "Damage",
             "pct": 70,
-            "scope": "nonMovement6"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Shield/Rampart/Heal",
-            "field": "Value",
-            "pct": -60,
             "scope": "nonMovement6"
           }
         ]
@@ -26107,21 +26089,12 @@
       "options": null,
       "keystone": {
         "upside": "embrace-chillのWound/Sap Duration+100%、傷の基準tick威力は保持",
-        "downside": "embrace-chill本体ダメージ-20%",
         "upsideSpec": [
           {
             "memory": "St_Q_EmbracingTheChill",
             "effect": "Wound/Sap",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_EmbracingTheChill",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -26158,21 +26131,12 @@
       "options": null,
       "keystone": {
         "upside": "boreal-chunkのEcho値+100%（基準40%の既存Echoは80%）",
-        "downside": "boreal-chunk本体ダメージ-25%。Echoは減額後の命中値を読む",
         "upsideSpec": [
           {
             "memory": "St_Q_BigBorealChunk",
             "effect": "Echo",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_BigBorealChunk",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -26210,21 +26174,12 @@
       "options": null,
       "keystone": {
         "upside": "charged本体ダメージ+45%",
-        "downside": "chargedのMOD Wound/Echo/Burst/ElementEdgeダメージ-50%。属性の付与は残す",
         "upsideSpec": [
           {
             "memory": "St_D_ChargedAnguillian",
             "effect": "NativeDamage",
             "field": "Damage",
             "pct": 45
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_ChargedAnguillian",
-            "effect": "Wound/Echo/Burst/ElementEdge",
-            "field": "Damage",
-            "pct": -50
           }
         ]
       },
@@ -26262,21 +26217,12 @@
       "options": null,
       "keystone": {
         "upside": "frozen-fistsのBurst/Echo/Wound/ElementEdgeダメージ+60%",
-        "downside": "frozen-fists本体ダメージ-20%",
         "upsideSpec": [
           {
             "memory": "St_R_FrozenFists",
             "effect": "Burst/Echo/Wound/ElementEdge",
             "field": "Damage",
             "pct": 60
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_FrozenFists",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -26314,21 +26260,12 @@
       "options": null,
       "keystone": {
         "upside": "back-offのMOD Shield/Rampart値+100%",
-        "downside": "back-offのMOD Burst/Echo/Woundダメージ-50%",
         "upsideSpec": [
           {
             "memory": "St_R_BackOff",
             "effect": "Shield/Rampart",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_BackOff",
-            "effect": "Burst/Echo/Wound",
-            "field": "Damage",
-            "pct": -50
           }
         ]
       },
@@ -26368,21 +26305,12 @@
       "options": null,
       "keystone": {
         "upside": "フロストチャージへのTのRecharge量+20%",
-        "downside": "Q/RのMOD Burst/Echo/Wound/ElementEdgeダメージ-30%",
         "upsideSpec": [
           {
             "effect": "Recharge",
             "field": "Value",
             "pct": 20,
             "receiver": "St_M_FrostyCharge"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Burst/Echo/Wound/ElementEdge",
-            "field": "Damage",
-            "pct": -30,
-            "scope": "equippedQR"
           }
         ]
       },
@@ -28314,15 +28242,7 @@
       "options": null,
       "keystone": {
         "upside": "Power.Frost=70（通常攻撃命中時70%で冷気1、敵上限1）",
-        "downside": "Q/R本体記憶ダメージ-15%（生成ダメージには二重適用しない）",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28332,7 +28252,7 @@
       ],
       "nameJa": "凍てつく潮",
       "nameEn": "Freezing Tide",
-      "notes": "設計表C: 凍てつく潮（既存）。利点: Power.Frost=70（通常攻撃命中時70%で冷気1、敵上限1）。代償: Q/R本体記憶ダメージ-15%（生成ダメージには二重適用しない）。必要機構M4（C07）、既存核位置、通常攻撃の既存フック。代償つき刻印は同時に1個だけ。"
+      "notes": "設計表C: 凍てつく潮（既存）。Power.Frost=70（通常攻撃命中時70%で冷気1、敵上限1）。必要機構M4（C07）、既存核位置、通常攻撃の既存フック（代償は #47 で撤廃）。"
     },
     {
       "id": "h.cetus.key2",
@@ -28352,7 +28272,6 @@
       "options": null,
       "keystone": {
         "upside": "Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）",
-        "downside": "Q/R本体記憶ダメージ-15%",
         "upsideSpec": [
           {
             "field": "Grant",
@@ -28366,13 +28285,6 @@
               "target": null
             }
           }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -15
-          }
         ]
       },
       "requires": [],
@@ -28384,7 +28296,7 @@
       ],
       "nameJa": "凪",
       "nameEn": "Calm Sea",
-      "notes": "設計表C: 凪（既存）。利点: Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）。代償: Q/R本体記憶ダメージ-15%。必要機構M4/M6（C07/C08）、既存核位置。集団スタンの多重盾を抑える既存間隔だけ残す。"
+      "notes": "設計表C: 凪（既存）。Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）。必要機構M4/M6（C07/C08）、既存核位置。集団スタンの多重盾を抑える既存間隔だけ残す（代償は #47 で撤廃）。"
     }
   ]
 }

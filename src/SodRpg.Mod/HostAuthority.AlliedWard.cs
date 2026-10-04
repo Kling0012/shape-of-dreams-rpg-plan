@@ -20,7 +20,7 @@ namespace SodRpg.Mod
                     { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = definition.ChannelId, Ward = definition });
             var transformed = TransformAuthoredPayload(owner.Hero, payload, sourceMemory, null, sourceKind,
                 definition.RecipientKind == WardRecipientKind.OwnedSummons ? KeystoneRecipientKind.OwnedSummon : KeystoneRecipientKind.AlliedHero);
-            if (transformed.Disabled || transformed.Value <= 0 || transformed.TargetCount < 1) return 0;
+            if (transformed.Value <= 0 || transformed.TargetCount < 1) return 0;
             definition = new AlliedWardDefinition(definition.ChannelId, definition.RecipientKind, definition.AmountBasis,
                 definition.PoolKind, transformed.Value * 100m, definition.IncludeOwner, (float)transformed.RadiusMetres,
                 (float)transformed.DurationSeconds, definition.BaseTargets,

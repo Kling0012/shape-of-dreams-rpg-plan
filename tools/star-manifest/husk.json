@@ -26703,20 +26703,12 @@
       "options": null,
       "keystone": {
         "upside": "一歩一殺へ帰属する本体通常攻撃ダメージ×145%",
-        "downside": "Q/Rの本体ダメージ×80%",
         "upsideSpec": [
           {
             "memory": "St_D_TheKillingFlow",
             "effect": "NativeDamage",
             "field": "Damage",
             "pct": 45
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -26728,7 +26720,7 @@
       "rankCost": 1,
       "nameJa": "一刀専心",
       "nameEn": "Single-Minded Blade",
-      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。一歩一殺（F）装備時のみ選択可能。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。一歩一殺（F）装備時のみ選択可能。 効果は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.wind-cut",
@@ -26753,20 +26745,12 @@
       "options": null,
       "keystone": {
         "upside": "風の傷の75%AD追加斬りの最終ダメージ×170%",
-        "downside": "通常攻撃の主ダメージ×80%（風の傷の追加斬りは代償対象外）",
         "upsideSpec": [
           {
             "memory": "St_D_ScarOfTheWind",
             "effect": "NativeDamage",
             "field": "Damage",
             "pct": 70
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "OnBasicAttack",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -26778,7 +26762,7 @@
       "rankCost": 1,
       "nameJa": "風傷の芯",
       "nameEn": "Core of the Wind Scar",
-      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。風の傷（W）装備時のみ。回復量は増減しない。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。風の傷（W）装備時のみ。回復量は増減しない。 効果は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.delayed-slash",
@@ -26803,7 +26787,6 @@
       "options": null,
       "keystone": {
         "upside": "裂傷の実命中ダメージの70%を0.3秒後にEcho（対象ごと1回、既存Echoに合算）",
-        "downside": "裂傷の本体ダメージ×75%（Echoの基準は減少後の実ダメージ）",
         "upsideSpec": [
           {
             "memory": "St_Q_Laceration",
@@ -26817,14 +26800,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_Laceration",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -26862,7 +26837,6 @@
       "options": null,
       "keystone": {
         "upside": "死の刻印の各命中対象の周り4mへ高い方のAD/AP80%のBurst",
-        "downside": "死の刻印の本体ダメージ×75%",
         "upsideSpec": [
           {
             "memory": "St_Q_DeathMark",
@@ -26876,14 +26850,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_DeathMark",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -26921,7 +26887,6 @@
       "options": null,
       "keystone": {
         "upside": "剣気の命中でElementEdge20%（最大4種類・80%を追加、既存Edgeと合算）",
-        "downside": "滅殺態勢の剣気本体ダメージ×80%",
         "upsideSpec": [
           {
             "memory": "St_R_AnnihilationStance",
@@ -26935,14 +26900,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_AnnihilationStance",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -26980,7 +26937,6 @@
       "options": null,
       "keystone": {
         "upside": "撹乱の解除爆発が1体以上に当たると最大HP8%の星図障壁を4秒（爆発1回につき1回）",
-        "downside": "撹乱の解除爆発本体ダメージ×75%",
         "upsideSpec": [
           {
             "memory": "St_R_Deception",
@@ -26994,14 +26950,6 @@
               "cooldown": 0,
               "target": null
             }
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_Deception",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -27040,19 +26988,11 @@
       "options": null,
       "keystone": {
         "upside": "この星図のElement Valueを×150%（闇5・光5・冷気1は保持、火のみ上限なし）",
-        "downside": "星図のBurst/Echo/Wound/ElementEdge/Primedの生成ダメージ×70%",
         "upsideSpec": [
           {
             "effect": "Element",
             "field": "Value",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Burst/Echo/Wound/ElementEdge/Primed",
-            "field": "Damage",
-            "pct": -30
           }
         ]
       },
@@ -27064,7 +27004,7 @@
       "rankCost": 1,
       "nameJa": "闇を編む",
       "nameEn": "Weave of Darkness",
-      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。利点・代償は星図全体（特定記憶なし）。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。効果は星図全体（特定記憶なし）。 効果は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.key.lingering-wound",
@@ -27089,19 +27029,11 @@
       "options": null,
       "keystone": {
         "upside": "星図Woundの毎秒ダメージ×200%（期間は増やさず同敵1傷の規則も維持）",
-        "downside": "Q/Rの本体ダメージ×85%",
         "upsideSpec": [
           {
             "effect": "Wound",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -15
           }
         ]
       },
@@ -27113,7 +27045,7 @@
       "rankCost": 1,
       "nameJa": "残傷の契約",
       "nameEn": "Lingering Wound Pact",
-      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。Wound最終Value120%以内を検証。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
+      "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。Wound最終Value120%以内を検証。 効果は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
       "id": "husk.run.g1",
@@ -28682,15 +28614,7 @@
       "options": null,
       "keystone": {
         "upside": "Power.Umbra100：通常攻撃で闇1個、会心ならさらに1個",
-        "downside": "自分のQ/Rの本体ダメージ×90%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28701,7 +28625,7 @@
       ],
       "nameJa": "虚ろの刃",
       "nameEn": "Hollow Blade",
-      "notes": "既存刻印。既存Powerは維持し、代償（Q/R本体ダメージ×90%）をv1.31で追加。旧版に代償がない点は移行画面で明示。"
+      "notes": "既存刻印。既存Powerは維持（代償は #47 で撤廃）。"
     },
     {
       "id": "h.husk.key2",
@@ -28718,15 +28642,7 @@
       "options": null,
       "keystone": {
         "upside": "Power.ShadowStep60：回避・ダッシュ・瞬間移動後3秒以内の次の通常攻撃へ高い方のAD/AP60%を追加",
-        "downside": "自分のQ/Rの本体ダメージ×90%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28737,7 +28653,7 @@
       ],
       "nameJa": "瞬歩の刃",
       "nameEn": "Flash-Step Blade",
-      "notes": "既存刻印。既存Powerは維持し、代償（Q/R本体ダメージ×90%）をv1.31で追加。旧版に代償がない点は移行画面で明示。"
+      "notes": "既存刻印。既存Powerは維持（代償は #47 で撤廃）。"
     }
   ]
 }

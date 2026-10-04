@@ -8,11 +8,9 @@ namespace SodRpg.Core.Game
     public enum KeystoneLayer { NativeDamage, StarMemoryDamage, GeneratedDamage, ModEffect }
     public enum KeystonePayloadKind { None, Gimmick, DirectedRecharge, MemoryPrimed, RelayWindow, SacrificeShield, AlliedWard, BridgeSuccess, PressureDividend }
     public enum KeystoneField { Value, Duration, Radius, Delay, TargetCount, EveryN, Probability, Argument }
-    /// <summary>Explicit event predicates; a conditioned transform applies only while its predicate holds (M6).</summary>
-    public enum KeystoneConditionKind { TargetHealthBelow, OutsideRetaliationWindow }
     public enum KeystoneSourceKind { NativeMemory, OwnedBasicAttack, OwnedSummon, Generated, MovementEvent }
     public enum KeystoneRecipientKind { Any, Self, AlliedHero, OwnedSummon }
-    public enum KeystoneOperation { Scale, SetSeconds, AddTargets, SetEveryN, Disable, RedistributeWound, Set, Add }
+    public enum KeystoneOperation { Scale, SetSeconds, AddTargets, SetEveryN, Set, Add }
 
     /// <summary>C07 percentages use hundredths of a percent, independently of legacy Build milli values.</summary>
     public readonly struct KeystoneMagnitude
@@ -43,8 +41,6 @@ namespace SodRpg.Core.Game
         public KeystoneRecipientKind Recipient { get; }
         public KeystonePayloadKind PayloadKind { get; }
         public int? Argument { get; }
-        public KeystoneConditionKind? Condition { get; }
-        public decimal ConditionPercent { get; }
         public KeystoneSourceKind? SourceKind { get; }
         public IReadOnlyList<MemorySelector> SourceSelectors { get; }
         public IReadOnlyList<MemorySelector> ReceiverSelectors { get; }
@@ -52,7 +48,7 @@ namespace SodRpg.Core.Game
         public KeystoneScope(IEnumerable<string> targetMemorySet = null, IEnumerable<GimmickEffect> targetEffectSet = null,
             IEnumerable<string> targetEffectIds = null, IEnumerable<string> receiverMemorySet = null,
             KeystoneRecipientKind recipient = KeystoneRecipientKind.Any, KeystonePayloadKind payloadKind = KeystonePayloadKind.None,
-            int? argument = null, KeystoneSourceKind? sourceKind = null, KeystoneConditionKind? condition = null, decimal conditionPercent = 0m,
+            int? argument = null, KeystoneSourceKind? sourceKind = null,
             IEnumerable<MemorySelector> sourceSelectors = null, IEnumerable<MemorySelector> receiverSelectors = null)
         {
             TargetMemorySet = KeystoneValidation.Strings(targetMemorySet);
@@ -69,10 +65,6 @@ namespace SodRpg.Core.Game
             PayloadKind = payloadKind;
             Argument = argument;
             SourceKind = sourceKind;
-            Condition = condition; ConditionPercent = conditionPercent;
-            if (condition.HasValue && !Enum.IsDefined(typeof(KeystoneConditionKind), condition.Value)
-                || condition == KeystoneConditionKind.TargetHealthBelow && (conditionPercent <= 0m || conditionPercent > 100m))
-                throw new ArgumentException("Invalid typed keystone condition.");
             SourceSelectors = Array.AsReadOnly((sourceSelectors ?? Array.Empty<MemorySelector>()).ToArray());
             ReceiverSelectors = Array.AsReadOnly((receiverSelectors ?? Array.Empty<MemorySelector>()).ToArray());
             if (SourceSelectors.Concat(ReceiverSelectors).Any(s => s == null)) throw new ArgumentException("Missing selector.");
@@ -88,14 +80,7 @@ namespace SodRpg.Core.Game
             && (!Argument.HasValue || Argument.Value == payload.Argument)
             && (!SourceKind.HasValue || SourceKind.Value == context.SourceKind)
             && MatchesSelectors(SourceSelectors, context.SourceMemory, context)
-            && MatchesSelectors(ReceiverSelectors, context.ReceiverMemory, context, true)
-            && MatchesCondition(context);
-
-        /// <summary>A missing fact never satisfies a condition: the transform stays inert until the host supplies it.</summary>
-        private bool MatchesCondition(KeystoneContext context) => !Condition.HasValue
-            || Condition == KeystoneConditionKind.TargetHealthBelow
-                && context.TargetHealthPercent.HasValue && context.TargetHealthPercent.Value < (float)ConditionPercent
-            || Condition == KeystoneConditionKind.OutsideRetaliationWindow && context.RetaliationWindowOpen == false;
+            && MatchesSelectors(ReceiverSelectors, context.ReceiverMemory, context, true);
 
         private static bool MatchesSelectors(IReadOnlyList<MemorySelector> selectors, string memory, KeystoneContext context, bool receiver = false)
         {
@@ -146,14 +131,13 @@ namespace SodRpg.Core.Game
         public KeystoneScope Scope { get; }
         public KeystoneOperation Operation { get; }
         public KeystoneMagnitude MagnitudeUnits { get; }
-        public KeystoneMagnitude WoundDurationUnits { get; }
         public decimal Seconds { get; }
         public int Count { get; }
         public decimal? Maximum { get; }
         public decimal? ExpectedFrom { get; }
 
         private KeystoneTransform(KeystoneLayer layer, KeystoneField field, KeystoneScope scope, KeystoneOperation operation,
-            KeystoneMagnitude magnitude = default, decimal seconds = 0m, int count = 0, KeystoneMagnitude woundDuration = default,
+            KeystoneMagnitude magnitude = default, decimal seconds = 0m, int count = 0,
             decimal? maximum = null, decimal? expectedFrom = null)
         {
             if (!Enum.IsDefined(typeof(KeystoneLayer), layer) || !Enum.IsDefined(typeof(KeystoneField), field))
@@ -161,7 +145,7 @@ namespace SodRpg.Core.Game
             if (layer != KeystoneLayer.ModEffect && field != KeystoneField.Value)
                 throw new ArgumentException("Damage layers only support value transforms.");
             TargetLayer = layer; Field = field; Scope = scope ?? throw new ArgumentNullException(nameof(scope));
-            Operation = operation; MagnitudeUnits = magnitude; Seconds = seconds; Count = count; WoundDurationUnits = woundDuration;
+            Operation = operation; MagnitudeUnits = magnitude; Seconds = seconds; Count = count;
             Maximum = maximum; ExpectedFrom = expectedFrom;
         }
 
@@ -169,7 +153,7 @@ namespace SodRpg.Core.Game
         {
             if (field == KeystoneField.TargetCount || field == KeystoneField.EveryN || field == KeystoneField.Argument)
                 throw new ArgumentException("Integer counts cannot be percentage scaled.");
-            if (magnitude.Units == -10000) throw new ArgumentException("Use Disable with explicit incompatible-allocation validation.");
+            if (magnitude.Units == -10000) throw new ArgumentException("A transform cannot fully cancel its recipient.");
             return new KeystoneTransform(layer, field, scope, KeystoneOperation.Scale, magnitude);
         }
         public static KeystoneTransform SetSeconds(KeystoneField field, decimal seconds, KeystoneScope scope)
@@ -187,20 +171,6 @@ namespace SodRpg.Core.Game
         {
             if (count < 1) throw new ArgumentOutOfRangeException(nameof(count));
             return new KeystoneTransform(KeystoneLayer.ModEffect, KeystoneField.EveryN, scope, KeystoneOperation.SetEveryN, count: count);
-        }
-        public static KeystoneTransform Disable(KeystoneLayer layer, KeystoneScope scope)
-        {
-            if (layer == KeystoneLayer.NativeDamage) throw new ArgumentException("A MOD transform cannot cancel native damage.");
-            return new KeystoneTransform(layer, KeystoneField.Value, scope, KeystoneOperation.Disable);
-        }
-        /// <summary>Total and lifetime are independently final multipliers; duration is not multiplied into total again.</summary>
-        public static KeystoneTransform RedistributeWound(KeystoneMagnitude total, KeystoneMagnitude duration, KeystoneScope scope)
-        {
-            if (duration.Multiplier <= 0 || total.Multiplier <= 0 || scope == null
-                || scope.TargetEffectSet.Count != 1 || scope.TargetEffectSet[0] != GimmickEffect.Wound)
-                throw new ArgumentException("Wound redistribution requires an explicit Wound scope and positive multipliers.");
-            return new KeystoneTransform(KeystoneLayer.ModEffect, KeystoneField.Value, scope,
-                KeystoneOperation.RedistributeWound, total, woundDuration: duration);
         }
         public static KeystoneTransform Set(KeystoneLayer layer, KeystoneField field, decimal value, KeystoneScope scope,
             decimal? expectedFrom = null) => Numeric(layer, field, KeystoneOperation.Set, value, scope, null, expectedFrom);
@@ -228,7 +198,6 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<string> RequiredMemories { get; }
         public IReadOnlyList<string> Prerequisites { get; }
         public IReadOnlyList<KeystoneTransform> Upside { get; }
-        public IReadOnlyList<KeystoneTransform> Downside { get; }
         public IReadOnlyList<KeystonePayloadKind> Payloads { get; }
         public IReadOnlyList<AuthoredMechanismSpec> Grants { get; }
         /// <summary>
@@ -239,7 +208,7 @@ namespace SodRpg.Core.Game
         public int RetainedPowerValue { get; }
 
         public KeystoneDefinition(string keystoneId, IEnumerable<string> requiredMemories,
-            IEnumerable<KeystoneTransform> upside, IEnumerable<KeystoneTransform> downside,
+            IEnumerable<KeystoneTransform> upside,
             IEnumerable<string> prerequisites = null, IEnumerable<KeystonePayloadKind> payloads = null, int cost = Content.KeystoneCost,
             IEnumerable<AuthoredMechanismSpec> grants = null, Power retainedPower = Power.None, int retainedPowerValue = 0)
         {
@@ -252,16 +221,15 @@ namespace SodRpg.Core.Game
             RequiredMemories = KeystoneValidation.Strings(requiredMemories);
             Prerequisites = KeystoneValidation.Strings(prerequisites);
             Upside = Array.AsReadOnly((upside ?? throw new ArgumentNullException(nameof(upside))).ToArray());
-            Downside = Array.AsReadOnly((downside ?? throw new ArgumentNullException(nameof(downside))).ToArray());
             Grants = Array.AsReadOnly((grants ?? Array.Empty<AuthoredMechanismSpec>()).ToArray());
             var kinds = (payloads ?? Array.Empty<KeystonePayloadKind>()).ToArray();
             if (kinds.Any(p => p == KeystonePayloadKind.None || !Enum.IsDefined(typeof(KeystonePayloadKind), p))
-                || kinds.Distinct().Count() != kinds.Length || Upside.Concat(Downside).Any(t => t == null)
-                || Upside.Count > StarProgression.MaxSpendablePoints || Downside.Count > StarProgression.MaxSpendablePoints
+                || kinds.Distinct().Count() != kinds.Length || Upside.Any(t => t == null)
+                || Upside.Count > StarProgression.MaxSpendablePoints
                 || Grants.Count > StarProgression.MaxSpendablePoints || RequiredMemories.Count > StarProgression.MaxSpendablePoints
                 || Prerequisites.Count > StarProgression.MaxSpendablePoints
-                || Grants.Any(g => g == null) || (Upside.Count == 0 && kinds.Length == 0 && Grants.Count == 0 && RetainedPower == Power.None) || Downside.Count == 0)
-                throw new ArgumentException("A cost-bearing keystone requires a typed upside and downside.");
+                || Grants.Any(g => g == null) || (Upside.Count == 0 && kinds.Length == 0 && Grants.Count == 0 && RetainedPower == Power.None))
+                throw new ArgumentException("A cost-bearing keystone requires a typed upside.");
             var admittedKinds = new HashSet<KeystonePayloadKind>(kinds);
             foreach (var grant in Grants)
             {
@@ -283,15 +251,6 @@ namespace SodRpg.Core.Game
             Payloads = Array.AsReadOnly(admittedKinds.OrderBy(k => k).ToArray());
         }
 
-        public bool HasNativeDownside(KeystoneContext context)
-        {
-            if (context == null) return false;
-            var payload = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(decimal.MaxValue));
-            foreach (var transform in Downside)
-                if (transform.TargetLayer == KeystoneLayer.NativeDamage && transform.Operation == KeystoneOperation.Scale
-                    && transform.MagnitudeUnits.Units < 0 && transform.Scope.Matches(payload, context)) return true;
-            return false;
-        }
     }
 
     public sealed class KeystoneContext
@@ -305,14 +264,9 @@ namespace SodRpg.Core.Game
         public MechanismMemorySlot? SourceSlot { get; }
         public MechanismMemorySlot? RecipientSlot { get; }
         public string HeroKey { get; }
-        /// <summary>Victim health percent immediately before this hit (M6: HP90%判定は命中直前); null when this event carries none.</summary>
-        public float? TargetHealthPercent { get; }
-        /// <summary>Whether the existing Retaliation window (被弾後3秒) is open for the damaging owner; null when unknown.</summary>
-        public bool? RetaliationWindowOpen { get; }
         public KeystoneContext(long equipmentEpoch, string sourceMemory, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory,
             string receiverMemory = null, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self, MechanismEquipment equipment = null,
-            MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null,
-            float? targetHealthPercent = null, bool? retaliationWindowOpen = null)
+            MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null)
         {
             if (equipmentEpoch < 0 || !Enum.IsDefined(typeof(KeystoneSourceKind), sourceKind)
                 || !Enum.IsDefined(typeof(KeystoneRecipientKind), recipient) || recipient == KeystoneRecipientKind.Any)
@@ -322,17 +276,14 @@ namespace SodRpg.Core.Game
             if (sourceSlot.HasValue && !Enum.IsDefined(typeof(MechanismMemorySlot), sourceSlot.Value)
                 || recipientSlot.HasValue && !Enum.IsDefined(typeof(MechanismMemorySlot), recipientSlot.Value))
                 throw new ArgumentException("Invalid projected slot.");
-            if (targetHealthPercent.HasValue && (float.IsNaN(targetHealthPercent.Value) || targetHealthPercent.Value < 0f))
-                throw new ArgumentException("Invalid target health fact.");
             EquipmentEpoch = equipmentEpoch; SourceMemory = sourceMemory; ReceiverMemory = receiverMemory;
             SourceKind = sourceKind; Recipient = recipient;
             Equipment = equipment;
             SourceSlot = sourceSlot; RecipientSlot = recipientSlot;
             HeroKey = heroKey;
-            TargetHealthPercent = targetHealthPercent; RetaliationWindowOpen = retaliationWindowOpen;
         }
         internal KeystoneContext AtEpoch(long epoch) => new KeystoneContext(epoch, SourceMemory, SourceKind, ReceiverMemory, Recipient,
-            Equipment, SourceSlot, RecipientSlot, HeroKey, TargetHealthPercent, RetaliationWindowOpen);
+            Equipment, SourceSlot, RecipientSlot, HeroKey);
     }
 
     /// <summary>Pristine values after ordinary additive, boost and parameter layers, before C07 and final caps.</summary>
@@ -401,7 +352,6 @@ namespace SodRpg.Core.Game
         public int EveryN { get => checked((int)EveryNWorking); internal set => EveryNWorking = value; }
         public decimal ProbabilityPercent { get; internal set; }
         public int Argument { get => checked((int)ArgumentWorking); internal set => ArgumentWorking = value; }
-        public bool Disabled { get; internal set; }
         internal decimal? ValueMaximum, DurationMaximum, RadiusMaximum, DelayMaximum, ProbabilityMaximum;
         internal int? TargetMaximum, EveryNMaximum, ArgumentMaximum;
         internal long TargetWorking, EveryNWorking, ArgumentWorking;
@@ -409,19 +359,6 @@ namespace SodRpg.Core.Game
         public decimal WoundRatePerSecond => DurationSeconds > 0 ? Value / DurationSeconds : 0;
     }
 
-    /// <summary>Explicit incompatibility witness for C15's rejection branch; it never silently refunds or leaves a disabled paid effect.</summary>
-    public sealed class KeystoneAllocatedEffect
-    {
-        public string StarId { get; }
-        public KeystonePayload Payload { get; }
-        public KeystoneContext Context { get; }
-        public KeystoneAllocatedEffect(string starId, KeystonePayload payload, KeystoneContext context)
-        {
-            KeystoneValidation.Token(starId); StarId = starId;
-            Payload = payload ?? throw new ArgumentNullException(nameof(payload));
-            Context = context ?? throw new ArgumentNullException(nameof(context));
-        }
-    }
 
     /// <summary>Reusable host-owned selection/application boundary. No design-table stars are registered here.</summary>
     public sealed class ScopedKeystoneModifiers
@@ -461,14 +398,8 @@ namespace SodRpg.Core.Game
             return false;
         }
 
-        public bool HasNativeDownside(KeystoneContext context)
-        {
-            if (!Active || context == null || context.EquipmentEpoch != EquipmentEpoch) return false;
-            foreach (var key in _selected) if (KeyEquipped(key) && key.HasNativeDownside(context)) return true;
-            return false;
-        }
         public void Configure(IEnumerable<string> selectedKeystoneIds, long equipmentEpoch, IEnumerable<string> equippedMemories,
-            IEnumerable<string> allocatedStarIds, IEnumerable<KeystoneAllocatedEffect> allocatedEffects, bool enabled = true,
+            IEnumerable<string> allocatedStarIds, bool enabled = true,
             IReadOnlyDictionary<string, bool> admission = null)
         {
             if (equipmentEpoch < 0) throw new ArgumentOutOfRangeException(nameof(equipmentEpoch));
@@ -484,19 +415,9 @@ namespace SodRpg.Core.Game
             }
             var equipment = new HashSet<string>(KeystoneValidation.Strings(equippedMemories), StringComparer.Ordinal);
             var allocated = new HashSet<string>(KeystoneValidation.Strings(allocatedStarIds), StringComparer.Ordinal);
-            var effects = (allocatedEffects ?? throw new ArgumentNullException(nameof(allocatedEffects))).ToArray();
-            if (effects.Any(e => e == null || !allocated.Contains(e.StarId)))
-                throw new ArgumentException("Every allocation witness must identify an allocated star.");
             foreach (var definition in definitions)
-            {
                 if (definition.Prerequisites.Any(p => !allocated.Contains(p)))
                     throw new InvalidOperationException("Keystone prerequisites are not allocated.");
-                // Validate intentional disablement even while equipment is absent: equipping later must not strand paid stars.
-                foreach (var disable in definition.Upside.Concat(definition.Downside).Where(t => t.Operation == KeystoneOperation.Disable))
-                    foreach (var effect in effects)
-                        if (disable.TargetLayer == effect.Payload.Layer && disable.Scope.Matches(effect.Payload, effect.Context))
-                            throw new InvalidOperationException("Refund incompatible allocation before selection: " + effect.StarId);
-            }
             string configuration = string.Join("|", selected) + ";" + string.Join("|", equipment.OrderBy(s => s, StringComparer.Ordinal))
                 + ";" + string.Join("|", allocated.OrderBy(s => s, StringComparer.Ordinal)) + ";" + (enabled ? "1" : "0")
                 + ";" + string.Join("|", admitted.Select(a => a ? "1" : "0"));
@@ -536,20 +457,8 @@ namespace SodRpg.Core.Game
                     if (context.SourceKind == KeystoneSourceKind.MovementEvent && key.KeystoneId != "h.husk.key2") continue;
                     anyApplied = true;
                     result.KeystoneId = key.KeystoneId;
-                    int woundTransforms = 0; bool durationTransform = false;
-                    foreach (var transform in key.Upside)
-                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
-                        { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
-                    foreach (var transform in key.Downside)
-                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
-                        { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
-                    if (woundTransforms > 1 || woundTransforms > 0 && durationTransform)
-                        throw new InvalidOperationException("Wound redistribution must be one final total/lifetime transform.");
                     foreach (var transform in key.Upside)
                         if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
-                    foreach (var transform in key.Downside)
-                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
-                    if (result.Disabled) result.Value = 0;
                 }
                 if (!anyApplied) result.KeystoneId = null;
                 if (context.SourceKind == KeystoneSourceKind.MovementEvent && !HasKey("h.husk.key2"))
@@ -645,17 +554,6 @@ namespace SodRpg.Core.Game
 
         private static void ApplyTransform(KeystonePayload payload, KeystoneResult result, KeystoneTransform transform)
         {
-            if (transform.Operation == KeystoneOperation.Disable)
-            {
-                result.Value = 0; result.Disabled = true;
-                SynchronizeProbability(payload, result, KeystoneField.Value);
-                return;
-            }
-            if (transform.Operation == KeystoneOperation.RedistributeWound)
-            {
-                if (payload.Effect != GimmickEffect.Wound) throw new InvalidOperationException("Wound transform applied outside Wound.");
-                result.Value *= transform.MagnitudeUnits.Multiplier; result.DurationSeconds *= transform.WoundDurationUnits.Multiplier; return;
-            }
             if (transform.Operation == KeystoneOperation.Set || transform.Operation == KeystoneOperation.Add)
             {
                 decimal current = transform.Field == KeystoneField.Value ? result.Value

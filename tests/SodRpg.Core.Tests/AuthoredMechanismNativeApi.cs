@@ -312,11 +312,10 @@ namespace SodRpg.Mod
             PublishMemoryActivation(identity.Event(MemoryEventKind.Kill, _memoryAttribution.NewPacketId(),
                 AttributedVictimLifetime(victim)), runtime.Hero, victim);
         }
-        internal void NativeKeyDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, ref DamageData data,
-            float targetHealthBefore = float.NaN, float targetMaxHealth = float.NaN)
+        internal void NativeKeyDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, ref DamageData data)
         {
             NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = runtime.Hero, Victim = victim, Identity = identity, Admitted = true };
-            ApplyAuthoredFinalNativeDamage(ref data, runtime.Hero, victim, targetHealthBefore, targetMaxHealth);
+            ApplyAuthoredFinalNativeDamage(ref data, runtime.Hero, victim);
         }
         internal long Packet() => _memoryAttribution.NewPacketId();
         internal void PaySacrifice(HeroRuntime runtime, float amount)

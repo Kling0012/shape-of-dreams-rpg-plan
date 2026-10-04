@@ -15,16 +15,13 @@ namespace SodRpg.Core.Game
         public decimal? To { get; set; }
         public decimal? Delta { get; set; }
         public decimal? Maximum { get; set; }
-        public bool Disable { get; set; }
         public AuthoredMechanismSpec Grant { get; set; }
-        /// <summary>When present, Percent is Wound's final-total change and this is its independent final lifetime change.</summary>
-        public decimal? WoundLifetimePercent { get; set; }
     }
 
     public static class AuthoredKeystoneCompiler
     {
         public static KeystoneDefinition Compile(string id, IEnumerable<string> requiredMemories,
-            IEnumerable<AuthoredKeystoneSpec> upside, IEnumerable<AuthoredKeystoneSpec> downside,
+            IEnumerable<AuthoredKeystoneSpec> upside,
             IEnumerable<string> prerequisites = null, int cost = Content.KeystoneCost,
             IEnumerable<KeystonePayloadKind> payloads = null, Power retainedPower = Power.None, int retainedPowerValue = 0)
         {
@@ -37,23 +34,18 @@ namespace SodRpg.Core.Game
                 {
                     if (spec == null || spec.Scope == null) throw new ArgumentException("Incomplete keystone spec.");
                     int operations = (spec.Percent.HasValue ? 1 : 0) + (spec.To.HasValue ? 1 : 0)
-                        + (spec.Delta.HasValue ? 1 : 0) + (spec.Disable ? 1 : 0) + (spec.Grant != null ? 1 : 0);
+                        + (spec.Delta.HasValue ? 1 : 0) + (spec.Grant != null ? 1 : 0);
                     if (operations != 1 || spec.From.HasValue && !spec.To.HasValue
                         || spec.Maximum.HasValue && !spec.Delta.HasValue) throw new ArgumentException("Ambiguous keystone operation.");
-                    if (spec.WoundLifetimePercent.HasValue && (!spec.Percent.HasValue || spec.Field != KeystoneField.Value
-                        || spec.Layer != KeystoneLayer.ModEffect)) throw new ArgumentException("Wound total/lifetime must be one coupled spec.");
                     if (spec.Grant != null) { grants.Add(spec.Grant); continue; }
-                    transforms.Add(spec.Disable ? KeystoneTransform.Disable(spec.Layer, spec.Scope)
-                        : spec.WoundLifetimePercent.HasValue ? KeystoneTransform.RedistributeWound(KeystoneMagnitude.FromPercent(spec.Percent.Value),
-                            KeystoneMagnitude.FromPercent(spec.WoundLifetimePercent.Value), spec.Scope)
-                        : spec.Percent.HasValue ? KeystoneTransform.Scale(spec.Layer, spec.Field, KeystoneMagnitude.FromPercent(spec.Percent.Value), spec.Scope)
+                    transforms.Add(spec.Percent.HasValue ? KeystoneTransform.Scale(spec.Layer, spec.Field, KeystoneMagnitude.FromPercent(spec.Percent.Value), spec.Scope)
                         : spec.To.HasValue ? KeystoneTransform.Set(spec.Layer, spec.Field, spec.To.Value, spec.Scope, spec.From)
                         : KeystoneTransform.Add(spec.Layer, spec.Field, spec.Delta.Value, spec.Scope, spec.Maximum));
                 }
                 return transforms.ToArray();
             }
-            var up = CompileSide(upside); var down = CompileSide(downside);
-            return new KeystoneDefinition(id, requiredMemories, up, down, prerequisites, payloads, cost, grants,
+            var up = CompileSide(upside);
+            return new KeystoneDefinition(id, requiredMemories, up, prerequisites, payloads, cost, grants,
                 retainedPower, retainedPowerValue);
         }
 
@@ -70,7 +62,7 @@ namespace SodRpg.Core.Game
                 case "Chance": return KeystoneField.Probability;
                 case "Arg": return KeystoneField.Argument;
                 case "EveryN": return KeystoneField.EveryN;
-                default: throw new ArgumentException("Enabled uses Disable; Grant uses a typed mechanism. Unknown numeric field: " + field);
+                default: throw new ArgumentException("Grant uses a typed mechanism. Unknown numeric field: " + field);
             }
         }
         public static KeystoneField RecipientField(string field, out KeystoneRecipientKind recipient)
@@ -215,7 +207,6 @@ namespace SodRpg.Core.Game
 
         public static GimmickDef EffectiveGimmick(GimmickDef pristine, KeystoneResult result)
         {
-            if (result.Disabled) return null;
             return new GimmickDef { Trigger = pristine.Trigger, Effect = pristine.Effect,
                 ValuePrecise = pristine.ValuePrecise, EffectiveValue = result.Value, Arg = result.Argument, Cooldown = pristine.Cooldown,
                 DurationUnits = pristine.DurationUnits, RadiusUnits = pristine.RadiusUnits,
@@ -239,7 +230,7 @@ namespace SodRpg.Core.Game
             var ids = new List<string>(); var prerequisites = new List<string>();
             foreach (var key in keys ?? Array.Empty<KeystoneDefinition>())
                 if (key != null) { ids.Add(key.KeystoneId); prerequisites.AddRange(key.Prerequisites); }
-            runtime.Configure(ids, epoch, memories, prerequisites, Array.Empty<KeystoneAllocatedEffect>());
+            runtime.Configure(ids, epoch, memories, prerequisites);
             return runtime;
         }
 
@@ -279,16 +270,6 @@ namespace SodRpg.Core.Game
             return runtime.Apply(payload, new KeystoneContext(epoch, source, sourceKind, receiver, recipient, equipment, sourceSlot, recipientSlot, heroKey));
         }
 
-        /// <summary>C15's explicit refund witness. The allocation owner removes these stars before composing again.</summary>
-        public static IReadOnlyList<string> RefundStarIds(KeystoneDefinition definition, IEnumerable<KeystoneAllocatedEffect> allocatedEffects)
-        {
-            if (definition == null || allocatedEffects == null) throw new ArgumentNullException();
-            var result = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var effect in allocatedEffects)
-                foreach (var transform in definition.Upside.Concat(definition.Downside))
-                    if (transform.Operation == KeystoneOperation.Disable && transform.TargetLayer == effect.Payload.Layer
-                        && transform.Scope.Matches(effect.Payload, effect.Context)) result.Add(effect.StarId);
-            return result.OrderBy(s => s, StringComparer.Ordinal).ToArray();
-        }
+
     }
 }

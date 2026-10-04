@@ -132,7 +132,7 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 `options[0]` = 選択肢A、`options[1]` = B。キーは `kind, memory, value, param, receiver, target, gimmick, power, stat, nameJa, nameEn`（この順・全て必須、使わない欄と無い名前は `null`）。`kind` は Choice/Keystone 以外。GimmickBoost/GimmickParam の選択肢は星と同じく `target` を持つ。旧 `label` は廃止（順序で表す）。
 
 ### 刻印（Keystone）
-`keystone` は `upside` / `downside`（文章）と `upsideSpec` / `downsideSpec`（機械可読の配列、書いていなければ `null`）。`null` は「機械可読化していない」の意味で、**文章が正**。
+`keystone` は `upside`（文章）と `upsideSpec`（機械可読の配列、書いていなければ `null`）。`null` は「機械可読化していない」の意味で、**文章が正**。刻印にデバフ（代償）はもう無い。
 Spec の要素は次のキーだけ：
 
 | キー | 意味 |
