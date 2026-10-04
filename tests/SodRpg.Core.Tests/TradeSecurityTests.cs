@@ -98,9 +98,10 @@ namespace SodRpg.Core.Tests
             Assert.True(a.Evaluate("p1", "runB", retry, 0, 0).Ok);
         }
 
-        // mp-ui-save.md #7：支払い待ち（商人・換金）も含め、全種別の保留が固定時間で期限切れになる。
+        // mp-ui-save.md #7：支払い待ち（商人・換金）も含め、全種別が固定時間で画面の待ちを解く。
+        // 取引は捨てず「結果不明」として残す（#26）ので、確保・潜行は押せるが、対価・返却はまだ確定していない。
         [Fact]
-        public void Ledger_expires_every_trade_kind_after_the_timeout()
+        public void Ledger_releases_the_wait_for_every_trade_kind_but_keeps_the_trades_unresolved()
         {
             var l = new TradeLedger();
             l.BeginMerchant(heat: 1, price: 75, now: 100.0);
@@ -112,33 +113,73 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, l.PendingCount);
             Assert.Equal(3, l.Expire(100.0 + Economy.TradeTimeoutSeconds));
             Assert.Equal(0, l.PendingCount); // HasPendingTrades が false になり、確保・潜行がまた押せる
+            Assert.Equal(3, l.UnresolvedCount);
+            Assert.Equal(3, l.HeldCount);
             Assert.False(l.HasPending(TradeKind.MerchantGold));
             Assert.False(l.HasPending(TradeKind.DustToShards));
             Assert.False(l.HasPending(TradeKind.SalvageForDust));
+            Assert.True(l.IsReserved("r0000000000000001")); // 遺物は結果が出るまで別の操作に使えない
+            Assert.Equal(0, l.Expire(1000.0)); // 一度結果不明にした取引は数え直さない
         }
 
-        // mp-ui-save.md #7：期限切れの rollback は何も確定しない。遅れて来た成功応答は捨てられる。
+        // #26：期限を過ぎてから成功応答が届いても、取引は残っているので対価が付く（支払い1回に対して対価1回）。
         [Fact]
-        public void Timed_out_merchant_and_dust_trades_grant_nothing_and_drop_late_results()
+        public void Late_success_after_the_timeout_still_completes_the_trade_exactly_once()
         {
             var l = new TradeLedger();
             var merchant = l.BeginMerchant(heat: 0, price: 60, now: 50.0);
             var dust = l.BeginDustToShards(batches: 1, now: 50.0);
             Assert.Equal(2, l.Expire(50.0 + Economy.TradeTimeoutSeconds));
 
-            // 応答待ちが消えているので、遅い成功応答は OnTradeResult の先頭で捨てられ、対価は付かない。
-            Assert.Null(l.Complete(merchant.Token, ok: true));
-            Assert.Null(l.Complete(dust.Token, ok: true));
+            Assert.Same(merchant, l.Complete(merchant.Token, ok: true));
+            Assert.Same(dust, l.Complete(dust.Token, ok: true));
+            Assert.Null(l.Complete(merchant.Token, ok: true)); // 重複応答は無視
+            Assert.Equal(0, l.HeldCount);
 
             // 新しい依頼はすぐ出せる（待ちが残らない）。
-            var again = l.BeginMerchant(heat: 0, price: 60, now: 61.0);
-            Assert.NotNull(again);
+            Assert.NotNull(l.BeginMerchant(heat: 0, price: 60, now: 61.0));
         }
 
-        // mp-ui-save.md #7／#10：分解の期限切れ rollback の全容。遺物は戻り、遅い応答は無視され、
-        // 再依頼はホストの台帳が断るので、ダストと遺物が二重に手に入ることはない。
+        // #26：ダスト交換の流れ全体。ホストが支払ってから成功応答だけが10秒以上遅れても、
+        // 結果の照会で支払い済みと分かり、欠片が一度だけ付く。
         [Fact]
-        public void Salvage_timeout_rollback_returns_the_relic_without_duplicating_dust()
+        public void Dust_exchange_with_a_delayed_success_is_resolved_by_querying_the_host()
+        {
+            var p = Profile.CreateNew(31);
+            var l = new TradeLedger();
+            var host = new TradeAuthority();
+            int dustBalance = 500;
+
+            var t = l.BeginDustToShards(batches: 1, now: 0.0);
+            var d = host.Evaluate("p1", "run", RequestOf(t), 0, dustBalance);
+            Assert.True(d.Ok);
+            dustBalance -= d.SpendDust; // ホストは支払い済み。成功応答だけが届かない
+
+            Assert.Equal(1, l.Expire(Economy.TradeTimeoutSeconds));
+            var due = new List<PendingTrade>();
+            Assert.Equal(1, l.CollectDueQueries(Economy.TradeTimeoutSeconds, due));
+
+            TradeWire.EncodeQuery(out int g, out int du, out int e);
+            Assert.True(TradeWire.TryDecode(t.Token, g, du, e, out var query));
+            var answer = host.Evaluate("p1", "run", query, 0, dustBalance);
+            Assert.True(answer.Ok); // 実行済みなので記録済みの結果が返る（通貨は動かさない）
+            Assert.True(answer.Replayed);
+
+            var done = l.Complete(t.Token, answer.Ok);
+            Assert.NotNull(done);
+            Rules.GrantPaidDustShards(p, done.SpendDust);
+            Assert.Equal(Economy.ShardsPerBatch, p.Material(Materials.Shard));
+
+            // 元の成功応答が遅れて届いても二重には付かない。
+            Assert.Null(l.Complete(t.Token, ok: true));
+            Assert.Equal(Economy.ShardsPerBatch, p.Material(Materials.Shard));
+            Assert.Equal(400, dustBalance);
+        }
+
+        // mp-ui-save.md #7／#10：分解の期限切れ。結果不明の間は遺物を預かったまま、照会の答えで
+        // 「ホストが未実行」なら返し、「実行済み」なら分解する。ダストと遺物が二重に手に入ることはない。
+        [Fact]
+        public void Salvage_timeout_keeps_the_relic_reserved_until_the_host_answers()
         {
             var p = Profile.CreateNew(11);
             Rules.BeginRun(p, "salvage-timeout");
@@ -156,11 +197,15 @@ namespace SodRpg.Core.Tests
             Assert.True(d1.Ok);
             earned += HostApply(d1);
 
-            // 期限切れ：予約が解けて遺物はそのまま鞄に残り（＝戻り）、遅い成功応答は捨てられる。
+            // 期限切れ：遺物は予約されたまま。遅い成功応答で分解が確定し、ダストは一度だけ。
             Assert.Equal(1, l.Expire(200.0 + Economy.TradeTimeoutSeconds));
-            Assert.False(l.IsReserved(relic.Uid));
+            Assert.True(l.IsReserved(relic.Uid));
             Assert.Contains(relic, p.Run.Satchel);
-            Assert.Null(l.Complete(first.Token, ok: true));
+            var done = l.Complete(first.Token, ok: true);
+            Assert.NotNull(done);
+            Assert.NotNull(Rules.SalvageUnsecured(p, done.Uid));
+            Assert.DoesNotContain(relic, p.Run.Satchel);
+            Assert.False(l.IsReserved(relic.Uid));
 
             // 同じ遺物の再依頼（新しいトークン）はホストが「dup」で断る。ダストは増えない。
             var retry = l.BeginSalvage(relic, now: 215.0);
@@ -169,12 +214,35 @@ namespace SodRpg.Core.Tests
             Assert.Equal("dup", d2.Reason);
             earned += HostApply(d2);
             Assert.Equal(Economy.SalvageDust(relic), earned);
-            Assert.Contains(relic, p.Run.Satchel);
         }
 
-        // 保留のまま遠征が終わっていた場合：預かり（PendingSalvage）へ移った遺物も期限切れで戻る。
+        // #26：要求が届いていなかった場合は、照会が「未実行」と答えて取り消し、遺物が戻る。
+        // 取り消し後に元の要求が遅れて届いても実行されない（遺物とダストの二重取りを防ぐ）。
         [Fact]
-        public void Salvage_reserved_across_run_end_is_restored_on_timeout()
+        public void Query_for_an_unexecuted_trade_cancels_it_so_a_late_original_cannot_run()
+        {
+            var host = new TradeAuthority();
+            var l = new TradeLedger();
+            var t = l.BeginSalvage(Rarity.Rare, 0, "r00000000000000aa", now: 0.0);
+            l.Expire(Economy.TradeTimeoutSeconds);
+
+            TradeWire.EncodeQuery(out int g, out int du, out int e);
+            Assert.True(TradeWire.TryDecode(t.Token, g, du, e, out var query));
+            var answer = host.Evaluate("p1", "run1", query, 0, 0);
+            Assert.False(answer.Ok);
+            Assert.Equal("unknown", answer.Reason);
+
+            var late = host.Evaluate("p1", "run1", RequestOf(t), 0, 0);
+            Assert.False(late.Ok);
+            Assert.Equal("cancelled", late.Reason);
+            Assert.Equal(0, HostApply(late));
+            Assert.Equal(0, host.TrackedTokenCount("p1"));
+        }
+
+        // 保留のまま遠征が終わっていた場合：預かり（PendingSalvage）へ移った遺物は、結果不明の間は戻さず、
+        // 「未実行」と分かってから戻る。
+        [Fact]
+        public void Salvage_reserved_across_run_end_is_restored_only_after_the_host_denies_it()
         {
             var p = Profile.CreateNew(12);
             Rules.BeginRun(p, "salvage-runend");
@@ -183,14 +251,90 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.Add(relic);
 
             var l = new TradeLedger();
-            l.BeginSalvage(relic, now: 0.0);
+            var t = l.BeginSalvage(relic, now: 0.0);
             Rules.EndRun(p, victory: true, reservedUids: l.ReservedSalvageUids());
             Assert.Single(p.PendingSalvage);
             Assert.Equal(relic.Uid, p.PendingSalvage[0].Relic.Uid);
 
             Assert.Equal(1, l.Expire(Economy.TradeTimeoutSeconds));
+            Rules.RestorePendingSalvage(p, keepUids: l.ReservedSalvageUids()); // 起動時の一括返却でも、結果不明の取引が握る遺物は返さない
+            Assert.Single(p.PendingSalvage);
+
+            Assert.NotNull(l.Complete(t.Token, ok: false)); // ホストは未実行
             Rules.RestorePendingSalvage(p, relic.Uid);
             Assert.Contains(relic, p.Stash);
+            Assert.Empty(p.PendingSalvage);
+        }
+
+        // #27：台帳だけが作り直されても、取引idは世代で分かれるので、ホストが覚えている過去の成功と衝突しない。
+        [Fact]
+        public void Recreated_client_ledger_does_not_collide_with_the_hosts_earlier_tokens()
+        {
+            var host = new TradeAuthority();
+            var oldLedger = new TradeLedger(generation: 1111);
+            var a = oldLedger.BeginSalvage(Rarity.Rare, 0, "r00000000000000a1", now: 0.0);
+            Assert.True(host.Evaluate("p1", "run1", RequestOf(a), 0, 0).Ok); // 遺物Aを分解（token の連番は1）
+
+            var newLedger = new TradeLedger(generation: 2222); // 参加者側だけMODを再読み込み
+            var b = newLedger.BeginSalvage(Rarity.Rare, 0, "r00000000000000b2", now: 100.0);
+            Assert.NotEqual(a.Token, b.Token);
+            var d = host.Evaluate("p1", "run1", RequestOf(b), 0, 0);
+            Assert.True(d.Ok);
+            Assert.False(d.Replayed); // 過去の成功を返さず、新しい取引として一度実行する
+            Assert.Equal(Economy.SalvageDust(Rarity.Rare, 0), HostApply(d));
+        }
+
+        // #27：同じ取引idでも別の要求は、過去の成功として受理しない。同じ要求の再送は冪等のまま。
+        [Fact]
+        public void Same_token_with_a_different_request_is_rejected_not_replayed()
+        {
+            var host = new TradeAuthority();
+            var first = new TradeRequest { Token = 5, Kind = TradeKind.SalvageForDust, Rarity = (int)Rarity.Rare, Enhance = 0, SalvageUid = 1 };
+            Assert.True(host.Evaluate("p1", "run1", first, 0, 0).Ok);
+
+            var otherUid = new TradeRequest { Token = 5, Kind = TradeKind.SalvageForDust, Rarity = (int)Rarity.Rare, Enhance = 0, SalvageUid = 2 };
+            var d1 = host.Evaluate("p1", "run1", otherUid, 0, 0);
+            Assert.False(d1.Ok);
+            Assert.Equal("conflict", d1.Reason);
+
+            var otherKind = new TradeRequest { Token = 5, Kind = TradeKind.DustToShards, Batches = 1 };
+            var d2 = host.Evaluate("p1", "run1", otherKind, 0, 1000);
+            Assert.False(d2.Ok);
+            Assert.Equal("conflict", d2.Reason);
+            Assert.False(d2.Replayed);
+
+            var same = host.Evaluate("p1", "run1", first, 0, 0);
+            Assert.True(same.Ok);
+            Assert.True(same.Replayed);
+        }
+
+        // #27：クライアント再作成をまたいで、未確定の取引を保存から戻して照会できる。
+        [Fact]
+        public void Unresolved_trades_survive_a_save_and_reload_and_are_queried_again()
+        {
+            var p = Profile.CreateNew(41);
+            var l = new TradeLedger(generation: 7);
+            var t = l.BeginDustToShards(batches: 3, now: 0.0);
+            var m = l.BeginMerchant(heat: 2, price: 90, now: 0.0);
+            p.PendingTrades.AddRange(l.Snapshot());
+
+            var reloaded = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(2, reloaded.PendingTrades.Count);
+
+            var fresh = new TradeLedger(generation: 8);
+            fresh.Restore(reloaded.PendingTrades, now: 500.0);
+            Assert.Equal(2, fresh.UnresolvedCount);
+            Assert.Equal(0, fresh.PendingCount);
+            var due = new List<PendingTrade>();
+            Assert.Equal(2, fresh.CollectDueQueries(500.0, due));
+            Assert.Equal(0, fresh.CollectDueQueries(500.0, new List<PendingTrade>())); // 同じ時刻に二重には照会しない
+            Assert.Equal(2, fresh.CollectDueQueries(500.0 + Economy.TradeQueryIntervalSeconds, new List<PendingTrade>()));
+
+            var done = fresh.Complete(t.Token, ok: true);
+            Assert.NotNull(done);
+            Assert.Equal(TradeKind.DustToShards, done.Kind);
+            Assert.Equal(3 * Economy.DustPerBatch, done.SpendDust);
+            Assert.Equal(TradeKind.MerchantGold, fresh.Complete(m.Token, ok: true).Kind);
         }
 
         // mp-host.md #2：範囲外の引数は「invalid」で拒否され、台帳も汚さない。

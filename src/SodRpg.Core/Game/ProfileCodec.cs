@@ -114,6 +114,7 @@ namespace SodRpg.Core.Game
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
                 .Add("pendingSalvage", pendingSalvage)
+                .Add("pendingTrades", p.PendingTrades.Select(WriteTrade).ToList())
                 .Add("retuneOffer", WriteRetuneOffer(p.RetuneOffer))
                 .Add("heroes", heroes)
                 .Add("codex", codex)
@@ -259,6 +260,7 @@ namespace SodRpg.Core.Game
             ReadRelics(b, "stash", p.Stash, notes);
             ReadRelics(b, "lostAndFound", p.LostAndFound, notes);
             ReadPendingSalvage(b, p.PendingSalvage, notes);
+            ReadPendingTrades(b, p.PendingTrades, notes);
             p.RetuneOffer = ReadRetuneOffer(b, notes);
             if (b.TryGet("heroes", out object ho) && ho is JsonObject heroes)
             {
@@ -503,6 +505,38 @@ namespace SodRpg.Core.Game
                 return null;
             }
             return offer;
+        }
+
+        private static object WriteTrade(PendingTrade t) => new JsonObject()
+            .Add("token", t.Token.ToString(CultureInfo.InvariantCulture)).Add("kind", (long)t.Kind)
+            .Add("spendGold", (long)t.SpendGold).Add("spendDust", (long)t.SpendDust).Add("earnDust", (long)t.EarnDust)
+            .Add("uid", t.Uid).Add("heat", (long)t.Heat).Add("batches", (long)t.Batches)
+            .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance);
+
+        private static void ReadPendingTrades(JsonObject parent, List<PendingTrade> into, List<string> notes)
+        {
+            if (!parent.TryGet("pendingTrades", out object o) || !(o is List<object> list)) return;
+            var seen = new HashSet<long>();
+            foreach (var item in list)
+            {
+                if (!(item is JsonObject j)
+                    || !long.TryParse(Str(j, "token"), NumberStyles.None, CultureInfo.InvariantCulture, out long token) || token <= 0
+                    || !seen.Add(token)
+                    || Long(j, "kind") < 0 || Long(j, "kind") > (long)TradeKind.SalvageForDust
+                    || into.Count >= TradeLedger.MaxHeld)
+                {
+                    notes.Add("pendingTrades: 形式が不正または多すぎる取引 → 除外");
+                    continue;
+                }
+                into.Add(new PendingTrade
+                {
+                    Token = token, Kind = (TradeKind)Long(j, "kind"),
+                    SpendGold = Clamp(Long(j, "spendGold"), 0, int.MaxValue), SpendDust = Clamp(Long(j, "spendDust"), 0, int.MaxValue),
+                    EarnDust = Clamp(Long(j, "earnDust"), 0, int.MaxValue), Uid = Str(j, "uid"),
+                    Heat = Clamp(Long(j, "heat"), 0, int.MaxValue), Batches = Clamp(Long(j, "batches"), 0, int.MaxValue),
+                    Rarity = Clamp(Long(j, "rarity"), 0, int.MaxValue), Enhance = Clamp(Long(j, "enhance"), 0, int.MaxValue),
+                });
+            }
         }
 
         private static void ReadPendingSalvage(JsonObject parent, List<PendingSalvage> into, List<string> notes)

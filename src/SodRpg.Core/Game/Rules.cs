@@ -1024,8 +1024,11 @@ namespace SodRpg.Core.Game
             return relic;
         }
 
-        /// <summary>分解失敗の預かり品を返す。uid が null なら台帳の無い起動時などに全品を返す。</summary>
-        public static List<GameEvent> RestorePendingSalvage(Profile p, string uid = null)
+        /// <summary>
+        /// 分解失敗の預かり品を返す。uid が null なら台帳の無い起動時などに全品を返す。
+        /// keepUids に挙げた遺物は、結果不明の取引がまだ握っているので返さない（ホストの確定結果が出るまで預かりのまま）。
+        /// </summary>
+        public static List<GameEvent> RestorePendingSalvage(Profile p, string uid = null, ISet<string> keepUids = null)
         {
             var ev = new List<GameEvent>();
             if (uid != null && p.Run?.Satchel.Find(r => r.Uid == uid) != null) return ev;
@@ -1034,6 +1037,7 @@ namespace SodRpg.Core.Game
             {
                 var pending = p.PendingSalvage[i];
                 if (uid != null && pending.Relic.Uid != uid) continue;
+                if (keepUids != null && keepUids.Contains(pending.Relic.Uid)) continue;
                 p.PendingSalvage.RemoveAt(i--);
                 if (pending.ReturnTarget == SalvageReturnTarget.Stash && p.Stash.Count < Workshop.StashCapacity(p))
                     p.Stash.Add(pending.Relic);
