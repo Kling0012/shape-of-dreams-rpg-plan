@@ -151,7 +151,7 @@ namespace SodRpg.Mod
             ConfigureRelayWindows(hero, relay);
             ConfigureIdentityStrikes(hero, strikes);
             ConfigureMemoryTunings(hero, tunings);
-            calm = calm && build.HasSelectedKeystone(CalmShieldGrant.ConsumerId) && AuthoredKeystoneActive(hero);
+            calm = calm && AuthoredKeystoneActive(hero, CalmShieldGrant.ConsumerId);
             foreach (var selected in build.SelectedKeystones)
                 foreach (var payload in selected.Payloads) if (payload == KeystonePayloadKind.SacrificeShield) sacrifice = true;
             ConfigureCalmStun(hero, calm, (root, recipient, grant) =>
@@ -190,7 +190,7 @@ namespace SodRpg.Mod
             foreach (var channel in state.Channels.Values)
             {
                 var spec = channel.Entry.Spec;
-                if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(hero)) continue;
+                if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(hero, channel.Entry.StarId)) continue;
                 if (spec.Kind == AuthoredMechanismKind.Gimmick)
                     InstallAuthoredGimmick(channel, spec.ChannelId, spec.Gimmick, entries, state);
                 else if (spec.Kind == AuthoredMechanismKind.BridgeSuccess)
@@ -310,7 +310,7 @@ namespace SodRpg.Mod
             if (identity != null && spec.TriggerByIdentity.TryGetValue(identity.GetType().Name, out var selected)) trigger = selected;
             if (trigger != notification.EventKind || spec.Source != null && !spec.Source.Matches(source)) return;
             var equipment = CollectMechanismEquipment(rt.Hero, notification.OwnerId);
-            if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(rt.Hero)) return;
+            if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(rt.Hero, channel.Entry.StarId)) return;
             foreach (string required in spec.RequiredMemories) if (equipment.Find(required) == null) return;
             if (spec.Condition != AuthoredMechanismCondition.Always)
             {

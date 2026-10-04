@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -267,6 +268,71 @@ namespace SodRpg.Core.Tests
             Assert.Equal(new[] { Source }, runtime.SelectedDefinition.RequiredMemories);
             Configure(runtime, "test.key", 2, equipment: Array.Empty<string>());
             Assert.False(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+        }
+
+        [Fact]
+        public void Per_keystone_admission_gates_payload_query_and_transform_of_the_same_keystone()
+        {
+            var sibling = Definition(id: "test.key", required: new string[0]);
+            var chalice = Definition(id: "test.key2", required: new string[0], up: new[] { Scale(KeystoneLayer.ModEffect, 100,
+                new KeystoneScope(payloadKind: KeystonePayloadKind.AlliedWard), KeystoneField.Radius) },
+                payloads: new[] { KeystonePayloadKind.SacrificeShield });
+            var runtime = new ScopedKeystoneModifiers(new[] { sibling, chalice });
+            runtime.Configure(new[] { "test.key", "test.key2" }, 1, new[] { Source }, Array.Empty<string>(),
+                admission: new Dictionary<string, bool> { ["test.key"] = true, ["test.key2"] = false });
+            Assert.True(runtime.Active);
+            Assert.True(runtime.IsKeystoneActive("test.key"));
+            Assert.False(runtime.IsKeystoneActive("test.key2"));
+            Assert.False(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+            Assert.Equal(80m, runtime.Apply(Payload(), Context()).Value);
+            var ward = new KeystonePayload(KeystoneLayer.ModEffect, 2, new KeystoneCaps(1000, radiusMetres: 100),
+                KeystonePayloadKind.AlliedWard, radiusMetres: 10);
+            Assert.Equal(10m, runtime.Apply(ward, Context()).RadiusMetres);
+        }
+
+        [Fact]
+        public void Active_requires_one_keystone_that_is_both_admitted_and_fully_equipped()
+        {
+            var strict = Definition(id: "test.strict", required: new[] { Source, Receiver });
+            var unadmitted = Definition(id: "test.free", required: new string[0],
+                payloads: new[] { KeystonePayloadKind.SacrificeShield });
+            var runtime = new ScopedKeystoneModifiers(new[] { strict, unadmitted });
+            runtime.Configure(new[] { "test.strict", "test.free" }, 1, new[] { Source }, Array.Empty<string>(),
+                admission: new Dictionary<string, bool> { ["test.strict"] = true, ["test.free"] = false });
+            Assert.False(runtime.Active);
+            Assert.False(runtime.IsKeystoneActive("test.strict"));
+            Assert.False(runtime.IsKeystoneActive("test.free"));
+            Assert.False(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+            Assert.Equal(40m, runtime.Apply(Payload(), Context()).Value);
+        }
+
+        [Fact]
+        public void Admission_flips_switch_their_keystone_while_the_aggregate_stays_true()
+        {
+            var sibling = Definition(id: "test.key", required: new string[0]);
+            var chalice = Definition(id: "test.key2", required: new string[0], up: new[] { Scale(KeystoneLayer.ModEffect, 100,
+                new KeystoneScope(payloadKind: KeystonePayloadKind.AlliedWard), KeystoneField.Radius) },
+                payloads: new[] { KeystonePayloadKind.SacrificeShield });
+            var third = Definition(id: "test.third");
+            var runtime = new ScopedKeystoneModifiers(new[] { sibling, chalice, third });
+            var ward = new KeystonePayload(KeystoneLayer.ModEffect, 2, new KeystoneCaps(1000, radiusMetres: 100),
+                KeystonePayloadKind.AlliedWard, radiusMetres: 10);
+            string[] selection = { "test.key2", "test.third", "test.key" };
+            var flipped = new Dictionary<string, bool> { ["test.key2"] = false, ["test.key"] = true, ["test.third"] = true };
+            runtime.Configure(selection, 1, new[] { Source }, Array.Empty<string>(), admission: flipped);
+            Assert.True(runtime.Active);
+            Assert.False(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+            Assert.Equal(10m, runtime.Apply(ward, Context()).RadiusMetres);
+            flipped["test.key2"] = true;
+            runtime.Configure(selection, 2, new[] { Source }, Array.Empty<string>(), admission: flipped);
+            Assert.True(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+            Assert.True(runtime.IsKeystoneActive("test.key2"));
+            Assert.Equal(20m, runtime.Apply(ward, Context(2)).RadiusMetres);
+            flipped["test.key2"] = false;
+            runtime.Configure(selection, 3, new[] { Source }, Array.Empty<string>(), admission: flipped);
+            Assert.False(runtime.HasPayload(KeystonePayloadKind.SacrificeShield));
+            Assert.Equal(10m, runtime.Apply(ward, Context(3)).RadiusMetres);
+            Assert.Equal(10m, runtime.RecomputePending(ward, Context()).RadiusMetres);
         }
 
         [Fact]

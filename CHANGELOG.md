@@ -6,6 +6,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 刻印ごとの許可判定（#49）
+
+- **不許可の刻印の効果が別刻印で動く問題**：複数刻印の選択時、効果の照会（HasPayload）と全体の有効判定（Active）が刻印ごとの許可を確認せず、個別に不許可の刻印（例：満ちた聖杯）の固有効果が別の刻印の許可状態で有効化される経路がありました。照会・変換・ネイティブ接続（犠牲シールドの接続確認）と刻印由来チャネルの有効判定で「同一刻印が許可済みかつ必要装備あり」を満たすかの共通判定を使い、Active は「全条件を満たす刻印が1つ以上ある」場合のみ真とします。 / **Fix**: per-keystone eligibility (admitted and fully equipped on the same keystone) is now the single check shared by payload queries, transforms, the native sacrifice-shield connection and keystone-owned channels; `Active` requires at least one keystone meeting all of its own requirements.
+- **再設定の取りこぼし**：ホストの再設定比較を刻印ごとの許可ベクトルに変更しました。同じ装備状態（native epoch）のままで接続状態だけが変わっても、全体のAny(true)が同じでも、対象刻印の許可変化が反映されます。 / **Reconfiguration**: the host now compares the per-keystone admission vector, so a connection-only change within the same equipment epoch still switches the target keystone's effects even when the aggregate stays true.
+- **検証**：Core単体試験3件とホスト経路の試験1件を追加（不許可の聖杯が変換・シールドとも無効で兄弟刻印のみ有効、GoldenBurst装備→使用、同じepochでの許可false→true→false、3刻印・選択順入替・遅延効果）。修正前は最小条件で HasPayload が真を返すことを再現済み。実機でのゲーム接続は未確認。 / **Verification**: three Core unit tests and one host-path test added (unadmitted chalice keeps transform, shield and native connection off while the sibling works; equip→use; false→true→false within one epoch; three keystones, order swap, delayed recompute). The pre-fix minimal condition was reproduced (HasPayload returned true). Real-game wiring remains unverified.
+
+---
+
+
 ## 未公開 — 純白の保留中の敵補正（#60）
 
 - **保留中の戦闘**：純白の入口で確保／潜行の選択を保留・非表示にして戦っても、敵に夢の圧・潜行深度の補正・悪夢化の初期化が届くようにしました。選択は明示のまま自動で消えず、未確定の道標も勝手に使いません。通常ルートの「最初の戦闘で潜行を確定してから初期化」は変更していません。 / **Deferred combat**: while the pure-white entrance choice stays pending or hidden, enemies still receive dream pressure, delve-depth bonuses and nightmare initialization. The choice stays explicit and the pending waypoint is never auto-picked; ordinary routes keep resolving on first combat.

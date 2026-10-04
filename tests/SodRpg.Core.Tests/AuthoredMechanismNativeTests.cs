@@ -407,10 +407,10 @@ namespace SodRpg.Core.Tests
             Arm(); Assert.Equal(40, runtime.Powers.OnAttackHit(0, 1000, 100, 100, 1).PrimedDamage);
             build.SelectedKeystone = key; host.BindAuthored(runtime, Build.Decode(build.Encode())); Arm();
             runtime.Hero.Skill.UnequipSkill(HeroSkillLocation.Q);
-            Assert.False(host.AuthoredKeystoneActive(runtime.Hero));
+            Assert.False(host.AuthoredKeystoneActive(runtime.Hero, key.KeystoneId));
             Assert.Equal(0, runtime.Powers.OnAttackHit(0, 1000, 100, 100, 1).PrimedDamage);
             runtime.Hero.Skill.EquipSkill(HeroSkillLocation.Q, new St_Q_CruelSun { owner = runtime.Hero });
-            Assert.True(host.AuthoredKeystoneActive(runtime.Hero));
+            Assert.True(host.AuthoredKeystoneActive(runtime.Hero, key.KeystoneId));
             Arm(); Assert.Equal(80, runtime.Powers.OnAttackHit(0, 1000, 100, 100, 1).PrimedDamage);
         }
 
@@ -454,6 +454,59 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(100, data.currentAmount, 4);
                 host.PaySacrifice(runtime, 20); host.FlushAuthored(runtime);
                 Assert.Equal(980, hero.currentHealth); Assert.Equal(0, hero.Status.currentShield);
+            }
+            finally { HostAuthority.InstallNativeSacrificeHook(); }
+        }
+
+        [Fact]
+        public void Unadmitted_chalice_keystone_stays_fully_off_while_sibling_keystone_keeps_working()
+        {
+            HostAuthority.InstallFinalNativeKeyHook();
+            Assert.Throws<InvalidOperationException>(() => HostAuthority.InstallNativeSacrificeHook(false)); // 支払いアダプター未接続 → 満ちた聖杯は個別に不許可
+            try
+            {
+                var sibling = new KeystoneDefinition("h.aurena.key", Array.Empty<string>(),
+                    new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(10000),
+                        new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) });
+                var chalice = new KeystoneDefinition("h.aurena.key2", Array.Empty<string>(),
+                    new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Radius, new KeystoneMagnitude(10000),
+                        new KeystoneScope(payloadKind: KeystonePayloadKind.AlliedWard)) },
+                    payloads: new[] { KeystonePayloadKind.SacrificeShield });
+                var build = new Build { SelectedKeystone = sibling };
+                build.AddSelectedKeystone(chalice);
+                var (host, runtime) = Setup(Build.Decode(build.Encode()));
+                var hero = runtime.Hero;
+                var echo = new KeystonePayload(KeystoneLayer.ModEffect, 40, new KeystoneCaps(120), KeystonePayloadKind.Gimmick, GimmickEffect.Echo);
+                var ward = new KeystonePayload(KeystoneLayer.ModEffect, 2, new KeystoneCaps(1000, radiusMetres: 100), KeystonePayloadKind.AlliedWard, radiusMetres: 10);
+                decimal Echo(string source) => host.TransformAuthoredPayload(hero, echo, source, null, KeystoneSourceKind.NativeMemory).Value;
+                decimal Ward(string source) => host.TransformAuthoredPayload(hero, ward, source, null, KeystoneSourceKind.NativeMemory).RadiusMetres;
+                // 1) 犠牲記憶なし: 聖杯は不許可、兄弟刻印だけ有効。
+                Assert.True(host.AuthoredKeystoneActive(hero, "h.aurena.key"));
+                Assert.False(host.AuthoredKeystoneActive(hero, "h.aurena.key2"));
+                Assert.Equal(80m, Echo(Q));
+                Assert.Equal(10m, Ward(Q));
+                // 2) GoldenBurst装備（装備変更の再設定経路）でも聖杯は不許可のまま: 支払いは起きるがシールドは付かない。
+                hero.Skill.EquipSkill(HeroSkillLocation.Q, new St_Q_GoldenBurst { owner = hero });
+                host.AuthoredKeystoneEpoch(hero);
+                Assert.False(host.AuthoredKeystoneActive(hero, "h.aurena.key2"));
+                host.PaySacrifice(runtime, 20); host.FlushAuthored(runtime);
+                Assert.Equal(980, hero.currentHealth); Assert.Equal(0, hero.Status.currentShield);
+                // 3) 同じnative epochで支払いアダプターが接続: 全体のAny(true)は不変のまま聖杯だけが切り替わる。
+                HostAuthority.InstallNativeSacrificeHook();
+                host.AuthoredKeystoneEpoch(hero);
+                Assert.True(host.AuthoredKeystoneActive(hero, "h.aurena.key2"));
+                Assert.Equal(80m, Echo("St_Q_GoldenBurst"));
+                Assert.Equal(20m, Ward("St_Q_GoldenBurst"));
+                host.PaySacrifice(runtime, 20); host.FlushAuthored(runtime);
+                Assert.Equal(960, hero.currentHealth); Assert.Equal(10, hero.Status.currentShield);
+                // 4) 再び不許可: 変換とシールドは即座に外れ、兄弟刻印は動き続ける。
+                Assert.Throws<InvalidOperationException>(() => HostAuthority.InstallNativeSacrificeHook(false));
+                host.AuthoredKeystoneEpoch(hero);
+                Assert.False(host.AuthoredKeystoneActive(hero, "h.aurena.key2"));
+                Assert.Equal(80m, Echo("St_Q_GoldenBurst"));
+                Assert.Equal(10m, Ward("St_Q_GoldenBurst"));
+                host.PaySacrifice(runtime, 20); host.FlushAuthored(runtime);
+                Assert.Equal(940, hero.currentHealth); Assert.Equal(10, hero.Status.currentShield);
             }
             finally { HostAuthority.InstallNativeSacrificeHook(); }
         }

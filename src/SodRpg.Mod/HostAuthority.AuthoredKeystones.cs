@@ -45,7 +45,7 @@ namespace SodRpg.Mod
             internal long Epoch;
             internal string Key;
             internal MechanismEquipment Equipment;
-            internal bool? Admission;
+            internal string Admission;
             internal int HookSignature = -1;
         }
         private readonly Dictionary<Hero, AuthoredKeystoneBinding> _authoredKeystones = new Dictionary<Hero, AuthoredKeystoneBinding>();
@@ -94,9 +94,10 @@ namespace SodRpg.Mod
             var equipment = binding.NativeEpoch == nativeEpoch && binding.Equipment != null
                 ? binding.Equipment : CollectMechanismEquipment(hero, hero.GetInstanceID());
             // 入手確認（ネイティブアダプター）は刻印ごとに判定する。未承認の刻印だけ止めても、他は動かす。
+            // #49: 比較は刻印ごとの許可ベクトルで行う。全体のAny(true)が同じでも個別許可の変化を再設定から漏らさない。
             var admission = new Dictionary<string, bool>(StringComparer.Ordinal);
             foreach (var key in keys) admission[key.KeystoneId] = SacrificeBindingAvailable(key, equipment);
-            bool admitted = admission.Values.Any(a => a);
+            string admitted = string.Join("|", keys.Select(key => admission[key.KeystoneId] ? "1" : "0"));
             if (binding.NativeEpoch == nativeEpoch && binding.Admission == admitted) return;
             binding.NativeEpoch = nativeEpoch; binding.Admission = admitted;
             binding.Epoch = checked(++_authoredKeystoneEpoch); binding.Equipment = equipment;
@@ -140,10 +141,12 @@ namespace SodRpg.Mod
             return source;
         }
 
-        internal bool AuthoredKeystoneActive(Hero hero)
+        /// <summary>指定刻印が「許可済み・必要装備あり」を満たすか（#49: 全体Activeではなく刻印ごとに判定）。</summary>
+        internal bool AuthoredKeystoneActive(Hero hero, string keystoneId)
         {
             RefreshAuthoredKeystone(hero);
-            return hero != null && _authoredKeystones.TryGetValue(hero, out var binding) && binding.Runtime.Active;
+            return hero != null && keystoneId != null && _authoredKeystones.TryGetValue(hero, out var binding)
+                && binding.Runtime.IsKeystoneActive(keystoneId);
         }
 
         internal long AuthoredKeystoneEpoch(Hero hero)
@@ -160,9 +163,10 @@ namespace SodRpg.Mod
             if (_sacrificeBindings.TryGetValue(hero, out var existing) && ReferenceEquals(existing.Keystone, binding.Runtime)) return;
             bool Verified()
             {
+                // #49: 犠牲シールドの接続確認も、その刻印自身の許可・装備（HasPayload）で判定する。
                 RefreshAuthoredKeystone(hero);
-                return binding.Runtime.Active && _authoredKeystones.TryGetValue(hero, out var current)
-                    && ReferenceEquals(current, binding) && binding.Admission == true;
+                return _authoredKeystones.TryGetValue(hero, out var current) && ReferenceEquals(current, binding)
+                    && binding.Runtime.HasPayload(KeystonePayloadKind.SacrificeShield);
             }
             BindSacrificeShield(hero, binding.Runtime, Verified);
         }
