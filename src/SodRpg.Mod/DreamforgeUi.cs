@@ -269,6 +269,9 @@ namespace SodRpg.Mod
             _st.EnsureBuilt();
             var cfg = _cfg();
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
+            // Keep the star map's fixed header rows and two choice cards within the visible window,
+            // including both optional sidebars. Honor the configured scale until it would clip that viewport.
+            if (Open && _tab == 2) scale = Mathf.Min(scale, Mathf.Min(Screen.width / 1600f, Screen.height / 960f));
             var oldMatrix = GUI.matrix;
             GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
             float w = Screen.width / scale;
@@ -1999,6 +2002,8 @@ namespace SodRpg.Mod
         private static readonly Color StarGold = new Color(1f, 0.79f, 0.32f);
         private static readonly Color StarBright = new Color(0.87f, 0.94f, 1f);
         private static readonly Color StarGrey = new Color(0.36f, 0.39f, 0.46f);
+        private static readonly Color StarFocus = new Color(134f / 255f, 199f / 255f, 1f);
+        private static readonly Color StarRelation = new Color(168f / 255f, 223f / 255f, 1f);
 
         private bool _starSumOpen, _starSumDirty = true;
         private int _starSumSig, _starSumHover = -1;
@@ -2543,8 +2548,11 @@ namespace SodRpg.Mod
                     _starPan = new Vector2(fitPan.X, fitPan.Y);
                 }
                 Vector2 mouse = e.mousePosition;
-                // 重ねて出している選択パネルの上では、星図は操作を受けない。
-                bool inside = viewport.Contains(mouse) && !(_starOverlay.width > 0f && _starOverlay.Contains(mouse + canvas.position));
+                Vector2 windowMouse = mouse + canvas.position;
+                // The panel background can pan, but obscured stars cannot be hovered, clicked or zoomed.
+                bool insideCanvas = viewport.Contains(mouse);
+                bool inside = insideCanvas && !(_starOverlay.width > 0f && _starOverlay.Contains(windowMouse));
+                bool canPan = insideCanvas && !StarChoicePanelBlocks(windowMouse);
                 float guiScale = Mathf.Abs(GUI.matrix.m00);
                 _starView.Update(_starLayout, viewport, _starPan, _starZoom, guiScale);
                 if (inside) hover = _starView.Hit(mouse);
@@ -2555,7 +2563,7 @@ namespace SodRpg.Mod
                     _starZoom = zoom;
                     e.Use();
                 }
-                if (inside && e.type == EventType.MouseDown && e.button <= 2)
+                if (canPan && e.type == EventType.MouseDown && e.button <= 2)
                 {
                     // ドラッグ中に追加で押したボタンでは、押した場所の星をクリックとして確定させない（#45）。
                     // 移動距離はその場でやり直すので、離した瞬間の誤選択・誤解除が出なくなる。
@@ -2592,6 +2600,8 @@ namespace SodRpg.Mod
                         {
                             if (_starMouseButton == 0 && t.IsChoice)
                             {
+                                if (_starChoiceId != t.Id)
+                                    _starChoiceScrolls[0] = _starChoiceScrolls[1] = Vector2.zero;
                                 _starChoiceId = t.Id;
                                 _starChoiceIndex = pressed;
                                 GUIUtility.ExitGUI();
@@ -2617,6 +2627,8 @@ namespace SodRpg.Mod
                 _starView.Update(_starLayout, viewport, _starPan, _starZoom, guiScale);
                 // Pan/zoom events may have changed the geometry since the initial hit check.
                 hover = inside ? _starView.Hit(mouse) : -1;
+                int choiceFocus = _starChoiceId != null ? _starChoiceIndex : -1;
+                _starView.UpdateRelationships(hover, choiceFocus);
                 StarFillRect(viewport, new Color(0.035f, 0.045f, 0.075f));
                 Matrix4x4 baseMatrix = GUI.matrix;
                 Vector2 unclippedOrigin = StarMapView.UnclippedOrigin(baseMatrix);
@@ -2627,6 +2639,8 @@ namespace SodRpg.Mod
                     var b = _starNodes[edge.B];
                     Color color = a.Allocated && b.Allocated ? StarGold
                         : (a.Allocated && b.Available || b.Allocated && a.Available) ? StarBright : StarGrey * 0.55f;
+                    if (_starView.Focused[edge.A] || _starView.Focused[edge.B])
+                        StarMapView.DrawEdge(edge, unclippedOrigin, baseMatrix, StarRelation, 6f);
                     StarMapView.DrawEdge(edge, unclippedOrigin, baseMatrix, color);
                 }
                 var disc = StarDisc();
@@ -2638,6 +2652,10 @@ namespace SodRpg.Mod
                     Color frame = n.Allocated ? StarGold : n.Keystone ? StarKeystone : n.Pair ? StarPair : n.Available ? StarBright : StarGrey;
                     if (n.SearchMatch || n.SummaryHover)
                         StarDrawDisc(StarSearchRing(), new Rect(rect.x - 11f, rect.y - 11f, rect.width + 22f, rect.height + 22f), StarGold);
+                    if (_starView.Focused[i])
+                        StarDrawDisc(StarSearchRing(), new Rect(rect.x - 8f, rect.y - 8f, rect.width + 16f, rect.height + 16f), StarFocus);
+                    else if (_starView.Related[i])
+                        StarDrawDisc(StarSearchRing(), new Rect(rect.x - 5f, rect.y - 5f, rect.width + 10f, rect.height + 10f), StarRelation);
                     if (n.Available && !n.Allocated)
                         StarDrawDisc(disc, new Rect(rect.x - 5f, rect.y - 5f, rect.width + 10f, rect.height + 10f),
                             new Color(StarBright.r, StarBright.g, StarBright.b, 0.22f));
@@ -2645,7 +2663,7 @@ namespace SodRpg.Mod
                         StarDrawDisc(disc, new Rect(rect.x - 7f, rect.y - 7f, rect.width + 14f, rect.height + 14f),
                             new Color(frame.r, frame.g, frame.b, 0.3f));
                     StarDrawDisc(disc, rect, frame);
-                    float border = (i == hover ? 4f : 2.5f) * Mathf.Clamp(rect.width / 40f, 0.6f, 1.6f);
+                    float border = (_starView.Focused[i] ? 4f : 2.5f) * Mathf.Clamp(rect.width / 40f, 0.6f, 1.6f);
                     var inner = new Rect(rect.x + border, rect.y + border, rect.width - border * 2, rect.height - border * 2);
                     StarDrawDisc(disc, inner, n.Allocated ? new Color(0.26f, 0.18f, 0.06f) : new Color(0.07f, 0.09f, 0.14f));
                     if (n.Icon != null)
@@ -2665,9 +2683,10 @@ namespace SodRpg.Mod
                     else if (rect.width >= 24f) GUI.Label(rect, n.RankLabel, _starRankStyle);
                     if (n.Region.HasValue && rect.width >= 20f)
                         StarDrawDisc(disc, new Rect(rect.xMax - 7f, rect.y - 3f, 8f, 8f), StarRegionColor(n.Region.Value));
-                    // Hover takes priority over another label in the same cell.
-                    if (i == hover || (_starView.Named[i]
-                        && (hover < 0 || _starView.LabelCells[i] != _starView.LabelCells[hover])))
+                    // Both focus labels stay visible; ordinary labels yield cells to them.
+                    if (_starView.Focused[i] || (_starView.Named[i]
+                        && (hover < 0 || _starView.LabelCells[i] != _starView.LabelCells[hover])
+                        && (choiceFocus < 0 || !_starView.Visible[choiceFocus] || _starView.LabelCells[i] != _starView.LabelCells[choiceFocus])))
                         GUI.Label(new Rect(rect.center.x - 100f, rect.yMax + 7f, 200f, 22f), n.Name, _starNameStyle);
                 }
             }

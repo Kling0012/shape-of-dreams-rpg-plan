@@ -13,9 +13,18 @@ namespace SodRpg.Core.Game
             ValidateChoice(star, chosen);
             if (rank < 0 || rank > star.MaxRank || rank > 0 && chosen < 0)
                 throw new InvalidOperationException("Invalid allocated choice state: " + star.Id);
+            // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
+            // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
             return (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
                 : Loc.T("選択中の効果：", "Chosen effect:"))
-                + "\n" + ChoiceOptionLabel(star, 0, chosen) + "\n" + ChoiceOptionLabel(star, 1, chosen);
+                + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen)
+                + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen);
+        }
+
+        private static string ChoiceOptionHeading(int option)
+        {
+            char letter = (char)('A' + option);
+            return Loc.T($"<color=#9fe0ff><b>■ 効果 {letter}</b></color>", $"<color=#9fe0ff><b>■ Effect {letter}</b></color>");
         }
 
         public static string ChoiceOptionLabel(TalentDef star, int option, int chosen)

@@ -31,9 +31,14 @@ namespace SodRpg.Mod
         private Vector2 _pan;
         private float _zoom, _guiScale;
         private readonly HashSet<long> _labelCells = new HashSet<long>();
+        private int[] _pairEndpointA, _pairEndpointB;
+        private int _relationHover = -1, _relationChoice = -1;
+        internal bool[] Focused { get; private set; }
+        internal bool[] Related { get; private set; }
         internal Rect[] NodeRects { get; private set; }
         internal long[] LabelCells { get; private set; }
         internal bool[] Named { get; private set; }
+        internal bool[] Visible { get; private set; }
         internal int[] VisibleNodes { get; private set; }
         internal EdgeQuad[] VisibleEdges { get; private set; }
         internal int NodeCount { get; private set; }
@@ -52,8 +57,10 @@ namespace SodRpg.Mod
                 NodeRects = new Rect[layout.Nodes.Count];
                 LabelCells = new long[layout.Nodes.Count];
                 Named = new bool[layout.Nodes.Count];
+                Visible = new bool[layout.Nodes.Count];
                 VisibleNodes = new int[layout.Nodes.Count];
                 VisibleEdges = new EdgeQuad[layout.Edges.Count];
+                RebuildRelationships(layout);
             }
             _layout = layout;
             _viewport = viewport;
@@ -74,7 +81,8 @@ namespace SodRpg.Mod
                 float size = (n.Kind == HeroTreeNodeKind.Small ? 36f : n.Kind == HeroTreeNodeKind.Notable ? 46f : 58f) * sizeScale;
                 // Includes the halo, rank badge and the label below the disc.
                 float half = size * 0.5f;
-                if (!StarMapMath.IsVisible(x, y, half, nodeBounds)) continue;
+                Visible[i] = StarMapMath.IsVisible(x, y, half, nodeBounds);
+                if (!Visible[i]) continue;
                 NodeRects[i] = new Rect(x - half, y - half, size, size);
                 VisibleNodes[NodeCount++] = i;
                 long cell = StarMapMath.LabelCell(x, y + half + 7f, LabelCellWidth, LabelCellHeight);
@@ -97,6 +105,46 @@ namespace SodRpg.Mod
             }
         }
 
+        private void RebuildRelationships(HeroTreeLayout layout)
+        {
+            int count = layout.Nodes.Count;
+            Focused = new bool[count];
+            Related = new bool[count];
+            _pairEndpointA = new int[count];
+            _pairEndpointB = new int[count];
+            _relationHover = _relationChoice = -1;
+            var indices = new Dictionary<string, int>(count, StringComparer.Ordinal);
+            for (int i = 0; i < count; i++) indices.Add(layout.Nodes[i].Id, i);
+            for (int i = 0; i < count; i++)
+            {
+                var pair = PairCombos.ForBridge(layout.Nodes[i].Talent?.Id);
+                _pairEndpointA[i] = pair?.StarA != null && indices.TryGetValue(pair.StarA, out int a) ? a : -1;
+                _pairEndpointB[i] = pair?.StarB != null && indices.TryGetValue(pair.StarB, out int b) ? b : -1;
+            }
+        }
+
+        // Only the previous and new focus neighborhoods are visited, not the whole graph each repaint.
+        internal void UpdateRelationships(int hover, int choice)
+        {
+            if (hover == _relationHover && choice == _relationChoice) return;
+            MarkRelationships(_relationHover, false);
+            MarkRelationships(_relationChoice, false);
+            _relationHover = hover;
+            _relationChoice = choice;
+            MarkRelationships(hover, true);
+            MarkRelationships(choice, true);
+        }
+
+        private void MarkRelationships(int focus, bool value)
+        {
+            if (focus < 0 || focus >= _layout.Nodes.Count) return;
+            Focused[focus] = value;
+            var neighbors = _layout.Nodes[focus].Neighbors;
+            for (int i = 0; i < neighbors.Count; i++) Related[neighbors[i]] = value;
+            if (_pairEndpointA[focus] >= 0) Related[_pairEndpointA[focus]] = value;
+            if (_pairEndpointB[focus] >= 0) Related[_pairEndpointB[focus]] = value;
+        }
+
         internal int Hit(Vector2 mouse)
         {
             for (int v = NodeCount - 1; v >= 0; v--)
@@ -114,7 +162,7 @@ namespace SodRpg.Mod
             finally { GUI.matrix = baseMatrix; }
         }
 
-        internal static void DrawEdge(EdgeQuad edge, Vector2 unclippedOrigin, Matrix4x4 baseMatrix, Color color)
+        internal static void DrawEdge(EdgeQuad edge, Vector2 unclippedOrigin, Matrix4x4 baseMatrix, Color color, float width = 2f)
         {
             Vector2 pivot = unclippedOrigin + edge.Start;
             // T(pivot) * R * T(-pivot), composed on the RIGHT of the base transform.
@@ -129,7 +177,7 @@ namespace SodRpg.Mod
             {
                 GUI.matrix = baseMatrix * rotation;
                 GUI.color = color;
-                GUI.DrawTexture(new Rect(edge.Start.x, edge.Start.y - 1f, edge.Length, 2f), Texture2D.whiteTexture);
+                GUI.DrawTexture(new Rect(edge.Start.x, edge.Start.y - width * 0.5f, edge.Length, Mathf.Max(1f, width)), Texture2D.whiteTexture);
             }
             finally { GUI.matrix = baseMatrix; GUI.color = oldColor; }
         }
