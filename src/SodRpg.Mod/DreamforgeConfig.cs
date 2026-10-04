@@ -17,6 +17,9 @@ namespace SodRpg.Mod
         [LabelText("Secure point panel key / 確保地点の画面を隠す・出すキー")]
         public Key securePanelKey = Key.F9;
 
+        [LabelText("Experimental custom mob models (same validated pack required on ALL peers) / カスタムMOBモデル（全員同じ検証済みパック必須）")]
+        public bool customMobModels = false;
+
         [LabelText("Japanese UI / 日本語表示")]
         public bool japanese = true;
 

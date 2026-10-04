@@ -5,3 +5,12 @@ obj/
 TestResults/
 .ref/
 tests/SodRpg.Core.Tests/Diagnostics/
+
+# Generated local validation/build outputs
+__pycache__/
+*.pyc
+# Source binaries are reproducibly materialized from checked-in archive parts.
+assets/dreamborne/*/*.blend
+assets/dreamborne/*/*.fbx
+assets/dreamborne/*/*.glb
+assets/dreamborne/*/Textures/*.png

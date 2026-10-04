@@ -1,0 +1,299 @@
+{
+  "schemaVersion": 1,
+  "unityVersion": "6000.0.77f1",
+  "urpVersion": "",
+  "gameVersion": "",
+  "buildTarget": "StandaloneWindows64",
+  "contentVersion": "1",
+  "renderPipelineAsset": "",
+  "renderPipelineSha256": "",
+  "sdkAssemblies": [
+    {
+      "file": "Dew.Core.dll",
+      "sha256": ""
+    }
+  ],
+  "models": [
+    {
+      "id": "ember_warden",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "mirecap_stomper",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "duskwing_oracle",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "thorncrown_stag",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "frostjaw_prowler",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "runestone_tortoise",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "glasswing_moth",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "obsidian_scorpion",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "lantern_wisp",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    },
+    {
+      "id": "abyssal_bell",
+      "baseMonsterTypes": [],
+      "templatePrefab": "",
+      "templateSha256": "",
+      "replaceChildPath": "",
+      "clipBindings": [
+        {
+          "semantic": "Idle",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "idle.clip"
+        },
+        {
+          "semantic": "Walk",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": "runForwardClip"
+        },
+        {
+          "semantic": "Attack",
+          "componentType": "EntityModel",
+          "componentPath": "",
+          "propertyPath": ""
+        }
+      ],
+      "objectBindings": []
+    }
+  ],
+  "additionalPackages": []
+}
