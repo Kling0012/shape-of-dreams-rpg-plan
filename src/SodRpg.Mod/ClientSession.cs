@@ -714,6 +714,15 @@ namespace SodRpg.Mod
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
                 return Loc.T("ゲームに接続していません。", "Not connected to a game.");
             }
+            // ホストが決済を始める前に、token・内容・台帳の識別子・分解の予約を含む準備状態をディスクへ確定させる。
+            // 確定できなければ送らない（ホストの通貨は動かない）。送ったあとの異常終了でも、保存済みの token から結果を照会できる。
+            if (!SaveNow(true))
+            {
+                RestoreSalvageTrade(_trades.Complete(t.Token, false));
+                SaveNow();
+                return Loc.T("取引の記録を保存できなかったため、取引は行っていません。保存先を確認してからもう一度お試しください。",
+                    "The trade was not made because its record could not be saved. Check the save location and try again.");
+            }
             try
             {
                 TradeWire.Encode(t, out int spendGold, out int spendDust, out int earnDust);
@@ -725,10 +734,10 @@ namespace SodRpg.Mod
             catch (Exception ex)
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
+                SaveNow(); // 準備状態は保存済み：送れなかった取り消しも保存して、再起動後に幽霊の取引が残らないようにする
                 Log.Error("Client SendTrade: " + ex.Message);
                 return Loc.T("取引を送れませんでした。", "Could not send the trade.");
             }
-            SaveNow(); // 送った取引は保存する：MODの再読み込みや終了をまたいでも、結果を照会して対価を受け取れる
             return null;
         }
 
@@ -1134,36 +1143,60 @@ namespace SodRpg.Mod
         public double SaveMsAverage => _saveCount > 0 ? _saveMsTotal / _saveCount : 0;
 
         /// <summary>保存を予約する（ディスクへの書き込みは別スレッド）。</summary>
-        public void SaveNow()
+        public void SaveNow() => SaveNow(false);
+
+        /// <summary>
+        /// 保存を予約する。confirm のときは、そのリビジョンがディスクへ書き終わるまで待ち、書けたかを返す（取引を送る前の準備保存用）。
+        /// confirm でなければ予約できたかどうかだけを返す。
+        /// </summary>
+        private bool SaveNow(bool confirm)
         {
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
-            if (_store == null) return;
+            if (_store == null)
+            {
+                // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
+                if (confirm)
+                {
+                    SaveError = Loc.T("保存先が無効です。", "Saving is unavailable.");
+                    _dirty = true;
+                }
+                return !confirm; // 確認なしの保存は従来どおり何もしない
+            }
             if (_writer == null) _writer = new AsyncProfileWriter(_store);
             var sw = System.Diagnostics.Stopwatch.StartNew();
+            bool ok = true;
             try
             {
-                _writer.Enqueue(Profile);
+                if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
+                else _writer.Enqueue(Profile);
             }
             catch (Exception ex)
             {
                 SaveError = ex.Message;
                 _dirty = true;
+                ok = false;
                 Log.Error("Save failed: " + ex.Message);
             }
             _saveMsTotal += sw.Elapsed.TotalMilliseconds;
             _saveCount++;
             if (_writer.LastError != null) SaveError = _writer.LastError;
             else if (SaveError != null && _writer.WrittenRevision > 0) SaveError = null;
+            if (!ok) _dirty = true;
+            return ok;
         }
 
         /// <summary>終了時：予約済みの保存を書き終えるまで待つ。</summary>
         public void FlushSaves()
         {
-            _writer?.Flush();
+            if (_writer == null) return;
+            bool drained = _writer.Flush();
+            // 待機が終わっただけでは書けたことにならない：書き込みの失敗や時間切れは記録に残す
+            if (!drained) Log.Error("Save flush timed out; the last save may not have been written.");
+            else if (_writer.LastError != null) Log.Error("Last save failed: " + _writer.LastError);
         }
     }
 }

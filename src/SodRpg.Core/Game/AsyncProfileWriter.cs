@@ -28,14 +28,52 @@ namespace SodRpg.Core.Game
         public string LastError { get; private set; }
 
         /// <summary>ディスクへ書き終えた最新のリビジョン。</summary>
-        public long WrittenRevision { get; private set; }
+        public long WrittenRevision { get { lock (_lock) return _writtenRevision; } }
+
+        private long _writtenRevision;
+        private long _attemptedRevision;
 
         public int Coalesced { get; private set; }
 
         public double LastWriteMs { get; private set; }
 
         /// <summary>保存を予約する。p のリビジョンを1進め、JSON を作って作業スレッドへ渡す。</summary>
-        public void Enqueue(Profile p)
+        public void Enqueue(Profile p) => EnqueueRevision(p);
+
+        /// <summary>
+        /// 保存を予約し、そのリビジョン（またはそれ以降）がディスクへ書き終わるまで待つ。
+        /// 書き込みに失敗した・時間切れになった場合は false（その内容は確定していない）。外部の決済を始める前の「準備の保存」に使う。
+        /// </summary>
+        public bool EnqueueAndConfirm(Profile p, int timeoutMs = 3000)
+        {
+            long rev = EnqueueRevision(p);
+            return WaitForRevision(rev, timeoutMs);
+        }
+
+        /// <summary>
+        /// 外部の決済を始める前の準備保存。writer が無い（保存先が無効な）ときは書き込みが一度も行われないので、確定できたことにはならず false。
+        /// </summary>
+        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = 3000)
+            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs);
+
+        /// <summary>指定リビジョン以降が書き終わったら true。その書き込みが失敗に終わった、または時間切れなら false。</summary>
+        public bool WaitForRevision(long revision, int timeoutMs = 3000)
+        {
+            var sw = Stopwatch.StartNew();
+            lock (_lock)
+            {
+                while (true)
+                {
+                    if (_writtenRevision >= revision) return true;
+                    if (_attemptedRevision >= revision) return false; // 試みたが書けなかった
+                    int left = timeoutMs - (int)sw.ElapsedMilliseconds;
+                    if (left <= 0) return false;
+                    Monitor.Wait(_lock, left);
+                }
+            }
+        }
+
+        private long EnqueueRevision(Profile p)
         {
             p.Revision++;
             string text = ProfileCodec.Write(p);
@@ -45,11 +83,12 @@ namespace SodRpg.Core.Game
                 if (_pendingText != null) Coalesced++;
                 _pendingText = text;
                 _pendingRevision = rev;
-                if (_running) return;
+                if (_running) return rev;
                 _running = true;
                 _idle.Reset();
             }
             ThreadPool.QueueUserWorkItem(_ => Work());
+            return rev;
         }
 
         private void Work()
@@ -74,18 +113,28 @@ namespace SodRpg.Core.Game
                 try
                 {
                     _store.WriteText(text, rev);
-                    WrittenRevision = rev;
-                    LastError = null;
+                    lock (_lock)
+                    {
+                        _writtenRevision = rev;
+                        _attemptedRevision = rev;
+                        LastError = null;
+                        Monitor.PulseAll(_lock);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    LastError = ex.Message;
+                    lock (_lock)
+                    {
+                        _attemptedRevision = rev;
+                        LastError = ex.Message;
+                        Monitor.PulseAll(_lock);
+                    }
                 }
                 LastWriteMs = sw.Elapsed.TotalMilliseconds;
             }
         }
 
-        /// <summary>予約済みの保存がすべて書き終わるまで待つ（終了時用）。</summary>
+        /// <summary>予約済みの保存がすべて書き終わるまで待つ（終了時用）。書き込みの成功は意味しない：成功したかは WrittenRevision / LastError で確かめる。</summary>
         public bool Flush(int timeoutMs = 5000) => _idle.WaitOne(timeoutMs);
     }
 }
