@@ -485,7 +485,9 @@ namespace SodRpg.Core.Tests
             for (ulong seed = 1; seed <= 100; seed++)
             {
                 var p = Profile.CreateNew(seed);
-                var r = Loot.RollRelic(new Rng(seed), Rarity.Rare, 10, slot: Slot.Head);
+                var rng = new Rng(seed);
+                Relic r;
+                do { r = Loot.RollRelic(rng, Rarity.Rare, 10, slot: Slot.Head); } while (r.NamedId != null); // 井戸の対象は通常のレア（銘品は対象外・設計 3.4）
                 Power old = Assert.Single(r.Powers).Power;
                 p.Stash.Add(r);
                 Rules.Equip(p, "Hero_Vesper", r.Uid);

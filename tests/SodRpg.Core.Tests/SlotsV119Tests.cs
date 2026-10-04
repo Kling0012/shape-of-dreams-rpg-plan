@@ -32,8 +32,16 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(slot, relic.Slot);
                 Assert.Equal(Rarity.Epic, relic.Rarity);
                 // v1.22：エピックは固有効果2つ（別々の物）。どちらもその枠の候補の範囲内。
+                // v1.32：銘品のエピックは定義の固定値（土台の枠の池とは限らない。NamedItemsDataV132Tests）。
                 Assert.Equal(2, relic.Powers.Count);
                 Assert.NotEqual(relic.Powers[0].Power, relic.Powers[1].Power);
+                if (relic.NamedId != null)
+                {
+                    NamedItems.TryGetNamed(relic.NamedId, out var def);
+                    Assert.Equal(def.Powers.Select(p => (p.Power, p.Value)),
+                        relic.Powers.Select(p => (p.Power, p.Value)));
+                    continue;
+                }
                 foreach (var power in relic.Powers)
                     Assert.Contains(Content.PowerPool(slot), p => p.Power == power.Power &&
                         power.Value >= p.Min && power.Value <= p.Max);

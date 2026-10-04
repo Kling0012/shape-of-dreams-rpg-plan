@@ -506,7 +506,18 @@ namespace SodRpg.Core.Tests
                 p.Hero("run.hero").Equipped[(int)slot] = equipped.Uid;
             }
             foreach (var rarity in new[] { Rarity.Common, Rarity.Common, Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
+            {
+                // るつぼの対象は通常品のエピック（銘品は固有効果が固定で対象外・設計 3.4）。ほかの乱数は変えない。
+                if (rarity == Rarity.Epic)
+                {
+                    var crucibleRng = new Rng(seed + 900);
+                    Relic epic;
+                    do { epic = Loot.RollRelic(crucibleRng, rarity, 10); } while (epic.NamedId != null);
+                    p.Run.Satchel.Add(epic);
+                    continue;
+                }
                 p.Run.Satchel.Add(Loot.RollRelic(rng, rarity, 10));
+            }
             var lost = Loot.RollRelic(rng, Rarity.Rare, 10);
             lost.Enhance = 1;
             p.LostAndFound.Add(lost);

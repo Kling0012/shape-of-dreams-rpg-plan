@@ -10,7 +10,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Fabricated_global_cap_raw_gear_is_clamped_to_its_source_not_build_caps()
         {
-            var relic = Loot.RollRelic(new Rng(19), Rarity.Rare, 1, Slot.Armor);
+            var relic = Ordinary(new Rng(19), Rarity.Rare, 1, Slot.Armor);
             var affix = Content.AffixPool(relic.Slot).First(a => a.Stat != relic.Base.ImplicitStat
                 && a.MinRarity <= relic.Rarity && Content.StatCap(a.Stat) > a.Max);
             var power = Content.PowerPool(relic.Slot).First(p => Content.PowerAllowedForRarity(p.Power, relic.Rarity)
@@ -176,12 +176,12 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Rare_full_retuned_power_and_epic_minor_upper_boundary_are_preserved()
         {
-            var rare = Loot.RollRelic(new Rng(11), Rarity.Rare, 60);
+            var rare = Ordinary(new Rng(11), Rarity.Rare, 60);
             var range = Content.PowerPool(rare.Slot).First(p => p.Power == rare.Powers[0].Power);
             rare.Powers[0] = new PowerLine(range.Power, range.Max); // Legal MemoryWell roll.
             AssertPreserved(rare);
 
-            var epic = Loot.RollRelic(new Rng(11), Rarity.Epic, 60);
+            var epic = Ordinary(new Rng(11), Rarity.Epic, 60);
             range = Content.PowerPool(epic.Slot).First(p => p.Power == epic.Powers[1].Power);
             int minorMax = range.Min + (range.Max - range.Min) / 2;
             epic.Powers[1] = new PowerLine(range.Power, minorMax);
@@ -237,7 +237,8 @@ namespace SodRpg.Core.Tests
                 Rules.ChooseRetune(profile, 0);
                 AssertPreserved(relic);
             }
-            var target = profile.Stash.First(r => r.Powers.Count > 0);
+            // 記憶の井戸の対象は通常品（銘品は固有効果が固定で対象外・設計 3.4）。
+            var target = profile.Stash.First(r => r.Powers.Count > 0 && r.NamedId == null);
             const string hero = "Hero_Cetus";
             profile.Hero(hero).Equipped[(int)target.Slot] = target.Uid;
             profile.Run = new RunState { HeroKey = hero };
@@ -272,6 +273,14 @@ namespace SodRpg.Core.Tests
                 && !Content.PowerPool(relic.Slot).Any(range => range.Power == p));
             relic.Powers[0] = new PowerLine(forbidden, 1);
             Reject(relic);
+        }
+
+        /// <summary>銘品ではない通常の遺物（銘品は固有効果が固定なので、値を書き換える試験には使えない）。</summary>
+        private static Relic Ordinary(Rng rng, Rarity rarity, int level, Slot? slot = null)
+        {
+            Relic relic;
+            do { relic = Loot.RollRelic(rng, rarity, level, slot); } while (relic.NamedId != null);
+            return relic;
         }
 
         private static int Rounded(int raw, int pct) => (raw * pct + 50) / 100;

@@ -14,7 +14,8 @@ namespace SodRpg.Core.Tests
             foreach (var slot in Content.SlotOrder)
                 for (int i = 0; i < 100; i++)
                 {
-                    var r = Loot.RollRelic(rng, Rarity.Rare, 10, slot: slot);
+                    Relic r;
+                    do { r = Loot.RollRelic(rng, Rarity.Rare, 10, slot: slot); } while (r.NamedId != null); // 銘品は固定値（NamedItemsDataV132Tests）
                     var pw = Assert.Single(r.Powers);
                     var pr = Content.PowerPool(slot).First(x => x.Power == pw.Power);
                     Assert.InRange(pw.Value, pr.Min, pr.Min + (pr.Max - pr.Min) / 2);
@@ -46,9 +47,13 @@ namespace SodRpg.Core.Tests
                 Assert.False(string.IsNullOrWhiteSpace(ep.En));
             }
             Loc.Japanese = true;
-            var epic = Loot.RollRelic(new Rng(3), Rarity.Epic, 5, slot: Slot.Weapon);
+            Relic epic;
+            var epicRng = new Rng(3);
+            do { epic = Loot.RollRelic(epicRng, Rarity.Epic, 5, slot: Slot.Weapon); } while (epic.NamedId != null); // 銘品には銘を付けない（設計 4）
             Assert.Equal(Content.Epithet(epic.Powers[0].Power).Ja + " " + epic.Base.Name.Ja, epic.PlainName);
-            var rare = Loot.RollRelic(new Rng(4), Rarity.Rare, 5, slot: Slot.Weapon);
+            Relic rare;
+            var rareRng = new Rng(4);
+            do { rare = Loot.RollRelic(rareRng, Rarity.Rare, 5, slot: Slot.Weapon); } while (rare.NamedId != null);
             Assert.Equal(rare.Base.Name.Ja, rare.PlainName); // レアには銘を付けない
             // 言語の切り替えは他の試験と並行して走ると干渉するので、ここでは日本語だけを確かめる。
         }

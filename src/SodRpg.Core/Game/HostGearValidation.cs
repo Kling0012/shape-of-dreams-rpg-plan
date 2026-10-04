@@ -29,6 +29,15 @@ namespace SodRpg.Core.Game
                     return false;
             }
             else if (source.Rarity == Rarity.Legendary) return false;
+            // 銘品（v1.32）も固有効果は定義どおり。通常の遺物と同じ土台・レア度でなければならない。
+            NamedDef named = null;
+            if (source.NamedId != null)
+            {
+                if (unique != null || !NamedItems.TryGetNamed(source.NamedId, out named)
+                    || !string.Equals(named.BaseId, source.BaseId, StringComparison.Ordinal)
+                    || named.Rarity != source.Rarity)
+                    return false;
+            }
             if (source.Rarity != Rarity.Legendary && (source.AwakenLevel != 0 || source.AwakenPoints != 0))
                 return false;
 
@@ -43,10 +52,11 @@ namespace SodRpg.Core.Game
             if (source.EnhanceMilestones > maxMilestones) return false;
             if (source.MilestonePowerApplied && source.EnhanceMilestones < 5) return false;
 
-            // Loot starts Rare/Epic with 1/2 powers, ordinary uniques with their authored powers,
-            // and Common/Uncommon/set pieces with none. +5 adds a power only to the latter sources;
-            // otherwise it adds an affix. +3/+10/+15 each add an affix; +20 adds no affix.
+            // Loot starts Rare/Epic with 1/2 powers, ordinary uniques and named items with their
+            // authored powers, and Common/Uncommon/set pieces with none. +5 adds a power only to
+            // the latter sources; otherwise it adds an affix. +3/+10/+15 each add an affix; +20 adds none.
             int initialPowers = unique != null ? unique.Powers.Count
+                : named != null ? named.Powers.Count
                 : source.Rarity == Rarity.Epic ? 2 : source.Rarity == Rarity.Rare ? 1 : 0;
             int maxPowers = initialPowers > 0 ? initialPowers : source.EnhanceMilestones >= 2 ? 1 : 0;
             int maxAffixes = Content.AffixCount(source.Rarity);
@@ -55,7 +65,7 @@ namespace SodRpg.Core.Game
             if (source.EnhanceMilestones >= 3) maxAffixes++;
             if (source.EnhanceMilestones >= 4) maxAffixes++;
             if (source.Affixes.Count > maxAffixes || source.Powers.Count > maxPowers
-                || (unique != null && initialPowers > 0 && source.Powers.Count != initialPowers))
+                || ((unique != null || named != null) && initialPowers > 0 && source.Powers.Count != initialPowers))
                 return false;
 
             var result = new Relic
@@ -63,6 +73,7 @@ namespace SodRpg.Core.Game
                 Uid = source.Uid,
                 BaseId = source.BaseId,
                 UniqueId = source.UniqueId,
+                NamedId = source.NamedId,
                 Rarity = source.Rarity,
                 ItemLevel = source.ItemLevel,
                 Enhance = source.Enhance,
@@ -107,6 +118,12 @@ namespace SodRpg.Core.Game
                     // Unique powers and order are authored, not interchangeable slot-pool rolls.
                     if (line.Power != unique.Powers[i].Power) return false;
                     cap = unique.Powers[i].Value;
+                }
+                else if (named != null)
+                {
+                    // 銘品の固有効果も定義どおり（設計 3.2。土台の枠の池とは限らない）。
+                    if (line.Power != named.Powers[i].Power) return false;
+                    cap = named.Powers[i].Value;
                 }
                 else
                 {

@@ -45,12 +45,13 @@ namespace SodRpg.Core.Game
                 if (relic == null) throw new InvalidOperationException("Missing equipped source.");
                 Token(relic.Uid); Token(relic.BaseId);
                 if (relic.UniqueId != null) Token(relic.UniqueId);
+                if (relic.NamedId != null) Token(relic.NamedId);
                 if (!first) sb.Append(','); first = false;
                 sb.Append(slot).Append(':').Append(relic.Uid).Append(':').Append(relic.BaseId).Append(':')
                     .Append(relic.UniqueId).Append(':').Append((int)relic.Rarity).Append(':').Append(relic.ItemLevel)
                     .Append(':').Append(relic.Enhance).Append(':').Append(relic.LimitBreaks)
                     .Append(':').Append(relic.AwakenLevel).Append(':').Append(relic.AwakenPoints)
-                    .Append(':').Append(relic.EnhanceMilestones).Append(':');
+                    .Append(':').Append(relic.EnhanceMilestones).Append(':').Append(relic.NamedId).Append(':');
                 bool lineFirst = true;
                 foreach (var line in relic.Affixes)
                 {
@@ -209,26 +210,28 @@ namespace SodRpg.Core.Game
                         foreach (string entry in Entries(body, Content.SlotCount))
                         {
                             var fields = entry.Split(':');
-                            if (fields.Length != 13) throw new FormatException();
+                            if (fields.Length != 14) throw new FormatException();
                             int slot = Range(fields[0], 0, Content.SlotCount - 1);
                             Token(fields[1]); Token(fields[2]);
                             if (fields[3].Length > 0) Token(fields[3]);
+                            if (fields[11].Length > 0) Token(fields[11]);
                             if (hero.Equipped[slot] != null || !uids.Add(fields[1])) throw new FormatException();
                             var relic = new Relic
                             {
                                 Uid = fields[1], BaseId = fields[2], UniqueId = fields[3].Length == 0 ? null : fields[3],
+                                NamedId = fields[11].Length == 0 ? null : fields[11],
                                 Rarity = (Rarity)Int(fields[4]), ItemLevel = Int(fields[5]), Enhance = Int(fields[6]),
                                 LimitBreaks = Int(fields[7]), AwakenLevel = Int(fields[8]), AwakenPoints = Int(fields[9]),
                                 EnhanceMilestones = Int(fields[10]),
                                 // The existing milestone history carries the one-time boost on the wire.
                                 MilestonePowerApplied = Int(fields[10]) >= 5,
                             };
-                            foreach (string line in Lines(fields[11], StatCount))
+                            foreach (string line in Lines(fields[12], StatCount))
                             {
                                 var pair = line.Split('='); if (pair.Length != 2) throw new FormatException();
                                 relic.Affixes.Add(new StatLine((Stat)Int(pair[0]), Int(pair[1])));
                             }
-                            foreach (string line in Lines(fields[12], PowerCount))
+                            foreach (string line in Lines(fields[13], PowerCount))
                             {
                                 var pair = line.Split('='); if (pair.Length != 2) throw new FormatException();
                                 relic.Powers.Add(new PowerLine((Power)Int(pair[0]), Int(pair[1])));

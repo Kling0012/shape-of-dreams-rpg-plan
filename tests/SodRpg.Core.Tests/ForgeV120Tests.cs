@@ -11,7 +11,9 @@ namespace SodRpg.Core.Tests
         private static (Profile P, Relic R) WithRelic(Rarity rarity, int seed = 7)
         {
             var p = Profile.CreateNew((ulong)seed);
-            var r = Loot.RollRelic(new Rng((ulong)seed), rarity, 5, Slot.Weapon);
+            var rng = new Rng((ulong)seed);
+            Relic r;
+            do { r = Loot.RollRelic(rng, rarity, 5, Slot.Weapon); } while (r.NamedId != null); // 節目の付与は通常品で（銘品は固有効果が固定）
             p.Stash.Add(r);
             p.AddMaterial(Materials.Shard, 5000);
             p.AddMaterial(Materials.Tuning, 50);

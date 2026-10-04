@@ -83,14 +83,19 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>
-    /// 銘品と組の登録簿（v1.32）。本体のデータは後の段階で入り、今は空。
+    /// 銘品と組の登録簿（v1.32）。本体のデータ（NamedItems.Data.cs）は初回アクセスで登録される。
     /// </summary>
     public static class NamedItems
     {
-        private static List<NamedDef> _named = new List<NamedDef>();
-        private static List<MiniSetDef> _miniSets = new List<MiniSetDef>();
-        private static Dictionary<string, NamedDef> _namedById = new Dictionary<string, NamedDef>(StringComparer.Ordinal);
-        private static Dictionary<string, MiniSetDef> _miniSetsById = new Dictionary<string, MiniSetDef>(StringComparer.Ordinal);
+        private static List<NamedDef> _named;
+        private static List<MiniSetDef> _miniSets;
+        private static Dictionary<string, NamedDef> _namedById;
+        private static Dictionary<string, MiniSetDef> _miniSetsById;
+
+        static NamedItems()
+        {
+            RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets);
+        }
 
         public static IReadOnlyList<NamedDef> All => _named;
         public static IReadOnlyList<MiniSetDef> MiniSets => _miniSets;
@@ -150,7 +155,8 @@ namespace SodRpg.Core.Game
             return Loc.T($"《{set.Name}》 発見 {found}/{set.PieceCount}", $"\"{set.Name}\" {found}/{set.PieceCount} found");
         }
 
-        /// <summary>試験用の登録。登録簿を丸ごと差し替え、図鑑のキャッシュを作り直させる。空を渡せば元の空に戻る。</summary>
+        /// <summary>試験用の登録。登録簿を丸ごと差し替え、図鑑のキャッシュを作り直させる。空を渡せば空の登録簿になる
+        /// （本体のデータへ戻すには NamedItemsData を渡す。起動時の初期化も同じ物を登録する）。</summary>
         internal static void RegisterForTests(IEnumerable<NamedDef> named, IEnumerable<MiniSetDef> miniSets)
         {
             var namedList = (named ?? Enumerable.Empty<NamedDef>()).ToList();

@@ -14,11 +14,16 @@ namespace SodRpg.Core.Tests
             double Share(Line? focus)
             {
                 var rng = new Rng(17);
-                int hit = 0;
+                int hit = 0, normal = 0;
                 const int n = 30000;
                 for (int i = 0; i < n; i++)
-                    if (Loot.RollRelic(rng, Rarity.Rare, 10, null, focus).Base.Line == Line.Guard) hit++;
-                return (double)hit / n;
+                {
+                    var r = Loot.RollRelic(rng, Rarity.Rare, 10, null, focus);
+                    if (r.NamedId != null) continue; // 銘品を除けば通常品の土台は狙い系統どおり（銘品は NamedItemsDataV132Tests で）
+                    normal++;
+                    if (r.Base.Line == Line.Guard) hit++;
+                }
+                return (double)hit / normal;
             }
             double baseShare = Share(null);
             double focused = Share(Line.Guard);
@@ -52,7 +57,8 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(p, "f");
             var rng = new Rng(p.RngState);
             int pity = p.EpicPity;
-            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, Line.Resonance);
+            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, Line.Resonance, null,
+                p.Stash, p.Run.Satchel, p.Codex); // Rules.OnKill と同じ引数（銘品の重みは図鑑・所持で変わる）
             Rules.OnKill(p, MonsterTier.Boss, 10);
             Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), p.Run.Satchel.Select(r => r.Uid + r.BaseId));
         }

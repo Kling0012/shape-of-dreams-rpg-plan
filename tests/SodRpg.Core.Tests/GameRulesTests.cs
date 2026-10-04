@@ -39,7 +39,7 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(u.SetId != null ? 0 : 2, r.Powers.Count);
                 }
                 if (r.Rarity == Rarity.Rare) Assert.Single(r.Powers); // v1.22：レアは弱い固有効果1つ
-                if (r.Rarity < Rarity.Rare) Assert.Empty(r.Powers);
+                if (r.Rarity < Rarity.Rare && r.NamedId == null) Assert.Empty(r.Powers); // 銘品のアンコモンは固有効果1つ（v1.32）
             }
         }
 

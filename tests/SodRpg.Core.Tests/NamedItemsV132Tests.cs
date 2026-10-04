@@ -10,12 +10,20 @@ using Xunit;
 namespace SodRpg.Core.Tests
 {
     /// <summary>
-    /// v1.32 stage 2b の回帰：銘品が1つも登録されていないとき（=データがまだ入っていない間）、
+    /// v1.32 stage 2b の回帰：銘品が1つも登録されていないとき（=登録簿を空に差し替えたとき）、
     /// 抽選は stage 2a の時点と完全に同じ遺物を同じ乱数列で出す。
     /// 古い RollRelic は凍結コピー（ここは変更しないこと）。
+    /// 本体のデータ（360銘品・30組）が登録されていても、コモンと伝説の経路は変わらない。
     /// </summary>
-    public class NamedItemsZeroDefsV132Tests
+    public class NamedItemsZeroDefsV132Tests : IDisposable
     {
+        public NamedItemsZeroDefsV132Tests()
+        {
+            NamedItems.RegisterForTests(null, null); // 空の登録簿で試す
+        }
+
+        public void Dispose() => NamedItems.RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets);
+
         private static readonly Rarity[] Rarities = { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary };
 
         private static T OldPickWeighted<T>(Rng rng, List<T> items, Func<T, Line> lineOf, Line? focus)
@@ -124,6 +132,37 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Common_and_legendary_rolls_are_unchanged_with_the_production_data_registered()
+        {
+            NamedItems.RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets); // 本体のデータ（360・30）
+            Assert.Equal(360, NamedItems.All.Count);
+
+            // セット収集補助が働くように、伝説のセット品と通常品を混ぜた所持リストも渡す。
+            var owned = new List<Relic> { Loot.RollUnique(new Rng(7101), FirstUniqueWithSet(), 10) };
+            var unsecured = new List<Relic> { Loot.RollRelic(new Rng(7102), Rarity.Epic, 10) };
+            var codex = new HashSet<string> { owned[0].UniqueId, unsecured[0].BaseId };
+            codex.Add(NamedItems.CodexId(NamedItemsData.Named[0].Id)); // 銘品の図鑑が混ざっていても影響しない
+
+            for (int i = 0; i < 2000; i++)
+            {
+                var rarity = i % 2 == 0 ? Rarity.Common : Rarity.Legendary; // コモン=土台だけ、伝説=今のまま
+                Slot? slot = i % 7 == 0 ? (Slot?)null : (Slot)(i % 6);
+                Line? focus = i % 4 == 0 ? (Line?)null : (Line)(i % 3);
+                int level = 1 + (i * 13) % Content.MaxItemLevel;
+                bool withLists = i % 5 == 0;
+                var oldRng = new Rng((ulong)(300000 + i));
+                var newRng = new Rng((ulong)(300000 + i));
+                var oldRelic = OldRollRelic(oldRng, rarity, level, slot, focus,
+                    withLists ? owned : null, withLists ? unsecured : null);
+                var newRelic = Loot.RollRelic(newRng, rarity, level, slot, focus,
+                    withLists ? owned : null, withLists ? unsecured : null, withLists ? codex : null);
+                Assert.Equal(Describe(oldRelic), Describe(newRelic));
+                Assert.Equal(oldRng.State, newRng.State);
+                Assert.Null(newRelic.NamedId); // コモンと伝説に銘品は出ない
+            }
+        }
+
+        [Fact]
         public void Passing_a_codex_set_changes_nothing_without_named_defs()
         {
             var codex = new HashSet<string> { "n:named.test.w1" };
@@ -190,7 +229,7 @@ namespace SodRpg.Core.Tests
             Register(Sample, SampleSets);
         }
 
-        public void Dispose() => NamedItems.RegisterForTests(null, null);
+        public void Dispose() => NamedItems.RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets);
 
         private static void Register(NamedDef[] named, MiniSetDef[] sets) => NamedItems.RegisterForTests(named, sets);
 

@@ -180,6 +180,14 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Multiple_arrivals_preserve_each_intervening_zones_rewards_with_reversed_commits()
         {
+            // 賞の数（ボスは1～2個落とす）は乱数列に依存する。進行の試験なので銘品の登録簿は空にして固定する。
+            NamedItems.RegisterForTests(null, null);
+            try { Multiple_arrivals_body(); }
+            finally { NamedItems.RegisterForTests(NamedItemsData.Named, NamedItemsData.MiniSets); }
+        }
+
+        private static void Multiple_arrivals_body()
+        {
             var client = new Session(atSecurePoint: true);
             var host = NewProfile(atSecurePoint: true);
             var first = Commit(host, 0, 2, Waypoint.FirstClaim);
