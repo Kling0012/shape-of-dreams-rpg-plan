@@ -36,11 +36,17 @@ namespace SodRpg.Core.Game
         {
             var ids = new List<string>();
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
-            foreach (var u in Content.Uniques) ids.Add("u:" + u.Id);
+            foreach (var u in Content.Uniques)
+            {
+                ids.Add("u:" + u.Id);
+                if (u.BossMove != null) ids.Add("boss-piece:" + u.Id + ":" + u.BaseId + ":" + u.SetId + ":" + u.BossMove);
+            }
             foreach (var s in Content.Sets)
             {
                 ids.Add("s:" + s.Id);
                 if (!string.IsNullOrEmpty(s.BossTypeName)) ids.Add("boss-source:" + s.BossTypeName + ":" + s.Id);
+                if (s.BossReward != null) ids.Add("boss-set-reward:" + s.Id + ":" + s.BossReward);
+                foreach (var stage in s.BossStages) ids.Add("boss-set-stage:" + s.Id + ":" + stage.RequiredPieces + ":" + stage.ProfileId);
                 foreach (var stage in s.LinkStages)
                     ids.Add("set-link:" + s.Id + ":" + stage.RequiredPieces + ":" + (int)stage.Link.Kind
                         + ":" + stage.Link.ValueMilli + ":" + string.Join(",", stage.Link.Requires));
@@ -57,6 +63,12 @@ namespace SodRpg.Core.Game
                 + "/" + Content.PowerCap(Power.DreamDustPct) + "/" + Content.PowerCap(Power.DreamDustDelvePct));
             ids.Add("boss-drop:" + BossSets.NormalDropPercent + ":" + BossSets.NightmareBonusPercent
                 + ":" + BossSets.DepthBonusPercent + ":" + BossSets.MaxDropDepth + ":" + BossSets.MaxDropPercent);
+            ids.AddRange(BossProfiles.FingerprintRecords());
+            ids.Add("boss-scaling:damage-heal-shield-only;duration-fixed;demon-channel-cap;others-post-cap-3x;milestone:" + Content.LimitBreakPowerPct
+                + ";max-enhance:" + Content.EnhancePowerScalePct(Content.MaxEnhanceFor(Rarity.Legendary, Content.MaxLimitBreaks(Rarity.Legendary)))
+                + ";max-awaken:" + Content.AwakenPowerPctAt(Content.MaxAwakenLevel));
+            for (int i = 0; i <= Content.EnhanceMilestoneFifth; i++) ids.Add("boss-enhance:" + i + ":" + Content.EnhancePowerScalePct(i));
+            for (int i = 0; i <= Content.MaxAwakenLevel; i++) ids.Add("boss-awaken:" + i + ":" + Content.AwakenPowerPctAt(i));
             ids.Add("mechanisms:v13:" + caps + "/" + authored);
             ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
             ids.Sort(StringComparer.Ordinal);

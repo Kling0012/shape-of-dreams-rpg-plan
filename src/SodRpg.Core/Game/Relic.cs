@@ -75,6 +75,25 @@ namespace SodRpg.Core.Game
         public Slot Slot => Base.Slot;
         /// <summary>固有品の連携（v1.26）。連携を持たない遺物・個体は null。</summary>
         public LinkDef Link => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Link : null;
+        public string BossMove => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.BossMove : null;
+        public int AuthoredEffectCount => BossMove != null ? 1 : Powers.Count;
+        public BossMoveEntry EffectiveBossMove()
+        {
+            if (!BossProfiles.TryGetMove(BossMove, out var profile)) return null;
+            var channels = new List<BossChannelValue>(profile.Channels.Count);
+            foreach (var c in profile.Channels)
+            {
+                bool scales = c.Kind == BossCoefficientKind.Damage || c.Kind == BossCoefficientKind.Heal || c.Kind == BossCoefficientKind.Shield;
+                decimal multiplier = scales ? Content.EnhancePowerScalePct(Enhance) / 100m * Content.AwakenPowerPctAt(AwakenLevel) / 100m : 1m;
+                if (scales && (MilestonePowerApplied || EnhanceMilestones >= 5)) multiplier *= Content.LimitBreakPowerPct / 100m;
+                if (profile.SetId != BossProfiles.DemonSetId) multiplier = Math.Min(3m, multiplier);
+                int value = scales ? checked((int)decimal.Round(c.ValueMilli * multiplier, 0, MidpointRounding.AwayFromZero)) : c.ValueMilli;
+                if (profile.SetId == BossProfiles.DemonSetId) value = Math.Min(c.CapMilli, value);
+                channels.Add(new BossChannelValue(c.ChannelId, value));
+            }
+            return new BossMoveEntry(profile.SetId, profile.Id, channels);
+        }
+        public string DescribeBossMove() => BossBuildCodec.Describe(EffectiveBossMove());
 
         /// <summary>強化値を付けない名前。</summary>
         public string PlainName
@@ -126,6 +145,7 @@ namespace SodRpg.Core.Game
         /// <summary>強化を反映した固有効果（+5までは+1ごとに+5%、そこから先は+1ごとに+3%）。覚醒の倍率は切り捨てる。</summary>
         public IEnumerable<PowerLine> EffectivePowers()
         {
+            if (BossMove != null) yield break;
             int pct = Content.EnhancePowerScalePct(Enhance);
             foreach (var p in Powers)
             {

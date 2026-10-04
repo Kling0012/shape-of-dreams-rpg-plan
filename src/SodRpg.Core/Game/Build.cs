@@ -23,6 +23,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<string, int> MiniSets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         /// <summary>遺物と星の連携。装着条件はホストで判定し、常時の能力値には加えない。</summary>
         public List<LinkDef> Links { get; } = new List<LinkDef>();
+        public List<BossMoveEntry> BossMoves { get; } = new List<BossMoveEntry>();
+        public List<BossRewardEntry> BossRewards { get; } = new List<BossRewardEntry>();
         /// <summary>振ったルートの星が持つ、記憶に反応する仕掛け。</summary>
         public List<GimmickEntry> Gimmicks { get; } = new List<GimmickEntry>();
         /// <summary>橋と両隣の星を取得した合わせ技。記憶の装備条件は各イベントで判定する。</summary>
@@ -134,6 +136,7 @@ namespace SodRpg.Core.Game
             var awakenGains = new Dictionary<Power, int>();
             var basePowers = new Dictionary<Power, decimal>();
             var equippedLinks = new Dictionary<string, (LinkDef Link, decimal Base, decimal Scaled)>(StringComparer.Ordinal);
+            var equippedBossMoves = new Dictionary<string, BossMoveEntry>(StringComparer.Ordinal);
             void AddPower(Power power, int value)
             {
                 Add(rawPowers, power, value);
@@ -160,8 +163,16 @@ namespace SodRpg.Core.Game
             {
                 var r = p.FindStash(uid);
                 if (r == null) continue;
+                var bossMove = r.EffectiveBossMove();
+                if (bossMove != null)
+                {
+                    string key = BossBuildCodec.Key(bossMove.SetId, bossMove.ProfileId);
+                    if (!equippedBossMoves.TryGetValue(key, out var existing)
+                        || bossMove.Channels[0].ValueMilli > existing.Channels[0].ValueMilli)
+                        equippedBossMoves[key] = bossMove;
+                }
                 foreach (var s in r.EffectiveStats()) Add(rawStats, s.Stat, s.Value);
-                for (int i = 0; i < r.Powers.Count; i++)
+                for (int i = 0; r.BossMove == null && i < r.Powers.Count; i++)
                 {
                     var pw = r.Powers[i];
                     int value = Relic.Scale(pw.Value, Content.EnhancePowerScalePct(r.Enhance));
@@ -173,7 +184,7 @@ namespace SodRpg.Core.Game
                     basePowers.TryGetValue(pw.Power, out decimal current);
                     basePowers[pw.Power] = current + basis;
                 }
-                if (r.Awakened)
+                if (r.Awakened && r.BossMove == null)
                     foreach (var pw in r.Powers)
                     {
                         if (!NewPowersV129.IsConditionalAttribute(pw.Power)) continue;
@@ -206,6 +217,7 @@ namespace SodRpg.Core.Game
                 b.Lines.TryGetValue(r.Base.Line, out int n);
                 b.Lines[r.Base.Line] = n + 1;
             }
+            b.BossMoves.AddRange(equippedBossMoves.Values);
             foreach (var kv in b.Lines)
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             // 同じ部位（固有品ID）を重複して数えない。6つ装着は6種類の部位がそろった時だけ有効。
@@ -226,11 +238,15 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) AddPower(pw.Power, pw.Value);
                 if (kv.Value >= 6 && set.HasSixPiece) foreach (var pw in set.SixPiece) AddPower(pw.Power, pw.Value);
+                foreach (var stage in set.BossStages)
+                    if (kv.Value >= stage.RequiredPieces) b.BossMoves.Add(BossBuildCodec.FixedMove(stage.ProfileId));
                 var stageLink = set.SelectLinkStage(kv.Value)?.Link;
                 if (stageLink != null)
                 {
                     // Set stages are fixed values, independent of the pieces' enhancement and awakening.
-                    if (stageLink.Kind == LinkKind.MemorySurge) b.Links.Add(stageLink);
+                    if (stageLink.Kind == LinkKind.BossReward)
+                        b.BossRewards.Add(new BossRewardEntry(set.Id, set.BossReward, (int)stageLink.Value));
+                    else if (stageLink.Kind == LinkKind.MemorySurge) b.Links.Add(stageLink);
                     else
                     {
                         string linkKey = BuildAggregation.LinkKey(stageLink);
@@ -519,6 +535,7 @@ namespace SodRpg.Core.Game
             }
             ScopedBuildCodec.Append(sb, this);
             global::SodRpg.Core.Game.RunGrowth.Append(sb, this);
+            BossBuildCodec.Append(sb, this);
             string encoded = sb.ToString();
             if (encoded.Length > BuildLimits.MaxEncodedChars || Encoding.UTF8.GetByteCount(encoded) > BuildLimits.MaxEncodedBytes)
                 throw new InvalidOperationException("The build exceeds the encoded message limit.");
@@ -534,6 +551,7 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("The build exceeds its legal entry envelope.");
             ScopedBuildCodec.Validate(this);
             global::SodRpg.Core.Game.RunGrowth.Validate(this);
+            BossBuildCodec.Validate(this);
             foreach (var link in AggregateLinks(Links))
                 if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length))
                     throw new InvalidOperationException("The build exceeds its legal link value envelope.");
@@ -584,12 +602,19 @@ namespace SodRpg.Core.Game
                         case "e": limit = StarProgression.MaxSpendablePoints; break;
                         case "k": limit = KeystoneSlots.Max; break;
                         case "w": limit = global::SodRpg.Core.Game.RunGrowth.MaxEntries; break;
+                        case "b":
+                        case "z": limit = BossProfiles.MaxEntries; break;
                     }
                     if (body.Length == 0) continue;
                     string[] entries = body.Split(',');
                     if (entries.Length > limit) return null;
                     foreach (string encoded in entries)
                     {
+                        if (kind == "b" || kind == "z")
+                        {
+                            BossBuildCodec.Read(kind, encoded, b);
+                            continue;
+                        }
                         if (kind == "w")
                         {
                             if (!global::SodRpg.Core.Game.RunGrowth.Read(encoded, b)) return null;
@@ -607,6 +632,7 @@ namespace SodRpg.Core.Game
                             var linkKind = (LinkKind)ParseInt(f[0]);
                             int value = ParseInt(f[1]);
                             var link = new LinkDef { Kind = linkKind, ValueMilli = value, Requires = f[2].Split('+') };
+                            if (linkKind == LinkKind.BossReward) return null;
                             if (!global::SodRpg.Core.Game.Links.Validate(link) || value < 0
                                 || value > BuildLimits.MaxLinkValueMilli(linkKind, link.Requires.Length)) return null;
                             b.Links.Add(link);

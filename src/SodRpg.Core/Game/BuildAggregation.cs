@@ -29,6 +29,7 @@ namespace SodRpg.Core.Game
             foreach (var link in links)
             {
                 if (!Links.Validate(link)) throw new ArgumentException("Invalid link.", nameof(link));
+                if (link.Kind == LinkKind.BossReward) throw new ArgumentException("Boss rewards require their independent set/profile section.", nameof(links));
                 if (link.ValueMilli < 0) throw new ArgumentException("Negative link value.", nameof(links));
                 // Surge windows retain their source identity and select the largest active value.
                 if (link.Kind == LinkKind.MemorySurge)

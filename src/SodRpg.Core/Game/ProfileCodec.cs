@@ -631,7 +631,8 @@ namespace SodRpg.Core.Game
                     }
                 }
             }
-            if (j.TryGet("powers", out object po) && po is List<object> pws)
+            // Boss effects now come only from the saved UniqueId, never the obsolete generic power payload.
+            if (r.BossMove == null && j.TryGet("powers", out object po) && po is List<object> pws)
             {
                 foreach (var x in pws)
                 {

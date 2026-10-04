@@ -334,7 +334,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = ClampLevel(itemLevel),
             };
             RollAffixes(rng, r, Content.AffixCount(Rarity.Legendary));
-            r.Powers.AddRange(u.Powers);
+            if (u.BossMove == null) r.Powers.AddRange(u.Powers);
             return r;
         }
 

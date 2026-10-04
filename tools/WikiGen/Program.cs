@@ -137,6 +137,7 @@ foreach (var slot in slots)
             string desc = BiBr(() => Content.FormatPower(p.Power, p.Value));
             lines.Add($"**{Bi(() => Content.PowerName(p.Power))}** {desc}");
         }
+        if (u.BossMove != null) lines.Add(BiBr(() => BossProfiles.DescribeMove(u.BossMove)));
         string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照 / No part powers; see set bonuses）" : string.Join(NL, lines);
         string set = "-";
         string link = u.Link == null ? "-" : BiBr(() => Links.Describe(u.Link));
@@ -145,7 +146,8 @@ foreach (var slot in slots)
             set = $"{TxtBi(sd.Name)} → {Link("sets", "セット装備 / Sets")}";
             if (sd.LinkStages.Length > 0)
                 link = string.Join(NL, sd.LinkStages.Select(stage =>
-                    $"**{stage.RequiredPieces}部位 / pieces**: " + BiBr(() => Links.Describe(stage.Link))));
+                    $"**{stage.RequiredPieces}部位 / pieces**: " + BiBr(() => stage.Link.Kind == LinkKind.BossReward
+                        ? BossProfiles.DescribeReward(sd.BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link))));
         }
         string lore = string.IsNullOrEmpty(u.Lore.Ja) ? "" : $"{NL}<sub>{Esc(u.Lore.Ja)} / {Esc(u.Lore.En)}</sub>";
         rows.Add($"| {TxtBi(u.Name)}{lore} | {BaseCell(u.BaseId)} | {powers} | {set} | {link} |");
@@ -170,8 +172,8 @@ foreach (var slot in slots)
         foreach (var u in Content.Uniques.Where(u => u.SetId == s.Id))
         {
             string bs = Content.TryGetBase(u.BaseId, out var bd) ? SlotTitle(bd.Slot) : "-";
-            string powers = u.Powers.Count == 0 ? "-" : string.Join(NL,
-                u.Powers.Select(p => BiBr(() => Content.FormatPower(p.Power, p.Value))));
+            string powers = u.BossMove != null ? BiBr(() => BossProfiles.DescribeMove(u.BossMove))
+                : u.Powers.Count == 0 ? "-" : string.Join(NL, u.Powers.Select(p => BiBr(() => Content.FormatPower(p.Power, p.Value))));
             sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} | {powers} |\n");
         }
         sb.Append('\n');
