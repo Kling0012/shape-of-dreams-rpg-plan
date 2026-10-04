@@ -176,6 +176,8 @@ namespace SodRpg.Mod
                 AppendImplicit(sb, e.Base);
             }
             foreach (var pw in u.Powers) sb.Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+            if (u.BossMove != null)
+                sb.Append(Colored(BossProfiles.DescribeMove(u.BossMove), Purple)).Append('\n');
             if (u.Link != null) sb.Append(Colored(Links.Describe(u.Link), Cyan)).Append('\n');
             sb.Append(Loc.T("特性：入手のたびに3つ抽選されます。", "Affixes: 3 are rolled each time you obtain one.")).Append('\n');
             sb.Append(Colored(Loc.T(
@@ -217,6 +219,8 @@ namespace SodRpg.Mod
                 if (got)
                     foreach (var pw in pc.Powers)
                         sb.Append("  ").Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+                if (got && pc.BossMove != null)
+                    sb.Append("  ").Append(Colored(BossProfiles.DescribeMove(pc.BossMove), Purple)).Append('\n');
             }
         }
 

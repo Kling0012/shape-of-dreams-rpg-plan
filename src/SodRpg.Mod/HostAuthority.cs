@@ -40,6 +40,7 @@ namespace SodRpg.Mod
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly BossCombatState Boss = new BossCombatState();
             public long ShieldEquipmentEpoch;
             public Action<EventInfoDamage> OnMemoryDamage;
             public Action<EventInfoKill> OnMemoryKill;
@@ -286,6 +287,8 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values) FlushNewPowers(rt);
             foreach (var rt in _runtimes.Values) UpdateReactions(rt);
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
+            foreach (var rt in _runtimes.Values) TickBossEffects(rt, now);
+            TickBossVisualSnapshots();
             UpdateIdentityStrikes();
             foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             PruneSapProcessors(now);
@@ -1368,6 +1371,7 @@ namespace SodRpg.Mod
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
+            ClearBossEffects(rt);
             // 連携の判定結果は Build と装着に紐付くので、付け直すときに一旦空にする。
             rt.HeroKey = hero.GetType().Name;
             rt.SatisfiedLinks.Clear();
@@ -1423,6 +1427,7 @@ namespace SodRpg.Mod
 
         private void Unhook(HeroRuntime rt)
         {
+            ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
             RestoreGemSlots(rt);
             UnhookNewPowers(rt);

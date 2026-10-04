@@ -171,7 +171,7 @@ namespace SodRpg.Mod
         // Version 13 adds authored mechanisms, scoped keystones and registry negotiation.
         // Version 14 carries every selected keystone (up to the traveler's slots) in the build envelope.
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
-        // Version 16 freezes exclusive boss source, native difficulty and shared dream depth in kill facts.
+        // Version 16 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         public const int Version = 16;
     }
 

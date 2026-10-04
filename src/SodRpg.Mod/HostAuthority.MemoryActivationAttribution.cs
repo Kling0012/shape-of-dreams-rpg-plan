@@ -347,6 +347,7 @@ namespace SodRpg.Mod
 
         internal void PublishAttributedFinalDamage(EventInfoDamage info)
         {
+            PublishBossNativeDamage(info);
             var packet = NativeAttributedDamagePacket.Current;
             if (packet == null || !packet.Admitted || packet.Actor != info.actor || packet.Victim != info.victim
                 || info.victim == null || info.damage.amount <= 0f) return;

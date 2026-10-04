@@ -43,6 +43,7 @@ namespace SodRpg.Mod
         internal void PublishAttributedMemoryUse(NativeAttributedMemoryCast.Cast cast)
         {
             if (cast.Skill.owner is Hero hero) PublishMemoryActivation(cast.Identity.Event(MemoryEventKind.ConfirmedUse), hero, null);
+            PublishBossConfirmedMemoryUse(cast);
         }
         internal void PublishAttributedBasicFired(AttackTrigger attack, AbilityInstance instance, CastInfo info)
         {

@@ -204,8 +204,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
-                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
+                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -353,6 +353,7 @@ namespace SodRpg.Mod
                     UnregisterHello(_clientRpcOn);
                     UnregisterGemSlotConflict(_clientRpcOn);
                     UnregisterRunGrowth(_clientRpcOn);
+                    UnregisterBossVisuals(_clientRpcOn);
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
@@ -377,6 +378,7 @@ namespace SodRpg.Mod
                 NightmareSeenAt.Clear();
                 ClearVariants();
                 ClearMonsterCues();
+                ClearBossDisplay();
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
@@ -404,6 +406,7 @@ namespace SodRpg.Mod
                     RegisterHello(actor);
                     RegisterGemSlotConflict(actor);
                     RegisterRunGrowth(actor);
+                    RegisterBossVisuals(actor);
                 }
             }
         }
@@ -439,6 +442,7 @@ namespace SodRpg.Mod
                     UnregisterHello(_clientRpcOn);
                     UnregisterGemSlotConflict(_clientRpcOn);
                     UnregisterRunGrowth(_clientRpcOn);
+                    UnregisterBossVisuals(_clientRpcOn);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
@@ -471,6 +475,7 @@ namespace SodRpg.Mod
             NightmareSeenAt.Clear();
             ClearVariants();
             ClearMonsterCues();
+            ClearBossDisplay();
             _loggedVariantVisualFailure = false;
         }
 

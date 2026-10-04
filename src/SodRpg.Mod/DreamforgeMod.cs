@@ -164,6 +164,7 @@ namespace SodRpg.Mod
         {
             if (_ui == null) return;
             _perf.Begin();
+            _session?.DrawBossEffects();
             _ui.Draw();
             _perf.EndGui();
         }

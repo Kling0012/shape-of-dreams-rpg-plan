@@ -48,6 +48,7 @@ namespace SodRpg.Mod
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
                 bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+                bool firstAcceptance = same && !_acceptedMechanismContent.ContainsKey(caller);
                 if (same)
                 {
                     _versionMismatches.Remove(caller);
@@ -67,6 +68,8 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, modVer = ModVersion, content = ContentFingerprint.Value,
                 });
+                // Boss facts rejected before Hello must be replayed after the content gate opens.
+                if (firstAcceptance) ReplayAuthoritativeBossKills(caller);
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }
         }

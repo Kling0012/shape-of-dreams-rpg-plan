@@ -8,6 +8,7 @@ namespace SodRpg.Mod
     public sealed class DreamforgeMonsterKillMsg
     {
         public int protocol;
+        public string content;
         public ulong authorityGeneration;
         public string runId;
         public string eventId;
@@ -21,7 +22,8 @@ namespace SodRpg.Mod
 
         public static DreamforgeMonsterKillMsg FromFact(AuthoritativeRunKill fact, ulong authority) => new DreamforgeMonsterKillMsg
         {
-            protocol = Protocol.Version, authorityGeneration = authority, runId = fact.RunId,
+            protocol = Protocol.Version, content = ContentFingerprint.Value,
+            authorityGeneration = authority, runId = fact.RunId,
             eventId = fact.EventId, netId = fact.MonsterNetId, zoneIndex = fact.ZoneIndex,
             affixes = (int)fact.Nightmare, variantId = fact.VariantId,
             bossTypeName = fact.BossTypeName, bossDropNightmare = fact.BossDropNightmare,

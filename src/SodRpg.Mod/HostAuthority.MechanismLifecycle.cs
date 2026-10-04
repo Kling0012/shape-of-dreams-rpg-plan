@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             foreach (var binding in _calmBindings.Values) binding.Filter.Reset();
             ClearMemoryPrimedRelay();
             ClearAuthoredMechanismTransients();
+            foreach (var rt in _runtimes.Values) ClearBossEffects(rt);
             _nativePressureLootSpawns.Clear();
         }
 
@@ -31,6 +32,7 @@ namespace SodRpg.Mod
             ClearBridgeSuccessEffects(hero);
             ClearMemoryPrimedRelay(hero);
             ClearAuthoredMechanismTransients(hero);
+            if (_runtimes.TryGetValue(hero, out var rt)) ClearBossEffects(rt);
             if (_calmBindings.TryGetValue(hero, out var binding)) binding.Filter.Reset();
         }
 

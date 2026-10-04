@@ -110,5 +110,15 @@ namespace SodRpg.Mod
             foreach (string eventId in _killFactPrune) _killFactPublishedAt.Remove(eventId);
             _lastKillReplayAt = Time.time;
         }
+
+        private void ReplayAuthoritativeBossKills(DewPlayer player)
+        {
+            if (_registeredOn == null) return;
+            string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            foreach (var fact in ClientSession.ReplayableHostKillFacts)
+                if (fact.RunId == runId && fact.BossTypeName != null)
+                    _registeredOn.CustomRpc_SendMessageToClient(player,
+                        DreamforgeMonsterKillMsg.FromFact(fact, ClientSession.HostAuthorityGeneration));
+        }
     }
 }

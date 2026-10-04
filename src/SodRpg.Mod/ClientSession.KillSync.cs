@@ -22,6 +22,7 @@ namespace SodRpg.Mod
             NightmareSeenAt.Clear();
             ClearVariants();
             ClearMonsterCues();
+            ClearBossDisplay();
             _buildDirty = true;
             return true;
         }
@@ -32,7 +33,8 @@ namespace SodRpg.Mod
         {
             if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0
                 || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)
-                || !string.IsNullOrEmpty(msg.bossTypeName) && !MechanismHandshakeAccepted) return;
+                || !string.IsNullOrEmpty(msg.bossTypeName) && (!MechanismHandshakeAccepted
+                    || !ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version))) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(gameRunId) || msg.runId != gameRunId || msg.runId == _completedRunId) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;
