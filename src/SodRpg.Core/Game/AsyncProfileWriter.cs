@@ -50,6 +50,12 @@ namespace SodRpg.Core.Game
             return WaitForRevision(rev, timeoutMs);
         }
 
+        /// <summary>
+        /// 外部の決済を始める前の準備保存。writer が無い（保存先が無効な）ときは書き込みが一度も行われないので、確定できたことにはならず false。
+        /// </summary>
+        public static bool ConfirmPrepared(AsyncProfileWriter writer, Profile p, int timeoutMs = 3000)
+            => writer != null && writer.EnqueueAndConfirm(p, timeoutMs);
+
         /// <summary>指定リビジョン以降が書き終わったら true。その書き込みが失敗に終わった、または時間切れなら false。</summary>
         public bool WaitForRevision(long revision, int timeoutMs = 3000)
         {

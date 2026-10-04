@@ -1156,13 +1156,22 @@ namespace SodRpg.Mod
             Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
-            if (_store == null) return true; // 保存先がない構成：保存する対象がない
+            if (_store == null)
+            {
+                // 保存先が無効（初期のプロフィール切替に失敗した場合など）。確認付きの保存は書き込みが行われないので失敗とし、取引は送らせない。
+                if (confirm)
+                {
+                    SaveError = Loc.T("保存先が無効です。", "Saving is unavailable.");
+                    _dirty = true;
+                }
+                return !confirm; // 確認なしの保存は従来どおり何もしない
+            }
             if (_writer == null) _writer = new AsyncProfileWriter(_store);
             var sw = System.Diagnostics.Stopwatch.StartNew();
             bool ok = true;
             try
             {
-                if (confirm) ok = _writer.EnqueueAndConfirm(Profile);
+                if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
                 else _writer.Enqueue(Profile);
             }
             catch (Exception ex)

@@ -247,13 +247,14 @@ namespace SodRpg.Core.Tests
             int hostCalls = 0;
 
             // クライアントの SendTrade と同じ順序：台帳へ登録 → 準備を保存して確認 → 送る
+            bool noStore = false;
             bool Send(bool ioFails)
             {
                 var t = ledger.BeginDustToShards(1, 0f);
                 p.PendingTrades.Clear();
                 p.PendingTrades.AddRange(ledger.Snapshot());
                 if (ioFails) fs.Arm(0, FaultMode.IoError); else fs.Disarm();
-                if (!w.EnqueueAndConfirm(p, 5000))
+                if (!AsyncProfileWriter.ConfirmPrepared(noStore ? null : w, p, 5000))
                 {
                     ledger.Complete(t.Token, false);
                     return false;
@@ -273,6 +274,14 @@ namespace SodRpg.Core.Tests
             // 送信直後に参加者を作り直しても、保存済みの token が復元される
             var restored = new ProfileStore(mem, "/s/p.json", 1).Load();
             Assert.Contains(restored.PendingTrades, x => x.Token == token);
+
+            // 保存先が無効（writer なし）の間は、準備保存を確定できないので送らない。復旧後は保存が成功したときだけ送れる
+            noStore = true;
+            Assert.False(Send(false));
+            Assert.Equal(1, hostCalls);
+            noStore = false;
+            Assert.True(Send(false));
+            Assert.Equal(2, hostCalls);
         }
     }
 }
