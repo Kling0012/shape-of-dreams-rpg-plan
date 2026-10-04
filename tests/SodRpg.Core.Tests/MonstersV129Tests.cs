@@ -158,7 +158,6 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(expected.Run.SatchelTuning, actual.Run.SatchelTuning);
                 Assert.Equal(expected.DreamXp, actual.DreamXp);
                 Assert.Equal(expected.DreamLevel, actual.DreamLevel);
-                Assert.Equal(expected.EpicPity, actual.EpicPity);
                 Assert.Equal(
                     expected.Run.Satchel.Select(r => (r.BaseId, r.UniqueId, r.Rarity, r.ItemLevel)),
                     actual.Run.Satchel.Select(r => (r.BaseId, r.UniqueId, r.Rarity, r.ItemLevel)));

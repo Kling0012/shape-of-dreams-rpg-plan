@@ -15,8 +15,8 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>
-    /// 抽選の規則。数値は計画書 付録B5（ドロップ）と B4（エピックの救済）を、
-    /// 本作の「1遠征で数百体を倒す」テンポに合わせて1体あたりの確率へ直したもの。
+        /// 抽選の規則。数値は計画書 付録B5（ドロップ）を、
+        /// 本作の「1遠征で数百体を倒す」テンポに合わせて1体あたりの確率へ直したもの。
     /// </summary>
     public static class Loot
     {
@@ -50,10 +50,6 @@ namespace SodRpg.Core.Game
                 default: return 0.0;
             }
         }
-
-        /// <summary>主報酬でエピック以上が出ないボスの救済。k=112（113体目）で確定。追加報酬はkを更新しない。</summary>
-        public static double EpicPityChance(int k) => Math.Min(1.0, 0.025 + 0.00875 * Math.Max(0, k));
-
         /// <summary>
         /// 画面に出す「良い遺物の出やすさ」の%。レア度が1段上がるごとに、抽選の重みがこの%だけ多く掛かる（RollRarity の f = 1 + 0.6×luck）。
         /// </summary>
@@ -383,9 +379,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 1体の撃破に対する個人の報酬を抽選する。協力時は各プレイヤーが自分の分を独立に抽選する
-        /// （計画書 第14章「確保と損失は個人ごと」）。epicPity はボス撃破でのみ進む。
+        /// （計画書 第14章「確保と損失は個人ごと」）。天井（救済）はなく、主報酬は通常抽選のみ。
         /// </summary>
-        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null, Pacts.Totals mods = null,
+        public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, Line? focus = null, Pacts.Totals mods = null,
             IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null)
         {
             heat = ClampHeat(heat);
@@ -397,20 +393,10 @@ namespace SodRpg.Core.Game
             if (rng.Chance(chance))
             {
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
-                bool pity = false;
-                if (tier == MonsterTier.Boss && rng.Chance(EpicPityChance(epicPity)))
-                {
-                    floor = Rarity.Epic;
-                    pity = true;
-                }
                 var rarity = RollRarity(rng, luck, allowLegendary, floor);
                 reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
-                if (tier == MonsterTier.Boss)
-                {
-                    if (pity || rarity >= Rarity.Epic) epicPity = 0;
-                    else epicPity++;
-                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
-                }
+                if (tier == MonsterTier.Boss && rng.Chance(0.6))
+                    reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
             }
 
             switch (tier)

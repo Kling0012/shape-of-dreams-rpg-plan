@@ -305,6 +305,7 @@ namespace SodRpg.Core.Game
         public ulong RngState { get; set; }
         public int DreamLevel { get; set; } = 1;
         public int DreamXp { get; set; }
+        /// <summary>旧版のボス救済（天井）のカウンタ。天井は撤廃済みで、保存互換のために読み書きだけ続ける。抽選には使わない。</summary>
         public int EpicPity { get; set; }
         /// <summary>まとめて分解の対象にする最高のレア度（コモン〜エピック。固有品は入らない）。</summary>
         public Rarity BulkSalvageMaxRarity { get; set; } = Rarity.Uncommon;

@@ -155,13 +155,12 @@ namespace SodRpg.Core.Game
             if (run == null) return ev;
             if (string.IsNullOrEmpty(heroKey)) heroKey = run.HeroKey;
             var rng = p.TakeRng();
-            int pity = p.EpicPity;
             var variant = Variants.Get(variantId);
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
             bool hoardPayout = run.ActiveWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
@@ -216,7 +215,6 @@ namespace SodRpg.Core.Game
                 killNotice = new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!"));
                 AddHint(p, Hint.FirstNightmare, ev);
             }
-            p.EpicPity = pity;
             p.StoreRng(rng);
 
             run.GearWindow = false;

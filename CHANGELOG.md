@@ -6,6 +6,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 伝説ドロップの天井（救済）を撤廃
+
+- **天井なし**：ボスの主報酬へのエピック以上の救済抽選と、その天井（未取得112回の次で確定）を撤廃しました。主報酬も追加報酬も通常の抽選のみになり、連続して出なくても確定はありません。通常の抽選率は変えません。 / **No pity**: the Epic+ pity roll and its ceiling on boss primary rewards are removed; primary and bonus rewards use only the normal roll, with no guarantee after consecutive misses. Normal roll rates are unchanged.
+- **表示**：記録タブにあった救済カウンタ（次のボスの主報酬がエピック以上になる追加確率）を削除しました。 / **HUD**: the records-tab pity counter is removed.
+- **互換**：保存形式・通信構造・Protocol番号は変更なし。旧セーブの救済カウンタ（epicPity）は読み込めるまま無視します。協力時は全員同じビルドにしてください。 / **Compatibility**: save and wire formats and protocol number unchanged; the stored pity counter is loaded but ignored. Use matching builds in co-op.
+
+---
+
+
 ## 未公開 — 宝庫の戦利品と討伐通知（#52）
 
 - **討伐通知**：「封じられた宝庫」のボス撃破で大量の遺物が払い出されても、同じ撃破のドロップ通知に悪夢・変種の討伐通知が押し出されないよう、討伐通知を最後に表示します。撃破統計・経験・覚醒・依頼と、通常敵／悪夢の戦利品をボス撃破時に3倍にする処理は変更していません。 / **Kill notifications**: nightmare/variant kill notices now follow the kill's other notifications, so a bulk Sealed Hoard payout does not evict its own kill notice. Kill statistics, experience, awakening, bounties and the threefold boss payout for ordinary/nightmare loot are unchanged.
@@ -46,10 +55,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース — 高レア装備と合成の難易度調整（2026-10-05）
 
-- **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.053個/遠征。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.053 per expedition, preserving low-rarity supply and boss reward counts.
-- **救済と鍛冶**：ボス救済の天井29→113体目。上位合成の材料・費用とエピック以上の強化・再調律・洗い直し・限界突破費用を2倍、覚醒必要量を2.5倍。高レアのイベント入手も難化。 / **Pity and crafting**: pity ceiling 29 → 113 bosses; upper-tier transmute requirements and Epic+ improvement fees doubled, awakening thresholds multiplied by 2.5, and high-rarity event acquisition tightened.
+- **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.027個/遠征（天井撤廃後の再計測）。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.027 per expedition (re-measured after pity removal), preserving low-rarity supply and boss reward counts.
+- **鍛冶**：上位合成の材料・費用とエピック以上の強化・再調律・洗い直し・限界突破費用を2倍、覚醒必要量を2.5倍。高レアのイベント入手も難化。 / **Crafting**: upper-tier transmute requirements and Epic+ improvement fees doubled, awakening thresholds multiplied by 2.5, and high-rarity event acquisition tightened.
 - 保存形式・通信構造・Protocol番号は変更なし。協力時は全員同じビルドにしてください（既存の内容指紋は今回の数値差を検出しません）。比較値・例外・計測条件は[仕様](docs/specs/rare-gear-difficulty.md)を参照。 / Save and wire formats and protocol number unchanged; use matching builds in co-op, as the existing content fingerprint does not detect these balance differences. See the comparison specification for assumptions and retained guarantees.
-- **テスト**：承認済みの新費用・覚醒しきい値に既存テストを更新。113体目の救済天井、上位合成の材料不足・正確な消費、低レア装備と素材の供給維持を既存シナリオで検証。 / **Tests**: existing scenarios updated for approved fees and awakening thresholds, covering the 113th-boss pity ceiling, upper-tier transmute rejection and exact consumption, and preserved low-rarity gear and material income.
+- **テスト**：承認済みの新費用・覚醒しきい値に既存テストを更新。上位合成の材料不足・正確な消費、低レア装備と素材の供給維持を既存シナリオで検証。 / **Tests**: existing scenarios updated for approved fees and awakening thresholds, covering upper-tier transmute rejection and exact consumption, and preserved low-rarity gear and material income.
 
 ## 未公開 — 星図の二択・相関表示（#46）
 

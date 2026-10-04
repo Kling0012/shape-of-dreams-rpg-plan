@@ -57,11 +57,11 @@ namespace SodRpg.Core.Tests
             int Count(int heat, out int epics)
             {
                 var rng = new Rng(99);
-                int pity = 0, drops = 0;
+                int drops = 0;
                 epics = 0;
                 for (int i = 0; i < 40000; i++)
                 {
-                    var rw = Loot.RollKill(rng, MonsterTier.Normal, 10, heat, ref pity);
+                    var rw = Loot.RollKill(rng, MonsterTier.Normal, 10, heat);
                     drops += rw.Relics.Count;
                     epics += rw.Relics.Count(r => r.Rarity >= Rarity.Epic);
                 }
@@ -79,38 +79,32 @@ namespace SodRpg.Core.Tests
         public void Normal_monsters_never_drop_legendaries()
         {
             var rng = new Rng(5);
-            int pity = 0;
             for (int i = 0; i < 50000; i++)
             {
-                var rw = Loot.RollKill(rng, MonsterTier.Normal, 10, 5, ref pity);
+                var rw = Loot.RollKill(rng, MonsterTier.Normal, 10, 5);
                 Assert.DoesNotContain(rw.Relics, r => r.Rarity == Rarity.Legendary);
             }
         }
 
         [Fact]
-        public void Boss_epic_pity_guarantees_by_the_113th_kill_and_resets_on_the_main_reward()
+        public void Boss_main_rewards_have_no_epic_pity_ceiling()
         {
+            // 天井（救済）撤廃後：主報酬のエピック以上は通常抽選のみで、連続未取得が113体を超えても確定しない。
             var rng = new Rng(11);
-            for (int trial = 0; trial < 200; trial++)
+            const int kills = 20000;
+            int epics = 0, streak = 0, bestStreak = 0;
+            for (int i = 0; i < kills; i++)
             {
-                int pity = 0;
-                int kills = 0;
-                bool got = false;
-                while (!got)
+                var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0);
+                if (rw.Relics[0].Rarity >= Rarity.Epic)
                 {
-                    kills++;
-                    var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity);
-                    got = rw.Relics.Count > 0 && rw.Relics[0].Rarity >= Rarity.Epic;
-                    Assert.True(kills <= 113, "pity must trigger by the 113th boss kill");
+                    epics++;
+                    streak = 0;
                 }
-                Assert.Equal(0, pity);
-
-                // 112 misses must guarantee the next main reward, regardless of the bonus reward.
-                pity = 112;
-                var guaranteed = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity);
-                Assert.True(guaranteed.Relics[0].Rarity >= Rarity.Epic);
-                Assert.Equal(0, pity);
+                else bestStreak = Math.Max(bestStreak, ++streak);
             }
+            Assert.True(bestStreak > 113, $"pity is gone; expected a dry streak beyond 113 boss kills, got {bestStreak}");
+            Assert.InRange((double)epics / kills, 0.03, 0.06); // 通常抽選どおり（理論値は主報酬エピック以上 約4.28%）
         }
 
         [Fact]
