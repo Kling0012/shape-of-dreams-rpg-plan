@@ -133,30 +133,53 @@ namespace SodRpg.Core.Game
                 Rarity = rarity,
                 ItemLevel = ClampLevel(itemLevel),
             };
-            RollAffixes(rng, r, Content.AffixCount(rarity));
+            RollAffixes(rng, r, Content.AffixCount(rarity), baseDef);
             // v1.22：レア度にふさわしい固有効果。レアは弱いものを1つ、エピックは範囲どおりの1つと弱いもう1つ。
             var pool = Content.PowerPool(baseDef.Slot);
             if (rarity == Rarity.Epic)
             {
-                var pr = pool[rng.Range(0, pool.Count - 1)];
+                var pr = PickPower(rng, pool, baseDef.Family, false, r);
                 r.Powers.Add(new PowerLine(pr.Power, rng.Range(pr.Min, pr.Max)));
-                AddMinorPower(rng, r, pool);
+                AddMinorPower(rng, r, pool, baseDef.Family);
             }
             else if (rarity == Rarity.Rare)
             {
-                AddMinorPower(rng, r, pool);
+                AddMinorPower(rng, r, pool, baseDef.Family);
             }
             return r;
         }
 
-        /// <summary>まだ持っていない固有効果を1つ、範囲の下半分の値で足す（レアと、エピックの2つ目）。</summary>
-        private static void AddMinorPower(Rng rng, Relic r, IReadOnlyList<PowerRange> pool)
+        /// <summary>
+        /// 固有効果の候補を重み付きで1つ選ぶ。minor=false はエピックの1つ目（従来どおり全プールから）、
+        /// minor=true は「レア度で許可され、まだ持っていない」候補から。家系の好みは許可の判定のあとで重み2倍。
+        /// Plain は全部の重みが1なので、従来の一様抽選（Range(0, n-1)）と同じ乱数列になる。
+        /// </summary>
+        private static PowerRange PickPower(Rng rng, IReadOnlyList<PowerRange> pool, Family family, bool minor, Relic r)
         {
             var candidates = new List<PowerRange>();
             foreach (var pr in pool)
-                if (Content.PowerAllowedForRarity(pr.Power, r.Rarity) && !r.Powers.Exists(x => x.Power == pr.Power)) candidates.Add(pr);
-            if (candidates.Count == 0) return;
-            var pick = candidates[rng.Range(0, candidates.Count - 1)];
+            {
+                if (minor && (!Content.PowerAllowedForRarity(pr.Power, r.Rarity) || r.Powers.Exists(x => x.Power == pr.Power))) continue;
+                candidates.Add(pr);
+            }
+            if (candidates.Count == 0) return null;
+            int total = 0;
+            foreach (var pr in candidates) total += FamilyPrefs.PrefersPower(family, pr.Power) ? FamilyPrefs.PreferredWeightMultiplier : 1;
+            int x = rng.Range(0, total - 1);
+            foreach (var pr in candidates)
+            {
+                int w = FamilyPrefs.PrefersPower(family, pr.Power) ? FamilyPrefs.PreferredWeightMultiplier : 1;
+                if (x < w) return pr;
+                x -= w;
+            }
+            return candidates[candidates.Count - 1];
+        }
+
+        /// <summary>まだ持っていない固有効果を1つ、範囲の下半分の値で足す（レアと、エピックの2つ目）。</summary>
+        private static void AddMinorPower(Rng rng, Relic r, IReadOnlyList<PowerRange> pool, Family family)
+        {
+            var pick = PickPower(rng, pool, family, true, r);
+            if (pick == null) return;
             int top = Math.Max(pick.Min, pick.Min + (pick.Max - pick.Min) / 2);
             r.Powers.Add(new PowerLine(pick.Power, rng.Range(pick.Min, top)));
         }
@@ -220,38 +243,45 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>特性を count 個になるまで足す。同じ能力値と、基礎能力と同じ能力値は避ける。</summary>
-        internal static void RollAffixes(Rng rng, Relic r, int count)
+        internal static void RollAffixes(Rng rng, Relic r, int count) => RollAffixes(rng, r, count, r.Base);
+
+        internal static void RollAffixes(Rng rng, Relic r, int count, BaseDef basis)
         {
-            var used = new HashSet<Stat> { r.Base.ImplicitStat };
+            var used = new HashSet<Stat> { basis.ImplicitStat };
             foreach (var a in r.Affixes) used.Add(a.Stat);
             while (r.Affixes.Count < count)
             {
-                var line = RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, used);
+                var line = RollAffix(rng, basis.Slot, r.Rarity, r.ItemLevel, used, basis.Family);
                 if (line == null) break;
                 used.Add(line.Stat);
                 r.Affixes.Add(line);
             }
         }
 
-        public static StatLine RollAffix(Rng rng, Slot slot, Rarity rarity, int itemLevel, ICollection<Stat> exclude)
+        private static int AffixWeight(AffixDef a, Family family) =>
+            FamilyPrefs.PrefersStat(family, a.Stat) ? a.Weight * FamilyPrefs.PreferredWeightMultiplier : a.Weight;
+
+        /// <summary>特性を1つ抽選する。family の好む能力値は、レア度の下限の判定のあとで重み2倍（Plain は変えない）。</summary>
+        public static StatLine RollAffix(Rng rng, Slot slot, Rarity rarity, int itemLevel, ICollection<Stat> exclude, Family family = Family.Plain)
         {
             var pool = Content.AffixPool(slot);
             int total = 0;
             foreach (var a in pool)
-                if (!exclude.Contains(a.Stat) && rarity >= a.MinRarity) total += a.Weight;
+                if (!exclude.Contains(a.Stat) && rarity >= a.MinRarity) total += AffixWeight(a, family);
             if (total <= 0) return null;
             int x = rng.Range(0, total - 1);
             foreach (var a in pool)
             {
                 if (exclude.Contains(a.Stat) || rarity < a.MinRarity) continue;
-                if (x < a.Weight)
+                int weight = AffixWeight(a, family);
+                if (x < weight)
                 {
                     int raw = rng.Range(a.Min, a.Max);
                     int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(itemLevel) : 100;
                     int pct = Content.RarityValuePct(rarity) * level / 100;
                     return new StatLine(a.Stat, Relic.Scale(raw, pct));
                 }
-                x -= a.Weight;
+                x -= weight;
             }
             return null;
         }

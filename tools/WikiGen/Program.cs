@@ -105,6 +105,7 @@ List<string> WriteTablePages(string stem, string title, string intro, string hea
 }
 
 // ============ 土台 ============
+string FamilyCell(BaseDef b) => FamilyPrefs.LabelName(b.Family) is Txt f ? TxtBi(f) : "―";
 var baseLinks = new List<(Slot, int, List<string>)>();
 foreach (var slot in slots)
 {
@@ -112,12 +113,12 @@ foreach (var slot in slots)
     foreach (var b in Content.BasesFor(slot))
     {
         string impl = Bi(() => Content.FormatStat(b.ImplicitStat, b.ImplicitValue));
-        rows.Add($"| {Icon(b.Id)} | {TxtBi(b.Name)} | {Bi(() => Content.LineName(b.Line).ToString())} | {impl} | {Esc(b.Id)} |");
+        rows.Add($"| {Icon(b.Id)} | {TxtBi(b.Name)} | {Bi(() => Content.LineName(b.Line).ToString())} | {FamilyCell(b)} | {impl} | {Esc(b.Id)} |");
     }
     string stem = "bases_" + SlotKey(slot);
     var names = WriteTablePages(stem, $"土台: {SlotTitle(slot)}",
         $"{SlotTitle(slot)}の土台（ベース装備）一覧です（{rows.Count}種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。",
-        "^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^", rows);
+        "^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 家系 (Family) ^ 基礎能力 (Implicit) ^ ID ^", rows);
     baseLinks.Add((slot, rows.Count, names));
 }
 

@@ -724,7 +724,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.ShadowExchange:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
-                    var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target));
+                    var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target), target.Base.Family);
                     if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available."));
                     var old = target.Affixes[0];
                     run.SatchelShards -= 25;
@@ -1364,7 +1364,7 @@ namespace SodRpg.Core.Game
         {
             var used = new HashSet<Stat> { r.Base.ImplicitStat };
             foreach (var a in r.Affixes) used.Add(a.Stat);
-            var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, used);
+            var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, used, r.Base.Family);
             if (line != null) r.Affixes.Add(line);
             return line;
         }
@@ -1424,8 +1424,8 @@ namespace SodRpg.Core.Game
             var exclude = new HashSet<Stat>(others);
             for (int k = 0; k < Content.RetuneChoices; k++)
             {
-                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude)
-                    ?? Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, others); // 能力値の種類が尽きたら、数値だけ違う候補にする
+                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, exclude, r.Base.Family)
+                    ?? Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, others, r.Base.Family); // 能力値の種類が尽きたら、数値だけ違う候補にする
                 if (line == null) break;
                 exclude.Add(line.Stat);
                 offer.Options.Add(line);
@@ -1502,7 +1502,7 @@ namespace SodRpg.Core.Game
             var implicitOnly = new HashSet<Stat> { r.Base.ImplicitStat };
             while (r.Affixes.Count < count) // 能力値の種類が尽きても数は守る：重複を許して埋める（再調律と同じ扱い）
             {
-                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, implicitOnly);
+                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, implicitOnly, r.Base.Family);
                 if (line == null) break;
                 r.Affixes.Add(line);
             }

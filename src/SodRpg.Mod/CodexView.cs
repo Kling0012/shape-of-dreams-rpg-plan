@@ -296,7 +296,8 @@ namespace SodRpg.Mod
                 case CodexCategory.Sets: return Loc.T("セット", "Set");
                 case CodexCategory.Powers: return SlotsText(e.SlotMask);
                 default:
-                    return Content.SlotName(e.Base.Slot) + " · " + Content.LineName(e.Base.Line);
+                    return Content.SlotName(e.Base.Slot) + " · " + Content.LineName(e.Base.Line)
+                        + (FamilyPrefs.Label(e.Base.Family) is string familyLabel ? " · " + familyLabel : "");
             }
         }
 

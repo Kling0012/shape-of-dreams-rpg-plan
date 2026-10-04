@@ -64,7 +64,13 @@ namespace SodRpg.Core.Game
     public sealed class BaseDef
     {
         public BaseDef(string id, Slot slot, Line line, Txt name, Stat implicitStat, int implicitValue)
+            : this(id, slot, line, name, implicitStat, implicitValue, Family.Plain)
         {
+        }
+
+        public BaseDef(string id, Slot slot, Line line, Txt name, Stat implicitStat, int implicitValue, Family family)
+        {
+            Family = family;
             Id = id;
             Slot = slot;
             Line = line;
@@ -79,6 +85,8 @@ namespace SodRpg.Core.Game
         public Txt Name { get; }
         public Stat ImplicitStat { get; }
         public int ImplicitValue { get; }
+        /// <summary>家系（v1.32）。特性と固有効果の抽選の傾向だけに効く。Plain は偏りなし。</summary>
+        public Family Family { get; }
     }
 
     /// <summary>固有品。基礎と2つの固有効果が固定で、特性は通常どおり3つ抽選する。</summary>
