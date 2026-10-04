@@ -197,7 +197,7 @@ namespace SodRpg.Core.Game
                 if (after > before && after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey)) AddHint(p, Hint.KeystoneReady, ev);
                 if (after > before)
                 {
-                    string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
+                    string name = HeroNames.Display(heroKey);
                     ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
                         $"{name}の熟練度が{after}「{Mastery.Title(after)}」に上がりました。" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? "到達刻印を選べるようになりました。" : ""),
                         $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? ": keystones unlocked" : ""))));
@@ -1135,9 +1135,10 @@ namespace SodRpg.Core.Game
             StarProgression.AddXp(hero, amount);
             int gained = StarProgression.Points(hero.StarXp) - before;
             if (gained <= 0) return;
+            string name = HeroNames.Display(heroKey);
             ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                $"{heroKey}の星図ポイントが{gained}増えました。",
-                $"{heroKey} earned {gained} star map point(s).")));
+                $"{name}の星図ポイントが{gained}増えました。",
+                $"{name} earned {gained} star map point(s).")));
             AddHint(p, Hint.TalentPoints, ev);
         }
 
