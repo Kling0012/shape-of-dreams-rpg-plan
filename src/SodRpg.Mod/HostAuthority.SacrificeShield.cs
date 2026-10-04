@@ -129,6 +129,7 @@ namespace SodRpg.Mod
 
         private readonly SacrificeShieldRuntime _sacrificeShields = new SacrificeShieldRuntime();
         private readonly Dictionary<Hero, SacrificeBinding> _sacrificeBindings = new Dictionary<Hero, SacrificeBinding>();
+        private readonly List<SacrificeBinding> _sacrificeBindingScratch = new List<SacrificeBinding>();
         private long _sacrificeEpoch;
 
         // C02 integration installs the exact native self-sacrifice adapters and provides their live verification.
@@ -182,13 +183,19 @@ namespace SodRpg.Mod
 
         private void UpdateSacrificeShields()
         {
-            foreach (var binding in new List<SacrificeBinding>(_sacrificeBindings.Values))
-                try { RefreshSacrificeBinding(binding); }
-                catch (Exception ex)
-                {
-                    StopSacrificeShield(binding.Owner.Hero);
-                    Log.Error("C11 SacrificeShield stopped; native sacrifice remains unchanged. " + ex);
-                }
+            // #55: this runs every host tick; reuse the scratch instead of allocating the binding list per frame.
+            if (_sacrificeBindings.Count > 0)
+            {
+                _sacrificeBindingScratch.Clear();
+                _sacrificeBindingScratch.AddRange(_sacrificeBindings.Values);
+                foreach (var binding in _sacrificeBindingScratch)
+                    try { RefreshSacrificeBinding(binding); }
+                    catch (Exception ex)
+                    {
+                        StopSacrificeShield(binding.Owner.Hero);
+                        Log.Error("C11 SacrificeShield stopped; native sacrifice remains unchanged. " + ex);
+                    }
+            }
             foreach (var award in _sacrificeShields.TakePendingForHostUpdate())
             {
                 SacrificeBinding binding = null;

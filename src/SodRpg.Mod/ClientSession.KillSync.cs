@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
+using UnityEngine;
 
 namespace SodRpg.Mod
 {
@@ -46,16 +47,25 @@ namespace SodRpg.Mod
         {
             if (!_killClassifications.ReceiveFact(fact)) return;
             ResolveClassifiedDeaths();
-            MarkDirty(false);
-            SaveNow();
+            DeferKillSave();
         }
 
         private void CaptureNativeKill(uint monsterNetId, PendingRunKill kill)
         {
             if (!_killClassifications.ObserveDeath(new PendingMonsterDeath(monsterNetId, kill))) return;
             ResolveClassifiedDeaths();
+            DeferKillSave();
+        }
+
+        /// <summary>
+        /// キルの記録を保存に回す（#55）。1キルごとに全文保存すると、ボス撃破で雑魚が一斉に死んだフレームに
+        /// 数十～数百回の JSON 化が重なりゲームが固まる。報酬は即時にメモリへ入り、保存は数秒以内の定期保存にまとめる。
+        /// </summary>
+        private void DeferKillSave()
+        {
             MarkDirty(false);
-            SaveNow();
+            float deadline = Time.unscaledTime + 5f;
+            if (_nextSave > deadline) _nextSave = deadline;
         }
 
         private void ResolveClassifiedDeaths()
