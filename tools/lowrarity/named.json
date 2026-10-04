@@ -1,0 +1,6770 @@
+[
+  {
+    "id": "named.armor.001",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.chain_hauberk",
+    "family": "Plain",
+    "nameJa": "鎖の輪舞",
+    "nameEn": "Chain Ronde",
+    "loreJa": "鎖が鳴るたび、歩みが速くなる。",
+    "loreEn": "Each clink of chain quickens the step.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.002",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.citadel_plate",
+    "family": "Plain",
+    "nameJa": "城砦の雷紋",
+    "nameEn": "Citadel Lightning Crest",
+    "loreJa": "石壁を伝う稲妻は、味方の合図。",
+    "loreEn": "Lightning along stone is a signal to allies.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.003",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.hunter_leather",
+    "family": "Plain",
+    "nameJa": "革の先手",
+    "nameEn": "Leather First Move",
+    "loreJa": "革の軋みは、敵より先に鳴る。",
+    "loreEn": "The leather creaks before the enemy moves.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.004",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.aurora_wrap",
+    "family": "Frost",
+    "nameJa": "極光の足止め",
+    "nameEn": "Aurora Snare",
+    "loreJa": "揺れる光に、追われる足が止まる。",
+    "loreEn": "Under the wavering light, fleeing feet slow.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.005",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.frost_robe",
+    "family": "Frost",
+    "nameJa": "霜法衣の湯気",
+    "nameEn": "Frost-Robe Steam",
+    "loreJa": "冷たい衣の内側で、白い霧が育つ。",
+    "loreEn": "Inside the cold robe, white mist gathers.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.006",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.basalt_cuirass",
+    "family": "Flame",
+    "nameJa": "玄武の火脈",
+    "nameEn": "Basalt Firevein",
+    "loreJa": "岩の割れ目から、四つ目の火が噴く。",
+    "loreEn": "From the rock's cracks, the fourth fire spouts.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.007",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.dancer_garb",
+    "family": "Flame",
+    "nameJa": "舞手の火の粉",
+    "nameEn": "Dancer's Sparks",
+    "loreJa": "衣の裾が、火の粉を撒き散らす。",
+    "loreEn": "The hem scatters sparks as it turns.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.hearth_ember"
+  },
+  {
+    "id": "named.armor.008",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.ember_plate",
+    "family": "Flame",
+    "nameJa": "燠火の黒種",
+    "nameEn": "Emberforged Seed",
+    "loreJa": "焼けた鎧の縫い目に、黒い種がある。",
+    "loreEn": "In the seams of the fired plate, a black seed waits.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.009",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.dawnlight_corset",
+    "family": "Light",
+    "nameJa": "暁光の灯",
+    "nameEn": "Dawnlight Lamp",
+    "loreJa": "暁の光が、ひと息ごとに盾を織る。",
+    "loreEn": "Dawnlight weaves a shield with every breath.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dawn_pair"
+  },
+  {
+    "id": "named.armor.010",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.morningdew_robe",
+    "family": "Light",
+    "nameJa": "朝露の輝き",
+    "nameEn": "Morning-Dew Radiance",
+    "loreJa": "露の粒が、小さな光を重ねる。",
+    "loreEn": "Each dewdrop stacks a little light.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_light"
+  },
+  {
+    "id": "named.armor.011",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.ambush_vest",
+    "family": "Dark",
+    "nameJa": "奇襲の断末",
+    "nameEn": "Ambush Finale",
+    "loreJa": "息の根を止めるのは、最初の一手。",
+    "loreEn": "The first move is what stops the breath.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.012",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.duskweave_jacket",
+    "family": "Dark",
+    "nameJa": "黄昏織りの影",
+    "nameEn": "Duskweave Shadow",
+    "loreJa": "織り上がるのは、夕暮れそのもの。",
+    "loreEn": "What it weaves is dusk itself.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dusk_pact"
+  },
+  {
+    "id": "named.armor.013",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.ink_robe",
+    "family": "Dark",
+    "nameJa": "墨染めの蝕",
+    "nameEn": "Ink-Dyed Eclipse",
+    "loreJa": "墨が滲む処で、光と影が交わる。",
+    "loreEn": "Where ink bleeds, light and shadow meet.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.014",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.bastion_shell",
+    "family": "Guard",
+    "nameJa": "甲羅の返し棘",
+    "nameEn": "Shell's Returning Spine",
+    "loreJa": "叩いた手が、痛い。",
+    "loreEn": "The hand that strikes it aches.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shield_wall"
+  },
+  {
+    "id": "named.armor.015",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.guardian_plate",
+    "family": "Guard",
+    "nameJa": "護りの不動",
+    "nameEn": "Guardian Immovability",
+    "loreJa": "構えを守れば、守られる。",
+    "loreEn": "Hold the stance, and be held.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.016",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.flowing_cloak",
+    "family": "Gale",
+    "nameJa": "流れの旋風",
+    "nameEn": "Flowing Whirlwind",
+    "loreJa": "身をひねれば、外套が渦になる。",
+    "loreEn": "Twist away, and the cloak becomes a whirl.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.swift_vow"
+  },
+  {
+    "id": "named.armor.017",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.quicksilver_jacket",
+    "family": "Gale",
+    "nameJa": "水銀の乱戦",
+    "nameEn": "Quicksilver Melee",
+    "loreJa": "混むほど、水銀は沸き立つ。",
+    "loreEn": "The more crowded, the more the mercury seethes.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.018",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.swiftstep_coat",
+    "family": "Gale",
+    "nameJa": "疾歩の追風",
+    "nameEn": "Swiftstep Tailwind",
+    "loreJa": "倒した敵の分だけ、風が追う。",
+    "loreEn": "For every foe felled, the wind follows harder.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.019",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.candlelight_robe",
+    "family": "Mend",
+    "nameJa": "燭光の満ち",
+    "nameEn": "Candlelight Fullness",
+    "loreJa": "溢れた灯が、蝋の盾になる。",
+    "loreEn": "The overflowing flame becomes a wax shield.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.020",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.healing_sash",
+    "family": "Mend",
+    "nameJa": "癒し帯の吸命",
+    "nameEn": "Healing Sash Leech",
+    "loreJa": "締めた帯が、痛みを吸い取る。",
+    "loreEn": "The bound sash draws the pain out.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.021",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.buckler_vest",
+    "family": "Summon",
+    "nameJa": "小盾の分け前",
+    "nameEn": "Buckler Share",
+    "loreJa": "小さな盾も、二つなら大きい。",
+    "loreEn": "A small shield, doubled, is large.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.022",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.oathplate_cuirass",
+    "family": "Summon",
+    "nameJa": "誓板の共演",
+    "nameEn": "Oathplate Co-Star",
+    "loreJa": "誓いを並べれば、舞台ができる。",
+    "loreEn": "Line up the oaths, and a stage appears.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.pack_trio"
+  },
+  {
+    "id": "named.armor.023",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.bark_mail",
+    "family": "Memory",
+    "nameJa": "樹皮の終曲",
+    "nameEn": "Barkbound Finale",
+    "loreJa": "年輪の果てに、幕引きの音がある。",
+    "loreEn": "At the rings' end sounds the closing note.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.024",
+    "slot": "Armor",
+    "rarity": "Uncommon",
+    "baseId": "armor.moon_silk",
+    "family": "Memory",
+    "nameJa": "月絹の巡り",
+    "nameEn": "Moonsilk Cycle",
+    "loreJa": "絹が月光を巻き戻す。",
+    "loreEn": "The silk winds the moonlight back.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.memory_trio"
+  },
+  {
+    "id": "named.armor.025",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.ember_jacket",
+    "family": "Plain",
+    "nameJa": "火の粉の砕音",
+    "nameEn": "Cinder Crack",
+    "loreJa": "灰を払えば、下から音が砕ける。",
+    "loreEn": "Brush the ash away and something cracks beneath.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.plain_trio"
+  },
+  {
+    "id": "named.armor.026",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.skirmisher_coat",
+    "family": "Plain",
+    "nameJa": "遊撃の割れ盾",
+    "nameEn": "Skirmisher's Shieldbreak",
+    "loreJa": "小さな盾も、割れれば音になる。",
+    "loreEn": "Even a small shield makes a sound when it breaks.",
+    "powers": [
+      {
+        "power": "ShieldbreakBurst",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.027",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.frost_coat",
+    "family": "Frost",
+    "nameJa": "霜織りの衣",
+    "nameEn": "Frostweave Mantle",
+    "loreJa": "織り込んだ霜が、触れた者を凍らせる。",
+    "loreEn": "The woven frost freezes whoever touches it.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.028",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.glacier_harness",
+    "family": "Frost",
+    "nameJa": "氷河の晶鎧",
+    "nameEn": "Glacial Crystal Harness",
+    "loreJa": "削られた氷が、光を鎧として纏う。",
+    "loreEn": "Carved ice wears light as its armor.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.029",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.tidebound_mail",
+    "family": "Frost",
+    "nameJa": "潮縛の脆氷",
+    "nameEn": "Tidebound Brittle Ice",
+    "loreJa": "潮を吸った氷は、諸共に割れる。",
+    "loreEn": "Tide-soaked ice shatters all together.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.winter_watch"
+  },
+  {
+    "id": "named.armor.030",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.ember_cuirass",
+    "family": "Flame",
+    "nameJa": "残り火の飛び路",
+    "nameEn": "Ember's Leaping Path",
+    "loreJa": "一つの火が、もう一つの火を呼ぶ。",
+    "loreEn": "One flame calls another.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.031",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.scale_coat",
+    "family": "Flame",
+    "nameJa": "竜鱗の輪",
+    "nameEn": "Dragon Scale Ring",
+    "loreJa": "鱗は重なり、囲まれても毀れない。",
+    "loreEn": "Scales overlap; a ring that will not chip.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.032",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.mirrorsilk_robe",
+    "family": "Light",
+    "nameJa": "鏡絹の星盾",
+    "nameEn": "Mirrorsilk Starshield",
+    "loreJa": "絹が星を映せば、盾の形になる。",
+    "loreEn": "When silk mirrors a star, it takes a shield's shape.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.033",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.prayer_shawl",
+    "family": "Light",
+    "nameJa": "祈りの返礼",
+    "nameEn": "Prayer's Kind Return",
+    "loreJa": "捧げた祈りは、誰かの親切になる。",
+    "loreEn": "A given prayer becomes someone's kindness.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.034",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.sun_plate",
+    "family": "Light",
+    "nameJa": "陽光の継ぎ糸",
+    "nameEn": "Sunlit Lifeline",
+    "loreJa": "日だまりの中で、命が縫い合わされる。",
+    "loreEn": "In the sunpatch, life is stitched back together.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.035",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.hunter_vest",
+    "family": "Dark",
+    "nameJa": "狩りの吸魂",
+    "nameEn": "Hunter's Siphon",
+    "loreJa": "獲物の最後の息を、着ていく。",
+    "loreEn": "It wears the prey's final breath home.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.036",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.shadow_cloak",
+    "family": "Dark",
+    "nameJa": "影織りの跡目",
+    "nameEn": "Shadowweave Heirloom",
+    "loreJa": "外套を継いだ者に、影が従う。",
+    "loreEn": "The shadow obeys whoever inherits the cloak.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.037",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.counter_gauntlets",
+    "family": "Guard",
+    "nameJa": "反撃の守護霊",
+    "nameEn": "Counter Guardian",
+    "loreJa": "痛い一撃には、霊が蓋をする。",
+    "loreEn": "Against the worst blows, a spirit throws the lid.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.038",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.ironbark_vest",
+    "family": "Guard",
+    "nameJa": "鉄樹の備え",
+    "nameEn": "Ironbark Readiness",
+    "loreJa": "硬い樹は、嵐の前に身を固める。",
+    "loreEn": "The hard tree braces before the storm.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.039",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.rampart_jacket",
+    "family": "Guard",
+    "nameJa": "土塁の残身",
+    "nameEn": "Rampart Echo",
+    "loreJa": "かわした体が、次の一手を覚える。",
+    "loreEn": "The dodging body remembers the next move.",
+    "powers": [
+      {
+        "power": "EchoingDodge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.040",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.stormfront_vest",
+    "family": "Gale",
+    "nameJa": "嵐前の疾駆",
+    "nameEn": "Stormfront Dash",
+    "loreJa": "嵐の前の風は、足に乗る。",
+    "loreEn": "The wind before the storm rides your feet.",
+    "powers": [
+      {
+        "power": "Sprint",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.041",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.traveler_coat",
+    "family": "Gale",
+    "nameJa": "旅人の渡り路",
+    "nameEn": "Traveler's Crossing",
+    "loreJa": "馴れた道ほど、刃が冴える。",
+    "loreEn": "On well-worn roads, the edge shines.",
+    "powers": [
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.042",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.deeproot_vest",
+    "family": "Mend",
+    "nameJa": "深根の薬師",
+    "nameEn": "Deeproot Apothecary",
+    "loreJa": "根が届く範囲まで、手当てが届く。",
+    "loreEn": "Care reaches as far as the roots.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.warm_hands"
+  },
+  {
+    "id": "named.armor.043",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.lampkeeper_mantle",
+    "family": "Mend",
+    "nameJa": "灯守の再起",
+    "nameEn": "Lampkeeper's Second Wind",
+    "loreJa": "灯が消えかけても、芯は残る。",
+    "loreEn": "Even as the flame gutters, the wick remains.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.044",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.monk_garb",
+    "family": "Mend",
+    "nameJa": "行者の止水",
+    "nameEn": "Ascetic Stillwater",
+    "loreJa": "動じなければ、水面が盾になる。",
+    "loreEn": "Unshaken, the water's surface becomes a shield.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.045",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.emberweave_shawl",
+    "family": "Summon",
+    "nameJa": "織り火の見守り",
+    "nameEn": "Emberweave Watch",
+    "loreJa": "肩に掛けた火が、仲間を見ている。",
+    "loreEn": "The fire on your shoulder watches your friends.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.046",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.seafoam_gown",
+    "family": "Summon",
+    "nameJa": "海沫の継ぎ手",
+    "nameEn": "Seafoam Relay",
+    "loreJa": "泡が弾ければ、次の波に渡す。",
+    "loreEn": "When foam pops, it hands off to the next wave.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.047",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.mist_robe",
+    "family": "Memory",
+    "nameJa": "霧衣の余韻",
+    "nameEn": "Mist-Robe Echo",
+    "loreJa": "霧が晴れても、音は残る。",
+    "loreEn": "After the mist clears, the sound remains.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.048",
+    "slot": "Armor",
+    "rarity": "Rare",
+    "baseId": "armor.resonant_robe",
+    "family": "Memory",
+    "nameJa": "共鳴の切札",
+    "nameEn": "Resonant Trump",
+    "loreJa": "袖の中に、一枚だけ残してある。",
+    "loreEn": "One card is kept back in the sleeve.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.049",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.spiked_plate",
+    "family": "Plain",
+    "nameJa": "棘付きの静水",
+    "nameEn": "Spineplate Stillwater",
+    "loreJa": "棘は返し、水は受け止める。",
+    "loreEn": "The spikes give back; the water receives.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "high"
+      },
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.050",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.winterwool_coat",
+    "family": "Frost",
+    "nameJa": "冬毛の囲い",
+    "nameEn": "Winterwool Enclosure",
+    "loreJa": "厚い毛は冷えと敵を、同時に防ぐ。",
+    "loreEn": "Thick wool keeps out cold and foes alike.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "high"
+      },
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.051",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.volcanic_coat",
+    "family": "Flame",
+    "nameJa": "火山の返し火",
+    "nameEn": "Volcanic Backfire",
+    "loreJa": "火を吐けば、灰が棘になって戻る。",
+    "loreEn": "Spit fire, and the ash comes back as thorns.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "high"
+      },
+      {
+        "power": "Thorns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.052",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.wardsigil_vest",
+    "family": "Light",
+    "nameJa": "加護の二重織",
+    "nameEn": "Wardsigil Double Weave",
+    "loreJa": "二つの護りを、一枚の布に織り込んだ。",
+    "loreEn": "Two wards woven into a single cloth.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "high"
+      },
+      {
+        "power": "StarShield",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.053",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.twistedchain_ply",
+    "family": "Dark",
+    "nameJa": "ねじれ鎖の処罰",
+    "nameEn": "Twisted-Chain Verdict",
+    "loreJa": "歪んだ鎖は、悪を締め上げ灯をともす。",
+    "loreEn": "The twisted chain strangles evil and lights a lamp.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "high"
+      },
+      {
+        "power": "Barrier",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.054",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.thorn_mail",
+    "family": "Guard",
+    "nameJa": "棘鎧の壁",
+    "nameEn": "Thorn Wall Mail",
+    "loreJa": "棘の壁は、巨浪も霊も弾く。",
+    "loreEn": "The thorn wall turns aside waves and spirits.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "high"
+      },
+      {
+        "power": "Aegis",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.055",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.zephyr_robe",
+    "family": "Gale",
+    "nameJa": "西風の舞い衣",
+    "nameEn": "Zephyr Dancing Robe",
+    "loreJa": "袖が膨らめば、渦と喧騒が来る。",
+    "loreEn": "When the sleeves fill, whirl and clamor follow.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "high"
+      },
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.056",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.nightloom_robe",
+    "family": "Mend",
+    "nameJa": "夜織りの溢れ",
+    "nameEn": "Nightloom Overflow",
+    "loreJa": "夜に織った分だけ、命が余る。",
+    "loreEn": "For all woven by night, life is left over.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "high"
+      },
+      {
+        "power": "Apothecary",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.057",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.star_mantle",
+    "family": "Summon",
+    "nameJa": "星屑の双護",
+    "nameEn": "Stardust Twin Ward",
+    "loreJa": "降る星屑が、護りを分け合う。",
+    "loreEn": "Falling stardust shares out its warding.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "mid"
+      },
+      {
+        "power": "WatchfulHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.058",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.summoners_vest",
+    "family": "Summon",
+    "nameJa": "喚び獣の目付",
+    "nameEn": "Summoner's Watchpost",
+    "loreJa": "呼んだ獣が、死角を見張る。",
+    "loreEn": "The called beast guards your blind side.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "high"
+      },
+      {
+        "power": "EchoingDodge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.059",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.root_mail",
+    "family": "Memory",
+    "nameJa": "根鎖の終章",
+    "nameEn": "Rootbound Finale",
+    "loreJa": "根が絡めば、幕は早く下りる。",
+    "loreEn": "When the roots entangle, the curtain falls sooner.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "mid"
+      },
+      {
+        "power": "Whirlwind",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.armor.060",
+    "slot": "Armor",
+    "rarity": "Epic",
+    "baseId": "armor.star_cloak",
+    "family": "Memory",
+    "nameJa": "星読みの余韻",
+    "nameEn": "Stargazer's Echo",
+    "loreJa": "読んだ星の分だけ、間が詰まる。",
+    "loreEn": "Each star read closes the gap a little.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "high"
+      },
+      {
+        "power": "Sprint",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.001",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.fang_necklace",
+    "family": "Plain",
+    "nameJa": "牙の連鳴",
+    "nameEn": "Fang Chaincall",
+    "loreJa": "牙が鳴るたび、拍子が上がる。",
+    "loreEn": "Each click of fang lifts the rhythm.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.002",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.hunters_seal",
+    "family": "Plain",
+    "nameJa": "狩印の雷鎖",
+    "nameEn": "Hunter's Lightning Seal",
+    "loreJa": "印を押した獲物へ、雷が渡る。",
+    "loreEn": "Lightning crosses to whatever the seal marks.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.003",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.longshot_charm",
+    "family": "Plain",
+    "nameJa": "遠当ての静水",
+    "nameEn": "Longshot Stillwater",
+    "loreJa": "遠くからでも、水は静かに効く。",
+    "loreEn": "Even from afar, the water works in stillness.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.004",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.frost_pendant",
+    "family": "Frost",
+    "nameJa": "霜息の垂飾",
+    "nameEn": "Frostbreath Pendant",
+    "loreJa": "吐く息ごとに、冷気が深まる。",
+    "loreEn": "With every breath, the cold deepens.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.rime_lantern"
+  },
+  {
+    "id": "named.charm.005",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.moon_bell",
+    "family": "Frost",
+    "nameJa": "月鈴の霜晶",
+    "nameEn": "Moon Bell Frostcrystal",
+    "loreJa": "鈴の音に、冷たい光が応える。",
+    "loreEn": "Cold light answers the bell's ring.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.006",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.blaze_brooch",
+    "family": "Flame",
+    "nameJa": "焔の黒種",
+    "nameEn": "Blaze Black Seed",
+    "loreJa": "燃え残りが、影と手を結ぶ。",
+    "loreEn": "The charred remnant joins hands with shadow.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.007",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.cindercore_locket",
+    "family": "Flame",
+    "nameJa": "火芯の四連",
+    "nameEn": "Cindercore Quadruple",
+    "loreJa": "蓋を開けるたび、火が覚える。",
+    "loreEn": "Each time it opens, the fire remembers.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.008",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.ember_locket",
+    "family": "Flame",
+    "nameJa": "残り火の飛び火",
+    "nameEn": "Ember Locket Wildfire",
+    "loreJa": "胸の火が、隣へ移る。",
+    "loreEn": "The fire at the chest leaps to the next.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.kindled_step"
+  },
+  {
+    "id": "named.charm.009",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.dawnsilk_band",
+    "family": "Light",
+    "nameJa": "暁糸の星傘",
+    "nameEn": "Dawnsilk Starshade",
+    "loreJa": "編んだ糸が、星の傘になる。",
+    "loreEn": "The woven thread becomes a star's parasol.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dusk_and_dawn"
+  },
+  {
+    "id": "named.charm.010",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.resonance_amulet",
+    "family": "Light",
+    "nameJa": "共鳴の継ぎ糸",
+    "nameEn": "Resonant Lifeline",
+    "loreJa": "波長が合えば、命が繋がる。",
+    "loreEn": "Where wavelengths meet, life is joined.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.011",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.duskbead_necklace",
+    "family": "Dark",
+    "nameJa": "宵珠の影重ね",
+    "nameEn": "Duskbead Shadow Stack",
+    "loreJa": "一珠ごとに、影が濃くなる。",
+    "loreEn": "Each bead darkens the shadow a shade.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.012",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.ink_stone",
+    "family": "Dark",
+    "nameJa": "墨硯の吸魂",
+    "nameEn": "Inkstone Siphon",
+    "loreJa": "すった墨が、誰かの最後を知る。",
+    "loreEn": "The ground ink knows someone's last moment.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.013",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.shadow_mask",
+    "family": "Dark",
+    "nameJa": "仮面の跡目",
+    "nameEn": "Mask's Shadow Heir",
+    "loreJa": "被った者から、次へ影が渡る。",
+    "loreEn": "The shadow passes from wearer to wearer.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.014",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.bulwark_seal",
+    "family": "Guard",
+    "nameJa": "壁印の備え",
+    "nameEn": "Bulwark Readiness",
+    "loreJa": "印は盾ではなく、心構え。",
+    "loreEn": "The seal is not a shield but a stance.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shieldmates"
+  },
+  {
+    "id": "named.charm.015",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.guardian_seal",
+    "family": "Guard",
+    "nameJa": "守護の棘",
+    "nameEn": "Guardian Spines",
+    "loreJa": "護る心に、棘が生える。",
+    "loreEn": "A guarding heart grows spines.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.016",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.ironknot_ring",
+    "family": "Gale",
+    "nameJa": "鉄結びの旋風",
+    "nameEn": "Ironknot Whirl",
+    "loreJa": "結び目がほどける時、渦が起きる。",
+    "loreEn": "When the knot slips loose, a whirl begins.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.017",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.pursuit_badge",
+    "family": "Gale",
+    "nameJa": "追撃の疾駆",
+    "nameEn": "Pursuit Dash",
+    "loreJa": "かわすことが、追うことになる。",
+    "loreEn": "To dodge is already to pursue.",
+    "powers": [
+      {
+        "power": "Sprint",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.018",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.tailwind_ring",
+    "family": "Gale",
+    "nameJa": "追風の渡り路",
+    "nameEn": "Tailwind Crossing",
+    "loreJa": "風に乗れば、帰りも知っている。",
+    "loreEn": "Ride the wind, and you know the way home.",
+    "powers": [
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.019",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.halo_charm",
+    "family": "Mend",
+    "nameJa": "光環の再燃",
+    "nameEn": "Halo Rekindling",
+    "loreJa": "輪が細っても、芯は燃え直す。",
+    "loreEn": "Though the ring thins, the core relights.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.sprout_care"
+  },
+  {
+    "id": "named.charm.020",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.hearthstone",
+    "family": "Mend",
+    "nameJa": "炉端の吸命",
+    "nameEn": "Hearthstone Leech",
+    "loreJa": "温もりの分を、どこかから貰う。",
+    "loreEn": "Its warmth is borrowed from somewhere.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.021",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.beasttongue_charm",
+    "family": "Summon",
+    "nameJa": "獣語の分け合い",
+    "nameEn": "Beasttongue Share",
+    "loreJa": "言葉が通じれば、盾も分け合う。",
+    "loreEn": "Where words reach, shields are shared.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.022",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.deeproot_charm",
+    "family": "Summon",
+    "nameJa": "深根の見守り",
+    "nameEn": "Deeproot Watch",
+    "loreJa": "根の張った先まで、目は届く。",
+    "loreEn": "Sight reaches wherever roots have spread.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.023",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.clockwork_charm",
+    "family": "Memory",
+    "nameJa": "ぜんまいの切札",
+    "nameEn": "Clockwork Trump",
+    "loreJa": "捲くたびに、一枚増える。",
+    "loreEn": "Every wind adds a card.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.star_ledger"
+  },
+  {
+    "id": "named.charm.024",
+    "slot": "Charm",
+    "rarity": "Uncommon",
+    "baseId": "charm.eclipse_ring",
+    "family": "Memory",
+    "nameJa": "蝕環の欠片",
+    "nameEn": "Eclipse Shard",
+    "loreJa": "欠けた分だけ、恵みが積もる。",
+    "loreEn": "For every missing piece, a boon accrues.",
+    "powers": [
+      {
+        "power": "ShardBoon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.025",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.iron_seal",
+    "family": "Plain",
+    "nameJa": "鉄印の先手",
+    "nameEn": "Iron First Seal",
+    "loreJa": "押した瞬間に、勝負は半ば決まる。",
+    "loreEn": "The instant it presses, half the contest is won.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.026",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.skirmish_ring",
+    "family": "Plain",
+    "nameJa": "四元の巡り輪",
+    "nameEn": "Ring of Four Colors",
+    "loreJa": "火霜光影が揃う瞬間、輪が光る。",
+    "loreEn": "When fire, frost, light and shadow align, the ring glows.",
+    "powers": [
+      {
+        "power": "Convergence",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.027",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.glacier_charm",
+    "family": "Frost",
+    "nameJa": "氷晶の湯気",
+    "nameEn": "Glacier Steam",
+    "loreJa": "氷と火が触れ、白い幕を張る。",
+    "loreEn": "Ice meets fire and hangs a white curtain.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.tide_and_flame"
+  },
+  {
+    "id": "named.charm.028",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.snowbloom_charm",
+    "family": "Frost",
+    "nameJa": "雪華の枷",
+    "nameEn": "Snowbloom Shackles",
+    "loreJa": "咲いた花の数だけ、足が重い。",
+    "loreEn": "For every blossom, a foot grows heavy.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.029",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.tidewarden_brooch",
+    "family": "Frost",
+    "nameJa": "潮衛の脆氷",
+    "nameEn": "Tidewarden Brittle Ice",
+    "loreJa": "守った潮が、敵の装甲を弱らせる。",
+    "loreEn": "The guarded tide softens the foe's armor.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.030",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.comet_pendant",
+    "family": "Flame",
+    "nameJa": "彗星の火種",
+    "nameEn": "Comet Spark",
+    "loreJa": "尾を引けば、火が残る。",
+    "loreEn": "Draw the tail, and fire remains.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.031",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.garnet_ring",
+    "family": "Flame",
+    "nameJa": "紅玉の追風",
+    "nameEn": "Garnet Tailwind",
+    "loreJa": "深紅の輝きが、背を押す。",
+    "loreEn": "The deep red gleam pushes at your back.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.032",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.keeneye_charm",
+    "family": "Light",
+    "nameJa": "鋭眼の返し",
+    "nameEn": "Keen-Eye Kindness",
+    "loreJa": "見逃した者に、情けが戻る。",
+    "loreEn": "Kindness returns for those spared.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.033",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.stardust_pendant",
+    "family": "Light",
+    "nameJa": "星屑の灯",
+    "nameEn": "Stardust Lamp",
+    "loreJa": "集めた星屑が、定めに灯る。",
+    "loreEn": "Gathered stardust lights a steady lamp.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.034",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.sun_brooch",
+    "family": "Light",
+    "nameJa": "陽の重ね輝き",
+    "nameEn": "Sunlight Stacked Glow",
+    "loreJa": "陽が当たるたび、光が重なる。",
+    "loreEn": "Each touch of sun stacks another glow.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_light"
+  },
+  {
+    "id": "named.charm.035",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.raven_feather",
+    "family": "Dark",
+    "nameJa": "鴉羽の蝕",
+    "nameEn": "Raven-Quill Eclipse",
+    "loreJa": "羽で書けば、昼と夜が交わる。",
+    "loreEn": "Write with the quill, and day crosses night.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.036",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.shadow_ring",
+    "family": "Dark",
+    "nameJa": "影環の断罪",
+    "nameEn": "Shadow Ring Verdict",
+    "loreJa": "怯えた影から、順に刈られる。",
+    "loreEn": "The frightened shadows are reaped in turn.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shadow_reverie"
+  },
+  {
+    "id": "named.charm.037",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.chain_necklace",
+    "family": "Guard",
+    "nameJa": "鎖首の輪",
+    "nameEn": "Chain Necklace Ring",
+    "loreJa": "囲まれて、鎖は固く鳴る。",
+    "loreEn": "Surrounded, the chain rings hard.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.038",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.iron_feather",
+    "family": "Guard",
+    "nameJa": "鉄羽の守護霊",
+    "nameEn": "Iron-Feather Guardian",
+    "loreJa": "大波を受け、羽が盾になる。",
+    "loreEn": "It takes the great wave; the feather turns shield.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.039",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.pulsing_core",
+    "family": "Guard",
+    "nameJa": "脈打つ不動",
+    "nameEn": "Pulsing Immovability",
+    "loreJa": "鼓動は速くても、地に根が張る。",
+    "loreEn": "The beat may race, yet roots hold the ground.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.040",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.stormcloud_locket",
+    "family": "Gale",
+    "nameJa": "雷雲の乱気",
+    "nameEn": "Stormcloud Turbulence",
+    "loreJa": "雲が低いほど、中は荒れる。",
+    "loreEn": "The lower the cloud, the wilder inside.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.041",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.windchime_charm",
+    "family": "Gale",
+    "nameJa": "風鈴の助走",
+    "nameEn": "Wind-Chime Run-Up",
+    "loreJa": "鳴った分だけ、距離が縮む。",
+    "loreEn": "Every chime shortens the distance.",
+    "powers": [
+      {
+        "power": "RunUp",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.tailwind_pair"
+  },
+  {
+    "id": "named.charm.042",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.hearthside_ring",
+    "family": "Mend",
+    "nameJa": "囲炉裏の薬環",
+    "nameEn": "Hearthside Remedy Ring",
+    "loreJa": "火を囲んだ手は、薬を覚える。",
+    "loreEn": "Hands that circle a fire remember medicine.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.043",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.lotus_seal",
+    "family": "Mend",
+    "nameJa": "蓮印の溢れ",
+    "nameEn": "Lotus Overflow",
+    "loreJa": "満ちた水は、葉を盾に変える。",
+    "loreEn": "Water that overfills turns leaves to shields.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.044",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.mender_locket",
+    "family": "Mend",
+    "nameJa": "癒し匣の砕音",
+    "nameEn": "Mender's Crack",
+    "loreJa": "開けた匣の中で、何かが弾ける。",
+    "loreEn": "Inside the opened locket, something bursts.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.045",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.boulder_pendant",
+    "family": "Summon",
+    "nameJa": "岩塊の共演",
+    "nameEn": "Boulder Co-Star",
+    "loreJa": "岩と並べば、道は広がる。",
+    "loreEn": "Stand beside the boulder and the road widens.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.pack_trio"
+  },
+  {
+    "id": "named.charm.046",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.hunter_tooth",
+    "family": "Summon",
+    "nameJa": "牙飾りの継ぎ",
+    "nameEn": "Fang Relay",
+    "loreJa": "一本の牙が、次の牙へ繋ぐ。",
+    "loreEn": "One fang passes the charge to the next.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.047",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.dream_lens",
+    "family": "Memory",
+    "nameJa": "夢鏡の循環",
+    "nameEn": "Dreaming-Lens Circuit",
+    "loreJa": "覗くたび、光が環を描く。",
+    "loreEn": "Each look makes the light loop once more.",
+    "powers": [
+      {
+        "power": "CrystalCircuit",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.048",
+    "slot": "Charm",
+    "rarity": "Rare",
+    "baseId": "charm.feather_token",
+    "family": "Memory",
+    "nameJa": "風羽の終曲",
+    "nameEn": "Windfeather Finale",
+    "loreJa": "羽が揃えば、幕が早まる。",
+    "loreEn": "When the feathers gather, the curtain hurries.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.049",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.war_horn",
+    "family": "Plain",
+    "nameJa": "戦角の凱歌",
+    "nameEn": "War-Horn Victory Note",
+    "loreJa": "角笛が鳴り、砕けた後に息が戻る。",
+    "loreEn": "The horn sounds; after the shattering, breath returns.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "mid"
+      },
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.050",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.winteroak_charm",
+    "family": "Frost",
+    "nameJa": "冬樫の白息",
+    "nameEn": "Winter Oak White Breath",
+    "loreJa": "樫の葉が落ちる頃、霧が味方する。",
+    "loreEn": "When oak leaves fall, the mist takes your side.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "mid"
+      },
+      {
+        "power": "Steam",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.051",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.war_drum",
+    "family": "Flame",
+    "nameJa": "戦鼓の白煙",
+    "nameEn": "War-Drum White Smoke",
+    "loreJa": "打ち鳴らせば、煙と種が散る。",
+    "loreEn": "Every beat scatters smoke and seeds.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "mid"
+      },
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.052",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.sunspoke_pin",
+    "family": "Light",
+    "nameJa": "陽輪の二重奏",
+    "nameEn": "Sunspoke Duet",
+    "loreJa": "傘と情けを、同時に差し出す。",
+    "loreEn": "It offers a parasol and a kindness at once.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "mid"
+      },
+      {
+        "power": "KindnessReturns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.053",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.storm_bell",
+    "family": "Dark",
+    "nameJa": "嵐鈴の夜噛み",
+    "nameEn": "Storm Bell Nightbite",
+    "loreJa": "鐘が鳴る夜は、影が魂を舐める。",
+    "loreEn": "On nights the bell rings, shadow licks at souls.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "mid"
+      },
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.054",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.stone_heart",
+    "family": "Guard",
+    "nameJa": "石心の備え風",
+    "nameEn": "Stone Heart Readywind",
+    "loreJa": "石は構え、風だけが動く。",
+    "loreEn": "The stone holds its guard; only the wind moves.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "mid"
+      },
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.055",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.zephyr_ring",
+    "family": "Gale",
+    "nameJa": "西風の二つ輪",
+    "nameEn": "Zephyr Twin Rings",
+    "loreJa": "追風と旋風を、一本の指で。",
+    "loreEn": "Tailwind and whirlwind on a single finger.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "mid"
+      },
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.056",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.oak_amulet",
+    "family": "Mend",
+    "nameJa": "樫守の二の息",
+    "nameEn": "Oak Second Breath",
+    "loreJa": "倒れても、根から息が戻る。",
+    "loreEn": "Even felled, breath returns through the roots.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "mid"
+      },
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.057",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.seafoam_ring",
+    "family": "Summon",
+    "nameJa": "海沫の分け輪",
+    "nameEn": "Seafoam Shared Ring",
+    "loreJa": "泡の輪は、嵐を半分にする。",
+    "loreEn": "A ring of foam halves the storm.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "high"
+      },
+      {
+        "power": "CoStar",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.058",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.talon_pendant",
+    "family": "Summon",
+    "nameJa": "爪飾りの二役",
+    "nameEn": "Talon's Two Roles",
+    "loreJa": "並び立ち、そして見守る。",
+    "loreEn": "It stands with you, and it watches.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "mid"
+      },
+      {
+        "power": "WatchfulHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.059",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.ice_heart",
+    "family": "Memory",
+    "nameJa": "氷心の切り札",
+    "nameEn": "Frozen-Heart Trump",
+    "loreJa": "凍えた胸に、最後の一枚がある。",
+    "loreEn": "In the frozen chest waits the final card.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "high"
+      },
+      {
+        "power": "CrystalCircuit",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.charm.060",
+    "slot": "Charm",
+    "rarity": "Epic",
+    "baseId": "charm.old_clock",
+    "family": "Memory",
+    "nameJa": "古時計の循環",
+    "nameEn": "Old-Clock Circuit",
+    "loreJa": "針が一周すれば、恵みが落ちる。",
+    "loreEn": "Each full turn of the hands drops a boon.",
+    "powers": [
+      {
+        "power": "CrystalCircuit",
+        "band": "mid"
+      },
+      {
+        "power": "ShardBoon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.001",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.ash_boots",
+    "family": "Plain",
+    "nameJa": "灰踏みの静雷",
+    "nameEn": "Ashwalker Quiet Lightning",
+    "loreJa": "灰の上を、光が這う。",
+    "loreEn": "Light crawls across the ash.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.002",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.hunter_boots",
+    "family": "Plain",
+    "nameJa": "追跡の砕け音",
+    "nameEn": "Tracker's Crack",
+    "loreJa": "踏み抜いた先で、音が弾ける。",
+    "loreEn": "Where the boot breaks through, sound bursts.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.plain_trio"
+  },
+  {
+    "id": "named.feet.003",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.spiked_boots",
+    "family": "Plain",
+    "nameJa": "棘靴の止水",
+    "nameEn": "Spiked Stillwater",
+    "loreJa": "踏み込んだ足元が、水面になる。",
+    "loreEn": "Where the boot plants, still water forms.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.004",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.dawnmist_shoes",
+    "family": "Frost",
+    "nameJa": "暁霧の白霜",
+    "nameEn": "Dawnmist Rime",
+    "loreJa": "霧の靴跡が、霜になる。",
+    "loreEn": "The misty footprints turn to rime.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.005",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.froststride_shoes",
+    "family": "Frost",
+    "nameJa": "霜踏みの湯気",
+    "nameEn": "Froststride Steam",
+    "loreJa": "冷たい歩みの後ろに、白い幕。",
+    "loreEn": "Behind the cold stride, a white curtain.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.winter_caravan"
+  },
+  {
+    "id": "named.feet.006",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.dawn_steps",
+    "family": "Flame",
+    "nameJa": "暁足の四連火",
+    "nameEn": "Dawnstep Quadruple",
+    "loreJa": "四歩目ごとに、火が灯る。",
+    "loreEn": "Every fourth step kindles a flame.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.007",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.ember_slippers",
+    "family": "Flame",
+    "nameJa": "燠火履きの粉",
+    "nameEn": "Embered-Slipper Sparks",
+    "loreJa": "歩くたび、火の粉が残る。",
+    "loreEn": "Each step leaves sparks behind.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.hearth_ember"
+  },
+  {
+    "id": "named.feet.008",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.mistral_sandals",
+    "family": "Flame",
+    "nameJa": "突風履きの種",
+    "nameEn": "Mistral Black Seed",
+    "loreJa": "風が運んだ火の種を、履いて歩く。",
+    "loreEn": "It walks wearing fire's seed the wind brought.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.009",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.cometstride_shoes",
+    "family": "Light",
+    "nameJa": "彗星履きの灯",
+    "nameEn": "Comet-Stride Lamp",
+    "loreJa": "流れた跡に、灯が残る。",
+    "loreEn": "Along the comet's wake, a lamp remains.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dawn_pair"
+  },
+  {
+    "id": "named.feet.010",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.sage_slippers",
+    "family": "Light",
+    "nameJa": "賢履きの星傘",
+    "nameEn": "Sage's Starshade",
+    "loreJa": "歩みの果てに、星が差しかかる。",
+    "loreEn": "At the walk's end, a star shades you.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.011",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.deadeye_leggings",
+    "family": "Dark",
+    "nameJa": "必中の吸魂",
+    "nameEn": "Deadeye Siphon",
+    "loreJa": "外さない脚が、息を拾う。",
+    "loreEn": "Feet that never miss gather breath.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.012",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.duskstep_boots",
+    "family": "Dark",
+    "nameJa": "宵踏みの断罪",
+    "nameEn": "Duskstep Verdict",
+    "loreJa": "黄昏の中で、終わりを踏む。",
+    "loreEn": "In the dusk it treads on endings.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shadow_reverie"
+  },
+  {
+    "id": "named.feet.013",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.mist_shoes",
+    "family": "Dark",
+    "nameJa": "霧履きの蝕",
+    "nameEn": "Mist-Shoe Eclipse",
+    "loreJa": "霧の中で、昼と夜が入れ替わる。",
+    "loreEn": "Inside the mist, day and night trade places.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dusk_and_dawn"
+  },
+  {
+    "id": "named.feet.014",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.ballast_boots",
+    "family": "Guard",
+    "nameJa": "沈錘の輪",
+    "nameEn": "Ballast Ring",
+    "loreJa": "重い靴ほど、輪は固い。",
+    "loreEn": "The heavier the boot, the harder the ring.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.015",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.chain_greaves",
+    "family": "Guard",
+    "nameJa": "鎖脛の守護霊",
+    "nameEn": "Chain-Greave Guardian",
+    "loreJa": "鎖の重みが、大波を止める。",
+    "loreEn": "The chain's weight halts the great wave.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.016",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.blitz_treads",
+    "family": "Gale",
+    "nameJa": "電光足の追風",
+    "nameEn": "Blitz Tailwind",
+    "loreJa": "閃いた後を、風が追う。",
+    "loreEn": "After the flash, the wind gives chase.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.tailwind_pair"
+  },
+  {
+    "id": "named.feet.017",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.dancer_shoes",
+    "family": "Gale",
+    "nameJa": "舞鞋の旋風",
+    "nameEn": "Dancer's Whirl",
+    "loreJa": "回れば、靴先が渦になる。",
+    "loreEn": "Every turn, the toe draws a whirl.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.018",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.hunter_striders",
+    "family": "Gale",
+    "nameJa": "追撃脛の助走",
+    "nameEn": "Hunter's Run-Up",
+    "loreJa": "距離こそ、爪の長さ。",
+    "loreEn": "Distance is the claw's true length.",
+    "powers": [
+      {
+        "power": "RunUp",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.019",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.deeproot_boots",
+    "family": "Mend",
+    "nameJa": "深根靴の溢れ",
+    "nameEn": "Deeproot Overflow",
+    "loreJa": "根が吸い過ぎて、盾が実る。",
+    "loreEn": "Roots that drink too much bear shields.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.020",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.guard_sabatons",
+    "family": "Mend",
+    "nameJa": "守靴の灯守",
+    "nameEn": "Guardian Warden",
+    "loreJa": "倒れかけた時、靴が灯る。",
+    "loreEn": "Just before falling, the boots light up.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.021",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.beastpaw_boots",
+    "family": "Summon",
+    "nameJa": "獣趾靴の見守り",
+    "nameEn": "Beastpaw Watch",
+    "loreJa": "獣の足跡が、後ろを見る。",
+    "loreEn": "The paw prints watch behind you.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.022",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.thorntread_sabatons",
+    "family": "Summon",
+    "nameJa": "棘踏みの共演",
+    "nameEn": "Thorntread Co-Star",
+    "loreJa": "棘の上で、誰かと並んで立つ。",
+    "loreEn": "On the thorns, it stands beside someone.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.pack_trio"
+  },
+  {
+    "id": "named.feet.023",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.raven_boots",
+    "family": "Memory",
+    "nameJa": "鴉羽靴の欠片",
+    "nameEn": "Raven-Boot Shard",
+    "loreJa": "落とした羽の数だけ、恵み。",
+    "loreEn": "For every feather shed, a boon.",
+    "powers": [
+      {
+        "power": "ShardBoon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.024",
+    "slot": "Feet",
+    "rarity": "Uncommon",
+    "baseId": "feet.star_slippers",
+    "family": "Memory",
+    "nameJa": "星座履きの余韻",
+    "nameEn": "Constellation Echo",
+    "loreJa": "星の並びが、鋭く響く。",
+    "loreEn": "The stars' arrangement rings sharp.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.old_friends"
+  },
+  {
+    "id": "named.feet.025",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.iron_clogs",
+    "family": "Plain",
+    "nameJa": "鉄下駄の先手",
+    "nameEn": "Iron-Clog First Move",
+    "loreJa": "重い一歩が、勝負を決める。",
+    "loreEn": "One heavy step settles the contest.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.026",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.stone_boots",
+    "family": "Plain",
+    "nameJa": "岩靴の見切り",
+    "nameEn": "Stone-Boot Read",
+    "loreJa": "動かない足が、次を読む。",
+    "loreEn": "Feet that do not move read what comes.",
+    "powers": [
+      {
+        "power": "PerfectRead",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.027",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.frost_boots",
+    "family": "Frost",
+    "nameJa": "氷上の足留め",
+    "nameEn": "Ice-Skimmer Snare",
+    "loreJa": "滑った跡で、追う足が止まる。",
+    "loreEn": "Along the glide, pursuing feet slow.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.028",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.ironwave_greaves",
+    "family": "Frost",
+    "nameJa": "鉄波の晶",
+    "nameEn": "Iron-Wave Crystal",
+    "loreJa": "寄せる鉄の波が、光を鎧う。",
+    "loreEn": "The advancing iron wave arms itself with light.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.029",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.rooted_boots",
+    "family": "Frost",
+    "nameJa": "根靴の脆氷",
+    "nameEn": "Rooted Brittle Ice",
+    "loreJa": "張った根の周りで、氷が割れる。",
+    "loreEn": "Around the spread roots, ice cracks.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.030",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.emberdash_boots",
+    "family": "Flame",
+    "nameJa": "火駆けの飛び火",
+    "nameEn": "Emberdash Wildfire",
+    "loreJa": "駆けた跡で、火が増える。",
+    "loreEn": "Along the dash, the fires multiply.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.tide_and_flame"
+  },
+  {
+    "id": "named.feet.031",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.shadow_slippers",
+    "family": "Flame",
+    "nameJa": "影履きの拍子",
+    "nameEn": "Shadow-Slipper Rhythm",
+    "loreJa": "影を踏むたび、足が軽い。",
+    "loreEn": "Each shadow stepped on lightens the feet.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.032",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.knight_sabatons",
+    "family": "Light",
+    "nameJa": "騎靴の重ね光",
+    "nameEn": "Knight's Stacked Glow",
+    "loreJa": "鉄の靴が、光を弾き返す。",
+    "loreEn": "The iron shoe rebounds the light.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.033",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.sun_sandals",
+    "family": "Light",
+    "nameJa": "陽だまりの返し",
+    "nameEn": "Sunwarm Kind Return",
+    "loreJa": "温めた分が、誰かの情けで戻る。",
+    "loreEn": "The warmth given returns as kindness.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.034",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.sunspur_boots",
+    "family": "Light",
+    "nameJa": "陽蹴りの継ぎ糸",
+    "nameEn": "Sunspur Lifeline",
+    "loreJa": "蹴った光が、命に繋がる。",
+    "loreEn": "The kicked light links to a life.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.035",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.ember_treads",
+    "family": "Dark",
+    "nameJa": "残り火の影踏み",
+    "nameEn": "Ember-Tread Shadow",
+    "loreJa": "火の周りの影を、歩いて濃くする。",
+    "loreEn": "It walks the shadows thicker round the fire.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.umbral_trio"
+  },
+  {
+    "id": "named.feet.036",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.nightveil_slippers",
+    "family": "Dark",
+    "nameJa": "夜帳の跡目",
+    "nameEn": "Nightveil Heirloom",
+    "loreJa": "夜を継いだ足に、影が従う。",
+    "loreEn": "Shadow follows feet that inherited night.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.037",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.bastion_sabatons",
+    "family": "Guard",
+    "nameJa": "城塞鉄鞋の棘",
+    "nameEn": "Bastion Spines",
+    "loreJa": "城門の前で、棘が返る。",
+    "loreEn": "Before the gate, the spines give back.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.038",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.iron_greaves",
+    "family": "Guard",
+    "nameJa": "鉄脛の不動",
+    "nameEn": "Iron-Greave Immovability",
+    "loreJa": "踏ん張った鉄は、動かない。",
+    "loreEn": "Iron set against the ground does not move.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.iron_vow"
+  },
+  {
+    "id": "named.feet.039",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.rampart_greaves",
+    "family": "Guard",
+    "nameJa": "土塁脛の備え",
+    "nameEn": "Rampart Readiness",
+    "loreJa": "土の盛りは、いつも構えている。",
+    "loreEn": "The earthwork is always braced.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.040",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.gale_greaves",
+    "family": "Gale",
+    "nameJa": "烈風脛の疾駆",
+    "nameEn": "Gale-Greave Dash",
+    "loreJa": "かわせば、風が足に乗る。",
+    "loreEn": "Dodge, and the wind mounts your feet.",
+    "powers": [
+      {
+        "power": "Sprint",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.gale_trio"
+  },
+  {
+    "id": "named.feet.041",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.storm_boots",
+    "family": "Gale",
+    "nameJa": "嵐駆けの乱気",
+    "nameEn": "Stormrunner Turbulence",
+    "loreJa": "嵐の中は、歩くほど速い。",
+    "loreEn": "Inside the storm, the more feet, the faster.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.042",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.firebloom_slippers",
+    "family": "Mend",
+    "nameJa": "火華履きの吸命",
+    "nameEn": "Firebloom Leech",
+    "loreJa": "咲いた火から、少しずつ貰う。",
+    "loreEn": "It sips a little from each blossom of fire.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.043",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.mender_shoes",
+    "family": "Mend",
+    "nameJa": "癒し靴の薬",
+    "nameEn": "Mender's Remedy Shoes",
+    "loreJa": "歩いた道が、薬の処方。",
+    "loreEn": "The road walked writes the prescription.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.warm_hands"
+  },
+  {
+    "id": "named.feet.044",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.pilgrim_boots",
+    "family": "Mend",
+    "nameJa": "巡礼靴の残身",
+    "nameEn": "Pilgrim's Echo",
+    "loreJa": "かわした道が、次の一歩を教える。",
+    "loreEn": "The path dodged teaches the next step.",
+    "powers": [
+      {
+        "power": "EchoingDodge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.045",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.quicksilver_greaves",
+    "family": "Summon",
+    "nameJa": "水銀脛の分け合い",
+    "nameEn": "Quicksilver Share",
+    "loreJa": "流れた分を、味方に回す。",
+    "loreEn": "Whatever flows off is routed to allies.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.046",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.tidepool_sandals",
+    "family": "Summon",
+    "nameJa": "潮溜まりの継ぎ",
+    "nameEn": "Tidepool Relay",
+    "loreJa": "波が引けば、次の溜まりへ渡す。",
+    "loreEn": "As the wave recedes, it hands to the next pool.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.047",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.root_sandals",
+    "family": "Memory",
+    "nameJa": "根草履の終曲",
+    "nameEn": "Root-Sandal Finale",
+    "loreJa": "編み終わった縄が、幕を引く。",
+    "loreEn": "The finished braid draws the curtain.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.048",
+    "slot": "Feet",
+    "rarity": "Rare",
+    "baseId": "feet.star_steps",
+    "family": "Memory",
+    "nameJa": "星渡りの巡り",
+    "nameEn": "Starstep Cycle",
+    "loreJa": "渡った星路が、巡って戻る。",
+    "loreEn": "The star-road crossed circles back.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.049",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.travel_boots",
+    "family": "Plain",
+    "nameJa": "旅靴の二の拍",
+    "nameEn": "Traveler's Second Beat",
+    "loreJa": "歩いた分だけ、息も余る。",
+    "loreEn": "For every mile walked, breath left over.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "high"
+      },
+      {
+        "power": "OverflowingLife",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.050",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.winterhide_boots",
+    "family": "Frost",
+    "nameJa": "冬毛の白い舞",
+    "nameEn": "Winterhide White Dance",
+    "loreJa": "雪の上を、舞いながら渡る。",
+    "loreEn": "Across the snow it goes, dancing.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "high"
+      },
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.051",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.tide_sandals",
+    "family": "Flame",
+    "nameJa": "潮履きの焔壁",
+    "nameEn": "Tide-Sandal Fire Wall",
+    "loreJa": "潮風が火を運び、輪を固める。",
+    "loreEn": "The sea wind bears fire and closes the ring.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "high"
+      },
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.052",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.wardstep_sandals",
+    "family": "Light",
+    "nameJa": "護り草鞋の棘",
+    "nameEn": "Wardstep Thorns",
+    "loreJa": "結んだ縄が、灯と棘になる。",
+    "loreEn": "The knotted rope becomes lamp and thorn.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "high"
+      },
+      {
+        "power": "Thorns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.053",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.stalker_boots",
+    "family": "Dark",
+    "nameJa": "忍び足の収穫",
+    "nameEn": "Stalker's Harvest",
+    "loreJa": "音もなく歩き、息を集める。",
+    "loreEn": "It walks soundless and gathers breath.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "high"
+      },
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.054",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.tortoiseshell_greaves",
+    "family": "Guard",
+    "nameJa": "亀甲の二重殻",
+    "nameEn": "Tortoise Twin Shell",
+    "loreJa": "二枚の甲羅が、輪と霊を担ぐ。",
+    "loreEn": "Two shells carry the ring and the spirit.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "high"
+      },
+      {
+        "power": "Aegis",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.055",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.wind_sandals",
+    "family": "Gale",
+    "nameJa": "風履きの二重渦",
+    "nameEn": "Wind-Sandal Twin Whirl",
+    "loreJa": "追風を纏い、渦を残す。",
+    "loreEn": "Wrapped in tailwind, it leaves a whirl.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "high"
+      },
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.056",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.stoneguard_sabatons",
+    "family": "Mend",
+    "nameJa": "石衛の溢れ残り",
+    "nameEn": "Stoneguard Overflow",
+    "loreJa": "石の懐に、余った命を隠す。",
+    "loreEn": "The stone's folds hide the life left over.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "high"
+      },
+      {
+        "power": "EchoingDodge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.057",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.wolf_boots",
+    "family": "Summon",
+    "nameJa": "狼皮の見張り狩り",
+    "nameEn": "Wolfskin Watch-Hunt",
+    "loreJa": "狼は見張り、息を集める。",
+    "loreEn": "The wolf keeps watch and gathers breath.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "mid"
+      },
+      {
+        "power": "SoulSiphon",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.058",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.wolfstride_boots",
+    "family": "Summon",
+    "nameJa": "狼歩きの二役",
+    "nameEn": "Wolfstride Two Roles",
+    "loreJa": "盾を分け、後ろを見る。",
+    "loreEn": "It splits its shield and watches behind.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "high"
+      },
+      {
+        "power": "WatchfulHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.059",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.starlit_moccasins",
+    "family": "Memory",
+    "nameJa": "星履きの駆け恵み",
+    "nameEn": "Starlit Dash-Boon",
+    "loreJa": "駆けた分だけ、恵みが積もる。",
+    "loreEn": "The farther the dash, the deeper the boons.",
+    "powers": [
+      {
+        "power": "ShardBoon",
+        "band": "mid"
+      },
+      {
+        "power": "Sprint",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.feet.060",
+    "slot": "Feet",
+    "rarity": "Epic",
+    "baseId": "feet.whisperweave_shoes",
+    "family": "Memory",
+    "nameJa": "囁き織りの幕",
+    "nameEn": "Whisperweave Curtain",
+    "loreJa": "織り上げた囁きが、幕を早める。",
+    "loreEn": "The woven whispers hurry the curtain.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "high"
+      },
+      {
+        "power": "ShardBoon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.001",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.archer_bracers",
+    "family": "Plain",
+    "nameJa": "射手の砕け腕",
+    "nameEn": "Archer's Crack Bracers",
+    "loreJa": "放った矢の先で、何かが弾ける。",
+    "loreEn": "Where the arrow lands, something bursts.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.002",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.bowmaster_bracers",
+    "family": "Plain",
+    "nameJa": "弓張りの先手",
+    "nameEn": "Bowmaster's First Move",
+    "loreJa": "弦を引く手が、勝負を先取る。",
+    "loreEn": "The drawing hand takes the lead.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.plain_craft"
+  },
+  {
+    "id": "named.hands.003",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.iron_gauntlets",
+    "family": "Plain",
+    "nameJa": "鉄篭手の盾打",
+    "nameEn": "Iron Shieldbash",
+    "loreJa": "籠手そのものが、盾になる。",
+    "loreEn": "The gauntlet itself becomes the shield.",
+    "powers": [
+      {
+        "power": "ShieldBash",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.004",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.frost_mitts",
+    "family": "Frost",
+    "nameJa": "霜手袋の白息",
+    "nameEn": "Frost-Mitt Breath",
+    "loreJa": "握ったものから、熱を奪う。",
+    "loreEn": "It steals heat from whatever it holds.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.005",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.radiant_wraps",
+    "family": "Frost",
+    "nameJa": "光巻きの湯気",
+    "nameEn": "Radiant Steam Wraps",
+    "loreJa": "光と冷気が、白い幕を作る。",
+    "loreEn": "Light and cold weave a white curtain.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.winter_caravan"
+  },
+  {
+    "id": "named.hands.006",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.blazeknit_gloves",
+    "family": "Flame",
+    "nameJa": "火織りの四連",
+    "nameEn": "Blazeknit Quadruple",
+    "loreJa": "編み目が四つ数え、火を噴く。",
+    "loreEn": "Four stitches counted, and fire spouts.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_forge"
+  },
+  {
+    "id": "named.hands.007",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.chain_wraps",
+    "family": "Flame",
+    "nameJa": "鎖拳の火の粉",
+    "nameEn": "Chain-Fist Sparks",
+    "loreJa": "巻いた鎖から、火の粉が散る。",
+    "loreEn": "Sparks fly off the wrapped chain.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.008",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.lantern_fingerless",
+    "family": "Flame",
+    "nameJa": "灯指抜きの種",
+    "nameEn": "Lantern Black Seed",
+    "loreJa": "灯の下で、黒い種が熟す。",
+    "loreEn": "Beneath the lamp, a black seed ripens.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.009",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.duskstitch_gloves",
+    "family": "Light",
+    "nameJa": "黄昏縫いの返し",
+    "nameEn": "Duskstitch Kind Return",
+    "loreJa": "縫い込んだ情けが、ほどけて戻る。",
+    "loreEn": "The kindness stitched in unpicks itself to return.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.010",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.oathpalm_gloves",
+    "family": "Light",
+    "nameJa": "誓掌の重ね光",
+    "nameEn": "Oathpalm Stacked Glow",
+    "loreJa": "手を重ねるたび、光が増す。",
+    "loreEn": "Each palm laid adds another glow.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.011",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.duelist_bracers",
+    "family": "Dark",
+    "nameJa": "決闘腕の断罪",
+    "nameEn": "Duelist's Verdict",
+    "loreJa": "挑んだ相手の息は、短い。",
+    "loreEn": "The challenged one's breath runs short.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.012",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.flame_grips",
+    "family": "Dark",
+    "nameJa": "炎握りの跡目",
+    "nameEn": "Flame-Grip Heirloom",
+    "loreJa": "火を受け継いだ手に、影が張り付く。",
+    "loreEn": "Shadow clings to hands that inherited fire.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.013",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.riven_fists",
+    "family": "Dark",
+    "nameJa": "裂拳の吸魂",
+    "nameEn": "Riven-Fist Siphon",
+    "loreJa": "裂け目から、最後の息を吸う。",
+    "loreEn": "It draws the last breath through the crack.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.014",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.bulwark_wraps",
+    "family": "Guard",
+    "nameJa": "壁巻きの輪",
+    "nameEn": "Bulwark Wraps Ring",
+    "loreJa": "巻いた手が、輪の内側を作る。",
+    "loreEn": "The wrapped hands make the inside of a ring.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.015",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.ironvein_gauntlets",
+    "family": "Guard",
+    "nameJa": "鉄脈の守護霊",
+    "nameEn": "Ironvein Guardian",
+    "loreJa": "鉱脈の記憶が、大波を防ぐ。",
+    "loreEn": "The vein's memory turns the great wave.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.016",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.chime_bracers",
+    "family": "Gale",
+    "nameJa": "鈴腕の乱気",
+    "nameEn": "Chime Turbulence",
+    "loreJa": "鈴の密度が、荒さになる。",
+    "loreEn": "The density of chimes sets the temper.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.017",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.monk_wraps",
+    "family": "Gale",
+    "nameJa": "行者巻きの渡り",
+    "nameEn": "Ascetic's Crossing",
+    "loreJa": "細い巻きでも、道は渡れる。",
+    "loreEn": "Even thin wraps can cross the road.",
+    "powers": [
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.018",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.sling_bracers",
+    "family": "Gale",
+    "nameJa": "投げ腕の追風",
+    "nameEn": "Thrower's Tailwind",
+    "loreJa": "投げた物の後を、風が追う。",
+    "loreEn": "The wind chases whatever you throw.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.gale_trio"
+  },
+  {
+    "id": "named.hands.019",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.alchemist_gloves",
+    "family": "Mend",
+    "nameJa": "錬金手の吸命",
+    "nameEn": "Alchemist's Leech",
+    "loreJa": "混ぜるたびに、少し元気になる。",
+    "loreEn": "Every stirring returns a little vigor.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.healing_trio"
+  },
+  {
+    "id": "named.hands.020",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.healer_hands",
+    "family": "Mend",
+    "nameJa": "癒手の再びの息",
+    "nameEn": "Healer's Second Breath",
+    "loreJa": "手を貸した側こそ、息を戻す。",
+    "loreEn": "The lending hand is the one that breathes again.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.021",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.bone_knuckles",
+    "family": "Summon",
+    "nameJa": "骨拳の継ぎ",
+    "nameEn": "Bone-Knuckle Relay",
+    "loreJa": "骨が骨へ、音を渡す。",
+    "loreEn": "Bone passes the note to bone.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.022",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.hunting_sinew",
+    "family": "Summon",
+    "nameJa": "筋帯の共演",
+    "nameEn": "Sinew Co-Star",
+    "loreJa": "弓の腱が、仲間と鳴る。",
+    "loreEn": "The bow's sinew sounds with a partner.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.023",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.cinderthread_wraps",
+    "family": "Memory",
+    "nameJa": "火糸の終曲",
+    "nameEn": "Cinderthread Finale",
+    "loreJa": "焼けた糸が、幕を引く音をする。",
+    "loreEn": "The burnt thread makes the curtain-pull sound.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.024",
+    "slot": "Hands",
+    "rarity": "Uncommon",
+    "baseId": "hands.rootgrip_gloves",
+    "family": "Memory",
+    "nameJa": "根握りの星巡り",
+    "nameEn": "Rootgrip Star Cycle",
+    "loreJa": "握った根から、星屑が巡る。",
+    "loreEn": "Stardust circles through the gripped root.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.memory_trio"
+  },
+  {
+    "id": "named.hands.025",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.duelist_gloves",
+    "family": "Plain",
+    "nameJa": "決闘手の止水",
+    "nameEn": "Duelist's Stillwater",
+    "loreJa": "受けを決めた手が、水面を作る。",
+    "loreEn": "A hand that parries well makes still water.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.026",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.leather_gloves",
+    "family": "Plain",
+    "nameJa": "革手の一点",
+    "nameEn": "Leather Focus",
+    "loreJa": "狙う場所を、指が覚えている。",
+    "loreEn": "The fingers remember where to aim.",
+    "powers": [
+      {
+        "power": "FocusFire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.027",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.frostbite_knuckles",
+    "family": "Frost",
+    "nameJa": "凍拳の足止め",
+    "nameEn": "Frostbite Snare",
+    "loreJa": "凍えた拳は、逃げ道も凍らす。",
+    "loreEn": "The frozen fist freezes the escape too.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.028",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.reef_gauntlets",
+    "family": "Frost",
+    "nameJa": "礁篭手の脆氷",
+    "nameEn": "Reef Brittle Ice",
+    "loreJa": "掴んだ鎧ごと、手の中で割る。",
+    "loreEn": "It cracks the grasped armor in its grip.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.029",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.snowmelt_mitts",
+    "family": "Frost",
+    "nameJa": "雪解の晶",
+    "nameEn": "Snowmelt Crystal",
+    "loreJa": "解けかけの手袋が、光を纏う。",
+    "loreEn": "The half-thawed mitt wears light.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.030",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.ember_gauntlets",
+    "family": "Flame",
+    "nameJa": "残火手甲の飛び火",
+    "nameEn": "Ember Gauntlet Wildfire",
+    "loreJa": "触れた火が、隣へ渡る。",
+    "loreEn": "Fire touched passes to the next.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.kindled_step"
+  },
+  {
+    "id": "named.hands.031",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.ripgrip_gloves",
+    "family": "Flame",
+    "nameJa": "裂握の拍子",
+    "nameEn": "Ripgrip Rhythm",
+    "loreJa": "引き裂くたび、手が軽くなる。",
+    "loreEn": "Each tear makes the hands lighter.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.032",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.oath_gauntlets",
+    "family": "Light",
+    "nameJa": "誓籠手の灯",
+    "nameEn": "Oath-Gauntlet Lamp",
+    "loreJa": "誓った手の甲に、灯がともる。",
+    "loreEn": "On the sworn hand, a flame is lit.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.033",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.precise_fingerless",
+    "family": "Light",
+    "nameJa": "的確の星傘",
+    "nameEn": "Precise Starshade",
+    "loreJa": "正確な指先に、星が傘を差す。",
+    "loreEn": "To precise fingertips, a star lends shade.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.noon_blessing"
+  },
+  {
+    "id": "named.hands.034",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.sun_gauntlets",
+    "family": "Light",
+    "nameJa": "陽籠手の継ぎ糸",
+    "nameEn": "Sunlit-Gauntlet Lifeline",
+    "loreJa": "日を当てた手が、命を縫う。",
+    "loreEn": "Sun-warmed hands stitch life together.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.035",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.nightpalm_gloves",
+    "family": "Dark",
+    "nameJa": "夜掌の影",
+    "nameEn": "Nightpalm Shadow",
+    "loreJa": "開いた掌から、夜が零れる。",
+    "loreEn": "Night spills from the opened palm.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.umbral_trio"
+  },
+  {
+    "id": "named.hands.036",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.shadow_gloves",
+    "family": "Dark",
+    "nameJa": "影縫いの蝕",
+    "nameEn": "Shadowstitch Eclipse",
+    "loreJa": "縫い合わせた影と光が、蝕になる。",
+    "loreEn": "Shadow and light sewn together eclipse.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.037",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.heavypalm_gloves",
+    "family": "Guard",
+    "nameJa": "重掌の返し棘",
+    "nameEn": "Heavypalm Spines",
+    "loreJa": "重い手の平ほど、痛い。",
+    "loreEn": "The heavier the palm, the worse it stings.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.shield_wall"
+  },
+  {
+    "id": "named.hands.038",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.stone_fists",
+    "family": "Guard",
+    "nameJa": "岩拳の不動",
+    "nameEn": "Stone-Fist Immovability",
+    "loreJa": "握りは岩、構えは山。",
+    "loreEn": "A grip of rock, a stance of mountain.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.039",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.thorn_wraps",
+    "family": "Guard",
+    "nameJa": "茨巻きの備え",
+    "nameEn": "Thorn-Wrap Readiness",
+    "loreJa": "巻き直す暇もなく、構える。",
+    "loreEn": "No time to rewrap; already braced.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.040",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.quick_fingers",
+    "family": "Gale",
+    "nameJa": "早業の助走",
+    "nameEn": "Quickfinger Run-Up",
+    "loreJa": "指が走れば、刃も伸びる。",
+    "loreEn": "When fingers run, the blade extends.",
+    "powers": [
+      {
+        "power": "RunUp",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.041",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.storm_knuckles",
+    "family": "Gale",
+    "nameJa": "嵐拳の旋風",
+    "nameEn": "Storm-Knuckle Whirl",
+    "loreJa": "かわせば、拳が渦を描く。",
+    "loreEn": "Dodge, and the fist draws a whirl.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.042",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.bark_knuckles",
+    "family": "Mend",
+    "nameJa": "樹皮拳の薬",
+    "nameEn": "Bark-Knuckle Remedy",
+    "loreJa": "樹の薬箱を、拳で開ける。",
+    "loreEn": "It opens the tree's medicine chest with a fist.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.043",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.ice_bracers",
+    "family": "Mend",
+    "nameJa": "氷腕の溢れ",
+    "nameEn": "Ice-Bracer Overflow",
+    "loreJa": "冷やし過ぎた分が、盾になる。",
+    "loreEn": "What is over-chilled becomes a shield.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.044",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.mender_palms",
+    "family": "Mend",
+    "nameJa": "癒掌の静雷",
+    "nameEn": "Mender's Quiet Lightning",
+    "loreJa": "静かに走る光が、痛みを繋ぐ。",
+    "loreEn": "Quietly running light links the pains.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.045",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.claw_gauntlets",
+    "family": "Summon",
+    "nameJa": "獣爪の分け合い",
+    "nameEn": "Beastclaw Share",
+    "loreJa": "爪を振れば、盾が半分こになる。",
+    "loreEn": "A sweep of the claw halves the shield.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.046",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.summoner_bands",
+    "family": "Summon",
+    "nameJa": "喚び環の見守り",
+    "nameEn": "Summoner's Watch",
+    "loreJa": "指輪の数だけ、目がある。",
+    "loreEn": "For every band, an eye.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.047",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.manuscript_gloves",
+    "family": "Memory",
+    "nameJa": "写本手の余韻",
+    "nameEn": "Manuscript Echo",
+    "loreJa": "写した文字が、鋭く響く。",
+    "loreEn": "The copied characters ring sharp.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.048",
+    "slot": "Hands",
+    "rarity": "Rare",
+    "baseId": "hands.spell_gloves",
+    "family": "Memory",
+    "nameJa": "呪文手の切札",
+    "nameEn": "Spellweave Trump",
+    "loreJa": "編んだ呪文の端に、一枚。",
+    "loreEn": "At the woven spell's end, one card.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.049",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.reach_bracers",
+    "family": "Plain",
+    "nameJa": "遠腕の二の拍",
+    "nameEn": "Reach Bracers' Second Beat",
+    "loreJa": "届く先で、拍子が繋がる。",
+    "loreEn": "Where the arm reaches, the beat goes on.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "mid"
+      },
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.050",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.vigor_grips",
+    "family": "Frost",
+    "nameJa": "活力握りの霜",
+    "nameEn": "Vigorgrip Frost",
+    "loreJa": "強い握りほど、冷たさを増す。",
+    "loreEn": "The stronger the grip, the deeper the cold.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "mid"
+      },
+      {
+        "power": "Fetters",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.051",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.sunfire_grips",
+    "family": "Flame",
+    "nameJa": "陽炎握りの種火",
+    "nameEn": "Sunfire Seedgrip",
+    "loreJa": "握れば熱く、離せば火の粉。",
+    "loreEn": "Hot in the grip; sparks when released.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "mid"
+      },
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.052",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.tide_gloves",
+    "family": "Light",
+    "nameJa": "潮手の二重奏",
+    "nameEn": "Tide-Glove Duet",
+    "loreJa": "返す波と、重なる拍子。",
+    "loreEn": "The returning wave and the stacking beat.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      },
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.053",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.thief_gloves",
+    "family": "Dark",
+    "nameJa": "盗手の刈り入れ",
+    "nameEn": "Thief's Harvest",
+    "loreJa": "盗んだ影ごと、命を刈る。",
+    "loreEn": "It reaps the life along with the stolen shadow.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "mid"
+      },
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.054",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.wardens_grips",
+    "family": "Guard",
+    "nameJa": "番人握りの輪",
+    "nameEn": "Warden's Ring Grip",
+    "loreJa": "囲まれても、握りは血を知る。",
+    "loreEn": "Though surrounded, the grip knows blood.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "mid"
+      },
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.055",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.swiftpalm_gloves",
+    "family": "Gale",
+    "nameJa": "風掌の二段",
+    "nameEn": "Swift-Palm Second Stage",
+    "loreJa": "混んで、渡って、なお速い。",
+    "loreEn": "Crowded, crossing, and still faster.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "mid"
+      },
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.056",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.prayer_beads",
+    "family": "Mend",
+    "nameJa": "数珠の二つの徳",
+    "nameEn": "Prayer-Bead Twin Virtues",
+    "loreJa": "数えた珠が、命と情けを返す。",
+    "loreEn": "The counted beads give back life and kindness.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "mid"
+      },
+      {
+        "power": "KindnessReturns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.057",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.tidecaller_wraps",
+    "family": "Summon",
+    "nameJa": "潮呼びの継ぎ討ち",
+    "nameEn": "Tidecaller Relay Hunt",
+    "loreJa": "渡した波が、終わりを断つ。",
+    "loreEn": "The handed-over wave cuts the ending short.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "high"
+      },
+      {
+        "power": "Executioner",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.058",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.viperfang_claws",
+    "family": "Summon",
+    "nameJa": "毒牙の二役",
+    "nameEn": "Viper-Fang Two Roles",
+    "loreJa": "毒を分け、役を継ぐ。",
+    "loreEn": "It shares its venom and takes its turn.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "mid"
+      },
+      {
+        "power": "RelayHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.059",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.star_rings",
+    "family": "Memory",
+    "nameJa": "星環の速い幕",
+    "nameEn": "Star-Ring Swift Curtain",
+    "loreJa": "会心のたび、幕が近づく。",
+    "loreEn": "Every critical brings the curtain nearer.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "high"
+      },
+      {
+        "power": "CriticalEcho",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.hands.060",
+    "slot": "Hands",
+    "rarity": "Epic",
+    "baseId": "hands.void_claws",
+    "family": "Memory",
+    "nameJa": "虚爪の巡り響き",
+    "nameEn": "Hollow-Claw Echo Cycle",
+    "loreJa": "空っぽの爪に、音がこだまする。",
+    "loreEn": "In the hollow claw, the sound echoes on.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "mid"
+      },
+      {
+        "power": "StardustCycle",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.001",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.ash_hood",
+    "family": "Plain",
+    "nameJa": "灰かぶりの拍子",
+    "nameEn": "Ashen Rhythm",
+    "loreJa": "灰を払う手が、次の拍子を刻む。",
+    "loreEn": "The hand that brushes ash beats the next bar.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.002",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.berserker_mask",
+    "family": "Plain",
+    "nameJa": "狂面の雷",
+    "nameEn": "Berserker's Lightning",
+    "loreJa": "叫びが、敵から敵へ渡る。",
+    "loreEn": "The shout passes from foe to foe.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.003",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.iron_coif",
+    "family": "Plain",
+    "nameJa": "鎖帽の先手",
+    "nameEn": "Coif's First Move",
+    "loreJa": "目立ちたくない者ほど、先に動く。",
+    "loreEn": "Those who shun notice move first.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.004",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.frost_helm",
+    "family": "Frost",
+    "nameJa": "霜兜の晶",
+    "nameEn": "Frosthelm Crystal",
+    "loreJa": "兜の霜が、光と結ぶ。",
+    "loreEn": "The helm's frost binds with light.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.005",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.moon_hood",
+    "family": "Frost",
+    "nameJa": "月影の足留め",
+    "nameEn": "Moonshadow Snare",
+    "loreJa": "影が伸びる先で、足が止まる。",
+    "loreEn": "Where the shadow stretches, feet stop.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.006",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.antler_crown",
+    "family": "Flame",
+    "nameJa": "大角の四連火",
+    "nameEn": "Antler Quadruple Fire",
+    "loreJa": "角が四つ数えれば、火が噴く。",
+    "loreEn": "Count four on the antlers and fire spouts.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_forge"
+  },
+  {
+    "id": "named.head.007",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.crimsonlotus_hood",
+    "family": "Flame",
+    "nameJa": "紅蓮の火種",
+    "nameEn": "Crimson Spark",
+    "loreJa": "蓮の弁から、火の粉が落ちる。",
+    "loreEn": "Sparks drop from the lotus petals.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.008",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.iron_helm",
+    "family": "Flame",
+    "nameJa": "鉄兜の黒種",
+    "nameEn": "Iron-Helm Black Seed",
+    "loreJa": "鉄の匂いに、焼けた種が混じる。",
+    "loreEn": "A burnt seed taints the iron smell.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.009",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.ember_crown",
+    "family": "Light",
+    "nameJa": "残り火冠の輝き",
+    "nameEn": "Ember-Crown Glow",
+    "loreJa": "火の残りが、光の種になる。",
+    "loreEn": "What fire leaves behind seeds the light.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.010",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.oathring_circlet",
+    "family": "Light",
+    "nameJa": "誓環の継ぎ糸",
+    "nameEn": "Oathring Lifeline",
+    "loreJa": "輪は切れても、糸が残る。",
+    "loreEn": "Though the ring breaks, a thread remains.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.011",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.eclipse_mask",
+    "family": "Dark",
+    "nameJa": "蝕面の影重ね",
+    "nameEn": "Eclipse-Mask Shadow Stack",
+    "loreJa": "面の影が、一つずつ深まる。",
+    "loreEn": "The mask's shadow deepens by ones.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.umbral_trio"
+  },
+  {
+    "id": "named.head.012",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.eye_patch",
+    "family": "Dark",
+    "nameJa": "片目の蝕",
+    "nameEn": "Eyepatch Eclipse",
+    "loreJa": "隠した目で、昼と夜を見る。",
+    "loreEn": "The hidden eye sees day and night as one.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dusk_and_dawn"
+  },
+  {
+    "id": "named.head.013",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.raven_mask",
+    "family": "Dark",
+    "nameJa": "鴉面の吸魂",
+    "nameEn": "Raven-Mask Siphon",
+    "loreJa": "鴉が啄むのは、最後の息。",
+    "loreEn": "What the raven pecks is the final breath.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.014",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.boulder_helm",
+    "family": "Guard",
+    "nameJa": "岩兜の不動",
+    "nameEn": "Boulder Immovability",
+    "loreJa": "岩の上では、風も考え直す。",
+    "loreEn": "Even the wind rethinks on the boulder.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.015",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.knight_helm",
+    "family": "Guard",
+    "nameJa": "騎盔の棘",
+    "nameEn": "Knight's Spines",
+    "loreJa": "兜の縁に、返しの棘。",
+    "loreEn": "Along the helm's rim, returning spines.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shield_wall"
+  },
+  {
+    "id": "named.head.016",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.gale_hood",
+    "family": "Gale",
+    "nameJa": "疾風巾の追風",
+    "nameEn": "Gale-Hood Tailwind",
+    "loreJa": "脱いだ後も、風は追いかける。",
+    "loreEn": "Even off your head, the wind keeps chase.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.gale_trio"
+  },
+  {
+    "id": "named.head.017",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.hawkeye_band",
+    "family": "Gale",
+    "nameJa": "鷹目の旋風",
+    "nameEn": "Hawkeye Whirl",
+    "loreJa": "見切りつけた瞬間、渦が起きる。",
+    "loreEn": "The instant the eye commits, a whirl rises.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.018",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.scout_goggles",
+    "family": "Gale",
+    "nameJa": "斥候鏡の疾駆",
+    "nameEn": "Scout's Dash",
+    "loreJa": "見えた抜け道を、体が先に知る。",
+    "loreEn": "The body knows the gap before the mind.",
+    "powers": [
+      {
+        "power": "Sprint",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.019",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.dream_veil",
+    "family": "Mend",
+    "nameJa": "夢帷の吸命",
+    "nameEn": "Dreamveil Leech",
+    "loreJa": "夢の中で、少しずつ元気を貰う。",
+    "loreEn": "In dreams it sips a little strength.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.020",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.kindly_circlet",
+    "family": "Mend",
+    "nameJa": "慈手の薬包",
+    "nameEn": "Kindly Remedy",
+    "loreJa": "額の温かさが、薬になる。",
+    "loreEn": "The warmth at the brow becomes medicine.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.healing_trio"
+  },
+  {
+    "id": "named.head.021",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.beastcaller_antlers",
+    "family": "Summon",
+    "nameJa": "呼角の共演",
+    "nameEn": "Beastcaller Co-Star",
+    "loreJa": "角が鳴れば、誰かが並ぶ。",
+    "loreEn": "When the antlers sound, someone falls in.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.pack_call"
+  },
+  {
+    "id": "named.head.022",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.horned_helm",
+    "family": "Summon",
+    "nameJa": "双角の分け合い",
+    "nameEn": "Horned Share",
+    "loreJa": "二本の角は、盾を二つに分ける。",
+    "loreEn": "Two horns split one shield in two.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.023",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.comet_diadem",
+    "family": "Memory",
+    "nameJa": "彗星髪の巡り",
+    "nameEn": "Comet Cycle",
+    "loreJa": "尾を引いた星が、元の場所へ。",
+    "loreEn": "The tailed star returns whence it came.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.024",
+    "slot": "Head",
+    "rarity": "Uncommon",
+    "baseId": "head.lantern_hat",
+    "family": "Memory",
+    "nameJa": "灯笠の環",
+    "nameEn": "Lantern-Hat Loop",
+    "loreJa": "笠の灯が、小さな環を回す。",
+    "loreEn": "The hat's lamp turns a little loop.",
+    "powers": [
+      {
+        "power": "CrystalCircuit",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.025",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.hunter_hood",
+    "family": "Plain",
+    "nameJa": "狩巾の砕け道",
+    "nameEn": "Hunter's Crack",
+    "loreJa": "狙った獲物の後ろで、音が弾ける。",
+    "loreEn": "Behind the marked prey, something bursts.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.plain_trio"
+  },
+  {
+    "id": "named.head.026",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.longshot_cap",
+    "family": "Plain",
+    "nameJa": "遠帽の止水",
+    "nameEn": "Long-Cap Stillwater",
+    "loreJa": "息を止めた分、狙いは静か。",
+    "loreEn": "For every held breath, the aim grows quiet.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.027",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.icewall_helm",
+    "family": "Frost",
+    "nameJa": "氷壁の白霜",
+    "nameEn": "Icewall Rime",
+    "loreJa": "壁の霜が、触れた敵を凍らす。",
+    "loreEn": "The wall's rime freezes whoever touches it.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.028",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.moonlace_hood",
+    "family": "Frost",
+    "nameJa": "月紗の白霧",
+    "nameEn": "Moonlace White Mist",
+    "loreJa": "冷たい紗が、温かい息と混ざる。",
+    "loreEn": "Cold lace mixes with warm breath.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.tide_and_flame"
+  },
+  {
+    "id": "named.head.029",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.rimebloom_hood",
+    "family": "Frost",
+    "nameJa": "霜華の砕氷",
+    "nameEn": "Rimebloom Brittle Ice",
+    "loreJa": "咲いた霜の花は、踏めば割れる。",
+    "loreEn": "The rime blossoms shatter underfoot.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.winter_watch"
+  },
+  {
+    "id": "named.head.030",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.emberbloom_crown",
+    "family": "Flame",
+    "nameJa": "火焔花の飛び火",
+    "nameEn": "Emberbloom Wildfire",
+    "loreJa": "花の火は、隣の枝へ渡る。",
+    "loreEn": "The blossom's fire crosses to the next branch.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.031",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.magma_band",
+    "family": "Flame",
+    "nameJa": "熔岩の灯",
+    "nameEn": "Magma Lamp",
+    "loreJa": "冷えかけた岩が、定めに灯る。",
+    "loreEn": "The cooling rock keeps a steady flame.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.032",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.noonlight_circlet",
+    "family": "Light",
+    "nameJa": "真昼の星傘",
+    "nameEn": "Noonlight Starshade",
+    "loreJa": "真昼でも、星は傘を差す。",
+    "loreEn": "Even at noon, a star holds its parasol.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.noon_blessing"
+  },
+  {
+    "id": "named.head.033",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.radiant_halo",
+    "family": "Light",
+    "nameJa": "光輪の返し",
+    "nameEn": "Halo's Kind Return",
+    "loreJa": "注いだ光が、誰かの情けで戻る。",
+    "loreEn": "Poured light returns as someone's kindness.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.034",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.star_diadem",
+    "family": "Light",
+    "nameJa": "星冠の灯守",
+    "nameEn": "Stardiadem Warden",
+    "loreJa": "星が一つ消えても、灯は残る。",
+    "loreEn": "Though one star goes out, the lamp remains.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.035",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.plague_mask",
+    "family": "Dark",
+    "nameJa": "鳥嘴の断罪",
+    "nameEn": "Beaked Verdict",
+    "loreJa": "嘴が向く先は、もう終わり。",
+    "loreEn": "Where the beak points, it is already over.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.036",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.talon_crown",
+    "family": "Dark",
+    "nameJa": "爪冠の跡目",
+    "nameEn": "Talon-Crown Heirloom",
+    "loreJa": "冠を受けた頭に、影が巣を作る。",
+    "loreEn": "On the crowned head, shadow builds its nest.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.037",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.fortress_coif",
+    "family": "Guard",
+    "nameJa": "城塞の輪",
+    "nameEn": "Fortress Ring",
+    "loreJa": "寄ってきた数だけ、固くなる。",
+    "loreEn": "It hardens by the number that gather.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.iron_vow"
+  },
+  {
+    "id": "named.head.038",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.sentry_visor",
+    "family": "Guard",
+    "nameJa": "歩哨の守護霊",
+    "nameEn": "Sentry Guardian",
+    "loreJa": "一撃を見極める目に、霊が宿る。",
+    "loreEn": "A spirit dwells in the eye that reads the blow.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.039",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.thorn_circlet",
+    "family": "Guard",
+    "nameJa": "茨冠の備え",
+    "nameEn": "Thorn Readiness",
+    "loreJa": "茨は、触れる前に構える。",
+    "loreEn": "The briars brace before you touch them.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.040",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.mist_veil",
+    "family": "Gale",
+    "nameJa": "霧帳の乱気",
+    "nameEn": "Mist-Veil Turbulence",
+    "loreJa": "霧の密度が、荒さを決める。",
+    "loreEn": "The mist's thickness decides the temper.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.041",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.thunderveil_hood",
+    "family": "Gale",
+    "nameJa": "雷帷の渡り",
+    "nameEn": "Thunderveil Crossing",
+    "loreJa": "雷の簾をくぐって、刃が冴える。",
+    "loreEn": "Through the curtain of thunder, the edge sharpens.",
+    "powers": [
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.042",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.healer_band",
+    "family": "Mend",
+    "nameJa": "癒手の溢れ",
+    "nameEn": "Healer's Overflow",
+    "loreJa": "癒し過ぎた分が、盾に変わる。",
+    "loreEn": "What heals beyond need turns to shield.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.043",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.meditation_band",
+    "family": "Mend",
+    "nameJa": "瞑想の渇き",
+    "nameEn": "Meditative Thirst",
+    "loreJa": "静かに座るほど、血が騒ぐ。",
+    "loreEn": "The quieter the sitting, the louder the blood.",
+    "powers": [
+      {
+        "power": "Bloodlust",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.044",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.moss_crown",
+    "family": "Mend",
+    "nameJa": "苔冠の終曲",
+    "nameEn": "Moss-Crown Finale",
+    "loreJa": "苔が這う速さで、幕が近づく。",
+    "loreEn": "At the moss's creeping pace, the curtain nears.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.045",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.coral_crown",
+    "family": "Summon",
+    "nameJa": "珊瑚の群れ糧",
+    "nameEn": "Coral Pack Feast",
+    "loreJa": "枝の数だけ、口がある。",
+    "loreEn": "For every branch, a mouth.",
+    "powers": [
+      {
+        "power": "PackFeast",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.046",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.leaf_wreath",
+    "family": "Summon",
+    "nameJa": "若葉の見守り",
+    "nameEn": "Leaf-Wreath Watch",
+    "loreJa": "若葉の揺れは、合図になる。",
+    "loreEn": "Each rustle of new leaves is a signal.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.047",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.dream_circlet",
+    "family": "Memory",
+    "nameJa": "夢冠の切札",
+    "nameEn": "Dreamer's Trump",
+    "loreJa": "額の飾りに、一枚隠してある。",
+    "loreEn": "A single card hides in the ornament.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.048",
+    "slot": "Head",
+    "rarity": "Rare",
+    "baseId": "head.pillar_crown",
+    "family": "Memory",
+    "nameJa": "柱冠の余韻",
+    "nameEn": "Pillar-Crown Echo",
+    "loreJa": "石に響いた音が、速さを残す。",
+    "loreEn": "The note off the stone leaves speed behind.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.old_friends"
+  },
+  {
+    "id": "named.head.049",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.sage_hat",
+    "family": "Plain",
+    "nameJa": "賢帽の二つの拍",
+    "nameEn": "Sage's Two Beats",
+    "loreJa": "歩む拍子と、幕引きの拍子。",
+    "loreEn": "One beat for walking, one for the curtain.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "high"
+      },
+      {
+        "power": "Finale",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.050",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.sunkenbell_helm",
+    "family": "Frost",
+    "nameJa": "沈鐘の晶灯",
+    "nameEn": "Sunken-Bell Crystal Lamp",
+    "loreJa": "沈んだ鐘が、光の殻を鳴らす。",
+    "loreEn": "The sunken bell rings a shell of light.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "high"
+      },
+      {
+        "power": "Barrier",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.051",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.sun_mask",
+    "family": "Flame",
+    "nameJa": "日輪面の再燃",
+    "nameEn": "Sunwheel Rekindling",
+    "loreJa": "日が沈んでも、面は火を覚えている。",
+    "loreEn": "The mask remembers fire past sundown.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "high"
+      },
+      {
+        "power": "SecondWind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.052",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.wardband",
+    "family": "Light",
+    "nameJa": "護符帯の二光",
+    "nameEn": "Ward Band Twin Lights",
+    "loreJa": "灯る盾と、重なる光。",
+    "loreEn": "A lamp of a shield, and a stacking glow.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "high"
+      },
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.053",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.vulture_hood",
+    "family": "Dark",
+    "nameJa": "兀鷲の蝕日",
+    "nameEn": "Vulture Eclipse",
+    "loreJa": "羽の陰で、昼が蝕まれる。",
+    "loreEn": "In the wings' shade, noon is eclipsed.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "high"
+      },
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.054",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.warden_visor",
+    "family": "Guard",
+    "nameJa": "番人の血醒め",
+    "nameEn": "Warden's Bloodthirst",
+    "loreJa": "構えは解けず、渇きだけが増す。",
+    "loreEn": "The stance never breaks; only the thirst grows.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "high"
+      },
+      {
+        "power": "Bloodlust",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.055",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.whisper_veil",
+    "family": "Gale",
+    "nameJa": "囁きの追い風",
+    "nameEn": "Whisper Tailwind",
+    "loreJa": "耳元の囁きは、影と風の声。",
+    "loreEn": "The whisper at your ear is shadow and wind.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "high"
+      },
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.056",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.sunbeam_hood",
+    "family": "Mend",
+    "nameJa": "光条の灯守",
+    "nameEn": "Sunbeam Warden",
+    "loreJa": "光の筋が、切れた命を繋ぐ。",
+    "loreEn": "The shaft of light rejoins the severed life.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "high"
+      },
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.057",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.void_helm",
+    "family": "Summon",
+    "nameJa": "虚兜の二役",
+    "nameEn": "Hollow Two Roles",
+    "loreJa": "空っぽの兜が、群れと並ぶ。",
+    "loreEn": "The empty helm lines up with the pack.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "mid"
+      },
+      {
+        "power": "PackFeast",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.058",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.wolf_pelt",
+    "family": "Summon",
+    "nameJa": "狼皮の星傘",
+    "nameEn": "Wolf-Pelt Starshade",
+    "loreJa": "毛皮の上に、星が傘を差す。",
+    "loreEn": "Over the pelt, a star holds its parasol.",
+    "powers": [
+      {
+        "power": "PackFeast",
+        "band": "high"
+      },
+      {
+        "power": "StarShield",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.059",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.starless_veil",
+    "family": "Memory",
+    "nameJa": "無星帳の二巡",
+    "nameEn": "Starless Double Round",
+    "loreJa": "星のない空も、巡りは続ける。",
+    "loreEn": "Even a starless sky keeps its rounds.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "mid"
+      },
+      {
+        "power": "StardustCycle",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.head.060",
+    "slot": "Head",
+    "rarity": "Epic",
+    "baseId": "head.tidal_circlet",
+    "family": "Memory",
+    "nameJa": "潮冠の星巡り",
+    "nameEn": "Tidal Star Cycle",
+    "loreJa": "潮が引けば、星屑が戻ってくる。",
+    "loreEn": "When the tide recedes, stardust comes back.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "high"
+      },
+      {
+        "power": "AceInHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.001",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.bone_cleaver",
+    "family": "Plain",
+    "nameJa": "先んじる骨断ち",
+    "nameEn": "First-Cut Cleaver",
+    "loreJa": "獲物が息を呑む前に、刃は落ちる。",
+    "loreEn": "The blade falls before the prey draws breath.",
+    "powers": [
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.plain_craft"
+  },
+  {
+    "id": "named.weapon.002",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.chain_sword",
+    "family": "Plain",
+    "nameJa": "断ち砕く連鎖",
+    "nameEn": "Chainbreaking Edge",
+    "loreJa": "倒れた者の跡で、次が砕ける。",
+    "loreEn": "Where one falls, the next one shatters.",
+    "powers": [
+      {
+        "power": "Shatter",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.003",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.hooked_falchion",
+    "family": "Plain",
+    "nameJa": "鉤爪の渇き",
+    "nameEn": "Thirsting Hook",
+    "loreJa": "血を知った爪は、深く食い込む。",
+    "loreEn": "Having tasted blood, the hook bites deeper.",
+    "powers": [
+      {
+        "power": "Bloodlust",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.004",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.frost_spear",
+    "family": "Frost",
+    "nameJa": "霜の足枷",
+    "nameEn": "Frost Fetters",
+    "loreJa": "霜は足を掴み、槍は息を止める。",
+    "loreEn": "The frost grips the feet; the spear stops the breath.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.rime_lantern"
+  },
+  {
+    "id": "named.weapon.005",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.maelstrom_sword",
+    "family": "Frost",
+    "nameJa": "渦潮の霜刃",
+    "nameEn": "Maelstrom Frostblade",
+    "loreJa": "潮の渦が、刃から冷気を巻く。",
+    "loreEn": "The tide's whirl drags cold from the blade.",
+    "powers": [
+      {
+        "power": "Frost",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.006",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.blaze_greatsword",
+    "family": "Flame",
+    "nameJa": "燃えさかる刃",
+    "nameEn": "Seething Blade",
+    "loreJa": "四つ目の振りが、火を呼ぶ。",
+    "loreEn": "Every fourth swing calls the fire.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_forge"
+  },
+  {
+    "id": "named.weapon.007",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.ember_whip",
+    "family": "Flame",
+    "nameJa": "火の粉を撒く鞭",
+    "nameEn": "Spark-Scattering Whip",
+    "loreJa": "しなる先から、火の粉が散る。",
+    "loreEn": "Sparks scatter from the flicking tip.",
+    "powers": [
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.008",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.rockbreaker",
+    "family": "Flame",
+    "nameJa": "砕岩の黒種",
+    "nameEn": "Cinder Rockbreak",
+    "loreJa": "砕いた岩の奥に、黒い種を残す。",
+    "loreEn": "In the broken rock it leaves a black seed.",
+    "powers": [
+      {
+        "power": "Cinder",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.009",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.dawn_scepter",
+    "family": "Light",
+    "nameJa": "暁の輝き笏",
+    "nameEn": "Dawning Scepter",
+    "loreJa": "振れば、夜の名残が剥がれる。",
+    "loreEn": "A wave of it peels the last of night away.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.triple_light"
+  },
+  {
+    "id": "named.weapon.010",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.lantern_rod",
+    "family": "Light",
+    "nameJa": "星除けの灯杖",
+    "nameEn": "Starward Lantern Rod",
+    "loreJa": "灯は、技の果てに星を描く。",
+    "loreEn": "The lantern draws a star at the art's end.",
+    "powers": [
+      {
+        "power": "StarShield",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.011",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.astral_staff",
+    "family": "Dark",
+    "nameJa": "星霜の断罪",
+    "nameEn": "Astral Verdict",
+    "loreJa": "星の巡りが、終わりを告げる。",
+    "loreEn": "The stars' slow turn pronounces the end.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.012",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.dusk_scythe",
+    "family": "Dark",
+    "nameJa": "黄昏の吸魂",
+    "nameEn": "Dusk Soulreaper",
+    "loreJa": "鎌が過ぎた後、魂の抜け殻が残る。",
+    "loreEn": "After the scythe passes, only husks remain.",
+    "powers": [
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.013",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.gloaming_dagger",
+    "family": "Dark",
+    "nameJa": "宵闇の蝕刃",
+    "nameEn": "Gloaming Eclipse",
+    "loreJa": "光と影が刃で交わる瞬間。",
+    "loreEn": "The instant light and shadow cross on the blade.",
+    "powers": [
+      {
+        "power": "Eclipse",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.014",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.anchor_cleaver",
+    "family": "Guard",
+    "nameJa": "錨の輪",
+    "nameEn": "Anchor Ring",
+    "loreJa": "囲まれてこそ、錨は光る。",
+    "loreEn": "Surrounded, the anchor shines.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.015",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.oath_mace",
+    "family": "Guard",
+    "nameJa": "誓いの守護霊",
+    "nameEn": "Oathbound Guardian",
+    "loreJa": "大波を食らっても、誓いは砕けない。",
+    "loreEn": "Even a great blow cannot break the oath.",
+    "powers": [
+      {
+        "power": "Aegis",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.016",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.evening_fan",
+    "family": "Gale",
+    "nameJa": "夕薫の乱舞",
+    "nameEn": "Evening Whirl",
+    "loreJa": "扇が混むほど、風は荒れる。",
+    "loreEn": "The more crowded, the wilder the wind.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.017",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.lightning_pair",
+    "family": "Gale",
+    "nameJa": "渡り鳥の双閃",
+    "nameEn": "Wanderer's Twin Flash",
+    "loreJa": "旅の刃は、帰り道も知っている。",
+    "loreEn": "A traveler's blade knows the way home too.",
+    "powers": [
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.018",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.thunder_hammer",
+    "family": "Gale",
+    "nameJa": "雷鳴の追い風",
+    "nameEn": "Thunder Tailwind",
+    "loreJa": "鳴り止んだ雷が、背を押す。",
+    "loreEn": "The fading thunder pushes at your back.",
+    "powers": [
+      {
+        "power": "Tailwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.019",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.calming_staff",
+    "family": "Mend",
+    "nameJa": "鎮めの吸命",
+    "nameEn": "Calming Leech",
+    "loreJa": "敵の騒ぎを、自分の静けさに変える。",
+    "loreEn": "It turns the foe's fury into your own calm.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.healing_trio"
+  },
+  {
+    "id": "named.weapon.020",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.lighthouse_cudgel",
+    "family": "Mend",
+    "nameJa": "灯台の溢れ",
+    "nameEn": "Lighthouse Overflow",
+    "loreJa": "満ちた光は、余すことなく盾になる。",
+    "loreEn": "Light that overflows becomes a shield.",
+    "powers": [
+      {
+        "power": "OverflowingLife",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.021",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.bone_flute",
+    "family": "Summon",
+    "nameJa": "骨笛の分け前",
+    "nameEn": "Bone-Flute Share",
+    "loreJa": "笛の音は、味方の盾を半分持つ。",
+    "loreEn": "The flute's note carries half a comrade's shield.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.022",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.granite_cosh",
+    "family": "Summon",
+    "nameJa": "御影の見守り",
+    "nameEn": "Granite Watch",
+    "loreJa": "石は動かず、それでも見ている。",
+    "loreEn": "The stone does not move, yet it watches.",
+    "powers": [
+      {
+        "power": "WatchfulHand",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.023",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.conch_scepter",
+    "family": "Memory",
+    "nameJa": "法螺の余韻",
+    "nameEn": "Conch Echo",
+    "loreJa": "法螺の音が、技の間を縮める。",
+    "loreEn": "The conch's drone shortens the wait between arts.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.024",
+    "slot": "Weapon",
+    "rarity": "Uncommon",
+    "baseId": "weapon.dream_wand",
+    "family": "Memory",
+    "nameJa": "夢見の終曲",
+    "nameEn": "Dreamer's Finale",
+    "loreJa": "三つの夢が、最後の幕を早める。",
+    "loreEn": "Three dreams hurry the final curtain.",
+    "powers": [
+      {
+        "power": "Finale",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.025",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.chanting_wand",
+    "family": "Plain",
+    "nameJa": "詠唱の静水",
+    "nameEn": "Still-Chant Wand",
+    "loreJa": "詠い止まれば、水は盾となる。",
+    "loreEn": "When the chant stills, the water becomes a shield.",
+    "powers": [
+      {
+        "power": "StillWater",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.026",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.hunting_bow",
+    "family": "Plain",
+    "nameJa": "射止める盾音",
+    "nameEn": "Shield-Crack Shot",
+    "loreJa": "矢鳴りは、盾の音に似ている。",
+    "loreEn": "An arrow's song can ring like a struck shield.",
+    "powers": [
+      {
+        "power": "ShieldBash",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.027",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.glacier_spear",
+    "family": "Frost",
+    "nameJa": "凍て穂の脆さ",
+    "nameEn": "Brittle Rimespike",
+    "loreJa": "凍てついた装甲は、花のように割れる。",
+    "loreEn": "Frozen armor splits like a blossom.",
+    "powers": [
+      {
+        "power": "BrittleIce",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.028",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.northwind_axe",
+    "family": "Frost",
+    "nameJa": "北風の白息",
+    "nameEn": "Northwind Steam",
+    "loreJa": "吹き荒ぶ風が、白い霧を残す。",
+    "loreEn": "The howling wind leaves a white mist behind.",
+    "powers": [
+      {
+        "power": "Steam",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.winter_caravan"
+  },
+  {
+    "id": "named.weapon.029",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.thaw_hammer",
+    "family": "Frost",
+    "nameJa": "雪解けの晶",
+    "nameEn": "Thawlight Crystal",
+    "loreJa": "解けかけの氷が、光を鎧う。",
+    "loreEn": "Half-melted ice wears the light as armor.",
+    "powers": [
+      {
+        "power": "FrostCrystal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.030",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.longspike_bow",
+    "family": "Flame",
+    "nameJa": "飛び火の長弓",
+    "nameEn": "Wildfire Longbow",
+    "loreJa": "火はひとつにとどまらない。",
+    "loreEn": "Fire never stays with just one.",
+    "powers": [
+      {
+        "power": "Wildfire",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.031",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.severing_axe",
+    "family": "Flame",
+    "nameJa": "断ち切りの舞",
+    "nameEn": "Severing Dance",
+    "loreJa": "斬り落とすたび、足が軽くなる。",
+    "loreEn": "Each cut taken makes the feet lighter.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.032",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.evilbreaker_lance",
+    "family": "Light",
+    "nameJa": "破邪の灯",
+    "nameEn": "Wardlight Lance",
+    "loreJa": "邪を破る槍先に、灯がともる。",
+    "loreEn": "A flame lights where the lance breaks evil.",
+    "powers": [
+      {
+        "power": "Barrier",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.033",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.starlit_knives",
+    "family": "Light",
+    "nameJa": "星剣の情け",
+    "nameEn": "Starlit Kindness",
+    "loreJa": "投じた星が、恩を返して戻る。",
+    "loreEn": "The thrown star returns to repay a kindness.",
+    "powers": [
+      {
+        "power": "KindnessReturns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.034",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.starsinger_bow",
+    "family": "Light",
+    "nameJa": "奏星の継ぎ糸",
+    "nameEn": "Star-Song Lifeline",
+    "loreJa": "弦の音が、命をつなぐ糸になる。",
+    "loreEn": "The string's note becomes a thread of life.",
+    "powers": [
+      {
+        "power": "Lifeline",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.035",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.ember_katar",
+    "family": "Dark",
+    "nameJa": "熾火の影刃",
+    "nameEn": "Ember-Shadow Katar",
+    "loreJa": "熾きた火の周りに、影が濃くなる。",
+    "loreEn": "Shadows thicken around the glowing coal.",
+    "powers": [
+      {
+        "power": "Umbra",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.dusk_pact"
+  },
+  {
+    "id": "named.weapon.036",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.moon_sickle",
+    "family": "Dark",
+    "nameJa": "月鎌の相続",
+    "nameEn": "Moonsickle Heritage",
+    "loreJa": "三日月が、影の名を譲る。",
+    "loreEn": "The crescent moon bequeaths a shadowed name.",
+    "powers": [
+      {
+        "power": "UmbralHeritage",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.037",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.iron_halberd",
+    "family": "Guard",
+    "nameJa": "鉄の棘",
+    "nameEn": "Iron Thorns",
+    "loreJa": "受けた痛みは、そのまま返す。",
+    "loreEn": "Whatever pain it takes, it gives straight back.",
+    "powers": [
+      {
+        "power": "Thorns",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.038",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.shield_maul",
+    "family": "Guard",
+    "nameJa": "不動の盾打ち",
+    "nameEn": "Immovable Shieldbash",
+    "loreJa": "構えを解かなければ、城は落ちない。",
+    "loreEn": "While the stance holds, the castle stands.",
+    "powers": [
+      {
+        "power": "ImmovableStance",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.039",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.tortoise_bokken",
+    "family": "Guard",
+    "nameJa": "亀甲の備え",
+    "nameEn": "Tortoise Readiness",
+    "loreJa": "遅い甲羅こそ、最後まで残る。",
+    "loreEn": "The slow shell is what remains at the end.",
+    "powers": [
+      {
+        "power": "ReadyGuard",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.shieldmates"
+  },
+  {
+    "id": "named.weapon.040",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.swallow_kodachi",
+    "family": "Gale",
+    "nameJa": "燕返しの助走",
+    "nameEn": "Swallow Run-Up",
+    "loreJa": "低く飛べば、刃はさらに伸びる。",
+    "loreEn": "Fly low, and the blade stretches further.",
+    "powers": [
+      {
+        "power": "RunUp",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.041",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.twin_fang",
+    "family": "Gale",
+    "nameJa": "双牙の旋風",
+    "nameEn": "Twin-Fang Whirl",
+    "loreJa": "身をひねれば、牙が渦を描く。",
+    "loreEn": "A twist of the body, and the fangs draw a spiral.",
+    "powers": [
+      {
+        "power": "Whirlwind",
+        "band": "low"
+      }
+    ],
+    "miniSetId": "miniset.swift_vow"
+  },
+  {
+    "id": "named.weapon.042",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.dewclear_wand",
+    "family": "Mend",
+    "nameJa": "露払いの灯守",
+    "nameEn": "Dewclear Warden",
+    "loreJa": "露が晴れる頃、もう一度立ち上がる。",
+    "loreEn": "When the dew clears, you rise once more.",
+    "powers": [
+      {
+        "power": "SecondWind",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.sprout_care"
+  },
+  {
+    "id": "named.weapon.043",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.pilgrim_staff",
+    "family": "Mend",
+    "nameJa": "巡礼の薬缶",
+    "nameEn": "Pilgrim's Medicine Pot",
+    "loreJa": "歩いた道のりだけ、薬は効く。",
+    "loreEn": "The medicine works for every mile walked.",
+    "powers": [
+      {
+        "power": "Apothecary",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.044",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.stillwater_blade",
+    "family": "Mend",
+    "nameJa": "静水の雷",
+    "nameEn": "Stillwater Lightning",
+    "loreJa": "水面を走る稲妻のように、静かに繋がる。",
+    "loreEn": "Like lightning over still water, it links in silence.",
+    "powers": [
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.045",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.gatehouse_maul",
+    "family": "Summon",
+    "nameJa": "城門の共演",
+    "nameEn": "Gatehouse Co-Star",
+    "loreJa": "門が開く時、誰かが並んで立つ。",
+    "loreEn": "When the gate opens, someone stands beside you.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.pack_call"
+  },
+  {
+    "id": "named.weapon.046",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.star_harp",
+    "family": "Summon",
+    "nameJa": "竪琴の継ぎ手",
+    "nameEn": "Harp Relay",
+    "loreJa": "一つめの音は、次の者へ渡される。",
+    "loreEn": "The first note is handed to the next player.",
+    "powers": [
+      {
+        "power": "RelayHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.047",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.dream_tome",
+    "family": "Memory",
+    "nameJa": "夢綴じの切り札",
+    "nameEn": "Dreambound Trump",
+    "loreJa": "読み終わった頁に、一枚だけ残る。",
+    "loreEn": "One card stays behind on the final page.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.star_ledger"
+  },
+  {
+    "id": "named.weapon.048",
+    "slot": "Weapon",
+    "rarity": "Rare",
+    "baseId": "weapon.firefly_staff",
+    "family": "Memory",
+    "nameJa": "蛍火の巡り",
+    "nameEn": "Firefly Cycle",
+    "loreJa": "蛍の光は、星屑の通り道。",
+    "loreEn": "Firefly light rides the stardust road.",
+    "powers": [
+      {
+        "power": "StardustCycle",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": "miniset.memory_trio"
+  },
+  {
+    "id": "named.weapon.049",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.war_axe",
+    "family": "Plain",
+    "nameJa": "戦斧の踊り",
+    "nameEn": "Dancing War Axe",
+    "loreJa": "最初の一振りが、舞の拍子を決める。",
+    "loreEn": "The first swing sets the rhythm of the dance.",
+    "powers": [
+      {
+        "power": "Momentum",
+        "band": "mid"
+      },
+      {
+        "power": "OpeningStrike",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.050",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.tide_cutter",
+    "family": "Frost",
+    "nameJa": "波切りの冬牢",
+    "nameEn": "Tidecutter Wintercell",
+    "loreJa": "斬った水が凍り、敵を閉じ込める。",
+    "loreEn": "The cut water freezes and seals the foe.",
+    "powers": [
+      {
+        "power": "Fetters",
+        "band": "mid"
+      },
+      {
+        "power": "BrittleIce",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.051",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.whiteheat_estoc",
+    "family": "Flame",
+    "nameJa": "白熱の突き",
+    "nameEn": "Whiteheat Thrust",
+    "loreJa": "白い刃が貫き、火の粒を撒く。",
+    "loreEn": "The white blade pierces and sows sparks.",
+    "powers": [
+      {
+        "power": "Blaze",
+        "band": "mid"
+      },
+      {
+        "power": "Ember",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.052",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.sunlit_blade",
+    "family": "Light",
+    "nameJa": "陽射しの二閃",
+    "nameEn": "Sunlit Double Flash",
+    "loreJa": "光を纏い、日向のように舞う。",
+    "loreEn": "Wrapped in light, it dances like open day.",
+    "powers": [
+      {
+        "power": "Radiance",
+        "band": "mid"
+      },
+      {
+        "power": "Momentum",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.053",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.twin_rapier",
+    "family": "Dark",
+    "nameJa": "双子の刈り入れ",
+    "nameEn": "Twin Harvest",
+    "loreJa": "一本が刈り、もう一本が飲む。",
+    "loreEn": "One reaps; the other drinks.",
+    "powers": [
+      {
+        "power": "Executioner",
+        "band": "mid"
+      },
+      {
+        "power": "SoulSiphon",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.054",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.tower_lance",
+    "family": "Guard",
+    "nameJa": "城壁の血肉",
+    "nameEn": "Rampart and Blood",
+    "loreJa": "壁は厚く、槍は生き血を知る。",
+    "loreEn": "The wall is thick; the spear knows blood.",
+    "powers": [
+      {
+        "power": "Bulwark",
+        "band": "mid"
+      },
+      {
+        "power": "Lifesteal",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.055",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.windhowl_staff",
+    "family": "Gale",
+    "nameJa": "風唸りの極",
+    "nameEn": "Windhowl Peak",
+    "loreJa": "唸る風の中で、杖も獣になる。",
+    "loreEn": "In the howling wind, the staff turns beast.",
+    "powers": [
+      {
+        "power": "Frenzy",
+        "band": "mid"
+      },
+      {
+        "power": "WanderersEdge",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.056",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.vow_mace",
+    "family": "Mend",
+    "nameJa": "誓約の刈り",
+    "nameEn": "Vowbound Harvest",
+    "loreJa": "誓いは血を分け、終わりを断つ。",
+    "loreEn": "The vow shares blood and cuts the ending short.",
+    "powers": [
+      {
+        "power": "Lifesteal",
+        "band": "mid"
+      },
+      {
+        "power": "Executioner",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.057",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.storm_glaive",
+    "family": "Summon",
+    "nameJa": "嵐の分かち合い",
+    "nameEn": "Storm-Shared Ward",
+    "loreJa": "嵐の夜は、傘を差し合う仲間がいる。",
+    "loreEn": "On stormy nights, someone shares your umbrella.",
+    "powers": [
+      {
+        "power": "SharedWard",
+        "band": "high"
+      },
+      {
+        "power": "Blaze",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.058",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.tide_trident",
+    "family": "Summon",
+    "nameJa": "潮騒の共演",
+    "nameEn": "Tidal Co-Star",
+    "loreJa": "波も、二つ重なれば音になる。",
+    "loreEn": "Even waves, when two overlap, become sound.",
+    "powers": [
+      {
+        "power": "CoStar",
+        "band": "mid"
+      },
+      {
+        "power": "ChainLightning",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.059",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.moonlit_cane",
+    "family": "Memory",
+    "nameJa": "月明の切り拓き",
+    "nameEn": "Moonlit Trump Card",
+    "loreJa": "月に照らされて、会心が鋭くなる。",
+    "loreEn": "By moonlight, the critical touch sharpens.",
+    "powers": [
+      {
+        "power": "CriticalEcho",
+        "band": "high"
+      },
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      }
+    ],
+    "miniSetId": null
+  },
+  {
+    "id": "named.weapon.060",
+    "slot": "Weapon",
+    "rarity": "Epic",
+    "baseId": "weapon.starchart_scroll",
+    "family": "Memory",
+    "nameJa": "星図の伏せ札",
+    "nameEn": "Star-Chart Hidden Card",
+    "loreJa": "星の並びに、まだ見ぬ一手がある。",
+    "loreEn": "In the stars' arrangement hides an unplayed move.",
+    "powers": [
+      {
+        "power": "AceInHand",
+        "band": "mid"
+      },
+      {
+        "power": "Bloodlust",
+        "band": "low"
+      }
+    ],
+    "miniSetId": null
+  }
+]

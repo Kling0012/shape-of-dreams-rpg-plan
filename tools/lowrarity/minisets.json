@@ -1,0 +1,530 @@
+[
+  {
+    "id": "miniset.rime_lantern",
+    "nameJa": "霜灯の二つ星",
+    "nameEn": "Twin Rime Lanterns",
+    "pieces": [
+      "named.weapon.004",
+      "named.charm.004"
+    ],
+    "twoPiece": {
+      "stat": "ColdAmp",
+      "value": 8
+    },
+    "threePiece": null,
+    "titleJa": "霜路の灯守",
+    "titleEn": "Keeper of the Frost Path"
+  },
+  {
+    "id": "miniset.hearth_ember",
+    "nameJa": "炉端の残り火",
+    "nameEn": "Hearthside Embers",
+    "pieces": [
+      "named.armor.007",
+      "named.feet.007"
+    ],
+    "twoPiece": {
+      "stat": "FireAmp",
+      "value": 8
+    },
+    "threePiece": null,
+    "titleJa": "火種の運び人",
+    "titleEn": "Ember Carrier"
+  },
+  {
+    "id": "miniset.noon_blessing",
+    "nameJa": "真昼の祝傘",
+    "nameEn": "Noonday Blessed Shade",
+    "pieces": [
+      "named.head.032",
+      "named.hands.033"
+    ],
+    "twoPiece": {
+      "stat": "ShieldPower",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "陽傘の祝人",
+    "titleEn": "Blessed Shade-Bearer"
+  },
+  {
+    "id": "miniset.dusk_pact",
+    "nameJa": "宵闇の密約",
+    "nameEn": "Twilight Pact",
+    "pieces": [
+      "named.weapon.035",
+      "named.armor.012"
+    ],
+    "twoPiece": {
+      "stat": "DarkAmp",
+      "value": 8
+    },
+    "threePiece": null,
+    "titleJa": "宵の約束者",
+    "titleEn": "Dusk Pactkeeper"
+  },
+  {
+    "id": "miniset.iron_vow",
+    "nameJa": "鉄の誓約",
+    "nameEn": "Iron Vow",
+    "pieces": [
+      "named.head.037",
+      "named.feet.038"
+    ],
+    "twoPiece": {
+      "stat": "Armor",
+      "value": 6
+    },
+    "threePiece": null,
+    "titleJa": "鉄の誓い人",
+    "titleEn": "Iron-Sworn"
+  },
+  {
+    "id": "miniset.tailwind_pair",
+    "nameJa": "追い風二つ",
+    "nameEn": "Two Tailwinds",
+    "pieces": [
+      "named.charm.041",
+      "named.feet.016"
+    ],
+    "twoPiece": {
+      "stat": "MoveSpeedPct",
+      "value": 3
+    },
+    "threePiece": null,
+    "titleJa": "風の道連れ",
+    "titleEn": "Wind's Companion"
+  },
+  {
+    "id": "miniset.sprout_care",
+    "nameJa": "若芽の看病",
+    "nameEn": "Nursing the Sprout",
+    "pieces": [
+      "named.weapon.042",
+      "named.charm.019"
+    ],
+    "twoPiece": {
+      "stat": "HealPower",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "苗床の看病人",
+    "titleEn": "Seedling Nurse"
+  },
+  {
+    "id": "miniset.pack_call",
+    "nameJa": "群れの呼び声",
+    "nameEn": "Call of the Pack",
+    "pieces": [
+      "named.weapon.045",
+      "named.head.021"
+    ],
+    "twoPiece": {
+      "stat": "AttackSpeedPct",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "群れの笛吹き",
+    "titleEn": "Pack Caller"
+  },
+  {
+    "id": "miniset.star_ledger",
+    "nameJa": "星の帳面",
+    "nameEn": "The Star Ledger",
+    "pieces": [
+      "named.weapon.047",
+      "named.charm.023"
+    ],
+    "twoPiece": {
+      "stat": "Haste",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "星目録の記手",
+    "titleEn": "Star-Ledger Keeper"
+  },
+  {
+    "id": "miniset.plain_craft",
+    "nameJa": "道具の二人",
+    "nameEn": "Two of Tools",
+    "pieces": [
+      "named.weapon.001",
+      "named.hands.002"
+    ],
+    "twoPiece": {
+      "stat": "AttackFlat",
+      "value": 3
+    },
+    "threePiece": null,
+    "titleJa": "道具の相棒",
+    "titleEn": "Partners in Craft"
+  },
+  {
+    "id": "miniset.winter_watch",
+    "nameJa": "冬の見張り",
+    "nameEn": "Winter Watch",
+    "pieces": [
+      "named.armor.029",
+      "named.head.029"
+    ],
+    "twoPiece": {
+      "stat": "Tenacity",
+      "value": 8
+    },
+    "threePiece": null,
+    "titleJa": "冬営の見張り番",
+    "titleEn": "Winter Camp Watch"
+  },
+  {
+    "id": "miniset.kindled_step",
+    "nameJa": "火種の足取り",
+    "nameEn": "Kindlefoot",
+    "pieces": [
+      "named.hands.030",
+      "named.charm.008"
+    ],
+    "twoPiece": {
+      "stat": "CritChancePct",
+      "value": 3
+    },
+    "threePiece": null,
+    "titleJa": "飛び火の目撃者",
+    "titleEn": "Wildfire Witness"
+  },
+  {
+    "id": "miniset.dawn_pair",
+    "nameJa": "暁の二灯",
+    "nameEn": "Twin Dawn Lamps",
+    "pieces": [
+      "named.armor.009",
+      "named.feet.009"
+    ],
+    "twoPiece": {
+      "stat": "MaxHealthPct",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "暁を運ぶ者",
+    "titleEn": "Bringer of Dawn"
+  },
+  {
+    "id": "miniset.shadow_reverie",
+    "nameJa": "影の空想",
+    "nameEn": "Shadow Reverie",
+    "pieces": [
+      "named.charm.036",
+      "named.feet.012"
+    ],
+    "twoPiece": {
+      "stat": "CritDamagePct",
+      "value": 8
+    },
+    "threePiece": null,
+    "titleJa": "影の夢想家",
+    "titleEn": "Shadow Dreamer"
+  },
+  {
+    "id": "miniset.shieldmates",
+    "nameJa": "盾の戦友",
+    "nameEn": "Shieldmates",
+    "pieces": [
+      "named.weapon.039",
+      "named.charm.014"
+    ],
+    "twoPiece": {
+      "stat": "MaxHealthFlat",
+      "value": 20
+    },
+    "threePiece": null,
+    "titleJa": "背中を預けし者",
+    "titleEn": "Back-to-Back Bonded"
+  },
+  {
+    "id": "miniset.swift_vow",
+    "nameJa": "疾風の二閃",
+    "nameEn": "Twin Gale Flashes",
+    "pieces": [
+      "named.weapon.041",
+      "named.armor.016"
+    ],
+    "twoPiece": {
+      "stat": "Haste",
+      "value": 4
+    },
+    "threePiece": null,
+    "titleJa": "風と誓う者",
+    "titleEn": "Windsworn"
+  },
+  {
+    "id": "miniset.warm_hands",
+    "nameJa": "温もりの二つ手",
+    "nameEn": "Two Warm Hands",
+    "pieces": [
+      "named.armor.042",
+      "named.feet.043"
+    ],
+    "twoPiece": {
+      "stat": "HealthRegen",
+      "value": 2
+    },
+    "threePiece": null,
+    "titleJa": "手を温める者",
+    "titleEn": "Hand-Warmer"
+  },
+  {
+    "id": "miniset.old_friends",
+    "nameJa": "古びた二つ星",
+    "nameEn": "Two Old Friends",
+    "pieces": [
+      "named.head.048",
+      "named.feet.024"
+    ],
+    "twoPiece": {
+      "stat": "PowerFlat",
+      "value": 3
+    },
+    "threePiece": null,
+    "titleJa": "旧友の再会",
+    "titleEn": "Old Friends Reunited"
+  },
+  {
+    "id": "miniset.winter_caravan",
+    "nameJa": "冬の隊商",
+    "nameEn": "Winter Caravan",
+    "pieces": [
+      "named.weapon.028",
+      "named.hands.005",
+      "named.feet.005"
+    ],
+    "twoPiece": {
+      "stat": "ColdAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Frost",
+      "band": "low"
+    },
+    "titleJa": "霜道の先導者",
+    "titleEn": "Frostroad Outrider"
+  },
+  {
+    "id": "miniset.triple_forge",
+    "nameJa": "三つ火の鍛冶",
+    "nameEn": "Three-Fire Forge",
+    "pieces": [
+      "named.weapon.006",
+      "named.head.006",
+      "named.hands.006"
+    ],
+    "twoPiece": {
+      "stat": "FireAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Ember",
+      "band": "low"
+    },
+    "titleJa": "三炎の鍛冶職人",
+    "titleEn": "Smith of Three Fires"
+  },
+  {
+    "id": "miniset.triple_light",
+    "nameJa": "光の三唱",
+    "nameEn": "Triple Light Chant",
+    "pieces": [
+      "named.weapon.009",
+      "named.charm.034",
+      "named.armor.010"
+    ],
+    "twoPiece": {
+      "stat": "LightAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Radiance",
+      "band": "low"
+    },
+    "titleJa": "陽の運び手",
+    "titleEn": "Sunbearer"
+  },
+  {
+    "id": "miniset.umbral_trio",
+    "nameJa": "闇の三重唱",
+    "nameEn": "Umbral Trio",
+    "pieces": [
+      "named.head.011",
+      "named.hands.035",
+      "named.feet.035"
+    ],
+    "twoPiece": {
+      "stat": "DarkAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Umbra",
+      "band": "low"
+    },
+    "titleJa": "闇に歌う者",
+    "titleEn": "Singer in the Dark"
+  },
+  {
+    "id": "miniset.shield_wall",
+    "nameJa": "三枚の盾壁",
+    "nameEn": "Wall of Three Shields",
+    "pieces": [
+      "named.armor.014",
+      "named.hands.037",
+      "named.head.015"
+    ],
+    "twoPiece": {
+      "stat": "Armor",
+      "value": 6
+    },
+    "threePiece": {
+      "power": "Bulwark",
+      "band": "low"
+    },
+    "titleJa": "動かぬ壁",
+    "titleEn": "The Unmoving Wall"
+  },
+  {
+    "id": "miniset.gale_trio",
+    "nameJa": "疾風の三脚",
+    "nameEn": "Gale Tripod",
+    "pieces": [
+      "named.head.016",
+      "named.hands.018",
+      "named.feet.040"
+    ],
+    "twoPiece": {
+      "stat": "MoveSpeedPct",
+      "value": 3
+    },
+    "threePiece": {
+      "power": "Sprint",
+      "band": "low"
+    },
+    "titleJa": "風の三本足",
+    "titleEn": "Three Legs of Wind"
+  },
+  {
+    "id": "miniset.healing_trio",
+    "nameJa": "癒しの三手",
+    "nameEn": "Three Healing Hands",
+    "pieces": [
+      "named.head.020",
+      "named.hands.019",
+      "named.weapon.019"
+    ],
+    "twoPiece": {
+      "stat": "HealPower",
+      "value": 4
+    },
+    "threePiece": {
+      "power": "Lifesteal",
+      "band": "low"
+    },
+    "titleJa": "三手の癒し手",
+    "titleEn": "Healer of Three Hands"
+  },
+  {
+    "id": "miniset.pack_trio",
+    "nameJa": "三匹の群れ",
+    "nameEn": "A Pack of Three",
+    "pieces": [
+      "named.armor.022",
+      "named.charm.045",
+      "named.feet.022"
+    ],
+    "twoPiece": {
+      "stat": "HealthRegen",
+      "value": 2
+    },
+    "threePiece": {
+      "power": "PackFeast",
+      "band": "low"
+    },
+    "titleJa": "群れの同志",
+    "titleEn": "Comrade of the Pack"
+  },
+  {
+    "id": "miniset.memory_trio",
+    "nameJa": "記憶の三鍵",
+    "nameEn": "Three Keys of Memory",
+    "pieces": [
+      "named.armor.024",
+      "named.hands.024",
+      "named.weapon.048"
+    ],
+    "twoPiece": {
+      "stat": "Haste",
+      "value": 4
+    },
+    "threePiece": {
+      "power": "CriticalEcho",
+      "band": "low"
+    },
+    "titleJa": "星霜の記録者",
+    "titleEn": "Annalist of Ages"
+  },
+  {
+    "id": "miniset.plain_trio",
+    "nameJa": "素朴な三つ道具",
+    "nameEn": "Three Plain Tools",
+    "pieces": [
+      "named.armor.025",
+      "named.head.025",
+      "named.feet.002"
+    ],
+    "twoPiece": {
+      "stat": "AttackFlat",
+      "value": 3
+    },
+    "threePiece": {
+      "power": "Momentum",
+      "band": "low"
+    },
+    "titleJa": "道具箱の達人",
+    "titleEn": "Master of the Toolbox"
+  },
+  {
+    "id": "miniset.tide_and_flame",
+    "nameJa": "潮と焔",
+    "nameEn": "Tide and Flame",
+    "pieces": [
+      "named.charm.027",
+      "named.head.028",
+      "named.feet.030"
+    ],
+    "twoPiece": {
+      "stat": "FireAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Steam",
+      "band": "low"
+    },
+    "titleJa": "湯気の幻想家",
+    "titleEn": "Dreamer in Steam"
+  },
+  {
+    "id": "miniset.dusk_and_dawn",
+    "nameJa": "暁と宵",
+    "nameEn": "Dusk and Dawn",
+    "pieces": [
+      "named.head.012",
+      "named.feet.013",
+      "named.charm.009"
+    ],
+    "twoPiece": {
+      "stat": "LightAmp",
+      "value": 8
+    },
+    "threePiece": {
+      "power": "Eclipse",
+      "band": "low"
+    },
+    "titleJa": "蝕を見る者",
+    "titleEn": "Eclipse Watcher"
+  }
+]

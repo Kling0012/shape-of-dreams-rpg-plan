@@ -1,0 +1,12 @@
+{
+  "id": "com.kling0012.dreamforgerpg",
+  "name": "Dreamforge RPG",
+  "author": "Kling0012",
+  "modVer": "2.0.0",
+  "supportedGameVer": [
+    "*"
+  ],
+  "assemblies": [
+    "DreamforgeRPG.dll"
+  ]
+}

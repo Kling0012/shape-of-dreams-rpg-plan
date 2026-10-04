@@ -23,7 +23,7 @@ namespace SodRpg.Core
     }
 
     /// <summary>
-    /// 台帳 ⇔ ファイル文字列。形式: {"checksum":"&lt;sha256&gt;","body":{...}}。
+    /// 台帳 ⇔ ファイル文字列。形式: {"body":{...}}。旧形式が持つ "checksum" 欄は読み込み時に無視する。
     /// 版0（旧形式）はラッパーなしの本体のみで、読み込み時に現行版へ移行する。
     /// </summary>
     public static class LedgerSerializer
@@ -32,12 +32,10 @@ namespace SodRpg.Core
 
         public static string ToFileText(LedgerState state)
         {
-            JsonObject body = ToBody(state);
-            string checksum = Sha256Hex(Json.Write(body));
-            return Json.Write(new JsonObject().Add("checksum", checksum).Add("body", body));
+            return Json.Write(new JsonObject().Add("body", ToBody(state)));
         }
 
-        /// <summary>構造が不正（壊れ・欠落・チェックサム不一致）なら LedgerFormatException、新しすぎる版なら LedgerVersionException。</summary>
+        /// <summary>構造が不正（壊れ・欠落）なら LedgerFormatException、新しすぎる版なら LedgerVersionException。</summary>
         public static ParsedLedger Parse(string text, Catalog catalog)
         {
             if (catalog == null) throw new ArgumentNullException(nameof(catalog));
@@ -45,24 +43,15 @@ namespace SodRpg.Core
             var rootObj = root as JsonObject ?? throw new LedgerFormatException("ルートがオブジェクトではありません。");
 
             JsonObject body;
-            if (rootObj.TryGet("checksum", out object cs) && rootObj.TryGet("body", out object b))
-            {
+            if (rootObj.TryGet("body", out object b))
                 body = b as JsonObject ?? throw new LedgerFormatException("bodyがオブジェクトではありません。");
-                string expected = cs as string ?? throw new LedgerFormatException("checksumが文字列ではありません。");
-                if (!string.Equals(expected, Sha256Hex(Json.Write(body)), StringComparison.OrdinalIgnoreCase))
-                    throw new LedgerFormatException("チェックサムが一致しません。");
-            }
             else
-            {
                 body = rootObj; // 版0（ラッパーなし）
-            }
 
             int version = body.TryGet("schemaVersion", out object sv) ? ToInt(sv, "schemaVersion") : 0;
             if (version < 0) throw new LedgerFormatException("schemaVersionが負です。");
             if (version > LedgerState.CurrentSchemaVersion)
                 throw new LedgerVersionException("この版(" + version + ")は未対応です。MODを更新してください。");
-            if (version >= 1 && !(rootObj.TryGet("checksum", out _)))
-                throw new LedgerFormatException("版" + version + "のファイルにチェックサムがありません。");
 
             var notes = new List<string>();
             string profileKey = GetString(body, "profileKey");

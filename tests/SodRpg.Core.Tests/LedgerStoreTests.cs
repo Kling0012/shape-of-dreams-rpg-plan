@@ -88,17 +88,42 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void B3_TamperedValueFailsTheChecksum()
+        public void B3_StructurallyBrokenMainFallsBackToTheBackup()
         {
             var fs = new InMemoryFileSystem();
             var store = NewStore(fs);
             store.Load();
-            AddShards(store, 5);
-            fs.Put(Path, fs.ReadAllText(Path).Replace("\"dream_shard\":5", "\"dream_shard\":500"));
+            AddShards(store, 1);
+            AddShards(store, 1); // main=rev2, bak=rev1
+            fs.Put(Path, fs.ReadAllText(Path).Replace("\"dream_shard\":2", "\"dream_shard\":\"tampered\""));
 
-            var ex = Assert.Throws<LedgerCorruptException>(() => NewStore(fs).Load());
+            var r = NewStore(fs).Load();
 
-            Assert.Contains("チェックサム", ex.Message);
+            Assert.Equal(1, r.State.Revision);
+            Assert.Equal(1, r.State.MaterialCount(PrototypeCatalog.ShardMaterialId));
+            Assert.Contains(r.Notes, n => n.Contains("ledger.json は無効"));
+        }
+
+        [Fact]
+        public void B1_NewFileHasNoChecksumAndOldFileWithOneStillLoads()
+        {
+            var seed = new LedgerState("p1", 3);
+            seed.AddItem(new ItemRecord(PrototypeCatalog.CharmItemId, "inst-9", "debug"));
+            seed.SetMaterial(PrototypeCatalog.ShardMaterialId, 2);
+            string text = LedgerSerializer.ToFileText(seed);
+
+            // 2026-10-04：整合性確認用のチェックサムは廃止。ラウンドトリップもこの形式で成立する
+            Assert.DoesNotContain("checksum", text);
+            var round = LedgerSerializer.Parse(text, Cat);
+            Assert.Equal(3, round.State.Revision);
+            Assert.Equal("inst-9", Assert.Single(round.State.Items).InstanceId);
+            Assert.Equal(2, round.State.MaterialCount(PrototypeCatalog.ShardMaterialId));
+
+            // 旧形式（checksum つき）は欄ごと無視して読める
+            int at = text.IndexOf("\"body\":", System.StringComparison.Ordinal);
+            var old = LedgerSerializer.Parse(text.Insert(at, "\"checksum\":\"legacy\","), Cat);
+            Assert.Equal(3, old.State.Revision);
+            Assert.Equal("inst-9", Assert.Single(old.State.Items).InstanceId);
         }
 
         [Fact]

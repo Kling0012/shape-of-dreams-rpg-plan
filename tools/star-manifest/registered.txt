@@ -1,0 +1,10 @@
+# Heroes whose generated map passed the real StarClusters.RegisterAuthored (GeneratedHeroAcceptanceTests). Never list a hero that fails.
+vesper
+husk
+lacerta
+bismuth
+mist
+yubar
+nachia
+cetus
+aurena
