@@ -332,13 +332,78 @@ namespace SodRpg.Mod
             if (excluded > 0)
             {
                 string message = Loc.T(
-                    $"ボス限定装備{excluded}点を除外しました。対応ボスの撃破報酬でのみ入手できます。",
-                    $"Excluded {excluded} boss-exclusive item(s). They can only be obtained as rewards for defeating their corresponding boss.");
+                    $"ボス限定装備{excluded}点を除外しました。確認用の付与には dreamforge_givebossset を使用してください。",
+                    $"Excluded {excluded} boss-exclusive item(s). Use dreamforge_givebossset for development grants.");
                 Debug.Log("[DreamforgeRPG] " + message);
                 _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + message));
             }
             _session.MarkDirty(true);
             _session.SaveNow();
+        }
+
+        [ConsoleCommand("Dreamforge (test): grant all six boss-set parts by set id or boss type (e.g. boss_demon)", "dreamforge_givebossset")]
+        private void GiveBossSetCommand(string setIdOrBossType)
+        {
+            if (!DevAllowed()) return;
+            if (!BossSets.TryGetSet(setIdOrBossType, out var set))
+                set = Content.GetSet(setIdOrBossType != null && setIdOrBossType.StartsWith("set.", StringComparison.Ordinal)
+                    ? setIdOrBossType : "set." + setIdOrBossType);
+            if (set?.BossTypeName == null)
+            {
+                string message = Loc.T("登録済みのボス限定セットIDまたはボス型名を指定してください。",
+                    "Specify a registered boss-exclusive set id or boss type name.");
+                Debug.Log("[DreamforgeRPG] " + message);
+                _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + message));
+                return;
+            }
+            var p = _session.Profile;
+            var rng = p.TakeRng();
+            foreach (var unique in Content.Uniques)
+                if (unique.SetId == set.Id)
+                    GrantDeveloperBossRelic(p, Loot.RollUnique(rng, unique, Math.Max(1, p.BestItemLevel)));
+            p.StoreRng(rng);
+            _session.MarkDirty(true);
+            _session.SaveNow();
+        }
+
+        [ConsoleCommand("Dreamforge (test): roll one exclusive boss drop by boss type during a run", "dreamforge_simbosskill")]
+        private void SimBossKillCommand(string bossTypeName)
+        {
+            if (!DevAllowed()) return;
+            var p = _session.Profile;
+            if (p.Run == null || !BossSets.TryGetSet(bossTypeName, out _))
+            {
+                string message = Loc.T("遠征中に登録済みのボス型名を指定してください。",
+                    "Specify a registered boss type name during an active run.");
+                Debug.Log("[DreamforgeRPG] " + message);
+                _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + message));
+                return;
+            }
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            string difficulty = game?.difficulty?.name;
+            bool nightmare = difficulty == "diffNightmare" || difficulty == "diffLimbo";
+            int depth = ClientSession.HostRun?.DreamDepth ?? p.Run.DreamDepth;
+            var rng = p.TakeRng();
+            var relic = BossSets.RollDrop(rng, bossTypeName, nightmare, depth, Math.Max(1, game?.ambientLevel ?? 1));
+            p.StoreRng(rng);
+            string result = Loc.T(
+                $"開発用ボス抽選：{bossTypeName}、確率{BossSets.DropChance(nightmare, depth) * 100:0}%、{(relic == null ? "当選なし" : relic.DisplayName)}。",
+                $"Developer boss roll: {bossTypeName}, chance {BossSets.DropChance(nightmare, depth) * 100:0}%, {(relic == null ? "no drop" : relic.DisplayName)}.");
+            Debug.Log("[DreamforgeRPG] " + result);
+            if (relic != null) GrantDeveloperBossRelic(p, relic);
+            _ui.Notify(new GameEvent(EventKind.Info, "[debug] " + result));
+            _session.MarkDirty(true);
+            _session.SaveNow();
+        }
+
+        private void GrantDeveloperBossRelic(Profile profile, Relic relic)
+        {
+            relic.DeveloperGranted = true;
+            if (profile.Run != null) profile.Run.Satchel.Add(relic);
+            else profile.Stash.Add(relic);
+            string message = Loc.T("開発付与：", "Developer grant: ") + relic.DisplayName;
+            Debug.Log("[DreamforgeRPG] " + message + " (" + relic.UniqueId + ", " + relic.Uid + ")");
+            _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + message, relic.Rarity));
         }
 
         [ConsoleCommand("Dreamforge: log your hero's final stats and the bonus applied by this mod", "dreamforge_stats")]

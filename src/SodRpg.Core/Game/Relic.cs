@@ -49,6 +49,8 @@ namespace SodRpg.Core.Game
         /// <summary>特性の洗い直しを使った回数（v1.31）。回数の上限はない。費用はこれで増える。</summary>
         public int AffixRerolls { get; set; }
         public bool Locked { get; set; }
+        /// <summary>専用の開発コマンドで付与した個体。戦闘性能や通常の抽選には影響しない。</summary>
+        public bool DeveloperGranted { get; set; }
         /// <summary>受け取った強化の節目（0〜5）。強化が+0に戻っても履歴は残る。</summary>
         public int EnhanceMilestones { get; set; }
         /// <summary>+20で1つ目の固有効果に1.2倍を適用済みか。強化の失敗でも失わない。</summary>
@@ -158,6 +160,7 @@ namespace SodRpg.Core.Game
                 Retunes = Retunes,
                 AffixRerolls = AffixRerolls,
                 Locked = Locked,
+                DeveloperGranted = DeveloperGranted,
                 EnhanceMilestones = EnhanceMilestones,
                 MilestonePowerApplied = MilestonePowerApplied,
                 AwakenPoints = AwakenPoints,

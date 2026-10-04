@@ -80,6 +80,7 @@ namespace SodRpg.Core.Game
                 LimitBreaks = source.LimitBreaks,
                 Retunes = source.Retunes,
                 Locked = source.Locked,
+                DeveloperGranted = source.DeveloperGranted,
                 EnhanceMilestones = source.EnhanceMilestones,
                 MilestonePowerApplied = source.MilestonePowerApplied || source.EnhanceMilestones >= 5,
                 AwakenPoints = source.AwakenPoints,

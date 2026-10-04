@@ -58,7 +58,11 @@
 - 既存 `SetPieceWeight=4` / `SetCompletionWeight=60` は汎用セット専用。新セットは対象外。専用品は道標変換の後置きなので、BossTribute等の格上げ、強制部位、個数制限、複製、SupplyLine等の分解、覚醒への変換に通さない（鞄満杯時の既存処理は残す）。本体の魂の祠（固有報酬10%／隠し100%）とも独立、祠の使用は不要。
 - 均等重複ありで6種完成までの期待当選数は `6H6=14.7`。表は固定pで `14.7 / p` を算出した期待値であり、当選品を保持できる前提。完成回数の保証ではなく、出現機会が少ないボスでは収集が長期化する。率・補正・上限は§5の確定値を使用する。
 
-**汎用プール除外**：`Loot.RollRelic` の伝説候補で、Uniqueの `SetId` から解決したセットに `BossTypeName` がある品を候補化前に除く（重み0で代用しない）。通常固有品・既存セットは候補のまま。通常ボスの既存2抽選、商人、箱、遺物交換、製作・合成、道標再抽選は同じ入口を通るため一括除外できる。限定IDの新規生成は専用ボス報酬入口のみとし、直接指定の開発コマンド `GiveUniqueCommand` も限定IDを拒否する。図鑑登録・既存品の保管／強化は従来どおり。
+**汎用プール除外**：`Loot.RollRelic` の伝説候補で、Uniqueの `SetId` から解決したセットに `BossTypeName` がある品を候補化前に除く（重み0で代用しない）。通常固有品・既存セットは候補のまま。通常ボスの既存2抽選、商人、箱、遺物交換、製作・合成、道標再抽選は同じ入口を通るため一括除外できる。通常の限定ID生成は専用ボス報酬入口のみ。`dreamforge_giveunique` は限定IDを拒否し、開発確認では以下の専用コマンドでのみ付与できる。図鑑登録・既存品の保管／強化は従来どおり。
+
+- `dreamforge_givebossset <セットIDまたはボス型名>`：登録済み限定セットの6部位を各1点付与。`boss_demon`、`set.boss_demon`、`Mon_Forest_BossDemon` を受け付ける。付与先・ドロップ通知は既存giveuniqueと同じ（遠征中は未確保鞄、遠征外は保管庫）。
+- `dreamforge_simbosskill <ボス型名>`：遠征中に専用抽選だけを1回実行し、当選／落選・抽選確率を通知。実際のNightmare／Limbo難易度と共有深度を使用し、通常報酬・撃破統計・pityは変更しない。
+- いずれも `DevAllowed()` が必須（プロフィールディレクトリ `QuickSave/Mods/DreamforgeRPG` に `dev.flag` を置いてゲームを再起動）。生成品は `Relic.DeveloperGranted=true` として保存・複製時にも保持し、装備詳細と通知・ログに「開発付与」と表示する。通常取得の除外ルールは変更しない。
 
 ### 2.3 「一段強い」の数値基準
 
@@ -109,7 +113,7 @@
 | 重複・順序 | 既存 RunId / EventId / MonsterNetId の結合・解決済み記録を共用。通常＋専用を同じ撃破処理に含め、保留・再送・復元で専用だけ再抽選しない。抽選結果をホストと全員で一致させる必要はない |
 | Protocol | 基点は14、#48単独では15へ更新。#47も14→15を提案中のため、**後からマージする側が先行側の値から次の版へ上げる**（#47先行なら#48は16、逆順なら#47が16）。同じ15を異なる線形式で共用しない。KillSyncの線形式変更で更新必須、ID追加だけとは区別。Mirrorの型ルーティングを継承し、別の「メッセージ番号」は作らない |
 | 内容整合 | ID追加で `ContentFingerprint` は変化する。ただし現行指紋は出所や率の値を含まないため、型名→セット対応・専用pの係数・LinkStagesの閾値とLink定義を対象へ追加する。Helloで旧版／異内容の効果適用を拒否し、専用fact受理にも内容一致を要求する（現行 `OnMonsterKill` のprotocol/run/generation確認だけに頼らない） |
-| 永続保存 | 装備は既存 BaseId / UniqueId で保存し、SetIdはUnique定義から参照。段階連携も定義・装備から再計算し、保存項目は追加しない。`Profile.CurrentVersion=4`、`ResetBeforeVersion=3`、`LedgerState.CurrentSchemaVersion=1`を維持。プロフィールリセットなし |
+| 永続保存 | 装備は既存 BaseId / UniqueId で保存し、SetIdはUnique定義から参照。段階連携は定義・装備から再計算し、専用保存項目は追加しない。開発付与の出所だけは遺物の任意キー `developerGranted` に保存し、欠落時はfalse。`Profile.CurrentVersion=4`、`ResetBeforeVersion=3`、`LedgerState.CurrentSchemaVersion=1`を維持。プロフィールリセットなし |
 | 撃破の保存 | `ProfileCodec.RunRecovery.cs` のpending killとkill分類fact両経路に任意キー `bossTypeName` / `bossDropNightmare` / `bossDropDepth` を追加。未結合 `KillClassificationCheckpoint.Facts`／`Deaths[].Kill`、結合済み未払い `RunRecoveryState.PendingKills` とclone・capture・restoreも保持。旧保存の欠落はnull/false/0＝通常報酬のみ継続、専用抽選なし。旧撃破を推定して遡及支給しない |
 | 戻し運用 | 追加IDを知らない旧MODでは未知Uniqueの既存除外処理が働くため、新品を含む保存を旧版へ戻して使う互換は保証しない。旧版対応の別名／shimは設けない |
 
