@@ -22,6 +22,8 @@ namespace SodRpg.Mod
             public Build Build;
             public string Encoded;
             public string Summary;
+            public string HeroKey;
+            public bool ApplyFailed;
         }
 
         private sealed class HeroRuntime
@@ -38,6 +40,7 @@ namespace SodRpg.Mod
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public long ShieldEquipmentEpoch;
             public Action<EventInfoDamage> OnMemoryDamage;
             public Action<EventInfoKill> OnMemoryKill;
             public readonly Dictionary<int, float> MemoryHitAmounts = new Dictionary<int, float>();
@@ -69,20 +72,22 @@ namespace SodRpg.Mod
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
             public string BountyRunId;
             public int ReportedLinks;
-            // 星図のエッセンス枠（v1.27）。旅人の最初の枠の数と、前回こちらが足した分。
-            public bool GemSlotsCaptured;
+            // Runtime retains only the component reference; ownership lives in its weak-key ledger.
             public HeroSkill GemSlotOwner;
-            public int BaseGemIdentity, BaseGemMovement;
-            public int AddedGemIdentity, AddedGemMovement;
         }
 
         private struct PendingGimmick
         {
+            public long ShieldEquipmentEpoch;
             public GimmickRequest Request;
             public Entity Victim;
             public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
+            public Func<bool> AuthoredIsCurrent;
+            public Func<GimmickDef> AuthoredDefinition;
+            public string AuthoredChannelId;
+            public float QueuedAt;
         }
 
         private sealed class MonsterRuntime
@@ -93,9 +98,11 @@ namespace SodRpg.Mod
             public StatBonus DepthBonus;
             public StatBonus SpecialBonus;
             public bool PressureApplied;
+            public DataProcessor<FinalStats> PressureHealth;
             public VariantDef Variant;
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
+            public string KillEventId;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -130,6 +137,7 @@ namespace SodRpg.Mod
         private readonly HashSet<LinkKind> _triggeredLinks = new HashSet<LinkKind>();
 
         private readonly Dictionary<DewPlayer, ReceivedBuild> _builds = new Dictionary<DewPlayer, ReceivedBuild>();
+        private readonly Dictionary<DewPlayer, BuildTransferReceiver> _incomingBuilds = new Dictionary<DewPlayer, BuildTransferReceiver>();
         private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
         private readonly List<Hero> _scratch = new List<Hero>();
         private readonly List<Build> _pressureBuilds = new List<Build>();
@@ -137,7 +145,6 @@ namespace SodRpg.Mod
         private readonly List<DewPlayer> _departedPlayers = new List<DewPlayer>();
         private DreamPressure _pressure = DreamPressure.Neutral;
         private int _pressurePlayerCount = -1;
-        private readonly DataProcessor<FinalStats> _pressureHealth;
         private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
@@ -179,7 +186,6 @@ namespace SodRpg.Mod
         private readonly Action<Entity> _onEntityAdd;
         private readonly Action<Entity> _onEntityRemove;
         private readonly Action<EventInfoKill> _onMonsterDeath;
-        private readonly Action<EventInfoStatusEffect> _onEnemyStatusAdded;
         private readonly Action<EventInfoDamage> _onMonsterDamageTaken;
         private readonly Action<EventInfoAttackHit> _onMonsterAttackHit;
         private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
@@ -191,7 +197,6 @@ namespace SodRpg.Mod
         private Dictionary<string, LucidDreamType> _lucidTypes;
         private readonly List<KeyValuePair<Monster, float>> _spawnQueue = new List<KeyValuePair<Monster, float>>();
         private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
-        private readonly List<Monster> _nightmareScratch = new List<Monster>();
         private float _nextNightmareSync;
         private readonly Func<int> _dailyIdOfHost;
         private readonly Dictionary<Monster, float> _regen = new Dictionary<Monster, float>();
@@ -204,14 +209,19 @@ namespace SodRpg.Mod
 
         public HostAuthority(Func<int> dailyIdOfHost)
         {
+            InitializeAssignedMechanisms();
             _dailyIdOfHost = dailyIdOfHost;
-            _pressureHealth = (ref FinalStats stats) => stats.maxHealth *= (float)_pressure.HealthMultiplier;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
             _onPressurePlayerAdded = player => _pressureDirty = true;
             _onPressurePlayerRemoved = player =>
             {
-                if (!ReferenceEquals(player, null)) _builds.Remove(player);
+                if (!ReferenceEquals(player, null))
+                {
+                    _builds.Remove(player);
+                    _incomingBuilds.Remove(player);
+                    RemoveBuildValidationPeer(player);
+                }
                 _pressureDirty = true;
             };
             _onBuild = OnBuild;
@@ -227,7 +237,6 @@ namespace SodRpg.Mod
             _onEntityAdd = OnEntityAdd;
             _onEntityRemove = OnEntityRemove;
             _onMonsterDeath = OnMonsterDeath;
-            _onEnemyStatusAdded = OnEnemyStatusAdded;
             _onMonsterDamageTaken = OnMonsterDamageTaken;
             _onMonsterAttackHit = OnMonsterAttackHit;
             _onApplyElemental = OnApplyElemental;
@@ -251,10 +260,13 @@ namespace SodRpg.Mod
             EnsureRegistered();
             NativeInstance = this;
             if (_registeredOn == null) return;
+            UpdateSacrificeShields();
             float now = Time.time;
+            ProcessBuildUpdates(Time.unscaledTime);
             RefreshRunModifiers();
             if (_pressureDirty) RefreshPressure();
             PruneAndApplyPending();
+            TickGemSlots();
             SyncWaypointHeroes();
             bool scan = now >= _nextAreaScan;
             if (scan)
@@ -267,6 +279,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
             foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
+            UpdateModShieldPools(now);
             ProcessSpawns();
             PruneMonsters(now);
             TickMonsterBehaviors(now);
@@ -279,7 +292,7 @@ namespace SodRpg.Mod
             if (now >= _nextNightmareSync)
             {
                 _nextNightmareSync = now + 5f;
-                ResyncNightmares();
+                ResyncMonsterClassifications();
                 SendPressure();
             }
         }
@@ -298,7 +311,14 @@ namespace SodRpg.Mod
             _departedPlayers.Clear();
             foreach (var player in _builds.Keys)
                 if (!_pressurePlayers.Contains(player)) _departedPlayers.Add(player);
-            foreach (var player in _departedPlayers) _builds.Remove(player);
+            foreach (var player in _incomingBuilds.Keys)
+                if (!_pressurePlayers.Contains(player)) _departedPlayers.Add(player);
+            foreach (var player in _departedPlayers)
+            {
+                _builds.Remove(player);
+                _incomingBuilds.Remove(player);
+                RemoveBuildValidationPeer(player);
+            }
             var pressure = DreamPressure.Average(_pressureBuilds)
                 .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
@@ -340,41 +360,10 @@ namespace SodRpg.Mod
             if (rt.PressureApplied) return;
             var monster = rt.Monster;
             // Final processors multiply after native multiplayer, depth, nightmare and variant stats.
-            monster.Status.finalStatsProcessors.Add(_pressureHealth, int.MaxValue);
+            InstallPressureHealthProcessor(rt);
             monster.dealtDamageProcessor.Add(_pressureDamage);
             rt.PressureApplied = true;
             monster.Status.CalculateStatsIfDirty();
-        }
-
-        /// <summary>生きている悪夢・変種を定期的に全員へ送り直す（途中参加・取りこぼし対策）。</summary>
-        private void ResyncNightmares()
-        {
-            if (_registeredOn == null) return;
-            _nightmareScratch.Clear();
-            foreach (var kv in _nightmares)
-            {
-                if (kv.Key == null || !kv.Key.isActive)
-                {
-                    _nightmareScratch.Add(kv.Key);
-                    continue;
-                }
-                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = kv.Key.netId, affixes = (int)kv.Value });
-                if (_monsters.TryGetValue(kv.Key, out var nightmareRuntime))
-                    SendMonsterBehaviorCue(nightmareRuntime, true);
-            }
-            foreach (var rt in _monsters.Values)
-            {
-                if (rt.Variant == null) continue;
-                var m = rt.Monster;
-                if (m == null || !m.isActive)
-                {
-                    _nightmareScratch.Add(m);
-                    continue;
-                }
-                _registeredOn.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = rt.Variant.Id });
-                SendMonsterBehaviorCue(rt, true);
-            }
-            foreach (var m in _nightmareScratch) RemoveMonster(m);
         }
 
         /// <summary>パーティの最大の夢の深度（MOD導入者の Build から）。</summary>
@@ -410,7 +399,7 @@ namespace SodRpg.Mod
             {
                 var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time };
                 _monsters[m] = rt;
-                m.ClientEntityEvent_OnStatusEffectAdded += _onEnemyStatusAdded;
+                TrackPressureDividendSpawn(m);
                 m.EntityEvent_OnDeath += _onMonsterDeath;
                 _spawnQueue.Add(new KeyValuePair<Monster, float>(m, rt.QueuedAt));
             }
@@ -429,6 +418,7 @@ namespace SodRpg.Mod
                 foreach (var heroRuntime in _runtimes.Values) heroRuntime.Powers.ForgetNewPowerTarget(e.GetInstanceID());
             if (!ReferenceEquals(e, null) && _nativeDeathEntities.Remove(e)) e.EntityEvent_OnDeath -= _onDeath;
             if (e is Monster m) RemoveMonster(m);
+            if (e is Monster removedMonster) _pressureDividendSpawns.Remove(removedMonster);
         }
 
         private void OnMonsterDeath(EventInfoKill info)
@@ -436,6 +426,8 @@ namespace SodRpg.Mod
             if (!(info.victim is Monster m)) return;
             try
             {
+                CaptureAuthoritativeRunKill(m);
+                CapturePressureDividendDeath(m);
                 if (!_monsters.TryGetValue(m, out var rt) || rt.Variant == null
                     || (rt.Variant.Traits & VariantTrait.DeathBurst) == 0 || rt.DeathBurstTriggered) return;
                 rt.DeathBurstTriggered = true;
@@ -491,6 +483,7 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _monsters.Values) Unhook(rt);
             _monsters.Clear();
+            _pressureDividendSpawns.Clear();
             foreach (var entity in _pairEntities)
             {
                 if (entity == null) continue;
@@ -511,7 +504,7 @@ namespace SodRpg.Mod
             {
                 try
                 {
-                    m.Status.finalStatsProcessors.Remove(_pressureHealth);
+                    m.Status.finalStatsProcessors.Remove(rt.PressureHealth);
                     m.Status.CalculateStatsIfDirty();
                 }
                 catch (Exception ex) { Log.Error("Host: unhook pressure health " + ex); }
@@ -520,8 +513,6 @@ namespace SodRpg.Mod
                 rt.PressureApplied = false;
             }
             // Each removal is independent: one failed cleanup must not leave other hooks attached.
-            try { m.ClientEntityEvent_OnStatusEffectAdded -= _onEnemyStatusAdded; }
-            catch (Exception ex) { Log.Error("Host: unhook monster status " + ex); }
             try { m.EntityEvent_OnDeath -= _onMonsterDeath; }
             catch (Exception ex) { Log.Error("Host: unhook monster death " + ex); }
             try { if (rt.Reflects) m.EntityEvent_OnTakeDamage -= _onMonsterDamageTaken; }
@@ -534,6 +525,7 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: unhook variant HitCap " + ex); }
             try { if (rt.Ward != null && rt.Ward.isActive) rt.Ward.Destroy(); }
             catch (Exception ex) { Log.Error("Host: remove nightmare Ward " + ex); }
+            ReleaseMirageSkin(m);
             try
             {
                 if (m.Status != null)
@@ -554,6 +546,17 @@ namespace SodRpg.Mod
             foreach (var m in _monsterScratch) RemoveMonster(m);
         }
 
+        private readonly Dictionary<KeyValuePair<Monster, Hero>, float> _thornsNextReflect = new Dictionary<KeyValuePair<Monster, Hero>, float>();
+        private readonly List<KeyValuePair<Monster, Hero>> _thornsScratch = new List<KeyValuePair<Monster, Hero>>();
+
+        private void PruneThornsTimers(float now)
+        {
+            _thornsScratch.Clear();
+            foreach (var kv in _thornsNextReflect)
+                if (kv.Value < now || kv.Key.Key == null || kv.Key.Value == null) _thornsScratch.Add(kv.Key);
+            foreach (var k in _thornsScratch) _thornsNextReflect.Remove(k);
+        }
+
         private void OnMonsterDamageTaken(EventInfoDamage info)
         {
             try
@@ -563,10 +566,17 @@ namespace SodRpg.Mod
                     || !_monsters.TryGetValue(m, out var rt) || !rt.Reflects) return;
                 var attacker = info.actor != null ? info.actor as Entity ?? info.actor.firstEntity : null;
                 if (!(attacker is Hero hero) || !Alive(hero) || hero.GetRelation(m) != EntityRelation.Enemy) return;
+                float now = Time.time;
+                var key = new KeyValuePair<Monster, Hero>(m, hero);
+                if (_thornsNextReflect.TryGetValue(key, out float next) && now < next) return;
+                _thornsNextReflect[key] = now + Nightmares.ThornsReflectInterval;
+                if (_thornsNextReflect.Count > 256) PruneThornsTimers(now);
+                float amount = Nightmares.ThornsReflectAmount(info.damage.amount, hero.maxHealth);
+                if (amount <= 0f) return;
                 _reflectingDamage = true;
                 try
                 {
-                    m.PureDamage(info.damage.amount * Nightmares.ThornsReflectPct / 100f, 0f)
+                    m.PureDamage(amount, 0f)
                         .Dispatch(hero, _registeredOn != null ? info.chain.New(_registeredOn) : info.chain);
                     LogAffixTrigger(NightmareAffix.Thorned, "reflected");
                 }
@@ -695,6 +705,7 @@ namespace SodRpg.Mod
 
         private void OnZoneLoaded(EventInfoLoadZone info)
         {
+            ClearAssignedMechanismTransients();
             _roomHasVariant = false;
             ClearZoneReactions();
             foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
@@ -793,7 +804,10 @@ namespace SodRpg.Mod
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg { netId = m.netId, affixes = (int)affix });
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
+            {
+                netId = m.netId, affixes = (int)affix, authorityGeneration = ClientSession.HostAuthorityGeneration,
+            });
         }
 
         private void MakeVariant(MonsterRuntime rt, VariantDef variant)
@@ -825,7 +839,10 @@ namespace SodRpg.Mod
                 _loggedVariantSpawn = true;
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
             }
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg { netId = m.netId, variantId = variant.Id });
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
+            {
+                netId = m.netId, variantId = variant.Id, authorityGeneration = ClientSession.HostAuthorityGeneration,
+            });
         }
 
         private void ApplyMonsterAffixes(MonsterRuntime rt, NightmareAffix affix, float regen)
@@ -863,35 +880,6 @@ namespace SodRpg.Mod
         /// 悪夢化した敵に本体のエリート効果（MirageSkin：見た目と専用攻撃）を付ける。
         /// 本体がすでに付けている敵には重ねない。深い悪夢（接頭2つ以上）は tier 1 も候補にする。
         /// </summary>
-        private void AttachMirageSkin(Monster m, bool allowTier1)
-        {
-            try
-            {
-                if (m.Status.HasStatusEffect<MirageSkinEffect>()) return;
-                if (_mirageTier0 == null)
-                {
-                    _mirageTier0 = new List<MirageSkinEffect>();
-                    _mirageTier1 = new List<MirageSkinEffect>();
-                    foreach (var e in DewResources.FindAllByType<MirageSkinEffect>())
-                    {
-                        if (e == null) continue;
-                        if (e.tier <= 0) _mirageTier0.Add(e);
-                        else _mirageTier1.Add(e);
-                    }
-                    Log.Info($"MirageSkin pool: tier0={_mirageTier0.Count} tier1={_mirageTier1.Count}");
-                }
-                var pool = new List<MirageSkinEffect>(_mirageTier0);
-                if (allowTier1) pool.AddRange(_mirageTier1);
-                if (pool.Count == 0) return;
-                var pick = pool[_rng.Range(0, pool.Count - 1)];
-                m.CreateStatusEffect(pick.GetType(), m, new CastInfo(m));
-            }
-            catch (Exception ex)
-            {
-                Log.Warn("MirageSkin attach failed: " + ex.Message);
-            }
-        }
-
         private void RegenNightmares()
         {
             if (_regen.Count == 0) return;
@@ -929,6 +917,8 @@ namespace SodRpg.Mod
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
                 _builds.Clear();
+                _incomingBuilds.Clear();
+                ClearBuildValidationPeers();
                 _pressurePlayerCount = -1;
                 _pressureDirty = true;
                 _registeredOn = actor;
@@ -941,6 +931,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
+                    RegisterHello(actor);
                     Log.Info("Host: registered build handler.");
                 }
             }
@@ -983,6 +974,7 @@ namespace SodRpg.Mod
                 }
                 _zone = zone;
                 _roomHasVariant = false;
+                ClearAssignedMechanismTransients();
                 ClearZoneReactions();
                 foreach (var rt in _runtimes.Values) rt.Powers.OnZoneLoaded(Time.time);
                 if (zone != null)
@@ -1019,7 +1011,9 @@ namespace SodRpg.Mod
         /// <summary>全キャラから補正を外し、登録を解除する（MODの再読み込み・終了時）。</summary>
         public void Detach()
         {
+            ClearAssignedMechanismSession();
             if (NativeInstance == this) NativeInstance = null;
+            ReleasePowerShields();
             ClearNewPowerZone();
             ClearZoneGimmicksV129();
             ClearSupportPowerStateV129();
@@ -1034,15 +1028,18 @@ namespace SodRpg.Mod
                 Unhook(rt);
             }
             _runtimes.Clear();
+            DetachGemSlots();
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
             _builds.Clear();
+            _incomingBuilds.Clear();
+            ClearBuildValidationPeers();
             _pressure = DreamPressure.Neutral;
             _pressurePlayerCount = -1;
             _pressureBuilds.Clear();
             _pressurePlayers.Clear();
             _departedPlayers.Clear();
-            _pactCurses.Clear();
+            ReleasePactCurses();
             Unsubscribe();
             UnhookShrines();
             UnhookMonsters();
@@ -1080,90 +1077,29 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                UnregisterHello(_registeredOn);
                 _registeredOn = null;
             }
         }
 
         private void OnBuild(DreamforgeBuildMsg msg, DewPlayer caller)
         {
-            try
-            {
-                if (caller == null || msg == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)) return;
-                if (msg.protocol != Protocol.Version)
-                {
-                    Log.Warn($"Host: ignored build from {caller.playerName} (protocol {msg.protocol}, expected {Protocol.Version}). Different mod versions?");
-                    return;
-                }
-                var hero = caller.hero;
-                if (hero != null && !hero.IsNullOrInactive()
-                    && _runtimes.TryGetValue(hero, out var rt) && rt.AppliedBuild != null && rt.AppliedBuild.Encoded == msg.build)
-                {
-                    // 定期再送は確認だけ返す。固有効果のスタックやクールダウンをリセットしない。
-                    _builds[caller] = rt.AppliedBuild;
-                    RefreshPressure(true);
-                    SendApplied(caller, hero, rt.AppliedBuild);
-                    return;
-                }
-                var build = Build.Decode(msg.build);
-                if (build == null)
-                {
-                    Log.Warn("Host: rejected malformed build from " + caller.playerName);
-                    return;
-                }
-                var received = new ReceivedBuild { Build = build, Encoded = msg.build, Summary = build.Encode() };
-                _builds[caller] = received;
-                RefreshPressure(true);
-                if (hero != null && !hero.IsNullOrInactive()) Apply(hero, received);
-                SendApplied(caller, hero, received);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("Host: OnBuild failed: " + ex);
-            }
+            ReceiveBuildUpdate(msg, caller);
         }
 
         private void SendApplied(DewPlayer caller, Hero hero, ReceivedBuild build)
         {
-            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeAppliedMsg
-            {
-                heroNetId = hero != null ? hero.netId : 0,
-                summary = build.Summary,
-            });
+            foreach (var part in BuildTransfer.Split(build.Summary))
+                _registeredOn?.CustomRpc_SendMessageToClient(caller,
+                    DreamforgeAppliedMsg.FromPart(part, hero != null ? hero.netId : 0));
         }
 
         /// <summary>悪夢の契約の代償：送ってきたプレイヤーのキャラへ、本体の呪いをランダムに1つ付ける（Hatred の祭壇と同じもの）。</summary>
-        /// <summary>本体の通貨での取引。残高を確かめて支払い・受け取りを行い、結果を返す（通貨を動かすのはホストだけ）。</summary>
-        private void OnTrade(DreamforgeTradeMsg msg, DewPlayer caller)
-        {
-            if (caller == null || msg == null) return;
-            bool ok = false;
-            string reason = null;
-            try
-            {
-                if (msg.protocol != Protocol.Version) reason = "protocol";
-                else if (msg.spendGold < 0 || msg.spendDust < 0 || msg.earnDust < 0 || msg.earnDust > Economy.MaxDustEarnPerTrade) reason = "invalid";
-                else if (caller.gold < msg.spendGold) reason = "gold";
-                else if (caller.dreamDust < msg.spendDust) reason = "dust";
-                else
-                {
-                    if (msg.spendGold > 0) caller.SpendGold(msg.spendGold);
-                    if (msg.spendDust > 0) caller.SpendDreamDust(msg.spendDust);
-                    if (msg.earnDust > 0) caller.EarnDreamDust(msg.earnDust);
-                    ok = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                reason = "error";
-                Log.Error("Host: OnTrade " + ex.Message);
-            }
-            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeTradeResultMsg { token = msg.token, ok = ok, reason = reason });
-        }
 
         private List<CurseStatusEffect> _curseCache;
 
         // 潜行の契約で付けた呪い（プレイヤーごと）。契約が解けたら（確保・遠征の終わり）まとめて消す。
-        private readonly Dictionary<DewPlayer, List<StatusEffect>> _pactCurses = new Dictionary<DewPlayer, List<StatusEffect>>();
+        private readonly OwnedEffectRegistry<DewPlayer, StatusEffect> _pactCurses = new OwnedEffectRegistry<DewPlayer, StatusEffect>();
 
         private void OnCurse(DreamforgeCurseMsg msg, DewPlayer caller)
         {
@@ -1172,7 +1108,11 @@ namespace SodRpg.Mod
                 if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
                 var hero = caller.hero;
                 if (hero == null || !hero.isActive) return;
-                var strength = msg.strength >= 3 ? HatredStrengthType.Powerful : msg.strength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
+                // Resync (ordinal > 0) is idempotent per player: skip if enough live pact curses already exist.
+                int ordinal = PactCurseSync.Ordinal(msg.strength);
+                if (!PactCurseSync.ShouldApply(ordinal, _pactCurses.CountLive(caller, se => se != null && !se.isDestroyed && se.isActive))) return;
+                int rawStrength = PactCurseSync.Strength(msg.strength);
+                var strength = rawStrength >= 3 ? HatredStrengthType.Powerful : rawStrength == 2 ? HatredStrengthType.Potent : HatredStrengthType.Mild;
                 if (_curseCache == null)
                 {
                     _curseCache = new List<CurseStatusEffect>();
@@ -1205,11 +1145,7 @@ namespace SodRpg.Mod
                 {
                     if (se is CurseStatusEffect curse) curse.currentStrength = strength;
                 });
-                if (effect != null)
-                {
-                    if (!_pactCurses.TryGetValue(caller, out var list)) _pactCurses[caller] = list = new List<StatusEffect>();
-                    list.Add(effect);
-                }
+                if (effect != null) _pactCurses.Add(caller, effect);
                 Log.Info($"Curse: {pick.GetType().Name} ({strength}) on {caller.playerName}");
             }
             catch (Exception ex)
@@ -1224,23 +1160,9 @@ namespace SodRpg.Mod
             try
             {
                 if (caller == null || msg == null || msg.protocol != Protocol.Version) return;
-                if (!_pactCurses.TryGetValue(caller, out var curses) || curses.Count == 0) return;
-                int cleared = 0;
-                foreach (var se in curses)
-                {
-                    // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
-                    if (se == null || se.isDestroyed || !se.isActive) continue;
-                    try
-                    {
-                        se.Destroy();
-                        cleared++;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error("Host: clear pact curse " + ex);
-                    }
-                }
-                curses.Clear();
+                // 既に消えているもの（ゲームの終了・部屋の切り替え・呪いの解除など）は数えない。
+                int cleared = _pactCurses.Release(caller, se => se != null && !se.isDestroyed && se.isActive, se => se.Destroy(),
+                    ex => Log.Error("Host: clear pact curse " + ex));
                 if (cleared > 0) Log.Info($"pact curses cleared: {cleared}");
             }
             catch (Exception ex)
@@ -1249,6 +1171,8 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly Dictionary<Hero, float> _applyRetryAt = new Dictionary<Hero, float>();
+
         private void PruneAndApplyPending()
         {
             _scratch.Clear();
@@ -1256,23 +1180,46 @@ namespace SodRpg.Mod
                 if (kv.Key == null || !kv.Key.isActive) _scratch.Add(kv.Key);
             foreach (var h in _scratch)
             {
-                Unhook(_runtimes[h]);
+                try { Unhook(_runtimes[h]); }
+                catch (Exception ex) { Log.Error("Host: unhook " + ex); }
                 _runtimes.Remove(h);
             }
 
             // 新しく生まれたキャラ（ラン開始・復帰）へ、届いている Build を付け直す。
+            // 1人の Build で例外が出ても、ほかの全員のホスト処理は止めない（mp-ui-save #6）。失敗した人は5秒おきに再試行する。
+            float now = Time.time;
             foreach (var kv in _builds)
             {
                 var hero = kv.Key != null ? kv.Key.hero : null;
-                if (hero == null || !hero.isActive) continue;
-                if (!_runtimes.ContainsKey(hero)) Apply(hero, kv.Value);
+                if (hero == null || !hero.isActive || _runtimes.ContainsKey(hero)) continue;
+                if (_applyRetryAt.TryGetValue(hero, out float retry) && now < retry) continue;
+                try
+                {
+                    ApplyValidatedBuild(kv.Key, hero, kv.Value);
+                    _applyRetryAt.Remove(hero);
+                }
+                catch (Exception ex)
+                {
+                    _applyRetryAt[hero] = now + 5f;
+                    if (_runtimes.TryGetValue(hero, out var partial))
+                    {
+                        try { Unhook(partial); } catch (Exception) { }
+                        _runtimes.Remove(hero);
+                    }
+                    Log.Error("Host: could not apply a player's build (retrying in 5 s): " + ex);
+                }
             }
+            _scratch.Clear();
+            foreach (var h in _applyRetryAt.Keys) if (h == null || !h.isActive) _scratch.Add(h);
+            foreach (var h in _scratch) _applyRetryAt.Remove(h);
             foreach (var rt in _runtimes.Values) BindGoldSpend(rt);
         }
 
         private void Apply(Hero hero, ReceivedBuild received)
         {
             var build = received.Build;
+            ValidateAuthoredHostBuild(build);
+            ValidateAuthoredSacrificeBinding(hero, build);
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
@@ -1330,17 +1277,22 @@ namespace SodRpg.Mod
                     if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
                     string memory = MemorySource(d.actor ?? a);
                     d.ApplyAmplification(captured.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(hero, memory), false));
-                    int memoryAmp = 0;
+                    long memoryAmpMilli = 0;
                     if (memory != null)
                         foreach (var link in captured.SatisfiedLinks)
                             if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
                             {
-                                memoryAmp += link.Value;
+                                memoryAmpMilli += link.ValueMilli;
                                 LogLinkApplied(link);
                             }
-                    memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time, memoryAmp);
+                    float memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
+                        memoryAmpMilli / (float)BuildPrecision.Scale)
+                        + (FindMemory(captured.Hero, memory) != null
+                            ? FractionalScopedModifiers.NativePercent(captured.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
+                    memoryAmp = TransformAuthoredMemoryDamage(captured.Hero, memory, memoryAmp);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
-                    ApplyExposeDamage(captured, ref d, t);
+                    ApplyRelayWindowDamage(captured, ref d, t);
+                    ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));
                 };
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);
                 rt.OnMemoryDamage = info => OnMemoryDamage(captured, info);
@@ -1387,15 +1339,17 @@ namespace SodRpg.Mod
             rt.LinkMemories.Clear();
             rt.LinkEssences.Clear();
             rt.Powers.SetBuild(build);
-            rt.Gimmicks.SetBuild(build.Gimmicks);
             rt.PairCombos.SetBuild(build.PairCombos);
             rt.GeneratedKillVictims.Clear();
             rt.PendingGimmicks.Clear();
+            ModShieldEquipmentEpoch(rt);
             rt.BaseBonus = ToStatBonus(build);
             rt.DynBonus = new StatBonus();
             hero.Status.AddStatBonus(rt.BaseBonus);
             hero.Status.AddStatBonus(rt.DynBonus);
             rt.AppliedBuild = received;
+            ConfigureAuthoredKeystone(hero, build);
+            ConfigureAuthoredMechanisms(hero, build);
             BindGoldSpend(rt);
             ApplyGemSlots(rt, build);
             // Builds can arrive after a persistent summon (for example Fenrir) has spawned.
@@ -1434,6 +1388,7 @@ namespace SodRpg.Mod
 
         private void Unhook(HeroRuntime rt)
         {
+            ForgetAssignedMechanismOwner(rt.Hero);
             RestoreGemSlots(rt);
             UnhookNewPowers(rt);
             UnhookGimmicksV129(rt);
@@ -1535,27 +1490,6 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: SpendersWard " + ex); }
         }
 
-        private void OnEnemyStatusAdded(EventInfoStatusEffect info)
-        {
-            try
-            {
-                var effect = info.effect;
-                if (info.victim == null || !info.victim.isActive || effect == null
-                    || !(effect.info.caster is Hero hero) || !Alive(hero)
-                    || info.victim.GetRelation(hero) != EntityRelation.Enemy
-                    || !_runtimes.TryGetValue(hero, out var rt)) return;
-                bool stun = false;
-                foreach (var basic in effect.basicEffects)
-                    if (basic != null && basic.isAlive && (basic.mask & BasicEffectMask.Stun) != 0)
-                    { stun = true; break; }
-                float shield = rt.Powers.TakeStillWater(Time.time, stun, hero.maxHealth);
-                if (shield <= 0) return;
-                hero.GiveShield(hero, shield, PowerRuntime.StillWaterDuration, false, default(ReactionChain));
-                LogPowerTrigger(Power.StillWater);
-            }
-            catch (Exception ex) { Log.Error("Host: StillWater " + ex); }
-        }
-
         private void OnDamageNegated(HeroRuntime rt, EventInfoDamageNegatedByImmunity info)
         {
             try
@@ -1644,11 +1578,12 @@ namespace SodRpg.Mod
                         : info.type == HeroSkillLocation.E ? 2 : info.type == HeroSkillLocation.R ? 3 : -1;
                     if (memorySlot >= 0) SendBountyReport(rt, BountyReportKind.MemoryUsed, memorySlot);
                 }
-                ApplyWaypointMemoryCooldown(rt, info);
+                ApplyWaypointMemoryCooldown(rt.Hero, info);
                 if (_gimmickDamageDepth == 0 && info.type != HeroSkillLocation.Movement && info.skill != null)
                     QueueGimmicks(rt, GimmickTrigger.OnUse, info.skill.GetType().Name, null, 0f);
                 var r = rt.Powers.OnSkillUsed(Time.time, info.type == HeroSkillLocation.Movement, info.skill != null && info.skill.type == SkillType.Ultimate,
-                    Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth);
+                    Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), hero.maxHealth,
+                    info.type == HeroSkillLocation.Identity);
                 if (r.Shield > 0) hero.GiveShield(hero, r.Shield, PowerRuntime.StarShieldDuration);
                 if (r.WhirlwindDamage > 0)
                 {
@@ -1665,16 +1600,17 @@ namespace SodRpg.Mod
                     var ultimate = hero.Skill.GetSkill(HeroSkillLocation.R);
                     if (ultimate != null)
                     {
-                        hero.ApplyCooldownReductionByRatio(ultimate, finale, false);
+                        ReduceNormalMemory(hero, ultimate, finale * 100f);
                         LogPowerTrigger(Power.Finale);
                     }
                 }
                 // 連携（v1.26）：使った記憶が条件に入っている連携だけを発動する。
                 UpdateLinks(rt, true);
-                if (rt.SatisfiedLinks.Count > 0 && info.skill != null)
+                if (info.skill != null)
                 {
                     string used = info.skill.GetType().Name;
-                    int haste = PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used);
+                    float haste = Math.Min(100f, PowerRuntime.LinkHastePercent(rt.SatisfiedLinks, used)
+                        + FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, used, LinkKind.MemoryHaste));
                     if (haste > 0) hero.ApplyCooldownReductionByRatio(info.skill, haste / 100f, false);
                     foreach (var link in rt.SatisfiedLinks)
                     {
@@ -1791,7 +1727,7 @@ namespace SodRpg.Mod
             p.HealthRatio = hero.maxHealth > 0 ? hero.currentHealth / hero.maxHealth : 1f;
             var dyn = p.Current(now);
             dyn.AttackSpeedPct += rt.Gimmicks.QuickenPercent(now);
-            int empower = rt.Gimmicks.EmpowerPercent(now);
+            float empower = rt.Gimmicks.EmpowerPercent(now);
             dyn.AttackPct += empower;
             dyn.PowerPct += empower;
             // Kill() follows the synchronous hit event; do not retain old victims between frames.
@@ -1916,7 +1852,7 @@ namespace SodRpg.Mod
                     if (kv.Value != null) essences.Add(kv.Value.GetType().Name);
             }
             rt.SatisfiedLinks.Clear();
-            int attune = 0, guardHealth = 0, guardArmor = 0;
+            long attuneMilli = 0, guardMilli = 0;
             foreach (var link in links)
             {
                 if (!alive || !Links.Satisfied(link, rt.HeroKey, memories, essences, nearbyAllies)) continue;
@@ -1924,20 +1860,19 @@ namespace SodRpg.Mod
                 switch (link.Kind)
                 {
                     case LinkKind.Attune:
-                        attune += link.Value;
+                        attuneMilli += link.ValueMilli;
                         LogLinkApplied(link);
                         break;
                     case LinkKind.Guard:
-                        guardHealth += link.Value;
-                        guardArmor += link.Value;
+                        guardMilli += link.ValueMilli;
                         LogLinkApplied(link);
                         break;
                 }
             }
             p.RetainLinkSurges(rt.SatisfiedLinks, Time.time);
-            p.LinkAttunePct = attune;
-            p.LinkGuardHealthPct = guardHealth;
-            p.LinkGuardArmor = guardArmor;
+            p.LinkAttunePct = attuneMilli / (float)BuildPrecision.Scale;
+            p.LinkGuardHealthPct = guardMilli / (float)BuildPrecision.Scale;
+            p.LinkGuardArmor = guardMilli / (float)BuildPrecision.Scale;
             if (rt.SatisfiedLinks.Count > rt.ReportedLinks)
             {
                 rt.ReportedLinks = rt.SatisfiedLinks.Count;
@@ -1987,6 +1922,7 @@ namespace SodRpg.Mod
         /// <summary>Use the creating actor chain, never guess St_* from an Ai_* name.</summary>
         private string MemorySource(Actor actor)
         {
+            if (TryGetAttributedDamageSource(actor, out string attributed)) return attributed;
             for (int depth = 0; actor != null && depth < 128; depth++, actor = actor.parentActor)
             {
                 // Gems can borrow a skill as their parent; their own damage is not that memory.
@@ -2012,7 +1948,8 @@ namespace SodRpg.Mod
                     || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy || info.damage.amount <= 0f) return;
                 int victimId = info.victim.GetInstanceID();
                 bool generated = _gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
-                    || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor);
+                    || (!info.chain.Equals(default(ReactionChain)) && !IsAttributedNativePacket(info.actor, info.victim))
+                    || IsPairReactionSource(info.actor);
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
@@ -2055,7 +1992,8 @@ namespace SodRpg.Mod
             if (info.victim == null || info.victim.currentHealth > 0.00001f) return;
             int id = info.victim.GetInstanceID();
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reflectingDamage || _shattering
-                || !info.chain.Equals(default(ReactionChain)) || IsPairReactionSource(info.actor)) _generatedPairDeaths.Add(id);
+                || (!info.chain.Equals(default(ReactionChain)) && !IsAttributedNativePacket(info.actor, info.victim))
+                || IsPairReactionSource(info.actor)) _generatedPairDeaths.Add(id);
             else _generatedPairDeaths.Remove(id);
         }
 
@@ -2146,12 +2084,14 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (info.victim is Hero deadHero) OnAssignedMechanismDeath(deadHero);
                 if (!(info.victim is Summon)) OnSupportDeathV129(info);
                 if (!(info.victim is Monster monster)) return;
+                CaptureAuthoritativeRunKill(monster);
                 ReportElementalDeath(monster);
                 OnReactionDeath(info.victim);
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
-                var rt = RuntimeOf(info.actor);
+                var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
                 var r = rt.Powers.OnKill(Time.time, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower), rt.Hero.maxHealth);
                 if (r.Heal > 0) rt.Hero.Heal(r.Heal).Dispatch(rt.Hero);
@@ -2178,7 +2118,7 @@ namespace SodRpg.Mod
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
                 bool reflected = _reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false));
                 OnNewPowerTaken(rt, info, enemy);
-                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected);
+                float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected, enemy);
                 if (reflect > 0)
                 {
                     _reflectingDamage = true;
@@ -2204,7 +2144,7 @@ namespace SodRpg.Mod
             try
             {
                 if (_gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
-                var rt = RuntimeOf(info.actor);
+                var rt = OwnerRuntimeOf(info.actor);
                 if (rt == null || !Alive(rt.Hero)) return;
                 var victim = info.victim;
                 if (victim == null || !victim.isActive || victim.Status == null

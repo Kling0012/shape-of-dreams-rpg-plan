@@ -56,7 +56,9 @@ namespace SodRpg.Core.Tests
         public void Values_are_capped_and_round_trip_through_existing_wire_section(GimmickEffect effect, int cap)
         {
             var build = new Build();
-            build.Gimmicks.Add(Entry(effect, int.MaxValue));
+            var oversized = Entry(effect);
+            oversized.Def.ValueMilli = int.MaxValue;
+            build.Gimmicks.Add(oversized);
             var result = Assert.Single(Build.Decode(build.Encode()).Gimmicks);
             Assert.Equal(cap, Gimmicks.Cap(effect));
             Assert.Equal(cap, result.Def.Value);

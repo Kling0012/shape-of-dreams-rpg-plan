@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -95,7 +96,16 @@ namespace SodRpg.Core.Tests
                 var r = new Relic { Uid = "thorns", BaseId = "weapon.blaze_greatsword", Rarity = Rarity.Epic, ItemLevel = 1 };
                 r.Powers.Add(new PowerLine(Power.Bulwark, relicValue));
                 p.Stash.Add(r);
-                Rules.Equip(p, Hero, r.Uid);
+                int beforeSpent = Rules.SpentPoints(p.Hero(Hero), Hero);
+                var plan = Rules.PreviewAllocationChange(p, Hero, new AllocationChange
+                { Kind = AllocationChangeKind.Equipment, EquipmentSlot = r.Slot, EquipmentUid = r.Uid });
+                var talent = HeroSigils.TreeFor(Hero).First(t => t.Id == DeepPower);
+                int expectedRanks = Math.Min(ranks, Math.Max(0,
+                    (Content.PowerCap(Power.Bulwark) - relicValue + talent.PerRank - 1) / talent.PerRank));
+                Assert.Equal((ranks - expectedRanks) * talent.RankCost, plan.RefundCost);
+                Rules.Equip(p, Hero, r.Uid, approvedRefundIds: plan.AffectedRefundIds);
+                Assert.Equal(expectedRanks, p.Hero(Hero).Talents[DeepPower]);
+                Assert.Equal(beforeSpent - plan.RefundCost, Rules.SpentPoints(p.Hero(Hero), Hero));
             }
             var b = Build.Compute(p, Hero, 0, null, dailyId);
             Assert.Equal(expected, b.Get(Power.Bulwark));

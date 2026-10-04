@@ -42,6 +42,18 @@ namespace SodRpg.Core.Tests
         private static void OpenWolfWindow(HostAuthority host, HostAuthority.HeroRuntime rt)
             => host.MemoryEvent(rt, PairComboTrigger.OnKill, "St_Q_MoonlightPact", Enemy());
 
+        [Fact]
+        public void Pending_payload_captures_equipment_epoch_before_later_equipment_changes()
+        {
+            var (host, rt) = Setup("Nachia", 1, 4, 5);
+            rt.ShieldEquipmentEpoch = 17;
+            OpenWolfWindow(host, rt);
+            host.Shot(rt, Shot(rt));
+            Assert.NotEmpty(rt.PendingGimmicks);
+            rt.ShieldEquipmentEpoch = 18;
+            Assert.All(rt.PendingGimmicks, pending => Assert.Equal(17, pending.ShieldEquipmentEpoch));
+        }
+
         [Theory]
         [InlineData(1, 9.8f, 510f)]
         [InlineData(2, 9.7f, 520f)]

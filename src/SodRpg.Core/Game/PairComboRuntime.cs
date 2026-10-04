@@ -5,7 +5,7 @@ using System.Runtime.CompilerServices;
 namespace SodRpg.Core.Game
 {
     /// <summary>Per-hero pair windows and per-victim marks with non-stacking vulnerability.</summary>
-    public sealed class PairComboRuntime
+    public sealed partial class PairComboRuntime
     {
         private sealed class State
         {
@@ -24,16 +24,20 @@ namespace SodRpg.Core.Game
 
         public void SetBuild(IReadOnlyList<PairComboEntry> entries)
         {
+            if (entries != null && entries.Count > PairCombos.MaxEntries)
+                throw new ArgumentException("The build exceeds the pair-combo entry limit.", nameof(entries));
             var next = new List<State>();
             if (entries != null)
             {
-                for (int i = 0; i < entries.Count && next.Count < PairCombos.MaxEntries; i++)
+                for (int i = 0; i < entries.Count; i++)
                 {
                     var entry = PairCombos.Clamp(entries[i]);
-                    if (entry == null) continue;
+                    if (entry == null) throw new ArgumentException("Invalid pair-combo entry.", nameof(entries));
+                    foreach (var success in _successStates)
+                        if (success.Definition.PairId == entry.Def.Id) throw new ArgumentException("A pair cannot have both legacy and success-effect bindings.", nameof(entries));
                     bool duplicate = false;
                     foreach (var added in next) if (added.Entry.Def.Id == entry.Def.Id) { duplicate = true; break; }
-                    if (duplicate) continue;
+                    if (duplicate) throw new ArgumentException("Duplicate pair-combo entry.", nameof(entries));
                     State state = null;
                     foreach (var old in _states)
                     {

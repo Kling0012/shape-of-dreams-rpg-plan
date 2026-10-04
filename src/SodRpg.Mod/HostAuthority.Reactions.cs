@@ -95,9 +95,9 @@ namespace SodRpg.Mod
             {
                 // Keep native support notifications off the hero's parent chain, as in v1.28 gimmicks.
                 var support = _am != null ? _am.serverActor : null;
-                if (support != null)
-                    support.GiveShield(hero, SupportStats.AmplifyShield(result.Shield, rt.Powers.Build.Get(Stat.ShieldPower)),
-                        ElementReactionRuntime.ShieldDuration);
+                var granted = support != null ? support.GiveShield(hero, SupportStats.AmplifyShield(result.Shield, rt.Powers.Build.Get(Stat.ShieldPower)),
+                    ElementReactionRuntime.ShieldDuration) : null;
+                if (granted != null) CreditShieldGranted(rt, hero, granted.shield != null ? granted.shield.amount : 0f);
             }
             if (!result.Steam && pending.CinderStacks <= 0) return;
             float radius = result.Steam ? ElementReactionRuntime.SteamRadius : ElementReactionRuntime.CinderRadius;
@@ -117,7 +117,7 @@ namespace SodRpg.Mod
                     hero.CreateBasicEffect(enemy, new SlowEffect { strength = ElementReactionRuntime.SteamSlowPercent },
                         ElementReactionRuntime.SteamSlowDuration, "dreamforge.reaction.steam", DuplicateEffectBehavior.UsePrevious);
                     if (result.SteamDamage <= 0f) continue;
-                    _gimmickDamageDepth++;
+                    EnterGenerated(hero);
                     try
                     {
                         var damage = hero.Status.abilityPower > hero.Status.attackDamage
@@ -125,7 +125,7 @@ namespace SodRpg.Mod
                         // Reuse the final received-damage patch: remove later native elements and attack procs too.
                         damage.SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(enemy);
                     }
-                    finally { _gimmickDamageDepth--; }
+                    finally { ExitGenerated(hero); }
                 }
             }
             finally { handle.Return(); }

@@ -44,9 +44,13 @@ namespace SodRpg.Core.Game
         /// <summary>限界突破の回数（0〜3）。1回ごとに強化の上限が+5広がる（v1.27）。</summary>
         public int LimitBreaks { get; set; }
         public int Retunes { get; set; }
+        /// <summary>特性の洗い直しを使った回数（v1.31）。回数の上限はない。費用はこれで増える。</summary>
+        public int AffixRerolls { get; set; }
         public bool Locked { get; set; }
-        /// <summary>強化の節目をいくつ受け取ったか（0〜5。+3・+5・+10・+15・+20）。</summary>
+        /// <summary>受け取った強化の節目（0〜5）。強化が+0に戻っても履歴は残る。</summary>
         public int EnhanceMilestones { get; set; }
+        /// <summary>+20で1つ目の固有効果に1.2倍を適用済みか。強化の失敗でも失わない。</summary>
+        public bool MilestonePowerApplied { get; set; }
         public int AwakenPoints { get; set; }
         /// <summary>覚醒の段（0〜3）。</summary>
         public int AwakenLevel { get; set; }
@@ -141,8 +145,10 @@ namespace SodRpg.Core.Game
                 Enhance = Enhance,
                 LimitBreaks = LimitBreaks,
                 Retunes = Retunes,
+                AffixRerolls = AffixRerolls,
                 Locked = Locked,
                 EnhanceMilestones = EnhanceMilestones,
+                MilestonePowerApplied = MilestonePowerApplied,
                 AwakenPoints = AwakenPoints,
                 AwakenLevel = AwakenLevel,
             };

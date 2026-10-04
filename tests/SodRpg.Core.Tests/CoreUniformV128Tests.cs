@@ -19,7 +19,8 @@ namespace SodRpg.Core.Tests
         [InlineData("Hero_Bismuth")]
         public void First_stars_are_five_stat_slots_and_deep_stars_are_three_stats_and_three_powers(string hero)
         {
-            var core = HeroSigils.All.Where(t => t.HeroKey == hero && !t.IsKeystone && t.RouteId == null && !t.IsDreamRing).ToList();
+            var core = HeroSigils.All.Where(t => t.HeroKey == hero && !t.IsKeystone && t.RouteId == null
+                && !t.IsDreamRing && !t.IsOuterAnchor && t.Cluster == null).ToList();
             var costly = core.Where(t => t.RankCost > 1).ToList();
             var first = core.Where(t => t.Tier == 1).ToList();
             var deep = core.Where(t => t.Tier == 2 && t.RankCost == 1).ToList();

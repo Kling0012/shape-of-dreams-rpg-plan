@@ -16,10 +16,16 @@ namespace SodRpg.Mod
         {
             public DataProcessor<HealData, Actor, Entity> Heal, Shield;
             public DataProcessor<FinalStats> Health;
+            public Action<EventInfoSkillUse> Skill;
+            public Action<EventInfoSummon> OnSummon;
+            public readonly Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>> Summons =
+                new Dictionary<Summon, DataProcessor<DamageData, Actor, Entity>>();
         }
 
         private readonly Dictionary<Hero, WaypointHeroRuntime> _waypointHeroes = new Dictionary<Hero, WaypointHeroRuntime>();
         private readonly List<Hero> _waypointHeroScratch = new List<Hero>();
+        private readonly List<Hero> _waypointAddScratch = new List<Hero>();
+        private readonly List<Summon> _waypointSummonScratch = new List<Summon>();
 
         private void EnsureWaypointCombatChoice()
         {
@@ -56,13 +62,15 @@ namespace SodRpg.Mod
 
         private void SyncWaypointHeroes()
         {
+            // Shared combat rules apply to every active hero; an accepted Build is not required (equipment powers are).
             _waypointHeroScratch.Clear();
-            foreach (var hero in _waypointHeroes.Keys)
-                if (hero == null || !hero.isActive || !_runtimes.ContainsKey(hero)) _waypointHeroScratch.Add(hero);
+            _waypointAddScratch.Clear();
+            WaypointRoster.Diff(_waypointHeroes.Keys, _am != null ? _am.allHeroes : (IEnumerable<Hero>)Array.Empty<Hero>(),
+                hero => hero != null && hero.isActive && hero.Status != null, _waypointAddScratch, _waypointHeroScratch);
             foreach (var hero in _waypointHeroScratch) RemoveWaypointHero(hero);
-            foreach (var hero in _runtimes.Keys)
+            foreach (var kv in _waypointHeroes) PruneWaypointSummons(kv.Value);
+            foreach (var hero in _waypointAddScratch)
             {
-                if (hero == null || hero.Status == null || _waypointHeroes.ContainsKey(hero)) continue;
                 var effects = new WaypointHeroRuntime
                 {
                     // Receiver hooks include heals/shields from the isolated serverActor path.
@@ -72,12 +80,49 @@ namespace SodRpg.Mod
                         ScaleWaypointRecovery(ref data, ActiveWaypointTotals.ShieldMultiplier),
                     Health = (ref FinalStats stats) => stats.maxHealth *= (float)ActiveWaypointTotals.HeroHealthMultiplier,
                 };
+                var captured = hero;
+                // Heroes with an accepted Build get these two rules from their runtime (OnSkillUse and HookSummon).
+                effects.Skill = info => { if (!_runtimes.ContainsKey(captured)) ApplyWaypointMemoryCooldown(captured, info); };
+                effects.OnSummon = info => HookWaypointSummon(captured, effects, info.summon);
                 _waypointHeroes.Add(hero, effects);
                 hero.takenHealProcessor.Add(effects.Heal, int.MaxValue);
                 hero.takenShieldProcessor.Add(effects.Shield, int.MaxValue);
                 hero.Status.finalStatsProcessors.Add(effects.Health, int.MaxValue);
+                hero.ClientHeroEvent_OnSkillUse += effects.Skill;
+                hero.ActorEvent_OnSpawnSummon += effects.OnSummon;
+                if (_am != null)
+                    foreach (var entity in _am.allEntities)
+                        if (entity is Summon summon) HookWaypointSummon(hero, effects, summon);
                 hero.Status.CalculateStatsIfDirty();
             }
+            _waypointAddScratch.Clear();
+        }
+
+        private void HookWaypointSummon(Hero hero, WaypointHeroRuntime effects, Summon summon)
+        {
+            if (summon == null || !summon.isActive || effects.Summons.ContainsKey(summon)
+                || summon.FindFirstAncestorOfType<Hero>() != hero) return;
+            DataProcessor<DamageData, Actor, Entity> processor = (ref DamageData damage, Actor source, Entity target) =>
+            {
+                if (_runtimes.ContainsKey(hero) || source == null || source.FindFirstOfType<Summon>() != summon) return;
+                damage.ApplyAmplification((float)ActiveWaypointTotals.SummonPowerMultiplier - 1f);
+            };
+            effects.Summons.Add(summon, processor);
+            summon.dealtDamageProcessor.Add(processor);
+        }
+
+        private void PruneWaypointSummons(WaypointHeroRuntime effects)
+        {
+            if (effects.Summons.Count == 0) return;
+            _waypointSummonScratch.Clear();
+            foreach (var kv in effects.Summons)
+                if (kv.Key == null || !kv.Key.isActive) _waypointSummonScratch.Add(kv.Key);
+            foreach (var summon in _waypointSummonScratch)
+            {
+                if (summon != null) summon.dealtDamageProcessor.Remove(effects.Summons[summon]);
+                effects.Summons.Remove(summon);
+            }
+            _waypointSummonScratch.Clear();
         }
 
         private static void ScaleWaypointRecovery(ref HealData data, double multiplier)
@@ -94,6 +139,11 @@ namespace SodRpg.Mod
             if (hero == null) return;
             hero.takenHealProcessor.Remove(effects.Heal);
             hero.takenShieldProcessor.Remove(effects.Shield);
+            try { hero.ClientHeroEvent_OnSkillUse -= effects.Skill; } catch (Exception ex) { Log.Error("Host: waypoint skill unhook " + ex.Message); }
+            try { hero.ActorEvent_OnSpawnSummon -= effects.OnSummon; } catch (Exception ex) { Log.Error("Host: waypoint summon unhook " + ex.Message); }
+            foreach (var kv in effects.Summons)
+                if (kv.Key != null) kv.Key.dealtDamageProcessor.Remove(kv.Value);
+            effects.Summons.Clear();
             if (hero.Status != null)
             {
                 hero.Status.finalStatsProcessors.Remove(effects.Health);
@@ -112,7 +162,7 @@ namespace SodRpg.Mod
             _modifierWaypoint = Waypoint.None;
         }
 
-        private void ApplyWaypointMemoryCooldown(HeroRuntime runtime, EventInfoSkillUse info)
+        private void ApplyWaypointMemoryCooldown(Hero hero, EventInfoSkillUse info)
         {
             var skill = info.skill;
             double multiplier = ActiveWaypointTotals.MemoryCooldownMultiplier;
@@ -121,7 +171,7 @@ namespace SodRpg.Mod
             // OnSkillUse follows the native cooldown assignment. Respect its reduction opt-out.
             float ratio = Gimmicks.RemainingCooldownReductionRatio(skill.currentConfigUnscaledCooldownTime,
                 skill.currentConfigUnscaledMaxCooldownTime, (int)Math.Round((1 - multiplier) * 100));
-            if (ratio > 0) runtime.Hero.ApplyCooldownReductionByRatio(skill, ratio, false);
+            if (ratio > 0) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
 
         private NightmareAffix RollWaypointNightmare(MonsterTier tier, int depth, double chanceMultiplier)

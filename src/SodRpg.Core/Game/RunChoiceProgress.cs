@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace SodRpg.Core.Game
 {
     /// <summary>Settles each departed zone before opening or applying the next zone's choices.</summary>
-    public sealed class RunChoiceProgress
+    public sealed partial class RunChoiceProgress
     {
         private readonly Queue<int> _arrivals = new Queue<int>();
         private readonly Dictionary<int, RunChoiceSnapshot> _committed = new Dictionary<int, RunChoiceSnapshot>();
@@ -20,7 +20,15 @@ namespace SodRpg.Core.Game
 
         public void BeginRun(string runId, int zoneIndex)
         {
-            if (_runId == runId) return;
+            if (_runId == runId)
+            {
+                // v1.30.3: a participant can see the run id before the native ZoneManager reaches it (zone -1).
+                // Adopt the real zone once it is known; otherwise host snapshots for that zone never apply and
+                // the participant gets no rewards and no secure point.
+                if (ZoneIndex < 0 && zoneIndex >= 0 && _arrivals.Count == 0) ZoneIndex = _lastArrival = zoneIndex;
+                Reconcile(runId, zoneIndex);
+                return;
+            }
             _runId = runId;
             ZoneIndex = _lastArrival = zoneIndex;
             _arrivals.Clear();
@@ -38,6 +46,14 @@ namespace SodRpg.Core.Game
             if (!Snapshots.TryAccept(snapshot)) return false;
             if (snapshot.Generation == 0 || snapshot.Settled) _committed[snapshot.ZoneIndex] = snapshot;
             else _committed.Remove(snapshot.ZoneIndex);
+            return true;
+        }
+
+        /// <summary>Native rejoin does not emit travel events. Do not skip an unpaid departed zone.</summary>
+        public bool Reconcile(string runId, int zoneIndex)
+        {
+            if (runId != _runId || _lastArrival < 0 || zoneIndex <= _lastArrival) return false;
+            while (_lastArrival < zoneIndex) Arrive(runId, _lastArrival + 1);
             return true;
         }
 
@@ -106,6 +122,21 @@ namespace SodRpg.Core.Game
         }
 
         public bool CanConclude(string runId) => runId == _runId && !HasPendingArrival && Rewards.Count == 0;
+
+        public bool CanConclude(string runId, int zoneIndex, bool authority) => CanConclude(runId)
+            && (authority || (ZoneIndex == zoneIndex && _applied != null
+                && ReferenceEquals(_applied, Snapshots.GetForZone(zoneIndex))
+                && _applied.RunId == runId && (_applied.Generation == 0 || _applied.Settled)));
+
+        /// <summary>A terminal result may accompany a repeated snapshot, but never a retired or stale one.</summary>
+        public bool AcceptsResult(RunChoiceSnapshot snapshot)
+        {
+            if (snapshot == null) return false;
+            var admitted = Snapshots.GetForZone(snapshot.ZoneIndex);
+            return admitted != null && admitted.RunId == snapshot.RunId
+                && admitted.AuthorityGeneration == snapshot.AuthorityGeneration
+                && admitted.Revision == snapshot.Revision;
+        }
 
         public void ResetConnection(bool resetHistory = false)
         {

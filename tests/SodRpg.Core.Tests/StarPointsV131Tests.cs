@@ -93,12 +93,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Decode_accepts_300_and_clamps_higher_values()
+        public void Decode_accepts_spendable_points_while_xp_points_remain_capped_at_300()
         {
             var roundtrip = Build.Decode(new Build { DreamLevel = 30, SpentStarPoints = 300 }.Encode());
             Assert.Equal(300, roundtrip.SpentStarPoints);
             Assert.Equal(300, Build.Decode("h:0;d:30;a:300").SpentStarPoints);
-            Assert.Equal(300, Build.Decode("h:0;d:30;a:9999").SpentStarPoints);
+            Assert.Equal(StarProgression.MaxSpendablePoints, Build.Decode("h:0;d:30;a:9999").SpentStarPoints);
             Assert.Equal(0, Build.Decode("h:0;d:30;a:-5").SpentStarPoints);
             Assert.Equal(300, DreamPressure.ForPlayer(30, 9999).AverageSpentStarPoints);
             Assert.Equal(300, StarProgression.Points(int.MaxValue));

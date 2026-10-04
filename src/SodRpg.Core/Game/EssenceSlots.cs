@@ -16,16 +16,6 @@ namespace SodRpg.Core.Game
 
         public static int ClampAdded(int added) => Math.Max(0, Math.Min(MaxPerLocation, added));
 
-        /// <summary>
-        /// 設定する新しい上限。本体や他の効果（混沌の聖堂など）が後から足した分は
-        /// 「いまの上限 −（元の上限 + 前回自分たちが足した分）」として取り出して、壊さずに保つ。
-        /// </summary>
-        public static int TargetMax(int original, int previouslyAdded, int added, int currentMax)
-        {
-            int others = currentMax - (original + previouslyAdded);
-            return Math.Max(0, original + added + others);
-        }
-
         /// <summary>上限が狭まったとき、はみ出すエッセンスの数（足元へ落とす分。壊さない）。</summary>
         public static int Overflow(int currentGems, int newMax) => Math.Max(0, currentGems - newMax);
     }

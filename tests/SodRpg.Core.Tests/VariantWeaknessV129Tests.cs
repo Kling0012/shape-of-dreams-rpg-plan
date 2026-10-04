@@ -76,7 +76,7 @@ namespace SodRpg.Core.Tests
                 [VariantTag.ShieldBreaker] = "障壁を割る",
                 [VariantTag.SummonHunter] = "召喚獣を狩る",
                 [VariantTag.LightEater] = "光3以上で脆い",
-                [VariantTag.Armored] = "通常攻撃に堅い",
+                [VariantTag.Armored] = "記憶以外に堅い",
                 [VariantTag.Spellward] = "記憶を弾く",
             };
             var enKeywords = new Dictionary<VariantTag, string>
@@ -88,7 +88,7 @@ namespace SodRpg.Core.Tests
                 [VariantTag.ShieldBreaker] = "Breaks shields",
                 [VariantTag.SummonHunter] = "Hunts summons",
                 [VariantTag.LightEater] = "Frail at 3+ light",
-                [VariantTag.Armored] = "Armored against basics",
+                [VariantTag.Armored] = "Armored against non-memory damage",
                 [VariantTag.Spellward] = "Warded against memories",
             };
             foreach (var v in Variants.All.Where(x => x.Tags != VariantTag.None))

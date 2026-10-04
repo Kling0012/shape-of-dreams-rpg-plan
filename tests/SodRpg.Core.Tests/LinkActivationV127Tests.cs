@@ -18,7 +18,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(75, PowerRuntime.LinkHastePercent(new[] { a, b, other }, "St_Q_Fleche"));
             Assert.Equal(80, PowerRuntime.LinkHastePercent(new[] { a, b, other }, "St_R_Parry"));
             Assert.Equal(0, PowerRuntime.LinkHastePercent(new[] { a, b }, "St_R_Parry"));
-            b.Value = int.MaxValue;
+            b.ValueMilli = int.MaxValue;
             Assert.Equal(100, PowerRuntime.LinkHastePercent(new[] { a, b }, "St_Q_Fleche"));
             Assert.Equal(100, PowerRuntime.LinkHastePercent(new[] { b, a }, "St_Q_Fleche"));
         }

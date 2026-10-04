@@ -77,7 +77,8 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(-10, -20, 1, 0)]
         [InlineData(17, 93, 17, 93)]
-        [InlineData(int.MaxValue, int.MaxValue, 30, 300)]
+        [InlineData(StarProgression.MaxSpendablePoints, StarProgression.MaxSpendablePoints, 30, StarProgression.MaxSpendablePoints)]
+        [InlineData(int.MaxValue, int.MaxValue, 30, StarProgression.MaxSpendablePoints)]
         public void Build_protocol_round_trips_and_clamps_pressure_metadata(int dream, int stars, int expectedDream, int expectedStars)
         {
             var b = new Build { DreamLevel = dream, SpentStarPoints = stars, Heat = 3 };
@@ -97,7 +98,7 @@ namespace SodRpg.Core.Tests
             var p = Ready();
             p.DreamLevel = 21;
             var star = LinkedStar(p);
-            int before = Rules.SpentPoints(p.Hero(Hero));
+            int before = Rules.SpentPoints(p.Hero(Hero), Hero);
             Rules.AddTalentRank(p, Hero, star.Id);
             var b = Build.Compute(p, Hero, 0);
             Assert.Equal(21, b.DreamLevel);
@@ -111,15 +112,15 @@ namespace SodRpg.Core.Tests
         public void Large_route_packet_preserves_all_links_instead_of_the_old_twelve_entry_limit()
         {
             var b = new Build { DreamLevel = 30, SpentStarPoints = 150 };
-            var memories = HeroSigils.All.Where(t => t.RouteMemory != null).Select(t => t.RouteMemory).Distinct().Take(Links.MaxLinks).ToArray();
+            var memories = HeroStarRoutes.All.Where(t => t.RouteMemory != null).Select(t => t.RouteMemory).Distinct().ToArray();
             foreach (string memory in memories)
                 b.Links.Add(new LinkDef { Kind = LinkKind.Guard, Value = 4, Requires = new[] { memory, "Hero_Mist", Links.Compass } });
             Assert.True(b.Encode().Length > 2000); // 旧版は、途中で切るのではなく文字列全体を拒否していた。
             var decoded = Build.Decode(b.Encode());
-            Assert.Equal(Links.MaxLinks, decoded.Links.Count);
+            Assert.Equal(memories.Length, decoded.Links.Count);
             for (int i = 0; i < memories.Length; i++)
             {
-                Assert.Equal(memories[i], decoded.Links[i].Requires[0]);
+                Assert.Contains(memories[i], decoded.Links[i].Requires);
                 Assert.Equal(4, decoded.Links[i].Value);
             }
         }

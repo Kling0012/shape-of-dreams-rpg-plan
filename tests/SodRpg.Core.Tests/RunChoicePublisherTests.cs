@@ -51,5 +51,39 @@ namespace SodRpg.Core.Tests
             Assert.Equal(before.Revision + 1, after.Revision);
             Assert.Equal(2, after.Depth);
         }
+        [Fact]
+        public void Finalized_history_replays_original_rules_and_terminal_result_until_a_new_run()
+        {
+            var publisher = new RunChoicePublisher();
+            var run = new RunState { RunId = "run", DreamDepth = 3, ActiveWaypoint = Waypoint.FirstClaim, WaypointGeneration = 1 };
+            string first = publisher.EncodeFinalizedZone(run, 0, 0);
+            run.ActiveWaypoint = Waypoint.ShardRoad;
+            run.WaypointGeneration++;
+            publisher.CaptureTerminal(run, 0, 1, true);
+            publisher.Encode(null, 0, -1);
+            Assert.Equal(new[] { first, publisher.TerminalChoices }, publisher.ExportFinalized());
+            Assert.True(publisher.TerminalVictory);
+            Assert.True(RunChoiceSnapshot.TryDecode(first, out var departed));
+            Assert.Equal(Waypoint.FirstClaim, departed.Active);
+            Assert.Equal(3, departed.Depth);
+
+            var replacement = new RunChoicePublisher();
+            replacement.RestoreFinalized(publisher.ExportFinalized(), publisher.TerminalChoices, publisher.TerminalVictory);
+            var progress = new RunChoiceProgress();
+            foreach (string encoded in replacement.ExportFinalized())
+            {
+                Assert.True(RunChoiceSnapshot.TryDecode(encoded, out var restored));
+                Assert.Equal(replacement.AuthorityGeneration, restored.AuthorityGeneration);
+                Assert.True(progress.Receive(restored));
+            }
+            Assert.Equal(Waypoint.FirstClaim, progress.Snapshots.GetForZone(0).Active);
+            Assert.Equal(Waypoint.ShardRoad, progress.Snapshots.GetForZone(1).Active);
+            Assert.True(replacement.TerminalVictory);
+            replacement.Encode(new RunState { RunId = "next" }, 0, 0);
+            Assert.Empty(replacement.ExportFinalized());
+            Assert.Null(replacement.TerminalVictory);
+            Assert.Null(replacement.TerminalChoices);
+        }
+
     }
 }

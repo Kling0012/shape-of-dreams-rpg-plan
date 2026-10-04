@@ -20,7 +20,7 @@ namespace SodRpg.Mod
         };
 
         public Font Font;
-        public GUIStyle ToastMeasure, Panel, Window, Title, Label, Small, Header, Button, ButtonSel, Tab, TabSel, Row, RowWrap, RowSel, Toast, Hud, Warn;
+        public GUIStyle ToastMeasure, Panel, Window, Title, Label, Small, Header, Button, ButtonSel, Tab, TabSel, Row, RowWrap, RowSel, Toast, Hud, Warn, ButtonWrap, ButtonWrapSel, OptionChosen, OptionIdle, TagChosen, TagBlocked;
         private bool _built;
         private readonly System.Collections.Generic.List<Texture2D> _textures = new System.Collections.Generic.List<Texture2D>();
 
@@ -72,7 +72,7 @@ namespace SodRpg.Mod
             Title = MakeLabel(22, FontStyle.Bold, new Color(1f, 0.86f, 0.55f));
             Header = MakeLabel(17, FontStyle.Bold, new Color(0.85f, 0.8f, 1f));
             Label = MakeLabel(15, FontStyle.Normal, new Color(0.92f, 0.92f, 0.96f));
-            Small = MakeLabel(13, FontStyle.Normal, new Color(0.75f, 0.75f, 0.82f));
+            Small = MakeLabel(13, FontStyle.Normal, new Color(0.87f, 0.87f, 0.93f));
             Warn = MakeLabel(14, FontStyle.Bold, new Color(1f, 0.55f, 0.45f));
             Toast = MakeLabel(18, FontStyle.Bold, Color.white); // v1.25.2：小さくて読みにくいという声があったので大きく
             Toast.normal.background = bgHud;
@@ -102,6 +102,27 @@ namespace SodRpg.Mod
                 margin = new RectOffset(2, 2, 1, 1),
             };
             RowWrap = new GUIStyle(Row) { wordWrap = true, fontSize = 13, padding = new RectOffset(10, 10, 4, 4) };
+            // 長い文でも右端で切れないよう折り返すボタン（鍛冶の特性ボタンなど）。幅の下限は最長の語で決まる。
+            ButtonWrap = new GUIStyle(Button) { wordWrap = true, fontSize = 14 };
+            ButtonWrapSel = new GUIStyle(ButtonSel) { wordWrap = true, fontSize = 14 };
+            // 選択の星：選択中の効果の枠（緑がかった地に金の文字）、そうでない効果の枠。
+            OptionChosen = new GUIStyle(Panel) { normal = { background = Tex(new Color(0.17f, 0.27f, 0.18f, 0.96f)) } };
+            OptionIdle = new GUIStyle(Panel);
+            // 「選択中」の印と、押せない理由の表示。ボタンではなく枠にして、グレーアウトのボタンと見分ける。
+            TagChosen = new GUIStyle(Button)
+            {
+                wordWrap = true, fontStyle = FontStyle.Bold,
+                normal = { background = Tex(new Color(0.22f, 0.45f, 0.27f, 1f)), textColor = new Color(1f, 0.93f, 0.62f) },
+                hover = { background = Tex(new Color(0.22f, 0.45f, 0.27f, 1f)), textColor = new Color(1f, 0.93f, 0.62f) },
+                active = { background = Tex(new Color(0.22f, 0.45f, 0.27f, 1f)), textColor = new Color(1f, 0.93f, 0.62f) },
+            };
+            TagBlocked = new GUIStyle(Button)
+            {
+                wordWrap = true, fontStyle = FontStyle.Italic,
+                normal = { background = Tex(new Color(0.09f, 0.09f, 0.12f, 1f)), textColor = new Color(0.78f, 0.62f, 0.62f) },
+                hover = { background = Tex(new Color(0.09f, 0.09f, 0.12f, 1f)), textColor = new Color(0.78f, 0.62f, 0.62f) },
+                active = { background = Tex(new Color(0.09f, 0.09f, 0.12f, 1f)), textColor = new Color(0.78f, 0.62f, 0.62f) },
+            };
             RowSel = new GUIStyle(Row) { normal = { background = bgRowSel, textColor = Color.white }, hover = { background = bgRowSel, textColor = Color.white } };
         }
 

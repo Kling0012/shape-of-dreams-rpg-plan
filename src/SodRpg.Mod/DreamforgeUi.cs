@@ -13,7 +13,7 @@ namespace SodRpg.Mod
     using Stat = SodRpg.Core.Game.Stat;
 
     /// <summary>Dreamforge のメニュー（装備・鍛冶・星図・記録）、HUD、確保地点のパネル、通知の描画。</summary>
-    internal sealed class DreamforgeUi
+    internal sealed partial class DreamforgeUi
     {
         private sealed class Toast
         {
@@ -81,6 +81,9 @@ namespace SodRpg.Mod
         private Vector2 _scrollList, _scrollDetail, _scrollRecords;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
+        private string _confirmAffixReroll;
+        private Relic _confirmEnhance;
+        private int _confirmEnhanceTarget;
         private bool _forgeAllSlots = true;
         private string _status;
         private float _statusUntil;
@@ -101,25 +104,37 @@ namespace SodRpg.Mod
         {
             _s = session;
             _cfg = cfg;
+            _s.ProfileChanged += ResetProfileView;
             // 起動したときに持っていた遺物は「見た」ことにする。それ以降に手に入れた物に NEW を付ける。
             foreach (var r in session.Profile.Stash) _seenUids.Add(r.Uid);
             _seenInit = true;
         }
+
+        private bool _secureHidden;
+
+        /// <summary>確保地点の画面を隠す／出す。何度でも切り替えられる。次の確保地点では出し直しになる。</summary>
+        public void ToggleSecurePanel() => _secureHidden = !_secureHidden;
 
         public void Toggle()
         {
             Open = !Open;
             if (!Open) CancelStarDrag();
             _confirmSalvage = null;
+            _confirmAffixReroll = null;
         }
 
         public void Close()
         {
             CancelStarDrag();
+            _confirmEnhance = null;
             Open = false;
         }
 
-        public void Dispose() => _st.Dispose();
+        public void Dispose()
+        {
+            _s.ProfileChanged -= ResetProfileView;
+            _st.Dispose();
+        }
 
         public void Notify(GameEvent e)
         {
@@ -171,7 +186,12 @@ namespace SodRpg.Mod
                     _lobbySeen = lobby;
                     _heroSel = lobby;
                 }
-                if (_heroSel == null) _heroSel = _s.Profile.Heroes.Keys.FirstOrDefault(k => k.StartsWith("Hero_")) ?? KnownHeroes[0];
+                if (_heroSel == null)
+                {
+                    foreach (string key in _s.Profile.Heroes.Keys)
+                        if (key.StartsWith("Hero_", StringComparison.Ordinal)) { _heroSel = key; break; }
+                    if (_heroSel == null) _heroSel = KnownHeroes[0];
+                }
                 return _heroSel;
             }
         }
@@ -239,12 +259,13 @@ namespace SodRpg.Mod
             catch (Exception) { return null; }
         }
 
-        private static string HeroName(string key) => key != null && key.StartsWith("Hero_") ? key.Substring(5) : key;
+        private static string HeroName(string key) => HeroNames.Display(key);
 
         // ─────────────────────────── 描画の入口 ───────────────────────────
 
         public void Draw()
         {
+            ValidateEnhanceConfirmation();
             _st.EnsureBuilt();
             var cfg = _cfg();
             float scale = Mathf.Clamp(Screen.height / 1080f * Mathf.Clamp(cfg.uiScale, 0.5f, 2.5f), 0.5f, 4f);
@@ -267,7 +288,13 @@ namespace SodRpg.Mod
                         DrawNightmareLabels(scale);
                         if (cfg.hudMode != HudMode.Off) DrawHud(w, h, cfg);
                     }
-                    if (layout && !Open && _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null) DrawSecurePrompt(w, h, cfg);
+                    bool secureWait = _s.Profile.Run != null && _s.Profile.Run.AwaitingChoice && _s.ActiveRunId != null;
+                    if (!secureWait) _secureHidden = false;
+                    if (layout && !Open && secureWait)
+                    {
+                        if (_secureHidden) DrawSecureCollapsed(w, cfg);
+                        else DrawSecurePrompt(w, h, cfg);
+                    }
                 }
                 if (repaint) DrawToasts(w, h);
                 // メニューを開いている間は、確保地点と遠征結果のパネルを隠す（重なった下のボタンを押せないように）。
@@ -336,7 +363,7 @@ namespace SodRpg.Mod
             sb.Length = 0;
             int need = Content.XpToNext(p.DreamLevel);
             string xp = p.DreamLevel >= Content.MaxDreamLevel ? "MAX" : (p.DreamXp * 100 / Math.Max(1, need)) + "%";
-            sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#aaaacc>(").Append(xp).Append(")</color>");
+            sb.Append(Loc.T("<b>Dreamforge</b>  夢のレベル ", "<b>Dreamforge</b>  Dream Lv ")).Append(p.DreamLevel).Append("  <color=#c4c4dc>(").Append(xp).Append(")</color>");
             sb.Append("\n<size=13>").Append(Loc.T("夢の深さ ", "Dream depth ")).Append(_s.ChosenDreamDepth)
                 .Append(Loc.T("・夢の圧 ", " · Pressure "));
             if (_s.HostConfirmed)
@@ -347,6 +374,16 @@ namespace SodRpg.Mod
             string sectionTags = SectionTagNotice();
             if (sectionTags != null)
                 sb.Append("\n<size=13><color=#ffd27f>").Append(sectionTags).Append("</color></size>");
+            // 版違いは見落とすと「効果も報酬も入らない」ので、目立つ色で常に出す（mp-ui-save #4）。
+            if (_s.HostVersionWarning != null)
+                sb.Append("\n<size=13><color=#ff7070>").Append(_s.HostVersionWarning).Append("</color></size>");
+            var hostWarnings = HostAuthority.VersionWarnings;
+            for (int i = 0; i < hostWarnings.Count; i++)
+                sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");
+            if (Mirror.NetworkServer.active ? HostAuthority.AnyGemSlotConflict : _s.GemSlotConflict)
+                sb.Append("\n<size=13><color=#ff7070>").Append(Loc.T(
+                    "ほかのMODがエッセンスの枠を変えているため、星図による枠の追加を止めました",
+                    "Another mod is changing essence slots, so the star map's extra slot is disabled.")).Append("</color></size>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {
@@ -387,8 +424,8 @@ namespace SodRpg.Mod
                 if (!compact) foreach (var b in run.Bounties)
                 {
                     sb.Append("\n<size=13>");
-                    if (b.Done) sb.Append("<color=#7af0c8>●</color><color=#888>").Append(b.Describe()).Append("</color>");
-                    else sb.Append("○").Append(b.Describe()).Append(" <color=#aaaacc>").Append(b.Progress).Append('/').Append(b.Target).Append("</color>");
+                    if (b.Done) sb.Append("<color=#7af0c8>●</color><color=#aaa>").Append(b.Describe()).Append("</color>");
+                    else sb.Append("○").Append(b.Describe()).Append(" <color=#c4c4dc>").Append(b.Progress).Append('/').Append(b.Target).Append("</color>");
                     sb.Append("</size>");
                 }
                 if (!_s.HostConfirmed && _s.LocalHero != null)
@@ -397,7 +434,7 @@ namespace SodRpg.Mod
             int unclaimedFeats = Feats.Unclaimed(p);
             if (unclaimedFeats > 0)
                 sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)")).Append("</color></size>");
-            sb.Append("\n<size=13><color=#aaaacc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
+            sb.Append("\n<size=13><color=#c4c4dc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
         }
 
@@ -422,6 +459,18 @@ namespace SodRpg.Mod
                 tags |= def.Tags;
             }
             return tags == VariantTag.None ? null : Variants.ZoneNotice(tags);
+        }
+
+        /// <summary>確保地点の画面を隠している間の、小さな呼び出しボタン。</summary>
+        private void DrawSecureCollapsed(float w, DreamforgeConfig cfg)
+        {
+            var rect = new Rect(w / 2 - 190, 12, 380, 44);
+            if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
+            GUILayout.BeginArea(rect, _st.Window);
+            if (GUILayout.Button(Loc.T($"確保地点を開く [{cfg.securePanelKey}]　（確保 [{cfg.secureKey}]・潜行 [{cfg.delveKey}]）",
+                    $"Open secure point [{cfg.securePanelKey}]  (Secure [{cfg.secureKey}] · Delve [{cfg.delveKey}])"), _st.Button, GUILayout.Height(28)))
+                _secureHidden = false;
+            GUILayout.EndArea();
         }
 
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
@@ -484,6 +533,8 @@ namespace SodRpg.Mod
                 Open = true;
                 _tab = 0;
             }
+            if (GUILayout.Button(Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]"), _st.Button, GUILayout.Height(34)))
+                _secureHidden = true;
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);
@@ -515,7 +566,7 @@ namespace SodRpg.Mod
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
                 if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, EventArtKey(e));
                 GUILayout.BeginVertical();
-                GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#aab>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored(Loc.T("出来事：", "Event: ") + DreamEvents.Name(e), "#9fe0ff") + "  <color=#ccd>" + DreamEvents.Describe(e, _s.Profile) + "</color>", _st.Small);
                 GUI.enabled = ok;
                 bool confirm = ok && _confirmEvent == e && DreamEvents.NeedsConfirm(e);
                 string label = !ok ? why
@@ -626,8 +677,8 @@ namespace SodRpg.Mod
             if (!_s.HasHostRunChoices)
                 GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
             else GUILayout.Label(Loc.T(
-                $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・レア度の幸運 +{DreamDepth.RarityLuck(depth):0.##}・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}",
-                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · rarity luck +{DreamDepth.RarityLuck(depth):0.##} · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00}"), _st.Small);
+                $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}・部屋 +{DreamDepth.ExtraZoneNodes(depth)}",
+                $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
         }
 
         private Vector2 _scrollSecure;
@@ -844,25 +895,44 @@ namespace SodRpg.Mod
 
         // ─────────────────────────── メニュー ───────────────────────────
 
+        private float _windowHeight = 720f;
+        // 遺物の一覧は最低でも7行ぶん（1行37）見えるようにする。
+        private static readonly GUILayoutOption[] ForgeListSize = { GUILayout.MinHeight(264), GUILayout.ExpandHeight(true) };
+        private static readonly GUILayoutOption[] ForgeColumnSize = { GUILayout.Width(360), GUILayout.ExpandHeight(true) };
+        private static readonly GUILayoutOption[] ForgePaneSize = { GUILayout.ExpandHeight(true) };
+        // 横に並ぶボタンは、文が長くても行の幅を押し広げない（押し広げると右端が切れる）。
+        private static readonly GUILayoutOption[] ShrinkWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] ShrinkMin28 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(28) };
+        private static readonly GUILayoutOption[] ShrinkMin30 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(30) };
+        private static readonly GUILayoutOption[] ShrinkMin32 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(32) };
+        private static readonly GUILayoutOption[] ShrinkMin44 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(44) };
+
         private void DrawWindow(float w, float h, DreamforgeConfig cfg)
         {
             // The star map needs room: it uses most of the screen and hides the expedition-only rows.
             bool starTab = _tab == 2;
-            float ww = Mathf.Min(starTab ? 1720 : 1060, w - 20), wh = Mathf.Min(starTab ? 1000 : 720, h - 20);
+            bool codexTab = _tab == 4 && _codexOpen; // 図鑑は一覧が見やすいよう、少し大きく開く
+            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶は左の一覧と右の操作欄が収まる高さまで広げる。
+            bool forgeTab = _tab == 1;
+            float ww = starTab ? w - 16 : Mathf.Min(codexTab ? 1180 : 1060, w - 20);
+            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab ? 900 : 720, h - 20);
+            _windowHeight = wh;
+            _windowWidth = ww;
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
             GUILayout.BeginArea(rect, _st.Window);
             GUILayout.BeginHorizontal();
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
             string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
             for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmBulk = false; _retuneIndex = -1; }
-            GUILayout.FlexibleSpace();
+                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
             GUILayout.EndHorizontal();
+            DrawProfileSlots();
 
             var p = _s.Profile;
-            if (!starTab) DrawDreamDepthChoice();
-            if (!starTab) GUILayout.Label(Loc.T(
+            bool compact = forgeTab && wh < 640f;
+            if (!starTab && !compact && !forgeTab) DrawDreamDepthChoice(); // 鍛冶では一覧の高さを優先する
+            if (!starTab && !compact) GUILayout.Label(Loc.T(
                 $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
                 $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
             GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
@@ -875,6 +945,7 @@ namespace SodRpg.Mod
                 case 3: DrawWorkshopTab(); break;
                 default: DrawRecordsTab(cfg); break;
             }
+            DrawAllocationRefund();
             GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
             GUILayout.EndArea();
         }
@@ -893,7 +964,7 @@ namespace SodRpg.Mod
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
-            "・星図：旅人ごとの星の経験で最大150ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
+            "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
             "<b>What this mod adds</b>\n" +
@@ -909,7 +980,7 @@ namespace SodRpg.Mod
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
-            "- Star Map: each Traveler earns up to 150 points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
+            "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
@@ -933,25 +1004,13 @@ namespace SodRpg.Mod
                 string reward = f.RewardTuning > 0
                     ? Loc.T($"欠片{f.RewardShards}・調律石{f.RewardTuning}", $"{f.RewardShards} shards, {f.RewardTuning} tuning")
                     : Loc.T($"欠片{f.RewardShards}", $"{f.RewardShards} shards");
-                _openFeats.Add("☆ " + f.Name + "  <color=#aab>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>  <color=#c9a86a>{reward}</color>");
+                _openFeats.Add("☆ " + f.Name + "  <color=#ccd>" + Feats.Describe(f) + $"  {prog}/{f.Target}</color>  <color=#c9a86a>{reward}</color>");
             }
             return _openFeats;
         }
 
-        private readonly List<string> _foundUniques = new List<string>();
-        private int _foundUniquesCodex = -1;
-        private bool _foundUniquesJa;
-
-        private List<string> FoundUniques(Profile p)
-        {
-            if (p.Codex.Count == _foundUniquesCodex && _foundUniquesJa == Loc.Japanese) return _foundUniques;
-            _foundUniquesCodex = p.Codex.Count;
-            _foundUniquesJa = Loc.Japanese;
-            _foundUniques.Clear();
-            foreach (var u in Content.Uniques)
-                if (p.Codex.Contains(u.Id)) _foundUniques.Add(UiStyles.Colored("◆ " + u.Name, UiStyles.RarityHex(Rarity.Legendary)));
-            return _foundUniques;
-        }
+        private readonly CodexView _codex = new CodexView();
+        private bool _codexOpen;
 
         private void DrawFeats(Profile p)
         {
@@ -963,7 +1022,7 @@ namespace SodRpg.Mod
             {
                 if (!p.Feats.Contains(f.Id) || p.FeatsClaimed.Contains(f.Id)) continue;
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(UiStyles.Colored("★ " + f.Name, "#ffe17a") + "  <color=#aab>" + Feats.Describe(f) + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored("★ " + f.Name, "#ffe17a") + "  <color=#ccd>" + Feats.Describe(f) + "</color>", _st.Small);
                 string reward = f.RewardTuning > 0
                     ? Loc.T($"受け取る（欠片{f.RewardShards}・調律石{f.RewardTuning}）", $"Claim ({f.RewardShards} shards, {f.RewardTuning} tuning)")
                     : Loc.T($"受け取る（欠片{f.RewardShards}）", $"Claim ({f.RewardShards} shards)");
@@ -989,12 +1048,12 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T($"深度{Variants.MinDepth}以降、本体の敵がまれに強い「夢の変種」になって現れます（部屋に1体まで）。倒すと一段上の戦利品が出ます。",
                 $"From delve {Variants.MinDepth}, base-game enemies sometimes appear as stronger dream variants (one per room). They drop loot a tier higher."), _st.Small);
             foreach (var v in Variants.All)
-                GUILayout.Label(UiStyles.Colored(v.Name.ToString(), "#ffb347") + "  <color=#aab>" + v.Description + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored(v.Name.ToString(), "#ffb347") + "  <color=#ccd>" + v.Description + "</color>", _st.Small);
             GUILayout.Label(Loc.T("悪夢の性質", "Nightmare affixes"), _st.Header);
             GUILayout.Label(Loc.T("金色は障壁の予告、琥珀色は条件付きの守り、青色は反撃の好機または敵の減速、緑色は傷繕いを示します。距離や向きによる守りは、性質の説明を確かめてください。",
                 "Gold warns of a shield; amber marks a conditional guard; blue marks a punish window or a slowed enemy; green marks recuperation. Read each affix for distance and facing conditions."), _st.Small);
             foreach (var affix in Nightmares.AllAffixes)
-                GUILayout.Label(UiStyles.Colored(Nightmares.AffixName(affix), "#ff6ad5") + "  <color=#aab>"
+                GUILayout.Label(UiStyles.Colored(Nightmares.AffixName(affix), "#ff6ad5") + "  <color=#ccd>"
                     + Nightmares.AffixDescription(affix) + "</color>", _st.Small);
         }
 
@@ -1042,16 +1101,32 @@ namespace SodRpg.Mod
             }
         }
 
+        private readonly List<string> _pickerHeroes = new List<string>();
+        private static readonly GUILayoutOption[] PickerCaptionWidth = { GUILayout.Width(60) };
+        private static readonly GUILayoutOption[] PickerArrowWidth = { GUILayout.Width(30) };
+        private static readonly GUILayoutOption[] PickerNameWidth = { GUILayout.Width(110) };
+        private readonly GUIContent _pickerName = new GUIContent();
+        private string _pickerNamedHero;
         private void HeroPicker()
         {
             if (_s.LocalHero != null) return;
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, GUILayout.Width(60));
-            var keys = KnownHeroes.Union(_s.Profile.Heroes.Keys.Where(k => k != "default")).ToList();
-            int idx = Math.Max(0, keys.IndexOf(HeroKey));
-            if (GUILayout.Button("<", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx - 1 + keys.Count) % keys.Count];
-            GUILayout.Label("<b>" + HeroName(HeroKey) + "</b>", _st.Label, GUILayout.Width(110));
-            if (GUILayout.Button(">", _st.Button, GUILayout.Width(30))) _heroSel = keys[(idx + 1) % keys.Count];
+            GUILayout.Label(Loc.T("旅人：", "Traveler:"), _st.Small, PickerCaptionWidth);
+            _pickerHeroes.Clear();
+            _pickerHeroes.AddRange(KnownHeroes);
+            foreach (string key in _s.Profile.Heroes.Keys)
+                if (key != "default" && !_pickerHeroes.Contains(key)) _pickerHeroes.Add(key);
+            int idx = Math.Max(0, _pickerHeroes.IndexOf(HeroKey));
+            if (GUILayout.Button("<", _st.Button, PickerArrowWidth))
+                _heroSel = _pickerHeroes[(idx - 1 + _pickerHeroes.Count) % _pickerHeroes.Count];
+            string selectedHero = HeroKey;
+            if (_pickerNamedHero != selectedHero)
+            {
+                _pickerNamedHero = selectedHero;
+                _pickerName.text = "<b>" + HeroName(selectedHero) + "</b>";
+            }
+            GUILayout.Label(_pickerName, _st.Label, PickerNameWidth);
+            if (GUILayout.Button(">", _st.Button, PickerArrowWidth)) _heroSel = _pickerHeroes[(idx + 1) % _pickerHeroes.Count];
             GUILayout.EndHorizontal();
         }
 
@@ -1070,10 +1145,10 @@ namespace SodRpg.Mod
                 int next = Mastery.ToNext(kills);
                 bool keyLocked = lv < HeroSigils.KeystoneMastery && HeroSigils.HasTree(hero);
                 GUILayout.Label(Loc.T(
-                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#888>あと{next}体倒すと上がります</color>" : "")
-                        + (keyLocked ? $"\n<color=#888>熟練度{HeroSigils.KeystoneMastery}で到達刻印を選べます。</color>" : ""),
-                    $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#888>{next} kills to next</color>" : "")
-                        + (keyLocked ? $"\n<color=#888>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : "")), _st.Small);
+                    $"熟練度 {lv}「{Mastery.Title(lv)}」" + (next > 0 ? $" <color=#aaa>あと{next}体倒すと上がります</color>" : "")
+                        + (keyLocked ? $"\n<color=#aaa>熟練度{HeroSigils.KeystoneMastery}で到達刻印を選べます。</color>" : ""),
+                    $"Mastery {lv} \"{Mastery.Title(lv)}\"" + (next > 0 ? $" <color=#aaa>{next} kills to next</color>" : "")
+                        + (keyLocked ? $"\n<color=#aaa>Keystones unlock at mastery {HeroSigils.KeystoneMastery}.</color>" : "")), _st.Small);
             }
             foreach (Slot slot in Content.SlotOrder)
             {
@@ -1099,7 +1174,7 @@ namespace SodRpg.Mod
             {
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
-                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/3", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#aab>" + set.Describe() + "</color>", _st.Small);
+                GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/{(set.HasSixPiece ? 6 : 3)}", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#ccd>" + set.Describe() + "</color>", _st.Small);
             }
             foreach (var kv in build.Lines)
             {
@@ -1160,13 +1235,23 @@ namespace SodRpg.Mod
                 bool equipped = cur != null && cur.Uid == sel.Uid;
                 if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
                 {
-                    foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
-                    _s.MarkDirty(true);
+                    try
+                    {
+                        foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
+                        _s.MarkDirty(true);
+                    }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                 }
                 if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
                 {
-                    foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
-                    _s.MarkDirty(true);
+                    try
+                    {
+                        foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
+                        _s.MarkDirty(true);
+                    }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                 }
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
@@ -1185,16 +1270,27 @@ namespace SodRpg.Mod
         {
             int n = 0;
             foreach (var r in p.Stash) if (r.Slot == slot) n++;
-            return n > 0 ? $"{Content.SlotName(slot)} <color=#9a9ab0>{n}</color>" : Content.SlotName(slot).ToString();
+            return n > 0 ? $"{Content.SlotName(slot)} <color=#bcbcd2>{n}</color>" : Content.SlotName(slot).ToString();
         }
 
         private void RelicList(IEnumerable<Relic> relics, string hero, float height)
         {
-            var list = SortedCached(relics, height);
-            var rows = RowTexts(list, hero, height);
-            _scrollList = GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
+            // height <= 0 は「残りの高さいっぱい」（鍛冶）。並べ替えの使い回しの鍵は固定値を使う。
+            bool flex = height <= 0f;
+            float cacheId = flex ? 431f : height;
+            float visibleHeight = flex ? Mathf.Max(300f, _windowHeight) : height;
+            var list = SortedCached(relics, cacheId);
+            var rows = RowTexts(list, hero, cacheId);
+            _scrollList = flex
+                ? GUILayout.BeginScrollView(_scrollList, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, ForgeListSize)
+                : GUILayout.BeginScrollView(_scrollList, GUILayout.Height(height));
             if (list.Count == 0) GUILayout.Label(Loc.T("まだありません。遠征で敵を倒すと遺物が落ち、確保すると保管庫に入ります。", "Nothing here yet. Enemies drop relics on expeditions; secure them to bring them here."), _st.Small);
-            for (int i = 0; i < list.Count; i++)
+            // 保管庫は最大420個まで広がるので、見えている行だけを描く（行の高さは一定）。
+            const float rowStep = 37f; // 行36＋余白1（GUILayout は隣り合う余白を重ねる）
+            int first = Math.Max(0, (int)(_scrollList.y / rowStep) - 2);
+            int last = Math.Min(list.Count, first + (int)(visibleHeight / rowStep) + 5);
+            if (first > 0) GUILayout.Space(first * rowStep);
+            for (int i = first; i < last; i++)
             {
                 var r = list[i];
                 GUILayout.BeginHorizontal();
@@ -1205,10 +1301,29 @@ namespace SodRpg.Mod
                     _seenUids.Add(r.Uid);
                     _retuneIndex = -1;
                     _confirmSalvage = null;
+                    _confirmEnhance = null;
+                    _confirmAffixReroll = null;
                 }
                 GUILayout.EndHorizontal();
             }
+            if (last < list.Count) GUILayout.Space((list.Count - last) * rowStep);
             GUILayout.EndScrollView();
+            _scrollList.y = WheelScroll(_scrollList.y, list.Count * rowStep);
+        }
+
+        /// <summary>
+        /// 直前に閉じたスクロール欄の上でホイールを回したとき、IMGUI が処理しなかった分をここで動かす
+        /// （ゲーム側の入力で標準のホイール処理が効かないことがあるため）。内容の高さが不明なら無限大を渡す。
+        /// </summary>
+        private static float WheelScroll(float y, float contentHeight)
+        {
+            var e = Event.current;
+            if (e.type != EventType.ScrollWheel) return y;
+            Rect view = GUILayoutUtility.GetLastRect();
+            if (!view.Contains(e.mousePosition)) return y;
+            float next = ScrollMath.Wheel(y, e.delta.y, 20f, contentHeight, view.height);
+            e.Use();
+            return next;
         }
 
         // ───── 描画の使い回し（OnGUI は1フレームに何度も呼ばれるので、並べ替えは0.3秒ごとに1回だけ行う） ─────
@@ -1295,7 +1410,7 @@ namespace SodRpg.Mod
                 string mark = equipped ? "<color=#ffe17a>★</color> " : better ? "<color=#7cf07c>▲</color> " : "";
                 string fresh = _seenUids.Contains(r.Uid) ? "" : " <color=#ffd24a><b>NEW</b></color>";
                 string lck = r.Locked ? Loc.T(" <color=#aaa>[鍵]</color>", " <color=#aaa>[locked]</color>") : "";
-                rows.Add($"{mark}{UiStyles.RelicTitle(r)} <color=#9a9ab0>Lv{r.ItemLevel}</color>{lck}{fresh}");
+                rows.Add($"{mark}{UiStyles.RelicTitle(r)} <color=#bcbcd2>Lv{r.ItemLevel}</color>{lck}{fresh}");
             }
             _rowCacheFor[id] = list;
             if (key != null) _rowCacheKey[id] = key;
@@ -1311,11 +1426,30 @@ namespace SodRpg.Mod
             var parts = Rules.BulkSalvageCandidates(p, _s.Trades);
             int shards = 0;
             foreach (var r in parts) shards += Rules.SalvageValue(r);
+            int high = 0;
+            foreach (var r in parts) if (r.Rarity >= Rarity.Rare) high++;
+            // 左の欄は幅が狭いので、見出しと選択肢を2段に分ける（1行に並べると右が切れる）。
+            GUILayout.Label(Loc.T("分解するレア度：", "Salvage up to:"), _st.Small);
+            var names = new[] { Loc.T("コモンまで", "Common"), Loc.T("アンコモンまで", "Uncommon"), Loc.T("レアまで", "Rare"), Loc.T("エピックまで", "Epic") };
+            int cur = (int)p.BulkSalvageMaxRarity;
+            int pick = GUILayout.SelectionGrid(Math.Max(0, Math.Min(3, cur)), names, 2, _st.ButtonWrap);
+            if (pick != cur)
+            {
+                Rules.SetBulkSalvageMaxRarity(p, (Rarity)pick);
+                _confirmBulk = false;
+                _s.MarkDirty(true);
+                _s.SaveNow();
+                parts = Rules.BulkSalvageCandidates(p, _s.Trades);
+                shards = 0; high = 0;
+                foreach (var r in parts) { shards += Rules.SalvageValue(r); if (r.Rarity >= Rarity.Rare) high++; }
+            }
+            if (high > 0)
+                GUILayout.Label(Loc.T($"<color=#ff8080>注意：レア以上が{high}個含まれます。2回押して確定します。</color>", $"<color=#ff8080>Warning: {high} Rare or better relics are included. Press twice to confirm.</color>"), _st.Small);
             GUI.enabled = parts.Count > 0 && (p.Run == null || !_s.InGame);
             string label = _confirmBulk
-                ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics</color>")
-                : Loc.T($"コモンとアンコモンをまとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage all Common and Uncommon ({parts.Count} relics, {shards} shards)");
-            if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
+                ? Loc.T($"<color=#ff8080>もう一度押すと、{parts.Count}個をまとめて分解します" + (high > 0 ? $"（レア以上{high}個）" : "") + "</color>", $"<color=#ff8080>Press again to salvage {parts.Count} relics" + (high > 0 ? $" ({high} Rare+)" : "") + "</color>")
+                : Loc.T($"まとめて分解（{parts.Count}個・欠片{shards}）", $"Salvage in bulk ({parts.Count} relics, {shards} shards)");
+            if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin30))
             {
                 if (!_confirmBulk) _confirmBulk = true;
                 else
@@ -1380,7 +1514,7 @@ namespace SodRpg.Mod
                 GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
                     $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
             var imp = r.Implicit;
-            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#888>（この種類が必ず持つ性能）</color>", "  <color=#888>(always on this type)</color>"), _st.Label);
+            GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この種類が必ず持つ性能）</color>", "  <color=#aaa>(always on this type)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
@@ -1391,7 +1525,7 @@ namespace SodRpg.Mod
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
-                    GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#aab>" + set.Describe() + "</color>", _st.Small);
+                    GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#ccd>" + set.Describe() + "</color>", _st.Small);
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
             }
@@ -1442,11 +1576,11 @@ namespace SodRpg.Mod
         private void DrawForgeTab()
         {
             var p = _s.Profile;
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal(ForgePaneSize);
 
-            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(360));
+            GUILayout.BeginVertical(_st.Panel, ForgeColumnSize);
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) _forgeAllSlots = true;
+            if (GUILayout.Button(Loc.T("すべて", "All"), _forgeAllSlots ? _st.ButtonSel : _st.Button)) { _forgeAllSlots = true; _confirmEnhance = null; }
             for (int i = 0; i < Content.SlotOrder.Count; i++)
             {
                 if (i == 3)
@@ -1459,31 +1593,51 @@ namespace SodRpg.Mod
                 {
                     _forgeAllSlots = false;
                     _slot = slot;
+                    _confirmEnhance = null;
                 }
             }
             GUILayout.EndHorizontal();
-            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 430);
+            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 0f);
             BulkSalvageRow();
             GUILayout.EndVertical();
 
-            GUILayout.BeginVertical(_st.Panel);
+            GUILayout.BeginVertical(_st.Panel, ForgePaneSize);
             // 6枠になって製作の行が増えたので、右の欄全体をスクロールできるようにする。
-            _scrollForge = GUILayout.BeginScrollView(_scrollForge);
+            // 横スクロールは使わない（長い文は折り返す）。横に広げると右端が切れて読めなくなる。
+            _scrollForge = GUILayout.BeginScrollView(_scrollForge, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
             var sel = p.FindStash(_selected);
             if (sel != null)
             {
-                _scrollRight = GUILayout.BeginScrollView(_scrollRight, GUILayout.Height(260)); // 固有効果まで見えるように
+                _scrollRight = GUILayout.BeginScrollView(_scrollRight, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(260)); // 固有効果まで見えるように
                 RelicDetail(sel);
                 GUILayout.EndScrollView();
+                _scrollRight.y = WheelScroll(_scrollRight.y, float.PositiveInfinity);
                 GUILayout.Space(4);
+                ValidateEnhanceConfirmation();
+                int failureChance = Rules.EnhanceFailureChance(sel);
+                if (failureChance > 0)
+                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると+0に戻ります）",
+                        $"Failure chance: {failureChance}% (failure resets enhancement to +0)"), "#ff8080"), _st.Small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 int maxEnhance = Content.MaxEnhanceFor(sel);
                 if (sel.Enhance < maxEnhance)
                 {
-                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
-                    if (GUILayout.Button(Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)"), _st.Button, GUILayout.Height(32)))
-                        Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
+                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.RetuneOffer == null && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
+                    bool confirm = _confirmEnhance == sel && _confirmEnhanceTarget == sel.Enhance + 1;
+                    string enhanceLabel = confirm
+                        ? Loc.T($"<color=#ff8080>もう一度押すと強化 +{sel.Enhance + 1}を確定します（欠片{Content.EnhanceCost(sel.Enhance)}）</color>",
+                            $"<color=#ff8080>Press again to confirm Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)</color>")
+                        : Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)");
+                    if (GUILayout.Button(enhanceLabel, _st.ButtonWrap, ShrinkMin32))
+                    {
+                        if (failureChance > 0 && !confirm)
+                        {
+                            _confirmEnhance = sel;
+                            _confirmEnhanceTarget = sel.Enhance + 1;
+                        }
+                        else Act(() => Rules.Enhance(p, sel.Uid, _s.Trades), true);
+                    }
                 }
                 else GUILayout.Label(Loc.T($"強化は+{maxEnhance}が上限です", $"Enhancement is capped at +{maxEnhance}"), _st.Small);
                 bool equippedSel = p.IsEquippedAnywhere(sel.Uid);
@@ -1497,7 +1651,7 @@ namespace SodRpg.Mod
                     : _confirmSalvage != sel.Uid ? Loc.T($"分解（{svGain}）", $"Salvage ({svGain})")
                     : weighty ? Loc.T($"<color=#ff8080>{(equippedSel ? "装着中の" : "")}「{sel.PlainName}」を分解します{(sel.Awakened ? "（覚醒も失われます）" : sel.AwakenPoints > 0 ? "（覚醒の力も失われます）" : "")}。もう一度押すと確定</color>", $"<color=#ff8080>Salvage {(equippedSel ? "equipped " : "")}\"{sel.PlainName}\"{(sel.AwakenPoints > 0 ? " (awakening is lost)" : "")}? Press again</color>")
                     : Loc.T("<color=#ff8080>もう一度押すと分解します</color>", "<color=#ff8080>Press again to salvage</color>");
-                if (GUILayout.Button(sv, _st.Button, GUILayout.Height(32)))
+                if (GUILayout.Button(sv, _st.ButtonWrap, ShrinkMin32))
                 {
                     if (_confirmSalvage == sel.Uid)
                     {
@@ -1529,15 +1683,15 @@ namespace SodRpg.Mod
                         var o = offer.Options[i];
                         string mark = o.Stat == cur.Stat ? (o.Value > cur.Value ? " <color=#7cf07c>▲</color>" : o.Value < cur.Value ? " <color=#ff7a7a>▼</color>" : "") : "";
                         int choice = i;
-                        if (GUILayout.Button(Content.FormatStat(o.Stat, o.Value) + mark, _st.ButtonSel, GUILayout.Height(32))) Act(() => Rules.ChooseRetune(p, choice), true);
+                        if (GUILayout.Button(Content.FormatStat(o.Stat, o.Value) + mark, _st.ButtonWrapSel, ShrinkMin32)) Act(() => Rules.ChooseRetune(p, choice), true);
                     }
                     GUILayout.EndHorizontal();
-                    if (GUILayout.Button(Loc.T("元のままにする（使った調律石は戻りません）", "Keep the original (tuning stones are not refunded)"), _st.Button, GUILayout.Height(28))) Act(() => Rules.ChooseRetune(p, -1), false);
+                    if (GUILayout.Button(Loc.T("元のままにする（使った調律石は戻りません）", "Keep the original (tuning stones are not refunded)"), _st.ButtonWrap, ShrinkMin28)) Act(() => Rules.ChooseRetune(p, -1), false);
                 }
                 else if (offer != null)
                 {
                     GUILayout.Label(Loc.T("別の遺物で、再調律の候補を選んでいる途中です。", "Another relic has retune options waiting."), _st.Warn);
-                    if (GUILayout.Button(Loc.T("その遺物を開く", "Open that relic"), _st.Button, GUILayout.Height(28)))
+                    if (GUILayout.Button(Loc.T("その遺物を開く", "Open that relic"), _st.ButtonWrap, ShrinkMin28))
                     {
                         _forgeAllSlots = true;
                         _selected = offer.Uid;
@@ -1552,7 +1706,7 @@ namespace SodRpg.Mod
                     for (int i = 0; i < sel.Affixes.Count; i++)
                     {
                         var a = sel.Affixes[i];
-                        if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonSel : _st.Button)) _retuneIndex = i;
+                        if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonWrapSel : _st.ButtonWrap, ShrinkWidth)) _retuneIndex = i;
                     }
                     GUILayout.EndHorizontal();
                     int rtCost = Content.RetuneCost(sel.Retunes);
@@ -1561,11 +1715,35 @@ namespace SodRpg.Mod
                     string rtLabel = !rtAfford ? Loc.T($"調律石が足りません（{rtCost}必要・所持{p.Material(Materials.Tuning)}）", $"Not enough tuning stones ({rtCost} needed, have {p.Material(Materials.Tuning)})")
                         : _retuneIndex < 0 ? Loc.T($"上の特性を1つ選んでください（調律石{rtCost}）", $"Pick an affix above ({rtCost} tuning)")
                         : Loc.T($"候補を出す（調律石{rtCost}）", $"Roll options ({rtCost} tuning)");
-                    if (GUILayout.Button(rtLabel, _st.Button, GUILayout.Height(30)))
+                    if (GUILayout.Button(rtLabel, _st.ButtonWrap, ShrinkMin30))
                     {
                         int idx = _retuneIndex;
                         Act(() => Rules.Retune(p, sel.Uid, idx, _s.Trades), true);
                         _retuneIndex = -1;
+                    }
+                    GUI.enabled = true;
+                }
+
+                // 特性の洗い直し（v1.31）：再調律の下に置く。候補が出ている遺物と、特性のない遺物には出さない。
+                if (sel.Affixes.Count > 0 && !(p.RetuneOffer != null && p.RetuneOffer.Uid == sel.Uid))
+                {
+                    var (rrShards, rrTuning) = Rules.AffixRerollCost(sel);
+                    bool rrAfford = p.Material(Materials.Shard) >= rrShards && p.Material(Materials.Tuning) >= rrTuning;
+                    bool rrConfirm = _confirmAffixReroll == sel.Uid;
+                    GUI.enabled = rrAfford && !_s.Trades.IsReserved(sel.Uid); // 鍵つき・装着中は押したときに理由が表示される
+                    string rrLabel = !rrAfford
+                        ? Loc.T($"素材が足りません（欠片{rrShards}・調律石{rrTuning}必要）", $"Not enough materials ({rrShards} shards and {rrTuning} tuning stones needed)")
+                        : rrConfirm ? Loc.T($"<color=#ff8080>もう一度押すと「{sel.PlainName}」の特性を全部引き直します（欠片{rrShards}・調律石{rrTuning}・取り消せません）</color>",
+                            $"<color=#ff8080>Press again to reroll every affix on \"{sel.PlainName}\" ({rrShards} shards, {rrTuning} tuning; cannot be undone)</color>")
+                        : Loc.T($"特性を洗い直す（欠片{rrShards}・調律石{rrTuning}）", $"Reroll all affixes ({rrShards} shards, {rrTuning} tuning)");
+                    if (GUILayout.Button(rrLabel, _st.ButtonWrap, ShrinkMin30))
+                    {
+                        if (rrConfirm)
+                        {
+                            _confirmAffixReroll = null;
+                            Act(() => Rules.AffixReroll(p, sel.Uid, _s.Trades), true);
+                        }
+                        else _confirmAffixReroll = sel.Uid;
                     }
                     GUI.enabled = true;
                 }
@@ -1576,19 +1754,21 @@ namespace SodRpg.Mod
             }
 
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("合成：同じレア度の遺物3つを、1つ上のレア度の遺物1つに変えます", "Transmute: turn 3 relics of one rarity into 1 of the next"), _st.Header);
-            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に3つを使います。エピック3つからは固有品が生まれます。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
-                "Locked and equipped relics are never used; the 3 weakest of the rest go in. Three Epics become a legendary. Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
+            GUILayout.Label(Loc.T("合成：同じレア度の遺物を決まった個数集めて、1つ上のレア度の遺物1つに変えます", "Transmute: turn a set number of relics of one rarity into 1 of the next"), _st.Header);
+            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に必要な個数を使います。エピックからは固有品が生まれます（欠片と調律石が要ります）。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
+                "Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
                 int n = TransmuteCount(r);
                 Slot? target = _forgeAllSlots ? (Slot?)null : _slot;
                 int tcost = Rules.TransmuteCost(r, target != null);
-                GUI.enabled = n >= 3 && p.Material(Materials.Shard) >= tcost;
-                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/3\n"
-                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}", $"→{Content.SlotName(target.Value)}, {tcost} shards") : Loc.T($"欠片{tcost}", $"{tcost} shards"));
-                if (GUILayout.Button(label, _st.Button, GUILayout.Height(44))) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
+                int need = Content.TransmuteInputs(r), ttune = Rules.TransmuteTuning(r);
+                GUI.enabled = n >= need && p.Material(Materials.Shard) >= tcost && p.Material(Materials.Tuning) >= ttune;
+                string tuneJa = ttune > 0 ? $"・調律石{ttune}" : "", tuneEn = ttune > 0 ? $", {ttune} tuning" : "";
+                string label = UiStyles.Colored(Content.RarityName(r).ToString(), UiStyles.RarityHex(r)) + $" {n}/{need}\n"
+                    + (target != null ? Loc.T($"→{Content.SlotName(target.Value)}・欠片{tcost}{tuneJa}", $"→{Content.SlotName(target.Value)}, {tcost} shards{tuneEn}") : Loc.T($"欠片{tcost}{tuneJa}", $"{tcost} shards{tuneEn}"));
+                if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin44)) Act(() => Rules.Transmute(p, r, _s.Trades, target), false);
                 GUI.enabled = true;
             }
             GUILayout.EndHorizontal();
@@ -1598,15 +1778,16 @@ namespace SodRpg.Mod
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(Content.SlotName(slot).ToString(), _st.Label, GUILayout.Width(70));
                 GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(false);
-                if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.Button))
+                if (GUILayout.Button(Loc.T($"通常：アンコモン以上（欠片{Rules.CraftShardCost(false)}）", $"Basic: Uncommon+ ({Rules.CraftShardCost(false)} shards)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, false), false);
                 GUI.enabled = p.Material(Materials.Shard) >= Rules.CraftShardCost(true) && p.Material(Materials.Tuning) >= Rules.CraftTuningCost(true);
-                if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.Button))
+                if (GUILayout.Button(Loc.T($"上等：レア以上（欠片{Rules.CraftShardCost(true)}・調律石{Rules.CraftTuningCost(true)}）", $"Fine: Rare+ ({Rules.CraftShardCost(true)} shards, {Rules.CraftTuningCost(true)} tuning)"), _st.ButtonWrap, ShrinkWidth))
                     Act(() => Rules.Craft(p, slot, true), false);
                 GUI.enabled = true;
                 GUILayout.EndHorizontal();
             }
             GUILayout.EndScrollView();
+            _scrollForge.y = WheelScroll(_scrollForge.y, float.PositiveInfinity);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
         }
@@ -1626,7 +1807,7 @@ namespace SodRpg.Mod
                 return Loc.T($"+{Content.EnhanceMilestoneThird}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneThird}: one more affix.");
             if (r.EnhanceMilestones < 4 && Content.EnhanceMilestoneFourth <= ceiling)
                 return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.");
-            if (r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
+            if (!r.MilestonePowerApplied && r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
                 return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が1.2倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows 1.2x.");
             return null;
         }
@@ -1652,7 +1833,7 @@ namespace SodRpg.Mod
             if (GUILayout.Button(_limitBreakOpen
                     ? Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}　△ 閉じる", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}   close")
                     : Loc.T($"限界突破（{sel.LimitBreaks}/{maxBreaks}）　上限 +{capNow} → +{capNext}", $"Limit break ({sel.LimitBreaks}/{maxBreaks})   cap +{capNow} -> +{capNext}"),
-                    _st.Button, GUILayout.Height(30)))
+                    _st.ButtonWrap, ShrinkMin30))
             {
                 _limitBreakOpen = !_limitBreakOpen;
                 _confirmLimitBreak = false;
@@ -1672,7 +1853,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("素材を選んでください：", "Pick a material:"), _st.Small);
             foreach (var m in parts)
             {
-                if (GUILayout.Button((_limitBreakMaterial == m.Uid ? "● " : "○ ") + UiStyles.RelicTitle(m) + $" <color=#9a9ab0>+{m.Enhance} · Lv{m.ItemLevel}</color>",
+                if (GUILayout.Button((_limitBreakMaterial == m.Uid ? "● " : "○ ") + UiStyles.RelicTitle(m) + $" <color=#bcbcd2>+{m.Enhance} · Lv{m.ItemLevel}</color>",
                     _limitBreakMaterial == m.Uid ? _st.ButtonSel : _st.Row, GUILayout.Height(26)))
                 {
                     _limitBreakMaterial = m.Uid;
@@ -1689,7 +1870,7 @@ namespace SodRpg.Mod
                     : _confirmLimitBreak
                         ? Loc.T($"<color=#ff8080>「{materialName}」を素材に限界突破します。もう一度押すと確定</color>", $"<color=#ff8080>Limit break using \"{materialName}\"? Press again</color>")
                         : Loc.T($"限界突破する（上限 +{capNext}）", $"Limit break (cap becomes +{capNext})");
-            if (GUILayout.Button(label, _st.Button, GUILayout.Height(30)))
+            if (GUILayout.Button(label, _st.ButtonWrap, ShrinkMin30))
             {
                 if (!_confirmLimitBreak) _confirmLimitBreak = true;
                 else
@@ -1706,8 +1887,21 @@ namespace SodRpg.Mod
 
         private Vector2 _scrollForge;
 
+        private void ValidateEnhanceConfirmation()
+        {
+            var r = _confirmEnhance;
+            if (r == null) return;
+            var p = _s.Profile;
+            if (!Open || _tab != 1 || _selected != r.Uid || p.FindStash(r.Uid) != r
+                || r.Enhance + 1 != _confirmEnhanceTarget || r.Enhance >= Content.MaxEnhanceFor(r)
+                || p.Material(Materials.Shard) < Content.EnhanceCost(r.Enhance)
+                || _s.Trades.IsReserved(r.Uid) || p.RetuneOffer != null)
+                _confirmEnhance = null;
+        }
+
         private void Act(Func<GameEvent> action, bool affectsBuild)
         {
+            _confirmEnhance = null;
             try
             {
                 var e = action();
@@ -1723,9 +1917,12 @@ namespace SodRpg.Mod
 
         private sealed class StarNode
         {
-            public int Rank;
-            public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch;
+            public int Rank, Choice = -1;
+            public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
             public string Description, SearchDescription;
+            public PairComboDef PairDefinition;
+            public ClusterRegionKind? Region;
+            public GUIContent[] ChoiceOptions;
             public Texture2D Icon;
             public bool Keystone, Pair;
             public float TooltipWidth, TooltipHeight;
@@ -1743,31 +1940,58 @@ namespace SodRpg.Mod
         private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState;
         private bool _starJapanese, _starDirty = true, _starDragging, _starMoved;
-        private int _starXp, _starKills, _starCodex, _starTestBonus, _starSpent, _starFree;
+        private int _starXp, _starKills, _starCodex, _starTestBonus, _starFree;
         private int _starPressed = -1, _starMouseButton, _starDragControl;
         private Vector2 _starPan, _starDragOrigin, _starPanOrigin;
-        private float _starZoom = 1f, _starExtent = 1f;
+        private float _starZoom = 1f, _starMinX, _starMaxX, _starMinY, _starMaxY;
         private bool _starNeedsFit = true;
         private int[] _starKeystones = new int[0];
+        private string _starChoiceId;
         private readonly StarMapView _starView = new StarMapView();
         private string _starSearch = "";
         private bool _starSearchDirty = true;
         private int[] _starMatches = new int[0];
         private int _starMatchCount, _starMatchCursor = -1;
         private readonly GUIContent _starSearchStatus = new GUIContent();
-        private static readonly GUILayoutOption[] StarRowHeight = { GUILayout.Height(26) };
-        private static readonly GUILayoutOption[] StarKeystoneWidth = { GUILayout.Width(96) };
+        private static readonly GUILayoutOption[] StarRowHeight = { GUILayout.Height(30) };
+        private static readonly GUILayoutOption[] StarKeystoneWidth = { GUILayout.Width(110) };
+        // 「ミストの刻印（1つ）：」のように旅人の名前が入るので、少し広く取る。星を探す欄の見出しも同じ幅にそろえる。
+        private const float StarKeystoneHeaderPx = 190f;
+        private static readonly GUILayoutOption[] StarKeystoneHeaderWidth = { GUILayout.Width(StarKeystoneHeaderPx) };
+        private const int StarKeystonesPerRow = 5;
+        // Keystone hovered in the bar (repaint of the bar happens before the canvas), shown with the canvas tooltip.
+        private int _starKeystoneHover = -1;
         private GUIStyle _starRankStyle, _starTooltipStyle, _starNameStyle, _starSearchStyle;
         private static Texture2D _starDisc, _starSearchRing;
         private const float StarMinZoom = 0.15f, StarMaxZoom = 3f;
+        // 全体表示で端の星の光輪・名前（下に出る）が切れないよう、各辺に残す余白（画面の単位）。
+        private const float StarFitMargin = 64f;
         private static readonly Color StarKeystone = new Color(0.8f, 0.55f, 1f);
         private static readonly Color StarPair = new Color(0.45f, 0.9f, 0.95f);
         private static readonly GUILayoutOption[] StarFill = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
         private static readonly GUILayoutOption[] StarCanvasSize =
             { GUILayout.MinHeight(160), GUILayout.ExpandHeight(true), GUILayout.ExpandWidth(true) };
+        private static readonly GUILayoutOption[] StarHorizontalSize = { GUILayout.ExpandHeight(true) };
         private static readonly Color StarGold = new Color(1f, 0.79f, 0.32f);
         private static readonly Color StarBright = new Color(0.87f, 0.94f, 1f);
         private static readonly Color StarGrey = new Color(0.36f, 0.39f, 0.46f);
+
+        private bool _starSumOpen, _starSumDirty = true;
+        private int _starSumSig, _starSumHover = -1;
+        private Vector2 _starSumScroll;
+        private readonly List<StarSumEntry> _starSumEntries = new List<StarSumEntry>();
+        private readonly GUIContent _starSumHeader = new GUIContent();
+        private GUIStyle _starSumLine, _starSumTitle;
+        private float _starSumWidth = -1f, _starSumHeight;
+        private static readonly GUILayoutOption[] StarSumWidth = { GUILayout.Width(420), GUILayout.ExpandHeight(true) };
+
+        private sealed class StarSumEntry
+        {
+            public readonly GUIContent Content = new GUIContent();
+            public int[] Nodes;
+            public bool Title;
+            public float Y, Height;
+        }
 
         private void CancelStarDrag()
         {
@@ -1781,31 +2005,40 @@ namespace SodRpg.Mod
         {
             bool newHero = _starHero != hero;
             _starHero = hero;
+            if (newHero) _starChoiceId = null;
             _starJapanese = Loc.Japanese;
             _starLayout = HeroTreeLayout.ForHero(hero);
             _starNodes = new StarNode[_starLayout.Nodes.Count];
             _starMatches = new int[_starNodes.Length];
             _starMatchCursor = -1;
             _starSearchDirty = true;
-            _starExtent = 1f;
+            _starMinX = _starMinY = float.MaxValue;
+            _starMaxX = _starMaxY = float.MinValue;
             var keystones = new List<int>();
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var node = _starLayout.Nodes[i];
                 var t = node.Talent;
                 var pair = t == null ? null : PairCombos.ForBridge(t.Id);
+                string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
-                    Description = t == null ? null : t.Describe(),
-                    Icon = RelicIcons.For("stars/" + StarIconKey(t)),
+                    Description = t == null ? null : t.IsKeystone ? StarMapPresentation.KeystoneDescription(t)
+                        : StarMapPresentation.EffectDescription(t),
+                    ChoiceOptions = t != null && t.IsChoice ? new[] { new GUIContent(), new GUIContent() } : null,
+                    Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
                     Pair = pair != null,
+                    PairDefinition = pair,
+                    Region = t?.Cluster?.Region.Kind,
                 };
                 _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
                 if (t != null && t.IsKeystone) keystones.Add(i);
-                _starExtent = Mathf.Max(_starExtent, Mathf.Abs(node.X), Mathf.Abs(node.Y));
+                _starMinX = Mathf.Min(_starMinX, node.X); _starMaxX = Mathf.Max(_starMaxX, node.X);
+                _starMinY = Mathf.Min(_starMinY, node.Y); _starMaxY = Mathf.Max(_starMaxY, node.Y);
             }
             _starKeystones = keystones.ToArray();
+            RebuildStarClusters();
             if (newHero) _starNeedsFit = true;
             CancelStarDrag();
             _starDirty = true;
@@ -1818,31 +2051,40 @@ namespace SodRpg.Mod
                 };
                 _starTooltipStyle = new GUIStyle(_st.Label)
                 {
-                    fontSize = 16, wordWrap = true, padding = new RectOffset(12, 12, 10, 10)
+                    fontSize = 17, wordWrap = true, padding = new RectOffset(12, 12, 10, 10)
                 };
                 _starNameStyle = new GUIStyle(_st.Label)
                 {
-                    alignment = TextAnchor.UpperCenter, fontSize = 12, wordWrap = false, clipping = TextClipping.Overflow,
+                    alignment = TextAnchor.UpperCenter, fontSize = 14, wordWrap = false, clipping = TextClipping.Overflow,
                     padding = new RectOffset(0, 0, 0, 0)
                 };
                 _starSearchStyle = new GUIStyle(GUI.skin.textField)
                 {
                     font = _st.Label.font, fontSize = 16, fixedHeight = 26f, wordWrap = false
                 };
-                _starRankStyle.fontSize = 11;
+                _starRankStyle.fontSize = 12;
             }
         }
 
         private void RefreshStarState(Profile p, string hero, HeroState hs)
         {
-            if (_starHero != hero || _starJapanese != Loc.Japanese) RebuildStarTree(hero);
+            if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero))
+            { RebuildStarTree(hero); _starSumDirty = true; }
             if (!_starDirty && Event.current.type != EventType.Layout) return;
-            int spent = Rules.SpentPoints(hs);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
-                || _starKeystone != hs.Keystone || _starSpent != spent;
+                || _starKeystone != hs.Keystone;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
+            if (_starSumOpen)
+            {
+                // Equipped memories/allies only change the check marks; a cheap order-free signature avoids per-frame text building.
+                int sig = matchingHero ? 1 : 0;
+                foreach (string m in _linkMemories) sig ^= m.GetHashCode();
+                foreach (string m in _linkEssences) sig += m.GetHashCode();
+                foreach (string m in _linkAllies) sig -= m.GetHashCode();
+                if (sig != _starSumSig) { _starSumSig = sig; _starSumDirty = true; }
+            }
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -1852,7 +2094,10 @@ namespace SodRpg.Mod
                 if (n.Rank != rank) changed = true;
                 n.Rank = rank;
                 n.Allocated = rank > 0;
-                var pair = t == null ? null : PairCombos.ForBridge(t.Id);
+                int choice = t != null && t.IsChoice && hs.TalentChoices.TryGetValue(t.Id, out int option) ? option : -1;
+                if (n.Choice != choice) changed = true;
+                n.Choice = choice;
+                var pair = n.PairDefinition;
                 if (pair != null)
                 {
                     bool a = matchingHero && marks != null && marks(pair.RouteA);
@@ -1863,15 +2108,16 @@ namespace SodRpg.Mod
                 }
             }
             if (!changed) return;
+            int spent = Rules.SpentPoints(hs, hero);
             _starState = hs;
             _starXp = hs.StarXp;
             _starKills = hs.Kills;
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
             _starKeystone = hs.Keystone;
-            _starSpent = spent;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
+            _starSumDirty = true;
             int earned = StarProgression.Points(hs.StarXp);
             _starPoints.text = Loc.T($"使えるポイント：残り {_starFree} / 合計 {p.TalentPoints(hero)}",
                 $"Available points: {_starFree} remaining / {p.TalentPoints(hero)} total");
@@ -1879,6 +2125,9 @@ namespace SodRpg.Mod
                 + (earned >= StarProgression.MaxPoints ? Loc.T("ポイント上限", "Point cap reached")
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
+            var reachable = _starLayout.ReachabilitySnapshot(hs);
+            RefreshStarClusters(hs);
+            int oldKeyCost = hs.Keystone == null ? 0 : Rules.AllocationValidationForHero(hero).Talent(hs.Keystone).KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -1891,49 +2140,65 @@ namespace SodRpg.Mod
                         "<b>Starting star</b>\nAlready acquired. Grow along its connections.");
                     continue;
                 }
-                bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : Rules.TalentUnlocked(hs, hero, t);
+                bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
                 n.Unlocked = unlocked;
-                int cost = t.IsKeystone ? (hs.Keystone != null ? 0 : Content.KeystoneCost) : t.RankCost;
+                int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+                int cost = t.IsKeystone ? Math.Max(0, keyCost - oldKeyCost) : t.RankCost;
                 if (t.IsKeystone)
                 {
                     string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
                         : unlocked ? Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>")
-                        : Loc.T("<color=#888>条件未達</color>", "<color=#888>locked</color>");
+                        : Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>");
                     n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
                 }
                 n.Available = unlocked && n.Rank < t.MaxRank && _starFree >= cost;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
-                string condition = Loc.T("取得済みの星と線でつながると振れます。",
-                    "Requires a connection to an acquired star.");
-                if (t.IsKeystone)
-                    condition += t.HeroKey != null
-                        ? Loc.T($"\n到達刻印は1つ。ツリーに{Content.KeystoneRouteRequirement}段・熟練度{HeroSigils.KeystoneMastery}が必要（いま熟練度{Mastery.Level(hs.Kills)}）。付け替えは無料。",
-                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} tree ranks and mastery {HeroSigils.KeystoneMastery} (now {Mastery.Level(hs.Kills)}). Switching is free.")
-                        : Loc.T($"\n到達刻印は1つ。この刻印に対応する能力の星に{Content.KeystoneRouteRequirement}段必要（いま{Rules.RouteRanks(hs, t.Route)}段）。付け替えは無料。",
-                            $"\nChoose one keystone. Requires {Content.KeystoneRouteRequirement} ranks in its matching attribute stars (now {Rules.RouteRanks(hs, t.Route)}). Switching is free.");
-                string state = n.Rank >= t.MaxRank ? Loc.T("最大段です。", "Maximum rank.")
-                    : !unlocked ? Loc.T("まだ条件を満たしていません。", "Requirements not yet met.")
-                    : _starFree < cost ? Loc.T("ポイントが足りません。", "Not enough points.")
-                    : Loc.T("振れます。", "Available.");
-                var pair = PairCombos.ForBridge(t.Id);
+                // 条件の説明は、まだ満たしていないときだけ出す。状態の1文と同じ内容を重ねない。
+                string condition = "";
+                if (t.IsKeystone && !n.Allocated)
+                    condition = StarMapPresentation.KeystoneRequirement(t.HeroKey != null, Content.KeystoneRouteRequirement,
+                        t.HeroKey != null ? Rules.TreeRanks(hs, t.HeroKey) : Rules.RouteRanks(hs, t.Route),
+                        t.HeroKey != null ? HeroSigils.KeystoneMastery : 0, Mastery.Level(hs.Kills), _starLayout.CanReach(hs, t, reachable));
+                string state = StarMapPresentation.AllocationStatus(t.IsKeystone, n.Rank >= t.MaxRank, unlocked, _starFree >= cost);
+                var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
-                string description = pair == null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
-                n.SearchDescription = description;
+                string description = pair == null || t.Mechanism != null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                if (t.IsChoice)
+                {
+                    description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
+                    for (int optionIndex = 0; optionIndex < 2; optionIndex++)
+                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex);
+                }
+                n.SearchDescription = StarMapPresentation.MechanismLabel(t) + "\n" + description;
+                // 合わせ技の説明（PairCombos.Describe）には「橋と両隣の星が必要」と既に書かれているので、条件欄で繰り返さない。
+                bool requirementInBody = pair != null && t.Mechanism == null;
                 if (pair != null)
                 {
                     description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
                         + Loc.T("を装着", " equipped")
                         + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB)
                         + Loc.T("を装着", " equipped");
-                    condition += Loc.T("\n合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
-                        "\nThe combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped.");
+                    if (!requirementInBody)
+                    condition += (condition.Length == 0 ? "" : "\n") + (pair.AuthoredDefinition != null
+                        ? Loc.T("橋と指定された両端の星を取得し、両方の記憶を装着すると有効。",
+                            "Requires this bridge, its specified endpoint stars and both memories equipped.")
+                        : Loc.T("合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
+                            "The combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped."));
                 }
-                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n" + description
-                    + Loc.T($"\n費用：1段 {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} ポイント",
-                        $"\nCost: {(t.IsKeystone ? Content.KeystoneCost : t.RankCost)} points per rank")
-                    + "\n" + condition + "\n" + state
-                    + Loc.T("\n左クリック：1段振る　右クリック：1段外す\n残りの星が始まりにつながる場合だけ外せます。",
-                        "\nLeft click: allocate one rank. Right click: refund one rank.\nRefunds require all remaining stars to stay connected to the start.");
+                // 必要ポイントは、本文に既に書かれていれば繰り返さない（刻印は本文の末尾に入っている）。
+                bool costInBody = description.Contains(Loc.T("ポイント", "point"));
+                string readyColor = !unlocked ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
+                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.MechanismLabel(t) + "</color>"
+                    + "\n" + description
+                    + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
+                    + (condition.Length == 0 ? "" : "\n" + condition)
+                    + "\n<color=" + readyColor + ">" + state + "</color>"
+                    + (t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
+                        "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.")
+                        : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
+                            "\nLeft click: allocate one rank. Right click: refund one rank."))
+                    + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
+                        "\nRefunds require all remaining stars to stay connected to the start.");
             }
             _starSearchDirty = true;
         }
@@ -1953,7 +2218,12 @@ namespace SodRpg.Mod
                 _starNeedsFit = true;
                 CancelStarDrag();
             }
-            GUI.enabled = _s.CanEditTalents;
+            if (GUILayout.Button(Loc.T("始まりに戻る", "Back to start"), _st.Button))
+                StarJumpTo(_starLayout.StartIndex);
+            bool wasOpen = _starSumOpen;
+            _starSumOpen = GUILayout.Toggle(_starSumOpen, Loc.T("取得した効果", "Acquired effects"), _st.Button);
+            if (_starSumOpen != wasOpen) { _starSumDirty = true; if (!_starSumOpen) StarSumSetHover(-1); CancelStarDrag(); }
+            GUI.enabled = _s.CanEditTalents && p.Run == null;
             if (GUILayout.Button(Loc.T("振り直し（無料）", "Respec (free)"), _st.Button))
             {
                 Rules.ResetTalents(p, hero);
@@ -1963,17 +2233,183 @@ namespace SodRpg.Mod
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
-            GUILayout.Label(_starProgress, _st.Small);
+            EnsureStarTextStyles();
+            GUILayout.Label(_starProgress, _starHelpStyle);
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
-            if (!_s.CanEditTalents) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+            if (!_s.CanEditTalents || p.Run != null) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
             DrawKeystoneBar(p, hero);
+            if (Event.current.type == EventType.Layout) _starChoiceShown = _starChoiceId != null;
             StarDrawSearch();
-            GUILayout.Label(Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　"
-                    + "<color=#cc8cff>紫の大きな星＝刻印</color>　<color=#73e6f2>水色＝合わせ技</color>　<color=#ffc952>金＝取得済み</color>",
-                "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   "
-                    + "<color=#cc8cff>Large purple = keystone</color>   <color=#73e6f2>Cyan = combo</color>   <color=#ffc952>Gold = acquired</color>"), _st.Small);
-            DrawStarCanvas(GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize), p, hero);
+            DrawStarLegend();
+            GUILayout.BeginHorizontal(StarHorizontalSize);
+            DrawStarClusterList();
+            Rect starCanvas = GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize);
+            _starOverlay = StarChoiceOverlayRect(starCanvas);
+            DrawStarCanvas(starCanvas, p, hero);
+            DrawStarChoicePicker(p, hero, _starOverlay);
+            if (_starSumOpen) DrawStarSummaryPanel(p, hero);
+            GUILayout.EndHorizontal();
+            DrawStarLegendTooltip();
         }
+
+        private void StarSumSetHover(int index)
+        {
+            if (_starSumHover == index) return;
+            if (_starSumHover >= 0 && _starSumHover < _starSumEntries.Count && _starSumEntries[_starSumHover].Nodes != null)
+                foreach (int i in _starSumEntries[_starSumHover].Nodes) if (i < _starNodes.Length) _starNodes[i].SummaryHover = false;
+            _starSumHover = index;
+            if (index >= 0 && index < _starSumEntries.Count && _starSumEntries[index].Nodes != null)
+                foreach (int i in _starSumEntries[index].Nodes) if (i < _starNodes.Length) _starNodes[i].SummaryHover = true;
+        }
+
+        private void StarSumAdd(List<StarSummaryLine> lines, Dictionary<string, int> indexOf, string title)
+        {
+            if (lines.Count == 0) return;
+            StarSumAddTitle(title);
+            foreach (var line in lines) StarSumAddLine(line, indexOf);
+        }
+
+        private void StarSumAddTitle(string title)
+        {
+            var e = new StarSumEntry { Title = true };
+            e.Content.text = title;
+            _starSumEntries.Add(e);
+        }
+
+        private void StarSumAddLine(StarSummaryLine line, Dictionary<string, int> indexOf)
+        {
+            if (line.StarIds.Count == 1 && indexOf.TryGetValue(line.StarIds[0], out int typedIndex)
+                && _starLayout.Nodes[typedIndex].Talent.Mechanism != null)
+            {
+                var node = _starNodes[typedIndex];
+                string text = node.Name.text + "  " + node.RankLabel.text + "\n" + node.Description;
+                var pair = node.PairDefinition;
+                if (pair != null)
+                    text += "\n" + (node.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA) + Loc.T("を装着", " equipped")
+                        + "\n" + (node.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB) + Loc.T("を装着", " equipped");
+                StarSumAddNode(typedIndex, text);
+                return;
+            }
+            var nodes = new List<int>(line.StarIds.Count);
+            foreach (string id in line.StarIds)
+            {
+                if (!indexOf.TryGetValue(id, out int i))
+                    throw new InvalidOperationException("Acquired effect references a missing star: " + id);
+                nodes.Add(i);
+            }
+            var e = new StarSumEntry { Nodes = nodes.ToArray() };
+            e.Content.text = line.Text;
+            _starSumEntries.Add(e);
+        }
+
+        // Rebuilt only when allocations, keystone, language or equipped memories change.
+        private void StarSumRebuild(Profile p, string hero)
+        {
+            foreach (var n in _starNodes) n.SummaryHover = false;
+            _starSumHover = -1;
+            _starSumDirty = false;
+            _starSumEntries.Clear();
+            _starSumWidth = -1f;
+            bool matching = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
+            var marks = matching ? LinkMarks() : null;
+            var sum = StarSummary.Compute(p, hero, marks);
+            var indexOf = new Dictionary<string, int>(StringComparer.Ordinal);
+            for (int i = 0; i < _starLayout.Nodes.Count; i++)
+                if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
+            _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
+            if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
+            for (int i = 0; i < _starNodes.Length; i++)
+                if (_starNodes[i].Allocated && _starNodes[i].Keystone)
+                {
+                    StarSumAddTitle(Loc.T("刻印", "Keystone"));
+                    StarSumAddNode(i, _starNodes[i].Name.text + "\n" + _starNodes[i].Description);
+                }
+            StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats"));
+            StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers"));
+            if (sum.Memories.Count > 0)
+            {
+                StarSumAddTitle(Loc.T("記憶ごとの効果", "Effects by memory"));
+                foreach (var g in sum.Memories)
+                {
+                    StarSumAddTitle("  " + g.Title);
+                    foreach (var line in g.Lines) StarSumAddLine(line, indexOf);
+                }
+            }
+            bool choiceTitle = false, mechanismTitle = false;
+            for (int i = 0; i < _starNodes.Length; i++)
+            {
+                var t = _starLayout.Nodes[i].Talent;
+                var n = _starNodes[i];
+                if (t == null || !n.Allocated || n.Keystone) continue;
+                if (t.IsChoice)
+                {
+                    if (!choiceTitle) { StarSumAddTitle(Loc.T("選択の星", "Choice stars")); choiceTitle = true; }
+                    StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n"
+                        + StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank));
+                }
+                else if (t.Mechanism != null && n.PairDefinition == null)
+                {
+                    if (!mechanismTitle) { StarSumAddTitle(Loc.T("仕掛けの効果", "Mechanism effects")); mechanismTitle = true; }
+                    StarSumAddNode(i, n.Name.text + "  " + n.RankLabel.text + "\n" + n.Description);
+                }
+            }
+        }
+
+        private void DrawStarSummaryPanel(Profile p, string hero)
+        {
+            if (_starSumLine == null)
+            {
+                _starSumLine = new GUIStyle(_st.Small) { fontSize = 15, wordWrap = true, richText = true, padding = new RectOffset(6, 4, 3, 3) };
+                _starSumTitle = new GUIStyle(_st.Label) { fontSize = 17, wordWrap = true, richText = true, fontStyle = FontStyle.Bold };
+            }
+            if (_starSumDirty && Event.current.type == EventType.Layout) StarSumRebuild(p, hero);
+            GUILayout.BeginVertical(_st.Panel, StarSumWidth);
+            GUILayout.Label(_starSumHeader, _st.Header);
+            Rect area = GUILayoutUtility.GetRect(0, 10000, 0, 10000, StarCanvasSize);
+            int hover = -1;
+            bool repaint = Event.current.type == EventType.Repaint;
+            if (Event.current.type != EventType.Layout)
+            {
+                float width = Mathf.Max(1, area.width - 18);
+                if (_starSumWidth != width)
+                {
+                    _starSumWidth = width;
+                    _starSumHeight = 0;
+                    for (int i = 0; i < _starSumEntries.Count; i++)
+                    {
+                        var entry = _starSumEntries[i];
+                        entry.Y = _starSumHeight;
+                        entry.Height = (entry.Title ? _starSumTitle : _starSumLine).CalcHeight(entry.Content, width) + 4;
+                        _starSumHeight += entry.Height;
+                    }
+                }
+                _starSumScroll = GUI.BeginScrollView(area, _starSumScroll, new Rect(0, 0, width, _starSumHeight));
+                try
+                {
+                    // Binary-search the first visible row; draw only the viewport's rows.
+                    int lo = 0, hi = _starSumEntries.Count;
+                    while (lo < hi)
+                    {
+                        int mid = lo + (hi - lo) / 2;
+                        var entry = _starSumEntries[mid];
+                        if (entry.Y + entry.Height < _starSumScroll.y) lo = mid + 1;
+                        else hi = mid;
+                    }
+                    for (int i = lo; i < _starSumEntries.Count; i++)
+                    {
+                        var entry = _starSumEntries[i];
+                        if (entry.Y > _starSumScroll.y + area.height) break;
+                        var row = new Rect(0, entry.Y, width, entry.Height);
+                        GUI.Label(row, entry.Content, entry.Title ? _starSumTitle : _starSumLine);
+                        if (repaint && !entry.Title && row.Contains(Event.current.mousePosition)) hover = i;
+                    }
+                }
+                finally { GUI.EndScrollView(); }
+            }
+            GUILayout.EndVertical();
+            if (repaint) StarSumSetHover(hover);
+        }
+
         private void StarRefreshSearch()
         {
             if (!_starSearchDirty) return;
@@ -1994,7 +2430,7 @@ namespace SodRpg.Mod
         {
             StarRefreshSearch();
             GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("星を探す", "Find star"), _st.Small, StarKeystoneWidth);
+            GUILayout.Label(Loc.T("星を探す", "Find star"), _starHelpStyle, StarKeystoneHeaderWidth);
             GUI.SetNextControlName("DreamforgeStarSearch");
             // Handle Enter before TextField can consume it; leave IME composition to the text field.
             var e = Event.current;
@@ -2009,7 +2445,7 @@ namespace SodRpg.Mod
                 _starSearchDirty = true;
                 StarRefreshSearch();
             }
-            GUILayout.Label(_starSearchStatus, _st.Small, StarKeystoneWidth);
+            GUILayout.Label(_starSearchStatus, _starHelpStyle, StarKeystoneWidth);
             bool enabled = GUI.enabled;
             GUI.enabled = enabled && _starMatchCount > 0;
             if (GUILayout.Button(Loc.T("次の星へ", "Next star"), _st.Button, StarRowHeight)) next = true;
@@ -2046,12 +2482,16 @@ namespace SodRpg.Mod
                 {
                     // Fit the whole tree, including the outermost stars, inside the canvas.
                     _starNeedsFit = false;
-                    _starPan = Vector2.zero;
-                    _starZoom = Mathf.Clamp(Mathf.Min(viewport.width, viewport.height) / (2f * _starExtent + 90f), StarMinZoom, StarMaxZoom);
+                    StarMapMath.FitView(viewport.width, viewport.height, _starMinX, _starMaxX, _starMinY, _starMaxY,
+                        StarFitMargin, StarMinZoom, StarMaxZoom, out float fitZoom, out var fitPan);
+                    _starZoom = fitZoom;
+                    _starPan = new Vector2(fitPan.X, fitPan.Y);
                 }
                 Vector2 mouse = e.mousePosition;
-                bool inside = viewport.Contains(mouse);
-                _starView.Update(_starLayout, viewport, _starPan, _starZoom);
+                // 重ねて出している選択パネルの上では、星図は操作を受けない。
+                bool inside = viewport.Contains(mouse) && !(_starOverlay.width > 0f && _starOverlay.Contains(mouse + canvas.position));
+                float guiScale = Mathf.Abs(GUI.matrix.m00);
+                _starView.Update(_starLayout, viewport, _starPan, _starZoom, guiScale);
                 if (inside) hover = _starView.Hit(mouse);
                 if (inside && e.type == EventType.ScrollWheel)
                 {
@@ -2084,11 +2524,17 @@ namespace SodRpg.Mod
                     int pressed = _starPressed;
                     CancelStarDrag();
                     e.Use();
-                    if (!_starMoved && inside && hover == pressed && pressed >= 0 && _starMouseButton < 2 && _s.CanEditTalents)
+                    if (!_starMoved && inside && hover == pressed && pressed >= 0 && _starMouseButton < 2)
                     {
                         var t = _starLayout.Nodes[pressed].Talent;
                         if (t != null)
                         {
+                            if (_starMouseButton == 0 && t.IsChoice)
+                            {
+                                _starChoiceId = t.Id;
+                                GUIUtility.ExitGUI();
+                            }
+                            if (!_s.CanEditTalents || p.Run != null) return;
                             try
                             {
                                 if (_starMouseButton == 1) Rules.RemoveTalentRank(p, hero, t.Id);
@@ -2100,12 +2546,13 @@ namespace SodRpg.Mod
                                 _starDirty = true;
                                 _s.MarkDirty(true);
                             }
+                            catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                             catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                         }
                     }
                 }
                 if (e.type != EventType.Repaint) return;
-                _starView.Update(_starLayout, viewport, _starPan, _starZoom);
+                _starView.Update(_starLayout, viewport, _starPan, _starZoom, guiScale);
                 // Pan/zoom events may have changed the geometry since the initial hit check.
                 hover = inside ? _starView.Hit(mouse) : -1;
                 StarFillRect(viewport, new Color(0.035f, 0.045f, 0.075f));
@@ -2127,7 +2574,7 @@ namespace SodRpg.Mod
                     Rect rect = _starView.NodeRects[i];
                     var n = _starNodes[i];
                     Color frame = n.Allocated ? StarGold : n.Keystone ? StarKeystone : n.Pair ? StarPair : n.Available ? StarBright : StarGrey;
-                    if (n.SearchMatch)
+                    if (n.SearchMatch || n.SummaryHover)
                         StarDrawDisc(StarSearchRing(), new Rect(rect.x - 11f, rect.y - 11f, rect.width + 22f, rect.height + 22f), StarGold);
                     if (n.Available && !n.Allocated)
                         StarDrawDisc(disc, new Rect(rect.x - 5f, rect.y - 5f, rect.width + 10f, rect.height + 10f),
@@ -2148,23 +2595,26 @@ namespace SodRpg.Mod
                         GUI.color = old;
                         if (_starLayout.Nodes[i].Talent != null && rect.width >= 24f)
                         {
-                            var badge = new Rect(rect.center.x - 15f, rect.yMax - 8f, 30f, 14f);
+                            var badge = new Rect(rect.center.x - 17f, rect.yMax - 9f, 34f, 16f);
                             StarFillRect(badge, new Color(0.04f, 0.05f, 0.08f, 0.9f));
                             GUI.Label(badge, n.RankLabel, _starRankStyle);
                         }
                     }
                     else if (rect.width >= 24f) GUI.Label(rect, n.RankLabel, _starRankStyle);
+                    if (n.Region.HasValue && rect.width >= 20f)
+                        StarDrawDisc(disc, new Rect(rect.xMax - 7f, rect.y - 3f, 8f, 8f), StarRegionColor(n.Region.Value));
                     // Hover takes priority over another label in the same cell.
                     if (i == hover || (_starView.Named[i]
                         && (hover < 0 || _starView.LabelCells[i] != _starView.LabelCells[hover])))
-                        GUI.Label(new Rect(rect.center.x - 80f, rect.yMax + 7f, 160f, 18f), n.Name, _starNameStyle);
+                        GUI.Label(new Rect(rect.center.x - 100f, rect.yMax + 7f, 200f, 22f), n.Name, _starNameStyle);
                 }
             }
             finally { GUI.EndGroup(); }
             // Tooltips may extend above the viewport, so long effects remain readable.
+            if (hover < 0 && _starKeystoneHover >= 0 && e.type == EventType.Repaint) hover = _starKeystoneHover;
             if (hover >= 0 && !_starDragging)
             {
-                float width = Mathf.Min(440f, canvas.width - 12f);
+                float width = Mathf.Min(480f, canvas.width - 12f);
                 var node = _starNodes[hover];
                 if (node.TooltipWidth != width)
                 {
@@ -2186,9 +2636,11 @@ namespace SodRpg.Mod
         {
             if (t == null) return "start";
             if (t.IsKeystone) return "keystone";
+            if (t.IsChoice) return "choice";
             if (PairCombos.ForBridge(t.Id) != null) return "pair";
-            if (t.Gimmick != null) return "gimmick";
-            if (t.LinkPerRank != null) return t.LinkPerRank.Kind == LinkKind.MemoryDamage ? "memory" : "link";
+            if (t.Gimmick != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue) return "gimmick";
+            if (t.LinkPerRank != null) return t.LinkPerRank.Kind == LinkKind.MemoryDamage
+                || t.LinkPerRank.Kind == LinkKind.MemoryHaste ? "memory" : "link";
             if (t.IsPowerNode) return "unique";
             switch (t.Stat)
             {
@@ -2225,19 +2677,29 @@ namespace SodRpg.Mod
         private void DrawKeystoneBar(Profile p, string hero)
         {
             if (_starKeystones.Length == 0) return;
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("刻印（1つ）：", "Keystone (one):"), _st.Small, StarKeystoneWidth);
+            // v1.31: travelers have 8–10 keystones, so the bar wraps into rows instead of overflowing one line.
+            if (Event.current.type == EventType.Repaint) _starKeystoneHover = -1;
             for (int k = 0; k < _starKeystones.Length; k++)
             {
+                if (k % StarKeystonesPerRow == 0)
+                {
+                    if (k > 0) GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    if (k == 0) GUILayout.Label(HeroNames.KeystoneHeader(hero), _starHelpStyle, StarKeystoneHeaderWidth);
+                    else GUILayout.Space(StarKeystoneHeaderPx + 4f);
+                }
                 int index = _starKeystones[k];
                 var t = _starLayout.Nodes[index].Talent;
                 var state = _starNodes[index];
                 bool chosen = state.Allocated;
                 bool unlocked = state.Unlocked;
-                if (GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight))
+                bool pressed = GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight);
+                if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                    _starKeystoneHover = index;
+                if (pressed)
                 {
                     StarJumpTo(index);
-                    if (!chosen && unlocked && _s.CanEditTalents)
+                    if (!chosen && unlocked && _s.CanEditTalents && p.Run == null)
                     {
                         try
                         {
@@ -2245,6 +2707,7 @@ namespace SodRpg.Mod
                             _starDirty = true;
                             _s.MarkDirty(true);
                         }
+                        catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
                         catch (InvalidOperationException ex) { SetStatus(ex.Message); }
                     }
                 }
@@ -2317,7 +2780,7 @@ namespace SodRpg.Mod
                 int lv = Workshop.Level(p, def.Id);
                 GUILayout.BeginHorizontal();
                 string pips = new string('●', lv) + new string('○', def.MaxLevel - lv);
-                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, lv < def.MaxLevel)}\n<color=#aab>{def.Description}</color>", _st.Small, GUILayout.Width(560));
+                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, lv < def.MaxLevel)}\n<color=#ccd>{def.Description}</color>", _st.Small, GUILayout.Width(560));
                 if (lv < def.MaxLevel)
                 {
                     var cost = def.Costs[lv];
@@ -2360,6 +2823,11 @@ namespace SodRpg.Mod
         private void DrawRecordsTab(DreamforgeConfig cfg)
         {
             var p = _s.Profile;
+            if (_codexOpen)
+            {
+                if (_codex.Draw(p, _st)) _codexOpen = false;
+                return;
+            }
             _scrollRecords = GUILayout.BeginScrollView(_scrollRecords);
             GUILayout.BeginHorizontal();
 
@@ -2419,7 +2887,7 @@ namespace SodRpg.Mod
                 {
                     GUILayout.BeginHorizontal();
                     IconSlot(r, 28);
-                    GUILayout.Label(UiStyles.RelicTitle(r) + $" <color=#9a9ab0>{Content.RarityName(r.Rarity)} Lv{r.ItemLevel}</color>", _st.Small);
+                    GUILayout.Label(UiStyles.RelicTitle(r) + $" <color=#bcbcd2>{Content.RarityName(r.Rarity)} Lv{r.ItemLevel}</color>", _st.Small);
                     GUI.enabled = !_s.Trades.IsReserved(r.Uid);
                     bool sure = _confirmDust == r.Uid;
                     string dustLabel = sure
@@ -2444,14 +2912,12 @@ namespace SodRpg.Mod
             foreach (var r in p.LostAndFound.OrderByDescending(r => r.Score)) GUILayout.Label("· " + UiStyles.RelicTitle(r) + $" Lv{r.ItemLevel}", _st.Small);
             DrawFeats(p);
             DrawVariantBook(p);
-            GUILayout.Label(Loc.T("固有品図鑑", "Legendary codex"), _st.Header);
-            var found = FoundUniques(p);
-            foreach (var line in found) GUILayout.Label(line, _st.Small);
-            int foundUniques = found.Count;
-            int missingUniques = Content.Uniques.Count - foundUniques;
+            GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
+            GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
+            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果）", "Open the codex (bases, legendaries, sets, powers)"), _st.Button)) _codexOpen = true;
             GUILayout.Label(Loc.T(
-                $"<color=#8a8aa0>見つけた固有品 {foundUniques}／{Content.Uniques.Count}種。まだ見つけていない物が{missingUniques}種あります。</color>",
-                $"<color=#8a8aa0>Legendaries found: {foundUniques}/{Content.Uniques.Count}. {missingUniques} still undiscovered.</color>"), _st.Small);
+                "<color=#8a8aa0>見つけていない固有品・セット・固有効果は、見つけるまで名前も効果も伏せられています。</color>",
+                "<color=#8a8aa0>Unfound legendaries, sets and powers stay hidden until you find them.</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();

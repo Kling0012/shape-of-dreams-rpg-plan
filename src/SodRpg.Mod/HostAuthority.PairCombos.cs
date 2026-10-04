@@ -50,7 +50,7 @@ namespace SodRpg.Mod
             catch (Exception ex) { Log.Error("Host: OnAttackFired " + ex.Message); }
         }
 
-        private void ApplyExposeDamage(HeroRuntime rt, ref DamageData damage, Entity victim)
+        private void ApplyExposeDamage(HeroRuntime rt, ref DamageData damage, Entity victim, float additionalExposePercent = 0f)
         {
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reactionEffectDepth != 0
                 || damage.IsAmountModifiedBy(typeof(GimmickRuntime)) || IsPairReactionSource(damage.actor)) return;
@@ -59,8 +59,9 @@ namespace SodRpg.Mod
             rt.PairCombos.RefreshEquipment(rt.PairMemories);
             int id = victim.GetInstanceID();
             // Expose sources share the strongest vulnerability; distinct pair IDs do not stack.
-            int expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
+            float expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
                 rt.PairCombos.ExposePercent(id, now));
+            expose = Math.Max(expose, additionalExposePercent);
             if (expose > 0) damage.ApplyAmplification(expose / 100f);
         }
 
@@ -96,19 +97,58 @@ namespace SodRpg.Mod
             {
                 var effect = request.Entry.Def.Effect;
                 if (effect == GimmickEffect.Quicken || effect == GimmickEffect.Empower || effect == GimmickEffect.Expose) continue;
-                rt.PendingGimmicks.Add(new PendingGimmick
+                var pending = new PendingGimmick
                 {
+                    ShieldEquipmentEpoch = rt.ShieldEquipmentEpoch,
+                    QueuedAt = now,
                     Request = request,
                     Victim = victim,
                     Pair = PairForRequest(rt, request.Entry.StarId),
                     Center = request.AreaAroundHero ? rt.Hero.agentPosition
                         : victim != null ? victim.position : rt.Hero.agentPosition,
-                    Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? 0.3f : 0f),
-                });
+                    Due = now + (request.Entry.Def.Effect == GimmickEffect.Echo ? request.Entry.Def.EffectiveDelaySeconds ?? 0.3f : 0f),
+                };
+                var configured = LegacyGimmickForRequest(rt, request.Entry.StarId);
+                if (configured != null)
+                {
+                    long epoch = RefreshMemoryAttributionEquipment(rt.Hero);
+                    string key = BuildAggregation.GimmickStateKey(configured);
+                    bool hadKey = rt.Powers.Build.SelectedKeystone != null;
+                    pending.AuthoredChannelId = configured.StarId;
+                    pending.AuthoredIsCurrent = () => epoch == RefreshMemoryAttributionEquipment(rt.Hero)
+                        && LegacyGimmickForRequest(rt, configured.StarId) is GimmickEntry current
+                        && (BuildAggregation.GimmickStateKey(current) == key
+                            || hadKey && rt.Powers.Build.SelectedKeystone == null && SameLegacyPendingBaseline(configured, current));
+                    pending.AuthoredDefinition = () => TransformLegacyGimmick(rt,
+                        LegacyGimmickForRequest(rt, configured.StarId)?.Def, request.Entry.Memory,
+                        request.SourceKind ?? KeystoneSourceKind.NativeMemory, configured.StarId);
+                }
+                rt.PendingGimmicks.Add(pending);
             }
             requests.Clear();
         }
 
+        private static GimmickEntry LegacyGimmickForRequest(HeroRuntime rt, string id)
+        {
+            foreach (var entry in rt.Powers.Build.Gimmicks) if (entry.StarId == id) return entry;
+            return null;
+        }
+
+        private static bool SameLegacyPendingBaseline(GimmickEntry before, GimmickEntry after)
+        {
+            var a = before.Def; var b = after.Def;
+            return before.Memory == after.Memory && a.Trigger == b.Trigger && a.Effect == b.Effect
+                && a.Arg == b.Arg && a.Cooldown == b.Cooldown && a.ValuePrecise == b.ValuePrecise
+                && a.DurationUnits == b.DurationUnits && a.RadiusUnits == b.RadiusUnits
+                && a.ExtraTargets == b.ExtraTargets && a.ChanceUnits == b.ChanceUnits
+                && (!b.UncappedValue.HasValue || a.UncappedValue == b.UncappedValue)
+                && (!b.UncappedDurationUnits.HasValue || a.UncappedDurationUnits == b.UncappedDurationUnits)
+                && (!b.UncappedRadiusUnits.HasValue || a.UncappedRadiusUnits == b.UncappedRadiusUnits)
+                && (!b.UncappedExtraTargets.HasValue || a.UncappedExtraTargets == b.UncappedExtraTargets)
+                && (!b.UncappedChanceUnits.HasValue || a.UncappedChanceUnits == b.UncappedChanceUnits)
+                && (before.Channel == null) == (after.Channel == null)
+                && (before.Channel == null || FractionalScopedModifiers.ChannelKey(before) == FractionalScopedModifiers.ChannelKey(after));
+        }
         private static PairComboDef PairForRequest(HeroRuntime rt, string id)
         {
             foreach (var entry in rt.Powers.Build.PairCombos)
@@ -142,7 +182,18 @@ namespace SodRpg.Mod
             for (int i = pending.Count - 1; i >= 0; i--)
             {
                 var effect = pending[i];
-                if (effect.Due > now) continue;
+                if (effect.AuthoredIsCurrent != null && !effect.AuthoredIsCurrent()) { pending.RemoveAt(i); continue; }
+                if (effect.AuthoredDefinition != null)
+                {
+                    var effective = effect.AuthoredDefinition();
+                    if (effective == null) { pending.RemoveAt(i); continue; }
+                    effect.Request.Entry = new GimmickEntry { StarId = effect.Request.Entry.StarId, Memory = effect.Request.Entry.Memory, Def = effective };
+                    if (effective.Effect == GimmickEffect.Burst || effect.Request.AreaRadius > 0)
+                        effect.Request.AreaRadius = Gimmicks.Radius(effective, Gimmicks.AreaRadius);
+                    if (effective.Effect == GimmickEffect.Echo)
+                        effect.Due = effect.QueuedAt + (effective.EffectiveDelaySeconds ?? 0.3f);
+                }
+                if (effect.Due > now) { pending[i] = effect; continue; }
                 pending.RemoveAt(i);
                 if (effect.Pair != null && (FindMemory(rt.Hero, effect.Pair.RouteA) == null
                     || FindMemory(rt.Hero, effect.Pair.RouteB) == null)) continue;
@@ -164,8 +215,7 @@ namespace SodRpg.Mod
             switch (def.Effect)
             {
                 case GimmickEffect.Element:
-                    int stacks = def.Value / 100;
-                    if (_rng.NextDouble() * 100 < def.Value % 100) stacks++;
+                    int stacks = Gimmicks.ElementStacks(def, _rng.NextDouble());
                     if (stacks <= 0) break;
                     var element = def.Arg == 0 ? ElementalType.Fire : def.Arg == 1 ? ElementalType.Cold
                         : def.Arg == 2 ? ElementalType.Light : ElementalType.Dark;
@@ -184,37 +234,38 @@ namespace SodRpg.Mod
                     else if (liveTarget) hero.ApplyElemental(element, victim, stacks);
                     break;
                 case GimmickEffect.Burst:
-                    _gimmickDamageDepth++;
+                    EnterGenerated(hero);
                     try
                     {
-                        DamageAround(hero, pending.Center, 4f,
-                            Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.Value / 100f,
+                        DamageAround(hero, pending.Center, request.AreaRadius,
+                            TransformAuthoredGeneratedDamage(hero, Math.Max(hero.Status.attackDamage, hero.Status.abilityPower) * def.ValuePercent / 100f,
+                                request.Entry.Memory, pending.AuthoredChannelId ?? request.Entry.StarId, GimmickEffect.Burst),
                             null, int.MaxValue, hero.Status.abilityPower > hero.Status.attackDamage, gimmick: true);
                     }
-                    finally { _gimmickDamageDepth--; }
+                    finally { ExitGenerated(hero); }
                     break;
                 case GimmickEffect.Shield:
-                    // The root server actor has no hero ancestors: native support cannot grant Heart of the Pack.
-                    // 出どころを変えたので、旅人のシールド量はここで掛ける（v1.27.1 の能力値）。
-                    ActorManager.instance.serverActor.GiveShield(hero,
-                        SupportStats.AmplifyShield(hero.maxHealth * def.Value / 100f, rt.Powers.Build.Get(Stat.ShieldPower)), 4f);
+                    ApplyGimmickV129(rt, pending);
                     break;
                 case GimmickEffect.Heal:
                     var support = ActorManager.instance.serverActor;
                     // 出どころを変えたので、旅人の回復量はここで掛ける（v1.27.1 の能力値）。
                     int healPower = rt.Powers.Build.Get(Stat.HealPower);
-                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.Value / 100f, healPower)).Dispatch(hero);
+                    support.Heal(SupportStats.AmplifyHeal(hero.maxHealth * def.ValuePercent / 100f, healPower)).Dispatch(hero);
+                    float healRadius = Gimmicks.Radius(def, 10f);
                     if (def.Arg == 1)
                         foreach (var player in DewPlayer.gamePlayers)
                         {
                             var ally = player != null ? player.hero : null;
                             if (ally == hero || !Alive(ally) || ally.GetRelation(hero) != EntityRelation.Ally
-                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > 100f) continue;
-                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * def.Value / 100f, healPower)).Dispatch(ally);
+                                || (ally.agentPosition - hero.agentPosition).sqrMagnitude > healRadius * healRadius) continue;
+                            float allyBefore = ally.currentHealth;
+                            support.Heal(SupportStats.AmplifyHeal(ally.maxHealth * (float)(def.EffectiveAllyValuePercent ?? def.EffectiveValueOrAuthored) / 100f, healPower)).Dispatch(ally);
+                            CreditHealRestored(rt, ally, allyBefore);
                         }
                     break;
                 case GimmickEffect.Recharge:
-                    ReduceMemoryCooldown(hero, FindMemory(hero, request.Entry.Memory), def.Value);
+                    ReduceMemoryCooldown(hero, FindMemory(hero, request.Entry.Memory), def.ValuePercent);
                     break;
                 case GimmickEffect.Reload:
                     var skill = FindMemory(hero, request.Entry.Memory);
@@ -233,26 +284,27 @@ namespace SodRpg.Mod
                         if (other == null || slot == HeroSkillLocation.Movement) continue;
                         if (Gimmicks.CanRechargeOther(request.Entry.Memory, other.GetType().Name,
                             other.type == SkillType.Normal, slot == HeroSkillLocation.Identity))
-                            ReduceMemoryCooldown(hero, other, def.Value);
+                            ReduceMemoryCooldown(hero, other, def.ValuePercent);
                     }
                     break;
                 case GimmickEffect.Echo:
                     if (!liveTarget || request.Damage <= 0f) break;
-                    _gimmickDamageDepth++;
+                    EnterGenerated(hero);
                     try
                     {
                         // Final damage is already armor-adjusted; repeat that amount without a second armor reduction.
-                        hero.PureDamage(request.Damage * def.Value / 100f, 0f)
+                        hero.PureDamage(TransformAuthoredGeneratedDamage(hero, request.Damage * def.ValuePercent / 100f,
+                            request.Entry.Memory, pending.AuthoredChannelId ?? request.Entry.StarId, GimmickEffect.Echo), 0f)
                             .SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
                     }
-                    finally { _gimmickDamageDepth--; }
+                    finally { ExitGenerated(hero); }
                     break;
                 // Quicken/Empower/Expose windows are registered by the pure runtime.
                 default: ApplyGimmickV129(rt, pending); break;
             }
         }
 
-        private static void ReduceMemoryCooldown(Hero hero, SkillTrigger skill, int percent)
+        private static void ReduceMemoryCooldown(Hero hero, SkillTrigger skill, float percent)
         {
             if (skill == null) return;
             // The native ratio is a fraction of maximum cooldown, not remaining cooldown.
@@ -290,7 +342,7 @@ namespace SodRpg.Mod
                 if (ReduceMemoryCooldowns(hero, criticalEcho)) LogPowerTrigger(Power.CriticalEcho);
                 float ratio = victim.maxHealth > 0 ? victim.currentHealth / victim.maxHealth : 1f;
                 var r = rt.Powers.OnAttackHit(Time.time, hero.maxHealth, hero.Status.attackDamage, hero.Status.abilityPower,
-                    ratio, info.isCrit, _rng.NextDouble());
+                    ratio, info.isCrit, _rng.NextDouble(), consumeNextBasic: !rt.Powers.UsesMemoryPreparationLedger);
                 _pairDamageDepth++;
                 try
                 {

@@ -14,12 +14,15 @@ namespace SodRpg.Core.Game
         public NightmareAffix Nightmare { get; }
         public string VariantId { get; }
         public string HeroKey { get; }
+        public string EventId { get; }
+        public uint MonsterNetId { get; }
 
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
-            NightmareAffix nightmare, string variantId, string heroKey)
+            NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
+            EventId = eventId; MonsterNetId = monsterNetId;
         }
     }
 
@@ -27,6 +30,7 @@ namespace SodRpg.Core.Game
     {
         private readonly Queue<PendingRunKill> _kills = new Queue<PendingRunKill>();
         public int Count => _kills.Count;
+        public IEnumerable<PendingRunKill> Facts => _kills;
         public bool HasFor(string runId, int zoneIndex) => _kills.Count > 0
             && _kills.Peek().RunId == runId && _kills.Peek().ZoneIndex == zoneIndex;
         public void Add(PendingRunKill kill) { if (!string.IsNullOrEmpty(kill.RunId)) _kills.Enqueue(kill); }

@@ -41,6 +41,19 @@ namespace SodRpg.Core.Game
             return new StarMapPoint(-x * zoom, -y * zoom);
         }
 
+        /// <summary>
+        /// 全体表示：レイアウト上の範囲（minX..maxX, minY..maxY）が、余白 marginPx（画面の単位。星の光輪・文字ぶん）を
+        /// 残して表示領域に収まる倍率と、その範囲の中心を表示領域の中心に置く pan を返す。
+        /// </summary>
+        public static void FitView(float viewWidth, float viewHeight, float minX, float maxX, float minY, float maxY,
+            float marginPx, float minZoom, float maxZoom, out float zoom, out StarMapPoint pan)
+        {
+            float spanX = Math.Max(1f, maxX - minX), spanY = Math.Max(1f, maxY - minY);
+            float availableX = Math.Max(1f, viewWidth - 2f * marginPx), availableY = Math.Max(1f, viewHeight - 2f * marginPx);
+            zoom = Math.Max(minZoom, Math.Min(maxZoom, Math.Min(availableX / spanX, availableY / spanY)));
+            pan = new StarMapPoint(-(minX + maxX) * 0.5f * zoom, -(minY + maxY) * 0.5f * zoom);
+        }
+
         /// <summary>Matches a nonempty query against a nullable name or effect description using ordinal case-insensitive text.</summary>
         public static bool Matches(string name, string description, string query)
         {
@@ -87,6 +100,15 @@ namespace SodRpg.Core.Game
         {
             int column = (int)Math.Floor(x / 90f);
             int row = (int)Math.Floor(y / 18f);
+            return ((long)column << 32) | (uint)row;
+        }
+
+        /// <summary>Same packing with an explicit cell size (larger label fonts need larger cells).</summary>
+        public static long LabelCell(float x, float y, float cellWidth, float cellHeight)
+        {
+            if (!(cellWidth > 0f) || !(cellHeight > 0f)) throw new ArgumentOutOfRangeException(nameof(cellWidth));
+            int column = (int)Math.Floor(x / cellWidth);
+            int row = (int)Math.Floor(y / cellHeight);
             return ((long)column << 32) | (uint)row;
         }
 

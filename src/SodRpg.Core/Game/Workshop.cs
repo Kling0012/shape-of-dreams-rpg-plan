@@ -77,15 +77,15 @@ namespace SodRpg.Core.Game
             {
                 Id = Upgrade.BigSatchel, Key = "bigSatchel",
                 Name = new Txt("大きな鞄", "Bigger Satchel"),
-                Description = new Txt("遠征中に持ち歩ける遺物が5個増えます。", "Carry 5 more unsecured relics on an expedition."),
-                Costs = new[] { (100, 0), (200, 2), (400, 4) },
+                Description = new Txt("遠征中に持ち歩ける遺物が1段につき5個増えます（10段まで）。", "Carry 5 more unsecured relics per level on an expedition (up to 10 levels)."),
+                Costs = new[] { (100, 0), (200, 2), (400, 4), (600, 6), (800, 8), (1000, 10), (1300, 12), (1600, 14), (2000, 16), (2500, 20) },
             },
             new UpgradeDef
             {
                 Id = Upgrade.WideStash, Key = "wideStash",
                 Name = new Txt("広い保管庫", "Wider Stash"),
-                Description = new Txt("保管庫に入る遺物が20個増えます。", "Your stash holds 20 more relics."),
-                Costs = new[] { (80, 0), (160, 1), (320, 3) },
+                Description = new Txt("保管庫に入る遺物が増えます（1〜3段目は20個ずつ、4〜10段目は40個ずつ）。", "Your stash holds more relics (20 per level for levels 1-3, 40 per level for levels 4-10)."),
+                Costs = new[] { (80, 0), (160, 1), (320, 3), (500, 5), (700, 7), (900, 9), (1200, 11), (1500, 13), (1900, 16), (2400, 20) },
             },
             new UpgradeDef
             {
@@ -143,7 +143,14 @@ namespace SodRpg.Core.Game
         public static int Level(Profile p, Upgrade u) => p.Upgrades.TryGetValue(u, out int lv) ? lv : 0;
 
         public static int SatchelCapacity(Profile p) => Content.SatchelCapacity + 5 * Level(p, Upgrade.BigSatchel);
-        public static int StashCapacity(Profile p) => Content.StashCapacity + 20 * Level(p, Upgrade.WideStash);
+        public static int StashCapacity(Profile p) => Content.StashCapacity + StashBonus(Level(p, Upgrade.WideStash));
+
+        /// <summary>広い保管庫の段ごとの増分：1〜3段目は20個、4段目からは40個（v1.31）。</summary>
+        public static int StashBonus(int level)
+        {
+            level = Math.Max(0, level);
+            return 20 * Math.Min(level, 3) + 40 * Math.Max(0, level - 3);
+        }
         public static int RoomsToRecover(Profile p) => Math.Max(2, Content.RoomsToRecoverLost - Level(p, Upgrade.LostMap));
         public static int EchoPercent(Profile p) => 25 + 5 * (p == null ? 0 : Level(p, Upgrade.EchoLantern));
         public static int PactsOffered(Profile p) => Pacts.Offered + (p == null ? 0 : Level(p, Upgrade.PactStars));

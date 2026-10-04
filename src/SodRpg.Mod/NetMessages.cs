@@ -1,4 +1,5 @@
 using System;
+using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
@@ -11,14 +12,53 @@ namespace SodRpg.Mod
     {
         public string build;
         public int protocol;
+        public string transferId;
+        public int index;
+        public int count;
+        public int totalLength;
+
+        public static DreamforgeBuildMsg FromPart(BuildTransferPart part) => new DreamforgeBuildMsg
+        {
+            build = part.Data, protocol = Protocol.Version, transferId = part.TransferId,
+            index = part.Index, count = part.Count, totalLength = part.TotalLength,
+        };
+        public BuildTransferPart ToPart() => new BuildTransferPart
+        {
+            Data = build, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength,
+        };
     }
 
     /// <summary>ホスト → クライアント：ホストがMODを導入済みで、能力を反映したことの通知。</summary>
     [Serializable]
+    /// <summary>
+    /// 版のあいさつ。参加者→ホスト、ホスト→参加者。**この型の名前と欄は今後も変えない**（どの版どうしでも読めて、版違いを利用者に知らせるため）。
+    /// </summary>
+    public class DreamforgeHelloMsg
+    {
+        public int protocol;
+        public string modVer;
+        public string content;
+    }
+
     public class DreamforgeAppliedMsg
     {
         public uint heroNetId;
         public string summary;
+        public int protocol;
+        public string transferId;
+        public int index;
+        public int count;
+        public int totalLength;
+
+        public static DreamforgeAppliedMsg FromPart(BuildTransferPart part, uint heroNetId) => new DreamforgeAppliedMsg
+        {
+            summary = part.Data, protocol = Protocol.Version, transferId = part.TransferId,
+            index = part.Index, count = part.Count, totalLength = part.TotalLength, heroNetId = heroNetId,
+        };
+        public BuildTransferPart ToPart() => new BuildTransferPart
+        {
+            Data = summary, TransferId = transferId, Index = index, Count = count, TotalLength = totalLength,
+        };
     }
 
     /// <summary>ホストが求めた夢の圧。途中参加向けにも定期送信する。</summary>
@@ -37,6 +77,8 @@ namespace SodRpg.Mod
     {
         public int protocol;
         public string choices;
+        public bool terminal;
+        public bool victory;
     }
 
     internal enum BountyReportKind
@@ -66,6 +108,7 @@ namespace SodRpg.Mod
     {
         public uint netId;
         public int affixes;
+        public ulong authorityGeneration;
     }
 
     /// <summary>ホスト → 全員：この敵が夢の変種になった（Core の変種ID）。</summary>
@@ -74,6 +117,7 @@ namespace SodRpg.Mod
     {
         public uint netId;
         public string variantId;
+        public ulong authorityGeneration;
     }
 
     /// <summary>ホスト → 全員：現在の敵側の予告。0なし、1障壁予告、2守り、3隙/減速、4回復。</summary>
@@ -82,6 +126,7 @@ namespace SodRpg.Mod
     {
         public uint netId;
         public int cue;
+        public ulong authorityGeneration;
     }
 
     /// <summary>クライアント → ホスト：悪夢の契約の代償として、自分のキャラへ本体の呪いを付けてほしい。</summary>
@@ -121,8 +166,10 @@ namespace SodRpg.Mod
 
     internal static class Protocol
     {
-        // Version 10 adds host authority generations to the shared run-choice snapshot wire format.
-        public const int Version = 10;
+        // Version 13 requires canonical allocation/loadout inputs for host reconstruction.
+        // Version 13 requires replayable authoritative death facts; version 12 cannot settle unknown dead classifications.
+        // Version 13 adds authored mechanisms, scoped keystones and registry negotiation.
+        public const int Version = 13;
     }
 
     [Serializable]

@@ -30,8 +30,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(affixes + 1, r.Affixes.Count);
             Assert.Equal(1, r.EnhanceMilestones);
             Assert.Equal(EventKind.LevelUp, e3.Kind);
-            Rules.Enhance(p, r.Uid);
-            Rules.Enhance(p, r.Uid);
+            r.Enhance = 5;
+            Rules.GrantEnhanceMilestones(new Rng(7), r);
             Assert.Single(r.Powers);
             Assert.Equal(2, r.EnhanceMilestones);
             // 固有効果はその枠の候補の下限値
@@ -47,7 +47,8 @@ namespace SodRpg.Core.Tests
         {
             var (p, r) = WithRelic(Rarity.Epic);
             int affixes = r.Affixes.Count, powers = r.Powers.Count;
-            for (int i = 0; i < 5; i++) Rules.Enhance(p, r.Uid);
+            r.Enhance = 5;
+            Rules.GrantEnhanceMilestones(new Rng(7), r);
             Assert.Equal(powers, r.Powers.Count);
             Assert.Equal(affixes + 2, r.Affixes.Count);
         }
@@ -125,7 +126,7 @@ namespace SodRpg.Core.Tests
         public void Offered_relic_is_not_used_as_transmute_material()
         {
             var p = Profile.CreateNew(3);
-            for (int i = 0; i < 4; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(40 + i)), Rarity.Common, 2));
+            for (int i = 0; i < Content.TransmuteInputs(Rarity.Common) + 1; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(40 + i)), Rarity.Common, 2));
             p.AddMaterial(Materials.Tuning, 10);
             var weakest = Rules.TransmuteCandidates(p, Rarity.Common).First();
             Rules.Retune(p, weakest.Uid, 0);
@@ -138,7 +139,7 @@ namespace SodRpg.Core.Tests
             foreach (var slot in new[] { Slot.Weapon, Slot.Armor, Slot.Charm })
             {
                 var p = Profile.CreateNew(11);
-                for (int i = 0; i < 3; i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(60 + i)), Rarity.Uncommon, 2));
+                for (int i = 0; i < Content.TransmuteInputs(Rarity.Uncommon); i++) p.Stash.Add(Loot.RollRelic(new Rng((ulong)(60 + i)), Rarity.Uncommon, 2));
                 p.AddMaterial(Materials.Shard, 1000);
                 int before = p.Material(Materials.Shard);
                 Rules.Transmute(p, Rarity.Uncommon, target: slot);

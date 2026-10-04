@@ -80,11 +80,11 @@ namespace SodRpg.Core.Tests
             Assert.Equal(14, bySlot(Slot.Hands));
             Assert.Equal(9, bySlot(Slot.Feet));
             Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(1190, Content.Uniques.Count); // Includes all reviewed P37 content.
+            Assert.Equal(1334, Content.Uniques.Count); // Includes all reviewed P37 content.
             Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
             Assert.Equal(357, Content.Uniques.Count(u => u.Link != null)); // Includes all reviewed P37 content.
             Assert.Equal(48, Content.Sets.Count); // Includes all reviewed P37 content.
-            Assert.Equal(12, Content.Uniques.Count(u => u.SetId != null && Pass1SetIds.Contains(u.SetId)));
+            Assert.Equal(24, Content.Uniques.Count(u => u.SetId != null && Pass1SetIds.Contains(u.SetId))); // 6部位化後
         }
 
         [Fact]
@@ -113,7 +113,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Pass1_sets_have_stat_two_piece_reaction_three_piece_and_three_pieces()
+        public void Pass1_sets_have_stat_two_piece_reaction_three_piece_and_six_pieces()
         {
             foreach (var setId in Pass1SetIds)
             {
@@ -125,8 +125,8 @@ namespace SodRpg.Core.Tests
                 Assert.All(set.ThreePiece, p => Assert.True(Enum.IsDefined(typeof(Power), p.Power), setId));
                 Assert.All(set.ThreePiece, p => Assert.InRange(p.Value, 1, Content.PowerCap(p.Power)));
                 var piecesOf = Content.Uniques.Where(u => u.SetId == setId).ToList();
-                Assert.Equal(3, piecesOf.Count);
-                Assert.Equal(3, piecesOf.Select(u => Content.GetBase(u.BaseId).Slot).Distinct().Count());
+                Assert.Equal(6, piecesOf.Count);
+                Assert.Equal(6, piecesOf.Select(u => Content.GetBase(u.BaseId).Slot).Distinct().Count());
                 Assert.All(piecesOf, u => Assert.False(string.IsNullOrWhiteSpace(u.Name.En), u.Id));
             }
         }

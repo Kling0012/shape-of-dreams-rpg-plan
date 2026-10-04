@@ -116,30 +116,20 @@ namespace SodRpg.Core.Tests
             {
                 Assert.Equal(b.Links[i].Kind, d.Links[i].Kind);
                 Assert.Equal(b.Links[i].Value, d.Links[i].Value);
-                Assert.Equal(b.Links[i].Requires, d.Links[i].Requires);
+                Assert.Equal(b.Links[i].Requires.OrderBy(x => x, StringComparer.Ordinal),
+                    d.Links[i].Requires.OrderBy(x => x, StringComparer.Ordinal));
             }
         }
 
         [Fact]
-        public void Decode_drops_unknown_targets_invalid_links_and_overflow()
+        public void Decode_rejects_unknown_targets_invalid_links_and_overflow_atomically()
         {
-            // 未知の対象と、記憶を要する効果に記憶がない物は捨てる。
             var d = Build.Decode("s:;p:;h:0;l:3:20:St_L_Blizzard,3:20:St_X_Unknown,1:30:Gem_L_PureWhite,0:10:St_L_Blizzard");
-            Assert.NotNull(d);
-            Assert.Single(d.Links);
-            Assert.Equal(LinkKind.Attune, d.Links[0].Kind);
+            Assert.Null(d);
 
-            // 値は条件の数に対する上限で切る。
-            var clamped = Build.Decode("s:;p:;h:0;l:3:999:St_L_Blizzard");
-            Assert.Equal(Links.EquippedCap(LinkKind.Attune, 1), clamped.Links[0].Value); // 覚醒Ⅲまでを含む上限（issue #14）
-
-            // 旅人ルートを含む上限までは保ち、それ以上は受信しない。
-            var many = new Build();
-            foreach (string m in HeroSigils.All.Where(t => t.RouteMemory != null).Select(t => t.RouteMemory).Distinct().Take(Links.MaxLinks + 1))
-                many.Links.Add(Link(LinkKind.Attune, 10, m));
-            Assert.Equal(Links.MaxLinks + 1, many.Links.Count);
-            var trimmed = Build.Decode(many.Encode());
-            Assert.Equal(Links.MaxLinks, trimmed.Links.Count);
+            var sum = Build.Decode("s:;p:;h:0;l:3:999000:St_L_Blizzard");
+            Assert.Equal(999m, Assert.Single(sum.Links).Value);
+            Assert.Null(Build.Decode("l:3:2147483647:St_L_Blizzard"));
 
             // 形式が壊れた l 区間は Build 全体として拒否する（s:p: と同じ扱い）。
             Assert.Null(Build.Decode("s:;p:;h:0;l:3:20"));

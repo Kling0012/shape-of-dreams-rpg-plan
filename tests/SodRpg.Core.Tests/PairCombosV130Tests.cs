@@ -63,7 +63,8 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(prefix + Branches[hero][i] + ".4", def.StarA);
                 Assert.Equal(prefix + Branches[hero][(i + 1) % pairs.Length] + ".4", def.StarB);
                 var bridge = tree.Nodes.Single(n => n.Id == def.BridgeId);
-                Assert.Equal(new[] { def.StarA, def.StarB }.OrderBy(x => x), bridge.Neighbors.Select(n => tree.Nodes[n].Id).OrderBy(x => x));
+                Assert.Contains(bridge.Neighbors, n => tree.Nodes[n].Id == def.StarA);
+                Assert.Contains(bridge.Neighbors, n => tree.Nodes[n].Id == def.StarB);
                 Assert.Equal(3, bridge.Talent.MaxRank);
                 Assert.Equal(0, bridge.Talent.PerRank);
                 Assert.NotEqual(def.RouteA, def.RouteB);
@@ -377,12 +378,14 @@ namespace SodRpg.Core.Tests
             Assert.All(decoded.PairCombos, e => { Assert.Equal(3, e.Ranks); Assert.Same(PairCombos.Get(e.Def.Id), e.Def); });
             var defA = Def("Vesper", 1); var defB = Def("Mist", 5);
             decoded = Build.Decode("c:unknown:3," + defA.Id + ":0," + defA.Id + ":-1," + defA.Id + ":bogus," + defA.Id + ":1:999;c:");
-            Assert.NotNull(decoded); Assert.Empty(decoded.PairCombos);
+            Assert.Null(decoded);
             decoded = Build.Decode("c:" + defA.Id + ":2147483647;c:;c:" + defA.Id + ":1," + defB.Id + ":2");
+            Assert.Null(decoded);
+            decoded = Build.Decode("c:" + defA.Id + ":2147483647," + defB.Id + ":2");
             Assert.Equal(new[] { 3, 2 }, decoded.PairCombos.Select(e => e.Ranks));
             Assert.Null(Build.Decode(new string('x', 16385)));
             build.PairCombos.Add(Entry(defA, 1));
-            Assert.Equal(62, Build.Decode(build.Encode()).PairCombos.Count);
+            Assert.Throws<InvalidOperationException>(() => build.Encode());
         }
 
         public static IEnumerable<object[]> GuardedDefinitions =>

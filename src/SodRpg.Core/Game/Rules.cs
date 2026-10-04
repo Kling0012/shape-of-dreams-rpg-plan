@@ -44,7 +44,7 @@ namespace SodRpg.Core.Game
     /// プロフィールに対する操作（遠征・鍛冶・装着・専門化）。すべて純粋なデータ操作で、
     /// 失敗時は InvalidOperationException を投げ、プロフィールを変更しない。
     /// </summary>
-    public static class Rules
+    public static partial class Rules
     {
         /// <summary>まだ見ていないヒントなら通知に加える。</summary>
         internal static void AddHint(Profile p, Hint h, List<GameEvent> ev)
@@ -98,6 +98,7 @@ namespace SodRpg.Core.Game
         {
             var ev = new List<GameEvent>();
             if (string.IsNullOrEmpty(runId)) runId = "unknown";
+            if (runId == p.CompletedRunId) return ev;
             if (p.Run != null && p.Run.RunId == runId)
             {
                 if (string.IsNullOrEmpty(p.Run.HeroKey) && !string.IsNullOrEmpty(heroKey)) p.Run.HeroKey = heroKey;
@@ -559,6 +560,7 @@ namespace SodRpg.Core.Game
             run.EventDropBonus = 0;
             run.EventLuck = 0;
             Waypoints.Expire(run);
+            p.CompletedRunId = run.RunId;
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;
@@ -798,8 +800,7 @@ namespace SodRpg.Core.Game
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を供物として捧げました。", $"Sacrificed \"{target.DisplayName}\" as an offering."), target.Rarity));
                     if (e == DreamEvent.StarOffering)
                     {
-                        StarProgression.AddXp(p.Heroes[run.HeroKey], 40);
-                        ev.Add(new GameEvent(EventKind.Info, Loc.T("この遠征の旅人の星の経験が40増えました。", "This expedition hero gained 40 star experience.")));
+                        AddStarXp(p, run.HeroKey, 40, ev);
                     }
                     else ev.AddRange(AddXp(p, 40 + 20 * run.Heat));
                     break;
@@ -1140,17 +1141,25 @@ namespace SodRpg.Core.Game
         /// <summary>遠征中は、確保地点の選択待ちか、確保してから次の敵を倒すまでの間だけ、装備を変更できる。</summary>
         public static bool LoadoutLocked(Profile p, bool inGame) => p.Run != null && !p.Run.AwaitingChoice && !p.Run.GearWindow && inGame;
 
-        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null)
+        public static IReadOnlyList<GameEvent> Equip(Profile p, string heroKey, string uid, TradeLedger trades = null,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
             RequireUnreserved(trades, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
-            p.Hero(heroKey).Equipped[(int)r.Slot] = uid;
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Equipment, EquipmentSlot = r.Slot, EquipmentUid = uid,
+            }, approvedRefundIds);
             return Feats.Check(p);
         }
 
-        public static IReadOnlyList<GameEvent> Unequip(Profile p, string heroKey, Slot slot)
+        public static IReadOnlyList<GameEvent> Unequip(Profile p, string heroKey, Slot slot,
+            IReadOnlyCollection<string> approvedRefundIds = null)
         {
-            p.Hero(heroKey).Equipped[(int)slot] = null;
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Equipment, EquipmentSlot = slot,
+            }, approvedRefundIds);
             return Feats.Check(p);
         }
 
@@ -1191,11 +1200,17 @@ namespace SodRpg.Core.Game
                 $"Salvaged \"{r.DisplayName}\": +{shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "")));
         }
 
-        /// <summary>まとめて分解の対象（コモンとアンコモンで、鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
+        /// <summary>まとめて分解の対象（設定したレア度まで。鍵なし・未装着・取引中でも再調律の候補でもない物）。</summary>
         public static List<Relic> BulkSalvageCandidates(Profile p, TradeLedger trades = null)
         {
             string offered = p.RetuneOffer?.Uid;
-            return p.Stash.Where(x => x.Rarity <= Rarity.Uncommon && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).ToList();
+            return p.Stash.Where(x => x.Rarity <= p.BulkSalvageMaxRarity && x.Rarity < Rarity.Legendary && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).ToList();
+        }
+
+        public static void SetBulkSalvageMaxRarity(Profile p, Rarity r)
+        {
+            if (r < Rarity.Common || r > Rarity.Epic) throw new ArgumentOutOfRangeException(nameof(r), Loc.T("まとめて分解はコモンからエピックまでです。", "Bulk salvage covers Common to Epic only."));
+            p.BulkSalvageMaxRarity = r;
         }
 
         /// <summary>候補を全部分解する。成功した物だけを数えて、得た欠片と調律石は素材の実際の増分で測る。</summary>
@@ -1221,6 +1236,13 @@ namespace SodRpg.Core.Game
                 $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
         }
 
+        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。上限では0。</summary>
+        public static int EnhanceFailureChance(Relic relic)
+        {
+            if (relic.Enhance >= Content.MaxEnhanceFor(relic)) return 0;
+            return Math.Max(0, (relic.Enhance - 2) * 5);
+        }
+
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
         {
             RequireUnreserved(trades, uid);
@@ -1230,12 +1252,20 @@ namespace SodRpg.Core.Game
             int cost = Content.EnhanceCost(r.Enhance);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
-            r.Enhance++;
             var rng = p.TakeRng();
+            if (rng.Chance(EnhanceFailureChance(r) / 100.0))
+            {
+                r.Enhance = 0;
+                p.StoreRng(rng);
+                return new GameEvent(EventKind.Info, Loc.T(
+                    $"「{r.PlainName}」の強化に失敗し、強化値が+0に戻りました。欠片{cost}は消費されました。",
+                    $"Enhancement failed for \"{r.PlainName}\" and reset it to +0. The {cost} shards were spent."), r.Rarity);
+            }
+            r.Enhance++;
             string milestone = GrantEnhanceMilestones(rng, r);
             p.StoreRng(rng);
             return WithBountyProgress(p, new GameEvent(milestone != null ? EventKind.LevelUp : EventKind.Info,
-                Loc.T($"「{r.PlainName}」を+{r.Enhance}に強化しました。", $"Enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
+                Loc.T($"「{r.PlainName}」の強化に成功し、+{r.Enhance}になりました。", $"Successfully enhanced \"{r.PlainName}\" to +{r.Enhance}.") + MilestoneSuffix(milestone), r.Rarity), BountyKind.RelicEnhancer);
         }
 
         private static string MilestoneSuffix(string milestone) => milestone == null ? "" : Loc.T("節目：", " Milestone: ") + milestone;
@@ -1285,6 +1315,8 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static string GrantEnhanceMilestones(Rng rng, Relic r)
         {
+            if (r.EnhanceMilestones >= 5) r.MilestonePowerApplied = true;
+            if (r.MilestonePowerApplied) r.EnhanceMilestones = 5;
             var notes = new List<string>();
             if (r.Enhance >= Content.EnhanceMilestoneFirst && r.EnhanceMilestones < 1)
             {
@@ -1320,9 +1352,8 @@ namespace SodRpg.Core.Game
                 var line = AddMilestoneAffix(rng, r);
                 if (line != null) notes.Add(Loc.T($"特性「{Content.FormatStat(line.Stat, line.Value)}」が増えました。", $"gained \"{Content.FormatStat(line.Stat, line.Value)}\"."));
             }
-            if (r.Enhance >= Content.EnhanceMilestoneFifth && r.EnhanceMilestones < 5 && r.Rarity == Rarity.Legendary)
+            if (r.Enhance >= Content.EnhanceMilestoneFifth && !r.MilestonePowerApplied && r.Rarity == Rarity.Legendary)
             {
-                r.EnhanceMilestones = 5;
                 var boosted = BoostMilestonePower(r);
                 if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
             }
@@ -1338,15 +1369,15 @@ namespace SodRpg.Core.Game
             return line;
         }
 
-        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の値を1.2倍にする（合計の上限 PowerCap で止まる）。</summary>
+        /// <summary>+20の節目（伝説のみ）。1つ目の固有効果の保存値を一度だけ1.2倍にする。</summary>
         private static PowerLine BoostMilestonePower(Relic r)
         {
-            if (r.Powers.Count == 0) return null;
+            if (r.MilestonePowerApplied || r.Powers.Count == 0) return null;
             var first = r.Powers[0];
-            int cap = Content.PowerCap(first.Power);
             int value = Relic.Scale(first.Value, Content.LimitBreakPowerPct);
-            if (cap > 0) value = Math.Min(cap, value);
             r.Powers[0] = new PowerLine(first.Power, value);
+            r.MilestonePowerApplied = true;
+            r.EnhanceMilestones = 5;
             return r.Powers[0];
         }
 
@@ -1426,6 +1457,65 @@ namespace SodRpg.Core.Game
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
+        /// <summary>特性の洗い直しの費用（v1.31）：欠片 60×(レア度+1) と調律石 2×(レア度+1) を、その遺物で済ませた回数ぶん1.5倍（切り上げ）する。</summary>
+        public static (int Shards, int Tuning) AffixRerollCost(Relic r)
+        {
+            int times = Math.Max(0, r.AffixRerolls);
+            return (TimesThreeHalves(60 * ((int)r.Rarity + 1), times), TimesThreeHalves(2 * ((int)r.Rarity + 1), times));
+        }
+
+        /// <summary>value × 1.5^times を 3^times / 2^times の有理数として整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。</summary>
+        private static int TimesThreeHalves(int value, int times)
+        {
+            long num = 1, den = 1;
+            for (int i = 0; i < times; i++)
+            {
+                // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。
+                if (num > long.MaxValue / 3 || den > long.MaxValue / 2 || num > long.MaxValue / Math.Max(1, value)) return int.MaxValue;
+                num *= 3;
+                den *= 2;
+            }
+            return (int)Math.Min(int.MaxValue, ((long)value * num + den - 1) / den);
+        }
+
+        /// <summary>
+        /// 特性の洗い直し（v1.31）：費用を払って、遺物の特性を全部まとめて引き直す。結果はすぐに確定し、取り消せない。
+        /// 特性の数・レア度・土台・強化値・限界突破・覚醒・固有品の固有効果はそのまま、新しい遺物を作るときと同じ抽選で引き直す。
+        /// 鍵つき・装着中・取引の予約中・再調律の候補が出ている遺物は対象外。
+        /// </summary>
+        public static GameEvent AffixReroll(Profile p, string uid, TradeLedger trades = null)
+        {
+            RequireUnreserved(trades, uid);
+            RequireNoRetuneOffer(p, uid);
+            var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
+            if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
+            if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
+            var (shards, tuning) = AffixRerollCost(r);
+            if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
+                throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed)."));
+            int count = r.Affixes.Count;
+            string sep = Loc.T("、", ", ");
+            var before = r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)).ToList();
+            var rng = p.TakeRng();
+            r.Affixes.Clear();
+            Loot.RollAffixes(rng, r, count); // 新しい遺物と同じ抽選（土台の暗黙値と同じ能力値は避ける）
+            var implicitOnly = new HashSet<Stat> { r.Base.ImplicitStat };
+            while (r.Affixes.Count < count) // 能力値の種類が尽きても数は守る：重複を許して埋める（再調律と同じ扱い）
+            {
+                var line = Loot.RollAffix(rng, r.Slot, r.Rarity, r.ItemLevel, implicitOnly);
+                if (line == null) break;
+                r.Affixes.Add(line);
+            }
+            p.StoreRng(rng);
+            p.AddMaterial(Materials.Shard, -shards);
+            p.AddMaterial(Materials.Tuning, -tuning);
+            r.AffixRerolls++;
+            string after = string.Join(sep, r.Affixes.Select(a => Content.FormatStat(a.Stat, a.Value)));
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"「{r.PlainName}」の特性を洗い直しました：{string.Join(sep, before)} → {after}",
+                $"Rerolled all affixes on \"{r.PlainName}\": {string.Join(sep, before)} -> {after}"), r.Rarity);
+        }
+
         public static int CraftShardCost(bool fine) => fine ? 150 : 60;
         public static int CraftTuningCost(bool fine) => fine ? 2 : 0;
 
@@ -1450,7 +1540,10 @@ namespace SodRpg.Core.Game
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
         }
 
-        public static int TransmuteCost(Rarity r) => 10 * ((int)r + 1);
+        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? 150 : 10 * ((int)r + 1);
+
+        /// <summary>合成で要る調律石（固有品への合成だけ）。</summary>
+        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? 2 : 0;
 
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
         public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)
@@ -1459,20 +1552,24 @@ namespace SodRpg.Core.Game
             return p.Stash.Where(x => x.Rarity == r && !x.Locked && !p.IsEquippedAnywhere(x.Uid) && x.Uid != offered && (trades == null || !trades.IsReserved(x.Uid))).OrderBy(x => x.Score).ToList();
         }
 
-        /// <summary>同じレア度の遺物3つ（弱い順）を1つ上のレア度の遺物1つにする。エピック3つからは固有品。</summary>
+        /// <summary>同じレア度の遺物 Content.TransmuteInputs 個（弱い順）を1つ上のレア度の遺物1つにする。エピックからは固有品。</summary>
         /// <summary>合成の費用。結果の枠を選ぶと TransmuteTargetCostPct 倍。</summary>
         public static int TransmuteCost(Rarity r, bool targeted) => targeted ? TransmuteCost(r) * Content.TransmuteTargetCostPct / 100 : TransmuteCost(r);
 
         public static GameEvent Transmute(Profile p, Rarity r, TradeLedger trades = null, Slot? target = null)
         {
             if (r >= Rarity.Legendary) throw new InvalidOperationException(Loc.T("固有品は合成できません。", "Legendaries cannot be transmuted."));
-            var parts = TransmuteCandidates(p, r, trades).Take(3).ToList();
-            if (parts.Count < 3) throw new InvalidOperationException(Loc.T("材料が3つ足りません（鍵なし・未装着の同じレア度）。", "Need 3 unlocked, unequipped relics of the same rarity."));
+            int need = Content.TransmuteInputs(r);
+            var parts = TransmuteCandidates(p, r, trades).Take(need).ToList();
+            if (parts.Count < need) throw new InvalidOperationException(Loc.T($"材料が足りません（鍵なし・未装着の同じレア度が{need}つ必要）。", $"Need {need} unlocked, unequipped relics of the same rarity."));
             int cost = TransmuteCost(r, target != null);
+            int tuningCost = TransmuteTuning(r);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
+            if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
             int ilvl = parts.Max(x => x.ItemLevel);
             foreach (var x in parts) p.Stash.Remove(x);
             p.AddMaterial(Materials.Shard, -cost);
+            if (tuningCost > 0) p.AddMaterial(Materials.Tuning, -tuningCost);
             var rng = p.TakeRng();
             var result = Loot.RollRelic(rng, r + 1, ilvl, target, p.Focus, p.Stash, p.Run?.Satchel);
             p.StoreRng(rng);
@@ -1502,12 +1599,7 @@ namespace SodRpg.Core.Game
         /// <summary>到達刻印のつながりと段数・熟練度の条件を確かめる。</summary>
         public static bool KeystoneUnlocked(Profile p, string heroKey, TalentDef key)
         {
-            if (key == null || !key.IsKeystone || !BelongsTo(key, heroKey)) return false;
-            var h = p.Hero(heroKey);
-            if (!HeroTreeLayout.ForHero(heroKey).CanReach(h, key)) return false;
-            return key.HeroKey != null
-                ? TreeRanks(h, heroKey) >= Content.KeystoneRouteRequirement && Mastery.Level(h.Kills) >= HeroSigils.KeystoneMastery
-                : RouteRanks(h, key.Route) >= Content.KeystoneRouteRequirement;
+            return AllocationValidationForHero(heroKey).KeystoneUnlocked(p.Hero(heroKey), heroKey, key);
         }
 
         /// <summary>装着中の遺物の覚醒の段の合計。段が上がったか（能力の送り直しが要るか）の判定に使う（issue #15）。</summary>
@@ -1528,7 +1620,7 @@ namespace SodRpg.Core.Game
         {
             int n = 0;
             foreach (var kv in h.Talents)
-                if (Content.TryGetTalent(kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
+                if (Content.TryGetTalent(heroKey, kv.Key, out var t) && t.HeroKey == heroKey && !t.IsKeystone) n += Math.Max(0, Math.Min(t.MaxRank, kv.Value));
             return n;
         }
 
@@ -1536,13 +1628,13 @@ namespace SodRpg.Core.Game
         public static bool TalentUnlocked(HeroState h, string heroKey, TalentDef t)
         {
             return h != null && t != null && BelongsTo(t, heroKey)
-                && HeroTreeLayout.ForHero(heroKey).CanReach(h, t);
+                && AllocationValidationForHero(heroKey).CanReach(h, t);
         }
 
         /// <summary>取得済みの星すべてが始まりの星につながっているか。</summary>
         public static bool TalentsConnected(HeroState h, string heroKey)
         {
-            return h != null && HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, null, h.Keystone);
+            return AllocationValidationForHero(heroKey).AllocationsConnected(h);
         }
 
         public static int RouteRanks(HeroState h, Line route)
@@ -1558,75 +1650,113 @@ namespace SodRpg.Core.Game
             long n = 0;
             foreach (var kv in h.Talents)
                 n += (long)Math.Max(0, kv.Value) * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
-            if (h.Keystone != null) n += Content.KeystoneCost;
+            if (h.Keystone != null)
+                n += Content.TryGetTalent(h.Keystone, out var key) ? key.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost;
             return (int)Math.Min(int.MaxValue, n);
         }
 
-        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey));
+        /// <summary>Hero-qualified saved IDs retain their actual rank costs, including shared local Outer IDs.</summary>
+        public static int SpentPoints(HeroState h, string heroKey) => AllocationValidationForHero(heroKey).SpentPoints(h);
 
-        public static void AddTalentRank(Profile p, string heroKey, string talentId)
-        {
-            if (!Content.TryGetTalent(talentId, out var t) || t.IsKeystone) throw new InvalidOperationException("未知のノード: " + talentId);
-            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人のノードではありません。", "That node is not in this Traveler's tree."));
-            var h = p.Hero(heroKey);
-            int cur = h.Talents.TryGetValue(talentId, out int c) ? c : 0;
-            if (cur >= t.MaxRank) throw new InvalidOperationException(Loc.T("最大段階です。", "Already at max rank."));
-            if (!TalentUnlocked(h, heroKey, t))
-                throw new InvalidOperationException(Loc.T("始まりの星からつながる星に先に振ってください。", "Allocate a connected star leading here from the starting star first."));
-            if (FreePoints(p, heroKey) < t.RankCost)
-                throw new InvalidOperationException(t.RankCost > 1
-                    ? Loc.T($"ポイントが足りません（{t.RankCost}必要）。", $"Not enough points ({t.RankCost} needed).")
-                    : Loc.T("ポイントが足りません。", "Not enough points."));
-            h.Talents[talentId] = cur + 1;
-        }
+        public static int FreePoints(Profile p, string heroKey) => p.TalentPoints(heroKey) - SpentPoints(p.Hero(heroKey), heroKey);
 
-        /// <summary>1段戻す。最後の1段を外しても、残る星がすべて始まりにつながる必要がある。</summary>
-        public static void RemoveTalentRank(Profile p, string heroKey, string talentId)
+        private static readonly Dictionary<string, EffectiveAllocationValidation> allocationValidators =
+            new Dictionary<string, EffectiveAllocationValidation>(StringComparer.Ordinal);
+        private static readonly object allocationValidatorLock = new object();
+
+        /// <summary>Install a reusable mechanism policy/engine before its data becomes purchasable. Null restores the canonical tree.</summary>
+        public static void RegisterAllocationValidation(string heroKey, EffectiveAllocationValidation validation)
         {
-            if (!Content.TryGetTalent(talentId, out var t) || !BelongsTo(t, heroKey))
-                throw new InvalidOperationException(Loc.T("この旅人の星ではありません。", "That star is not in this Traveler's tree."));
-            var h = p.Hero(heroKey);
-            if (t.IsKeystone)
+            string key = string.IsNullOrEmpty(heroKey) ? "default" : heroKey;
+            lock (allocationValidatorLock)
             {
-                if (h.Keystone != talentId)
-                    throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
-                SetKeystone(p, heroKey, null);
-                return;
+                if (validation == null) allocationValidators.Remove(key);
+                else allocationValidators[key] = validation;
             }
-            if (!h.Talents.TryGetValue(talentId, out int rank) || rank <= 0)
-                throw new InvalidOperationException(Loc.T("この星には振っていません。", "That star is not allocated."));
-            RequireConnectedRefund(h, heroKey, rank == 1 ? talentId : null, h.Keystone);
-            if (rank == 1) h.Talents.Remove(talentId);
-            else h.Talents[talentId] = rank - 1;
         }
 
-        private static void RequireConnectedRefund(HeroState h, string heroKey, string removedTalent, string keystone)
+        public static EffectiveAllocationValidation AllocationValidationForHero(string heroKey)
         {
-            if (!HeroTreeLayout.ForHero(heroKey).AllocationsConnected(h, removedTalent, keystone))
-                throw new InvalidOperationException(Loc.T("つながりが切れます。先に外側の星を外してください。",
-                    "That would disconnect allocated stars. Remove the outer stars first."));
-        }
-
-        /// <summary>到達刻印は1つまで。付け替えは追加費用なしで、残る星のつながりを維持する。</summary>
-        public static void SetKeystone(Profile p, string heroKey, string keystoneId)
-        {
-            var h = p.Hero(heroKey);
-            if (keystoneId == null)
+            string key = string.IsNullOrEmpty(heroKey) ? "default" : heroKey;
+            lock (allocationValidatorLock)
             {
-                RequireConnectedRefund(h, heroKey, null, null);
-                h.Keystone = null;
-                return;
+                if (!allocationValidators.TryGetValue(key, out var validation))
+                    allocationValidators.Add(key, validation = new EffectiveAllocationValidation(HeroSigils.TreeFor(heroKey), null, HeroTreeLayout.ForHero(heroKey)));
+                return validation;
             }
-            if (!Content.TryGetTalent(keystoneId, out var t) || !t.IsKeystone) throw new InvalidOperationException("未知の刻印: " + keystoneId);
-            if (!BelongsTo(t, heroKey)) throw new InvalidOperationException(Loc.T("この旅人の刻印ではありません。", "That keystone is not in this Traveler's tree."));
-            if (!KeystoneUnlocked(p, heroKey, t))
-                throw new InvalidOperationException(t.HeroKey != null
-                    ? Loc.T($"始まりにつながり、このツリーに{Content.KeystoneRouteRequirement}段以上振り、熟練度を{HeroSigils.KeystoneMastery}以上にする必要があります。", $"Requires a connection to the starting star, {Content.KeystoneRouteRequirement}+ tree ranks and mastery {HeroSigils.KeystoneMastery}+.")
-                    : Loc.T($"始まりにつながり、{Content.LineName(t.Route)}に{Content.KeystoneRouteRequirement}段以上必要です。", $"Requires a connection to the starting star and {Content.KeystoneRouteRequirement}+ ranks in {Content.LineName(t.Route)}."));
-            if (h.Keystone == null && FreePoints(p, heroKey) < Content.KeystoneCost)
-                throw new InvalidOperationException(Loc.T($"ポイントが足りません（{Content.KeystoneCost}必要）。", $"Not enough points ({Content.KeystoneCost} needed)."));
-            RequireConnectedRefund(h, heroKey, null, keystoneId);
-            h.Keystone = keystoneId;
+        }
+
+        /// <summary>UI/host preview of exact saturated IDs, original-cost refunds and prerequisite cascades. Does not mutate the profile.</summary>
+        public static EffectiveAllocationPlan PreviewAllocationChange(Profile p, string heroKey, AllocationChange change,
+            EffectiveAllocationValidation validation = null)
+        {
+            if (change == null) throw new ArgumentNullException(nameof(change));
+            var engine = validation ?? AllocationValidationForHero(heroKey);
+            var talent = engine.Talent(change.CandidateStarId);
+            if (p.Run != null && (change.Kind == AllocationChangeKind.Choice ||
+                change.Kind == AllocationChangeKind.Purchase && talent?.IsChoice == true))
+                throw new InvalidOperationException(Loc.T("遠征中は選択の星を変更できません。", "Choice stars cannot be changed during an expedition."));
+            return engine.Preview(p, heroKey, change);
+        }
+
+        public static EffectiveAllocationPlan ApplyAllocationChange(Profile p, string heroKey, AllocationChange change,
+            IReadOnlyCollection<string> approvedRefundIds = null, EffectiveAllocationValidation validation = null)
+        {
+            var engine = validation ?? AllocationValidationForHero(heroKey);
+            var plan = PreviewAllocationChange(p, heroKey, change, engine);
+            engine.Commit(p, plan, approvedRefundIds);
+            return plan;
+        }
+
+        public static void AddTalentRank(Profile p, string heroKey, string talentId, int? choice = null,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Purchase, CandidateStarId = talentId, SelectedOption = choice,
+            }, approvedRefundIds);
+        }
+
+        /// <summary>Switch one explicit option for all allocated ranks, only outside expeditions; incompatible refunds need approval.</summary>
+        public static void SetTalentChoice(Profile p, string heroKey, string talentId, int choice,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Choice, CandidateStarId = talentId, SelectedOption = choice,
+            }, approvedRefundIds);
+        }
+
+        /// <summary>The requested rank refund is explicit; any additional dependent refunds require separate approval.</summary>
+        public static void RemoveTalentRank(Profile p, string heroKey, string talentId,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            var approval = approvedRefundIds == null
+                ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
+            approval.Add(talentId);
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Refund, CandidateStarId = talentId,
+            }, approval);
+        }
+
+        /// <summary>One cost-bearing keystone. No substitute is selected; disabled/dependent allocations are refunded atomically.</summary>
+        public static void SetKeystone(Profile p, string heroKey, string keystoneId,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            IReadOnlyCollection<string> approval = approvedRefundIds;
+            string old = p.Hero(heroKey).Keystone;
+            if (keystoneId == null && old != null)
+            {
+                var ids = approvedRefundIds == null
+                    ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
+                ids.Add(old);
+                approval = ids;
+            }
+            ApplyAllocationChange(p, heroKey, new AllocationChange
+            {
+                Kind = AllocationChangeKind.Keystone, KeystoneId = keystoneId,
+            }, approval);
         }
 
         /// <summary>ノードがその旅人のツリーに属するか。</summary>
@@ -1639,6 +1769,7 @@ namespace SodRpg.Core.Game
         {
             var h = p.Hero(heroKey);
             h.Talents.Clear();
+            h.TalentChoices.Clear();
             h.Keystone = null;
         }
     }

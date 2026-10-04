@@ -33,7 +33,7 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>Stable, shared star positions and undirected connections, including the unspent starting star.</summary>
-    public sealed class HeroTreeLayout
+    public sealed partial class HeroTreeLayout
     {
         public const float MinimumSpacing = 80f;
         private const float InnerRadius = 180f;
@@ -76,7 +76,11 @@ namespace SodRpg.Core.Game
         public int StartIndex => 0;
 
         public static HeroTreeLayout ForHero(string heroKey) =>
-            heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
+            StarClusters.TryGetRegisteredLayout(heroKey, out var registered) ? registered
+                : heroKey != null && Layouts.TryGetValue(heroKey, out var layout) ? layout : Generic;
+
+        /// <summary>Builds a validated generated tree for data tooling and layout stress scenarios.</summary>
+        public static HeroTreeLayout ForTalents(IReadOnlyList<TalentDef> talents) => Create(talents, true);
 
         private static Dictionary<string, HeroTreeLayout> CreateLayouts()
         {
@@ -89,6 +93,10 @@ namespace SodRpg.Core.Game
 
         private static HeroTreeNodeKind Kind(TalentDef talent)
         {
+            if (talent.IsKeystone) return HeroTreeNodeKind.Keystone;
+            if (talent.ClusterStar != null)
+                return talent.IsChoice || talent.ClusterStar.Kind == ClusterStarKind.Notable
+                    ? HeroTreeNodeKind.Notable : HeroTreeNodeKind.Small;
             if (talent.IsKeystone || talent.Stat == Stat.FourthAttackShift
                 || talent.Stat == Stat.EssenceSlotIdentity || talent.Stat == Stat.EssenceSlotMovement)
                 return HeroTreeNodeKind.Keystone;
@@ -137,6 +145,7 @@ namespace SodRpg.Core.Game
 
             foreach (var talent in talents)
             {
+                if (talent.Cluster != null || talent.IsOuterAnchor) continue;
                 if (talent.IsDreamRing) ring.Add(talent);
                 else if (talent.RouteId != null)
                 {
@@ -196,11 +205,13 @@ namespace SodRpg.Core.Game
             // Two earlier crossings let travelers change direction before reaching the outer bridges.
             Join(branchNodes[1][2], branchNodes[2][2]);
             Join(branchNodes[4][2], branchNodes[5][2]);
+            PlaceClusters(nodes, neighbors, edges, talents);
             return new HeroTreeLayout(nodes, edges);
         }
 
         internal bool CanReach(HeroState hero, TalentDef talent)
         {
+            if (!AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystone)) return false;
             if (!indices.TryGetValue(talent.Id, out int target) || Nodes[target].Talent != talent) return false;
             lock (traversalLock)
             {
@@ -213,6 +224,26 @@ namespace SodRpg.Core.Game
             }
         }
 
+        internal bool[] ReachabilitySnapshot(HeroState hero)
+        {
+            lock (traversalLock)
+            {
+                Traverse(hero, -1, hero.Keystone);
+                var eligible = new bool[Nodes.Count];
+                for (int i = 0; i < Nodes.Count; i++)
+                {
+                    if (!reached[i]) continue;
+                    eligible[i] = true;
+                    foreach (int adjacent in Nodes[i].Neighbors) eligible[adjacent] = true;
+                }
+                return eligible;
+            }
+        }
+
+        internal bool CanReach(HeroState hero, TalentDef talent, bool[] snapshot) =>
+            indices.TryGetValue(talent.Id, out int target) && Nodes[target].Talent == talent && snapshot[target]
+            && AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystone);
+
         internal bool AllocationsConnected(HeroState hero, string removedTalent, string keystone)
         {
             int removed = removedTalent != null && indices.TryGetValue(removedTalent, out int index) ? index : -1;
@@ -221,8 +252,10 @@ namespace SodRpg.Core.Game
                 Traverse(hero, removed, keystone);
                 foreach (var allocation in hero.Talents)
                     if (allocation.Value > 0 && allocation.Key != removedTalent
-                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated])) return false;
-                return keystone == null || (indices.TryGetValue(keystone, out int key) && reached[key]);
+                        && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated]
+                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystone))) return false;
+                return keystone == null || (indices.TryGetValue(keystone, out int key) && reached[key]
+                    && AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystone));
             }
         }
 

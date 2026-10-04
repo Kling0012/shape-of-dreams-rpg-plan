@@ -12,7 +12,12 @@ namespace SodRpg.Core.Game
         /// <summary>小ノードの段階。到達ノード（刻印）はここに含めず Keystone に持つ。</summary>
         public SortedDictionary<string, int> Talents { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
 
+        /// <summary>Allocated choice stars: zero-based option indices.</summary>
+        public Dictionary<string, int> TalentChoices { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
         public string Keystone { get; set; }
+        /// <summary>Last explicit authored-effect migration applied to this hero's saved local IDs.</summary>
+        public int AuthoredMigrationVersion { get; set; }
 
         /// <summary>このキャラでの撃破数（熟練度）。</summary>
         public int Kills { get; set; }
@@ -23,9 +28,10 @@ namespace SodRpg.Core.Game
 
         public HeroState Clone()
         {
-            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp };
+            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp, AuthoredMigrationVersion = AuthoredMigrationVersion };
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
+            foreach (var kv in TalentChoices) c.TalentChoices[kv.Key] = kv.Value;
             return c;
         }
     }
@@ -234,8 +240,12 @@ namespace SodRpg.Core.Game
         /// <summary>選んでいない再調律の候補。なければ null。</summary>
         public RetuneOffer RetuneOffer { get; set; }
 
-        /// <summary>保存の版。v1.27 で 2、v1.28 で 3 に上げた（大きな変更のたびに、古い保存は写しを残して新しく始める）。</summary>
-        public const int CurrentVersion = 3;
+        /// <summary>
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4 に上げた。内容（星団の星・選択の星など）を足す版では必ず上げる。
+        /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
+        /// 3→4 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// </summary>
+        public const int CurrentVersion = 4;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;
@@ -248,6 +258,8 @@ namespace SodRpg.Core.Game
         public int DreamLevel { get; set; } = 1;
         public int DreamXp { get; set; }
         public int EpicPity { get; set; }
+        /// <summary>まとめて分解の対象にする最高のレア度（コモン〜エピック。固有品は入らない）。</summary>
+        public Rarity BulkSalvageMaxRarity { get; set; } = Rarity.Uncommon;
         public int BestItemLevel { get; set; } = 1;
         public bool Japanese { get; set; } = true;
         /// <summary>遠征を始めるときの夢の深度（深淵の段階）。確保できた最高深度まで選べる。</summary>
@@ -281,6 +293,9 @@ namespace SodRpg.Core.Game
         public List<string> StarterUids { get; } = new List<string>();
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
+        public string CompletedRunId { get; set; }
+        public RunRecoveryState RunRecovery { get; set; }
+        public KillClassificationCheckpoint KillClassification { get; set; }
 
         /// <summary>狙い系統。設定するとその系統の装備が出やすくなる。null は狙いなし。</summary>
         public Line? Focus { get; set; }
@@ -299,7 +314,7 @@ namespace SodRpg.Core.Game
         {
             if (amount == 0) return;
             long next = (long)Material(id) + amount;
-            if (next < 0) throw new InvalidOperationException("素材が足りません: " + id);
+            if (next < 0) throw new InvalidOperationException(RuleMessages.NotEnoughMaterial.ToString() + id);
             Materials[id] = (int)Math.Min(int.MaxValue, next);
         }
 
@@ -308,7 +323,8 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(heroKey)) heroKey = "default";
             if (!Heroes.TryGetValue(heroKey, out var h))
             {
-                h = new HeroState();
+                // A hero created now never held stars under a redefined effect, so it starts at the current revision.
+                h = new HeroState { AuthoredMigrationVersion = StarClusters.MigrationsFor(heroKey).Count > 0 ? AuthoredStarMigration.CurrentVersion : 0 };
                 Heroes[heroKey] = h;
             }
             return h;
@@ -331,7 +347,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>その旅人の星ポイントに、図鑑とテスト設定の共通ボーナスを加える。</summary>
-        public int TalentPoints(string heroKey) => (int)Math.Min(int.MaxValue,
+        public int TalentPoints(string heroKey) => (int)Math.Min(StarProgression.MaxSpendablePoints,
             (long)StarProgression.Points(Hero(heroKey).StarXp) + CodexBonusPoints + Math.Max(0, TestBonusPoints));
 
         /// <summary>確認用に足す星図ポイント（保存しない）。0〜100。</summary>
@@ -353,12 +369,16 @@ namespace SodRpg.Core.Game
                 DreamLevel = DreamLevel,
                 DreamXp = DreamXp,
                 EpicPity = EpicPity,
+                BulkSalvageMaxRarity = BulkSalvageMaxRarity,
                 BestItemLevel = BestItemLevel,
                 Japanese = Japanese,
                 StartDepth = StartDepth,
                 LastDreamDepth = LastDreamDepth,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
+                CompletedRunId = CompletedRunId,
+                RunRecovery = RunRecovery?.Clone(),
+                KillClassification = KillClassification?.Clone(),
                 Focus = Focus,
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),

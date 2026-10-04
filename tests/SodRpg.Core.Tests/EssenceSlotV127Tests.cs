@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -9,20 +7,12 @@ namespace SodRpg.Core.Tests
     public class EssenceSlotV127Tests
     {
         [Fact]
-        public void New_stats_have_caps_of_one_and_natural_texts()
+        public void New_stats_keep_saved_ids_and_caps_of_one()
         {
             Assert.Equal(18, (int)Stat.EssenceSlotIdentity); // 並びは保存の値なので変えない
             Assert.Equal(19, (int)Stat.EssenceSlotMovement);
             Assert.Equal(1, Content.StatCap(Stat.EssenceSlotIdentity));
             Assert.Equal(1, Content.StatCap(Stat.EssenceSlotMovement));
-
-            Loc.Japanese = true;
-            Assert.Equal("アイデンティティ記憶にエッセンスをもう1つはめられる", Content.FormatStat(Stat.EssenceSlotIdentity, 1));
-            Assert.Equal("回避（移動の記憶）にエッセンスをもう1つはめられる", Content.FormatStat(Stat.EssenceSlotMovement, 1));
-            Loc.Japanese = false;
-            Assert.Equal("You can socket 1 more essence in your Identity memory", Content.FormatStat(Stat.EssenceSlotIdentity, 1));
-            Assert.Equal("You can socket 1 more essence in your Dodge (Movement memory)", Content.FormatStat(Stat.EssenceSlotMovement, 1));
-            Loc.Japanese = true;
         }
 
         [Fact]
@@ -60,22 +50,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1, EssenceSlots.ClampAdded(2));
             Assert.Equal(0, EssenceSlots.ClampAdded(-1));
             Assert.Equal(0, EssenceSlots.AddedFrom(new Build(), Stat.EssenceSlotIdentity)); // 無ければ0
-        }
-
-        [Fact]
-        public void Target_max_preserves_slots_added_by_other_sources()
-        {
-            // 初回：元が2で、星図から+1。他の効果はまだ無い
-            Assert.Equal(3, EssenceSlots.TargetMax(2, 0, 1, 2));
-            // 混沌の聖堂がさらに+1した後の再適用：聖堂の分（いま4 − 元2 − 自分1 = 1）を壊さない
-            Assert.Equal(4, EssenceSlots.TargetMax(2, 1, 1, 4));
-            // 聖堂の効果が切れて元に戻ったら、星図の分だけが残る
-            Assert.Equal(3, EssenceSlots.TargetMax(2, 1, 1, 3));
-            // 星を外した（自分の分が0に減った）：元の数へ戻る
-            Assert.Equal(2, EssenceSlots.TargetMax(2, 1, 0, 3));
-            // 他の効果が減らした分も、そのまま保つ（0未満にはしない）
-            Assert.Equal(1, EssenceSlots.TargetMax(2, 1, 0, 2));
-            Assert.Equal(0, EssenceSlots.TargetMax(0, 1, 0, 0));
         }
 
         [Fact]

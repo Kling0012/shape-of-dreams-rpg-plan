@@ -220,6 +220,29 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Participant_that_saw_the_run_before_its_zone_adopts_the_zone_and_receives_rewards()
+        {
+            // v1.30.3: the participant's run began while its ZoneManager was not yet known (zone -1).
+            var progress = new RunChoiceProgress();
+            progress.BeginRun("run", -1);
+            var host = NewProfile(atSecurePoint: false);
+            Assert.True(progress.Receive(Snapshot(host, 0, 1)));
+            var client = NewProfile(atSecurePoint: false);
+            Assert.False(progress.ApplyCurrent(client, 0));
+            progress.BeginRun("run", 0);
+            Assert.Equal(0, progress.ZoneIndex);
+            Assert.True(progress.ApplyCurrent(client, 0));
+            progress.Rewards.Add(new PendingRunKill("run", 0, 1, MonsterTier.Normal, 8, NightmareAffix.None, null, "hero"));
+            Assert.Equal(1, progress.FlushRewards(client, 0, false, _ => { }, kill =>
+                Rules.OnKill(client, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
+                    variantId: kill.VariantId, roomIndex: kill.RoomIndex)));
+            Assert.Equal(1, client.Run.Kills);
+            // A known zone is never overwritten by a later call.
+            progress.BeginRun("run", 3);
+            Assert.Equal(0, progress.ZoneIndex);
+        }
+
+        [Fact]
         public void Snapshot_received_before_local_run_start_is_available_for_its_first_pending_reward()
         {
             var progress = new RunChoiceProgress();
@@ -309,6 +332,96 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, client.LastReport.Kills);
             Assert.Equal(victory, client.LastReport.Victory);
             Assert.Equal(priorRelics, victory ? client.Stash.Count : client.LostAndFound.Count);
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void Rejoin_without_native_travel_reconciles_old_rewards_before_current_rules(bool missedCommit, bool victory)
+        {
+            var client = new Session(atSecurePoint: true);
+            var host = NewProfile(atSecurePoint: true);
+            var prior = Commit(host, 0, 2, Waypoint.FirstClaim);
+            if (!missedCommit) Assert.True(client.Progress.Receive(prior));
+            client.Queue(0, 10);
+            client.Progress.ResetConnection();
+            Rules.ReachSecurePoint(host);
+            var current = Commit(host, 1, 4, Waypoint.ShardRoad);
+
+            // Rejoin calls tracking, not the native travel callback.
+            client.Progress.BeginRun("run", 1);
+            client.Queue(1, 20);
+            Assert.True(client.Progress.HasPendingArrival);
+            Assert.True(client.Progress.Receive(current));
+            if (missedCommit)
+            {
+                Assert.Equal(0, client.Advance());
+                Assert.False(client.Progress.CanConclude("run"));
+                Assert.True(client.Progress.Receive(prior));
+            }
+            Assert.Equal(1, client.Advance());
+            Assert.Equal(Waypoint.FirstClaim, client.Awards.Single().Waypoint);
+            Assert.Equal(0, client.Awards.Single().Zone);
+            Assert.True(client.Progress.ApplyCurrent(client.Profile, 1));
+            Assert.True(client.Progress.CanResolveChoice(client.Profile.Run, 1, false));
+            Assert.Equal(1, client.Flush(1));
+            Assert.Equal(Waypoint.ShardRoad, client.Awards.Last().Waypoint);
+            Assert.True(client.Progress.CanConclude("run"));
+            client.Emit(Rules.EndRun(client.Profile, victory));
+            Assert.Equal(2, client.Profile.LastReport.Kills);
+            Assert.Equal(victory, client.Profile.LastReport.Victory);
+        }
+
+        [Fact]
+        public void Rejoin_skipping_two_zones_waits_for_each_original_commit()
+        {
+            var client = new Session(atSecurePoint: true);
+            client.Queue(0, 10);
+            client.Progress.BeginRun("run", 2);
+            var host = NewProfile(atSecurePoint: true);
+            var first = Commit(host, 0, 2, Waypoint.FirstClaim);
+            Rules.ReachSecurePoint(host);
+            var second = Commit(host, 1, 4, Waypoint.ShardRoad);
+            Rules.ReachSecurePoint(host);
+            var third = Commit(host, 2, 6, Waypoint.WeaponRoad);
+            Assert.True(client.Progress.Receive(third));
+            Assert.True(client.Progress.Receive(first));
+            Assert.Equal(1, client.Advance());
+            Assert.Equal(1, client.Progress.ZoneIndex);
+            Assert.True(client.Progress.HasPendingArrival);
+            Assert.True(client.Progress.Receive(second));
+            Assert.Equal(1, client.Advance());
+            Assert.Equal(2, client.Progress.ZoneIndex);
+            Assert.False(client.Progress.HasPendingArrival);
+            Assert.True(client.Progress.ApplyCurrent(client.Profile, 2));
+            Assert.Equal(Waypoint.WeaponRoad, client.Profile.Run.ActiveWaypoint);
+            Assert.Equal(Waypoint.FirstClaim, client.Awards.Single().Waypoint);
+        }
+
+        [Fact]
+        public void Terminal_result_waits_for_current_committed_rules_and_rejects_retired_or_stale_snapshots()
+        {
+            var client = new Session(atSecurePoint: true);
+            var host = NewProfile(atSecurePoint: true);
+            var pending = Snapshot(host, 0, 1);
+            pending.AuthorityGeneration = 10;
+            Assert.True(client.Progress.Receive(pending));
+            Assert.True(client.Progress.ApplyCurrent(client.Profile, 0));
+            Assert.False(client.Progress.CanConclude("run", 0, false));
+            var final = Commit(host, 0, 2, Waypoint.ShardRoad);
+            final.AuthorityGeneration = 20;
+            Assert.True(client.Progress.Receive(final));
+            Assert.True(client.Progress.AcceptsResult(final));
+            Assert.True(client.Progress.ApplyCurrent(client.Profile, 0));
+            Assert.True(client.Progress.CanConclude("run", 0, false));
+            Assert.False(client.Progress.Receive(pending));
+            Assert.False(client.Progress.AcceptsResult(pending));
+            var stale = Snapshot(host, 0, 1);
+            stale.AuthorityGeneration = 20;
+            Assert.False(client.Progress.AcceptsResult(stale));
+            Assert.False(client.Progress.CanConclude("run", 1, false));
         }
 
         private static Profile NewProfile(bool atSecurePoint)

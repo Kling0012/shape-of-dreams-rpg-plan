@@ -3,7 +3,7 @@ using System;
 namespace SodRpg.Core.Game
 {
     /// <summary>One host session's identity, revision sequence, and cached shared-choice payload.</summary>
-    public sealed class RunChoicePublisher
+    public sealed partial class RunChoicePublisher
     {
         private RunChoiceSnapshot _encodedState;
         private string _encoded;
@@ -21,6 +21,7 @@ namespace SodRpg.Core.Game
 
         public string Encode(RunState run, int selectedDepth, int zoneIndex)
         {
+            TrackHistoryRun(run?.RunId);
             int depth = DreamDepth.Clamp(run?.DreamDepth ?? selectedDepth);
             int zone = run == null ? -1 : zoneIndex;
             var old = _encodedState;
@@ -43,8 +44,10 @@ namespace SodRpg.Core.Game
         {
             var snapshot = RunChoiceSnapshot.Capture(run, selectedDepth, zoneIndex,
                 checked(++_revision), AuthorityGeneration);
+            string encoded = snapshot.Encode();
+            RememberFinalized(snapshot.RunId, zoneIndex, encoded);
             Invalidate();
-            return snapshot.Encode();
+            return encoded;
         }
 
         /// <summary>Resend freshly captured state without forgetting this host session's identity or sequence.</summary>

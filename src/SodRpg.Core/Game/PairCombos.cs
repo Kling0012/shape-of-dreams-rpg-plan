@@ -12,6 +12,7 @@ namespace SodRpg.Core.Game
     {
         public string Id { get; internal set; }
         public string HeroKey { get; internal set; }
+        public BridgeSuccessDefinition AuthoredDefinition { get; internal set; }
         public int BridgeIndex { get; internal set; }
         public string BridgeId { get; internal set; }
         public string RouteA { get; internal set; }
@@ -44,7 +45,7 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// 回避そのものは起点にしない。ただしダメージを出す移動の記憶（重装タックル・フロストチャージ）の「当たったとき」だけは例外（v1.30 の決定）。
         /// </summary>
-        public bool MovementOrigin => TriggerMemory.StartsWith("St_M_", StringComparison.Ordinal)
+        public bool MovementOrigin => AuthoredDefinition == null && TriggerMemory != null && TriggerMemory.StartsWith("St_M_", StringComparison.Ordinal)
             && !(Trigger == PairComboTrigger.OnHit && DamagingMovement.Contains(TriggerMemory));
 
         private static readonly HashSet<string> DamagingMovement = new HashSet<string>(StringComparer.Ordinal) { "St_M_Charge", "St_M_FrostyCharge" };
@@ -60,7 +61,7 @@ namespace SodRpg.Core.Game
 
     public static class PairCombos
     {
-        public const int MaxEntries = 62;
+        public static int MaxEntries => BuildLimits.MaxPairComboEntries;
         public const int MaxRanks = 3;
         public const float Duration = 4f;
         private static readonly string[] BridgeSlugs = { "force", "insight", "vessel", "armor", "recall", "rhythm", "resolve" };
@@ -74,12 +75,15 @@ namespace SodRpg.Core.Game
             foreach (var def in All) result.Add(id ? def.Id : def.BridgeId, def);
             return result;
         }
-        public static PairComboDef ForBridge(string bridgeId) => bridgeId != null && ByBridge.TryGetValue(bridgeId, out var def) ? def : null;
-        public static PairComboDef Get(string id) => id != null && ById.TryGetValue(id, out var def) ? def : null;
+        public static IReadOnlyList<PairComboDef> RegisteredAll => StarClusters.RegisteredPairs(All);
+        public static PairComboDef ForBridge(string bridgeId) => bridgeId != null && ByBridge.TryGetValue(bridgeId, out var def) ? def
+            : StarClusters.RegisteredPair(bridgeId, true);
+        public static PairComboDef Get(string id) => id != null && ById.TryGetValue(id, out var def) ? def
+            : StarClusters.RegisteredPair(id, false);
         public static PairComboEntry Clamp(PairComboEntry entry)
         {
             var def = entry?.Def == null ? null : Get(entry.Def.Id);
-            return def == null || entry.Ranks <= 0 ? null : new PairComboEntry { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks) };
+            return def == null || def.AuthoredDefinition != null || entry.Ranks <= 0 ? null : new PairComboEntry { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks) };
         }
         public static PairComboEntry Activate(PairComboDef def, HeroState hero, int bridgeRanks)
         {
@@ -93,6 +97,9 @@ namespace SodRpg.Core.Game
 
         public static string Describe(PairComboDef def, int ranks = 1)
         {
+            if (def?.AuthoredDefinition != null)
+                return AuthoredMechanisms.Describe(new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.BridgeSuccess,
+                    ChannelId = def.Id, Bridge = def.AuthoredDefinition });
             var entry = Clamp(new PairComboEntry { Def = def, Ranks = ranks });
             if (entry == null) return "";
             def = entry.Def;
@@ -119,8 +126,8 @@ namespace SodRpg.Core.Game
                     effect = ja ? target + "の残りクールダウンを" + n + "%縮める" : "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "装備中のQ記憶の残りクールダウンを" + n + "%縮める（移動・Ultimate・アイデンティティは対象外）"
-                        : "reduce your equipped Q memory's remaining cooldown by " + n + "% (excluding Movement, Ultimate and Identity)";
+                    effect = ja ? "Q・W・Eの通常記憶すべての残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティと、発動した記憶自身は対象外）"
+                        : "reduce the remaining cooldown of all your other normal memories (Q/W/E) by " + n + "% (excluding Movement, Ultimate, Identity and the triggering memory itself)";
                     break;
                 case GimmickEffect.Shield:
                     effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（4秒）" : "gain a shield equal to " + n + "% of maximum health for 4 seconds";

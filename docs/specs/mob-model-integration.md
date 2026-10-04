@@ -1,8 +1,7 @@
 # MOBモデル導入: 10体ソースと方式Bの実装（draft）
 
-> この時点のdraftはアセット公開の追加承認待ちです。10体のmanifestと検査/展開ツールは含みますが、63個のモデル実データの分割アーカイブはまだこのPRへ公開していません。クリーンcheckoutからの素材展開・素材CIは公開完了まで実行できません。
 
-関連: [Issue #19](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/19)、[第1段の調査](issue19-model-import-research.md)、[API根拠](mob-api-compatibility.md)。土台は PR #4 の `beaa1ab5685fa248ba2d47c1fbaaebee3181a42e`。PR #4 の実装ブランチへ積む変更で、古い main を土台にしない。
+関連: [Issue #19](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/19)、[第1段の調査](issue19-model-import-research.md)、[API根拠](mob-api-compatibility.md)。初回の土台は PR #4 の `beaa1ab5685fa248ba2d47c1fbaaebee3181a42e`。モデル実データの追加時に `9cb7a8f9de04e843a962e9076d78c7a6be3a0e62` までの開発を取り込み、新しい設定・起動/終了処理を維持して競合を解決した。PR #4 の実装ブランチへ積む変更で、古い main を土台にしない。
 
 ## 返信を受けた位置づけ
 
@@ -14,7 +13,7 @@ Issueの返信は「調査を始めた」「Unity 6000.0.77f1」「A=実行時GL
 
 `assets/dreamborne/manifest.json` は全10体（炉のゴーレム、茸獣、鴉の魔導師、鹿、狼、亀、蛾、蠍、灯の精、鐘クラゲ）のFBX/GLB/Blend/パレットを記録する。独立メッシュ10、三角形20,562、骨209、Idle/Walk/Attack各1つで30クリップ。最初の dream_eater は今回の10体には含めない。
 
-実バイナリは小分けの再現可能な圧縮アーカイブで管理し、次のコマンドで展開する。展開時にアーカイブ・各ファイルのサイズ/SHA-256・パスを照合する。GitHub投稿APIの大容量リクエスト制限に対応する保存形式で、外部の個人保管先への参照ではない。
+実バイナリは全88断片・合計5,745,387バイトの再現可能な圧縮アーカイブ（SHA-256: `a35cc3421d585fd48dc5387c64f0255e10100c140c15312edd3a786eb2056071`）で管理し、次のコマンドで展開する。展開時にアーカイブ・各ファイルのサイズ/SHA-256・パスを照合する。大容量の一括転送がこの作業経路で完了しなかったため、小さな単位で転送・照合できる保存形式にした。外部の個人保管先への参照ではない。
 
 ```sh
 python tools/materialize_mob_assets.py

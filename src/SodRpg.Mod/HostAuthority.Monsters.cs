@@ -232,7 +232,10 @@ namespace SodRpg.Mod
             state.Cue = cue;
             state.CueSent = true;
             state.NextCueSync = now + 5f;
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg { netId = m.netId, cue = cue });
+            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg
+            {
+                netId = m.netId, cue = cue, authorityGeneration = ClientSession.HostAuthorityGeneration,
+            });
             // Verified ClientRpc also reaches clients without Dreamforge. Modded
             // clients retain a separate modifier so model tint updates cannot erase warnings.
             m.Visual.SetShaderProperty("_CMEmission", MonsterCues.ColorFor(cue));
@@ -257,7 +260,13 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Error("Host: remove beacon shield " + ex); }
                 try { if (m.Visual != null && m.isActive) m.Visual.SetShaderProperty("_CMEmission", Color.black); }
                 catch (Exception ex) { Log.Error("Host: reset monster cue " + ex); }
-                try { _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg { netId = m.netId, cue = 0 }); }
+                try
+                {
+                    _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg
+                    {
+                        netId = m.netId, cue = 0, authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    });
+                }
                 catch (Exception ex) { Log.Error("Host: clear monster cue snapshot " + ex); }
             }
             try { if (rt.BehaviorShield != null && rt.BehaviorShield.isActive) rt.BehaviorShield.Destroy(); }

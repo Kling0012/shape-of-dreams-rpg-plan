@@ -71,12 +71,12 @@ namespace SodRpg.Core.Tests
             var p = Rich();
             Max(p, Upgrade.BigSatchel);
             Max(p, Upgrade.WideStash);
-            Assert.Equal(Content.SatchelCapacity + 15, Workshop.SatchelCapacity(p));
-            Assert.Equal(Content.StashCapacity + 60, Workshop.StashCapacity(p));
+            Assert.Equal(Content.SatchelCapacity + 50, Workshop.SatchelCapacity(p));
+            Assert.Equal(Content.StashCapacity + 340, Workshop.StashCapacity(p));
 
             Rules.BeginRun(p, "cap");
             var rng = new Rng(1001);
-            for (int i = 0; i < Content.SatchelCapacity + 15; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
+            for (int i = 0; i < Content.SatchelCapacity + 50; i++) p.Run.Satchel.Add(Loot.RollRelic(rng, Rarity.Common, 1));
             for (int i = 0; i < 10; i++) Rules.OnKill(p, MonsterTier.Boss, 1);
             Assert.Equal(Workshop.SatchelCapacity(p), p.Run.Satchel.Count);
         }

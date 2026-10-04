@@ -1,4 +1,5 @@
 using System.Globalization;
+using SodRpg.Core.Game;
 
 namespace BalanceSim;
 
@@ -20,6 +21,9 @@ internal sealed class Options
     public int ItemLevelPerZone { get; private set; } = 1;
     public string? Out { get; private set; }
     public bool Help { get; private set; }
+    public string Mode { get; private set; } = "expeditions";
+    public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
+    public bool Stars => Mode == "stars";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -59,6 +63,16 @@ internal sealed class Options
                 case "--out":
                     if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("--out のパスが空です。");
                     o.Out = value;
+                    break;
+                case "--mode":
+                    if (value is not ("expeditions" or "stars"))
+                        throw new ArgumentException("--mode は expeditions / stars です。");
+                    o.Mode = value;
+                    break;
+                case "--dream-level":
+                    o.DreamLevel = Integer(key, value, 1);
+                    if (o.DreamLevel > Content.MaxDreamLevel)
+                        throw new ArgumentException($"--dream-level は 1〜{Content.MaxDreamLevel} です。");
                     break;
                 default: throw new ArgumentException($"未知の引数: {key}");
             }
@@ -100,6 +114,8 @@ internal sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
+          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）
+          --dream-level 30   stars: 夢の圧に仮定する夢レベル（1〜30）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --help             この説明を表示
         """;

@@ -20,7 +20,7 @@ namespace SodRpg.Mod
     /// </summary>
     internal sealed partial class ClientSession
     {
-        private readonly ProfileStore _store;
+        private ProfileStore _store;
         private readonly Action<GameEvent> _notify;
 
         private ZoneManager _zone;
@@ -39,7 +39,7 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeMonsterCueMsg> _onMonsterCue;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly Action<DreamforgeBountyReportMsg> _onBountyReport;
-        private readonly Action<PendingTrade> _onSalvageExpired;
+        private readonly Action<PendingTrade> _onTradeExpired;
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
         public bool HasPendingTrades => _trades.PendingCount > 0;
@@ -83,6 +83,7 @@ namespace SodRpg.Mod
         public string ActiveRunId { get; private set; }
         public bool HostConfirmed { get; private set; }
         public string HostSummary { get; private set; }
+        private readonly BuildTransferReceiver _appliedTransfer = new BuildTransferReceiver();
         public float PressureHealthMultiplier { get; private set; } = 1f;
         public float PressureDamageMultiplier { get; private set; } = 1f;
         public string LoadNotes { get; private set; }
@@ -92,22 +93,8 @@ namespace SodRpg.Mod
         {
             _hostSession = this;
             _notify = notify;
-            string path = Path.Combine(saveDir, "profile.json");
-            ulong seed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|" + DateTime.UtcNow.Ticks);
-            _store = new ProfileStore(new RealFileSystem(), path, seed);
-            try
-            {
-                Profile = _store.Load();
-            }
-            catch (LedgerVersionException ex)
-            {
-                // 新しい版で保存されたデータ。上書きして壊さないよう、読み取り専用の空プロフィールで動く。
-                Profile = Profile.CreateNew(seed);
-                SaveError = "新しい版のMODで保存されたデータです。上書きを防ぐため保存を止めています: " + ex.Message;
-                _store = null;
-            }
-            LoadNotes = _store != null && _store.Notes.Count > 0 ? string.Join("\n", _store.Notes) : null;
-            if (LoadNotes != null) Log.Warn("Profile load notes:\n" + LoadNotes);
+            InitializeProfiles(saveDir);
+            RestoreRunDurability();
             _onDeath = OnDeath;
             _onZoneLoaded = OnZoneLoaded;
             _onClearedRoomsChanged = OnClearedRoomsChanged;
@@ -121,7 +108,7 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
-            _onSalvageExpired = RestoreSalvageTrade;
+            _onTradeExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -175,6 +162,7 @@ namespace SodRpg.Mod
                 case "gold": return Loc.T("取引できませんでした。ゴールドが足りません。", "Trade failed: not enough gold.");
                 case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
                 case "protocol": return Loc.T("取引できませんでした。ホストと Dreamforge の版が違います。全員が同じ版を入れてください。", "Trade failed: the host runs a different Dreamforge version. Everyone needs the same version.");
+                case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -195,27 +183,50 @@ namespace SodRpg.Mod
             Emit(Feats.Check(Profile));
         }
 
+        // Each step runs on its own: one failing step must not stop Build sending or periodic saving for everyone (mp-ui-save #5).
+        private Action[] _tickSteps;
+        private string[] _tickStepNames;
+        private float[] _tickStepNextLog;
+
         public void Tick()
         {
-            try
+            if (_tickSteps == null)
             {
-                Wire();
-                UpdateVariantVisuals();
-                UpdateMonsterCues();
-                TrackRun();
-                TickRunChoices();
-                if (_trades.ExpireSalvage(Time.unscaledTime, _onSalvageExpired) > 0)
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
+                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickStepNextLog = new float[_tickSteps.Length];
+            }
+            for (int i = 0; i < _tickSteps.Length; i++)
+            {
+                try
                 {
-                    Emit(new GameEvent(EventKind.Warning, Loc.T("分解の応答がないため、予約を解除しました。", "No salvage response; reservation released.")));
-                    SaveNow();
+                    _tickSteps[i]();
                 }
-                SendBuildIfNeeded();
-                if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
+                catch (Exception ex)
+                {
+                    // Log at most every 10 s per step so a persistent fault does not flood the log every frame.
+                    if (Time.unscaledTime >= _tickStepNextLog[i])
+                    {
+                        _tickStepNextLog[i] = Time.unscaledTime + 10f;
+                        Log.Error("Client tick (" + _tickStepNames[i] + "): " + ex);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                Log.Error("Client tick: " + ex);
-            }
+        }
+
+        private void TickSalvageExpiry()
+        {
+            // GLM (mp-ui-save #7): every pending trade times out and is rolled back, not only salvage.
+            if (_trades.Expire(Time.unscaledTime, _onTradeExpired) <= 0) return;
+            Emit(new GameEvent(EventKind.Warning, Loc.T(
+                "取引の応答がなかったため、待ちを解除しました。ゴールドとドリームダストの増減をご確認ください。",
+                "No trade response; the pending trade was released. Please check your gold and Dream Dust.")));
+            SaveNow();
+        }
+
+        private void TickPeriodicSave()
+        {
+            if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
         }
 
         private void Wire()
@@ -278,13 +289,17 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied); } catch (Exception) { }
+                    UnregisterHello(_clientRpcOn);
+                    UnregisterGemSlotConflict(_clientRpcOn);
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport); } catch (Exception) { }
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
                 _clientRpcOn = actor;
                 _trades.Clear();
@@ -300,8 +315,12 @@ namespace SodRpg.Mod
                 _loggedVariantVisualFailure = false;
                 HostConfirmed = false;
                 HostSummary = null;
+                ResetHello();
+                ResetGemSlotConflict();
+                _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
                 ResetRunChoiceConnection();
+                ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
                 _buildDirty = true;
                 if (actor != null)
@@ -312,8 +331,12 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
+                    RegisterHello(actor);
+                    RegisterGemSlotConflict(actor);
                 }
             }
         }
@@ -330,6 +353,9 @@ namespace SodRpg.Mod
 
         public void Unwire()
         {
+            SaveNow();
+            FlushSaves();
+            _runDurabilityDetached = true;
             try
             {
                 if (_zone != null)
@@ -343,13 +369,17 @@ namespace SodRpg.Mod
                 if (_clientRpcOn != null)
                 {
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
+                    UnregisterHello(_clientRpcOn);
+                    UnregisterGemSlotConflict(_clientRpcOn);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
             }
             catch (Exception) { }
@@ -359,10 +389,14 @@ namespace SodRpg.Mod
             _clientRpcOn = null;
             HostConfirmed = false;
             HostSummary = null;
+            ResetGemSlotConflict();
+            _appliedTransfer.Reset();
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
+            ResetMonsterAuthorityConnection();
             if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _pendingRunRewards.Clear();
+            _pendingPressureDividends.Clear();
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();
@@ -381,10 +415,14 @@ namespace SodRpg.Mod
                 return;
             }
             string runId = gm.runId;
-            if (string.IsNullOrEmpty(runId) || runId == ActiveRunId || runId == _completedRunId) return;
+            if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
+            if (_zone != null && _zone.isInAnyTransition) return;
+            // 参加者の PC では ZoneManager が遅れて届くことがある。ゾーン番号が分かるまで遠征を始めない（v1.30.3）。
+            if (ChoiceZoneIndex < 0) return;
             // Remember zone history even while the initial host rules are still in transit.
             _runChoiceProgress.BeginRun(runId, ChoiceZoneIndex);
+            if (runId == ActiveRunId) return;
             // The first reward must use the host's depth, including clients who join during an expedition.
             if (!CanChooseRunRules && (_receivedRunChoices == null || _receivedRunChoices.RunId != runId)) return;
             // 別のIDの未解決ランが残っていれば BeginRun の中で終わる。その契約の呪いを消す。
@@ -457,12 +495,11 @@ namespace SodRpg.Mod
             try
             {
                 if (!(info.victim is Monster m)) return;
-                Nightmare.TryGetValue(m.netId, out var nightmare);
-                Variant.TryGetValue(m.netId, out var variantId);
                 Nightmare.Remove(m.netId);
                 NightmareSeenAt.Remove(m.netId);
                 RemoveVariant(m.netId);
                 RemoveMonsterCue(m.netId);
+                _monsterAuthority.Remove(m.netId);
                 // ゲーム本体が報酬を出さない敵（演出・召喚・ハンターの追加敵など）は対象外（PickupManager と同じ判定）。
                 if (m.disableLoot) return;
                 if (m.Status != null && m.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter) && !hunter.enableGoldAndExpDrops) return;
@@ -478,9 +515,8 @@ namespace SodRpg.Mod
                 if (gm.runId == _completedRunId) return;
                 _runChoiceProgress.BeginRun(gm.runId, ChoiceZoneIndex);
                 if (CanChooseRunRules) CommitCombatChoice();
-                _pendingRunRewards.Add(new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
-                    tier, level, nightmare, variantId, heroKey));
-                FlushPendingRunRewards();
+                CaptureNativeKill(m.netId, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
+                    tier, level, NightmareAffix.None, null, heroKey));
             }
             catch (Exception ex)
             {
@@ -564,7 +600,7 @@ namespace SodRpg.Mod
             if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
-            return SendTrade(_trades.Begin(TradeKind.MerchantGold, price, 0, 0));
+            return SendTrade(_trades.BeginMerchant(Profile.Run?.Heat ?? 0, price, Time.unscaledTime));
         }
 
         public string ConvertDust()
@@ -573,7 +609,7 @@ namespace SodRpg.Mod
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
             if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
             if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
-            return SendTrade(_trades.Begin(TradeKind.DustToShards, 0, Math.Min(dust, Economy.DustPerBatch * 10), 0));
+            return SendTrade(_trades.BeginDustToShards(Math.Min(dust / Economy.DustPerBatch, Economy.MaxBatchesPerTrade), Time.unscaledTime));
         }
 
         private string SendTrade(PendingTrade t)
@@ -585,9 +621,10 @@ namespace SodRpg.Mod
             }
             try
             {
+                TradeWire.Encode(t, out int spendGold, out int spendDust, out int earnDust);
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
                 {
-                    token = t.Token, spendGold = t.SpendGold, spendDust = t.SpendDust, earnDust = t.EarnDust, protocol = Protocol.Version,
+                    token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
                 });
             }
             catch (Exception ex)
@@ -649,7 +686,7 @@ namespace SodRpg.Mod
                     return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
                 var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
-                return SendTrade(_trades.Begin(TradeKind.SalvageForDust, 0, 0, Economy.SalvageDust(r), r.Uid, Time.unscaledTime));
+                return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
             }
             catch (InvalidOperationException ex)
             {
@@ -659,9 +696,16 @@ namespace SodRpg.Mod
 
         private void OnNightmare(DreamforgeNightmareMsg msg)
         {
-            if (msg == null) return;
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
+                || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
             var a = Nightmares.Sanitize(msg.affixes);
-            if (a == NightmareAffix.None) return;
+            if (a == NightmareAffix.None)
+            {
+                Nightmare.Remove(msg.netId);
+                NightmareSeenAt.Remove(msg.netId);
+                RemoveVariant(msg.netId);
+                return;
+            }
             RemoveVariant(msg.netId);
             Nightmare[msg.netId] = a;
             NightmareSeenAt[msg.netId] = Time.unscaledTime;
@@ -674,9 +718,16 @@ namespace SodRpg.Mod
 
         private void OnVariant(DreamforgeVariantMsg msg)
         {
-            if (msg == null) return;
+            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
+                || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             var def = Variants.Get(msg.variantId);
-            if (def == null) return;
+            if (def == null)
+            {
+                Nightmare.Remove(msg.netId);
+                NightmareSeenAt.Remove(msg.netId);
+                RemoveVariant(msg.netId);
+                return;
+            }
             if (Variant.TryGetValue(msg.netId, out var previous) && previous != def.Id)
                 RemoveVariant(msg.netId);
             Nightmare.Remove(msg.netId);
@@ -782,7 +833,10 @@ namespace SodRpg.Mod
 
         private void OnApplied(DreamforgeAppliedMsg msg)
         {
-            HostSummary = msg?.summary;
+            if (msg == null || msg.protocol != Protocol.Version || !MechanismHandshakeAccepted) return;
+            if (msg.heroNetId != 0 && (LocalHero == null || LocalHero.netId != msg.heroNetId)) return;
+            if (_appliedTransfer.TryAccept(msg.ToPart(), out string summary) && summary != null)
+                HostSummary = summary;
         }
 
         private void OnPressure(DreamforgePressureMsg msg)
@@ -851,11 +905,42 @@ namespace SodRpg.Mod
             Emit(Rules.Delve(Profile, pact));
             var def = Pacts.Get(pact);
             if (def != null && _clientRpcOn != null && NetworkClient.active)
+            {
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg { strength = def.CurseStrength, protocol = Protocol.Version });
+                _curseSyncedKey = CurseKey(); // already applied by this Delve: no resync for the same run/hero/authority
+            }
             _buildDirty = true;
             SaveNow();
             PublishRunChoices();
             return null;
+        }
+
+        private string _curseSyncedKey = "";
+
+        private string CurseKey()
+        {
+            var hero = LocalHero;
+            if (hero == null || _clientRpcOn == null || !NetworkClient.active || !RunActive) return "";
+            return PactCurseSync.Key(ActiveRunId, hero.GetInstanceID(), _clientRpcOn.GetInstanceID());
+        }
+
+        /// <summary>再起動・ホスト権限の交代・復活のあとも契約が残っていれば、呪いを1回だけ付け直してもらう。</summary>
+        private void TickCurseResync()
+        {
+            var run = Profile.Run;
+            if (run == null || run.Pacts.Count == 0 || LocalHero == null || !LocalHero.isActive) return;
+            string key = CurseKey();
+            if (!PactCurseSync.ShouldResend(run.Pacts.Count, _curseSyncedKey, key)) return;
+            _curseSyncedKey = key;
+            for (int i = 0; i < run.Pacts.Count; i++)
+            {
+                var def = Pacts.Get(run.Pacts[i]);
+                if (def == null) continue;
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeCurseMsg
+                {
+                    strength = PactCurseSync.Encode(def.CurseStrength, i + 1), protocol = Protocol.Version,
+                });
+            }
         }
 
         /// <summary>契約が解けたことをホストへ伝え、潜行で付いた呪いを消してもらう。</summary>
@@ -891,6 +976,7 @@ namespace SodRpg.Mod
         {
             var hero = LocalHero;
             if (hero == null || _clientRpcOn == null || !NetworkClient.active) return;
+            if (!MechanismHandshakeAccepted) return;
             if (_sentDreamLevel != Profile.DreamLevel)
             {
                 _buildDirty = true;
@@ -902,10 +988,13 @@ namespace SodRpg.Mod
                 _buildDirty = true;
             }
             float now = Time.unscaledTime;
-            if (!_buildDirty && now < _nextBuildSend) return;
-            string encoded = CurrentBuild(HeroKeyOf(hero)).Encode();
-            _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeBuildMsg { build = encoded, protocol = Protocol.Version });
+            if (!_buildDirty && !_monsterAuthority.BuildResendRequired && now < _nextBuildSend) return;
+            string encoded = HostBuildValidation.Encode(CurrentBuild(HeroKeyOf(hero)), Profile, HeroKeyOf(hero),
+                Profile.Run?.Heat ?? 0, Profile.Run?.Pacts, Profile.Run?.DailyId ?? 0);
+            foreach (var part in BuildTransfer.Split(encoded))
+                _clientRpcOn.CustomRpc_SendMessageToServer(DreamforgeBuildMsg.FromPart(part));
             _buildDirty = false;
+            _monsterAuthority.BuildSent();
             _sentDreamLevel = Profile.DreamLevel;
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
@@ -920,6 +1009,7 @@ namespace SodRpg.Mod
         /// <summary>保存を予約する（ディスクへの書き込みは別スレッド）。</summary>
         public void SaveNow()
         {
+            PersistRunDurability();
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
             if (_store == null) return;

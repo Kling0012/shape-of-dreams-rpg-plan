@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         [LabelText("Delve key / 深く潜るキー")]
         public Key delveKey = Key.F8;
 
+        [LabelText("Secure point panel key / 確保地点の画面を隠す・出すキー")]
+        public Key securePanelKey = Key.F9;
+
         [LabelText("Experimental custom mob models (same validated pack required on ALL peers) / カスタムMOBモデル（全員同じ検証済みパック必須）")]
         public bool customMobModels = false;
 

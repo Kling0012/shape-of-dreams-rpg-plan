@@ -12,6 +12,12 @@ dotnet run --project tools/BalanceSim -c Release -- --runs 20 --players 300 --se
 
 Markdownを標準出力に表示し、`--out` を指定した場合は同じ内容をUTF-8（BOMなし）のファイルにも保存します。出力先の親ディレクトリは自動で作ります。引数を間違えた場合の終了コードは2、ファイル出力に失敗した場合は1です。
 
+## 星振りモード（v1.31）
+
+`--mode stars` で遠征ではなく星図の振り方を調べます。300ポイント（`StarProgression.MaxPoints`）までの購入を `Rules.AddTalentRank` / `Rules.SetKeystone` で実際に行い、`Build.Compute` の結果を節目 0/50/100/150/200/250/300 で記録します。ツリーは実行時に `HeroSigils.TreeFor` が返すもの（authored 星群の登録があれば自動でそれ）を使うため、星群データの差し替えにこのツールの変更は要りません。
+
+3つの振り方を全旅人で試します。能力値優先はプロキシ増分がポイント単価あたり最大の購入を毎回選び、記憶特化は星数最大の星群（なければ記憶ルート）を完成させてから能力値優先に切り替え、核先行は核の前提を最安で満たして `Rules.SetKeystone` を呼んでから能力値優先に戻ります。プロキシは本体が悪夢化抽選の強さに使う式（攻撃力%か魔力%の大きい方＋最大HP%の半分）で、戦闘出力ではありません。夢の圧は `DreamPressure.ForPlayer` の実式、深度の効果は `DreamDepth` / `Nightmares` の実式で、`--dream-level`（1〜30、既定30）が夢レベルの仮定です。乱数を使わない決定的なシミュレーションなので `--seed` は使いません。
+
 SDKがPATHにない環境では、次のように場所を選んで実行できます。ネットワークへの依存を増やさないよう、このプロジェクトには追加のNuGetパッケージはありません。
 
 ```powershell
@@ -35,7 +41,8 @@ $dotnet = if ($env:DOTNET_ROOT) {
 | `--lesser` | `10` | 部屋あたりの Lesser 撃破数（0以上） |
 | `--normal` | `8` | 部屋あたりの Normal 撃破数（0以上） |
 | `--miniboss` | `0.25` | 部屋ごとに MiniBoss を1体倒す確率（0〜1） |
-| `--bosses` | `1` | 各ゾーン最後の Boss 撃破数（0以上） |
+| `--mode` | `expeditions` | `expeditions`（遠征）/ `stars`（v1.31 星振り） |
+| `--dream-level` | `30` | stars: 夢の圧に仮定する夢レベル（1〜30） |
 | `--policy` | `secure` | `secure` / `delve1` / `greedy` |
 | `--wipe` | `0.15` | 遠征ごとの全滅確率（0〜1） |
 | `--bounty` | `0.6` | 本体の行動が必要な依頼の達成を予定する確率（0〜1） |

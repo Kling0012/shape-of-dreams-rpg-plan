@@ -6,8 +6,57 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v1.30.2 — 不具合の修正と、見やすい星図（2026-10-03・未公開）
+## v1.31 — 星図を10倍に（2026-10-03・未公開・作業中。実装済みの一部は v1.30.2 に入っています）
 
+旅人ごとに星を700個以上へ増やす「星図10倍」の作業中の記録です。**実装済み**と**設計のみ**を分けて書きます。実機での画面・戦闘・協力通信は未検証です。 / Work in progress: the star map grows to 700+ stars per traveler. Implemented and design-only items are listed separately; live-game screens, combat and co-op are unverified.
+
+### 実装済み / Implemented
+
+- **セットが6部位になりました**：48のセットすべてに足りない3部位（各セットに合う土台）を加え、6つそろえたときのセット効果を追加しました。新しい部位も従来のセット部位と同じく、固有効果は持たず、セット効果で強さを出します。 / **Sets now have six pieces**: every one of the 48 sets gains its 3 missing slots and a new 6-piece bonus. New pieces, like existing set pieces, have no own unique power; their strength comes from the set bonuses.
+- **鞄と保管庫を大きく広げられるようになりました**（工房）：大きな鞄は10段まで（最大80個）、広い保管庫は10段まで（最大420個）。遺物の一覧は見えている行だけを描くので、数が増えても重くなりません。 / **Satchel and stash can grow much larger** (Workshop): satchel up to 80, stash up to 420; the relic list draws only visible rows.
+- **特性を洗い直せるようになりました**（鍛冶タブ）：遺物の特性を全部まとめて引き直します。特性の数・レア度・土台・強化値・限界突破・覚醒・固有品の固有効果はそのままで、新しい遺物を作るときと同じ抽選で引き直ります。費用は同じ遺物で使うたびに上がり、回数は遺物に保存されます。鍵つき・装着中・取引中・再調律の候補が出ている遺物は対象外です。 / **Affix reroll** (Forge tab): redraw every affix on a relic at once; affix count, rarity, base, enhancement, limit breaks, awakening and unique powers are all kept, and the redraw uses the same roll as a freshly made relic. The cost rises with each use on the same relic and the count is stored on the relic. Locked, equipped, trade-pending and retune-offered relics are excluded.
+- **悪夢化「棘皮」と、棘を返す変種を弱めました**：跳ね返すダメージは、与えたダメージの15%で、1回につき攻撃した旅人の最大HPの1.5%まで（夢の圧と潜行で増えます）。同じ敵からは0.4秒に1回までです。火力が上がるほど自分が削られる問題を直しました。 / **Thorned nightmares and thorny variants are weaker**: reflection is 15% of damage dealt, capped at 1.5% of the attacker's max HP per hit (raised by pressure and delve), at most once per 0.4 s per enemy.
+- **まとめて分解するレア度を選べるようになりました**（鍛冶タブ）：コモンまで／アンコモンまで／レアまで／エピックまで。固有品・鍵つき・装着中の遺物は対象外です。レア以上を含むときは、件数を示したうえで2回押しで確定します。 / **Choose the rarity for bulk salvage**: up to Common / Uncommon / Rare / Epic; legendaries, locked and equipped relics are never included.
+- **強化に失敗の可能性が付きました**（鍛冶タブ）：失敗すると遺物は残り、強化値が+0に戻ります。確定前に失敗の確率を表示し、失敗の可能性があるときは2回押しで確定します。 / **Forge enhancement can now fail**: the relic is kept, but its enhancement resets to +0. The failure chance is shown before confirmation; risky enhancements require two presses.
+- **協力の再接続・途中参加・MOD再読み込みを修正（通信版13）**：移動前の確定した道標を再送し、古いゾーンの未払い報酬を元のルールで精算します。悪夢・変種の撃破はホストが記録した分類を待って一度だけ報酬にし、ホストが読み直されたら古い表示を消してビルドをすぐ送り直します。終了前に未払い報酬と結果を保存し、終わった遠征を読み直しで再開しません。協力では全員を同じ版へ更新してください。保存形式3は維持。 / **Co-op reconnect, late join and mod reload fixes (protocol 13)**: finalized zone rules are replayed, old-zone rewards use their original rules, and special kills wait for authoritative classification and pay once. Host reload clears stale tags and immediately resends Builds. Unpaid rewards/results survive shutdown; completed expeditions cannot restart on reload. Update every co-op participant together; profile format 3 is unchanged. [修正・検証記録](docs/specs/v1.31-mpfix-sol2.md)
+- **夢の深さで部屋が増える**：深さ1ごとに各ゾーンの部屋（ノード）を2個ずつ増やします（深さ5で+10）。ホストのゾーン生成時にだけ一時的にゲーム側のノード数オフセットへ足し、生成が例外で終わっても必ず元に戻します。特別生成のゾーンと深さ0は変わりません。 / **Depth adds rooms**: each depth step adds 2 rooms (world nodes) per zone (+10 at depth 5). The host adds to the game's node-count offset only for the duration of zone generation and restores it even if generation throws; special-generation zones and depth 0 are unchanged.
+- **星のポイント上限を300に**（従来150）。経験の曲線は変えず、300個目まで取れるようにしました。あわせて「夢の圧」の星の係数を半分にし、300星で従来の150星と同じ圧になります。 / Star points are capped at 300 (was 150); the XP curve is unchanged. The Dream Pressure star coefficient is halved, so 300 stars give the same pressure that 150 gave before.
+- **大きな星図の描画**：線は1本ごとに回転した四角1枚で描き、画面に見える物だけを処理し、重なる星の名前は間引きます。 / **Large-map rendering**: each line is one rotated quad, only visible items are processed, and overlapping names are thinned out.
+- **星の検索**：名前や効果で該当する星を光らせ、「次の星へ」で順に移動できます。 / **Star search**: matches by name or effect are highlighted, and "Next star" jumps between them.
+- **星団エンジン**：記憶・橋・外縁の星団を固定IDと扇形・輪形・鎖形の配置から生成し、既存の星のIDと位置は維持します。記憶ごとの仕掛けの効果量・持続時間・半径・対象数・属性追加確率をBuildからホストの既存の効果経路まで反映し、意味のないパラメータは登録時に拒否します。選択の星は2効果から選び、遠征の外では無料で切り替えられ、保存・複製され、払い戻しと振り直しで解除されます。Cetusに3領域の実効例があります。仕様は [星団エンジン](docs/specs/v1.31-cluster-engine.md)。 / **Cluster engine**: Memory, Bridge and Outer clusters are generated from fixed IDs with Fan/Ring/Chain layouts that keep existing star IDs and positions; gimmick value/duration/radius/target-count/chance modifiers reach the host effect paths, unsupported parameters fail validation, and two-option choice stars support free switching outside expeditions, persistence, cloning and respec. Three working Cetus examples.
+- **通信の版13・機構の統合**：固定ID登録→実効購入→Build→ホスト処理を接続。発動予算、指定先リチャージ、橋の成功条件、障壁プール、刻印の両側と各payload、rank/once/EveryN/identity/replacementを型付きで保持します。小数と最終上限前の値を失わず、両端の内容・cap・装備カテゴリの一致後だけ適用。既存の通信容量・512 channel上限を維持します。永久に無効になる配分は一覧の明示承認後に原子払い戻し。/ **Protocol 13 integration**: authored registration, allocation, Build and host consumers are connected; complete typed scopes, budgets and key sides retain pre-cap precision, mutual identity admission and the existing envelope. Permanent invalid allocations require explicit atomic refunds. [生成器・統合契約](docs/specs/v1.31-integration.md)
+- **C01〜C15の機構コードは統合済み、内容表の生成は別作業**：型付き登録APIとnative API adapter試験、オフラインの実DLLフック検証を追加。実機画面・戦闘・co-opは未検証で、9人の全設計表を既に登録したという意味ではありません。 / **C01–C15 mechanism code is integrated; content generation is separate.** Native API adapter coverage and offline installed-assembly hook checks do not claim live-game verification or registration of every designed star. [正式仕様](docs/specs/v1.31-new-mechanisms.md)
+- **アイコン**：v1.29で増えた土台180種、新しい夢の出来事13種、星図の星の記号30種を追加（これで土台360種すべてに絵が付きました）。 / **Icons**: 180 bases added in v1.29, 13 dream events and 30 star-map symbols (all 360 bases now have icons).
+
+### 設計のみ（まだ遊べません）/ Design only
+
+- **9人分の星団設計表**：旅人ごとの購入できる星は735〜892個、合計7,502個（既存663＋新規5,399＋共有の外縁160を9人分）。刻印は旅人ごとに8〜10（合計82）、全体の能力値だけの星は各4〜5%（合計で4.4%）。内訳は Vesper 878・Cetus 892・Lacerta 878・Husk 879・Mist 885・Yubar 877・Aurena 743・Nachia 735・Bismuth 735。表は `docs/specs/v1.31-clusters-*.md`（旅人9人＋共有の外縁）。 / **Design tables for 9 travelers**: 735–892 purchasable stars per traveler, 7,502 in total, 8–10 keystones each (82 total), global stat-only stars about 4–5% (4.4% overall).
+- **独立レビュー**：表の違反（傷の上限、障壁は最大値、移動の記憶は受け手のみ、帰属など）を修正。IDは消さず、300ポイントで取れるのは全体の3〜4割程度。数値のつり合いは実装後に調整します。 / **Independent review** fixed rule violations in the tables; no IDs are removed, 300 points cover roughly 30–40% of a tree, and balance is tuned after implementation. [設計レビュー](docs/specs/v1.31-design-review.md)
+- 星の機械可読マニフェスト（`tools/star-manifest/`）を作成中です。 / A machine-readable star manifest is being written.
+
+### 方針 / Policy
+
+- 実機で確かめていない星や仕組みも、Coreの試験が通れば有効にしてよい（利用者の指示）。実機の確認は後からまとめて行います。 / Stars and mechanisms not yet verified in the live game may be enabled once the Core tests pass; live checks follow later.
+
+### 調べたこと
+
+- **#19 3Dモデルの導入**：環境とAPIの互換性、同じゲームの前例、方式A（実行時にGLBを読む）と方式Bの比較、方式Aのアニメーション・差し替え地点・協力同期の調査をまとめました。実装はまだです。 / **#19**: research only (environment, API compatibility, precedents, approach A vs B, animation and sync for approach A); not implemented. [第1段](docs/specs/issue19-model-import-research.md) / [第2段](docs/specs/issue19-stage2-approach-a.md)
+
+## v1.30.3 — 協力プレイで参加者に報酬が入らない不具合の修正（2026-10-03・Pre）
+
+- **協力プレイの参加者（ゲスト）に、確保地点が出ず、遺物も星の経験も入らない不具合を直しました。** 参加者の PC ではゲーム本体のゾーン情報がホストより少し遅れて届くことがあり、その間に遠征が始まるとゾーン番号が「不明」のまま記録され、ホストから届く遠征の決まりを適用できずにいました。ゾーン番号が分かってから遠征を始め、すでに始まっていた場合も正しい番号に直します。 / **Fixed co-op participants getting no secure point, relics or star XP.** A participant could start the run before the game's zone info arrived, recording an unknown zone and never applying the host's run rules.
+- **星図のポイントが301〜304点になると、装備画面が開かず装備の効果も送れなくなる不具合を直しました**（図鑑のボーナスを含めた上限は304点）。 / Fixed the gear tab and build sending failing when star points reached 301–304 (codex bonus included).
+- 協力プレイは v1.30.2 のホストとも遊べます（通信の版12のまま）。直るのは参加者側なので、**参加する人は v1.30.3 にしてください**。保存形式は3のままです。 / Compatible with v1.30.2 hosts (protocol 12); participants should update. Save format 3 unchanged.
+- 実機での協力プレイの確認はまだです。Core の試験で、ゾーン番号が遅れて分かった場合に報酬が払われることを確かめています。 / Not yet verified in live co-op; covered by a Core regression test.
+
+## v1.30.2 — 装備の画像・詳しい図鑑・見やすい星図・不具合の修正（2026-10-03・Pre）
+
+- **装備の画像が足りなかった不具合を直しました**：v1.30.1 までは、v1.29 で増えた装備の土台約180種に画像が付いていませんでした。土台360種すべてに画像が付きます。夢の出来事13種と星図の星の記号30種の画像も追加しました。 / **Fixed missing gear images**: the ~180 bases added in v1.29 had no icon in v1.30.1; all 360 bases now have one, plus 13 dream-event illustrations and 30 star-map symbols.
+- **図鑑が詳しくなりました**（記録タブ→「図鑑を開く」）：固有品・土台・セット・固有効果を、枠・系統・発見状態で絞り込み、名前や効果で検索できます。右に詳細（効果・特性・セットの部位）を出します。未発見の固有品・セット・固有効果は「？？？」で伏せます。 / **Detailed codex**: filter by slot, line and found state, search by name or effect, with a detail pane; unfound legendaries, sets and powers stay hidden.
+- **夢の深さで部屋が増えます**：深さ1段につき各ゾーンの部屋が2つ増えます（深さ5で+10）。深さの表示に「部屋 +N」を出します。 / **Dream depth adds rooms**: +2 rooms per zone per depth level.
+- **「レア度の幸運」の表記を「良い遺物の出やすさ +X%」に直しました**（抽選の中身は同じです）。 / The "rarity luck" label is now "better relics +X%" (same underlying roll).
+- **星のポイントの上限が300になりました**（旅人ごと）。夢の圧の星の係数は半分にして、300振っても以前の150と同じ強さです。 / Star points per traveler now cap at 300; the pressure coefficient per star is halved.
+- **協力は全員この版へ更新してください**：通信の版が12になりました（ビルドの集約と分割送信）。保存形式は3のままで、プロフィールの初期化はありません。 / **All co-op players must update**: protocol 12; save format 3 unchanged, no reset.
 - **星図が見やすくなりました**：開くと木の全体が収まります（「全体を表示」で戻せます）。拡大縮小は0.15〜3倍。星は丸く、種類ごとの記号と段の数を表示します。刻印は紫の大きな星で、上部の「刻印」の一覧から探して選べます。合わせ技の橋は水色です。星図タブではメニューを画面いっぱいに広げます。星をつなぐ線が、画面の拡大率によって別の場所に描かれていた不具合も直しました。 / **Clearer star map**: the whole tree fits on open ("Show all" restores it), zoom 0.15–3x, round stars with type symbols and ranks, keystones as large purple stars plus a keystone bar, combo bridges in cyan, a full-screen window on the star map tab, and connection lines no longer drawn in the wrong place at some UI scales.
 - **アイコンの追加**：v1.29で増えた装備の土台と、新しい夢の出来事に絵を付けました（順次）。 / **New icons** for the bases and dream events added in v1.29.
 - **#20：確保地点の確定が遅れたままゾーンを移ると**、撃破の報酬と遠征の精算が止まることがありました。前のゾーンの報酬をそのゾーンの決まりで払ってから、次の確保地点を開きます。 / **#20**: moving zones while a secure-point confirmation was delayed could stall kill rewards and run settlement. The previous zone is now paid under its own rules before the next secure point opens.

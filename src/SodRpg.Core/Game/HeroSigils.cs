@@ -90,10 +90,10 @@ namespace SodRpg.Core.Game
             Node("Hero_Yubar", "yubar.power", "宇宙の理", "Cosmic Law", Stat.PowerPct, 4),
             Node("Hero_Yubar", "yubar.reach", "星の脈動", "Stellar Pulse", Stat.AttackSpeedPct, 3),
             Key("Hero_Yubar", "yubar.key", "収束する星", "Converging Light", Power.UltimateSurge, 20,
-                "エキゾチック物質を溜めてから Ultimate を撃つ流れと合わせます。", "Pair it with charging Exotic Matter before your Ultimate."),
+                "エキゾチック物質を溜めてから奥義を撃つ流れと合わせます。", "Pair it with charging Exotic Matter before your Ultimate."),
             Node("Hero_Yubar", "yubar.crit", "星の器", "Stellar Vessel", Stat.MaxHealthPct, 4),
             Key("Hero_Yubar", "yubar.key2", "星の盾", "Stellar Ward", Power.StarShield, 20,
-                "Ultimate を撃つ瞬間の守りを固めます。", "Shields you the moment you unleash your Ultimate."),
+                "奥義を撃つ瞬間の守りを固めます。", "Shields you the moment you unleash your Ultimate."),
             DeepNode("Hero_Yubar", "yubar.deep.critdmg", "超新星", "Supernova", Stat.PowerPct, 3),
             DeepNode("Hero_Yubar", "yubar.deep.life", "星の鎧", "Star Armor", Stat.Armor, 6),
             DeepNode("Hero_Yubar", "yubar.deep.move", "星の導き", "Guiding Star", Stat.CritDamagePct, 8),
@@ -182,23 +182,28 @@ namespace SodRpg.Core.Game
             DeepPower("Hero_Bismuth", "bismuth.deep.umbra", "闇の頁", "Page of Shadow", Power.Umbra, 15),
         };
 
-        /// <summary>核のIDを維持したまま、記憶ルートと夢の輪を加える。</summary>
-        public static readonly IReadOnlyList<TalentDef> All = CreateAll();
+        /// <summary>核のIDを維持したまま、記憶ルート・夢の輪・星群を加える。</summary>
+        private static readonly IReadOnlyList<TalentDef> BaselineAll = CreateAll();
+        public static IReadOnlyList<TalentDef> All => StarClusters.InstalledTalents(BaselineAll);
         private static readonly Dictionary<string, IReadOnlyList<TalentDef>> Trees = CreateTrees();
 
         private static IReadOnlyList<TalentDef> CreateAll()
         {
             var routes = HeroStarRoutes.All;
-            var all = new TalentDef[Core.Length + routes.Count];
-            Array.Copy(Core, all, Core.Length);
-            for (int i = 0; i < routes.Count; i++) all[Core.Length + i] = routes[i];
-            return all;
+            var anchors = StarClusters.OuterAnchors;
+            var existing = new List<TalentDef>(Core.Length + routes.Count + anchors.Count);
+            existing.AddRange(Core);
+            existing.AddRange(routes);
+            existing.AddRange(anchors);
+            var clusters = StarClusters.Generate(StarClusters.All, existing);
+            existing.AddRange(clusters);
+            return existing.AsReadOnly();
         }
 
         private static Dictionary<string, IReadOnlyList<TalentDef>> CreateTrees()
         {
             var groups = new Dictionary<string, List<TalentDef>>(StringComparer.Ordinal);
-            foreach (var t in All)
+            foreach (var t in BaselineAll)
             {
                 if (!groups.TryGetValue(t.HeroKey, out var tree))
                 {
@@ -216,6 +221,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>旅人ごとに一度だけ分類する。未知の旅人は従来の汎用ツリー。</summary>
         public static IReadOnlyList<TalentDef> TreeFor(string heroKey) =>
+            StarClusters.TryGetRegisteredTree(heroKey, out var registered) ? registered : BaselineTreeFor(heroKey);
+        internal static IReadOnlyList<TalentDef> BaselineTreeFor(string heroKey) =>
             heroKey != null && Trees.TryGetValue(heroKey, out var tree) ? tree : Content.Talents;
     }
 }

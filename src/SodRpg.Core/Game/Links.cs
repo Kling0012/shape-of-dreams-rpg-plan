@@ -28,7 +28,9 @@ namespace SodRpg.Core.Game
     {
         public string[] Requires;
         public LinkKind Kind;
-        public int Value;
+        public int ValueMilli { get; set; }
+        public decimal Value { get => ValueMilli / (decimal)BuildPrecision.Scale; set => ValueMilli = BuildPrecision.FromDecimal(value); }
+        public float ValuePercent => ValueMilli / (float)BuildPrecision.Scale;
     }
 
     /// <summary>
@@ -37,9 +39,6 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Links
     {
-        /// <summary>遺物6枠と記憶ルートの連携を収める通信上限。</summary>
-        public const int MaxLinks = 40;
-
         /// <summary>絆を満たす、生きている味方旅人までの距離（m）。</summary>
         public const double BondRange = 10;
 
@@ -53,6 +52,17 @@ namespace SodRpg.Core.Game
 
         private static readonly Dictionary<string, Txt> MemoryNames = new Dictionary<string, Txt>(StringComparer.Ordinal)
         {
+            // Verified common memories used by the shared Outer authoring contract.
+            ["St_C_GlacialStomp"] = new Txt("氷河ストンプ", "Glacial Stomp"),
+            ["St_C_FlashFreeze"] = new Txt("急速凍結", "Flash Freeze"),
+            ["St_C_BeamOfLight"] = new Txt("光線", "Beam of Light"),
+            ["St_C_Purgatory"] = new Txt("煉獄", "Purgatory"),
+            ["St_C_SparklingWaterGun"] = new Txt("ピリッとする水鉄砲", "Sparkling Water Gun"),
+            ["St_C_Pew"] = new Txt("発砲", "Pew"),
+            ["St_C_Starfall"] = new Txt("流星", "Starfall"),
+            ["St_C_DarkBolt"] = new Txt("闇の矢", "Dark Bolt"),
+            ["St_C_MassProtection"] = new Txt("範囲シールド", "Mass Protection"),
+            ["St_E_MassCleanse"] = new Txt("大規模浄化", "Mass Cleanse"),
             // レジェンダリー・ユニークの記憶
             ["St_L_Blizzard"] = new Txt("吹雪", "Blizzard"),
             ["St_L_ButchersStrike"] = new Txt("屠殺者の一撃", "Butcher's Strike"),
@@ -218,16 +228,16 @@ namespace SodRpg.Core.Game
             return (int)Math.Round(single * mult, MidpointRounding.AwayFromZero);
         }
 
-        /// <summary>記憶加速は、覚醒しても 90% を超えない（クールダウンが無くならないように）。</summary>
+        /// <summary>記憶加速の装備合計の元値の上限。覚醒倍率はこの上限の後に掛ける。</summary>
         public const int MaxHaste = 90;
 
         /// <summary>
-        /// 装着中の連携に許す上限（v1.27、issue #14）。覚醒Ⅲの倍率まで含め、記憶加速は 90 まで。
-        /// クライアントの Compute とホストの Decode の両方で同じ上限を使い、表示と実効値をそろえる。
+        /// 装着中の同条件の連携の元値合計に許す上限。覚醒倍率は比例配分した元値に掛け、最終値はこの2.5倍まで。
+        /// 星の連携は別に加算し、ホストも Build.Compute で同じ装備計算を行う。
         /// </summary>
-        public static int EquippedCap(LinkKind kind, int requireCount)
+        public static decimal EquippedCap(LinkKind kind, int requireCount)
         {
-            int cap = (int)((long)Cap(kind, requireCount) * Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100);
+            decimal cap = Cap(kind, requireCount) * Content.AwakenPowerPctAt(Content.MaxAwakenLevel) / 100m;
             return kind == LinkKind.MemoryHaste ? Math.Min(MaxHaste, cap) : cap;
         }
 
@@ -237,7 +247,7 @@ namespace SodRpg.Core.Game
             if (link == null || link.Requires == null) return false;
             int n = link.Requires.Length;
             if (n < 1 || n > 3) return false;
-            if (link.Kind == LinkKind.None) return false;
+            if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
             {

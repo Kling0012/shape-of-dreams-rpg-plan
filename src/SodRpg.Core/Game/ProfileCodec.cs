@@ -12,7 +12,7 @@ namespace SodRpg.Core.Game
     /// プロフィールの保存形式。{"format","version","checksum","body"} の形で、checksum は body の
     /// 正規化済みJSONの sha256。読めない遺物（未知の基礎IDなど）は捨てずに Notes へ記録して除外する。
     /// </summary>
-    public static class ProfileCodec
+    public static partial class ProfileCodec
     {
         public const string Format = "sodrpg.profile";
 
@@ -56,7 +56,11 @@ namespace SodRpg.Core.Game
                 foreach (var uid in h.Equipped) eq.Add(uid);
                 var tal = new JsonObject();
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
-                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp));
+                var choices = new JsonObject();
+                foreach (var choice in h.TalentChoices) choices.Add(choice.Key, (long)choice.Value);
+                heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
+                    .Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
+                    .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion));
             }
             var codex = new List<object>();
             foreach (var c in p.Codex) codex.Add(c);
@@ -107,6 +111,7 @@ namespace SodRpg.Core.Game
                 .Add("dreamLevel", (long)p.DreamLevel)
                 .Add("dreamXp", (long)p.DreamXp)
                 .Add("epicPity", (long)p.EpicPity)
+                .Add("bulkSalvageMax", (long)p.BulkSalvageMaxRarity)
                 .Add("bestItemLevel", (long)p.BestItemLevel)
                 .Add("japanese", p.Japanese)
                 .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
@@ -128,6 +133,9 @@ namespace SodRpg.Core.Game
                 .Add("starterV119Granted", p.StarterV119Granted)
                 .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
                 .Add("stats", stats)
+                .Add("completedRunId", p.CompletedRunId)
+                .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
+                .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
         }
 
@@ -210,10 +218,17 @@ namespace SodRpg.Core.Game
             return new JsonObject()
                 .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
-                .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("locked", r.Locked)
+                .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("affixRerolls", (long)r.AffixRerolls).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
+                .Add("milestonePowerApplied", r.MilestonePowerApplied)
                 .Add("affixes", aff).Add("powers", pw);
+        }
+
+        private static string StarLabel(IReadOnlyList<TalentDef> tree, string id)
+        {
+            foreach (var t in tree) if (t.Id == id) return t.Name + "(" + id + ")";
+            return id;
         }
 
         private static Profile ReadBody(JsonObject b, List<string> notes)
@@ -225,11 +240,15 @@ namespace SodRpg.Core.Game
                 DreamLevel = Clamp(Long(b, "dreamLevel"), 1, Content.MaxDreamLevel),
                 DreamXp = Clamp(Long(b, "dreamXp"), 0, int.MaxValue),
                 EpicPity = Clamp(Long(b, "epicPity"), 0, 1000),
+                BulkSalvageMaxRarity = b.TryGet("bulkSalvageMax", out object bsm) && bsm is long bsl ? (Rarity)Clamp(bsl, (int)Rarity.Common, (int)Rarity.Epic) : Rarity.Uncommon,
                 BestItemLevel = Clamp(Long(b, "bestItemLevel"), 1, Content.MaxItemLevel),
                 Japanese = Bool(b, "japanese", true),
             };
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
+            p.CompletedRunId = Str(b, "completedRunId");
+            p.RunRecovery = ReadRunRecovery(b);
+            p.KillClassification = ReadKillClassification(b);
             long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
             if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)
@@ -267,7 +286,7 @@ namespace SodRpg.Core.Game
                     {
                         foreach (var t in tal.Properties)
                         {
-                            if (Content.TryGetTalent(t.Key, out var def) && !def.IsKeystone && t.Value is long rank && rank > 0)
+                            if (Content.TryGetTalent(kv.Key, t.Key, out var def) && !def.IsKeystone && t.Value is long rank && rank > 0)
                             {
                                 if (Rules.BelongsTo(def, kv.Key)) h.Talents[t.Key] = (int)Math.Min(def.MaxRank, rank);
                                 else notes.Add($"{kv.Key}: 旅人の刻印へ移行したため汎用ノードのポイントを戻しました: {t.Key}");
@@ -276,12 +295,48 @@ namespace SodRpg.Core.Game
                                 notes.Add("未知の専門化ノードを除外: " + t.Key);
                         }
                     }
+                    if (hj.TryGet("talentChoices", out object choicesObj) && choicesObj is JsonObject choices)
+                        foreach (var choice in choices.Properties)
+                            if (h.Talents.ContainsKey(choice.Key) && Content.TryGetTalent(kv.Key, choice.Key, out var def)
+                                && def.IsChoice && choice.Value is long option && option >= 0 && option < def.Choices.Count)
+                                h.TalentChoices[choice.Key] = (int)option;
+                    if (!HeroSigils.HasTree(kv.Key))
+                    {
+                        var invalidChoices = new List<string>();
+                        foreach (var allocation in h.Talents)
+                            if (Content.TryGetTalent(kv.Key, allocation.Key, out var def) && def.IsChoice
+                                && !h.TalentChoices.ContainsKey(allocation.Key)) invalidChoices.Add(allocation.Key);
+                        foreach (string id in invalidChoices)
+                        {
+                            Content.TryGetTalent(kv.Key, id, out var def);
+                            int refund = checked(h.Talents[id] * def.RankCost);
+                            h.Talents.Remove(id);
+                            notes.Add(Loc.T($"選択のない星を払い戻しました（{refund}ポイント）: ",
+                                $"Refunded a star without a valid choice ({refund} points): ") + id);
+                        }
+                    }
                     h.Kills = Clamp(Long(hj, "kills"), 0, int.MaxValue);
                     h.StarXp = hj.TryGet("starXp", out object sx)
                         ? Clamp(sx is long xp ? xp : 0, 0, int.MaxValue)
                         : StarProgression.LegacyXp(h.Kills);
+                    h.AuthoredMigrationVersion = Clamp(Long(hj, "authoredMigrationVersion"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
-                    if (key != null && Content.TryGetTalent(key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (HeroSigils.HasTree(kv.Key))
+                    {
+                        var tree = HeroSigils.TreeFor(kv.Key);
+                        var refund = AuthoredStarMigration.Apply(h, tree, StarClusters.MigrationsFor(kv.Key));
+                        if (refund.ChangedStarIds.Count > 0)
+                            notes.Add(Loc.T($"{kv.Key}: 効果が変わった星の取得を解除し、使っていたポイントを全額戻しました（{refund.ChangedRefundCost}ポイント）。星の盤で取り直せます: ",
+                                $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ")
+                                + string.Join(", ", refund.ChangedStarIds.Select(id => StarLabel(tree, id))));
+                        int otherCost = refund.RefundCost - refund.ChangedRefundCost;
+                        var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id)).ToList();
+                        if (otherIds.Count > 0)
+                            notes.Add(Loc.T($"{kv.Key}: 選択や前提が無効になった星も払い戻しました（{otherCost}ポイント）: ",
+                                $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ")
+                                + string.Join(", ", otherIds.Select(id => StarLabel(tree, id))));
+                    }
                 }
             }
             if (b.TryGet("codex", out object co) && co is List<object> codex)
@@ -493,6 +548,7 @@ namespace SodRpg.Core.Game
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
                 LimitBreaks = limitBreaks,
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
+                AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)
@@ -500,6 +556,11 @@ namespace SodRpg.Core.Game
                     : Bool(j, "awakened", false) ? Content.LegacyAwakenLevel : 0, // v1.26 までの覚醒は覚醒Ⅱ
                 EnhanceMilestones = Clamp(Long(j, "milestones"), 0, Content.MaxEnhanceMilestones),
             };
+            // 古い+20は保存済みの値に倍率が含まれる。再適用せず、履歴として引き継ぐ。
+            r.MilestonePowerApplied = Bool(j, "milestonePowerApplied",
+                r.Enhance >= Content.EnhanceMilestoneFifth || r.EnhanceMilestones >= Content.MaxEnhanceMilestones)
+                || r.EnhanceMilestones >= Content.MaxEnhanceMilestones;
+            if (r.MilestonePowerApplied) r.EnhanceMilestones = Content.MaxEnhanceMilestones;
             if (string.IsNullOrEmpty(r.Uid) || !Content.TryGetBase(r.BaseId, out _))
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
             if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
@@ -529,7 +590,9 @@ namespace SodRpg.Core.Game
                         && pid != 0 && Enum.IsDefined(typeof(Power), (int)pid))
                     {
                         var pw = (Power)(int)pid;
-                        r.Powers.Add(new PowerLine(pw, Clamp(v, 0, Content.PowerCap(pw))));
+                        int cap = Content.PowerCap(pw);
+                        if (r.Powers.Count == 0 && r.MilestonePowerApplied) cap = Relic.Scale(cap, Content.LimitBreakPowerPct);
+                        r.Powers.Add(new PowerLine(pw, Clamp(v, 0, cap)));
                     }
                 }
             }

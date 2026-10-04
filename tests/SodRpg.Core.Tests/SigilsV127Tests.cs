@@ -47,7 +47,7 @@ namespace SodRpg.Core.Tests
             StarProgression.AddXp(p.Hero(hero), StarProgression.CostForPoint(HeroSigils.CostlyRankCost));
             Rules.AddTalentRank(p, hero, id);
             Assert.Equal(0, Rules.FreePoints(p, hero));
-            Assert.Equal(HeroSigils.CostlyRankCost, Rules.SpentPoints(p.Hero(hero)));
+            Assert.Equal(HeroSigils.CostlyRankCost, Rules.SpentPoints(p.Hero(hero), hero));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, hero, id)); // 1段まで
         }
 

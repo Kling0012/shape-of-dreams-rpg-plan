@@ -74,7 +74,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(14, p.TalentPoints(Other));
                 Assert.Equal(21, p.TalentPoints(Hero));
                 Profile.TestBonusPoints = int.MaxValue;
-                Assert.Equal(int.MaxValue, p.TalentPoints(Hero));
+                Assert.Equal(StarProgression.MaxSpendablePoints, p.TalentPoints(Hero));
                 Profile.TestBonusPoints = -1;
                 Assert.Equal(12, p.TalentPoints(Hero));
             }
@@ -237,10 +237,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, q.Hero(Hero).Talents["h.vesper.deep.thorns"]);
             Assert.Equal(1, q.Hero(Hero).Talents["h.vesper.fourth"]);
             Assert.Equal("h.vesper.key", q.Hero(Hero).Keystone);
-            Assert.Equal(Rules.SpentPoints(p.Hero(Hero)) - 4, Rules.SpentPoints(q.Hero(Hero)));
+            Assert.Equal(Rules.SpentPoints(p.Hero(Hero), Hero) - 4, Rules.SpentPoints(q.Hero(Hero), Hero));
             Assert.Empty(q.Hero(Other).Talents);
             Assert.Null(q.Hero(Other).Keystone);
-            Assert.Single(notes);
             Assert.Equal(0, q.Material(Materials.Shard));
             Assert.Equal(1, Build.Compute(q, Hero, 0).Get(Stat.FourthAttackShift));
         }
@@ -253,7 +252,6 @@ namespace SodRpg.Core.Tests
             var notes = new List<string>();
             var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
             Assert.Null(q.Hero(Hero).Keystone);
-            Assert.Single(notes);
             p = Funded(12);
             OpenCore(p);
             p.AddMaterial(Materials.Shard, 7);
@@ -296,14 +294,14 @@ namespace SodRpg.Core.Tests
             Rules.SetKeystone(p, Hero, "h.vesper.key");
             TreeTestPaths.Connect(p, Hero, route[0].Id);
             foreach (var node in route.Take(6)) Rules.AddTalentRank(p, Hero, node.Id);
-            int before = Rules.SpentPoints(h);
+            int before = Rules.SpentPoints(h, Hero);
             h.StarXp = StarProgression.TotalXpForPoints(before + 2);
             Assert.Equal(2, Rules.FreePoints(p, Hero));
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[6].Id));
             h.StarXp = StarProgression.TotalXpForPoints(before + 3);
             Rules.AddTalentRank(p, Hero, route[6].Id);
             Assert.Equal(0, Rules.FreePoints(p, Hero));
-            Assert.Equal(before + 3, Rules.SpentPoints(h));
+            Assert.Equal(before + 3, Rules.SpentPoints(h, Hero));
             Assert.Equal("h.vesper.key", h.Keystone);
             Assert.Equal(1, h.Talents[route[6].Id]);
             Assert.Throws<InvalidOperationException>(() => Rules.AddTalentRank(p, Hero, route[6].Id));

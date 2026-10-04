@@ -277,13 +277,13 @@ namespace SodRpg.Core.Tests
             var feat = Feats.All.First(f => f.Kind == FeatKind.SetsCompleted);
             var pieces = Content.Uniques.Where(u => u.SetId == Content.Sets[0].Id).ToList();
             var rng = new Rng(119);
-            p.Stash.Add(Loot.RollUnique(rng, pieces[0], 10));
-            p.Stash.Add(Loot.RollUnique(rng, pieces[1], 10));
+            Assert.Equal(6, pieces.Count);
+            for (int i = 0; i < 5; i++) p.Stash.Add(Loot.RollUnique(rng, pieces[i], 10));
             Assert.Equal(0, Feats.Progress(p, feat));
             p.Stash.Add(Loot.RollUnique(rng, pieces[0], 10));
             p.Stash.Add(Loot.RollRelic(rng, Rarity.Legendary, 10, Slot.Head));
             Assert.Equal(0, Feats.Progress(p, feat));
-            var last = Loot.RollUnique(rng, pieces[2], 10);
+            var last = Loot.RollUnique(rng, pieces[5], 10);
             p.Stash.Add(last);
             Rules.Equip(p, HeroKey, last.Uid);
             Assert.Equal(1, Feats.Progress(p, feat));

@@ -35,6 +35,8 @@ namespace SodRpg.Mod
             {
                 instance.isAlteringGameplay = true;
                 Loc.Japanese = config.japanese;
+                // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
+                StarClusters.RegisterAllGenerated();
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 _mobModels = new MobModelSession(mod?.path, config.customMobModels);
@@ -51,6 +53,7 @@ namespace SodRpg.Mod
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
                 harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
+                HostAuthority.ModVersion = mod.metadata.modVer ?? "?";
             }
             catch (Exception ex)
             {
@@ -86,7 +89,7 @@ namespace SodRpg.Mod
             _mobModels?.Tick();
             try
             {
-                _host.Tick();
+                _host?.Tick();
             }
             catch (Exception ex)
             {
@@ -135,9 +138,12 @@ namespace SodRpg.Mod
         {
             var kb = Keyboard.current;
             if (kb == null) return;
+            if (_ui == null) return;
             if (Pressed(kb, config.menuKey)) _ui.Toggle();
             if (_ui.Open && kb.escapeKey.wasPressedThisFrame) _ui.Close();
             var run = _session.Profile.Run;
+            // 確保地点の画面は、隠して戦場を見たり、また出したりを何度でもできる（ゾーンを進むたびに出し直しになる）。
+            if (run != null && run.AwaitingChoice && _session.ActiveRunId != null && Pressed(kb, config.securePanelKey)) _ui.ToggleSecurePanel();
             if (run != null && run.AwaitingChoice && _session.ActiveRunId != null && !_session.HasPendingTrades)
             {
                 if (Pressed(kb, config.secureKey)) _ui.SetStatus(_session.Secure());
@@ -168,6 +174,14 @@ namespace SodRpg.Mod
 
         private bool _devCommands;
 
+        /// <summary>確認用コマンドが使えるか。使えないときは、黙らずにコンソールへ一言出す（何も起きない理由が分かるように）。</summary>
+        private bool DevAllowed()
+        {
+            if (_devCommands) return true;
+            Debug.Log("[DreamforgeRPG] This command is not available.");
+            return false;
+        }
+
         [ConsoleCommand("Dreamforge: show time spent by this mod per frame (Update / OnGUI / save)", "dreamforge_perf")]
         private void PerfCommand()
         {
@@ -186,7 +200,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): travel to the nearest connected combat node (prefers unvisited)", "dreamforge_travelnext")]
         private void TravelNextCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             try
             {
                 var zm = NetworkedManagerBase<ZoneManager>.softInstance;
@@ -254,37 +268,31 @@ namespace SodRpg.Mod
 
         private void OnDestroy()
         {
-            // ライブリロードに備え、付けた補正・登録・パッチをすべて外してから保存する。
+            // 未精算の報酬と遠征の結果を保存してから、登録・補正・パッチを外す。
             try { _mobModels?.Dispose(); } catch (Exception ex) { Log.Error("Mob models dispose: " + ex); }
             try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Icons dispose: " + ex); }
             try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
-            try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }
-            try
-            {
-                _session?.SaveNow();
-                _session?.FlushSaves();
-            }
-            catch (Exception ex) { Log.Error("Save on destroy: " + ex); }
+            try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
             BlockInputWhileMenuOpen.MenuOpen = false;
             BlockGameUi(false);
             try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }
             try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
         }
 
-        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-100, 0 = off)", "dreamforge_testpoints")]
+        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-300, 0 = off)", "dreamforge_testpoints")]
         private void TestPointsCommand(int points)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             // 保存しない。ゲームを終えれば元に戻る。設定画面には置かない（誰でも触れる所に置かない）。
-            Profile.TestBonusPoints = Math.Max(0, Math.Min(100, points));
+            Profile.TestBonusPoints = Math.Max(0, Math.Min(StarProgression.MaxPoints, points));
             _ui.Notify(new GameEvent(EventKind.LevelUp, "[debug] star map points +" + Profile.TestBonusPoints));
         }
 
         [ConsoleCommand("Dreamforge: give relics for testing (count, rarity 0-4)", "dreamforge_give")]
         private void GiveCommand(int count, int rarity)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             var rng = p.TakeRng();
             for (int i = 0; i < Math.Max(1, Math.Min(count, 20)); i++)
@@ -302,18 +310,21 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: give legendaries whose id starts with a prefix for testing (e.g. set.cinder)", "dreamforge_giveunique")]
         private void GiveUniqueCommand(string prefix)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             var rng = p.TakeRng();
+            int given = 0;
             foreach (var u in Content.Uniques)
             {
                 if (string.IsNullOrEmpty(prefix) || !u.Id.StartsWith(prefix, StringComparison.Ordinal)) continue;
                 var r = Loot.RollUnique(rng, u, Math.Max(1, p.BestItemLevel));
+                given++;
                 if (p.Run != null) p.Run.Satchel.Add(r);
                 else p.Stash.Add(r);
                 _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + r.DisplayName, r.Rarity));
             }
             p.StoreRng(rng);
+            Debug.Log($"[DreamforgeRPG] giveunique '{prefix}': {given} item(s) added to the {(p.Run != null ? "satchel" : "stash")}.");
             _session.MarkDirty(true);
             _session.SaveNow();
         }
@@ -337,7 +348,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (host test): kill enemies within radius to test drops", "dreamforge_killnear")]
         private void KillNearCommand(float radius)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             if (!MakeSureServer()) return;
             var hero = _session.LocalHero;
             if (hero == null) return;
@@ -353,7 +364,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): simulate kills of a tier (0 lesser,1 normal,2 miniboss,3 boss)", "dreamforge_simkill")]
         private void SimKillCommand(int tier, int count)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             if (_session.Profile.Run == null) { Debug.Log("[DreamforgeRPG] no run"); return; }
             int lvl = Math.Max(1, NetworkedManagerBase<GameManager>.softInstance?.ambientLevel ?? 1);
             for (int i = 0; i < Math.Max(1, Math.Min(count, 500)); i++)
@@ -364,7 +375,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): equip the newest stash relic of every slot on your traveler", "dreamforge_equipnew")]
         private void EquipNewCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             var p = _session.Profile;
             string hero = ClientSession.HeroKeyOf(_session.LocalHero);
             if (hero == null) { Debug.Log("[DreamforgeRPG] no local hero"); return; }
@@ -381,7 +392,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): end the current run in the mod (1 = victory, 0 = defeat)", "dreamforge_endrun")]
         private void EndRunCommand(int victory)
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             foreach (var e in Rules.EndRun(_session.Profile, victory != 0, _session.Trades.ReservedSalvageUids())) _ui.Notify(e);
             _session.MarkDirty(true);
             _session.SaveNow();
@@ -390,7 +401,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): open a secure point now", "dreamforge_securepoint")]
         private void SecurePointCommand()
         {
-            if (!_devCommands) return;
+            if (!DevAllowed()) return;
             Rules.ReachSecurePoint(_session.Profile);
         }
 

@@ -3,6 +3,8 @@ obj/
 *.user
 .vs/
 TestResults/
+.ref/
+tests/SodRpg.Core.Tests/Diagnostics/
 
 # Generated local validation/build outputs
 __pycache__/

@@ -6,12 +6,12 @@ namespace SodRpg.Core.Game
     /// <summary>ある時点で付けるべき一時的な補正（表示単位）。</summary>
     public struct DynamicBonus
     {
-        public int AttackSpeedPct;
-        public int AttackPct;
-        public int PowerPct;
+        public float AttackSpeedPct;
+        public float AttackPct;
+        public float PowerPct;
         public int MoveSpeedPct;
-        public int MaxHealthPct;
-        public int Armor;
+        public float MaxHealthPct;
+        public float Armor;
     }
 
     /// <summary>
@@ -138,13 +138,13 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Memory を使った。一時補正を始める。回避なら回避の残響・瞬歩の刃の3秒も始める（重ならず延長）。</summary>
-        public void OnSkillUsed(float now, bool isMovement, bool isUltimate)
+        public void OnSkillUsed(float now, bool isMovement, bool isUltimate, bool isIdentity = false)
         {
             if (isUltimate && Build.Get(Power.UltimateSurge) > 0) _surgeUntil = now + SurgeDuration;
             if (isMovement && Build.Get(Power.Sprint) > 0) _sprintUntil = now + SprintDuration;
             if (isMovement && Build.Get(Power.EchoingDodge) > 0) _echoUntil = now + EchoingDodgeWindow;
             if (isMovement) OnSelfMovement(now);
-            if (!isMovement && !isUltimate && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
+            if (!isMovement && !isUltimate && !isIdentity && Build.Get(Power.Overload) > 0) _overloadUntil = now + OverloadDuration;
         }
 
         public struct SkillResult
@@ -154,9 +154,9 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Memory の使用結果。旋風・星の加護の量を返す。旋風は攻撃力と魔力の高い方（attackOrPower）で計算する。</summary>
-        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackOrPower, float maxHealth)
+        public SkillResult OnSkillUsed(float now, bool isMovement, bool isUltimate, float attackOrPower, float maxHealth, bool isIdentity = false)
         {
-            OnSkillUsed(now, isMovement, isUltimate);
+            OnSkillUsed(now, isMovement, isUltimate, isIdentity);
             var r = new SkillResult();
             int whirlwind = Build.Get(Power.Whirlwind);
             if (isMovement && whirlwind > 0 && now >= _whirlwindReady)
@@ -176,7 +176,14 @@ namespace SodRpg.Core.Game
             if (v <= 0 || !allFour) return 0;
             if (_convergenceReady.TryGetValue(victimId, out float ready) && now < ready) return 0;
             _convergenceReady[victimId] = now + ConvergenceCooldown;
-            if (_convergenceReady.Count > 200) _convergenceReady.Clear();
+            // Active victim cooldowns must survive large encounters.
+            if (_convergenceReady.Count > 200)
+            {
+                var expired = new List<int>();
+                foreach (var pair in _convergenceReady)
+                    if (now >= pair.Value) expired.Add(pair.Key);
+                foreach (int id in expired) _convergenceReady.Remove(id);
+            }
             return attackOrPower * v / 100f;
         }
 
@@ -197,11 +204,11 @@ namespace SodRpg.Core.Game
         public int EvilDreamCount { get; set; }
 
         /// <summary>連携（同調）：条件を満たしている間の攻撃力・魔力%（ホストの定期走査で更新）。</summary>
-        public int LinkAttunePct { get; set; }
+        public float LinkAttunePct { get; set; }
         /// <summary>連携（守り）：条件を満たしている間の最大HP%（ホストの定期走査で更新）。</summary>
-        public int LinkGuardHealthPct { get; set; }
+        public float LinkGuardHealthPct { get; set; }
         /// <summary>連携（守り）：条件を満たしている間の防御（ホストの定期走査で更新）。</summary>
-        public int LinkGuardArmor { get; set; }
+        public float LinkGuardArmor { get; set; }
 
         /// <summary>余韻は重ならない。発動元ごとに、装着中だけ5秒の期限を延長する。</summary>
         public void OnLinkSurge(float now, LinkDef source)
@@ -226,7 +233,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>使った記憶の連携加速を合計する。1回の発動でクールダウン全量（100%）まで。</summary>
-        public static int LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
+        public static float LinkHastePercent(IReadOnlyList<LinkDef> satisfied, string usedMemory)
         {
             long total = 0;
             if (satisfied == null || usedMemory == null) return 0;
@@ -235,10 +242,10 @@ namespace SodRpg.Core.Game
                 var link = satisfied[i];
                 if (link == null || link.Kind != LinkKind.MemoryHaste || link.Requires == null
                     || Array.IndexOf(link.Requires, usedMemory) < 0) continue;
-                total += Math.Max(0, link.Value);
-                if (total >= 100) return 100;
+                total += Math.Max(0, link.ValueMilli);
+                if (total >= 100 * BuildPrecision.Scale) return 100;
             }
-            return (int)total;
+            return total / (float)BuildPrecision.Scale;
         }
 
         /// <summary>止水：自分の技によるスタンで張る障壁量。成功したときだけ内部CDを開始する。</summary>
@@ -362,7 +369,9 @@ namespace SodRpg.Core.Game
         }
         public void SetBuild(Build build)
         {
-            Build = build ?? new Build();
+            var replacement = build ?? new Build();
+            RetainGimmickPrimedForBuild(replacement);
+            Build = replacement;
             RetainEquippedNewPowerState();
             // 連携の状態は装備に紐付くので、Build が変わったらやり直す（判定は次の走査で）。
             LinkAttunePct = 0;
@@ -420,15 +429,19 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>被弾した。棘で返すダメージ（0なら返さない）を返す。</summary>
-        public float OnDamaged(float now, float amount, bool attackerIsEnemy)
+        public float OnDamaged(float now, float amount, bool attackerIsEnemy, bool? attackedByEnemy = null)
         {
             if (amount <= 0) return 0;
-            if (Build.Get(Power.Retaliation) > 0) _retaliationUntil = now + RetaliationDuration;
+            // 逆襲：敵に攻撃されたときだけ。自傷・味方由来のダメージでは発動しない。
+            if (Build.Get(Power.Retaliation) > 0 && (attackedByEnemy ?? attackerIsEnemy)) _retaliationUntil = now + RetaliationDuration;
             int thorns = Build.Get(Power.Thorns);
             if (thorns <= 0 || !attackerIsEnemy || now < _thornsReady) return 0;
             _thornsReady = now + ThornsInterval;
             return amount * thorns / 100f;
         }
+
+        /// <summary>逆襲（被弾後3秒）の窓の内側か。刻印の条件式（M6）はこの既存窓を参照する。</summary>
+        public bool WithinRetaliationWindow(float now) => now < _retaliationUntil;
 
         public struct HitResult
         {
@@ -453,7 +466,7 @@ namespace SodRpg.Core.Game
         /// 烈火・雷鎖・回避の残響・瞬歩の刃は攻撃力と魔力の高い方、処刑・先制は攻撃力で計算する。
         /// </summary>
         public HitResult OnAttackHit(float now, float maxHealth, float attackDamage, float abilityPower,
-            float victimHealthRatio, bool isCrit = false, double roll = 1.0)
+            float victimHealthRatio, bool isCrit = false, double roll = 1.0, bool consumeNextBasic = true)
         {
             var r = new HitResult();
             int lifesteal = Build.Get(Power.Lifesteal);
@@ -470,7 +483,7 @@ namespace SodRpg.Core.Game
             int blaze = Build.Get(Power.Blaze);
             if (blaze > 0 && _nextHitIsFourth) r.BlazeDamage = higher * blaze / 100f;
             _nextHitIsFourth = false;
-            TakeLargestNextBasic(now, higher, ref r);
+            if (consumeNextBasic) TakeLargestNextBasic(now, higher, ref r);
             r.FireStacks = ElementStacks(Power.Ember);
             r.ColdStacks = ElementStacks(Power.Frost);
             r.LightStacks = ElementStacks(Power.Radiance);
@@ -497,10 +510,10 @@ namespace SodRpg.Core.Game
         {
             if (now > _momentumUntil) MomentumStacks = 0;
             // 連携（v1.26）：同調は常時、記憶の余韻は条件の記憶を使った後の5秒間。
-            int linkSurge = 0;
+            float linkSurge = 0;
             foreach (var pair in _linkSurges)
-                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.Value);
-            int linkAttack = LinkAttunePct + linkSurge;
+                if (now < pair.Value) linkSurge = Math.Max(linkSurge, pair.Key.ValuePercent);
+            float linkAttack = LinkAttunePct + linkSurge;
             int conditionalTotal = ConditionalAttributes(now);
             return new DynamicBonus
             {
