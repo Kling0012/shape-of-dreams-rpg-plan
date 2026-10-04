@@ -605,8 +605,17 @@ namespace SodRpg.Mod
                 if (gm.runId == _completedRunId) return;
                 _runChoiceProgress.BeginRun(gm.runId, ChoiceZoneIndex);
                 if (CanChooseRunRules) CommitCombatChoice();
+                // 純白の入口で選択を保留したまま戦った撃破は、戦ったときの深度と道標を記録して精算する（#71）。
+                // 通常ルートは最初の撃破で自動潜行するため、記録不要（精算時の状態＝戦ったときの状態）。
+                int? fightHeat = null;
+                Waypoint? fightWaypoint = null;
+                if (InPureWhiteRoute && Profile.Run != null && Profile.Run.AwaitingChoice)
+                {
+                    fightHeat = Profile.Run.Heat;
+                    fightWaypoint = Profile.Run.ActiveWaypoint;
+                }
                 CaptureNativeKill(m.netId, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
-                    tier, level, NightmareAffix.None, null, heroKey));
+                    tier, level, NightmareAffix.None, null, heroKey, heat: fightHeat, waypoint: fightWaypoint));
             }
             catch (Exception ex)
             {

@@ -836,10 +836,12 @@ namespace SodRpg.Mod
                 // Pressure is already active; give the initial depth build time to arrive.
                 if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
                 _spawnQueue.RemoveAt(i);
-                if (depth <= 0 && !ActiveWaypointTotals.AllNightmares && ActiveWaypointTotals.NightmareChanceMultiplier <= 1) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;
+                // 深さ0では深度ボーナス・悪夢化の初期化をしないが、処理済みとして印を付ける（#71）。
+                // 潜行で深さが1以上になれば、#60 の揃え直しの対象になる。
                 rt.SpawnProcessed = true;
+                if (SpawnInitRules.SkipsDepthInit(depth, ActiveWaypointTotals.AllNightmares, ActiveWaypointTotals.NightmareChanceMultiplier)) continue;
                 try
                 {
                     ApplyDepthBonus(rt, tier, depth);

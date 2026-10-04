@@ -176,7 +176,7 @@ namespace SodRpg.Core.Tests
             var reward = new KillReward();
             reward.Relics.Add(Loot.RollRelic(new Rng(131), Rarity.Common, 10));
             var rng = new Rng(10); // The first roll would fail a forge attempt at +4.
-            Waypoints.ApplyKill(p, MonsterTier.Normal, false, rng, reward, 10, null, 1, out _, out _);
+            Waypoints.ApplyKill(p, MonsterTier.Normal, false, rng, reward, 10, null, 1, waypoint, out _, out _);
             var relic = Assert.Single(reward.Relics);
             Assert.Equal(expected, relic.Enhance);
             Assert.Equal(expected >= 3 ? 1 : 0, relic.EnhanceMilestones);

@@ -128,7 +128,8 @@ namespace SodRpg.Core.Game
                 if (!_resolvedEventIds.Add(fact.EventId)) continue;
                 var native = death.Kill;
                 kill = new PendingRunKill(native.RunId, native.ZoneIndex, native.RoomIndex, native.Tier,
-                    native.Level, fact.Nightmare, fact.VariantId, native.HeroKey, fact.EventId, death.MonsterNetId);
+                    native.Level, fact.Nightmare, fact.VariantId, native.HeroKey, fact.EventId, death.MonsterNetId,
+                    native.Heat, native.Waypoint);
                 return true;
             }
             return false;
