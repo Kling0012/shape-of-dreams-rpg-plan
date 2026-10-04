@@ -10,16 +10,16 @@ namespace SodRpg.Core.Tests
     public class DataV129Tests
     {
         [Fact]
-        public void Bases_doubled_to_360_with_60_per_slot_and_unique_ids_and_names()
+        public void Bases_grew_to_600_with_100_per_slot_and_unique_ids_and_names()
         {
-            Assert.Equal(360, Content.Bases.Count);
+            Assert.Equal(600, Content.Bases.Count);
             Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Id).Distinct().Count());
             Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Name.Ja).Distinct().Count());
             Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Name.En).Distinct().Count());
             foreach (var slot in Content.SlotOrder)
             {
                 var bases = Content.Bases.Where(b => b.Slot == slot).ToList();
-                Assert.Equal(60, bases.Count);
+                Assert.Equal(100, bases.Count);
                 // どの枠も3系統がそろっている（狙い系統をどれにしても外れがない）
                 foreach (Line line in Enum.GetValues(typeof(Line)))
                     Assert.True(bases.Count(b => b.Line == line) >= 5, $"{slot}/{line}");

@@ -13,7 +13,7 @@ namespace SodRpg.Core.Tests
         {
             foreach (var slot in Content.SlotOrder)
             {
-                Assert.Equal(60, Content.BasesFor(slot).Count());
+                Assert.Equal(100, Content.BasesFor(slot).Count());
                 int uniques = Content.Uniques.Count(u => u.SetId == null && Content.GetBase(u.BaseId).Slot == slot);
                 Assert.True(uniques >= 40, $"{slot}: {uniques}");
             }

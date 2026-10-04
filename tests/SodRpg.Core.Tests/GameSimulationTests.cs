@@ -326,10 +326,10 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Content_tables_are_consistent()
         {
-            Assert.Equal(360, Content.Bases.Count);
+            Assert.Equal(600, Content.Bases.Count);
             foreach (Slot s in Enum.GetValues(typeof(Slot)))
             {
-                Assert.Equal(60, Content.BasesFor(s).Count());
+                Assert.Equal(100, Content.BasesFor(s).Count());
                 Assert.NotEmpty(Content.AffixPool(s));
                 Assert.NotEmpty(Content.PowerPool(s));
                 Assert.True(Content.AffixPool(s).Count >= 4, "Rare needs 3 affixes besides the implicit");
