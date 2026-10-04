@@ -862,11 +862,7 @@ namespace SodRpg.Mod
             RemoveVariant(msg.netId);
             Nightmare[msg.netId] = a;
             NightmareSeenAt[msg.netId] = Time.unscaledTime;
-            if (Nightmare.Count > 300)
-            {
-                Nightmare.Clear(); // 取りこぼしで溜まり続けないように
-                NightmareSeenAt.Clear();
-            }
+            TrimNightmareNameplates();
         }
 
         private void OnVariant(DreamforgeVariantMsg msg)
@@ -887,13 +883,41 @@ namespace SodRpg.Mod
             NightmareSeenAt.Remove(msg.netId);
             Variant[msg.netId] = def.Id;
             VariantSeenAt[msg.netId] = Time.unscaledTime;
-            if (Variant.Count > 300)
-            {
-                ClearVariants();
-                return;
-            }
+            TrimVariantNameplates();
             if (NetworkClient.spawned.TryGetValue(msg.netId, out var id) && id != null)
                 ApplyVariantVisual(msg.netId, id.GetComponent<Monster>(), def);
+        }
+
+        private readonly List<uint> _nameplateTrimScratch = new List<uint>(64);
+        private float _nextNameplateTrimAt;
+        private static readonly Func<uint, bool> NameplateAliveProbe = IsNameplateAlive;
+
+        // 名札の生存確認：スポーン済みで、まだ生きているモンスターか。
+        private static bool IsNameplateAlive(uint netId)
+        {
+            if (!NetworkClient.spawned.TryGetValue(netId, out var id) || id == null) return false;
+            var m = id.GetComponent<Monster>();
+            return m != null && m.isActive;
+        }
+
+        // 辞書が膨らんだら、死亡の取りこぼし分だけを期限切れにする。生きている敵の名札は消さない（#74）。
+        private void TrimNightmareNameplates()
+        {
+            if (!NameplateTrim.Due(Nightmare.Count, Time.unscaledTime, ref _nextNameplateTrimAt)) return;
+            foreach (uint netId in NameplateTrim.CollectStale(NightmareSeenAt, NameplateAliveProbe,
+                Time.unscaledTime, _nameplateTrimScratch))
+            {
+                Nightmare.Remove(netId);
+                NightmareSeenAt.Remove(netId);
+            }
+        }
+
+        private void TrimVariantNameplates()
+        {
+            if (!NameplateTrim.Due(Variant.Count, Time.unscaledTime, ref _nextNameplateTrimAt)) return;
+            foreach (uint netId in NameplateTrim.CollectStale(VariantSeenAt, NameplateAliveProbe,
+                Time.unscaledTime, _nameplateTrimScratch))
+                RemoveVariant(netId);
         }
 
         private void UpdateVariantVisuals()
