@@ -83,7 +83,8 @@ namespace SodRpg.Core.Game
                 .Add("facts", state.Facts.Select(x => (object)new JsonObject().Add("runId", x.RunId)
                     .Add("eventId", x.EventId).Add("monster", (long)x.MonsterNetId).Add("zone", (long)x.ZoneIndex)
                     .Add("nightmare", (long)x.Nightmare).Add("variant", x.VariantId)).ToList())
-                .Add("resolved", state.ResolvedEventIds.Select(x => (object)x).ToList());
+                .Add("resolved", state.ResolvedEventIds.Select(x => (object)x).ToList())
+                .Add("expiredMonsters", state.ExpiredMonsterNetIds.Select(x => (object)(long)x).ToList());
         }
 
         private static KillClassificationCheckpoint ReadKillClassification(JsonObject parent)
@@ -100,6 +101,9 @@ namespace SodRpg.Core.Game
                         (NightmareAffix)Long(fact, "nightmare"), Str(fact, "variant")));
             foreach (object item in Array(j, "resolved"))
                 if (item is string id) state.ResolvedEventIds.Add(id);
+            foreach (object item in Array(j, "expiredMonsters"))
+                if (item is long monster && monster > 0 && monster <= uint.MaxValue)
+                    state.ExpiredMonsterNetIds.Add((uint)monster);
             return state;
         }
 
