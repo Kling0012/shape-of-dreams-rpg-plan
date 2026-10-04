@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using SodRpg.Core.Game;
 using Xunit;
 
@@ -55,15 +57,69 @@ namespace SodRpg.Core.Tests
             return result;
         }
 
-        /// <summary>Registers each generated hero once for the class (the 300-point purchase is expensive) and restores the baseline afterwards.</summary>
+        /// <summary>
+        /// Registers every generated hero once for the class and plays each hero's 300-point purchase (the expensive part, about a minute
+        /// per hero) exactly once, shared by every assertion. The purchases of different heroes run concurrently: all heroes are
+        /// registered first (a registration changes the registry fingerprint every pending plan is checked against) and each purchase
+        /// only touches its own hero. The cache is keyed by the registry fingerprint: if another test class re-registered any tree in
+        /// between, the next access re-registers every hero and discards the cached purchases. The baseline is restored afterwards.
+        /// </summary>
         public sealed class Installed : IDisposable
         {
             internal readonly string Empty = StarClusters.AuthoredRegistryFingerprint;
-            internal readonly HashSet<string> Heroes = new HashSet<string>(StringComparer.Ordinal);
-            internal readonly Dictionary<string, Played> Games = new Dictionary<string, Played>(StringComparer.Ordinal);
+            private string registered;
+            private readonly Dictionary<string, Exception> registrationFailures = new Dictionary<string, Exception>(StringComparer.Ordinal);
+            private readonly Dictionary<string, Task<Played>> games = new Dictionary<string, Task<Played>>(StringComparer.Ordinal);
+
+            /// <summary>Makes sure every generated hero is registered as it is now; returns false (and the failure) for a hero that fails to register.</summary>
+            internal void Ensure(string hero)
+            {
+                if (registered == null || registered != StarClusters.AuthoredRegistryFingerprint)
+                {
+                    WaitForPurchases();
+                    games.Clear();
+                    registrationFailures.Clear();
+                    foreach (string generated in StarClusters.GeneratedHeroes)
+                    {
+                        try { StarClusters.RegisterGeneratedHero(generated); }
+                        catch (Exception error) { registrationFailures[generated] = error; }
+                    }
+                    foreach (string generated in StarClusters.GeneratedHeroes) // warm the shared lazily built caches before any thread starts
+                        if (!registrationFailures.ContainsKey(generated)) { Rules.AllocationValidationForHero(generated); HeroTreeLayout.ForHero(generated); }
+                    registered = StarClusters.AuthoredRegistryFingerprint;
+                }
+                if (registrationFailures.TryGetValue(hero, out var failure))
+                    System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
+            }
+
+            internal Played Play(string hero)
+            {
+                Ensure(hero);
+                if (games.Count == 0)
+                    foreach (string generated in StarClusters.GeneratedHeroes)
+                    {
+                        if (registrationFailures.ContainsKey(generated)) continue;
+                        string key = generated;
+                        games[key] = Task.Factory.StartNew(() =>
+                        {
+                            var game = new Played();
+                            game.Profile = ThreeHundredPointProfile(key, out game.Keystone, out game.Refused);
+                            return game;
+                        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+                    }
+                return games[hero].GetAwaiter().GetResult();
+            }
+
+            private void WaitForPurchases()
+            {
+                foreach (var task in games.Values)
+                    try { task.Wait(); } catch (AggregateException) { }
+            }
+
             public void Dispose()
             {
-                foreach (string hero in Heroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
+                WaitForPurchases();
+                foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
             }
         }
 
@@ -73,21 +129,12 @@ namespace SodRpg.Core.Tests
         {
             Assert.True(StarClusters.GeneratedHeroes.Contains(hero), "StarClusters.GeneratedHeroes is empty or lacks " + hero
                 + ": run `python tools/star-manifest/gen_cs.py --all` and fix the manifest rows it reports.");
-            if (installed.Heroes.Add(hero)) StarClusters.RegisterGeneratedHero(hero);
+            installed.Ensure(hero);
             Assert.True(StarClusters.TryGetRegisteredTree(hero, out var tree));
             body(tree);
         }
 
-        private Played Play(string hero)
-        {
-            if (!installed.Games.TryGetValue(hero, out var game))
-            {
-                game = new Played();
-                game.Profile = ThreeHundredPointProfile(hero, out game.Keystone, out game.Refused);
-                installed.Games.Add(hero, game);
-            }
-            return game;
-        }
+        private Played Play(string hero) => installed.Play(hero);
 
         [Fact]
         public void At_least_one_hero_is_generated()
