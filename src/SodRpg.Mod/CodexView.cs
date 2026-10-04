@@ -12,10 +12,10 @@ namespace SodRpg.Mod
     using Slot = SodRpg.Core.Game.Slot;
 
     /// <summary>
-    /// 図鑑（記録タブから開く）。土台・固有品・セット・固有効果を、絞り込みと文字検索つきで一覧し、右に詳細を出す。
+    /// 図鑑（記録タブから開く）。土台・固有品・セット・固有効果・銘品・組を、絞り込みと文字検索つきで一覧し、右に詳細を出す。
     /// 性能：一覧と詳細の文字列は、絞り込み・検索・選択・図鑑の件数・言語が変わったときだけ作り直す。
     /// 描画は見えている行だけを、固定の行高で手動に描く（GUILayout は場所の確保にしか使わない）。
-    /// 見つけていない固有品・セット・固有効果は名前も効果も出さない（？？？）。土台は秘密ではないので名前とアイコンを淡く出す。
+    /// 見つけていない固有品・セット・固有効果・銘品・組は名前も効果も出さない（？？？）。土台は秘密ではないので名前とアイコンを淡く出す。
     /// </summary>
     internal sealed class CodexView
     {
@@ -35,7 +35,7 @@ namespace SodRpg.Mod
 
         private readonly List<string> _rowText = new List<string>();
         private readonly List<Color> _rowFrame = new List<Color>();
-        private readonly string[] _catLabels = new string[4];
+        private readonly string[] _catLabels = new string[6];
         private readonly string[] _foundLabels = new string[3];
         private readonly string[] _slotLabels = new string[7];
         private readonly string[] _lineLabels = new string[4];
@@ -51,7 +51,7 @@ namespace SodRpg.Mod
         private readonly StringBuilder _sb = new StringBuilder();
         private readonly GUIContent _tmp = new GUIContent();
 
-        private static readonly CodexCategory[] Cats = { CodexCategory.Uniques, CodexCategory.Bases, CodexCategory.Sets, CodexCategory.Powers };
+        private static readonly CodexCategory[] Cats = { CodexCategory.Uniques, CodexCategory.Bases, CodexCategory.Sets, CodexCategory.Powers, CodexCategory.Named, CodexCategory.MiniSets };
         private static readonly Slot[] Slots = { Slot.Weapon, Slot.Head, Slot.Armor, Slot.Hands, Slot.Feet, Slot.Charm };
         private static readonly Line[] Lines = { Line.Offense, Line.Guard, Line.Resonance };
 
@@ -62,6 +62,8 @@ namespace SodRpg.Mod
                 case CodexCategory.Bases: return Loc.T("土台", "Bases");
                 case CodexCategory.Uniques: return Loc.T("固有品", "Legendaries");
                 case CodexCategory.Sets: return Loc.T("セット", "Sets");
+                case CodexCategory.Named: return Loc.T("銘品", "Named");
+                case CodexCategory.MiniSets: return Loc.T("組", "Mini sets");
                 default: return Loc.T("固有効果", "Powers");
             }
         }
@@ -85,8 +87,8 @@ namespace SodRpg.Mod
 
             // 1段目：戻る・カテゴリ
             if (GUI.Button(new Rect(x, y, 120f, BarH), _backLabel, _btn)) back = true;
-            float cx = x + 130f, cw = Mathf.Max(80f, (w - 130f) / 4f - 4f);
-            for (int i = 0; i < 4; i++)
+            float cx = x + 130f, cw = Mathf.Max(80f, (w - 130f) / Cats.Length - 4f);
+            for (int i = 0; i < Cats.Length; i++)
             {
                 bool on = _filter.Category == Cats[i];
                 if (GUI.Button(new Rect(cx + i * (cw + 4f), y, cw, BarH), _catLabels[i], on ? _btnSel : _btn) && !on)
@@ -295,6 +297,8 @@ namespace SodRpg.Mod
             {
                 case CodexCategory.Sets: return Loc.T("セット", "Set");
                 case CodexCategory.Powers: return SlotsText(e.SlotMask);
+                case CodexCategory.MiniSets:
+                    return Loc.T($"{e.NamedPieces.Count}部位", $"{e.NamedPieces.Count} pieces") + " · " + SlotsText(e.SlotMask);
                 default:
                     return Content.SlotName(e.Base.Slot) + " · " + Content.LineName(e.Base.Line)
                         + (FamilyPrefs.Label(e.Base.Family) is string familyLabel ? " · " + familyLabel : "");
@@ -318,17 +322,15 @@ namespace SodRpg.Mod
         {
             string hex;
             if (!found) hex = "#4a4a5c";
-            else if (e.Category == CodexCategory.Sets || (e.Unique != null && e.Unique.SetId != null)) hex = Orange;
-            else if (e.Category == CodexCategory.Powers) hex = Purple;
-            else if (e.Category == CodexCategory.Bases) hex = "#d6d6d6";
-            else hex = UiStyles.RarityHex(Rarity.Legendary);
+            else hex = NameColor(e);
             ColorUtility.TryParseHtmlString(hex, out var c);
             return c;
         }
 
         private static string NameColor(CodexEntry e)
         {
-            if (e.Category == CodexCategory.Sets || (e.Unique != null && e.Unique.SetId != null)) return Orange;
+            if (e.Category == CodexCategory.Sets || e.Category == CodexCategory.MiniSets || (e.Unique != null && e.Unique.SetId != null)) return Orange;
+            if (e.Category == CodexCategory.Named && e.Named != null) return UiStyles.RarityHex(e.Named.Rarity);
             if (e.Category == CodexCategory.Powers) return Purple;
             if (e.Category == CodexCategory.Bases) return "#d6d6d6";
             return UiStyles.RarityHex(Rarity.Legendary);
@@ -350,7 +352,7 @@ namespace SodRpg.Mod
                 _rowFrame.Add(FrameFor(e, found));
             }
 
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < Cats.Length; i++)
                 _catLabels[i] = $"{CatName(Cats[i])} {_res.CategoryFound[(int)Cats[i]]}/{_res.CategoryTotal[(int)Cats[i]]}";
             int all = _res.ScopeTotal, got = _res.ScopeFound;
             _foundLabels[0] = Loc.T($"すべて {all}", $"All {all}");
@@ -368,16 +370,18 @@ namespace SodRpg.Mod
             _searchHint = Loc.T("名前・効果で検索", "Search name / effect");
             _emptyText = Loc.T("条件に合う項目がありません。絞り込みや検索を変えてみてください。", "Nothing matches. Try changing the filters or search.");
             _hint = Loc.T(
-                "固有品・セット・固有効果は、見つけるまで名前も効果も伏せられます（？？？。枠と系統だけ見えます）。土台は秘密ではないので、未発見でも名前とアイコンが淡く見えます。文字検索の対象は、見つけた物と土台の名前・効果です。",
-                "Legendaries, sets and powers keep their name and effects hidden until you find them (???; only slot and line show). Bases are not secret, so unfound ones still show a dim name and icon. Search covers found entries and base names.");
+                "固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も伏せられます（？？？。枠と系統だけ見えます）。土台は秘密ではないので、未発見でも名前とアイコンが淡く見えます。文字検索の対象は、見つけた物と土台の名前・効果です。",
+                "Legendaries, sets, powers, named items and mini sets keep their name and effects hidden until you find them (???; only slot and line show). Bases are not secret, so unfound ones still show a dim name and icon. Search covers found entries and base names.");
 
             int bf = _res.CategoryFound[(int)CodexCategory.Bases], bt = _res.CategoryTotal[(int)CodexCategory.Bases];
             int uf = _res.CategoryFound[(int)CodexCategory.Uniques], ut = _res.CategoryTotal[(int)CodexCategory.Uniques];
             int sf = _res.CategoryFound[(int)CodexCategory.Sets], stt = _res.CategoryTotal[(int)CodexCategory.Sets];
             int pf = _res.CategoryFound[(int)CodexCategory.Powers], pt = _res.CategoryTotal[(int)CodexCategory.Powers];
+            int nf = _res.CategoryFound[(int)CodexCategory.Named], nt = _res.CategoryTotal[(int)CodexCategory.Named];
+            int mf = _res.CategoryFound[(int)CodexCategory.MiniSets], mt = _res.CategoryTotal[(int)CodexCategory.MiniSets];
             _summary = Loc.T(
-                $"土台 {bf}/{bt}　固有品 {uf}/{ut}　セット {sf}/{stt}　固有効果 {pf}/{pt}",
-                $"Bases {bf}/{bt}   Legendaries {uf}/{ut}   Sets {sf}/{stt}   Powers {pf}/{pt}");
+                $"土台 {bf}/{bt}　固有品 {uf}/{ut}　セット {sf}/{stt}　固有効果 {pf}/{pt}　銘品 {nf}/{nt}　組 {mf}/{mt}",
+                $"Bases {bf}/{bt}   Legendaries {uf}/{ut}   Sets {sf}/{stt}   Powers {pf}/{pt}   Named {nf}/{nt}   Mini sets {mf}/{mt}");
         }
 
         private void BuildDetail()
@@ -411,6 +415,8 @@ namespace SodRpg.Mod
                     case CodexCategory.Bases: AppendBase(sb, e); break;
                     case CodexCategory.Uniques: AppendUnique(sb, e); break;
                     case CodexCategory.Sets: AppendSet(sb, e); break;
+                    case CodexCategory.Named: AppendNamed(sb, e); break;
+                    case CodexCategory.MiniSets: AppendMiniSet(sb, e); break;
                     default: AppendPower(sb, e); break;
                 }
             }
@@ -488,6 +494,52 @@ namespace SodRpg.Mod
                 sb.Append(got ? UiStyles.Colored(pc.Name.ToString(), Orange) : UiStyles.Colored("？？？", "#6a6a7c"));
                 sb.Append("  ").Append(UiStyles.Colored(slotLine, Dim));
                 if (pc.Id == currentPieceId) sb.Append(UiStyles.Colored(Loc.T("  ←この装備", "  <- this one"), Dim));
+                sb.Append('\n');
+            }
+        }
+
+        private void AppendNamed(StringBuilder sb, CodexEntry e)
+        {
+            var n = e.Named;
+            sb.Append(UiStyles.Colored(Content.RarityName(n.Rarity).ToString(), NameColor(e))).Append('\n');
+            if (e.Base != null)
+            {
+                sb.Append(Loc.T("土台：", "Base: ")).Append(e.Base.Name.ToString()).Append('\n');
+                AppendImplicit(sb, e.Base);
+            }
+            foreach (var pw in n.Powers) sb.Append(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
+            sb.Append(Loc.T("特性：入手のたびに抽選されます。", "Affixes are rolled each time you obtain one.")).Append('\n');
+            string lore = n.Lore.ToString();
+            if (!string.IsNullOrEmpty(lore))
+                sb.Append('\n').Append("<i>").Append(UiStyles.Colored(lore, "#c9a86a")).Append("</i>").Append('\n');
+            if (n.MiniSetId != null && NamedItems.TryGetMiniSet(n.MiniSetId, out var set))
+            {
+                sb.Append('\n').Append(UiStyles.Colored($"《{set.Name}》", Orange)).Append('\n');
+                AppendMiniSetBody(sb, set, n.Id);
+            }
+        }
+
+        private void AppendMiniSet(StringBuilder sb, CodexEntry e)
+        {
+            AppendMiniSetBody(sb, e.MiniSet, null);
+        }
+
+        private void AppendMiniSetBody(StringBuilder sb, MiniSetDef set, string currentPieceId)
+        {
+            sb.Append(UiStyles.Colored(set.Describe(), "#c8c8e0")).Append('\n').Append('\n');
+            int have = 0;
+            foreach (var id in set.PieceIds) if (_state.Codex.Contains(NamedItems.CodexId(id))) have++;
+            sb.Append(Loc.T($"部位（見つけた数 {have}/{set.PieceCount}）", $"Pieces ({have}/{set.PieceCount} found)")).Append('\n');
+            foreach (var id in set.PieceIds)
+            {
+                if (!NamedItems.TryGetNamed(id, out var piece)) continue;
+                string slotLine = "";
+                if (Content.TryGetBase(piece.BaseId, out var pb)) slotLine = Content.SlotName(pb.Slot) + " · " + Content.LineName(pb.Line);
+                bool got = _state.Codex.Contains(NamedItems.CodexId(id));
+                sb.Append(got ? "◆ " : "◇ ");
+                sb.Append(got ? UiStyles.Colored(piece.Name.ToString(), Orange) : UiStyles.Colored("？？？", "#6a6a7c")); // 未発見の部位名は伏せる
+                sb.Append("  ").Append(UiStyles.Colored(slotLine, Dim));
+                if (id == currentPieceId) sb.Append(UiStyles.Colored(Loc.T("  ←この装備", "  <- this one"), Dim));
                 sb.Append('\n');
             }
         }
