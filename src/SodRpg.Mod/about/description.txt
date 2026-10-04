@@ -1,5 +1,5 @@
-[b]v2.0.1: safer co-op trades (late or lost responses no longer lose a paid trade), the codex shows Named relics and Mini sets, forge reroll cost fix. Saves carry over. Update all co-op players. Restart the game after updating.[/b]
-[b]v2.0.1：協力プレイの取引を安全にし（応答の遅れや保存の失敗で支払い済みの取引を失わなくなります）、図鑑に銘品と組の分類を加え、鍛冶の洗い直し費用の不具合を直しました。保存データはそのまま引き継げます。協力は全員同じ版へ更新し、ゲームを再起動してください。[/b]
+[b]v2.0.2: high-rarity gear is much rarer (no more Legendary pity), keystones lose their drawbacks and up to three can be chosen, plus fixes for the Sealed Hoard, the pure-white route, long-run slowdowns and the star map. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.0.2：高レア装備がかなり出にくくなり（伝説の天井もなし）、刻印のデバフがなくなって最大3つまで選べるようになりました。封じられた宝庫・純白ルート・長いプレイでの重さ・星図の不具合も直しています。セーブはそのまま使えます。協力プレイは全員この版にして、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
