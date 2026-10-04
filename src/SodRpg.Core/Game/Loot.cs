@@ -86,7 +86,7 @@ namespace SodRpg.Core.Game
         /// 所持リストを省略すると、セット部位の収集補助は行わない。
         /// </summary>
         public static Relic RollRelic(Rng rng, Rarity rarity, int itemLevel, Slot? slot = null, Line? focus = null,
-            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null)
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null)
         {
             if (rarity == Rarity.Legendary)
             {
@@ -118,8 +118,82 @@ namespace SodRpg.Core.Game
             var bases = new List<BaseDef>();
             foreach (var b in Content.Bases)
                 if (slot == null || b.Slot == slot.Value) bases.Add(b);
-            var baseDef = PickWeighted(rng, bases, b => b.Line, focus);
-            return RollBaseRelic(rng, baseDef, rarity, itemLevel);
+            // v1.32（設計 3.4）：低レアは「その枠の土台」（重み1）と「その枠・そのレア度の銘品」（レア度ごとの定数）から抽選する。
+            // 銘品が1つもなければ今までどおり土台だけの抽選（乱数列も同じ）。
+            var named = NamedCandidates(rarity, slot);
+            if (named.Count == 0)
+            {
+                var only = PickWeighted(rng, bases, b => b.Line, focus);
+                return RollBaseRelic(rng, only, rarity, itemLevel);
+            }
+            var picks = new List<(BaseDef Base, NamedDef Named, int Weight)>(bases.Count + named.Count);
+            int totalWeight = 0;
+            foreach (var b in bases)
+            {
+                int w = focus != null && b.Line == focus.Value ? FocusWeight : 1;
+                picks.Add((b, null, w));
+                totalWeight += w;
+            }
+            foreach (var n in named)
+            {
+                var baseDef = Content.GetBase(n.BaseId);
+                int w = NamedWeight(n, baseDef, focus, codex, ownedRelics, unsecuredRelics);
+                picks.Add((baseDef, n, w));
+                totalWeight += w;
+            }
+            int roll = rng.Range(0, totalWeight - 1);
+            foreach (var pick in picks)
+            {
+                if (roll < pick.Weight)
+                    return pick.Named != null ? RollNamed(rng, pick.Named, itemLevel) : RollBaseRelic(rng, pick.Base, rarity, itemLevel);
+                roll -= pick.Weight;
+            }
+            var last = picks[picks.Count - 1];
+            return last.Named != null ? RollNamed(rng, last.Named, itemLevel) : RollBaseRelic(rng, last.Base, rarity, itemLevel);
+        }
+
+        /// <summary>その枠・そのレア度の銘品の候補。土台が定義にない銘品は候補に入れない（データ検証で弾く前提）。</summary>
+        private static List<NamedDef> NamedCandidates(Rarity rarity, Slot? slot)
+        {
+            if (rarity != Rarity.Uncommon && rarity != Rarity.Rare && rarity != Rarity.Epic) return new List<NamedDef>();
+            var named = new List<NamedDef>();
+            foreach (var n in NamedItems.All)
+            {
+                if (n.Rarity != rarity) continue;
+                if (!Content.TryGetBase(n.BaseId, out var baseDef)) continue;
+                if (slot != null && baseDef.Slot != slot.Value) continue;
+                named.Add(n);
+            }
+            return named;
+        }
+
+        /// <summary>銘品1種の重み（設計 3.4）。レア度ごとの定数 × 狙い系統2倍 × 図鑑にまだない3倍 × 始めた組の未所持部位4倍。
+        /// 図鑑を受け取らない呼び出しでは3倍を掛けない（分からないものを「未所持」とは扱わない）。</summary>
+        internal static int NamedWeight(NamedDef def, BaseDef baseDef, Line? focus, ISet<string> codex,
+            IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        {
+            int w = NamedItems.RarityWeight(def.Rarity);
+            if (focus != null && baseDef.Line == focus.Value) w *= FocusWeight;
+            if (codex != null && !codex.Contains(NamedItems.CodexId(def.Id))) w *= NamedItems.NotInCodexMultiplier;
+            if (IsMissingMiniSetPiece(def, ownedRelics, unsecuredRelics)) w *= NamedItems.MissingMiniSetPieceMultiplier;
+            return w;
+        }
+
+        /// <summary>銘品を新しく抽選する。固有効果は定義の固定値、特性はレア度どおりに個体ごとに抽選する（設計 3.2）。</summary>
+        internal static Relic RollNamed(Rng rng, NamedDef def, int itemLevel)
+        {
+            var baseDef = Content.GetBase(def.BaseId);
+            var r = new Relic
+            {
+                Uid = rng.NextUid(),
+                BaseId = def.BaseId,
+                NamedId = def.Id,
+                Rarity = def.Rarity,
+                ItemLevel = ClampLevel(itemLevel),
+            };
+            RollAffixes(rng, r, Content.AffixCount(def.Rarity), baseDef);
+            r.Powers.AddRange(def.Powers);
+            return r;
         }
 
         /// <summary>指定された土台の通常遺物を新しく抽選する（双子の鏡用）。</summary>
@@ -212,6 +286,26 @@ namespace SodRpg.Core.Game
             return started;
         }
 
+        /// <summary>始めた組（小セット）の未所持部位か（設計 3.4）。既に持っている部位は false、組を始めていなければ false。</summary>
+        private static bool IsMissingMiniSetPiece(NamedDef candidate, IReadOnlyList<Relic> ownedRelics, IReadOnlyList<Relic> unsecuredRelics)
+        {
+            if (candidate.MiniSetId == null) return false;
+            bool started = false;
+            for (int source = 0; source < 2; source++)
+            {
+                var relics = source == 0 ? ownedRelics : unsecuredRelics;
+                if (relics == null) continue;
+                for (int i = 0; i < relics.Count; i++)
+                {
+                    string id = relics[i].NamedId;
+                    if (id == candidate.Id) return false;
+                    if (!started && NamedItems.TryGetNamed(id, out var named) && named.MiniSetId == candidate.MiniSetId)
+                        started = true;
+                }
+            }
+            return started;
+        }
+
         private static T PickWeighted<T>(Rng rng, List<T> items, Func<T, Line> lineOf, Line? focus)
         {
             if (focus == null) return items[rng.Range(0, items.Count - 1)];
@@ -291,7 +385,7 @@ namespace SodRpg.Core.Game
         /// （計画書 第14章「確保と損失は個人ごと」）。epicPity はボス撃破でのみ進む。
         /// </summary>
         public static KillReward RollKill(Rng rng, MonsterTier tier, int itemLevel, int heat, ref int epicPity, Line? focus = null, Pacts.Totals mods = null,
-            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null)
+            IReadOnlyList<Relic> ownedRelics = null, IReadOnlyList<Relic> unsecuredRelics = null, ISet<string> codex = null)
         {
             heat = ClampHeat(heat);
             var reward = new KillReward { Xp = Content.KillXp(tier) };
@@ -309,12 +403,12 @@ namespace SodRpg.Core.Game
                     pity = true;
                 }
                 var rarity = RollRarity(rng, luck, allowLegendary, floor);
-                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics));
+                reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
                 if (tier == MonsterTier.Boss)
                 {
                     if (pity || rarity >= Rarity.Epic) epicPity = 0;
                     else epicPity++;
-                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics));
+                    if (rng.Chance(0.6)) reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
                 }
             }
 

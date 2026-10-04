@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
-    public enum CodexCategory { Bases = 0, Uniques = 1, Sets = 2, Powers = 3 }
+    public enum CodexCategory { Bases = 0, Uniques = 1, Sets = 2, Powers = 3, Named = 4, MiniSets = 5 }
 
     public enum CodexFoundFilter { All = 0, Found = 1, Unfound = 2 }
 
@@ -24,6 +24,12 @@ namespace SodRpg.Core.Game
         public UniqueDef Unique { get; internal set; }
         public SetDef Set { get; internal set; }
         public Power Power { get; internal set; }
+        /// <summary>銘品の項目だけ（v1.32）。</summary>
+        public NamedDef Named { get; internal set; }
+        /// <summary>組（小セット）の項目だけ（v1.32）。</summary>
+        public MiniSetDef MiniSet { get; internal set; }
+        /// <summary>組の部位（銘品）。</summary>
+        public IReadOnlyList<NamedDef> NamedPieces { get; internal set; }
         /// <summary>セットの部位（固有品ID）。</summary>
         public IReadOnlyList<UniqueDef> Pieces { get; internal set; }
         /// <summary>固有効果を固定で持つ固有品・セット（固有効果の項目だけ）。</summary>
@@ -69,6 +75,10 @@ namespace SodRpg.Core.Game
                     foreach (var p in e.Pieces)
                         if (Codex.Contains(p.Id)) return true;
                     return false;
+                case CodexCategory.MiniSets:
+                    foreach (var n in e.NamedPieces)
+                        if (Codex.Contains(NamedItems.CodexId(n.Id))) return true;
+                    return false;
                 case CodexCategory.Powers:
                     return KnownPowers.Contains(e.Power);
                 default:
@@ -92,8 +102,8 @@ namespace SodRpg.Core.Game
         /// <summary>各項目が見つかっているか（Items と同じ並び）。</summary>
         public List<bool> ItemFound = new List<bool>();
         /// <summary>カテゴリごとの 見つけた数 / 全体。</summary>
-        public int[] CategoryFound = new int[4];
-        public int[] CategoryTotal = new int[4];
+        public int[] CategoryFound = new int[6];
+        public int[] CategoryTotal = new int[6];
         /// <summary>選んだカテゴリの中での 枠・系統ごとの 見つけた数 / 全体。</summary>
         public int[] SlotFound = new int[6];
         public int[] SlotTotal = new int[6];
@@ -117,6 +127,9 @@ namespace SodRpg.Core.Game
             }
             return all[(int)c];
         }
+
+        /// <summary>登録簿（銘品・組）が変わったら作り直す（試験用登録から呼ぶ）。</summary>
+        internal static void InvalidateCache() => _all = null;
 
         private static IReadOnlyList<CodexEntry>[] BuildAll()
         {
@@ -207,7 +220,48 @@ namespace SodRpg.Core.Game
                     CarrierSets = (IReadOnlyList<SetDef>)cs ?? Array.Empty<SetDef>(),
                 });
             }
-            return new IReadOnlyList<CodexEntry>[] { bases, uniques, sets, powers };
+            // 銘品と組（v1.32）。登録簿が空の間は項目が1つもない。
+            var namedEntries = new List<CodexEntry>();
+            foreach (var n in NamedItems.All)
+            {
+                int slot = 0, line = 0;
+                BaseDef b = null;
+                if (Content.TryGetBase(n.BaseId, out b))
+                {
+                    slot = 1 << (int)b.Slot;
+                    line = 1 << (int)b.Line;
+                }
+                namedEntries.Add(new CodexEntry
+                {
+                    Category = CodexCategory.Named, Id = NamedItems.CodexId(n.Id), Name = n.Name, Named = n, Base = b,
+                    IconBaseId = n.BaseId, SlotMask = slot, LineMask = line,
+                });
+            }
+
+            var miniSetEntries = new List<CodexEntry>();
+            foreach (var s in NamedItems.MiniSets)
+            {
+                var pieces = new List<NamedDef>();
+                int slot = 0, line = 0;
+                string icon = null;
+                foreach (var pieceId in s.PieceIds)
+                {
+                    if (!NamedItems.TryGetNamed(pieceId, out var piece)) continue;
+                    pieces.Add(piece);
+                    if (Content.TryGetBase(piece.BaseId, out var pb))
+                    {
+                        slot |= 1 << (int)pb.Slot;
+                        line |= 1 << (int)pb.Line;
+                        if (icon == null) icon = pb.Id;
+                    }
+                }
+                miniSetEntries.Add(new CodexEntry
+                {
+                    Category = CodexCategory.MiniSets, Id = s.Id, Name = s.Name, MiniSet = s, NamedPieces = pieces,
+                    IconBaseId = icon, SlotMask = slot, LineMask = line,
+                });
+            }
+            return new IReadOnlyList<CodexEntry>[] { bases, uniques, sets, powers, namedEntries, miniSetEntries };
         }
 
         private static string PowerNameIn(Power p, bool ja)
@@ -277,6 +331,20 @@ namespace SodRpg.Core.Game
                 if (!any) continue;
                 foreach (var pw in e.Set.ThreePiece) set.Add(pw.Power);
             }
+            foreach (var n in NamedItems.All)
+            {
+                if (!p.Codex.Contains(NamedItems.CodexId(n.Id))) continue;
+                foreach (var pw in n.Powers) set.Add(pw.Power);
+            }
+            foreach (var e in Entries(CodexCategory.MiniSets))
+            {
+                if (e.MiniSet.ThreePiece == null) continue;
+                bool any = false;
+                foreach (var pc in e.NamedPieces)
+                    if (p.Codex.Contains(NamedItems.CodexId(pc.Id))) { any = true; break; }
+                if (!any) continue;
+                set.Add(e.MiniSet.ThreePiece.Power);
+            }
             return set;
         }
 
@@ -302,6 +370,16 @@ namespace SodRpg.Core.Game
                 case CodexCategory.Sets:
                     sb.Append(e.Set.Describe());
                     break;
+                case CodexCategory.Named:
+                    if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
+                    foreach (var pw in e.Named.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
+                    if (e.Named.MiniSetId != null && NamedItems.TryGetMiniSet(e.Named.MiniSetId, out var ms))
+                        sb.Append(ms.Name.Ja).Append(' ').Append(ms.Name.En).Append(' ');
+                    sb.Append(e.Named.Lore.Ja).Append(' ').Append(e.Named.Lore.En);
+                    break;
+                case CodexCategory.MiniSets:
+                    sb.Append(e.MiniSet.Describe());
+                    break;
                 default:
                     if (TryPowerRange(e.Power, out int min, out int max))
                         sb.Append(Content.FormatPower(e.Power, max));
@@ -319,8 +397,8 @@ namespace SodRpg.Core.Game
             var res = reuse ?? new CodexResult();
             res.Items.Clear();
             res.ItemFound.Clear();
-            Array.Clear(res.CategoryFound, 0, 4);
-            Array.Clear(res.CategoryTotal, 0, 4);
+            Array.Clear(res.CategoryFound, 0, 6);
+            Array.Clear(res.CategoryTotal, 0, 6);
             Array.Clear(res.SlotFound, 0, 6);
             Array.Clear(res.SlotTotal, 0, 6);
             Array.Clear(res.LineFound, 0, 3);
@@ -328,7 +406,7 @@ namespace SodRpg.Core.Game
             res.ScopeFound = res.ScopeTotal = 0;
             string text = (f.Text ?? "").Trim().ToLowerInvariant();
 
-            for (int c = 0; c < 4; c++)
+            for (int c = 0; c < 6; c++)
             {
                 bool selected = c == (int)f.Category;
                 foreach (var e in Entries((CodexCategory)c))

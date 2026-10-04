@@ -216,7 +216,7 @@ namespace SodRpg.Core.Game
             var pw = new List<object>();
             foreach (var x in r.Powers) pw.Add(new List<object> { (long)x.Power, (long)x.Value });
             return new JsonObject()
-                .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId)
+                .Add("uid", r.Uid).Add("base", r.BaseId).Add("unique", r.UniqueId).Add("named", r.NamedId)
                 .Add("rarity", (long)r.Rarity).Add("ilvl", (long)r.ItemLevel)
                 .Add("enhance", (long)r.Enhance).Add("retunes", (long)r.Retunes).Add("affixRerolls", (long)r.AffixRerolls).Add("locked", r.Locked)
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
@@ -543,6 +543,7 @@ namespace SodRpg.Core.Game
                 Uid = Str(j, "uid"),
                 BaseId = Str(j, "base"),
                 UniqueId = j.TryGet("unique", out object u) ? u as string : null,
+                NamedId = j.TryGet("named", out object nm) ? nm as string : null, // v1.32：古い保存には無いので null
                 Rarity = rarity,
                 ItemLevel = Clamp(Long(j, "ilvl"), 1, Content.MaxItemLevel),
                 Enhance = Clamp(Long(j, "enhance"), 0, Content.MaxEnhanceFor(rarity, limitBreaks)),
@@ -565,6 +566,8 @@ namespace SodRpg.Core.Game
                 throw new LedgerFormatException("未知の基礎ID: " + r.BaseId);
             if (r.UniqueId != null && !Content.TryGetUnique(r.UniqueId, out _))
                 throw new LedgerFormatException("未知の固有品ID: " + r.UniqueId);
+            // 未知の銘品IDは例外にせず通常の遺物として読む（設計 4。固有品と違って落とさない）。
+            if (r.NamedId != null && !NamedItems.TryGetNamed(r.NamedId, out _)) r.NamedId = null;
             if (!seen.Add(r.Uid)) throw new LedgerFormatException("Uidの重複: " + r.Uid);
             // 段と覚醒の力をそろえる（v1.26 までの覚醒は覚醒Ⅱの累計から続ける）。
             if (r.AwakenPoints < Content.AwakenThresholdFor(r.AwakenLevel)) r.AwakenPoints = Content.AwakenThresholdFor(r.AwakenLevel);

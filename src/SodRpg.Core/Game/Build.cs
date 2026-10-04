@@ -19,6 +19,8 @@ namespace SodRpg.Core.Game
         public SortedDictionary<Line, int> Lines { get; } = new SortedDictionary<Line, int>();
         /// <summary>セット遺物の装着数（表示用）。</summary>
         public SortedDictionary<string, int> Sets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
+        /// <summary>組（小セット）の装着数（表示用・v1.32）。SetDef の集計とは別。</summary>
+        public SortedDictionary<string, int> MiniSets { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         /// <summary>遺物と星の連携。装着条件はホストで判定し、常時の能力値には加えない。</summary>
         public List<LinkDef> Links { get; } = new List<LinkDef>();
         /// <summary>振ったルートの星が持つ、記憶に反応する仕掛け。</summary>
@@ -204,6 +206,23 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) AddPower(pw.Power, pw.Value);
                 if (kv.Value >= 6 && set.HasSixPiece) foreach (var pw in set.SixPiece) AddPower(pw.Power, pw.Value);
+            }
+            // 組（小セット・v1.32 設計 3.2/4）。同じ組の別々の銘品だけを数え、SetDef の集計とは別に足す（重複して数えない）。
+            var miniPieces = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            foreach (string uid in h.Equipped)
+            {
+                var r = p.FindStash(uid);
+                if (r?.NamedId == null || !NamedItems.TryGetNamed(r.NamedId, out var named) || named.MiniSetId == null) continue;
+                if (!miniPieces.TryGetValue(named.MiniSetId, out var ids))
+                    miniPieces[named.MiniSetId] = ids = new HashSet<string>(StringComparer.Ordinal);
+                ids.Add(named.Id);
+            }
+            foreach (var mp in miniPieces)
+            {
+                b.MiniSets[mp.Key] = mp.Value.Count;
+                if (!NamedItems.TryGetMiniSet(mp.Key, out var mini)) continue;
+                if (mp.Value.Count >= 2) Add(rawStats, mini.TwoPiece.Stat, mini.TwoPiece.Value);
+                if (mp.Value.Count >= 3 && mini.ThreePiece != null) AddPower(mini.ThreePiece.Power, mini.ThreePiece.Value);
             }
             foreach (var selected in selectedTalents)
             {

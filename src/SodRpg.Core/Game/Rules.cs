@@ -161,7 +161,7 @@ namespace SodRpg.Core.Game
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel);
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
             if (!string.IsNullOrEmpty(heroKey))
@@ -227,7 +227,7 @@ namespace SodRpg.Core.Game
                 p.Stats.RelicsFound++;
                 run.RelicsFound++;
                 if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
-                p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+                p.Codex.Add(relic.CodexId);
                 p.BestItemLevel = Math.Max(p.BestItemLevel, relic.ItemLevel);
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
@@ -664,7 +664,7 @@ namespace SodRpg.Core.Game
                     int itemLevel = parts.Max(r => r.ItemLevel);
                     foreach (var part in parts) run.Satchel.Remove(part);
                     var relic = Loot.RollRelic(rng, rarity, itemLevel, null,
-                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
                     RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
@@ -808,7 +808,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.AbyssalChest:
                 {
                     var relic = Loot.RollRelic(rng, Rarity.Epic, p.BestItemLevel, null,
-                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
                     run.SatchelShards -= 30;
                     run.Heat++;
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
@@ -822,7 +822,7 @@ namespace SodRpg.Core.Game
                     var target = DreamEvents.TradeTarget(p, e, trades);
                     var slot = (Slot)(((int)target.Slot + 1) % Content.SlotCount);
                     var relic = Loot.RollRelic(rng, target.Rarity, target.ItemLevel, slot,
-                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel);
+                        p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
                     run.Satchel.Remove(target);
                     ev.Add(new GameEvent(EventKind.Lost, Loc.T($"「{target.DisplayName}」を別の枠の遺物と交換しました。", $"Exchanged \"{target.DisplayName}\" for a relic in another slot."), target.Rarity));
                     RecordEventRelic(p, relic, ev, trades);
@@ -867,8 +867,8 @@ namespace SodRpg.Core.Game
             var run = p.Run;
             var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * (run?.Heat ?? 0), true, Rarity.Uncommon);
             var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
-                p.Focus ?? DailyDream.Get(run?.DailyId ?? 0)?.FeaturedLine, p.Stash, run?.Satchel);
-            p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+                p.Focus ?? DailyDream.Get(run?.DailyId ?? 0)?.FeaturedLine, p.Stash, run?.Satchel, p.Codex);
+            p.Codex.Add(relic.CodexId);
             p.Stats.RelicsFound++;
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
@@ -889,7 +889,7 @@ namespace SodRpg.Core.Game
 
         private static void RecordEventRelic(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null)
         {
-            p.Codex.Add(relic.UniqueId ?? relic.BaseId);
+            p.Codex.Add(relic.CodexId);
             p.Run.RelicsFound++;
             p.Stats.RelicsFound++;
             if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
@@ -1529,12 +1529,12 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}）。", $"Not enough materials ({shards} shards, {tuning} tuning)."));
             var rng = p.TakeRng();
             var rarity = Loot.RollRarity(rng, fine ? 1.0 : 0.5, allowLegendary: false, fine ? Rarity.Rare : Rarity.Uncommon);
-            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot, ownedRelics: p.Stash, unsecuredRelics: p.Run?.Satchel);
+            var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, slot, ownedRelics: p.Stash, unsecuredRelics: p.Run?.Satchel, codex: p.Codex);
             p.StoreRng(rng);
             p.AddMaterial(Materials.Shard, -shards);
             p.AddMaterial(Materials.Tuning, -tuning);
             p.Stash.Add(relic);
-            p.Codex.Add(relic.BaseId);
+            p.Codex.Add(relic.CodexId);
             return new GameEvent(EventKind.Drop, Loc.T(
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を作りました。",
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
@@ -1571,10 +1571,10 @@ namespace SodRpg.Core.Game
             p.AddMaterial(Materials.Shard, -cost);
             if (tuningCost > 0) p.AddMaterial(Materials.Tuning, -tuningCost);
             var rng = p.TakeRng();
-            var result = Loot.RollRelic(rng, r + 1, ilvl, target, p.Focus, p.Stash, p.Run?.Satchel);
+            var result = Loot.RollRelic(rng, r + 1, ilvl, target, p.Focus, p.Stash, p.Run?.Satchel, p.Codex);
             p.StoreRng(rng);
             p.Stash.Add(result);
-            p.Codex.Add(result.UniqueId ?? result.BaseId);
+            p.Codex.Add(result.CodexId);
             if (result.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
             return new GameEvent(EventKind.Drop, Loc.T(
                 $"合成して、{Content.RarityName(result.Rarity)}「{result.DisplayName}」ができました。",

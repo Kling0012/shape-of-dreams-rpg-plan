@@ -38,6 +38,8 @@ namespace SodRpg.Core.Game
         public string BaseId { get; set; }
         /// <summary>固有品なら固有品ID、それ以外は null。</summary>
         public string UniqueId { get; set; }
+        /// <summary>銘品なら銘品ID、それ以外は null（v1.32）。</summary>
+        public string NamedId { get; set; }
         public Rarity Rarity { get; set; }
         public int ItemLevel { get; set; }
         public int Enhance { get; set; }
@@ -78,6 +80,8 @@ namespace SodRpg.Core.Game
             get
             {
                 if (UniqueId != null && Content.TryGetUnique(UniqueId, out var u)) return u.Name.ToString();
+                // 銘品は銘品の名前。エピックの銘（Epithets）は付けない（設計 4）。
+                if (NamedId != null && NamedItems.TryGetNamed(NamedId, out var named)) return named.Name.ToString();
                 // エピックは、1つ目の固有効果から銘が付く（例：猛火の連なりの剣）。
                 if (Rarity == Rarity.Epic && Powers.Count > 0 && Content.Epithet(Powers[0].Power) is Txt ep)
                     return Loc.Japanese ? ep.Ja + " " + Base.Name.Ja : ep.En + " " + Base.Name.En; // 「乱戦の 共鳴の衣」のように区切って読みやすく
@@ -86,6 +90,12 @@ namespace SodRpg.Core.Game
         }
 
         public string DisplayName => Enhance > 0 ? PlainName + " +" + Enhance.ToString(CultureInfo.InvariantCulture) : PlainName;
+
+        /// <summary>固有効果が固定の遺物（固有品・銘品）。固有効果を交換する出来事の対象外（設計 3.4）。</summary>
+        public bool HasFixedPowers => UniqueId != null || NamedId != null;
+
+        /// <summary>図鑑に載る文字列。固有品は固有品ID、銘品は「n:」付き、それ以外は土台ID（設計 3.5・4）。</summary>
+        public string CodexId => UniqueId ?? (NamedId != null ? NamedItems.CodexId(NamedId) : BaseId);
 
         /// <summary>基礎能力の現在値（アイテムレベルと強化を反映）。</summary>
         public StatLine Implicit
@@ -140,6 +150,7 @@ namespace SodRpg.Core.Game
                 Uid = Uid,
                 BaseId = BaseId,
                 UniqueId = UniqueId,
+                NamedId = NamedId,
                 Rarity = Rarity,
                 ItemLevel = ItemLevel,
                 Enhance = Enhance,

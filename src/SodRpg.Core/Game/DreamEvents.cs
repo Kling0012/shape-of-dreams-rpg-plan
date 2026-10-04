@@ -358,7 +358,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.MemoryWell:
                     if (string.IsNullOrEmpty(p.Run.HeroKey) || !p.Heroes.TryGetValue(p.Run.HeroKey, out var hero)) return null;
                     pool = p.Stash.Where(r => hero.Equipped.Contains(r.Uid) && SafeTradeRelic(p, r, trades, true)
-                        && r.UniqueId == null && r.Powers.Count > 0 && ReplacementPowers(r).Any());
+                        && !r.HasFixedPowers && r.Powers.Count > 0 && ReplacementPowers(r).Any());
                     break;
                 case DreamEvent.ShadowExchange:
                     pool = pool.Where(r => r.Affixes.Count > 0 && r.Retunes < Content.MaxRetunes
@@ -378,7 +378,7 @@ namespace SodRpg.Core.Game
                     pool = pool.Where(r => r.UniqueId == null && (r.Rarity == Rarity.Rare || r.Rarity == Rarity.Epic));
                     break;
                 case DreamEvent.PowerCrucible:
-                    pool = pool.Where(r => r.UniqueId == null && r.Powers.Count >= 2 && ReplacementPowers(r).Any());
+                    pool = pool.Where(r => !r.HasFixedPowers && r.Powers.Count >= 2 && ReplacementPowers(r).Any());
                     break;
             }
             Relic selected = null;
