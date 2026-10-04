@@ -11,7 +11,7 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Checkpoints_cover_the_v131_grid_up_to_MaxPoints()
         {
-            Assert.Equal(new[] { 0, 50, 100, 150, 200, 250, 300 }, StarBalance.Checkpoints);
+            Assert.Equal(new[] { 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 }, StarBalance.Checkpoints);
             Assert.Equal(StarProgression.MaxPoints, StarBalance.Checkpoints[StarBalance.Checkpoints.Length - 1]);
         }
 

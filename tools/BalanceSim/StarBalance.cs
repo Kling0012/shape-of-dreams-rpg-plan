@@ -30,8 +30,8 @@ public sealed record MemoryFocus(string Key, string? Memory, bool IsAuthoredClus
 /// <summary>v1.31 星振りシミュレーションの純粋な補助関数。コアの定数は一切書き換えない。</summary>
 public static class StarBalance
 {
-    /// <summary>報告するポイント節目。v1.31 の上限は StarProgression.MaxPoints = 300。</summary>
-    public static readonly int[] Checkpoints = { 0, 50, 100, 150, 200, 250, 300 };
+    /// <summary>報告するポイント節目。v1.31 の上限は StarProgression.MaxPoints = 500。</summary>
+    public static readonly int[] Checkpoints = { 0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500 };
 
     /// <summary>
     /// 力の代理値。本体が悪夢化抽選の強さとして使う式

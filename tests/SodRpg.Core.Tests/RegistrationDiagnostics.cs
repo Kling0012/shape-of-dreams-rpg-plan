@@ -135,13 +135,13 @@ namespace SodRpg.Core.Tests
             return result;
         }
 
-        /// <summary>Registers the hero's definitions and buys a 300-point build greedily (as GeneratedHeroAcceptanceTests does): runtime composition failures that registration cannot see.</summary>
+        /// <summary>Registers the hero's definitions and buys a maximum-point build greedily (as GeneratedHeroAcceptanceTests does): runtime composition failures that registration cannot see.</summary>
         internal static string Play(string hero, List<AuthoredStarDef> definitions)
         {
             try
             {
                 StarClusters.RegisterAuthored(hero, definitions);
-                var profile = GeneratedHeroAcceptanceTests.ThreeHundredPointProfile(hero, out string keystone, out var refused);
+                var profile = GeneratedHeroAcceptanceTests.MaxPointProfile(hero, out string keystone, out var refused);
                 return "plays (keystone " + keystone + ", " + Rules.SpentPoints(profile.Hero(hero), hero) + " points spent)";
             }
             catch (Exception error) { return "FAILS: " + error.GetType().Name + ": " + error.Message; }
@@ -191,7 +191,7 @@ namespace SodRpg.Core.Tests
             foreach (var (hero, total, rejections) in results)
             {
                 sb.Append("\n## ").Append(hero).Append("\n\n");
-                sb.Append("Greedy 300-point play: ").Append(plays[hero]).Append("\n\n");
+                sb.Append("Greedy maximum-point play: ").Append(plays[hero]).Append("\n\n");
                 if (rejections.Count == 0) { sb.Append("No rejection: registers cleanly.\n"); continue; }
                 foreach (var group in rejections.GroupBy(r => r.Reason).OrderByDescending(g => g.Count()))
                 {

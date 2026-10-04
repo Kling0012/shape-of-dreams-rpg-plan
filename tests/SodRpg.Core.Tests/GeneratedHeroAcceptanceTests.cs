@@ -59,7 +59,7 @@ namespace SodRpg.Core.Tests
         }
 
         /// <summary>
-        /// Registers every generated hero once for the class and plays each hero's 300-point purchase (the expensive part, about a minute
+        /// Registers every generated hero once for the class and plays each hero's maximum-point (StarProgression.MaxSpendablePoints) purchase (the expensive part, about a minute
         /// per hero) exactly once, shared by every assertion. The purchases of different heroes run concurrently: all heroes are
         /// registered first (a registration changes the registry fingerprint every pending plan is checked against) and each purchase
         /// only touches its own hero. The cache is keyed by the registry fingerprint: if another test class re-registered any tree in
@@ -104,7 +104,7 @@ namespace SodRpg.Core.Tests
                         games[key] = Task.Factory.StartNew(() =>
                         {
                             var game = new Played();
-                            game.Profile = ThreeHundredPointProfile(key, out game.Keystone, out game.Refused);
+                            game.Profile = MaxPointProfile(key, out game.Keystone, out game.Refused);
                             return game;
                         }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                     }
@@ -258,13 +258,15 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        internal static Profile ThreeHundredPointProfile(string hero, out string keystone, out List<string> refused)
+        internal static Profile MaxPointProfile(string hero, out string keystone, out List<string> refused)
         {
             var profile = Profile.CreateNew(1331);
             var state = profile.Hero(hero);
             state.StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);
             state.Kills = 1000000;
-            Assert.Equal(StarProgression.MaxPoints, profile.TalentPoints(hero));
+            // The full codex bonus on top of the experience cap: the real maximum a player can spend.
+            for (int i = 0; i < Content.MaxCodexBonus * Content.CodexPerPoint; i++) profile.Codex.Add("acceptance.codex." + i);
+            Assert.Equal(StarProgression.MaxSpendablePoints, profile.TalentPoints(hero));
             var layout = HeroTreeLayout.ForHero(hero);
             int reserve = layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).Min(n => n.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
             refused = new List<string>();
@@ -304,8 +306,20 @@ namespace SodRpg.Core.Tests
             return profile;
         }
 
+        /// <summary>Optional: append the per-hero envelope numbers to the file named by SODRPG_ENVELOPE_LOG.</summary>
+        private static void LogEnvelope(string hero, IReadOnlyList<TalentDef> tree, int spent, Build build, string encoded)
+        {
+            string path = Environment.GetEnvironmentVariable("SODRPG_ENVELOPE_LOG");
+            if (string.IsNullOrEmpty(path)) return;
+            var capacity = BuildLimits.Analyze(tree);
+            lock (typeof(GeneratedHeroAcceptanceTests))
+                File.AppendAllText(path, hero + " spent=" + spent + " encodedChars=" + encoded.Length + "/" + BuildLimits.MaxEncodedChars
+                    + " gimmicks=" + build.Gimmicks.Count + " analysisGimmickEntries=" + capacity.GimmickEntries + "/" + BuildLimits.EffectiveChannelSecurityLimit
+                    + " analysisTalentChars=" + capacity.MaximumEncodedTalentChars + Environment.NewLine);
+        }
+
         [Theory, MemberData(nameof(Heroes))]
-        public void Greedy_three_hundred_point_purchase_succeeds_and_the_build_round_trips_within_protocol_13(string hero)
+        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_within_protocol_13(string hero)
         {
             WithHero(hero, tree =>
             {
@@ -314,8 +328,8 @@ namespace SodRpg.Core.Tests
                 var state = profile.Hero(hero);
                 int spent = Rules.SpentPoints(state, hero);
                 int smallest = tree.Where(t => !t.IsKeystone && (!state.Talents.TryGetValue(t.Id, out int r) || r < t.MaxRank)).Select(t => t.RankCost).DefaultIfEmpty(int.MaxValue).Min();
-                Assert.True(spent <= StarProgression.MaxPoints);
-                Assert.True(StarProgression.MaxPoints - spent < Math.Max(1, smallest) || Rules.FreePoints(profile, hero) == 0,
+                Assert.True(spent <= StarProgression.MaxSpendablePoints);
+                Assert.True(StarProgression.MaxSpendablePoints - spent < Math.Max(1, smallest) || Rules.FreePoints(profile, hero) == 0,
                     "Points were left unspent although a reachable star is affordable: spent " + spent
                     + "; refused as capped or inert: " + string.Join("; ", refused.Take(20)));
                 Assert.Equal(keystone, state.Keystone);
@@ -324,6 +338,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(spent, build.SpentStarPoints);
                 string encoded = build.Encode();
                 Assert.InRange(encoded.Length, 1, BuildLimits.MaxEncodedChars);
+                LogEnvelope(hero, tree, spent, build, encoded);
                 var decoded = Build.Decode(encoded);
                 Assert.NotNull(decoded);
                 Assert.Equal(encoded, decoded.Encode());

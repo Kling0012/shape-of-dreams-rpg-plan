@@ -63,7 +63,7 @@ internal sealed class StarHeroResult
 }
 
 /// <summary>
-/// v1.31：300ポイントまでの星振りを、本体と同じ Rules.AddTalentRank / Rules.SetKeystone /
+/// v1.31：500ポイントまでの星振りを、本体と同じ Rules.AddTalentRank / Rules.SetKeystone /
 /// Build.Compute の経路で購入して眺める。ツリーは実行時に登録されているもの
 /// （HeroSigils.TreeFor）をそのまま使うため、authored 星群の追加・差し替えに自動で追従する。
 /// </summary>

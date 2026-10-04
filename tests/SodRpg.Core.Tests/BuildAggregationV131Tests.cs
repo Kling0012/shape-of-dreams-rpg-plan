@@ -28,7 +28,7 @@ namespace SodRpg.Core.Tests
         };
 
         [Fact]
-        public void Three_hundred_points_select_the_maximum_effect_sources_on_a_generated_large_tree_without_loss()
+        public void Max_points_select_the_maximum_effect_sources_on_a_generated_large_tree_without_loss()
         {
             var anchor = Anchor;
             var existing = HeroSigils.TreeFor(anchor.HeroKey).Where(t => t.Cluster == null).ToArray();
@@ -65,17 +65,17 @@ namespace SodRpg.Core.Tests
                 if (talent.IsChoice) hero.TalentChoices.Add(talent.Id, talent.ClusterOrder % 2);
                 spent += talent.RankCost;
             }
-            Assert.Equal(300, spent);
+            Assert.Equal(StarProgression.MaxPoints, spent);
             var selected = tree.Where(t => hero.Talents.ContainsKey(t.Id))
                 .Select(t => t.IsChoice ? t.Choices[hero.TalentChoices[t.Id]] : t).ToArray();
             int sourceCount = selected.Count(HasSource);
             // Every effect costs at least one point. The cheapest path to any effect
             // requires this many non-effect points; the constructed allocation attains the bound.
-            Assert.Equal(300 - MinimumNonEffectCost(layout), sourceCount);
+            Assert.Equal(StarProgression.MaxPoints - MinimumNonEffectCost(layout), sourceCount);
             var build = Build.ComputeForTree(profile, anchor.HeroKey, 0, tree);
             var decoded = Build.Decode(build.Encode());
             Assert.NotNull(decoded);
-            Assert.Equal(300, decoded.SpentStarPoints);
+            Assert.Equal(StarProgression.MaxPoints, decoded.SpentStarPoints);
             Assert.True(build.Gimmicks.Count > 32);
             Assert.True(selected.Count(t => t.LinkPerRank != null) > 40);
             var expectedGimmicks = selected.Where(t => t.Gimmick != null).ToArray();

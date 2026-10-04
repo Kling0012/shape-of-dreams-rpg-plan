@@ -83,7 +83,9 @@ namespace SodRpg.Core.Game
             int fixedFields = checked(64 + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (IntegerChars * 2 + 2)
                 + Content.SlotCount * (IntegerChars * 2 + MaxLinkRequirements * (MaxTokenLength + 1) + 4));
             if (capacity.GimmickEntries > EffectiveChannelSecurityLimit || capacity.MaximumEncodedTalentChars + fixedFields > MaxEncodedChars)
-                throw new InvalidOperationException("The authored registry can exceed the fixed 300-point channel or wire envelope.");
+                throw new InvalidOperationException("The authored registry can exceed the fixed maximum-spendable-point (MaxSpendablePoints) channel or wire envelope: "
+                    + capacity.GimmickEntries + "/" + EffectiveChannelSecurityLimit + " effective channels, "
+                    + (capacity.MaximumEncodedTalentChars + fixedFields) + "/" + MaxEncodedChars + " encoded chars at " + capacity.PointBudget + " points.");
         }
         /// <summary>
         /// Exact first-rank entry maxima per hero under the point budget, before aggregation.

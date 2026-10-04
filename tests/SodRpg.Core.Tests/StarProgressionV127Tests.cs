@@ -35,12 +35,12 @@ namespace SodRpg.Core.Tests
             .OrderBy(t => t.RouteOrder).ToArray();
 
         [Fact]
-        public void Every_curve_boundary_charges_the_next_point_and_caps_at_300()
+        public void Every_curve_boundary_charges_the_next_point_and_caps_at_500()
         {
             int total = 0;
             Assert.Equal(0, StarProgression.Points(-1));
             Assert.Equal(0, StarProgression.Points(0));
-            for (int k = 1; k <= 300; k++)
+            for (int k = 1; k <= 500; k++)
             {
                 Assert.Equal(6 * k + 50, StarProgression.CostForPoint(k));
                 total += 6 * k + 50;
@@ -48,11 +48,11 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(k - 1, StarProgression.Points(total - 1));
                 Assert.Equal(k, StarProgression.Points(total));
             }
-            Assert.Equal(285900, total);
-            Assert.Equal(300, StarProgression.Points(int.MaxValue));
-            Assert.Equal(285900, StarProgression.TotalXpForPoints(int.MaxValue));
+            Assert.Equal(776500, total);
+            Assert.Equal(500, StarProgression.Points(int.MaxValue));
+            Assert.Equal(776500, StarProgression.TotalXpForPoints(int.MaxValue));
             Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(0));
-            Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(301));
+            Assert.Throws<ArgumentOutOfRangeException>(() => StarProgression.CostForPoint(501));
         }
 
         [Fact]

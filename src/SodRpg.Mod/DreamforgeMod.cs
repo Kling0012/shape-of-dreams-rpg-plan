@@ -275,7 +275,7 @@ namespace SodRpg.Mod
             try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
         }
 
-        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-300, 0 = off)", "dreamforge_testpoints")]
+        [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-500, 0 = off)", "dreamforge_testpoints")]
         private void TestPointsCommand(int points)
         {
             if (!DevAllowed()) return;

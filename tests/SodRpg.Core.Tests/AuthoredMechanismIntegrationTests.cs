@@ -165,6 +165,9 @@ namespace SodRpg.Core.Tests
             }
             finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
         }
+        // Synthetic worst case: every star is a directed-recharge mechanism (about 560 wire chars each). 300 such stars fit the unchanged
+        // 195820-char envelope; at the 504 spendable points 504 of them would not (282309 chars), which registration rejects by design.
+        // Real generated heroes are checked at MaxSpendablePoints in GeneratedHeroAcceptanceTests.
         [Fact]
         public void Three_hundred_points_with_real_first_purchases_keep_every_recharge_application_inside_fixed_wire_envelope()
         {

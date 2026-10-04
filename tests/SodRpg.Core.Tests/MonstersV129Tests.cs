@@ -276,15 +276,15 @@ namespace SodRpg.Core.Tests
             var player = new Build { DreamLevel = 25, SpentStarPoints = 40 };
             var solo = DreamPressure.Average(new[] { player });
             var party = DreamPressure.Average(new[] { player, player, player, player });
-            Assert.Equal(1.6, solo.HealthMultiplier, 8);
-            Assert.Equal(1.29, solo.DamageMultiplier, 8);
+            Assert.Equal(1.7, solo.HealthMultiplier, 8);
+            Assert.Equal(1.34, solo.DamageMultiplier, 8);
             Assert.Equal(solo.HealthMultiplier, party.HealthMultiplier);
             Assert.Equal(solo.DamageMultiplier, party.DamageMultiplier);
             var joining = DreamPressure.Average(new Build[] { player, null });
             Assert.Equal(13, joining.AverageDreamLevel);
             Assert.Equal(20, joining.AverageSpentStarPoints);
-            Assert.Equal(1.25, joining.HealthMultiplier, 8);
-            Assert.Equal(1.121, joining.DamageMultiplier, 8);
+            Assert.Equal(1.3, joining.HealthMultiplier, 8);
+            Assert.Equal(1.146, joining.DamageMultiplier, 8);
         }
 
         private static float Incoming(NightmareAffix affixes, float distance = 4, float dot = 0,
