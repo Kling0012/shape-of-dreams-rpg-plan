@@ -1464,18 +1464,27 @@ namespace SodRpg.Core.Game
             return (TimesThreeHalves(60 * ((int)r.Rarity + 1), times), TimesThreeHalves(2 * ((int)r.Rarity + 1), times));
         }
 
-        /// <summary>value × 1.5^times を 3^times / 2^times の有理数として整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。</summary>
-        private static int TimesThreeHalves(int value, int times)
+        /// <summary>
+        /// value × 1.5^times を整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。
+        /// 値を q + r/2^i（0 ≤ r &lt; 2^i）の形で持ち、1回ごとに×3/2 を正確に行うので、3^times や 2^times を一度も作らずに済む。
+        /// q が int を超えたら（以後は単調に増えるだけなので）欠片の所持上限 int.MaxValue に張り付く。
+        /// </summary>
+        internal static int TimesThreeHalves(int value, int times)
         {
-            long num = 1, den = 1;
+            if (value <= 0 || times <= 0) return Math.Max(0, value);
+            long q = value, r = 0;
             for (int i = 0; i < times; i++)
             {
-                // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。
-                if (num > long.MaxValue / 3 || den > long.MaxValue / 2 || num > long.MaxValue / Math.Max(1, value)) return int.MaxValue;
-                num *= 3;
-                den *= 2;
+                if (q > int.MaxValue) return int.MaxValue; // 以後は増える一方。ここで止めるので i は高々60台で、2^i も long に収まる
+                long den = 1L << i;
+                long carry = 3 * r / den;                  // 3r/2^i = carry + r2/2^i
+                long r2 = 3 * r % den;
+                long top = 3 * q + carry;                  // x×3 = top + r2/2^i を、さらに2で割る
+                q = top >> 1;
+                r = ((top & 1) << i) + r2;                 // 割った余りは 2^(i+1) を分母にした値になる
             }
-            return (int)Math.Min(int.MaxValue, ((long)value * num + den - 1) / den);
+            long cost = q + (r > 0 ? 1 : 0);
+            return (int)Math.Min(int.MaxValue, cost);
         }
 
         /// <summary>
@@ -1491,6 +1500,7 @@ namespace SodRpg.Core.Game
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
             if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
             var (shards, tuning) = AffixRerollCost(r);
+            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "The reroll cost is invalid.")); // 費用が負だと払うほど増えるので、念のため拒否する
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed)."));
             int count = r.Affixes.Count;
