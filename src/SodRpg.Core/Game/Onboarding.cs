@@ -147,7 +147,7 @@ namespace SodRpg.Core.Game
                 var r = Loot.RollRelic(rng, Rarity.Uncommon, 1, slot);
                 p.Stash.Add(r);
                 p.StarterUids.Add(r.Uid);
-                p.Codex.Add(r.CodexId); // 銘品なら「n:」付き。土台IDだけだと銘品・組が発見済みにならない
+                p.Codex.Add(r.CodexId); // 銘品は「n:」付きID（Relic.CodexId の契約）
                 given.Add(r);
             }
             p.StoreRng(rng);
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Game
                 var r = Loot.RollRelic(rng, Rarity.Uncommon, Math.Max(1, p.BestItemLevel), (Slot)i); // すでに遊んでいる人には、いまの最高アイテムレベルで
                 p.Stash.Add(r);
                 p.StarterUids.Add(r.Uid);
-                p.Codex.Add(r.CodexId); // 銘品なら「n:」付き。土台IDだけだと銘品・組が発見済みにならない
+                p.Codex.Add(r.CodexId); // 銘品は「n:」付きID（Relic.CodexId の契約）
             }
             p.StoreRng(rng);
             p.StarterV119Granted = true;
@@ -176,16 +176,16 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 配布済みの初期装備のうち、銘品なのに図鑑へ銘品IDが載っていないものを補う。補ったら true。
-        /// 旧版は土台IDだけを登録していたため、受け取った銘品・所属する組が未発見のままになっていた。
+        /// 配布済みの初期装備のうち、いまも持っている物の図鑑登録を補う（銘品が土台IDで登録されていた旧データの修復）。
+        /// すでに登録済みなら何もしない。追加した件数を返す。
         /// </summary>
-        public static bool BackfillStarterCodex(Profile p)
+        public static int BackfillStarterCodex(Profile p)
         {
-            bool added = false;
+            int added = 0;
             foreach (var uid in p.StarterUids)
             {
                 var r = p.FindStash(uid);
-                if (r != null && r.NamedId != null && p.Codex.Add(r.CodexId)) added = true;
+                if (r != null && p.Codex.Add(r.CodexId)) added++;
             }
             return added;
         }
