@@ -69,6 +69,7 @@ namespace SodRpg.Core.Game
         private ulong? _multiOriginSeed;
         private bool _originMissing;
         private bool _copyUsed;
+        private bool _switchFailed;
 
         public ProfileSlots(IFileSystem fs, string saveDir, ulong soloSeed, ulong multiSeed)
         {
@@ -119,19 +120,26 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>Atomically persists the choice without switching profiles. Failed writes retain the old mode.</summary>
+        /// <summary>
+        /// Atomically persists the choice without switching profiles. Failed writes retain the old mode.
+        /// An explicit choice also re-arms a switch that previously failed (#72).
+        /// </summary>
         public void SetMode(ProfileSlotMode mode)
         {
             var settings = new ProfileSlotSettings(mode);
             WriteAtomic(_settingsPath, settings.Serialize());
             _settings = settings;
+            _switchFailed = false;
             RefreshNote();
         }
 
         /// <summary>
         /// Defers while the stored profile has a Run, even if the game has disconnected.
         /// Otherwise drains and synchronously saves the old slot before loading the target.
-        /// Failed flush/save/load leaves Profile, Store, ActiveSlot and PendingSlot unchanged.
+        /// Failed flush/save/load leaves Profile, Store, ActiveSlot and PendingSlot unchanged and
+        /// latches the failure: a caller retrying every frame must not re-save the old slot (a full
+        /// synchronous save) on each attempt, so after a failure no further attempt runs until
+        /// SetMode or the next launch (#72).
         /// </summary>
         public bool TrySwitch(ProfileSessionKind session, Action flushOldWriter)
         {
@@ -142,31 +150,40 @@ namespace SodRpg.Core.Game
                 PendingSlot = null;
                 return false;
             }
+            if (_switchFailed) return false;
             if (Profile.Run != null)
             {
                 PendingSlot = target;
                 return false;
             }
-            flushOldWriter();
-            Store.Save(Profile);
-            ProfileStore targetStore = target == ProfileSlot.Solo ? _soloStore : _multiStore;
-            Profile next = LoadSlot(targetStore, target);
-            if (targetStore.WritesBlocked)
-                throw new IOException("前のデータの写しを作れなかったため、選んだプロフィールに切り替えられません。\n"
-                    + "The target profile cannot be activated because its version-reset archive could not be saved.");
-            ulong? originSeed = null;
-            bool originMissing = false;
-            Profile pristine = target == ProfileSlot.Multi ? ReadPristineMulti(out originSeed, out originMissing) : null;
-            bool copyUsed = _fs.Exists(_copyMarkerPath);
-            if (ActiveSlot == ProfileSlot.Solo) _savedSolo = Profile;
-            Profile = next;
-            Store = targetStore;
-            ActiveSlot = target;
-            PendingSlot = null;
-            _pristineMulti = pristine;
-            _multiOriginSeed = originSeed;
-            _originMissing = originMissing;
-            _copyUsed = copyUsed;
+            try
+            {
+                flushOldWriter();
+                Store.Save(Profile);
+                ProfileStore targetStore = target == ProfileSlot.Solo ? _soloStore : _multiStore;
+                Profile next = LoadSlot(targetStore, target);
+                if (targetStore.WritesBlocked)
+                    throw new IOException("前のデータの写しを作れなかったため、選んだプロフィールに切り替えられません。\n"
+                        + "The target profile cannot be activated because its version-reset archive could not be saved.");
+                ulong? originSeed = null;
+                bool originMissing = false;
+                Profile pristine = target == ProfileSlot.Multi ? ReadPristineMulti(out originSeed, out originMissing) : null;
+                bool copyUsed = _fs.Exists(_copyMarkerPath);
+                if (ActiveSlot == ProfileSlot.Solo) _savedSolo = Profile;
+                Profile = next;
+                Store = targetStore;
+                ActiveSlot = target;
+                PendingSlot = null;
+                _pristineMulti = pristine;
+                _multiOriginSeed = originSeed;
+                _originMissing = originMissing;
+                _copyUsed = copyUsed;
+            }
+            catch
+            {
+                _switchFailed = true;
+                throw;
+            }
             RefreshNote();
             return true;
         }
@@ -183,9 +200,10 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// Reads Solo's serialized save without writing any inactive-slot files, then deep
         /// copies it into Multi. profile.multi.copied is an atomic "copy-once\n" marker, committed
-        /// before the profile write: a failure after reservation conservatively disables future
-        /// copies. profile.multi.origin stores the initial seed as 16 lowercase hex digits plus LF;
-        /// missing/corrupt/unreadable origins never authorize replacement of starter gear.
+        /// before the profile write; if that write fails the marker is rolled back so the copy
+        /// may be retried instead of losing the once-only right (#72). profile.multi.origin stores
+        /// the initial seed as 16 lowercase hex digits plus LF; missing/corrupt/unreadable origins
+        /// never authorize replacement of starter gear.
         /// Returns false for ineligible copies; I/O and protected format/version errors propagate.
         /// </summary>
         public bool CopySolo(Action flushOldWriter)
@@ -215,7 +233,19 @@ namespace SodRpg.Core.Game
                 throw;
             }
             _copyUsed = true;
-            Store.Save(copy);
+            try
+            {
+                Store.Save(copy);
+            }
+            catch
+            {
+                // The copy never became the stored profile; release the once-only reservation so a
+                // later attempt may retry instead of silently losing the right (#72). If even the
+                // rollback fails the marker stays, which only conservatively keeps the old behavior.
+                try { _fs.Delete(_copyMarkerPath); } catch { }
+                _copyUsed = _fs.Exists(_copyMarkerPath);
+                throw;
+            }
             Profile = copy;
             return true;
         }

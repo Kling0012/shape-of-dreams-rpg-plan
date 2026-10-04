@@ -36,7 +36,11 @@ namespace SodRpg.Core.Game
         public void Add(PendingRunKill kill) { if (!string.IsNullOrEmpty(kill.RunId)) _kills.Enqueue(kill); }
         public void Clear() => _kills.Clear();
 
-        /// <summary>Preserve event order and never replay a fact into a different expedition.</summary>
+        /// <summary>
+        /// Preserve event order and never replay a fact into a different expedition.
+        /// A kill leaves the queue only after its reward succeeded: a throwing reward keeps the
+        /// fact queued (at the head) so settlement can retry it instead of dropping it (#72).
+        /// </summary>
         public int Drain(string runId, int zoneIndex, Action<PendingRunKill> reward)
         {
             int awarded = 0;
@@ -45,8 +49,8 @@ namespace SodRpg.Core.Game
                 var kill = _kills.Peek();
                 if (kill.RunId != runId) { _kills.Dequeue(); continue; }
                 if (kill.ZoneIndex != zoneIndex) break;
-                _kills.Dequeue();
                 reward(kill);
+                _kills.Dequeue();
                 awarded++;
             }
             return awarded;

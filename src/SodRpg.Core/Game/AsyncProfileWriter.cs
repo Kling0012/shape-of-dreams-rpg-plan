@@ -32,6 +32,13 @@ namespace SodRpg.Core.Game
 
         private long _writtenRevision;
         private long _attemptedRevision;
+        private bool _failurePending;
+
+        /// <summary>
+        /// 最後の書き込みが失敗したままか（成功すると false に戻る）。失敗したテキストは破棄されるので、
+        /// 呼び出し側はこの印を見て保存を予約し直す必要がある（#72）。
+        /// </summary>
+        public bool HasPendingFailure { get { lock (_lock) return _failurePending; } }
 
         public int Coalesced { get; private set; }
 
@@ -117,6 +124,7 @@ namespace SodRpg.Core.Game
                     {
                         _writtenRevision = rev;
                         _attemptedRevision = rev;
+                        _failurePending = false;
                         LastError = null;
                         Monitor.PulseAll(_lock);
                     }
@@ -126,6 +134,7 @@ namespace SodRpg.Core.Game
                     lock (_lock)
                     {
                         _attemptedRevision = rev;
+                        _failurePending = true;
                         LastError = ex.Message;
                         Monitor.PulseAll(_lock);
                     }

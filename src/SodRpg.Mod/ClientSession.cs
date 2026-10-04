@@ -285,8 +285,26 @@ namespace SodRpg.Mod
             }
         }
 
+        private bool _saveErrorFromWriteFailure;
+
         private void TickPeriodicSave()
         {
+            // バックグラウンド書き込みに失敗したままの保存がある：その内容は破棄されているので、
+            // 「保存が必要」を立て直して定期保存で書き直す。失敗が続く間は画面にも出す（#72）。
+            if (_writer != null && _writer.HasPendingFailure)
+            {
+                _dirty = true;
+                _saveErrorFromWriteFailure = true;
+                SaveError = Loc.T("保存に失敗しました。自動で再試行します: ", "Saving failed; retrying automatically: ") + _writer.LastError;
+                float retry = Time.unscaledTime + 5f;
+                if (_nextSave > retry) _nextSave = retry;
+            }
+            else if (_saveErrorFromWriteFailure && SaveError != null && _writer != null && _writer.WrittenRevision > 0)
+            {
+                // 書き込みが成功し直したので、この経路の失敗表示だけを消す（別の経路のエラーは残す）。
+                SaveError = null;
+                _saveErrorFromWriteFailure = false;
+            }
             if (_dirty && Time.unscaledTime >= _nextSave) SaveNow();
         }
 
