@@ -56,10 +56,15 @@ namespace SodRpg.Core.Tests
         {
             var runtime = Runtime(Definition(id: "h.test.key"), Definition(id: "test.key.new"));
             Assert.Equal(Content.KeystoneCost, runtime.SelectedCost);
-            Assert.Throws<InvalidOperationException>(() => runtime.Configure(new[] { "h.test.key", "test.key.new" }, 2,
-                new[] { Source }, Array.Empty<string>(), Array.Empty<KeystoneAllocatedEffect>()));
+            // v2.0.2: 複数選択（枠まで）は正当な構成。超過だけが拒否される。
+            runtime.Configure(new[] { "h.test.key", "test.key.new" }, 2,
+                new[] { Source }, Array.Empty<string>(), Array.Empty<KeystoneAllocatedEffect>());
             Assert.Equal("h.test.key", runtime.SelectedKeystoneId);
-            Configure(runtime, "test.key.new", 2);
+            Assert.Equal(2 * Content.KeystoneCost, runtime.SelectedCost);
+            Assert.Throws<InvalidOperationException>(() => runtime.Configure(
+                new[] { "h.test.key", "test.key.new", Definition().KeystoneId, "test.key.fourth" }, 3,
+                new[] { Source }, Array.Empty<string>(), Array.Empty<KeystoneAllocatedEffect>()));
+            Configure(runtime, "test.key.new", 4);
             Assert.Equal("test.key.new", runtime.SelectedKeystoneId);
         }
 

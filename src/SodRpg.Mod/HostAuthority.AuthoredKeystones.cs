@@ -57,15 +57,15 @@ namespace SodRpg.Mod
         internal void ConfigureAuthoredKeystone(Hero hero, Build build)
         {
             if (hero == null || build == null) throw new ArgumentNullException();
-            string signature = build.SelectedKeystone == null ? null : AuthoredKeystoneCodec.Encode(build.SelectedKeystone);
+            string signature = build.SelectedKeystones.Count == 0 ? null
+                : string.Join("|", build.SelectedKeystones.Select(AuthoredKeystoneCodec.Encode));
             if (_authoredKeystones.TryGetValue(hero, out var existing) && existing.Key == signature)
             { existing.Build = build; RefreshAuthoredKeystone(hero); return; }
             StopSacrificeShield(hero);
             if (existing != null || signature != null) ClearAuthoredGimmickPrimed(hero);
-            if (build.SelectedKeystone == null) { _authoredKeystones.Remove(hero); return; }
-            var key = build.SelectedKeystone;
+            if (build.SelectedKeystones.Count == 0) { _authoredKeystones.Remove(hero); return; }
             var binding = new AuthoredKeystoneBinding { Build = build, Key = signature,
-                Runtime = new ScopedKeystoneModifiers(new[] { key }), Epoch = checked(++_authoredKeystoneEpoch) };
+                Runtime = new ScopedKeystoneModifiers(build.SelectedKeystones), Epoch = checked(++_authoredKeystoneEpoch) };
             _authoredKeystones[hero] = binding;
             RefreshAuthoredKeystone(hero);
         }
@@ -87,8 +87,8 @@ namespace SodRpg.Mod
         {
             if (hero == null || !_authoredKeystones.TryGetValue(hero, out var binding)) return;
             long nativeEpoch = RefreshMemoryAttributionEquipment(hero);
-            var key = binding.Build.SelectedKeystone;
-            int hooks = key.Payloads.Contains(KeystonePayloadKind.SacrificeShield)
+            var keys = binding.Build.SelectedKeystones;
+            int hooks = keys.Any(key => key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
                 ? (NativeAuthoredKeystoneDamage.Bound ? 1 : 0) | (NativeSacrificeShieldDispatch.GoldenBound ? 2 : 0)
                     | (NativeSacrificeShieldDispatch.ReductionBound ? 4 : 0) : 0;
             if (binding.NativeEpoch == nativeEpoch && binding.HookSignature == hooks) return;
@@ -96,31 +96,39 @@ namespace SodRpg.Mod
             binding.HookSignature = hooks;
             var equipment = binding.NativeEpoch == nativeEpoch && binding.Equipment != null
                 ? binding.Equipment : CollectMechanismEquipment(hero, hero.GetInstanceID());
-            bool admitted = SacrificeBindingAvailable(key, equipment);
+            // 入手確認（ネイティブアダプター）は刻印ごとに判定する。未承認の刻印だけ止めても、他は動かす。
+            var admission = new Dictionary<string, bool>(StringComparer.Ordinal);
+            foreach (var key in keys) admission[key.KeystoneId] = SacrificeBindingAvailable(key, equipment);
+            bool admitted = admission.Values.Any(a => a);
             if (binding.NativeEpoch == nativeEpoch && binding.Admission == admitted) return;
             binding.NativeEpoch = nativeEpoch; binding.Admission = admitted;
             binding.Epoch = checked(++_authoredKeystoneEpoch); binding.Equipment = equipment;
-            binding.Runtime.Configure(new[] { key.KeystoneId }, binding.Epoch, equipment.Memories.Select(m => m.Memory),
-                key.Prerequisites, Array.Empty<KeystoneAllocatedEffect>(), admitted);
-            if (key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
-            {
-                if (!binding.Runtime.Active) StopSacrificeShield(hero);
-                else if (_runtimes.ContainsKey(hero)) BindAuthoredSacrificeShield(hero);
-            }
+            var prerequisites = keys.SelectMany(key => key.Prerequisites).Distinct(StringComparer.Ordinal);
+            binding.Runtime.Configure(keys.Select(key => key.KeystoneId), binding.Epoch, equipment.Memories.Select(m => m.Memory),
+                prerequisites, Array.Empty<KeystoneAllocatedEffect>(), true, admission);
+            foreach (var key in keys)
+                if (key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
+                {
+                    if (!binding.Runtime.HasPayload(KeystonePayloadKind.SacrificeShield)) StopSacrificeShield(hero);
+                    else if (_runtimes.ContainsKey(hero)) BindAuthoredSacrificeShield(hero);
+                }
         }
 
         internal void ValidateAuthoredSacrificeBinding(Hero hero, Build build)
         {
-            var key = build?.SelectedKeystone;
-            if (key == null || !key.Payloads.Contains(KeystonePayloadKind.SacrificeShield)) return;
-            if (key.KeystoneId != "h.aurena.key2") throw new InvalidOperationException("C11 requires its named authored keystone.");
-            var equipment = CollectMechanismEquipment(hero, hero.GetInstanceID());
-            foreach (string required in key.RequiredMemories) if (equipment.Find(required) == null) return;
-            foreach (var memory in equipment.Memories)
-                if (IsSacrificeMemory(memory.Memory) && !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch,
-                    memory.Memory, equipment: equipment)))
-                    throw new InvalidOperationException("C11 requires the simultaneous downside on its exact equipped sacrifice source.");
-            // Missing verified host adapters disable the whole key through Configure, never just its shield half.
+            var keys = build?.SelectedKeystones.Where(key => key.Payloads.Contains(KeystonePayloadKind.SacrificeShield));
+            if (keys == null) return;
+            foreach (var key in keys)
+            {
+                if (key.KeystoneId != "h.aurena.key2") throw new InvalidOperationException("C11 requires its named authored keystone.");
+                var equipment = CollectMechanismEquipment(hero, hero.GetInstanceID());
+                foreach (string required in key.RequiredMemories) if (equipment.Find(required) == null) return;
+                foreach (var memory in equipment.Memories)
+                    if (IsSacrificeMemory(memory.Memory) && !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch,
+                        memory.Memory, equipment: equipment)))
+                        throw new InvalidOperationException("C11 requires the simultaneous downside on its exact equipped sacrifice source.");
+                // Missing verified host adapters disable the whole key through Configure, never just its shield half.
+            }
         }
 
         private static bool IsSacrificeMemory(string memory) => memory == "St_Q_GoldenBurst" || memory == "St_Q_Reduction";

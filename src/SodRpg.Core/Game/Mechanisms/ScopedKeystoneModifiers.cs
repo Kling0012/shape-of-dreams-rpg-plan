@@ -428,13 +428,17 @@ namespace SodRpg.Core.Game
     {
         private readonly Dictionary<string, KeystoneDefinition> _definitions;
         private string _configuration;
-        private KeystoneDefinition _selected;
+        private KeystoneDefinition[] _selected = Array.Empty<KeystoneDefinition>();
+        private bool[] _selectedEnabled = Array.Empty<bool>();
         private HashSet<string> _equipped = new HashSet<string>(StringComparer.Ordinal);
-        public string SelectedKeystoneId => _selected?.KeystoneId;
-        public KeystoneDefinition SelectedDefinition => _selected;
+        public string SelectedKeystoneId => _selected.Length > 0 ? _selected[0].KeystoneId : null;
+        public KeystoneDefinition SelectedDefinition => _selected.Length > 0 ? _selected[0] : null;
+        /// <summary>構成済みの刻印（枠順）。選択が空なら空。</summary>
+        public IReadOnlyList<KeystoneDefinition> SelectedDefinitions => _selected;
         public long EquipmentEpoch { get; private set; }
+        /// <summary>少なくとも1つの刻印が有効（装備・前提・入力の許可を満たしている）。</summary>
         public bool Active { get; private set; }
-        public int SelectedCost => _selected?.Cost ?? 0;
+        public int SelectedCost { get { int total = 0; foreach (var key in _selected) total = checked(total + key.Cost); return total; } }
 
         public ScopedKeystoneModifiers(IEnumerable<KeystoneDefinition> definitions)
         {
@@ -448,42 +452,59 @@ namespace SodRpg.Core.Game
             }
         }
 
-        public bool HasPayload(KeystonePayloadKind kind) => Active && _selected.Payloads.Contains(kind);
+        private bool KeyEquipped(KeystoneDefinition key) => key.RequiredMemories.All(_equipped.Contains);
+
+        public bool HasPayload(KeystonePayloadKind kind)
+        {
+            if (!Active) return false;
+            foreach (var key in _selected) if (KeyEquipped(key) && key.Payloads.Contains(kind)) return true;
+            return false;
+        }
 
         public bool HasNativeDownside(KeystoneContext context)
         {
             if (!Active || context == null || context.EquipmentEpoch != EquipmentEpoch) return false;
-            return _selected.HasNativeDownside(context);
+            foreach (var key in _selected) if (KeyEquipped(key) && key.HasNativeDownside(context)) return true;
+            return false;
         }
-
         public void Configure(IEnumerable<string> selectedKeystoneIds, long equipmentEpoch, IEnumerable<string> equippedMemories,
-            IEnumerable<string> allocatedStarIds, IEnumerable<KeystoneAllocatedEffect> allocatedEffects, bool enabled = true)
+            IEnumerable<string> allocatedStarIds, IEnumerable<KeystoneAllocatedEffect> allocatedEffects, bool enabled = true,
+            IReadOnlyDictionary<string, bool> admission = null)
         {
             if (equipmentEpoch < 0) throw new ArgumentOutOfRangeException(nameof(equipmentEpoch));
             var selected = KeystoneValidation.Strings(selectedKeystoneIds);
-            if (selected.Count > 1) throw new InvalidOperationException("Only one cost-bearing keystone may be selected.");
-            KeystoneDefinition definition = null;
-            if (selected.Count == 1 && !_definitions.TryGetValue(selected[0], out definition))
-                throw new InvalidOperationException("Unknown keystone: " + selected[0]);
+            if (selected.Count > KeystoneSlots.Max) throw new InvalidOperationException("At most " + KeystoneSlots.Max + " cost-bearing keystones may be selected.");
+            var definitions = new KeystoneDefinition[selected.Count];
+            var admitted = new bool[selected.Count];
+            for (int i = 0; i < selected.Count; i++)
+            {
+                if (!_definitions.TryGetValue(selected[i], out definitions[i]))
+                    throw new InvalidOperationException("Unknown keystone: " + selected[i]);
+                admitted[i] = admission == null || !admission.TryGetValue(selected[i], out bool allowed) || allowed;
+            }
             var equipment = new HashSet<string>(KeystoneValidation.Strings(equippedMemories), StringComparer.Ordinal);
             var allocated = new HashSet<string>(KeystoneValidation.Strings(allocatedStarIds), StringComparer.Ordinal);
             var effects = (allocatedEffects ?? throw new ArgumentNullException(nameof(allocatedEffects))).ToArray();
             if (effects.Any(e => e == null || !allocated.Contains(e.StarId)))
                 throw new ArgumentException("Every allocation witness must identify an allocated star.");
-            if (definition != null && definition.Prerequisites.Any(p => !allocated.Contains(p)))
-                throw new InvalidOperationException("Keystone prerequisites are not allocated.");
-            // Validate intentional disablement even while equipment is absent: equipping later must not strand paid stars.
-            if (definition != null)
+            foreach (var definition in definitions)
+            {
+                if (definition.Prerequisites.Any(p => !allocated.Contains(p)))
+                    throw new InvalidOperationException("Keystone prerequisites are not allocated.");
+                // Validate intentional disablement even while equipment is absent: equipping later must not strand paid stars.
                 foreach (var disable in definition.Upside.Concat(definition.Downside).Where(t => t.Operation == KeystoneOperation.Disable))
                     foreach (var effect in effects)
                         if (disable.TargetLayer == effect.Payload.Layer && disable.Scope.Matches(effect.Payload, effect.Context))
                             throw new InvalidOperationException("Refund incompatible allocation before selection: " + effect.StarId);
+            }
             string configuration = string.Join("|", selected) + ";" + string.Join("|", equipment.OrderBy(s => s, StringComparer.Ordinal))
-                + ";" + string.Join("|", allocated.OrderBy(s => s, StringComparer.Ordinal)) + ";" + (enabled ? "1" : "0");
+                + ";" + string.Join("|", allocated.OrderBy(s => s, StringComparer.Ordinal)) + ";" + (enabled ? "1" : "0")
+                + ";" + string.Join("|", admitted.Select(a => a ? "1" : "0"));
             if (_configuration != null && (equipmentEpoch < EquipmentEpoch || (configuration != _configuration && equipmentEpoch == EquipmentEpoch)))
                 throw new InvalidOperationException("Selection or equipment changes require a new epoch.");
-            _configuration = configuration; _selected = definition; _equipped = equipment; EquipmentEpoch = equipmentEpoch;
-            Active = enabled && definition != null && definition.RequiredMemories.All(equipment.Contains);
+            _configuration = configuration; _selected = definitions; _selectedEnabled = admitted; _equipped = equipment; EquipmentEpoch = equipmentEpoch;
+            Active = enabled && definitions.Any(definition => definition.RequiredMemories.All(equipment.Contains))
+                && admitted.Any(a => a);
         }
 
         public KeystoneResult Apply(KeystonePayload payload, KeystoneContext context)
@@ -507,25 +528,41 @@ namespace SodRpg.Core.Game
             bool receiverEquipped = context.ReceiverMemory == null || _equipped.Contains(context.ReceiverMemory);
             if (Active && sourceEquipped && receiverEquipped)
             {
-                if (context.SourceKind == KeystoneSourceKind.MovementEvent && _selected.KeystoneId != "h.husk.key2")
+                bool anyApplied = false;
+                for (int i = 0; i < _selected.Length; i++)
+                {
+                    var key = _selected[i];
+                    if (!_selectedEnabled[i] || !key.RequiredMemories.All(_equipped.Contains)) continue;
+                    if (context.SourceKind == KeystoneSourceKind.MovementEvent && key.KeystoneId != "h.husk.key2") continue;
+                    anyApplied = true;
+                    result.KeystoneId = key.KeystoneId;
+                    int woundTransforms = 0; bool durationTransform = false;
+                    foreach (var transform in key.Upside)
+                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
+                        { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
+                    foreach (var transform in key.Downside)
+                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
+                        { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
+                    if (woundTransforms > 1 || woundTransforms > 0 && durationTransform)
+                        throw new InvalidOperationException("Wound redistribution must be one final total/lifetime transform.");
+                    foreach (var transform in key.Upside)
+                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
+                    foreach (var transform in key.Downside)
+                        if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
+                    if (result.Disabled) result.Value = 0;
+                }
+                if (!anyApplied) result.KeystoneId = null;
+                if (context.SourceKind == KeystoneSourceKind.MovementEvent && !HasKey("h.husk.key2"))
                     throw new InvalidOperationException("Only the existing movement keystone may consume a movement event.");
-                result.KeystoneId = _selected.KeystoneId;
-                int woundTransforms = 0; bool durationTransform = false;
-                foreach (var transform in _selected.Upside)
-                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
-                    { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
-                foreach (var transform in _selected.Downside)
-                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context))
-                    { if (transform.Operation == KeystoneOperation.RedistributeWound) woundTransforms++; if (transform.Field == KeystoneField.Duration) durationTransform = true; }
-                if (woundTransforms > 1 || woundTransforms > 0 && durationTransform)
-                    throw new InvalidOperationException("Wound redistribution must be one final total/lifetime transform.");
-                foreach (var transform in _selected.Upside)
-                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
-                foreach (var transform in _selected.Downside)
-                    if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
-                if (result.Disabled) result.Value = 0;
             }
             return ApplyCaps(payload, result);
+        }
+
+        private bool HasKey(string keystoneId)
+        {
+            for (int i = 0; i < _selected.Length; i++)
+                if (_selectedEnabled[i] && _selected[i].KeystoneId == keystoneId && _selected[i].RequiredMemories.All(_equipped.Contains)) return true;
+            return false;
         }
 
         public static KeystoneResult ApplyUnmodified(KeystonePayload payload)

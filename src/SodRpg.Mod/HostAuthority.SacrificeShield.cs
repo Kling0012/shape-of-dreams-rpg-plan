@@ -159,8 +159,9 @@ namespace SodRpg.Mod
             if (enabled && !binding.NativeDownsideIsBound())
                 throw new InvalidOperationException("C11 native downside binding was removed while its upside remains selected.");
             if (enabled)
-                foreach (string memory in binding.Keystone.SelectedDefinition.RequiredMemories)
-                    if (FindMemory(binding.Owner.Hero, memory) == null) { enabled = false; break; }
+                foreach (var definition in binding.Keystone.SelectedDefinitions)
+                    foreach (string memory in definition.RequiredMemories)
+                        if (FindMemory(binding.Owner.Hero, memory) == null) { enabled = false; break; }
             _sacrificeShields.Configure(binding.Owner.Hero.GetInstanceID(), binding.CaptureEpoch, enabled);
         }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace SodRpg.Core.Game
@@ -17,8 +18,7 @@ namespace SodRpg.Core.Game
         private static readonly int StatCount = Enum.GetValues(typeof(Stat)).Length;
         private static readonly int PowerCount = Enum.GetValues(typeof(Power)).Length;
         private static readonly int PactCount = Enum.GetValues(typeof(Pact)).Length;
-
-        // The outer envelope is protocol 13. Applied summaries keep the existing Build grammar.
+        // The outer envelope is protocol 14 (keystone slots S and multi-key K). Applied summaries keep the existing Build grammar.
         public static string Encode(Build derived, Profile profile, string heroKey, int heat,
             IEnumerable<Pact> pacts = null, int dailyId = 0)
         {
@@ -26,7 +26,8 @@ namespace SodRpg.Core.Game
             var hero = profile.Hero(heroKey);
             var sb = new StringBuilder();
             sb.Append("D:").Append(profile.DreamLevel).Append(";H:").Append(heat)
-                .Append(";M:").Append(hero.Kills).Append(";K:").Append(hero.Keystone).Append(";T:");
+                .Append(";M:").Append(hero.Kills).Append(";K:").Append(string.Join(",", hero.Keystones.Where(k => k != null)))
+                .Append(";S:").Append(StarProgression.Points(hero.StarXp)).Append(";T:");
             bool first = true;
             foreach (var rank in hero.Talents)
             {
@@ -36,7 +37,7 @@ namespace SodRpg.Core.Game
                 sb.Append(rank.Key).Append('=').Append(rank.Value).Append('=')
                     .Append(hero.TalentChoices.TryGetValue(rank.Key, out int choice) ? choice : -1);
             }
-            if (hero.Keystone != null) Token(hero.Keystone);
+            foreach (string keystone in hero.Keystones) if (keystone != null) Token(keystone);
             sb.Append(";R:"); first = true;
             for (int slot = 0; slot < hero.Equipped.Length; slot++)
             {
@@ -120,8 +121,18 @@ namespace SodRpg.Core.Game
             spent = 0;
             reason = null;
             if (hero == null || engine == null) return Reject("allocation", out reason);
-            // A typed keystone declares its own cost (every other consumer reads KeystoneDefinition.Cost); legacy keys cost Content.KeystoneCost.
-            long total = hero.Keystone == null ? 0 : engine.Talent(hero.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            // Each keystone keeps its own requirements and cost; the number of slots follows the traveler's star level.
+            long total = 0;
+            foreach (string keystone in hero.Keystones)
+            {
+                if (keystone == null) continue;
+                if (hero.KeystoneCount > hero.KeystoneSlotCount) return Reject("keystone-slots", out reason);
+                var definition = engine.Talent(keystone);
+                if (definition == null || !definition.IsKeystone || !Rules.BelongsTo(definition, heroKey))
+                    return Reject("keystone", out reason);
+                // A typed keystone declares its own cost (every other consumer reads KeystoneDefinition.Cost); legacy keys cost Content.KeystoneCost.
+                total += definition.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            }
             foreach (var rank in hero.Talents)
             {
                 var def = engine.Talent(rank.Key);
@@ -139,8 +150,9 @@ namespace SodRpg.Core.Game
                 if (!hero.Talents.ContainsKey(choice.Key)) return Reject("choice", out reason);
             if (total > StarProgression.MaxSpendablePoints) return Reject("point-budget", out reason);
             if (!engine.AllocationsConnected(hero)) return Reject("disconnected", out reason);
-            if (hero.Keystone != null && !engine.KeystoneUnlocked(hero, heroKey, engine.Talent(hero.Keystone)))
-                return Reject("keystone", out reason);
+            foreach (string keystone in hero.Keystones)
+                if (keystone != null && !engine.KeystoneUnlocked(hero, heroKey, engine.Talent(keystone)))
+                    return Reject("keystone", out reason);
             spent = (int)total;
             return true;
         }
@@ -193,7 +205,15 @@ namespace SodRpg.Core.Game
                     case "D": input.Profile.DreamLevel = Range(body, 1, Content.MaxDreamLevel); break;
                     case "H": input.Heat = Range(body, 0, Content.MaxHeat); break;
                     case "M": hero.Kills = Range(body, 0, int.MaxValue); break;
-                    case "K": if (body.Length > 0) { Token(body); hero.Keystone = body; } break;
+                    case "K":
+                        foreach (string entry in Entries(body, KeystoneSlots.Max))
+                        {
+                            Token(entry);
+                            if (hero.HasKeystone(entry)) throw new FormatException();
+                            if (hero.AddKeystone(entry) < 0) throw new FormatException();
+                        }
+                        break;
+                    case "S": hero.StarXp = StarProgression.TotalXpForPoints(Range(body, 0, StarProgression.MaxPoints)); break;
                     case "T":
                         foreach (string entry in Entries(body, StarProgression.MaxSpendablePoints))
                         {
@@ -258,7 +278,7 @@ namespace SodRpg.Core.Game
                     default: throw new FormatException();
                 }
             }
-            if (seen.Count != 8) throw new FormatException();
+            if (seen.Count != 9) throw new FormatException();
             return input;
         }
 

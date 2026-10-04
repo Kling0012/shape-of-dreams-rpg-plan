@@ -110,7 +110,7 @@ namespace SodRpg.Mod
             if (sourceKind == KeystoneSourceKind.MovementEvent)
             {
                 var source = CollectMechanismEquipment(runtime.Hero, runtime.Hero.GetInstanceID()).Find(memory);
-                if (runtime.Powers.Build.SelectedKeystone?.KeystoneId != "h.husk.key2"
+                if (!runtime.Powers.Build.HasSelectedKeystone("h.husk.key2")
                     || source == null || source.Slot != MechanismMemorySlot.Movement) return definition;
             }
             return TransformAuthoredGimmick(runtime.Hero, definition, memory, memory, sourceKind, effectId,

@@ -25,8 +25,8 @@ namespace SodRpg.Core.Game
         private readonly Dictionary<string, HashSet<string>> groupMembers = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
         private readonly Dictionary<string, List<string>> groupsOf = new Dictionary<string, List<string>>(StringComparer.Ordinal);
 
-        /// <summary>The keystone the build actually applied (null when none, or when its route/mastery gate is not met).</summary>
-        internal KeystoneDefinition AppliedKeystone { get; set; }
+        /// <summary>The keystones the build actually applied, in slot order (empty when none, or when a gate is not met).</summary>
+        internal IReadOnlyList<KeystoneDefinition> AppliedKeystones { get; set; } = Array.Empty<KeystoneDefinition>();
 
         /// <summary>A choice star contributes through its selected option; the allocation (and every change) names the choice star.</summary>
         internal void Alias(string optionId, string starId)

@@ -29,6 +29,12 @@ namespace SodRpg.Core.Game
         public static readonly Txt KeystoneNotAllocated = new Txt(
             "その刻印は選ばれていません。",
             "That keystone is not selected.");
+        public static readonly Txt KeystoneDuplicate = new Txt(
+            "同じ刻印は重ねて選べません。",
+            "The same keystone cannot be selected twice.");
+        public static readonly Txt KeystoneSlotsFull = new Txt(
+            "刻印の枠がありません。次の枠は星のレベルが上がると開きます。",
+            "No free keystone slot. The next slot unlocks at a higher star level.");
         public static readonly Txt StarNotAllocated = new Txt(
             "その星はまだ取得していません。",
             "That star is not acquired.");
@@ -67,7 +73,7 @@ namespace SodRpg.Core.Game
         public static IReadOnlyList<Txt> All { get; } = new List<Txt>
         {
             RegistryChanged, NotEnoughStarPoints, RelicNotInStash, RelicWrongSlot, KeystoneNotReady, UnknownStar,
-            KeystoneNotAllocated, StarNotAllocated, UseKeystoneChange, AlreadyMaxRank, NeedConnectedStars,
+            KeystoneNotAllocated, KeystoneDuplicate, KeystoneSlotsFull, StarNotAllocated, UseKeystoneChange, AlreadyMaxRank, NeedConnectedStars,
             ChoiceNotAllocated, SelectOneEffect, SameOptionOnly, NotChoiceStar, MissingDisableRule, UnknownStarId,
             NotEnoughMaterial,
         }.AsReadOnly();

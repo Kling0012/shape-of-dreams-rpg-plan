@@ -82,11 +82,11 @@ namespace SodRpg.Core.Game
         public static bool IsVerifiedCommonMemory(string id) => id != null && CommonMemories.Contains(id);
         internal static IEnumerable<string> VerifiedCommonMemories => CommonMemories;
 
-        public static bool PrerequisitesMet(HeroState hero, TalentDef talent, string removedId = null, string keystone = null)
+        public static bool PrerequisitesMet(HeroState hero, TalentDef talent, string removedId = null, string[] keystones = null)
         {
             var authored = talent.AuthoredStar;
             if (authored == null) return true;
-            bool Has(string id) => id != removedId && (id == keystone
+            bool Has(string id) => id != removedId && (keystones != null && Array.IndexOf(keystones, id) >= 0
                 || hero.Talents.TryGetValue(id, out int rank) && rank > 0);
             foreach (string id in authored.RequiredStarIds) if (!Has(id)) return false;
             if (authored.RequiredAnyStarIds.Count == 0) return true;

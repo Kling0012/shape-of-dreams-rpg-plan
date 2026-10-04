@@ -219,9 +219,10 @@ namespace SodRpg.Core.Game
             foreach (string key in memoryOrder.OrderBy(k => k.Length == 0 ? 1 : 0).ThenBy(k => memoryGroups[k].Title, StringComparer.Ordinal))
                 summary.Memories.Add(memoryGroups[key]);
 
-            if (h.Keystone != null && definitions.TryGetValue(h.Keystone, out var keystone) && keystone.IsKeystone
-                && Rules.BelongsTo(keystone, heroKey))
+            foreach (string selected in h.Keystones)
             {
+                if (selected == null || !definitions.TryGetValue(selected, out var keystone) || !keystone.IsKeystone
+                    || !Rules.BelongsTo(keystone, heroKey)) continue;
                 var line = new StarSummaryLine { Text = keystone.Name + "\n" + keystone.Describe() };
                 line.StarIds.Add(keystone.Id);
                 summary.Keystone.Add(line);

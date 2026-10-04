@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Security.Cryptography;
+using System.Linq;
 using System.Text;
 using Mirror;
 using SodRpg.Core.Game;
@@ -44,9 +45,9 @@ namespace SodRpg.Mod
         }
         private static void ValidateAuthoredHostBuild(Build build)
         {
-            if (build.SelectedKeystone != null)
-                foreach (var payload in build.SelectedKeystone.Payloads)
-                    if (payload == KeystonePayloadKind.SacrificeShield && build.SelectedKeystone.KeystoneId != "h.aurena.key2")
+            foreach (var selected in build.SelectedKeystones)
+                foreach (var payload in selected.Payloads)
+                    if (payload == KeystonePayloadKind.SacrificeShield && selected.KeystoneId != "h.aurena.key2")
                         throw new InvalidOperationException("The native sacrifice adapter belongs only to its selected key.");
             foreach (var entry in build.Mechanisms)
             {
@@ -54,8 +55,8 @@ namespace SodRpg.Mod
                 AuthoredMechanisms.Validate(spec);
                 if (spec.Kind == AuthoredMechanismKind.StunSourceFilter || spec.Kind == AuthoredMechanismKind.SacrificeShield)
                 {
-                    var key = build.SelectedKeystone;
-                    if (!AuthoredKeyContributor(entry, key?.KeystoneId))
+                    var key = build.SelectedKeystones.FirstOrDefault(k => AuthoredKeyContributor(entry, k.KeystoneId));
+                    if (key == null)
                         throw new InvalidOperationException("A key-only payload requires its selected contributor.");
                     bool declared = false;
                     foreach (var grant in key.Grants)
@@ -133,8 +134,8 @@ namespace SodRpg.Mod
                         break;
                     case AuthoredMechanismKind.MemoryTuning: tunings.Add(spec.Tuning); break;
                     case AuthoredMechanismKind.IdentityStrike: strikes.Add(new KeyValuePair<string, IdentityStrikeDefinition>(key, spec.IdentityStrike)); break;
-                    case AuthoredMechanismKind.StunSourceFilter: calm |= AuthoredKeyContributor(entry, build.SelectedKeystone?.KeystoneId); break;
-                    case AuthoredMechanismKind.SacrificeShield: sacrifice |= AuthoredKeyContributor(entry, build.SelectedKeystone?.KeystoneId); break;
+                    case AuthoredMechanismKind.StunSourceFilter: calm |= build.SelectedKeystones.Any(k => AuthoredKeyContributor(entry, k.KeystoneId)); break;
+                    case AuthoredMechanismKind.SacrificeShield: sacrifice |= build.SelectedKeystones.Any(k => AuthoredKeyContributor(entry, k.KeystoneId)); break;
                 }
             }
             bool removed = false;
@@ -150,9 +151,9 @@ namespace SodRpg.Mod
             ConfigureRelayWindows(hero, relay);
             ConfigureIdentityStrikes(hero, strikes);
             ConfigureMemoryTunings(hero, tunings);
-            calm = calm && build.SelectedKeystone?.KeystoneId == CalmShieldGrant.ConsumerId && AuthoredKeystoneActive(hero);
-            if (build.SelectedKeystone != null)
-                foreach (var payload in build.SelectedKeystone.Payloads) if (payload == KeystonePayloadKind.SacrificeShield) sacrifice = true;
+            calm = calm && build.HasSelectedKeystone(CalmShieldGrant.ConsumerId) && AuthoredKeystoneActive(hero);
+            foreach (var selected in build.SelectedKeystones)
+                foreach (var payload in selected.Payloads) if (payload == KeystonePayloadKind.SacrificeShield) sacrifice = true;
             ConfigureCalmStun(hero, calm, (root, recipient, grant) =>
             {
                 if (!_runtimes.TryGetValue(hero, out var rt)) return;
@@ -189,7 +190,7 @@ namespace SodRpg.Mod
             foreach (var channel in state.Channels.Values)
             {
                 var spec = channel.Entry.Spec;
-                if (channel.Entry.StarId == state.Build.SelectedKeystone?.KeystoneId && !AuthoredKeystoneActive(hero)) continue;
+                if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(hero)) continue;
                 if (spec.Kind == AuthoredMechanismKind.Gimmick)
                     InstallAuthoredGimmick(channel, spec.ChannelId, spec.Gimmick, entries, state);
                 else if (spec.Kind == AuthoredMechanismKind.BridgeSuccess)
@@ -309,7 +310,7 @@ namespace SodRpg.Mod
             if (identity != null && spec.TriggerByIdentity.TryGetValue(identity.GetType().Name, out var selected)) trigger = selected;
             if (trigger != notification.EventKind || spec.Source != null && !spec.Source.Matches(source)) return;
             var equipment = CollectMechanismEquipment(rt.Hero, notification.OwnerId);
-            if (channel.Entry.StarId == state.Build.SelectedKeystone?.KeystoneId && !AuthoredKeystoneActive(rt.Hero)) return;
+            if (state.Build.HasSelectedKeystone(channel.Entry.StarId) && !AuthoredKeystoneActive(rt.Hero)) return;
             foreach (string required in spec.RequiredMemories) if (equipment.Find(required) == null) return;
             if (spec.Condition != AuthoredMechanismCondition.Always)
             {

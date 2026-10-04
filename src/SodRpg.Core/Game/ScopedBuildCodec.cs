@@ -40,8 +40,9 @@ namespace SodRpg.Core.Game
                 if (entry.Spec.Kind == AuthoredMechanismKind.StunSourceFilter || entry.Spec.Kind == AuthoredMechanismKind.SacrificeShield)
                 {
                     string expected = entry.Spec.Kind == AuthoredMechanismKind.StunSourceFilter ? "h.cetus.key2" : "h.aurena.key2";
-                    if (build.SelectedKeystone?.KeystoneId != expected || entry.StarId != expected
-                        || !build.SelectedKeystone.Grants.Any(x => AuthoredMechanisms.Key(x) == AuthoredMechanisms.Key(entry.Spec)))
+                    var key = build.FindSelectedKeystone(expected);
+                    if (key == null || entry.StarId != expected
+                        || !key.Grants.Any(x => AuthoredMechanisms.Key(x) == AuthoredMechanisms.Key(entry.Spec)))
                         throw new InvalidOperationException("Native keystone adapter does not belong to the selected named key.");
                 }
                 if (!channels.Add(entry.Spec.ChannelId)) throw new InvalidOperationException("Duplicate mechanism channel.");
@@ -130,11 +131,11 @@ namespace SodRpg.Core.Game
             first = true;
             foreach (var e in build.Gimmicks)
             {
-                if (!GimmickRawCodec.HasRaw(e.Def) || build.SelectedKeystone == null && !GimmickRawCodec.NeedsExactValue(e.Def)) continue;
+                if (!GimmickRawCodec.HasRaw(e.Def) || build.SelectedKeystones.Count == 0 && !GimmickRawCodec.NeedsExactValue(e.Def)) continue;
                 using (var stream = new MemoryStream(GimmickRawCodec.MaxBytes))
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                 {
-                    GimmickRawCodec.Write(writer, e.Def, valueOnly: build.SelectedKeystone == null); writer.Flush();
+                    GimmickRawCodec.Write(writer, e.Def, valueOnly: build.SelectedKeystones.Count == 0); writer.Flush();
                     sb.Append(first ? ";r:" : ","); first = false;
                     sb.Append(e.StarId).Append(':').Append(Convert.ToBase64String(stream.ToArray()));
                 }
@@ -145,15 +146,25 @@ namespace SodRpg.Core.Game
             first = true;
             foreach (var endpoint in build.MechanismEndpointRanks)
             { sb.Append(first ? ";e:" : ","); first = false; sb.Append(endpoint.Key).Append(':').Append(endpoint.Value); }
-            if (build.SelectedKeystone != null) sb.Append(";k:").Append(AuthoredKeystoneCodec.Encode(build.SelectedKeystone));
+            if (build.SelectedKeystones.Count > 0)
+            {
+                sb.Append(";k:");
+                bool keystoneFirst = true;
+                foreach (var key in build.SelectedKeystones)
+                {
+                    if (!keystoneFirst) sb.Append(','); keystoneFirst = false;
+                    sb.Append(AuthoredKeystoneCodec.Encode(key));
+                }
+            }
         }
         internal static void Read(string kind, string encoded, Build build)
         {
             if (kind == "m") { build.Mechanisms.Add(AuthoredMechanismCodec.Decode(encoded)); return; }
             if (kind == "k")
             {
-                if (build.SelectedKeystone != null) throw new FormatException("Duplicate keystone record.");
-                build.SelectedKeystone = AuthoredKeystoneCodec.Decode(encoded); return;
+                var keystone = AuthoredKeystoneCodec.Decode(encoded);
+                if (build.HasSelectedKeystone(keystone.KeystoneId)) throw new FormatException("Duplicate keystone record.");
+                build.AddSelectedKeystone(keystone); return;
             }
             if (kind == "e")
             {
@@ -224,7 +235,7 @@ namespace SodRpg.Core.Game
                         throw new FormatException("Invalid postordinary record.");
                 }
                 ValidateRawRecipient(e.Def);
-                if (build.SelectedKeystone == null && (!GimmickRawCodec.NeedsExactValue(e.Def)
+                if (build.SelectedKeystones.Count == 0 && (!GimmickRawCodec.NeedsExactValue(e.Def)
                     || e.Def.UncappedDurationUnits.HasValue || e.Def.UncappedRadiusUnits.HasValue
                     || e.Def.UncappedExtraTargets.HasValue || e.Def.UncappedChanceUnits.HasValue))
                     throw new FormatException("A keyless postordinary record must carry only a finer exact effect value.");

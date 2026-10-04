@@ -77,14 +77,14 @@ namespace SodRpg.Core.Game
             }
             bool Redefined(string id) => hero.AuthoredMigrationVersion < migrationVersion
                 && costs.TryGetValue(id, out var rule) && rule.ChangedEffect;
-            var candidate = new HeroState { Kills = hero.Kills };
+            var candidate = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp };
             foreach (var allocation in hero.Talents)
             {
                 if (!nodes.TryGetValue(allocation.Key, out var node) || allocation.Value <= 0 || allocation.Value > node.MaxRank)
                     throw new InvalidOperationException("Invalid migration allocation: " + allocation.Key);
                 candidate.Talents.Add(allocation.Key, allocation.Value);
             }
-            candidate.Keystone = hero.Keystone;
+            candidate.CopyKeystonesFrom(hero);
             foreach (var choice in hero.TalentChoices) candidate.TalentChoices.Add(choice.Key, choice.Value);
             var refunded = new List<string>();
             var redefinedIds = new List<string>();
@@ -109,12 +109,13 @@ namespace SodRpg.Core.Game
                     || option < 0 || option >= node.Choices.Count)) invalid.Add(node.Id);
             }
             foreach (string id in invalid) Refund(id);
-            if (candidate.Keystone != null && Redefined(candidate.Keystone))
+            foreach (string selected in candidate.Keystones)
             {
-                refunded.Add(candidate.Keystone); redefinedIds.Add(candidate.Keystone);
-                int old = costs[candidate.Keystone].RankCost;
+                if (selected == null || !Redefined(selected)) continue;
+                refunded.Add(selected); redefinedIds.Add(selected);
+                int old = costs[selected].RankCost;
                 points = checked(points + old); redefinedPoints = checked(redefinedPoints + old);
-                candidate.Keystone = null;
+                candidate.RemoveKeystone(selected);
             }
             var layout = HeroTreeLayout.ForTalents(tree);
             bool EligibleKey(TalentDef key)
@@ -134,22 +135,35 @@ namespace SodRpg.Core.Game
                 foreach (var allocation in candidate.Talents)
                     if (!layout.CanReach(candidate, nodes[allocation.Key])) invalid.Add(allocation.Key);
                 foreach (string id in invalid) { Refund(id); changed = true; }
-                if (candidate.Keystone != null && (!nodes.TryGetValue(candidate.Keystone, out var key)
-                    || !layout.CanReach(candidate, key) || !EligibleKey(key)))
+                foreach (string selected in candidate.Keystones)
                 {
-                    refunded.Add(candidate.Keystone);
-                    points = checked(points + (key?.KeystoneDefinition?.Cost ?? Content.KeystoneCost));
-                    candidate.Keystone = null;
-                    changed = true;
+                    if (selected == null) continue;
+                    TalentDef key;
+                    if (!nodes.TryGetValue(selected, out key) || !layout.CanReach(candidate, key) || !EligibleKey(key))
+                    {
+                        refunded.Add(selected);
+                        points = checked(points + (key?.KeystoneDefinition?.Cost ?? Content.KeystoneCost));
+                        candidate.RemoveKeystone(selected);
+                        changed = true;
+                    }
                 }
             } while (changed);
+            // 枠が減った（星のレベルが下がることは通常ないが、データの都合で減った）場合：
+            // 後から選んだ刻印から外し、その費用を戻す。
+            while (candidate.KeystoneCount > candidate.KeystoneSlotCount)
+            {
+                string removed = candidate.Keystones[candidate.KeystoneCount - 1];
+                refunded.Add(removed);
+                points = checked(points + (nodes.TryGetValue(removed, out var removedKey) ? removedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost));
+                candidate.RemoveKeystone(removed);
+            }
             // CanReach admits a candidate adjacent to the allocated graph; it never admits an allocated disconnected island.
-            if (!layout.AllocationsConnected(candidate, null, candidate.Keystone))
+            if (!layout.AllocationsConnected(candidate, null, candidate.Keystones))
                 throw new InvalidOperationException("Migration leaves an invalid keystone or disconnected allocation.");
             hero.Talents.Clear(); foreach (var allocation in candidate.Talents) hero.Talents.Add(allocation.Key, allocation.Value);
             hero.TalentChoices.Clear();
             foreach (var choice in candidate.TalentChoices) if (hero.Talents.ContainsKey(choice.Key)) hero.TalentChoices.Add(choice.Key, choice.Value);
-            hero.Keystone = candidate.Keystone;
+            hero.CopyKeystonesFrom(candidate);
             if (migrations.Count > 0) hero.AuthoredMigrationVersion = Math.Max(hero.AuthoredMigrationVersion, migrationVersion);
             return new StarMigrationRefund(refunded, points, redefinedIds, redefinedPoints);
         }

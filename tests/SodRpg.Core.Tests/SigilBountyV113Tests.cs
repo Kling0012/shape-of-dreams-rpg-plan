@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using SodRpg.Core.Game;
@@ -18,7 +19,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Only_one_keystone_can_be_active_and_the_second_one_can_be_chosen()
+        public void A_second_keystone_needs_a_free_slot_and_switching_refunds_the_first()
         {
             var p = Profile.CreateNew(1);
             p.Hero("Hero_Mist").StarXp = StarProgression.TotalXpForPoints(19);
@@ -29,8 +30,15 @@ namespace SodRpg.Core.Tests
                     if (Rules.FreePoints(p, hero) > 0) Rules.AddTalentRank(p, hero, n.Id);
             var keys = HeroSigils.TreeFor(hero).Where(t => t.IsKeystone).ToList();
             Assert.Equal(2, keys.Count);
+            // 星のレベル19では枠は1つ。枠を超えて選ぶことも、同じ刻印を重ねることもできない。
             Rules.SetKeystone(p, hero, keys[1].Id);
             Assert.Equal(keys[1].Id, p.Hero(hero).Keystone);
+            Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, hero, keys[0].Id));
+            Assert.Throws<InvalidOperationException>(() => Rules.SetKeystone(p, hero, keys[1].Id));
+            // 外せば費用は戻り、別の刻印を選べる。
+            int spent = Rules.SpentPoints(p.Hero(hero), hero);
+            Rules.RemoveKeystone(p, hero, keys[1].Id);
+            Assert.Equal(spent - Content.KeystoneCost, Rules.SpentPoints(p.Hero(hero), hero));
             Rules.SetKeystone(p, hero, keys[0].Id);
             Assert.Equal(keys[0].Id, p.Hero(hero).Keystone);
             var b = Build.Compute(p, hero, 0);

@@ -147,6 +147,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(60, build.Get(Power.ShadowStep));
             Assert.Equal(0, build.Get(Power.Executioner));
             Assert.True(Rules.FreePoints(profile, hero) >= 0);
+            Rules.RemoveKeystone(profile, hero, "h.husk.key2");
             Rules.SetKeystone(profile, hero, "h.husk.key");
             var alternate = Build.Compute(profile, hero, 0);
             Assert.Equal(0, alternate.Get(Power.ShadowStep));

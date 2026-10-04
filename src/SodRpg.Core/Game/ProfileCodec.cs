@@ -51,8 +51,10 @@ namespace SodRpg.Core.Game
                 foreach (var t in h.Talents) tal.Add(t.Key, (long)t.Value);
                 var choices = new JsonObject();
                 foreach (var choice in h.TalentChoices) choices.Add(choice.Key, (long)choice.Value);
+                var keystones = new List<object>();
+                for (int i = 1; i < h.Keystones.Length && h.Keystones[i] != null; i++) keystones.Add(h.Keystones[i]);
                 heroes.Add(kv.Key, new JsonObject().Add("equipped", eq).Add("talents", tal).Add("talentChoices", choices)
-                    .Add("keystone", h.Keystone).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
+                    .Add("keystone", h.Keystone).Add("keystones", keystones).Add("kills", (long)h.Kills).Add("starXp", (long)h.StarXp)
                     .Add("authoredMigrationVersion", (long)h.AuthoredMigrationVersion));
             }
             var codex = new List<object>();
@@ -317,6 +319,14 @@ namespace SodRpg.Core.Game
                     h.AuthoredMigrationVersion = Clamp(Long(hj, "authoredMigrationVersion"), 0, int.MaxValue);
                     string key = hj.TryGet("keystone", out object ko) ? ko as string : null;
                     if (key != null && Content.TryGetTalent(kv.Key, key, out var kdef) && kdef.IsKeystone && Rules.BelongsTo(kdef, kv.Key)) h.Keystone = key;
+                    if (hj.TryGet("keystones", out object ksList) && ksList is List<object> extraKeys)
+                        for (int slot = 1; slot < h.Keystones.Length; slot++)
+                        {
+                            // 2つ目以降の刻印。古い保存にはこの欄が無い（読み込みは1つのまま）。枠は前詰めで保存した順に入れる。
+                            string id = slot - 1 < extraKeys.Count ? extraKeys[slot - 1] as string : null;
+                            if (id != null && !h.HasKeystone(id) && Content.TryGetTalent(kv.Key, id, out var extraDef)
+                                && extraDef.IsKeystone && Rules.BelongsTo(extraDef, kv.Key) && h.AddKeystone(id) < 0) break;
+                        }
                     if (HeroSigils.HasTree(kv.Key))
                     {
                         var tree = HeroSigils.TreeFor(kv.Key);

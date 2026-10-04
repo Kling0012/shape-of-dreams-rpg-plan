@@ -32,7 +32,32 @@ namespace SodRpg.Core.Game
         /// <summary>v1.32 B：遠征を通して成長する仕組み（修飾を反映済み）。通信では空なら節ごと省く。</summary>
         public List<RunGrowthEntry> RunGrowths { get; } = new List<RunGrowthEntry>();
         public SortedDictionary<string, int> MechanismEndpointRanks { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
-        public KeystoneDefinition SelectedKeystone { get; set; }
+        private readonly List<KeystoneDefinition> selectedKeystones = new List<KeystoneDefinition>(KeystoneSlots.Max);
+        /// <summary>適用された刻印（枠順。Build.Compute が段数・熟練度の条件を満たしたものだけ入れる）。</summary>
+        public IReadOnlyList<KeystoneDefinition> SelectedKeystones => selectedKeystones;
+        /// <summary>1つ目の刻印（互換用）。 setter は枠をこの1つに置き換える。</summary>
+        public KeystoneDefinition SelectedKeystone
+        {
+            get => selectedKeystones.Count > 0 ? selectedKeystones[0] : null;
+            set { selectedKeystones.Clear(); if (value != null) selectedKeystones.Add(value); }
+        }
+        /// <summary>この刻印を選んでいるか（2〜3つ目も含む）。</summary>
+        public bool HasSelectedKeystone(string keystoneId)
+        {
+            foreach (var key in selectedKeystones) if (key.KeystoneId == keystoneId) return true;
+            return false;
+        }
+        /// <summary>選んでいる刻印のうちこのIDの定義（無ければ null）。</summary>
+        public KeystoneDefinition FindSelectedKeystone(string keystoneId)
+        {
+            foreach (var key in selectedKeystones) if (key.KeystoneId == keystoneId) return key;
+            return null;
+        }
+        internal void AddSelectedKeystone(KeystoneDefinition keystone)
+        {
+            if (keystone == null || HasSelectedKeystone(keystone.KeystoneId)) return;
+            selectedKeystones.Add(keystone);
+        }
         /// <summary>Set only by C15's dependency-aware evaluation; records which stars combine into which outputs.</summary>
         internal StarDependencies Dependencies { get; set; }
         internal Dictionary<string, string[]> ScopedWireRecords { get; } = new Dictionary<string, string[]>(StringComparer.Ordinal);
@@ -88,8 +113,10 @@ namespace SodRpg.Core.Game
             var reachabilityState = reachability ?? h;
             var reachable = reachabilitySnapshot ?? layout.ReachabilitySnapshot(reachabilityState);
             bool Unlocked(TalentDef talent) => Rules.BelongsTo(talent, heroKey) && layout.CanReach(reachabilityState, talent, reachable);
-            long spent = h.Keystone != null && definitions.TryGetValue(h.Keystone, out var selectedKey)
-                ? selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost : 0;
+            long spent = 0;
+            foreach (string keystoneId in h.Keystones)
+                if (keystoneId != null && definitions.TryGetValue(keystoneId, out var selectedKey))
+                    spent += selectedKey.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             foreach (var allocated in h.Talents)
                 if (definitions.TryGetValue(allocated.Key, out var talent))
                     spent += (long)Math.Max(0, allocated.Value) * talent.RankCost;
@@ -308,17 +335,19 @@ namespace SodRpg.Core.Game
                 return ranks >= Content.KeystoneRouteRequirement
                     && (candidateKey.HeroKey == null || Mastery.Level(gate.Kills) >= HeroSigils.KeystoneMastery);
             }
-            if (h.Keystone != null && definitions.TryGetValue(h.Keystone, out var key) && key.IsKeystone
-                && Rules.BelongsTo(key, heroKey) && KeyUnlocked(key))
+            foreach (string keystoneId in h.Keystones)
             {
-                b.SelectedKeystone = key.KeystoneDefinition;
-                if (dependencies != null) dependencies.AppliedKeystone = b.SelectedKeystone;
+                if (keystoneId == null || !definitions.TryGetValue(keystoneId, out var key) || !key.IsKeystone
+                    || !Rules.BelongsTo(key, heroKey) || !KeyUnlocked(key)) continue;
+                b.AddSelectedKeystone(key.KeystoneDefinition);
                 bool migratedStillWater = false;
                 if (key.Power == Power.StillWater && key.KeystoneDefinition != null)
                     foreach (var grant in key.KeystoneDefinition.Grants)
                         if (grant.Kind == AuthoredMechanismKind.StunSourceFilter) { migratedStillWater = true; break; }
+                // 各刻印の保持Powerは1回ずつ入れる（刻印の数だけ重なる。上限は通常の能力上限）。
                 if (key.Power != Power.None && !migratedStillWater) AddPower(key.Power, key.PowerValue);
             }
+            if (dependencies != null) dependencies.AppliedKeystones = b.SelectedKeystones;
             AuthoredKeystoneComposer.Apply(b);
 
             var daily = DailyDream.Get(dailyId);
@@ -541,7 +570,7 @@ namespace SodRpg.Core.Game
                         case "r": limit = BuildLimits.MaxGimmickEntries; break;
                         case "m": limit = BuildLimits.MaxGimmickEntries; break;
                         case "e": limit = StarProgression.MaxSpendablePoints; break;
-                        case "k": limit = 1; break;
+                        case "k": limit = KeystoneSlots.Max; break;
                         case "w": limit = global::SodRpg.Core.Game.RunGrowth.MaxEntries; break;
                     }
                     if (body.Length == 0) continue;

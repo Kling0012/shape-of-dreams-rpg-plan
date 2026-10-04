@@ -211,11 +211,11 @@ namespace SodRpg.Core.Game
 
         internal bool CanReach(HeroState hero, TalentDef talent)
         {
-            if (!AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystone)) return false;
+            if (!AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystones)) return false;
             if (!indices.TryGetValue(talent.Id, out int target) || Nodes[target].Talent != talent) return false;
             lock (traversalLock)
             {
-                Traverse(hero, -1, hero.Keystone);
+                Traverse(hero, -1, hero.Keystones);
                 if (reached[target]) return true;
                 var adjacent = Nodes[target].Neighbors;
                 for (int i = 0; i < adjacent.Count; i++)
@@ -228,7 +228,7 @@ namespace SodRpg.Core.Game
         {
             lock (traversalLock)
             {
-                Traverse(hero, -1, hero.Keystone);
+                Traverse(hero, -1, hero.Keystones);
                 var eligible = new bool[Nodes.Count];
                 for (int i = 0; i < Nodes.Count; i++)
                 {
@@ -242,24 +242,30 @@ namespace SodRpg.Core.Game
 
         internal bool CanReach(HeroState hero, TalentDef talent, bool[] snapshot) =>
             indices.TryGetValue(talent.Id, out int target) && Nodes[target].Talent == talent && snapshot[target]
-            && AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystone);
+            && AuthoredStarContract.PrerequisitesMet(hero, talent, null, hero.Keystones);
 
-        internal bool AllocationsConnected(HeroState hero, string removedTalent, string keystone)
+        internal bool AllocationsConnected(HeroState hero, string removedTalent, string keystone) =>
+            AllocationsConnected(hero, removedTalent, keystone == null ? Array.Empty<string>() : new[] { keystone });
+
+        /// <summary>選択中の刻印すべて（Keystones）が取得済みの星とつながっているか。</summary>
+        internal bool AllocationsConnected(HeroState hero, string removedTalent, string[] keystones)
         {
             int removed = removedTalent != null && indices.TryGetValue(removedTalent, out int index) ? index : -1;
             lock (traversalLock)
             {
-                Traverse(hero, removed, keystone);
+                Traverse(hero, removed, keystones);
                 foreach (var allocation in hero.Talents)
                     if (allocation.Value > 0 && allocation.Key != removedTalent
                         && (!indices.TryGetValue(allocation.Key, out int allocated) || !reached[allocated]
-                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystone))) return false;
-                return keystone == null || (indices.TryGetValue(keystone, out int key) && reached[key]
-                    && AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystone));
+                            || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[allocated].Talent, removedTalent, keystones))) return false;
+                foreach (string keystone in keystones)
+                    if (keystone != null && (!indices.TryGetValue(keystone, out int key) || !reached[key]
+                        || !AuthoredStarContract.PrerequisitesMet(hero, Nodes[key].Talent, removedTalent, keystones))) return false;
+                return true;
             }
         }
 
-        private void Traverse(HeroState hero, int removed, string keystone)
+        private void Traverse(HeroState hero, int removed, string[] keystones)
         {
             Array.Clear(reached, 0, reached.Length);
             reached[StartIndex] = true;
@@ -273,7 +279,7 @@ namespace SodRpg.Core.Game
                     int next = adjacent[i];
                     if (next == removed || reached[next]) continue;
                     var talent = Nodes[next].Talent;
-                    bool allocated = talent.IsKeystone ? talent.Id == keystone
+                    bool allocated = talent.IsKeystone ? Array.IndexOf(keystones, talent.Id) >= 0
                         : hero.Talents.TryGetValue(talent.Id, out int rank) && rank > 0;
                     if (!allocated) continue;
                     reached[next] = true;
@@ -281,5 +287,6 @@ namespace SodRpg.Core.Game
                 }
             }
         }
+
     }
 }

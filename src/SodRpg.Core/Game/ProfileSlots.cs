@@ -288,7 +288,7 @@ namespace SodRpg.Core.Game
                 if (hint != (int)Hint.Welcome) return false;
             foreach (HeroState hero in p.Heroes.Values)
             {
-                if (hero.Kills != 0 || hero.StarXp != 0 || hero.Keystone != null
+                if (hero.Kills != 0 || hero.StarXp != 0 || hero.KeystoneCount != 0
                     || hero.Talents.Count != 0 || hero.TalentChoices.Count != 0) return false;
                 foreach (string equipped in hero.Equipped)
                     if (equipped != null) return false;

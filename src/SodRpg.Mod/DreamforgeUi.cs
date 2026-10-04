@@ -980,7 +980,7 @@ namespace SodRpg.Mod
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
             "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
-            "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は1つ選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
+            "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
             "<b>What this mod adds</b>\n" +
@@ -996,7 +996,7 @@ namespace SodRpg.Mod
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
             "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
-            "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose one keystone. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
+            "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose up to three keystones as your star level rises. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
 
@@ -1952,7 +1952,7 @@ namespace SodRpg.Mod
         // Layout and localized text survive IMGUI events; only state changes rebuild descriptions.
         private HeroTreeLayout _starLayout;
         private StarNode[] _starNodes;
-        private string _starHero, _starKeystone;
+        private string _starHero, _starKeystoneSignature;
         private readonly GUIContent _starPoints = new GUIContent();
         private readonly GUIContent _starProgress = new GUIContent();
         private HeroState _starState;
@@ -1972,10 +1972,12 @@ namespace SodRpg.Mod
         private readonly GUIContent _starSearchStatus = new GUIContent();
         private static readonly GUILayoutOption[] StarRowHeight = { GUILayout.Height(30) };
         private static readonly GUILayoutOption[] StarKeystoneWidth = { GUILayout.Width(110) };
-        // 「ミストの刻印（1つ）：」のように旅人の名前が入るので、少し広く取る。星を探す欄の見出しも同じ幅にそろえる。
+        // 「ミストの刻印：」のように旅人の名前が入るので、少し広く取る。星を探す欄の見出しも同じ幅にそろえる。
         private const float StarKeystoneHeaderPx = 190f;
         private static readonly GUILayoutOption[] StarKeystoneHeaderWidth = { GUILayout.Width(StarKeystoneHeaderPx) };
         private const int StarKeystonesPerRow = 5;
+        // 刻印の帯の「刻印 n/枠数」と次の枠のヒント。Rebuild ではなく状態変更のたびに作り直す。
+        private readonly GUIContent _starKeystoneSlots = new GUIContent();
         // Keystone hovered in the bar (repaint of the bar happens before the canvas), shown with the canvas tooltip.
         private int _starKeystoneHover = -1;
         private GUIStyle _starRankStyle, _starTooltipStyle, _starNameStyle, _starSearchStyle;
@@ -2088,9 +2090,10 @@ namespace SodRpg.Mod
             if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero))
             { RebuildStarTree(hero); _starSumDirty = true; }
             if (!_starDirty && Event.current.type != EventType.Layout) return;
+            string keystones = string.Join("\u0001", hs.Keystones);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
-                || _starKeystone != hs.Keystone;
+                || _starKeystoneSignature != keystones;
             var marks = LinkMarks();
             bool matchingHero = _s.LocalHero != null && ClientSession.HeroKeyOf(_s.LocalHero) == hero;
             if (_starSumOpen)
@@ -2108,7 +2111,7 @@ namespace SodRpg.Mod
             {
                 var n = _starNodes[i];
                 var t = _starLayout.Nodes[i].Talent;
-                int rank = t == null ? 1 : t.IsKeystone ? (hs.Keystone == t.Id ? 1 : 0)
+                int rank = t == null ? 1 : t.IsKeystone ? (hs.HasKeystone(t.Id) ? 1 : 0)
                     : hs.Talents.TryGetValue(t.Id, out var r) ? r : 0;
                 if (n.Rank != rank) changed = true;
                 n.Rank = rank;
@@ -2133,7 +2136,7 @@ namespace SodRpg.Mod
             _starKills = hs.Kills;
             _starCodex = p.CodexBonusPoints;
             _starTestBonus = Profile.TestBonusPoints;
-            _starKeystone = hs.Keystone;
+            _starKeystoneSignature = keystones;
             _starFree = p.TalentPoints(hero) - spent;
             _starDirty = false;
             _starSumDirty = true;
@@ -2146,7 +2149,10 @@ namespace SodRpg.Mod
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
             var reachable = _starLayout.ReachabilitySnapshot(hs);
             RefreshStarClusters(hs);
-            int oldKeyCost = hs.Keystone == null ? 0 : Rules.AllocationValidationForHero(hero).Talent(hs.Keystone).KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int slots = hs.KeystoneSlotCount;
+            bool freeSlot = hs.KeystoneCount < slots;
+            _starKeystoneSlots.text = StarMapPresentation.KeystoneSlotStatus(hs.KeystoneCount, slots)
+                + "　" + StarMapPresentation.NextSlotText(earned);
             for (int i = 0; i < _starNodes.Length; i++)
             {
                 var n = _starNodes[i];
@@ -2162,23 +2168,28 @@ namespace SodRpg.Mod
                 bool unlocked = t.IsKeystone ? Rules.KeystoneUnlocked(p, hero, t) : _starLayout.CanReach(hs, t, reachable);
                 n.Unlocked = unlocked;
                 int keyCost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
-                int cost = t.IsKeystone ? Math.Max(0, keyCost - oldKeyCost) : t.RankCost;
+                int cost = t.IsKeystone ? keyCost : t.RankCost;
+                bool slotsFull = t.IsKeystone && !n.Allocated && !freeSlot;
                 if (t.IsKeystone)
                 {
                     string keystoneState = n.Allocated ? Loc.T("<color=#ffc952>選択中</color>", "<color=#ffc952>active</color>")
-                        : unlocked ? Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>")
-                        : Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>");
+                        : !unlocked ? Loc.T("<color=#ffb090>条件未達</color>", "<color=#ffb090>locked</color>")
+                        : slotsFull ? Loc.T("<color=#ffb090>枠がいっぱい</color>", "<color=#ffb090>no free slot</color>")
+                        : Loc.T("<color=#9fe0ff>選べる</color>", "<color=#9fe0ff>available</color>");
                     n.KeystoneLabel.text = "<color=#cc8cff>◆</color> " + n.Name.text + "  " + keystoneState;
                 }
-                n.Available = unlocked && n.Rank < t.MaxRank && _starFree >= cost;
+                n.Available = unlocked && n.Rank < t.MaxRank && !slotsFull && _starFree >= cost;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
                 // 条件の説明は、まだ満たしていないときだけ出す。状態の1文と同じ内容を重ねない。
                 string condition = "";
                 if (t.IsKeystone && !n.Allocated)
                     condition = StarMapPresentation.KeystoneRequirement(t.HeroKey != null, Content.KeystoneRouteRequirement,
                         t.HeroKey != null ? Rules.TreeRanks(hs, t.HeroKey) : Rules.RouteRanks(hs, t.Route),
-                        t.HeroKey != null ? HeroSigils.KeystoneMastery : 0, Mastery.Level(hs.Kills), _starLayout.CanReach(hs, t, reachable));
-                string state = StarMapPresentation.AllocationStatus(t.IsKeystone, n.Rank >= t.MaxRank, unlocked, _starFree >= cost);
+                        t.HeroKey != null ? HeroSigils.KeystoneMastery : 0, Mastery.Level(hs.Kills), _starLayout.CanReach(hs, t, reachable),
+                        slots, earned);
+                string state = slotsFull
+                    ? Loc.T("枠がありません。次の枠は星のレベルが上がると開きます。", "No free keystone slot. The next slot unlocks at a higher star level.")
+                    : StarMapPresentation.AllocationStatus(t.IsKeystone, n.Rank >= t.MaxRank, unlocked, _starFree >= cost);
                 var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
                 string description = pair == null || t.Mechanism != null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
@@ -2206,13 +2217,15 @@ namespace SodRpg.Mod
                 }
                 // 必要ポイントは、本文に既に書かれていれば繰り返さない（刻印は本文の末尾に入っている）。
                 bool costInBody = description.Contains(Loc.T("ポイント", "point"));
-                string readyColor = !unlocked ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
+                string readyColor = !unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
                 n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.MechanismLabel(t) + "</color>"
                     + "\n" + description
                     + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
                     + (condition.Length == 0 ? "" : "\n" + condition)
                     + "\n<color=" + readyColor + ">" + state + "</color>"
-                    + (t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
+                    + (t.IsKeystone ? Loc.T("\n左クリック：選ぶ　右クリック：外す（費用は戻ります）",
+                        "\nLeft click: select. Right click: remove (its cost is refunded).")
+                        : t.IsChoice ? Loc.T("\n左クリック：選択パネルを開く（切り替えは無料・遠征外のみ）　右クリック：1段外す",
                         "\nLeft click: open the option panel (switching is free outside expeditions). Right click: refund one rank.")
                         : Loc.T("\n左クリック：1段振る　右クリック：1段外す",
                             "\nLeft click: allocate one rank. Right click: refund one rank."))
@@ -2706,7 +2719,8 @@ namespace SodRpg.Mod
 
         /// <summary>
         /// 刻印の一覧。図のどこにあるか探さなくても、選べる刻印とその状態が分かるようにする。
-        /// 押すと図をその刻印へ寄せ、条件を満たしていれば選ぶ。
+        /// 押すと図をその刻印へ寄せ、条件を満たしていれば選ぶ。選択済みは右クリックで外す。
+        /// 見出しの行に「刻印 n/枠数」と、次の枠が開く星のレベルを出す。
         /// </summary>
         private void DrawKeystoneBar(Profile p, string hero)
         {
@@ -2719,7 +2733,11 @@ namespace SodRpg.Mod
                 {
                     if (k > 0) GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
-                    if (k == 0) GUILayout.Label(HeroNames.KeystoneHeader(hero), _starHelpStyle, StarKeystoneHeaderWidth);
+                    if (k == 0)
+                    {
+                        GUILayout.Label(HeroNames.KeystoneHeader(hero), _starHelpStyle, StarKeystoneHeaderWidth);
+                        GUILayout.Label(_starKeystoneSlots, _starHelpStyle);
+                    }
                     else GUILayout.Space(StarKeystoneHeaderPx + 4f);
                 }
                 int index = _starKeystones[k];
@@ -2728,8 +2746,23 @@ namespace SodRpg.Mod
                 bool chosen = state.Allocated;
                 bool unlocked = state.Unlocked;
                 bool pressed = GUILayout.Button(state.KeystoneLabel, chosen ? _st.RowSel : _st.Row, StarRowHeight);
-                if (Event.current.type == EventType.Repaint && GUILayoutUtility.GetLastRect().Contains(Event.current.mousePosition))
+                Rect buttonRect = GUILayoutUtility.GetLastRect();
+                if (Event.current.type == EventType.Repaint && buttonRect.Contains(Event.current.mousePosition))
                     _starKeystoneHover = index;
+                if (chosen && _s.CanEditTalents && p.Run == null
+                    && Event.current.type == EventType.MouseDown && Event.current.button == 1 && buttonRect.Contains(Event.current.mousePosition))
+                {
+                    Event.current.Use();
+                    try
+                    {
+                        Rules.RemoveKeystone(p, hero, t.Id);
+                        _starDirty = true;
+                        _s.MarkDirty(true);
+                    }
+                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero); }
+                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
+                    continue;
+                }
                 if (pressed)
                 {
                     StarJumpTo(index);

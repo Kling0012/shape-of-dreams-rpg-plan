@@ -51,7 +51,7 @@ namespace SodRpg.Core.Tests
                 d.CapProfileId, d.DeclaredModifierCeilingUnits, d.DeclaredModifierUnit, d.Reason);
 
         private static string Describe(HeroState h) =>
-            string.Join(";", h.Keystone, h.StarXp, h.Kills, string.Join(",", h.Equipped),
+            string.Join(";", string.Join("+", h.Keystones), h.StarXp, h.Kills, string.Join(",", h.Equipped),
                 string.Join(",", h.Talents.Select(t => t.Key + "=" + t.Value)),
                 string.Join(",", h.TalentChoices.OrderBy(t => t.Key, StringComparer.Ordinal).Select(t => t.Key + "=" + t.Value)));
 
