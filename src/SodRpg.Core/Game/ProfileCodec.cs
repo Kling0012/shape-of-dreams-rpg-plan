@@ -95,6 +95,7 @@ namespace SodRpg.Core.Game
                     .Add("securedCount", (long)r.SecuredCount).Add("kills", (long)r.Kills)
                     .Add("peakHeat", (long)r.PeakHeat)
                     .Add("relicsFound", (long)r.RelicsFound).Add("relicsSecured", (long)r.RelicsSecured).Add("shardsSecured", (long)r.ShardsSecured).Add("levelAtStart", (long)r.LevelAtStart).Add("daily", (long)r.DailyId).Add("startDepth", (long)r.StartDepth).Add("rerollsUsed", (long)r.RerollsUsed).Add("event", (long)r.OfferedEvent).Add("limbo", (long)r.LimboDepth)
+                    .Add("eventId", r.OfferedEventId)
                     // 最小JSONは整数のみ扱うため、小数の補正はカルチャ非依存の文字列で保存する。
                     .Add("eventDropBonus", r.EventDropBonus.ToString("R", CultureInfo.InvariantCulture))
                     .Add("eventLuck", r.EventLuck.ToString("R", CultureInfo.InvariantCulture))
@@ -433,6 +434,7 @@ namespace SodRpg.Core.Game
                     RerollsUsed = Clamp(Long(rj, "rerollsUsed"), 0, 100),
                     LimboDepth = Clamp(Long(rj, "limbo"), 0, 50),
                     OfferedEvent = Enum.IsDefined(typeof(DreamEvent), (int)Long(rj, "event")) ? (DreamEvent)(int)Long(rj, "event") : DreamEvent.None,
+                    OfferedEventId = rj.TryGet("eventId", out _) ? Str(rj, "eventId") : Guid.NewGuid().ToString("N"),
                     EventDropBonus = Bonus(rj, "eventDropBonus"),
                     EventLuck = Bonus(rj, "eventLuck"),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
@@ -525,6 +527,7 @@ namespace SodRpg.Core.Game
             .Add("token", t.Token.ToString(CultureInfo.InvariantCulture)).Add("kind", (long)t.Kind)
             .Add("spendGold", (long)t.SpendGold).Add("spendDust", (long)t.SpendDust).Add("earnDust", (long)t.EarnDust)
             .Add("uid", t.Uid).Add("heat", (long)t.Heat).Add("batches", (long)t.Batches)
+            .Add("merchantOfferId", t.MerchantOfferId)
             .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance)
             .Add("ledger", unchecked((ulong)t.LedgerId).ToString(CultureInfo.InvariantCulture)).Add("lost", t.Lost);
 
@@ -552,6 +555,7 @@ namespace SodRpg.Core.Game
                     Heat = Clamp(Long(j, "heat"), 0, int.MaxValue), Batches = Clamp(Long(j, "batches"), 0, int.MaxValue),
                     Rarity = Clamp(Long(j, "rarity"), 0, int.MaxValue), Enhance = Clamp(Long(j, "enhance"), 0, int.MaxValue),
                     LedgerId = unchecked((long)ledgerBits), Lost = Bool(j, "lost", false),
+                    MerchantOfferId = Str(j, "merchantOfferId"),
                 });
             }
         }

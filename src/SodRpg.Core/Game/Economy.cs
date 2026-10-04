@@ -72,6 +72,8 @@ namespace SodRpg.Core.Game
         // 以下は v1.31 のホスト検証に使う引数（金額ではなく、金額の計算に使う値）。
         /// <summary>MerchantGold：価格の計算に使った熱度。</summary>
         public int Heat;
+        /// <summary>購入元の出来事の提示識別子。旧保存では null（購入元を推測しない）。</summary>
+        public string MerchantOfferId;
         /// <summary>DustToShards：換える束数。</summary>
         public int Batches;
         /// <summary>SalvageForDust：分解対象の希少度（(int)Rarity）と強化値。</summary>
@@ -165,6 +167,15 @@ namespace SodRpg.Core.Game
         {
             foreach (var t in _pending.Values)
                 if (t.Kind == kind && !t.Unresolved) return true;
+            return false;
+        }
+
+        /// <summary>同じ商人の購入を予約中か。結果不明・確認不能も含む。購入元不明の旧取引が残る間は安全のため再購入を止める。</summary>
+        public bool IsMerchantReserved(string offerId)
+        {
+            foreach (var t in _pending.Values)
+                if (t.Kind == TradeKind.MerchantGold
+                    && (string.IsNullOrEmpty(t.MerchantOfferId) || t.MerchantOfferId == offerId)) return true;
             return false;
         }
 
@@ -271,6 +282,7 @@ namespace SodRpg.Core.Game
             Token = t.Token, Kind = t.Kind, SpendGold = t.SpendGold, SpendDust = t.SpendDust, EarnDust = t.EarnDust, Uid = t.Uid,
             StartedAt = t.StartedAt, Heat = t.Heat, Batches = t.Batches, Rarity = t.Rarity, Enhance = t.Enhance,
             Unresolved = t.Unresolved, Queries = t.Queries, NextQueryAt = t.NextQueryAt, LedgerId = t.LedgerId, Lost = t.Lost,
+            MerchantOfferId = t.MerchantOfferId,
         };
 
         /// <summary>上限に達していたら、取引の登録も通信も通貨の変更も始めさせない（呼び出し側は先に CanBegin で案内する）。</summary>
@@ -292,12 +304,14 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>商人の購入（v1.31）。価格は表示と同じ物を使い、ホストは熱度から自分で計算し直す。</summary>
-        public PendingTrade BeginMerchant(int heat, int price, double now)
+        public PendingTrade BeginMerchant(int heat, int price, double now, string offerId = null)
         {
             if (heat < 0 || heat > Content.MaxHeat) throw new ArgumentOutOfRangeException(nameof(heat));
             if (price < 1) throw new ArgumentOutOfRangeException(nameof(price));
+            if (!string.IsNullOrEmpty(offerId) && IsMerchantReserved(offerId))
+                throw new InvalidOperationException(Loc.T("この商人の取引は未確定です。", "This merchant's trade is unresolved."));
             EnsureRoom();
-            var t = new PendingTrade { Token = _next++, Kind = TradeKind.MerchantGold, SpendGold = price, Heat = heat, StartedAt = now };
+            var t = new PendingTrade { Token = _next++, Kind = TradeKind.MerchantGold, SpendGold = price, Heat = heat, StartedAt = now, MerchantOfferId = offerId };
             _pending[t.Token] = t;
             return t;
         }

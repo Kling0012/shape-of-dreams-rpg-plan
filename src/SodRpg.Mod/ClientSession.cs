@@ -668,13 +668,12 @@ namespace SodRpg.Mod
 
         public string BuyFromMerchant()
         {
-            if (TradePending(TradeKind.MerchantGold)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
             if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
             string blocked = TradeUnavailable();
             if (blocked != null) return blocked;
-            return SendTrade(_trades.BeginMerchant(Profile.Run?.Heat ?? 0, price, Time.unscaledTime));
+            return SendTrade(_trades.BeginMerchant(Profile.Run.Heat, price, Time.unscaledTime, Profile.Run.OfferedEventId));
         }
 
         public string ConvertDust()
@@ -793,7 +792,7 @@ namespace SodRpg.Mod
                 switch (t.Kind)
                 {
                     case TradeKind.MerchantGold:
-                        Emit(Rules.GrantPaidMerchant(Profile, _trades));
+                        Emit(Rules.GrantPaidMerchant(Profile, _trades, t));
                         break;
                     case TradeKind.DustToShards:
                         Emit(Rules.GrantPaidDustShards(Profile, t.SpendDust));

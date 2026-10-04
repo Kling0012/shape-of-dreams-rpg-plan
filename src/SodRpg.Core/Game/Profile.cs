@@ -136,6 +136,8 @@ namespace SodRpg.Core.Game
         public int RerollsUsed { get; set; }
         /// <summary>確保地点に現れている出来事（選択待ちの間だけ）。</summary>
         public DreamEvent OfferedEvent { get; set; }
+        /// <summary>個人の出来事の提示識別子。共有の道標世代から独立し、次の提示では更新する。</summary>
+        public string OfferedEventId { get; set; }
         /// <summary>出来事による撃破時の遺物ドロップ率の上乗せ（次の確保まで）。</summary>
         public double EventDropBonus { get; set; }
         /// <summary>出来事による撃破時の幸運（次の確保まで）。</summary>
@@ -185,6 +187,7 @@ namespace SodRpg.Core.Game
                 StartDepth = StartDepth,
                 RerollsUsed = RerollsUsed,
                 OfferedEvent = OfferedEvent,
+                OfferedEventId = OfferedEventId,
                 EventDropBonus = EventDropBonus,
                 EventLuck = EventLuck,
                 LimboDepth = LimboDepth,

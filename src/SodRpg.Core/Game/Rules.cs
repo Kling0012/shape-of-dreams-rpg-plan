@@ -314,6 +314,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
+            run.OfferedEventId = Guid.NewGuid().ToString("N");
             run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
             run.OfferedWaypoints.AddRange(Waypoints.Offer(rng));
             p.StoreRng(rng);
@@ -611,7 +612,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Merchant:
                 {
                     if (!goldPaid) p.AddMaterial(Materials.Shard, -DreamEvents.MerchantCost(run.Heat));
-                    GiveMerchantRelic(p, rng, ev, trades);
+                    GiveMerchantRelic(p, rng, ev, run.Heat, trades);
                     break;
                 }
                 case DreamEvent.Fountain:
@@ -867,23 +868,26 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>ホストが支払いを確定した商人の遺物を渡す。出来事や確保地点が終わっていても付与する。</summary>
-        public static List<GameEvent> GrantPaidMerchant(Profile p, TradeLedger trades = null)
+        public static List<GameEvent> GrantPaidMerchant(Profile p, TradeLedger trades = null, PendingTrade purchase = null)
         {
             var ev = new List<GameEvent>();
             var rng = p.TakeRng();
-            GiveMerchantRelic(p, rng, ev, trades);
+            GiveMerchantRelic(p, rng, ev, purchase?.Heat ?? 0, trades);
             p.StoreRng(rng);
             p.Stats.EventsUsed++;
-            if (p.Run?.OfferedEvent == DreamEvent.Merchant) p.Run.OfferedEvent = DreamEvent.None;
+            // 旧取引は購入元不明。対価は渡すが、現在の提示を購入元と決めつけない。
+            if (!string.IsNullOrEmpty(purchase?.MerchantOfferId)
+                && p.Run?.OfferedEvent == DreamEvent.Merchant
+                && p.Run.OfferedEventId == purchase.MerchantOfferId) p.Run.OfferedEvent = DreamEvent.None;
             AdvanceBounty(p, BountyKind.EventTaker, 1, false, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
         }
 
-        private static void GiveMerchantRelic(Profile p, Rng rng, List<GameEvent> ev, TradeLedger trades)
+        private static void GiveMerchantRelic(Profile p, Rng rng, List<GameEvent> ev, int heat, TradeLedger trades)
         {
             var run = p.Run;
-            var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * (run?.Heat ?? 0), true, Rarity.Uncommon);
+            var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * Loot.ClampHeat(heat), true, Rarity.Uncommon);
             var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
                 p.Focus ?? DailyDream.Get(run?.DailyId ?? 0)?.FeaturedLine, p.Stash, run?.Satchel, p.Codex);
             p.Codex.Add(relic.CodexId);
