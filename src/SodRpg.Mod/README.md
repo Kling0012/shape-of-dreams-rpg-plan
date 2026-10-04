@@ -100,13 +100,17 @@ v1.24 の変種通知は `DreamforgeVariantMsg`。途中参加向けに悪夢と
 
 変種のゲームAPI署名は `.ref/dump/` の `Entity`・`EntityVisual`・色／変形修飾子・`DamageData`・`Actor`・`ActorManager`・`ZoneManager` で照合した。ダメージプロセッサの登録／解除は既存の旅人向け実装と同じ方法を使う。プロトコルは2に更新した（ダンプには未知のCustomRpc通知を旧クライアントが安全に無視する保証がないため、旧版のBuild・取引は受け付けない）。ファイル編集のみで、ビルド・Coreテスト・実機でのプロセッサ順序や描画・協力同期は未確認。Coreの挙動とテストは変更していない。
 
+## カスタムMOBモデル（draft）
+
+前作成の10体と、全参加者のアセット一致を確認して差し替える実装は [導入・検証ガイド](../../docs/specs/mob-model-integration.md) を参照してください。設定は初期値で無効です。Unity/実機マルチ試験を終えるまで配布済み機能とは扱いません。
+
 ## ビルドと配置
 
 ```
-dotnet build src/SodRpg.Mod -c Release -p:GameDir="D:\app\stm\steamapps\common\Shape of Dreams"
+dotnet build src/SodRpg.Mod -c Release -p:GameDir="D:\app\stm\steamapps\common\Shape of Dreams" -p:DeployModToGame=false
 ```
 
-`GameDir` は環境変数 `SOD_GAME_DIR` でも指定できる。ビルドすると `<GameDir>/Mods/DreamforgeRPG/` に DLL と `about/` が置かれ、ゲームのMOD管理で有効化できる。Workshop への登録は、開発者モードのMOD管理で本MODを選んで「Upload」から行う（初回は非公開で作成される）。
+`GameDir` は環境変数 `SOD_GAME_DIR` でも指定できる。明示的に `-p:DeployModToGame=true` を指定したビルドでは `<GameDir>/Mods/DreamforgeRPG/` に DLL と `about/` が置かれ、ゲームのMOD管理で有効化できる。Workshop への登録は、開発者モードのMOD管理で本MODを選んで「Upload」から行う（初回は非公開で作成される）。
 
 保存先は `<persistentDataPath>/QuickSave/Mods/DreamforgeRPG/profile.json`（Windowsでは `%USERPROFILE%/AppData/LocalLow/Lizard Smoothie/Shape of Dreams/...`）。一時ファイル→読み戻し→置換で書き、直前の内容を `.bak` に残す。
 
