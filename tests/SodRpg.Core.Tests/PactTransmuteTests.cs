@@ -101,8 +101,8 @@ namespace SodRpg.Core.Tests
             int Drops(Pacts.Totals mods)
             {
                 var rng = new Rng(5);
-                int pity = 0, n = 0;
-                for (int i = 0; i < 40000; i++) n += Loot.RollKill(rng, MonsterTier.Normal, 10, 0, ref pity, null, mods).Relics.Count;
+                int n = 0;
+                for (int i = 0; i < 40000; i++) n += Loot.RollKill(rng, MonsterTier.Normal, 10, 0, null, mods).Relics.Count;
                 return n;
             }
             int plain = Drops(null);
@@ -115,8 +115,7 @@ namespace SodRpg.Core.Tests
         {
             var mods = Pacts.Sum(new[] { Pact.Unguarded, Pact.LeadenFeet, Pact.DryDream });
             var rng = new Rng(9);
-            int pity = 0;
-            var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, null, mods);
+            var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, null, mods);
             Assert.InRange(rw.Shards, 30, 45);   // 20〜30 ×1.5
             Assert.Equal(2, rw.Tuning);          // 1 + 乾いた夢
             Assert.Equal(75, rw.Xp);             // 50 ×1.5

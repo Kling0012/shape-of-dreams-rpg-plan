@@ -164,14 +164,21 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Pity_chance_values()
+        public void Loaded_epic_pity_counter_is_ignored_and_never_forces_an_epic()
         {
-            Assert.Equal(0.025, Loot.EpicPityChance(0), 6);
-            Assert.Equal(0.025 + 0.00875 * 3, Loot.EpicPityChance(3), 6);
-            Assert.Equal(0.99625, Loot.EpicPityChance(111), 6);
-            Assert.Equal(1.0, Loot.EpicPityChance(112), 6);
-            Assert.Equal(1.0, Loot.EpicPityChance(1000), 6);
-            Assert.True(Loot.EpicPityChance(1) > Loot.EpicPityChance(0));
+            // 旧セーブの救済カウンタ（epicPity）は保存互換で読み書きするが、天井は撤廃済みで抽選には使わない。
+            var p = Profile.CreateNew(7);
+            Rules.BeginRun(p, "test");
+            p.EpicPity = 1000; // 旧実装なら毎回確定した値
+            const int kills = 3000;
+            int epicMains = 0;
+            for (int i = 0; i < kills; i++)
+            {
+                // 鞄は容量で捨てられるため、主報酬＝その撃破の最初のドロップイベントで判定する。
+                var main = Rules.OnKill(p, MonsterTier.Boss, 10).First(e => e.Kind == EventKind.Drop);
+                if (main.Rarity >= Rarity.Epic) epicMains++;
+            }
+            Assert.InRange((double)epicMains / kills, 0.03, 0.06); // 主報酬エピック以上 約4.28%（天井なし）
         }
 
         [Fact]
