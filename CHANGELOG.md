@@ -6,6 +6,28 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.0.0 — 装備の種類を大きく増やしました（2026-10-04）
+
+これまでの版をまとめた正式版です。以前のリリースは取り下げ、この版に一本化しました。 / This release consolidates all earlier versions; previous releases have been withdrawn.
+
+### 更新前に確認 / Before updating
+
+- **保存データはそのまま引き継げます**（星図・遺物・図鑑など）。 / Saves carry over.
+- **協力プレイは全員を同じ版に**してください。 / Everyone in co-op must use the same version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい装備 / New gear
+
+- **土台が各枠60種から100種に**（合計600種）。新しい240種はすべて専用のアイコン付きです。 / **Bases per slot 60 → 100** (600 total); all 240 new bases have their own icons.
+- **家系**：土台は「氷霜・炎・光・闇・守り・疾風・癒し・召喚・記憶・無垢」の10の家系に分かれ、家系ごとに出やすい特性と固有効果があります。遺物の説明と図鑑に家系が表示されます。 / **Families**: bases belong to 10 families that favour certain affixes and powers; shown in tooltips and the codex.
+- **銘品（360種）**：アンコモン・レア・エピックに、固有の名前・一言・決まった固有効果を持つ遺物が加わりました。特性は通常どおり抽選されます。 / **Named relics (360)**: uncommon, rare and epic relics with their own name, lore line and fixed powers; affixes still roll normally.
+- **小さな組（30組）**：一部の銘品は2〜3点の組になっていて、そろえると小さなボーナスが付きます。 / **Mini sets (30)**: some named relics form 2–3 piece sets with small bonuses.
+- 図鑑に銘品と組の分類が加わりました。 / The codex lists named relics and mini sets.
+
+### この MOD について / About this mod
+
+遠征ごとに持ち帰れる遺物、ゾーンごとの「確保するか潜るか」の選択、旅人ごとの大きな星図（700星以上）、鍛冶と工房、長く続く目標を Shape of Dreams に加えます。協力プレイに対応しています。過去の変更の詳細は [CHANGELOG](https://github.com/Kling0012/shape-of-dreams-rpg-plan/blob/claude/dreamforge-playable-v0.1/CHANGELOG.md) にあります。 / Adds keepable relics, a secure-or-delve choice per zone, large per-traveler star maps (700+ stars), a forge and workshop, and long-term goals. Co-op ready.
+
 ## v1.31.0 — 星図を10倍に（2026-10-04・Pre）
 
 9人の旅人すべての星図が、約70個から**700〜860個の星**へ広がりました。記憶ごとの星団、2つの記憶をつなぐ橋、外縁の星団、旅人ごとに8〜10個の刻印から、遊び方に合わせて伸ばし方を選べます。 / Every traveler's star map grows from about 70 to **700–860 stars**: memory clusters, bridges between two memories, outer clusters and 8–10 keystones per traveler.
