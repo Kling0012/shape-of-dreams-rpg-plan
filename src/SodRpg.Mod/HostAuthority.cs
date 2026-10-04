@@ -798,7 +798,8 @@ namespace SodRpg.Mod
 
         /// <summary>
         /// 深度ボーナスを置き換える。出現時も、潜行が深まった確定後の再適用もこの入口を通る。
-        /// 古いボーナスを外してから足し直すため、二重には掛からない。現在HPは再計算でも保存される。
+        /// 古いボーナスを外してから足し直すため、二重には掛からない。本体の再計算はHPの割合を保つため、
+        /// 再計算後には現在HPを置き換え前の絶対値へ戻す（満タンの敵は新しい最大HPのまま、#68）。
         /// </summary>
         private void ApplyDepthBonus(MonsterRuntime rt, MonsterTier tier, int depth)
         {
@@ -806,16 +807,22 @@ namespace SodRpg.Mod
             var m = rt.Monster;
             var stats = Nightmares.DepthBonus(tier, depth);
             if (m == null || m.Status == null) return;
+            float healthBefore = m.Status.currentHealth;
+            float maxHealthBefore = m.Status.maxHealth;
             if (rt.DepthBonus != null)
             {
                 m.Status.RemoveStatBonus(rt.DepthBonus);
                 rt.DepthBonus = null;
             }
-            if (stats.Count == 0) return;
-            var bonus = ToMonsterStatBonus(stats);
-            rt.DepthBonus = bonus;
-            m.Status.AddStatBonus(bonus);
+            if (stats.Count > 0)
+            {
+                var bonus = ToMonsterStatBonus(stats);
+                rt.DepthBonus = bonus;
+                m.Status.AddStatBonus(bonus);
+            }
             m.Status.CalculateStatsIfDirty();
+            float healthAfter = SpawnInitRules.HealthAfterDepthRealign(healthBefore, maxHealthBefore, m.Status.maxHealth);
+            if (healthAfter != m.Status.currentHealth) m.Status.SetHealth(healthAfter);
         }
 
         private static StatBonus ToMonsterStatBonus(IReadOnlyList<StatLine> stats)

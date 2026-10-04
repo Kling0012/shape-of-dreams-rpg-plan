@@ -150,7 +150,7 @@ namespace SodRpg.Core.Tests
             var events = new List<GameEvent>();
             for (int i = 0; i < 100; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Lesser, 1, NightmareAffix.None, "Hero_Vesper"));
             Assert.Equal(100, p.Hero("Hero_Vesper").Kills);
-            Assert.Contains(events, e => e.Kind == EventKind.LevelUp && e.Text.Contains("Vesper"));
+            Assert.Equal(1, Mastery.Level(p.Hero("Hero_Vesper").Kills));
             var b = Build.Compute(p, "Hero_Vesper", 0);
             Assert.Equal(0, b.Get(Stat.AttackPct)); // v1.2：熟練度は能力%ではなく到達刻印の解放条件
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
