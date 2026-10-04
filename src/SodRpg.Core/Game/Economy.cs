@@ -59,6 +59,16 @@ namespace SodRpg.Core.Game
         /// <summary>照会した回数と、次に照会する時刻（保存しない）。</summary>
         public int Queries;
         public double NextQueryAt;
+        /// <summary>
+        /// 送ったときに知っていたホストの取引台帳の識別子（0 は不明）。照会は「この台帳に記録がない」ときだけ「未実行」と言えるので、
+        /// 台帳が替わった（ホストの再読み込み・接続の netId 変更など）取引は、記録がないことを未実行の証拠にしない。保存する。
+        /// </summary>
+        public long LedgerId;
+        /// <summary>
+        /// ホストが「記録の有無を確かめられない」と答えた取引。対価も返却も確定せず、遅れて届く成功・失敗の応答か、
+        /// 利用者の明示的な放棄（TradeLedger.TakeLost）で初めて片付く。保存する。
+        /// </summary>
+        public bool Lost;
         // 以下は v1.31 のホスト検証に使う引数（金額ではなく、金額の計算に使う値）。
         /// <summary>MerchantGold：価格の計算に使った熱度。</summary>
         public int Heat;
@@ -68,13 +78,34 @@ namespace SodRpg.Core.Game
         public int Rarity, Enhance;
     }
 
+    /// <summary>ホストの応答を台帳へ反映した結果。</summary>
+    public enum TradeOutcome
+    {
+        /// <summary>知らない取引id、または反映済みの重複応答。何もしない。</summary>
+        NotFound = 0,
+        /// <summary>ホストが支払いを確定した。取引は片付き、対価を一度だけ付ける。</summary>
+        Paid = 1,
+        /// <summary>ホストが実行していないと確定した。取引は片付き、予約した遺物を戻す。</summary>
+        Failed = 2,
+        /// <summary>ホストが記録の有無を確かめられないと答えた（初めて）。取引は片付けずに残す。</summary>
+        Lost = 3,
+        /// <summary>すでに確認不能として残している取引への、重ねての同じ答え。</summary>
+        AlreadyLost = 4,
+    }
+
     /// <summary>
     /// 取引の応答待ちを管理する。応答が来たら一度だけ確定し、重複・未知の応答は無視する（二重確定を防ぐ）。
     /// </summary>
     public sealed class TradeLedger
     {
-        /// <summary>保持する取引（応答待ちと結果不明の合計）の上限。</summary>
+        /// <summary>新しく始められる取引の上限：保持している取引（応答待ち・結果不明・確認不能の合計）がこれに達したら、どの種別も受け付けない。</summary>
         public const int MaxHeld = 64;
+
+        /// <summary>
+        /// 保存から読み戻す取引の上限（壊れた保存での肥大化を防ぐだけの安全弁）。MaxHeld を超えて保存されている取引（旧版の保存など）も、
+        /// 捨てずにここまで全件復元する。超えた分だけが復元できず、その場合は呼び出し側へ捨てた件数を返す。
+        /// </summary>
+        public const int MaxRestored = 4096;
 
         private readonly Dictionary<long, PendingTrade> _pending = new Dictionary<long, PendingTrade>();
         private readonly List<long> _expired = new List<long>();
@@ -110,8 +141,22 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>期限切れで結果不明のまま残っている取引の数。</summary>
+        /// <summary>期限切れで結果不明のまま残っている取引の数（ホストが確かめられないと答えた取引も含む）。</summary>
         public int UnresolvedCount => _pending.Count - PendingCount;
+
+        /// <summary>ホストが記録の有無を確かめられないと答えた取引の数。</summary>
+        public int LostCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var t in _pending.Values) if (t.Lost) n++;
+                return n;
+            }
+        }
+
+        /// <summary>新しい取引を始められるか。上限は全種別で共通で、通信・決済より前に確かめる。</summary>
+        public bool CanBegin => _pending.Count < MaxHeld;
 
         /// <summary>応答待ち・結果不明を合わせて、まだ対価や返却が確定していない取引の数。プロフィールの切り替えなどを止めるのに使う。</summary>
         public int HeldCount => _pending.Count;
@@ -169,7 +214,7 @@ namespace SodRpg.Core.Game
             int n = 0;
             foreach (var t in _pending.Values)
             {
-                if (!t.Unresolved || t.Queries >= Economy.MaxTradeQueries || now < t.NextQueryAt) continue;
+                if (!t.Unresolved || t.Lost || t.Queries >= Economy.MaxTradeQueries || now < t.NextQueryAt) continue;
                 t.Queries++;
                 t.NextQueryAt = now + Economy.TradeQueryIntervalSeconds;
                 into.Add(t);
@@ -184,6 +229,7 @@ namespace SodRpg.Core.Game
             foreach (var t in _pending.Values)
             {
                 t.Unresolved = true;
+                if (t.Lost) continue; // 確かめられないと答えられた取引は、照会し直しても答えは変わらない
                 t.Queries = 0;
                 t.NextQueryAt = now;
             }
@@ -198,13 +244,18 @@ namespace SodRpg.Core.Game
             return list;
         }
 
-        /// <summary>保存から戻す。戻した取引は結果不明として、起動後すぐにホストへ照会する。</summary>
-        public void Restore(IEnumerable<PendingTrade> trades, double now)
+        /// <summary>
+        /// 保存から戻す。戻した取引は結果不明として、起動後すぐにホストへ照会する（確認不能と記録された取引は照会しない）。
+        /// MaxHeld は新規の受付だけを止める上限なので、保存されている取引は MaxRestored まで全件戻す。戻せずに捨てた件数を返す。
+        /// </summary>
+        public int Restore(IEnumerable<PendingTrade> trades, double now)
         {
-            if (trades == null) return;
+            int dropped = 0;
+            if (trades == null) return dropped;
             foreach (var saved in trades)
             {
-                if (saved == null || saved.Token <= 0 || _pending.ContainsKey(saved.Token) || _pending.Count >= MaxHeld) continue;
+                if (saved == null || saved.Token <= 0 || _pending.ContainsKey(saved.Token)) continue;
+                if (_pending.Count >= MaxRestored) { dropped++; continue; }
                 var t = CloneOf(saved);
                 t.Unresolved = true;
                 t.Queries = 0;
@@ -212,18 +263,29 @@ namespace SodRpg.Core.Game
                 t.StartedAt = now;
                 _pending[t.Token] = t;
             }
+            return dropped;
         }
 
         private static PendingTrade CloneOf(PendingTrade t) => new PendingTrade
         {
             Token = t.Token, Kind = t.Kind, SpendGold = t.SpendGold, SpendDust = t.SpendDust, EarnDust = t.EarnDust, Uid = t.Uid,
             StartedAt = t.StartedAt, Heat = t.Heat, Batches = t.Batches, Rarity = t.Rarity, Enhance = t.Enhance,
-            Unresolved = t.Unresolved, Queries = t.Queries, NextQueryAt = t.NextQueryAt,
+            Unresolved = t.Unresolved, Queries = t.Queries, NextQueryAt = t.NextQueryAt, LedgerId = t.LedgerId, Lost = t.Lost,
         };
+
+        /// <summary>上限に達していたら、取引の登録も通信も通貨の変更も始めさせない（呼び出し側は先に CanBegin で案内する）。</summary>
+        private void EnsureRoom()
+        {
+            if (_pending.Count >= MaxHeld)
+                throw new InvalidOperationException(Loc.T(
+                    $"未確定の取引が{MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
+                    $"There are already {MaxHeld} unresolved trades. New trades are paused until their results are confirmed."));
+        }
 
         public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null, double now = 0)
         {
             if (spendGold < 0 || spendDust < 0 || earnDust < 0) throw new ArgumentOutOfRangeException();
+            EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = kind, SpendGold = spendGold, SpendDust = spendDust, EarnDust = earnDust, Uid = uid, StartedAt = now };
             _pending[t.Token] = t;
             return t;
@@ -234,6 +296,7 @@ namespace SodRpg.Core.Game
         {
             if (heat < 0 || heat > Content.MaxHeat) throw new ArgumentOutOfRangeException(nameof(heat));
             if (price < 1) throw new ArgumentOutOfRangeException(nameof(price));
+            EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.MerchantGold, SpendGold = price, Heat = heat, StartedAt = now };
             _pending[t.Token] = t;
             return t;
@@ -243,6 +306,7 @@ namespace SodRpg.Core.Game
         public PendingTrade BeginDustToShards(int batches, double now)
         {
             if (batches < 1 || batches > Economy.MaxBatchesPerTrade) throw new ArgumentOutOfRangeException(nameof(batches));
+            EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.DustToShards, SpendDust = batches * Economy.DustPerBatch, Batches = batches, StartedAt = now };
             _pending[t.Token] = t;
             return t;
@@ -255,6 +319,7 @@ namespace SodRpg.Core.Game
         public PendingTrade BeginSalvage(Rarity rarity, int enhance, string uid, double now)
         {
             if (string.IsNullOrEmpty(uid)) throw new ArgumentNullException(nameof(uid));
+            EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.SalvageForDust, EarnDust = Economy.SalvageDust(rarity, enhance), Uid = uid, Rarity = (int)rarity, Enhance = enhance, StartedAt = now };
             _pending[t.Token] = t;
             return t;
@@ -266,6 +331,37 @@ namespace SodRpg.Core.Game
             if (!_pending.TryGetValue(token, out var t)) return null;
             _pending.Remove(token);
             return t;
+        }
+
+        /// <summary>
+        /// ホストの応答を台帳へ反映する。「確かめられない」（reasonCode が TradeWire.LostReason）なら取引は片付けず確認不能として残し、
+        /// それ以外は成功・失敗とも取引を返して予約を解除する（Complete と同じ）。未知・重複の応答は NotFound。
+        /// </summary>
+        public TradeOutcome OnResult(long token, bool ok, string reasonCode, out PendingTrade trade)
+        {
+            if (!_pending.TryGetValue(token, out trade)) { trade = null; return TradeOutcome.NotFound; }
+            if (!ok && reasonCode == TradeWire.LostReason)
+            {
+                bool first = !trade.Lost;
+                trade.Lost = true;
+                trade.Unresolved = true;
+                return first ? TradeOutcome.Lost : TradeOutcome.AlreadyLost;
+            }
+            _pending.Remove(token);
+            return ok ? TradeOutcome.Paid : TradeOutcome.Failed;
+        }
+
+        /// <summary>
+        /// 確認不能の取引を、利用者の明示的な操作で手放す。取引は消え、対価は付かない（呼び出し側は予約した遺物を戻す）。
+        /// 実際にはホストが支払い済みだった場合は、その分は戻らない。自動では呼ばない。
+        /// </summary>
+        public List<PendingTrade> TakeLost()
+        {
+            var taken = new List<PendingTrade>();
+            foreach (var t in _pending.Values) if (t.Lost) taken.Add(t);
+            foreach (var t in taken) _pending.Remove(t.Token);
+            taken.Sort((x, y) => x.Token.CompareTo(y.Token));
+            return taken;
         }
 
         /// <summary>応答待ちをすべて捨てる（試験や、結果を照会できない状況の最後の手段）。通常の接続切り替えでは MarkAllUnresolved を使う。</summary>

@@ -550,6 +550,8 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);
+            else if (_s.LostTradeCount > 0)
+                GUILayout.Label(Loc.T("ホストが確認できない取引があります。遅れて届く応答を待っています（対価も返却も保留中。確保・潜行は続けられます）。手放すにはコンソールで dreamforge_trades_giveup。", "Some trades cannot be confirmed by the host and are on hold (you can still secure or delve). To give them up, run dreamforge_trades_giveup in the console."), _st.Small);
             else if (_s.HasHeldTrades)
                 GUILayout.Label(Loc.T("取引の結果をホストに確認中です（確保・潜行は続けられます）。", "Checking a trade result with the host (you can still secure or delve)."), _st.Small);
             else if (!_s.CanResolveSecureChoice)

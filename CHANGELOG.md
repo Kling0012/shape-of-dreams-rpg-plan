@@ -11,6 +11,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **図鑑**：銘品と組の分類をゲーム画面から選べるようにしました（#28）。初期装備の銘品も銘品として図鑑に記録され、すでに受け取った分も起動時に補われます（#29）。 / The codex screen now offers Named and Mini sets; starter named relics are recorded as such, and already-granted ones are backfilled.
 - **鍛冶**：エピックを36回洗い直したときに費用が負になり、欠片が増えてしまう不具合を直しました（#30）。 / Fixed the epic affix-reroll cost going negative on the 36th reroll.
 - **取引**：10秒を過ぎても取引を捨てず、ホストの確定結果を照会して、支払い済みの対価を一度だけ受け取るか、未実行なら遺物を返します。取引idに世代を付け、MODの再読み込みで過去の取引と衝突しないようにしました（#26 #27）。未確定の取引は保存されます。**協力プレイは全員を同じ版に**してください。 / Late trade responses are no longer lost: unresolved trades are kept, queried against the host and settled exactly once; trade ids carry a generation and the host rejects a reused id with a different request.
+- **取引**：ホストの取引台帳が失われた（ホストのMOD再読み込み・接続の変更・記録の上限超過）あとでも、「記録がない」ことを「未実行」と見なさず、決済済みの購入・交換・分解を取り消さないようにしました（#36）。ホストの台帳の識別子を取引に結び付け、確かめられない取引は返却も対価も確定せず保留します（手放すにはコンソールで `dreamforge_trades_giveup`）。未確定の取引は全種類で64件までしか始められず、保存・読込・復元の上限も揃えたので、受け付けた取引は再読み込みの後でも解決できます（旧版が書いた65件以上も全件復元）（#37）。 / A trade is no longer cancelled just because the host has no record of it: each trade is bound to the host ledger it was sent to, and when that ledger changed (host reload, new connection, history cap) the result is held instead of refunded. Unresolved trades are capped at 64 for every kind and the cap now matches save, load and restore (older saves above 64 restore in full).
+
 
 ---
 

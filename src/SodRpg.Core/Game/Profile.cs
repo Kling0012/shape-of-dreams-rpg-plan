@@ -396,6 +396,7 @@ namespace SodRpg.Core.Game
             {
                 Token = trade.Token, Kind = trade.Kind, SpendGold = trade.SpendGold, SpendDust = trade.SpendDust, EarnDust = trade.EarnDust,
                 Uid = trade.Uid, Heat = trade.Heat, Batches = trade.Batches, Rarity = trade.Rarity, Enhance = trade.Enhance,
+                LedgerId = trade.LedgerId, Lost = trade.Lost,
             });
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);

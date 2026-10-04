@@ -45,6 +45,14 @@ namespace SodRpg.Mod
         public bool HasPendingTrades => _trades.PendingCount > 0;
         /// <summary>応答待ちに加えて、期限切れで結果不明のまま残っている取引もあるか。プロフィールの切り替えなど、対価の行き先が変わる操作を止めるのに使う。</summary>
         public bool HasHeldTrades => _trades.HeldCount > 0;
+        /// <summary>ホストが記録の有無を確かめられないと答えた取引の数（遅れて届く応答か、利用者の明示的な放棄でしか片付かない）。</summary>
+        public int LostTradeCount => _trades.LostCount;
+        /// <summary>
+        /// いま接続しているホストの取引台帳の識別子（0 は未確認）。接続のたびに照会して知り、取引を送るときに取引へ結び付ける。
+        /// ホストが再読み込みされた・接続の netId が変わったなどで台帳が替わると、結び付けた識別子と合わなくなり、記録がないことを未実行と見なさない（#36）。
+        /// </summary>
+        private long _hostLedgerId;
+        private double _nextLedgerProbeAt;
         private readonly Action<DewPlayer> _onChaos;
         private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
         private readonly Action<Hero, Gem> _onMerged;
@@ -230,7 +238,27 @@ namespace SodRpg.Mod
                     "The trade response is late. The wait was released; checking the result with the host.")));
                 SaveNow();
             }
+            if (_hostLedgerId == 0) SendLedgerProbe();
             SendDueTradeQueries();
+        }
+
+        /// <summary>ホストの取引台帳の識別子を尋ねる（台帳には何も書かれない）。答えが届くまで、数秒おきに繰り返す。</summary>
+        private void SendLedgerProbe()
+        {
+            if (_clientRpcOn == null || !NetworkClient.active || Time.unscaledTime < _nextLedgerProbeAt) return;
+            _nextLedgerProbeAt = Time.unscaledTime + 2.0;
+            try
+            {
+                TradeWire.EncodeQuery(0, out int spendGold, out int spendDust, out int earnDust);
+                _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+                {
+                    token = TradeWire.ProbeToken, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
+                });
+            }
+            catch (Exception ex)
+            {
+                Log.Error("Client TradeLedgerProbe: " + ex.Message);
+            }
         }
 
         /// <summary>結果不明の取引を、同じ取引idでホストへ照会する。接続していないときは次の機会まで待つ。</summary>
@@ -239,11 +267,12 @@ namespace SodRpg.Mod
             if (_trades.UnresolvedCount == 0 || _clientRpcOn == null || !NetworkClient.active) return;
             _dueTradeQueries.Clear();
             if (_trades.CollectDueQueries(Time.unscaledTime, _dueTradeQueries) == 0) return;
-            TradeWire.EncodeQuery(out int spendGold, out int spendDust, out int earnDust);
             foreach (var t in _dueTradeQueries)
             {
                 try
                 {
+                    // 送ったときに知っていた台帳の識別子を添える。ホストは、その台帳に記録がないときだけ「未実行」と答える。
+                    TradeWire.EncodeQuery(t.LedgerId, out int spendGold, out int spendDust, out int earnDust);
                     _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
                     {
                         token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
@@ -337,6 +366,8 @@ namespace SodRpg.Mod
                 _clientRpcOn = actor;
                 // 接続が替わったら、応答待ちの取引は結果不明にして新しい接続から照会する（捨てると、支払い済みの対価や預かった遺物を失う）。
                 _trades.MarkAllUnresolved(Time.unscaledTime);
+                _hostLedgerId = 0; // 接続先が替わったので、新しい接続の台帳の識別子を尋ね直す（それまで新しい取引は始めない）
+                _nextLedgerProbeAt = 0;
                 if (Profile.PendingSalvage.Count > 0)
                 {
                     Emit(Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids()));
@@ -497,7 +528,9 @@ namespace SodRpg.Mod
         /// <summary>初めての起動：初期装備を配り、ようこその案内を出す。</summary>
         public void FirstLaunch()
         {
-            _trades.Restore(Profile.PendingTrades, Time.unscaledTime); // 前回の終了時に結果が出ていなかった取引は、起動後すぐにホストへ照会する
+            // 前回の終了時に結果が出ていなかった取引は、起動後すぐにホストへ照会する（件数が MaxHeld を超えていても全件戻す）。
+            int notRestored = _trades.Restore(Profile.PendingTrades, Time.unscaledTime);
+            if (notRestored > 0) Log.Warn("Trade restore: " + notRestored + " saved trade(s) exceeded the restore limit and were not restored.");
             Emit(Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids()));
             if (!Profile.StarterGranted)
             {
@@ -639,6 +672,8 @@ namespace SodRpg.Mod
             if (!DreamEvents.CanUse(Profile, DreamEvent.Merchant, true, out string reason, _trades)) return reason;
             int price = MerchantPrice();
             if (LocalGold < price) return Loc.T($"ゴールドが足りません（{price}G）。", $"Not enough gold ({price}G).");
+            string blocked = TradeUnavailable();
+            if (blocked != null) return blocked;
             return SendTrade(_trades.BeginMerchant(Profile.Run?.Heat ?? 0, price, Time.unscaledTime));
         }
 
@@ -648,11 +683,32 @@ namespace SodRpg.Mod
             int dust = (LocalDust / Economy.DustPerBatch) * Economy.DustPerBatch;
             if (dust <= 0) return Loc.T($"ドリームダストが{Economy.DustPerBatch}以上必要です。", $"Need at least {Economy.DustPerBatch} Dream Dust.");
             if (TradePending(TradeKind.DustToShards)) return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
+            string blocked = TradeUnavailable();
+            if (blocked != null) return blocked;
             return SendTrade(_trades.BeginDustToShards(Math.Min(dust / Economy.DustPerBatch, Economy.MaxBatchesPerTrade), Time.unscaledTime));
+        }
+
+        /// <summary>
+        /// 新しい取引を始められない理由（なければ null）。上限・接続・台帳の識別子は、取引を台帳へ登録する前（通信・決済より前）に確かめる。
+        /// 識別子が分からない間に送ると、あとで「記録がない」ことの意味を確かめられないので、分かるまで待たせる。
+        /// </summary>
+        private string TradeUnavailable()
+        {
+            if (!_trades.CanBegin)
+                return Loc.T($"未確定の取引が{TradeLedger.MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
+                    $"There are already {TradeLedger.MaxHeld} unresolved trades. New trades are paused until their results are confirmed.");
+            if (_clientRpcOn == null || !NetworkClient.active) return Loc.T("ゲームに接続していません。", "Not connected to a game.");
+            if (_hostLedgerId == 0)
+            {
+                SendLedgerProbe();
+                return Loc.T("ホストとの取引を準備しています。少し待ってからもう一度お試しください。", "Preparing trades with the host. Please try again in a moment.");
+            }
+            return null;
         }
 
         private string SendTrade(PendingTrade t)
         {
+            t.LedgerId = _hostLedgerId; // 送った時点の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる
             if (_clientRpcOn == null || !NetworkClient.active)
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
@@ -676,6 +732,22 @@ namespace SodRpg.Mod
             return null;
         }
 
+        /// <summary>
+        /// 確認不能の取引を、利用者の明示的な操作で手放す（コンソール dreamforge_trades_giveup）。対価は付かず、預かった遺物は戻る。
+        /// ホストが実際には支払い済みだった場合、その分は戻らず、分解なら遺物とダストの両方が手元に残ることがある。自動では行わない。
+        /// </summary>
+        public int GiveUpLostTrades()
+        {
+            var taken = _trades.TakeLost();
+            if (taken.Count == 0) return 0;
+            foreach (var t in taken) RestoreSalvageTrade(t);
+            Emit(new GameEvent(EventKind.Warning, Loc.T(
+                $"結果を確認できない取引{taken.Count}件を手放しました（対価は付いていません）。",
+                $"Gave up {taken.Count} trade(s) whose result could not be confirmed (no reward was granted).")));
+            SaveNow();
+            return taken.Count;
+        }
+
         private void RestoreSalvageTrade(PendingTrade trade)
         {
             if (trade == null || trade.Kind != TradeKind.SalvageForDust) return;
@@ -687,12 +759,25 @@ namespace SodRpg.Mod
             try
             {
                 if (msg == null) return;
-                var t = _trades.Complete(msg.token, msg.ok);
-                if (t == null) return;
-                if (!msg.ok)
+                // reason は「コード@台帳の識別子」。どの結果にも、ホストの現在の台帳の識別子が付いてくる。
+                TradeWire.SplitReason(msg.reason, out string code, out long ledgerId);
+                if (ledgerId != 0) _hostLedgerId = ledgerId;
+                if (msg.token == TradeWire.ProbeToken) return;
+                var outcome = _trades.OnResult(msg.token, msg.ok, code, out var t);
+                if (outcome == TradeOutcome.NotFound || outcome == TradeOutcome.AlreadyLost) return;
+                if (outcome == TradeOutcome.Lost)
+                {
+                    // ホストは記録の有無を確かめられない：支払い済みかもしれないので、返却も対価も確定せず保留する（遺物は預かったまま）。
+                    Emit(new GameEvent(EventKind.Warning, Loc.T(
+                        "取引の結果をホストが確認できません（ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
+                        "The host cannot confirm the result of a trade (it may have reloaded or the connection changed). The reward and the return are both on hold.")));
+                    SaveNow();
+                    return;
+                }
+                if (outcome == TradeOutcome.Failed)
                 {
                     RestoreSalvageTrade(t);
-                    Emit(new GameEvent(EventKind.Warning, TradeFailText(msg.reason)));
+                    Emit(new GameEvent(EventKind.Warning, TradeFailText(code)));
                     SaveNow();
                     return;
                 }
@@ -726,6 +811,8 @@ namespace SodRpg.Mod
                     return Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.");
                 var run = Profile.Run ?? throw new InvalidOperationException(Loc.T("遠征中のみ使えます。", "Only during an expedition."));
                 var r = run.Satchel.Find(x => x.Uid == uid) ?? throw new InvalidOperationException(Loc.T("未確保の遺物ではありません。", "That relic is not in your satchel."));
+                string blocked = TradeUnavailable();
+                if (blocked != null) return blocked;
                 return SendTrade(_trades.BeginSalvage(r, Time.unscaledTime));
             }
             catch (InvalidOperationException ex)
