@@ -6,7 +6,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## 未公開（v2.0.0 後の修正）
+## v2.1.0 — 取引の安全性と図鑑の修正（2026-10-04）
+
+v2.0.0 後の修正をまとめた版です。**実機（ゲーム本体・2台での協力プレイ）での確認はまだ**のため、試験版（pre-release）として公開します。 / Fixes since v2.0.0. Not yet verified in the real game or in two-player co-op, so this is published as a pre-release.
+
+### 更新前に確認 / Before updating
+
+- **保存データはそのまま引き継げます**。未確定の取引も保存されます。 / Saves carry over; unresolved trades are saved too.
+- **協力プレイは全員を同じ版に**してください。 / Everyone in co-op must use the same version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
 
 - **図鑑**：銘品と組の分類をゲーム画面から選べるようにしました（#28）。初期装備の銘品も銘品として図鑑に記録され、すでに受け取った分も起動時に補われます（#29）。 / The codex screen now offers Named and Mini sets; starter named relics are recorded as such, and already-granted ones are backfilled.
 - **鍛冶**：エピックを36回洗い直したときに費用が負になり、欠片が増えてしまう不具合を直しました（#30）。 / Fixed the epic affix-reroll cost going negative on the 36th reroll.
