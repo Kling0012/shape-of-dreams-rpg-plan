@@ -3,7 +3,7 @@ using SodRpg.Core.Game;
 
 namespace BalanceSim;
 
-internal sealed class Options
+public sealed class Options
 {
     public int Runs { get; private set; } = 20;
     public int Players { get; private set; } = 300;
@@ -14,17 +14,18 @@ internal sealed class Options
     public int Normal { get; private set; } = 8;
     public double MiniBoss { get; private set; } = 0.25;
     public int Bosses { get; private set; } = 1;
-    public string Policy { get; private set; } = "secure";
+    public string Policy { get; internal set; } = "secure";
     public double Wipe { get; private set; } = 0.15;
     public double Bounty { get; private set; } = 0.6;
     public int ItemLevel { get; private set; } = 1;
     public int ItemLevelPerZone { get; private set; } = 1;
     public string? Out { get; private set; }
     public bool Help { get; private set; }
-    public string Mode { get; private set; } = "expeditions";
+    public string Mode { get; internal set; } = "expeditions";
     public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
     public bool Stars => Mode == "stars";
     public bool Sets => Mode == "sets";
+    public bool V132Stars => Mode == "v132stars";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -66,8 +67,8 @@ internal sealed class Options
                     o.Out = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets です。");
+                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars です。");
                     o.Mode = value;
                     break;
                 case "--dream-level":
@@ -82,6 +83,14 @@ internal sealed class Options
             throw new ArgumentException("ゾーン数×部屋数は32ビット整数の範囲にしてください。");
         return o;
     }
+
+    /// <summary>同じ値の複製（v1.32 計測で方針だけ差し替えて使い回す）。</summary>
+    public Options Clone() => new()
+    {
+        Runs = Runs, Players = Players, Seed = Seed, Zones = Zones, Rooms = Rooms, Lesser = Lesser, Normal = Normal,
+        MiniBoss = MiniBoss, Bosses = Bosses, Policy = Policy, Wipe = Wipe, Bounty = Bounty, ItemLevel = ItemLevel,
+        ItemLevelPerZone = ItemLevelPerZone, Out = Out, Mode = Mode, DreamLevel = DreamLevel,
+    };
 
     private static int Integer(string key, string value, int min)
     {
@@ -115,8 +124,7 @@ internal sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）/ sets（v1.32 セット6部位）
-          --dream-level 30   stars: 夢の圧に仮定する夢レベル（1〜30）
+          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）/ sets（v1.32 セット6部位）/ v132stars（v1.32 星図の追加効果）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --help             この説明を表示
         """;

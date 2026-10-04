@@ -27382,7 +27382,7 @@
       "power": null,
       "growth": {
         "trigger": "DamageTakenMaxHpPct",
-        "threshold": 10,
+        "threshold": 20,
         "cap": 60,
         "effects": [
           {

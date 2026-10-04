@@ -9,7 +9,7 @@ internal enum Metric
     Count
 }
 
-internal sealed class Simulation
+public sealed class Simulation
 {
     internal static readonly string[] MilestoneNames =
     ["初めてのレア以上（発見）", "初めてのエピック以上（発見）", "初めての伝説・固有品（発見）",
@@ -20,6 +20,15 @@ internal sealed class Simulation
     public int[,] Milestones { get; }
     // Full transitions and automatically salvaged relics are separate quantities.
     public long[,] Capacity { get; }
+
+    /// <summary>v1.32 の計測用フック。null（既定）なら従来どおりで、通貨は数えない。プレイヤーごとに作り直す。</summary>
+    public RunCurrency? Currency { get; set; }
+    /// <summary>プレイヤーごとの通貨帳簿を作る工場（v1.32 の計測用）。null なら通貨は数えない。</summary>
+    public Func<int, RunCurrency>? CurrencyFactory { get; set; }
+    /// <summary>遠征の旅人（Rules.BeginRun の heroKey）。null なら従来どおり（既定の旅人）。</summary>
+    public string? RunHeroKey { get; set; }
+    /// <summary>遠征開始時の夢の深度。null なら従来どおり（プロフィールの前回の深度）。</summary>
+    public int? RunDreamDepth { get; set; }
 
     public Simulation(Options options)
     {
@@ -38,15 +47,19 @@ internal sealed class Simulation
             var profile = Profile.CreateNew(seeds.NextULong());
             var scenario = new Rng(seeds.NextULong());
             var row = new double[(int)Metric.Count];
+            Currency = CurrencyFactory?.Invoke(player);
             for (int run = 1; run <= options.Runs; run++)
             {
                 Array.Clear(row);
                 int shardsBefore = profile.Material(Materials.Shard);
                 int tuningBefore = profile.Material(Materials.Tuning);
-                Rules.BeginRun(profile, run.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                Currency?.BeginRun(profile, RunHeroKey ?? Hero);
+                Rules.BeginRun(profile, run.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    heroKey: RunHeroKey, dreamDepth: RunDreamDepth);
                 var state = profile.Run;
+                int roomsPerZone = options.Rooms + (RunDreamDepth.HasValue ? DreamDepth.ExtraZoneNodes(RunDreamDepth.Value) : 0);
                 int wipeZone = scenario.Chance(options.Wipe) ? scenario.Range(1, options.Zones) : 0;
-                int wipeRoom = wipeZone == 0 ? 0 : scenario.Range(1, options.Rooms);
+                int wipeRoom = wipeZone == 0 ? 0 : scenario.Range(1, roomsPerZone);
                 var actions = PlanExternalActions(state, scenario);
                 bool wiped = false;
                 int cleared = 0;
@@ -62,14 +75,15 @@ internal sealed class Simulation
                     }
                     int itemLevel = (int)Math.Min(Content.MaxItemLevel,
                         (long)options.ItemLevel + (long)(zone - 1) * options.ItemLevelPerZone);
-                    for (int room = 1; room <= options.Rooms; room++)
+                    for (int room = 1; room <= roomsPerZone; room++)
                     {
-                        KillMany(profile, MonsterTier.Lesser, options.Lesser, itemLevel, row, player, run);
-                        KillMany(profile, MonsterTier.Normal, options.Normal, itemLevel, row, player, run);
+                        KillMany(profile, MonsterTier.Lesser, options.Lesser, itemLevel, zone, row, player, run);
+                        KillMany(profile, MonsterTier.Normal, options.Normal, itemLevel, zone, row, player, run);
                         if (scenario.Chance(options.MiniBoss))
-                            KillMany(profile, MonsterTier.MiniBoss, 1, itemLevel, row, player, run);
+                            KillMany(profile, MonsterTier.MiniBoss, 1, itemLevel, zone, row, player, run);
                         int before = state.Satchel.Count;
                         Observe(Rules.OnRoomsCleared(profile, ++cleared), before, profile, row, player, run);
+                        Currency?.OnRoomCleared(profile);
                         foreach (var action in actions)
                         {
                             if (action.Room != cleared) continue;
@@ -79,10 +93,12 @@ internal sealed class Simulation
                         if (zone == wipeZone && room == wipeRoom) { wiped = true; break; }
                     }
                     if (wiped) break;
-                    KillMany(profile, MonsterTier.Boss, options.Bosses, itemLevel, row, player, run);
+                    KillMany(profile, MonsterTier.Boss, options.Bosses, itemLevel, zone, row, player, run);
+                    Currency?.OnBossKilled(profile);
                 }
                 if (!wiped) CountStashTransfer(profile, player);
                 Rules.EndRun(profile, victory: !wiped);
+                Currency?.EndRun(profile, RunHeroKey ?? Hero);
                 CheckPossession(profile, player, run);
                 ManageEquipment(profile);
                 CheckLevels(profile, player, run);
@@ -115,12 +131,13 @@ internal sealed class Simulation
         return actions;
     }
 
-    private void KillMany(Profile p, MonsterTier tier, int count, int level, double[] row, int player, int run)
+    private void KillMany(Profile p, MonsterTier tier, int count, int level, int zone, double[] row, int player, int run)
     {
         for (int i = 0; i < count; i++)
         {
             int before = p.Run.Satchel.Count;
             Observe(Rules.OnKill(p, tier, level), before, p, row, player, run);
+            Currency?.OnKill(p.Run, tier, zone);
         }
         CheckLevels(p, player, run);
     }
@@ -155,6 +172,7 @@ internal sealed class Simulation
 
     private void Secure(Profile p, int player, int run)
     {
+        Currency?.AtSecurePoint(p);
         CountStashTransfer(p, player);
         Rules.Secure(p);
         CheckPossession(p, player, run);

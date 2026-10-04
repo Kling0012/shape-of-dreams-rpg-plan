@@ -26417,7 +26417,7 @@
       "power": null,
       "growth": {
         "trigger": "ShieldAbsorbedMaxHpPct",
-        "threshold": 10,
+        "threshold": 16,
         "cap": 60,
         "effects": [
           {

@@ -2,15 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Text;
 using SodRpg.Core.Internal;
 
 namespace SodRpg.Core.Game
 {
     /// <summary>
-    /// プロフィールの保存形式。{"format","version","checksum","body"} の形で、checksum は body の
-    /// 正規化済みJSONの sha256。読めない遺物（未知の基礎IDなど）は捨てずに Notes へ記録して除外する。
+    /// プロフィールの保存形式。{"format","version","body"} の形。旧形式が持つ "checksum" 欄は
+    /// 読み込み時に無視する。読めない遺物（未知の基礎IDなど）は捨てずに Notes へ記録して除外する。
     /// </summary>
     public static partial class ProfileCodec
     {
@@ -19,11 +17,9 @@ namespace SodRpg.Core.Game
         public static string Write(Profile p)
         {
             var body = WriteBody(p);
-            string bodyJson = Json.Write(body);
             var root = new JsonObject()
                 .Add("format", Format)
                 .Add("version", (long)Profile.CurrentVersion)
-                .Add("checksum", "sha256:" + Sha256(bodyJson))
                 .Add("body", body);
             return Json.Write(root);
         }
@@ -35,9 +31,6 @@ namespace SodRpg.Core.Game
             long version = Long(root, "version");
             if (version > Profile.CurrentVersion) throw new LedgerVersionException("新しすぎる版です: " + version);
             if (!root.TryGet("body", out object bodyObj) || !(bodyObj is JsonObject body)) throw new LedgerFormatException("body がありません。");
-            string expected = Str(root, "checksum");
-            string actual = "sha256:" + Sha256(Json.Write(body));
-            if (!string.Equals(expected, actual, StringComparison.Ordinal)) throw new LedgerFormatException("チェックサムが一致しません。");
             var loaded = ReadBody(body, notes ?? new List<string>());
             loaded.LoadedVersion = (int)Math.Max(0, Math.Min(int.MaxValue, version));
             return loaded;
@@ -236,7 +229,7 @@ namespace SodRpg.Core.Game
             var p = new Profile
             {
                 Revision = Long(b, "revision"),
-                RngState = ulong.Parse(Str(b, "rng"), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture),
+                RngState = ParseRng(b),
                 DreamLevel = Clamp(Long(b, "dreamLevel"), 1, Content.MaxDreamLevel),
                 DreamXp = Clamp(Long(b, "dreamXp"), 0, int.MaxValue),
                 EpicPity = Clamp(Long(b, "epicPity"), 0, 1000),
@@ -621,17 +614,14 @@ namespace SodRpg.Core.Game
 
         private static bool Bool(JsonObject o, string key, bool fallback) => o.TryGet(key, out object v) && v is bool b ? b : fallback;
 
-        private static int Clamp(long v, int min, int max) => (int)Math.Max(min, Math.Min(max, v));
-
-        private static string Sha256(string text)
+        private static ulong ParseRng(JsonObject b)
         {
-            using (var sha = SHA256.Create())
-            {
-                byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(text));
-                var sb = new StringBuilder(hash.Length * 2);
-                foreach (byte x in hash) sb.Append(x.ToString("x2", CultureInfo.InvariantCulture));
-                return sb.ToString();
-            }
+            string s = Str(b, "rng");
+            if (string.IsNullOrEmpty(s) || !ulong.TryParse(s, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out ulong value))
+                throw new LedgerFormatException("rng が読めません。");
+            return value;
         }
+
+        private static int Clamp(long v, int min, int max) => (int)Math.Max(min, Math.Min(max, v));
     }
 }

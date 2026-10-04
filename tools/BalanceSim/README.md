@@ -32,6 +32,19 @@ Markdownを標準出力に表示し、`--out` を指定した場合は同じ内�
 ```powershell
 dotnet run --project tools/BalanceSim -c Release -- --mode sets --out tools/BalanceSim/result-v1.32-sets.md
 ```
+
+## v1.32 星図の追加効果モード
+
+`--mode v132stars` で、v1.32 の「巡る富」（共有の外縁星団 outer.fortune：撃破ゴールド＋12%・エリート/ボス＋25%・夢のダスト＋22%（潜行中＋32%））と「遠征の鍛錬」（Vesper・Cetus・Mist・空殻の RunGrowth）を測ります。結果は `result-v1.32-stars.md` を参照。
+
+- **経済**：遠征モードと同じループ（`Rules.BeginRun` に `dreamDepth` を渡し、1ゾーンの部屋数は `DreamDepth.ExtraZoneNodes` で増えます）に通貨の帳簿を重ね、星なし／全取得を同じシードで比べます（欠片が増えた分だけ遠征間の強化の回数が変わり、依頼の抽選を通じて遠征の詳細がわずかにずれるため、変化率には±2%弱のぶれが残ります）。撃破ゴールドは本体の `GameManager.GetKillGoldAmount` の式（ゾーン倍率 (1+0.4x)×(1+0.20x)・±10%のぶれ・確率丸め）、受け取りは `Pickup_BaseGoldOrb.GrantGold` と同じ形で `CurrencyStars.KillGoldMultiplierDelta` / `EliteKillGoldPercent` を通します。夢のダストは部屋・ボスごとの拾得を `CurrencyStars.DreamDustBonusForPickup`（潜行中は `CurrencyStars.IsDelving` の実式）、未確保品のダスト化は `TradeAuthority` + `Economy.SalvageDust`、欠片への換金は `Rules.ConvertDust` の実経路です。種別ごとの撃破ゴールドの基礎額とダストの拾得量は本体アセットが読めないための文書化した仮定です。
+- **遠征の鍛錬**：`Rules.AddTalentRank` で入口の星・上限の星・2択を実際に買った `Build`（`Build.RunGrowths`）を作り、模型化した出来事（被ダメージ・障壁の吸収・パリィ・会心の基本攻撃でのとどめ）を本体のホストと同じ `RunGrowthLedger.Gain` に流して、ゾーンごとのスタックと上限到達ゾーンを測ります。深度は `DreamDepth.DamageMultiplier`、潜行は `Build.DamageTakenPerDelvePct` の実係数を使い、仮定の感度も3段階で報告します。
+- 割り当て検証（効果が出る購入しか許さない）を通れない経路の星（記憶にスコープされた選択肢など）は、コアのテストと同じ直接割り当てで足します（報告書の「補足」に件数を記載）。効果の集計（`Build.Compute`）とスタック（`RunGrowthLedger`）は常に実経路です。
+
+```powershell
+dotnet run --project tools/BalanceSim -c Release -- --mode v132stars --runs 10 --players 100 --seed 3 --out tools/BalanceSim/result-v1.32-stars.md
+```
+
 SDKがPATHにない環境では、次のように場所を選んで実行できます。ネットワークへの依存を増やさないよう、このプロジェクトには追加のNuGetパッケージはありません。
 
 ```powershell
@@ -55,7 +68,7 @@ $dotnet = if ($env:DOTNET_ROOT) {
 | `--lesser` | `10` | 部屋あたりの Lesser 撃破数（0以上） |
 | `--normal` | `8` | 部屋あたりの Normal 撃破数（0以上） |
 | `--miniboss` | `0.25` | 部屋ごとに MiniBoss を1体倒す確率（0〜1） |
-| `--mode` | `expeditions` | `expeditions`（遠征）/ `stars`（v1.31 星振り）/ `sets`（v1.32 セット6部位） |
+| `--mode` | `expeditions` | `expeditions`（遠征）/ `stars`（v1.31 星振り）/ `sets`（v1.32 セット6部位）/ `v132stars`（v1.32 星図の追加効果） |
 | `--dream-level` | `30` | stars: 夢の圧に仮定する夢レベル（1〜30） |
 | `--policy` | `secure` | `secure` / `delve1` / `greedy` |
 | `--wipe` | `0.15` | 遠征ごとの全滅確率（0〜1） |

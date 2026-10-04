@@ -2,7 +2,7 @@ using System;
 
 namespace SodRpg.Core
 {
-    /// <summary>台帳ファイルの構造が不正（壊れたJSON、必須欄の欠落、チェックサム不一致など）。</summary>
+    /// <summary>台帳ファイルの構造が不正（壊れたJSON、必須欄の欠落、値の形式が違うなど）。</summary>
     public class LedgerFormatException : Exception
     {
         public LedgerFormatException(string message) : base(message) { }

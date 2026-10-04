@@ -400,14 +400,23 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Codec_rejects_tampering_and_quarantines_unknown_relics()
+        public void Codec_writes_no_checksum_but_still_loads_old_files_that_have_one()
         {
             var p = NewProfile();
-            Give(p, Rarity.Rare, Slot.Armor);
+            p.DreamLevel = 9;
             string text = ProfileCodec.Write(p);
-            Assert.Throws<LedgerFormatException>(() => ProfileCodec.Read(text.Replace("\"dreamLevel\":1", "\"dreamLevel\":30"), null));
+            Assert.DoesNotContain("checksum", text); // 2026-10-04：整合性確認用のチェックサムは廃止
 
-            // 正しいチェックサムのまま未知の基礎IDを含む場合は、その遺物だけ除外する
+            // 旧形式（checksum つき）は欄ごと無視して読める
+            int at = text.IndexOf("\"body\":", StringComparison.Ordinal);
+            var o = ProfileCodec.Read(text.Insert(at, "\"checksum\":\"sha256:legacy\","), new List<string>());
+            Assert.Equal(9, o.DreamLevel);
+            Assert.Equal(text, ProfileCodec.Write(o));
+        }
+
+        [Fact]
+        public void Codec_quarantines_unknown_relics()
+        {
             var p2 = NewProfile();
             var r = Give(p2, Rarity.Rare, Slot.Armor);
             var good = Give(p2, Rarity.Common, Slot.Charm);
@@ -438,6 +447,27 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1, q.Revision);
             Assert.Equal(5, q.Material(Materials.Shard));
             Assert.NotEmpty(store2.Notes);
+        }
+
+        [Fact]
+        public void Store_recovers_from_a_truncated_main_file_via_backup()
+        {
+            var fs = new InMemoryFileSystem();
+            var store = new ProfileStore(fs, "/save/profile.json", 1);
+            var p = store.Load();
+            p.AddMaterial(Materials.Shard, 5);
+            store.Save(p);
+            p.AddMaterial(Materials.Shard, 6);
+            store.Save(p); // 本体=rev2、.bak=rev1
+            string good = fs.ReadAllText("/save/profile.json");
+            fs.WriteAllText("/save/profile.json", good.Substring(0, good.Length / 2)); // 途中で切れた
+
+            var store2 = new ProfileStore(fs, "/save/profile.json", 1);
+            var q = store2.Load();
+
+            Assert.Equal(1, q.Revision);
+            Assert.Equal(5, q.Material(Materials.Shard));
+            Assert.Contains(store2.Notes, n => n.Contains("バックアップから復旧"));
         }
 
         [Fact]

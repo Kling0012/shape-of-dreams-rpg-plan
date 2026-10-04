@@ -33,22 +33,26 @@ internal static class Program
                 Console.Write(starReport);
                 return 0;
             }
-            if (options.Sets)
+            if (options.V132Stars)
             {
-                var sets = SetBalance.MeasureAll();
+                var economy = V132Simulation.RunEconomy(options, "secure");
+                economy.AddRange(V132Simulation.RunEconomy(options, "greedy"));
+                var growth = V132Simulation.RunGrowth(options);
+                var sensitivity = V132Simulation.RunGrowthSensitivity(options, V132Report.SensitivityScenarios);
                 timer.Stop();
-                string setReport = SetReport.Render(sets, timer.Elapsed);
+                string v132Report = V132Report.Render(options, economy, growth, sensitivity, timer.Elapsed);
                 if (options.Out != null)
                 {
-                    string setPath = Path.GetFullPath(options.Out);
-                    string? setDirectory = Path.GetDirectoryName(setPath);
-                    if (setDirectory != null) Directory.CreateDirectory(setDirectory);
-                    File.WriteAllText(setPath, setReport, new UTF8Encoding(false));
+                    string v132Path = Path.GetFullPath(options.Out);
+                    string? v132Directory = Path.GetDirectoryName(v132Path);
+                    if (v132Directory != null) Directory.CreateDirectory(v132Directory);
+                    File.WriteAllText(v132Path, v132Report, new UTF8Encoding(false));
                 }
-                Console.Write(setReport);
+                Console.Write(v132Report);
                 return 0;
             }
             var simulation = new Simulation(options);
+            simulation.Run();
             string report = Report.Render(options, simulation, timer.Elapsed);
             if (options.Out != null)
             {
