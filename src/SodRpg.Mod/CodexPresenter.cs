@@ -23,14 +23,14 @@ namespace SodRpg.Mod
         private static string Colored(string text, string hex) => "<color=" + hex + ">" + text + "</color>";
 
         // UiStyles.RarityHex と同じ配色（UiStyles は Unity に依存するので、ここには写して持つ）。
-        private static string RarityHex(Rarity r)
+        private static string RarityHex(SodRpg.Core.Game.Rarity r)
         {
             switch (r)
             {
-                case Rarity.Common: return "#d6d6d6";
-                case Rarity.Uncommon: return "#62d962";
-                case Rarity.Rare: return "#4fa8ff";
-                case Rarity.Epic: return "#c475ff";
+                case SodRpg.Core.Game.Rarity.Common: return "#d6d6d6";
+                case SodRpg.Core.Game.Rarity.Uncommon: return "#62d962";
+                case SodRpg.Core.Game.Rarity.Rare: return "#4fa8ff";
+                case SodRpg.Core.Game.Rarity.Epic: return "#c475ff";
                 default: return Gold;
             }
         }
@@ -101,7 +101,7 @@ namespace SodRpg.Mod
             if (e.Category == CodexCategory.Named) return RarityHex(e.Named.Rarity);
             if (e.Category == CodexCategory.Powers) return Purple;
             if (e.Category == CodexCategory.Bases) return "#d6d6d6";
-            return RarityHex(Rarity.Legendary);
+            return RarityHex(SodRpg.Core.Game.Rarity.Legendary);
         }
 
         /// <summary>一覧の1行ぶんの文字。見つけていないものは「？？？」（土台だけ名前を淡く出す）。</summary>
