@@ -10,16 +10,28 @@ namespace SodRpg.Core.Game
         private static bool generatedRegistered;
 
         /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>
-        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Husk", "Hero_Lacerta", "Hero_Vesper" });
+        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Bismuth", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Vesper", "Hero_Yubar" });
 
         /// <summary>Every hero whose manifest compiled to C# (a superset of GeneratedHeroes; used by the registration diagnostics).</summary>
-        public static readonly IReadOnlyList<string> CompiledHeroes = Array.AsReadOnly(new string[] { "Hero_Husk", "Hero_Lacerta", "Hero_Vesper" });
+        public static readonly IReadOnlyList<string> CompiledHeroes = Array.AsReadOnly(new string[] { "Hero_Aurena", "Hero_Bismuth", "Hero_Cetus", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Nachia", "Hero_Vesper", "Hero_Yubar" });
 
         /// <summary>Install one generated hero's authored tree, then its migration rules (tests and tools; production uses RegisterAllGenerated).</summary>
         public static void RegisterGeneratedHero(string heroKey)
         {
             switch (heroKey)
             {
+                case "Hero_Aurena":
+                    RegisterAuthored("Hero_Aurena", CreateAurenaAuthored());
+                    RegisterMigrations("Hero_Aurena", CreateAurenaMigrations());
+                    return;
+                case "Hero_Bismuth":
+                    RegisterAuthored("Hero_Bismuth", CreateBismuthAuthored());
+                    RegisterMigrations("Hero_Bismuth", CreateBismuthMigrations());
+                    return;
+                case "Hero_Cetus":
+                    RegisterAuthored("Hero_Cetus", CreateCetusAuthored());
+                    RegisterMigrations("Hero_Cetus", CreateCetusMigrations());
+                    return;
                 case "Hero_Husk":
                     RegisterAuthored("Hero_Husk", CreateHuskAuthored());
                     RegisterMigrations("Hero_Husk", CreateHuskMigrations());
@@ -28,9 +40,21 @@ namespace SodRpg.Core.Game
                     RegisterAuthored("Hero_Lacerta", CreateLacertaAuthored());
                     RegisterMigrations("Hero_Lacerta", CreateLacertaMigrations());
                     return;
+                case "Hero_Mist":
+                    RegisterAuthored("Hero_Mist", CreateMistAuthored());
+                    RegisterMigrations("Hero_Mist", CreateMistMigrations());
+                    return;
+                case "Hero_Nachia":
+                    RegisterAuthored("Hero_Nachia", CreateNachiaAuthored());
+                    RegisterMigrations("Hero_Nachia", CreateNachiaMigrations());
+                    return;
                 case "Hero_Vesper":
                     RegisterAuthored("Hero_Vesper", CreateVesperAuthored());
                     RegisterMigrations("Hero_Vesper", CreateVesperMigrations());
+                    return;
+                case "Hero_Yubar":
+                    RegisterAuthored("Hero_Yubar", CreateYubarAuthored());
+                    RegisterMigrations("Hero_Yubar", CreateYubarMigrations());
                     return;
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
@@ -41,9 +65,15 @@ namespace SodRpg.Core.Game
         {
             switch (heroKey)
             {
+                case "Hero_Aurena": return CreateAurenaAuthored();
+                case "Hero_Bismuth": return CreateBismuthAuthored();
+                case "Hero_Cetus": return CreateCetusAuthored();
                 case "Hero_Husk": return CreateHuskAuthored();
                 case "Hero_Lacerta": return CreateLacertaAuthored();
+                case "Hero_Mist": return CreateMistAuthored();
+                case "Hero_Nachia": return CreateNachiaAuthored();
                 case "Hero_Vesper": return CreateVesperAuthored();
+                case "Hero_Yubar": return CreateYubarAuthored();
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
         }
@@ -53,9 +83,15 @@ namespace SodRpg.Core.Game
         {
             switch (heroKey)
             {
+                case "Hero_Aurena": return CreateAurenaMigrations();
+                case "Hero_Bismuth": return CreateBismuthMigrations();
+                case "Hero_Cetus": return CreateCetusMigrations();
                 case "Hero_Husk": return CreateHuskMigrations();
                 case "Hero_Lacerta": return CreateLacertaMigrations();
+                case "Hero_Mist": return CreateMistMigrations();
+                case "Hero_Nachia": return CreateNachiaMigrations();
                 case "Hero_Vesper": return CreateVesperMigrations();
+                case "Hero_Yubar": return CreateYubarMigrations();
                 default: throw new ArgumentException("No generated star map for " + heroKey);
             }
         }

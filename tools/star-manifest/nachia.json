@@ -21970,7 +21970,13 @@
         "upside": "Power.Overload=20を保持。通常の非移動記憶使用で4秒魔力+20%、1重、時間更新",
         "downside": "自分の召喚獣による直接ダメージを最終-15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "SummonDirectDamage",
+            "field": "Damage",
+            "pct": -15
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

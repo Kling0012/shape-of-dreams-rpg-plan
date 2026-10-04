@@ -21380,7 +21380,21 @@
       "keystone": {
         "upside": "G(P,Hit,Ricochet,30,2,0.3)。本の実命中ダメージ30%を8mの別の敵2体まで",
         "downside": "Pの元ダメージ-20%（x0.80）",
-        "upsideSpec": null,
+        "upsideSpec": [
+          {
+            "memory": "St_D_PrismaticEyes",
+            "field": "Grant",
+            "effect": "Ricochet",
+            "gimmick": {
+              "trigger": "OnHit",
+              "effect": "Ricochet",
+              "value": 30,
+              "arg": 2,
+              "cooldown": 0.3,
+              "target": null
+            }
+          }
+        ],
         "downsideSpec": [
           {
             "memory": "St_D_PrismaticEyes",

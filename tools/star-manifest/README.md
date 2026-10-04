@@ -106,11 +106,10 @@ Spec の要素は次のキーだけ：
 | `pct` | 増減の%（-10 = -10%、100 = +100%） |
 | `from` / `to` | 絶対値の変更（`from` は元の値、`to` は変更後。`to` だけでもよい） |
 | `delta` / `max` | 加算（+1 など）と合計の上限 |
+| `condition` | 条件付き刻印（M6）。`TargetHealthBelow:<0-100>`（命中直前の対象HP%が未満のときだけ適用）または `OutsideRetaliationWindow`（既存の逆襲（被弾後3秒）の窓の外側だけ適用）。最終本体ダメージの effect（`NativeDamage` / `DirectQR` / `DirectDamage` / `DirectBasicAttack` / `SummonDirectDamage`）とだけ併用可 |
 | `memory` / `memories` / `scope` / `receiver` | 対象の記憶（1つ／複数／名前付きの集合）と受け手 |
 | `field: "Enabled"` + `to: 0` | その効果を無効にする |
-| `field: "Grant"` + `gimmick` | 刻印が追加で与える仕掛け（gimmick は上記5の形） |
-
-`pct` / `delta` / `to` のどれか1つが必要（`Grant` は不要）。刻印の効果は `gimmick`/`power`/`options` ではなく Spec に書く（それらは `null`）。
+| `field: "Grant"` + `gimmick` | 刻印が追加で与える仕掛け（gimmick は上記5の形。`effect: "SacrificeShield"` / `"StunSourceFilter"` はC11/C08の名前付きネイティブアダプタで、`h.aurena.key2` / `h.cetus.key2` にだけ書ける） |
 刻印星は `cluster: "<hero>.key"`、`edges: []`、置き場所は `anchor`（先頭の候補）と `requires`（全部必要）/`requiresAny`（どれか）で表す。**表が置き場所を指定していない刻印**は現在の仮置きのまま `notes` を `仮置き:` で始める（検証が数える）。
 
 ### 6. グラフ

@@ -21,10 +21,12 @@ namespace SodRpg.Core.Game
             var retainedKey = effect.KeystoneDefinition;
             if (retainedKey != null && retainedKey.RetainedPower != Power.None)
             {
-                // The retained Power comes from the baseline node alone; the node keeps carrying it so Build adds it once.
-                if (!original.IsKeystone || original.Power != retainedKey.RetainedPower || original.PowerValue != retainedKey.RetainedPowerValue)
+                // The retained Power's identity comes from the baseline node alone; the node keeps carrying it so Build
+                // adds it once. A differing value is the design's explicit same-ID migration of that Power
+                // (旧StarShield20→15); the node then carries the manifest value instead of the baseline one.
+                if (!original.IsKeystone || original.Power != retainedKey.RetainedPower)
                     throw new InvalidOperationException("Manifest keystone Power differs from the baseline keystone: " + id);
-                effect.Power = original.Power; effect.Amount = original.PowerValue;
+                effect.Power = original.Power; effect.Amount = retainedKey.RetainedPowerValue;
             }
             // A retained outer bridge that carries a complete authored pair (ManifestNewPair) is a real bridge region too.
             var pair = PairCombos.ForBridge(id);
@@ -48,16 +50,20 @@ namespace SodRpg.Core.Game
             };
         }
 
-        // A legacy keystone's upside is its existing Power. It is read from the baseline node, never re-typed in the manifest.
+        // A legacy keystone's upside is its existing Power. It is read from the baseline node, never re-typed in the manifest;
+        // the sole exception is the design's explicit same-ID value migration (旧Power.StarShield20→15), passed as migratedPowerValue.
         internal static KeystoneDefinition ManifestKeystone(string hero, string id, IEnumerable<string> requiredMemories,
             IEnumerable<AuthoredKeystoneSpec> upside, IEnumerable<AuthoredKeystoneSpec> downside,
-            IEnumerable<string> prerequisites, int cost)
+            IEnumerable<string> prerequisites, int cost, int migratedPowerValue = 0)
         {
             var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == id);
             if (!original.IsKeystone || original.Power == Power.None || original.PowerValue <= 0)
                 throw new InvalidOperationException("Baseline keystone has no retained Power: " + id);
+            if (migratedPowerValue != 0 && migratedPowerValue <= 0)
+                throw new InvalidOperationException("A migrated keystone Power value must be positive: " + id);
             return AuthoredKeystoneCompiler.Compile(id, requiredMemories, upside, downside, prerequisites, cost,
-                retainedPower: original.Power, retainedPowerValue: original.PowerValue);
+                retainedPower: original.Power,
+                retainedPowerValue: migratedPowerValue != 0 ? migratedPowerValue : original.PowerValue);
         }
 
         // A manifest migration row keeps the star's ID and ranks and changes its effect. The original per-rank cost

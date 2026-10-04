@@ -28159,7 +28159,20 @@
       "keystone": {
         "upside": "Power.StillWater=6（Q/R本体記憶でスタン成功時、最大HP6%の盾3秒、既存2秒間隔）",
         "downside": "Q/R本体記憶ダメージ-15%",
-        "upsideSpec": null,
+        "upsideSpec": [
+          {
+            "field": "Grant",
+            "effect": "StunSourceFilter",
+            "gimmick": {
+              "trigger": "OnHit",
+              "effect": "StunSourceFilter",
+              "value": 6,
+              "arg": 0,
+              "cooldown": 2,
+              "target": null
+            }
+          }
+        ],
         "downsideSpec": [
           {
             "effect": "DirectQR",

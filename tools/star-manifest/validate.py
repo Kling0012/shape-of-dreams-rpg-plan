@@ -37,7 +37,7 @@ OPT_KEYS = ['kind', 'memory', 'value', 'param', 'receiver', 'target', 'gimmick',
 G_REQUIRED = ['trigger', 'effect', 'value', 'arg', 'cooldown', 'target']
 G_OPTIONAL = ['condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool']
 KS_KEYS = ['upside', 'downside', 'upsideSpec', 'downsideSpec']
-SPEC_KEYS = {'memory', 'memories', 'effect', 'field', 'pct', 'from', 'to', 'delta', 'max', 'receiver', 'scope', 'gimmick'}
+SPEC_KEYS = {'memory', 'memories', 'effect', 'field', 'pct', 'from', 'to', 'delta', 'max', 'receiver', 'scope', 'gimmick', 'condition'}
 
 # 記憶ID または スロット選択子（@ID/@Q/@R/@M、@Q(St_A|St_B) の制約付き、| で連結可）
 MEM = r'St_[A-Za-z0-9_]+'
@@ -247,8 +247,9 @@ def check_spec_list(lst, ctx, legacy, hero, refs, errors):
                 errors.append(f'{c2}: bad {k} {e[k]!r}')
         if 'memories' in e and not (isinstance(e['memories'], list) and e['memories'] and all(memory_ok(x) and x for x in e['memories'])):
             errors.append(f'{c2}: bad memories')
-        if 'scope' in e and not isinstance(e['scope'], str):
-            errors.append(f'{c2}: scope must be string')
+        if 'condition' in e and not (isinstance(e['condition'], str)
+                                     and re.fullmatch(r'TargetHealthBelow:(100|[1-9]?\d)(\.\d+)?|OutsideRetaliationWindow', e['condition'])):
+            errors.append(f'{c2}: bad condition {e.get("condition")!r} (TargetHealthBelow:<0-100> or OutsideRetaliationWindow)')
         if e.get('field') == 'Grant':
             if not isinstance(e.get('gimmick'), dict):
                 errors.append(f'{c2}: Grant needs gimmick')

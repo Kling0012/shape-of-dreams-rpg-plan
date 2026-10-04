@@ -53,8 +53,10 @@ WARDS = {"AlliedWard", "SummonWard", "AllyWard", "AllyShield"}
 DURATION = {"Shield", "Empower", "Quicken", "Wound", "Daze", "Rampart", "Primed", "Crescendo", "Sap", "Weakspot"}
 
 # Legacy keystones whose upside is their existing Power, kept unchanged. Only the downside is typed in the manifest.
+# h.yubar.key2 keeps its Power and migrates the value 20->15 in the same ID (row `power` field; ManifestKeystone's
+# migratedPowerValue), which is still the baseline Power as the upside, never a re-typed second source.
 RETAINED_POWER_KEYS = {"h.vesper.key", "h.vesper.key2", "h.lacerta.key", "h.lacerta.key2", "h.cetus.key",
-                       "h.yubar.key", "h.husk.key", "h.husk.key2", "h.nachia.key", "h.nachia.key2", "h.bismuth.key",
+                       "h.yubar.key", "h.yubar.key2", "h.husk.key", "h.husk.key2", "h.nachia.key", "h.nachia.key2", "h.bismuth.key",
                        "h.mist.key", "h.mist.key2"}
 BASELINE_KEYS = {}
 for _hero, _id, _power, _value in re.findall(r'Key\("Hero_(\w+)",\s*"(\w+\.key2?)",\s*"[^"]*",\s*"[^"]*",\s*Power\.(\w+),\s*(\d+)',
@@ -456,6 +458,13 @@ class Compiler:
                 "Value": dec(g["value"]), "Arg": whole(g["arg"]), "Cooldown": format(number(g["cooldown"]), "f") + "f"}))
             if e == "Rampart":
                 members["ShieldPool"] = "ModShieldPoolKind.Rampart"
+        elif e in ("SacrificeShield", "StunSourceFilter"):
+            # C11/C08 named adapters: the flag payload is the whole typed mechanism; the host reads its fixed
+            # design constants (50%/4s/10% cap, 6%HP/3s/2s interval) from the runtime, so no source/payload fields exist.
+            if sid != ("h.aurena.key2.grant" if e == "SacrificeShield" else "h.cetus.key2.grant") or g["cooldown"] != (0 if e == "SacrificeShield" else 2) or g["target"] is not None:
+                self.fail(sid, prefix + ".effect", e, "native adapter grants belong only to their named legacy keystone (no target, cooldown 0/2)")
+                return None
+            return obj("AuthoredMechanismSpec", {"ChannelId": cs(sid), "Kind": "AuthoredMechanismKind." + e})
         else:
             self.fail(sid, prefix + ".effect", e, "no executable AuthoredMechanismSpec translation")
             return None
@@ -560,6 +569,16 @@ class Compiler:
             scope.append("sourceKind: KeystoneSourceKind.NativeMemory")
             if effect == "DirectQR":
                 scope.append("sourceSelectors: new[] { MemorySelector.Parse(\"@Q|@R\") }")
+        elif effect == "DirectBasicAttack":
+            members["Layer"] = "KeystoneLayer.NativeDamage"
+            scope.append("sourceKind: KeystoneSourceKind.OwnedBasicAttack")
+        elif effect == "SummonDirectDamage":
+            members["Layer"] = "KeystoneLayer.NativeDamage"
+            scope.append("sourceKind: KeystoneSourceKind.OwnedSummon")
+        elif effect in ("SacrificeShield", "StunSourceFilter"):
+            # Named native adapters (C11/C08): the typed flag payload is the whole effect; no effect-set scope here.
+            if field != "Grant" or sid not in ("h.aurena.key2", "h.cetus.key2"):
+                self.fail(sid, path + ".effect", effect, "native adapter grants belong only to their named legacy keystone and are Grants")
         elif effect == "MemoryDamage":
             members["Layer"] = "KeystoneLayer.StarMemoryDamage"
         elif effect in RECHARGE:
@@ -635,6 +654,20 @@ class Compiler:
             scope.append("argument: 1")
         if sid == "vesper.key.shared-flame" and field == "Radius":
             scope.append("argument: 1")
+        condition = spec.get("condition")
+        if condition is not None:
+            kind, separator, argument = condition.partition(":")
+            if effect not in ("DirectQR", "DirectDamage", "NativeDamage", "DirectBasicAttack", "SummonDirectDamage"):
+                self.fail(sid, path + ".condition", condition, "a typed condition gates final native damage only; other layers have no event facts")
+            elif kind == "TargetHealthBelow":
+                if not separator or not re.fullmatch(r"(100|[1-9]?\d)(\.\d+)?", argument):
+                    self.fail(sid, path + ".condition", condition, "TargetHealthBelow needs a 0-100 percent argument")
+                else:
+                    scope.append("condition: KeystoneConditionKind.TargetHealthBelow, conditionPercent: " + dec(Decimal(argument)))
+            elif condition == "OutsideRetaliationWindow":
+                scope.append("condition: KeystoneConditionKind.OutsideRetaliationWindow")
+            else:
+                self.fail(sid, path + ".condition", condition, "no typed condition kind for this expression")
         members["Scope"] = "new KeystoneScope(" + ", ".join(dict.fromkeys(scope)) + ")"
         if field == "Enabled":
             if spec.get("to") != 0:
@@ -689,8 +722,33 @@ class Compiler:
             sides.append(array(expressions, "AuthoredKeystoneSpec"))
         required = sorted({s["receiver"] for s in up + down if s.get("receiver") and s["receiver"].startswith("St_")})
         cost = "Content.KeystoneCost" if row["region"] == "migration" else whole(row["rankCost"])
-        compiler = "ManifestKeystone(" + cs(self.hero) + ", " + cs(sid) + ", " if retained else "AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", "
-        return compiler + array(required) + ", " + ", ".join(sides) + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost + ")"
+        # A migration row's `power` re-states the baseline Power as the typed upside. The Power must be the baseline
+        # keystone's own; a different value is the design's explicit same-ID migration (旧StarShield20→15).
+        migrated = self.typed_power(sid, row)
+        if retained:
+            return ("ManifestKeystone(" + cs(self.hero) + ", " + cs(sid) + ", " + array(required) + ", " + sides[0] + ", " + sides[1]
+                + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost
+                + (", migratedPowerValue: " + migrated[1] if migrated and migrated[1] != BASELINE_KEYS[sid][1] else "") + ")")
+        return ("AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", " + array(required) + ", " + sides[0] + ", " + sides[1]
+            + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost
+            + (", retainedPower: Power." + migrated[0] + ", retainedPowerValue: " + migrated[1] if migrated else "") + ")")
+
+    def typed_power(self, sid, row):
+        """(Power name, value) for a migration Keystone row that re-states its Power; None when the row has none."""
+        power = row.get("power") if row["region"] == "migration" else None
+        if not power:
+            return None
+        baseline = BASELINE_KEYS.get(sid)
+        name, value = power["name"], number(power["perRank"])
+        if baseline is None or name != baseline[0]:
+            self.fail(sid, "power.name", name, "a typed keystone Power must be the baseline keystone's own Power " + display_value(baseline))
+        elif name not in self.powers:
+            self.fail(sid, "power.name", name, "no concrete Power enum member")
+        elif value != value.to_integral_value() or value < 1:
+            self.fail(sid, "power.perRank", power["perRank"], "a typed keystone Power value is a positive whole number")
+        else:
+            return name, whole(value)
+        return None
 
     def effect(self, sid, row, max_rank, cost, option_path=""):
         kind = row["kind"]

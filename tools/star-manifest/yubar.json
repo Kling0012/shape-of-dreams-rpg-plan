@@ -28896,7 +28896,10 @@
       "receiver": null,
       "target": null,
       "gimmick": null,
-      "power": null,
+      "power": {
+        "name": "StarShield",
+        "perRank": 15
+      },
       "stat": null,
       "options": null,
       "keystone": {

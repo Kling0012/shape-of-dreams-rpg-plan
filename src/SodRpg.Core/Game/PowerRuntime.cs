@@ -440,6 +440,9 @@ namespace SodRpg.Core.Game
             return amount * thorns / 100f;
         }
 
+        /// <summary>逆襲（被弾後3秒）の窓の内側か。刻印の条件式（M6）はこの既存窓を参照する。</summary>
+        public bool WithinRetaliationWindow(float now) => now < _retaliationUntil;
+
         public struct HitResult
         {
             public float Heal;

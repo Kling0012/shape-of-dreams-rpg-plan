@@ -92,6 +92,8 @@ namespace SodRpg.Core.Game
                 writer.Write((int)s.Recipient); writer.Write((int)s.PayloadKind);
                 writer.Write(s.Argument.HasValue); if (s.Argument.HasValue) writer.Write(s.Argument.Value);
                 writer.Write(s.SourceKind.HasValue); if (s.SourceKind.HasValue) writer.Write((int)s.SourceKind.Value);
+                writer.Write(s.Condition.HasValue);
+                if (s.Condition.HasValue) { writer.Write((int)s.Condition.Value); writer.Write(s.ConditionPercent); }
                 Selectors(writer, s.SourceSelectors); Selectors(writer, s.ReceiverSelectors);
             }
         }
@@ -125,7 +127,13 @@ namespace SodRpg.Core.Game
                 var recipient = (KeystoneRecipientKind)reader.ReadInt32(); var payload = (KeystonePayloadKind)reader.ReadInt32();
                 int? argument = reader.ReadBoolean() ? reader.ReadInt32() : (int?)null;
                 KeystoneSourceKind? source = reader.ReadBoolean() ? (KeystoneSourceKind)reader.ReadInt32() : (KeystoneSourceKind?)null;
-                var scope = new KeystoneScope(memories, effects, ids, receivers, recipient, payload, argument, source, Selectors(reader), Selectors(reader));
+                var condition = reader.ReadBoolean() ? (KeystoneConditionKind?)reader.ReadInt32() : (KeystoneConditionKind?)null;
+                if (condition.HasValue && !Enum.IsDefined(typeof(KeystoneConditionKind), condition.Value))
+                    throw new FormatException("Unknown keystone condition.");
+                decimal conditionPercent = condition.HasValue ? reader.ReadDecimal() : 0m;
+                var sourceSelectors = Selectors(reader); var receiverSelectors = Selectors(reader);
+                var scope = new KeystoneScope(memories, effects, ids, receivers, recipient, payload, argument, source,
+                    condition, conditionPercent, sourceSelectors, receiverSelectors);
                 switch (operation)
                 {
                     case KeystoneOperation.Scale: result[i] = KeystoneTransform.Scale(layer, field, magnitude, scope); break;

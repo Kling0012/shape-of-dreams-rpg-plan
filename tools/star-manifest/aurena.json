@@ -22577,7 +22577,14 @@
       "keystone": {
         "upside": "装着Qの仕掛けValue+100%(他のBと別の最終倍率2倍、各効果上限は維持)",
         "downside": "装着QのMemoryDamage由来補正は0%。装備や本体記憶の倍率は消さない",
-        "upsideSpec": null,
+        "upsideSpec": [
+          {
+            "memory": "@Q",
+            "effect": "AlliedWard/Burst/Daze/Echo/Element/ElementEdge/Expose/Rampart/Ricochet/Sap/Shield/Wound",
+            "field": "Value",
+            "pct": 100
+          }
+        ],
         "downsideSpec": [
           {
             "memory": "@Q",
@@ -22616,7 +22623,20 @@
       "keystone": {
         "upside": "G/Dで実際に失ったHPの50%を4秒の障壁へ(1回最大HP10%、C06通常プール15%内で大きい方更新)",
         "downside": "G/DのMOD由来Echo/Burst/ElementEdge/Ricochetの最終ダメージを40%減らす",
-        "upsideSpec": null,
+        "upsideSpec": [
+          {
+            "field": "Grant",
+            "effect": "SacrificeShield",
+            "gimmick": {
+              "trigger": "OnUse",
+              "effect": "SacrificeShield",
+              "value": 50,
+              "arg": 0,
+              "cooldown": 0,
+              "target": null
+            }
+          }
+        ],
         "downsideSpec": [
           {
             "memories": [

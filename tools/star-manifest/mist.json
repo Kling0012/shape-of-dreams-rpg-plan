@@ -29631,7 +29631,20 @@
         "upside": "既存 Power.OpeningStrike 70：HP90%以上の敵への基本攻撃に攻撃力70%の追加",
         "downside": "HP90%未満の敵への自分の本体ダメージ−15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15,
+            "condition": "TargetHealthBelow:90"
+          },
+          {
+            "effect": "DirectBasicAttack",
+            "field": "Damage",
+            "pct": -15,
+            "condition": "TargetHealthBelow:90"
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],
@@ -29661,7 +29674,14 @@
         "upside": "既存 Power.Retaliation 25：被弾後3秒、攻撃力/魔力+25%（上限1重・再被弾で更新）",
         "downside": "被弾後3秒以外の本体記憶ダメージ−15%",
         "upsideSpec": null,
-        "downsideSpec": null
+        "downsideSpec": [
+          {
+            "effect": "NativeDamage",
+            "field": "Damage",
+            "pct": -15,
+            "condition": "OutsideRetaliationWindow"
+          }
+        ]
       },
       "requires": [],
       "requiresAny": [],

@@ -128,9 +128,13 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void The_baseline_power_cannot_be_retyped_or_contradicted()
         {
-            var wrong = AuthoredKeystoneCompiler.Compile("h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(), Downside(-10),
+            // A differing value on the same Power is the design's explicit same-ID migration (旧StarShield20→15):
+            // the node carries the manifest value exactly once. A different Power still rejects.
+            var migrated = AuthoredKeystoneCompiler.Compile("h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(), Downside(-10),
                 retainedPower: Power.Umbra, retainedPowerValue: 99);
-            Assert.Throws<InvalidOperationException>(() => Retained("h.husk.key", wrong));
+            var migratedNode = Retained("h.husk.key", migrated);
+            Assert.Equal(Power.Umbra, migratedNode.Effect.Power);
+            Assert.Equal(99, migratedNode.Effect.Amount);
             var other = AuthoredKeystoneCompiler.Compile("h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(), Downside(-10),
                 retainedPower: Power.ShadowStep, retainedPowerValue: 100);
             Assert.Throws<InvalidOperationException>(() => Retained("h.husk.key", other));
