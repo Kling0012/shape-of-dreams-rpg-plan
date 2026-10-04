@@ -300,9 +300,12 @@ namespace SodRpg.Mod
                 // メニューを開いている間は、確保地点と遠征結果のパネルを隠す（重なった下のボタンを押せないように）。
                 if (layout && !Open && _s.Profile.LastReport != null && (_s.Profile.LastReport != _shownReport || !_reportDismissed)) DrawReport(w, h);
                 // ヒントの上にマウスがあるときは、下にあるメニューのボタンへマウスの操作を渡さない。
+                // ただし星図のドラッグ中の移動・解放は座標を入れ替えない。ドラッグはホットコントロールを持つので
+                // 下のボタンは押せず、入れ替えた座標でパンを計算すると図が画面の外へ飛んでしまう（#45）。
                 bool mouseEvent = type == EventType.MouseDown || type == EventType.MouseUp || type == EventType.MouseDrag || type == EventType.ScrollWheel;
                 Vector2 realMouse = Event.current.mousePosition;
-                bool shield = mouseEvent && _hints.Count > 0 && HintRect(w, h).Contains(realMouse);
+                bool starDragGesture = _starDragging && (type == EventType.MouseDrag || type == EventType.MouseUp);
+                bool shield = mouseEvent && !starDragGesture && _hints.Count > 0 && HintRect(w, h).Contains(realMouse);
                 if (shield) Event.current.mousePosition = new Vector2(-99999f, -99999f);
                 try
                 {
@@ -1964,6 +1967,8 @@ namespace SodRpg.Mod
         private bool _starNeedsFit = true;
         private int[] _starKeystones = new int[0];
         private string _starChoiceId;
+        // 選択パネルの星の添え字（#45: パネルを出している間の毎パスの全走査を避ける）。
+        private int _starChoiceIndex = -1;
         private readonly StarMapView _starView = new StarMapView();
         private string _starSearch = "";
         private bool _starSearchDirty = true;
@@ -2024,7 +2029,7 @@ namespace SodRpg.Mod
         {
             bool newHero = _starHero != hero;
             _starHero = hero;
-            if (newHero) _starChoiceId = null;
+            if (newHero) { _starChoiceId = null; _starChoiceIndex = -1; }
             _starJapanese = Loc.Japanese;
             _starLayout = HeroTreeLayout.ForHero(hero);
             _starNodes = new StarNode[_starLayout.Nodes.Count];
@@ -2089,7 +2094,10 @@ namespace SodRpg.Mod
         {
             if (_starHero != hero || _starJapanese != Loc.Japanese || _starLayout != HeroTreeLayout.ForHero(hero))
             { RebuildStarTree(hero); _starSumDirty = true; }
-            if (!_starDirty && Event.current.type != EventType.Layout) return;
+            // 再構築は Layout パスでのみ行う（#45）。約900星ぶんの文字列をマウスイベントのパスで作り直すと、
+            // 星を選んだ直後のドラッグ開始が引っかかる。選択の可否は Rules が毎回検証するので、
+            // 表示が1フレーム遅れて変わっても操作には影響しない。
+            if (Event.current.type != EventType.Layout) return;
             string keystones = string.Join("\u0001", hs.Keystones);
             bool changed = _starDirty || _starState != hs || _starXp != hs.StarXp || _starKills != hs.Kills
                 || _starCodex != p.CodexBonusPoints || _starTestBonus != Profile.TestBonusPoints
@@ -2549,12 +2557,15 @@ namespace SodRpg.Mod
                 }
                 if (inside && e.type == EventType.MouseDown && e.button <= 2)
                 {
+                    // ドラッグ中に追加で押したボタンでは、押した場所の星をクリックとして確定させない（#45）。
+                    // 移動距離はその場でやり直すので、離した瞬間の誤選択・誤解除が出なくなる。
+                    bool joining = _starDragging && _starDragControl != 0 && GUIUtility.hotControl == _starDragControl;
+                    _starMoved = false;
+                    if (joining) _starPressed = -1;
+                    else { _starPressed = hover; _starMouseButton = e.button; }
                     _starDragging = true;
                     GUIUtility.hotControl = control;
                     _starDragControl = control;
-                    _starMoved = false;
-                    _starPressed = hover;
-                    _starMouseButton = e.button;
                     _starDragOrigin = mouse;
                     _starPanOrigin = _starPan;
                     e.Use();
@@ -2562,7 +2573,10 @@ namespace SodRpg.Mod
                 if (_starDragging && e.type == EventType.MouseDrag)
                 {
                     Vector2 delta = mouse - _starDragOrigin;
-                    if (delta.sqrMagnitude > 16f) _starMoved = true;
+                    // クリックとドラッグの境は画面の物理ピクセルで測る（#45）。GUI 座標のままだと表示の倍率が
+                    // 小さい環境で2ピクセル程度のふるえがクリック扱いになり、星を意図せず振ってしまう。
+                    Vector2 physical = delta * guiScale;
+                    if (physical.sqrMagnitude > 25f) _starMoved = true;
                     if (_starMoved) _starPan = _starPanOrigin + delta;
                     e.Use();
                 }
@@ -2579,6 +2593,7 @@ namespace SodRpg.Mod
                             if (_starMouseButton == 0 && t.IsChoice)
                             {
                                 _starChoiceId = t.Id;
+                                _starChoiceIndex = pressed;
                                 GUIUtility.ExitGUI();
                             }
                             if (!_s.CanEditTalents || p.Run != null) return;

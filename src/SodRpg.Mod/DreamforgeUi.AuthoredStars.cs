@@ -256,9 +256,15 @@ namespace SodRpg.Mod
             if (!_starChoiceShown || area.width <= 0f) return;
             if (_starChoiceId == null) { GUIUtility.ExitGUI(); return; }
             EnsureStarTextStyles();
-            int index = -1;
-            for (int i = 0; i < _starLayout.Nodes.Count; i++)
-                if (_starLayout.Nodes[i].Talent?.Id == _starChoiceId) { index = i; break; }
+            // 約900星の図を、パネルを出している間じゅう毎パス走査しないように添え字を覚える（#45）。
+            int index = _starChoiceIndex;
+            if (index < 0 || index >= _starLayout.Nodes.Count || _starLayout.Nodes[index].Talent?.Id != _starChoiceId)
+            {
+                index = -1;
+                for (int i = 0; i < _starLayout.Nodes.Count; i++)
+                    if (_starLayout.Nodes[i].Talent?.Id == _starChoiceId) { index = i; break; }
+                _starChoiceIndex = index;
+            }
             if (index < 0 || !_starLayout.Nodes[index].Talent.IsChoice)
                 throw new InvalidOperationException("Selected choice star is missing from the current layout: " + _starChoiceId);
             var t = _starLayout.Nodes[index].Talent;
