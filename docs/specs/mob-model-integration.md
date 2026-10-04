@@ -1,6 +1,8 @@
 # MOBモデル導入: 10体ソースと方式Bの実装（draft）
 
 
+最終的な判断・作業分解は [Issue #19 統合仕様](issue19-integration-spec.md) に集約した。
+
 関連: [Issue #19](https://github.com/Kling0012/shape-of-dreams-rpg-plan/issues/19)、[第1段の調査](issue19-model-import-research.md)、[API根拠](mob-api-compatibility.md)。初回の土台は PR #4 の `beaa1ab5685fa248ba2d47c1fbaaebee3181a42e`。モデル実データの追加時に `9cb7a8f9de04e843a962e9076d78c7a6be3a0e62` までの開発を取り込み、新しい設定・起動/終了処理を維持して競合を解決した。PR #4 の実装ブランチへ積む変更で、古い main を土台にしない。
 
 ## 返信を受けた位置づけ
