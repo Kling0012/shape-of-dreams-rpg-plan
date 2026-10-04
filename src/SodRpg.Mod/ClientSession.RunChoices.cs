@@ -30,6 +30,9 @@ namespace SodRpg.Mod
             ? _hostSession._choicePublisher.AuthorityGeneration : 0;
         internal static bool CommitHostCombatChoice() => NetworkServer.active && _hostSession != null
             && _hostSession.CommitCombatChoice();
+        /// <summary>戦闑では選択を解決できない経路（純白の入口）。この間は敵の必須初期化を確定待ちで止めない。</summary>
+        internal static bool HostCombatChoiceSuspended => NetworkServer.active && _hostSession != null
+            && _hostSession.RunActive && _hostSession.InPureWhiteRoute;
 
         public bool CanChooseRunRules => NetworkServer.active || !NetworkClient.active;
         public bool CanChooseDepth => !InGame && CanChooseRunRules;

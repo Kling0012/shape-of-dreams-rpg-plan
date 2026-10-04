@@ -6,6 +6,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 純白の保留中の敵補正（#60）
+
+- **保留中の戦闘**：純白の入口で確保／潜行の選択を保留・非表示にして戦っても、敵に夢の圧・潜行深度の補正・悪夢化の初期化が届くようにしました。選択は明示のまま自動で消えず、未確定の道標も勝手に使いません。通常ルートの「最初の戦闘で潜行を確定してから初期化」は変更していません。 / **Deferred combat**: while the pure-white entrance choice stays pending or hidden, enemies still receive dream pressure, delve-depth bonuses and nightmare initialization. The choice stays explicit and the pending waypoint is never auto-picked; ordinary routes keep resolving on first combat.
+- **確定後の再整合**：保留中に初期化済みの敵は、明示的に潜行を深めたときだけ深度ボーナスを新しい深度へ置き換えます。古いボーナスを外してから足すため二重に掛からず、現在HPも保存されます。浅く確保しても下げないため、撃破報酬が参照する潜行深度と敵側の難易度が揃います。 / **Post-commit alignment**: enemies initialized during deferral get their depth bonus replaced only when delving deeper; the old bonus is removed first, so nothing doubles and current health is preserved. Securing shallower never weakens them, keeping enemy difficulty in step with kill-reward depth.
+- **復帰・再初期化**：出現処理の選択待ちガードを純白の保留中は通過するため、途中セーブの復帰やホスト側の再初期化でも、既存の生存敵が補正なしのまま残りません。 / **Restore/re-init**: the spawn-processing gate passes while the pure-white choice is pending, so existing enemies no longer sit uncorrected after a save restore or host re-init.
+- **検証**：追加した PureWhiteDeferralTests で、保留中の出現処理ゲート・深度再整合の規則・深度ボーナスの単調性と、接続層（RunChoiceSnapshot／RunChoiceProgress）での選択保持・確定後の深度一致をソロ（権威）と協力（参加側）の両経路で確認。全テスト成功、Release ビルド成功（警告5・エラー0）。実機・実セーブでの純白と2台協力プレイは未確認です。 / **Verification**: new PureWhiteDeferralTests cover the deferred spawn gate, the depth-realignment rule, depth-bonus monotonicity, and connection-layer choice preservation and post-commit depth agreement for both solo (authority) and co-op (participant) paths. Full test suite passes; Release build succeeded (5 warnings, 0 errors). Real-game pure-white runs and two-machine co-op remain unverified.
+
+---
+
+
 ## 未公開 — 伝説ドロップの天井（救済）を撤廃
 
 - **天井なし**：ボスの主報酬へのエピック以上の救済抽選と、その天井（未取得112回の次で確定）を撤廃しました。主報酬も追加報酬も通常の抽選のみになり、連続して出なくても確定はありません。通常の抽選率は変えません。 / **No pity**: the Epic+ pity roll and its ceiling on boss primary rewards are removed; primary and bonus rewards use only the normal roll, with no guarantee after consecutive misses. Normal roll rates are unchanged.

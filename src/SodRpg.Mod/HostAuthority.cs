@@ -104,6 +104,7 @@ namespace SodRpg.Mod
             public Monster Monster;
             public float QueuedAt;
             public bool SpawnProcessed;
+            public int DepthApplied;
             public StatBonus DepthBonus;
             public StatBonus SpecialBonus;
             public bool PressureApplied;
@@ -744,7 +745,9 @@ namespace SodRpg.Mod
         {
             if (_spawnQueue.Count == 0) return;
             if (_zone != null && _zone.isInAnyTransition) return;
-            if (ClientSession.HostRun?.AwaitingChoice == true) return;
+            // 戦闑では選択を解決できない純白の入口でも、戦う敵への必須の圧・深度補正は確定を待たない。
+            if (!SpawnInitRules.ProcessesWhileAwaitingChoice(
+                ClientSession.HostRun?.AwaitingChoice == true, ClientSession.HostCombatChoiceSuspended)) return;
             float now = Time.time;
             int depth = PartyDepth();
             int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
@@ -775,14 +778,7 @@ namespace SodRpg.Mod
                 rt.SpawnProcessed = true;
                 try
                 {
-                    var stats = Nightmares.DepthBonus(tier, depth);
-                    if (stats.Count > 0)
-                    {
-                        var bonus = ToMonsterStatBonus(stats);
-                        rt.DepthBonus = bonus;
-                        m.Status.AddStatBonus(bonus);
-                        m.Status.CalculateStatsIfDirty();
-                    }
+                    ApplyDepthBonus(rt, tier, depth);
                     var variant = ActiveWaypointTotals.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
                     if (variant != null)
                     {
@@ -798,6 +794,28 @@ namespace SodRpg.Mod
                     Log.Error("Host: ProcessSpawns " + ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// 深度ボーナスを置き換える。出現時も、潜行が深まった確定後の再適用もこの入口を通る。
+        /// 古いボーナスを外してから足し直すため、二重には掛からない。現在HPは再計算でも保存される。
+        /// </summary>
+        private void ApplyDepthBonus(MonsterRuntime rt, MonsterTier tier, int depth)
+        {
+            rt.DepthApplied = depth;
+            var m = rt.Monster;
+            var stats = Nightmares.DepthBonus(tier, depth);
+            if (m == null || m.Status == null) return;
+            if (rt.DepthBonus != null)
+            {
+                m.Status.RemoveStatBonus(rt.DepthBonus);
+                rt.DepthBonus = null;
+            }
+            if (stats.Count == 0) return;
+            var bonus = ToMonsterStatBonus(stats);
+            rt.DepthBonus = bonus;
+            m.Status.AddStatBonus(bonus);
+            m.Status.CalculateStatsIfDirty();
         }
 
         private static StatBonus ToMonsterStatBonus(IReadOnlyList<StatLine> stats)
