@@ -2946,10 +2946,10 @@ namespace SodRpg.Mod
             DrawVariantBook(p);
             GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
             GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
-            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果）", "Open the codex (bases, legendaries, sets, powers)"), _st.Button)) _codexOpen = true;
+            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果・銘品・組）", "Open the codex (bases, legendaries, sets, powers, named items, mini sets)"), _st.Button)) _codexOpen = true;
             GUILayout.Label(Loc.T(
-                "<color=#8a8aa0>見つけていない固有品・セット・固有効果は、見つけるまで名前も効果も伏せられています。</color>",
-                "<color=#8a8aa0>Unfound legendaries, sets and powers stay hidden until you find them.</color>"), _st.Small);
+                "<color=#8a8aa0>見つけていない固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も伏せられています。</color>",
+                "<color=#8a8aa0>Unfound legendaries, sets, powers, named items and mini sets stay hidden until you find them.</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();
