@@ -80,6 +80,7 @@ namespace SodRpg.Core.Game
                     .Add("runId", r.RunId).Add("heat", (long)r.Heat).Add("satchel", WriteRelics(r.Satchel))
                     .Add("heroKey", r.HeroKey).Add("starSecureRewarded", r.StarSecureRewarded)
                     .Add("dreamDepth", (long)r.DreamDepth)
+                    .Add("pureWhiteChoiceReached", r.PureWhiteChoiceReached)
                     .Add("activeWaypoint", (long)r.ActiveWaypoint).Add("pendingWaypoint", (long)r.PendingWaypoint)
                     .Add("offeredWaypoints", r.OfferedWaypoints.Select(w => (object)(long)w).ToList())
                     .Add("waypointChosen", r.WaypointChosen).Add("waypointGeneration", (long)r.WaypointGeneration)
@@ -433,6 +434,7 @@ namespace SodRpg.Core.Game
                     EventDropBonus = Bonus(rj, "eventDropBonus"),
                     EventLuck = Bonus(rj, "eventLuck"),
                     AwaitingChoice = Bool(rj, "awaitingChoice", false),
+                    PureWhiteChoiceReached = Bool(rj, "pureWhiteChoiceReached", false),
                     GearWindow = Bool(rj, "gearWindow", false),
                 };
                 ReadRelics(rj, "satchel", run.Satchel, notes);
