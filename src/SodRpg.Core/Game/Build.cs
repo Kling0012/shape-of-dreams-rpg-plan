@@ -27,6 +27,8 @@ namespace SodRpg.Core.Game
         public List<PairComboEntry> PairCombos { get; } = new List<PairComboEntry>();
         public List<NativeMemoryModifierEntry> NativeModifiers { get; } = new List<NativeMemoryModifierEntry>();
         public List<AuthoredMechanismEntry> Mechanisms { get; } = new List<AuthoredMechanismEntry>();
+        /// <summary>v1.32 B：遠征を通して成長する仕組み（修飾を反映済み）。通信では空なら節ごと省く。</summary>
+        public List<RunGrowthEntry> RunGrowths { get; } = new List<RunGrowthEntry>();
         public SortedDictionary<string, int> MechanismEndpointRanks { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public KeystoneDefinition SelectedKeystone { get; set; }
         /// <summary>Set only by C15's dependency-aware evaluation; records which stars combine into which outputs.</summary>
@@ -274,6 +276,7 @@ namespace SodRpg.Core.Game
             }
             FractionalScopedModifiers.Compose(b, selectedTalents);
             AuthoredMechanisms.Compose(b, selectedTalents);
+            global::SodRpg.Core.Game.RunGrowth.Compose(b, selectedTalents);
             bool KeyUnlocked(TalentDef candidateKey)
             {
                 if (!Unlocked(candidateKey)) return false;
@@ -455,6 +458,7 @@ namespace SodRpg.Core.Game
                 sb.Append(entry.Def.Id).Append(':').Append(entry.Ranks.ToString(CultureInfo.InvariantCulture));
             }
             ScopedBuildCodec.Append(sb, this);
+            global::SodRpg.Core.Game.RunGrowth.Append(sb, this);
             string encoded = sb.ToString();
             if (encoded.Length > BuildLimits.MaxEncodedChars || Encoding.UTF8.GetByteCount(encoded) > BuildLimits.MaxEncodedBytes)
                 throw new InvalidOperationException("The build exceeds the encoded message limit.");
@@ -469,6 +473,7 @@ namespace SodRpg.Core.Game
                 || MechanismEndpointRanks.Count > StarProgression.MaxSpendablePoints)
                 throw new InvalidOperationException("The build exceeds its legal entry envelope.");
             ScopedBuildCodec.Validate(this);
+            global::SodRpg.Core.Game.RunGrowth.Validate(this);
             foreach (var link in AggregateLinks(Links))
                 if (link.ValueMilli > BuildLimits.MaxLinkValueMilli(link.Kind, link.Requires.Length))
                     throw new InvalidOperationException("The build exceeds its legal link value envelope.");
@@ -518,12 +523,18 @@ namespace SodRpg.Core.Game
                         case "m": limit = BuildLimits.MaxGimmickEntries; break;
                         case "e": limit = StarProgression.MaxSpendablePoints; break;
                         case "k": limit = 1; break;
+                        case "w": limit = global::SodRpg.Core.Game.RunGrowth.MaxEntries; break;
                     }
                     if (body.Length == 0) continue;
                     string[] entries = body.Split(',');
                     if (entries.Length > limit) return null;
                     foreach (string encoded in entries)
                     {
+                        if (kind == "w")
+                        {
+                            if (!global::SodRpg.Core.Game.RunGrowth.Read(encoded, b)) return null;
+                            continue;
+                        }
                         if (kind == "f" || kind == "n" || kind == "j" || kind == "v" || kind == "r" || kind == "m" || kind == "e" || kind == "k")
                         {
                             ScopedBuildCodec.Read(kind, encoded, b);

@@ -218,6 +218,14 @@ namespace SodRpg.Core.Game
         ReadyGuard = 89,
         Apothecary = 90,
         SpilloverStrike = 91,
+        /// <summary>撃破で得るゴールド +X%（本体の monsterKillGoldMultiplier へ加減算）。星図だけの効果で、装備には付かない。</summary>
+        KillGoldPct = 92,
+        /// <summary>エリート・ボスの撃破ゴールド +X%（ホストが追加分を付与）。星図だけの効果。</summary>
+        EliteKillGoldPct = 93,
+        /// <summary>自分で拾う夢のダスト +X%（Pickup_DreamDust.onGiveDreamDust）。星図だけの効果。</summary>
+        DreamDustPct = 94,
+        /// <summary>夢のダスト +X%、潜行中はさらに +X%（「夢屑の籠」）。星図だけの効果。</summary>
+        DreamDustDelvePct = 95,
     }
 
     /// <summary>撃破された敵の格。ゲームの Monster.MonsterType と同じ並び。</summary>

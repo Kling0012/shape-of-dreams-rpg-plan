@@ -20,6 +20,9 @@ namespace SodRpg.Core.Game
         public List<PressureDividendReward> PendingDividends { get; } = new List<PressureDividendReward>();
         public List<string> DividendNonces { get; } = new List<string>();
         public List<string> DividendDeaths { get; } = new List<string>();
+        /// <summary>v1.32 遠征の鍛錬（RunGrowth）のスタック。どの遠征のものかと、旅人の持ち主ごとの値。</summary>
+        public string GrowthRunId { get; set; }
+        public List<RunGrowthSave> Growth { get; } = new List<RunGrowthSave>();
 
         public RunRecoveryState Clone()
         {
@@ -28,7 +31,7 @@ namespace SodRpg.Core.Game
                 RunId = RunId, ZoneIndex = ZoneIndex, LastArrival = LastArrival,
                 PendingResultRunId = PendingResultRunId, PendingVictory = PendingVictory,
                 PublisherTerminalChoices = PublisherTerminalChoices, PublisherVictory = PublisherVictory,
-                DividendRunId = DividendRunId,
+                DividendRunId = DividendRunId, GrowthRunId = GrowthRunId,
             };
             copy.Arrivals.AddRange(Arrivals);
             copy.CommittedChoices.AddRange(CommittedChoices);
@@ -37,6 +40,8 @@ namespace SodRpg.Core.Game
             copy.PendingDividends.AddRange(PendingDividends);
             copy.DividendNonces.AddRange(DividendNonces);
             copy.DividendDeaths.AddRange(DividendDeaths);
+            foreach (var save in Growth)
+                copy.Growth.Add(new RunGrowthSave { Owner = save.Owner, GrowthId = save.GrowthId, Stacks = save.Stacks, ProgressMilli = save.ProgressMilli });
             return copy;
         }
     }

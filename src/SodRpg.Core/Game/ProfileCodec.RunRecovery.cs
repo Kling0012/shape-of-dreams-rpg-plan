@@ -22,7 +22,10 @@ namespace SodRpg.Core.Game
                 .Add("dividends", state.PendingDividends.Select(x => (object)new JsonObject().Add("runId", x.RunId)
                     .Add("zone", (long)x.ZoneId).Add("spawn", x.SpawnId).Add("owner", x.OwnerId).Add("nonce", x.RewardNonce)).ToList())
                 .Add("dividendNonces", state.DividendNonces.Select(x => (object)x).ToList())
-                .Add("dividendDeaths", state.DividendDeaths.Select(x => (object)x).ToList());
+                .Add("dividendDeaths", state.DividendDeaths.Select(x => (object)x).ToList())
+                .Add("growthRunId", state.GrowthRunId)
+                .Add("growth", state.Growth.Select(x => (object)new JsonObject().Add("owner", x.Owner).Add("id", x.GrowthId)
+                    .Add("stacks", (long)x.Stacks).Add("progress", x.ProgressMilli)).ToList());
         }
 
         private static RunRecoveryState ReadRunRecovery(JsonObject parent)
@@ -34,7 +37,7 @@ namespace SodRpg.Core.Game
                 LastArrival = Clamp(Long(j, "lastArrival"), -1, int.MaxValue),
                 PendingResultRunId = Str(j, "resultRunId"), PendingVictory = NullableBool(j, "victory"),
                 PublisherTerminalChoices = Str(j, "publisherTerminal"), PublisherVictory = NullableBool(j, "publisherVictory"),
-                DividendRunId = Str(j, "dividendRunId"),
+                DividendRunId = Str(j, "dividendRunId"), GrowthRunId = Str(j, "growthRunId"),
             };
             foreach (object item in Array(j, "arrivals"))
                 if (item is long zone && zone >= 0 && zone <= int.MaxValue) state.Arrivals.Add((int)zone);
@@ -52,6 +55,10 @@ namespace SodRpg.Core.Game
                 if (item is string nonce) state.DividendNonces.Add(nonce);
             foreach (object item in Array(j, "dividendDeaths"))
                 if (item is string death) state.DividendDeaths.Add(death);
+            foreach (object item in Array(j, "growth"))
+                if (item is JsonObject growth)
+                    state.Growth.Add(new RunGrowthSave { Owner = Str(growth, "owner"), GrowthId = Str(growth, "id"),
+                        Stacks = (int)Clamp(Long(growth, "stacks"), 0, RunGrowthDef.MaxCap), ProgressMilli = System.Math.Max(0L, Long(growth, "progress")) });
             return state;
         }
 

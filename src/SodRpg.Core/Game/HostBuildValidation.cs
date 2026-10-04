@@ -162,7 +162,7 @@ namespace SodRpg.Core.Game
             {
                 int colon = section.IndexOf(':');
                 string kind = section.Substring(0, colon);
-                if (kind == "g" || kind == "l" || kind == "c" || kind == "f" || kind == "n" || kind == "j" || kind == "v")
+                if (kind == "g" || kind == "l" || kind == "c" || kind == "f" || kind == "n" || kind == "j" || kind == "v" || kind == "w")
                     effects.Add(kind, section.Substring(colon + 1));
             }
             return effects;

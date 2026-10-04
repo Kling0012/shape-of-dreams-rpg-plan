@@ -580,6 +580,23 @@ namespace SodRpg.Core.Game
     /// <summary>表示単位からゲームの StatBonus の単位への変換。会心・属性は割合（1% = 0.01）。</summary>
     public static class StatUnits
     {
+        /// <summary>小数を許す値（RunGrowth など）をゲームの単位へ。整数版と同じ換算。</summary>
+        public static float ToGame(Stat s, double value)
+        {
+            switch (s)
+            {
+                case Stat.CritChancePct:
+                case Stat.CritDamagePct:
+                case Stat.FireAmp:
+                case Stat.ColdAmp:
+                case Stat.LightAmp:
+                case Stat.DarkAmp:
+                    return (float)(value / 100d);
+                default:
+                    return (float)value;
+            }
+        }
+
         public static float ToGame(Stat s, int value)
         {
             switch (s)

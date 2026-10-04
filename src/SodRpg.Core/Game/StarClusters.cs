@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace SodRpg.Core.Game
 {
-    public enum ClusterStarKind { MemoryDamage, MemoryHaste, GimmickBoost, GimmickParam, Notable, Choice, Stat, Keystone }
+    public enum ClusterStarKind { MemoryDamage, MemoryHaste, GimmickBoost, GimmickParam, Notable, Choice, Stat, Keystone, RunGrowthModifier }
     /// <summary>WindowDuration / MarkDuration scale the gate lifetime of one bridge pair (its window / its mark), never a payload's own duration.</summary>
     public enum GimmickParam { Duration, Radius, ExtraTargets, Chance, WindowDuration, MarkDuration }
     public enum ClusterShape { Fan, Ring, Chain }
@@ -51,6 +51,10 @@ namespace SodRpg.Core.Game
         public NativeMemoryModifierDef NativeModifier { get; set; }
         public AuthoredMechanismSpec Mechanism { get; set; }
         public KeystoneDefinition KeystoneDefinition { get; set; }
+        /// <summary>v1.32 B：遠征を通して成長する仕組みを得る重要な星（Kind = Notable。他の効果とは併用しない）。</summary>
+        public RunGrowthDef RunGrowth { get; set; }
+        /// <summary>v1.32 B：RunGrowth への修飾（上限 +N／1スタックの効果 +X%／溜まる速さ2倍）。Kind = RunGrowthModifier。</summary>
+        public RunGrowthModifierDef RunGrowthModifier { get; set; }
     }
 
     /// <summary>Small authored clusters. Validation uses only the supplied registry, never Content.</summary>
@@ -165,7 +169,8 @@ namespace SodRpg.Core.Game
                 if (option || cluster.AuthoredEdges == null && star.MaxRank != 1 || star.Options == null || star.Options.Count != 2)
                     throw Invalid(id, "A choice requires exactly two non-choice options; ranked choices require the authored path.");
                 if (star.Amount != 0 || star.Memory != null || star.Gimmick != null || star.Power != Power.None
-                    || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null || star.Mechanism != null || star.KeystoneDefinition != null)
+                    || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null || star.Mechanism != null || star.KeystoneDefinition != null
+                    || star.RunGrowth != null || star.RunGrowthModifier != null)
                     throw Invalid(id, "A choice carries its effects in its options only.");
                 foreach (var choice in star.Options)
                 {
@@ -176,6 +181,17 @@ namespace SodRpg.Core.Game
                 return;
             }
             if (star.Options != null && star.Options.Count != 0) throw Invalid(id, "Only choice stars have options.");
+            if (star.RunGrowth != null || star.RunGrowthModifier != null)
+            {
+                bool growth = star.RunGrowth != null;
+                if (star.RunGrowth != null && star.RunGrowthModifier != null
+                    || (growth ? star.Kind != ClusterStarKind.Notable : star.Kind != ClusterStarKind.RunGrowthModifier)
+                    || star.Gimmick != null || star.Power != Power.None || star.Amount != 0 || star.Memory != null || star.Mechanism != null
+                    || star.KeystoneDefinition != null || star.ScopedModifier != null || star.NativeModifier != null || star.EffectChannel != null)
+                    throw Invalid(id, "A RunGrowth star carries its typed payload and nothing else.");
+                return;
+            }
+            if (star.Kind == ClusterStarKind.RunGrowthModifier) throw Invalid(id, "A RunGrowth modifier requires its typed payload.");
             if (star.Mechanism != null)
             {
                 if (star.Kind != ClusterStarKind.Notable || star.Gimmick != null || star.Power != Power.None || star.Amount != 0)
@@ -312,6 +328,8 @@ namespace SodRpg.Core.Game
             talent.NativeModifier = star.NativeModifier;
             talent.Mechanism = star.Mechanism;
             talent.KeystoneDefinition = star.KeystoneDefinition;
+            talent.RunGrowth = star.RunGrowth;
+            talent.RunGrowthModifier = star.RunGrowthModifier;
             if (star.Gimmick != null) talent.Gimmick = Gimmicks.Clamp(new GimmickEntry { StarId = id, Memory = star.Memory, Def = star.Gimmick }).Def;
             if (star.Kind == ClusterStarKind.GimmickBoost) talent.GimmickBoost = star.Amount;
             if (star.Kind == ClusterStarKind.GimmickParam && star.ScopedModifier == null)

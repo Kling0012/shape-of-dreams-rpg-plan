@@ -809,6 +809,29 @@ class Compiler:
             return name, whole(value)
         return None
 
+    def run_growth(self, sid, row, path):
+        g = row["growth"]
+        effects = []
+        for i, e in enumerate(g["effects"]):
+            if e["stat"] not in self.stats:
+                self.fail(sid, path + "growth.effects[" + str(i) + "].stat", e["stat"], "no concrete Stat enum member")
+                continue
+            try:
+                milli = whole(number(e["amount"]) * 1000)
+            except ValueError as ex:
+                self.fail(sid, path + "growth.effects[" + str(i) + "].amount", e["amount"], "RunGrowth amounts are exact thousandths: " + str(ex))
+                continue
+            effects.append("new RunGrowthEffect(Stat." + e["stat"] + ", " + milli + ")")
+        return "new RunGrowthDef(RunGrowthTrigger." + g["trigger"] + ", " + whole(g["threshold"]) + ", " + whole(g["cap"]) \
+            + ", new RunGrowthEffect[] { " + ", ".join(effects) + " })"
+
+    def run_growth_mod(self, sid, row, path):
+        g = row["growth"]
+        target = g["target"]
+        if target is not None and self.by_id.get(target, {}).get("kind") != "RunGrowth":
+            self.fail(sid, path + "growth.target", target, "a RunGrowth modifier targets a RunGrowth star of the same hero (or null for every RunGrowth of the hero)")
+        return "new RunGrowthModifierDef(" + cs(target) + ", " + whole(g["capBonus"]) + ", " + whole(g["effectPct"]) + ", " + ("true" if g["doubleGain"] else "false") + ")"
+
     def effect(self, sid, row, max_rank, cost, option_path=""):
         kind = row["kind"]
         if kind is None:
@@ -820,6 +843,13 @@ class Compiler:
         self.memory(sid, option_path + "receiver", row.get("receiver"))
         if kind == "Choice":
             members["Options"] = array([self.effect(sid, o, max_rank, cost, "options[" + str(i) + "].") or "null" for i, o in enumerate(row["options"])], "ClusterStarDef")
+        elif kind == "RunGrowth":
+            # The important star that grants a run-long stacking mechanism: a Notable carrying the typed RunGrowthDef payload only.
+            members["Kind"] = "ClusterStarKind.Notable"
+            members["RunGrowth"] = self.run_growth(sid, row, option_path)
+        elif kind == "RunGrowthMod":
+            members["Kind"] = "ClusterStarKind.RunGrowthModifier"
+            members["RunGrowthModifier"] = self.run_growth_mod(sid, row, option_path)
         elif kind in ("MemoryDamage", "MemoryHaste"):
             if row.get("receiver") or row["memory"].startswith("@"):
                 self.fail(sid, option_path + "memory", row["memory"], "native modifiers require one actual nonmovement memory, not a receiver/slot selector")

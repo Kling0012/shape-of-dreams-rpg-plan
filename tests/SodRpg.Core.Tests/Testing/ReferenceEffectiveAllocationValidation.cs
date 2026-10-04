@@ -450,6 +450,9 @@ namespace SodRpg.Core.Tests.Testing
             }
             foreach (var pair in build.PairCombos)
                 result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value));
+            foreach (var growth in build.RunGrowths)
+                result.Add(Scalar("growth:" + growth.StarId, (long)growth.Cap * (100 + growth.EffectPercent) * growth.GainMultiplier,
+                    (long)RunGrowthDef.MaxCap * (100 + RunGrowthModifierDef.MaxEffectPercent) * 2));
             foreach (var entry in build.Mechanisms)
                 foreach (var channel in AuthoredMechanisms.EffectiveChannels(entry, build, heroKey)) result.Add(channel);
             return result.AsReadOnly();
@@ -630,6 +633,7 @@ namespace SodRpg.Core.Tests.Testing
                 foreach (string contributor in channel.ContributorIds) if (contributor == talent.Id) return true;
                 return false;
             }
+            if (talent.RunGrowth != null || talent.RunGrowthModifier != null) return channel.Key.StartsWith("growth:", StringComparison.Ordinal);
             return channel.Key == (talent.IsPowerNode ? "power:" + (int)talent.RankPower : "stat:" + (int)talent.Stat);
         }
 

@@ -74,6 +74,15 @@ namespace SodRpg.Mod
             public int ReportedLinks;
             // Runtime retains only the component reference; ownership lives in its weak-key ledger.
             public HeroSkill GemSlotOwner;
+            // v1.32 B: the stacks live in HostAuthority.RunGrowthLedger (outside this runtime); only their applied effect is kept here.
+            public StatBonus GrowthBonus;
+            public readonly Dictionary<Stat, double> GrowthTotals = new Dictionary<Stat, double>();
+            public int GrowthVersion = -1;
+            public Build GrowthBuild;
+            public Action<EventInfoAbilityInstance> OnAbilityCreated;
+            public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
+            public float GrowthSentAt;
+            public int GrowthSentVersion = -1;
         }
 
         private struct PendingGimmick
@@ -280,6 +289,8 @@ namespace SodRpg.Mod
             UpdateIdentityStrikes();
             foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
+            foreach (var rt in _runtimes.Values) ApplyRunGrowth(rt, now);
+            SyncCurrency(now);
             UpdateModShieldPools(now);
             ProcessSpawns();
             PruneMonsters(now);
@@ -425,6 +436,8 @@ namespace SodRpg.Mod
         private void OnMonsterDeath(EventInfoKill info)
         {
             if (!(info.victim is Monster m)) return;
+            try { GrantEliteKillGold(m); }
+            catch (Exception ex) { Log.Error("Host: elite kill gold " + ex); }
             try
             {
                 CaptureAuthoritativeRunKill(m);
@@ -663,6 +676,7 @@ namespace SodRpg.Mod
             }
             if (actor is Shrine shrine && _shrines.Add(shrine))
                 shrine.ClientEvent_OnSuccessfulUse += _onShrineUsed;
+            if (actor is Pickup_DreamDust dust) HookDreamDust(dust);
         }
 
         private void OnActorRemove(Actor actor)
@@ -678,6 +692,7 @@ namespace SodRpg.Mod
                     }
             }
             if (actor is Monster m) RemoveMonster(m);
+            if (actor is Pickup_DreamDust dust) UnhookDreamDust(dust);
             if (actor is Shrine shrine && _shrines.Remove(shrine))
                 shrine.ClientEvent_OnSuccessfulUse -= _onShrineUsed;
         }
@@ -917,6 +932,7 @@ namespace SodRpg.Mod
                 }
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
+                ReleaseCurrency();
                 _builds.Clear();
                 _incomingBuilds.Clear();
                 ClearBuildValidationPeers();
@@ -1029,6 +1045,7 @@ namespace SodRpg.Mod
                 Unhook(rt);
             }
             _runtimes.Clear();
+            ReleaseCurrency();
             DetachGemSlots();
             _scanList.Clear();
             _scanPowers = Array.Empty<PowerRuntime>();
@@ -1321,9 +1338,9 @@ namespace SodRpg.Mod
                 // Actor walks its ancestor processors, including for Heal().Dispatch and GiveShield.
                 // Mod-created recovery therefore uses these hooks too; do not multiply at call sites.
                 rt.HealDealt = (ref HealData heal, Actor a, Entity t) =>
-                    heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower)) - 1f);
+                    heal.ApplyAmplification(SupportStats.AmplifyHeal(1f, captured.Powers.Build.Get(Stat.HealPower) + GrowthSupport(captured, Stat.HealPower)) - 1f);
                 rt.ShieldDealt = (ref HealData shield, Actor a, Entity t) =>
-                    shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower)) - 1f);
+                    shield.ApplyAmplification(SupportStats.AmplifyShield(1f, captured.Powers.Build.Get(Stat.ShieldPower) + GrowthSupport(captured, Stat.ShieldPower)) - 1f);
                 hero.dealtHealProcessor.Add(rt.HealDealt);
                 hero.dealtShieldProcessor.Add(rt.ShieldDealt);
                 rt.OnSummon = info => HookSummon(captured, info.summon);
@@ -1332,6 +1349,8 @@ namespace SodRpg.Mod
                 hero.EntityEvent_OnTakeHeal += rt.OnHeal;
                 rt.OnImmunity = info => OnDamageNegated(captured, info);
                 hero.EntityEvent_OnDamageNegatedByImmunity += rt.OnImmunity;
+                rt.OnAbilityCreated = info => OnRunGrowthAbility(captured, info);
+                hero.ActorEvent_OnAbilityInstanceCreated += rt.OnAbilityCreated;
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
@@ -1378,7 +1397,7 @@ namespace SodRpg.Mod
                 if (source == null || source.FindFirstOfType<Summon>() != summon
                     || summon.FindFirstAncestorOfType<Hero>() != rt.Hero) return;
                 damage.ApplyAmplification(SupportStats.AmplifySummonDamage(1f,
-                    rt.Powers.Build.Get(Stat.SummonPower)) - 1f);
+                    rt.Powers.Build.Get(Stat.SummonPower) + GrowthSupport(rt, Stat.SummonPower)) - 1f);
                 damage.ApplyAmplification((float)ActiveWaypointTotals.SummonPowerMultiplier - 1f);
                 if (_gimmickDamageDepth == 0 && !damage.IsAmountModifiedBy(typeof(GimmickRuntime)))
                     damage.ApplyAmplification(rt.Powers.OutgoingDamageAmplification(Time.time, false, true));
@@ -1407,6 +1426,7 @@ namespace SodRpg.Mod
             try
             {
                 if (rt.OnImmunity != null) hero.EntityEvent_OnDamageNegatedByImmunity -= rt.OnImmunity;
+                if (rt.OnAbilityCreated != null) hero.ActorEvent_OnAbilityInstanceCreated -= rt.OnAbilityCreated;
             }
             catch (Exception ex) { Log.Error("Host: unhook immunity " + ex); }
             try
@@ -1437,6 +1457,8 @@ namespace SodRpg.Mod
             rt.DamageDealt = null;
             rt.OnHeal = null;
             rt.OnImmunity = null;
+            rt.OnAbilityCreated = null;
+            rt.CritBasicVictims.Clear();
             rt.HealDealt = null;
             rt.ShieldDealt = null;
             rt.OnSummon = null;
@@ -1670,52 +1692,60 @@ namespace SodRpg.Mod
             {
                 if (rt.BaseBonus != null) hero.Status.RemoveStatBonus(rt.BaseBonus);
                 if (rt.DynBonus != null) hero.Status.RemoveStatBonus(rt.DynBonus);
+                if (rt.GrowthBonus != null) hero.Status.RemoveStatBonus(rt.GrowthBonus);
             }
             catch (Exception) { }
             rt.BaseBonus = null;
             rt.DynBonus = null;
+            rt.GrowthBonus = null;
+            rt.GrowthTotals.Clear();
+            rt.GrowthVersion = -1;
+            rt.GrowthBuild = null;
+            rt.GrowthSentVersion = -1;
         }
 
         internal static StatBonus ToStatBonus(Build b)
         {
             var s = new StatBonus();
-            foreach (var kv in b.Stats)
-            {
-                float v = StatUnits.ToGame(kv.Key, kv.Value);
-                switch (kv.Key)
-                {
-                    case Stat.AttackPct: s.attackDamagePercentage += v; break;
-                    case Stat.PowerPct: s.abilityPowerPercentage += v; break;
-                    case Stat.AttackSpeedPct: s.attackSpeedPercentage += v; break;
-                    case Stat.CritChancePct: s.critChanceFlat += v; break;
-                    case Stat.CritDamagePct: s.critAmpFlat += v; break;
-                    case Stat.MaxHealthPct: s.maxHealthPercentage += v; break;
-                    case Stat.MaxHealthFlat: s.maxHealthFlat += v; break;
-                    case Stat.AttackFlat: s.attackDamageFlat += v; break;
-                    case Stat.PowerFlat: s.abilityPowerFlat += v; break;
-                    case Stat.Armor: s.armorFlat += v; break;
-                    case Stat.HealthRegen: s.healthRegenFlat += v; break;
-                    case Stat.Haste: s.abilityHasteFlat += v; break;
-                    case Stat.MoveSpeedPct: s.movementSpeedPercentage += v; break;
-                    case Stat.Tenacity: s.tenacityFlat += v; break;
-                    case Stat.FireAmp: s.fireEffectAmpFlat += v; break;
-                    case Stat.ColdAmp: s.coldEffectAmpFlat += v; break;
-                    case Stat.LightAmp: s.lightEffectAmpFlat += v; break;
-                    case Stat.DarkAmp: s.darkEffectAmpFlat += v; break;
-                    case Stat.AttackRangePct: s.attackRangePercentage += v; break;
-                    case Stat.FourthAttackShift: s.everyFourAttackStartIndexFlat += (int)v; break;
-                    // エッセンス枠（v1.27）は能力補正ではなく ApplyGemSlots が枠の数として扱う。
-                    case Stat.EssenceSlotIdentity:
-                    case Stat.EssenceSlotMovement:
-                    // Support stats are handled by combat processors, not native StatBonus fields.
-                    case Stat.HealPower:
-                    case Stat.ShieldPower:
-                    case Stat.SummonPower:
-                    case Stat.SacrificeReduction:
-                        break;
-                }
-            }
+            foreach (var kv in b.Stats) AddNativeStat(s, kv.Key, StatUnits.ToGame(kv.Key, kv.Value));
             return s;
+        }
+
+        /// <summary>1つの能力値を本体の StatBonus へ足す（ゲームの単位）。ネイティブに入らない能力値は何もしない。</summary>
+        internal static void AddNativeStat(StatBonus s, Stat stat, float v)
+        {
+            switch (stat)
+            {
+                case Stat.AttackPct: s.attackDamagePercentage += v; break;
+                case Stat.PowerPct: s.abilityPowerPercentage += v; break;
+                case Stat.AttackSpeedPct: s.attackSpeedPercentage += v; break;
+                case Stat.CritChancePct: s.critChanceFlat += v; break;
+                case Stat.CritDamagePct: s.critAmpFlat += v; break;
+                case Stat.MaxHealthPct: s.maxHealthPercentage += v; break;
+                case Stat.MaxHealthFlat: s.maxHealthFlat += v; break;
+                case Stat.AttackFlat: s.attackDamageFlat += v; break;
+                case Stat.PowerFlat: s.abilityPowerFlat += v; break;
+                case Stat.Armor: s.armorFlat += v; break;
+                case Stat.HealthRegen: s.healthRegenFlat += v; break;
+                case Stat.Haste: s.abilityHasteFlat += v; break;
+                case Stat.MoveSpeedPct: s.movementSpeedPercentage += v; break;
+                case Stat.Tenacity: s.tenacityFlat += v; break;
+                case Stat.FireAmp: s.fireEffectAmpFlat += v; break;
+                case Stat.ColdAmp: s.coldEffectAmpFlat += v; break;
+                case Stat.LightAmp: s.lightEffectAmpFlat += v; break;
+                case Stat.DarkAmp: s.darkEffectAmpFlat += v; break;
+                case Stat.AttackRangePct: s.attackRangePercentage += v; break;
+                case Stat.FourthAttackShift: s.everyFourAttackStartIndexFlat += (int)v; break;
+                // エッセンス枠（v1.27）は能力補正ではなく ApplyGemSlots が枠の数として扱う。
+                case Stat.EssenceSlotIdentity:
+                case Stat.EssenceSlotMovement:
+                // Support stats are handled by combat processors, not native StatBonus fields.
+                case Stat.HealPower:
+                case Stat.ShieldPower:
+                case Stat.SummonPower:
+                case Stat.SacrificeReduction:
+                    break;
+            }
         }
 
         private static bool Alive(Hero h) => h != null && h.isActive && !h.isKnockedOut;
@@ -1735,6 +1765,7 @@ namespace SodRpg.Mod
             // Kill() follows the synchronous hit event; do not retain old victims between frames.
             rt.MemoryHitAmounts.Clear();
             rt.GeneratedKillVictims.Clear();
+            rt.CritBasicVictims.Clear();
             var d = rt.DynBonus;
             // 値が変わったときだけ能力を再計算する（StatBonus は同じ値の代入では汚れない）。
             if (d.attackSpeedPercentage != dyn.AttackSpeedPct || d.attackDamagePercentage != dyn.AttackPct || d.abilityPowerPercentage != dyn.PowerPct
@@ -1955,6 +1986,7 @@ namespace SodRpg.Mod
                 if (generated && info.victim.currentHealth <= 0.00001f) rt.GeneratedKillVictims.Add(victimId);
                 else rt.GeneratedKillVictims.Remove(victimId);
                 if (generated) return;
+                TrackCritBasicDamage(rt, info, victimId);
                 OnNewPowerDamage(rt, info);
                 string memory = MemorySource(info.actor);
                 if (memory == null) return;
@@ -1980,6 +2012,7 @@ namespace SodRpg.Mod
                 rt.MemoryHitAmounts.TryGetValue(victimId, out float damage);
                 rt.MemoryHitAmounts.Remove(victimId);
                 if (generated) return;
+                TrackCritBasicKill(rt, victimId);
                 OnNewPowerKill(rt, info);
                 string memory = MemorySource(info.actor);
                 if (memory != null) QueueGimmicks(rt, GimmickTrigger.OnKill, memory, info.victim, damage, generated, info.actor);
@@ -2120,6 +2153,7 @@ namespace SodRpg.Mod
                 bool enemy = attacker != null && attacker.isActive && attacker.GetRelation(hero) == EntityRelation.Enemy;
                 bool reflected = _reflectingDamage || (_registeredOn != null && info.chain.DidReact(_registeredOn, false));
                 OnNewPowerTaken(rt, info, enemy);
+                OnRunGrowthDamage(rt, info, enemy);
                 float reflect = rt.Powers.OnDamaged(Time.time, info.damage.amount, enemy && !reflected, enemy);
                 if (reflect > 0)
                 {

@@ -226,6 +226,10 @@ namespace SodRpg.Core.Game
         public NativeMemoryModifierDef NativeModifier { get; set; }
         public AuthoredMechanismSpec Mechanism { get; set; }
         public KeystoneDefinition KeystoneDefinition { get; set; }
+        /// <summary>v1.32 B：遠征を通して成長する仕組み（重要な星）。なければ null。</summary>
+        public RunGrowthDef RunGrowth { get; set; }
+        /// <summary>v1.32 B：RunGrowth への修飾（小さな星・選択肢）。なければ null。</summary>
+        public RunGrowthModifierDef RunGrowthModifier { get; set; }
         public bool IsChoice => ClusterStar?.Kind == ClusterStarKind.Choice;
         public IReadOnlyList<TalentDef> Choices { get; set; } = Array.Empty<TalentDef>();
         public int GimmickBoost { get; set; }
@@ -254,6 +258,10 @@ namespace SodRpg.Core.Game
         /// <summary>星図に表示する効果。小ノードは1段あたりの値。</summary>
         public string Describe()
         {
+            if (RunGrowth != null) return DescribeRunGrowth(RunGrowth)
+                + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
+            if (RunGrowthModifier != null) return DescribeRunGrowth(RunGrowthModifier)
+                + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
             if (Mechanism != null) return AuthoredMechanisms.Describe(Mechanism)
                 + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
             if (KeystoneDefinition != null) return (AuthoredStar?.KeystoneUpside?.ToString() ?? AuthoredMechanisms.DescribeKeystone(KeystoneDefinition, true)) + "\n"
@@ -280,6 +288,10 @@ namespace SodRpg.Core.Game
             if (IsKeystone) return effect;
             return effect + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} {(MaxRank == 1 ? "rank" : "ranks")}; {RankCost} {(RankCost == 1 ? "point" : "points")} per rank)");
         }
+
+        // The TalentDef.RunGrowth property hides the static type name inside this class.
+        private static string DescribeRunGrowth(RunGrowthDef def) => global::SodRpg.Core.Game.RunGrowth.Describe(def);
+        private static string DescribeRunGrowth(RunGrowthModifierDef mod) => global::SodRpg.Core.Game.RunGrowth.Describe(mod);
 
         internal static string DescribeGimmickBoost(string routeMemory, int amount) =>
             Loc.T($"『{Links.Name(routeMemory).Ja}』の仕掛けの効果量 +{amount}%", $"{Links.Name(routeMemory).En} gimmick effect values +{amount}%");
@@ -4973,6 +4985,11 @@ namespace SodRpg.Core.Game
             [Power.ReadyGuard] = 18,
             [Power.Apothecary] = 30,
             [Power.SpilloverStrike] = 120,
+            // v1.32 A：星図だけの効果。設計表の合計上限（撃破ゴールド+12%・エリート/ボス+25%・ダスト+12%＋籠10%）。
+            [Power.KillGoldPct] = 12,
+            [Power.EliteKillGoldPct] = 25,
+            [Power.DreamDustPct] = 12,
+            [Power.DreamDustDelvePct] = 10,
         };
 
         /// <summary>MOD由来の能力値の合計上限（計画書 第7章の L2 上限 +120% を基準）。</summary>
@@ -5067,7 +5084,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>Direct conditional AD/AP powers may roll only on Epic or higher gear.</summary>
         public static bool IsPowerDroppable(Power power) => Enum.IsDefined(typeof(Power), power)
-            && power != Power.None && power != Power.ShadowStep;
+            && power != Power.None && power != Power.ShadowStep && !CurrencyStars.IsPower(power);
         public static bool PowerAllowedForRarity(Power power, Rarity rarity) => IsPowerDroppable(power)
             && (rarity >= Rarity.Epic || !NewPowersV129.IsConditionalAttribute(power));
 
@@ -5435,6 +5452,7 @@ namespace SodRpg.Core.Game
         public static string PowerName(Power p)
         {
             if (NewPowersV129.IsPower(p)) return NewPowersV129.Name(p);
+            if (CurrencyStars.IsPower(p)) return CurrencyStars.Name(p);
             switch (p)
             {
                 case Power.Momentum: return Loc.T("連撃", "Momentum");
@@ -5492,6 +5510,7 @@ namespace SodRpg.Core.Game
         {
             string name = PowerName(p);
             if (NewPowersV129.IsPower(p)) return NewPowersV129.Describe(p, v);
+            if (CurrencyStars.IsPower(p)) return CurrencyStars.Describe(p, v);
             if (ElementReactions.IsPower(p)) return FormatReaction(p, v, name);
             switch (p)
             {

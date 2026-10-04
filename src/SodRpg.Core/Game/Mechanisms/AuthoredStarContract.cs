@@ -423,7 +423,8 @@ namespace SodRpg.Core.Game
                 EffectChannel = def.EffectChannel ?? effect.EffectChannel,
                 NativeModifier = def.NativeModifier ?? effect.NativeModifier,
                 Mechanism = def.Mechanism ?? effect.Mechanism,
-                KeystoneDefinition = def.KeystoneDefinition ?? effect.KeystoneDefinition
+                KeystoneDefinition = def.KeystoneDefinition ?? effect.KeystoneDefinition,
+                RunGrowth = effect.RunGrowth, RunGrowthModifier = effect.RunGrowthModifier
             };
         }
 

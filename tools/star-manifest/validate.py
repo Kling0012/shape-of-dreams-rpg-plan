@@ -20,8 +20,16 @@ EXPECTED = {
     'vesper': 645, 'cetus': 645, 'lacerta': 645, 'husk': 646, 'mist': 652,
     'yubar': 644, 'aurena': 510, 'nachia': 502, 'bismuth': 510, 'outer': 160,
 }
-KINDS = {'MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Notable', 'Choice', 'Stat', 'Keystone'}
-OPTION_KINDS = KINDS - {'Choice', 'Keystone'}
+# v1.32 B: RunGrowth is the important star that grants a run-long stacking mechanism; RunGrowthMod is a small star/option that modifies it.
+GROWTH_KINDS = {'RunGrowth', 'RunGrowthMod'}
+KINDS = {'MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Notable', 'Choice', 'Stat', 'Keystone'} | GROWTH_KINDS
+OPTION_KINDS = KINDS - {'Choice', 'Keystone', 'RunGrowth'}
+GROWTH_TRIGGERS = {'DamageTakenMaxHpPct': 100, 'ShieldAbsorbedMaxHpPct': 100, 'ParrySuccess': 1000, 'CritBasicAttackKill': 1000}
+GROWTH_KEYS = ['trigger', 'threshold', 'cap', 'effects']
+GROWTH_MOD_KEYS = ['target', 'capBonus', 'effectPct', 'doubleGain']
+GROWTH_UNSUPPORTED_STATS = {'EssenceSlotIdentity', 'EssenceSlotMovement', 'SacrificeReduction', 'FourthAttackShift'}
+GROWTH_MAX_CAP, GROWTH_MAX_EFFECTS, GROWTH_MAX_MILLI = 500, 4, 1000000
+GROWTH_MAX_CAP_BONUS, GROWTH_MAX_EFFECT_PCT = 200, 500
 REGIONS = {'memory', 'bridge', 'outer', 'keystone'}
 PARAMS = {None, 'Duration', 'Radius', 'ExtraTargets', 'Chance', 'WindowDuration', 'MarkDuration'}
 GATE_PARAMS = {'WindowDuration', 'MarkDuration'}
@@ -35,6 +43,68 @@ STAR_KEYS = ['id', 'region', 'cluster', 'shape', 'anchor', 'edges', 'requires', 
 MIG_KEYS = ['id', 'region', 'kind', 'memory', 'value', 'param', 'receiver', 'target', 'gimmick', 'power', 'stat',
             'options', 'keystone', 'requires', 'requiresAny', 'maxRank', 'mechanisms', 'nameJa', 'nameEn', 'notes']
 OPT_KEYS = ['kind', 'memory', 'value', 'param', 'receiver', 'target', 'gimmick', 'power', 'stat', 'nameJa', 'nameEn']
+# RunGrowth rows carry one extra optional key `growth` right after `power` (present exactly for kinds RunGrowth / RunGrowthMod).
+STAR_KEYS_G = STAR_KEYS[:STAR_KEYS.index('power') + 1] + ['growth'] + STAR_KEYS[STAR_KEYS.index('power') + 1:]
+OPT_KEYS_G = OPT_KEYS[:OPT_KEYS.index('power') + 1] + ['growth'] + OPT_KEYS[OPT_KEYS.index('power') + 1:]
+
+
+def stat_names():
+    src = open(os.path.join(GAME, 'Ids.cs'), encoding='utf-8').read()
+    m = re.search(r'enum Stat\s*\{(.*?)\n\s*\}', src, re.S)
+    return set(re.findall(r'^\s*(\w+)\s*=\s*\d+', m.group(1), re.M)) if m else set()
+
+
+def check_growth(o, ctx, kind, hero, refs, errors, S):
+    """kind RunGrowth / RunGrowthMod の `growth` 欄。他の効果欄は null でなければならない。"""
+    g = o.get('growth')
+    for k in ('memory', 'value', 'param', 'receiver', 'target', 'gimmick', 'power', 'stat', 'options', 'keystone'):
+        if k in o and o[k] is not None:
+            errors.append(f'{ctx}: {kind} keeps {k} null (the payload is in growth)')
+    if kind == 'RunGrowth':
+        if not isinstance(g, dict) or list(g) != GROWTH_KEYS:
+            errors.append(f'{ctx}: growth keys must be exactly {GROWTH_KEYS} in order')
+            return
+        trig = g['trigger']
+        if trig not in GROWTH_TRIGGERS:
+            errors.append(f'{ctx}: bad growth.trigger {trig!r} (one of {sorted(GROWTH_TRIGGERS)})')
+        elif not (isinstance(g['threshold'], int) and not isinstance(g['threshold'], bool) and 1 <= g['threshold'] <= GROWTH_TRIGGERS[trig]):
+            errors.append(f'{ctx}: growth.threshold must be an int 1..{GROWTH_TRIGGERS[trig]} for {trig} (percent of max HP for the HP triggers, event count otherwise)')
+        if not (isinstance(g['cap'], int) and not isinstance(g['cap'], bool) and 1 <= g['cap'] <= GROWTH_MAX_CAP):
+            errors.append(f'{ctx}: growth.cap must be an int 1..{GROWTH_MAX_CAP}')
+        effs = g['effects']
+        if not (isinstance(effs, list) and 1 <= len(effs) <= GROWTH_MAX_EFFECTS):
+            errors.append(f'{ctx}: growth.effects must list 1..{GROWTH_MAX_EFFECTS} stat effects')
+            return
+        names = stat_names()
+        seen = set()
+        for i, e in enumerate(effs):
+            if not (isinstance(e, dict) and list(e) == ['stat', 'amount']):
+                errors.append(f'{ctx}: growth.effects[{i}] keys must be exactly [stat, amount]')
+                continue
+            if e['stat'] not in names or e['stat'] in GROWTH_UNSUPPORTED_STATS or e['stat'] in seen:
+                errors.append(f'{ctx}: growth.effects[{i}].stat {e["stat"]!r} is unknown, unsupported or duplicated')
+            seen.add(e['stat'])
+            a = e['amount']
+            if not (isinstance(a, (int, float)) and not isinstance(a, bool) and a > 0
+                    and abs(a * 1000 - round(a * 1000)) < 1e-9 and round(a * 1000) <= GROWTH_MAX_MILLI):
+                errors.append(f'{ctx}: growth.effects[{i}].amount must be a positive number in thousandths (0.5, 0.3, 1, ...)')
+    else:
+        if not isinstance(g, dict) or list(g) != GROWTH_MOD_KEYS:
+            errors.append(f'{ctx}: growth keys must be exactly {GROWTH_MOD_KEYS} in order')
+            return
+        t = g['target']
+        if t is not None:
+            refs.append((ctx, 'growth.target', t))
+            ts = S.get(t)
+            if ts is not None and ts.get('kind') != 'RunGrowth':
+                errors.append(f'{ctx}: growth.target {t} is not a RunGrowth star')
+        for k, hi in (('capBonus', GROWTH_MAX_CAP_BONUS), ('effectPct', GROWTH_MAX_EFFECT_PCT)):
+            if not (isinstance(g[k], int) and not isinstance(g[k], bool) and 0 <= g[k] <= hi):
+                errors.append(f'{ctx}: growth.{k} must be an int 0..{hi}')
+        if not isinstance(g['doubleGain'], bool):
+            errors.append(f'{ctx}: growth.doubleGain must be a bool')
+        if isinstance(g['capBonus'], int) and isinstance(g['effectPct'], int) and g['doubleGain'] is False and g['capBonus'] == 0 and g['effectPct'] == 0:
+            errors.append(f'{ctx}: a RunGrowth modifier must change something')
 G_REQUIRED = ['trigger', 'effect', 'value', 'arg', 'cooldown', 'target']
 G_OPTIONAL = ['condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool', 'strike', 'tuning']
 # IdentityStrike（アイデンティティ記憶そのものが与える追加ダメージ）。gimmick.strike の正準形。
@@ -233,6 +303,13 @@ def check_strike(g, ctx, errors, memory=None):
 def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
     """star / option / migration row に共通の効果欄の検査。"""
     kind = o.get('kind')
+    if kind in GROWTH_KINDS:
+        if kind_rule == 'migration':
+            errors.append(f'{ctx}: {kind} is not allowed in a migration row')
+        check_growth(o, ctx, kind, hero, refs, errors, S)
+        return
+    if 'growth' in o:
+        errors.append(f'{ctx}: growth only for RunGrowth / RunGrowthMod')
     mem, rec = o.get('memory'), o.get('receiver')
     if not memory_ok(mem):
         errors.append(f'{ctx}: bad memory {mem!r} (St_* or @ID/@Q/@R/@M[(..)])')
@@ -297,8 +374,8 @@ def check_options(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
         return
     for i, op in enumerate(opts):
         c2 = f'{ctx}#opt{i}'
-        if not isinstance(op, dict) or list(op) != OPT_KEYS:
-            errors.append(f'{c2}: option keys must be exactly {OPT_KEYS} in order')
+        if not isinstance(op, dict) or list(op) not in (OPT_KEYS, OPT_KEYS_G) or (list(op) == OPT_KEYS_G) != (op.get('kind') in GROWTH_KINDS):
+            errors.append(f'{c2}: option keys must be exactly {OPT_KEYS} in order (plus growth right after power for RunGrowthMod)')
             continue
         if op['kind'] not in OPTION_KINDS:
             errors.append(f'{c2}: bad option kind {op["kind"]}')
@@ -388,8 +465,8 @@ def check(name, legacy, routes, enum_effects, all_effects):
 
     for s in new:
         sid = s.get('id', '?')
-        if list(s) != STAR_KEYS:
-            errors.append(f'{sid}: keys must be exactly {STAR_KEYS} (diff {sorted(set(s) ^ set(STAR_KEYS))})')
+        if list(s) not in (STAR_KEYS, STAR_KEYS_G) or (list(s) == STAR_KEYS_G) != (s.get('kind') in GROWTH_KINDS):
+            errors.append(f'{sid}: keys must be exactly {STAR_KEYS} (diff {sorted(set(s) ^ set(STAR_KEYS))}); RunGrowth / RunGrowthMod rows add `growth` right after `power`')
             continue
         region, kind = s['region'], s['kind']
         if region not in REGIONS:

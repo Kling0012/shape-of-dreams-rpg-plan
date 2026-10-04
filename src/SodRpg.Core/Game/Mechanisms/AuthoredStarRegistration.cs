@@ -272,7 +272,9 @@ namespace SodRpg.Core.Game
             Gimmick = e.Gimmick == null ? null : Gimmicks.ApplyModifierUnits(e.Gimmick, 0, 0, 0, 0, 0), MaxRank = e.MaxRank, RankCost = e.RankCost,
             Options = e.Options?.Select(option => CopyEffect(option, definitions)).ToArray(), NativeModifier = CopyNative(e.NativeModifier), ScopedModifier = CopyModifier(e.ScopedModifier),
             EffectChannel = CopyChannel(e.EffectChannel), Mechanism = CopyMechanism(e.Mechanism, definitions),
-            KeystoneDefinition = e.KeystoneDefinition == null ? null : AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(e.KeystoneDefinition)) };
+            KeystoneDefinition = e.KeystoneDefinition == null ? null : AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(e.KeystoneDefinition)),
+            // Immutable typed payloads are shared safely.
+            RunGrowth = e.RunGrowth, RunGrowthModifier = e.RunGrowthModifier };
         private static string Fingerprint(IReadOnlyList<TalentDef> tree)
         {
             var sb = new StringBuilder();
@@ -299,6 +301,8 @@ namespace SodRpg.Core.Game
                             .Append(':').Append(c.PairSuccessId).Append(':').Append(c.ActivationBudget).Append(':').Append(c.ClockPolicy).Append(':').Append((int)c.ScopeKind)
                             .Append(':').Append(string.Join("+", c.EquipmentRequirements.OrderBy(x => x, StringComparer.Ordinal))).Append('|');
                     }
+                    if (t.RunGrowth != null) sb.Append(global::SodRpg.Core.Game.RunGrowth.Signature(t.RunGrowth)).Append('|');
+                    if (t.RunGrowthModifier != null) sb.Append(global::SodRpg.Core.Game.RunGrowth.Signature(t.RunGrowthModifier)).Append('|');
                     if (t.Mechanism != null) sb.Append(AuthoredMechanisms.Key(t.Mechanism));
                     if (t.KeystoneDefinition != null) sb.Append(AuthoredKeystoneCodec.Encode(t.KeystoneDefinition));
                     if (t.Gimmick != null) sb.Append(AuthoredMechanisms.Key(new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.Gimmick,

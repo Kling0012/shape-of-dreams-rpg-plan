@@ -134,6 +134,8 @@ namespace SodRpg.Core.Game
                     default: throw new InvalidOperationException("Unknown mechanism: " + star.Id);
                 }
             }
+            if (star.RunGrowth != null) return Loc.T("遠征を通して成長", "Run-long growth");
+            if (star.RunGrowthModifier != null) return Loc.T("遠征の鍛錬の強化", "Expedition training enhancement");
             if (star.KeystoneDefinition != null || star.IsKeystone) return Loc.T("刻印", "Keystone");
             if (star.IsChoice) { ValidateChoice(star, -1); return Loc.T("二択の効果", "Choice of two effects"); }
             if (star.NativeModifier != null || star.ScopedModifier != null)

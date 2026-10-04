@@ -428,6 +428,7 @@ namespace SodRpg.Mod
                     else sb.Append("○").Append(b.Describe()).Append(" <color=#c4c4dc>").Append(b.Progress).Append('/').Append(b.Target).Append("</color>");
                     sb.Append("</size>");
                 }
+                AppendRunGrowthHud(sb);
                 if (!_s.HostConfirmed && _s.LocalHero != null)
                     sb.Append("\n<size=13>").Append(Loc.T("装備の効果がまだ反映されていません（ホストがこのMODを入れていない可能性があります）", "Gear bonuses not applied yet (the host may not have this mod)")).Append("</size>");
             }
@@ -436,6 +437,17 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13><color=#ffe17a>").Append(Loc.T($"★ 偉業の報酬を{unclaimedFeats}件受け取れます（記録タブ）", $"★ {unclaimedFeats} feat reward(s) to claim (Records tab)")).Append("</color></size>");
             sb.Append("\n<size=13><color=#c4c4dc>[").Append(cfg.menuKey).Append(Loc.T("] メニュー", "] Menu")).Append("</color></size>");
             return sb.ToString();
+        }
+
+        /// <summary>v1.32 B：遠征の鍛錬のスタックを小さな1行ずつ（旅人が持つ RunGrowth ごと）。</summary>
+        private void AppendRunGrowthHud(System.Text.StringBuilder sb)
+        {
+            var hero = _s.LocalHero;
+            if (hero == null) return;
+            var build = _s.CurrentBuild(ClientSession.HeroKeyOf(hero));
+            if (build == null) return;
+            foreach (var entry in build.RunGrowths)
+                sb.Append("\n<size=13><color=#9fe3a0>").Append(RunGrowth.HudLine(entry, _s.GrowthStacks(entry.StarId))).Append("</color></size>");
         }
 
         /// <summary>
@@ -2084,6 +2096,8 @@ namespace SodRpg.Mod
                 foreach (string m in _linkMemories) sig ^= m.GetHashCode();
                 foreach (string m in _linkEssences) sig += m.GetHashCode();
                 foreach (string m in _linkAllies) sig -= m.GetHashCode();
+                // v1.32 B: the live RunGrowth stacks are part of the acquired-effects text.
+                if (matchingHero) sig += _s.RunGrowthVersion * 7919;
                 if (sig != _starSumSig) { _starSumSig = sig; _starSumDirty = true; }
             }
             for (int i = 0; i < _starNodes.Length; i++)
@@ -2330,6 +2344,18 @@ namespace SodRpg.Mod
                 }
             StarSumAdd(sum.Stats, indexOf, Loc.T("能力値", "Stats"));
             StarSumAdd(sum.Powers, indexOf, Loc.T("固有効果", "Powers"));
+            if (sum.RunGrowths.Count > 0)
+            {
+                StarSumAddTitle(Loc.T("遠征の鍛錬", "Expedition training"));
+                foreach (var growth in sum.RunGrowths)
+                {
+                    // Only the traveler in play has stacks to show; another traveler's page shows the definition.
+                    var live = new StarSummaryLine { Growth = growth.Growth,
+                        Text = matching ? RunGrowth.SummaryLine(growth.Growth, _s.GrowthStacks(growth.Growth.StarId)) : growth.Text };
+                    live.StarIds.AddRange(growth.StarIds);
+                    StarSumAddLine(live, indexOf);
+                }
+            }
             if (sum.Memories.Count > 0)
             {
                 StarSumAddTitle(Loc.T("記憶ごとの効果", "Effects by memory"));
@@ -2645,7 +2671,7 @@ namespace SodRpg.Mod
             if (t.Gimmick != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue) return "gimmick";
             if (t.LinkPerRank != null) return t.LinkPerRank.Kind == LinkKind.MemoryDamage
                 || t.LinkPerRank.Kind == LinkKind.MemoryHaste ? "memory" : "link";
-            if (t.IsPowerNode) return "unique";
+            if (t.IsPowerNode || t.RunGrowth != null || t.RunGrowthModifier != null) return "unique";
             switch (t.Stat)
             {
                 case Stat.AttackPct: case Stat.AttackFlat: return "attack";

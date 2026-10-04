@@ -44,6 +44,10 @@ namespace SodRpg.Core.Game
             ids.Add("power:" + Enum.GetValues(typeof(Power)).Length);
             ids.Add("stat:" + Enum.GetValues(typeof(Stat)).Length);
             ids.Add("gimmick:" + Enum.GetValues(typeof(GimmickEffect)).Length);
+            // v1.32: currency stars and RunGrowth. Registered growth definitions are part of the authored-registry fingerprint.
+            ids.Add("run-growth:v1:" + Enum.GetValues(typeof(RunGrowthTrigger)).Length + ":" + RunGrowth.MaxEntries);
+            ids.Add("currency-stars:v1:" + Content.PowerCap(Power.KillGoldPct) + "/" + Content.PowerCap(Power.EliteKillGoldPct)
+                + "/" + Content.PowerCap(Power.DreamDustPct) + "/" + Content.PowerCap(Power.DreamDustDelvePct));
             ids.Add("mechanisms:v13:" + caps + "/" + authored);
             ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
             ids.Sort(StringComparer.Ordinal);

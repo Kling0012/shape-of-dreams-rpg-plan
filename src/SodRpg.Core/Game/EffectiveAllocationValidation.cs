@@ -899,6 +899,10 @@ namespace SodRpg.Core.Game
             }
             foreach (var pair in build.PairCombos)
                 result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value, 0, dependencies, "Q:", pair.Def.Id));
+            // v1.32 B: a RunGrowth is worth (cap x per-stack effect x gain speed); a modifier is effective only while it raises one of them.
+            foreach (var growth in build.RunGrowths)
+                result.Add(Scalar("growth:" + growth.StarId, (long)growth.Cap * (100 + growth.EffectPercent) * growth.GainMultiplier,
+                    (long)RunGrowthDef.MaxCap * (100 + RunGrowthModifierDef.MaxEffectPercent) * 2, dependencies, "W:", "growth"));
             foreach (var entry in build.Mechanisms)
                 result.AddRange(MechanismChannels(entry, build, heroKey, capFingerprint));
             if (dependencies != null)
@@ -1154,6 +1158,7 @@ namespace SodRpg.Core.Game
                 foreach (string contributor in channel.ContributorIds) if (contributor == talent.Id) return true;
                 return false;
             }
+            if (talent.RunGrowth != null || talent.RunGrowthModifier != null) return channel.Key.StartsWith("growth:", StringComparison.Ordinal);
             return channel.Key == (talent.IsPowerNode ? "power:" + (int)talent.RankPower : "stat:" + (int)talent.Stat);
         }
 

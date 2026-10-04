@@ -10,6 +10,8 @@ namespace SodRpg.Core.Game
     {
         public string Text { get; set; } = "";
         public List<string> StarIds { get; } = new List<string>();
+        /// <summary>遠征の鍛錬（RunGrowth）の行なら、その定義。画面が現在のスタックを添えるために使う。</summary>
+        public RunGrowthEntry Growth { get; set; }
     }
 
     /// <summary>Lines grouped under a heading (a memory name, or a generic section).</summary>
@@ -32,9 +34,11 @@ namespace SodRpg.Core.Game
         public List<StarSummaryGroup> Memories { get; } = new List<StarSummaryGroup>();
         public List<StarSummaryLine> Choices { get; } = new List<StarSummaryLine>();
         public List<StarSummaryLine> Keystone { get; } = new List<StarSummaryLine>();
+        /// <summary>v1.32 遠征の鍛錬（RunGrowth）。1本ごとに1行。</summary>
+        public List<StarSummaryLine> RunGrowths { get; } = new List<StarSummaryLine>();
 
         public bool IsEmpty => Stats.Count == 0 && Powers.Count == 0 && Memories.Count == 0
-            && Choices.Count == 0 && Keystone.Count == 0;
+            && Choices.Count == 0 && Keystone.Count == 0 && RunGrowths.Count == 0;
 
         /// <param name="isEquipped">記憶の型名が装着中か。null なら印を付けない。</param>
         public static StarSummary Compute(Profile p, string heroKey, Func<string, bool> isEquipped = null)
@@ -67,6 +71,7 @@ namespace SodRpg.Core.Game
                 return g;
             }
 
+            var growthRows = new List<KeyValuePair<TalentDef, int>>();
             var effectLines = new Dictionary<string, EffectTotal>(StringComparer.Ordinal);
             var effectOrder = new List<EffectTotal>();
             var pairLines = new List<KeyValuePair<string, StarSummaryLine>>();
@@ -87,6 +92,11 @@ namespace SodRpg.Core.Game
                     };
                     chosen.StarIds.Add(star.Id);
                     summary.Choices.Add(chosen);
+                }
+                if (t.RunGrowth != null || t.RunGrowthModifier != null)
+                {
+                    growthRows.Add(new KeyValuePair<TalentDef, int>(t, rank));
+                    continue;
                 }
                 string memory = star.RouteMemory ?? t.RouteMemory;
                 var pair = PairCombos.ForBridge(star.Id);
@@ -177,6 +187,17 @@ namespace SodRpg.Core.Game
                 }
             }
 
+            if (growthRows.Count > 0)
+            {
+                var growthBuild = new Build();
+                RunGrowth.Compose(growthBuild, growthRows);
+                foreach (var entry in growthBuild.RunGrowths)
+                {
+                    var line = new StarSummaryLine { Text = RunGrowth.Describe(entry), Growth = entry };
+                    line.StarIds.AddRange(entry.ContributorIds);
+                    summary.RunGrowths.Add(line);
+                }
+            }
             foreach (var total in effectOrder) total.Line.Text = total.Describe();
             foreach (var kv in stats.OrderBy(k => (int)k.Key))
             {

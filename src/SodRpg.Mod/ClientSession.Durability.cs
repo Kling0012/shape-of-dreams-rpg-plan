@@ -17,6 +17,8 @@ namespace SodRpg.Mod
             state.PublisherTerminalChoices = _choicePublisher.TerminalChoices;
             state.PublisherVictory = _choicePublisher.TerminalVictory;
             _pendingPressureDividends.Capture(state);
+            // v1.32 B: the host's per-player RunGrowth stacks resume with the expedition (no-op without a RunGrowth star).
+            HostAuthority.RunGrowthLedger.Capture(state);
             Profile.RunRecovery = state;
             CaptureKillClassification();
         }
@@ -31,6 +33,7 @@ namespace SodRpg.Mod
             _pendingRunVictory = state?.PendingVictory;
             _choicePublisher.RestoreFinalized(state?.PublisherHistory, state?.PublisherTerminalChoices, state?.PublisherVictory);
             _pendingPressureDividends.Restore(state);
+            HostAuthority.RunGrowthLedger.Restore(state);
             RestoreKillClassification();
         }
     }

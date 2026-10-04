@@ -25,7 +25,7 @@
   "edges": ["同じ星団の隣接星ID"],
   "requires": ["購入の前提（全部）"],
   "requiresAny": ["購入の前提（どれか1つ）"],
-  "kind": "MemoryDamage | MemoryHaste | GimmickBoost | GimmickParam | Notable | Choice | Stat | Keystone",
+  "kind": "MemoryDamage | MemoryHaste | GimmickBoost | GimmickParam | Notable | Choice | Stat | Keystone | RunGrowth | RunGrowthMod（後ろの2つは下の「v1.32 の追加」参照）",
   "memory": "St_D_IcyVeins | 選択子 | null",
   "value": 1.0,
   "param": "Duration | Radius | ExtraTargets | Chance | null",
@@ -165,6 +165,70 @@ Spec の要素は次のキーだけ：
 
 ### その他
 - 星の `mechanisms` は C01〜C15。`maxRank` は新規星では通常1。`rankCost` は新規星が1、旧星の費用は維持（移行行には書かない）。
+
+## v1.32 の追加：通貨の星と「遠征の鍛錬」（RunGrowth）
+
+設計は [v1.32-star-additions.md](../../docs/specs/v1.32-star-additions.md) の A・B。エンジンは新しい `Power` と型付き機構で、行の形は次のとおり（正準形の他の規約はそのまま）。
+
+### A. 通貨（既存の `kind: "Notable"` + `power`、新しい Power 名だけ）
+
+`power.name` に次の Power を書くだけで、生成・検証は既存の経路（`kind: "Notable"`・`power: {name, perRank}`・`maxRank: 1`）を通る。値は%。合計は Build が `Content.PowerCap` で打ち切る（設計の合計上限）。
+
+| `power.name` | 効果 | 合計上限 |
+| --- | --- | --- |
+| `KillGoldPct` | 撃破ゴールド +perRank%（`monsterKillGoldMultiplier` へ加減算） | 12 |
+| `EliteKillGoldPct` | エリート・ボスの撃破ゴールドがさらに +perRank%（ホストが追加分を付与） | 25 |
+| `DreamDustPct` | 自分で拾う夢のダスト +perRank%（仲間の贈り物・MODの取引には掛けない） | 12 |
+| `DreamDustDelvePct` | 夢のダスト +perRank%、**潜行中はさらに +perRank%**（「夢屑の籠」。常時分と潜行分が同じ値で付く） | 10 |
+
+```json
+"kind": "Notable", "power": { "name": "KillGoldPct", "perRank": 4 }, "maxRank": 1
+```
+
+夢のダストの合計は「夢屑の集め」3星×4% ＋ 籠10% ＝ 22%（潜行中は籠の分がもう10%付いて32%）。上限に収まるよう `DreamDustPct` は小さな星 4% ×3 まで、`DreamDustDelvePct` は 10 だけを使う。
+
+### B. 遠征の鍛錬（`kind: "RunGrowth"` と `"RunGrowthMod"`、任意の欄 `growth`）
+
+`growth` 欄は `power` の直後に置く**任意の欄**で、`kind` が `RunGrowth` / `RunGrowthMod` の行（と、Choice の選択肢）にだけ付く。ほかの効果欄（memory/value/param/receiver/target/gimmick/power/stat/options/keystone）は null。移行行には使えない。
+
+入口の重要な星（仕組みを得る。生成物は `ClusterStarKind.Notable` + `RunGrowthDef`）：
+
+```json
+"kind": "RunGrowth",
+"memory": null, "value": null, "param": null, "receiver": null, "target": null, "gimmick": null, "power": null,
+"growth": {
+  "trigger": "DamageTakenMaxHpPct",
+  "threshold": 10,
+  "cap": 60,
+  "effects": [ { "stat": "Armor", "amount": 1 }, { "stat": "MaxHealthFlat", "amount": 4 } ]
+},
+"stat": null, "options": null, "keystone": null
+```
+
+- `trigger`：`DamageTakenMaxHpPct`（受けて失ったHPが最大HPの threshold% に達するたび）、`ShieldAbsorbedMaxHpPct`（障壁が吸収した量が最大HPの threshold% に達するたび）、`ParrySuccess`（ミストのパリィ `St_R_Parry` の成功 threshold 回ごと）、`CritBasicAttackKill`（会心の基本攻撃でとどめ threshold 回ごと）。
+- `threshold`：HP系は 1〜100（最大HPに対する%）、出来事系は 1〜1000（回数。ふつう 1）。
+- `cap`：1〜500。`effects`：1〜4個。`stat` は `Stat` の名前（エッセンス枠・`SacrificeReduction`・`FourthAttackShift` は不可）、`amount` は**1スタックあたり**で、千分の一まで（0.5、0.3 など）。`ShieldPower` / `HealPower` / `SummonPower` は戦闘の処理器が読み、そのほかはヒーローの能力値に足される。
+
+修飾（上限 +N／1スタックの効果 +X%／溜まる速さ2倍）。小さな星は `kind: "RunGrowthMod"`、2択は Choice の `options` の各要素に同じ形で書く：
+
+```json
+"kind": "RunGrowthMod",
+"memory": null, "value": null, "param": null, "receiver": null, "target": null, "gimmick": null, "power": null,
+"growth": { "target": "husk.run.g1", "capBonus": 20, "effectPct": 0, "doubleGain": false },
+"stat": null, "options": null, "keystone": null
+```
+
+- `target`：修飾する RunGrowth 星のID（同じ旅人。`kind` が `RunGrowth` であること）。null ならその旅人のすべての RunGrowth。
+- `capBonus`（0〜200）、`effectPct`（0〜500、1スタックの効果への上乗せ%）、`doubleGain`（true で1回の到達で2スタック。重ねても2倍まで）。どれも動かさない行は不可。段数（`maxRank`）を掛けて加算される。
+
+Choice の選択肢（`OPT_KEYS` に `growth` が加わる。`options` の各要素のキー順は `kind, memory, value, param, receiver, target, gimmick, power, growth, stat, nameJa, nameEn`）：
+
+```json
+{ "kind": "RunGrowthMod", "memory": null, "value": null, "param": null, "receiver": null, "target": null, "gimmick": null, "power": null,
+  "growth": { "target": null, "capBonus": 0, "effectPct": 50, "doubleGain": false }, "stat": null, "nameJa": "…", "nameEn": "…" }
+```
+
+スタックの扱い：ホストが旅人（プレイヤー）ごとに HeroRuntime の外で持ち、死亡・ゾーン移動・旅人の再生成でも残り、遠征の開始（`GameManager.runId` の変化）で0に戻る。協力プレイの復帰用に `RunRecoveryState`（`growthRunId` / `growth`）へ保存する。星の取得を外すと効果は外れるが、スタックはその遠征の間は残る。
 
 ## 検証
 
