@@ -6,6 +6,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 純白ルートの選択と勝利確保（#53・#54）
+
+- **純白の入口**：`Rift_Sidetrack_TheDream` が移動する `Zone_Primus` では、戦闘や撃破だけで確保／潜行を自動決定せず、道標・確保／潜行・契約を明示的に選べるようにしました。通常ルートの戦闘による自動潜行は変更しません。道標は従来どおりホスト共有、確保／潜行と契約は各自の選択です。 / **Pure-white entrance**: choices in `Zone_Primus` remain pending until explicitly selected instead of auto-delving on combat. Ordinary routes are unchanged; waypoints remain host-shared, while securing/delving and pacts remain personal.
+- **途中の保存**：既存の純白途中セーブは遠征と鞄を維持し、入口の選択を一度だけ補います。選択待ちなら既存の提示を維持し、新しい保存用の印で再読込による再提示を防ぎます。保存形式の番号は変えません。 / **Existing saves**: retain the active expedition and satchel, backfill the entrance choice once, preserve an already-pending offer, and persist a marker against repeated offers on reload; no profile-format reset.
+- **ボス撃破**：Primus 撃破から本体の `StartPrimusDeath` が始まった時点で、既存の勝利精算・終端履歴の同期を開始します。エンディングのカットシーン終了まで待たず、ホストと参加者の未確保品を持ち帰ります。 / **Boss victory**: native `StartPrimusDeath` starts the existing victory settlement and terminal-history replay, without waiting for the ending cutscene.
+- **調査・確認範囲**：本体資料の Loc に日本語「純白」の一致はなく、`MainLocalization` のリソース本体も未提供です。ルートは上記入口と `Primus_Ending → PureWhiteDream` のコードで対応付けました。#53 の即時自動潜行が報告時にも起きたか、クラッシュとの因果、実機UI・2台協力プレイは未確認です。権威側の撃破情報を失った保存については、分類や報酬を推測して補いません。 / **Limits**: Japanese localization assets, reporter logs, real-game UI and two-machine co-op are unavailable; the reported auto-delve timing and crash relationship remain unverified. Missing authoritative kill facts are not invented.
+- **検証**：指定の Release ビルド成功（警告5・エラー0）。指定の既存テストは .NET 8 ランタイム不足で中断後、`DOTNET_ROLL_FORWARD=Major` を付けて成功2018・失敗0・スキップ2。テストの追加・変更なし。 / **Verification**: Release build succeeded with 5 warnings and no errors; existing changed tests passed 2018, failed 0, skipped 2 with major runtime roll-forward because .NET 8 was unavailable. No tests added or changed.
+
+---
+
 ## v2.0.3 — 刻印からデバフを撤廃（2026-10-05）
 
 刻印（星図の紫の大星）に付いていたデバフ（代償）を、説明文だけでなく実効果からもすべて撤廃しました（#47）。残る効果の説明は対象・条件つきで自動生成され、効果一覧・選択画面・実効果が同じソースから作られるため、食い違いが起きません。 / Every keystone drawback is removed from the actual effects, not just the text (#47). The remaining effect text is generated from the same typed data the game applies, so descriptions, the selection screen and the effect list cannot disagree.

@@ -143,6 +143,8 @@ namespace SodRpg.Core.Game
         public int LimboDepth { get; set; }
         /// <summary>確保地点で選択待ちか。選ぶまで装備の変更ができる。</summary>
         public bool AwaitingChoice { get; set; }
+        /// <summary>純白の入口の明示選択を提示済みか。旧保存では一度だけ補う。</summary>
+        public bool PureWhiteChoiceReached { get; set; }
         /// <summary>確保地点での選択が終わってから、次の敵を倒すまで装備を整えられる。</summary>
         public bool GearWindow { get; set; }
 
@@ -185,6 +187,7 @@ namespace SodRpg.Core.Game
                 EventLuck = EventLuck,
                 LimboDepth = LimboDepth,
                 AwaitingChoice = AwaitingChoice,
+                PureWhiteChoiceReached = PureWhiteChoiceReached,
                 GearWindow = GearWindow,
             };
             foreach (var r in Satchel) c.Satchel.Add(r.Clone());

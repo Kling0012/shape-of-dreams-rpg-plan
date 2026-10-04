@@ -1,4 +1,5 @@
 using System;
+using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -37,6 +38,18 @@ namespace SodRpg.Mod
         public bool HasHostRunChoices => CanChooseRunRules || _receivedRunChoices != null;
         public bool WaypointChoicesReady => CanChooseRunRules || _runChoiceProgress.ChoicesReady(Profile.Run, ChoiceZoneIndex);
         private int ChoiceZoneIndex => _zone != null ? _zone.currentZoneIndex : -1;
+        private bool InPureWhiteRoute => _zone != null && _zone.currentZone != null && _zone.currentZone.name == "Zone_Primus";
+
+        internal static void OnPureWhiteBossDefeated()
+        {
+            if (!NetworkServer.active || _hostSession == null || !_hostSession.RunActive) return;
+            if (_hostSession._pendingRunVictory == true && _hostSession._pendingResultRunId == _hostSession.ActiveRunId) return;
+            _hostSession._pendingRunVictory = true;
+            _hostSession._pendingResultRunId = _hostSession.ActiveRunId;
+            // Persist the native victory before reward settlement; replay uses the normal terminal snapshot.
+            _hostSession.SaveNow();
+            _hostSession.TryConcludeRun();
+        }
 
         public bool CanResolveSecureChoice => RunActive && !HasPendingTrades
             && _runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules);
@@ -91,6 +104,9 @@ namespace SodRpg.Mod
         {
             NotifyPersonalDreamEvent();
             TryFinishSecureArrival();
+            if (CanChooseRunRules && InPureWhiteRoute && InGameUIManager.instance != null
+                && InGameUIManager.instance.isDoingEnding) OnPureWhiteBossDefeated();
+            EnsurePureWhiteChoice();
             if (NetworkServer.active)
             {
                 string before = _encodedRunChoices;
@@ -112,9 +128,11 @@ namespace SodRpg.Mod
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
 
-        private bool CommitCombatChoice(bool publish = true)
+        private bool CommitCombatChoice(bool publish = true, bool concluding = false)
         {
             if (!RunActive || !_runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules)) return false;
+            // Primus can begin combat at the entrance. Combat must not silently skip this route's choice.
+            if (InPureWhiteRoute && !concluding) return false;
             // Continuing combat chooses no pact. Delve leaves inventory and reserved trades untouched.
             Emit(Rules.Delve(Profile, Pact.None));
             MarkDirty(true);
@@ -134,6 +152,23 @@ namespace SodRpg.Mod
             _notify?.Invoke(new GameEvent(EventKind.Info, Loc.T(
                 "確保地点に到着。未確保の戦利品を「確保」するか、「深く潜る」かを選んでください。",
                 "Secure point reached. Choose to Secure your loot or Delve deeper.")));
+            SaveNow();
+        }
+
+        private void EnsurePureWhiteChoice()
+        {
+            if (!RunActive || !InPureWhiteRoute || _zone.isInAnyTransition || _pendingRunVictory.HasValue
+                || Profile.Run.PureWhiteChoiceReached || HasPendingKillClassification
+                || _runChoiceProgress.HasPendingArrival || _runChoiceProgress.ZoneIndex != ChoiceZoneIndex) return;
+            if (!CanChooseRunRules && _runChoiceProgress.Snapshots.GetForZone(ChoiceZoneIndex) == null) return;
+            // Resume the existing run and satchel. Legacy saves may have missed or auto-settled the entrance.
+            if (!Profile.Run.AwaitingChoice) Emit(Rules.ReachSecurePoint(Profile, _trades));
+            Profile.Run.PureWhiteChoiceReached = true;
+            if (!CanChooseRunRules)
+                _runChoiceProgress.Snapshots.GetForZone(ChoiceZoneIndex).ApplyTo(Profile.Run, ChoiceZoneIndex);
+            MarkDirty(true);
+            _nextDreamEventNotice = 0f;
+            PublishRunChoices();
             SaveNow();
         }
 
@@ -175,6 +210,7 @@ namespace SodRpg.Mod
             }
             if (!received) return;
             TryFinishSecureArrival();
+            EnsurePureWhiteChoice();
             ApplyHostRunChoices();
         }
 
@@ -199,7 +235,7 @@ namespace SodRpg.Mod
             if (!_pendingRunVictory.HasValue || !RunActive || HasPendingKillClassification || ActiveRunId != _pendingResultRunId) return;
             if (CanChooseRunRules)
             {
-                CommitCombatChoice(publish: false);
+                CommitCombatChoice(publish: false, concluding: true);
                 FlushPendingRunRewards();
             }
             if (!_runChoiceProgress.CanConclude(ActiveRunId, ChoiceZoneIndex, CanChooseRunRules)) return;
@@ -222,5 +258,12 @@ namespace SodRpg.Mod
         private string SecureChoiceUnavailable() => HasPendingTrades
             ? Loc.T("取引の応答を待っています。", "Waiting for the trade to complete.")
             : Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve.");
+    }
+
+    /// <summary>Primus death starts an ending sequence; the native result arrives only after its cutscene.</summary>
+    [HarmonyPatch(typeof(Primus_Ending), nameof(Primus_Ending.StartPrimusDeath))]
+    internal static class SecurePureWhiteBossVictory
+    {
+        private static void Postfix() => ClientSession.OnPureWhiteBossDefeated();
     }
 }
