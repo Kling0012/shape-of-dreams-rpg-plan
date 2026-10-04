@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SodRpg.Core.Game
 {
@@ -66,6 +67,8 @@ namespace SodRpg.Core.Game
                 return g;
             }
 
+            var effectLines = new Dictionary<string, EffectTotal>(StringComparer.Ordinal);
+            var effectOrder = new List<EffectTotal>();
             var pairLines = new List<KeyValuePair<string, StarSummaryLine>>();
             foreach (var kv in h.Talents.OrderBy(k => k.Key, StringComparer.Ordinal))
             {
@@ -107,7 +110,7 @@ namespace SodRpg.Core.Game
                 }
                 if (t.Gimmick != null && t.Gimmick.Value > 0)
                 {
-                    string text = Gimmicks.Describe(t.Gimmick, memory, rank);
+                    string text = Compact(Gimmicks.Describe(t.Gimmick, memory, rank));
                     if (text.Length > 0)
                     {
                         var line = new StarSummaryLine { Text = text };
@@ -150,17 +153,31 @@ namespace SodRpg.Core.Game
                     if (!stats.TryGetValue(t.Stat, out var line)) stats[t.Stat] = line = new StarSummaryLine();
                     line.StarIds.Add(star.Id);
                 }
+                else if (t.Gimmick == null && t.Mechanism == null && EffectKey(t, memory) is string effectKey)
+                {
+                    // Same effect (kind, target, parameter) from several stars: one line, summed value, every contributing star.
+                    if (!effectLines.TryGetValue(effectKey, out var total))
+                    {
+                        total = new EffectTotal { Template = t, Memory = memory, Line = new StarSummaryLine() };
+                        effectLines.Add(effectKey, total);
+                        effectOrder.Add(total);
+                        Group(memory).Lines.Add(total.Line);
+                    }
+                    total.Add(t, rank);
+                    total.Line.StarIds.Add(star.Id);
+                }
                 else if (t.Mechanism != null || t.ScopedModifier != null || t.NativeModifier != null || t.GimmickBoost > 0 || t.GimmickParameter.HasValue)
                 {
                     var line = new StarSummaryLine
                     {
-                        Text = Trim(t.Describe()) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks") : ""),
+                        Text = Compact(Trim(t.Describe())) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks") : ""),
                     };
                     line.StarIds.Add(star.Id);
                     Group(memory).Lines.Add(line);
                 }
             }
 
+            foreach (var total in effectOrder) total.Line.Text = total.Describe();
             foreach (var kv in stats.OrderBy(k => (int)k.Key))
             {
                 kv.Value.Text = Content.FormatStat(kv.Key, statValues[kv.Key]);
@@ -190,6 +207,73 @@ namespace SodRpg.Core.Game
             }
             return summary;
         }
+
+        /// <summary>Identity of an additive effect: equal keys add up. Null for effects that never merge (mechanisms).</summary>
+        internal static string EffectKey(TalentDef t, string memory)
+        {
+            var scoped = t.ScopedModifier;
+            if (scoped != null)
+                return "S|" + scoped.ScopeKind + "|" + scoped.ScopeMemory + "|" + string.Join(",", scoped.TargetEffectIds)
+                    + "|" + string.Join(",", scoped.TargetEffects) + "|" + scoped.Param + "|" + scoped.CapProfileId;
+            if (t.NativeModifier != null) return "N|" + t.NativeModifier.Memory + "|" + t.NativeModifier.Kind + "|" + t.NativeModifier.CapProfileId;
+            if (t.GimmickBoost > 0) return "B|" + t.RouteMemory;
+            if (t.GimmickParameter.HasValue) return "P|" + t.RouteMemory + "|" + t.GimmickParameter.Value;
+            return null;
+        }
+
+        private sealed class EffectTotal
+        {
+            public TalentDef Template;
+            public string Memory;
+            public StarSummaryLine Line;
+            private int amount, probability, targets, stars;
+
+            public void Add(TalentDef t, int rank)
+            {
+                stars++;
+                if (t.ScopedModifier != null)
+                {
+                    amount += t.ScopedModifier.Amount.Units * rank;
+                    probability += t.ScopedModifier.Probability.Units * rank;
+                    targets += t.ScopedModifier.ExtraTargets * rank;
+                }
+                else if (t.NativeModifier != null) amount += t.NativeModifier.Value.Units * rank;
+                else if (t.GimmickBoost > 0) amount += t.GimmickBoost * rank;
+                else amount += t.GimmickParamAmount * rank;
+            }
+
+            public string Describe()
+            {
+                var t = Template;
+                string text;
+                if (t.ScopedModifier != null)
+                {
+                    var m = t.ScopedModifier;
+                    text = FractionalScopedModifiers.Describe(new ScopedModifierDef
+                    {
+                        ScopeKind = m.ScopeKind, ScopeMemory = m.ScopeMemory, TargetEffectIds = m.TargetEffectIds, TargetEffects = m.TargetEffects,
+                        Param = m.Param, CapProfileId = m.CapProfileId, Amount = new ModifierUnits(amount),
+                        Probability = new ProbabilityUnits(Math.Min(probability, 10000)), ExtraTargets = targets,
+                    });
+                }
+                else if (t.NativeModifier != null)
+                    text = stars == 1
+                        ? FractionalScopedModifiers.Describe(new NativeMemoryModifierDef { Memory = t.NativeModifier.Memory, Kind = t.NativeModifier.Kind,
+                            CapProfileId = t.NativeModifier.CapProfileId, Value = new ValueUnits(amount) })
+                        : FractionalScopedModifiers.DescribeTotal(t.NativeModifier.Memory, t.NativeModifier.Kind, amount);
+                else if (t.GimmickBoost > 0) text = TalentDef.DescribeGimmickBoost(t.RouteMemory, amount);
+                else text = TalentDef.DescribeGimmickParameter(t.RouteMemory, t.GimmickParameter.Value, amount, t.Id);
+                return text;
+            }
+        }
+
+        private static readonly Regex JaBoilerplate = new Regex(
+            "（[^（）]*(?:（[^（）]*）[^（）]*)*。仕掛けのダメージからは発動しない）|(?:。効果量上限[0-9.]+%)?。仕掛けのダメージからは発動しない", RegexOptions.Compiled);
+        private static readonly Regex EnBoilerplate = new Regex(
+            @" \([^()]*(?:\([^()]*\)[^()]*)*; cannot trigger from gimmick damage\)\.?|(?:; effect value capped at [0-9.]+%)?; cannot trigger from gimmick damage\.?", RegexOptions.Compiled);
+
+        /// <summary>The summary lists what a star does; the cap and interval boilerplate stays in the star's own description.</summary>
+        internal static string Compact(string text) => text == null ? "" : EnBoilerplate.Replace(JaBoilerplate.Replace(text, ""), "");
 
         // Describe() appends "(max N ranks; ...)" which is noise in an aggregated list.
         private static string Trim(string text)

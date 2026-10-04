@@ -24,7 +24,7 @@ namespace SodRpg.Core.Game
         /// <summary>Localized representative-star name; the authored cluster's identity/name is Id.</summary>
         public Txt Name { get; }
         /// <summary>画面に出す星団の名前（例：「氷の血脈の星団」）。内部IDは含まない。</summary>
-        public Txt DisplayName { get; }
+        public Txt DisplayName { get; internal set; }
         public ClusterRegionKind Region { get; }
         public int[] NodeIndices => (int[])nodeIndices.Clone();
         public int NodeCount => nodeIndices.Length;
@@ -92,7 +92,68 @@ namespace SodRpg.Core.Game
                 int region = a.Region.CompareTo(b.Region);
                 return region != 0 ? region : StringComparer.Ordinal.Compare(a.Id, b.Id);
             });
+            MakeNamesDistinct(layout, result);
             return result;
+        }
+
+        /// <summary>
+        /// 同じ旅人の星団どうしで表示名が重ならないようにする。重なる名前だけを、その星団で最初の見せ場の星
+        /// （「太陽の洗礼：洗礼の脈動」）で言い分け、それでも重なれば番号（一・二…）を付ける。
+        /// </summary>
+        private static void MakeNamesDistinct(HeroTreeLayout layout, StarMapCluster[] clusters)
+        {
+            var seen = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+            for (int i = 0; i < clusters.Length; i++)
+            {
+                if (!seen.TryGetValue(clusters[i].DisplayName.Ja, out var list)) seen.Add(clusters[i].DisplayName.Ja, list = new List<int>());
+                list.Add(i);
+            }
+            foreach (var pair in seen)
+            {
+                if (pair.Value.Count < 2) continue;
+                foreach (int i in pair.Value)
+                {
+                    var cluster = clusters[i];
+                    var star = NotableStarName(layout, cluster);
+                    var name = cluster.DisplayName;
+                    string ja = name.Ja.EndsWith("の星団", StringComparison.Ordinal) ? name.Ja.Substring(0, name.Ja.Length - 3) : name.Ja;
+                    string en = name.En.EndsWith(" Cluster", StringComparison.Ordinal) ? name.En.Substring(0, name.En.Length - 8) : name.En;
+                    cluster.DisplayName = new Txt(ja + "：" + star.Ja, en + ": " + star.En);
+                }
+                var again = new Dictionary<string, List<int>>(StringComparer.Ordinal);
+                foreach (int i in pair.Value)
+                {
+                    if (!again.TryGetValue(clusters[i].DisplayName.Ja, out var list)) again.Add(clusters[i].DisplayName.Ja, list = new List<int>());
+                    list.Add(i);
+                }
+                foreach (var group in again.Values)
+                {
+                    if (group.Count < 2) continue;
+                    for (int n = 0; n < group.Count; n++)
+                    {
+                        var name = clusters[group[n]].DisplayName;
+                        clusters[group[n]].DisplayName = new Txt(name.Ja + "（" + Ordinal(n + 1) + "）", name.En + " (" + (n + 1) + ")");
+                    }
+                }
+            }
+        }
+
+        private static Txt NotableStarName(HeroTreeLayout layout, StarMapCluster cluster)
+        {
+            for (int i = 0; i < cluster.NodeCount; i++)
+            {
+                var node = layout.Nodes[cluster.NodeIndex(i)];
+                if (node.Kind == HeroTreeNodeKind.Notable) return node.Talent.Name;
+            }
+            return cluster.Name;
+        }
+
+        private static string Ordinal(int number)
+        {
+            string[] digits = { "〇", "一", "二", "三", "四", "五", "六", "七", "八", "九" };
+            if (number < 10) return digits[number];
+            if (number < 20) return "十" + (number == 10 ? "" : digits[number - 10]);
+            return number.ToString(System.Globalization.CultureInfo.InvariantCulture);
         }
 
         /// <summary>

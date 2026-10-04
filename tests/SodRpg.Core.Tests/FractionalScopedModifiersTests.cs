@@ -169,7 +169,24 @@ namespace SodRpg.Core.Tests
         public void Source_and_receiver_boosts_are_explicitly_rejected_instead_of_multiplied()
         {
             var scenario = Tree(Effect(GimmickEffect.Shield, 1m, "shield.main"), Modifier(null, 2m), Modifier(null, 3m, ScopeKind.Receiver));
-            Assert.Throws<InvalidOperationException>(() => Compute(scenario));
+            Assert.Throws<InvalidStarCombinationException>(() => Compute(scenario));
+        }
+
+        [Fact]
+        public void Purchase_completing_a_source_and_receiver_boost_is_a_normal_rejection_not_an_exception()
+        {
+            var scenario = Tree(Effect(GimmickEffect.Shield, 1m, "shield.main"), Modifier(null, 2m), Modifier(null, 3m, ScopeKind.Receiver));
+            var hero = scenario.Profile.Hero(Anchor.HeroKey);
+            var receiver = scenario.Generated[2];
+            hero.Talents.Remove(receiver.Id);
+            var engine = new EffectiveAllocationValidation(scenario.Tree, layout: HeroTreeLayout.ForTalents(scenario.Tree));
+            var plan = engine.Preview(scenario.Profile, Anchor.HeroKey,
+                new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = receiver.Id });
+            Assert.False(plan.CanApply);
+            Assert.False(plan.CandidateEffective);
+            Assert.Contains(receiver.Id + "#1", plan.SaturatedChannels);
+            Assert.Empty(plan.AffectedRefundIds);
+            Assert.Throws<AllocationValidationException>(() => engine.Commit(scenario.Profile, plan, null));
         }
 
         [Fact]

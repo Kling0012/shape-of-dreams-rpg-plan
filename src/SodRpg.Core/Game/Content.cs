@@ -262,9 +262,8 @@ namespace SodRpg.Core.Game
             else
                 effect = ScopedModifier != null ? FractionalScopedModifiers.Describe(ScopedModifier)
                     : NativeModifier != null ? FractionalScopedModifiers.Describe(NativeModifier)
-                    : GimmickBoost > 0 ? Loc.T($"『{Links.Name(RouteMemory).Ja}』の仕掛けの効果量 +{GimmickBoost}%",
-                        $"{Links.Name(RouteMemory).En} gimmick effect values +{GimmickBoost}%")
-                    : GimmickParameter.HasValue ? DescribeGimmickParameter()
+                    : GimmickBoost > 0 ? DescribeGimmickBoost(RouteMemory, GimmickBoost)
+                    : GimmickParameter.HasValue ? DescribeGimmickParameter(RouteMemory, GimmickParameter.Value, GimmickParamAmount, Id)
                     : LinkPerRank != null ? Links.Describe(LinkPerRank)
                     : IsPowerNode ? Content.FormatPower(RankPower, PerRank)
                     : Gimmick != null && PerRank == 0 ? "" : Content.FormatStat(Stat, PerRank);
@@ -274,21 +273,24 @@ namespace SodRpg.Core.Game
             return effect + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} {(MaxRank == 1 ? "rank" : "ranks")}; {RankCost} {(RankCost == 1 ? "point" : "points")} per rank)");
         }
 
-        private string DescribeGimmickParameter()
+        internal static string DescribeGimmickBoost(string routeMemory, int amount) =>
+            Loc.T($"『{Links.Name(routeMemory).Ja}』の仕掛けの効果量 +{amount}%", $"{Links.Name(routeMemory).En} gimmick effect values +{amount}%");
+
+        internal static string DescribeGimmickParameter(string routeMemory, GimmickParam parameter, int amount, string id)
         {
-            string memory = Links.Name(RouteMemory).ToString();
-            switch (GimmickParameter.Value)
+            string memory = Links.Name(routeMemory).ToString();
+            switch (parameter)
             {
-                case GimmickParam.Duration: return Loc.T($"『{memory}』の仕掛けの持続時間 +{GimmickParamAmount}%",
-                    $"{memory} gimmick duration +{GimmickParamAmount}%");
-                case GimmickParam.WindowDuration: case GimmickParam.MarkDuration: throw new InvalidOperationException("A bridge gate duration is a typed scoped modifier, not a legacy gimmick parameter: " + Id);
-                case GimmickParam.Radius: return Loc.T($"『{memory}』の仕掛けの半径 +{GimmickParamAmount}%",
-                    $"{memory} gimmick radius +{GimmickParamAmount}%");
-                case GimmickParam.ExtraTargets: return Loc.T($"『{memory}』の仕掛けの追加対象 +{GimmickParamAmount}体",
-                    $"{memory} gimmicks: +{GimmickParamAmount} additional targets");
-                case GimmickParam.Chance: return Loc.T($"『{memory}』の仕掛けの属性追加確率 +{GimmickParamAmount}ポイント",
-                    $"{memory} gimmick extra-element chance +{GimmickParamAmount} percentage points");
-                default: throw new InvalidOperationException("Invalid gimmick parameter for " + Id);
+                case GimmickParam.Duration: return Loc.T($"『{memory}』の仕掛けの持続時間 +{amount}%",
+                    $"{memory} gimmick duration +{amount}%");
+                case GimmickParam.WindowDuration: case GimmickParam.MarkDuration: throw new InvalidOperationException("A bridge gate duration is a typed scoped modifier, not a legacy gimmick parameter: " + id);
+                case GimmickParam.Radius: return Loc.T($"『{memory}』の仕掛けの半径 +{amount}%",
+                    $"{memory} gimmick radius +{amount}%");
+                case GimmickParam.ExtraTargets: return Loc.T($"『{memory}』の仕掛けの追加対象 +{amount}体",
+                    $"{memory} gimmicks: +{amount} additional targets");
+                case GimmickParam.Chance: return Loc.T($"『{memory}』の仕掛けの属性追加確率 +{amount}ポイント",
+                    $"{memory} gimmick extra-element chance +{amount} percentage points");
+                default: throw new InvalidOperationException("Invalid gimmick parameter for " + id);
             }
         }
     }

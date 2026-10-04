@@ -2318,6 +2318,9 @@ namespace SodRpg.Mod
                 if (_starLayout.Nodes[i].Talent != null) indexOf[_starLayout.Nodes[i].Talent.Id] = i;
             _starSumHeader.text = Loc.T($"使ったポイント {sum.Spent} / 合計 {sum.Total}", $"Points used {sum.Spent} / {sum.Total} total");
             if (sum.Spent == 0) { StarSumAddTitle(Loc.T("まだ星を取得していません。", "No stars acquired yet.")); return; }
+            var note = new StarSumEntry();
+            note.Content.text = "<color=#9aa>" + Loc.T("発動間隔や上限は、各星の説明で確認できます。", "Cooldowns and caps are listed in each star's description.") + "</color>";
+            _starSumEntries.Add(note);
             for (int i = 0; i < _starNodes.Length; i++)
                 if (_starNodes[i].Allocated && _starNodes[i].Keystone)
                 {

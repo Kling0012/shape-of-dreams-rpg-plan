@@ -30,8 +30,24 @@ namespace SodRpg.Core.Game
             }
         }
 
+        /// <summary>
+        /// Two passes: the first finds every cluster star's position (bridges first, keystones last, so short entries win the
+        /// nearby space); the second adds the stars in author order at those positions, so node order and edge order stay stable.
+        /// </summary>
         private static void PlaceClusters(List<HeroTreeNode> nodes, List<List<int>> neighbors,
             List<HeroTreeEdge> edges, IReadOnlyList<TalentDef> talents)
+        {
+            var recorded = new Dictionary<string, StarMapPoint>(StringComparer.Ordinal);
+            var scratchNodes = new List<HeroTreeNode>(nodes);
+            var scratchNeighbors = new List<List<int>>(neighbors.Count);
+            foreach (var list in neighbors) scratchNeighbors.Add(new List<int>(list));
+            PlaceClusters(scratchNodes, scratchNeighbors, new List<HeroTreeEdge>(edges), talents, null, recorded);
+            PlaceClusters(nodes, neighbors, edges, talents, recorded, null);
+        }
+
+        private static void PlaceClusters(List<HeroTreeNode> nodes, List<List<int>> neighbors,
+            List<HeroTreeEdge> edges, IReadOnlyList<TalentDef> talents,
+            Dictionary<string, StarMapPoint> fixedPositions, Dictionary<string, StarMapPoint> recorded)
         {
             var grid = new PlacementGrid();
             var indices = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -42,6 +58,8 @@ namespace SodRpg.Core.Game
             }
             int Add(TalentDef talent, float x, float y)
             {
+                if (fixedPositions != null && fixedPositions.TryGetValue(talent.Id, out var known)) { x = known.X; y = known.Y; }
+                recorded?.Add(talent.Id, new StarMapPoint(x, y));
                 var adjacent = new List<int>();
                 int index = nodes.Count;
                 neighbors.Add(adjacent);
@@ -124,12 +142,32 @@ namespace SodRpg.Core.Game
                 }
                 if (!indices.ContainsKey(talent.Id)) clusters[group].Add(talent);
             }
+            // Bridge clusters claim the free space next to their ring star first, so their entry line stays short and the
+            // large memory clusters flow around them; keystones are placed last, each beside its own anchor.
+            var ordered = new List<List<TalentDef>>(clusters.Count);
+            for (int pass = 0; pass < 3; pass++)
+                foreach (var candidate in clusters)
+                {
+                    if (candidate.Count == 0) { if (pass == 1) ordered.Add(candidate); continue; }
+                    var kind = candidate[0].Cluster.Region.Kind;
+                    if ((kind == ClusterRegionKind.Bridge ? 0 : kind == ClusterRegionKind.Keystone ? 2 : 1) == pass) ordered.Add(candidate);
+                }
+            if (fixedPositions == null) clusters = ordered;
+            bool AnchorsReady(List<TalentDef> group)
+            {
+                if (IsKeystoneGroup(group))
+                {
+                    foreach (var star in group) if (!indices.ContainsKey(KeystoneAnchor(star))) return false;
+                    return true;
+                }
+                return indices.ContainsKey(group[0].Cluster.Anchor);
+            }
+            var keystonePoints = new List<StarMapPoint>();
             for (int groupIndex = 0; groupIndex < clusters.Count; groupIndex++)
             {
                 // Preserve author order among ready groups; an anchor may live in a later cluster.
                 int ready = groupIndex;
-                while (ready < clusters.Count && clusters[ready].Count != 0
-                    && !indices.ContainsKey(clusters[ready][0].Cluster.Anchor)) ready++;
+                while (ready < clusters.Count && clusters[ready].Count != 0 && !AnchorsReady(clusters[ready])) ready++;
                 if (ready == clusters.Count)
                     throw new InvalidOperationException("Cluster anchor is missing or cyclic: " + clusters[groupIndex][0].Cluster.Id);
                 var group = clusters[ready];
@@ -138,13 +176,44 @@ namespace SodRpg.Core.Game
                 group.Sort((a, b) => a.ClusterOrder.CompareTo(b.ClusterOrder));
                 if (group.Count == 0) continue;
                 var cluster = group[0].Cluster;
-                if (!indices.TryGetValue(cluster.Anchor, out int anchor))
+                if (IsKeystoneGroup(group))
+                {
+                    // Authored keystones are independent big stars: each sits beside its own anchor, never in a shared fan.
+                    foreach (var star in group)
+                    {
+                        var home = nodes[indices[KeystoneAnchor(star)]];
+                        double heading = Math.Atan2(home.Y, home.X);
+                        float kx = 0, ky = 0;
+                        bool found = fixedPositions != null;
+                        for (int shell = 1; !found; shell++)
+                        {
+                            int directions = 16 + shell * 8;
+                            for (int direction = 0; direction < directions && !found; direction++)
+                            {
+                                int signed = direction == 0 ? 0 : (direction + 1) / 2 * (direction % 2 == 1 ? 1 : -1);
+                                double angle = heading + signed * 2 * Math.PI / directions;
+                                kx = home.X + (float)(shell * MinimumSpacing * 1.5f * Math.Cos(angle));
+                                ky = home.Y + (float)(shell * MinimumSpacing * 1.5f * Math.Sin(angle));
+                                found = grid.Free(kx, ky) && KeystoneFree(keystonePoints, kx, ky);
+                            }
+                        }
+                        keystonePoints.Add(new StarMapPoint(kx, ky));
+                        Add(star, kx, ky);
+                    }
+                    continue;
+                }
+                if (!indices.TryGetValue(PlacementAnchor(group, indices), out int anchor))
                     throw new InvalidOperationException("Cluster anchor missing from layout: " + cluster.Id);
                 var offsets = ClusterOffsets(group, StarShapes(group, cluster));
+                // The entry star (the one the anchor's line reaches) is the rigid unit's origin. Rings and chains already start there;
+                // a fan's arc lies far from its pivot, which used to push the entry hundreds of units away from the anchor.
+                var entryOffset = offsets[0];
+                if (Math.Abs(entryOffset.X) > 0.001f || Math.Abs(entryOffset.Y) > 0.001f)
+                    for (int i = 0; i < offsets.Length; i++) offsets[i] = new StarMapPoint(offsets[i].X - entryOffset.X, offsets[i].Y - entryOffset.Y);
                 var positions = new StarMapPoint[group.Count];
                 var origin = nodes[anchor];
                 double outward = Math.Atan2(origin.Y, origin.X);
-                bool placed = false;
+                bool placed = fixedPositions != null;
                 // Search nearest free shells around the anchor, retaining the whole shape as one rigid unit.
                 for (int shell = 1; !placed; shell++)
                 {
@@ -211,6 +280,44 @@ namespace SodRpg.Core.Game
                     Join(from, to);
                 }
             }
+        }
+
+        /// <summary>Keystones are drawn larger than other stars, so they keep twice the ordinary spacing from each other.</summary>
+        public const float KeystoneSpacing = MinimumSpacing * 2f;
+
+        private static bool IsKeystoneGroup(List<TalentDef> group) =>
+            group.Count > 0 && group[0].Cluster.Region.Kind == ClusterRegionKind.Keystone && group[0].AuthoredStar != null;
+
+        /// <summary>
+        /// The star a cluster is placed beside. Authored clusters record one group-level anchor (a route's first star), but the
+        /// entry line really leaves from the already placed star the entry star's authored edge reaches outside the cluster (a route's fourth or
+        /// seventh star); placing beside that star keeps the entry line short. Otherwise the cluster's own anchor.
+        /// </summary>
+        private static string PlacementAnchor(List<TalentDef> group, Dictionary<string, int> placed)
+        {
+            var entry = group[0];
+            if (entry.AuthoredStar == null) return entry.Cluster.Anchor;
+            foreach (var edge in entry.AuthoredStar.Edges)
+            {
+                string other = edge.To == entry.Id ? edge.From : edge.From == entry.Id ? edge.To : null;
+                if (other == null || !placed.TryGetValue(other, out _)) continue;
+                bool inside = false;
+                foreach (var star in group) if (star.Id == other) { inside = true; break; }
+                if (!inside) return other;
+            }
+            return entry.Cluster.Anchor;
+        }
+
+        private static string KeystoneAnchor(TalentDef star) => star.AuthoredStar.AnchorId ?? star.Cluster.Anchor;
+
+        private static bool KeystoneFree(List<StarMapPoint> placed, float x, float y)
+        {
+            foreach (var point in placed)
+            {
+                float dx = point.X - x, dy = point.Y - y;
+                if (dx * dx + dy * dy < KeystoneSpacing * KeystoneSpacing) return false;
+            }
+            return true;
         }
 
         /// <summary>Per-star geometry: authored stars carry their own shape, others use their cluster's shape.</summary>

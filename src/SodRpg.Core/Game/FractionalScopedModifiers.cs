@@ -240,6 +240,16 @@ namespace SodRpg.Core.Game
             return Loc.T("（指定範囲の合計上限" + maximum + jaUnit + "）", " (scope total cap " + maximum + enUnit + ")");
         }
 
+        /// <summary>Total of several native stars sharing one effect: no per-star cap note, which would misread as a cap on the total.</summary>
+        internal static string DescribeTotal(string memoryId, LinkKind kind, int units)
+        {
+            string value = (units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
+            string memory = Links.Name(memoryId).ToString();
+            return kind == LinkKind.MemoryDamage
+                ? Loc.T(memory + "の記憶ダメージ +" + value + "%", memory + " memory damage +" + value + "%")
+                : Loc.T(memory + "を使用した際のクールダウン短縮 +" + value + "%", memory + " self cooldown reduction on use +" + value + "%");
+        }
+
         public static string Describe(NativeMemoryModifierDef modifier)
         {
             var cap = Profiles[modifier.CapProfileId];
@@ -457,7 +467,7 @@ namespace SodRpg.Core.Game
                             break;
                     }
                 }
-                if (sourceBoost && receiverBoost) throw new InvalidOperationException("Source/receiver double boost is forbidden: " + entry.StarId);
+                if (sourceBoost && receiverBoost) throw new InvalidStarCombinationException("Source/receiver double boost is forbidden: " + entry.StarId);
                 if (boostCap != null) boost = Math.Min(boost, boostCap.MaximumModifier.Units);
                 if (durationCap != null) duration = CapAdded(duration, entry.Def.DurationUnits, durationCap.MaximumModifier.Units);
                 if (radiusCap != null) radius = CapAdded(radius, entry.Def.RadiusUnits, radiusCap.MaximumModifier.Units);

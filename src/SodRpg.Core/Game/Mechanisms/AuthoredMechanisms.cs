@@ -46,6 +46,15 @@ namespace SodRpg.Core.Game
         }
     }
 
+    /// <summary>
+    /// A set of allocated stars that can never form a legal build (for example boosting one mechanism from both its source and its
+    /// receiver). Allocation validation turns it into a normal rejection of the star that completed the combination.
+    /// </summary>
+    public sealed class InvalidStarCombinationException : InvalidOperationException
+    {
+        public InvalidStarCombinationException(string message) : base(message) { }
+    }
+
     public sealed class AuthoredMechanismEntry
     {
         public string StarId { get; set; }
@@ -446,7 +455,7 @@ namespace SodRpg.Core.Game
                     default: boost += amount; sourceBoost |= m.ScopeKind != ScopeKind.Receiver; receiverBoost |= m.ScopeKind == ScopeKind.Receiver; break;
                 }
             }
-            if (sourceBoost && receiverBoost) throw new InvalidOperationException("Source/receiver double boost is forbidden: " + s.ChannelId);
+            if (sourceBoost && receiverBoost) throw new InvalidStarCombinationException("Source/receiver double boost is forbidden: " + s.ChannelId);
             if (caps.TryGetValue(-1, out var bc)) boost = Math.Min(boost, bc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Duration, out var dc)) duration = Math.Min(duration, dc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.WindowDuration, out var wc)) windowDuration = Math.Min(windowDuration, wc.MaximumModifier.Units);

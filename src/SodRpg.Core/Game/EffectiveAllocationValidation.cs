@@ -254,10 +254,19 @@ namespace SodRpg.Core.Game
             var saturated = new List<string>();
             var details = new List<AllocationSaturation>();
             var refunds = new SortedDictionary<string, AllocationRefund>(StringComparer.Ordinal);
-            var channels = scope.Pin(proposed, proposed);
-            scope.BeginChange(change, candidate, original, proposed);
-            bool candidateEffective = true;
-            if (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice)
+            IReadOnlyList<EffectiveAllocationChannel> channels;
+            bool illegalCombination = false;
+            try { channels = scope.Pin(proposed, proposed); }
+            catch (InvalidStarCombinationException) when (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice)
+            {
+                // The candidate completes a combination no build may contain: reject it like any other ineffective star.
+                channels = oldChannels;
+                illegalCombination = true;
+                saturated.Add(candidate.Id + "#" + proposed.Talents[candidate.Id].ToString(CultureInfo.InvariantCulture));
+            }
+            if (!illegalCombination) scope.BeginChange(change, candidate, original, proposed);
+            bool candidateEffective = !illegalCombination;
+            if (!illegalCombination && (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice))
             {
                 int rank = proposed.Talents[candidate.Id];
                 int start = change.Kind == AllocationChangeKind.Purchase ? rank : 1;
