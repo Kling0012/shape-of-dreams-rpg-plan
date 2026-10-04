@@ -1,0 +1,67 @@
+====== 土台: 頭 (Head) ======
+
+頭 (Head)の土台（ベース装備）一覧です（60種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:head.iron_helm.png?40}} | 鉄の兜 (Iron Helm) | 生命 (Life) | 防御 +6 (+6 Armor) | head.iron_helm |
+| {{dreamforge:icons:head.dream_circlet.png?40}} | 夢見の額冠 (Dreamer's Circlet) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | head.dream_circlet |
+| {{dreamforge:icons:head.hunter_hood.png?40}} | 狩人の頭巾 (Hunter's Hood) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | head.hunter_hood |
+| {{dreamforge:icons:head.horned_helm.png?40}} | 双角の兜 (Horned Helm) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | head.horned_helm |
+| {{dreamforge:icons:head.sage_hat.png?40}} | 賢者のとんがり帽 (Sage's Hat) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | head.sage_hat |
+| {{dreamforge:icons:head.mist_veil.png?40}} | 霧のヴェール (Veil of Mist) | 想像 (Imagination) | 移動速度 +3% (+3% Move Speed) | head.mist_veil |
+| {{dreamforge:icons:head.warden_visor.png?40}} | 番人の面頬 (Warden's Visor) | 生命 (Life) | 行動妨害耐性 +8 (+8 Tenacity) | head.warden_visor |
+| {{dreamforge:icons:head.ember_crown.png?40}} | 残り火の冠 (Ember Crown) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | head.ember_crown |
+| {{dreamforge:icons:head.moon_hood.png?40}} | 月影の頭巾 (Moonshadow Hood) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | head.moon_hood |
+| {{dreamforge:icons:head.healer_band.png?40}} | 癒し手の鉢巻 (Healer's Band) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | head.healer_band |
+| {{dreamforge:icons:head.thorn_circlet.png?40}} | 茨の冠 (Thorn Circlet) | 生命 (Life) | 最大HP +25 (+25 Max Health) | head.thorn_circlet |
+| {{dreamforge:icons:head.frost_helm.png?40}} | 霜の兜 (Frost Helm) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | head.frost_helm |
+| {{dreamforge:icons:head.radiant_halo.png?40}} | 光輪 (Radiant Halo) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | head.radiant_halo |
+| {{dreamforge:icons:head.scout_goggles.png?40}} | 斥候の遠眼鏡 (Scout's Goggles) | 破壊 (Destruction) | 通常攻撃の射程 +5% (+5% Attack Range) | head.scout_goggles |
+| {{dreamforge:icons:head.berserker_mask.png?40}} | 狂戦士の面 (Berserker's Mask) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | head.berserker_mask |
+| {{dreamforge:icons:head.wolf_pelt.png?40}} | 狼の毛皮かぶり (Wolf Pelt Hood) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | head.wolf_pelt |
+| {{dreamforge:icons:head.star_diadem.png?40}} | 星の髪飾り (Star Diadem) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | head.star_diadem |
+| {{dreamforge:icons:head.plague_mask.png?40}} | 鳥嘴の面 (Beaked Mask) | 生命 (Life) | 行動妨害耐性 +8 (+8 Tenacity) | head.plague_mask |
+| {{dreamforge:icons:head.coral_crown.png?40}} | 珊瑚の冠 (Coral Crown) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | head.coral_crown |
+| {{dreamforge:icons:head.knight_helm.png?40}} | 騎士の大兜 (Knight's Greathelm) | 生命 (Life) | 最大HP +5% (+5% Max Health) | head.knight_helm |
+| {{dreamforge:icons:head.ash_hood.png?40}} | 灰かぶりの頭巾 (Ashen Hood) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | head.ash_hood |
+| {{dreamforge:icons:head.eye_patch.png?40}} | 片目の眼帯 (Marksman's Eyepatch) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | head.eye_patch |
+| {{dreamforge:icons:head.leaf_wreath.png?40}} | 若葉の花冠 (Leaf Wreath) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | head.leaf_wreath |
+| {{dreamforge:icons:head.void_helm.png?40}} | 虚ろの兜 (Hollow Helm) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | head.void_helm |
+| {{dreamforge:icons:head.sun_mask.png?40}} | 日輪の面 (Sunwheel Mask) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | head.sun_mask |
+| {{dreamforge:icons:head.raven_mask.png?40}} | 鴉の面 (Raven Mask) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | head.raven_mask |
+| {{dreamforge:icons:head.lantern_hat.png?40}} | 灯籠の笠 (Lantern Hat) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | head.lantern_hat |
+| {{dreamforge:icons:head.iron_coif.png?40}} | 鎖頭巾 (Chain Coif) | 生命 (Life) | 防御 +6 (+6 Armor) | head.iron_coif |
+| {{dreamforge:icons:head.dream_veil.png?40}} | 夢見の薄衣 (Dreamer's Veil) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | head.dream_veil |
+| {{dreamforge:icons:head.antler_crown.png?40}} | 大角の冠 (Antler Crown) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | head.antler_crown |
+| {{dreamforge:icons:head.talon_crown.png?40}} | 爪の冠 (Talon Crown) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | head.talon_crown |
+| {{dreamforge:icons:head.gale_hood.png?40}} | 疾風の頭巾 (Gale Hood) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | head.gale_hood |
+| {{dreamforge:icons:head.magma_band.png?40}} | 熔岩の鉢巻 (Magma Band) | 破壊 (Destruction) | 火属性効果 +8% (+8% Fire Effect) | head.magma_band |
+| {{dreamforge:icons:head.rimebloom_hood.png?40}} | 霜華の頭巾 (Rimebloom Hood) | 破壊 (Destruction) | 冷気属性効果 +8% (+8% Cold Effect) | head.rimebloom_hood |
+| {{dreamforge:icons:head.noonlight_circlet.png?40}} | 真昼の額冠 (Noonlight Circlet) | 破壊 (Destruction) | 光属性効果 +8% (+8% Light Effect) | head.noonlight_circlet |
+| {{dreamforge:icons:head.eclipse_mask.png?40}} | 日蝕の面 (Eclipse Mask) | 破壊 (Destruction) | 闇属性効果 +8% (+8% Dark Effect) | head.eclipse_mask |
+| {{dreamforge:icons:head.hawkeye_band.png?40}} | 鷹目の鉢巻 (Hawkeye Band) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | head.hawkeye_band |
+| {{dreamforge:icons:head.longshot_cap.png?40}} | 遠撃の帽子 (Longshot Cap) | 破壊 (Destruction) | 通常攻撃の射程 +5% (+5% Attack Range) | head.longshot_cap |
+| {{dreamforge:icons:head.crimsonlotus_hood.png?40}} | 紅蓮の頭巾 (Crimson Lotus Hood) | 破壊 (Destruction) | 会心ダメージ +12% (+12% Crit Damage) | head.crimsonlotus_hood |
+| {{dreamforge:icons:head.thunderveil_hood.png?40}} | 雷帷の頭巾 (Thunderveil Hood) | 破壊 (Destruction) | 攻撃速度 +5% (+5% Attack Speed) | head.thunderveil_hood |
+| {{dreamforge:icons:head.vulture_hood.png?40}} | 兀鷹のフード (Vulture Hood) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | head.vulture_hood |
+| {{dreamforge:icons:head.sentry_visor.png?40}} | 歩哨の面頬 (Sentry Visor) | 生命 (Life) | 防御 +7 (+7 Armor) | head.sentry_visor |
+| {{dreamforge:icons:head.boulder_helm.png?40}} | 岩塊の兜 (Boulder Helm) | 生命 (Life) | 最大HP +6% (+6% Max Health) | head.boulder_helm |
+| {{dreamforge:icons:head.moss_crown.png?40}} | 苔の冠 (Moss Crown) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | head.moss_crown |
+| {{dreamforge:icons:head.icewall_helm.png?40}} | 氷壁の兜 (Icewall Helm) | 生命 (Life) | 防御 +8 (+8 Armor) | head.icewall_helm |
+| {{dreamforge:icons:head.oathring_circlet.png?40}} | 誓環の額冠 (Oathring Circlet) | 生命 (Life) | 最大HP +30 (+30 Max Health) | head.oathring_circlet |
+| {{dreamforge:icons:head.sunkenbell_helm.png?40}} | 沈鐘の兜 (Sunken Bell Helm) | 生命 (Life) | 行動妨害耐性 +12 (+12 Tenacity) | head.sunkenbell_helm |
+| {{dreamforge:icons:head.pillar_crown.png?40}} | 柱石の冠 (Pillar Crown) | 生命 (Life) | 最大HP +25 (+25 Max Health) | head.pillar_crown |
+| {{dreamforge:icons:head.fortress_coif.png?40}} | 城塞の鎖頭巾 (Fortress Coif) | 生命 (Life) | 防御 +6 (+6 Armor) | head.fortress_coif |
+| {{dreamforge:icons:head.comet_diadem.png?40}} | 彗星の髪飾り (Comet Diadem) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | head.comet_diadem |
+| {{dreamforge:icons:head.whisper_veil.png?40}} | 囁きのヴェール (Whisper Veil) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | head.whisper_veil |
+| {{dreamforge:icons:head.tidal_circlet.png?40}} | 潮汐の額冠 (Tidal Circlet) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | head.tidal_circlet |
+| {{dreamforge:icons:head.emberbloom_crown.png?40}} | 火焔花の冠 (Emberbloom Crown) | 想像 (Imagination) | 火属性効果 +6% (+6% Fire Effect) | head.emberbloom_crown |
+| {{dreamforge:icons:head.sunbeam_hood.png?40}} | 光条の頭巾 (Sunbeam Hood) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | head.sunbeam_hood |
+| {{dreamforge:icons:head.starless_veil.png?40}} | 無星のヴェール (Starless Veil) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | head.starless_veil |
+| {{dreamforge:icons:head.meditation_band.png?40}} | 瞑想の鉢巻 (Meditation Band) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | head.meditation_band |
+| {{dreamforge:icons:head.kindly_circlet.png?40}} | 慈手の額冠 (Kindly Circlet) | 想像 (Imagination) | 与える回復が5%増える（味方への回復も・上限60%） (Healing you grant increases by 5% (including allies; cap 60%)) | head.kindly_circlet |
+| {{dreamforge:icons:head.wardband.png?40}} | 護符の額帯 (Ward Band) | 想像 (Imagination) | 与えるシールドが5%増える（味方へのシールドも・上限60%） (Shields you grant increase by 5% (including allies; cap 60%)) | head.wardband |
+| {{dreamforge:icons:head.beastcaller_antlers.png?40}} | 呼獣の飾り角 (Beastcaller Antlers) | 想像 (Imagination) | 召喚獣の与えるダメージが8%増える（上限80%） (Your summons deal 8% more damage (cap 80%)) | head.beastcaller_antlers |
+| {{dreamforge:icons:head.moonlace_hood.png?40}} | 月紗の頭巾 (Moonlace Hood) | 想像 (Imagination) | 魔力 +6 (+6 Ability Power) | head.moonlace_hood |

@@ -1,0 +1,50 @@
+====== Dreamforge RPG 装備ウィキ ======
+
+Shape of Dreams 用MOD「Dreamforge RPG」（バージョン 1.30.3）の装備をまとめたウィキです。内容はゲームのデータから自動生成しています。\\
+Equipment reference for the Dreamforge RPG mod, generated directly from the game data.
+
+===== 収録数 =====
+
+  * 土台 (Bases): 360
+  * 固有品 (Uniques): 1334
+  * セット (Sets): 48
+  * 固有効果 (Powers): 91（うち装備の抽選で出るもの 90）
+  * 特性 (Affixes): 98（部位別の合計）
+
+===== ページ =====
+
+  * [[dreamforge:basics|装備の基本]]
+  * [[dreamforge:powers|固有効果]]
+  * [[dreamforge:affixes|特性]]
+  * [[dreamforge:sets|セット装備]]
+  * [[dreamforge:starmap|星図（旅人別）]]
+
+===== 星図（旅人別） =====
+
+  * [[dreamforge:starmap_cetus|Cetus]]（星 87 / 到達刻印 2）
+  * [[dreamforge:starmap_aurena|Aurena]]（星 73 / 到達刻印 2）
+  * [[dreamforge:starmap_bismuth|Bismuth]]（星 735 / 到達刻印 19）
+  * [[dreamforge:starmap_husk|Husk]]（星 879 / 到達刻印 20）
+  * [[dreamforge:starmap_lacerta|Lacerta]]（星 878 / 到達刻印 18）
+  * [[dreamforge:starmap_mist|Mist]]（星 885 / 到達刻印 19）
+  * [[dreamforge:starmap_nachia|Nachia]]（星 735 / 到達刻印 16）
+  * [[dreamforge:starmap_vesper|Vesper]]（星 878 / 到達刻印 18）
+  * [[dreamforge:starmap_yubar|Yubar]]（星 877 / 到達刻印 17）
+
+===== 土台 =====
+
+  * [[dreamforge:bases_weapon|主装備]]（60）
+  * [[dreamforge:bases_head|頭]]（60）
+  * [[dreamforge:bases_armor|防具]]（60）
+  * [[dreamforge:bases_hands|手]]（60）
+  * [[dreamforge:bases_feet|足]]（60）
+  * [[dreamforge:bases_charm|装飾品]]（60）
+
+===== 固有品 =====
+
+  * [[dreamforge:uniques_weapon|主装備]]（235）
+  * [[dreamforge:uniques_head|頭]]（219）
+  * [[dreamforge:uniques_armor|防具]]（229）
+  * [[dreamforge:uniques_hands|手]]（217）
+  * [[dreamforge:uniques_feet|足]]（215）
+  * [[dreamforge:uniques_charm|装飾品]]（219）

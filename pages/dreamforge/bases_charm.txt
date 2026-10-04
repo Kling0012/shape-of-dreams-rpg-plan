@@ -1,0 +1,67 @@
+====== 土台: 装飾品 (Charm) ======
+
+装飾品 (Charm)の土台（ベース装備）一覧です（60種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:charm.resonance_amulet.png?40}} | 共鳴の護符 (Resonance Amulet) | 想像 (Imagination) | スキル加速 +4 (+4 Ability Haste) | charm.resonance_amulet |
+| {{dreamforge:icons:charm.tailwind_ring.png?40}} | 追い風の指輪 (Tailwind Ring) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | charm.tailwind_ring |
+| {{dreamforge:icons:charm.hunters_seal.png?40}} | 狩人の印章 (Hunter's Seal) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | charm.hunters_seal |
+| {{dreamforge:icons:charm.pulsing_core.png?40}} | 脈打つ核 (Pulsing Core) | 生命 (Life) | 最大HP +20 (+20 Max Health) | charm.pulsing_core |
+| {{dreamforge:icons:charm.chain_necklace.png?40}} | 鎖の首飾り (Chain Necklace) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | charm.chain_necklace |
+| {{dreamforge:icons:charm.old_clock.png?40}} | 古き時計 (Old Clock) | 破壊 (Destruction) | スキル加速 +6 (+6 Ability Haste) | charm.old_clock |
+| {{dreamforge:icons:charm.ember_locket.png?40}} | 残り火のロケット (Ember Locket) | 破壊 (Destruction) | 火属性効果 +10% (+10% Fire Effect) | charm.ember_locket |
+| {{dreamforge:icons:charm.moon_bell.png?40}} | 月の鈴 (Moon Bell) | 想像 (Imagination) | 冷気属性効果 +10% (+10% Cold Effect) | charm.moon_bell |
+| {{dreamforge:icons:charm.iron_feather.png?40}} | 鉄の羽根 (Iron Feather) | 生命 (Life) | 防御 +6 (+6 Armor) | charm.iron_feather |
+| {{dreamforge:icons:charm.fang_necklace.png?40}} | 牙の首飾り (Fang Necklace) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | charm.fang_necklace |
+| {{dreamforge:icons:charm.war_drum.png?40}} | 戦太鼓 (War Drum) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | charm.war_drum |
+| {{dreamforge:icons:charm.guardian_seal.png?40}} | 守護の封印 (Guardian Seal) | 生命 (Life) | 最大HP +5% (+5% Max Health) | charm.guardian_seal |
+| {{dreamforge:icons:charm.stone_heart.png?40}} | 石の心臓 (Stone Heart) | 生命 (Life) | 行動妨害耐性 +12 (+12 Tenacity) | charm.stone_heart |
+| {{dreamforge:icons:charm.dream_lens.png?40}} | 夢見の水晶 (Dreaming Lens) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | charm.dream_lens |
+| {{dreamforge:icons:charm.shadow_mask.png?40}} | 影の仮面 (Shadow Mask) | 想像 (Imagination) | 闇属性効果 +10% (+10% Dark Effect) | charm.shadow_mask |
+| {{dreamforge:icons:charm.hearthstone.png?40}} | 炉端の石 (Hearthstone) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | charm.hearthstone |
+| {{dreamforge:icons:charm.frost_pendant.png?40}} | 霜の首飾り (Frost Pendant) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | charm.frost_pendant |
+| {{dreamforge:icons:charm.sun_brooch.png?40}} | 陽光のブローチ (Sun Brooch) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | charm.sun_brooch |
+| {{dreamforge:icons:charm.shadow_ring.png?40}} | 影の指輪 (Shadow Ring) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | charm.shadow_ring |
+| {{dreamforge:icons:charm.hunter_tooth.png?40}} | 獲物の牙飾り (Hunter's Fang) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | charm.hunter_tooth |
+| {{dreamforge:icons:charm.oak_amulet.png?40}} | 樫の護符 (Oak Amulet) | 生命 (Life) | 最大HP +5% (+5% Max Health) | charm.oak_amulet |
+| {{dreamforge:icons:charm.clockwork_charm.png?40}} | ぜんまい仕掛けの飾り (Clockwork Charm) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | charm.clockwork_charm |
+| {{dreamforge:icons:charm.iron_seal.png?40}} | 鉄の印章 (Iron Seal) | 生命 (Life) | 防御 +6 (+6 Armor) | charm.iron_seal |
+| {{dreamforge:icons:charm.feather_token.png?40}} | 風切り羽 (Windfeather Token) | 想像 (Imagination) | 移動速度 +3% (+3% Move Speed) | charm.feather_token |
+| {{dreamforge:icons:charm.war_horn.png?40}} | 戦の角笛 (War Horn) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | charm.war_horn |
+| {{dreamforge:icons:charm.raven_feather.png?40}} | 鴉の風切り羽 (Raven Quill) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | charm.raven_feather |
+| {{dreamforge:icons:charm.lotus_seal.png?40}} | 蓮の印 (Lotus Seal) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | charm.lotus_seal |
+| {{dreamforge:icons:charm.storm_bell.png?40}} | 嵐の鈴 (Storm Bell) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | charm.storm_bell |
+| {{dreamforge:icons:charm.ice_heart.png?40}} | 氷の心臓 (Frozen Heart) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | charm.ice_heart |
+| {{dreamforge:icons:charm.ink_stone.png?40}} | 墨の硯 (Ink Stone) | 破壊 (Destruction) | 魔力 +5 (+5 Ability Power) | charm.ink_stone |
+| {{dreamforge:icons:charm.talon_pendant.png?40}} | 爪の垂飾り (Talon Pendant) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | charm.talon_pendant |
+| {{dreamforge:icons:charm.blaze_brooch.png?40}} | 焔のブローチ (Blaze Brooch) | 破壊 (Destruction) | 火属性効果 +8% (+8% Fire Effect) | charm.blaze_brooch |
+| {{dreamforge:icons:charm.glacier_charm.png?40}} | 氷晶の飾り (Glacier Charm) | 破壊 (Destruction) | 冷気属性効果 +8% (+8% Cold Effect) | charm.glacier_charm |
+| {{dreamforge:icons:charm.sunspoke_pin.png?40}} | 陽光的ピン (Sunspoke Pin) | 破壊 (Destruction) | 光属性効果 +8% (+8% Light Effect) | charm.sunspoke_pin |
+| {{dreamforge:icons:charm.duskbead_necklace.png?40}} | 宵珠の首飾り (Duskbead Necklace) | 破壊 (Destruction) | 闇属性効果 +8% (+8% Dark Effect) | charm.duskbead_necklace |
+| {{dreamforge:icons:charm.keeneye_charm.png?40}} | 鋭眼の御守り (Keen-Eye Charm) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | charm.keeneye_charm |
+| {{dreamforge:icons:charm.stormcloud_locket.png?40}} | 雷雲のロケット (Stormcloud Locket) | 破壊 (Destruction) | 攻撃速度 +5% (+5% Attack Speed) | charm.stormcloud_locket |
+| {{dreamforge:icons:charm.pursuit_badge.png?40}} | 追撃の徽章 (Pursuit Badge) | 破壊 (Destruction) | 会心ダメージ +12% (+12% Crit Damage) | charm.pursuit_badge |
+| {{dreamforge:icons:charm.skirmish_ring.png?40}} | 遊撃の指輪 (Skirmish Ring) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | charm.skirmish_ring |
+| {{dreamforge:icons:charm.longshot_charm.png?40}} | 遠当ての御守り (Longshot Charm) | 破壊 (Destruction) | 通常攻撃の射程 +6% (+6% Attack Range) | charm.longshot_charm |
+| {{dreamforge:icons:charm.garnet_ring.png?40}} | 紅玉の指輪 (Garnet Ring) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | charm.garnet_ring |
+| {{dreamforge:icons:charm.hearthside_ring.png?40}} | 囲炉裏の指輪 (Hearthside Ring) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | charm.hearthside_ring |
+| {{dreamforge:icons:charm.bulwark_seal.png?40}} | 壁の印章 (Bulwark Seal) | 生命 (Life) | 防御 +7 (+7 Armor) | charm.bulwark_seal |
+| {{dreamforge:icons:charm.deeproot_charm.png?40}} | 深根の護符 (Deeproot Charm) | 生命 (Life) | 最大HP +6% (+6% Max Health) | charm.deeproot_charm |
+| {{dreamforge:icons:charm.tidewarden_brooch.png?40}} | 潮衛のブローチ (Tidewarden Brooch) | 生命 (Life) | 防御 +6 (+6 Armor) | charm.tidewarden_brooch |
+| {{dreamforge:icons:charm.boulder_pendant.png?40}} | 岩塊の首飾り (Boulder Pendant) | 生命 (Life) | 最大HP +30 (+30 Max Health) | charm.boulder_pendant |
+| {{dreamforge:icons:charm.ironknot_ring.png?40}} | 鉄結びの指輪 (Ironknot Ring) | 生命 (Life) | 行動妨害耐性 +12 (+12 Tenacity) | charm.ironknot_ring |
+| {{dreamforge:icons:charm.snowbloom_charm.png?40}} | 雪華の御守り (Snowbloom Charm) | 生命 (Life) | 与えるシールドが5%増える（味方へのシールドも・上限60%） (Shields you grant increase by 5% (including allies; cap 60%)) | charm.snowbloom_charm |
+| {{dreamforge:icons:charm.winteroak_charm.png?40}} | 冬樫の護符 (Winter Oak Charm) | 生命 (Life) | 最大HP +25 (+25 Max Health) | charm.winteroak_charm |
+| {{dreamforge:icons:charm.comet_pendant.png?40}} | 彗星の垂飾り (Comet Pendant) | 想像 (Imagination) | 魔力 +6 (+6 Ability Power) | charm.comet_pendant |
+| {{dreamforge:icons:charm.seafoam_ring.png?40}} | 海沫の指輪 (Seafoam Ring) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | charm.seafoam_ring |
+| {{dreamforge:icons:charm.cindercore_locket.png?40}} | 火芯のロケット (Cindercore Locket) | 想像 (Imagination) | 火属性効果 +6% (+6% Fire Effect) | charm.cindercore_locket |
+| {{dreamforge:icons:charm.halo_charm.png?40}} | 光環の御守り (Halo Charm) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | charm.halo_charm |
+| {{dreamforge:icons:charm.eclipse_ring.png?40}} | 蝕の指輪 (Eclipse Ring) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | charm.eclipse_ring |
+| {{dreamforge:icons:charm.windchime_charm.png?40}} | 風鈴の飾り (Wind Chime Charm) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | charm.windchime_charm |
+| {{dreamforge:icons:charm.mender_locket.png?40}} | 癒しのロケット (Mender's Locket) | 想像 (Imagination) | 与える回復が5%増える（味方への回復も・上限60%） (Healing you grant increases by 5% (including allies; cap 60%)) | charm.mender_locket |
+| {{dreamforge:icons:charm.beasttongue_charm.png?40}} | 獣語の護符 (Beasttongue Charm) | 想像 (Imagination) | 召喚獣の与えるダメージが8%増える（上限80%） (Your summons deal 8% more damage (cap 80%)) | charm.beasttongue_charm |
+| {{dreamforge:icons:charm.zephyr_ring.png?40}} | 西風の指輪 (Zephyr Ring) | 想像 (Imagination) | 移動速度 +3% (+3% Move Speed) | charm.zephyr_ring |
+| {{dreamforge:icons:charm.dawnsilk_band.png?40}} | 暁糸の腕輪 (Dawnsilk Band) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | charm.dawnsilk_band |
+| {{dreamforge:icons:charm.stardust_pendant.png?40}} | 星屑の垂飾り (Stardust Pendant) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | charm.stardust_pendant |

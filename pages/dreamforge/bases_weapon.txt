@@ -1,0 +1,67 @@
+====== 土台: 主装備 (Weapon) ======
+
+主装備 (Weapon)の土台（ベース装備）一覧です（60種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:weapon.chain_sword.png?40}} | 連なりの剣 (Chain Sword) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | weapon.chain_sword |
+| {{dreamforge:icons:weapon.twin_fang.png?40}} | 双牙の短刀 (Twin Fang Daggers) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | weapon.twin_fang |
+| {{dreamforge:icons:weapon.calming_staff.png?40}} | 鎮めの杖 (Calming Staff) | 想像 (Imagination) | 魔力 +6 (+6 Ability Power) | weapon.calming_staff |
+| {{dreamforge:icons:weapon.longspike_bow.png?40}} | 長穂の弓 (Longspike Bow) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | weapon.longspike_bow |
+| {{dreamforge:icons:weapon.shield_maul.png?40}} | 盾打ちの槌 (Shieldbash Maul) | 生命 (Life) | 最大HP +5% (+5% Max Health) | weapon.shield_maul |
+| {{dreamforge:icons:weapon.blaze_greatsword.png?40}} | 烈火の大剣 (Blazing Greatsword) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | weapon.blaze_greatsword |
+| {{dreamforge:icons:weapon.frost_spear.png?40}} | 霜穂の槍 (Frostspike Spear) | 生命 (Life) | 通常攻撃の射程 +8% (+8% Attack Range) | weapon.frost_spear |
+| {{dreamforge:icons:weapon.dusk_scythe.png?40}} | 黄昏の大鎌 (Dusk Scythe) | 破壊 (Destruction) | 会心ダメージ +14% (+14% Crit Damage) | weapon.dusk_scythe |
+| {{dreamforge:icons:weapon.lantern_rod.png?40}} | 灯火の杖 (Lantern Rod) | 想像 (Imagination) | 光属性効果 +10% (+10% Light Effect) | weapon.lantern_rod |
+| {{dreamforge:icons:weapon.hunting_bow.png?40}} | 狩人の短弓 (Hunting Shortbow) | 破壊 (Destruction) | 攻撃速度 +5% (+5% Attack Speed) | weapon.hunting_bow |
+| {{dreamforge:icons:weapon.war_axe.png?40}} | 戦斧 (War Axe) | 破壊 (Destruction) | 攻撃力 +7 (+7 Attack Damage) | weapon.war_axe |
+| {{dreamforge:icons:weapon.tower_lance.png?40}} | 城壁の槍 (Rampart Lance) | 生命 (Life) | 防御 +6 (+6 Armor) | weapon.tower_lance |
+| {{dreamforge:icons:weapon.oath_mace.png?40}} | 誓いの戦棍 (Oath Mace) | 生命 (Life) | 最大HP +25 (+25 Max Health) | weapon.oath_mace |
+| {{dreamforge:icons:weapon.dream_wand.png?40}} | 夢見の杖 (Dreamer's Wand) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | weapon.dream_wand |
+| {{dreamforge:icons:weapon.star_harp.png?40}} | 星の竪琴 (Star Harp) | 想像 (Imagination) | 魔力 +7 (+7 Ability Power) | weapon.star_harp |
+| {{dreamforge:icons:weapon.moon_sickle.png?40}} | 月鎌 (Moon Sickle) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | weapon.moon_sickle |
+| {{dreamforge:icons:weapon.ember_whip.png?40}} | 残り火の鞭 (Ember Whip) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | weapon.ember_whip |
+| {{dreamforge:icons:weapon.glacier_spear.png?40}} | 凍て穂の槍 (Rimefrost Spear) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | weapon.glacier_spear |
+| {{dreamforge:icons:weapon.dawn_scepter.png?40}} | 暁の笏 (Dawn Scepter) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | weapon.dawn_scepter |
+| {{dreamforge:icons:weapon.iron_halberd.png?40}} | 鉄の斧槍 (Iron Halberd) | 生命 (Life) | 防御 +8 (+8 Armor) | weapon.iron_halberd |
+| {{dreamforge:icons:weapon.dream_tome.png?40}} | 夢綴じの書 (Dreambound Tome) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | weapon.dream_tome |
+| {{dreamforge:icons:weapon.bone_cleaver.png?40}} | 骨断ちの大包丁 (Bone Cleaver) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | weapon.bone_cleaver |
+| {{dreamforge:icons:weapon.twin_rapier.png?40}} | 双子の細剣 (Twin Rapiers) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | weapon.twin_rapier |
+| {{dreamforge:icons:weapon.pilgrim_staff.png?40}} | 巡礼の錫杖 (Pilgrim's Staff) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | weapon.pilgrim_staff |
+| {{dreamforge:icons:weapon.thunder_hammer.png?40}} | 雷鳴の戦鎚 (Thunder Hammer) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | weapon.thunder_hammer |
+| {{dreamforge:icons:weapon.storm_glaive.png?40}} | 嵐の薙刀 (Storm Glaive) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | weapon.storm_glaive |
+| {{dreamforge:icons:weapon.bone_flute.png?40}} | 骨の笛 (Bone Flute) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | weapon.bone_flute |
+| {{dreamforge:icons:weapon.ember_katar.png?40}} | 熾火の短刃 (Ember Katar) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | weapon.ember_katar |
+| {{dreamforge:icons:weapon.tide_trident.png?40}} | 潮騒の三叉槍 (Tidal Trident) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | weapon.tide_trident |
+| {{dreamforge:icons:weapon.vow_mace.png?40}} | 誓約の鎚矛 (Vow Mace) | 生命 (Life) | 最大HP +5% (+5% Max Health) | weapon.vow_mace |
+| {{dreamforge:icons:weapon.tide_cutter.png?40}} | 波切りの刀 (Tidecutter Blade) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | weapon.tide_cutter |
+| {{dreamforge:icons:weapon.rockbreaker.png?40}} | 砕岩のハンマー (Rockbreaker Hammer) | 破壊 (Destruction) | 攻撃力 +7 (+7 Attack Damage) | weapon.rockbreaker |
+| {{dreamforge:icons:weapon.swallow_kodachi.png?40}} | 燕返しの小太刀 (Swallow-Turn Kodachi) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | weapon.swallow_kodachi |
+| {{dreamforge:icons:weapon.hooked_falchion.png?40}} | 鉤爪の曲刀 (Hooked Falchion) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | weapon.hooked_falchion |
+| {{dreamforge:icons:weapon.severing_axe.png?40}} | 断ち切りの大斧 (Severing Greataxe) | 破壊 (Destruction) | 会心ダメージ +12% (+12% Crit Damage) | weapon.severing_axe |
+| {{dreamforge:icons:weapon.starlit_knives.png?40}} | 連星の投剣 (Starlit Throwing Knives) | 破壊 (Destruction) | 通常攻撃の射程 +6% (+6% Attack Range) | weapon.starlit_knives |
+| {{dreamforge:icons:weapon.whiteheat_estoc.png?40}} | 白熱の刺突剣 (Whiteheat Estoc) | 破壊 (Destruction) | 火属性効果 +8% (+8% Fire Effect) | weapon.whiteheat_estoc |
+| {{dreamforge:icons:weapon.northwind_axe.png?40}} | 北風の戦斧 (Northwind Battleaxe) | 破壊 (Destruction) | 冷気属性効果 +8% (+8% Cold Effect) | weapon.northwind_axe |
+| {{dreamforge:icons:weapon.sunlit_blade.png?40}} | 陽射しの刃 (Sunlit Blade) | 破壊 (Destruction) | 光属性効果 +8% (+8% Light Effect) | weapon.sunlit_blade |
+| {{dreamforge:icons:weapon.gloaming_dagger.png?40}} | 宵闇の短剣 (Gloaming Dagger) | 破壊 (Destruction) | 闇属性効果 +8% (+8% Dark Effect) | weapon.gloaming_dagger |
+| {{dreamforge:icons:weapon.lightning_pair.png?40}} | 雷光の双刃 (Lightning Paired Blades) | 破壊 (Destruction) | 攻撃速度 +5% (+5% Attack Speed) | weapon.lightning_pair |
+| {{dreamforge:icons:weapon.evilbreaker_lance.png?40}} | 破邪の槍 (Evil-Breaking Lance) | 破壊 (Destruction) | 攻撃力 +6 (+6 Attack Damage) | weapon.evilbreaker_lance |
+| {{dreamforge:icons:weapon.maelstrom_sword.png?40}} | 渦潮の剣 (Maelstrom Sword) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | weapon.maelstrom_sword |
+| {{dreamforge:icons:weapon.gatehouse_maul.png?40}} | 城門の大槌 (Gatehouse Maul) | 生命 (Life) | 防御 +8 (+8 Armor) | weapon.gatehouse_maul |
+| {{dreamforge:icons:weapon.lighthouse_cudgel.png?40}} | 灯台の棍 (Lighthouse Cudgel) | 生命 (Life) | 光属性効果 +6% (+6% Light Effect) | weapon.lighthouse_cudgel |
+| {{dreamforge:icons:weapon.tortoise_bokken.png?40}} | 亀甲の木刀 (Tortoiseshell Bokken) | 生命 (Life) | 最大HP +30 (+30 Max Health) | weapon.tortoise_bokken |
+| {{dreamforge:icons:weapon.thaw_hammer.png?40}} | 雪解けの鎚 (Thawhammer) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | weapon.thaw_hammer |
+| {{dreamforge:icons:weapon.anchor_cleaver.png?40}} | 錨の鉈 (Anchor Cleaver) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | weapon.anchor_cleaver |
+| {{dreamforge:icons:weapon.granite_cosh.png?40}} | 御影の戦棍 (Granite Cosh) | 生命 (Life) | 最大HP +5% (+5% Max Health) | weapon.granite_cosh |
+| {{dreamforge:icons:weapon.stillwater_blade.png?40}} | 静水の長刀 (Stillwater Longblade) | 生命 (Life) | 防御 +6 (+6 Armor) | weapon.stillwater_blade |
+| {{dreamforge:icons:weapon.chanting_wand.png?40}} | 詠唱の短杖 (Chanting Wand) | 想像 (Imagination) | 魔力 +6 (+6 Ability Power) | weapon.chanting_wand |
+| {{dreamforge:icons:weapon.astral_staff.png?40}} | 星霜の儀杖 (Astral Ritual Staff) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | weapon.astral_staff |
+| {{dreamforge:icons:weapon.windhowl_staff.png?40}} | 風唸りの杖 (Windhowl Staff) | 想像 (Imagination) | 魔力 +7 (+7 Ability Power) | weapon.windhowl_staff |
+| {{dreamforge:icons:weapon.conch_scepter.png?40}} | 法螺の聖杖 (Conch Scepter) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | weapon.conch_scepter |
+| {{dreamforge:icons:weapon.firefly_staff.png?40}} | 蛍火の灯杖 (Firefly Staff) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | weapon.firefly_staff |
+| {{dreamforge:icons:weapon.evening_fan.png?40}} | 夕薫の扇 (Evening Breeze Fan) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | weapon.evening_fan |
+| {{dreamforge:icons:weapon.starchart_scroll.png?40}} | 星図の巻物 (Star Chart Scroll) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | weapon.starchart_scroll |
+| {{dreamforge:icons:weapon.dewclear_wand.png?40}} | 露払いの細杖 (Dewclear Wand) | 想像 (Imagination) | 与える回復が5%増える（味方への回復も・上限60%） (Healing you grant increases by 5% (including allies; cap 60%)) | weapon.dewclear_wand |
+| {{dreamforge:icons:weapon.starsinger_bow.png?40}} | 奏星の弓 (Star-Singing Bow) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | weapon.starsinger_bow |
+| {{dreamforge:icons:weapon.moonlit_cane.png?40}} | 月明の杖 (Moonlit Cane) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | weapon.moonlit_cane |

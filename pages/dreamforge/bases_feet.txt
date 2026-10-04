@@ -1,0 +1,67 @@
+====== 土台: 足 (Feet) ======
+
+足 (Feet)の土台（ベース装備）一覧です（60種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:feet.travel_boots.png?40}} | 旅の長靴 (Traveler's Boots) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | feet.travel_boots |
+| {{dreamforge:icons:feet.iron_greaves.png?40}} | 鉄の脛当て (Iron Greaves) | 生命 (Life) | 防御 +6 (+6 Armor) | feet.iron_greaves |
+| {{dreamforge:icons:feet.dancer_shoes.png?40}} | 舞い手の靴 (Dancer's Shoes) | 破壊 (Destruction) | 攻撃速度 +3% (+3% Attack Speed) | feet.dancer_shoes |
+| {{dreamforge:icons:feet.wind_sandals.png?40}} | 風のサンダル (Wind Sandals) | 想像 (Imagination) | スキル加速 +4 (+4 Ability Haste) | feet.wind_sandals |
+| {{dreamforge:icons:feet.stalker_boots.png?40}} | 忍び足の靴 (Stalker's Boots) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | feet.stalker_boots |
+| {{dreamforge:icons:feet.rooted_boots.png?40}} | 根を張る靴 (Rooted Boots) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | feet.rooted_boots |
+| {{dreamforge:icons:feet.ember_treads.png?40}} | 残り火の足甲 (Ember Treads) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | feet.ember_treads |
+| {{dreamforge:icons:feet.pilgrim_boots.png?40}} | 巡礼の靴 (Pilgrim's Boots) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | feet.pilgrim_boots |
+| {{dreamforge:icons:feet.stone_boots.png?40}} | 岩の重靴 (Stone Boots) | 生命 (Life) | 最大HP +5% (+5% Max Health) | feet.stone_boots |
+| {{dreamforge:icons:feet.star_steps.png?40}} | 星渡りの靴 (Starstep Boots) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | feet.star_steps |
+| {{dreamforge:icons:feet.frost_boots.png?40}} | 氷上の靴 (Ice Skimmers) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | feet.frost_boots |
+| {{dreamforge:icons:feet.shadow_slippers.png?40}} | 影の上履き (Shadow Slippers) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | feet.shadow_slippers |
+| {{dreamforge:icons:feet.spiked_boots.png?40}} | 棘付きの長靴 (Spiked Boots) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | feet.spiked_boots |
+| {{dreamforge:icons:feet.sage_slippers.png?40}} | 賢者の室内履き (Sage's Slippers) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | feet.sage_slippers |
+| {{dreamforge:icons:feet.guard_sabatons.png?40}} | 守りの鉄靴 (Guardian Sabatons) | 生命 (Life) | 最大HP +25 (+25 Max Health) | feet.guard_sabatons |
+| {{dreamforge:icons:feet.wolf_boots.png?40}} | 狼の毛皮靴 (Wolfskin Boots) | 破壊 (Destruction) | 攻撃速度 +3% (+3% Attack Speed) | feet.wolf_boots |
+| {{dreamforge:icons:feet.tide_sandals.png?40}} | 潮のサンダル (Tide Sandals) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | feet.tide_sandals |
+| {{dreamforge:icons:feet.knight_sabatons.png?40}} | 騎士の鉄靴 (Knight's Sabatons) | 生命 (Life) | 防御 +6 (+6 Armor) | feet.knight_sabatons |
+| {{dreamforge:icons:feet.dawn_steps.png?40}} | 暁の足取り (Dawnsteps) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | feet.dawn_steps |
+| {{dreamforge:icons:feet.ash_boots.png?40}} | 灰踏みの靴 (Ashwalker Boots) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | feet.ash_boots |
+| {{dreamforge:icons:feet.root_sandals.png?40}} | 根のサンダル (Root Sandals) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | feet.root_sandals |
+| {{dreamforge:icons:feet.mist_shoes.png?40}} | 霧の靴 (Mist Shoes) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | feet.mist_shoes |
+| {{dreamforge:icons:feet.hunter_boots.png?40}} | 追跡者の長靴 (Tracker's Boots) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | feet.hunter_boots |
+| {{dreamforge:icons:feet.iron_clogs.png?40}} | 鉄の木靴 (Iron Clogs) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | feet.iron_clogs |
+| {{dreamforge:icons:feet.star_slippers.png?40}} | 星座の上履き (Constellation Slippers) | 想像 (Imagination) | スキル加速 +4 (+4 Ability Haste) | feet.star_slippers |
+| {{dreamforge:icons:feet.raven_boots.png?40}} | 鴉羽の長靴 (Raven-Feather Boots) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | feet.raven_boots |
+| {{dreamforge:icons:feet.sun_sandals.png?40}} | 陽だまりのサンダル (Sunwarm Sandals) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | feet.sun_sandals |
+| {{dreamforge:icons:feet.chain_greaves.png?40}} | 鎖の脛当て (Chain Greaves) | 生命 (Life) | 最大HP +25 (+25 Max Health) | feet.chain_greaves |
+| {{dreamforge:icons:feet.storm_boots.png?40}} | 嵐駆けの靴 (Stormrunner Boots) | 破壊 (Destruction) | 移動速度 +4% (+4% Move Speed) | feet.storm_boots |
+| {{dreamforge:icons:feet.ember_slippers.png?40}} | 燠火の上履き (Embered Slippers) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | feet.ember_slippers |
+| {{dreamforge:icons:feet.blitz_treads.png?40}} | 電光の足甲 (Blitz Treads) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | feet.blitz_treads |
+| {{dreamforge:icons:feet.emberdash_boots.png?40}} | 火駆けの長靴 (Emberdash Boots) | 破壊 (Destruction) | 火属性効果 +8% (+8% Fire Effect) | feet.emberdash_boots |
+| {{dreamforge:icons:feet.froststride_shoes.png?40}} | 霜踏みの靴 (Froststride Shoes) | 破壊 (Destruction) | 冷気属性効果 +8% (+8% Cold Effect) | feet.froststride_shoes |
+| {{dreamforge:icons:feet.sunspur_boots.png?40}} | 陽蹴りの靴 (Sunspur Boots) | 破壊 (Destruction) | 光属性効果 +8% (+8% Light Effect) | feet.sunspur_boots |
+| {{dreamforge:icons:feet.duskstep_boots.png?40}} | 宵踏みの靴 (Duskstep Boots) | 破壊 (Destruction) | 闇属性効果 +8% (+8% Dark Effect) | feet.duskstep_boots |
+| {{dreamforge:icons:feet.hunter_striders.png?40}} | 追撃の脚当て (Hunter's Striders) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | feet.hunter_striders |
+| {{dreamforge:icons:feet.quicksilver_greaves.png?40}} | 水銀の脛当て (Quicksilver Greaves) | 破壊 (Destruction) | 移動速度 +4% (+4% Move Speed) | feet.quicksilver_greaves |
+| {{dreamforge:icons:feet.deadeye_leggings.png?40}} | 必中の脚絆 (Deadeye Leggings) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | feet.deadeye_leggings |
+| {{dreamforge:icons:feet.wolfstride_boots.png?40}} | 狼歩の長靴 (Wolfstride Boots) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | feet.wolfstride_boots |
+| {{dreamforge:icons:feet.gale_greaves.png?40}} | 烈風の脛当て (Gale Greaves) | 破壊 (Destruction) | 攻撃速度 +5% (+5% Attack Speed) | feet.gale_greaves |
+| {{dreamforge:icons:feet.thorntread_sabatons.png?40}} | 棘踏みの足甲 (Thorntread Sabatons) | 破壊 (Destruction) | 通常攻撃の射程 +5% (+5% Attack Range) | feet.thorntread_sabatons |
+| {{dreamforge:icons:feet.bastion_sabatons.png?40}} | 城塞の鉄鞋 (Bastion Sabatons) | 生命 (Life) | 防御 +8 (+8 Armor) | feet.bastion_sabatons |
+| {{dreamforge:icons:feet.deeproot_boots.png?40}} | 深根の長靴 (Deeproot Boots) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | feet.deeproot_boots |
+| {{dreamforge:icons:feet.stoneguard_sabatons.png?40}} | 石衛の鉄鞋 (Stoneguard Sabatons) | 生命 (Life) | 最大HP +6% (+6% Max Health) | feet.stoneguard_sabatons |
+| {{dreamforge:icons:feet.tortoiseshell_greaves.png?40}} | 亀甲の脛当て (Tortoiseshell Greaves) | 生命 (Life) | 最大HP +30 (+30 Max Health) | feet.tortoiseshell_greaves |
+| {{dreamforge:icons:feet.ironwave_greaves.png?40}} | 鉄波の脛当て (Ironwave Greaves) | 生命 (Life) | 防御 +6 (+6 Armor) | feet.ironwave_greaves |
+| {{dreamforge:icons:feet.ballast_boots.png?40}} | 沈錘の長靴 (Ballast Boots) | 生命 (Life) | 行動妨害耐性 +12 (+12 Tenacity) | feet.ballast_boots |
+| {{dreamforge:icons:feet.rampart_greaves.png?40}} | 土塁の脛当て (Rampart Greaves) | 生命 (Life) | 防御 +7 (+7 Armor) | feet.rampart_greaves |
+| {{dreamforge:icons:feet.winterhide_boots.png?40}} | 冬毛の長靴 (Winterhide Boots) | 生命 (Life) | 最大HP +25 (+25 Max Health) | feet.winterhide_boots |
+| {{dreamforge:icons:feet.wardstep_sandals.png?40}} | 護りの草鞋 (Wardstep Sandals) | 生命 (Life) | 与えるシールドが5%増える（味方へのシールドも・上限60%） (Shields you grant increase by 5% (including allies; cap 60%)) | feet.wardstep_sandals |
+| {{dreamforge:icons:feet.mistral_sandals.png?40}} | 突風のサンダル (Mistral Sandals) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | feet.mistral_sandals |
+| {{dreamforge:icons:feet.starlit_moccasins.png?40}} | 星履の靴 (Starlit Moccasins) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | feet.starlit_moccasins |
+| {{dreamforge:icons:feet.tidepool_sandals.png?40}} | 潮溜まりのサンダル (Tidepool Sandals) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | feet.tidepool_sandals |
+| {{dreamforge:icons:feet.firebloom_slippers.png?40}} | 火華の上履き (Firebloom Slippers) | 想像 (Imagination) | 火属性効果 +6% (+6% Fire Effect) | feet.firebloom_slippers |
+| {{dreamforge:icons:feet.dawnmist_shoes.png?40}} | 暁霧の靴 (Dawnmist Shoes) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | feet.dawnmist_shoes |
+| {{dreamforge:icons:feet.nightveil_slippers.png?40}} | 夜帳の上履き (Nightveil Slippers) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | feet.nightveil_slippers |
+| {{dreamforge:icons:feet.mender_shoes.png?40}} | 癒しの靴 (Mender's Shoes) | 想像 (Imagination) | 与える回復が5%増える（味方への回復も・上限60%） (Healing you grant increases by 5% (including allies; cap 60%)) | feet.mender_shoes |
+| {{dreamforge:icons:feet.cometstride_shoes.png?40}} | 彗星の靴 (Comet-Stride Shoes) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | feet.cometstride_shoes |
+| {{dreamforge:icons:feet.whisperweave_shoes.png?40}} | 囁き織りの靴 (Whisperweave Shoes) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | feet.whisperweave_shoes |
+| {{dreamforge:icons:feet.beastpaw_boots.png?40}} | 獣趾の長靴 (Beastpaw Boots) | 想像 (Imagination) | 召喚獣の与えるダメージが8%増える（上限80%） (Your summons deal 8% more damage (cap 80%)) | feet.beastpaw_boots |

@@ -1,0 +1,67 @@
+====== 土台: 防具 (Armor) ======
+
+防具 (Armor)の土台（ベース装備）一覧です（60種）。基礎能力はアイテムレベル1・強化なしの値で、固定値の基礎能力はアイテムレベルに応じて伸びます。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ アイコン ^ 名前 (Name) ^ 系統 (Line) ^ 基礎能力 (Implicit) ^ ID ^
+| {{dreamforge:icons:armor.counter_gauntlets.png?40}} | 反撃の籠手 (Counter Gauntlets) | 生命 (Life) | 防御 +6 (+6 Armor) | armor.counter_gauntlets |
+| {{dreamforge:icons:armor.flowing_cloak.png?40}} | 流れの外套 (Flowing Cloak) | 想像 (Imagination) | 移動速度 +3% (+3% Move Speed) | armor.flowing_cloak |
+| {{dreamforge:icons:armor.guardian_plate.png?40}} | 護りの胸当て (Guardian Plate) | 生命 (Life) | 防御 +10 (+10 Armor) | armor.guardian_plate |
+| {{dreamforge:icons:armor.resonant_robe.png?40}} | 共鳴の衣 (Resonant Robe) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | armor.resonant_robe |
+| {{dreamforge:icons:armor.thorn_mail.png?40}} | 棘の鎧 (Thorn Mail) | 生命 (Life) | 最大HP +25 (+25 Max Health) | armor.thorn_mail |
+| {{dreamforge:icons:armor.lampkeeper_mantle.png?40}} | 灯守の外衣 (Lampkeeper's Mantle) | 想像 (Imagination) | HP回復 +2/秒 (+2 Health Regen/s) | armor.lampkeeper_mantle |
+| {{dreamforge:icons:armor.frost_coat.png?40}} | 霜の上衣 (Frostweave Coat) | 生命 (Life) | 行動妨害耐性 +15 (+15 Tenacity) | armor.frost_coat |
+| {{dreamforge:icons:armor.dancer_garb.png?40}} | 舞手の衣 (Dancer's Garb) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | armor.dancer_garb |
+| {{dreamforge:icons:armor.star_cloak.png?40}} | 星読みの外套 (Stargazer's Cloak) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | armor.star_cloak |
+| {{dreamforge:icons:armor.hunter_leather.png?40}} | 狩人の革鎧 (Hunter's Leathers) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | armor.hunter_leather |
+| {{dreamforge:icons:armor.ember_plate.png?40}} | 燠火の鎧 (Emberforged Plate) | 破壊 (Destruction) | 火属性効果 +10% (+10% Fire Effect) | armor.ember_plate |
+| {{dreamforge:icons:armor.root_mail.png?40}} | 根の鎖帷子 (Rootbound Mail) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | armor.root_mail |
+| {{dreamforge:icons:armor.bastion_shell.png?40}} | 甲羅の鎧 (Shell Armor) | 生命 (Life) | 最大HP +6% (+6% Max Health) | armor.bastion_shell |
+| {{dreamforge:icons:armor.mist_robe.png?40}} | 霧の法衣 (Mist Robe) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | armor.mist_robe |
+| {{dreamforge:icons:armor.prayer_shawl.png?40}} | 祈りの肩掛け (Prayer Shawl) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | armor.prayer_shawl |
+| {{dreamforge:icons:armor.ember_cuirass.png?40}} | 残り火の胴鎧 (Ember Cuirass) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | armor.ember_cuirass |
+| {{dreamforge:icons:armor.frost_robe.png?40}} | 霜の法衣 (Frost Robe) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | armor.frost_robe |
+| {{dreamforge:icons:armor.scale_coat.png?40}} | 竜鱗の外套 (Dragonscale Coat) | 生命 (Life) | 防御 +9 (+9 Armor) | armor.scale_coat |
+| {{dreamforge:icons:armor.hunter_vest.png?40}} | 狩人の胴衣 (Hunter's Vest) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | armor.hunter_vest |
+| {{dreamforge:icons:armor.star_mantle.png?40}} | 星屑の肩掛け (Stardust Mantle) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | armor.star_mantle |
+| {{dreamforge:icons:armor.monk_garb.png?40}} | 修行者の道着 (Ascetic's Garb) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | armor.monk_garb |
+| {{dreamforge:icons:armor.shadow_cloak.png?40}} | 影織りの外套 (Shadowweave Cloak) | 破壊 (Destruction) | 闇属性効果 +6% (+6% Dark Effect) | armor.shadow_cloak |
+| {{dreamforge:icons:armor.sun_plate.png?40}} | 陽光の鎧 (Sunlit Plate) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | armor.sun_plate |
+| {{dreamforge:icons:armor.bark_mail.png?40}} | 樹皮の鎧 (Barkmail) | 生命 (Life) | HP回復 +2/秒 (+2 Health Regen/s) | armor.bark_mail |
+| {{dreamforge:icons:armor.traveler_coat.png?40}} | 旅人の外套 (Traveler's Coat) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | armor.traveler_coat |
+| {{dreamforge:icons:armor.ink_robe.png?40}} | 墨染めの衣 (Ink-Dyed Robe) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | armor.ink_robe |
+| {{dreamforge:icons:armor.chain_hauberk.png?40}} | 鎖帷子 (Chain Hauberk) | 生命 (Life) | 防御 +9 (+9 Armor) | armor.chain_hauberk |
+| {{dreamforge:icons:armor.ember_jacket.png?40}} | 火の粉の革衣 (Cinder Jacket) | 破壊 (Destruction) | 火属性効果 +6% (+6% Fire Effect) | armor.ember_jacket |
+| {{dreamforge:icons:armor.moon_silk.png?40}} | 月絹の衣 (Moonsilk Robe) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | armor.moon_silk |
+| {{dreamforge:icons:armor.spiked_plate.png?40}} | 棘付きの板金鎧 (Spiked Plate) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | armor.spiked_plate |
+| {{dreamforge:icons:armor.stormfront_vest.png?40}} | 嵐の胸当て (Stormfront Vest) | 破壊 (Destruction) | 攻撃速度 +4% (+4% Attack Speed) | armor.stormfront_vest |
+| {{dreamforge:icons:armor.quicksilver_jacket.png?40}} | 水銀の短上衣 (Quicksilver Jacket) | 破壊 (Destruction) | 会心率 +3% (+3% Crit Chance) | armor.quicksilver_jacket |
+| {{dreamforge:icons:armor.volcanic_coat.png?40}} | 火山岩の外套 (Volcanic Coat) | 破壊 (Destruction) | 火属性効果 +8% (+8% Fire Effect) | armor.volcanic_coat |
+| {{dreamforge:icons:armor.glacier_harness.png?40}} | 氷河の胸綱 (Glacier Harness) | 破壊 (Destruction) | 冷気属性効果 +8% (+8% Cold Effect) | armor.glacier_harness |
+| {{dreamforge:icons:armor.dawnlight_corset.png?40}} | 暁光の胴衣 (Dawnlight Corset) | 破壊 (Destruction) | 光属性効果 +8% (+8% Light Effect) | armor.dawnlight_corset |
+| {{dreamforge:icons:armor.duskweave_jacket.png?40}} | 黄昏織りの上着 (Duskweave Jacket) | 破壊 (Destruction) | 闇属性効果 +8% (+8% Dark Effect) | armor.duskweave_jacket |
+| {{dreamforge:icons:armor.ambush_vest.png?40}} | 奇襲の胴衣 (Ambush Vest) | 破壊 (Destruction) | 会心ダメージ +10% (+10% Crit Damage) | armor.ambush_vest |
+| {{dreamforge:icons:armor.skirmisher_coat.png?40}} | 遊撃手の外套 (Skirmisher's Coat) | 破壊 (Destruction) | 攻撃力 +5 (+5 Attack Damage) | armor.skirmisher_coat |
+| {{dreamforge:icons:armor.citadel_plate.png?40}} | 城砦の板金鎧 (Citadel Plate) | 生命 (Life) | 防御 +10 (+10 Armor) | armor.citadel_plate |
+| {{dreamforge:icons:armor.rampart_jacket.png?40}} | 土塁の上着 (Rampart Jacket) | 生命 (Life) | 防御 +7 (+7 Armor) | armor.rampart_jacket |
+| {{dreamforge:icons:armor.deeproot_vest.png?40}} | 深根の胴着 (Deeproot Vest) | 生命 (Life) | HP回復 +3/秒 (+3 Health Regen/s) | armor.deeproot_vest |
+| {{dreamforge:icons:armor.tidebound_mail.png?40}} | 潮縛の鎖帷子 (Tidebound Mail) | 生命 (Life) | 最大HP +30 (+30 Max Health) | armor.tidebound_mail |
+| {{dreamforge:icons:armor.basalt_cuirass.png?40}} | 玄武の胴鎧 (Basalt Cuirass) | 生命 (Life) | 行動妨害耐性 +12 (+12 Tenacity) | armor.basalt_cuirass |
+| {{dreamforge:icons:armor.buckler_vest.png?40}} | 小盾の胴衣 (Buckler Vest) | 生命 (Life) | 防御 +6 (+6 Armor) | armor.buckler_vest |
+| {{dreamforge:icons:armor.oathplate_cuirass.png?40}} | 誓板の胸当て (Oathplate Cuirass) | 生命 (Life) | 最大HP +6% (+6% Max Health) | armor.oathplate_cuirass |
+| {{dreamforge:icons:armor.winterwool_coat.png?40}} | 冬毛の上衣 (Winterwool Coat) | 生命 (Life) | 最大HP +25 (+25 Max Health) | armor.winterwool_coat |
+| {{dreamforge:icons:armor.ironbark_vest.png?40}} | 鉄樹の胴衣 (Ironbark Vest) | 生命 (Life) | 防御 +8 (+8 Armor) | armor.ironbark_vest |
+| {{dreamforge:icons:armor.twistedchain_ply.png?40}} | ねじれ鎖の腹当て (Twisted-Chain Ply) | 生命 (Life) | 行動妨害耐性 +10 (+10 Tenacity) | armor.twistedchain_ply |
+| {{dreamforge:icons:armor.mirrorsilk_robe.png?40}} | 鏡絹の衣 (Mirrorsilk Robe) | 想像 (Imagination) | 魔力 +5 (+5 Ability Power) | armor.mirrorsilk_robe |
+| {{dreamforge:icons:armor.aurora_wrap.png?40}} | 極光の肩掛け (Aurora Wrap) | 想像 (Imagination) | スキル加速 +5 (+5 Ability Haste) | armor.aurora_wrap |
+| {{dreamforge:icons:armor.seafoam_gown.png?40}} | 海沫の長衣 (Seafoam Gown) | 想像 (Imagination) | 冷気属性効果 +6% (+6% Cold Effect) | armor.seafoam_gown |
+| {{dreamforge:icons:armor.emberweave_shawl.png?40}} | 織り火の肩掛け (Emberweave Shawl) | 想像 (Imagination) | 火属性効果 +6% (+6% Fire Effect) | armor.emberweave_shawl |
+| {{dreamforge:icons:armor.candlelight_robe.png?40}} | 燭光の法衣 (Candlelight Robe) | 想像 (Imagination) | 光属性効果 +6% (+6% Light Effect) | armor.candlelight_robe |
+| {{dreamforge:icons:armor.nightloom_robe.png?40}} | 夜織りの衣 (Nightloom Robe) | 想像 (Imagination) | 闇属性効果 +6% (+6% Dark Effect) | armor.nightloom_robe |
+| {{dreamforge:icons:armor.swiftstep_coat.png?40}} | 疾歩の外套 (Swiftstep Coat) | 想像 (Imagination) | 移動速度 +4% (+4% Move Speed) | armor.swiftstep_coat |
+| {{dreamforge:icons:armor.healing_sash.png?40}} | 癒しの飾り帯 (Healing Sash) | 想像 (Imagination) | 与える回復が5%増える（味方への回復も・上限60%） (Healing you grant increases by 5% (including allies; cap 60%)) | armor.healing_sash |
+| {{dreamforge:icons:armor.wardsigil_vest.png?40}} | 加護の胴衣 (Wardsigil Vest) | 想像 (Imagination) | 与えるシールドが5%増える（味方へのシールドも・上限60%） (Shields you grant increase by 5% (including allies; cap 60%)) | armor.wardsigil_vest |
+| {{dreamforge:icons:armor.summoners_vest.png?40}} | 喚び獣の胸当て (Summoner's Vest) | 想像 (Imagination) | 召喚獣の与えるダメージが8%増える（上限80%） (Your summons deal 8% more damage (cap 80%)) | armor.summoners_vest |
+| {{dreamforge:icons:armor.zephyr_robe.png?40}} | 西風の法衣 (Zephyr Robe) | 想像 (Imagination) | スキル加速 +6 (+6 Ability Haste) | armor.zephyr_robe |
+| {{dreamforge:icons:armor.morningdew_robe.png?40}} | 朝露の衣 (Morning Dew Robe) | 想像 (Imagination) | 魔力 +6 (+6 Ability Power) | armor.morningdew_robe |

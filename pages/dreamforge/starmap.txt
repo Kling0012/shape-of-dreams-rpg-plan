@@ -1,0 +1,23 @@
+====== 星図（旅人別）======
+
+旅人ごとの星図の一覧です。星の名前・段数・費用・効果と、到達刻印の利点と欠点を載せています。内容はゲームのデータから自動生成しています。
+
+[[dreamforge:start|ホームへ戻る]]
+
+^ 旅人 ^ 星（刻印を含む） ^ 到達刻印 ^ ページ数 ^
+| [[dreamforge:starmap_cetus|Cetus]] | 87 | 2 | 1 |
+| [[dreamforge:starmap_aurena|Aurena]] | 73 | 2 | 1 |
+| [[dreamforge:starmap_bismuth|Bismuth]] | 735 | 19 | 1 |
+| [[dreamforge:starmap_husk|Husk]] | 879 | 20 | 1 |
+| [[dreamforge:starmap_lacerta|Lacerta]] | 878 | 18 | 1 |
+| [[dreamforge:starmap_mist|Mist]] | 885 | 19 | 1 |
+| [[dreamforge:starmap_nachia|Nachia]] | 735 | 16 | 1 |
+| [[dreamforge:starmap_vesper|Vesper]] | 878 | 18 | 1 |
+| [[dreamforge:starmap_yubar|Yubar]] | 877 | 17 | 1 |
+
+星は「核」「記憶」「橋」「外縁」の4つの地域に分かれます。
+
+  * 核：旅人の根もとの星
+  * 記憶：記憶（スキル）ごとのルート
+  * 橋：隣り合う記憶をつなぐ合わせ技の星
+  * 外縁：星図の外側の星

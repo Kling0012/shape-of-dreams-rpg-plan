@@ -1,0 +1,889 @@
+====== セット装備 (Sets) ======
+
+2つ装着・3つ装着（6部位のセットは6つ装着も）でボーナスが付く名前付きの組です。ボーナスの数値は基本値です。
+
+[[dreamforge:start|ホームへ戻る]]
+
+===== 潮鳴りの装い (Tidecaller's Regalia) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 潮鳴りの剣 (Tidecaller's Blade) | {{dreamforge:icons:weapon.chain_sword.png?40}} 連なりの剣 (Chain Sword) |
+| 防具 (Armor) | 潮鳴りの外套 (Tidecaller's Cloak) | {{dreamforge:icons:armor.flowing_cloak.png?40}} 流れの外套 (Flowing Cloak) |
+| 装飾品 (Charm) | 潮鳴りの指輪 (Tidecaller's Ring) | {{dreamforge:icons:charm.tailwind_ring.png?40}} 追い風の指輪 (Tailwind Ring) |
+| 頭 (Head) | 潮鳴りの額冠 (Tidecaller's Circlet) | {{dreamforge:icons:head.tidal_circlet.png?40}} 潮汐の額冠 (Tidal Circlet) |
+| 手 (Hands) | 潮鳴りの手袋 (Tidecaller's Gloves) | {{dreamforge:icons:hands.tide_gloves.png?40}} 潮の手袋 (Tide Gloves) |
+| 足 (Feet) | 潮鳴りの渚履 (Tidecaller's Sandals) | {{dreamforge:icons:feet.tide_sandals.png?40}} 潮のサンダル (Tide Sandals) |
+
+  * **2つ装着 (2 pieces)**: 冷気属性効果 +10% (+10% Cold Effect) / 移動速度 +5% (+5% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **霜 (Frost)** 【霜】通常攻撃が当たると45%の確率で、敵を冷気で冷やす（冷気は重ならない） ([Frost] Basic attack hits have a 45% chance to apply Cold (Cold does not stack))
+    * **回避の残響 (Echoing Dodge)** 【回避の残響】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の65%分のダメージを上乗せする（重ならず、回避するたびに時間を延長。次の通常攻撃への上乗せは最大の1つだけを消費し、残りは保持） ([Echoing Dodge] After a dodge, your next basic attack within 3s deals +65% of the higher of AD or AP (does not stack; each dodge refreshes it; only the largest next-basic bonus is consumed, others remain))
+  * **6つ装着 (6 pieces)**
+    * **歩き撃ち (Strafe Shot)** 【歩き撃ち】移動しながら通常攻撃を当てると、敵の移動速度を1秒間24%下げる（重ならず時間を延長）（効果値の合計上限40%） ([Strafe Shot] Basic attacks while moving slow the enemy by 24% for 1s (refreshes without stacking) (combined value capped at 40%))
+    * **脆き氷 (Brittle Ice)** 【脆き氷】冷気の敵に会心を当てると、攻撃力か魔力の高い方の40%分のダメージを追加する（効果値の合計上限90%） ([Brittle Ice] Critical hits on chilled enemies deal 40% of the higher of AD or AP as bonus damage (combined value capped at 90%))
+
+===== 灯守の誓い (Lampkeeper's Oath) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 灯守の杖 (Lampkeeper's Staff) | {{dreamforge:icons:weapon.calming_staff.png?40}} 鎮めの杖 (Calming Staff) |
+| 防具 (Armor) | 灯守の誓衣 (Lampkeeper's Vow) | {{dreamforge:icons:armor.lampkeeper_mantle.png?40}} 灯守の外衣 (Lampkeeper's Mantle) |
+| 装飾品 (Charm) | 灯守の護符 (Lampkeeper's Charm) | {{dreamforge:icons:charm.resonance_amulet.png?40}} 共鳴の護符 (Resonance Amulet) |
+| 頭 (Head) | 灯守の笠 (Lampkeeper's Hat) | {{dreamforge:icons:head.lantern_hat.png?40}} 灯籠の笠 (Lantern Hat) |
+| 手 (Hands) | 灯守の指抜き (Lampkeeper's Fingerless Gloves) | {{dreamforge:icons:hands.lantern_fingerless.png?40}} 灯火の指抜き (Lantern Fingerless Gloves) |
+| 足 (Feet) | 灯守の長靴 (Lampkeeper's Boots) | {{dreamforge:icons:feet.dawn_steps.png?40}} 暁の足取り (Dawnsteps) |
+
+  * **2つ装着 (2 pieces)**: 光属性効果 +10% (+10% Light Effect) / 最大HP +8% (+8% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **輝き (Radiance)** 【輝き】通常攻撃が当たると、75%の確率で敵に光を1つ付ける（光は5つまで。3つ重なると光のダメージは必ず会心） ([Radiance] Basic attack hits have a 75% chance to apply 1 Light (up to 5; at 3, light damage always crits))
+    * **灯守 (Second Wind)** 【灯守】HPが30%を切ると、最大HPの25%を回復する（60秒に1回） ([Second Wind] When you drop below 30% health, heal 25% of max health (once per 60s))
+  * **6つ装着 (6 pieces)**
+    * **溢れる命 (Overflowing Life)** 【溢れる命】最大HPを超えた回復の40%が、3秒の障壁になる（障壁は最大HPの10%まで） ([Overflowing Life] 40% of overhealing becomes a 3s shield (up to 10% of max health))
+    * **見守りの手 (Watchful Hand)** 【見守りの手】味方旅人のHPが30%を切ると、自分の最大HPの18%の障壁をその味方に6秒間張る（同じ味方へ45秒に1回）（効果値の合計上限30%） ([Watchful Hand] When an allied traveler falls below 30% health, give them a 6s shield worth 18% of your max health (once per 45s per ally) (combined value capped at 30%))
+
+===== 残火の誓約 (Cinder Covenant) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 残火の大剣 (Cinderbrand) | {{dreamforge:icons:weapon.blaze_greatsword.png?40}} 烈火の大剣 (Blazing Greatsword) |
+| 防具 (Armor) | 残火の鱗鎧 (Cinderscale Mail) | {{dreamforge:icons:armor.thorn_mail.png?40}} 棘の鎧 (Thorn Mail) |
+| 装飾品 (Charm) | 残火の懐中時計 (Cinder Pocketwatch) | {{dreamforge:icons:charm.old_clock.png?40}} 古き時計 (Old Clock) |
+| 頭 (Head) | 残火の冠 (Cinder Crown) | {{dreamforge:icons:head.ember_crown.png?40}} 残り火の冠 (Ember Crown) |
+| 手 (Hands) | 残火の手甲 (Cinder Gauntlets) | {{dreamforge:icons:hands.ember_gauntlets.png?40}} 残り火の手甲 (Ember Gauntlets) |
+| 足 (Feet) | 残火の足甲 (Cinder Treads) | {{dreamforge:icons:feet.ember_treads.png?40}} 残り火の足甲 (Ember Treads) |
+
+  * **2つ装着 (2 pieces)**: 火属性効果 +10% (+10% Fire Effect) / 攻撃力 +5% (+5% Attack Damage)
+  * **3つ装着 (3 pieces)**
+    * **火種 (Ember)** 【火種】通常攻撃が当たると、45%の確率で敵に火を1つ付ける（火は上限なしで重なる） ([Ember] Basic attack hits have a 45% chance to apply 1 Fire (Fire has no stack limit))
+    * **烈火 (Blaze)** 【烈火】通常攻撃4回ごとに、攻撃力か魔力の高い方の50%分の魔法ダメージを追加する ([Blaze] Every 4th basic attack deals +50% of the higher of AD or AP as magic damage)
+  * **6つ装着 (6 pieces)**
+    * **飛び火 (Wildfire)** 【飛び火】火が3つ以上重なった敵に火を付けると、32%の確率で近くの敵にも火が1つ移る ([Wildfire] Applying fire to an enemy with 3+ fire stacks has a 32% chance to spread 1 stack to a nearby enemy)
+
+===== 黄昏の狩装 (Dusk Hunter's Garb) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 黄昏の双牙 (Duskfang) | {{dreamforge:icons:weapon.twin_fang.png?40}} 双牙の短刀 (Twin Fang Daggers) |
+| 防具 (Armor) | 黄昏の籠手 (Dusk Gauntlets) | {{dreamforge:icons:armor.counter_gauntlets.png?40}} 反撃の籠手 (Counter Gauntlets) |
+| 装飾品 (Charm) | 黄昏の印章 (Dusk Seal) | {{dreamforge:icons:charm.hunters_seal.png?40}} 狩人の印章 (Hunter's Seal) |
+| 頭 (Head) | 黄昏の鴉面 (Dusk Raven Mask) | {{dreamforge:icons:head.raven_mask.png?40}} 鴉の面 (Raven Mask) |
+| 手 (Hands) | 黄昏の影手袋 (Dusk Shadowgloves) | {{dreamforge:icons:hands.shadow_gloves.png?40}} 影縫いの手袋 (Shadowstitch Gloves) |
+| 足 (Feet) | 黄昏の足甲 (Duskstep Greaves) | {{dreamforge:icons:feet.duskstep_boots.png?40}} 宵踏みの靴 (Duskstep Boots) |
+
+  * **2つ装着 (2 pieces)**: 闇属性効果 +10% (+10% Dark Effect) / 会心率 +4% (+4% Crit Chance)
+  * **3つ装着 (3 pieces)**
+    * **影 (Umbra)** 【影】通常攻撃が当たると、75%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 75% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+    * **処刑 (Executioner)** 【処刑】HPが30%未満の敵への通常攻撃に、攻撃力40%分のダメージを上乗せする ([Executioner] Basic attacks on enemies below 30% health deal +40% AD as bonus damage)
+  * **6つ装着 (6 pieces)**
+    * **影の継承 (Umbral Heritage)** 【影の継承】闇が2つ以上ある敵を倒すと、6m以内の敵5体までにそれぞれ50%の確率で闇を1つ付ける（闇は5つまで）（効果値の合計上限100%） ([Umbral Heritage] Killing an enemy with 2 or more Dark stacks has a 50% chance per enemy to apply 1 Dark stack to up to 5 enemies within 6m (Dark capped at 5) (combined value capped at 100%))
+
+===== 冬枯れの誓約 (Winterbound Oath) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 冬枯れの槍 (Winterbound Spear) | {{dreamforge:icons:weapon.frost_spear.png?40}} 霜穂の槍 (Frostspike Spear) |
+| 防具 (Armor) | 冬枯れの上衣 (Winterbound Coat) | {{dreamforge:icons:armor.frost_coat.png?40}} 霜の上衣 (Frostweave Coat) |
+| 装飾品 (Charm) | 冬枯れの鈴 (Winterbound Bell) | {{dreamforge:icons:charm.moon_bell.png?40}} 月の鈴 (Moon Bell) |
+| 頭 (Head) | 冬枯れの氷壁兜 (Winterbound Icewall Helm) | {{dreamforge:icons:head.icewall_helm.png?40}} 氷壁の兜 (Icewall Helm) |
+| 手 (Hands) | 冬枯れの雪解け手袋 (Winterbound Snowmelt Mitts) | {{dreamforge:icons:hands.snowmelt_mitts.png?40}} 雪解の指なし (Snowmelt Mitts) |
+| 足 (Feet) | 冬枯れの毛皮靴 (Winterbound Hideboots) | {{dreamforge:icons:feet.winterhide_boots.png?40}} 冬毛の長靴 (Winterhide Boots) |
+
+  * **2つ装着 (2 pieces)**: 冷気属性効果 +10% (+10% Cold Effect) / 防御 +6 (+6 Armor)
+  * **3つ装着 (3 pieces)**
+    * **霜 (Frost)** 【霜】通常攻撃が当たると45%の確率で、敵を冷気で冷やす（冷気は重ならない） ([Frost] Basic attack hits have a 45% chance to apply Cold (Cold does not stack))
+    * **鉄の輪 (Bulwark)** 【鉄の輪】周りに敵が3体以上いる間、防御が30上がる ([Bulwark] +30 armor while 3 or more enemies are nearby)
+  * **6つ装着 (6 pieces)**
+    * **不動の構え (Immovable Stance)** 【不動の構え】1秒以上動かずにいる間、与えるダメージが10%上がり、受けるダメージが5%下がる（軽減は10%まで。動くと解除）（効果値の合計上限20%） ([Immovable Stance] After standing still for 1s, deal 10% more damage and take 5% less damage until you move (damage reduction capped at 10%) (combined value capped at 20%))
+    * **脆き氷 (Brittle Ice)** 【脆き氷】冷気の敵に会心を当てると、攻撃力か魔力の高い方の40%分のダメージを追加する（効果値の合計上限90%） ([Brittle Ice] Critical hits on chilled enemies deal 40% of the higher of AD or AP as bonus damage (combined value capped at 90%))
+
+===== 星詠みの装束 (Starsinger's Raiment) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 星詠みの杖 (Starsinger's Rod) | {{dreamforge:icons:weapon.lantern_rod.png?40}} 灯火の杖 (Lantern Rod) |
+| 防具 (Armor) | 星詠みの外套 (Starsinger's Cloak) | {{dreamforge:icons:armor.star_cloak.png?40}} 星読みの外套 (Stargazer's Cloak) |
+| 装飾品 (Charm) | 星詠みの時計 (Starsinger's Clock) | {{dreamforge:icons:charm.old_clock.png?40}} 古き時計 (Old Clock) |
+| 頭 (Head) | 星詠みの冠 (Starsinger's Diadem) | {{dreamforge:icons:head.comet_diadem.png?40}} 彗星の髪飾り (Comet Diadem) |
+| 手 (Hands) | 星詠みの指環 (Starsinger's Rings) | {{dreamforge:icons:hands.star_rings.png?40}} 星環の指輪 (Star-Ring Bands) |
+| 足 (Feet) | 星詠みの靴 (Starsinger's Slippers) | {{dreamforge:icons:feet.star_slippers.png?40}} 星座の上履き (Constellation Slippers) |
+
+  * **2つ装着 (2 pieces)**: スキル加速 +10 (+10 Ability Haste) / 魔力 +5% (+5% Ability Power)
+  * **3つ装着 (3 pieces)**
+    * **終の昂り (Ultimate Surge)** 【終の昂り】奥義を使った後の5秒間、攻撃力・魔力が25%上がる（重ならず時間を延長） ([Ultimate Surge] +25% AD/AP for 5s after using your Ultimate (refreshes, does not stack))
+    * **回避の残響 (Echoing Dodge)** 【回避の残響】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の65%分のダメージを上乗せする（重ならず、回避するたびに時間を延長。次の通常攻撃への上乗せは最大の1つだけを消費し、残りは保持） ([Echoing Dodge] After a dodge, your next basic attack within 3s deals +65% of the higher of AD or AP (does not stack; each dodge refreshes it; only the largest next-basic bonus is consumed, others remain))
+  * **6つ装着 (6 pieces)**
+    * **終曲 (Finale)** 【終曲】Q・W・Eを8秒以内にすべて使うと、奥義の残りクールダウンが22%縮む（10秒に1回） ([Finale] Using Q, W and E within 8s cuts your Ultimate's remaining cooldown by 22% (once per 10s))
+    * **凱歌 (Triumph Song)** 【凱歌】奥義を使うと、自分と10m以内の味方旅人を自分の最大HPの5%回復する（効果値の合計上限12%） ([Triumph Song] Using an Ultimate heals you and allied travelers within 10m for 5% of your max health (combined value capped at 12%))
+
+===== 狩猟団の装備 (Huntmaster's Kit) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 狩猟団の弓 (Huntmaster's Bow) | {{dreamforge:icons:weapon.hunting_bow.png?40}} 狩人の短弓 (Hunting Shortbow) |
+| 防具 (Armor) | 狩猟団の革鎧 (Huntmaster's Leathers) | {{dreamforge:icons:armor.hunter_leather.png?40}} 狩人の革鎧 (Hunter's Leathers) |
+| 装飾品 (Charm) | 狩猟団の牙 (Huntmaster's Fang) | {{dreamforge:icons:charm.fang_necklace.png?40}} 牙の首飾り (Fang Necklace) |
+| 頭 (Head) | 狩猟団の頭巾 (Huntmaster's Hood) | {{dreamforge:icons:head.hunter_hood.png?40}} 狩人の頭巾 (Hunter's Hood) |
+| 手 (Hands) | 狩猟団の筋帯 (Huntmaster's Sinew Wraps) | {{dreamforge:icons:hands.hunting_sinew.png?40}} 狩りの筋帯 (Hunting Sinew Wraps) |
+| 足 (Feet) | 狩猟団の長靴 (Huntmaster's Boots) | {{dreamforge:icons:feet.hunter_boots.png?40}} 追跡者の長靴 (Tracker's Boots) |
+
+  * **2つ装着 (2 pieces)**: 会心率 +4% (+4% Crit Chance) / 攻撃速度 +5% (+5% Attack Speed)
+  * **3つ装着 (3 pieces)**
+    * **処刑 (Executioner)** 【処刑】HPが30%未満の敵への通常攻撃に、攻撃力40%分のダメージを上乗せする ([Executioner] Basic attacks on enemies below 30% health deal +40% AD as bonus damage)
+    * **連撃 (Momentum)** 【連撃】敵を倒すたびに攻撃速度が5%上がる（4秒間、5回まで重なる） ([Momentum] Each kill grants +5% attack speed for 4s (stacks up to 5 times))
+  * **6つ装着 (6 pieces)**
+    * **渡り鳥 (Wanderer's Edge)** 【渡り鳥】通常攻撃を直前とは別の敵に当てると、攻撃力か魔力の高い方の22%分のダメージを追加する（主対象への1回につき1回。同じ敵には1秒に1回）（効果値の合計上限50%） ([Wanderer's Edge] Hitting a different enemy with a basic attack adds 22% of the higher of AD or AP as damage (once per primary attack; once per 1s per enemy) (combined value capped at 50%))
+    * **溢れる一撃 (Spillover Strike)** 【溢れる一撃】敵を倒した一撃の過剰ダメージの40%を、6m以内の別の敵1体に与える（連鎖しない）（効果値の合計上限120%） ([Spillover Strike] On kill, deal 40% of the killing hit's excess damage to one other enemy within 6m (does not chain) (combined value capped at 120%))
+
+===== 不落城の装い (Bastion's Bulwark) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 不落城の槍 (Bastion Lance) | {{dreamforge:icons:weapon.tower_lance.png?40}} 城壁の槍 (Rampart Lance) |
+| 防具 (Armor) | 不落城の甲羅 (Bastion Shell) | {{dreamforge:icons:armor.bastion_shell.png?40}} 甲羅の鎧 (Shell Armor) |
+| 装飾品 (Charm) | 不落城の封印 (Bastion Seal) | {{dreamforge:icons:charm.guardian_seal.png?40}} 守護の封印 (Guardian Seal) |
+| 頭 (Head) | 不落城の面頬 (Bastion Visor) | {{dreamforge:icons:head.sentry_visor.png?40}} 歩哨の面頬 (Sentry Visor) |
+| 手 (Hands) | 不落城の籠手 (Bastion Gauntlets) | {{dreamforge:icons:hands.ironvein_gauntlets.png?40}} 鉄脈の籠手 (Ironvein Gauntlets) |
+| 足 (Feet) | 不落城の鉄鞋 (Bastion Sabatons) | {{dreamforge:icons:feet.bastion_sabatons.png?40}} 城塞の鉄鞋 (Bastion Sabatons) |
+
+  * **2つ装着 (2 pieces)**: 防御 +8 (+8 Armor) / 最大HP +6% (+6% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **鉄の輪 (Bulwark)** 【鉄の輪】周りに敵が3体以上いる間、防御が35上がる ([Bulwark] +35 armor while 3 or more enemies are nearby)
+    * **守護霊 (Aegis)** 【守護霊】最大HPの10%以上の一撃を受けると、最大HPの25%分の障壁を6秒間張る（12秒に1回） ([Aegis] When a single hit deals 10%+ of your max health, gain a shield worth 25% of max health for 6s (once per 12s))
+  * **6つ装着 (6 pieces)**
+    * **盾打ち (Shield Bash)** 【盾打ち】障壁がある間、通常攻撃に現在の障壁量の42%分の無属性魔法ダメージを追加する（障壁は減らない）（効果値の合計上限90%） ([Shield Bash] While shielded, basic attacks deal 42% of your current shield as bonus non-elemental magic damage without consuming it (combined value capped at 90%))
+    * **割れ盾の衝撃 (Shieldbreak Burst)** 【割れ盾の衝撃】敵の攻撃で障壁が割れ切ると、割れる直前の障壁残量か最大HPの高い方の8%分のダメージを周囲5mに与える（6秒に1回。時間切れでは発動しない）（効果値の合計上限20%） ([Shieldbreak Burst] When enemy damage breaks your shield, deal 8% of the higher of its remaining value before the hit or your max health to enemies within 5m (once per 6s; expiry does not trigger it) (combined value capped at 20%))
+
+===== 燎原の軍装 (Wildfire Warband) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 燎原の斧 (Wildfire Cleaver) | {{dreamforge:icons:weapon.war_axe.png?40}} 戦斧 (War Axe) |
+| 防具 (Armor) | 燎原の鎧 (Wildfire Plate) | {{dreamforge:icons:armor.ember_plate.png?40}} 燠火の鎧 (Emberforged Plate) |
+| 装飾品 (Charm) | 燎原の太鼓 (Wildfire Drum) | {{dreamforge:icons:charm.war_drum.png?40}} 戦太鼓 (War Drum) |
+| 頭 (Head) | 燎原の熔岩鉢巻 (Wildfire Magma Band) | {{dreamforge:icons:head.magma_band.png?40}} 熔岩の鉢巻 (Magma Band) |
+| 手 (Hands) | 燎原の火織り手袋 (Wildfire Blazeknit Gloves) | {{dreamforge:icons:hands.blazeknit_gloves.png?40}} 火織りの手袋 (Blazeknit Gloves) |
+| 足 (Feet) | 燎原の火駆け靴 (Wildfire Embertreads) | {{dreamforge:icons:feet.emberdash_boots.png?40}} 火駆けの長靴 (Emberdash Boots) |
+
+  * **2つ装着 (2 pieces)**: 火属性効果 +10% (+10% Fire Effect) / 攻撃速度 +5% (+5% Attack Speed)
+  * **3つ装着 (3 pieces)**
+    * **火種 (Ember)** 【火種】通常攻撃が当たると、52%の確率で敵に火を1つ付ける（火は上限なしで重なる） ([Ember] Basic attack hits have a 52% chance to apply 1 Fire (Fire has no stack limit))
+    * **爆砕 (Shatter)** 【爆砕】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の60%分のダメージを与える（爆砕で倒した敵からは起きない） ([Shatter] On kill, deal 60% of the higher of AD or AP to enemies within 4m (kills by Shatter do not chain))
+  * **6つ装着 (6 pieces)**
+    * **乱戦 (Melee Frenzy)** 【乱戦】周りの敵1体につき、攻撃速度が3%上がる（8体まで） ([Melee Frenzy] +3% attack speed per nearby enemy (up to 8))
+    * **連撃 (Momentum)** 【連撃】敵を倒すたびに攻撃速度が4%上がる（4秒間、5回まで重なる） ([Momentum] Each kill grants +4% attack speed for 4s (stacks up to 5 times))
+
+===== 古森の守り (Old Grove Ward) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 古森の戦棍 (Grove Mace) | {{dreamforge:icons:weapon.oath_mace.png?40}} 誓いの戦棍 (Oath Mace) |
+| 防具 (Armor) | 古森の帷子 (Grove Mail) | {{dreamforge:icons:armor.root_mail.png?40}} 根の鎖帷子 (Rootbound Mail) |
+| 装飾品 (Charm) | 古森の心臓 (Grove Heart) | {{dreamforge:icons:charm.stone_heart.png?40}} 石の心臓 (Stone Heart) |
+| 頭 (Head) | 古森の苔冠 (Grove Moss Crown) | {{dreamforge:icons:head.moss_crown.png?40}} 苔の冠 (Moss Crown) |
+| 手 (Hands) | 古森の樹皮手 (Grove Barkgrips) | {{dreamforge:icons:hands.bark_knuckles.png?40}} 樹皮の拳当て (Bark Knuckles) |
+| 足 (Feet) | 古森の深根靴 (Grove Deeprootboots) | {{dreamforge:icons:feet.deeproot_boots.png?40}} 深根の長靴 (Deeproot Boots) |
+
+  * **2つ装着 (2 pieces)**: HP回復 +3/秒 (+3 Health Regen/s) / 行動妨害耐性 +12 (+12 Tenacity)
+  * **3つ装着 (3 pieces)**
+    * **護りの灯 (Barrier)** 【護りの灯】12秒ごとに、最大HPの10%分の障壁を4秒間張る ([Barrier] Every 12s, gain a shield worth 10% of max health for 4s)
+    * **灯守 (Second Wind)** 【灯守】HPが30%を切ると、最大HPの30%を回復する（60秒に1回） ([Second Wind] When you drop below 30% health, heal 30% of max health (once per 60s))
+  * **6つ装着 (6 pieces)**
+    * **溢れる命 (Overflowing Life)** 【溢れる命】最大HPを超えた回復の40%が、3秒の障壁になる（障壁は最大HPの10%まで） ([Overflowing Life] 40% of overhealing becomes a 3s shield (up to 10% of max health))
+    * **備えの盾 (Ready Guard)** 【備えの盾】5秒間ダメージを与えず受けずに過ごした後、最初に与えるか受けた瞬間、最大HPの8%の障壁を8秒間張る（効果値の合計上限18%） ([Ready Guard] After 5s without dealing or taking damage, your first damage dealt or taken grants an 8s shield worth 8% max health (combined value capped at 18%))
+
+===== 夢想の楽団 (Reverie Ensemble) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 夢想の竪琴 (Reverie Harp) | {{dreamforge:icons:weapon.star_harp.png?40}} 星の竪琴 (Star Harp) |
+| 防具 (Armor) | 夢想の肩掛け (Reverie Shawl) | {{dreamforge:icons:armor.prayer_shawl.png?40}} 祈りの肩掛け (Prayer Shawl) |
+| 装飾品 (Charm) | 夢想の水晶 (Reverie Lens) | {{dreamforge:icons:charm.dream_lens.png?40}} 夢見の水晶 (Dreaming Lens) |
+| 頭 (Head) | 夢想の月紗頭巾 (Reverie Moonlace Hood) | {{dreamforge:icons:head.moonlace_hood.png?40}} 月紗の頭巾 (Moonlace Hood) |
+| 手 (Hands) | 夢想の鈴腕輪 (Reverie Chime Bracers) | {{dreamforge:icons:hands.chime_bracers.png?40}} 鈴鳴りの腕輪 (Chime Bracers) |
+| 足 (Feet) | 夢想の囁き靴 (Reverie Whisperweave Shoes) | {{dreamforge:icons:feet.whisperweave_shoes.png?40}} 囁き織りの靴 (Whisperweave Shoes) |
+
+  * **2つ装着 (2 pieces)**: 魔力 +6% (+6% Ability Power) / スキル加速 +8 (+8 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **共鳴 (Resonance)** 【共鳴】近くに味方がいる間、自分の攻撃力・魔力が10%、近くの味方は5%上がる（一人のときは自分も半分。味方への分は重ならず、いちばん高い人の分） ([Resonance] While an ally is near, you gain +10% AD/AP and nearby allies gain +5% (half for yourself when alone; allies take only the highest, no stacking))
+    * **輝き (Radiance)** 【輝き】通常攻撃が当たると、88%の確率で敵に光を1つ付ける（光は5つまで。3つ重なると光のダメージは必ず会心） ([Radiance] Basic attack hits have a 88% chance to apply 1 Light (up to 5; at 3, light damage always crits))
+  * **6つ装着 (6 pieces)**
+    * **星屑の巡り (Stardust Cycle)** 【星屑の巡り】敵の光が5つに達すると、通常記憶のうち残りクールダウンが最長の1つを14%短縮する（全体で1秒に1回、同じ敵へ5秒に1回）（効果値の合計上限30%） ([Stardust Cycle] When an enemy reaches 5 Light stacks, cut your longest remaining ordinary-memory cooldown by 14% (once per 1s overall and once per 5s per enemy) (combined value capped at 30%))
+    * **継ぎの手 (Relay Hand)** 【継ぎの手】敵を倒すと、最も近い味方旅人の通常記憶のうち残りクールダウンが最長の1つを8%短縮する（同じ味方へ2秒に1回）（効果値の合計上限15%） ([Relay Hand] On kill, cut the nearest allied traveler's longest remaining ordinary-memory cooldown by 8% (once per 2s per ally) (combined value capped at 15%))
+
+===== 幻影の一座 (Phantom Troupe) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 幻影の杖 (Phantom Wand) | {{dreamforge:icons:weapon.dream_wand.png?40}} 夢見の杖 (Dreamer's Wand) |
+| 防具 (Armor) | 幻影の法衣 (Phantom Robe) | {{dreamforge:icons:armor.mist_robe.png?40}} 霧の法衣 (Mist Robe) |
+| 装飾品 (Charm) | 幻影の仮面 (Phantom Mask) | {{dreamforge:icons:charm.shadow_mask.png?40}} 影の仮面 (Shadow Mask) |
+| 頭 (Head) | 幻影の黒面紗 (Phantom Blackveil) | {{dreamforge:icons:head.starless_veil.png?40}} 無星のヴェール (Starless Veil) |
+| 手 (Hands) | 幻影の虚爪 (Phantom Voidclaws) | {{dreamforge:icons:hands.void_claws.png?40}} 虚ろの爪 (Hollow Claws) |
+| 足 (Feet) | 幻影の夜履 (Phantom Nightslippers) | {{dreamforge:icons:feet.nightveil_slippers.png?40}} 夜帳の上履き (Nightveil Slippers) |
+
+  * **2つ装着 (2 pieces)**: 闇属性効果 +10% (+10% Dark Effect) / 移動速度 +5% (+5% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **影 (Umbra)** 【影】通常攻撃が当たると、88%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 88% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+    * **回避の残響 (Echoing Dodge)** 【回避の残響】回避した後3秒以内の次の通常攻撃に、攻撃力か魔力の高い方の78%分のダメージを上乗せする（重ならず、回避するたびに時間を延長。次の通常攻撃への上乗せは最大の1つだけを消費し、残りは保持） ([Echoing Dodge] After a dodge, your next basic attack within 3s deals +78% of the higher of AD or AP (does not stack; each dodge refreshes it; only the largest next-basic bonus is consumed, others remain))
+  * **6つ装着 (6 pieces)**
+    * **詠唱の薙ぎ (Spellsweep)** 【詠唱の薙ぎ】通常記憶を使った後5秒以内の次の通常攻撃が、そのダメージの42%を周囲3mの別の敵にも与える（1回で消費。記憶を使うたび時間を延長）（効果値の合計上限90%） ([Spellsweep] After using an ordinary memory, your next basic attack within 5s deals 42% of its damage to other enemies within 3m (consumed once; each memory use refreshes the window) (combined value capped at 90%))
+    * **戻り刃 (Returning Blade)** 【戻り刃】記憶のダメージで敵を倒すと、その記憶の残りクールダウンが14%縮む（効果値の合計上限30%） ([Returning Blade] Killing an enemy with a memory cuts that memory's remaining cooldown by 14% (combined value capped at 30%))
+
+===== 凍土の装い (Permafrost Garb) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 凍土の兜 (Permafrost Helm) | {{dreamforge:icons:head.frost_helm.png?40}} 霜の兜 (Frost Helm) |
+| 手 (Hands) | 凍土の手甲 (Permafrost Gauntlets) | {{dreamforge:icons:hands.frost_mitts.png?40}} 霜の指なし手袋 (Frost Mitts) |
+| 足 (Feet) | 凍土の脚絆 (Permafrost Greaves) | {{dreamforge:icons:feet.frost_boots.png?40}} 氷上の靴 (Ice Skimmers) |
+| 主装備 (Weapon) | 凍土の氷槍 (Permafrost Spear) | {{dreamforge:icons:weapon.glacier_spear.png?40}} 凍て穂の槍 (Rimefrost Spear) |
+| 防具 (Armor) | 凍土の霜衣 (Permafrost Robe) | {{dreamforge:icons:armor.frost_robe.png?40}} 霜の法衣 (Frost Robe) |
+| 装飾品 (Charm) | 凍土の霜飾り (Permafrost Frostpendant) | {{dreamforge:icons:charm.frost_pendant.png?40}} 霜の首飾り (Frost Pendant) |
+
+  * **2つ装着 (2 pieces)**: 冷気属性効果 +10% (+10% Cold Effect) / 防御 +10 (+10 Armor)
+  * **3つ装着 (3 pieces)**
+    * **棘 (Thorns)** 【棘】受けたダメージの30%を相手に跳ね返す（1秒に1回） ([Thorns] Reflect 30% of damage taken back to the attacker (once per second))
+    * **霜 (Frost)** 【霜】通常攻撃が当たると45%の確率で、敵を冷気で冷やす（冷気は重ならない） ([Frost] Basic attack hits have a 45% chance to apply Cold (Cold does not stack))
+  * **6つ装着 (6 pieces)**
+    * **備えの盾 (Ready Guard)** 【備えの盾】5秒間ダメージを与えず受けずに過ごした後、最初に与えるか受けた瞬間、最大HPの8%の障壁を8秒間張る（効果値の合計上限18%） ([Ready Guard] After 5s without dealing or taking damage, your first damage dealt or taken grants an 8s shield worth 8% max health (combined value capped at 18%))
+    * **怨嗟の鐘 (Toll of Grudge)** 【怨嗟の鐘】実際に失ったHPの合計が最大HPの60%に達するたび、周囲6mに最大HPの20%分の魔法ダメージを与える（障壁で吸収した分は数えず、世界を移ると溜めは0）（効果値の合計上限40%） ([Toll of Grudge] Every time actual health lost totals 60% max health, deal 20% max health as magic damage within 6m (shield absorption does not count; progress resets between worlds) (combined value capped at 40%))
+
+===== 修羅道の装い (Path of Carnage) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 修羅道の面 (Carnage Mask) | {{dreamforge:icons:head.berserker_mask.png?40}} 狂戦士の面 (Berserker's Mask) |
+| 手 (Hands) | 修羅道の爪 (Carnage Claws) | {{dreamforge:icons:hands.claw_gauntlets.png?40}} 獣爪の手甲 (Beastclaw Gauntlets) |
+| 足 (Feet) | 修羅道の脛 (Carnage Spurs) | {{dreamforge:icons:feet.spiked_boots.png?40}} 棘付きの長靴 (Spiked Boots) |
+| 主装備 (Weapon) | 修羅道の大斧 (Carnage Greataxe) | {{dreamforge:icons:weapon.severing_axe.png?40}} 断ち切りの大斧 (Severing Greataxe) |
+| 防具 (Armor) | 修羅道の胴着 (Carnage Vest) | {{dreamforge:icons:armor.skirmisher_coat.png?40}} 遊撃手の外套 (Skirmisher's Coat) |
+| 装飾品 (Charm) | 修羅道の牙飾り (Carnage Fangcharm) | {{dreamforge:icons:charm.hunter_tooth.png?40}} 獲物の牙飾り (Hunter's Fang) |
+
+  * **2つ装着 (2 pieces)**: 攻撃力 +8% (+8% Attack Damage) / 最大HP +40 (+40 Max Health)
+  * **3つ装着 (3 pieces)**
+    * **血の渇き (Bloodlust)** 【血の渇き】HPが50%未満の間、攻撃速度が20%上がる ([Bloodlust] +20% attack speed while below 50% health)
+    * **吸命 (Lifesteal)** 【吸命】通常攻撃が当たるたびに、最大HPの1%を回復する（0.15秒に1回まで） ([Lifesteal] Basic attack hits heal you for 1% of max health (at most once per 0.15s))
+  * **6つ装着 (6 pieces)**
+    * **逆襲 (Retaliation)** 【逆襲】攻撃を受けると、3秒間 攻撃力・魔力が25%上がる（重ならず時間を延長） ([Retaliation] After taking a hit, gain +25% attack damage and ability power for 3s (refreshes, does not stack))
+    * **怨嗟の鐘 (Toll of Grudge)** 【怨嗟の鐘】実際に失ったHPの合計が最大HPの60%に達するたび、周囲6mに最大HPの20%分の魔法ダメージを与える（障壁で吸収した分は数えず、世界を移ると溜めは0）（効果値の合計上限40%） ([Toll of Grudge] Every time actual health lost totals 60% max health, deal 20% max health as magic damage within 6m (shield absorption does not count; progress resets between worlds) (combined value capped at 40%))
+
+===== 風舞の装い (Galedancer's Attire) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 風舞の面紗 (Galedancer Veil) | {{dreamforge:icons:head.mist_veil.png?40}} 霧のヴェール (Veil of Mist) |
+| 手 (Hands) | 風舞の指貫 (Galedancer Gloves) | {{dreamforge:icons:hands.quick_fingers.png?40}} 早業の手袋 (Quickfinger Gloves) |
+| 足 (Feet) | 風舞の靴 (Galedancer Shoes) | {{dreamforge:icons:feet.dancer_shoes.png?40}} 舞い手の靴 (Dancer's Shoes) |
+| 主装備 (Weapon) | 風舞の薙刀 (Galedancer's Glaive) | {{dreamforge:icons:weapon.storm_glaive.png?40}} 嵐の薙刀 (Storm Glaive) |
+| 防具 (Armor) | 風舞の疾歩衣 (Galedancer's Swiftcoat) | {{dreamforge:icons:armor.swiftstep_coat.png?40}} 疾歩の外套 (Swiftstep Coat) |
+| 装飾品 (Charm) | 風舞の指輪 (Galedancer's Ring) | {{dreamforge:icons:charm.zephyr_ring.png?40}} 西風の指輪 (Zephyr Ring) |
+
+  * **2つ装着 (2 pieces)**: 移動速度 +5% (+5% Move Speed) / スキル加速 +10 (+10 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **旋風 (Whirlwind)** 【旋風】回避すると、周囲4mの敵に攻撃力か魔力の高い方の60%分のダメージを与える（2秒に1回） ([Whirlwind] Dodging deals 60% of the higher of AD or AP to enemies within 4m (once per 2s))
+    * **疾駆 (Sprint)** 【疾駆】回避した後の3秒間、移動速度と攻撃速度が15%上がる（重ならず時間を延長） ([Sprint] +15% move speed and attack speed for 3s after dodging (refreshes, does not stack))
+  * **6つ装着 (6 pieces)**
+    * **渡り鳥 (Wanderer's Edge)** 【渡り鳥】通常攻撃を直前とは別の敵に当てると、攻撃力か魔力の高い方の28%分のダメージを追加する（主対象への1回につき1回。同じ敵には1秒に1回）（効果値の合計上限50%） ([Wanderer's Edge] Hitting a different enemy with a basic attack adds 28% of the higher of AD or AP as damage (once per primary attack; once per 1s per enemy) (combined value capped at 50%))
+
+===== 天穹の誓い (Firmament Vow) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 天穹の冠 (Firmament Diadem) | {{dreamforge:icons:head.star_diadem.png?40}} 星の髪飾り (Star Diadem) |
+| 手 (Hands) | 天穹の指環 (Firmament Rings) | {{dreamforge:icons:hands.star_rings.png?40}} 星環の指輪 (Star-Ring Bands) |
+| 足 (Feet) | 天穹の沓 (Firmament Steps) | {{dreamforge:icons:feet.star_steps.png?40}} 星渡りの靴 (Starstep Boots) |
+| 主装備 (Weapon) | 天穹の儀杖 (Firmament Ritual Staff) | {{dreamforge:icons:weapon.astral_staff.png?40}} 星霜の儀杖 (Astral Ritual Staff) |
+| 防具 (Armor) | 天穹の星衣 (Firmament Starmantle) | {{dreamforge:icons:armor.star_mantle.png?40}} 星屑の肩掛け (Stardust Mantle) |
+| 装飾品 (Charm) | 天穹の彗星垂飾 (Firmament Comet Pendant) | {{dreamforge:icons:charm.comet_pendant.png?40}} 彗星の垂飾り (Comet Pendant) |
+
+  * **2つ装着 (2 pieces)**: 魔力 +6% (+6% Ability Power) / スキル加速 +8 (+8 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **終の昂り (Ultimate Surge)** 【終の昂り】奥義を使った後の5秒間、攻撃力・魔力が20%上がる（重ならず時間を延長） ([Ultimate Surge] +20% AD/AP for 5s after using your Ultimate (refreshes, does not stack))
+    * **星の加護 (Star Shield)** 【星の加護】奥義を使うと、最大HPの12%分の障壁を5秒間張る ([Star Shield] Using your Ultimate grants a shield worth 12% of max health for 5s)
+  * **6つ装着 (6 pieces)**
+    * **切り札を握る (Ace in Hand)** 【切り札を握る】装備中の奥義が使える間、通常記憶のダメージが12%上がる（星座による奥義化を含む。奥義がなければ無効）（効果値の合計上限24%） ([Ace in Hand] While your equipped Ultimate is ready, ordinary memories deal 12% more damage (includes constellation conversions to Ultimate; requires an Ultimate) (combined value capped at 24%))
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを20%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 20% (rearms when all are ready again) (combined value capped at 45%))
+
+===== 闇討ちの装い (Nightstrike Gear) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 闇討ちの眼帯 (Nightstrike Eyepatch) | {{dreamforge:icons:head.eye_patch.png?40}} 片目の眼帯 (Marksman's Eyepatch) |
+| 手 (Hands) | 闇討ちの手袋 (Nightstrike Gloves) | {{dreamforge:icons:hands.duelist_gloves.png?40}} 決闘者の手袋 (Duelist's Gloves) |
+| 足 (Feet) | 闇討ちの足袋 (Nightstrike Tabi) | {{dreamforge:icons:feet.stalker_boots.png?40}} 忍び足の靴 (Stalker's Boots) |
+| 主装備 (Weapon) | 闇討ちの宵短剣 (Nightstrike Gloamdagger) | {{dreamforge:icons:weapon.gloaming_dagger.png?40}} 宵闇の短剣 (Gloaming Dagger) |
+| 防具 (Armor) | 闇討ちの黄昏上着 (Nightstrike Duskjacket) | {{dreamforge:icons:armor.duskweave_jacket.png?40}} 黄昏織りの上着 (Duskweave Jacket) |
+| 装飾品 (Charm) | 闇討ちの鋭眼御守 (Nightstrike Keeneye Charm) | {{dreamforge:icons:charm.keeneye_charm.png?40}} 鋭眼の御守り (Keen-Eye Charm) |
+
+  * **2つ装着 (2 pieces)**: 会心率 +4% (+4% Crit Chance) / 攻撃速度 +6% (+6% Attack Speed)
+  * **3つ装着 (3 pieces)**
+    * **影 (Umbra)** 【影】通常攻撃が当たると、75%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 75% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+    * **先制 (Opening Strike)** 【先制】HPが90%以上の敵への通常攻撃に、攻撃力60%分のダメージを上乗せする ([Opening Strike] Basic attacks on enemies above 90% health deal +60% AD)
+  * **6つ装着 (6 pieces)**
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを22%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 22% (rearms when all are ready again) (combined value capped at 45%))
+    * **積もる運 (Piling Luck)** 【積もる運】会心しなかった通常攻撃のたび、次の通常攻撃の会心率が2%上がる（10回まで。会心で0に戻る。確定会心では数えず、リセットもしない）（効果値の合計上限3%） ([Piling Luck] Each non-critical basic attack adds 2% critical chance to your next basic attack (up to 10 stacks; a critical hit resets them; guaranteed critical hits neither add nor reset stacks) (combined value capped at 3%))
+
+===== 灰走りの装い (Ashrunner's Garb) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 灰走りの頭巾 (Ashrunner Hood) | {{dreamforge:icons:head.ash_hood.png?40}} 灰かぶりの頭巾 (Ashen Hood) |
+| 手 (Hands) | 灰走りの手甲 (Ashrunner Grips) | {{dreamforge:icons:hands.flame_grips.png?40}} 炎の握り (Flame Grips) |
+| 足 (Feet) | 灰走りの靴 (Ashrunner Boots) | {{dreamforge:icons:feet.ash_boots.png?40}} 灰踏みの靴 (Ashwalker Boots) |
+| 主装備 (Weapon) | 灰走りの短刃 (Ashrunner Katar) | {{dreamforge:icons:weapon.ember_katar.png?40}} 熾火の短刃 (Ember Katar) |
+| 防具 (Armor) | 灰走りの外衣 (Ashrunner Jacket) | {{dreamforge:icons:armor.ember_jacket.png?40}} 火の粉の革衣 (Cinder Jacket) |
+| 装飾品 (Charm) | 灰走りの炉石 (Ashrunner Hearthstone) | {{dreamforge:icons:charm.hearthstone.png?40}} 炉端の石 (Hearthstone) |
+
+  * **2つ装着 (2 pieces)**: 火属性効果 +10% (+10% Fire Effect) / 移動速度 +5% (+5% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **火種 (Ember)** 【火種】通常攻撃が当たると、45%の確率で敵に火を1つ付ける（火は上限なしで重なる） ([Ember] Basic attack hits have a 45% chance to apply 1 Fire (Fire has no stack limit))
+    * **追い風 (Tailwind)** 【追い風】敵を倒した後の2秒間、移動速度が15%上がる（重ならず時間を延長） ([Tailwind] +15% move speed for 2s after a kill (refreshes, does not stack))
+  * **6つ装着 (6 pieces)**
+    * **助走 (Run-Up)** 【助走】歩いて合計12m動くと、次の通常攻撃に攻撃力か魔力の高い方の50%分のダメージを追加する（1回で消費。回避・ダッシュは数えず、世界を移ると0に戻る。次の通常攻撃への上乗せは最大の1つだけを使い、残りは保持）（効果値の合計上限120%） ([Run-Up] After walking 12m, your next basic attack deals 50% of the higher of AD or AP as bonus damage (consumed once; excludes dodges and dashes; resets between worlds; only the largest next-basic bonus is consumed, others remain) (combined value capped at 120%))
+    * **飛び火 (Wildfire)** 【飛び火】火が3つ以上重なった敵に火を付けると、26%の確率で近くの敵にも火が1つ移る ([Wildfire] Applying fire to an enemy with 3+ fire stacks has a 26% chance to spread 1 stack to a nearby enemy)
+
+===== 施療の誓い (Healer's Pledge) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 施療の錫杖 (Healer's Staff) | {{dreamforge:icons:weapon.pilgrim_staff.png?40}} 巡礼の錫杖 (Pilgrim's Staff) |
+| 手 (Hands) | 施療の手袋 (Healer's Gloves) | {{dreamforge:icons:hands.healer_hands.png?40}} 癒し手の手袋 (Healer's Gloves) |
+| 装飾品 (Charm) | 施療の飾り (Healer's Brooch) | {{dreamforge:icons:charm.sun_brooch.png?40}} 陽光のブローチ (Sun Brooch) |
+| 頭 (Head) | 施療の額冠 (Healer's Circlet) | {{dreamforge:icons:head.kindly_circlet.png?40}} 慈手の額冠 (Kindly Circlet) |
+| 防具 (Armor) | 施療の飾り帯 (Healer's Sash) | {{dreamforge:icons:armor.healing_sash.png?40}} 癒しの飾り帯 (Healing Sash) |
+| 足 (Feet) | 施療の靴 (Healer's Shoes) | {{dreamforge:icons:feet.mender_shoes.png?40}} 癒しの靴 (Mender's Shoes) |
+
+  * **2つ装着 (2 pieces)**: HP回復 +3/秒 (+3 Health Regen/s) / 光属性効果 +10% (+10% Light Effect)
+  * **3つ装着 (3 pieces)**
+    * **護りの灯 (Barrier)** 【護りの灯】12秒ごとに、最大HPの10%分の障壁を4秒間張る ([Barrier] Every 12s, gain a shield worth 10% of max health for 4s)
+    * **共鳴 (Resonance)** 【共鳴】近くに味方がいる間、自分の攻撃力・魔力が10%、近くの味方は5%上がる（一人のときは自分も半分。味方への分は重ならず、いちばん高い人の分） ([Resonance] While an ally is near, you gain +10% AD/AP and nearby allies gain +5% (half for yourself when alone; allies take only the highest, no stacking))
+  * **6つ装着 (6 pieces)**
+    * **分かち合う護り (Shared Ward)** 【分かち合う護り】障壁を得るたび、10m以内の味方旅人にその量の28%の障壁を4秒間与える（分けた障壁からは発動しない。重ならず大きい方を適用）（効果値の合計上限60%） ([Shared Ward] When you gain a shield, give allied travelers within 10m a 4s shield worth 28% of that amount (shared shields do not trigger this; highest shield only, no stacking) (combined value capped at 60%))
+    * **凱歌 (Triumph Song)** 【凱歌】奥義を使うと、自分と10m以内の味方旅人を自分の最大HPの5%回復する（効果値の合計上限12%） ([Triumph Song] Using an Ultimate heals you and allied travelers within 10m for 5% of your max health (combined value capped at 12%))
+
+===== 鉄騎の誓い (Ironknight's Oath) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 鉄騎の竜鎧 (Ironknight Scale Mail) | {{dreamforge:icons:armor.scale_coat.png?40}} 竜鱗の外套 (Dragonscale Coat) |
+| 頭 (Head) | 鉄騎の大兜 (Ironknight Greathelm) | {{dreamforge:icons:head.knight_helm.png?40}} 騎士の大兜 (Knight's Greathelm) |
+| 足 (Feet) | 鉄騎の鉄脚 (Ironknight Sabatons) | {{dreamforge:icons:feet.knight_sabatons.png?40}} 騎士の鉄靴 (Knight's Sabatons) |
+| 主装備 (Weapon) | 鉄騎の城門槌 (Ironknight Gatemaul) | {{dreamforge:icons:weapon.gatehouse_maul.png?40}} 城門の大槌 (Gatehouse Maul) |
+| 手 (Hands) | 鉄騎の鉄脈籠手 (Ironknight Ironvein Gauntlets) | {{dreamforge:icons:hands.ironvein_gauntlets.png?40}} 鉄脈の籠手 (Ironvein Gauntlets) |
+| 装飾品 (Charm) | 鉄騎の印章 (Ironknight Seal) | {{dreamforge:icons:charm.iron_seal.png?40}} 鉄の印章 (Iron Seal) |
+
+  * **2つ装着 (2 pieces)**: 防御 +10 (+10 Armor) / 最大HP +8% (+8% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **棘 (Thorns)** 【棘】受けたダメージの35%を相手に跳ね返す（1秒に1回） ([Thorns] Reflect 35% of damage taken back to the attacker (once per second))
+    * **守護霊 (Aegis)** 【守護霊】最大HPの10%以上の一撃を受けると、最大HPの20%分の障壁を6秒間張る（12秒に1回） ([Aegis] When a single hit deals 10%+ of your max health, gain a shield worth 20% of max health for 6s (once per 12s))
+  * **6つ装着 (6 pieces)**
+    * **割れ盾の衝撃 (Shieldbreak Burst)** 【割れ盾の衝撃】敵の攻撃で障壁が割れ切ると、割れる直前の障壁残量か最大HPの高い方の10%分のダメージを周囲5mに与える（6秒に1回。時間切れでは発動しない）（効果値の合計上限20%） ([Shieldbreak Burst] When enemy damage breaks your shield, deal 10% of the higher of its remaining value before the hit or your max health to enemies within 5m (once per 6s; expiry does not trigger it) (combined value capped at 20%))
+    * **怨嗟の鐘 (Toll of Grudge)** 【怨嗟の鐘】実際に失ったHPの合計が最大HPの60%に達するたび、周囲6mに最大HPの18%分の魔法ダメージを与える（障壁で吸収した分は数えず、世界を移ると溜めは0）（効果値の合計上限40%） ([Toll of Grudge] Every time actual health lost totals 60% max health, deal 18% max health as magic damage within 6m (shield absorption does not count; progress resets between worlds) (combined value capped at 40%))
+
+===== 月蝕の装い (Eclipse Regalia) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 月蝕の鎌 (Eclipse Sickle) | {{dreamforge:icons:weapon.moon_sickle.png?40}} 月鎌 (Moon Sickle) |
+| 頭 (Head) | 月蝕の兜 (Eclipse Helm) | {{dreamforge:icons:head.void_helm.png?40}} 虚ろの兜 (Hollow Helm) |
+| 装飾品 (Charm) | 月蝕の指輪 (Eclipse Ring) | {{dreamforge:icons:charm.shadow_ring.png?40}} 影の指輪 (Shadow Ring) |
+| 防具 (Armor) | 月蝕の影外套 (Eclipse Shadowcloak) | {{dreamforge:icons:armor.shadow_cloak.png?40}} 影織りの外套 (Shadowweave Cloak) |
+| 手 (Hands) | 月蝕の虚爪 (Eclipse Voidclaws) | {{dreamforge:icons:hands.void_claws.png?40}} 虚ろの爪 (Hollow Claws) |
+| 足 (Feet) | 月蝕の影履 (Eclipse Shadowslippers) | {{dreamforge:icons:feet.shadow_slippers.png?40}} 影の上履き (Shadow Slippers) |
+
+  * **2つ装着 (2 pieces)**: 闇属性効果 +10% (+10% Dark Effect) / 会心ダメージ +15% (+15% Crit Damage)
+  * **3つ装着 (3 pieces)**
+    * **影 (Umbra)** 【影】通常攻撃が当たると、75%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 75% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+    * **吸魂 (Soul Siphon)** 【吸魂】敵を倒すと、最大HPの2.0%を回復する（0.5秒に1回まで） ([Soul Siphon] Kills heal you for 2.0% of max health (at most once per 0.5s))
+  * **6つ装着 (6 pieces)**
+    * **急所の傷 (Weak-Point Wound)** 【急所の傷】同じ敵へ会心を3回当てるたび、攻撃力か魔力の高い方の75%分のダメージを追加する（敵ごとに数え、6秒空くと0）（効果値の合計上限160%） ([Weak-Point Wound] Every 3 critical hits on the same enemy deal 75% of the higher of AD or AP as bonus damage (tracked per enemy; resets after a 6s gap) (combined value capped at 160%))
+
+===== 迅雷の武装 (Thunderclap Arms) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 迅雷の戦鎚 (Thunderclap Hammer) | {{dreamforge:icons:weapon.thunder_hammer.png?40}} 雷鳴の戦鎚 (Thunder Hammer) |
+| 防具 (Armor) | 迅雷の道着 (Thunderclap Gi) | {{dreamforge:icons:armor.monk_garb.png?40}} 修行者の道着 (Ascetic's Garb) |
+| 足 (Feet) | 迅雷の長靴 (Thunderclap Boots) | {{dreamforge:icons:feet.wolf_boots.png?40}} 狼の毛皮靴 (Wolfskin Boots) |
+| 頭 (Head) | 迅雷の頭巾 (Thunderclap Hood) | {{dreamforge:icons:head.thunderveil_hood.png?40}} 雷帷の頭巾 (Thunderveil Hood) |
+| 手 (Hands) | 迅雷の嵐拳 (Thunderclap Knuckles) | {{dreamforge:icons:hands.storm_knuckles.png?40}} 嵐の拳当て (Storm Knuckles) |
+| 装飾品 (Charm) | 迅雷の雷雲飾り (Thunderclap Cloudlocket) | {{dreamforge:icons:charm.stormcloud_locket.png?40}} 雷雲のロケット (Stormcloud Locket) |
+
+  * **2つ装着 (2 pieces)**: 攻撃力 +8% (+8% Attack Damage) / 攻撃速度 +6% (+6% Attack Speed)
+  * **3つ装着 (3 pieces)**
+    * **雷鎖 (Chain Lightning)** 【雷鎖】通常攻撃が当たると25%の確率で、近くの敵2体に攻撃力か魔力の高い方の40%分の魔法ダメージを与える ([Chain Lightning] Basic attack hits have a 25% chance to deal 40% of the higher of AD or AP as magic damage to 2 nearby enemies)
+    * **乱戦 (Melee Frenzy)** 【乱戦】周りの敵1体につき、攻撃速度が3%上がる（8体まで） ([Melee Frenzy] +3% attack speed per nearby enemy (up to 8))
+  * **6つ装着 (6 pieces)**
+    * **積もる運 (Piling Luck)** 【積もる運】会心しなかった通常攻撃のたび、次の通常攻撃の会心率が2%上がる（10回まで。会心で0に戻る。確定会心では数えず、リセットもしない）（効果値の合計上限3%） ([Piling Luck] Each non-critical basic attack adds 2% critical chance to your next basic attack (up to 10 stacks; a critical hit resets them; guaranteed critical hits neither add nor reset stacks) (combined value capped at 3%))
+    * **一点集中 (Focus Fire)** 【一点集中】同じ敵へ通常攻撃を5回続けて当てるたび、攻撃力か魔力の高い方の50%分のダメージを追加する（別の敵に当てるか4秒空くと数え直し）（効果値の合計上限120%） ([Focus Fire] Every 5 consecutive basic hits on the same enemy deal 50% of the higher of AD or AP as bonus damage (resets on a different target or a 4s gap) (combined value capped at 120%))
+
+===== 万象の装い (Myriad Weaver's Vestments) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 万象の法衣 (Myriad Robe) | {{dreamforge:icons:armor.resonant_robe.png?40}} 共鳴の衣 (Resonant Robe) |
+| 手 (Hands) | 万象の手袋 (Myriad Gloves) | {{dreamforge:icons:hands.alchemist_gloves.png?40}} 錬金術師の手袋 (Alchemist's Gloves) |
+| 装飾品 (Charm) | 万象の飾り (Myriad Trinket) | {{dreamforge:icons:charm.clockwork_charm.png?40}} ぜんまい仕掛けの飾り (Clockwork Charm) |
+| 主装備 (Weapon) | 万象の詠唱杖 (Myriad Chanting Wand) | {{dreamforge:icons:weapon.chanting_wand.png?40}} 詠唱の短杖 (Chanting Wand) |
+| 頭 (Head) | 万象の賢者帽 (Myriad Sage Hat) | {{dreamforge:icons:head.sage_hat.png?40}} 賢者のとんがり帽 (Sage's Hat) |
+| 足 (Feet) | 万象の彗星靴 (Myriad Cometshoes) | {{dreamforge:icons:feet.cometstride_shoes.png?40}} 彗星の靴 (Comet-Stride Shoes) |
+
+  * **2つ装着 (2 pieces)**: 魔力 +7% (+7% Ability Power) / スキル加速 +10 (+10 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **四元の共鳴 (Convergence)** 【四元の共鳴】敵に火・冷気・光・闇がそろった瞬間、攻撃力か魔力の高い方の80%分の爆発を起こす（同じ敵には6秒に1回） ([Convergence] When an enemy has Fire, Cold, Light and Dark at once, it bursts for 80% of the higher of AD or AP (once per 6s per enemy))
+    * **過負荷 (Overload)** 【過負荷】Q・W・Eを使った後の4秒間、攻撃力・魔力が15%上がる（重ならず時間を延長） ([Overload] +15% AD/AP for 4s after using Q, W or E (refreshes, does not stack))
+  * **6つ装着 (6 pieces)**
+    * **蒸気 (Steam)** 【蒸気】火と冷気のある敵を中心に、3m以内の敵へ攻撃力か魔力の高い方の50%分の無属性ダメージを与え、2秒間30%のスロウを付ける（ダメージの合計上限120%）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Steam] When an enemy has Fire and Cold, deal 50% of the higher of AD or AP as non-elemental damage to it and enemies within 3m, and slow them by 30% for 2s (damage total capped at 120%). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **元素の収穫 (Elemental Harvest)** 【元素の収穫】2種類以上の属性がある敵を倒すと、属性1種類につき攻撃力か魔力の高い方の26%分のダメージを周囲4mに与える（4種類まで。連鎖しない）（効果値の合計上限60%） ([Elemental Harvest] Killing an enemy with at least 2 element types deals 26% of the higher of AD or AP per type to enemies within 4m (up to 4 types; does not chain) (combined value capped at 60%))
+
+===== 払暁の誓い (Daybreak Vow) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 払暁の笏 (Daybreak Scepter) | {{dreamforge:icons:weapon.dawn_scepter.png?40}} 暁の笏 (Dawn Scepter) |
+| 頭 (Head) | 払暁の光輪 (Daybreak Halo) | {{dreamforge:icons:head.radiant_halo.png?40}} 光輪 (Radiant Halo) |
+| 足 (Feet) | 払暁の長靴 (Daybreak Treads) | {{dreamforge:icons:feet.dawn_steps.png?40}} 暁の足取り (Dawnsteps) |
+| 防具 (Armor) | 払暁の胸甲 (Daybreak Breastplate) | {{dreamforge:icons:armor.sun_plate.png?40}} 陽光の鎧 (Sunlit Plate) |
+| 手 (Hands) | 払暁の陽炎手 (Daybreak Sunfire Grips) | {{dreamforge:icons:hands.sunfire_grips.png?40}} 陽炎の握り (Sunfire Grips) |
+| 装飾品 (Charm) | 払暁の光環御守 (Daybreak Halo Charm) | {{dreamforge:icons:charm.halo_charm.png?40}} 光環の御守り (Halo Charm) |
+
+  * **2つ装着 (2 pieces)**: 光属性効果 +10% (+10% Light Effect) / 攻撃力 +6% (+6% Attack Damage)
+  * **3つ装着 (3 pieces)**
+    * **輝き (Radiance)** 【輝き】通常攻撃が当たると、75%の確率で敵に光を1つ付ける（光は5つまで。3つ重なると光のダメージは必ず会心） ([Radiance] Basic attack hits have a 75% chance to apply 1 Light (up to 5; at 3, light damage always crits))
+    * **万全 (Vigor)** 【万全】HPが80%以上の間、攻撃力・魔力が15%上がる ([Vigor] +15% attack damage and ability power while above 80% health)
+  * **6つ装着 (6 pieces)**
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを22%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 22% (rearms when all are ready again) (combined value capped at 45%))
+    * **備えの盾 (Ready Guard)** 【備えの盾】5秒間ダメージを与えず受けずに過ごした後、最初に与えるか受けた瞬間、最大HPの8%の障壁を8秒間張る（効果値の合計上限18%） ([Ready Guard] After 5s without dealing or taking damage, your first damage dealt or taken grants an 8s shield worth 8% max health (combined value capped at 18%))
+
+===== 湯けむり織りの調べ (Steamweaver's Cadence) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 湯煙の三叉槍 (Steamhaze Trident) | {{dreamforge:icons:weapon.tide_trident.png?40}} 潮騒の三叉槍 (Tidal Trident) |
+| 防具 (Armor) | 白煙の法衣 (Whitesmoke Robe) | {{dreamforge:icons:armor.mist_robe.png?40}} 霧の法衣 (Mist Robe) |
+| 装飾品 (Charm) | 沸き立つ鈴 (Simmerbell) | {{dreamforge:icons:charm.moon_bell.png?40}} 月の鈴 (Moon Bell) |
+| 頭 (Head) | 湯気の珊瑚冠 (Steamweave Coral Crown) | {{dreamforge:icons:head.coral_crown.png?40}} 珊瑚の冠 (Coral Crown) |
+| 手 (Hands) | 湯糸の手巻き (Steamthread Wraps) | {{dreamforge:icons:hands.cinderthread_wraps.png?40}} 火糸の手巻き (Cinderthread Wraps) |
+| 足 (Feet) | 湯気の火華靴 (Steamweave Fireblooms) | {{dreamforge:icons:feet.firebloom_slippers.png?40}} 火華の上履き (Firebloom Slippers) |
+
+  * **2つ装着 (2 pieces)**: 火属性効果 +8% (+8% Fire Effect) / 冷気属性効果 +8% (+8% Cold Effect)
+  * **3つ装着 (3 pieces)**
+    * **蒸気 (Steam)** 【蒸気】火と冷気のある敵を中心に、3m以内の敵へ攻撃力か魔力の高い方の60%分の無属性ダメージを与え、2秒間30%のスロウを付ける（ダメージの合計上限120%）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Steam] When an enemy has Fire and Cold, deal 60% of the higher of AD or AP as non-elemental damage to it and enemies within 3m, and slow them by 30% for 2s (damage total capped at 120%). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **霜 (Frost)** 【霜】通常攻撃が当たると50%の確率で、敵を冷気で冷やす（冷気は重ならない） ([Frost] Basic attack hits have a 50% chance to apply Cold (Cold does not stack))
+    * **火種 (Ember)** 【火種】通常攻撃が当たると、45%の確率で敵に火を1つ付ける（火は上限なしで重なる） ([Ember] Basic attack hits have a 45% chance to apply 1 Fire (Fire has no stack limit))
+  * **6つ装着 (6 pieces)**
+    * **元素の収穫 (Elemental Harvest)** 【元素の収穫】2種類以上の属性がある敵を倒すと、属性1種類につき攻撃力か魔力の高い方の28%分のダメージを周囲4mに与える（4種類まで。連鎖しない）（効果値の合計上限60%） ([Elemental Harvest] Killing an enemy with at least 2 element types deals 28% of the higher of AD or AP per type to enemies within 4m (up to 4 types; does not chain) (combined value capped at 60%))
+    * **七色の切替 (Prism Shift)** 【七色の切替】直前とは別の属性を付けると、最大HPの2%の障壁を3秒間張る（1秒に1回。重ならず大きい方を適用）（効果値の合計上限5%） ([Prism Shift] Applying a different element from your last grants a 3s shield worth 2% max health (once per 1s; highest shield only) (combined value capped at 5%))
+
+===== 蝕の儀の装い (Eclipse-Rite Vestments) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 蝕の儀の杖 (Eclipse-Rite Cane) | {{dreamforge:icons:weapon.moonlit_cane.png?40}} 月明の杖 (Moonlit Cane) |
+| 頭 (Head) | 蝕の儀の面 (Eclipse-Rite Mask) | {{dreamforge:icons:head.eclipse_mask.png?40}} 日蝕の面 (Eclipse Mask) |
+| 装飾品 (Charm) | 蝕の儀の指環 (Eclipse-Rite Signet) | {{dreamforge:icons:charm.eclipse_ring.png?40}} 蝕の指輪 (Eclipse Ring) |
+| 防具 (Armor) | 蝕の儀の月絹衣 (Eclipse-Rite Moonsilk) | {{dreamforge:icons:armor.moon_silk.png?40}} 月絹の衣 (Moonsilk Robe) |
+| 手 (Hands) | 蝕の儀の黄昏手袋 (Eclipse-Rite Gloves) | {{dreamforge:icons:hands.duskstitch_gloves.png?40}} 黄昏縫いの手袋 (Duskstitch Gloves) |
+| 足 (Feet) | 蝕の儀の暁霧靴 (Eclipse-Rite Mist Shoes) | {{dreamforge:icons:feet.dawnmist_shoes.png?40}} 暁霧の靴 (Dawnmist Shoes) |
+
+  * **2つ装着 (2 pieces)**: 光属性効果 +8% (+8% Light Effect) / 闇属性効果 +8% (+8% Dark Effect)
+  * **3つ装着 (3 pieces)**
+    * **蝕 (Eclipse)** 【蝕】光と闇のある敵は、4秒間 自分から受けるダメージが14%増える（合計上限25%。同じ効果は重ならず高い値だけ適用）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Eclipse] An enemy with Light and Dark takes 14% more damage from you for 4s (total capped at 25%; uses the highest Expose effect without stacking). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **輝き (Radiance)** 【輝き】通常攻撃が当たると、75%の確率で敵に光を1つ付ける（光は5つまで。3つ重なると光のダメージは必ず会心） ([Radiance] Basic attack hits have a 75% chance to apply 1 Light (up to 5; at 3, light damage always crits))
+    * **影 (Umbra)** 【影】通常攻撃が当たると、75%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 75% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+  * **6つ装着 (6 pieces)**
+    * **星屑の巡り (Stardust Cycle)** 【星屑の巡り】敵の光が5つに達すると、通常記憶のうち残りクールダウンが最長の1つを14%短縮する（全体で1秒に1回、同じ敵へ5秒に1回）（効果値の合計上限30%） ([Stardust Cycle] When an enemy reaches 5 Light stacks, cut your longest remaining ordinary-memory cooldown by 14% (once per 1s overall and once per 5s per enemy) (combined value capped at 30%))
+    * **影の継承 (Umbral Heritage)** 【影の継承】闇が2つ以上ある敵を倒すと、6m以内の敵5体までにそれぞれ45%の確率で闇を1つ付ける（闇は5つまで）（効果値の合計上限100%） ([Umbral Heritage] Killing an enemy with 2 or more Dark stacks has a 45% chance per enemy to apply 1 Dark stack to up to 5 enemies within 6m (Dark capped at 5) (combined value capped at 100%))
+
+===== 降り灰の行軍 (Cinderfall March) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 灰引きの鞭 (Ashdrag Whip) | {{dreamforge:icons:weapon.ember_whip.png?40}} 残り火の鞭 (Ember Whip) |
+| 防具 (Armor) | 降り灰の外衣 (Ashfall Mantle) | {{dreamforge:icons:armor.ember_jacket.png?40}} 火の粉の革衣 (Cinder Jacket) |
+| 足 (Feet) | 降り灰の行軍靴 (Cinderfall Marchers) | {{dreamforge:icons:feet.ash_boots.png?40}} 灰踏みの靴 (Ashwalker Boots) |
+| 頭 (Head) | 降り灰の頭巾 (Ashfall Hood) | {{dreamforge:icons:head.ash_hood.png?40}} 灰かぶりの頭巾 (Ashen Hood) |
+| 手 (Hands) | 降り灰の夜掌手袋 (Ashfall Nightpalm Gloves) | {{dreamforge:icons:hands.nightpalm_gloves.png?40}} 夜掌の手袋 (Nightpalm Gloves) |
+| 装飾品 (Charm) | 降り灰の火芯飾り (Ashfall Cindercore Locket) | {{dreamforge:icons:charm.cindercore_locket.png?40}} 火芯のロケット (Cindercore Locket) |
+
+  * **2つ装着 (2 pieces)**: 火属性効果 +8% (+8% Fire Effect) / 闇属性効果 +8% (+8% Dark Effect)
+  * **3つ装着 (3 pieces)**
+    * **燃え殻 (Cinder)** 【燃え殻】火と闇のある敵に印を付け、倒れると周囲4mの敵へ火を1つ付ける（合計上限1つ。印は重ならず、味方の撃破でも発動）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Cinder] Mark an enemy with Fire and Dark. When it dies, apply 1 Fire stack to enemies within 4m (total capped at 1; marks do not stack; ally kills also trigger it). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **火種 (Ember)** 【火種】通常攻撃が当たると、50%の確率で敵に火を1つ付ける（火は上限なしで重なる） ([Ember] Basic attack hits have a 50% chance to apply 1 Fire (Fire has no stack limit))
+    * **影 (Umbra)** 【影】通常攻撃が当たると、70%の確率で敵に闇を1つ付ける。会心で当たればもう1つ（闇は5つまで） ([Umbra] Basic attack hits have a 70% chance to apply 1 Dark; a critical hit adds 1 more (up to 5))
+  * **6つ装着 (6 pieces)**
+    * **影の継承 (Umbral Heritage)** 【影の継承】闇が2つ以上ある敵を倒すと、6m以内の敵5体までにそれぞれ50%の確率で闇を1つ付ける（闇は5つまで）（効果値の合計上限100%） ([Umbral Heritage] Killing an enemy with 2 or more Dark stacks has a 50% chance per enemy to apply 1 Dark stack to up to 5 enemies within 6m (Dark capped at 5) (combined value capped at 100%))
+    * **元素の収穫 (Elemental Harvest)** 【元素の収穫】2種類以上の属性がある敵を倒すと、属性1種類につき攻撃力か魔力の高い方の26%分のダメージを周囲4mに与える（4種類まで。連鎖しない）（効果値の合計上限60%） ([Elemental Harvest] Killing an enemy with at least 2 element types deals 26% of the higher of AD or AP per type to enemies within 4m (up to 4 types; does not chain) (combined value capped at 60%))
+
+===== 氷晶の聖句 (Icicrystal Canticle) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 霜花の聖頭巾 (Rimebloom Cowl) | {{dreamforge:icons:head.rimebloom_hood.png?40}} 霜華の頭巾 (Rimebloom Hood) |
+| 手 (Hands) | 聖歌の白手袋 (Canticle Mittens) | {{dreamforge:icons:hands.frost_mitts.png?40}} 霜の指なし手袋 (Frost Mitts) |
+| 装飾品 (Charm) | 聖氷の首飾り (Holy-Ice Pendant) | {{dreamforge:icons:charm.frost_pendant.png?40}} 霜の首飾り (Frost Pendant) |
+| 主装備 (Weapon) | 氷晶の聖杖 (Icicrystal Scepter) | {{dreamforge:icons:weapon.conch_scepter.png?40}} 法螺の聖杖 (Conch Scepter) |
+| 防具 (Armor) | 氷晶の聖衣 (Icicrystal Vestment) | {{dreamforge:icons:armor.seafoam_gown.png?40}} 海沫の長衣 (Seafoam Gown) |
+| 足 (Feet) | 聖氷の霜踏み靴 (Canticle Froststriders) | {{dreamforge:icons:feet.froststride_shoes.png?40}} 霜踏みの靴 (Froststride Shoes) |
+
+  * **2つ装着 (2 pieces)**: 冷気属性効果 +8% (+8% Cold Effect) / 光属性効果 +8% (+8% Light Effect)
+  * **3つ装着 (3 pieces)**
+    * **氷晶 (Frost Crystal)** 【氷晶】光と冷気のある敵に反応し、最大HPの7%分の障壁を4秒間得る（合計上限12%）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Frost Crystal] When an enemy has Light and Cold, gain a shield worth 7% of max health for 4s (total capped at 12%). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **霜 (Frost)** 【霜】通常攻撃が当たると55%の確率で、敵を冷気で冷やす（冷気は重ならない） ([Frost] Basic attack hits have a 55% chance to apply Cold (Cold does not stack))
+    * **輝き (Radiance)** 【輝き】通常攻撃が当たると、75%の確率で敵に光を1つ付ける（光は5つまで。3つ重なると光のダメージは必ず会心） ([Radiance] Basic attack hits have a 75% chance to apply 1 Light (up to 5; at 3, light damage always crits))
+  * **6つ装着 (6 pieces)**
+    * **星屑の巡り (Stardust Cycle)** 【星屑の巡り】敵の光が5つに達すると、通常記憶のうち残りクールダウンが最長の1つを14%短縮する（全体で1秒に1回、同じ敵へ5秒に1回）（効果値の合計上限30%） ([Stardust Cycle] When an enemy reaches 5 Light stacks, cut your longest remaining ordinary-memory cooldown by 14% (once per 1s overall and once per 5s per enemy) (combined value capped at 30%))
+    * **脆き氷 (Brittle Ice)** 【脆き氷】冷気の敵に会心を当てると、攻撃力か魔力の高い方の45%分のダメージを追加する（効果値の合計上限90%） ([Brittle Ice] Critical hits on chilled enemies deal 45% of the higher of AD or AP as bonus damage (combined value capped at 90%))
+
+===== 砕盾騎士団の誓い (Oath of the Shardshield Knights) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 砕盾騎士の胸甲 (Shardshield Knight Plate) | {{dreamforge:icons:armor.guardian_plate.png?40}} 護りの胸当て (Guardian Plate) |
+| 頭 (Head) | 砕盾騎士の兜 (Shardshield Greathelm) | {{dreamforge:icons:head.knight_helm.png?40}} 騎士の大兜 (Knight's Greathelm) |
+| 足 (Feet) | 砕盾騎士の鉄靴 (Shardshield Sabatons) | {{dreamforge:icons:feet.knight_sabatons.png?40}} 騎士の鉄靴 (Knight's Sabatons) |
+| 主装備 (Weapon) | 砕盾騎士の大槌 (Shardshield Maul) | {{dreamforge:icons:weapon.shield_maul.png?40}} 盾打ちの槌 (Shieldbash Maul) |
+| 手 (Hands) | 砕盾騎士の籠手 (Shardshield Gauntlets) | {{dreamforge:icons:hands.oathpalm_gloves.png?40}} 誓掌の手袋 (Oathpalm Gloves) |
+| 装飾品 (Charm) | 砕盾騎士の雪華御守 (Shardshield Snowbloom Charm) | {{dreamforge:icons:charm.snowbloom_charm.png?40}} 雪華の御守り (Snowbloom Charm) |
+
+  * **2つ装着 (2 pieces)**: 防御 +8 (+8 Armor) / 最大HP +6% (+6% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **割れ盾の衝撃 (Shieldbreak Burst)** 【割れ盾の衝撃】敵の攻撃で障壁が割れ切ると、割れる直前の障壁残量か最大HPの高い方の10%分のダメージを周囲5mに与える（6秒に1回。時間切れでは発動しない）（効果値の合計上限20%） ([Shieldbreak Burst] When enemy damage breaks your shield, deal 10% of the higher of its remaining value before the hit or your max health to enemies within 5m (once per 6s; expiry does not trigger it) (combined value capped at 20%))
+    * **護りの灯 (Barrier)** 【護りの灯】12秒ごとに、最大HPの12%分の障壁を4秒間張る ([Barrier] Every 12s, gain a shield worth 12% of max health for 4s)
+    * **備えの盾 (Ready Guard)** 【備えの盾】5秒間ダメージを与えず受けずに過ごした後、最初に与えるか受けた瞬間、最大HPの10%の障壁を8秒間張る（効果値の合計上限18%） ([Ready Guard] After 5s without dealing or taking damage, your first damage dealt or taken grants an 8s shield worth 10% max health (combined value capped at 18%))
+  * **6つ装着 (6 pieces)**
+    * **盾打ち (Shield Bash)** 【盾打ち】障壁がある間、通常攻撃に現在の障壁量の45%分の無属性魔法ダメージを追加する（障壁は減らない）（効果値の合計上限90%） ([Shield Bash] While shielded, basic attacks deal 45% of your current shield as bonus non-elemental magic damage without consuming it (combined value capped at 90%))
+    * **障壁の輝き (Gleaming Ward)** 【障壁の輝き】障壁がある間、攻撃力・魔力が9%上がる（エピック以上限定。条件つき攻撃力・魔力の総上限は覚醒前120%）（効果値の合計上限18%） ([Gleaming Ward] While shielded, gain +9% AD/AP (Epic or higher only; combined conditional AD/AP is capped at 120% before awakening) (combined value capped at 18%))
+
+===== 盾打ちの誓約 (Bashbound Covenant) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 盾誓いの大槌 (Bashbound Maul) | {{dreamforge:icons:weapon.shield_maul.png?40}} 盾打ちの槌 (Shieldbash Maul) |
+| 手 (Hands) | 盾誓いの籠手 (Bashbound Gauntlets) | {{dreamforge:icons:hands.oath_gauntlets.png?40}} 誓いの籠手 (Oath Gauntlets) |
+| 装飾品 (Charm) | 盾誓いの護符 (Bashbound Seal) | {{dreamforge:icons:charm.guardian_seal.png?40}} 守護の封印 (Guardian Seal) |
+| 頭 (Head) | 盾誓いの面頬 (Bashbound Visor) | {{dreamforge:icons:head.warden_visor.png?40}} 番人の面頬 (Warden's Visor) |
+| 防具 (Armor) | 盾誓いの加護胴衣 (Bashbound Wardvest) | {{dreamforge:icons:armor.wardsigil_vest.png?40}} 加護の胴衣 (Wardsigil Vest) |
+| 足 (Feet) | 盾誓いの草鞋 (Bashbound Sandals) | {{dreamforge:icons:feet.wardstep_sandals.png?40}} 護りの草鞋 (Wardstep Sandals) |
+
+  * **2つ装着 (2 pieces)**: 防御 +8 (+8 Armor) / 与えるシールドが8%増える（味方へのシールドも・上限60%） (Shields you grant increase by 8% (including allies; cap 60%))
+  * **3つ装着 (3 pieces)**
+    * **盾打ち (Shield Bash)** 【盾打ち】障壁がある間、通常攻撃に現在の障壁量の55%分の無属性魔法ダメージを追加する（障壁は減らない）（効果値の合計上限90%） ([Shield Bash] While shielded, basic attacks deal 55% of your current shield as bonus non-elemental magic damage without consuming it (combined value capped at 90%))
+    * **障壁の輝き (Gleaming Ward)** 【障壁の輝き】障壁がある間、攻撃力・魔力が10%上がる（エピック以上限定。条件つき攻撃力・魔力の総上限は覚醒前120%）（効果値の合計上限18%） ([Gleaming Ward] While shielded, gain +10% AD/AP (Epic or higher only; combined conditional AD/AP is capped at 120% before awakening) (combined value capped at 18%))
+    * **守護霊 (Aegis)** 【守護霊】最大HPの10%以上の一撃を受けると、最大HPの22%分の障壁を6秒間張る（12秒に1回） ([Aegis] When a single hit deals 10%+ of your max health, gain a shield worth 22% of max health for 6s (once per 12s))
+  * **6つ装着 (6 pieces)**
+    * **星の加護 (Star Shield)** 【星の加護】奥義を使うと、最大HPの15%分の障壁を5秒間張る ([Star Shield] Using your Ultimate grants a shield worth 15% of max health for 5s)
+    * **分かち合う護り (Shared Ward)** 【分かち合う護り】障壁を得るたび、10m以内の味方旅人にその量の30%の障壁を4秒間与える（分けた障壁からは発動しない。重ならず大きい方を適用）（効果値の合計上限60%） ([Shared Ward] When you gain a shield, give allied travelers within 10m a 4s shield worth 30% of that amount (shared shields do not trigger this; highest shield only, no stacking) (combined value capped at 60%))
+
+===== 陣頭の隊列 (Frontline Formation) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 陣頭の砦胸甲 (Frontline Citadel Plate) | {{dreamforge:icons:armor.citadel_plate.png?40}} 城砦の板金鎧 (Citadel Plate) |
+| 頭 (Head) | 陣頭の頭巾 (Frontline Coif) | {{dreamforge:icons:head.fortress_coif.png?40}} 城塞の鎖頭巾 (Fortress Coif) |
+| 足 (Feet) | 陣頭の堅脛 (Frontline Greaves) | {{dreamforge:icons:feet.bastion_sabatons.png?40}} 城塞の鉄鞋 (Bastion Sabatons) |
+| 主装備 (Weapon) | 陣頭の城門槌 (Frontline Gatemaul) | {{dreamforge:icons:weapon.gatehouse_maul.png?40}} 城門の大槌 (Gatehouse Maul) |
+| 手 (Hands) | 陣頭の壁手巻 (Frontline Wallwraps) | {{dreamforge:icons:hands.bulwark_wraps.png?40}} 壁の手巻き (Bulwark Wraps) |
+| 装飾品 (Charm) | 陣頭の壁印章 (Frontline Wallseal) | {{dreamforge:icons:charm.bulwark_seal.png?40}} 壁の印章 (Bulwark Seal) |
+
+  * **2つ装着 (2 pieces)**: 最大HP +6% (+6% Max Health) / 行動妨害耐性 +10 (+10 Tenacity)
+  * **3つ装着 (3 pieces)**
+    * **前衛の誓い (Vanguard's Oath)** 【前衛の誓い】敵に最も近い旅人である間、得る障壁量が25%増える（ソロでは12.5%。敵がいない間は無効）（効果値の合計上限45%） ([Vanguard's Oath] While you are the traveler nearest an enemy, gain 25% more shield (12.5% when solo; inactive without enemies) (combined value capped at 45%))
+    * **怨嗟の鐘 (Toll of Grudge)** 【怨嗟の鐘】実際に失ったHPの合計が最大HPの60%に達するたび、周囲6mに最大HPの20%分の魔法ダメージを与える（障壁で吸収した分は数えず、世界を移ると溜めは0）（効果値の合計上限40%） ([Toll of Grudge] Every time actual health lost totals 60% max health, deal 20% max health as magic damage within 6m (shield absorption does not count; progress resets between worlds) (combined value capped at 40%))
+    * **鉄の輪 (Bulwark)** 【鉄の輪】周りに敵が3体以上いる間、防御が30上がる ([Bulwark] +30 armor while 3 or more enemies are nearby)
+  * **6つ装着 (6 pieces)**
+    * **包囲突破 (Breakout)** 【包囲突破】6m以内の敵が3体以下から4体以上になると、最大HPの9%の障壁を5秒間張り、周囲6mの敵を2秒間30%遅くする（10秒に1回）（効果値の合計上限18%） ([Breakout] When enemies within 6m rise from 3 or fewer to 4 or more, gain a 5s shield worth 9% max health and slow enemies within 6m by 30% for 2s (once per 10s) (combined value capped at 18%))
+    * **不動の構え (Immovable Stance)** 【不動の構え】1秒以上動かずにいる間、与えるダメージが8%上がり、受けるダメージが4%下がる（軽減は10%まで。動くと解除）（効果値の合計上限20%） ([Immovable Stance] After standing still for 1s, deal 8% more damage and take 4% less damage until you move (damage reduction capped at 10%) (combined value capped at 20%))
+
+===== 後陣の射手隊 (Rearline Marksmen) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 後陣の星弓 (Rearline Starbow) | {{dreamforge:icons:weapon.starsinger_bow.png?40}} 奏星の弓 (Star-Singing Bow) |
+| 頭 (Head) | 後陣の遠矢帽 (Rearline Cap) | {{dreamforge:icons:head.longshot_cap.png?40}} 遠撃の帽子 (Longshot Cap) |
+| 防具 (Armor) | 後陣の星外套 (Rearline Starcloak) | {{dreamforge:icons:armor.star_cloak.png?40}} 星読みの外套 (Stargazer's Cloak) |
+| 手 (Hands) | 後陣の弓手腕当 (Rearline Bowbracers) | {{dreamforge:icons:hands.bowmaster_bracers.png?40}} 弓張りの腕当て (Bowmaster's Bracers) |
+| 足 (Feet) | 後陣の星履 (Rearline Starmoccasins) | {{dreamforge:icons:feet.starlit_moccasins.png?40}} 星履の靴 (Starlit Moccasins) |
+| 装飾品 (Charm) | 後陣の遠当て御守 (Rearline Longshot Charm) | {{dreamforge:icons:charm.longshot_charm.png?40}} 遠当ての御守り (Longshot Charm) |
+
+  * **2つ装着 (2 pieces)**: 魔力 +5% (+5% Ability Power) / スキル加速 +8 (+8 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **後衛の流儀 (Rearguard's Way)** 【後衛の流儀】パーティで敵から最も遠い旅人である間、通常記憶のダメージが10%上がる（ソロや敵がいない間は無効）（効果値の合計上限18%） ([Rearguard's Way] While you are the traveler farthest from enemies in your party, ordinary memories deal 10% more damage (inactive when solo or without enemies) (combined value capped at 18%))
+    * **連奏 (Medley)** 【連奏】直近12秒に使った通常記憶の種類1つにつき、攻撃力・魔力が5%上がる（3種類まで。種類が増えると12秒に延長。同じ記憶では増えず消えない。エピック以上限定。条件つき攻撃力・魔力の総上限は覚醒前120%）（効果値の合計上限10%） ([Medley] Gain +5% AD/AP per distinct ordinary memory used within 12s (up to 3; new types refresh the 12s window, repeats neither add nor remove stacks; Epic or higher only; combined conditional AD/AP capped at 120% before awakening) (combined value capped at 10%))
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを22%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 22% (rearms when all are ready again) (combined value capped at 45%))
+  * **6つ装着 (6 pieces)**
+    * **切り札を握る (Ace in Hand)** 【切り札を握る】装備中の奥義が使える間、通常記憶のダメージが12%上がる（星座による奥義化を含む。奥義がなければ無効）（効果値の合計上限24%） ([Ace in Hand] While your equipped Ultimate is ready, ordinary memories deal 12% more damage (includes constellation conversions to Ultimate; requires an Ultimate) (combined value capped at 24%))
+    * **詠唱の薙ぎ (Spellsweep)** 【詠唱の薙ぎ】通常記憶を使った後5秒以内の次の通常攻撃が、そのダメージの40%を周囲3mの別の敵にも与える（1回で消費。記憶を使うたび時間を延長）（効果値の合計上限90%） ([Spellsweep] After using an ordinary memory, your next basic attack within 5s deals 40% of its damage to other enemies within 3m (consumed once; each memory use refreshes the window) (combined value capped at 90%))
+
+===== 見守りの輪 (Watcher's Circle) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 輪守りの外套 (Ringwarden Mantle) | {{dreamforge:icons:armor.lampkeeper_mantle.png?40}} 灯守の外衣 (Lampkeeper's Mantle) |
+| 手 (Hands) | 輪守りの手巻き (Ringwarden Palms) | {{dreamforge:icons:hands.mender_palms.png?40}} 癒し掌の手袋 (Mender's Palms) |
+| 装飾品 (Charm) | 輪守りの首飾り (Ringwarden Locket) | {{dreamforge:icons:charm.mender_locket.png?40}} 癒しのロケット (Mender's Locket) |
+| 主装備 (Weapon) | 輪守りの細杖 (Ringwarden Wand) | {{dreamforge:icons:weapon.dewclear_wand.png?40}} 露払いの細杖 (Dewclear Wand) |
+| 頭 (Head) | 輪守りの額冠 (Ringwarden Circlet) | {{dreamforge:icons:head.kindly_circlet.png?40}} 慈手の額冠 (Kindly Circlet) |
+| 足 (Feet) | 輪守りの靴 (Ringwarden Shoes) | {{dreamforge:icons:feet.mender_shoes.png?40}} 癒しの靴 (Mender's Shoes) |
+
+  * **2つ装着 (2 pieces)**: 与える回復が8%増える（味方への回復も・上限60%） (Healing you grant increases by 8% (including allies; cap 60%)) / HP回復 +3/秒 (+3 Health Regen/s)
+  * **3つ装着 (3 pieces)**
+    * **見守りの手 (Watchful Hand)** 【見守りの手】味方旅人のHPが30%を切ると、自分の最大HPの20%の障壁をその味方に6秒間張る（同じ味方へ45秒に1回）（効果値の合計上限30%） ([Watchful Hand] When an allied traveler falls below 30% health, give them a 6s shield worth 20% of your max health (once per 45s per ally) (combined value capped at 30%))
+    * **分かち合う護り (Shared Ward)** 【分かち合う護り】障壁を得るたび、10m以内の味方旅人にその量の30%の障壁を4秒間与える（分けた障壁からは発動しない。重ならず大きい方を適用）（効果値の合計上限60%） ([Shared Ward] When you gain a shield, give allied travelers within 10m a 4s shield worth 30% of that amount (shared shields do not trigger this; highest shield only, no stacking) (combined value capped at 60%))
+    * **凱歌 (Triumph Song)** 【凱歌】奥義を使うと、自分と10m以内の味方旅人を自分の最大HPの6%回復する（効果値の合計上限12%） ([Triumph Song] Using an Ultimate heals you and allied travelers within 10m for 6% of your max health (combined value capped at 12%))
+  * **6つ装着 (6 pieces)**
+    * **溢れる命 (Overflowing Life)** 【溢れる命】最大HPを超えた回復の40%が、3秒の障壁になる（障壁は最大HPの10%まで） ([Overflowing Life] 40% of overhealing becomes a 3s shield (up to 10% of max health))
+    * **継ぎの手 (Relay Hand)** 【継ぎの手】敵を倒すと、最も近い味方旅人の通常記憶のうち残りクールダウンが最長の1つを8%短縮する（同じ味方へ2秒に1回）（効果値の合計上限15%） ([Relay Hand] On kill, cut the nearest allied traveler's longest remaining ordinary-memory cooldown by 8% (once per 2s per ally) (combined value capped at 15%))
+
+===== 継ぎ歌の合唱 (Relaysong Choir) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 手 (Hands) | 継ぎ歌の手袋 (Relaysong Gloves) | {{dreamforge:icons:hands.swiftpalm_gloves.png?40}} 風掌の手袋 (Swift-Palm Gloves) |
+| 頭 (Head) | 合唱長の鉢巻 (Choirmaster Band) | {{dreamforge:icons:head.healer_band.png?40}} 癒し手の鉢巻 (Healer's Band) |
+| 装飾品 (Charm) | 継ぎ歌の角笛 (Relaysong Horn) | {{dreamforge:icons:charm.war_horn.png?40}} 戦の角笛 (War Horn) |
+| 主装備 (Weapon) | 継ぎ歌の細杖 (Relaysong Wand) | {{dreamforge:icons:weapon.dream_wand.png?40}} 夢見の杖 (Dreamer's Wand) |
+| 防具 (Armor) | 継ぎ歌の飾り帯 (Relaysong Sash) | {{dreamforge:icons:armor.healing_sash.png?40}} 癒しの飾り帯 (Healing Sash) |
+| 足 (Feet) | 継ぎ歌の靴 (Relaysong Shoes) | {{dreamforge:icons:feet.cometstride_shoes.png?40}} 彗星の靴 (Comet-Stride Shoes) |
+
+  * **2つ装着 (2 pieces)**: スキル加速 +8 (+8 Ability Haste) / 移動速度 +4% (+4% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **継ぎの手 (Relay Hand)** 【継ぎの手】敵を倒すと、最も近い味方旅人の通常記憶のうち残りクールダウンが最長の1つを8%短縮する（同じ味方へ2秒に1回）（効果値の合計上限15%） ([Relay Hand] On kill, cut the nearest allied traveler's longest remaining ordinary-memory cooldown by 8% (once per 2s per ally) (combined value capped at 15%))
+    * **共演 (Co-star)** 【共演】味方が奥義を使うたび、自分の通常記憶の残りクールダウンが15%縮む（自分の奥義では7.5%）（効果値の合計上限30%） ([Co-star] An ally using an Ultimate cuts your ordinary memories' remaining cooldowns by 15% (your own Ultimate grants 7.5%) (combined value capped at 30%))
+    * **情けの返礼 (Kindness Returns)** 【情けの返礼】自分の記憶で別の味方旅人や召喚獣を回復すると、実際に回復した量の20%を自分も回復する（効果値の合計上限30%） ([Kindness Returns] When your memory heals another allied traveler or summon, heal yourself for 20% of the health actually restored (combined value capped at 30%))
+  * **6つ装着 (6 pieces)**
+    * **終曲 (Finale)** 【終曲】Q・W・Eを8秒以内にすべて使うと、奥義の残りクールダウンが20%縮む（10秒に1回） ([Finale] Using Q, W and E within 8s cuts your Ultimate's remaining cooldown by 20% (once per 10s))
+    * **分かち合う護り (Shared Ward)** 【分かち合う護り】障壁を得るたび、10m以内の味方旅人にその量の28%の障壁を4秒間与える（分けた障壁からは発動しない。重ならず大きい方を適用）（効果値の合計上限60%） ([Shared Ward] When you gain a shield, give allied travelers within 10m a 4s shield worth 28% of that amount (shared shields do not trigger this; highest shield only, no stacking) (combined value capped at 60%))
+
+===== 群れの宴 (Feast of the Pack) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 宴の角冠 (Feastpack Antlers) | {{dreamforge:icons:head.beastcaller_antlers.png?40}} 呼獣の飾り角 (Beastcaller Antlers) |
+| 防具 (Armor) | 宴の群れ胴衣 (Feastpack Vest) | {{dreamforge:icons:armor.summoners_vest.png?40}} 喚び獣の胸当て (Summoner's Vest) |
+| 装飾品 (Charm) | 宴の群れ護符 (Feastpack Totem) | {{dreamforge:icons:charm.beasttongue_charm.png?40}} 獣語の護符 (Beasttongue Charm) |
+| 主装備 (Weapon) | 宴の骨笛 (Feastpack Flute) | {{dreamforge:icons:weapon.bone_flute.png?40}} 骨の笛 (Bone Flute) |
+| 手 (Hands) | 宴の群れ腕輪 (Feastpack Bands) | {{dreamforge:icons:hands.summoner_bands.png?40}} 喚び手の指輪 (Summoner's Bands) |
+| 足 (Feet) | 宴の群れ獣靴 (Feastpack Pawboots) | {{dreamforge:icons:feet.beastpaw_boots.png?40}} 獣趾の長靴 (Beastpaw Boots) |
+
+  * **2つ装着 (2 pieces)**: 召喚獣の与えるダメージが10%増える（上限80%） (Your summons deal 10% more damage (cap 80%)) / 最大HP +6% (+6% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **群れの糧 (Pack Feast)** 【群れの糧】自分の召喚獣が敵を倒すと、最大HPの4%の障壁を4秒間張る（重ならず大きい方を適用）（効果値の合計上限8%） ([Pack Feast] Your summons killing an enemy grants a 4s shield worth 4% max health (highest shield only; does not stack) (combined value capped at 8%))
+    * **継ぎの命 (Lifeline)** 【継ぎの命】最大HPを超えた回復が出ると、4秒間、自分の召喚獣のダメージが5%上がる（重ならず時間を延長）（効果値の合計上限12%） ([Lifeline] Overhealing grants your summons 5% more damage for 4s (refreshes without stacking) (combined value capped at 12%))
+    * **死に花 (Death Bloom)** 【死に花】自分の召喚獣が倒されると、周囲4mに攻撃力か魔力の高い方の90%分のダメージを与える（時間切れでは発動せず、連鎖しない）（効果値の合計上限160%） ([Death Bloom] When your summon is killed, deal 90% of the higher of AD or AP to enemies within 4m of it (expiry does not trigger this; does not chain) (combined value capped at 160%))
+  * **6つ装着 (6 pieces)**
+    * **溢れる命 (Overflowing Life)** 【溢れる命】最大HPを超えた回復の38%が、3秒の障壁になる（障壁は最大HPの10%まで） ([Overflowing Life] 38% of overhealing becomes a 3s shield (up to 10% of max health))
+    * **情けの返礼 (Kindness Returns)** 【情けの返礼】自分の記憶で別の味方旅人や召喚獣を回復すると、実際に回復した量の22%を自分も回復する（効果値の合計上限30%） ([Kindness Returns] When your memory heals another allied traveler or summon, heal yourself for 22% of the health actually restored (combined value capped at 30%))
+
+===== 弔い花の庭 (Garden of Funeral Blooms) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 弔い花の骨笛 (Funeral-Bloom Flute) | {{dreamforge:icons:weapon.bone_flute.png?40}} 骨の笛 (Bone Flute) |
+| 手 (Hands) | 弔い花の腕輪 (Funeral-Bloom Bands) | {{dreamforge:icons:hands.summoner_bands.png?40}} 喚び手の指輪 (Summoner's Bands) |
+| 足 (Feet) | 弔い花の獣靴 (Funeral-Bloom Pawboots) | {{dreamforge:icons:feet.beastpaw_boots.png?40}} 獣趾の長靴 (Beastpaw Boots) |
+| 頭 (Head) | 弔い花の花冠 (Funeral-Bloom Wreath) | {{dreamforge:icons:head.leaf_wreath.png?40}} 若葉の花冠 (Leaf Wreath) |
+| 防具 (Armor) | 弔い花の胸衣 (Funeral-Bloom Vest) | {{dreamforge:icons:armor.summoners_vest.png?40}} 喚び獣の胸当て (Summoner's Vest) |
+| 装飾品 (Charm) | 弔い花の獣語護符 (Funeral-Bloom Beastcharm) | {{dreamforge:icons:charm.beasttongue_charm.png?40}} 獣語の護符 (Beasttongue Charm) |
+
+  * **2つ装着 (2 pieces)**: 召喚獣の与えるダメージが8%増える（上限80%） (Your summons deal 8% more damage (cap 80%)) / 防御 +6 (+6 Armor)
+  * **3つ装着 (3 pieces)**
+    * **死に花 (Death Bloom)** 【死に花】自分の召喚獣が倒されると、周囲4mに攻撃力か魔力の高い方の100%分のダメージを与える（時間切れでは発動せず、連鎖しない）（効果値の合計上限160%） ([Death Bloom] When your summon is killed, deal 100% of the higher of AD or AP to enemies within 4m of it (expiry does not trigger this; does not chain) (combined value capped at 160%))
+    * **群れの糧 (Pack Feast)** 【群れの糧】自分の召喚獣が敵を倒すと、最大HPの4%の障壁を4秒間張る（重ならず大きい方を適用）（効果値の合計上限8%） ([Pack Feast] Your summons killing an enemy grants a 4s shield worth 4% max health (highest shield only; does not stack) (combined value capped at 8%))
+    * **棘 (Thorns)** 【棘】受けたダメージの35%を相手に跳ね返す（1秒に1回） ([Thorns] Reflect 35% of damage taken back to the attacker (once per second))
+  * **6つ装着 (6 pieces)**
+    * **情けの返礼 (Kindness Returns)** 【情けの返礼】自分の記憶で別の味方旅人や召喚獣を回復すると、実際に回復した量の22%を自分も回復する（効果値の合計上限30%） ([Kindness Returns] When your memory heals another allied traveler or summon, heal yourself for 22% of the health actually restored (combined value capped at 30%))
+    * **継ぎの命 (Lifeline)** 【継ぎの命】最大HPを超えた回復が出ると、4秒間、自分の召喚獣のダメージが4%上がる（重ならず時間を延長）（効果値の合計上限12%） ([Lifeline] Overhealing grants your summons 4% more damage for 4s (refreshes without stacking) (combined value capped at 12%))
+
+===== 一点狙いの狩人 (Single-Mark Hunters) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 一点狙いの長弓 (Single-Mark Longbow) | {{dreamforge:icons:weapon.longspike_bow.png?40}} 長穂の弓 (Longspike Bow) |
+| 頭 (Head) | 狙い澄ます眼帯 (Steady-Aim Eyepatch) | {{dreamforge:icons:head.eye_patch.png?40}} 片目の眼帯 (Marksman's Eyepatch) |
+| 手 (Hands) | 照準の指なし手袋 (Aimpoint Fingerless Gloves) | {{dreamforge:icons:hands.precise_fingerless.png?40}} 的確な指抜き (Precise Fingerless Gloves) |
+| 防具 (Armor) | 一点狙いの胴衣 (Single-Mark Vest) | {{dreamforge:icons:armor.hunter_vest.png?40}} 狩人の胴衣 (Hunter's Vest) |
+| 足 (Feet) | 一点狙いの脚絆 (Single-Mark Leggings) | {{dreamforge:icons:feet.deadeye_leggings.png?40}} 必中の脚絆 (Deadeye Leggings) |
+| 装飾品 (Charm) | 一点狙いの鋭眼御守 (Single-Mark Keeneye Charm) | {{dreamforge:icons:charm.keeneye_charm.png?40}} 鋭眼の御守り (Keen-Eye Charm) |
+
+  * **2つ装着 (2 pieces)**: 会心率 +4% (+4% Crit Chance) / 攻撃力 +5% (+5% Attack Damage)
+  * **3つ装着 (3 pieces)**
+    * **一点集中 (Focus Fire)** 【一点集中】同じ敵へ通常攻撃を5回続けて当てるたび、攻撃力か魔力の高い方の70%分のダメージを追加する（別の敵に当てるか4秒空くと数え直し）（効果値の合計上限120%） ([Focus Fire] Every 5 consecutive basic hits on the same enemy deal 70% of the higher of AD or AP as bonus damage (resets on a different target or a 4s gap) (combined value capped at 120%))
+    * **決闘者の流儀 (Duelist's Way)** 【決闘者の流儀】8m以内の敵が1体だけの間、その敵への通常攻撃に攻撃力か魔力の高い方の35%分のダメージを追加する（効果値の合計上限60%） ([Duelist's Way] While exactly one enemy is within 8m, basic attacks against it deal 35% of the higher of AD or AP as bonus damage (combined value capped at 60%))
+    * **急所の傷 (Weak-Point Wound)** 【急所の傷】同じ敵へ会心を3回当てるたび、攻撃力か魔力の高い方の80%分のダメージを追加する（敵ごとに数え、6秒空くと0）（効果値の合計上限160%） ([Weak-Point Wound] Every 3 critical hits on the same enemy deal 80% of the higher of AD or AP as bonus damage (tracked per enemy; resets after a 6s gap) (combined value capped at 160%))
+  * **6つ装着 (6 pieces)**
+    * **不動の構え (Immovable Stance)** 【不動の構え】1秒以上動かずにいる間、与えるダメージが8%上がり、受けるダメージが4%下がる（軽減は10%まで。動くと解除）（効果値の合計上限20%） ([Immovable Stance] After standing still for 1s, deal 8% more damage and take 4% less damage until you move (damage reduction capped at 10%) (combined value capped at 20%))
+    * **積もる運 (Piling Luck)** 【積もる運】会心しなかった通常攻撃のたび、次の通常攻撃の会心率が2%上がる（10回まで。会心で0に戻る。確定会心では数えず、リセットもしない）（効果値の合計上限3%） ([Piling Luck] Each non-critical basic attack adds 2% critical chance to your next basic attack (up to 10 stacks; a critical hit resets them; guaranteed critical hits neither add nor reset stacks) (combined value capped at 3%))
+
+===== 渡り鳥の剣舞 (Migrant Bladedance) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 渡り雷の双刃 (Driftbolt Twinblades) | {{dreamforge:icons:weapon.lightning_pair.png?40}} 雷光の双刃 (Lightning Paired Blades) |
+| 手 (Hands) | 渡り鳥の細手袋 (Migrant Fine Gloves) | {{dreamforge:icons:hands.thief_gloves.png?40}} 盗賊の手袋 (Thief's Gloves) |
+| 足 (Feet) | 渡り鳥の長靴 (Migrant Longboots) | {{dreamforge:icons:feet.wolfstride_boots.png?40}} 狼歩の長靴 (Wolfstride Boots) |
+| 頭 (Head) | 渡り鳥の疾風頭巾 (Migrant Galehood) | {{dreamforge:icons:head.gale_hood.png?40}} 疾風の頭巾 (Gale Hood) |
+| 防具 (Armor) | 渡り鳥の舞衣 (Migrant Dancewear) | {{dreamforge:icons:armor.dancer_garb.png?40}} 舞手の衣 (Dancer's Garb) |
+| 装飾品 (Charm) | 渡り鳥の遊撃指輪 (Migrant Skirmish Ring) | {{dreamforge:icons:charm.skirmish_ring.png?40}} 遊撃の指輪 (Skirmish Ring) |
+
+  * **2つ装着 (2 pieces)**: 攻撃速度 +5% (+5% Attack Speed) / 移動速度 +4% (+4% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **渡り鳥 (Wanderer's Edge)** 【渡り鳥】通常攻撃を直前とは別の敵に当てると、攻撃力か魔力の高い方の25%分のダメージを追加する（主対象への1回につき1回。同じ敵には1秒に1回）（効果値の合計上限50%） ([Wanderer's Edge] Hitting a different enemy with a basic attack adds 25% of the higher of AD or AP as damage (once per primary attack; once per 1s per enemy) (combined value capped at 50%))
+    * **会心の飛沫 (Crit Splash)** 【会心の飛沫】通常攻撃が会心すると、そのダメージの30%を周囲3mの別の敵にも与える（追加分は会心せず、連鎖しない）（効果値の合計上限60%） ([Crit Splash] Critical basic attacks deal 30% of their damage to other enemies within 3m (the splash cannot critically hit or chain) (combined value capped at 60%))
+    * **戻り刃 (Returning Blade)** 【戻り刃】記憶のダメージで敵を倒すと、その記憶の残りクールダウンが15%縮む（効果値の合計上限30%） ([Returning Blade] Killing an enemy with a memory cuts that memory's remaining cooldown by 15% (combined value capped at 30%))
+  * **6つ装着 (6 pieces)**
+    * **溢れる一撃 (Spillover Strike)** 【溢れる一撃】敵を倒した一撃の過剰ダメージの55%を、6m以内の別の敵1体に与える（連鎖しない）（効果値の合計上限120%） ([Spillover Strike] On kill, deal 55% of the killing hit's excess damage to one other enemy within 6m (does not chain) (combined value capped at 120%))
+
+===== 運刃の賭け (Gambit of the Fortune Edge) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 運刃の双牙 (Fortune-Edge Fangs) | {{dreamforge:icons:weapon.twin_fang.png?40}} 双牙の短刀 (Twin Fang Daggers) |
+| 頭 (Head) | 運刃の鷹目帯 (Fortune-Edge Band) | {{dreamforge:icons:head.hawkeye_band.png?40}} 鷹目の鉢巻 (Hawkeye Band) |
+| 手 (Hands) | 運刃の勝負手袋 (Fortune-Edge Gloves) | {{dreamforge:icons:hands.duelist_gloves.png?40}} 決闘者の手袋 (Duelist's Gloves) |
+| 防具 (Armor) | 運刃の奇襲胴衣 (Fortune-Edge Ambushvest) | {{dreamforge:icons:armor.ambush_vest.png?40}} 奇襲の胴衣 (Ambush Vest) |
+| 足 (Feet) | 運刃の追撃脚当 (Fortune-Edge Striders) | {{dreamforge:icons:feet.hunter_striders.png?40}} 追撃の脚当て (Hunter's Striders) |
+| 装飾品 (Charm) | 運刃の紅玉指輪 (Fortune-Edge Garnet Ring) | {{dreamforge:icons:charm.garnet_ring.png?40}} 紅玉の指輪 (Garnet Ring) |
+
+  * **2つ装着 (2 pieces)**: 会心率 +4% (+4% Crit Chance) / 会心ダメージ +15% (+15% Crit Damage)
+  * **3つ装着 (3 pieces)**
+    * **積もる運 (Piling Luck)** 【積もる運】会心しなかった通常攻撃のたび、次の通常攻撃の会心率が2%上がる（10回まで。会心で0に戻る。確定会心では数えず、リセットもしない）（効果値の合計上限3%） ([Piling Luck] Each non-critical basic attack adds 2% critical chance to your next basic attack (up to 10 stacks; a critical hit resets them; guaranteed critical hits neither add nor reset stacks) (combined value capped at 3%))
+    * **脆き氷 (Brittle Ice)** 【脆き氷】冷気の敵に会心を当てると、攻撃力か魔力の高い方の50%分のダメージを追加する（効果値の合計上限90%） ([Brittle Ice] Critical hits on chilled enemies deal 50% of the higher of AD or AP as bonus damage (combined value capped at 90%))
+    * **急所の傷 (Weak-Point Wound)** 【急所の傷】同じ敵へ会心を3回当てるたび、攻撃力か魔力の高い方の90%分のダメージを追加する（敵ごとに数え、6秒空くと0）（効果値の合計上限160%） ([Weak-Point Wound] Every 3 critical hits on the same enemy deal 90% of the higher of AD or AP as bonus damage (tracked per enemy; resets after a 6s gap) (combined value capped at 160%))
+  * **6つ装着 (6 pieces)**
+    * **会心の余韻 (Critical Echo)** 【会心の余韻】通常攻撃が会心で当たると、Q・W・Eのクールダウンが0.5秒縮む（0.5秒に1回まで） ([Critical Echo] Critical basic attacks shorten Q/W/E cooldowns by 0.5s (at most once per 0.5s))
+    * **戻り刃 (Returning Blade)** 【戻り刃】記憶のダメージで敵を倒すと、その記憶の残りクールダウンが14%縮む（効果値の合計上限30%） ([Returning Blade] Killing an enemy with a memory cuts that memory's remaining cooldown by 14% (combined value capped at 30%))
+
+===== 助走の突撃隊 (Runup Charge Corps) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 突撃隊の長槍 (Charge-Corps Lance) | {{dreamforge:icons:weapon.tower_lance.png?40}} 城壁の槍 (Rampart Lance) |
+| 手 (Hands) | 突撃隊の腕当て (Charge-Corps Bracers) | {{dreamforge:icons:hands.reach_bracers.png?40}} 遠手の腕輪 (Bracers of Reach) |
+| 足 (Feet) | 突撃隊の嵐靴 (Charge-Corps Stormboots) | {{dreamforge:icons:feet.storm_boots.png?40}} 嵐駆けの靴 (Stormrunner Boots) |
+| 頭 (Head) | 突撃隊の角兜 (Charge-Corps Horned Helm) | {{dreamforge:icons:head.horned_helm.png?40}} 双角の兜 (Horned Helm) |
+| 防具 (Armor) | 突撃隊の嵐胴衣 (Charge-Corps Stormvest) | {{dreamforge:icons:armor.stormfront_vest.png?40}} 嵐の胸当て (Stormfront Vest) |
+| 装飾品 (Charm) | 突撃隊の遊撃指輪 (Charge-Corps Skirmish Ring) | {{dreamforge:icons:charm.skirmish_ring.png?40}} 遊撃の指輪 (Skirmish Ring) |
+
+  * **2つ装着 (2 pieces)**: 移動速度 +5% (+5% Move Speed) / 攻撃力 +10 (+10 Attack Damage)
+  * **3つ装着 (3 pieces)**
+    * **助走 (Run-Up)** 【助走】歩いて合計12m動くと、次の通常攻撃に攻撃力か魔力の高い方の70%分のダメージを追加する（1回で消費。回避・ダッシュは数えず、世界を移ると0に戻る。次の通常攻撃への上乗せは最大の1つだけを使い、残りは保持）（効果値の合計上限120%） ([Run-Up] After walking 12m, your next basic attack deals 70% of the higher of AD or AP as bonus damage (consumed once; excludes dodges and dashes; resets between worlds; only the largest next-basic bonus is consumed, others remain) (combined value capped at 120%))
+    * **歩き撃ち (Strafe Shot)** 【歩き撃ち】移動しながら通常攻撃を当てると、敵の移動速度を1秒間25%下げる（重ならず時間を延長）（効果値の合計上限40%） ([Strafe Shot] Basic attacks while moving slow the enemy by 25% for 1s (refreshes without stacking) (combined value capped at 40%))
+    * **溢れる一撃 (Spillover Strike)** 【溢れる一撃】敵を倒した一撃の過剰ダメージの60%を、6m以内の別の敵1体に与える（連鎖しない）（効果値の合計上限120%） ([Spillover Strike] On kill, deal 60% of the killing hit's excess damage to one other enemy within 6m (does not chain) (combined value capped at 120%))
+  * **6つ装着 (6 pieces)**
+    * **包囲突破 (Breakout)** 【包囲突破】6m以内の敵が3体以下から4体以上になると、最大HPの9%の障壁を5秒間張り、周囲6mの敵を2秒間30%遅くする（10秒に1回）（効果値の合計上限18%） ([Breakout] When enemies within 6m rise from 3 or fewer to 4 or more, gain a 5s shield worth 9% max health and slow enemies within 6m by 30% for 2s (once per 10s) (combined value capped at 18%))
+    * **乱戦 (Melee Frenzy)** 【乱戦】周りの敵1体につき、攻撃速度が3%上がる（8体まで） ([Melee Frenzy] +3% attack speed per nearby enemy (up to 8))
+
+===== 連奏の楽団 (Medley Ensemble) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 楽団の竪琴 (Ensemble Harp) | {{dreamforge:icons:weapon.star_harp.png?40}} 星の竪琴 (Star Harp) |
+| 頭 (Head) | 楽団長の帽子 (Conductor's Hat) | {{dreamforge:icons:head.sage_hat.png?40}} 賢者のとんがり帽 (Sage's Hat) |
+| 装飾品 (Charm) | 楽団の風鈴 (Ensemble Chime) | {{dreamforge:icons:charm.windchime_charm.png?40}} 風鈴の飾り (Wind Chime Charm) |
+| 防具 (Armor) | 楽団の墨染め衣 (Ensemble Inkrobe) | {{dreamforge:icons:armor.ink_robe.png?40}} 墨染めの衣 (Ink-Dyed Robe) |
+| 手 (Hands) | 楽団の楽譜手袋 (Ensemble Scorekeeper Gloves) | {{dreamforge:icons:hands.manuscript_gloves.png?40}} 写本の手袋 (Manuscript Gloves) |
+| 足 (Feet) | 楽団の舞台靴 (Ensemble Stagesteps) | {{dreamforge:icons:feet.star_slippers.png?40}} 星座の上履き (Constellation Slippers) |
+
+  * **2つ装着 (2 pieces)**: 魔力 +5% (+5% Ability Power) / スキル加速 +10 (+10 Ability Haste)
+  * **3つ装着 (3 pieces)**
+    * **連奏 (Medley)** 【連奏】直近12秒に使った通常記憶の種類1つにつき、攻撃力・魔力が5%上がる（3種類まで。種類が増えると12秒に延長。同じ記憶では増えず消えない。エピック以上限定。条件つき攻撃力・魔力の総上限は覚醒前120%）（効果値の合計上限10%） ([Medley] Gain +5% AD/AP per distinct ordinary memory used within 12s (up to 3; new types refresh the 12s window, repeats neither add nor remove stacks; Epic or higher only; combined conditional AD/AP capped at 120% before awakening) (combined value capped at 10%))
+    * **畳みかけ (Pile-On)** 【畳みかけ】ほかの記憶を挟まず同じ記憶を3回続けて使うたび、その記憶の残りクールダウンが30%縮む（効果値の合計上限60%） ([Pile-On] Every 3 consecutive uses of the same memory without another memory in between cut its remaining cooldown by 30% (combined value capped at 60%))
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを22%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 22% (rearms when all are ready again) (combined value capped at 45%))
+  * **6つ装着 (6 pieces)**
+    * **詠唱の薙ぎ (Spellsweep)** 【詠唱の薙ぎ】通常記憶を使った後5秒以内の次の通常攻撃が、そのダメージの42%を周囲3mの別の敵にも与える（1回で消費。記憶を使うたび時間を延長）（効果値の合計上限90%） ([Spellsweep] After using an ordinary memory, your next basic attack within 5s deals 42% of its damage to other enemies within 3m (consumed once; each memory use refreshes the window) (combined value capped at 90%))
+    * **戻り刃 (Returning Blade)** 【戻り刃】記憶のダメージで敵を倒すと、その記憶の残りクールダウンが14%縮む（効果値の合計上限30%） ([Returning Blade] Killing an enemy with a memory cuts that memory's remaining cooldown by 14% (combined value capped at 30%))
+
+===== 切り札の勝負師 (Trump-Card Gambler) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 勝負師の細杖 (Gambler's Wand) | {{dreamforge:icons:weapon.dream_wand.png?40}} 夢見の杖 (Dreamer's Wand) |
+| 頭 (Head) | 勝負師の額冠 (Gambler's Circlet) | {{dreamforge:icons:head.dream_circlet.png?40}} 夢見の額冠 (Dreamer's Circlet) |
+| 装飾品 (Charm) | 勝負師の懐中時計 (Gambler's Pocket Watch) | {{dreamforge:icons:charm.clockwork_charm.png?40}} ぜんまい仕掛けの飾り (Clockwork Charm) |
+| 防具 (Armor) | 勝負師の旅外套 (Gambler's Travelcoat) | {{dreamforge:icons:armor.traveler_coat.png?40}} 旅人の外套 (Traveler's Coat) |
+| 手 (Hands) | 勝負師の呪文手袋 (Gambler's Spellgloves) | {{dreamforge:icons:hands.spell_gloves.png?40}} 呪文の手袋 (Spellweave Gloves) |
+| 足 (Feet) | 勝負師の星靴 (Gambler's Starshoes) | {{dreamforge:icons:feet.star_slippers.png?40}} 星座の上履き (Constellation Slippers) |
+
+  * **2つ装着 (2 pieces)**: スキル加速 +8 (+8 Ability Haste) / 魔力 +5% (+5% Ability Power)
+  * **3つ装着 (3 pieces)**
+    * **切り札を握る (Ace in Hand)** 【切り札を握る】装備中の奥義が使える間、通常記憶のダメージが12%上がる（星座による奥義化を含む。奥義がなければ無効）（効果値の合計上限24%） ([Ace in Hand] While your equipped Ultimate is ready, ordinary memories deal 12% more damage (includes constellation conversions to Ultimate; requires an Ultimate) (combined value capped at 24%))
+    * **戻り刃 (Returning Blade)** 【戻り刃】記憶のダメージで敵を倒すと、その記憶の残りクールダウンが15%縮む（効果値の合計上限30%） ([Returning Blade] Killing an enemy with a memory cuts that memory's remaining cooldown by 15% (combined value capped at 30%))
+    * **終の昂り (Ultimate Surge)** 【終の昂り】奥義を使った後の5秒間、攻撃力・魔力が25%上がる（重ならず時間を延長） ([Ultimate Surge] +25% AD/AP for 5s after using your Ultimate (refreshes, does not stack))
+  * **6つ装着 (6 pieces)**
+    * **畳みかけ (Pile-On)** 【畳みかけ】ほかの記憶を挟まず同じ記憶を3回続けて使うたび、その記憶の残りクールダウンが30%縮む（効果値の合計上限60%） ([Pile-On] Every 3 consecutive uses of the same memory without another memory in between cut its remaining cooldown by 30% (combined value capped at 60%))
+    * **口火 (Opening Salvo)** 【口火】通常記憶がすべて使える状態から最初に使う記憶の残りクールダウンを22%短縮する（すべて使える状態に戻ると再準備）（効果値の合計上限45%） ([Opening Salvo] When all ordinary memories are ready, the first one used has its remaining cooldown reduced by 22% (rearms when all are ready again) (combined value capped at 45%))
+
+===== 無手の矜持 (Creed of the Bare Hand) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 無手の誇りの木刀 (Bare-Hand Bokken) | {{dreamforge:icons:weapon.tortoise_bokken.png?40}} 亀甲の木刀 (Tortoiseshell Bokken) |
+| 手 (Hands) | 無手の誇りの巻き布 (Bare-Hand Wraps) | {{dreamforge:icons:hands.monk_wraps.png?40}} 修行者の手巻き (Ascetic's Wraps) |
+| 装飾品 (Charm) | 無手の誇りの印 (Bare-Hand Seal) | {{dreamforge:icons:charm.hunters_seal.png?40}} 狩人の印章 (Hunter's Seal) |
+| 頭 (Head) | 無手の誇りの面 (Bare-Hand Mask) | {{dreamforge:icons:head.berserker_mask.png?40}} 狂戦士の面 (Berserker's Mask) |
+| 防具 (Armor) | 無手の誇りの道着 (Bare-Hand Gi) | {{dreamforge:icons:armor.monk_garb.png?40}} 修行者の道着 (Ascetic's Garb) |
+| 足 (Feet) | 無手の誇りの足袋 (Bare-Hand Tabi) | {{dreamforge:icons:feet.stalker_boots.png?40}} 忍び足の靴 (Stalker's Boots) |
+
+  * **2つ装着 (2 pieces)**: 攻撃力 +5% (+5% Attack Damage) / 攻撃速度 +5% (+5% Attack Speed)
+  * **3つ装着 (3 pieces)**
+    * **素手の矜持 (Bare-Handed Pride)** 【素手の矜持】通常記憶がすべてクールダウン中の間、通常攻撃を当てると通常記憶のクールダウンが0.2秒縮む（0.3秒に1回）（短縮は合計0.3秒まで） ([Bare-Handed Pride] While every ordinary memory is cooling down, basic hits reduce their cooldowns by 0.2s (once per 0.3s) (total reduction capped at 0.3s))
+    * **詠唱の薙ぎ (Spellsweep)** 【詠唱の薙ぎ】通常記憶を使った後5秒以内の次の通常攻撃が、そのダメージの45%を周囲3mの別の敵にも与える（1回で消費。記憶を使うたび時間を延長）（効果値の合計上限90%） ([Spellsweep] After using an ordinary memory, your next basic attack within 5s deals 45% of its damage to other enemies within 3m (consumed once; each memory use refreshes the window) (combined value capped at 90%))
+    * **会心の余韻 (Critical Echo)** 【会心の余韻】通常攻撃が会心で当たると、Q・W・Eのクールダウンが0.5秒縮む（0.5秒に1回まで） ([Critical Echo] Critical basic attacks shorten Q/W/E cooldowns by 0.5s (at most once per 0.5s))
+  * **6つ装着 (6 pieces)**
+    * **決闘者の流儀 (Duelist's Way)** 【決闘者の流儀】8m以内の敵が1体だけの間、その敵への通常攻撃に攻撃力か魔力の高い方の30%分のダメージを追加する（効果値の合計上限60%） ([Duelist's Way] While exactly one enemy is within 8m, basic attacks against it deal 30% of the higher of AD or AP as bonus damage (combined value capped at 60%))
+    * **一点集中 (Focus Fire)** 【一点集中】同じ敵へ通常攻撃を5回続けて当てるたび、攻撃力か魔力の高い方の45%分のダメージを追加する（別の敵に当てるか4秒空くと数え直し）（効果値の合計上限120%） ([Focus Fire] Every 5 consecutive basic hits on the same enemy deal 45% of the higher of AD or AP as bonus damage (resets on a different target or a 4s gap) (combined value capped at 120%))
+
+===== 結晶の回路 (Crystal Circuit Array) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 回路の瞑想帯 (Circuit Meditation Band) | {{dreamforge:icons:head.meditation_band.png?40}} 瞑想の鉢巻 (Meditation Band) |
+| 手 (Hands) | 回路の調合手袋 (Circuit Compounder Gloves) | {{dreamforge:icons:hands.alchemist_gloves.png?40}} 錬金術師の手袋 (Alchemist's Gloves) |
+| 装飾品 (Charm) | 回路の水晶玉 (Circuit Crystal Lens) | {{dreamforge:icons:charm.dream_lens.png?40}} 夢見の水晶 (Dreaming Lens) |
+| 主装備 (Weapon) | 回路の導杖 (Circuit Conductor Staff) | {{dreamforge:icons:weapon.windhowl_staff.png?40}} 風唸りの杖 (Windhowl Staff) |
+| 防具 (Armor) | 回路の鏡絹衣 (Circuit Mirrorsilk) | {{dreamforge:icons:armor.mirrorsilk_robe.png?40}} 鏡絹の衣 (Mirrorsilk Robe) |
+| 足 (Feet) | 回路の囁き靴 (Circuit Whisperweave Shoes) | {{dreamforge:icons:feet.whisperweave_shoes.png?40}} 囁き織りの靴 (Whisperweave Shoes) |
+
+  * **2つ装着 (2 pieces)**: スキル加速 +10 (+10 Ability Haste) / 魔力 +10 (+10 Ability Power)
+  * **3つ装着 (3 pieces)**
+    * **結晶の循環 (Crystal Circuit)** 【結晶の循環】エッセンスが発動するたび、通常記憶の残りクールダウンが12%縮む（効果値の合計上限25%） ([Crystal Circuit] Each Essence activation cuts your ordinary memories' remaining cooldowns by 12% (combined value capped at 25%))
+    * **結晶共鳴 (Crystal Resonance)** 【結晶共鳴】装着中のエッセンスの品質の合計100%ごとに、攻撃力・魔力が2%上がる（8段まで） ([Crystal Resonance] +2% AD/AP per 100% total quality of your equipped Essences (up to 8))
+    * **終曲 (Finale)** 【終曲】Q・W・Eを8秒以内にすべて使うと、奥義の残りクールダウンが22%縮む（10秒に1回） ([Finale] Using Q, W and E within 8s cuts your Ultimate's remaining cooldown by 22% (once per 10s))
+  * **6つ装着 (6 pieces)**
+    * **結晶共鳴 (Crystal Resonance)** 【結晶共鳴】装着中のエッセンスの品質の合計100%ごとに、攻撃力・魔力が2%上がる（8段まで） ([Crystal Resonance] +2% AD/AP per 100% total quality of your equipped Essences (up to 8))
+    * **畳みかけ (Pile-On)** 【畳みかけ】ほかの記憶を挟まず同じ記憶を3回続けて使うたび、その記憶の残りクールダウンが28%縮む（効果値の合計上限60%） ([Pile-On] Every 3 consecutive uses of the same memory without another memory in between cut its remaining cooldown by 28% (combined value capped at 60%))
+
+===== 夢見の寝ずの番 (Dreamwatch Vigil) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 頭 (Head) | 寝ずの番の面紗 (Vigil Veil) | {{dreamforge:icons:head.dream_veil.png?40}} 夢見の薄衣 (Dreamer's Veil) |
+| 防具 (Armor) | 寝ずの番の朝露衣 (Vigil Dewrobe) | {{dreamforge:icons:armor.morningdew_robe.png?40}} 朝露の衣 (Morning Dew Robe) |
+| 装飾品 (Charm) | 寝ずの番の星飾り (Vigil Stardust) | {{dreamforge:icons:charm.stardust_pendant.png?40}} 星屑の垂飾り (Stardust Pendant) |
+| 主装備 (Weapon) | 寝ずの番の巡礼杖 (Vigil Pilgrim Staff) | {{dreamforge:icons:weapon.pilgrim_staff.png?40}} 巡礼の錫杖 (Pilgrim's Staff) |
+| 手 (Hands) | 寝ずの番の手袋 (Vigil Gloves) | {{dreamforge:icons:hands.healer_hands.png?40}} 癒し手の手袋 (Healer's Gloves) |
+| 足 (Feet) | 寝ずの番の巡礼靴 (Vigil Pilgrim Boots) | {{dreamforge:icons:feet.pilgrim_boots.png?40}} 巡礼の靴 (Pilgrim's Boots) |
+
+  * **2つ装着 (2 pieces)**: 行動妨害耐性 +10 (+10 Tenacity) / 最大HP +6% (+6% Max Health)
+  * **3つ装着 (3 pieces)**
+    * **夢見の前兆 (Dream Omen)** 【夢見の前兆】夢の出来事が始まると、通常記憶の残りクールダウンが25%縮み、最大HPの12.5%の障壁を10秒間張る（効果値の合計上限50%） ([Dream Omen] When a dream event begins, cut ordinary-memory remaining cooldowns by 25% and gain a 10s shield worth 12.5% max health (combined value capped at 50%))
+    * **欠片の恵み (Shard Boon)** 【欠片の恵み】黄金の欠片かドリームダストの欠片を壊すと、最大HPの0.8%を回復する（0.3秒に1回）（合計上限1.5%） ([Shard Boon] Breaking a Gold or Dreamdust fragment heals 0.8% max health (once per 0.3s) (combined value capped at 1.5%))
+    * **明晰 (Lucid Boon)** 【明晰】有効な邪悪な明晰夢1つにつき、攻撃力・魔力が8%上がる（6つまで、合計18%まで） ([Lucid Boon] +8% AD/AP per active Evil lucid dream (up to 6 dreams and +18% total))
+  * **6つ装着 (6 pieces)**
+    * **祈願 (Devotion)** 【祈願】聖堂を使うたび、そのゾーンの間 攻撃力・魔力が3%上がる（5回まで） ([Devotion] Each shrine you use grants +3% AD/AP for the rest of the zone (up to 5))
+    * **備えの盾 (Ready Guard)** 【備えの盾】5秒間ダメージを与えず受けずに過ごした後、最初に与えるか受けた瞬間、最大HPの8%の障壁を8秒間張る（効果値の合計上限18%） ([Ready Guard] After 5s without dealing or taking damage, your first damage dealt or taken grants an 8s shield worth 8% max health (combined value capped at 18%))
+
+===== 供犠の血盟 (Tithebound Blood Pact) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 主装備 (Weapon) | 供犠の戦斧 (Tithe Hatchet) | {{dreamforge:icons:weapon.war_axe.png?40}} 戦斧 (War Axe) |
+| 防具 (Armor) | 供犠の棘甲 (Tithe Spikeplate) | {{dreamforge:icons:armor.spiked_plate.png?40}} 棘付きの板金鎧 (Spiked Plate) |
+| 装飾品 (Charm) | 供犠の炎針 (Tithe Flamepin) | {{dreamforge:icons:charm.blaze_brooch.png?40}} 焔のブローチ (Blaze Brooch) |
+| 頭 (Head) | 供犠の茨冠 (Tithe Thorn Crown) | {{dreamforge:icons:head.thorn_circlet.png?40}} 茨の冠 (Thorn Circlet) |
+| 手 (Hands) | 供犠の棘手巻 (Tithe Barbwraps) | {{dreamforge:icons:hands.thorn_wraps.png?40}} 茨の手巻き (Thorn Wraps) |
+| 足 (Feet) | 供犠の鎖脛当 (Tithe Chaingreaves) | {{dreamforge:icons:feet.chain_greaves.png?40}} 鎖の脛当て (Chain Greaves) |
+
+  * **2つ装着 (2 pieces)**: HPを捧げる技の消費が12%減る（上限40%） (Skills that sacrifice HP cost 12% less HP (cap 40%)) / 攻撃力 +5% (+5% Attack Damage)
+  * **3つ装着 (3 pieces)**
+    * **灯守 (Second Wind)** 【灯守】HPが30%を切ると、最大HPの30%を回復する（60秒に1回） ([Second Wind] When you drop below 30% health, heal 30% of max health (once per 60s))
+    * **血の渇き (Bloodlust)** 【血の渇き】HPが50%未満の間、攻撃速度が30%上がる ([Bloodlust] +30% attack speed while below 50% health)
+    * **溢れる一撃 (Spillover Strike)** 【溢れる一撃】敵を倒した一撃の過剰ダメージの55%を、6m以内の別の敵1体に与える（連鎖しない）（効果値の合計上限120%） ([Spillover Strike] On kill, deal 55% of the killing hit's excess damage to one other enemy within 6m (does not chain) (combined value capped at 120%))
+  * **6つ装着 (6 pieces)**
+    * **怨嗟の鐘 (Toll of Grudge)** 【怨嗟の鐘】実際に失ったHPの合計が最大HPの60%に達するたび、周囲6mに最大HPの22%分の魔法ダメージを与える（障壁で吸収した分は数えず、世界を移ると溜めは0）（効果値の合計上限40%） ([Toll of Grudge] Every time actual health lost totals 60% max health, deal 22% max health as magic damage within 6m (shield absorption does not count; progress resets between worlds) (combined value capped at 40%))
+    * **不撓の心 (Unbowed Mind)** 【不撓の心】敵からスタンを受けると、最大HPの6%の障壁とアンストッパブルを4秒間得る（8秒に1回。障壁が壊れてもアンストッパブルは持続）（効果値の合計上限12%） ([Unbowed Mind] Enemy stuns grant a shield worth 6% max health and Unstoppable for 4s (once per 8s; Unstoppable persists if the shield breaks) (combined value capped at 12%))
+
+===== 七彩の舞 (Prismatic Dance) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 手 (Hands) | 舞い星の環 (Dancing-Star Rings) | {{dreamforge:icons:hands.star_rings.png?40}} 星環の指輪 (Star-Ring Bands) |
+| 頭 (Head) | 舞い星の冠 (Dancing-Star Diadem) | {{dreamforge:icons:head.star_diadem.png?40}} 星の髪飾り (Star Diadem) |
+| 足 (Feet) | 舞い星の踊り靴 (Dancing-Star Shoes) | {{dreamforge:icons:feet.dancer_shoes.png?40}} 舞い手の靴 (Dancer's Shoes) |
+| 主装備 (Weapon) | 舞い星の夕扇 (Dancing-Star Fan) | {{dreamforge:icons:weapon.evening_fan.png?40}} 夕薫の扇 (Evening Breeze Fan) |
+| 防具 (Armor) | 舞い星の羽衣 (Dancing-Star Aurora) | {{dreamforge:icons:armor.aurora_wrap.png?40}} 極光の肩掛け (Aurora Wrap) |
+| 装飾品 (Charm) | 舞い星の光環御守 (Dancing-Star Halo Charm) | {{dreamforge:icons:charm.halo_charm.png?40}} 光環の御守り (Halo Charm) |
+
+  * **2つ装着 (2 pieces)**: スキル加速 +8 (+8 Ability Haste) / 魔力 +5% (+5% Ability Power)
+  * **3つ装着 (3 pieces)**
+    * **七色の切替 (Prism Shift)** 【七色の切替】直前とは別の属性を付けると、最大HPの3%の障壁を3秒間張る（1秒に1回。重ならず大きい方を適用）（効果値の合計上限5%） ([Prism Shift] Applying a different element from your last grants a 3s shield worth 3% max health (once per 1s; highest shield only) (combined value capped at 5%))
+    * **元素の収穫 (Elemental Harvest)** 【元素の収穫】2種類以上の属性がある敵を倒すと、属性1種類につき攻撃力か魔力の高い方の30%分のダメージを周囲4mに与える（4種類まで。連鎖しない）（効果値の合計上限60%） ([Elemental Harvest] Killing an enemy with at least 2 element types deals 30% of the higher of AD or AP per type to enemies within 4m (up to 4 types; does not chain) (combined value capped at 60%))
+    * **星屑の巡り (Stardust Cycle)** 【星屑の巡り】敵の光が5つに達すると、通常記憶のうち残りクールダウンが最長の1つを14%短縮する（全体で1秒に1回、同じ敵へ5秒に1回）（効果値の合計上限30%） ([Stardust Cycle] When an enemy reaches 5 Light stacks, cut your longest remaining ordinary-memory cooldown by 14% (once per 1s overall and once per 5s per enemy) (combined value capped at 30%))
+  * **6つ装着 (6 pieces)**
+    * **蝕 (Eclipse)** 【蝕】光と闇のある敵は、4秒間 自分から受けるダメージが12%増える（合計上限25%。同じ効果は重ならず高い値だけ適用）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Eclipse] An enemy with Light and Dark takes 12% more damage from you for 4s (total capped at 25%; uses the highest Expose effect without stacking). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+    * **氷晶 (Frost Crystal)** 【氷晶】光と冷気のある敵に反応し、最大HPの6%分の障壁を4秒間得る（合計上限12%）。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。 ([Frost Crystal] When an enemy has Light and Cold, gain a shield worth 6% of max health for 4s (total capped at 12%). Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.)
+
+===== 包囲突破隊 (Breakout Corps) =====
+
+^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^
+| 防具 (Armor) | 突破隊の嵐衣 (Breakout Stormvest) | {{dreamforge:icons:armor.stormfront_vest.png?40}} 嵐の胸当て (Stormfront Vest) |
+| 足 (Feet) | 突破隊の鉄脛 (Breakout Greaves) | {{dreamforge:icons:feet.iron_greaves.png?40}} 鉄の脛当て (Iron Greaves) |
+| 頭 (Head) | 突破隊の鎖頭巾 (Breakout Coif) | {{dreamforge:icons:head.iron_coif.png?40}} 鎖頭巾 (Chain Coif) |
+| 主装備 (Weapon) | 突破隊の破城槌 (Breakout Ram) | {{dreamforge:icons:weapon.gatehouse_maul.png?40}} 城門の大槌 (Gatehouse Maul) |
+| 手 (Hands) | 突破隊の鉄手 (Breakout Ironhands) | {{dreamforge:icons:hands.ironvein_gauntlets.png?40}} 鉄脈の籠手 (Ironvein Gauntlets) |
+| 装飾品 (Charm) | 突破隊の鉄羽根 (Breakout Ironfeather) | {{dreamforge:icons:charm.iron_feather.png?40}} 鉄の羽根 (Iron Feather) |
+
+  * **2つ装着 (2 pieces)**: 最大HP +6% (+6% Max Health) / 移動速度 +4% (+4% Move Speed)
+  * **3つ装着 (3 pieces)**
+    * **包囲突破 (Breakout)** 【包囲突破】6m以内の敵が3体以下から4体以上になると、最大HPの10%の障壁を5秒間張り、周囲6mの敵を2秒間30%遅くする（10秒に1回）（効果値の合計上限18%） ([Breakout] When enemies within 6m rise from 3 or fewer to 4 or more, gain a 5s shield worth 10% max health and slow enemies within 6m by 30% for 2s (once per 10s) (combined value capped at 18%))
+    * **不撓の心 (Unbowed Mind)** 【不撓の心】敵からスタンを受けると、最大HPの7%の障壁とアンストッパブルを4秒間得る（8秒に1回。障壁が壊れてもアンストッパブルは持続）（効果値の合計上限12%） ([Unbowed Mind] Enemy stuns grant a shield worth 7% max health and Unstoppable for 4s (once per 8s; Unstoppable persists if the shield breaks) (combined value capped at 12%))
+    * **不動の構え (Immovable Stance)** 【不動の構え】1秒以上動かずにいる間、与えるダメージが9%上がり、受けるダメージが4%下がる（軽減は10%まで。動くと解除）（効果値の合計上限20%） ([Immovable Stance] After standing still for 1s, deal 9% more damage and take 4% less damage until you move (damage reduction capped at 10%) (combined value capped at 20%))
+  * **6つ装着 (6 pieces)**
+    * **乱戦 (Melee Frenzy)** 【乱戦】周りの敵1体につき、攻撃速度が3%上がる（8体まで） ([Melee Frenzy] +3% attack speed per nearby enemy (up to 8))
+    * **爆砕 (Shatter)** 【爆砕】敵を倒すと、周囲4mの敵に攻撃力か魔力の高い方の45%分のダメージを与える（爆砕で倒した敵からは起きない） ([Shatter] On kill, deal 45% of the higher of AD or AP to enemies within 4m (kills by Shatter do not chain))
+
