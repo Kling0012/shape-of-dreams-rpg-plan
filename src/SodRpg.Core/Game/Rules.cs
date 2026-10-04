@@ -1468,20 +1468,27 @@ namespace SodRpg.Core.Game
             return (TimesThreeHalves(60 * ((int)r.Rarity + 1), times), TimesThreeHalves(2 * ((int)r.Rarity + 1), times));
         }
 
-        /// <summary>value × 1.5^times を 3^times / 2^times の有理数として整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。</summary>
-        private static int TimesThreeHalves(int value, int times)
+        /// <summary>
+        /// value × 1.5^times を整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。
+        /// 値を q + r/2^i（0 ≤ r &lt; 2^i）の形で持ち、1回ごとに×3/2 を正確に行うので、3^times や 2^times を一度も作らずに済む。
+        /// q が int を超えたら（以後は単調に増えるだけなので）欠片の所持上限 int.MaxValue に張り付く。
+        /// </summary>
+        internal static int TimesThreeHalves(int value, int times)
         {
-            if (value <= 0) return 0;
-            // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。value ≥ 1 なら 1.5^56 は int.MaxValue を必ず超える。
-            if (value > 400) throw new ArgumentOutOfRangeException(nameof(value)); // 呼び出しは最大 60×5=300。decimal で厳密に扱える範囲
-            if (times >= 56) return int.MaxValue;
-            // 途中の long 上限に達しても本来 int に収まる費用を過大にしないよう、最後の乗算と切り上げの加算まで正確に計算する。
-            // decimal は整数なら 28 桁まで正確（value ≤ 400、3^55 ≈ 1.7e26 なので積は 7e28 未満で decimal の上限 7.9e28 に収まる）。除算は丸めが入るので余りで切り上げる。
-            decimal num = value, den = 1m;
-            for (int i = 0; i < times; i++) { num *= 3m; den *= 2m; }
-            decimal rem = decimal.Remainder(num, den);
-            decimal cost = (num - rem) / den + (rem > 0m ? 1m : 0m);
-            return cost >= int.MaxValue ? int.MaxValue : (int)cost;
+            if (value <= 0 || times <= 0) return Math.Max(0, value);
+            long q = value, r = 0;
+            for (int i = 0; i < times; i++)
+            {
+                if (q > int.MaxValue) return int.MaxValue; // 以後は増える一方。ここで止めるので i は高々60台で、2^i も long に収まる
+                long den = 1L << i;
+                long carry = 3 * r / den;                  // 3r/2^i = carry + r2/2^i
+                long r2 = 3 * r % den;
+                long top = 3 * q + carry;                  // x×3 = top + r2/2^i を、さらに2で割る
+                q = top >> 1;
+                r = ((top & 1) << i) + r2;                 // 割った余りは 2^(i+1) を分母にした値になる
+            }
+            long cost = q + (r > 0 ? 1 : 0);
+            return (int)Math.Min(int.MaxValue, cost);
         }
 
         /// <summary>

@@ -123,9 +123,9 @@ namespace SodRpg.Core.Tests
             var namedIds = p.Stash.Where(r => r.NamedId != null).Select(r => r.CodexId).ToList();
             foreach (var id in namedIds) p.Codex.Remove(id);
             foreach (var r in p.Stash.Where(r => r.NamedId != null)) p.Codex.Add(r.BaseId);
-            Assert.True(Onboarding.BackfillStarterCodex(p));
+            Assert.True(Onboarding.BackfillStarterCodex(p) > 0);
             Assert.All(namedIds, id => Assert.Contains(id, p.Codex));
-            Assert.False(Onboarding.BackfillStarterCodex(p)); // 二度目は何も足さない
+            Assert.Equal(0, Onboarding.BackfillStarterCodex(p)); // 二度目は何も足さない
             Assert.Equal(Content.SlotCount, p.StarterUids.Count); // 二重配布はしない
             Assert.Empty(Onboarding.GrantStarterKit(p));
         }
