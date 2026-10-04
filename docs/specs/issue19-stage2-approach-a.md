@@ -1,5 +1,7 @@
 # Issue #19 第2段調査：方式A（実行時GLB読み込み）の設計材料
 
+> 追記（2026-10-04）：下記の「第1段で利用者が方式Aを選択した」は、リポジトリ・プロジェクトのチャットから**選択の記録を確認できない**。ローダー方式の判断は [統合仕様 D2・§12](issue19-integration-spec.md) に従う（方式Bを本線、方式Aは代替策）。本書の設計は代替策として有効。
+
 2026-10-03。読み取りのみ（ゲーム本体・Workshop MOD・セーブは一切変更していない）。第1段（docs/specs/issue19-model-import-research.md:41）で利用者が方式Aを選択したことを受けての、実装前の最終調査。根拠はすべて `sod-decomp/Dew.Core`（%LOCALAPPDATA%）、`.ref/dump/*.txt`、本repo `src/SodRpg.Mod`、ワークショップMOD `…/2444750/3807706235`（Shape of Dreams VRM 0.4.0）、およびゲームのビルド成果物（読み取り）から行ごとに示す。確認できなかった点は 要確認 と記す。
 
 前提（第1段で確認済み）: Unity 6000.0.77f1 / URP / Mirror / Addressables（docs/specs/issue19-model-import-research.md:10-13）。EntityModel の各フィールドと `LoadModelLocal` の制約（初期化済みインスタンス不可）も同文書（docs/specs/issue19-model-import-research.md:20-22）。
