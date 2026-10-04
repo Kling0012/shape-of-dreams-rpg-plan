@@ -635,7 +635,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.ForgeShrine:
                 {
                     var target = run.Satchel.Where(r => r.Enhance < Content.MaxEnhanceFor(r) && (trades == null || !trades.IsReserved(r.Uid))).OrderByDescending(r => r.Score).First();
-                    run.SatchelShards -= 20;
+                    run.SatchelShards -= target.Rarity >= Rarity.Epic ? 40 : 20;
                     target.Enhance++;
                     string shrineMilestone = GrantEnhanceMilestones(rng, target);
                     ev.Add(new GameEvent(EventKind.Info, Loc.T($"鍛冶の祠で「{target.PlainName}」を+{target.Enhance}に強化しました。",
@@ -648,7 +648,7 @@ namespace SodRpg.Core.Game
                     var source = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderByDescending(r => r.Score).First();
                     var rarity = source.Rarity == Rarity.Legendary ? Rarity.Epic : source.Rarity;
                     var relic = Loot.RollBaseRelic(rng, source.Base, rarity, source.ItemLevel);
-                    run.SatchelShards -= 30;
+                    run.SatchelShards -= source.Rarity >= Rarity.Epic ? 60 : 30;
                     RecordEventRelic(p, relic, ev, trades);
                     break;
                 }
@@ -713,7 +713,7 @@ namespace SodRpg.Core.Game
                     var chosen = pool[rng.Range(0, pool.Count - 1)];
                     var replacement = new PowerLine(chosen.Power, rng.Range(chosen.Min, chosen.Max));
                     var old = target.Powers[0];
-                    if (e == DreamEvent.MemoryWell) p.AddMaterial(Materials.Tuning, -1);
+                    if (e == DreamEvent.MemoryWell) p.AddMaterial(Materials.Tuning, -(target.Rarity >= Rarity.Epic ? 2 : 1));
                     else target.Powers.RemoveAt(target.Powers.Count - 1);
                     target.Powers[0] = replacement;
                     ev.Add(new GameEvent(e == DreamEvent.MemoryWell ? EventKind.LevelUp : EventKind.Info, Loc.T(
@@ -727,7 +727,7 @@ namespace SodRpg.Core.Game
                     var replacement = Loot.RollAffix(rng, target.Slot, target.Rarity, target.ItemLevel, DreamEvents.ShadowExcludedStats(target), target.Base.Family);
                     if (replacement == null) throw new InvalidOperationException(Loc.T("別の特性を付けられません。", "No different affix is available."));
                     var old = target.Affixes[0];
-                    run.SatchelShards -= 25;
+                    run.SatchelShards -= target.Rarity >= Rarity.Epic ? 50 : 25;
                     target.Retunes++;
                     target.Affixes[0] = replacement;
                     ev.Add(new GameEvent(EventKind.Info, Loc.T(
@@ -753,7 +753,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.RelicWager:
                 {
                     var target = DreamEvents.TradeTarget(p, e, trades);
-                    if (rng.Chance(0.5))
+                    if (rng.Chance(target.Rarity == Rarity.Rare ? 0.2 : 0.5))
                     {
                         var replacement = Loot.RollBaseRelic(rng, target.Base, target.Rarity + 1, target.ItemLevel);
                         run.Satchel.Remove(target);
@@ -809,7 +809,7 @@ namespace SodRpg.Core.Game
                 {
                     var relic = Loot.RollRelic(rng, Rarity.Epic, p.BestItemLevel, null,
                         p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine, p.Stash, run.Satchel, p.Codex);
-                    run.SatchelShards -= 30;
+                    run.SatchelShards -= 75;
                     run.Heat++;
                     run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
                     ev.Add(new GameEvent(EventKind.Delved, Loc.T($"宝箱を開き、潜行が{run.Heat}になりました。", $"Opened the chest; delve is now {run.Heat}.")));
@@ -1253,7 +1253,7 @@ namespace SodRpg.Core.Game
             RequireNoRetuneOffer(p, uid);
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (r.Enhance >= Content.MaxEnhanceFor(r)) throw new InvalidOperationException(Loc.T("これ以上強化できません。", "Already at maximum enhancement."));
-            int cost = Content.EnhanceCost(r.Enhance);
+            int cost = Content.EnhanceCost(r.Enhance) * (r.Rarity >= Rarity.Epic ? 2 : 1);
             if (p.Material(Materials.Shard) < cost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{cost}必要）。", $"Not enough shards ({cost} needed)."));
             p.AddMaterial(Materials.Shard, -cost);
             var rng = p.TakeRng();
@@ -1300,7 +1300,7 @@ namespace SodRpg.Core.Game
             if (!LimitBreakCandidates(p, r, trades).Contains(material))
                 throw new InvalidOperationException(Loc.T("材料は同じ枠で同じレア度以上の、鍵なし・未装着・取引中でない遺物です。", "The material must be an unlocked, unequipped, unreserved relic of the same slot and equal or higher rarity."));
             int n = r.LimitBreaks + 1;
-            int tuningCost = Content.LimitBreakTuningCost(n), shardCost = Content.LimitBreakShardCost(n);
+            int tuningCost = Content.LimitBreakTuningCost(n) * (r.Rarity >= Rarity.Epic ? 2 : 1), shardCost = Content.LimitBreakShardCost(n) * (r.Rarity >= Rarity.Epic ? 2 : 1);
             if (p.Material(Materials.Tuning) < tuningCost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{tuningCost}必要）。", $"Not enough tuning stones ({tuningCost} needed)."));
             if (p.Material(Materials.Shard) < shardCost) throw new InvalidOperationException(Loc.T($"欠片が足りません（{shardCost}必要）。", $"Not enough shards ({shardCost} needed)."));
             p.AddMaterial(Materials.Tuning, -tuningCost);
@@ -1419,7 +1419,7 @@ namespace SodRpg.Core.Game
             var r = p.FindStash(uid) ?? throw new InvalidOperationException(Loc.T("保管庫にない遺物です。", "That relic is not in your stash."));
             if (affixIndex < 0 || affixIndex >= r.Affixes.Count) throw new InvalidOperationException(Loc.T("特性を選んでください。", "Choose an affix."));
             if (r.Retunes >= Content.MaxRetunes) throw new InvalidOperationException(Loc.T("再調律の回数を使い切りました。", "No retunes left."));
-            int cost = Content.RetuneCost(r.Retunes);
+            int cost = Content.RetuneCost(r.Retunes) * (r.Rarity >= Rarity.Epic ? 2 : 1);
             if (p.Material(Materials.Tuning) < cost) throw new InvalidOperationException(Loc.T($"調律石が足りません（{cost}必要）。", $"Not enough tuning stones ({cost} needed)."));
             var others = new HashSet<Stat> { r.Base.ImplicitStat };
             for (int i = 0; i < r.Affixes.Count; i++) if (i != affixIndex) others.Add(r.Affixes[i].Stat);
@@ -1461,11 +1461,11 @@ namespace SodRpg.Core.Game
                 $"Retuned: {Content.FormatStat(old.Stat, old.Value)} -> {Content.FormatStat(line.Stat, line.Value)}"), r.Rarity);
         }
 
-        /// <summary>特性の洗い直しの費用（v1.31）：欠片 60×(レア度+1) と調律石 2×(レア度+1) を、その遺物で済ませた回数ぶん1.5倍（切り上げ）する。</summary>
+        /// <summary>特性の洗い直しの費用（v1.31）：欠片 60×(レア度+1) と調律石 2×(レア度+1)（エピック以上は2倍）を、その遺物で済ませた回数ぶん1.5倍（切り上げ）する。</summary>
         public static (int Shards, int Tuning) AffixRerollCost(Relic r)
         {
             int times = Math.Max(0, r.AffixRerolls);
-            return (TimesThreeHalves(60 * ((int)r.Rarity + 1), times), TimesThreeHalves(2 * ((int)r.Rarity + 1), times));
+            return (TimesThreeHalves((r.Rarity >= Rarity.Epic ? 120 : 60) * ((int)r.Rarity + 1), times), TimesThreeHalves((r.Rarity >= Rarity.Epic ? 4 : 2) * ((int)r.Rarity + 1), times));
         }
 
         /// <summary>
@@ -1554,10 +1554,10 @@ namespace SodRpg.Core.Game
                 $"Crafted {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\""), relic.Rarity);
         }
 
-        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? 150 : 10 * ((int)r + 1);
+        public static int TransmuteCost(Rarity r) => r >= Rarity.Epic ? 300 : r == Rarity.Rare ? 60 : 10 * ((int)r + 1);
 
         /// <summary>合成で要る調律石（固有品への合成だけ）。</summary>
-        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? 2 : 0;
+        public static int TransmuteTuning(Rarity r) => r >= Rarity.Epic ? 4 : 0;
 
         /// <summary>合成の材料になる遺物（鍵なし・どこにも装着していない・同じレア度）を弱い順に。</summary>
         public static List<Relic> TransmuteCandidates(Profile p, Rarity r, TradeLedger trades = null)

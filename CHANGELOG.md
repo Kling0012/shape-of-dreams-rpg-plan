@@ -6,6 +6,12 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — 高レア装備と合成の難易度調整（2026-10-05）
+
+- **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.053個/遠征。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.053 per expedition, preserving low-rarity supply and boss reward counts.
+- **救済と鍛冶**：ボス救済の天井29→113体目。上位合成の材料・費用とエピック以上の強化・再調律・洗い直し・限界突破費用を2倍、覚醒必要量を2.5倍。高レアのイベント入手も難化。 / **Pity and crafting**: pity ceiling 29 → 113 bosses; upper-tier transmute requirements and Epic+ improvement fees doubled, awakening thresholds multiplied by 2.5, and high-rarity event acquisition tightened.
+- 保存形式・通信構造・Protocol番号は変更なし。協力時は全員同じビルドにしてください（既存の内容指紋は今回の数値差を検出しません）。比較値・例外・計測条件は[仕様](docs/specs/rare-gear-difficulty.md)を参照。 / Save and wire formats and protocol number unchanged; use matching builds in co-op, as the existing content fingerprint does not detect these balance differences. See the comparison specification for assumptions and retained guarantees.
+
 ## 未公開 — 星図の二択・相関表示（#46）
 
 - **二択の比較**：効果A/Bを左右のカードで常時表示し、候補名・本文・選択状態を分離しました。本文と操作欄はカードごとに折り返し・スクロールし、長い説明でももう一方を隠しません。ツールチップの二つの説明も見出しと空行で分けました。 / **Choice comparison**: both A/B cards stay visible, with separate names, effects and chosen states. Each card wraps and scrolls independently; tooltip effects also have headings and paragraph spacing.
