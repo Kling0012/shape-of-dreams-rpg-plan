@@ -6,6 +6,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 星図の二択・相関表示（#46）
+
+- **二択の比較**：効果A/Bを左右のカードで常時表示し、候補名・本文・選択状態を分離しました。本文と操作欄はカードごとに折り返し・スクロールし、長い説明でももう一方を隠しません。ツールチップの二つの説明も見出しと空行で分けました。 / **Choice comparison**: both A/B cards stay visible, with separate names, effects and chosen states. Each card wraps and scrolls independently; tooltip effects also have headings and paragraph spacing.
+- **相関表示**：ホバー中と二択を開いた星を青い輪、接続先と合わせ技の前提となる両端を淡青の輪、注目中の星への接続を太い線で示します。取得済みの金の枠・線は残し、接続による解放と合わせ技の条件を凡例に記載しました。 / **Relationships**: blue rings mark hovered/open-choice stars; pale-blue rings mark connections and combo endpoint prerequisites; thick line borders mark focused connections. Acquired gold frames/line cores remain, with unlock and combo requirements explained in the legend.
+- **表示・操作**：選択パネルのボタン・スクロールバー以外からも星図をドラッグできます。隠れた星への誤クリックは防ぎます。星図だけは画面に1600×960の論理領域が収まるよう実効倍率を制限し、二択パネルは最大幅1000・キャンバス内の高さで表示します（設定倍率は変更しません）。選択確定のRules・同期経路は従来どおりです。 / **Layout/input**: pan from non-control areas of the choice panel without clicking obscured stars. Only the star-map screen limits effective scale to fit a 1600×960 logical viewport; choice panels use at most 1000 logical units of width and fit the canvas height. Configured scale and Rules/synchronization remain unchanged.
+
+---
+
 ## v2.0.1 — 取引の安全性と図鑑の修正（2026-10-04）
 
 v2.0.0 後の不具合の修正です。新しい機能はありません。**実機（ゲーム本体・2台での協力プレイ）での確認はまだ**のため、試験版（pre-release）として公開します。 / Fixes since v2.0.0; no new features. Not yet verified in the real game or in two-player co-op, so this is published as a pre-release.

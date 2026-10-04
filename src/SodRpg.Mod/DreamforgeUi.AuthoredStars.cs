@@ -22,9 +22,7 @@ namespace SodRpg.Mod
         private GUIStyle _starClusterRow, _starHelpStyle, _starLegendStyle, _starChoiceBody, _starChoiceHead;
         private static readonly GUILayoutOption[] StarClusterSize =
             { GUILayout.Width(270), GUILayout.ExpandHeight(true), GUILayout.MinHeight(160) };
-        private static readonly GUILayoutOption[] StarOptionColumn = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
-        private static readonly GUILayoutOption[] StarCloseWidth = { GUILayout.Width(170) };
-        private static readonly GUILayoutOption[] StarTagHeight = { GUILayout.MinHeight(34) };
+        private static readonly GUILayoutOption[] StarWrappedWidth = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true) };
 
         // Legend: every item has a hover tooltip. Items 0-3 are the region row, 4-6 the colour row.
         private sealed class StarLegendItem
@@ -37,6 +35,7 @@ namespace SodRpg.Mod
         private const float StarLegendTipWidth = 440f;
         private readonly StarLegendItem[] _starLegend = NewLegend();
         private readonly GUIContent _starHelpText = new GUIContent();
+        private readonly GUIContent _starRelationHelp = new GUIContent();
         private int _starLegendHover = -1;
         private float _windowWidth = 1060f;
 
@@ -84,6 +83,9 @@ namespace SodRpg.Mod
             }
             _starHelpText.text = Loc.T("ドラッグ：移動　ホイール：拡大縮小　左クリック：振る　右クリック：外す　",
                 "Drag: pan   Wheel: zoom   Left click: allocate   Right click: refund   ");
+            _starRelationHelp.text = Loc.T(
+                "青い輪＝注目中（ホバー／二択を開いた星）　淡青の輪＝接続先・合わせ技の前提　太い線＝注目中の星の接続\n線で取得済みの星につながると解放（金＝取得済み）。合わせ技は橋・両端の星の取得と、両方の記憶の装着が必要です。",
+                "Blue ring = focus (hover / open choice)   Pale blue ring = connection or combo prerequisite   Thick line = focus connection\nConnect to an acquired star to unlock (gold = acquired). Combos require the bridge, both endpoint stars and both memories equipped.");
         }
 
         private void RebuildStarClusters()
@@ -131,6 +133,7 @@ namespace SodRpg.Mod
             _starClusterRow = new GUIStyle(_st.RowWrap) { fontSize = 15 };
             _starChoiceBody = new GUIStyle(_st.Label) { fontSize = 16, wordWrap = true, richText = true };
             _starChoiceHead = new GUIStyle(_st.Label) { fontSize = 17, wordWrap = true, richText = true, fontStyle = FontStyle.Bold };
+            _starChoiceNote = new GUIStyle(_st.Small) { wordWrap = true };
         }
 
         /// <summary>
@@ -152,6 +155,7 @@ namespace SodRpg.Mod
             for (int i = StarLegendRegionItems; i < StarLegendItems; i++) DrawStarLegendItem(i, repaint);
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
+            GUILayout.Label(_starRelationHelp, _starChoiceNote, StarWrappedWidth);
         }
 
         private void DrawStarLegendItem(int index, bool repaint)
@@ -241,22 +245,38 @@ namespace SodRpg.Mod
         // Layout イベントで開閉を確定し、同じフレームの残りのイベントでは変えない。
         private bool _starChoiceShown;
         private Rect _starOverlay;
-        private const float StarChoiceMargin = 8f, StarChoiceMaxHeight = 236f;
+        private const float StarChoiceMargin = 8f, StarChoiceGap = 8f, StarChoiceScrollBar = 18f;
+        private const float StarChoiceCloseWidth = 170f;
+        private readonly Vector2[] _starChoiceScrolls = new Vector2[2];
+        private readonly GUIContent _starChoiceHeader = new GUIContent(), _starChoiceClose = new GUIContent(), _starChoiceHelp = new GUIContent();
+        private readonly GUIContent[] _starChoiceHeads = { new GUIContent(), new GUIContent() };
+        private readonly float[] _starChoiceHeadHeight = new float[2], _starChoiceBodyHeight = new float[2], _starChoiceContentHeight = new float[2];
+        private readonly int[] _starChoiceActionCount = new int[2];
+        private readonly Rect[] _starChoiceViews = new Rect[2];
+        private float _starChoiceHeaderHeight, _starChoiceHelpHeight, _starChoiceColumnWidth;
+        private GUIStyle _starChoiceNote;
+        private string _starChoiceStateText;
+        private bool _starChoiceCanEdit;
 
-        /// <summary>選択パネルを星図の上端に重ねる範囲。開いていなければ空。</summary>
-        private Rect StarChoiceOverlayRect(Rect canvas)
+        private sealed class StarChoiceAction
         {
-            if (!_starChoiceShown) return Rect.zero;
-            float height = Mathf.Min(StarChoiceMaxHeight, canvas.height - 2f * StarChoiceMargin);
-            return height < 60f ? Rect.zero : new Rect(canvas.x + StarChoiceMargin, canvas.y + StarChoiceMargin, canvas.width - 2f * StarChoiceMargin, height);
+            public readonly GUIContent Content = new GUIContent();
+            public GUIStyle Style;
+            public bool Button;
+            public float Height;
         }
 
-        private void DrawStarChoicePicker(Profile p, string hero, Rect area)
+        private static StarChoiceAction[] StarNewActions()
         {
-            if (!_starChoiceShown || area.width <= 0f) return;
-            if (_starChoiceId == null) { GUIUtility.ExitGUI(); return; }
-            EnsureStarTextStyles();
-            // 約900星の図を、パネルを出している間じゅう毎パス走査しないように添え字を覚える（#45）。
+            var actions = new StarChoiceAction[4];
+            for (int i = 0; i < actions.Length; i++) actions[i] = new StarChoiceAction();
+            return actions;
+        }
+        private readonly StarChoiceAction[] _starChoiceActions = StarNewActions();
+
+        /// <summary>選択パネルの星の添え字（#45: パネルを出している間の毎パスの全走査を避ける）。</summary>
+        private int StarChoiceResolveIndex()
+        {
             int index = _starChoiceIndex;
             if (index < 0 || index >= _starLayout.Nodes.Count || _starLayout.Nodes[index].Talent?.Id != _starChoiceId)
             {
@@ -265,78 +285,190 @@ namespace SodRpg.Mod
                     if (_starLayout.Nodes[i].Talent?.Id == _starChoiceId) { index = i; break; }
                 _starChoiceIndex = index;
             }
-            if (index < 0 || !_starLayout.Nodes[index].Talent.IsChoice)
-                throw new InvalidOperationException("Selected choice star is missing from the current layout: " + _starChoiceId);
-            var t = _starLayout.Nodes[index].Talent;
-            var state = _starNodes[index];
-            bool canEdit = _s.CanEditTalents && p.Run == null;
-            // 二つの列は同じ幅にする（本文の長さで幅が変わらないよう、幅を固定する）。
-            float column = Mathf.Floor((area.width - _st.Panel.padding.horizontal - 2f * (_st.OptionIdle.margin.horizontal)) * 0.5f);
-            var columnWidth = new[] { GUILayout.Width(Mathf.Max(120f, column)) };
-            GUILayout.BeginArea(area, _st.Panel);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(state.Name.text + "  " + state.RankLabel.text, _starChoiceHead, StarOptionColumn);
-            if (GUILayout.Button(Loc.T("選択を閉じる", "Close selection"), _st.Button, StarCloseWidth))
-            {
-                _starChoiceId = null;
-                GUIUtility.ExitGUI();
-            }
-            GUILayout.EndHorizontal();
-            if (!canEdit)
-                GUILayout.Label(Loc.T("遠征中は選択を変更できません。帰還後は無料で切り替えられます。",
-                    "Choices cannot be changed during an expedition. Switching is free after returning."), _st.Warn);
-            else
-                GUILayout.Label(state.Allocated
-                    ? Loc.T("選んだ効果は全段に適用されます。別の効果への切り替えは無料です。",
-                        "The chosen effect applies to every rank. Switching is free.")
-                    : Loc.T("二つの効果のうち、1つを選んで取得します（あとから無料で切り替えられます）。",
-                        "Pick one of the two effects to acquire (you can switch later for free)."), _starHelpStyle);
-            GUILayout.BeginHorizontal();
-            for (int option = 0; option < 2; option++) DrawStarChoiceOption(p, hero, t, state, option, canEdit, columnWidth);
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
+            return index;
         }
 
-        private void DrawStarChoiceOption(Profile p, string hero, TalentDef t, StarNode state, int option, bool canEdit, GUILayoutOption[] columnWidth)
+        // Both headings remain visible; only each card's contents scroll when the viewport is short.
+        private Rect StarChoiceOverlayRect(Rect canvas)
         {
-            bool chosen = state.Allocated && state.Choice == option;
-            GUILayout.BeginVertical(chosen ? _st.OptionChosen : _st.OptionIdle, columnWidth);
-            GUILayout.Label(chosen ? Loc.T("<color=#ffd36e>✓ 選択中の効果</color>", "<color=#ffd36e>✓ Chosen effect</color>")
-                : state.Allocated ? Loc.T("<color=#d6d6ea>もう一方の効果</color>", "<color=#d6d6ea>The other effect</color>")
-                : option == 0 ? Loc.T("<color=#9fe0ff>効果 A</color>", "<color=#9fe0ff>Effect A</color>")
-                : Loc.T("<color=#9fe0ff>効果 B</color>", "<color=#9fe0ff>Effect B</color>"), _starChoiceHead);
-            GUILayout.Label(state.ChoiceOptions[option], _starChoiceBody);
-            GUILayout.FlexibleSpace();
-            bool switching = state.Allocated && !chosen;
-            bool more = chosen && state.Rank < t.MaxRank;
-            // The disabled state is a dark box with the reason; the chosen state is a green tag with a check mark.
-            // They are deliberately different from a greyed-out button, which used to read as "already chosen".
-            string blocked = !canEdit ? Loc.T("遠征中は変更できません", "Cannot change during an expedition")
-                : switching ? null
-                : !state.Unlocked ? Loc.T("取得済みの星と線でつながると選べます", "Connect it to an acquired star to choose")
-                : state.Rank >= t.MaxRank ? null
-                : !state.Available ? Loc.T("ポイントが足りません", "Not enough points")
-                : null;
-            bool act = false;
-            if (chosen && !more)
-                GUILayout.Box(Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段・最大）", $"✓ Chosen ({state.Rank}/{t.MaxRank}, maximum)"), _st.TagChosen, StarTagHeight);
-            else if (blocked != null)
+            if (!_starChoiceShown || Event.current.type == EventType.Layout) return Rect.zero;
+            int index = StarChoiceResolveIndex();
+            if (index < 0 || !_starLayout.Nodes[index].Talent.IsChoice)
+                throw new InvalidOperationException("Selected choice star is missing from the current layout: " + _starChoiceId);
+            EnsureStarTextStyles();
+            var state = _starNodes[index];
+            var t = _starLayout.Nodes[index].Talent;
+            StarBuildChoicePanel(t, state, _s.CanEditTalents && _s.Profile.Run == null);
+            float width = Mathf.Min(1000f, canvas.width - 2f * StarChoiceMargin);
+            float available = canvas.height - 2f * StarChoiceMargin;
+            if (width <= 0f || available <= 0f) return Rect.zero;
+            float inner = width - _st.Panel.padding.horizontal;
+            float closeWidth = Mathf.Min(StarChoiceCloseWidth, inner * 0.5f);
+            _starChoiceHeaderHeight = Mathf.Max(
+                _starChoiceHead.CalcHeight(_starChoiceHeader, inner - closeWidth - StarChoiceGap),
+                _st.ButtonWrap.CalcHeight(_starChoiceClose, closeWidth));
+            _starChoiceColumnWidth = (inner - StarChoiceGap) * 0.5f;
+            float bodyWidth = Mathf.Max(1f, _starChoiceColumnWidth - _st.OptionIdle.padding.horizontal - StarChoiceScrollBar);
+            _starChoiceHelpHeight = _starChoiceNote.CalcHeight(_starChoiceHelp, bodyWidth);
+            float need = 0f;
+            for (int option = 0; option < 2; option++)
             {
-                if (chosen) GUILayout.Box(Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段）", $"✓ Chosen ({state.Rank}/{t.MaxRank})"), _st.TagChosen, StarTagHeight);
-                GUILayout.Box(Loc.T("取得できません：", "Unavailable: ") + blocked, _st.TagBlocked, StarTagHeight);
+                _starChoiceHeadHeight[option] = _starChoiceHead.CalcHeight(_starChoiceHeads[option],
+                    Mathf.Max(1f, _starChoiceColumnWidth - _st.OptionIdle.padding.horizontal));
+                _starChoiceBodyHeight[option] = _starChoiceBody.CalcHeight(state.ChoiceOptions[option], bodyWidth);
+                float content = _starChoiceBodyHeight[option] + StarChoiceGap + _starChoiceHelpHeight;
+                for (int action = 0; action < _starChoiceActionCount[option]; action++)
+                {
+                    var item = _starChoiceActions[option * 2 + action];
+                    item.Height = Mathf.Max(34f, item.Style.CalcHeight(item.Content, bodyWidth));
+                    content += StarChoiceGap + item.Height;
+                }
+                _starChoiceContentHeight[option] = content;
+                need = Mathf.Max(need, content);
             }
-            else
+            float heads = Mathf.Max(_starChoiceHeadHeight[0], _starChoiceHeadHeight[1]);
+            float height = Mathf.Min(available, _st.Panel.padding.vertical + _starChoiceHeaderHeight + StarChoiceGap
+                + _st.OptionIdle.padding.vertical + heads + StarChoiceGap + need);
+            var area = new Rect(canvas.x + (canvas.width - width) * 0.5f, canvas.y + StarChoiceMargin, width, height);
+            float top = area.y + _st.Panel.padding.top + _starChoiceHeaderHeight + StarChoiceGap;
+            float viewTop = top + _st.OptionIdle.padding.top + heads + StarChoiceGap;
+            for (int option = 0; option < 2; option++)
             {
-                act = GUILayout.Button(switching ? Loc.T("この効果に切り替える（無料）", "Switch to this effect (free)")
-                    : more ? Loc.T($"この効果をもう1段取得（{state.Rank}/{t.MaxRank}段）", $"Allocate one more rank (currently {state.Rank}/{t.MaxRank})")
-                    : Loc.T("この効果で1段取得", "Allocate one rank with this effect"), _st.ButtonWrap, StarTagHeight);
+                _starChoiceViews[option] = new Rect(area.x + _st.Panel.padding.left
+                    + option * (_starChoiceColumnWidth + StarChoiceGap) + _st.OptionIdle.padding.left,
+                    viewTop, _starChoiceColumnWidth - _st.OptionIdle.padding.horizontal,
+                    Mathf.Max(1f, area.yMax - _st.Panel.padding.bottom - _st.OptionIdle.padding.bottom - viewTop));
+                _starChoiceScrolls[option].y = Mathf.Clamp(_starChoiceScrolls[option].y, 0f,
+                    Mathf.Max(0f, _starChoiceContentHeight[option] - _starChoiceViews[option].height));
             }
-            GUILayout.EndVertical();
-            if (!act) return;
+            return area;
+        }
+
+        // Only actual controls capture input. Card text/background remains a canvas pan surface.
+        private bool StarChoicePanelBlocks(Vector2 mouse)
+        {
+            if (_starOverlay.width <= 0f || !_starOverlay.Contains(mouse)) return false;
+            if (StarChoiceCloseRect(_starOverlay).Contains(mouse)) return true;
+            for (int option = 0; option < 2; option++)
+            {
+                Rect view = _starChoiceViews[option];
+                if (!view.Contains(mouse)) continue;
+                if (_starChoiceContentHeight[option] > view.height && mouse.x >= view.xMax - StarChoiceScrollBar) return true;
+                float y = view.y + _starChoiceBodyHeight[option] + StarChoiceGap + _starChoiceHelpHeight - _starChoiceScrolls[option].y;
+                for (int action = 0; action < _starChoiceActionCount[option]; action++)
+                {
+                    var item = _starChoiceActions[option * 2 + action];
+                    y += StarChoiceGap;
+                    if (item.Button && new Rect(view.x, y, view.width - StarChoiceScrollBar, item.Height).Contains(mouse)) return true;
+                    y += item.Height;
+                }
+            }
+            return false;
+        }
+
+        private Rect StarChoiceCloseRect(Rect area)
+        {
+            float inner = area.width - _st.Panel.padding.horizontal;
+            float width = Mathf.Min(StarChoiceCloseWidth, inner * 0.5f);
+            return new Rect(area.xMax - _st.Panel.padding.right - width, area.y + _st.Panel.padding.top, width, _starChoiceHeaderHeight);
+        }
+
+        private void StarBuildChoicePanel(TalentDef t, StarNode state, bool canEdit)
+        {
+            if (_starChoiceStateText == state.Tooltip.text && _starChoiceCanEdit == canEdit) return;
+            _starChoiceStateText = state.Tooltip.text;
+            _starChoiceCanEdit = canEdit;
+            _starChoiceHeader.text = state.Name.text + "  " + state.RankLabel.text;
+            _starChoiceClose.text = Loc.T("選択を閉じる", "Close selection");
+            _starChoiceHelp.text = !canEdit
+                ? Loc.T("遠征中は変更できません。帰還後は無料で切り替えられます。", "Cannot change during an expedition. Switching is free after returning.")
+                : Loc.T("どちらか1つを選択。選んだ効果は全段に適用され、切り替えは無料です。", "Choose one effect. It applies to every rank; switching is free.");
+            for (int option = 0; option < 2; option++)
+            {
+                bool chosen = state.Allocated && state.Choice == option;
+                bool switching = state.Allocated && !chosen;
+                bool more = chosen && state.Rank < t.MaxRank;
+                string heading = option == 0 ? Loc.T("効果 A", "Effect A") : Loc.T("効果 B", "Effect B");
+                _starChoiceHeads[option].text = chosen
+                    ? "<color=#ffd36e>✓ " + heading + Loc.T("（選択中）", " (chosen)") + "</color>"
+                    : "<color=#9fe0ff>" + heading + Loc.T("（未選択）", " (unselected)") + "</color>";
+                string blocked = !canEdit ? Loc.T("遠征中は変更できません", "Cannot change during an expedition")
+                    : switching ? null
+                    : !state.Unlocked ? Loc.T("取得済みの星と線でつながると選べます", "Connect it to an acquired star to choose")
+                    : state.Rank >= t.MaxRank ? null
+                    : !state.Available ? Loc.T("ポイントが足りません", "Not enough points") : null;
+                int count = 0;
+                if (chosen && (!more || blocked != null))
+                    StarChoiceSetAction(option, count++, !more
+                        ? Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段・最大）", $"✓ Chosen ({state.Rank}/{t.MaxRank}, maximum)")
+                        : Loc.T($"✓ 選択中（{state.Rank}/{t.MaxRank}段）", $"✓ Chosen ({state.Rank}/{t.MaxRank})"), _st.TagChosen, false);
+                if (blocked != null)
+                    StarChoiceSetAction(option, count++, Loc.T("取得できません：", "Unavailable: ") + blocked, _st.TagBlocked, false);
+                else if (!chosen || more)
+                    StarChoiceSetAction(option, count++, switching ? Loc.T("この効果に切り替える（無料）", "Switch to this effect (free)")
+                        : more ? Loc.T($"この効果をもう1段取得（{state.Rank}/{t.MaxRank}段）", $"Allocate one more rank ({state.Rank}/{t.MaxRank})")
+                        : Loc.T("この効果で1段取得", "Allocate one rank with this effect"), _st.ButtonWrap, true);
+                _starChoiceActionCount[option] = count;
+            }
+        }
+
+        private void StarChoiceSetAction(int option, int action, string text, GUIStyle style, bool button)
+        {
+            var item = _starChoiceActions[option * 2 + action];
+            item.Content.text = text;
+            item.Style = style;
+            item.Button = button;
+        }
+
+        private void DrawStarChoicePicker(Profile p, string hero, Rect area)
+        {
+            if (!_starChoiceShown || area.width <= 0f) return;
+            int index = StarChoiceResolveIndex();
+            var t = _starLayout.Nodes[index].Talent;
+            var state = _starNodes[index];
+            bool close = false;
+            int act = -1;
+            GUI.Box(area, GUIContent.none, _st.Panel);
+            Rect closeRect = StarChoiceCloseRect(area);
+            GUI.Label(new Rect(area.x + _st.Panel.padding.left, closeRect.y,
+                closeRect.x - area.x - _st.Panel.padding.left - StarChoiceGap, _starChoiceHeaderHeight), _starChoiceHeader, _starChoiceHead);
+            close = GUI.Button(closeRect, _starChoiceClose, _st.ButtonWrap);
+            float heads = Mathf.Max(_starChoiceHeadHeight[0], _starChoiceHeadHeight[1]);
+            for (int option = 0; option < 2; option++)
+            {
+                Rect view = _starChoiceViews[option];
+                var card = new Rect(view.x - _st.OptionIdle.padding.left,
+                    view.y - StarChoiceGap - heads - _st.OptionIdle.padding.top,
+                    _starChoiceColumnWidth, view.height + StarChoiceGap + heads + _st.OptionIdle.padding.vertical);
+                GUI.Box(card, GUIContent.none, state.Allocated && state.Choice == option ? _st.OptionChosen : _st.OptionIdle);
+                GUI.Label(new Rect(view.x, card.y + _st.OptionIdle.padding.top, view.width, heads), _starChoiceHeads[option], _starChoiceHead);
+                float width = Mathf.Max(1f, view.width - StarChoiceScrollBar);
+                _starChoiceScrolls[option] = GUI.BeginScrollView(view, _starChoiceScrolls[option],
+                    new Rect(0f, 0f, width, _starChoiceContentHeight[option]));
+                try
+                {
+                    GUI.Label(new Rect(0f, 0f, width, _starChoiceBodyHeight[option]), state.ChoiceOptions[option], _starChoiceBody);
+                    float y = _starChoiceBodyHeight[option] + StarChoiceGap;
+                    GUI.Label(new Rect(0f, y, width, _starChoiceHelpHeight), _starChoiceHelp, _starChoiceNote);
+                    y += _starChoiceHelpHeight;
+                    for (int action = 0; action < _starChoiceActionCount[option]; action++)
+                    {
+                        var item = _starChoiceActions[option * 2 + action];
+                        y += StarChoiceGap;
+                        var rect = new Rect(0f, y, width, item.Height);
+                        if (item.Button) { if (GUI.Button(rect, item.Content, item.Style)) act = option; }
+                        else GUI.Box(rect, item.Content, item.Style);
+                        y += item.Height;
+                    }
+                }
+                finally { GUI.EndScrollView(); }
+            }
+            if (close) { _starChoiceId = null; GUIUtility.ExitGUI(); }
+            if (act < 0) return;
             try
             {
-                if (switching) Rules.SetTalentChoice(p, hero, t.Id, option);
-                else Rules.AddTalentRank(p, hero, t.Id, option);
+                if (state.Allocated && state.Choice != act) Rules.SetTalentChoice(p, hero, t.Id, act);
+                else Rules.AddTalentRank(p, hero, t.Id, act);
                 _starDirty = true;
                 _s.MarkDirty(true);
             }
