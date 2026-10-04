@@ -102,7 +102,7 @@ namespace SodRpg.Mod
             // ProfileSlots.Save synchronously retries the complete current snapshot after draining.
         }
 
-        private bool ProfileSessionSettled => !HasPendingTrades && _pendingRunRewards.Count == 0
+        private bool ProfileSessionSettled => !HasHeldTrades && _pendingRunRewards.Count == 0
             && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
             && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0;
 
@@ -177,7 +177,7 @@ namespace SodRpg.Mod
 
         private void ResetProfileSession()
         {
-            System.Diagnostics.Debug.Assert(!HasPendingTrades && _pendingRunRewards.Count == 0
+            System.Diagnostics.Debug.Assert(!HasHeldTrades && _pendingRunRewards.Count == 0
                 && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
                 && _pendingResultRunId == null, "Profile switch requires settled session queues.");
             _trades.Clear();

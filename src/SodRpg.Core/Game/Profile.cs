@@ -273,6 +273,11 @@ namespace SodRpg.Core.Game
         public List<Relic> LostAndFound { get; } = new List<Relic>();
         /// <summary>分解の応答待ち。装着・鍛冶・出来事の対象には含めない。</summary>
         public List<PendingSalvage> PendingSalvage { get; } = new List<PendingSalvage>();
+        /// <summary>
+        /// ホストの確定結果をまだ受け取っていない取引（期限切れで結果不明のものを含む）。MODの再読み込みや再起動をまたいで、
+        /// 支払い済みの対価・返却を取りこぼさないために保存する。起動後にホストへ照会して解決する。
+        /// </summary>
+        public List<PendingTrade> PendingTrades { get; } = new List<PendingTrade>();
         public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>達成済みの偉業のID。</summary>
@@ -387,6 +392,11 @@ namespace SodRpg.Core.Game
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
+            foreach (var trade in PendingTrades) c.PendingTrades.Add(new PendingTrade
+            {
+                Token = trade.Token, Kind = trade.Kind, SpendGold = trade.SpendGold, SpendDust = trade.SpendDust, EarnDust = trade.EarnDust,
+                Uid = trade.Uid, Heat = trade.Heat, Batches = trade.Batches, Rarity = trade.Rarity, Enhance = trade.Enhance,
+            });
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);

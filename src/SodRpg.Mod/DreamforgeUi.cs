@@ -489,7 +489,7 @@ namespace SodRpg.Mod
         {
             var run = _s.Profile.Run;
             var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
-                + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades ? 24 : 0)
+                + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades || _s.HasHeldTrades ? 24 : 0)
                 + 24 + (run.OfferedWaypoints.Count > 0 ? 250 : 44));
             // 前のフレームで測った中身の高さがあれば、それに合わせる（余白も、はみ出しも出さない）。
             if (_secureMeasured > 0) rect.height = _secureMeasured + 28;
@@ -550,6 +550,8 @@ namespace SodRpg.Mod
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
                 GUILayout.Label(Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."), _st.Warn);
+            else if (_s.HasHeldTrades)
+                GUILayout.Label(Loc.T("取引の結果をホストに確認中です（確保・潜行は続けられます）。", "Checking a trade result with the host (you can still secure or delve)."), _st.Small);
             else if (!_s.CanResolveSecureChoice)
                 GUILayout.Label(Loc.T("ホストが道標を決めて確保または潜行を選ぶまでお待ちください。", "Waiting for the host to confirm a waypoint and choose Secure or Delve."), _st.Small);
             {
@@ -2944,10 +2946,10 @@ namespace SodRpg.Mod
             DrawVariantBook(p);
             GUILayout.Label(Loc.T("図鑑", "Codex"), _st.Header);
             GUILayout.Label(UiStyles.Colored(_codex.Summary(p), "#c8c8e0"), _st.Small);
-            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果）", "Open the codex (bases, legendaries, sets, powers)"), _st.Button)) _codexOpen = true;
+            if (GUILayout.Button(Loc.T("図鑑を開く（土台・固有品・セット・固有効果・銘品・組）", "Open the codex (bases, legendaries, sets, powers, named items, mini sets)"), _st.Button)) _codexOpen = true;
             GUILayout.Label(Loc.T(
-                "<color=#8a8aa0>見つけていない固有品・セット・固有効果は、見つけるまで名前も効果も伏せられています。</color>",
-                "<color=#8a8aa0>Unfound legendaries, sets and powers stay hidden until you find them.</color>"), _st.Small);
+                "<color=#8a8aa0>見つけていない固有品・セット・固有効果・銘品・組は、見つけるまで名前も効果も伏せられています。</color>",
+                "<color=#8a8aa0>Unfound legendaries, sets, powers, named items and mini sets stay hidden until you find them.</color>"), _st.Small);
             GUILayout.EndVertical();
 
             GUILayout.EndHorizontal();

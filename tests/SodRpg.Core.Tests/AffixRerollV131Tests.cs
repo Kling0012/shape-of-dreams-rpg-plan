@@ -30,6 +30,34 @@ namespace SodRpg.Core.Tests
             return ((int)decimal.Ceiling(60 * ((int)rarity + 1) * m), (int)decimal.Ceiling(2 * ((int)rarity + 1) * m));
         }
 
+        [Fact]
+        public void Epic_cost_after_35_rerolls_is_exact_and_not_negative()
+        {
+            // Issue #30：240×3^35 は long を超えるが、費用そのものは int に収まる
+            var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
+            Assert.Equal((349_466_306, 11_648_877), Rules.AffixRerollCost(r));
+        }
+
+        [Theory]
+        [InlineData(Rarity.Common)]
+        [InlineData(Rarity.Uncommon)]
+        [InlineData(Rarity.Rare)]
+        [InlineData(Rarity.Epic)]
+        [InlineData(Rarity.Legendary)]
+        public void Cost_is_exact_ceiling_nonnegative_and_monotonic_up_to_the_int_cap(Rarity rarity)
+        {
+            int prevShards = 0, prevTuning = 0;
+            for (int n = 0; n <= 80; n++)
+            {
+                var (shards, tuning) = Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = n });
+                Assert.InRange(shards, prevShards, int.MaxValue);
+                Assert.InRange(tuning, prevTuning, int.MaxValue);
+                prevShards = shards; prevTuning = tuning;
+                if (n <= 30) Assert.Equal(ExpectedCost(rarity, n), (shards, tuning)); // decimal で独立に求められる範囲は厳密比較
+            }
+            Assert.Equal((int.MaxValue, int.MaxValue), Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = int.MaxValue }));
+        }
+
         [Theory]
         [InlineData(Rarity.Common)]
         [InlineData(Rarity.Uncommon)]

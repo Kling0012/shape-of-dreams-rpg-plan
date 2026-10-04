@@ -6,6 +6,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開（v2.0.0 後の修正）
+
+- **図鑑**：銘品と組の分類をゲーム画面から選べるようにしました（#28）。初期装備の銘品も銘品として図鑑に記録され、すでに受け取った分も起動時に補われます（#29）。 / The codex screen now offers Named and Mini sets; starter named relics are recorded as such, and already-granted ones are backfilled.
+- **鍛冶**：エピックを36回洗い直したときに費用が負になり、欠片が増えてしまう不具合を直しました（#30）。 / Fixed the epic affix-reroll cost going negative on the 36th reroll.
+- **取引**：10秒を過ぎても取引を捨てず、ホストの確定結果を照会して、支払い済みの対価を一度だけ受け取るか、未実行なら遺物を返します。取引idに世代を付け、MODの再読み込みで過去の取引と衝突しないようにしました（#26 #27）。未確定の取引は保存されます。**協力プレイは全員を同じ版に**してください。 / Late trade responses are no longer lost: unresolved trades are kept, queried against the host and settled exactly once; trade ids carry a generation and the host rejects a reused id with a different request.
+
+---
+
 ## v2.0.0 — 装備の種類を大きく増やしました（2026-10-04）
 
 これまでの版をまとめた正式版です。以前のリリースは取り下げ、この版に一本化しました。 / This release consolidates all earlier versions; previous releases have been withdrawn.

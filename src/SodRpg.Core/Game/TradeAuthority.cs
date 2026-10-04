@@ -19,6 +19,11 @@ namespace SodRpg.Core.Game
         public ulong SalvageUid;
         /// <summary>SalvageForDust：分解対象の希少度（(int)Rarity）と強化値。</summary>
         public int Rarity, Enhance;
+        /// <summary>
+        /// true なら取引の実行ではなく「この取引idの結果の照会」。実行済みなら記録済みの結果を返し、未実行ならその取引idを取り消す
+        /// （あとから届いた元の要求は実行しない）。結果不明の取引の対価・返却を、二重にも欠落もなく決めるのに使う。
+        /// </summary>
+        public bool Query;
     }
 
     /// <summary>ホストが下した取引の判定。Replayed=true は同一トークンの再送で、記録済みの結果を返すだけ（通貨は動かさない）。</summary>
@@ -40,6 +45,17 @@ namespace SodRpg.Core.Game
     {
         /// <summary>種別付き要求の目印（この値を超える負の spendGold）。</summary>
         public const int KindTag = 1000;
+
+        /// <summary>結果の照会（種別の番号。取引の種別とは別に、同じ符号の枠に置く）。</summary>
+        public const int QueryKind = 3;
+
+        /// <summary>結果不明の取引idの照会を通信値へ落とす。</summary>
+        public static void EncodeQuery(out int spendGold, out int spendDust, out int earnDust)
+        {
+            spendGold = -(KindTag + QueryKind);
+            spendDust = 0;
+            earnDust = 0;
+        }
 
         /// <summary>保留中の取引を通信値へ落とす。クライアントの送信に使う。</summary>
         public static void Encode(PendingTrade t, out int spendGold, out int spendDust, out int earnDust)
@@ -77,6 +93,12 @@ namespace SodRpg.Core.Game
             int kind = payload % 4;
             int rarity = (payload / 4) % 8;
             int enhance = payload / 32;
+            if (kind == QueryKind)
+            {
+                if (rarity != 0 || enhance != 0 || spendDust != 0 || earnDust != 0) return false;
+                req = new TradeRequest { Token = token, Query = true };
+                return true;
+            }
             var r = new TradeRequest { Token = token, Kind = (TradeKind)kind, Heat = spendDust, Batches = spendDust, SalvageUid = ((ulong)(uint)earnDust << 32) | (uint)spendDust };
             switch (r.Kind)
             {
@@ -140,6 +162,11 @@ namespace SodRpg.Core.Game
             public string RunId;
             public readonly Queue<long> Order = new Queue<long>();
             public readonly Dictionary<long, TradeDecision> Executed = new Dictionary<long, TradeDecision>();
+            /// <summary>実行済みの取引idの要求の中身（種別・引数）。同じidで別の要求が来たときに、過去の成功を流用しないための照合に使う。</summary>
+            public readonly Dictionary<long, string> Fingerprints = new Dictionary<long, string>();
+            /// <summary>照会で「未実行」と答えて取り消した取引id。あとから元の要求が届いても実行しない。</summary>
+            public readonly Queue<long> CancelledOrder = new Queue<long>();
+            public readonly HashSet<long> Cancelled = new HashSet<long>();
             public readonly Queue<ulong> SalvageOrder = new Queue<ulong>();
             public readonly HashSet<ulong> SalvagedUids = new HashSet<ulong>();
         }
@@ -166,6 +193,7 @@ namespace SodRpg.Core.Game
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
+            if (req.Query) return Resolve(playerKey, runId, req.Token);
             switch (req.Kind)
             {
                 case TradeKind.MerchantGold:
@@ -188,17 +216,29 @@ namespace SodRpg.Core.Game
                     return d;
             }
             var ledger = Ledger(playerKey, runId);
+            string fingerprint = Fingerprint(req);
             if (ledger.Executed.TryGetValue(req.Token, out var recorded))
+            {
+                // 同じ取引idの再送だけを冪等に扱う。idが同じでも要求の中身が違えば、過去の成功を流用せずに断る。
+                if (!ledger.Fingerprints.TryGetValue(req.Token, out var recordedFingerprint) || recordedFingerprint != fingerprint)
+                { d.Reason = "conflict"; return d; }
                 return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust };
+            }
+            if (ledger.Cancelled.Contains(req.Token)) { d.Reason = "cancelled"; return d; }
             if (req.Kind == TradeKind.SalvageForDust && ledger.SalvagedUids.Contains(req.SalvageUid))
             { d.Reason = "dup"; return d; }
             if (d.SpendGold > gold) { d.Reason = "gold"; return d; }
             if (d.SpendDust > dust) { d.Reason = "dust"; return d; }
             d.Ok = true;
             ledger.Executed[req.Token] = d;
+            ledger.Fingerprints[req.Token] = fingerprint;
             ledger.Order.Enqueue(req.Token);
             while (ledger.Order.Count > MaxTokensPerPlayer)
-                ledger.Executed.Remove(ledger.Order.Dequeue());
+            {
+                long old = ledger.Order.Dequeue();
+                ledger.Executed.Remove(old);
+                ledger.Fingerprints.Remove(old);
+            }
             if (req.Kind == TradeKind.SalvageForDust)
             {
                 ledger.SalvagedUids.Add(req.SalvageUid);
@@ -207,6 +247,36 @@ namespace SodRpg.Core.Game
                     ledger.SalvagedUids.Remove(ledger.SalvageOrder.Dequeue());
             }
             return d;
+        }
+
+        /// <summary>
+        /// 取引idの結果の照会。実行済みなら記録済みの結果（Replayed=true の成功）を返す。
+        /// 未実行なら「unknown」で答えると同時にその取引idを取り消し、あとから届く元の要求も実行しない
+        /// （クライアントは「ホストは何も支払っていない」として返却できる）。
+        /// </summary>
+        private TradeDecision Resolve(string playerKey, string runId, long token)
+        {
+            var ledger = Ledger(playerKey, runId);
+            if (ledger.Executed.TryGetValue(token, out var recorded))
+                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust };
+            if (ledger.Cancelled.Add(token))
+            {
+                ledger.CancelledOrder.Enqueue(token);
+                while (ledger.CancelledOrder.Count > MaxTokensPerPlayer)
+                    ledger.Cancelled.Remove(ledger.CancelledOrder.Dequeue());
+            }
+            return new TradeDecision { Reason = "unknown" };
+        }
+
+        /// <summary>要求の中身（種別と、金額の計算に使う引数）の照合用の文字列。取引id（Token）は含めない。</summary>
+        private static string Fingerprint(TradeRequest req)
+        {
+            switch (req.Kind)
+            {
+                case TradeKind.MerchantGold: return "m:" + req.Heat;
+                case TradeKind.DustToShards: return "d:" + req.Batches;
+                default: return "s:" + req.SalvageUid + ":" + req.Rarity + ":" + req.Enhance;
+            }
         }
 
         private PlayerLedger Ledger(string playerKey, string runId)

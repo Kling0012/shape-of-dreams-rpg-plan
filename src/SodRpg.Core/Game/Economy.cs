@@ -19,8 +19,12 @@ namespace SodRpg.Core.Game
         /// <summary>1回の換金で売れる束数の上限（ドリームダスト DustPerBatch 単位）。</summary>
         public const int MaxBatchesPerTrade = 10;
 
-        /// <summary>取引の応答待ちの期限（秒）。過ぎたら保留を解いて、結果不明の注意を出す（v1.31）。</summary>
+        /// <summary>取引の応答待ちの期限（秒）。過ぎたら画面の待ちは解くが、取引は「結果不明」として残してホストの確定結果を照会する。</summary>
         public const double TradeTimeoutSeconds = 10.0;
+
+        /// <summary>結果不明の取引をホストへ照会する間隔（秒）と、1つの取引あたりの照会回数の上限。</summary>
+        public const double TradeQueryIntervalSeconds = 10.0;
+        public const int MaxTradeQueries = 30;
 
         /// <summary>夢の商人の基本価格（ゴールド、難易度補正の前）。</summary>
         public static int MerchantGoldBase(int heat) => 60 + 15 * Loot.ClampHeat(heat);
@@ -50,6 +54,11 @@ namespace SodRpg.Core.Game
         public string Uid;
         /// <summary>応答待ちを始めた時刻（保存・通信には含めない）。</summary>
         public double StartedAt;
+        /// <summary>期限を過ぎても応答がなく、ホストの確定結果を照会している取引。画面の待ちからは外れるが、対価・返却は未確定のまま残る。</summary>
+        public bool Unresolved;
+        /// <summary>照会した回数と、次に照会する時刻（保存しない）。</summary>
+        public int Queries;
+        public double NextQueryAt;
         // 以下は v1.31 のホスト検証に使う引数（金額ではなく、金額の計算に使う値）。
         /// <summary>MerchantGold：価格の計算に使った熱度。</summary>
         public int Heat;
@@ -64,20 +73,57 @@ namespace SodRpg.Core.Game
     /// </summary>
     public sealed class TradeLedger
     {
+        /// <summary>保持する取引（応答待ちと結果不明の合計）の上限。</summary>
+        public const int MaxHeld = 64;
+
         private readonly Dictionary<long, PendingTrade> _pending = new Dictionary<long, PendingTrade>();
         private readonly List<long> _expired = new List<long>();
-        private long _next = 1;
+        private long _next;
 
-        public int PendingCount => _pending.Count;
+        /// <summary>
+        /// 取引idは「世代（上位32bit）＋連番（下位32bit）」。世代はインスタンスごとに変えるので、MODの再読み込みなどで
+        /// 台帳だけが作り直されても、ホストが覚えている過去の取引id（接続単位）と衝突しにくい。世代 0 は連番だけ（試験用）。
+        /// </summary>
+        public TradeLedger() : this(NewGeneration())
+        {
+        }
+
+        public TradeLedger(int generation)
+        {
+            _next = ((long)(generation & 0x3FFFFFFF) << 32) + 1;
+        }
+
+        private static int NewGeneration()
+        {
+            int g = Guid.NewGuid().GetHashCode() & 0x3FFFFFFF;
+            return g == 0 ? 1 : g;
+        }
+
+        /// <summary>画面で応答を待っている取引の数（結果不明の取引は含めない）。確保・潜行などの操作を止めるのに使う。</summary>
+        public int PendingCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var t in _pending.Values) if (!t.Unresolved) n++;
+                return n;
+            }
+        }
+
+        /// <summary>期限切れで結果不明のまま残っている取引の数。</summary>
+        public int UnresolvedCount => _pending.Count - PendingCount;
+
+        /// <summary>応答待ち・結果不明を合わせて、まだ対価や返却が確定していない取引の数。プロフィールの切り替えなどを止めるのに使う。</summary>
+        public int HeldCount => _pending.Count;
 
         public bool HasPending(TradeKind kind)
         {
             foreach (var t in _pending.Values)
-                if (t.Kind == kind) return true;
+                if (t.Kind == kind && !t.Unresolved) return true;
             return false;
         }
 
-        /// <summary>分解の応答待ちで、別の操作に使えない遺物か。</summary>
+        /// <summary>分解の応答待ち（結果不明を含む）で、別の操作に使えない遺物か。</summary>
         public bool IsReserved(string uid)
         {
             if (string.IsNullOrEmpty(uid)) return false;
@@ -94,38 +140,86 @@ namespace SodRpg.Core.Game
             return uids;
         }
 
-        /// <summary>30秒返事がない分解予約を解除し、返却処理へ取引を渡す。支払い待ちの取引は捨てない。</summary>
-        public int ExpireSalvage(double now, Action<PendingTrade> onExpired = null)
+        /// <summary>
+        /// 応答のない取引を、全種別で「結果不明」にする。期限は Economy.TradeTimeoutSeconds。
+        /// 取引は捨てない：ホストがすでに支払っていれば、遅れて来た成功応答（や照会の結果）で対価を一度だけ付ける。
+        /// 新しく結果不明になった取引の数を返し、onUnresolved には新しい取引だけを渡す。
+        /// </summary>
+        public int Expire(double now, Action<PendingTrade> onUnresolved = null)
         {
             _expired.Clear();
             foreach (var t in _pending.Values)
-                if (t.Kind == TradeKind.SalvageForDust && now - t.StartedAt >= 30.0) _expired.Add(t.Token);
+                if (!t.Unresolved && now - t.StartedAt >= Economy.TradeTimeoutSeconds) _expired.Add(t.Token);
             foreach (var token in _expired)
             {
                 var t = _pending[token];
-                _pending.Remove(token);
-                onExpired?.Invoke(t);
+                t.Unresolved = true;
+                t.NextQueryAt = now;
+                onUnresolved?.Invoke(t);
             }
             return _expired.Count;
         }
 
         /// <summary>
-        /// 応答のない取引を全種別で期限切れにする（v1.31）。期限は Economy.TradeTimeoutSeconds。
-        /// 期限切れの確定はしない（対価を付けない）ので、二重に物や通貨が増えることはない。
+        /// ホストへ照会する時期が来た結果不明の取引を集める（集めた取引は照会回数と次の時刻を進める）。
+        /// 接続していないときは呼ばない（呼び出し側が判断する）。上限回数に達した取引は照会しないが、遅れた応答は受け付け続ける。
         /// </summary>
-        public int Expire(double now, Action<PendingTrade> onExpired = null)
+        public int CollectDueQueries(double now, List<PendingTrade> into)
         {
-            _expired.Clear();
+            int n = 0;
             foreach (var t in _pending.Values)
-                if (now - t.StartedAt >= Economy.TradeTimeoutSeconds) _expired.Add(t.Token);
-            foreach (var token in _expired)
             {
-                var t = _pending[token];
-                _pending.Remove(token);
-                onExpired?.Invoke(t);
+                if (!t.Unresolved || t.Queries >= Economy.MaxTradeQueries || now < t.NextQueryAt) continue;
+                t.Queries++;
+                t.NextQueryAt = now + Economy.TradeQueryIntervalSeconds;
+                into.Add(t);
+                n++;
             }
-            return _expired.Count;
+            return n;
         }
+
+        /// <summary>接続の切り替えなど：保持している取引をすべて結果不明にして、すぐ照会できるようにする。</summary>
+        public void MarkAllUnresolved(double now)
+        {
+            foreach (var t in _pending.Values)
+            {
+                t.Unresolved = true;
+                t.Queries = 0;
+                t.NextQueryAt = now;
+            }
+        }
+
+        /// <summary>保存用：保持している取引の写し（トークン順）。</summary>
+        public List<PendingTrade> Snapshot()
+        {
+            var list = new List<PendingTrade>();
+            foreach (var t in _pending.Values) list.Add(CloneOf(t));
+            list.Sort((x, y) => x.Token.CompareTo(y.Token));
+            return list;
+        }
+
+        /// <summary>保存から戻す。戻した取引は結果不明として、起動後すぐにホストへ照会する。</summary>
+        public void Restore(IEnumerable<PendingTrade> trades, double now)
+        {
+            if (trades == null) return;
+            foreach (var saved in trades)
+            {
+                if (saved == null || saved.Token <= 0 || _pending.ContainsKey(saved.Token) || _pending.Count >= MaxHeld) continue;
+                var t = CloneOf(saved);
+                t.Unresolved = true;
+                t.Queries = 0;
+                t.NextQueryAt = now;
+                t.StartedAt = now;
+                _pending[t.Token] = t;
+            }
+        }
+
+        private static PendingTrade CloneOf(PendingTrade t) => new PendingTrade
+        {
+            Token = t.Token, Kind = t.Kind, SpendGold = t.SpendGold, SpendDust = t.SpendDust, EarnDust = t.EarnDust, Uid = t.Uid,
+            StartedAt = t.StartedAt, Heat = t.Heat, Batches = t.Batches, Rarity = t.Rarity, Enhance = t.Enhance,
+            Unresolved = t.Unresolved, Queries = t.Queries, NextQueryAt = t.NextQueryAt,
+        };
 
         public PendingTrade Begin(TradeKind kind, int spendGold, int spendDust, int earnDust, string uid = null, double now = 0)
         {
@@ -174,7 +268,7 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        /// <summary>接続が切れたときなど、応答待ちを捨てる。</summary>
+        /// <summary>応答待ちをすべて捨てる（試験や、結果を照会できない状況の最後の手段）。通常の接続切り替えでは MarkAllUnresolved を使う。</summary>
         public void Clear() => _pending.Clear();
     }
 }
