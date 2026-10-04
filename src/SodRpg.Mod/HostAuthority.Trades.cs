@@ -19,6 +19,7 @@ namespace SodRpg.Mod
             if (caller == null || msg == null) return;
             bool ok = false;
             string reason = null;
+            long ledgerId = 0;
             try
             {
                 if (msg.protocol != Protocol.Version) reason = "protocol";
@@ -29,6 +30,7 @@ namespace SodRpg.Mod
                     var d = _tradeAuthority.Evaluate(TradePlayerKey(caller), TradeRunId(), req, caller.gold, caller.dreamDust, TradeGoldCostScale());
                     ok = d.Ok;
                     reason = d.Reason;
+                    ledgerId = d.LedgerId;
                     if (d.Ok && !d.Replayed)
                     {
                         if (d.SpendGold > 0) caller.SpendGold(d.SpendGold);
@@ -43,7 +45,11 @@ namespace SodRpg.Mod
                 reason = "error";
                 Log.Error("Host: OnTrade " + ex.Message);
             }
-            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeTradeResultMsg { token = msg.token, ok = ok, reason = reason });
+            _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeTradeResultMsg
+            {
+                // メッセージの形は変えず、reason に「コード@台帳の識別子」で台帳の識別子を載せる。クライアントはこれで台帳の入れ替わりに気づく（#36）。
+                token = msg.token, ok = ok, reason = TradeWire.ComposeReason(reason, ledgerId),
+            });
         }
 
         /// <summary>取引の台帳の鍵：接続ごと（本体の netId）。再接続したプレイヤーは別の鍵で最初から数える。</summary>

@@ -24,6 +24,11 @@ namespace SodRpg.Core.Game
         /// （あとから届いた元の要求は実行しない）。結果不明の取引の対価・返却を、二重にも欠落もなく決めるのに使う。
         /// </summary>
         public bool Query;
+        /// <summary>
+        /// 照会のとき：その取引を送った時点で知っていたホストの台帳の識別子（0 は不明）。ホストはこの台帳に記録がない場合にだけ「未実行」と答える。
+        /// 台帳が替わっていたり不明だったりすれば、記録がないことは未実行の証拠にならないので「lost」（確かめられない）と答える。
+        /// </summary>
+        public long LedgerId;
     }
 
     /// <summary>ホストが下した取引の判定。Replayed=true は同一トークンの再送で、記録済みの結果を返すだけ（通貨は動かさない）。</summary>
@@ -33,6 +38,8 @@ namespace SodRpg.Core.Game
         public bool Replayed;
         public string Reason;
         public int SpendGold, SpendDust, EarnDust;
+        /// <summary>この判定を下した台帳の識別子（0 は台帳に触れる前の拒否）。結果の reason に載せてクライアントへ伝える。</summary>
+        public long LedgerId;
     }
 
     /// <summary>
@@ -49,12 +56,40 @@ namespace SodRpg.Core.Game
         /// <summary>結果の照会（種別の番号。取引の種別とは別に、同じ符号の枠に置く）。</summary>
         public const int QueryKind = 3;
 
-        /// <summary>結果不明の取引idの照会を通信値へ落とす。</summary>
-        public static void EncodeQuery(out int spendGold, out int spendDust, out int earnDust)
+        /// <summary>
+        /// 台帳の識別子だけを尋ねる照会の取引id（実際の取引idは上位に世代が付くので、この値にはならない）。
+        /// ホストは台帳に何も書かず、識別子を結果の reason に載せて返す。クライアントは接続のたびにこれで自分の台帳の識別子を知る。
+        /// </summary>
+        public const long ProbeToken = long.MaxValue;
+
+        /// <summary>結果の reason：ホストが記録の有無を確かめられない（台帳が替わった・記録が上限で消えた可能性がある）。</summary>
+        public const string LostReason = "lost";
+
+        /// <summary>結果不明の取引idの照会を通信値へ落とす。ledgerId はその取引を送ったときに知っていたホストの台帳の識別子（不明なら 0）。</summary>
+        public static void EncodeQuery(long ledgerId, out int spendGold, out int spendDust, out int earnDust)
         {
             spendGold = -(KindTag + QueryKind);
-            spendDust = 0;
-            earnDust = 0;
+            ulong bits = unchecked((ulong)ledgerId);
+            spendDust = unchecked((int)bits);
+            earnDust = unchecked((int)(bits >> 32));
+        }
+
+        /// <summary>結果の reason に台帳の識別子を載せる（メッセージの形は変えない）。形式は「コード@16桁の16進」。識別子が 0 ならコードのまま。</summary>
+        public static string ComposeReason(string code, long ledgerId) =>
+            ledgerId == 0 ? code : (code ?? "") + "@" + unchecked((ulong)ledgerId).ToString("x16");
+
+        /// <summary>ComposeReason の逆。識別子の付いていない reason（旧形式・台帳に触れる前の拒否）は ledgerId=0。</summary>
+        public static void SplitReason(string reason, out string code, out long ledgerId)
+        {
+            code = reason;
+            ledgerId = 0;
+            if (string.IsNullOrEmpty(reason)) { code = null; return; }
+            int at = reason.LastIndexOf('@');
+            if (at < 0) return;
+            string hex = reason.Substring(at + 1);
+            if (hex.Length != 16 || !ulong.TryParse(hex, System.Globalization.NumberStyles.AllowHexSpecifier, System.Globalization.CultureInfo.InvariantCulture, out ulong bits)) return;
+            code = at == 0 ? null : reason.Substring(0, at);
+            ledgerId = unchecked((long)bits);
         }
 
         /// <summary>保留中の取引を通信値へ落とす。クライアントの送信に使う。</summary>
@@ -95,8 +130,9 @@ namespace SodRpg.Core.Game
             int enhance = payload / 32;
             if (kind == QueryKind)
             {
-                if (rarity != 0 || enhance != 0 || spendDust != 0 || earnDust != 0) return false;
-                req = new TradeRequest { Token = token, Query = true };
+                if (rarity != 0 || enhance != 0) return false;
+                ulong bits = ((ulong)(uint)earnDust << 32) | (uint)spendDust;
+                req = new TradeRequest { Token = token, Query = true, LedgerId = unchecked((long)bits) };
                 return true;
             }
             var r = new TradeRequest { Token = token, Kind = (TradeKind)kind, Heat = spendDust, Batches = spendDust, SalvageUid = ((ulong)(uint)earnDust << 32) | (uint)spendDust };
@@ -157,8 +193,22 @@ namespace SodRpg.Core.Game
         /// <summary>追跡するプレイヤー（接続）の上限。超えたら全部忘れる（通常の協力プレイでは起こらない）。</summary>
         public const int MaxTrackedPlayers = 32;
 
+        /// <summary>消えた記録の下限を覚える（クライアントの世代）の上限。超えたら照会は常に「lost」で答える（実際には起こらない）。</summary>
+        public const int MaxFloorGenerations = 64;
+
         private sealed class PlayerLedger
         {
+            /// <summary>
+            /// この台帳の識別子（権威の世代＋作成順）。権威の作り直し・接続（netId）の変更・追跡プレイヤー数の超過で台帳が新しくなると変わる。
+            /// 「記録がない」ことを「未実行」の証拠にできるのは、取引を送ったときの識別子と今の識別子が同じときだけ。
+            /// </summary>
+            public long Id;
+            /// <summary>
+            /// 上限で忘れた取引id（実行済み・取り消し済み）の、クライアント世代ごとの最大値。クライアントは1つの世代の中で取引idを
+            /// 増やしながら発行するので、これを超える id は忘れられていない（あるいは本当に未知）と言える。以下の id は記録の有無を確かめられない。
+            /// </summary>
+            public readonly Dictionary<int, long> Floors = new Dictionary<int, long>();
+            public bool FloorOverflow;
             public string RunId;
             public readonly Queue<long> Order = new Queue<long>();
             public readonly Dictionary<long, TradeDecision> Executed = new Dictionary<long, TradeDecision>();
@@ -172,6 +222,30 @@ namespace SodRpg.Core.Game
         }
 
         private readonly Dictionary<string, PlayerLedger> _players = new Dictionary<string, PlayerLedger>();
+        private int _ledgerSerial;
+
+        /// <summary>この権威の世代。MOD の読み込みごと（権威を作るたび）に変わる。</summary>
+        public int Generation { get; }
+
+        public TradeAuthority() : this(NewGeneration())
+        {
+        }
+
+        /// <summary>世代を指定して作る（試験用。0 以下は 1 として扱う）。</summary>
+        public TradeAuthority(int generation)
+        {
+            Generation = generation <= 0 ? 1 : generation & 0x3FFFFFFF;
+            if (Generation == 0) Generation = 1;
+        }
+
+        private static int NewGeneration()
+        {
+            int g = Guid.NewGuid().GetHashCode() & 0x3FFFFFFF;
+            return g == 0 ? 1 : g;
+        }
+
+        /// <summary>そのプレイヤー（接続）の現在の台帳の識別子。台帳がまだ無ければ作る。</summary>
+        public long LedgerIdOf(string playerKey, string runId = "") => Ledger(playerKey, runId).Id;
 
         /// <summary>検証用：そのプレイヤーの実行済みトークン数（台帳の上限が効いていることの確認に使う）。</summary>
         public int TrackedTokenCount(string playerKey) => _players.TryGetValue(playerKey, out var l) ? l.Executed.Count : 0;
@@ -193,7 +267,9 @@ namespace SodRpg.Core.Game
         {
             var d = new TradeDecision();
             if (req == null || req.Token <= 0) { d.Reason = "invalid"; return d; }
-            if (req.Query) return Resolve(playerKey, runId, req.Token);
+            if (req.Query && req.Token == TradeWire.ProbeToken)
+                return new TradeDecision { Reason = "probe", LedgerId = Ledger(playerKey, runId).Id };
+            if (req.Query) return Resolve(playerKey, runId, req);
             switch (req.Kind)
             {
                 case TradeKind.MerchantGold:
@@ -216,15 +292,18 @@ namespace SodRpg.Core.Game
                     return d;
             }
             var ledger = Ledger(playerKey, runId);
+            d.LedgerId = ledger.Id;
             string fingerprint = Fingerprint(req);
             if (ledger.Executed.TryGetValue(req.Token, out var recorded))
             {
                 // 同じ取引idの再送だけを冪等に扱う。idが同じでも要求の中身が違えば、過去の成功を流用せずに断る。
                 if (!ledger.Fingerprints.TryGetValue(req.Token, out var recordedFingerprint) || recordedFingerprint != fingerprint)
                 { d.Reason = "conflict"; return d; }
-                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust };
+                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust, LedgerId = ledger.Id };
             }
             if (ledger.Cancelled.Contains(req.Token)) { d.Reason = "cancelled"; return d; }
+            // 上限で忘れた範囲の取引idは、すでに実行・取り消し済みかもしれない。新しく実行せず、確かめられないと答える（クライアントは取引を保留する）。
+            if (BelowFloor(ledger, req.Token)) { d.Reason = TradeWire.LostReason; return d; }
             if (req.Kind == TradeKind.SalvageForDust && ledger.SalvagedUids.Contains(req.SalvageUid))
             { d.Reason = "dup"; return d; }
             if (d.SpendGold > gold) { d.Reason = "gold"; return d; }
@@ -238,6 +317,7 @@ namespace SodRpg.Core.Game
                 long old = ledger.Order.Dequeue();
                 ledger.Executed.Remove(old);
                 ledger.Fingerprints.Remove(old);
+                RaiseFloor(ledger, old);
             }
             if (req.Kind == TradeKind.SalvageForDust)
             {
@@ -251,22 +331,47 @@ namespace SodRpg.Core.Game
 
         /// <summary>
         /// 取引idの結果の照会。実行済みなら記録済みの結果（Replayed=true の成功）を返す。
-        /// 未実行なら「unknown」で答えると同時にその取引idを取り消し、あとから届く元の要求も実行しない
-        /// （クライアントは「ホストは何も支払っていない」として返却できる）。
+        /// 記録がなく、しかも「送ったときの台帳」が今の台帳と同じで記録も上限で消えていないと言えるときだけ、「unknown」（未実行）で答えると同時に
+        /// その取引idを取り消す（あとから届く元の要求は実行せず、クライアントは「ホストは何も支払っていない」として返却できる）。
+        /// 台帳が替わっている（権威の作り直し・接続の変更）か、記録が上限で消えた範囲なら、記録がないことは未実行の証拠にならないので
+        /// 「lost」で答え、何も取り消さない（クライアントは取引を確定せずに保留する）。
         /// </summary>
-        private TradeDecision Resolve(string playerKey, string runId, long token)
+        private TradeDecision Resolve(string playerKey, string runId, TradeRequest req)
         {
+            long token = req.Token;
             var ledger = Ledger(playerKey, runId);
             if (ledger.Executed.TryGetValue(token, out var recorded))
-                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust };
+                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust, LedgerId = ledger.Id };
+            if (ledger.Cancelled.Contains(token))
+                return new TradeDecision { Reason = "unknown", LedgerId = ledger.Id };
+            if (req.LedgerId != ledger.Id || ledger.FloorOverflow || BelowFloor(ledger, token))
+                return new TradeDecision { Reason = TradeWire.LostReason, LedgerId = ledger.Id };
             if (ledger.Cancelled.Add(token))
             {
                 ledger.CancelledOrder.Enqueue(token);
                 while (ledger.CancelledOrder.Count > MaxTokensPerPlayer)
-                    ledger.Cancelled.Remove(ledger.CancelledOrder.Dequeue());
+                {
+                    long old = ledger.CancelledOrder.Dequeue();
+                    ledger.Cancelled.Remove(old);
+                    RaiseFloor(ledger, old);
+                }
             }
-            return new TradeDecision { Reason = "unknown" };
+            return new TradeDecision { Reason = "unknown", LedgerId = ledger.Id };
         }
+
+        private static int ClientGeneration(long token) => (int)(token >> 32);
+
+        /// <summary>忘れた取引idの下限を上げる。</summary>
+        private static void RaiseFloor(PlayerLedger ledger, long token)
+        {
+            int gen = ClientGeneration(token);
+            if (ledger.Floors.TryGetValue(gen, out long floor)) { if (token > floor) ledger.Floors[gen] = token; return; }
+            if (ledger.Floors.Count >= MaxFloorGenerations) { ledger.FloorOverflow = true; return; }
+            ledger.Floors[gen] = token;
+        }
+
+        private static bool BelowFloor(PlayerLedger ledger, long token) =>
+            ledger.Floors.TryGetValue(ClientGeneration(token), out long floor) && token <= floor;
 
         /// <summary>要求の中身（種別と、金額の計算に使う引数）の照合用の文字列。取引id（Token）は含めない。</summary>
         private static string Fingerprint(TradeRequest req)
@@ -284,7 +389,7 @@ namespace SodRpg.Core.Game
             if (!_players.TryGetValue(playerKey, out var ledger))
             {
                 if (_players.Count >= MaxTrackedPlayers) _players.Clear();
-                _players[playerKey] = ledger = new PlayerLedger();
+                _players[playerKey] = ledger = new PlayerLedger { Id = ((long)Generation << 32) | (uint)++_ledgerSerial };
             }
             if (ledger.RunId != runId)
             {

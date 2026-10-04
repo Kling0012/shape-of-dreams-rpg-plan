@@ -159,7 +159,7 @@ namespace SodRpg.Core.Tests
             var due = new List<PendingTrade>();
             Assert.Equal(1, l.CollectDueQueries(Economy.TradeTimeoutSeconds, due));
 
-            TradeWire.EncodeQuery(out int g, out int du, out int e);
+            TradeWire.EncodeQuery(host.LedgerIdOf("p1", "run"), out int g, out int du, out int e);
             Assert.True(TradeWire.TryDecode(t.Token, g, du, e, out var query));
             var answer = host.Evaluate("p1", "run", query, 0, dustBalance);
             Assert.True(answer.Ok); // 実行済みなので記録済みの結果が返る（通貨は動かさない）
@@ -226,7 +226,8 @@ namespace SodRpg.Core.Tests
             var t = l.BeginSalvage(Rarity.Rare, 0, "r00000000000000aa", now: 0.0);
             l.Expire(Economy.TradeTimeoutSeconds);
 
-            TradeWire.EncodeQuery(out int g, out int du, out int e);
+            // 送ったときに知っていた台帳（いまも同じ台帳）に記録がないので、ホストは「未実行」と言い切って取り消せる。
+            TradeWire.EncodeQuery(host.LedgerIdOf("p1", "run1"), out int g, out int du, out int e);
             Assert.True(TradeWire.TryDecode(t.Token, g, du, e, out var query));
             var answer = host.Evaluate("p1", "run1", query, 0, 0);
             Assert.False(answer.Ok);

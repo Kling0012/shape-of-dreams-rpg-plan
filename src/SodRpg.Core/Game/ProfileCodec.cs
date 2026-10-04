@@ -511,7 +511,8 @@ namespace SodRpg.Core.Game
             .Add("token", t.Token.ToString(CultureInfo.InvariantCulture)).Add("kind", (long)t.Kind)
             .Add("spendGold", (long)t.SpendGold).Add("spendDust", (long)t.SpendDust).Add("earnDust", (long)t.EarnDust)
             .Add("uid", t.Uid).Add("heat", (long)t.Heat).Add("batches", (long)t.Batches)
-            .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance);
+            .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance)
+            .Add("ledger", unchecked((ulong)t.LedgerId).ToString(CultureInfo.InvariantCulture)).Add("lost", t.Lost);
 
         private static void ReadPendingTrades(JsonObject parent, List<PendingTrade> into, List<string> notes)
         {
@@ -523,11 +524,12 @@ namespace SodRpg.Core.Game
                     || !long.TryParse(Str(j, "token"), NumberStyles.None, CultureInfo.InvariantCulture, out long token) || token <= 0
                     || !seen.Add(token)
                     || Long(j, "kind") < 0 || Long(j, "kind") > (long)TradeKind.SalvageForDust
-                    || into.Count >= TradeLedger.MaxHeld)
+                    || into.Count >= TradeLedger.MaxRestored)
                 {
                     notes.Add("pendingTrades: 形式が不正または多すぎる取引 → 除外");
                     continue;
                 }
+                ulong.TryParse(Str(j, "ledger"), NumberStyles.None, CultureInfo.InvariantCulture, out ulong ledgerBits);
                 into.Add(new PendingTrade
                 {
                     Token = token, Kind = (TradeKind)Long(j, "kind"),
@@ -535,6 +537,7 @@ namespace SodRpg.Core.Game
                     EarnDust = Clamp(Long(j, "earnDust"), 0, int.MaxValue), Uid = Str(j, "uid"),
                     Heat = Clamp(Long(j, "heat"), 0, int.MaxValue), Batches = Clamp(Long(j, "batches"), 0, int.MaxValue),
                     Rarity = Clamp(Long(j, "rarity"), 0, int.MaxValue), Enhance = Clamp(Long(j, "enhance"), 0, int.MaxValue),
+                    LedgerId = unchecked((long)ledgerBits), Lost = Bool(j, "lost", false),
                 });
             }
         }
