@@ -69,6 +69,67 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Content.SlotCount, p.Stash.Count);
         }
 
+        /// <summary>初期装備に銘品が含まれる最初のシード（なければ失敗）。</summary>
+        private static ulong SeedWithNamedStarter()
+        {
+            for (ulong seed = 1; seed < 20000; seed++)
+            {
+                var p = Profile.CreateNew(seed);
+                Onboarding.GrantStarterKit(p);
+                if (p.Stash.Any(r => r.NamedId != null)) return seed;
+            }
+            throw new InvalidOperationException("銘品を含む初期装備のシードが見つからない");
+        }
+
+        [Fact]
+        public void Starter_named_relic_is_recorded_in_the_codex_with_its_mini_set()
+        {
+            var p = Profile.CreateNew(SeedWithNamedStarter());
+            var kit = Onboarding.GrantStarterKit(p);
+            Assert.All(kit, r => Assert.Contains(r.CodexId, p.Codex));
+            var named = kit.First(r => r.NamedId != null);
+            Assert.StartsWith("n:", named.CodexId, StringComparison.Ordinal);
+            Assert.Contains(NamedItems.CodexId(named.NamedId), p.Codex);
+
+            var state = new CodexState(p.Codex, new HashSet<Power>());
+            Assert.True(state.IsFound(CodexQuery.Entries(CodexCategory.Named).Single(e => e.Id == named.CodexId)));
+            string miniSetId = NamedItems.TryGetNamed(named.NamedId, out var def) ? def.MiniSetId : null;
+            if (miniSetId != null)
+                Assert.True(state.IsFound(CodexQuery.Entries(CodexCategory.MiniSets).Single(e => e.Id == miniSetId)));
+        }
+
+        [Fact]
+        public void Extra_slot_starters_also_record_named_relics_in_the_codex()
+        {
+            for (ulong seed = 1; seed < 20000; seed++)
+            {
+                var p = Profile.CreateNew(seed);
+                p.StarterGranted = true; // 旧プロフィール：3枠の追加配布だけが走る
+                Onboarding.GrantNewSlotStarters(p);
+                var named = p.Stash.FirstOrDefault(r => r.NamedId != null);
+                if (named == null) continue;
+                Assert.Contains(named.CodexId, p.Codex);
+                return;
+            }
+            Assert.Fail("銘品を含む追加3枠のシードが見つからない");
+        }
+
+        [Fact]
+        public void Backfill_adds_missing_named_codex_ids_for_already_granted_starters_once()
+        {
+            var p = Profile.CreateNew(SeedWithNamedStarter());
+            Onboarding.GrantStarterKit(p);
+            // 旧版の状態：土台IDだけが載り、銘品IDがない
+            var namedIds = p.Stash.Where(r => r.NamedId != null).Select(r => r.CodexId).ToList();
+            foreach (var id in namedIds) p.Codex.Remove(id);
+            foreach (var r in p.Stash.Where(r => r.NamedId != null)) p.Codex.Add(r.BaseId);
+            Assert.True(Onboarding.BackfillStarterCodex(p));
+            Assert.All(namedIds, id => Assert.Contains(id, p.Codex));
+            Assert.False(Onboarding.BackfillStarterCodex(p)); // 二度目は何も足さない
+            Assert.Equal(Content.SlotCount, p.StarterUids.Count); // 二重配布はしない
+            Assert.Empty(Onboarding.GrantStarterKit(p));
+        }
+
         [Fact]
         public void Starter_kit_auto_equips_only_into_an_empty_traveler()
         {

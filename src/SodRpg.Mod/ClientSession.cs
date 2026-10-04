@@ -471,6 +471,7 @@ namespace SodRpg.Mod
                 _dirty = true;
             }
             var newSlotStarters = Onboarding.GrantNewSlotStarters(Profile);
+            if (Onboarding.BackfillStarterCodex(Profile)) _dirty = true; // 旧版で配られた初期銘品の発見記録を補う
             // v1.20：以前に+3・+5にした遺物へ、強化の節目を一度だけ付ける。
             int milestones = Rules.ApplyEnhanceMilestones(Profile);
             if (milestones > 0) Emit(new GameEvent(EventKind.Info, Loc.T($"強化の節目を、これまでに+3・+5にした遺物{milestones}個に付けました（特性や固有効果が増えています）。", $"Enhancement milestones were applied to {milestones} relic(s) you had already enhanced.")));

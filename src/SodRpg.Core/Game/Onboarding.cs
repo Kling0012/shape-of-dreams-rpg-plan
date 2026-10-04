@@ -147,7 +147,7 @@ namespace SodRpg.Core.Game
                 var r = Loot.RollRelic(rng, Rarity.Uncommon, 1, slot);
                 p.Stash.Add(r);
                 p.StarterUids.Add(r.Uid);
-                p.Codex.Add(r.BaseId);
+                p.Codex.Add(r.CodexId); // 銘品なら「n:」付き。土台IDだけだと銘品・組が発見済みにならない
                 given.Add(r);
             }
             p.StoreRng(rng);
@@ -165,7 +165,7 @@ namespace SodRpg.Core.Game
                 var r = Loot.RollRelic(rng, Rarity.Uncommon, Math.Max(1, p.BestItemLevel), (Slot)i); // すでに遊んでいる人には、いまの最高アイテムレベルで
                 p.Stash.Add(r);
                 p.StarterUids.Add(r.Uid);
-                p.Codex.Add(r.BaseId);
+                p.Codex.Add(r.CodexId); // 銘品なら「n:」付き。土台IDだけだと銘品・組が発見済みにならない
             }
             p.StoreRng(rng);
             p.StarterV119Granted = true;
@@ -173,6 +173,21 @@ namespace SodRpg.Core.Game
                 "新しい装備の枠（頭・手・足）が増えました。それぞれの遺物を1つずつ保管庫に入れました。",
                 "New equipment slots (Head, Hands, Feet) are available. One relic for each has been added to your stash.")));
             return events;
+        }
+
+        /// <summary>
+        /// 配布済みの初期装備のうち、銘品なのに図鑑へ銘品IDが載っていないものを補う。補ったら true。
+        /// 旧版は土台IDだけを登録していたため、受け取った銘品・所属する組が未発見のままになっていた。
+        /// </summary>
+        public static bool BackfillStarterCodex(Profile p)
+        {
+            bool added = false;
+            foreach (var uid in p.StarterUids)
+            {
+                var r = p.FindStash(uid);
+                if (r != null && r.NamedId != null && p.Codex.Add(r.CodexId)) added = true;
+            }
+            return added;
         }
 
         /// <summary>この旅人に何も装備していなければ、初期の遺物を空いた枠に装備する。装備したら true。</summary>
