@@ -185,54 +185,57 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("Invalid two-option choice: " + star.Id);
         }
 
-        private static string DescribeKeySide(KeystoneDefinition key, bool upside)
+        internal static string DescribeKeySide(KeystoneDefinition key, bool upside)
         {
-            if (!Loc.Japanese) return AuthoredMechanisms.DescribeKeystone(key, upside);
             var lines = new List<string>();
             if (upside && key.RetainedPower != Power.None)
                 lines.Add(Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
             foreach (var transform in upside ? key.Upside : key.Downside)
             {
-                string layer = EnumText(transform.TargetLayer, "記憶固有のダメージ", "星による記憶ダメージ", "追加生成ダメージ", "仕掛けの効果");
-                string field = EnumText(transform.Field, "効果量", "持続時間", "効果半径", "発生までの時間", "対象数", "発火間隔", "確率", "効果の種類");
-                string operation = EnumText(transform.Operation, "増減率", "秒数", "追加数", "発動に必要な回数", "無効化", "傷の再配分", "設定値", "加算量");
+                string layer = EnumText(transform.TargetLayer, Loc.Japanese, new[] { "記憶固有のダメージ", "星による記憶ダメージ", "追加生成ダメージ", "仕掛けの効果" }, new[] { "native memory damage", "star memory damage", "generated damage", "gimmick effect" });
+                string field = EnumText(transform.Field, Loc.Japanese, new[] { "効果量", "持続時間", "効果半径", "発生までの時間", "対象数", "発火間隔", "確率", "効果の種類" }, new[] { "effect value", "duration", "radius", "delay", "target count", "interval", "chance", "effect type" });
+                string operation = EnumText(transform.Operation, Loc.Japanese, new[] { "増減率", "秒数", "追加数", "発動に必要な回数", "無効化", "傷の再配分", "設定値", "加算量" }, new[] { "scale", "seconds", "extra count", "required count", "disable", "wound redistribution", "set value", "additive amount" });
                 var scope = transform.Scope;
                 var targets = new List<string>();
                 targets.AddRange(scope.TargetMemorySet.Select(m => Links.Name(m).ToString()));
                 targets.AddRange(scope.TargetEffectSet.Select(EffectText));
-                targets.AddRange(scope.TargetEffectIds.Select(id => "対象の星：" + id));
+                targets.AddRange(scope.TargetEffectIds.Select(id => Loc.T("対象の星：", "target star: ") + StarName(id)));
                 targets.AddRange(scope.SourceSelectors.Select(SelectorText));
-                targets.AddRange(scope.ReceiverMemorySet.Select(m => "受け手：" + Links.Name(m)));
-                targets.AddRange(scope.ReceiverSelectors.Select(s => "受け手：" + SelectorText(s)));
+                targets.AddRange(scope.ReceiverMemorySet.Select(m => Loc.T("受け手：", "receiver: ") + Links.Name(m)));
+                targets.AddRange(scope.ReceiverSelectors.Select(s => Loc.T("受け手：", "receiver: ") + SelectorText(s)));
                 if (scope.PayloadKind != KeystonePayloadKind.None)
-                    targets.Add(EnumText(scope.PayloadKind, "すべての効果", "記憶の仕掛け", "対象指定のクールダウン短縮", "次の通常攻撃強化",
-                        "記憶への引継ぎ", "HP支払いから障壁へ", "味方への障壁", "合わせ技の成功効果", "敵の強化に応じた追加報酬"));
+                    targets.Add(EnumText(scope.PayloadKind, Loc.Japanese, new[] { "すべての効果", "記憶の仕掛け", "対象指定のクールダウン短縮", "次の通常攻撃強化",
+                        "記憶への引継ぎ", "HP支払いから障壁へ", "味方への障壁", "合わせ技の成功効果", "敵の強化に応じた追加報酬" },
+                        new[] { "all effects", "memory gimmick", "directed cooldown reduction", "next basic attack enhancement", "memory relay", "HP payment to shield", "allied shield", "bridge success payoff", "pressure dividend" }));
                 if (scope.Recipient != KeystoneRecipientKind.Any)
-                    targets.Add(EnumText(scope.Recipient, "すべての受け手", "自分", "味方", "自分の召喚物"));
+                    targets.Add(EnumText(scope.Recipient, Loc.Japanese, new[] { "すべての受け手", "自分", "味方", "自分の召喚物" }, new[] { "any recipient", "self", "allies", "own summons" }));
                 if (scope.SourceKind.HasValue)
-                    targets.Add(EnumText(scope.SourceKind.Value, "記憶固有の発火", "自分の通常攻撃", "自分の召喚物", "追加生成効果", "移動による発火"));
-                if (scope.Argument.HasValue) targets.Add("効果の種類：" + scope.Argument.Value);
+                    targets.Add(EnumText(scope.SourceKind.Value, Loc.Japanese, new[] { "記憶固有の発火", "自分の通常攻撃", "自分の召喚物", "追加生成効果", "移動による発火" }, new[] { "native memory trigger", "own basic attack", "own summon", "generated effect", "movement trigger" }));
+                if (scope.Argument.HasValue) targets.Add(Loc.T("効果の種類：", "effect type: ") + scope.Argument.Value);
                 string Number(decimal value) => value.ToString(CultureInfo.InvariantCulture);
                 string valueText;
                 switch (transform.Operation)
                 {
                     case KeystoneOperation.Scale: valueText = Number(transform.MagnitudeUnits.Percent) + "%"; break;
-                    case KeystoneOperation.RedistributeWound: valueText = Number(transform.MagnitudeUnits.Percent) + "%、持続時間の増減率 " + Number(transform.WoundDurationUnits.Percent) + "%"; break;
+                    case KeystoneOperation.RedistributeWound: valueText = Number(transform.MagnitudeUnits.Percent) + Loc.T("%、持続時間の増減率 ", "%, lifetime change ") + Number(transform.WoundDurationUnits.Percent) + "%"; break;
                     case KeystoneOperation.Disable: valueText = ""; break;
-                    case KeystoneOperation.SetSeconds: valueText = Number(transform.Seconds) + "秒"; break;
+                    case KeystoneOperation.SetSeconds: valueText = Number(transform.Seconds) + Loc.T("秒", "s"); break;
                     case KeystoneOperation.Set:
                     case KeystoneOperation.Add: valueText = Number(transform.Seconds); break;
                     default: valueText = transform.Count.ToString(CultureInfo.InvariantCulture); break;
                 }
-                lines.Add(layer + "（" + (targets.Count == 0 ? "すべての対象" : string.Join("、", targets)) + "）\n  " + field + "：" + operation + " " + valueText
-                    + (transform.ExpectedFrom.HasValue ? "（変更前 " + Number(transform.ExpectedFrom.Value) + "）" : "")
-                    + (transform.Maximum.HasValue ? "（上限 " + Number(transform.Maximum.Value) + "）" : ""));
+                lines.Add(layer + Loc.T("（", " (") + (targets.Count == 0 ? Loc.T("すべての対象", "all targets") : string.Join(Loc.T("、", ", "), targets)) + Loc.T("）", ")") + "\n  " + field + Loc.T("：", ": ") + operation + " " + valueText
+                    + (transform.ExpectedFrom.HasValue ? Loc.T("（変更前 ", " (from ") + Number(transform.ExpectedFrom.Value) + Loc.T("）", ")") : "")
+                    + (transform.Maximum.HasValue ? Loc.T("（上限 ", " (max ") + Number(transform.Maximum.Value) + Loc.T("）", ")") : ""));
             }
             if (upside)
                 foreach (var grant in key.Grants)
                     lines.Add(Loc.T("付与：", "Grant: ") + DescribeMechanism(grant));
             return string.Join("\n", lines);
         }
+
+        private static string EnumText<T>(T value, bool japanese, string[] ja, string[] en) where T : struct
+            => EnumText(value, japanese ? ja : en);
 
         private static string EnumText<T>(T value, params string[] names) where T : struct
         {

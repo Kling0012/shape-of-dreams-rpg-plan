@@ -7,6 +7,25 @@ namespace SodRpg.Core.Game
 {
     public static partial class StarMapPresentation
     {
+        // 画面に内部IDを出さない：星は名前、橋の合わせ技は名前で示す。
+        private static string StarName(string id)
+        {
+            string[] parts = id?.Split('.');
+            if (parts != null && parts.Length > 1 && parts[1].Length > 0)
+            {
+                string hero = "Hero_" + char.ToUpperInvariant(parts[1][0]) + parts[1].Substring(1);
+                foreach (var talent in HeroSigils.TreeFor(hero))
+                    if (talent.Id == id) return Loc.T("「" + talent.Name.Ja + "」", "\"" + talent.Name.En + "\"");
+            }
+            return Loc.T("（名前のない星）", "(unnamed star)");
+        }
+
+        private static string PairName(string pairId)
+        {
+            var pair = PairCombos.Get(pairId);
+            return pair?.Name != null ? Loc.T("「" + pair.Name.Ja + "」", "\"" + pair.Name.En + "\"") : Loc.T("この橋の合わせ技", "this bridge combo");
+        }
+
         private static string Number(decimal value) => value.ToString("0.#######", CultureInfo.InvariantCulture);
         private static string Number(float value) => value.ToString("0.#######", CultureInfo.InvariantCulture);
         private static string Percent(decimal units) => Number(units / 100m) + "%";
@@ -78,7 +97,7 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private static string DescribeMechanism(AuthoredMechanismSpec spec)
+        internal static string DescribeMechanism(AuthoredMechanismSpec spec)
         {
             AuthoredMechanisms.Validate(spec);
             var lines = new List<string>();
@@ -143,7 +162,7 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.BridgeSuccess:
                     var bridge = spec.Bridge;
                     foreach (var endpoint in bridge.Endpoints)
-                        lines.Add(Links.Name(endpoint.Memory) + Loc.T($"：端点の星 [{endpoint.StarId}] に{endpoint.MinimumRank}段必要。", $": endpoint [{endpoint.StarId}] requires {endpoint.MinimumRank} ranks."));
+                        lines.Add(Links.Name(endpoint.Memory) + Loc.T($"：端点の星{StarName(endpoint.StarId)}に{endpoint.MinimumRank}段以上必要。", $": endpoint star {StarName(endpoint.StarId)} needs {endpoint.MinimumRank}+ ranks."));
                     lines.Add(SelectorText(bridge.OpeningSource) + " / " + EventText(bridge.OpeningTrigger)
                         + " → " + SelectorText(bridge.PayoffSource) + " / " + EventText(bridge.PayoffTrigger));
                     lines.Add(bridge.GateKind == BridgeGateKind.Mark ? Loc.T("同じ敵の印を起点に発動。", "Triggers from a mark on the same enemy.")
@@ -164,13 +183,13 @@ namespace SodRpg.Core.Game
                 lines.Add(Links.Name(trigger.Key) + Loc.T("の条件：", " trigger: ") + EventText(trigger.Value));
             if (spec.RequiredMemories.Length > 0)
                 lines.Add(Loc.T("必要な装備記憶：", "Required equipped memories: ") + string.Join(Loc.T("、", ", "), spec.RequiredMemories.Select(m => Links.Name(m).ToString())));
-            if (spec.Replaces.Length > 0) lines.Add(Loc.T("置き換える星：", "Replaces stars: ") + string.Join(", ", spec.Replaces));
+            if (spec.Replaces.Length > 0) lines.Add(Loc.T("置き換える星：", "Replaces stars: ") + string.Join(Loc.T("、", ", "), spec.Replaces.Select(StarName)));
             switch (spec.Condition)
             {
                 case AuthoredMechanismCondition.Always: break;
-                case AuthoredMechanismCondition.BridgeSuccess: lines.Add(Loc.T("橋の成功時のみ：", "On bridge success only: ") + spec.PairId); break;
-                case AuthoredMechanismCondition.BridgeMark: lines.Add(Loc.T("橋の印がある敵にのみ：", "Only on bridge-marked enemies: ") + spec.PairId); break;
-                case AuthoredMechanismCondition.BridgeWindow: lines.Add(Loc.T("橋の受付時間内のみ：", "Only within the bridge window: ") + spec.PairId); break;
+                case AuthoredMechanismCondition.BridgeSuccess: lines.Add(Loc.T("橋の成功時のみ：", "On bridge success only: ") + PairName(spec.PairId)); break;
+                case AuthoredMechanismCondition.BridgeMark: lines.Add(Loc.T("橋の印がある敵にのみ：", "Only on bridge-marked enemies: ") + PairName(spec.PairId)); break;
+                case AuthoredMechanismCondition.BridgeWindow: lines.Add(Loc.T("橋の受付時間内のみ：", "Only within the bridge window: ") + PairName(spec.PairId)); break;
                 default: throw new InvalidOperationException("Unknown mechanism condition: " + spec.Condition);
             }
             return string.Join("\n", lines);

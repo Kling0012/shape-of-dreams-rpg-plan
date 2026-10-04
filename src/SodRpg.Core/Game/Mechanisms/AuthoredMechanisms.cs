@@ -105,55 +105,8 @@ namespace SodRpg.Core.Game
                 && (source.Kind != MemorySelectorKind.Memory || !source.Memory.StartsWith("St_M_", StringComparison.Ordinal));
         }
         public static string Key(AuthoredMechanismSpec spec) => AuthoredMechanismCodec.EncodeSpec(spec);
-        public static string Describe(AuthoredMechanismSpec spec)
-        {
-            string Percent(decimal units) => (units / 100m).ToString("0.#####", System.Globalization.CultureInfo.InvariantCulture) + "%";
-            string source = spec.Source?.Expression ?? SourceMemory(spec) ?? Loc.T("装備中の発火元", "equipped source");
-            string effect = spec.Gimmick != null ? spec.Gimmick.Effect + " " + spec.Gimmick.Value.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%"
-                : spec.Recharge != null ? Loc.T("残りクールダウン短縮 ", "remaining cooldown reduction ") + Percent(spec.Recharge.EffectiveValueUnits) + " → " + spec.Recharge.Recipient.Expression
-                : spec.Primed != null ? Loc.T("次の通常攻撃 ", "next basic attack ") + Percent(spec.Primed.ValueUnits) + " / " + spec.Primed.DurationSeconds + "s"
-                : spec.Relay != null ? Loc.T("引継ぎダメージ ", "relay native damage ") + Percent(spec.Relay.ValueUnits) + " → " + spec.Relay.TargetMemory + " / " + spec.Relay.DurationSeconds + "s"
-                : spec.Ward != null ? Loc.T("味方障壁 ", "recipient ward ") + Percent(spec.Ward.ValueUnits) + " (" + spec.Ward.AmountBasis + ", " + spec.Ward.PoolKind
-                    + ", " + spec.Ward.RecipientKind + ") / " + spec.Ward.RadiusMetres + "m / " + spec.Ward.DurationSeconds + "s / " + spec.Ward.Targets + Loc.T("体", " targets")
-                : spec.Dividend != null ? spec.Dividend.Describe()
-                : spec.Bridge != null ? Loc.T("合わせ技：", "pair payoff: ") + spec.Bridge.PairId + " / " + spec.Bridge.GateKind + " / "
-                    + string.Join(", ", new[] { spec.Bridge.BasePayoff }.Concat(spec.Bridge.Extras).Select(x => x.Kind + " " + Percent(x.ValueUnits)))
-                : spec.Kind == AuthoredMechanismKind.SacrificeShield ? Loc.T("固有のHP支払いの50%を障壁へ（新規付与上限10%HP）", "convert 50% of qualified native HP payment to shield (new award cap 10% HP)")
-                : Loc.T("装備中のQ/R由来の成功したスタンから障壁6%HP（3秒・間隔2秒）", "successful equipped native Q/R stun grants 6% HP shield (3s, 2s interval)");
-            return source + " / " + spec.Trigger + ": " + effect + "\n" + spec.Budget
-                + (spec.EveryN > 1 ? " / " + Loc.T("発火回数", "every notifications: ") + spec.EveryN : "")
-                + (spec.Condition == AuthoredMechanismCondition.Always ? "" : " / " + spec.Condition + ":" + spec.PairId);
-        }
-        public static string DescribeKeystone(KeystoneDefinition definition, bool upside)
-        {
-            string Number(decimal value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
-            string Transform(KeystoneTransform transform)
-            {
-                var scope = transform.Scope;
-                string value = transform.Operation == KeystoneOperation.Scale ? Number(transform.MagnitudeUnits.Percent) + "%"
-                    : transform.Operation == KeystoneOperation.RedistributeWound ? Number(transform.MagnitudeUnits.Percent) + "% / " + Number(transform.WoundDurationUnits.Percent) + "% lifetime"
-                    : transform.Operation == KeystoneOperation.Disable ? ""
-                    : transform.Operation == KeystoneOperation.Set || transform.Operation == KeystoneOperation.Add || transform.Operation == KeystoneOperation.SetSeconds
-                        ? Number(transform.Seconds) : transform.Count.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                string targets = string.Join(" / ", scope.TargetMemorySet
-                    .Concat(scope.TargetEffectSet.Select(x => x.ToString())).Concat(scope.TargetEffectIds)
-                    .Concat(scope.SourceSelectors.Select(x => x.Expression))
-                    .Concat(scope.ReceiverMemorySet.Select(x => "→" + x))
-                    .Concat(scope.ReceiverSelectors.Select(x => "→" + x.Expression)));
-                return transform.TargetLayer + " / " + scope.PayloadKind + " / " + targets
-                    + (scope.Recipient == KeystoneRecipientKind.Any ? "" : " / " + scope.Recipient)
-                    + (scope.SourceKind.HasValue ? " / " + scope.SourceKind.Value : "")
-                    + (scope.Argument.HasValue ? " / Arg=" + scope.Argument.Value : "")
-                    + " / " + transform.Field + ": " + transform.Operation + " " + value
-                    + (transform.ExpectedFrom.HasValue ? " (from " + Number(transform.ExpectedFrom.Value) + ")" : "")
-                    + (transform.Maximum.HasValue ? " (max " + Number(transform.Maximum.Value) + ")" : "");
-            }
-            return string.Join("\n", (upside && definition.RetainedPower != Power.None
-                    ? new[] { Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(definition.RetainedPower, definition.RetainedPowerValue) }
-                    : Enumerable.Empty<string>())
-                .Concat((upside ? definition.Upside : definition.Downside).Select(Transform))
-                .Concat(upside ? definition.Grants.Select(Describe) : Enumerable.Empty<string>()));
-        }
+        public static string Describe(AuthoredMechanismSpec spec) => StarMapPresentation.DescribeMechanism(spec);
+        public static string DescribeKeystone(KeystoneDefinition definition, bool upside) => StarMapPresentation.DescribeKeySide(definition, upside);
         internal static void ValidateBindings(IReadOnlyList<TalentDef> tree)
         {
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();
