@@ -2,7 +2,7 @@
 
 ## 1. 概要・確定方針
 
-14セット・84部位の設計。本改訂は**森の悪魔1セットの再設計だけ**で、実装しない。§3.1の新仕様は旧Demon案と矛盾する共通記述に優先する。ほかの13セットは旧案を残し、再設計の段階2で扱う（§4の既存の実装段階とは別）。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
+14セット・84部位を、実際のボス技と固有報酬の仕組みに沿って再設計した仕様書。**設計のみで実装しない**。Demonの993ee1dの遊び方・数値は維持し、全体で使う機構へ定義方式を共通化する。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
 
 | 項目 | 方針 |
 | --- | --- |
@@ -10,11 +10,11 @@
 | 構成 | Weapon / Armor / Charm / Head / Hands / Feet 各1点。通常の2/3/6ピース効果は累積。4/5専用の通常効果なし（任意連携には4部位段階あり） |
 | 入手 | 対応ボス撃破ごと、各プレイヤーが独立抽選。当選時、そのセットからランダムな1部位のみ |
 | 限定 | 他ボス・通常敵・汎用プール・宝箱・商人・製作等から新規取得不可 |
-| 強さ | 既存6部位セットより一段強くする。Demonは§3.1の新機構予算、未改訂13案は§2.3の旧数値基準 |
+| 強さ | 既存6部位セットより一段強くする。2/3点は対応する既存セットの予算約1.4倍を参考、6点追加は既存中央値0.925の約2倍＝1.85を設計目安とする |
 | 任意連携 | 自分の対応記憶／エッセンス装着＋対応セット2/4/6部位で段階強化。セット単独で成立、本体報酬単独は本体どおり（このセットの連携なし） |
 | 報酬なし | PrimusAeron / Polaris は本体報酬との連携なし。追加の任意要素も今回は採用しない |
 | 同期 | ボス型名・抽選条件はホストの撃破factが正。抽選結果は個人別、戦闘効果はホストが適用 |
-| 推奨事項の確定 | 悪夢補正はLimboを含む。日英テーマ名・部位名は§3を採用。Azurakの6点は召喚構成向けとし、別途任意の召喚手段が必要（穴掘りは不要） |
+| 名称・自立性 | 日英名は§3を採用。任意の2/3部位で段階機構が成立し、6部位も特定記憶・別の召喚手段を必須にしない |
 
 ### 設計原則
 
@@ -26,6 +26,8 @@
 
 - MOD調査：`~/dev/sod-prompts/i48-research.md`。本体15型・報酬・戦闘テーマ：`~/dev/sod-prompts/i48-bosses-src.md`（r1.4.0.13）。本体データは転記せず、以下は型名と短い要約のみ。
 - 今回の森の悪魔／ヒステリー／接続APIの行根拠と調査要約：`~/dev/sod-prompts/i48-demon-facts.md`。元DLLからの必要型抽出もリポジトリ外。旧調査の「樹木召喚ミサイル」「瞬間移動」という読みは同factsで訂正する。
+- 残り13ボス・報酬の行根拠は `~/dev/sod-prompts/i48-facts-<boss>.md`（`<boss>`は§3見出しの`boss_`を除いたslug）。Unityのserialized値・説明本文が未取得の箇所は推測せず、MOD設計値と区別する。
+- 全体の集計・装備検証・Build伝送・移動／効果／召喚APIの行根拠：`~/dev/sod-prompts/i48-facts-common.md`。これらはコード上の接続可能性であり、新機構のゲーム内動作を観測したという意味ではない。
 - 現行定義：[Content.cs](../../src/SodRpg.Core/Game/Content.cs)（`UniqueDef` / `SetDef` / `Sets` / 上限）、[Links.cs](../../src/SodRpg.Core/Game/Links.cs)、[Loot.cs](../../src/SodRpg.Core/Game/Loot.cs)、[KillClassificationLedger.cs](../../src/SodRpg.Core/Game/KillClassificationLedger.cs)。
 - [付録A A6/A10](../appendix-a-content.md)：限定固有品・非必須性の方針を継承。ただし同付録の独自ボスを本体14型と同一視しない。[付録B](../appendix-b-numbers.md)は初期設計値であり、現行ドロップ率の根拠にしない。
 - [既存6点バランス](v1.32-six-piece-balance.md)と [SetBalance.cs](../../tools/BalanceSim/SetBalance.cs) の上限正規化を数値予算の参考にする。代理値はDPS・実効耐久ではない。
@@ -40,11 +42,11 @@
 | スロット | 保存値 Weapon=0 / Armor=1 / Charm=2 / Head=3 / Hands=4 / Feet=5を維持。表示順は既存 `Content.SlotOrder` |
 | 土台・レア度 | 既存600土台から対応枠・テーマに合う `BaseId` を選ぶ。新土台・レア度なし。Legendary、通常のimplicit・特性3本・アイテムレベル・強化・覚醒を継承 |
 | 出所 | 確定：`SetDef` に任意の `BossTypeName` を追加。既存セットはnull。型名→セットと限定Unique ID集合を定義から導出し、手書きの別ID台帳を増やさない |
-| 部位固有効果 | 旧セット部位の空Power配列は維持。ボス部位は `SetId` とPower1行を同時指定する入口を使用。Demonでは§3.1の新Powerを使う |
+| 部位固有効果 | `UniqueDef.BossMove` に既知の部位profile IDを1件指定する。旧セットはnull。ボス別Power列挙を増やさず、6部位の技を共通実行機構で表す |
 | 名称 | ボス名を出さないテーマ名（日／英、§3）を採用。公式ボス日本語名は未取得。型名由来の「スコル」等の仮名は採用しない |
 | 表示 | 出所表示もテーマ名＋ボス型名の内部対応を使用。名前・効果・連携は `Txt` と既存説明機構。公式名取得後もIDは不変 |
 
-部位固有効果は `SetId` とPower1行を同時指定できる `UniqueDef` 定義入口の追加で表す。現行 `Loot.RollUnique` は定義Powerをコピーし、`Build.Compute` は部位Powerとセット効果を独立集計、`HostGearValidation` は定義Power数・種類・順序・値を照合できるため、部位Power用の新集計／検証規則は不要。ビルド装備14欄も維持。部位Powerの強化・覚醒は既存倍率、セット段階連携は§2.4の固定値。既存48セット・既存単品Linkの倍率は変更しない。
+ボス部位は `SetId` と `BossMove` を持ち、旧汎用Powerと二重発動させない。`Loot.RollUnique` は既存UniqueIdを保存し、`Build.Compute` が定義から部位profile／2・3・6段階を導出する。ホストは `HostGearValidation` の検証済み装備から同じprofileを再構築し、申告された命令列を信用しない。固有技も著作済み効果1枠として強化milestoneの判定・表示へ接続し、空Power配列を理由に追加ランダムPowerを付けない。既存の強化・覚醒倍率は部位のdamage／heal／shieldだけへ1回適用。Demonは各channel明記cap、§3.2以降は元式内capの計算後に倍率を最大3倍へ制限して適用する。回数・距離・CD・寿命・CC強度は固定、セット／連携段階に倍率なし。既存48セット・単品Linkは不変。
 
 ### 2.2 専用ドロップ
 
@@ -73,41 +75,43 @@
 
 ### 2.3 「一段強い」の数値基準
 
-以下の旧案比較は強化0・覚醒0・連携なし。§3.2以降の未改訂13組は、2/3点を既存各行の**1.4倍、四捨五入**（0.5切上げ）、6点を既存中央値の約2倍とした旧予算を残す。Demonは数値の上乗せ方式を廃止し、§3.1の機構・新Power予算へ置き換える。
+強化0・覚醒0・連携なしで比較する。2/3点は従来の対応セットの予算約1.4倍を参考とするが、新しい技をArmor等の各行1.4倍へ機械的に置換しない。2点で技の起点、3点で位置／周期／回収を変え、6点で完成循環を追加する。
 
-| 対応例 | 2点：既存 → 案 | 3点：既存 → 案 | 6点：既存 → 案（正規化予算） |
-| --- | --- | --- | --- |
-| 旧bastion比較 → boss_demon再設計 | 防御数値ではなく移動着地の踏みつけ | 踏みつけ後の遅延樹木を追加 | §3.1：樹木回収から連続踏みつけ・再植樹。新Powerの定義予算1.85（未実測） |
-| winter → boss_skoll | ColdAmp 10→14、Armor 6→8 | Frost 45→63、Bulwark 30→42 | ImmovableStance10＋BrittleIce40（0.944）→19＋81（1.850） |
-| cinder → boss_infernus | FireAmp 10→14、AttackPct 5→7 | Ember 45→63、Blaze 50→70 | Wildfire32（0.533）→Wildfire56＋Shatter138（1.853） |
-| lamp → boss_white_night | LightAmp 10→14、MaxHealthPct 8→11 | Radiance 75→105、SecondWind 25→35 | OverflowingLife40＋WatchfulHand18（1.000）→StardustCycle28＋GleamingWard17（1.878） |
-| dusk → boss_dark_moon | DarkAmp 10→14、CritChancePct 4→6 | Umbra 75→105、Executioner 40→56 | UmbralHeritage50（0.500）→UmbralHeritage93＋WeakPointWound147（1.849） |
-| firmament → boss_nyx | PowerPct 6→8、Haste 8→11 | UltimateSurge 20→28、StarShield 12→17 | AceInHand12＋OpeningSalvo20（0.944）→22＋42（1.850） |
+- 6点追加の設計予算は**1.85**。§3.2以降は独立channel A=90/cap100、B=38/cap40に配分し、`90/100 + 38/40 = 1.85`。係数がdamage以外なら単位と効果全体への配分を各節に明記する。Demonは元の90/100＋38/40を維持。
+- これは新channel capを置いた定義予算であり、既存48組中央値0.925の2倍という強さの目安。実効DPS・耐久の2倍、あるいは新機構が既存Powerと等価だという証明ではない。実装後も比較母集団は旧48組に固定し、ボスセットを混ぜて中央値を上げない。
+- 単品は小さな技1つと内部CD、2/3点は新しい操作循環、6点は高い追加予算を与える。報酬連携をセット基礎強さへ算入しない。cap・同一対象のhit gate・配置数・有効時間・世代制限を係数の上限と独立に保つ。
+- 既存AD/AP・軽減・属性反応・Linkの上限は緩めない。即死・HP割合攻撃・無敵延長・CD撤廃・生成攻撃の自己再発動を行わない。本体のHP閾値や数値を、未取得のアセットの代わりに捏造しない。
 
-- 未改訂13案の6点追加予算 `Σ(Value / Content.PowerCap)` は**1.849〜1.878**。既存48組の記録中央値0.925の約2倍。Demonは§3.1の新capによる1.85を設計目標として採用するが、異なる機構を同価値とみなす代理値であり、強さの実証ではない。
-- 未改訂13案の各部位は正規化予算約0.025〜0.083の旧小効果。Demonの新機構単品は§3.1のCD・対象・世代制限で抑え、通常固有品の2大効果は載せない。
-上限は強さではなく破綻防止の境界として維持する。部位・3点・6点の同種Power合算、条件付きAD/AP・軽減・Linkの既存上限を緩めず、v1.29系Power／属性反応の実行時capも守る。無敵の延長、即死／HP割合処刑、発動CD撤廃、連鎖世代追加は行わない。CD短縮は既存の残りCD割合と発動条件のまま、余韻は加算せず既存の窓・最高値規則を使用し、追加攻撃／反応を自己再発動させない。目標予算へ届かせるためのcap超過は認めず、実効DPS1.4倍や無被弾を保証しない。
-- `SetBalance.PowerScore` / `SixBonusGain` は実装後の予算較正に使用できる。既存48組を比較母集団として固定し、ボスセットを混ぜて中央値を上げない。連携を基礎強さへ算入しない。上限飽和や条件不成立を含む実効出力は未較正。
+### 2.4 段階連携・共通戦闘機構
 
-### 2.4 任意連携・効果機構
+12セットの連携条件は、自分の対応報酬装着＋異なるセット部位数。0/1はなし、2/3・4/5・6は段階1/2/3、最高段階プロファイルだけを選ぶ（下位の動作を含む場合はそのプロファイルに記載）。所持・味方の装着・祠使用だけでは成立しない。Primus／Polarisは連携なし。白夜／暗月は同じ記憶でも各セットの部位数を独立に数える。
 
-連携を持つ12セットは、**対応セットの異なる部位数＋自分の対応記憶／エッセンス装着**を条件にする。部位の組合せは任意でCharm必須ではない。0/1部位は連携なし、2/3は第1段階、4/5は第2段階、6は第3段階。最高の1段階だけ有効、段階の累積なし。所持・祠使用・味方の装着だけでは成立しない。白夜／暗月は個別に数え、部位数を合算しない。
+**共通定義**：`BossMoveProfile` は部位の技と2/3/6段階、`BossRewardProfile` は報酬固有の作用を記す既知IDのデータ。`UniqueDef.BossMove`／`SetDef.BossStages`（閾値2/3/6）／`SetDef.LinkStages`（2/4/6）へ接続。汎用プログラムや自由な再帰グラフは作らず、profileは起点・条件・有限payload・係数cap・CD・個数／寿命の固定レコード。旧Demonの10Power名は効果channel IDへ移管し、新Power／Stat enumは**0種**。新LinkKindは **`BossReward` 1種**（Value=段階番号1/2/3、cap3）、旧`HysteriaGrove`案は撤去し同じ動作をDemon profileに収める。
 
-- **データ**：`SetDef.LinkStages: SetLinkStage[]` に `SetLinkStage { RequiredPieces, LinkDef Link }` を3件追加（閾値は2/4/6）。全段階のRequiresは同じ対応型名1つ、Kindも同じ、Valueは単調増加・`Links.Cap(kind, 1)`以内で、各Linkは `Links.Validate` を通す。Primus／Polaris・旧48セットは空。ボス部位の `UniqueDef.Link` は全てnull。
-- **集計**：`Build.Compute` の既存UniqueId重複除外によるセット集計後に最高段階を選ぶ。同条件の装備連携と同じ集約・上限経路へ入れ、集約確定をセット段階選択後へ移す。MemorySurgeは選択した定義LinkDefを再利用し、既存の参照同一性による余韻保持・独立窓・最高値規則を守る。セットごとに1候補だけ、強化／覚醒倍率なし（単品の倍率起点を新設しない）。
-- **判定時点**：装備交換・再接続のビルド再構築で部位段階を更新し、ホストの既存装着走査と各記憶の起点イベントで `Links.Satisfied` を適用する。段階低下／装着解除では旧段階の余韻も既存の保持・失効処理へ反映し、6部位時の高い値を残さない。段階上昇は余韻を自動発動せず、次の対象記憶使用から新しい値。
-- **同期**：参加者表示とホスト再構築で同じセット定義・部位数・段階選択を使用。ホストは検証済み装備から計算し、参加者の申告Linkを信用しない。生成結果は既存 `Build.Links` の線形式に載り、部位数や段階専用のwire／保存フィールドは追加しない。
-- **説明表示**：日英で対応報酬名、2/4/6の全数値、現在部位数・有効段階・対象装着の可否・次段階までの不足数を表示。単品説明もセット段階への参照にし、「Charmだけで発動」の旧表示は廃止。§3の `a/b/c` は2/4/6部位の値。
+profile IDはセットから導出し、同Requiresの異なるボス連携を合算しない。Buildのboss系集約キーは `(SetId, ProfileId)`、各段階は固定値・最大段階選択・覚醒倍率なし。`BossReward`は通常Linksに合算せず、選択したSetDefからprofileを導出して`BossRewards`へ入れる。既存のLinkキーや最高余韻を流用して白夜／暗月を潰さない。`Build.BossMoves` は既知profile IDとchannel係数Milli、`BossRewards` はSetId／profile ID／段階番号を持ち、それぞれ新しい独立codec節に必ず含める。重複ID・未知ID・過剰件数（各64件まで）を拒否し、`HostBuildValidation.EffectsMatch` の比較とApplied summaryにも含める。ホストは既存装備入力のUniqueId／強化／覚醒から再導出し、申告係数を使わない。永続保存は既存UniqueIdが正、予約・印・modeは保存しない。
 
-| LinkKind | 2部位 | 4部位 | 6部位 | 既存効果（Valueの意味） |
-| --- | ---: | ---: | ---: | --- |
-| Attune | 8 | 14 | 20 | 条件装着中、自分の攻撃力・魔力+Value% |
-| Guard | 8 | 14 | 20 | 条件装着中、最大HP+Value%・防御+Value |
-| MemorySurge | 12 | 20 | 30 | 対象記憶使用後5秒、攻撃力・魔力+Value% |
-| MemoryHaste | 15 | 25 | 40 | 対象記憶使用時、そのCDの戻りをValue%加速 |
-| MemoryDamage | 12 | 20 | 30 | 対象記憶によるダメージ+Value% |
+| 共通実行機構 | 範囲・既存接続点とホスト／参加者の整合 |
+| --- | --- |
+| M1 形状攻撃・有限多段 | 円／扇／線／列を同じ範囲検索と `DamageAround` のdamage dispatch方式へ接続。1pulse1対象1hit、段数・対象上限はprofile固定、ホストのみ命中裁定 |
+| M2 有界弾道 | 直線／放射／追尾の弾状態を `Tick` と `DewPhysics.SphereCastAllEntities`／本体Projectileの壁判定で処理。原則速度12m/秒・射程8m・幅0.4m、異なる値は§3へ明記。波内hit集合を持ち、参加者は発射／消滅通知を描画 |
+| M3 予告・遅延・持続場 | `PendingGimmick` のCenter／Dueと同じ固定予約方式。円／線・噴出・安全域・回収は有限状態。独立寿命tokenごと1場、固定地点列は1予約に束ねる。本人・セットごと同時4場まで、満杯なら新規生成を見送り（§3でより小さい上限・最古置換を明記したprofileはその固定規則）。ホストの時刻で1回消費 |
+| M4 本人の限定移動 | native移動完了の捕捉、追加dashは `GetValidAgentDestination_LinearSweep`／`StartDisplacement` の方式。地形越え・無敵を追加しない。自動爪dash／敵押出しを起点から除外し、ホストの到達地点を配信 |
+| M5 敵の位置操作 | 本体Knockback／Controlの方式で吸引・押出し。新しい強制移動はボス／CC免疫／無効対象へ適用せず、1要求最大2m・同対象1秒gate。damageと移動の成否を分離し、サーバー状態同期を利用 |
+| M6 短命の分身・設置射手 | 最大2体／本人・セット、寿命はprofile固定。親owner・装備epochを追跡し、有限攻撃だけ実行。Native Summonを使う型は `SpawnSummon` のCastInfo／owner検証と既存Spawn経路、非Entityの設置物はホストM1/M2＋表示通知で実装。どちらかを各節で確定し、偽のSummon proc／通常lootを付けない |
+| M7 独立状態・防護 | `CreateBasicEffect`／既存shield pool／final stat processorを使い、発生源別IDとタイマーを保持。減装／解除では自身のcontainer／modifierだけ除去し、本体のCC耐性や状態を壊さない |
+| M8 小さな印・段階ledger | 主撃／左右組／3形態／最大3段の循環。印の対象数は最大8、主撃カウンタは最大6。期限は明記した秒数を最後の有効native進行から数え、成功加算で更新する（個別に固定寿命を記す場は別）。activationを重複計上せず、生成世代から進行させない |
 
-共通基盤は①ボス専用取得経路、②Power付きセット部位、③2/4/6段階連携。Demonにはさらに§3.1の**新Power10種・LinkKind1種・専用トリガー3種**と2点Powerの定義／集計経路が必要。§3.2以降は新戦闘機構0件という旧案を暫定保持し、再設計段階2で見直す。召喚・吸引・武器切替・本体変身の追加は今回行わない。
+**共通イベント語彙6種**：E1本人のnative通常主撃成功、E2本人記憶のConfirmedUse、E3本人移動完了、E4本人native与／被damage、E5報酬型限定のinstance／状態event、E6ホスト時刻／mode遷移。E1/E4は帰属packetを確認し1activation1通知、E2は既存`NativeMemoryCasts`、E3はcastとdisplacement寿命を対応付ける追加adapter、E5は本体FromSkill生成event／限定Harmony／processor、E6は`HostAuthority.Tick`。別セットの生成物を本人nativeとして再入力しない。
+
+**報酬アダプタ11種**：Hysteria、GlacialCore、EternalFlame、BeamOfBalance、HerWorld、LastStarlight、SoulPrison、Burrow、WorldCracker、BigChomp、ShoutOfOblivion。汎用の使用後AD/APバフで置換せず、型・owner・parent・instance寿命・native成功eventを確認する。Beamだけは1adapterへ白夜／暗月の別profileを渡す。対象数が増えてもprofileの発生数／回復量／配置上限を増殖させない。
+
+**総数の数え方**：共通実行8種＋固有報酬adapter11種＋共通統合3経路（定義／集計／検証／表示、段階連携dispatch、視覚通知／snapshot）＝**22実装単位**。6イベント種・新LinkKind1種はこれらのschemaで重複加算しない。14セット・84部位・42通常段階・12連携profile／36連携段階はデータ件数で、別runtimeを162個作るという意味ではない。既存の専用取得経路は追加機構数へ再計上しない。
+
+- `H=max(AD,AP)`、追加攻撃は優位側の物理／魔法（同値物理）。属性は§3の指定、指定なしは無属性。`25`/`25%H`は`0.25H`、heal／shieldもH表記に従い、%最大HPは明記した値だけ。距離はm、時刻は秒。設計値は発生時に凍結、通常防御計算を1回だけ適用、追加会心・native通常攻撃procなし。M2/M3の生成damageにnative回復や報酬procをコピーしない。native状態延長も本体のboss／CC免疫判定を維持する。
+- 部位の主撃／記憶／移動効果は、段階効果に必要な特定部位を要求しない。2/3/6は累積、4/5の通常段階なし。channel A/Bの係数cap以外に、1敵1発動の合計上限・CD・同時数も固定。各profileの数値が本体の元スキルを書き換える場合だけ報酬adapterに隔離する。
+- ホストが装備からprofileを再構築して効果を裁定し、参加者の地点・対象・stage申告は信用しない。表示・予告通知はownerNetId／run・room・equipment epoch／effect ID／時刻／地点列を持ち、同じIDの再送は表示更新のみ。Clock offsetは本体同期時刻に合わせ、遅延受信は残り時間だけ描画する。
+- `DewEffect.PlayNewNetworked` のasset pathは親identity内に必要。任意ボスFXをHero親で送る設計にせず、native資産のローカル再生または同じ形状を表すMOD描画を専用通知で行う。新しいMirror prefab型を必須にしない。再接続はホストの生存効果snapshot、終了一覧／epochで古い予告を除く。新wireにはProtocol更新が必要。
+- 減装・記憶交換でepochを進め未消費予約／印／左右組を破棄、native寿命／pool再利用を越えて参照を使わない。死亡・部屋遷移・owner離脱でも破棄。消費型報酬の成功callbackで確定した有限shieldだけは、native消費で撤回せず期限まで保持（任意の減装・死亡・部屋移動では除去）。変更中のnative状態は固有modifierだけ現行段階へ再適用し、元値を復元する。段階上昇だけで攻撃や召喚を発動しない。
 
 ### 2.5 KillSync・Protocol・保存
 
@@ -118,15 +122,15 @@
 | 結合・保留 | `KillClassificationLedger.TryResolve` → `PendingRunKill` → `PendingRunRewards` → `GrantPendingKill` → `Rules.OnKill`。型名・pの条件はfactからのみ採用し、local死亡側の推定で上書きしない |
 | 権威と参加 | ローカル死亡は既存の敵対／報酬資格・HeroKey・level等の情報源。専用抽選資格はホストが許可型を付けたfact。とどめ／与ダメージの有無で人数分の抽選を減らさない。参加中の既存報酬資格を持つ各プレイヤーに同じpで1回ずつ |
 | 重複・順序 | 既存 RunId / EventId / MonsterNetId の結合・解決済み記録を共用。通常＋専用を同じ撃破処理に含め、保留・再送・復元で専用だけ再抽選しない。抽選結果をホストと全員で一致させる必要はない |
-| Protocol | 基点は14、#48単独では15へ更新。#47も14→15を提案中のため、**後からマージする側が先行側の値から次の版へ上げる**（#47先行なら#48は16、逆順なら#47が16）。同じ15を異なる線形式で共用しない。KillSyncの線形式変更で更新必須、ID追加だけとは区別。Mirrorの型ルーティングを継承し、別の「メッセージ番号」は作らない |
-| 内容整合 | ID追加で `ContentFingerprint` は変化する。ただし現行指紋は出所や率の値を含まないため、型名→セット対応・専用pの係数・LinkStagesの閾値とLink定義を対象へ追加する。Helloで旧版／異内容の効果適用を拒否し、専用fact受理にも内容一致を要求する（現行 `OnMonsterKill` のprotocol/run/generation確認だけに頼らない） |
+| Protocol | 新Build profile節・固有報酬段階・視覚通知の実装時は、**その時点の `Protocol.Version` の次版**へ更新する（現コード15なら16、#47等が先に更新済みならさらに次）。異なるschemaで同じ版を共用しない。今回の設計書改訂ではコードの版は変更しない |
+| 内容整合 | `ContentFingerprint` の対象に型名→セット対応・専用p・全profile／channelの係数cap・時間・個数／世代上限・LinkStages・native adapterの作用と順序を含める。Helloで異内容の適用を拒否し、Build／効果通知／専用factにも内容一致を要求する |
 | 永続保存 | 装備は既存 BaseId / UniqueId で保存し、SetIdはUnique定義から参照。段階連携は定義・装備から再計算し、専用保存項目は追加しない。開発付与の出所だけは遺物の任意キー `developerGranted` に保存し、欠落時はfalse。`Profile.CurrentVersion=4`、`ResetBeforeVersion=3`、`LedgerState.CurrentSchemaVersion=1`を維持。プロフィールリセットなし |
 | 撃破の保存 | `ProfileCodec.RunRecovery.cs` のpending killとkill分類fact両経路に任意キー `bossTypeName` / `bossDropNightmare` / `bossDropDepth` を追加。未結合 `KillClassificationCheckpoint.Facts`／`Deaths[].Kill`、結合済み未払い `RunRecoveryState.PendingKills` とclone・capture・restoreも保持。旧保存の欠落はnull/false/0＝通常報酬のみ継続、専用抽選なし。旧撃破を推定して遡及支給しない |
 | 戻し運用 | 追加IDを知らない旧MODでは未知Uniqueの既存除外処理が働くため、新品を含む保存を旧版へ戻して使う互換は保証しない。旧版対応の別名／shimは設けない |
 
 ## 3. 14セット案
 
-部位順は依頼順。IDは見出しのslugから§2.1で導出。§3.1の新Powerの入力単位・発動条件は同節で定義する。§3.2以降は旧 `Content.FormatPower` / `NewPowersV129.Describe` の単位・挙動を暫定保持する（すべてが%ではない）。「本体単独」は全対象共通で従来の本体固有効果をそのまま使え、数値・挙動の変更なし。
+各部位と段階は§2.4の共通profileへ定義する。以下の値は本体データの転写でなく、新しいMODの設計値。「本体単独」は全対象共通で元の固有効果をそのまま使え、装備しないときの数値・挙動を変えない。専用ID／取得条件／強化・覚醒の基本規則は§2.1〜2.3を共用する。
 
 ### 3.1 `boss_demon`：荒ぶる樹界 / Rampaging Grove
 
@@ -144,9 +148,9 @@
 
 #### 6部位：単品でも技が使える
 
-`Value / cap` は新Powerの定義値／合算上限。Armor以外のValueはHに対するダメージ%。部位の強化・覚醒は既存倍率でValueだけを伸ばしcapで止める。回数・半径・CD・寿命・樹芽数は増やさない。
+`Value / cap` は共通profileの効果channel定義値／合算上限（Power enumではない）。Armor以外のValueはHに対するダメージ%。部位の強化・覚醒は既存倍率でValueだけを伸ばしcapで止める。回数・半径・CD・寿命・樹芽数は増やさない。
 
-| 部位 | 装備名（日 / 英） | 技の翻案・単品の動作 | 新Power：Value / cap |
+| 部位 | 装備名（日 / 英） | 技の翻案・単品の動作 | channel：Value / cap |
 | --- | --- | --- | --- |
 | Weapon | 震根の槌 / Quakeroot Maul | 主撃3回ごと、命中地点に半径3mの踏みつけ衝撃波。内部CD2秒。密集へ通常攻撃を差し込む | `DemonImpact`：25 / 80 |
 | Armor | 不退の樹皮 / Unyielding Bark | 自分の移動スキルによる移動完了後0.6秒Unstoppable、内部CD8秒。無敵・軽減ではなく、前進直後の攻撃をCCで止められにくくする | `DemonStride`：6 / 10（Value×0.1秒） |
@@ -172,7 +176,7 @@ Armor／Feetは敵の押し出しとヒステリー爪自身のdashでは発動�
 
 #### ヒステリー連携：爪で森を駆動する
 
-新 `LinkKind.HysteriaGrove`。Requiresは自分の `St_U_Hysteria`、2/4/6部位のValueは**段階番号1/2/3**（%ではない、cap3）。最高段階だけ採用し、下位動作を含む段階プロファイルを選ぶ。装着だけで爪を生成せず、本人の本体 `Se_U_Hysteria` 生存中・そこから生成された `Ai_U_Hysteria_Claw` だけに作用する。
+共通 `LinkKind.BossReward` のDemon profile。Requiresは自分の `St_U_Hysteria`、2/4/6部位のValueは**段階番号1/2/3**（%ではない、cap3）。最高段階だけ採用し、下位動作を含むプロファイルを選ぶ。装着だけで爪を生成せず、本人の本体 `Se_U_Hysteria` 生存中・そこから生成された `Ai_U_Hysteria_Claw` だけに作用する。
 
 | 部位数 | 固有要素への直接作用 | 使い方 |
 | --- | --- | --- |
@@ -184,257 +188,373 @@ Armor／Feetは敵の押し出しとヒステリー爪自身のdashでは発動�
 
 **単独／併用**：セット単独は通常攻撃と移動で森を作り、好きな記憶で成立。ヒステリー単独は本体の自動爪・自己回復・制約のまま。併用は、能力ロック中も爪が植樹と回収を担い、左右の手拍子に沿って森の列が伸びる。汎用の「記憶使用後AD/AP増加」は一切付けない。
 
-#### 新機構と実装可能性（設計のみ）
+#### 共通機構への接続（挙動・数値は993ee1dを維持）
 
-| 必要機構 | 既存の接続点・追加箇所・ホスト／参加者の整合 |
-| --- | --- |
-| 新Power10種と2点Power | `Content` の部位Power入口／`ThreePiece`／`SixPiece`、`PowerRuntime` の戻り値方式を再利用。2点には `SetDef.TwoPiecePowers`（旧セットは空）を追加し `Build.Compute` で集計。`PowerCap`・説明・ホスト再構築／検証・内容指紋へ全10種と固定パラメータを登録し、既存の装備／Power線形式を使う |
-| 専用トリガー①森の主撃 | `HostAuthority.MemoryActivationAttribution` の主通常攻撃packet／activation IDと成功ダメージを使用。専用カウンタへ1activation1通知、生成originを除外。ホストだけが数え、参加者の命中申告は使わない |
-| 専用トリガー②本人移動の完了 | 既存 `Control.ClientEvent_OnTeleport`／`OnDisplacementStarted` と本体移動スキルcastを対応付け、`HostAuthority.Tick` でdisplacement終了・到達を確認する新アダプタを追加。開始では攻撃せず、敵の押出し・爪dashを除外。ホストの実到達地点だけを使う |
-| 専用トリガー③本体ヒステリー爪 | 本体 `HeroEvent_OnAbilityInstanceBeforePrepareFromSkill`／Createdと `Ai_U_Hysteria_Claw.OnHit` へのホスト限定adapterで、親Se instance・左右・爪activation・最初の成功ダメージを結合。爪終了時に左右組を確定し、通常Fired/Hitや汎用記憶使用イベントだけで代用しない |
-| 踏みつけ・遅延樹木・列 | 既存 `DamageAround`／範囲検索・`PendingGimmick` の固定中心／Due方式を再利用した専用の有界予約状態を追加。4芽・列1件を本人ごとに保持し、ホストだけが回収／噴出／ダメージを実行。死亡・部屋移動・所有者離脱で予約を破棄 |
-| 放射ミサイル | 本体 `DewPhysics.SphereCastAllEntities` と `Projectile` の `Physics2D.CircleCast`／壁レイヤー判定を参考に、`HostAuthority.Tick` で有界の最大6弾を前進・区間判定する。波内の命中済み敵集合で重複を除外。元ボスAiの敵味方・caster制御・ダメージを再利用せず、新しいMirror prefab型も要求しない。ホストの発射／消滅通知で参加者は弾を描画するだけ |
-| 短時間Unstoppable | 既存 `HostAuthority.UnbowedMind` と同じ `serverActor.CreateBasicEffect` を独立ID・タイマーで使用。死亡／装備解除で自身のcontainerだけ破棄し、本体ヒステリーのUnstoppableを消さない。参加者は本体状態同期を表示 |
-| 新LinkKindと鈍足置換 | `Links` の判定・最高段階選択を再利用。`HysteriaGrove` は加算せず最大段階、単品覚醒倍率なしとする例外を `Build` の集約・validate・cap・説明へ追加。本体 `Se_U_Hysteria.OnCreate` の `DoSpeed(-50)` に限定adapterを置き、戻り値のSpeedEffectを追跡して3段階なら-25へ置換。active状態の段階変更時も同じSpeedEffectだけを `StopBasicEffect`／`DoSpeed` で置換し、条件解除時は-50へ戻す。状態とpool寿命を越えて効果参照を使わない |
-| 予告・噴出・弾の見た目同期 | `DewEffect.PlayNewNetworked` は親identity内のasset pathを要求するため、任意のボスFXをHero親で送らない。共有ボス資産から外見を得るMODローカル表示＋専用ホスト通知（ownerNetId・room epoch・effect ID・種別・地点列／発射方向と速度・発生時刻・終了／回収）を追加。参加者は描画だけ、再接続時はホストの生存予告snapshotで復元。専用通知を含むProtocol改訂が必要 |
+M1/M2/M3/M7/M8、E1/E2/E3/E5/E6。主通常packetの帰属・移動完了・FromSkillのSe／Claw生成と成功damageを結合する。Hysteria adapterは左右組と最初の成功命中を確定し、`Se_U_Hysteria.OnCreate`の`DoSpeed(-50)`が返すSpeedEffectだけを追跡。段階3なら-25、解除なら `StopBasicEffect`／`DoSpeed` で-50へ戻し、本体ロック・回復・Unstoppableは変更しない。樹芽・列・弾・表示通知・減装失効は§2.4を共用する。
 
-参加者とホストの段階・Power集計は同じ定義、効果の正はホスト。装備／記憶変更で装備epochを進め、未完了の左右組・部位カウンタ・予約・芽を破棄し、6点効果を減装後へ持ち越さない。移動先・回収対象・発生数を参加者から受理しない。内容指紋へ新機構の係数・時間・上限・段階プロファイルも含める（ここでは検証用ハッシュを作らない）。セーブへ戦闘予約を永続化せず、再接続の効果snapshotはホストの現行状態だけ。ゲーム実行による較正・表示検証は本設計作業では行っていない。
+ホストが現行装備からDemon profileを裁定し、参加者は生存効果通知を表示する。減装時の未完了左右組・予約・芽の破棄と、同じ本体状態だけを扱う寿命規則は維持する。ゲーム実行による較正・表示検証は本設計作業では行っていない。
 
 ### 3.2 `boss_skoll`：氷刃の王装 / Iceblade Regalia
-**段階2で同じ原則で再設計予定**：§3.2〜§3.14の13セットは旧案をそのまま残す。以下の汎用連携や数値だけの段階強化は、新しい設計原則を満たした完成案とは扱わない。
 
-`Mon_SnowMountain_BossSkoll`：Cold。オーラ刃、剣／矢召喚、旋風、落下、捕縛。冷気と会心の継続攻撃。
+`Mon_SnowMountain_BossSkoll` / `Gem_U_GlacialCore`：予告斬撃で地点を確保し、氷矢の残留場を氷雨で囲む。Coldで発動する本体回復→冷気弾の循環を直接支援。
+以下は全て設計値。H=max(AD,AP)、追加damageは優位type（同値物理）/Cold、追加会心・attackeffect・procなし、セット生成effectはE1〜E5 native判定から除外；CDは本人/部位別、1activation1count。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+| 部位 | 装備名（日 / 英） | 実技翻案・単品挙動 |
 | --- | --- | --- |
-| Weapon | 氷雨の剣 / Icerain Sword | 通常攻撃で冷気付与：Frost 4 |
-| Armor | 氷刃の帷子 / Iceblade Mail | 定期障壁：Barrier 1 |
-| Charm | 雪嶺の核 / Snowcrest Core | 低HP時回復：SecondWind 3 |
-| Head | 氷輪の冠 / Icering Crown | 高HP時攻撃力・魔力：Vigor 2 |
-| Hands | 霜裂きの手甲 / Frostrend Grips | 冷気敵への会心追撃：BrittleIce 4 |
-| Feet | 氷渦の鉄靴 / Icewhorl Sabatons | 回避時の周囲攻撃：Whirlwind 8 |
+| Weapon | 氷雨の剣 / Icerain Sword | Atkの予告斬撃：E1で敵位置を固定（本人から最大8m）、0.25秒後長4m×幅1mの刃1本、0.28H、CD5秒。 |
+| Armor | 氷刃の帷子 / Iceblade Mail | AuraBlade遅延切返し：E4被弾で被弾時本人地点を予告、0.40秒後半径2mへ0.25H、CD7秒。 |
+| Charm | 雪嶺の核 / Snowcrest Core | SummonArrow：E2でカーソル合法地点最大8mへ氷矢、0.45秒後半径1.8mに0.18H＋0.06Hを0.5秒間隔3tick、寿命1.5秒、最大1場、CD8秒。 |
+| Head | 氷輪の冠 / Icering Crown | AuraBladeRain：E1を3回/6秒で敵位置中心の横列3点（間隔1.5m）へ予告、0.50/0.75/1.00秒後に半径0.9m各0.12H、最大1列、CD8秒。 |
+| Hands | 霜裂きの手甲 / Frostrend Grips | AuraSlice：E1の4回目/6秒で前方長4m・60°を0.25秒予告して0.30H＋1m押出し、boss/CC immunity移動除外、CD6秒。 |
+| Feet | 氷渦の鉄靴 / Icewhorl Sabatons | Whirlwind：E3 native移動完了で本人追従半径2m旋風、0.25秒間隔4tick各0.07H、寿命1秒、最大1、CD5秒；自動追跡/操作blockなし。 |
 
-| 2点（基準winter） | 3点 | 6点 |
-| --- | --- | --- |
-| ColdAmp 14、Armor 8 | Frost 63、Bulwark 42（冷気付与・包囲防御） | BrittleIce 81、ImmovableStance 19（冷気会心・静止時攻防） |
+**2点**：E1/E2で氷印1（最大3、寿命6秒）。3印の次E1/E2で全消費し、その敵/カーソル合法地点最大8mを固定、0.4秒後長5m×幅1mのオーラ裂き0.35H、CD4秒；任意2部位で成立。
 
-連携：氷河のコア / Glacial Core `Gem_U_GlacialCore`、対応セット2/4/6部位＋対象エッセンス装着で Guard 8/14/20。役割：セット単独＝冷気会心型、本体単独＝従来のエッセンス、併用＝装着による耐久を足し、静止攻撃の隙を支える。
+**3点**：2点の固定地点に氷矢を追加、0.65秒予告後半径2mで0.15H、さらに0.5秒間隔3tick各0.05H、寿命1.5秒、同時1場；任意3部位で同じ入力から成立。
+
+**6点**：2点発動時、固定地点を囲む半径2mの4点へ氷雨（各半径1m、予告0.6/0.8/1.0/1.2秒、各0.225H）→終段で本人shield0.38H/2秒非加算、CD10秒、同時1雨。追加A=90/cap100（雨計0.90H/cap1H）、B=38/cap40（shield0.38H/cap0.40H）、予算1.85未実測。
+
+**報酬連携2**：装着Coreのnative Cold-trigger healだけ+20%（追加最大0.12H、CD2秒）。元のheal/crit/chainを保持し、その回復が本体bankへ自然に入る；セット生成Coldは本体healを再発動しない。
+
+**報酬連携4**：上記native Cold healの原因敵を2秒記録、Coreが次に作るnative projectileの標的を、元shootRadius内/生存/敵対ならその敵へ優先；native bank・damage・proc・射数は増やさない。
+
+**報酬連携6**：native Cold heal後1秒間、既存bankの実射のみ最大3発を最短0.10秒間隔へ加速（元の方が速ければ維持、CD8秒、1tick1射）；bank/合法敵なしでは加速せず弾・bank複製なし。
+M1/3/5/7/8＋E1/2/3/4/5/6；API：Gem_U_GlacialCore.OnDealDamage内RoutineのMoveNext cold-heal IL入口、InitProjectile beforePrepare postfix(info)、ActiveLogicUpdate射間隔入口、Actor.GiveShield/AbilityInstance.info。host裁定、参加者へ刃/場/氷印/加速残射を表示、死亡/KO/部屋/装備epoch/報酬解除で独自状態破棄（本体bankは本体管理）。
+調査根拠・入口詳細：`/home/wang/dev/sod-prompts/i48-facts-skoll.md`（serialized実値未取得、静的調査のみ）。
 
 ### 3.3 `boss_infernus`：噴火炉の軍装 / Eruptionforge Warplate
-`Mon_LavaLand_BossInfernus`：Fire。火炎息、隕石、炎柱、噴火、跳躍。火を重ねて群れへ広げる。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_LavaLand_BossInfernus` / `Gem_U_EternalFlame`：外へ走る噴火列→炎柱で占領→放射咆哮で押し広げる。報酬の呪い/火stack蓄積/5stack強制会心へ直接連携。
+以下は全て設計値。H=max(AD,AP)、追加damageは優位type（同値物理）/Fire、追加会心・attackeffect・procなし、セット生成effectはnativeイベント/curse判定から除外；CDは本人/部位別、1activation1count。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品挙動 |
 | --- | --- | --- |
-| Weapon | 噴火の大剣 / Eruption Greatsword | 通常攻撃で火付与：Ember 6 |
-| Armor | 炉壁の鎧 / Furnacewall Plate | 大被弾時障壁：Aegis 2 |
-| Charm | 不滅炉の火種 / Undying Furnace Spark | 瀕死敵への通常攻撃追撃：Executioner 5 |
-| Head | 熔冠 / Molten Crown | 通常記憶使用後の強化：Overload 2 |
-| Hands | 赤熱の拳 / Redheat Fists | 4回目の通常攻撃追撃：Blaze 6 |
-| Feet | 火柱越えの靴 / Flamepillar Treads | 回避後移動・攻撃速度：Sprint 3 |
+| Weapon | 噴火の大剣 / Eruption Greatsword | Stomp：E1で攻撃方向1.5/3/4.5m地点へ噴火各半径0.8m、0.30/0.45/0.60秒予告後各0.10H、地形段差>2mで以遠中止、CD5秒。 |
+| Armor | 炉壁の鎧 / Furnacewall Plate | Jump_Land：E4被弾時の本人位置に0.35秒予告→半径2m着地衝撃0.24H、移動可能な通常敵のみ外へ0.8m、硬CCなし、CD7秒。 |
+| Charm | 不滅炉の火種 / Undying Furnace Spark | PowerBomb柱：E2でカーソル合法地点最大8mへ半径1.5m炎柱、0.50秒後0.16H＋0.06Hを0.5秒間隔3tick、寿命1.5秒、最大1柱、CD8秒。 |
+| Head | 熔冠 / Molten Crown | BreathFire：E2で発動時方向の長5m×幅1m火炎3列（0/0.2/0.4秒、各0.12H、同対象各回1hit）、寿命0.6秒、最大1列、CD7秒；追跡回転/操作blockなし。 |
+| Hands | 赤熱の拳 / Redheat Fists | Roar：E1の3回目/6秒で0.35秒予告→4方向の直線弾（速度10m/秒、射程4m、幅0.5m、寿命0.4秒、各0.05H）、同対象総0.20Hまで、最大4弾、CD6秒。 |
+| Feet | 火柱越えの靴 / Flamepillar Treads | Dash初段：E3 native移動完了で前方長3m×幅1.5mへ0.18Hと1.2m押出し、壁で停止、boss/CC immunity移動除外、硬CC/壁追加damageなし、CD5秒。 |
 
-| 2点（基準cinder） | 3点 | 6点 |
-| --- | --- | --- |
-| FireAmp 14、AttackPct 7 | Ember 63、Blaze 70（火蓄積・4撃目追撃） | Wildfire 56、Shatter 138（火の伝播・撃破爆発） |
+**2点**：E1/E2で熱印1（最大3、寿命6秒）。3印の次E1/E2で全消費、前方2/4/6mに半径1m噴火各0.12H（予告0.35/0.55/0.75秒、段差>2mで以遠中止）、CD4秒；任意2部位で成立。
 
-連携：永遠の炎 / Eternal Flame `Gem_U_EternalFlame`、対応セット2/4/6部位＋対象エッセンス装着で Attune 8/14/20。役割：セット単独＝蓄積火・掃討、本体単独＝従来のエッセンス、併用＝共通攻撃力・魔力を上乗せ。新しい炎柱は生成しない。
+**3点**：2点列の最後の合法地点に0.8秒予告の炎柱（半径2m、0.5秒間隔4tick各0.08H、寿命2秒、同時1柱）；任意3部位で成立、敵数による増柱なし。
+
+**6点**：2点発動から1秒後に本人から4方向咆哮弾（速度12m/秒、射程6m、幅0.7m、寿命0.5秒、各0.225H、同対象合計cap0.90H）、本人shield0.38H/2秒非加算、CD10秒、同時1burst。追加A=90/cap100（放射計0.90H/cap1H）、B=38/cap40（shield0.38H/cap0.40H）、予算1.85未実測。
+
+**報酬連携2**：装着EternalFlame由来native curseのduration/remainingを本体取得値+1秒に限定延長（native refreshも同上限、他curseは不変）；報酬解除時は保存したnative期間へ差分復元。
+
+**報酬連携4**：自分のcurseがnative本人damageで本体proc判定に成功してFire stackを追加した時だけ、さらに1Fire（同対象CD2秒、本人CD1秒、対象台帳最大3）；本体proc不成立/生成effect/他者damageでは追加なし。
+
+**報酬連携6**：自分のcurseが付いたfireStack3〜4の敵1体について、装着SkillTriggerのnative main activation最初のdamageだけ本体Processorの強制会心門を5→3に下げる（CD4秒、1activation1回）；増幅計算は実fireStack、既存>=5門は維持。
+M1/2/3/5/7/8＋E1/2/3/4/5/6；API：Se_U_EternalFlame_Curse.OnCreate/EntityEventOnTakeDamage、Gem_U_EternalFlame.Processor crit門IL入口、StatusEffect.SetTimer/ResetTimer、Actor.ApplyElemental/GiveShield。host裁定、参加者へ噴火方向/柱予告/熱印/門readiness表示、死亡/KO/部屋/装備epoch/報酬解除で独自状態破棄（本体curseは削除しない）。
+調査根拠・入口詳細：`/home/wang/dev/sod-prompts/i48-facts-infernus.md`（serialized実値未取得、静的調査のみ）。
 
 ### 3.4 `boss_white_night`：白蓮の守装 / White Lotus Vestments
-`Mon_Ink_BossWhiteNight`：Light。65%／35%移行、日蝕と安全域、掌撃、幻影、暗月との対戦。光と防衛。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+**白蓮域を張り、圏内から旋回波と三拍の掌を組む。** `Mon_Ink_BossWhiteNight`／任意報酬 `St_U_BeamOfBalance`。以下は新設計値、H/主撃/生成originは共通契約、追加攻撃はLight・優位物理/魔法。
+
+| 部位 | 装備名（日 / 英） | 技の翻案・単品の動作 |
 | --- | --- | --- |
-| Weapon | 白蓮の錫杖 / White Lotus Staff | 通常攻撃で光付与：Radiance 8 |
-| Armor | 安息域の法衣 / Haven Robe | 定期障壁：Barrier 1 |
-| Charm | 光秤の印 / Lightscale Seal | 奥義使用時障壁：StarShield 2 |
-| Head | 白暁の冠 / White Dawn Crown | 高HP時攻撃力・魔力：Vigor 2 |
-| Hands | 蓮掌の手巻き / Lotus Palm Wraps | 通常攻撃命中回復：Lifesteal 1 |
-| Feet | 光界の歩み / Lightward Steps | 回避後移動・攻撃速度：Sprint 3 |
+| Weapon | 白蓮の錫杖 / White Lotus Staff | 予測掌：E1主撃3回ごと命中点を0.65秒予告し半径2.5mへ25%Hの掌、CD3秒・予約1個 |
+| Armor | 安息域の法衣 / Haven Robe | 安全域：E4 native被弾後本人位置へ半径2m/1.5秒の域、域内本人へ15%H shieldを1回/1.5秒、CD8秒・1域 |
+| Charm | 光秤の印 / Lightscale Seal | 縮む安全円：E2記憶confirmed useで本人位置に半径3→2mを1.2秒で縮める域、満了時圏内本人＋最寄り味方hero1人まで各12%H shield/2秒、CD6秒・1域 |
+| Head | 白暁の冠 / White Dawn Crown | 旋回破滅波：E1主撃5回で射程5m/60°のLight扇を-30/0/+30°へ0/0.2/0.4秒に各10%H、CD5秒・列1組 |
+| Hands | 蓮掌の手巻き / Lotus Palm Wraps | 寸勁：E1主撃4回で命中点半径2mの非boss・CC非免疫敵を最大1m吸引し0.35秒後20%H掌、CD4秒・予約1個、地形越え/本人移動なし |
+| Feet | 光界の歩み / Lightward Steps | 転位後の波：E3本人移動完了後2秒以内の次主撃で到達点から命中方向へ長さ6m/幅1m/20%Hの線、CD4秒 |
 
-| 2点（基準lamp） | 3点 | 6点 |
+| 通常段階 | 追加機構・設計値 | プレイ変化 |
 | --- | --- | --- |
-| LightAmp 14、MaxHealthPct 11 | Radiance 105、SecondWind 35（光付与・緊急回復） | StardustCycle 28、GleamingWard 17（光5スタック時CD短縮・障壁中強化） |
+| 2 | E1主撃3回で本人位置へ半径3m白蓮域（CD4秒、1域）、0.75秒後40%H掌→域2秒、域内本人＋最寄り味方hero1人まで15%H shield各1回/2秒 | 予告を置いて圏内へ残る。任意2部位で成立 |
+| 3 | 開始時に掌済み本人域の中にいる主撃で命中方向へ6m/90°/30%Hの波、CD2秒 | 域に立って扇を向ける。新規域・予告中の域は使えない |
+| 6 | 同じ掌済み域内の主撃3回で域を消費、半径5m境界波90%H（cap100）＋同2heroまで各38%H shield/2秒（cap40）、CD6秒 | 退避円を三拍の攻勢へ変換。波CD中もnative主撃は数え、域失効で印消失 |
 
-連携：均衡の光線 / Beam of Balance `St_U_BeamOfBalance`、白夜セット2/4/6部位＋対象記憶装着で Guard 8/14/20。役割：セット単独＝光を重ねて守る、本体単独＝従来の記憶、併用＝光線の構成に常時の耐久を足す。暗月装備は不要。
+6点予算90/100+38/40=1.85（実効未較正）。域消費→6点→当該主撃の部位/2点新規域の順、生成は再発動しない。全白夜shieldは同target最高量へ置換・合計cap38%H、独立containerを使う。
+
+**報酬2部位**：本人native Beamの非敵heal実overhealの25%を2秒shieldへ変換、先着native heal対象hero最大1人・target cap0.12H・親Se全体0.24H予算。native heal原量は維持。
+
+**報酬4部位**：overheal25%、対象hero最大2人・target cap0.20H・親Se全体0.40H予算・2秒へ置換。対象枠を固定し、shield更新も予算消費。
+
+**報酬6部位**：overheal50%・最大2hero・target cap0.30H・親Se全体0.60H予算・2秒へ置換。Hはbeam生成時凍結。他人/生成healから反応せずnative healを消費しない。
+
+**白夜/暗月併用**：部位数/profileは独立。同一Beamでnative分岐→適格なら暗月固定量加算→native成功→白夜overheal shield→暗月cadence。汎用倍率なし、片profile解除は他方を残し、native原量/steering/range/interval/endTimeは維持。
+
+**M/E・入口**：M1/3/5/7/8、E1–E6。共通Beam adapterはSeの子Ai捕捉＋ActorEvent_OnDoHeal/GiveShield、暗月だけAi.dealtDamageProcessor。ホストが装備/親寿命/epoch/生成originを照合して裁定、参加者は域・波・shield/残予算を表示。終了/死亡/部屋移動/離脱/装備・記憶変更で本人profileの予約・印・shield・購読だけ解除。
+根拠・値未取得範囲・各技とAPIのfile:line：`~/dev/sod-prompts/i48-facts-white_night.md`（暗月も同じBeam単一抽出を参照）。
 
 ### 3.5 `boss_dark_moon`：黒月の刃装 / Black Moon Armament
-`Mon_Ink_BossDarkMoon`：Dark。刃／槍／槌の切替、投槍、瞬間移動攻撃、自我の剣、怒り。攻勢と会心。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+**刃→槍→槌の形を回し、運ぶ槍と一斉幻影斬を組む。** `Mon_Ink_BossDarkMoon`／任意報酬 `St_U_BeamOfBalance`。以下は新設計値、H/主撃/生成originは共通契約、追加攻撃はDark・優位物理/魔法。
+
+| 部位 | 装備名（日 / 英） | 技の翻案・単品の動作 |
 | --- | --- | --- |
-| Weapon | 黒月の三叉刃 / Black Moon Trident | 通常攻撃で闇付与：Umbra 8 |
-| Armor | 怒影の鎧 / Wrathshadow Mail | 被弾後の攻撃力・魔力：Retaliation 3 |
-| Charm | 月欠けの環 / Waning Moon Ring | 通常攻撃命中回復：Lifesteal 1 |
-| Head | 自我の面 / Mask of the Self | 通常記憶使用後の強化：Overload 2 |
-| Hands | 切替の握り / Shifting Grips | 通常攻撃会心時CD短縮：CriticalEcho 1 |
-| Feet | 跳影の靴 / Shadowleap Boots | 回避・ダッシュ・瞬間移動後の次通常攻撃：ShadowStep 6 |
+| Weapon | 黒月の三叉刃 / Black Moon Trident | 刃：E1主撃3回で本人前方4m/90°/25%Hの扇、CD3秒 |
+| Armor | 怒影の鎧 / Wrathshadow Mail | 落下槌：E4 native被弾後、攻撃者の8m以内の地点を0.8秒予告し半径2m/20%H槌、CD8秒・予約1個、無敵なし |
+| Charm | 月欠けの環 / Waning Moon Ring | 投槍：E2記憶confirmed useで照準方向へ直線弾1本、12m/s・射程8m・幅0.5m・20%H、最初の敵/壁で消滅、CD5秒・1弾 |
+| Head | 自我の面 / Mask of the Self | 自我剣：E1主撃5回で本人から命中点（最大8m）へ12m/sの剣弾1本、終点2m/25%H、壁で消滅、CD5秒。非Summon |
+| Hands | 切替の握り / Shifting Grips | 運ぶ槍：E1主撃4回で長さ5m/幅0.8m/20%H線、非boss・CC非免疫敵だけ前方最大1m押出し、CD4秒・地形越えなし |
+| Feet | 跳影の靴 / Shadowleap Boots | 転位斬：E3本人移動完了後2秒内の次主撃で到達点へ幻影予告、0.4秒後命中方向へ長さ5m/幅1m/25%H線、CD4秒・非Entity固定表示 |
 
-| 2点（基準dusk） | 3点 | 6点 |
+| 通常段階 | 追加機構・設計値 | プレイ変化 |
 | --- | --- | --- |
-| DarkAmp 14、CritChancePct 6 | Umbra 105、Executioner 56（闇付与・処刑追撃） | UmbralHeritage 93、WeakPointWound 147（闇の撃破伝播・同敵3会心追撃） |
+| 2 | E1で刃4m/90°25%H→槍7m/幅0.8m25%H→槌0.6秒予告/半径2.5m40%Hを順送り、CD1秒、初期刃・無操作6秒でreset | 任意2部位で攻撃形が切り替わる。CD中の主撃は進行/超過蓄積なし |
+| 3 | 2点形を予約した主撃のnative対象1体へ月印（最大3stack/6秒）、3stackで0.3秒後30%H斬・CD3秒、対象変更で旧印消去。E3で次形を1段送る/CD2秒 | 移動で必要な形を選び、同敵に三拍を重ねる |
+| 6 | 6秒以内の刃→槍→槌完成で槌地点左右2mに固定幻影、0.35秒後各45%H/長さ6m/幅0.8m斬線（A90/cap100）＋0.8秒後同地点半径3m38%H槌（B38/cap40）、CD6秒・予約1組 | 3形完遂を一斉幻影の挟撃へ。E3で順を飛ばすとchain resetし次の刃から再開 |
 
-連携：均衡の光線 / Beam of Balance `St_U_BeamOfBalance`、暗月セット2/4/6部位＋対象記憶装着で MemorySurge 12/20/30。役割：セット単独＝闇会心の攻勢、本体単独＝従来の記憶、併用＝光線使用後の攻撃窓。白夜とは防御／攻撃で分け、混成時は各セットの段階を独立適用。
+6点予算90/100+38/40=1.85（実効未較正）。phantomはM1/M3の固定攻撃表示でEntity/Summonを作らずnative召喚procなし。2点形→3点印→6点完成→部位の順、生成は印/主撃を進めない。
+
+**報酬2部位**：Beamの同敵native成功tick列1秒以後のnative敵packetへ固定0.10H加算、global CD1秒・親Se最大3回/計0.30H。tick間隔上限=本体hitInterval+checkInterval+0.1秒、ledger最大3敵、期限切れだけ入替。native原量/属性/procは維持。
+
+**報酬4部位**：閾値0.75秒・固定0.15H×最大3回/計0.45Hへ置換。独立してnative敵tick成功からbeam位置→対象凍結点へ25%H投槍（12m/s・8m・幅0.5m・最初の敵/壁で消滅）、global CD1秒・親Se最大3本。
+
+**報酬6部位**：閾値0.5秒・固定0.20H×最大3回/計0.60Hへ置換（加算CD1秒/Hはbeam生成時凍結）。native敵tick成功が2点形/3点印/6点完成へ照射主撃をglobal CD1秒・親Se最大6回供給（通常2点CD共有、部位counterには供給なし）。4投槍/6進行は加算閾値未達/加算枠なしでも各独立gateで成立。
+
+**白夜/暗月併用**：1共通Beam adapterでnative分岐→暗月有界固定量加算→native成功→白夜overheal shield→暗月cadence。汎用倍率なし、native原量/照準/range/interval/持続/無敵は維持、生成再反応なし、部位数と解除はprofile独立。
+
+**M/E・入口**：M1/2/3/5/8、E1–E6。Seの子Ai捕捉＋Ai.dealtDamageProcessor/DamageData.AddFlatAmount/ActorEvent_OnDealDamageで本人/親/寿命/native originを限定。ホストが形・月印・残加算/発数を裁定して通知、参加者は予告/固定幻影/照射進行を表示。終了/死亡/部屋移動/離脱/装備・記憶変更で当該profile予約/ledger/購読を解除し他profile/nativeを壊さない。
+根拠・各技とAPIのfile:line：`~/dev/sod-prompts/i48-facts-dark_moon.md`、Beam実値未取得と共存契約は共有 `~/dev/sod-prompts/i48-facts-white_night.md`。
 
 ### 3.6 `boss_nyx`：星海の主衣 / Starsea Sovereign Raiment
-`Mon_Sky_BossNyx`：Light。3段階、星落とし、ブラックホール、星のダッシュ、レーザー、星柱。奥義と通常記憶の交代。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_Sky_BossNyx`／報酬`St_U_HerWorld`。予告地点を攻撃で閉じ、移動で置き直し、3周目を有限の吸引→爆発へ変える（全数値は設計値、H=max(AD,AP)）。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品効果 |
 | --- | --- | --- |
-| Weapon | 星柱の杖 / Starpillar Staff | 通常攻撃で光付与：Radiance 8 |
-| Armor | 星海の外套 / Starsea Mantle | 奥義使用時障壁：StarShield 2 |
-| Charm | 夜空の種 / Nightseed | 通常記憶使用後の強化：Overload 2 |
-| Head | 星軌の冠 / Starorbit Crown | 高HP時攻撃力・魔力：Vigor 2 |
-| Hands | 星を結ぶ指 / Starbinding Fingers | 通常記憶後の次通常攻撃を周囲へ波及：Spellsweep 4 |
-| Feet | 星渡りの靴 / Starcrossing Shoes | 回避後移動・攻撃速度：Sprint 3 |
+| Weapon | 星柱の杖 / Starpillar Staff | 星柱：E1被害地点≤8mに半径1.5m予告.35秒、初撃.12H＋.4秒後.06H Light、CD5秒 |
+| Armor | 星海の外套 / Starsea Mantle | Blackholeの防護channel：E4被damage後、本人shield .16H/2秒＋足元半径2m予告.4秒→.08H Light爆発、CD8秒 |
+| Charm | 夜空の種 / Nightseed | seed自壊：E2照準≤8mに非Entity種1個、.6秒後3方向弾（距離4m/速度8m/s/半径.25m/寿命.5秒、同敵1hit .10H Light）、CD6秒、本体召喚procなし |
+| Head | 星軌の冠 / Starorbit Crown | 移動しながら地点レーザー：E3終点前方2mに半径1m予告.3秒→.14H Light爆発、CD5秒 |
+| Hands | 星を結ぶ指 / Starbinding Fingers | Pull→AfterAtk：E1対象周辺半径2m、最大3敵を本人側へ≤.6m/.3秒吸引、.4秒後同円.12H Light、CD6秒（boss/immune移動不可） |
+| Feet | 星渡りの靴 / Starcrossing Shoes | StellarDash：E2照準方向へ本人≤3m/.2秒有効地形dash、経路幅.6mで敵1回.10H Light、CD7秒、無敵なし・この自動移動はE3対象外 |
 
-| 2点（基準firmament） | 3点 | 6点 |
-| --- | --- | --- |
-| PowerPct 8、Haste 11 | UltimateSurge 28、StarShield 17（奥義後強化・障壁） | AceInHand 22、OpeningSalvo 42（奥義温存時の記憶火力・最初の記憶CD短縮） |
+| 段階 | セット単独の操作循環（累積、どの部位組合せでも成立） |
+| --- | --- |
+| 2点 | E2照準≤8mに星点1個/6秒。次E1が星点へ半径2mの柱2hit各.10H Light（.35/.75秒）を起動し星点消費、CD6秒 |
+| 3点 | 星点待機中E3で1回だけ終点前方2mへ置き直せる。起動柱に半径2m・≤.6m/.3秒の敵吸引を先行追加、星点消費で星印+1（最大3/12秒、boss/immune移動不可） |
+| 6点 | 2点柱を3回起動して印3→次E2で全消費、照準≤8mに半径3mを予告.5秒→1秒吸引（最大3敵/2m/s/総移動≤2m）→.90H Light爆発＋本人shield .38H/3秒、CD10秒。印は各柱起動で得るためE3不要；A90/cap100+B38/cap40=1.85 |
 
-連携：彼女の世界 / Her World `St_U_HerWorld`、対応セット2/4/6部位＋対象記憶装着で MemoryDamage 12/20/30。役割：セット単独＝奥義温存と使用の循環、本体単独＝従来の記憶、併用＝対象記憶だけの火力補強。新しい吸引処理なし。
+| 報酬連携 | `St_U_HerWorld`装着＋対応部位数（累積；native報酬の実status/childのみ） |
+| --- | --- |
+| 2部位 | native `Se_U_HerWorld_Blackhole`のtick円内の敵へ追加吸引1m/s、1status・1敵追加移動≤2m（boss/immune除外）；native曲線/ability lock/death interruptは変更なし |
+| 4部位 | 当該native statusのtickDamageRadiusを`r+min(1,max(0,8-r))`mへ；自分中心Light DoTの捕捉域を直接拡張し終了時復元 |
+| 6部位 | native tick成功敵を最大3体記録→同status自然終了child `Ai_U_HerWorld_Explosion`実hit時、記録敵へ1回.45H Light追加。native stunは`d+min(.25,max(0,3-d))`秒、既存値を短縮しない |
+
+共通M1/M2/M3/M4/M5/M7/M8・E1〜E6（M6不要、種はM3→M2）；native入口はstatus OnCreate/ActiveLogicUpdate/OnDestroyActorとExplosion.OnHitのowner/parent/epoch限定adapter、Shield/Displacement/OverlapCircle/Dispatch。host裁定・予告/星点/印/引力円を参加者同期；死亡/解除/部屋変更で追加分破棄・pooled field復元（報酬単独は不変）。追加damageは優位AD/AP・指定element・crit/proc再発動なし；全場本人計2個、最古置換。
+根拠：`/home/wang/dev/sod-prompts/i48-facts-nyx.md`（実技・報酬・APIのfile:line、asset未取得と設計値を分離）。
 
 ### 3.7 `boss_erebos`：終星の流衣 / Laststar Vesture
-`Mon_Special_BossErebos`：Light＋隕石Fire。反重力、ブラックホール、星雨、召喚、視線、波紋、50%移行。多属性の面攻撃。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_Special_BossErebos`／報酬`Gem_U_LastStarlight`。定点の波紋を起動し、移動で吸排を反転、3周目に予告線と中心爆発を重ねる（全数値は設計値、H=max(AD,AP)）。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品効果 |
 | --- | --- | --- |
-| Weapon | 終星の波琴 / Laststar Waveharp | 通常攻撃で光付与：Radiance 8 |
-| Armor | 重力なき肩衣 / Weightless Mantle | 定期障壁：Barrier 1 |
-| Charm | 残照の星核 / Afterglow Starcore | 低HP時回復：SecondWind 3 |
-| Head | 隕光の冠 / Meteorlight Crown | 通常記憶使用後の強化：Overload 2 |
-| Hands | 星雨の指環 / Starshower Fingerbands | 通常攻撃で火付与：Ember 6 |
-| Feet | 波紋の履 / Ripple Shoes | 回避時の周囲攻撃：Whirlwind 8 |
+| Weapon | 終星の波琴 / Laststar Waveharp | Gaze：E1照準方向に固定線6m/幅.6m、予告.3秒→.08H Lightを.3秒間隔で2回、CD5秒・各敵2hit上限 |
+| Armor | 重力なき肩衣 / Weightless Mantle | AntiGravityの浮上→降下：E4被damage地点半径2mを予告.5秒→.12H Light着地円＋敵を中心から≤.5m/.2秒押出し、CD8秒（boss/immune移動なし） |
+| Charm | 残照の星核 / Afterglow Starcore | phase Whitehole：E3終点半径2.5mに.3秒予告→.10H Light＋最大3敵を≤.6m/.3秒押出し、CD6秒（boss/immune移動なし） |
+| Head | 隕光の冠 / Meteorlight Crown | Meteor：E2照準≤8mに半径1.8m予告.7秒→.18H Fire着弾、CD7秒、HP比例damage/浮遊stunなし |
+| Hands | 星雨の指環 / Starshower Fingerbands | StarRain：E1対象の確定位置≤8mへ2発を.2秒差で射出（速度12m/s/寿命1秒）、到着予告円半径1mで各.08H Light、CD6秒・敵最大2hit |
+| Feet | 波紋の履 / Ripple Shoes | Ripple：E3終点から半径1/2/3mの円を.2/.4/.6秒後に順次起動、各.04/.05/.06H Light、CD6秒・敵最大3hit |
 
-| 2点（基準reverie） | 3点 | 6点 |
-| --- | --- | --- |
-| PowerPct 8、Haste 11 | Resonance 14、Radiance 123（ソロ半量の共鳴・光付与） | ElementalHarvest 56、Spellsweep 83（多属性撃破爆発・記憶後の掃討） |
+| 段階 | セット単独の操作循環（累積、どの部位組合せでも成立） |
+| --- | --- |
+| 2点 | E2照準≤8mに中心印1個/4秒、次E1で半径2m/.10H→.3秒後半径3m/.14H Light波紋を起動し印消費、CD6秒 |
+| 3点 | 印待機中E3を1回行うと「排」を「吸」に反転。起動波紋直前に半径3mの最大3敵を外/内へ≤.8m/.3秒移動；印消費で境界印+1（最大3/12秒、boss/immune移動なし） |
+| 6点 | 波紋起動3回で印3→次E2で全消費、照準≤8mに半径4m場/3秒＋本人shield .38H/3秒。2秒目から中心の直交6m線2本（幅.6m）を予告.5秒→各.225H Light、3秒目に中心.45H Light円；準備中E3で線角度を1回だけ変更、CD10秒。A90/cap100+B38/cap40=1.85、E3なしでも成立 |
 
-連携：最後の星明かり / Last Starlight `Gem_U_LastStarlight`、対応セット2/4/6部位＋対象エッセンス装着で Attune 8/14/20。役割：セット単独＝火／光の掃討、本体単独＝従来のエッセンス、併用＝掃討火力の上乗せ。Nyxの記憶は条件にしない。
+| 報酬連携 | `Gem_U_LastStarlight`装着＋対応部位数（累積；本人の実native instanceのみ） |
+| --- | --- |
+| 2部位 | `Ai_Gem_U_LastStarlight`のprepare delayを`d-min(.20,max(0,d-.25))`秒へ短縮；既存.25秒未満を延ばさず、予告から吸引への移行を直接早める |
+| 4部位 | 当該native吸引半径`r+min(1,max(0,12-r))`m、native tick円`r+min(.5,max(0,8-r))`m；各元値を独立に拡張し既存cap超過値は下げない |
+| 6部位 | native prepare中E3で1回だけ元中心から移動終点方向へ≤2m有効地点に再照準（有効化後は固定）。native durationは`d+min(1,max(0,6-d))`秒、skill/gem失効の自滅を尊重し追加寿命のみ解除時撤回 |
+
+共通M1/M2/M3/M5/M7/M8・E1〜E6（M6不要、全場は非Entity・召喚procなし）；native入口はAi.OnCreateSequenced前のgem/skill/epoch識別とprepare/active/expiry adapter、Network_info/OverlapCircle/Dispatch/GiveShield。host裁定・予告線/吸排/中心/印/残時間を参加者同期；死亡/解除/部屋変更で追加分破棄・field復元・待機deadline再裁定（native単独不変）。追加damageは優位AD/AP・指定element・crit/proc再発動なし；全場本人計2個、最古置換。
+根拠：`/home/wang/dev/sod-prompts/i48-facts-erebos.md`（実技・報酬・APIのfile:line、星生成/HP余命を推測せずasset未取得を分離）。
 
 ### 3.8 `boss_seeker`：幻彩の追装 / Mirage Spectrum Gear
-`Mon_DarkCave_BossSeeker`：多色オーブ・Fire裂け目、瞬間移動弾幕、分身、狭窄視、幻覚。多色を既存属性と移動で表現。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+三相オーブを巡らせ分身で射角を増やし、狭窄照準から爪列へ。`Mon_DarkCave_BossSeeker` / 報酬`Gem_U_SoulPrison`。以下すべて設計値、H=max(AD,AP)、追加damageは優位物理/魔法・同値物理、明記Fire以外無属性、追加会心/attackeffectなし。
+
+| 部位 | 装備名（日 / 英） | 単品の技翻案（本人native eventのみ） |
 | --- | --- | --- |
-| Weapon | 幻彩の球杖 / Mirage Orb Rod | 通常攻撃で火付与：Ember 6 |
-| Armor | 分身の外套 / Double Mantle | 大被弾時障壁：Aegis 2 |
-| Charm | 魂窓の珠 / Soulwindow Pearl | 通常記憶使用後の強化：Overload 2 |
-| Head | 狭界の面 / Narrowworld Mask | 通常攻撃で光付与：Radiance 8 |
-| Hands | 紫影の手袋 / Violetshadow Gloves | 通常攻撃で闇付与：Umbra 8 |
-| Feet | 裂け目の歩み / Fissure Steps | 回避後移動・攻撃速度：Sprint 3 |
+| Weapon | 幻彩の球杖 / Mirage Orb Rod | 球弾幕：E1で主対象の確定点へ球1発、射程8m/寿命1秒、到達爆発半径1.5m・0.18H、CD3秒。 |
+| Armor | 分身の外套 / Double Mantle | 幻覚分身：E4被弾で非Entity分身1体を本人地点に2秒表示、本人shield0.18H/2秒、CD10秒。taunt/敵味方のtarget変更なし。 |
+| Charm | 魂窓の珠 / Soulwindow Pearl | 緑球の寿命爆発：E2で最寄り敵（8m）へ誘導球1発、寿命2秒/移動上限8m、命中または満了で半径1.5m・0.24Hを1回、CD6秒。 |
+| Head | 狭界の面 / Narrowworld Mask | 狭窄技の照準→clawを敵地点へ：E1で主対象点に0.4秒予告、半径2m・0.20H、CD5秒。本人/味方の画面暗転なし。 |
+| Hands | 紫影の手袋 / Violetshadow Gloves | 紫場：E2で最寄り敵の確定点（8m）に半径2m/2秒の場1個、0.5/1.5秒に各0.10H、CD6秒、追従/追加子場なし。 |
+| Feet | 裂け目の歩み / Fissure Steps | blink後の赤裂け目：E3で出発点に0.3秒予告→半径1.5m・0.22H＋Fire、非boss/非CC免疫だけstun0.25秒、CD5秒。生成移動はE3対象外。 |
 
-| 2点（基準steamweave） | 3点 | 6点 |
-| --- | --- | --- |
-| FireAmp 11、ColdAmp 11 | Steam 84、Frost 70、Ember 63（火冷気反応・付与） | PrismShift 5、RunUp 102（異属性付与時障壁・歩行12m後の追撃） |
+| 段階 | セット単独のプレイ変化 |
+| --- | --- |
+| 2点 | E1成功ごとに三相を緑→紫→赤へ1段進め、CD3秒でその相の1発0.16H：緑は8m/1秒の球、紫は主対象点の0.4秒予告/半径1.5m、赤は同点の半径1.5m＋Fire。1activation1count、特定部位不要。 |
+| 3点 | E3で出発点へ非Entity分身1体/3秒（CD5秒）。次E1の相を分身起点から主対象確定点へ1回だけ複製0.12H/射程8m、即消失。Armor表示分身と合算最大1体、召喚proc/lootなし。 |
+| 6点 | E2で敵点（8m）を照準、0.5秒後から0.25秒間隔で90度/長さ4mの爪扇3回、各0.30H、本人shield0.38H/2.5秒、CD10秒。A90/100=3×30爪、B38/40=防護38；移動不能/無敵/暗転なし、特定記憶不要。 |
 
-連携：魂の牢獄 / Soul Prison `Gem_U_SoulPrison`、対応セット2/4/6部位＋対象エッセンス装着で Guard 8/14/20。役割：セット単独＝属性切替と歩行攻撃、本体単独＝従来のエッセンス、併用＝移動型の耐久補完。幻覚・分身は生成しない。
+| 報酬連携 | 対象エッセンス装着時、2/4/6段階は累積・当該native救命branchだけ |
+| --- | --- |
+| 2部位 | Soul Prisonのquality倍率済みnative救命Healへmin(元回復量×10%,0.20H)加算。別Healを発行せずnative overflow処理に渡す；gem消費/HP=1を維持。 |
+| 4部位 | 同native HealのdiscardedAmountが出た時だけ追加shield=min(overflow×25%,0.30H)/6秒を1回。元の同量・無期限shieldは変更せず、他Healやshieldから再発動しない。 |
+| 6部位 | 同native救命Healのoverflowから本人6m内の最寄りalive味方Hero1人（本人除外）へshield=min(overflow×25%,0.40H)/3秒を1回。overflow無し/味方無しは0；4部位本人shieldとは別target、native本人の無期限shieldとgem消費を維持、無敵延長なし。 |
+
+共有M1/M2/M3/M6（非Entity）/M7/M8、E1–E6；native `EntityEvent_OnAttackHit/OnCastComplete`、`StartDisplacement`完了、`DoDeathInterrupt` callback scope＋`takenHealProcessor/ActorEvent_OnDoHeal`＋`GiveShield`のSoulPrisonAdapterが入口。hostがowner/parent/instance/gem/epochを照合・有限裁定し相/照準/分身/救命shieldを参加者表示；他Heal/追加shieldから再反応なし。native消費確定callbackの本人/味方有限shieldだけ寿命まで保持、任意の減装/死亡/部屋移動は追加FX/ledger/効果解除。
+根拠・未取得値・adapter詳細：`/home/wang/dev/sod-prompts/i48-facts-seeker.md`。
 
 ### 3.9 `boss_azurak`：轟召の重装 / Roarcall Heavy Gear
-`Mon_Despair_BossAzurak`：無属性。転がり、二重踏み、咆哮、砲撃、取り巻き／Displacer召喚。前線と召喚獣の共闘。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_Despair_BossAzurak`／穴掘り `St_U_Burrow`：二重踏みの予告を設置し、自分の砲塁を守って前進する。**セット単独で6点まで成立、別記憶・召喚手段不要、companionなし**。以下すべて設計値、追加damageはH優位/同値物理・None、追加会心/通常attackEffectなし。
+
+| 部位 | 装備名（日 / 英） | 技の翻案・単品効果（設計値） |
 | --- | --- | --- |
-| Weapon | 轟召の戦棍 / Roarcall Mace | 被弾後の反撃強化：Retaliation 3 |
-| Armor | 砲塁の鎧 / Artillery Rampart | 大被弾時障壁：Aegis 2 |
-| Charm | 呼び声の角笛 / Calling Horn | 最大HP超過回復を障壁へ：OverflowingLife 4 |
-| Head | 召集の兜 / Muster Helm | 高HP時攻撃力・魔力：Vigor 2 |
-| Hands | 地鳴りの拳 / Earthrumble Fists | 通常攻撃命中回復：Lifesteal 1 |
-| Feet | 転輪の鉄靴 / Rolling Sabatons | 回避時の周囲攻撃：Whirlwind 8 |
+| Weapon | 轟召の戦棍 / Roarcall Mace | 二重踏み：E1で命中地点半径2.5mに0.09H×2、間隔0.15秒、CD4秒、1地点・2hit固定。 |
+| Armor | 砲塁の鎧 / Artillery Rampart | 踏み防御：敵対native実HP被damage E4で本人shield0.10H/2秒、CD6秒、非重複、無敵blockなし。 |
+| Charm | 呼び声の角笛 / Calling Horn | 咆哮：E1で本人円3mに0.14H＋押出し0.8m、CD6秒；boss/CC immuneには移動なし。 |
+| Head | 召集の兜 / Muster Helm | 咆哮の安全地帯：E2で本人の開始地点に円2m/1秒、0.5秒後も本人が円内なら本人shield0.08H/1.5秒、CD6秒、1回のみ。 |
+| Hands | 地鳴りの拳 / Earthrumble Fists | 砲撃：E1で8m以内の命中地点に半径1.5mの0.6秒予告→0.18H爆発1回、CD5秒、保存地点を追尾しない。 |
+| Feet | 転輪の鉄靴 / Rolling Sabatons | 転輪の着地：本人native回避/移動完了E3の地点で円2mに0.16H、CD5秒；新dash/無敵/反復rollなし。 |
 
-| 2点（基準vanguardline） | 3点 | 6点 |
-| --- | --- | --- |
-| MaxHealthPct 8、Tenacity 14 | VanguardsOath 35、TollOfGrudge 28、Bulwark 42（前線障壁・実HP損失の反撃・包囲防御） | PackFeast 7、DeathBloom 156（自召喚獣の撃破で障壁・被撃破で爆発） |
+| 段階 | 組合せに依存しない追加の遊び（累積） |
+| --- | --- |
+| 2点 | profile自身のE1を3回数える（最大3、最終成功から4秒失効）。3回目の命中地点8m以内へ円2.5mの地鳴り0.16H、CD3秒；各部位の印・技は不要。 |
+| 3点 | 同じ3回目に円2.5mの予告を同地点へ残し、0.45秒後0.22Hで再踏み、CD5秒。動く敵の先に足場を固定する。 |
+| 6点 | 同じ3回目で円3m/予告0.35秒→0.45H×2（0.20秒間隔）＋本人shield0.38H/3秒、CD8秒、固定地点1、shield非重複。追加予算A=90/cap100（damage）、B=38/cap40（shield）、正規化1.85。召喚撃破/死亡を一切待たない。 |
 
-連携：穴掘り / Burrow `St_U_Burrow`、対応セット2/4/6部位＋対象記憶装着で MemoryHaste 15/25/40。役割：セット単独＝3点まで前線、6点は任意の召喚構成を選んだとき完成効果、本体単独＝従来の記憶、併用＝対象記憶の再使用を補助。セット自体は召喚獣を新規生成しない。
+| 報酬連携 | 当セット2/4/6部位＋Burrow装着、native本人Emergeのみ（累積・生成は除外） |
+| --- | --- |
+| 2部位 | native出土hitのstunへ最大0.15秒追加、追加後上限1秒（元が1秒以上なら追加0）、boss/CC immune/非敵対は追加0。Burrowの無敵duration・再使用config不変。 |
+| 4部位 | 同Emergeのnative敵対damageへ20%加算、全対象合計cap0.20H/activation、CD8秒。native範囲/stun/元damageは保持、多体で加算枠を増やさない。 |
+| 6部位 | 4部位の加算を25%・合計cap0.45Hへ置換（CD8秒維持）、同Emergeの本人dazeを0.05秒短縮/下限0秒。出土の制圧→即攻撃に直結し、別記憶や汎用hasteを与えない。 |
+
+共有M1/M3/M5/M7/M8＋E1〜E6、BossMove/RewardProfile・BossReward共通Kind。入口：native attack/cast/移動/実HPdamage＋BurrowExitAdapter（native Emergeのstun/daze引数、instance dealtDamageProcessor）。hostが位置/CD/世代/epoch裁定、参加者へ予告/2踏み/盾を同期；死亡・装備不足・部屋移動・instance破棄で場/handler/印を解除、pool持越し禁止。
+根拠・未取得値・API詳細：外部 `/home/wang/dev/sod-prompts/i48-facts-azurak.md`。
 
 ### 3.10 `boss_primus_aeron`：三相の武装 / Threefold Armament
-`Mon_Primus_BossPrimusAeron`：Force／Adapt／Rage、二種の剣、多属性、沈黙・幻惑。複数属性と記憶の使い分け。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+主撃・記憶・移動をForce/Adapt/Rageへ翻案し、退いた場所から三相連撃する。型=`Mon_Primus_BossPrimusAeron`、固有報酬なし。以下は設計値、damage=%H／shield=%最大HP。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品効果（セット不要） |
 | --- | --- | --- |
-| Weapon | 三相の大剣 / Threefold Greatsword | 通常攻撃で光付与：Radiance 8 |
-| Armor | 適応の胸甲 / Adaptation Cuirass | 定期障壁：Barrier 1 |
-| Charm | 相転の核 / Phasechange Core | 通常記憶使用後の強化：Overload 2 |
-| Head | 激情の面 / Rage Mask | 通常攻撃で闇付与：Umbra 8 |
-| Hands | 流火の双手 / Flowfire Grips | 通常攻撃で火付与：Ember 6 |
-| Feet | 氷爪の脛当て / Iceclaw Greaves | 通常攻撃で冷気付与：Frost 4 |
+| Weapon | 三相の大剣 / Threefold Greatsword | Force剣撃：E1で前方3m・90°扇18、無属性、1hit/敵、CD4秒。 |
+| Armor | 適応の胸甲 / Adaptation Cuirass | Rage減衰盾：E4本人の敵対native被damage後に盾8、3秒で線形減衰、1枚、CD12秒。HP再設定・無敵なし。 |
+| Charm | 相転の核 / Phasechange Core | Adapt光連鎖：E2の方向へ光弾1本、射程8m/速度12/幅0.4、初着弾後3m内の未命中敵へ最大2跳、各8、間隔0.15秒、最大3敵/寿命1.5秒、CD7秒。 |
+| Head | 激情の面 / Rage Mask | Rage双剣：E1前方3m・120°を0/0.25秒に各10の闇斬撃、同敵合計20まで、CD5秒。 |
+| Hands | 流火の双手 / Flowfire Grips | Doom落星：E2の指定点を本人6m内へ裁定し、0.5秒予告→半径2mの火18を1回、同時1場、CD8秒。隕石弾幕・stunなし。 |
+| Feet | 氷爪の脛当て / Iceclaw Greaves | IceClaw二連：E3着地点の前方2.5m・120°へ0/0.25秒に各10の冷斬撃、合計20、CD7秒。自動dash/追跡Frost/stunなし。 |
 
-| 2点（基準prismdance） | 3点 | 6点 |
-| --- | --- | --- |
-| Haste 11、PowerPct 7 | PrismShift 4、ElementalHarvest 42、StardustCycle 20（属性切替障壁・多属性撃破・光5段CD短縮） | Convergence 278、Steam 111（4属性爆発・火冷気反応） |
+**2点**：E1/E2/E3でForce/Adapt/Rageを選ぶ小mode（入力gate0.5秒）。共有CD3秒でその入力の技1つ：Force=3m/90°無属性扇12、Adapt=8m/幅0.4光弾12、Rage=着地半径2m闇円12。CD中はmodeだけ更新、攻撃予約なし。
 
-連携なし（固有報酬なし）。役割：セット単独＝全部位で4属性付与が可能、任意の属性記憶で蓄積を補う。記憶／エッセンス単独＝従来どおり、併用＝通常の属性相乗だけ。専用のフェーズ切替・代替必須条件は作らない。
+**3点**：E3で出発点に非Entityの相紋1個を4秒残す。次の実発動E1/E2相技は本人6m内の相紋を消費し、0.35秒予告後そこから発射（本人起点との二重発射なし、damage不増）。新E3で上書き、範囲外なら本人起点。
+
+**6点**：8秒内に異なる3入力を揃えるとCD18秒の三相合流、成立入力の通常相技を置換。A90/cap100=0/0.3/0.6秒に無属性4m/90°扇30＋光8m/幅0.6線30＋闇半径2.5m円30（起点/向き固定、同敵合計90）。B38/cap40=盾38を1枚、6秒で線形減衰。相紋が有効ならそこ、なければ本人起点；完成時に3入力印/相紋を消費、CD中の完成は保持しない。
+連携なし（2/4/6ともなし）。特定記憶・報酬・召喚・HP閾値は不要；任意2/3部位で段階成立し、記憶単独は従来どおり。
+
+**M/E・入口**：M1/2/3/4/7/8、E1/2/3/4/6；既存native主撃帰属/ConfirmedUse＋`EntityControl.StartDisplacement`寿命adapter、`Actor.PhysicalDamage/MagicDamage().Dispatch`・独立shield・host Tick。M6/E5/報酬adapterなし。ホストが装備/起点/命中を裁定、参加者はmode/相紋/予告のみ表示；1形状8敵上限、epoch変更/死亡/部屋離脱で予約・印・自前盾解除、生成物再入力・無敵・即死・永久CC禁止。
+根拠・未取得値・mode詳細：`/home/wang/dev/sod-prompts/i48-facts-primus_aeron.md`（本体値と上の設計値は別）。
 
 ### 3.11 `boss_light_elemental`：光裂の法装 / Radiant Fracture Raiment
-`Mon_Special_BossLightElemental`：Light。ビーム、弾幕、雷、召喚、HP閾値で技解禁。光の集中攻撃と通常記憶循環。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_Special_BossLightElemental` / `St_U_WorldCracker`：予告光線→落雷→3段掃引を充填で解禁、短命光晶が発動中を支持。報酬native beamの旋回・幅・実終端へ直接連携。
+以下は全て設計値。H=max(AD,AP)、追加damageは優位type（同値物理）/Light、追加会心・attackeffect・procなし、セット生成effectはnativeイベントから除外；CDは本人/部位別、1activation1count。全装備beamは地形でclipし対象1beam1hit。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品挙動 |
 | --- | --- | --- |
-| Weapon | 光裂の杖 / Radiant Fracture Staff | 通常攻撃で光付与：Radiance 8 |
-| Armor | 光片の法衣 / Radiant Shard Robe | 定期障壁：Barrier 1 |
-| Charm | 世界罅の結晶 / Worldfissure Crystal | 奥義後の強化：UltimateSurge 2 |
-| Head | 雷光の冠 / Lightning Halo | 通常記憶使用後の強化：Overload 2 |
-| Hands | 光束の手巻き / Beam Wraps | 通常攻撃の連鎖追撃：ChainLightning 5 |
-| Feet | 閃光の履 / Flash Shoes | 回避後移動・攻撃速度：Sprint 3 |
+| Weapon | 光裂の杖 / Radiant Fracture Staff | BeamAtk：E1で敵方向を固定、0.30秒予告後に長7m×幅0.8mの瞬間beam0.28H、CD5秒。 |
+| Armor | 光片の法衣 / Radiant Shard Robe | Summonの本体shield：E4被弾で本人にshield0.20H/2秒（独立container、非加算）、CD7秒；永続無敵なし。 |
+| Charm | 世界罅の結晶 / Worldfissure Crystal | Summonの支持役を非Entity光晶へ翻案：E2で本人2m前の合法地点に1光晶/3秒、0.5秒後最も近い敵（光晶から6m内）へ長6m×幅0.6mbeam0.24Hを1回、本人所有最大1、CD8秒、native召喚proc/lootなし。 |
+| Head | 雷光の冠 / Lightning Halo | Lightning：E2でカーソル合法地点最大8mを固定、0.45/0.75秒予告後半径1.2mの落雷各0.16H、同時1列、CD7秒。 |
+| Hands | 光束の手巻き / Beam Wraps | BeamBarrage：E1の3回目/6秒で前方-25°→+25°を0.8秒掃引する長5m×幅0.6mbeam、0.30秒予告、対象全掃引で1hit0.30H、最大1、CD6秒。 |
+| Feet | 閃光の履 / Flash Shoes | BeamAtk方向固定：E3 native移動完了で移動方向と±20°の3方向を0.25秒予告、長4m×幅0.5m各0.08H、同対象総cap0.24H、CD5秒；追加入力/自動移動なし。 |
 
-| 2点（基準daybreak） | 3点 | 6点 |
-| --- | --- | --- |
-| LightAmp 14、AttackPct 8 | Radiance 105、Vigor 21（光付与・高HP強化） | FocusFire 111、StardustCycle 28（同敵5通常攻撃追撃・光5段CD短縮） |
+**2点**：E1/E2で光相1（最大3、寿命6秒）。3相の次E1/E2で全消費、敵/カーソル方向へ0.35秒予告→長8m×幅1mbeam0.35H、CD4秒；任意2部位で成立、HP閾値を充填phaseへ置換。
 
-連携：世界の破壊者 / World Cracker `St_U_WorldCracker`、対応セット2/4/6部位＋対象記憶装着で MemoryDamage 12/20/30。役割：セット単独＝光の単体集中型、本体単独＝従来の記憶、併用＝対象記憶の火力を補強。新規レーザーは作らない。
+**3点**：2点beamの地形clip済み終端へ0.65秒予告の半径1.8m落雷0.30H、同時1予約；任意3部位で成立、特定記憶不要。
+
+**6点**：2点発動後、本人起点長6m×幅0.7mbeamを-45°→-15°/-15°→+15°/+15°→+45°へ各0.4秒掃引（予告0.3秒、各0.30H/対象1hit）、旧光晶を更新した支持光晶2個が本人へ各shield0.19Hを与える（1container合計0.38H/2秒非加算、光晶寿命3秒）、CD12秒、同時1phase、全光晶本人最大2。追加A=90/cap100（掃引計0.90H/cap1H）、B=38/cap40（shield0.38H/cap0.40H）、予算1.85未実測。
+
+**報酬連携2**：本人装着WorldCrackerのnative Ai_U_WorldCrackerだけangleSpeedを本体取得値+30°/秒（最大native×1.5、native>0のみ）へ変更しカーソル旋回を改善；本体channel/消費/持続は維持。
+
+**報酬連携4**：同native beamのSphereCast radiusを本体取得値+0.30m（最大native×1.5、native>0のみ）へ変更；元raycast/maxDistance/対象別damageIntervalを維持、他記憶不変。
+
+**報酬連携6**：同敵へのnative成功tick3回（gap<=1秒、台帳最大3敵）で直前の実damage用clipped終端に半径1.8m/0.35秒予告/0.45H Light pulse1回、CD6秒、native beam lifetime最大2pulse・同時1；生成pulseはtickに数えずchannel停止時予約中止。
+M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、host有限攻撃＋通知）。API：Ai_U_WorldCracker.OnCreate/OnDisable(public angleSpeed/radius保存復元)、ActiveLogicUpdate成功Dispatch/実clipped numのIL通知入口、Actor.GiveShield。host裁定、参加者へ光相/掃引幅/雷予告/光晶期限表示、死亡/KO/部屋/装備epoch/報酬解除/channel停止で独自状態破棄・native取得field復元。
+調査根拠・入口詳細：`/home/wang/dev/sod-prompts/i48-facts-light_elemental.md`（共用Beam調査含む、serialized実値未取得、静的調査のみ）。
 
 ### 3.12 `boss_maw`：飢影の狩装 / Ravenous Shadow Gear
-`Mon_Special_BossMaw`：Dark。噛みつき、滅殺態勢、煉獄、影歩き、月光の誓約、75%／35%移行。低HPで攻めて吸収する。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+`Mon_Special_BossMaw`／大噛みつき `St_U_BigChomp`：左右の牙と予告煉獄で追い詰め、低HPで前後を噛み吸収する。**本体報酬はhit数/boss重みの回復・盾・CD短縮でありdamage比例lifestealではない**。以下は設計値、追加damageはH優位/同値物理・Dark、追加会心/通常attackEffectなし。
+
+| 部位 | 装備名（日 / 英） | 技の翻案・単品効果（設計値） |
 | --- | --- | --- |
-| Weapon | 飢影の牙刃 / Ravenous Fangblade | 通常攻撃で闇付与：Umbra 8 |
-| Armor | 煉獄の革鎧 / Purgatory Leathers | 被弾後の強化：Retaliation 3 |
-| Charm | 大顎の護符 / Greatjaw Talisman | 撃破時の回復：SoulSiphon 2 |
-| Head | 飢えの面 / Hunger Mask | 高HP時の強化：Vigor 2 |
-| Hands | 貪りの爪 / Devouring Claws | 通常攻撃命中回復：Lifesteal 1 |
-| Feet | 影歩きの靴 / Shadowwalk Boots | 移動技後の次通常攻撃：ShadowStep 6 |
+| Weapon | 飢影の牙刃 / Ravenous Fangblade | 噛み付き：E1で命中方向の扇120度/3mに0.18H、CD4秒、dash/無敵なし。 |
+| Armor | 煉獄の革鎧 / Purgatory Leathers | ShieldConversion：敵対native実HP被damage E4で本人shield=min(0.14H,不足HP×0.15)/2秒、CD6秒、非重複、放置rechargeなし。 |
+| Charm | 大顎の護符 / Greatjaw Talisman | 噛み付き人数回復の有限化：E1の4回目（最大3保存、4秒失効）で本人heal=min(0.06H,不足HP×0.08)、CD5秒、多体でも1回。 |
+| Head | 飢えの面 / Hunger Mask | 滅殺態勢：E2で確定詠唱方向へ左右2斬波、各0.08H、幅1m/射程6m/寿命0.6秒、間隔0.15秒、CD6秒、追尾なし。 |
+| Hands | 貪りの爪 / Devouring Claws | 煉獄の戻る回復：E1の実敵HPdamage×0.10を本人へ吸収、cap0.04H/activation、CD4秒。無敵hit/味方/反射/生成damageは回復0。 |
+| Feet | 影歩きの靴 / Shadowwalk Boots | native移動完了E3後2秒以内の次E1に追加扇90度/3m/0.18H、CD5秒、1印だけ。untargetable・追加dashは付与しない。 |
 
-| 2点（基準asura） | 3点 | 6点 |
-| --- | --- | --- |
-| AttackPct 11、MaxHealthFlat 56 | Bloodlust 28、Lifesteal 14（低HP攻撃速度・命中回復） | Executioner 111、SpilloverStrike 111（瀕死敵追撃・過剰撃破ダメージの転送） |
+| 段階 | 組合せに依存しない追加の遊び（累積） |
+| --- | --- |
+| 2点 | profile自身のE1を3回数える（最大3、最終成功から4秒失効）。3回目に前方扇120度/3m/0.18H、CD3秒；本人HP50%以下では前後各90度/3mの扇に各0.09H（合計0.18H）を配分。Weapon/Feetの印は不要。 |
+| 3点 | 同じ3回目の命中地点8m以内へ煉獄円2.5m、0.5秒予告→0.22H爆発1回、CD5秒。HP50%以下では地点を本人足元に替え、囲む敵を吸収狩りへ誘う（追加damage量不変）。 |
+| 6点 | 同じ3回目で前方から左右±30度の120度扇/3.5mを各0.45H（0.20秒間隔）、その実敵HPdamage合計×0.45を本人heal、総cap0.38H、CD8秒。HP50%以下では前後90度扇/3.5mを各0.45Hへ置換、吸収cap不変。追加予算A=90/cap100（damage）、B=38/cap40（heal）、正規化1.85；0damageなら吸収0、過剰回復は捨てる。 |
 
-連携：大噛みつき / Big Chomp `St_U_BigChomp`、対応セット2/4/6部位＋対象記憶装着で MemorySurge 12/20/30。役割：セット単独＝リスクを伴う吸収近接、本体単独＝従来の記憶、併用＝対象記憶後の攻め時を補強。魂の祠ではなく専用祠を使う本体報酬経路には介入しない。
+| 報酬連携 | 当セット2/4/6部位＋Big Chomp装着、本人native instanceの1回のOnAfterDelayへ直接作用（累積） |
+| --- | --- |
+| 2部位 | 敵対のalive/非immune native hitだけでboss重みを含むwを記録（cap3）。native本人Healへmin(0.08H,本体healPerHit実値×w×0.20)加算、追加枠CD8秒；本体の味方hit処理不変。 |
+| 4部位 | 同じnative GiveShieldへmin(0.10H,本体shieldPerHit実値×w×0.20)加算、元duration維持。同instance/同8秒枠で1回、多体でw上限を増やさない。 |
+| 6部位 | 同native instanceが自身firstTriggerへ行うCD短縮にmin(0.50秒,w×0.25秒)追加、同8秒枠。native minimum/scale/canReceiveCooldownを維持、別記憶/汎用after-useバフなし。 |
+
+共有M1/M2/M3/M7/M8＋E1〜E6、BossMove/RewardProfile・BossReward共通Kind。入口：native attack/cast/移動/HPdamage＋BigChompAdapter（OnHit敵対重み、instance dealtHeal/Shield/CooldownReductionProcessor）。hostがHP形態/吸収/CD/世代/epoch裁定、参加者へ牙/斬波/円予告を同期；死亡・装備不足・部屋移動・instance破棄で印/場/handler解除、native報酬祠・drop/ID不変、M6なし。
+根拠・未取得値・API詳細：外部 `/home/wang/dev/sod-prompts/i48-facts-maw.md`。
 
 ### 3.13 `boss_obliviax`：忘針の襲装 / Oblivion Needle Gear
-`Mon_Special_BossObliviax`：Dark。影歩き、砲台姿勢、針、突撃連鎖、巣への誘拐。記憶と通常攻撃の待ち伏せ。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+影歩きの出発点を待伏せ射角に変え、残影砲座から予告砲撃へ。`Mon_Special_BossObliviax` / 報酬`St_U_ShoutOfOblivion`。以下すべて設計値、H=max(AD,AP)、追加damageは優位物理/魔法・同値物理＋Dark（新設計指定）、追加会心/attackeffectなし。
+
+| 部位 | 装備名（日 / 英） | 単品の技翻案（本人native eventのみ） |
 | --- | --- | --- |
-| Weapon | 忘針の連刃 / Oblivion Needleblade | 通常攻撃で闇付与：Umbra 8 |
-| Armor | 巣影の外套 / Nestshadow Mantle | 大被弾時障壁：Aegis 2 |
-| Charm | 忘却の喉石 / Oblivion Throatstone | 通常記憶使用後の強化：Overload 2 |
-| Head | 砲座の面 / Turret Mask | 静止時攻防：ImmovableStance 1 |
-| Hands | 針継ぎの手袋 / Needlestitch Gloves | 高HP敵への初撃追撃：OpeningStrike 6 |
-| Feet | 攫い影の靴 / Abducting Shadow Boots | 移動技後の次通常攻撃：ShadowStep 6 |
+| Weapon | 忘針の連刃 / Oblivion Needleblade | 左右連刃dash sweepを線撃へ：E1で主対象方向に幅1.5m/長さ4m・0.18Hを1回、本人移動なし、CD3秒。 |
+| Armor | 巣影の外套 / Nestshadow Mantle | ChargeSequence消失中防護を有限shieldへ：E2で本人shield0.18H/2秒、CD8秒、不可視/無敵/入力拘束なし。 |
+| Charm | 忘却の喉石 / Oblivion Throatstone | Artillery：E2で最寄り敵の確定点（8m）に0.6秒予告→半径1.5m・0.24H、非boss/非CC免疫のみslow20%/0.5秒、CD6秒。 |
+| Head | 砲座の面 / Turret Mask | Turret姿勢：E6で本人自発移動1m未満/1秒を確認した次E1で主対象確定点へ球2発、0.2秒間隔/射程8m/寿命1秒/爆発半径1m、各0.09H、CD4秒。移動で待機解除、本人拘束なし。 |
+| Hands | 針継ぎの手袋 / Needlestitch Gloves | Needleの全域Hero攻撃を近距離pulseへ：E1で本人周囲半径2m・0.18H、非boss/非CC免疫のみstun0.25秒、CD6秒。HP割合damage/技能CD resetなし。 |
+| Feet | 攫い影の靴 / Abducting Shadow Boots | 影歩き後の捕縛翻案：E3で到着点3m内の最寄り敵1体に0.12H、非boss/非CC免疫のみ本人側へ最大1m/0.25秒pull、CD6秒。味方/部屋移動/入力停止なし。 |
 
-| 2点（基準phantom） | 3点 | 6点 |
-| --- | --- | --- |
-| DarkAmp 14、MoveSpeedPct 7 | Umbra 123、EchoingDodge 109（闇付与・回避後追撃） | Spellsweep 83、UmbralHeritage 93（記憶後の掃討・闇の撃破伝播） |
+| 段階 | セット単独のプレイ変化 |
+| --- | --- |
+| 2点 | E3で出発点を3秒記録（1token、CD4秒）；次E1でその起点から主対象方向へ幅1.5m/長さ8mの待伏せ線撃0.20Hを1回、token消費。単品Feetの敵pull/生成移動は記録を増やさない。 |
+| 3点 | 待伏せを撃った起点に非Entity残影砲座1体/3秒・残弾1。さらに次の別activationのE1で主対象確定点（砲座から8m）へ予告0.4秒→半径1.5m・0.15Hを1回、砲座消失；新設置で旧砲座解除、召喚proc/lootなし。 |
+| 6点 | E2で最寄り敵点（8m）とそこから本人射角左右に2mずつの計3地点を固定予告；0.6/0.8/1.0秒に半径1.5m・各0.30H、本人shield0.38H/2.5秒、CD10秒。A90/100=3×30砲撃、B38/40=防護38；人数増殖/追従/他召喚要求なし。 |
 
-連携：忘却の咆哮 / Shout of Oblivion `St_U_ShoutOfOblivion`、対応セット2/4/6部位＋対象記憶装着で MemoryHaste 15/25/40。役割：セット単独＝影歩きと掃討、本体単独＝従来の記憶、併用＝対象記憶の再使用を補助。誘拐・砲台変身の機構は追加しない。
+| 報酬連携 | 対象記憶装着時、2/4/6段階は累積・本人native Shout instanceだけ |
+| --- | --- |
+| 2部位 | Shout固有のhunt倍率にlevel当たり0.03追加、native clamp0–5に従い合計bonus最大0.15。level0は追加0、実hunt値/全記憶倍率を変更せずnative会心条件を維持。 |
+| 4部位 | Shout自身の後退displacementだけ4m→5m（追加上限1m）、0.4秒/terrain越え不可を維持し安全掃引点にclamp。通常回避や生成待伏せには適用しない。 |
+| 6部位 | Shout自身のnative命中stunだけ実duration+0.4秒、追加上限0.4秒・敵1体1activation1回。boss/CC免疫には追加せず、詠唱無敵/complete後1秒無敵は延長しない。 |
+
+共有M1/M2/M3/M4/M5/M6（非Entity）/M7/M8、E1/E2/E3/E5/E6；native `EntityEvent_OnAttackHit/OnCastComplete`、`StartDisplacement`完了、skill-owned `ActorEvent_OnAbilityInstanceBeforePrepare`＋`Ai_U_ShoutOfOblivion.currentDamageAmp/OnCreate/OnHit`のShoutAdapterが入口。hostがowner/parent/type/activation/epochを照合し射角/予告/捕縛を参加者表示；死亡/部屋/装備変更・native cast cancelで追加FX/砲座/ledger/scope解除、味方操作/カメラへ干渉しない。
+根拠・未取得値・adapter詳細：`/home/wang/dev/sod-prompts/i48-facts-obliviax.md`。
 
 ### 3.14 `boss_polaris`：墜聖の双装 / Fallen Sanctity Regalia
-`Mon_Special_BossPolaris`：聖形／獣形の2形態。光線・黄金槍・降火・対呪文、呪いの飛込み・雷・踏みつけ。光と炎、防御後の攻勢。
 
-| 部位 | 装備名（日 / 英） | 固有効果の概要・Power値 |
+記憶で聖の防護、移動で獣の踏撃、盾の終わりを攻勢へ変える。型=`Mon_Special_BossPolaris`、固有報酬なし。以下は設計値、damage=%H／shield・heal=%最大HP。
+
+| 部位 | 装備名（日 / 英） | 実技翻案・単品効果（セット不要） |
 | --- | --- | --- |
-| Weapon | 墜聖の金槍 / Fallen Golden Spear | 通常攻撃で光付与：Radiance 8 |
-| Armor | 聖獣の胸甲 / Sacred Beast Cuirass | 大被弾時障壁：Aegis 2 |
-| Charm | 星無き聖印 / Starless Sacred Seal | 奥義使用時障壁：StarShield 2 |
-| Head | 反呪の冠 / Counterspell Crown | 通常記憶使用後の強化：Overload 2 |
-| Hands | 降火の手甲 / Rainfire Gauntlets | 通常攻撃で火付与：Ember 6 |
-| Feet | 呪降の鉄靴 / Cursed Descent Sabatons | 回避時の周囲攻撃：Whirlwind 8 |
+| Weapon | 墜聖の金槍 / Fallen Golden Spear | GoldenSpear：E1で正面±6°に光槍2本、各12、射程8m/速度12/幅0.4/寿命0.8秒、同敵は片槍のみ、CD5秒。 |
+| Armor | 聖獣の胸甲 / Sacred Beast Cuirass | 初撃減衰防護：敵対native E4被damage後に盾8、4秒で線形減衰、1枚、CD12秒。本体の巨大armor/無敵は移さない。 |
+| Charm | 星無き聖印 / Starless Sacred Seal | Purgatory還流：E2指定点（本人6m内）に半径2m火場1個、0.4秒予告後0/0.5/1秒の3pulse各6、同敵合計18；最初の成功hitで本人heal3を1回だけ、CD9秒。 |
+| Head | 反呪の冠 / Counterspell Crown | CounterSpell：E2で盾4/1秒＋反撃窓1秒、最初の敵対native被damage E4後に攻撃者へ光弾14を1本（8m内、射程8/速度12/幅0.4/寿命0.8秒）、CD10秒。skill窃盗/stunなし。 |
+| Hands | 降火の手甲 / Rainfire Gauntlets | RainFire：E1対象地点（本人6m内）を中心に半径1.5m上の0/120/240°へ火円3個（各半径1.2m）、各0.4秒予告→0/0.15/0.3秒ずれで各6、同敵合計18、CD8秒。追従/無敵なし。 |
+| Feet | 踏星の鉄靴 / Starstomp Sabatons | 読めるJumpStompへ改名：E3着地点で0.25秒予告→半径2.5mの無属性踏撃18を1回、CD7秒。追加移動/地形越え/stunなし。 |
 
-| 2点（基準daybreak） | 3点 | 6点 |
-| --- | --- | --- |
-| LightAmp 14、AttackPct 8 | Radiance 105、Vigor 21（光付与・高HP強化） | ShieldBash 83、OpeningSalvo 42（障壁中の通常攻撃追撃・記憶の口火） |
+**2点**：Holy/Beastの小mode（E2/E3入力gate0.5秒）。E2=Holyへ＋段階専用盾6/3秒（盾CD8秒）、E3=Beastへ＋着地半径2.5m無属性踏撃18（攻撃CD4秒）。CD中もmode選択可、盾/攻撃予約なし。
 
-連携なし（固有報酬なし）。役割：セット単独＝被弾／奥義で障壁を張り攻勢へ移る、記憶／エッセンス単独＝従来どおり、併用＝任意の障壁系記憶による通常の相乗だけ。形態変身や報酬の捏造なし。
+**3点**：Holy→BeastはE3だけでなく専用盾の使切り/自然失効でも成立。E3なら出発点、盾終了なら現在地に離陸印1個/4秒；移行E3またはBeast中の次E1/E3踏撃を、本人6m内の印へ0.35秒予告で移し印を消費（着地との二重hitなし）。同mode入力は印を新設せず、E2で旧印破棄。
+
+**6点**：E2開始から8秒内のHoly→Beast→Holy帰還でCD18秒の双相技、最後E2の盾6を置換。A90/cap100=印（有効かつ6m内）/本人から光槍45（射程8/速度12/幅0.4、最初の敵/壁/射程末で停止）→終点に0.5秒予告の半径3m無属性星踏45、同敵合計90。B38/cap40=盾38を1枚/6秒線形減衰（盾6と重複授与しない）。向きは最後E2で固定、cycle/印消費、同mode連打で進行/期限延長なし、CD中の完成は保持しない。
+連携なし（2/4/6ともなし）。報酬・変身・特定記憶・特定部位・召喚不要；任意2/3部位で防護→移動→帰還成立。盾の自然失効でも遊べ、被弾は必須でない。
+
+**M/E・入口**：M1/2/3/4/7/8、E1/2/3/4/6；native主撃帰属/ConfirmedUse＋`EntityControl.StartDisplacement`寿命adapter、`Actor.PhysicalDamage/MagicDamage().Dispatch`・`DoHeal`・独立shield終了観測・host Tick。M6/E5/報酬adapterなし。ホスト裁定、参加者mode/印/予告表示、1pulse8敵/同時4場まで；減装・記憶交換・死亡・部屋離脱で印/予約/自前盾解除。生成再入力・無敵・即死・永久CC・二重damage禁止。
+根拠・欠落IL/未取得serialized値・mode詳細：`/home/wang/dev/sod-prompts/i48-facts-polaris.md`（Beam/CursedDiveの詳細は推測しない）。
 
 ## 4. マルチプレイの整合条件・実装段階・既存への影響
 
@@ -445,19 +565,19 @@ Armor／Feetは敵の押し出しとヒステリー爪自身のdashでは発動�
 | 識別 | ホスト自身と参加者が同じfactの型名・難易度区分・深度を使用。白夜／暗月は個別撃破、同時死亡の雑魚には限定抽選なし |
 | 抽選 | 各参加者に1回ずつ独立抽選。同じpであって、当否・部位・特性が同一である必要はない。ホストの当選を全員へ配らない |
 | 保留・再送・継続 | 解決済みEventIdを共有する通常＋専用報酬の処理単位を維持。ルール選択待ち・再接続・チェックポイント復元で型名やpを変えず、支給を増殖させない |
-| 効果 | 同じ6部位・強化・覚醒・星図ならホストと参加者の `Build.Compute` 集計は同じ。装備交換で2/3/6の累積と部位Powerを再計算 |
+| 効果 | 同じ装備・強化・覚醒・星図ならホストと参加者のprofile導出は同じ。2/3/6の累積・部位channel・固有modifierは装備epochで再計算 |
 | 連携 | 自分の対応セット部位数で2/4/6の最高段階を1つ選び、自分の対象報酬装着で成立。減装・解除で再判定し旧余韻を失効。白夜／暗月の部位数は別集計。対象起点・上限はホストが適用 |
 | 互換 | マージ順で確定するProtocol版と内容指紋の一致が前提。旧版混在時に「同じ表示なのにホストだけ効果不反映」を正常運用扱いしない |
 
-この既存実装段階表では、Demonの戦闘機構も§3.1の新仕様へ置き換える。再設計の段階2（ほか13セット）は別の作業であり、各旧案を完成仕様とみなして新原則の適用を省略しない。将来ほかの再設計で線形式が変われば、内容追加だけという想定に関係なくProtocolを改訂する。
+全14セットを同じ設計原則で改訂済み。下表は実装の分割であり、本依頼で実装を行う意味ではない。Demonの専用Power案も共通profileへ置換し、旧汎用効果との併存・aliasを残さない。
 
 | 実装段階 | 範囲 |
 | --- | --- |
-| 段階1 | 基盤拡張3件・Protocol更新・任意保存キー・汎用除外・段階連携の集計／説明表示。Demon／Skollの2セット12部位（記憶連携／エッセンス連携を各1種）を登録し、既存の保存・装備経路へ接続 |
-| 段階2 | 残り12セット72部位を追加。白夜／暗月を独立登録、Primus／PolarisはLinkなし。§2.3の同じ予算基準で全14組を較正 |
-| 段階間 | 最終IDを最初から使用。コードに未実装の仮定義・無効な完成効果・互換aliasを残さない。内容追加だけの段階2ではProtocolをさらに上げず、指紋で区別 |
+| 段階1 | 専用取得基盤＋§2.4の共通8機構・統合3経路・Protocol／保存連携。Demon／Skollの2セット12部位と必要な報酬adapterを登録 |
+| 段階2 | 残り12セット72部位・残り報酬adapterを追加。白夜／暗月を独立登録、Primus／Polarisは連携なし。§2.3の比較母集団・予算基準で全14組を較正 |
+| 段階間 | 最終IDを最初から使用し、無効仮定義・互換aliasを残さない。データだけの追加は内容指紋、wire／schema追加はその都度Protocolを次版へ上げる |
 
-既存テストへの影響（テスト設計・修正は行わない）：段階1ではセット件数48→50、セット部位288→300、段階2完了時には62・372となる。`GameRulesTests` のセット部位Power0、`EventSetTests` の全セットが汎用抽選可能という前提と衝突する。段階連携はSetDef側（段階1は6定義、全体は36定義）で、`LinksV126Tests` の単品連携件数357と既存単品定義は不変。`SixPieceBalanceV132Tests` の全セット共通許容帯、`KillClassificationTests` / `PendingRunRewardsTests` / `RunDurabilityTests` のfact・保存、`HostGearValidationTests` / `SixPieceSetTests` の部位Power・セット集計・ホスト再構築が影響範囲。図鑑分母は段階1でUnique12点、段階2完了時には84点増えるが、土台数・既存ID・装備線形式・セーブ版は維持する。
+既存への影響（テスト設計・修正はしない）：実装段階1のセット数48→50・部位288→300、全体62・372、連携段階は6→36定義。新profileは84部位・42通常段階、既存単品Linkの件数／倍率は不変。Loot／Build／HostGearValidation／説明／図鑑／装備codecのprofile導出と強化milestoneの著作済み効果判定、Protocol／KillSync／予約表示同期が影響範囲。保存済みボス部位の旧定義Powerは新版ロード時に新版定義から正規化し、旧Powerとの二重発動を残さない。土台・既存ID・保存版・プロフィールリセットなしの方針は維持する。
 
 ## 5. 確定事項（利用者指定）
 
