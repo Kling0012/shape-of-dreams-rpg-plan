@@ -22,11 +22,14 @@ namespace SodRpg.Mod
         private readonly ModShieldPools<Se_GenericShield_OneShot> _modShieldPools = new ModShieldPools<Se_GenericShield_OneShot>();
         private readonly Dictionary<ModShieldPoolKey, PoolRecipient> _modShieldRecipients = new Dictionary<ModShieldPoolKey, PoolRecipient>();
         private readonly Dictionary<HeroRuntime, ShieldOwnerEquipment> _shieldEquipment = new Dictionary<HeroRuntime, ShieldOwnerEquipment>();
+        private readonly List<ModShieldPoolKey> _modShieldDeadScratch = new List<ModShieldPoolKey>();
+        private readonly List<SkillTrigger> _shieldSkillScratch = new List<SkillTrigger>();
         private long _shieldEpoch;
 
         private long ModShieldEquipmentEpoch(HeroRuntime rt)
         {
-            var skills = new List<SkillTrigger>();
+            var skills = _shieldSkillScratch;
+            skills.Clear();
             foreach (var slot in LinkSkills) skills.Add(rt.Hero.Skill != null ? rt.Hero.Skill.GetSkill(slot) : null);
             if (!_shieldEquipment.TryGetValue(rt, out var state))
                 _shieldEquipment.Add(rt, state = new ShieldOwnerEquipment());
@@ -71,7 +74,9 @@ namespace SodRpg.Mod
 
         private void UpdateModShieldPools(float now)
         {
-            var dead = new List<ModShieldPoolKey>();
+            if (_modShieldRecipients.Count == 0) return;
+            var dead = _modShieldDeadScratch;
+            dead.Clear();
             foreach (var pair in _modShieldRecipients)
             {
                 var owner = pair.Value.Owner;

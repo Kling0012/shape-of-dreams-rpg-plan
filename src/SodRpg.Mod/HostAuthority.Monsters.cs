@@ -28,6 +28,8 @@ namespace SodRpg.Mod
             public int Cue;
             public bool CueSent;
             public float NextCueSync;
+            public bool HasAlly;
+            public float AllyCheckedAt = -1f;
         }
 
         private readonly List<MonsterRuntime> _behaviorScratch = new List<MonsterRuntime>();
@@ -63,7 +65,8 @@ namespace SodRpg.Mod
                     if (distance > 0.001f)
                         dot = Vector3.Dot(m.rotation * Vector3.forward, offset / distance);
                 }
-                bool hasAlly = (affixes & NightmareAffix.Packbound) != 0 && FindBehaviorAlly(m, false) != null;
+                // #55: the full monster scan ran per hit; the behavior tick refreshes the cached ally state instead.
+                bool hasAlly = (affixes & NightmareAffix.Packbound) != 0 && PackboundAllyNear(rt);
                 float mult = MonsterBehavior.IncomingMultiplier(affixes, distance, dot, hasAlly,
                     m.Control != null && m.Control.ongoingChannels.Count > 0,
                     Time.time < state.RecoveryUntil, state.Age, m is BossMonster,
@@ -115,6 +118,22 @@ namespace SodRpg.Mod
             return nearest;
         }
 
+        /// <summary>
+        /// 群れの味方が近くにいるか（#55）。全モンスター走査を被弾・合図のたびに繰り返す代わりに、
+        /// 0.15秒までのキャッシュを使う。値の更新は TickMonsterBehaviors が0.1秒ごとに行う。
+        /// </summary>
+        private bool PackboundAllyNear(MonsterRuntime rt)
+        {
+            var state = rt.Behavior;
+            if (state == null) return false;
+            if (state.AllyCheckedAt < 0f || Time.time - state.AllyCheckedAt > 0.15f)
+            {
+                state.HasAlly = FindBehaviorAlly(rt.Monster, false) != null;
+                state.AllyCheckedAt = Time.time;
+            }
+            return state.HasAlly;
+        }
+
         private void TickMonsterBehaviors(float now)
         {
             if (now < _nextMonsterBehaviorTick) return;
@@ -131,6 +150,8 @@ namespace SodRpg.Mod
                 if (state == null || !Alive(m)) continue;
                 float elapsed = Mathf.Clamp(now - state.LastTick, 0f, 0.25f);
                 state.LastTick = now;
+                // Refresh before the sleep branch: a sleeping monster can still take a cached-guard hit (#55).
+                if ((state.Affixes & NightmareAffix.Packbound) != 0) PackboundAllyNear(rt);
                 if (m.isSleeping || (_zone != null && _zone.isInAnyTransition))
                 {
                     state.LastHit = now; // Do not accumulate out-of-combat healing.
@@ -221,7 +242,7 @@ namespace SodRpg.Mod
                 || ((state.Affixes & NightmareAffix.Committed) != 0 && now < state.RecoveryUntil);
             bool guarding = (state.Affixes & (NightmareAffix.Veiled | NightmareAffix.Hollow | NightmareAffix.Facing)) != 0
                 || ((state.Affixes & NightmareAffix.Pulsing) != 0 && MonsterBehavior.PulseGuarded(state.Age))
-                || ((state.Affixes & NightmareAffix.Packbound) != 0 && FindBehaviorAlly(m, false) != null)
+                || ((state.Affixes & NightmareAffix.Packbound) != 0 && PackboundAllyNear(rt))
                 || ((state.Affixes & NightmareAffix.Committed) != 0 && m.Control != null && m.Control.ongoingChannels.Count > 0);
             bool healing = (state.Affixes & NightmareAffix.Recuperating) != 0 && state.HealBudget > 0f
                 && now - state.LastHit >= MonsterBehavior.HealDelaySeconds && m.currentHealth < m.maxHealth;

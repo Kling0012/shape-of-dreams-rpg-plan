@@ -30,6 +30,9 @@ namespace SodRpg.Mod
         private readonly Dictionary<HeroRuntime, GimmickHostState> _gimmickV129 = new Dictionary<HeroRuntime, GimmickHostState>();
         private readonly Dictionary<Entity, DataProcessor<DamageData, Actor, Entity>> _sapProcessors =
             new Dictionary<Entity, DataProcessor<DamageData, Actor, Entity>>();
+        private readonly List<int> _gimmickVictimScratch = new List<int>();
+        private readonly List<Actor> _gimmickCastScratch = new List<Actor>();
+        private readonly List<Entity> _sapExpiryScratch = new List<Entity>();
         private long _gimmickCastSequence;
 
         private GimmickHostState InitializeGimmicksV129(HeroRuntime rt)
@@ -341,7 +344,8 @@ namespace SodRpg.Mod
         {
             if (!_gimmickV129.TryGetValue(rt, out var state)) return;
             if (!Alive(rt.Hero)) { state.Wounds.Clear(); state.LastHits.Clear(); return; }
-            var dead = new List<int>();
+            var dead = _gimmickVictimScratch;
+            dead.Clear();
             foreach (var pair in state.Victims)
                 if (pair.Value == null || !pair.Value.isActive || pair.Value.currentHealth <= 0) dead.Add(pair.Key);
             foreach (int id in dead)
@@ -351,7 +355,8 @@ namespace SodRpg.Mod
                 rt.Gimmicks.ForgetVictim(id);
                 state.LastHits.Remove(id);
             }
-            var casts = new List<Actor>();
+            var casts = _gimmickCastScratch;
+            casts.Clear();
             foreach (var cast in state.Casts)
                 // Inactive roots can still own travelling projectiles and lingering DoT children.
                 if (cast.Key == null) casts.Add(cast.Key);
@@ -373,16 +378,25 @@ namespace SodRpg.Mod
             }
             finally { ExitGenerated(rt.Hero); }
             state.LastHits.Clear();
-            var expired = new List<Entity>();
+        }
+
+        /// <summary>
+        /// 樹液の被ダメ補正がまだ必要な敵だけを残す（#55）。どの旅人にも依存しない走査なので、
+        /// 1フレームに1回（UpdateGimmicksV129 の後）だけ行う。
+        /// </summary>
+        private void PruneSapProcessors(float now)
+        {
+            if (_sapProcessors.Count == 0) return;
+            _sapExpiryScratch.Clear();
             foreach (var pair in _sapProcessors)
             {
                 bool active = false;
                 if (pair.Key != null && pair.Key.isActive)
                     foreach (var owner in _runtimes.Values)
                         if (owner.Gimmicks.SapPercent(pair.Key.GetInstanceID(), now, false) > 0) { active = true; break; }
-                if (!active) expired.Add(pair.Key);
+                if (!active) _sapExpiryScratch.Add(pair.Key);
             }
-            foreach (var enemy in expired)
+            foreach (var enemy in _sapExpiryScratch)
             {
                 if (enemy != null) enemy.dealtDamageProcessor.Remove(_sapProcessors[enemy]);
                 _sapProcessors.Remove(enemy);
