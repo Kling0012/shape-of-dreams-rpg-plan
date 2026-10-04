@@ -88,9 +88,11 @@ namespace SodRpg.Core.Game
             if (build == null) throw new ArgumentNullException(nameof(build));
             var key = build.SelectedKeystone;
             if (key == null) return;
+            int index = 0;
             foreach (var grant in key.Grants)
                 build.Mechanisms.Add(new AuthoredMechanismEntry { StarId = key.KeystoneId,
-                    ContributorIds = new[] { key.KeystoneId }, Spec = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(grant)) });
+                    ContributorIds = new[] { key.KeystoneId }, Spec = AuthoredMechanismCodec.DecodeSpec(AuthoredMechanismCodec.EncodeSpec(grant)),
+                    Provenance = new MechanismProvenance().Add(grant, index++) });
         }
 
         public static decimal GimmickDurationBase(GimmickDef def, decimal? valuePercent = null) =>
@@ -226,19 +228,39 @@ namespace SodRpg.Core.Game
                 EffectiveWoundTotal = pristine.Effect == GimmickEffect.Wound };
         }
 
+        private static ScopedKeystoneModifiers CreateAllocationRuntime(KeystoneDefinition key, string source, string receiver, MechanismEquipment equipment, long epoch)
+        {
+            var runtime = new ScopedKeystoneModifiers(key == null ? Array.Empty<KeystoneDefinition>() : new[] { key });
+            var memories = new HashSet<string>(key?.RequiredMemories ?? Array.Empty<string>(), StringComparer.Ordinal);
+            if (source != null) memories.Add(source); if (receiver != null) memories.Add(receiver);
+            if (equipment != null) memories = new HashSet<string>(equipment.Memories.Select(m => m.Memory), StringComparer.Ordinal);
+            runtime.Configure(key == null ? Array.Empty<string>() : new[] { key.KeystoneId }, epoch, memories,
+                key?.Prerequisites ?? Array.Empty<string>(), Array.Empty<KeystoneAllocatedEffect>());
+            return runtime;
+        }
+
+        // The configured runtime is a pure function of (keystone, source, receiver) and Apply never mutates it, so allocation
+        // evaluation (which asks the same few questions thousands of times per preview) reuses one per question. Failures are never cached.
+        [ThreadStatic] private static Dictionary<(KeystoneDefinition, string, string), ScopedKeystoneModifiers> runtimeCache;
+        private static ScopedKeystoneModifiers AllocationRuntime(KeystoneDefinition key, string source, string receiver, long epoch)
+        {
+            var cache = runtimeCache ?? (runtimeCache = new Dictionary<(KeystoneDefinition, string, string), ScopedKeystoneModifiers>());
+            var id = (key, source, receiver);
+            if (cache.TryGetValue(id, out var runtime)) return runtime;
+            runtime = CreateAllocationRuntime(key, source, receiver, null, epoch);
+            if (cache.Count >= 512) cache.Clear();
+            cache.Add(id, runtime);
+            return runtime;
+        }
+
         public static KeystoneResult TransformAllocationPayload(Build build, KeystonePayload payload, string source,
             string receiver = null, MechanismEquipment equipment = null, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory,
             KeystoneRecipientKind recipient = KeystoneRecipientKind.Self,
             MechanismMemorySlot? sourceSlot = null, MechanismMemorySlot? recipientSlot = null, string heroKey = null)
         {
             var key = build.SelectedKeystone;
-            var runtime = new ScopedKeystoneModifiers(key == null ? Array.Empty<KeystoneDefinition>() : new[] { key });
-            var memories = new HashSet<string>(key?.RequiredMemories ?? Array.Empty<string>(), StringComparer.Ordinal);
-            if (source != null) memories.Add(source); if (receiver != null) memories.Add(receiver);
-            if (equipment != null) memories = new HashSet<string>(equipment.Memories.Select(m => m.Memory), StringComparer.Ordinal);
             long epoch = equipment?.EquipmentEpoch ?? 1;
-            runtime.Configure(key == null ? Array.Empty<string>() : new[] { key.KeystoneId }, epoch, memories,
-                key?.Prerequisites ?? Array.Empty<string>(), Array.Empty<KeystoneAllocatedEffect>());
+            var runtime = equipment == null ? AllocationRuntime(key, source, receiver, epoch) : CreateAllocationRuntime(key, source, receiver, equipment, epoch);
             return runtime.Apply(payload, new KeystoneContext(epoch, source, sourceKind, receiver, recipient, equipment, sourceSlot, recipientSlot, heroKey));
         }
 

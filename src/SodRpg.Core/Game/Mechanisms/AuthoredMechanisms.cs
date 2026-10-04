@@ -60,6 +60,39 @@ namespace SodRpg.Core.Game
         public string StarId { get; set; }
         public string[] ContributorIds { get; set; } = Array.Empty<string>();
         public AuthoredMechanismSpec Spec { get; set; }
+        /// <summary>
+        /// Everything the composed spec was derived from (contributing stars with ranks, applied scoped modifiers with ranks), or null when
+        /// unknown. Equal provenance on equal registered data means an identical composed spec, so allocation analysis can reuse its projection.
+        /// </summary>
+        internal MechanismProvenance Provenance { get; set; }
+    }
+
+    /// <summary>The identity of a composed mechanism entry: the star definitions and ranks it was composed from, compared by reference.</summary>
+    internal sealed class MechanismProvenance : IEquatable<MechanismProvenance>
+    {
+        private object[] sources = new object[8];
+        private int[] ranks = new int[8];
+        private int count;
+        private int hash = 17;
+        internal MechanismProvenance Add(object source, int rank)
+        {
+            if (count == sources.Length) { Array.Resize(ref sources, count * 2); Array.Resize(ref ranks, count * 2); }
+            sources[count] = source; ranks[count++] = rank;
+            hash = unchecked(hash * 31 + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(source)) * 31 + rank;
+            return this;
+        }
+        /// <summary>Separates the contributing stars from the modifiers applied to them.</summary>
+        internal MechanismProvenance Mark() => Add(null, -1);
+        public bool Equals(MechanismProvenance other)
+        {
+            if (ReferenceEquals(this, other)) return true;
+            if (other == null || hash != other.hash || count != other.count) return false;
+            for (int i = 0; i < count; i++)
+                if (!ReferenceEquals(sources[i], other.sources[i]) || ranks[i] != other.ranks[i]) return false;
+            return true;
+        }
+        public override bool Equals(object obj) => Equals(obj as MechanismProvenance);
+        public override int GetHashCode() => hash;
     }
 
     public static class AuthoredMechanisms
@@ -266,9 +299,16 @@ namespace SodRpg.Core.Game
         {
             var s = entry.Spec;
             string memory = modifier.ScopeKind == ScopeKind.Receiver ? ReceiverMemory(s) : SourceMemory(s);
-            return (memory == modifier.ScopeMemory || memory == null && modifier.TargetEffectIds.Length > 0)
-                && (modifier.TargetEffectIds.Length == 0 || entry.ContributorIds.Any(modifier.TargetEffectIds.Contains))
-                && (modifier.TargetEffects.Length == 0 || modifier.TargetEffects.Contains(Effect(s)));
+            var ids = modifier.TargetEffectIds;
+            if (!(memory == modifier.ScopeMemory || memory == null && ids.Length > 0)) return false;
+            if (ids.Length != 0)
+            {
+                bool any = false;
+                foreach (string contributor in entry.ContributorIds)
+                    if (Array.IndexOf(ids, contributor) >= 0) { any = true; break; }
+                if (!any) return false;
+            }
+            return modifier.TargetEffects.Length == 0 || Array.IndexOf(modifier.TargetEffects, Effect(s)) >= 0;
         }
         internal static bool Supports(AuthoredMechanismSpec s, GimmickParam param)
         {
@@ -349,6 +389,7 @@ namespace SodRpg.Core.Game
                 ?? (IReadOnlyList<KeyValuePair<TalentDef, int>>)Array.Empty<KeyValuePair<TalentDef, int>>();
             build.Gimmicks.RemoveAll(e => replaced.Contains(e.StarId));
             var groups = new Dictionary<string, (AuthoredMechanismEntry Entry, decimal Value, string Signature)>(StringComparer.Ordinal);
+            var provenance = new Dictionary<string, MechanismProvenance>(StringComparer.Ordinal);
             foreach (var row in selected)
             {
                 var authored = row.Key.Mechanism ?? (FractionalScopedModifiers.RequiresMechanismRoute(row.Key.EffectChannel)
@@ -380,8 +421,13 @@ namespace SodRpg.Core.Game
                     group.Entry.ContributorIds = group.Entry.ContributorIds.Concat(entry.ContributorIds).OrderBy(x => x, StringComparer.Ordinal).ToArray();
                     if (StringComparer.Ordinal.Compare(entry.StarId, group.Entry.StarId) < 0) group.Entry.StarId = entry.StarId;
                     groups[spec.ChannelId] = (group.Entry, checked(group.Value + value), signature);
+                    provenance[spec.ChannelId].Add(row.Key, row.Value);
                 }
-                else groups.Add(spec.ChannelId, (entry, value, null));
+                else
+                {
+                    groups.Add(spec.ChannelId, (entry, value, null));
+                    provenance.Add(spec.ChannelId, new MechanismProvenance().Add(row.Key, row.Value));
+                }
                 if (entry.Spec.Bridge != null)
                     foreach (var endpoint in entry.Spec.Bridge.Endpoints)
                     {
@@ -393,7 +439,9 @@ namespace SodRpg.Core.Game
             foreach (var group in groups.Values)
             {
                 if (group.Entry.Spec.Bridge == null) SetValue(group.Entry.Spec, group.Value, group.Entry.ContributorIds);
-                ComposeEntry(group.Entry, 1, appliedModifiers, false, build.Dependencies);
+                var trace = provenance[group.Entry.Spec.ChannelId].Mark();
+                ComposeEntry(group.Entry, 1, appliedModifiers, false, build.Dependencies, trace);
+                group.Entry.Provenance = trace;
                 build.Mechanisms.Add(group.Entry);
             }
             var admittedPairs = new HashSet<string>(StringComparer.Ordinal);
@@ -422,7 +470,7 @@ namespace SodRpg.Core.Game
         }
 
         private static void ComposeEntry(AuthoredMechanismEntry entry, int rank, IReadOnlyList<KeyValuePair<TalentDef, int>> selected, bool applyRankValues = true,
-            StarDependencies dependencies = null)
+            StarDependencies dependencies = null, MechanismProvenance trace = null)
         {
             var s = entry.Spec;
             s.EveryN = EffectiveEveryN(s);
@@ -435,6 +483,7 @@ namespace SodRpg.Core.Game
                 var m = t.ScopedModifier;
                 if (m == null || !Matches(m, entry)) continue;
                 dependencies?.Touch("G:" + s.ChannelId, t.Id);
+                trace?.Add(t, row.Value);
                 if (m.Param.HasValue && !Supports(s, m.Param.Value)) throw new InvalidOperationException("Unsupported mechanism parameter: " + t.Id);
                 if (m.CapProfileId != null)
                 {
@@ -626,13 +675,29 @@ namespace SodRpg.Core.Game
         internal static bool GeneratedDamageEffect(GimmickEffect effect) => effect == GimmickEffect.Burst || effect == GimmickEffect.Echo
             || effect == GimmickEffect.Wound || effect == GimmickEffect.Ricochet || effect == GimmickEffect.Primed;
 
+        private static readonly MemorySelector DefaultSourceSelector = MemorySelector.Parse("@ID|@Q|@R");
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string, MechanismMemorySlot?, string, MechanismMemorySlot?), string> scenarios =
+            new System.Collections.Concurrent.ConcurrentDictionary<(string, MechanismMemorySlot?, string, MechanismMemorySlot?), string>();
+        private static string Scenario(string sourceMemory, MechanismMemorySlot? sourceSlot, string receiverMemory, MechanismMemorySlot? receiverSlot)
+        {
+            var key = (sourceMemory, sourceSlot, receiverMemory, receiverSlot);
+            if (scenarios.TryGetValue(key, out string text)) return text;
+            if (scenarios.Count > 4096) scenarios.Clear();
+            return scenarios.GetOrAdd(key, sourceMemory + "@" + sourceSlot + ">" + receiverMemory + "@" + receiverSlot);
+        }
+
         private static IEnumerable<EffectiveAllocationChannel> ProjectPayload(AuthoredMechanismEntry entry, Build build,
             KeystonePayload payload, MemorySelector sourceSelector, MemorySelector receiverSelector = null, string sourceFallback = null,
             string receiverFallback = null, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self, string discriminator = null,
             float cooldown = 0, MemoryEventKind? trigger = null, string heroKey = null)
         {
             var spec = entry.Spec;
-            if (sourceSelector == null && sourceFallback == null) sourceSelector = MemorySelector.Parse("@ID|@Q|@R");
+            if (sourceSelector == null && sourceFallback == null) sourceSelector = DefaultSourceSelector;
+            // Everything of the predicate that does not depend on the projected scope is built once per payload.
+            string head = "mechanism:" + ((int)spec.Kind).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":"
+                + ((int)(trigger ?? spec.Trigger)).ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + payload.Effect + ":";
+            string tail = ":" + spec.Condition + ":" + spec.PairId + ":";
+            string channelSuffix = ":" + (discriminator ?? spec.ChannelId);
             foreach (var source in ProjectionScopes(sourceSelector, sourceFallback, heroKey))
                 foreach (var receiver in ProjectionScopes(receiverSelector, receiverFallback, heroKey, source.Memory))
                 {
@@ -654,13 +719,11 @@ namespace SodRpg.Core.Game
                         if (generated.Disabled) continue;
                         value = generated.Value;
                     }
-                    string scenario = source.Memory + "@" + source.Slot + ">" + receiver.Memory + "@" + receiver.Slot;
-                    string predicate = "mechanism:" + (int)spec.Kind + ":" + (int)(trigger ?? spec.Trigger) + ":" + payload.Effect
-                        + ":" + final.Argument + ":" + spec.Condition + ":" + spec.PairId + ":" + scenario;
+                    string predicate = head + final.Argument + tail + Scenario(source.Memory, source.Slot, receiver.Memory, receiver.Slot);
                     bool strongest = StrongestEffect(payload.Effect) && spec.Kind != AuthoredMechanismKind.DirectedRecharge;
                     yield return new EffectiveAllocationChannel
                     {
-                        Key = strongest ? predicate : predicate + ":" + (discriminator ?? spec.ChannelId),
+                        Key = strongest ? predicate : predicate + channelSuffix,
                         PredicateKey = predicate, Strongest = strongest, Cooldown = cooldown, Effect = payload.Effect,
                         StarId = entry.StarId, ContributorIds = entry.ContributorIds, Memory = source.Memory,
                         ValueMilli = value * BuildPrecision.Scale / final.EveryN,

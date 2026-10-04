@@ -18,6 +18,7 @@ namespace SodRpg.Core.Tests
     /// and the resulting serialized profiles. The production engine additionally evaluates every star its dependency analysis
     /// skips and fails if skipping could have hidden a refund (EffectiveAllocationValidation.VerifyPruning).
     /// </summary>
+    [Collection("Generated hero registry")]
     public sealed class AllocationEquivalenceV131Tests
     {
         private readonly ITestOutputHelper _out;
@@ -289,9 +290,23 @@ namespace SodRpg.Core.Tests
 
         private static void WithVerification(Action body)
         {
+            // Strict: every star the analysis skips must keep exactly its marginal effectiveness, and every star the region shortcut
+            // accepts must be effective on the whole allocation. A violation is recorded and fails the test after the run.
             EffectiveAllocationValidation.VerifyPruning = true;
-            try { body(); }
-            finally { EffectiveAllocationValidation.VerifyPruning = false; }
+            EffectiveAllocationValidation.VerifyPruningStrict = true;
+            EffectiveAllocationValidation.PruningViolations = new List<string>();
+            try
+            {
+                body();
+                Assert.True(EffectiveAllocationValidation.PruningViolations.Count == 0,
+                    string.Join(Environment.NewLine, EffectiveAllocationValidation.PruningViolations.Take(10)));
+            }
+            finally
+            {
+                EffectiveAllocationValidation.VerifyPruning = false;
+                EffectiveAllocationValidation.VerifyPruningStrict = false;
+                EffectiveAllocationValidation.PruningViolations = null;
+            }
         }
 
         // ---- hand-built cascades: the purchase makes older paid stars inert and they are refunded, unrelated stars are skipped ----
@@ -577,6 +592,46 @@ namespace SodRpg.Core.Tests
             var tree = HeroSigils.TreeFor(hero);
             RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)seed, hero, 80, relics: 8)),
                 hero, tree, true, seed, 110, hero);
+        }
+
+        public static IEnumerable<object[]> GeneratedHeroes() => new[]
+        {
+            new object[] { "Hero_Vesper", 41 }, new object[] { "Hero_Nachia", 42 }, new object[] { "Hero_Mist", 43 }, new object[] { "Hero_Lacerta", 44 },
+        };
+
+        private void WithGeneratedHero(string hero, Action<IReadOnlyList<TalentDef>> body)
+        {
+            StarClusters.RegisterGeneratedHero(hero);
+            try { body(HeroSigils.TreeFor(hero)); }
+            finally { StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
+        }
+
+        /// <summary>The real generated v1.31 trees (700-860 stars): dependency groups, region evaluation and keystone changes against the original algorithm.</summary>
+        [Theory, MemberData(nameof(GeneratedHeroes))]
+        public void Production_engine_matches_the_original_algorithm_on_generated_v131_hero_trees(string hero, int seed)
+        {
+            WithGeneratedHero(hero, tree =>
+                RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)seed, hero, 150, relics: 4)),
+                    hero, tree, true, seed, 45, hero));
+        }
+
+        /// <summary>More seeds and longer sequences on the generated trees (slow: the original algorithm costs seconds per step there).</summary>
+        [SlowFact, Trait("Speed", "Slow")]
+        public void Extended_random_equivalence_over_the_generated_v131_hero_trees()
+        {
+            foreach (var row in GeneratedHeroes())
+            {
+                string hero = (string)row[0];
+                WithGeneratedHero(hero, tree =>
+                {
+                    for (int seed = 500; seed < 504; seed++)
+                    {
+                        int s = seed;
+                        RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)s, hero, 220, relics: 4)),
+                            hero, tree, true, seed, 90, hero);
+                    }
+                });
+            }
         }
 
         [Theory]

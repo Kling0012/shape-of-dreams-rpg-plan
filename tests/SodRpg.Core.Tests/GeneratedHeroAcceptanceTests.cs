@@ -14,6 +14,7 @@ namespace SodRpg.Core.Tests
     /// Whole-hero acceptance for every hero gen_cs.py generated (StarClusters.GeneratedHeroes). The suite fails, never skips,
     /// when no hero is generated: a green run must mean a real generated star map was registered and played.
     /// </summary>
+    [Collection("Generated hero registry")]
     public sealed class GeneratedHeroAcceptanceTests : IClassFixture<GeneratedHeroAcceptanceTests.Installed>
     {
         private readonly Installed installed;

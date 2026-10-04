@@ -55,6 +55,8 @@ namespace SodRpg.Core.Game
         public string PredicateKey { get; internal set; }
         public float Cooldown { get; internal set; }
         public GimmickEffect? Effect { get; internal set; }
+        /// <summary>Dependency tokens (see StarDependencies) naming every star this channel's value is composed from; recorded only while analysing.</summary>
+        internal string[] DependsOn { get; set; }
     }
 
     public sealed class AllocationRefund
@@ -157,6 +159,10 @@ namespace SodRpg.Core.Game
         /// would have hidden a refund. Never set in production.
         /// </summary>
         internal static bool VerifyPruning;
+        /// <summary>With <see cref="VerifyPruning"/>: a skipped star must have exactly the same marginal effectiveness before and after the change, not only avoid a refund.</summary>
+        internal static bool VerifyPruningStrict;
+        /// <summary>Test hook: when set, a pruning violation is recorded here instead of thrown, so a whole purchase sequence can be audited.</summary>
+        internal static List<string> PruningViolations;
 
         // The tree never changes after construction, so its typed-star validation only has to be repeated when the cap registry does.
         private string validatedCapFingerprint;
@@ -320,14 +326,28 @@ namespace SodRpg.Core.Game
                             scope.Pruned++;
                             if (VerifyPruning)
                                 for (int r = 1; r <= rank; r++)
-                                    if (!RankEffective(scope, proposed, node, r) && RankEffective(scope, original, node, r))
-                                        throw new InvalidOperationException(Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ") + id + "#" + r.ToString(CultureInfo.InvariantCulture));
+                                    if (VerifyPruningStrict ? RankEffective(scope, proposed, node, r) != RankEffective(scope, original, node, r)
+                                        : !RankEffective(scope, proposed, node, r) && RankEffective(scope, original, node, r))
+                                    {
+                                        string message = Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ") + id + "#" + r.ToString(CultureInfo.InvariantCulture);
+                                        if (PruningViolations == null) throw new InvalidOperationException(message);
+                                        PruningViolations.Add(message + " (change " + change.CandidateStarId + ")");
+                                    }
                             continue;
                         }
                         int retained = rank;
+                        var region = scope.Region(id);
                         for (int r = 1; r <= rank; r++)
                         {
-                            if (RankEffective(scope, proposed, node, r) || !RankEffective(scope, original, node, r)) continue;
+                            // A positive answer on the star's own region is final; anything else is settled on the whole allocation.
+                            bool effective = region != null && RankEffectiveRegion(scope, proposed, node, r, region);
+                            if (effective && VerifyPruning && !RankEffective(scope, proposed, node, r))
+                            {
+                                string message = "Region evaluation disagrees with the full allocation: " + id + "#" + r.ToString(CultureInfo.InvariantCulture);
+                                if (PruningViolations == null) throw new InvalidOperationException(message);
+                                PruningViolations.Add(message + " (change " + change.CandidateStarId + ")");
+                            }
+                            if (effective || RankEffective(scope, proposed, node, r) || !RankEffective(scope, original, node, r)) continue;
                             RankEffective(scope, proposed, node, r, details);
                             retained = r - 1;
                             break;
@@ -499,6 +519,9 @@ namespace SodRpg.Core.Game
             return effective;
         }
 
+        private bool RankEffectiveRegion(PreviewScope scope, HeroState hero, TalentDef talent, int rank, PreviewScope.RegionInfo region) =>
+            HasPositiveDifference(scope.CaptureRegion(hero, talent.Id, rank, region), scope.CaptureRegion(hero, talent.Id, rank - 1, region));
+
         private static string MarginalKey(string baseKey, string id, int rank) =>
             baseKey + "\u0004" + id + "=" + rank.ToString(CultureInfo.InvariantCulture);
 
@@ -526,8 +549,13 @@ namespace SodRpg.Core.Game
             private readonly StarDependencies dependencies = new StarDependencies();
             private readonly Dictionary<string, KeystoneDefinition> appliedKeystones = new Dictionary<string, KeystoneDefinition>(StringComparer.Ordinal);
             private readonly HashSet<string> changedStars = new HashSet<string>(StringComparer.Ordinal);
-            private HashSet<string> dirtyRoots;
+            private HashSet<string> dirtyRoots, dirtyNeighbours;
+            private bool directResolved, regionsOk;
+            private int version;
+            private readonly Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>> regionCaptures =
+                new Dictionary<string, IReadOnlyList<EffectiveAllocationChannel>>(StringComparer.Ordinal);
             private bool pruning;
+            internal static bool UseDirectGroups = true, UseRegions = true;
 
             internal PreviewScope(EffectiveAllocationValidation owner, Profile profile, string heroKey)
             { this.owner = owner; this.profile = profile; this.heroKey = heroKey; }
@@ -536,9 +564,10 @@ namespace SodRpg.Core.Game
             internal void ProposedChanged(string refundedStarId)
             {
                 proposedKeyValid = false;
+                version++;
                 // The keystone's route gate counts every star's ranks, so once ranks change under a selected keystone nothing is provably local.
-                if (Original.Keystone != null || Proposed.Keystone != null) pruning = false;
-                if (changedStars.Add(refundedStarId)) dirtyRoots = null;
+                if (Original.Keystone != null || Proposed.Keystone != null) { pruning = false; regionsOk = false; }
+                if (changedStars.Add(refundedStarId)) { dirtyRoots = null; dirtyNeighbours = null; directResolved = false; }
             }
 
             /// <summary>
@@ -547,6 +576,10 @@ namespace SodRpg.Core.Game
             /// </summary>
             internal void BeginChange(AllocationChange change, TalentDef candidate, HeroState original, HeroState proposed)
             {
+                // A star's own marginal effect depends only on the stars it shares an output with, whatever was changed, so the region
+                // evaluation also serves a keystone change (the keystone is part of every build compared) and changes that cannot be pruned.
+                regionsOk = change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice
+                    || change.Kind == AllocationChangeKind.Refund || change.Kind == AllocationChangeKind.Keystone;
                 pruning = (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice
                         || change.Kind == AllocationChangeKind.Refund)
                     && candidate != null && !candidate.IsKeystone && original.Keystone == proposed.Keystone;
@@ -563,7 +596,7 @@ namespace SodRpg.Core.Game
                     // A star that starts or stops contributing to the build because of this change counts as changed too.
                     if (CanReach(original, node) != CanReach(proposed, node)) changedStars.Add(id);
                 }
-                dirtyRoots = null;
+                dirtyRoots = null; dirtyNeighbours = null; directResolved = false;
             }
 
             private KeystoneDefinition AppliedKeystone(HeroState hero)
@@ -572,9 +605,64 @@ namespace SodRpg.Core.Game
                 return key;
             }
 
+            private void ResolveDirect()
+            {
+                if (directResolved) return;
+                // Direct sharing: a star's output groups are only affected by a changed star that belongs to one of them.
+                // A changed star that takes part in a pair or a replacement can switch other stars' outputs on and off, so then
+                // (and for such stars themselves) only the transitive component is safe.
+                directResolved = true;
+                dirtyNeighbours = new HashSet<string>(StringComparer.Ordinal);
+                foreach (string id in changedStars) dependencies.AddAffected(id, dirtyNeighbours);
+            }
+
+            /// <summary>
+            /// The stars whose ranks decide every output group the star belongs to, or null when the star has to be analysed against the whole
+            /// allocation. Re-evaluating the star's marginal effect on this region alone gives the same answer as on the whole allocation.
+            /// </summary>
+            internal sealed class RegionInfo { internal HashSet<string> Ids; internal int Handle; }
+            private readonly Dictionary<string, RegionInfo> regions = new Dictionary<string, RegionInfo>(StringComparer.Ordinal);
+
+            internal RegionInfo Region(string starId)
+            {
+                if (!regionsOk || !UseDirectGroups || !UseRegions || owner.policy.PermanentDisables.Count != 0) return null;
+                if (dependencies.IsComplex(starId)) return null;
+                // Stars in the same output groups share one region, and with it the build of the unchanged allocation.
+                string key = string.Join("", dependencies.GroupsOf(starId)) + "" + (dependencies.GroupsOf(starId).Count == 0 ? starId : "");
+                if (regions.TryGetValue(key, out var info)) return info;
+                var ids = new HashSet<string>(StringComparer.Ordinal) { starId };
+                dependencies.AddGroupNeighbours(starId, ids);
+                regions.Add(key, info = new RegionInfo { Ids = ids, Handle = regions.Count });
+                return info;
+            }
+
+            internal IReadOnlyList<EffectiveAllocationChannel> CaptureRegion(HeroState hero, string starId, int rank, RegionInfo region)
+            {
+                bool unchanged = hero.Talents.TryGetValue(starId, out int current) && current == rank;
+                string key = version.ToString(CultureInfo.InvariantCulture) + "" + (unchanged ? "r" + region.Handle.ToString(CultureInfo.InvariantCulture) : starId + "" + rank.ToString(CultureInfo.InvariantCulture));
+                if (regionCaptures.TryGetValue(key, out var hit)) return hit;
+                var allocation = new HeroState { Keystone = hero.Keystone, Kills = hero.Kills, StarXp = hero.StarXp, AuthoredMigrationVersion = hero.AuthoredMigrationVersion };
+                Array.Copy(hero.Equipped, allocation.Equipped, hero.Equipped.Length);
+                foreach (string id in region.Ids)
+                {
+                    if (hero.Talents.TryGetValue(id, out int ranks)) allocation.Talents[id] = ranks;
+                    if (hero.TalentChoices.TryGetValue(id, out int choice)) allocation.TalentChoices[id] = choice;
+                }
+                if (!unchanged) SetRank(allocation, starId, rank);
+                var channels = owner.Capture(profile, heroKey, allocation, hero, Snapshot(hero, KeyOf(hero)));
+                if (regionCaptures.Count >= 16) regionCaptures.Clear();
+                regionCaptures.Add(key, channels);
+                return channels;
+            }
+
             internal bool IsIndependent(string starId)
             {
                 if (!pruning || changedStars.Contains(starId)) return false;
+                if (UseDirectGroups)
+                {
+                    ResolveDirect();
+                    return !dirtyNeighbours.Contains(starId);
+                }
                 if (dirtyRoots == null)
                 {
                     dirtyRoots = new HashSet<string>(StringComparer.Ordinal);
@@ -595,13 +683,23 @@ namespace SodRpg.Core.Game
 
             internal string KeyOf(HeroState hero)
             {
-                if (ReferenceEquals(hero, Original)) return originalKey ?? (originalKey = ContentKey(hero));
+                if (ReferenceEquals(hero, Original)) return originalKey ?? (originalKey = Intern(ContentKey(hero)));
                 if (ReferenceEquals(hero, Proposed))
                 {
-                    if (!proposedKeyValid) { proposedKey = ContentKey(hero); proposedKeyValid = true; }
+                    if (!proposedKeyValid) { proposedKey = Intern(ContentKey(hero)); proposedKeyValid = true; }
                     return proposedKey;
                 }
-                return ContentKey(hero);
+                return Intern(ContentKey(hero));
+            }
+
+            // A content key spans the whole allocation (kilobytes), and it is combined and hashed for every build the preview looks up.
+            // Each distinct content therefore gets one short handle; equal handles mean equal content.
+            private readonly Dictionary<string, string> contentHandles = new Dictionary<string, string>(StringComparer.Ordinal);
+            private string Intern(string content)
+            {
+                if (!contentHandles.TryGetValue(content, out string handle))
+                    contentHandles.Add(content, handle = "#" + contentHandles.Count.ToString(CultureInfo.InvariantCulture));
+                return handle;
             }
 
             private static string ContentKey(HeroState hero)
@@ -725,18 +823,22 @@ namespace SodRpg.Core.Game
             }
             var build = Build.ComputeForValidatedTree(profile, heroKey, tree, effective, reachability, layout, definitions, reachabilitySnapshot, dependencies);
             var result = new List<EffectiveAllocationChannel>();
-            foreach (var stat in build.Stats) result.Add(Scalar("stat:" + (int)stat.Key, stat.Value, Content.StatCap(stat.Key)));
-            foreach (var power in build.Powers) result.Add(Scalar("power:" + (int)power.Key, power.Value, Content.PowerCap(power.Key)));
+            foreach (var stat in build.Stats) result.Add(Scalar(IntKey("stat:", (int)stat.Key), stat.Value, Content.StatCap(stat.Key), dependencies, "S:", (int)stat.Key));
+            foreach (var power in build.Powers) result.Add(Scalar(IntKey("power:", (int)power.Key), power.Value, Content.PowerCap(power.Key), dependencies, "P:", (int)power.Key));
             foreach (var link in build.Links)
             {
                 if (link.Kind != LinkKind.MemoryHaste)
-                    result.Add(Scalar("link:" + BuildAggregation.LinkKey(link), link.ValueMilli));
+                {
+                    string linkKey = BuildAggregation.LinkKey(link);
+                    result.Add(Scalar("link:" + linkKey, link.ValueMilli, 0, dependencies, "L:", linkKey));
+                }
             }
             foreach (var native in build.NativeModifiers)
                 if (native.Kind != LinkKind.MemoryHaste)
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, native.Memory))
                     result.Add(new EffectiveAllocationChannel
                     {
+                        DependsOn = dependencies == null ? null : new[] { "N:" + ((int)native.Kind).ToString(CultureInfo.InvariantCulture) + ":" + native.Memory },
                         Key = "native:" + native.Memory + "@" + sourceSlot + ":" + (int)native.Kind + ":" + native.CapProfileId,
                         Memory = native.Memory, ValueMilli = AuthoredKeystoneComposer.TransformAllocationPayload(build,
                             new KeystonePayload(KeystoneLayer.StarMemoryDamage, native.ValueMilli / 1000m,
@@ -744,7 +846,7 @@ namespace SodRpg.Core.Game
                             sourceSlot: sourceSlot, heroKey: heroKey).Value * 1000m,
                         ValueCeiling = FractionalScopedModifiers.NativeCapValueMilli(native.CapProfileId), CapProfileId = native.CapProfileId,
                     });
-            CaptureHaste(build, result);
+            CaptureHaste(build, result, dependencies);
             foreach (var entry in build.Gimmicks)
                 foreach (var sourceSlot in VerifiedMechanismSlots.ForMemory(heroKey, entry.Memory))
                 {
@@ -779,6 +881,7 @@ namespace SodRpg.Core.Game
                     duration = Math.Min(duration, 36000m / entry.Def.EffectiveValueOrAuthored);
                 result.Add(new EffectiveAllocationChannel
                 {
+                    DependsOn = dependencies == null ? null : new[] { "E:" + entry.StarId },
                     Key = key, StarId = entry.StarId, ValueMilli = value, Strongest = strongest,
                     Effect = def.Effect,
                     PredicateKey = predicate, Cooldown = def.Cooldown,
@@ -795,13 +898,19 @@ namespace SodRpg.Core.Game
                 });
             }
             foreach (var pair in build.PairCombos)
-                result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value));
+                result.Add(Scalar("pair:" + BuildAggregation.PairKey(pair), pair.Value, 0, dependencies, "Q:", pair.Def.Id));
             foreach (var entry in build.Mechanisms)
-                foreach (var channel in AuthoredMechanisms.EffectiveChannels(entry, build, heroKey)) result.Add(channel);
+                result.AddRange(MechanismChannels(entry, build, heroKey, capFingerprint));
             if (dependencies != null)
                 foreach (var channel in result)
                 {
                     // HasPositiveDifference compares channels of one key, and strongest channels of one predicate, with each other.
+                    if (channel.DependsOn != null)
+                    {
+                        // Direct record: every star the channel's value depends on, grouped with the channels it is compared with.
+                        dependencies.Group("K:" + channel.Key, channel.DependsOn);
+                        if (channel.Strongest) dependencies.Group("PK:" + channel.PredicateKey, channel.DependsOn);
+                    }
                     if (channel.ContributorIds.Count == 0) continue;
                     dependencies.Touch("K:" + channel.Key, channel.ContributorIds);
                     if (channel.Strongest) dependencies.Touch("PK:" + channel.PredicateKey, channel.ContributorIds);
@@ -827,7 +936,7 @@ namespace SodRpg.Core.Game
             if (!scenarios.ContainsKey(key)) scenarios.Add(key, canonical);
         }
 
-        private void CaptureHaste(Build build, List<EffectiveAllocationChannel> result)
+        private void CaptureHaste(Build build, List<EffectiveAllocationChannel> result, StarDependencies dependencies)
         {
             var scenarios = new SortedDictionary<string, string[]>(hasteScenarios, StringComparer.Ordinal);
             foreach (var link in build.Links)
@@ -847,7 +956,7 @@ namespace SodRpg.Core.Game
                     }
                     foreach (var native in build.NativeModifiers)
                         if (native.Kind == LinkKind.MemoryHaste && native.Memory == memory) total = checked(total + native.ValueMilli);
-                    result.Add(Scalar("haste:" + memory + ":" + scenario.Key, Math.Min(100L * BuildPrecision.Scale, total), 100L * BuildPrecision.Scale));
+                    result.Add(Scalar("haste:" + memory + ":" + scenario.Key, Math.Min(100L * BuildPrecision.Scale, total), 100L * BuildPrecision.Scale, dependencies, "H:", memory));
                 }
         }
 
@@ -878,8 +987,64 @@ namespace SodRpg.Core.Game
             return ids;
         }
 
-        private static EffectiveAllocationChannel Scalar(string key, long value, long ceiling = 0) =>
-            new EffectiveAllocationChannel { Key = key, ValueMilli = value, ValueCeiling = ceiling };
+        private sealed class ProjectedMechanism
+        {
+            public KeystoneDefinition Keystone;
+            public string CapFingerprint;
+            public EffectiveAllocationChannel[] Channels;
+        }
+
+        // Projecting a mechanism into its channels is the most expensive step of a capture and is a pure function of the composed entry,
+        // the selected keystone and the registered caps. Entries whose provenance (contributors, applied modifiers, ranks) is known are
+        // therefore projected once; the channel objects are never modified after creation.
+        private readonly System.Collections.Concurrent.ConcurrentDictionary<ProjectionKey, ProjectedMechanism> projectedMechanisms =
+            new System.Collections.Concurrent.ConcurrentDictionary<ProjectionKey, ProjectedMechanism>();
+
+        private sealed class ProjectionKey : IEquatable<ProjectionKey>
+        {
+            private readonly MechanismProvenance provenance;
+            private readonly KeystoneDefinition keystone;
+            internal ProjectionKey(MechanismProvenance provenance, KeystoneDefinition keystone) { this.provenance = provenance; this.keystone = keystone; }
+            public bool Equals(ProjectionKey other) => other != null && ReferenceEquals(keystone, other.keystone) && provenance.Equals(other.provenance);
+            public override bool Equals(object obj) => Equals(obj as ProjectionKey);
+            public override int GetHashCode() => provenance.GetHashCode() * 31 + (keystone == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(keystone));
+        }
+
+        private EffectiveAllocationChannel[] MechanismChannels(AuthoredMechanismEntry entry, Build build, string heroKey, string capFingerprint)
+        {
+            var key = entry.Provenance == null ? null : new ProjectionKey(entry.Provenance, build.SelectedKeystone);
+            if (key != null && projectedMechanisms.TryGetValue(key, out var hit)
+                && ReferenceEquals(hit.Keystone, build.SelectedKeystone) && hit.CapFingerprint == capFingerprint) return hit.Channels;
+            var spec = entry.Spec;
+            var list = new List<string> { "G:" + spec.ChannelId };
+            if (spec.PairId != null) list.Add("Q:" + spec.PairId);
+            if (spec.Bridge != null) list.Add("Q:" + spec.Bridge.PairId);
+            var tokens = list.ToArray();
+            var channels = new List<EffectiveAllocationChannel>();
+            foreach (var channel in AuthoredMechanisms.EffectiveChannels(entry, build, heroKey)) { channel.DependsOn = tokens; channels.Add(channel); }
+            var projected = channels.ToArray();
+            if (key != null)
+            {
+                if (projectedMechanisms.Count >= 4096) projectedMechanisms.Clear();
+                projectedMechanisms[key] = new ProjectedMechanism { Keystone = build.SelectedKeystone, CapFingerprint = capFingerprint, Channels = projected };
+            }
+            return projected;
+        }
+
+        private static EffectiveAllocationChannel Scalar(string key, long value, long ceiling, StarDependencies dependencies, string tokenKind, string tokenName) =>
+            new EffectiveAllocationChannel { Key = key, ValueMilli = value, ValueCeiling = ceiling, DependsOn = dependencies == null ? null : new[] { tokenKind + tokenName } };
+
+        private static EffectiveAllocationChannel Scalar(string key, long value, long ceiling, StarDependencies dependencies, string tokenKind, int tokenNumber) =>
+            new EffectiveAllocationChannel { Key = key, ValueMilli = value, ValueCeiling = ceiling, DependsOn = dependencies == null ? null : new[] { IntKey(tokenKind, tokenNumber) } };
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<(string, int), string> intKeys =
+            new System.Collections.Concurrent.ConcurrentDictionary<(string, int), string>();
+        /// <summary>"prefix" + number, remembered: the same few hundred keys are rebuilt for every channel of every capture.</summary>
+        private static string IntKey(string prefix, int number)
+        {
+            if (intKeys.TryGetValue((prefix, number), out string key)) return key;
+            return intKeys.GetOrAdd((prefix, number), prefix + number.ToString(CultureInfo.InvariantCulture));
+        }
 
         private void DescribeInert(HeroState allocation, TalentDef talent, int rank,
             IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without,
