@@ -26397,6 +26397,200 @@
       "notes": "「outer.o4と装備Qのc1.n1」の後半を、Qが送り手のfrost-charge.c1/c2のn1（c1=embrace-chill, c2=boreal-chunk由来）のどちらかと解釈（要確認）。"
     },
     {
+      "id": "cetus.run.g1",
+      "region": "outer",
+      "cluster": "cetus.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.cetus.route.back-off.7",
+      "edges": [
+        "cetus.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "ShieldAbsorbedMaxHpPct",
+        "threshold": 10,
+        "cap": 60,
+        "effects": [
+          {
+            "stat": "ShieldPower",
+            "amount": 0.5
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "障壁の積み重ね",
+      "nameEn": "Layered Barrier",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "cetus.run.m1",
+      "region": "outer",
+      "cluster": "cetus.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "cetus.run.g1",
+        "cetus.run.m2"
+      ],
+      "requires": [
+        "cetus.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "cetus.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "凍てつく層",
+      "nameEn": "Frozen Layers",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "cetus.run.m2",
+      "region": "outer",
+      "cluster": "cetus.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "cetus.run.m1",
+        "cetus.run.choice"
+      ],
+      "requires": [
+        "cetus.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "cetus.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "砕けぬ氷膜",
+      "nameEn": "Unbroken Ice Film",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "cetus.run.choice",
+      "region": "outer",
+      "cluster": "cetus.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "cetus.run.m2"
+      ],
+      "requires": [
+        "cetus.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "cetus.run.g1",
+            "capBonus": 0,
+            "effectPct": 50,
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "厚みを増す氷",
+          "nameEn": "Thickening Ice"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "cetus.run.g1",
+            "capBonus": 0,
+            "effectPct": 0,
+            "doubleGain": true
+          },
+          "stat": null,
+          "nameJa": "速く育つ氷",
+          "nameEn": "Swiftly Growing Ice"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "氷の育て方",
+      "nameEn": "How Ice Grows",
+      "notes": "1スタックの効果 +50% ／ 溜まる速さ2倍"
+    },
+    {
       "id": "h.cetus.ring.insight",
       "region": "migration",
       "kind": "Notable",

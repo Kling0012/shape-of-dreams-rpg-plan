@@ -5373,7 +5373,8 @@
       "anchor": null,
       "edges": [
         "outer.dream.s1",
-        "outer.dream.s3"
+        "outer.dream.s3",
+        "outer.fortune.s4"
       ],
       "requires": [],
       "requiresAny": [],
@@ -6088,6 +6089,330 @@
       "nameJa": "取り分の分かれ道",
       "nameEn": "Crossroads of the Share",
       "notes": ""
+    },
+    {
+      "id": "outer.fortune.s1",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "ring",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s2",
+        "outer.fortune.s4",
+        "outer.fortune.d1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "Stat",
+      "memory": null,
+      "value": 2,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": {
+        "name": "MoveSpeedPct",
+        "perRank": 2
+      },
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "拾い歩き",
+      "nameEn": "Scavenger's Stride",
+      "notes": "v1.32 A: 巡る富の入口。外縁の規約どおり、効果のあるStatが星団の根（s1）。"
+    },
+    {
+      "id": "outer.fortune.s2",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "ring",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s1",
+        "outer.fortune.s3"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "KillGoldPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "戦利の欠片",
+      "nameEn": "Spoils Fragment",
+      "notes": "撃破ゴールド +4%"
+    },
+    {
+      "id": "outer.fortune.s3",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "ring",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s2",
+        "outer.fortune.s4",
+        "outer.fortune.n1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "KillGoldPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "取り立ての手",
+      "nameEn": "Collector's Hand",
+      "notes": "撃破ゴールド +4%"
+    },
+    {
+      "id": "outer.fortune.s4",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "ring",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s3",
+        "outer.fortune.s1",
+        "outer.dream.s2"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "KillGoldPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "懐の重み",
+      "nameEn": "Weight of the Purse",
+      "notes": "撃破ゴールド +4%。外周の環は dream.s2 とこの星（s4）で接続する（規約: 前の星団のs2 - 次の星団のs4）。"
+    },
+    {
+      "id": "outer.fortune.d1",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s1",
+        "outer.fortune.d2"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "DreamDustPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "夢屑の拾い手",
+      "nameEn": "Dust Gleaner",
+      "notes": "自分で拾う夢のダスト +4%"
+    },
+    {
+      "id": "outer.fortune.d2",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.d1",
+        "outer.fortune.d3"
+      ],
+      "requires": [
+        "outer.fortune.d1"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "DreamDustPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "散らばる夢屑",
+      "nameEn": "Scattered Dust",
+      "notes": "自分で拾う夢のダスト +4%"
+    },
+    {
+      "id": "outer.fortune.d3",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.d2",
+        "outer.fortune.n2"
+      ],
+      "requires": [
+        "outer.fortune.d2"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "DreamDustPct",
+        "perRank": 4
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "夢屑の輝き",
+      "nameEn": "Glint of Dust",
+      "notes": "自分で拾う夢のダスト +4%"
+    },
+    {
+      "id": "outer.fortune.n1",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.s3"
+      ],
+      "requires": [
+        "outer.fortune.s3"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "EliteKillGoldPct",
+        "perRank": 25
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "黄金の嗅覚",
+      "nameEn": "Nose for Gold",
+      "notes": "エリート・ボスの撃破ゴールド +25%"
+    },
+    {
+      "id": "outer.fortune.n2",
+      "region": "outer",
+      "cluster": "outer.fortune",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "outer.fortune.d3"
+      ],
+      "requires": [
+        "outer.fortune.d3"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": {
+        "name": "DreamDustDelvePct",
+        "perRank": 10
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "夢屑の籠",
+      "nameEn": "Basket of Dream Dust",
+      "notes": "夢のダスト +10%、潜行中はさらに +10%"
     }
   ]
 }

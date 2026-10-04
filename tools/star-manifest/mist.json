@@ -28626,6 +28626,204 @@
       "notes": "配置は「last-ripple奥」だけで6レーン(EG,PR,LU,UD,FL,PA)のどれかが不明。先頭レーンをanchor、6レーンのxを辺とした。利点・代償は倍率修飾（C07）。"
     },
     {
+      "id": "mist.run.g1",
+      "region": "outer",
+      "cluster": "mist.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.mist.route.parry.7",
+      "edges": [
+        "mist.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "ParrySuccess",
+        "threshold": 1,
+        "cap": 80,
+        "effects": [
+          {
+            "stat": "AttackFlat",
+            "amount": 1
+          },
+          {
+            "stat": "CritDamagePct",
+            "amount": 0.3
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "受け流しの練達",
+      "nameEn": "Mastery of the Parry",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "mist.run.m1",
+      "region": "outer",
+      "cluster": "mist.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "mist.run.g1",
+        "mist.run.m2"
+      ],
+      "requires": [
+        "mist.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "mist.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "冴える見切り",
+      "nameEn": "Sharpening Read",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "mist.run.m2",
+      "region": "outer",
+      "cluster": "mist.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "mist.run.m1",
+        "mist.run.choice"
+      ],
+      "requires": [
+        "mist.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "mist.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "途切れぬ応酬",
+      "nameEn": "Unbroken Riposte",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "mist.run.choice",
+      "region": "outer",
+      "cluster": "mist.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "mist.run.m2"
+      ],
+      "requires": [
+        "mist.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "mist.run.g1",
+            "capBonus": 0,
+            "effectPct": 50,
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "深まる練達",
+          "nameEn": "Deeper Mastery"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "mist.run.g1",
+            "capBonus": 0,
+            "effectPct": 0,
+            "doubleGain": true
+          },
+          "stat": null,
+          "nameJa": "速まる練達",
+          "nameEn": "Swifter Mastery"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "練達の道筋",
+      "nameEn": "Path of Mastery",
+      "notes": "1スタックの効果 +50% ／ 溜まる速さ2倍"
+    },
+    {
       "id": "h.mist.dance",
       "region": "migration",
       "kind": "Choice",

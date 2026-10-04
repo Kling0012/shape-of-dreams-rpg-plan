@@ -27116,6 +27116,533 @@
       "notes": "配置決定（2026-10-03）：効果にいちばん関係する記憶の星団の、奥の選択の星の先に置く（他の旅人の刻印と同じ置き方）。設計表の刻印表に配置の記載が無い。記憶の領域c4（Element系はc3、Wound系はlaceration.c1）の選択星の奥に当初の置き場所（要確認）。Wound最終Value120%以内を検証。 利点・代償は倍率修飾（C07）で、Gimmick/Powerとして表せるものが設計表に無い。"
     },
     {
+      "id": "husk.run.g1",
+      "region": "outer",
+      "cluster": "husk.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.husk.route.killing-flow.7",
+      "edges": [
+        "husk.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "CritBasicAttackKill",
+        "threshold": 1,
+        "cap": 80,
+        "effects": [
+          {
+            "stat": "AttackFlat",
+            "amount": 0.5
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "殺意の積み増し",
+      "nameEn": "Accumulated Killing Intent",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "husk.run.m1",
+      "region": "outer",
+      "cluster": "husk.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.run.g1",
+        "husk.run.m2"
+      ],
+      "requires": [
+        "husk.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "husk.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "研がれ続ける殺意",
+      "nameEn": "Ever-Honed Intent",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "husk.run.m2",
+      "region": "outer",
+      "cluster": "husk.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.run.m1",
+        "husk.run.choice"
+      ],
+      "requires": [
+        "husk.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "husk.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "尽きぬ殺意",
+      "nameEn": "Inexhaustible Intent",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "husk.run.choice",
+      "region": "outer",
+      "cluster": "husk.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.run.m2"
+      ],
+      "requires": [
+        "husk.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "husk.run.g1",
+            "capBonus": 0,
+            "effectPct": 50,
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "濃くなる殺意",
+          "nameEn": "Concentrated Intent"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "husk.run.g1",
+            "capBonus": 0,
+            "effectPct": 0,
+            "doubleGain": true
+          },
+          "stat": null,
+          "nameJa": "早く育つ殺意",
+          "nameEn": "Quickening Intent"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "殺意の育て方",
+      "nameEn": "How Intent Grows",
+      "notes": "1スタックの効果 +50% ／ 溜まる速さ2倍"
+    },
+    {
+      "id": "husk.mem.wind-scar.c5.n1",
+      "region": "memory",
+      "cluster": "husk.mem.wind-scar.c5",
+      "shape": "chain",
+      "anchor": "h.husk.route.wind-scar.7",
+      "edges": [
+        "husk.mem.wind-scar.c5.choice"
+      ],
+      "requires": [
+        "h.husk.route.wind-scar.7"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": "St_D_ScarOfTheWind",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": {
+        "trigger": "OnHit",
+        "effect": "IdentityStrike",
+        "value": 60,
+        "arg": 0,
+        "cooldown": 0,
+        "target": null,
+        "strike": {
+          "mode": "AfterDisplacement",
+          "element": "Dark",
+          "shape": "ForwardLine",
+          "range": 4.5,
+          "width": 2,
+          "maxTargets": 8,
+          "windowSeconds": 4
+        }
+      },
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "風傷の残響",
+      "nameEn": "Wind-Scar Echo",
+      "notes": "v1.32 C: 移動のあとの基本攻撃の命中で風の傷として斬撃（1移動1回）。アイデンティティの精髄の枠はこの経路の既存の .slot 星（h.husk.route.wind-scar.slot）。"
+    },
+    {
+      "id": "husk.mem.wind-scar.c5.choice",
+      "region": "memory",
+      "cluster": "husk.mem.wind-scar.c5",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.mem.wind-scar.c5.n1"
+      ],
+      "requires": [
+        "husk.mem.wind-scar.c5.n1"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "Notable",
+          "memory": "St_D_ScarOfTheWind",
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": {
+            "trigger": "OnHit",
+            "effect": "IdentityStrike",
+            "value": 0,
+            "arg": 0,
+            "cooldown": 0,
+            "target": null,
+            "strike": {
+              "mode": "DashBonusAsMemory"
+            }
+          },
+          "power": null,
+          "stat": null,
+          "nameJa": "風傷の継承",
+          "nameEn": "Wind-Scar Inheritance"
+        },
+        {
+          "kind": "GimmickBoost",
+          "memory": "St_D_ScarOfTheWind",
+          "value": 20,
+          "param": null,
+          "receiver": null,
+          "target": {
+            "star": "husk.mem.wind-scar.c5.n1",
+            "effect": "IdentityStrike"
+          },
+          "gimmick": null,
+          "power": null,
+          "stat": null,
+          "nameJa": "風傷の残響の冴え",
+          "nameEn": "Keener Wind-Scar Echo"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "風傷の行き先",
+      "nameEn": "Where the Wind-Scar Goes",
+      "notes": "継承: ダッシュ攻撃の追加分を風の傷として数える（ダメージは増えない）／残響のダメージ +20%"
+    },
+    {
+      "id": "husk.mem.killing-flow.c5.n1",
+      "region": "memory",
+      "cluster": "husk.mem.killing-flow.c5",
+      "shape": "chain",
+      "anchor": "h.husk.route.killing-flow.7",
+      "edges": [
+        "husk.mem.killing-flow.c5.n2"
+      ],
+      "requires": [
+        "h.husk.route.killing-flow.7"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": "St_D_TheKillingFlow",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": {
+        "trigger": "OnHit",
+        "effect": "IdentityStrike",
+        "value": 25,
+        "arg": 0,
+        "cooldown": 0,
+        "target": null,
+        "everyN": 1,
+        "strike": {
+          "mode": "EveryNthBasicAttack",
+          "element": "None",
+          "shape": "ForwardArc",
+          "range": 4.5,
+          "width": 120,
+          "maxTargets": 8,
+          "bonusSpeed": 0.2
+        }
+      },
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "流れる殺意",
+      "nameEn": "Flowing Killing Intent",
+      "notes": "v1.32 C: 基本攻撃のたびに一歩一殺として扇状の剣風。アイデンティティの精髄の枠は既存の h.husk.route.killing-flow.slot。"
+    },
+    {
+      "id": "husk.mem.killing-flow.c5.n2",
+      "region": "memory",
+      "cluster": "husk.mem.killing-flow.c5",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.mem.killing-flow.c5.n1",
+        "husk.mem.killing-flow.c5.choice"
+      ],
+      "requires": [
+        "husk.mem.killing-flow.c5.n1"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": "St_D_TheKillingFlow",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": {
+        "trigger": "OnUse",
+        "effect": "MemoryTuning",
+        "value": 200,
+        "arg": 0,
+        "cooldown": 0,
+        "target": null,
+        "tuning": {
+          "kind": "KillingFlowOnHitHealScale"
+        }
+      },
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "殺意の滋養",
+      "nameEn": "Nourishing Killing Intent",
+      "notes": "命中ごとの回復に、変換で失った攻撃速度の倍率（最大2倍）を掛ける。"
+    },
+    {
+      "id": "husk.mem.killing-flow.c5.choice",
+      "region": "memory",
+      "cluster": "husk.mem.killing-flow.c5",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "husk.mem.killing-flow.c5.n2"
+      ],
+      "requires": [
+        "husk.mem.killing-flow.c5.n2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "Notable",
+          "memory": "St_D_TheKillingFlow",
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": {
+            "trigger": "OnUse",
+            "effect": "MemoryTuning",
+            "value": 40,
+            "arg": 0,
+            "cooldown": 0,
+            "target": null,
+            "tuning": {
+              "kind": "KillingFlowKeepSpeed"
+            }
+          },
+          "power": null,
+          "stat": null,
+          "nameJa": "残す速さ",
+          "nameEn": "Kept Swiftness"
+        },
+        {
+          "kind": "MemoryDamage",
+          "memory": "St_D_TheKillingFlow",
+          "value": 4,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "stat": null,
+          "nameJa": "研ぎ澄ます一歩",
+          "nameEn": "Honed Step"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "歩みの方針",
+      "nameEn": "Course of the Step",
+      "notes": "残す速さ: 追加の攻撃速度の4割を変換せずに残す／一歩一殺のダメージ +4%"
+    },
+    {
+      "id": "husk.mem.annihilation.c5.n1",
+      "region": "memory",
+      "cluster": "husk.mem.annihilation.c5",
+      "shape": "chain",
+      "anchor": "h.husk.route.annihilation.7",
+      "edges": [],
+      "requires": [
+        "h.husk.route.annihilation.7"
+      ],
+      "requiresAny": [],
+      "kind": "Notable",
+      "memory": "St_R_AnnihilationStance",
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": {
+        "trigger": "OnUse",
+        "effect": "MemoryTuning",
+        "value": 100,
+        "arg": 0,
+        "cooldown": 0,
+        "target": null,
+        "tuning": {
+          "kind": "StanceSwordQiAttackBasis"
+        }
+      },
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C02"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "剣気の鍛え直し",
+      "nameEn": "Reforged Sword Qi",
+      "notes": "v1.32 C: 剣気を魔力ではなく攻撃力で伸ばす（係数は同じ、物理ダメージ）。"
+    },
+    {
       "id": "h.husk.dark",
       "region": "migration",
       "kind": "Choice",

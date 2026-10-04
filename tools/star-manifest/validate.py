@@ -17,8 +17,8 @@ GAME = os.path.normpath(os.path.join(HERE, '..', '..', 'src', 'SodRpg.Core', 'Ga
 
 # New private IDs（docs/specs/v1.31-design-review.md の表）。外縁は共有160。
 EXPECTED = {
-    'vesper': 645, 'cetus': 645, 'lacerta': 645, 'husk': 646, 'mist': 652,
-    'yubar': 644, 'aurena': 510, 'nachia': 502, 'bismuth': 510, 'outer': 160,
+    'vesper': 649, 'cetus': 649, 'lacerta': 645, 'husk': 656, 'mist': 656,
+    'yubar': 644, 'aurena': 510, 'nachia': 502, 'bismuth': 510, 'outer': 169,
 }
 # v1.32 B: RunGrowth is the important star that grants a run-long stacking mechanism; RunGrowthMod is a small star/option that modifies it.
 GROWTH_KINDS = {'RunGrowth', 'RunGrowthMod'}

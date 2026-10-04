@@ -27362,6 +27362,204 @@
       "notes": "配置「campfire奥」を外縁campfireのxと解釈。"
     },
     {
+      "id": "vesper.run.g1",
+      "region": "outer",
+      "cluster": "vesper.outer.run-growth",
+      "shape": "chain",
+      "anchor": "h.vesper.route.sanctuary.7",
+      "edges": [
+        "vesper.run.m1"
+      ],
+      "requires": [],
+      "requiresAny": [],
+      "kind": "RunGrowth",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "trigger": "DamageTakenMaxHpPct",
+        "threshold": 10,
+        "cap": 60,
+        "effects": [
+          {
+            "stat": "Armor",
+            "amount": 1
+          },
+          {
+            "stat": "MaxHealthFlat",
+            "amount": 4
+          }
+        ]
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "傷を糧にする",
+      "nameEn": "Fed by Wounds",
+      "notes": "v1.32 B: 遠征の鍛錬の入口（仕組みを得る重要な星）。"
+    },
+    {
+      "id": "vesper.run.m1",
+      "region": "outer",
+      "cluster": "vesper.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "vesper.run.g1",
+        "vesper.run.m2"
+      ],
+      "requires": [
+        "vesper.run.g1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "vesper.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "積もる傷痕",
+      "nameEn": "Deepening Scars",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "vesper.run.m2",
+      "region": "outer",
+      "cluster": "vesper.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "vesper.run.m1",
+        "vesper.run.choice"
+      ],
+      "requires": [
+        "vesper.run.m1"
+      ],
+      "requiresAny": [],
+      "kind": "RunGrowthMod",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "growth": {
+        "target": "vesper.run.g1",
+        "capBonus": 20,
+        "effectPct": 0,
+        "doubleGain": false
+      },
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "耐え抜いた証",
+      "nameEn": "Mark of Endurance",
+      "notes": "上限 +20"
+    },
+    {
+      "id": "vesper.run.choice",
+      "region": "outer",
+      "cluster": "vesper.outer.run-growth",
+      "shape": "chain",
+      "anchor": null,
+      "edges": [
+        "vesper.run.m2"
+      ],
+      "requires": [
+        "vesper.run.m2"
+      ],
+      "requiresAny": [],
+      "kind": "Choice",
+      "memory": null,
+      "value": null,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": [
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "vesper.run.g1",
+            "capBonus": 0,
+            "effectPct": 50,
+            "doubleGain": false
+          },
+          "stat": null,
+          "nameJa": "厚みを増す鍛錬",
+          "nameEn": "Thicker Conditioning"
+        },
+        {
+          "kind": "RunGrowthMod",
+          "memory": null,
+          "value": null,
+          "param": null,
+          "receiver": null,
+          "target": null,
+          "gimmick": null,
+          "power": null,
+          "growth": {
+            "target": "vesper.run.g1",
+            "capBonus": 0,
+            "effectPct": 0,
+            "doubleGain": true
+          },
+          "stat": null,
+          "nameJa": "速まる鍛錬",
+          "nameEn": "Swifter Conditioning"
+        }
+      ],
+      "keystone": null,
+      "mechanisms": [
+        "C01"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "鍛錬の進め方",
+      "nameEn": "How to Temper",
+      "notes": "1スタックの効果 +50% ／ 溜まる速さ2倍"
+    },
+    {
       "id": "h.vesper.fire",
       "region": "migration",
       "kind": "Notable",

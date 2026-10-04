@@ -171,14 +171,14 @@ namespace SodRpg.Core.Tests
             {
                 var manifest = ReadManifest(hero);
                 var baseline = HeroSigils.BaselineTreeFor(hero);
-                Assert.Equal(160, manifest.OuterRows);
+                Assert.Equal(169, manifest.OuterRows);
                 Assert.Equal(baseline.Count + manifest.NewRows, tree.Count);
                 Assert.Equal(tree.Count, tree.Select(t => t.Id).Distinct(StringComparer.Ordinal).Count());
                 foreach (string id in manifest.NewIds) Assert.Contains(tree, t => t.Id == id);
                 Assert.Equal(tree.Count + 1, HeroTreeLayout.ForHero(hero).Nodes.Count);
                 // Designed per-hero totals are 735–892 purchasable IDs (docs/specs/v1.31-design-review.md).
-                // Cetus's 892 = 87 retained baseline (73 + the 14 shipped engine-sample IDs) + 645 new + 160 shared outer.
-                Assert.InRange(tree.Count, 730, 892);
+                // Cetus's 905 = 87 retained baseline (73 + the 14 shipped engine-sample IDs) + 649 new (645 + the v1.32 run-growth cluster) + 169 shared outer (160 + the v1.32 fortune cluster).
+                Assert.InRange(tree.Count, 730, 905);
             });
         }
 
