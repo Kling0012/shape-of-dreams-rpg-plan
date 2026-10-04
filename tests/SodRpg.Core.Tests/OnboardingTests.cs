@@ -202,5 +202,77 @@ namespace SodRpg.Core.Tests
             Assert.Null(w.LastError);
             Assert.Equal(p.Revision, new ProfileStore(mem, "/s/p.json", 1).Load().Revision);
         }
+
+        [Fact]
+        public void Flush_completing_does_not_mean_the_save_succeeded()
+        {
+            var mem = new InMemoryFileSystem();
+            var fs = new FaultyFileSystem(mem);
+            var store = new ProfileStore(fs, "/s/p.json", 1);
+            var p = store.Load();
+            var w = new AsyncProfileWriter(store);
+            fs.Arm(0, FaultMode.IoError);
+            w.Enqueue(p);
+            Assert.True(w.Flush());
+            Assert.NotNull(w.LastError);
+            Assert.True(w.WrittenRevision < p.Revision);
+        }
+
+        [Fact]
+        public void Confirmed_save_fails_on_write_error_and_succeeds_after_recovery()
+        {
+            var mem = new InMemoryFileSystem();
+            var fs = new FaultyFileSystem(mem);
+            var store = new ProfileStore(fs, "/s/p.json", 1);
+            var p = store.Load();
+            var w = new AsyncProfileWriter(store);
+            fs.Arm(0, FaultMode.IoError);
+            Assert.False(w.EnqueueAndConfirm(p, 5000)); // 書けなかった：この状態は確定していない
+            Assert.NotNull(w.LastError);
+            fs.Disarm();
+            Assert.True(w.EnqueueAndConfirm(p, 5000));
+            Assert.Null(w.LastError);
+            Assert.Equal(p.Revision, new ProfileStore(mem, "/s/p.json", 1).Load().Revision);
+        }
+
+        [Fact]
+        public void Trade_is_sent_only_after_prepared_state_is_durable_and_survives_restart()
+        {
+            var mem = new InMemoryFileSystem();
+            var fs = new FaultyFileSystem(mem);
+            var store = new ProfileStore(fs, "/s/p.json", 1);
+            var p = store.Load();
+            var w = new AsyncProfileWriter(store);
+            var ledger = new TradeLedger();
+            int hostCalls = 0;
+
+            // クライアントの SendTrade と同じ順序：台帳へ登録 → 準備を保存して確認 → 送る
+            bool Send(bool ioFails)
+            {
+                var t = ledger.BeginDustToShards(1, 0f);
+                p.PendingTrades.Clear();
+                p.PendingTrades.AddRange(ledger.Snapshot());
+                if (ioFails) fs.Arm(0, FaultMode.IoError); else fs.Disarm();
+                if (!w.EnqueueAndConfirm(p, 5000))
+                {
+                    ledger.Complete(t.Token, false);
+                    return false;
+                }
+                hostCalls++;
+                return true;
+            }
+
+            Assert.False(Send(true));
+            Assert.Equal(0, hostCalls); // 保存に失敗したら送らない（ホストの通貨は動かない）
+            Assert.Empty(ledger.Snapshot());
+
+            Assert.True(Send(false));
+            Assert.Equal(1, hostCalls);
+            var token = ledger.Snapshot().Single().Token;
+
+            // 送信直後に参加者を作り直しても、保存済みの token が復元される
+            var restored = new ProfileStore(mem, "/s/p.json", 1).Load();
+            Assert.Contains(restored.PendingTrades, x => x.Token == token);
+        }
     }
 }
