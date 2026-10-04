@@ -138,28 +138,18 @@ internal static class StarMapWiki
 
     private static string KeystoneRow(TalentDef t)
     {
-        string up, down;
-        if (t.AuthoredStar?.KeystoneUpside != null)
-        {
-            up = t.AuthoredStar.KeystoneUpside.Ja;
-            down = t.AuthoredStar.KeystoneDownside?.Ja ?? "";
-        }
-        else if (t.KeystoneDefinition != null)
-        {
-            up = Ja(() => AuthoredMechanisms.DescribeKeystone(t.KeystoneDefinition, true));
-            down = Ja(() => AuthoredMechanisms.DescribeKeystone(t.KeystoneDefinition, false));
-        }
+        string up;
+        if (t.KeystoneDefinition != null)
+            up = Ja(() => AuthoredMechanisms.DescribeKeystone(t.KeystoneDefinition));
         else
-        {
             up = Ja(() => Content.FormatPower(t.Power, t.PowerValue)) + "\n" + t.Description?.Ja;
-            down = "";
-        }
         int cost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
-        return $"| {NameCell(t.Name)} | {Cell(up)} | {Cell(down == "" ? "なし" : down)} | {cost} |";
+        return $"| {NameCell(t.Name)} | {Cell(up)} | {cost} |";
     }
 
     private const string StarHeader = "^ 星 ^ 星群 ^ 最大段 ^ 1段の費用 ^ 効果 ^";
-    private const string KeyHeader = "^ 刻印 ^ 利点 ^ 欠点 ^ 費用 ^";
+    private const string KeyHeader = "^ 刻印 ^ 効果 ^ 費用 ^";
+
 
     public static string HeroSlug(string heroKey) => (heroKey.StartsWith("Hero_") ? heroKey[5..] : heroKey).ToLowerInvariant();
 

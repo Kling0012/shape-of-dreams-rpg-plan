@@ -53,7 +53,7 @@ namespace SodRpg.Core.Game
         // A legacy keystone's upside is its existing Power. It is read from the baseline node, never re-typed in the manifest;
         // the sole exception is the design's explicit same-ID value migration (旧Power.StarShield20→15), passed as migratedPowerValue.
         internal static KeystoneDefinition ManifestKeystone(string hero, string id, IEnumerable<string> requiredMemories,
-            IEnumerable<AuthoredKeystoneSpec> upside, IEnumerable<AuthoredKeystoneSpec> downside,
+            IEnumerable<AuthoredKeystoneSpec> upside,
             IEnumerable<string> prerequisites, int cost, int migratedPowerValue = 0)
         {
             var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == id);
@@ -61,7 +61,7 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("Baseline keystone has no retained Power: " + id);
             if (migratedPowerValue != 0 && migratedPowerValue <= 0)
                 throw new InvalidOperationException("A migrated keystone Power value must be positive: " + id);
-            return AuthoredKeystoneCompiler.Compile(id, requiredMemories, upside, downside, prerequisites, cost,
+            return AuthoredKeystoneCompiler.Compile(id, requiredMemories, upside, prerequisites, cost,
                 retainedPower: original.Power,
                 retainedPowerValue: migratedPowerValue != 0 ? migratedPowerValue : original.PowerValue);
         }

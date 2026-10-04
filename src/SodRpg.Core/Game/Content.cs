@@ -264,8 +264,7 @@ namespace SodRpg.Core.Game
                 + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
             if (Mechanism != null) return AuthoredMechanisms.Describe(Mechanism)
                 + Loc.T($"（最大{MaxRank}段・1段につき{RankCost}ポイント）", $" (maximum {MaxRank} ranks; {RankCost} points per rank)");
-            if (KeystoneDefinition != null) return (AuthoredStar?.KeystoneUpside?.ToString() ?? AuthoredMechanisms.DescribeKeystone(KeystoneDefinition, true)) + "\n"
-                + (AuthoredStar?.KeystoneDownside?.ToString() ?? AuthoredMechanisms.DescribeKeystone(KeystoneDefinition, false))
+            if (KeystoneDefinition != null) return AuthoredMechanisms.DescribeKeystone(KeystoneDefinition)
                 + Loc.T($"（{KeystoneDefinition.Cost}ポイント）", $" ({KeystoneDefinition.Cost} points)");
             if (PairCombo != null) return PairCombos.Describe(PairCombo);
             if (IsChoice)

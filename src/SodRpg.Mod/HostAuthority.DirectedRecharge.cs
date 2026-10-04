@@ -73,7 +73,6 @@ namespace SodRpg.Mod
                 : notification.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
             var effective = spec != null && source != null ? TransformAuthoredPayload(hero, AuthoredKeystoneComposer.MechanismPayload(spec),
                 source.Memory, null, kind) : null;
-            if (effective != null && effective.Disabled) return;
             runtime.Notify(notification, equipment, new RechargeConditionContext(hero.Status.currentShield > 0f, elements, summons), _rng.NextDouble, requests,
                 candidate => channelId == null || candidate.ChannelId == channelId, channelId != null,
                 candidate => effective?.EveryN ?? candidate.EveryN,
@@ -103,7 +102,6 @@ namespace SodRpg.Mod
                 }
             var transformed = TransformAuthoredPayload(hero, payload, request.SourceMemory, request.RecipientMemory,
                 request.RequiresOwnedSummon ? KeystoneSourceKind.OwnedBasicAttack : KeystoneSourceKind.NativeMemory);
-            if (transformed.Disabled) return;
             float ratio = Gimmicks.RemainingCooldownReductionRatio(skill.currentConfigUnscaledCooldownTime,
                 skill.currentConfigUnscaledMaxCooldownTime, (float)transformed.Value);
             if (ratio > 0f) hero.ApplyCooldownReductionByRatio(skill, ratio, false);

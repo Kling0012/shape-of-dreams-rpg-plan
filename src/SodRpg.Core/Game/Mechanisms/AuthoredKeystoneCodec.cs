@@ -15,12 +15,13 @@ namespace SodRpg.Core.Game
             {
                 using (var writer = new BinaryWriter(stream, Encoding.UTF8, true))
                 {
-                    // Grammar 1 is byte-identical to every keystone without a retained Power; grammar 2 appends it.
+                    // Grammar 3 is byte-identical to every keystone without a retained Power; grammar 4 appends it.
+                    // Grammars 1/2 carried upside+downside transform lists and scoped conditions (removed with keystone drawbacks).
                     bool retained = definition.RetainedPower != Power.None;
-                    writer.Write((byte)(retained ? 2 : 1)); writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
+                    writer.Write((byte)(retained ? 4 : 3)); writer.Write(definition.KeystoneId); writer.Write(definition.Cost);
                     Strings(writer, definition.RequiredMemories); Strings(writer, definition.Prerequisites);
                     writer.Write(definition.Payloads.Count); foreach (var payload in definition.Payloads) writer.Write((int)payload);
-                    Transforms(writer, definition.Upside); Transforms(writer, definition.Downside);
+                    Transforms(writer, definition.Upside);
                     writer.Write(definition.Grants.Count);
                     foreach (var grant in definition.Grants) writer.Write(AuthoredMechanismCodec.Encode(new AuthoredMechanismEntry
                         { StarId = definition.KeystoneId, ContributorIds = new[] { definition.KeystoneId }, Spec = grant }));
@@ -37,11 +38,11 @@ namespace SodRpg.Core.Game
             using (var reader = new BinaryReader(stream, Encoding.UTF8, false))
             {
                 byte grammar = reader.ReadByte();
-                if (grammar != 1 && grammar != 2) throw new FormatException("Unknown keystone grammar.");
+                if (grammar != 3 && grammar != 4) throw new FormatException("Unknown keystone grammar.");
                 string id = Token(reader); int cost = reader.ReadInt32(); var memories = Strings(reader); var prerequisites = Strings(reader);
                 var kinds = new List<KeystonePayloadKind>(); int count = Count(reader);
                 for (int i = 0; i < count; i++) kinds.Add((KeystonePayloadKind)reader.ReadInt32());
-                var up = Transforms(reader); var down = Transforms(reader);
+                var up = Transforms(reader);
                 var grants = new List<AuthoredMechanismSpec>(); count = Count(reader);
                 for (int i = 0; i < count; i++)
                 {
@@ -51,7 +52,7 @@ namespace SodRpg.Core.Game
                     grants.Add(entry.Spec);
                 }
                 var power = Power.None; int powerValue = 0;
-                if (grammar == 2)
+                if (grammar == 4)
                 {
                     int rawPower = reader.ReadInt32(); powerValue = reader.ReadInt32();
                     if (!Enum.IsDefined(typeof(Power), rawPower) || rawPower == (int)Power.None || powerValue <= 0)
@@ -59,7 +60,7 @@ namespace SodRpg.Core.Game
                     power = (Power)rawPower;
                 }
                 if (stream.Position != stream.Length) throw new FormatException("Trailing keystone data.");
-                return new KeystoneDefinition(id, memories, up, down, prerequisites, kinds, cost, grants, power, powerValue);
+                return new KeystoneDefinition(id, memories, up, prerequisites, kinds, cost, grants, power, powerValue);
             }
         }
         private static void Strings(BinaryWriter writer, IReadOnlyList<string> values)
@@ -84,7 +85,7 @@ namespace SodRpg.Core.Game
             foreach (var t in transforms)
             {
                 writer.Write((int)t.TargetLayer); writer.Write((int)t.Field); writer.Write((int)t.Operation);
-                writer.Write(t.MagnitudeUnits.Units); writer.Write(t.WoundDurationUnits.Units); writer.Write(t.Seconds); writer.Write(t.Count);
+                writer.Write(t.MagnitudeUnits.Units); writer.Write(t.Seconds); writer.Write(t.Count);
                 writer.Write(t.Maximum.HasValue); if (t.Maximum.HasValue) writer.Write(t.Maximum.Value);
                 writer.Write(t.ExpectedFrom.HasValue); if (t.ExpectedFrom.HasValue) writer.Write(t.ExpectedFrom.Value);
                 var s = t.Scope; Strings(writer, s.TargetMemorySet); Strings(writer, s.TargetEffectIds); Strings(writer, s.ReceiverMemorySet);
@@ -92,8 +93,6 @@ namespace SodRpg.Core.Game
                 writer.Write((int)s.Recipient); writer.Write((int)s.PayloadKind);
                 writer.Write(s.Argument.HasValue); if (s.Argument.HasValue) writer.Write(s.Argument.Value);
                 writer.Write(s.SourceKind.HasValue); if (s.SourceKind.HasValue) writer.Write((int)s.SourceKind.Value);
-                writer.Write(s.Condition.HasValue);
-                if (s.Condition.HasValue) { writer.Write((int)s.Condition.Value); writer.Write(s.ConditionPercent); }
                 Selectors(writer, s.SourceSelectors); Selectors(writer, s.ReceiverSelectors);
             }
         }
@@ -103,23 +102,20 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < count; i++)
             {
                 var layer = (KeystoneLayer)reader.ReadInt32(); var field = (KeystoneField)reader.ReadInt32(); var operation = (KeystoneOperation)reader.ReadInt32();
-                var magnitude = new KeystoneMagnitude(reader.ReadInt32()); var duration = new KeystoneMagnitude(reader.ReadInt32());
+                var magnitude = new KeystoneMagnitude(reader.ReadInt32());
                 decimal seconds = reader.ReadDecimal(); int targets = reader.ReadInt32();
                 decimal? maximum = reader.ReadBoolean() ? reader.ReadDecimal() : (decimal?)null;
                 decimal? from = reader.ReadBoolean() ? reader.ReadDecimal() : (decimal?)null;
                 if (!Enum.IsDefined(typeof(KeystoneLayer), layer) || !Enum.IsDefined(typeof(KeystoneField), field)
                     || !Enum.IsDefined(typeof(KeystoneOperation), operation)
-                    || operation != KeystoneOperation.RedistributeWound && duration.Units != 0
-                    || operation != KeystoneOperation.Scale && operation != KeystoneOperation.RedistributeWound && magnitude.Units != 0
+                    || operation != KeystoneOperation.Scale && magnitude.Units != 0
                     || operation != KeystoneOperation.SetSeconds && operation != KeystoneOperation.Set && operation != KeystoneOperation.Add && seconds != 0
                     || operation != KeystoneOperation.AddTargets && operation != KeystoneOperation.SetEveryN && targets != 0
                     || operation != KeystoneOperation.Add && maximum.HasValue || operation != KeystoneOperation.Set && from.HasValue)
                     throw new FormatException("Unexpected keystone operation fields.");
                 if ((operation == KeystoneOperation.AddTargets && (layer != KeystoneLayer.ModEffect || field != KeystoneField.TargetCount))
                     || (operation == KeystoneOperation.SetEveryN && (layer != KeystoneLayer.ModEffect || field != KeystoneField.EveryN))
-                    || (operation == KeystoneOperation.SetSeconds && layer != KeystoneLayer.ModEffect)
-                    || (operation == KeystoneOperation.Disable && field != KeystoneField.Value)
-                    || (operation == KeystoneOperation.RedistributeWound && (layer != KeystoneLayer.ModEffect || field != KeystoneField.Value)))
+                    || (operation == KeystoneOperation.SetSeconds && layer != KeystoneLayer.ModEffect))
                     throw new FormatException("Contradictory keystone operation layer.");
                 var memories = Strings(reader); var ids = Strings(reader); var receivers = Strings(reader);
                 int effectsCount = Count(reader); var effects = new GimmickEffect[effectsCount];
@@ -127,21 +123,15 @@ namespace SodRpg.Core.Game
                 var recipient = (KeystoneRecipientKind)reader.ReadInt32(); var payload = (KeystonePayloadKind)reader.ReadInt32();
                 int? argument = reader.ReadBoolean() ? reader.ReadInt32() : (int?)null;
                 KeystoneSourceKind? source = reader.ReadBoolean() ? (KeystoneSourceKind)reader.ReadInt32() : (KeystoneSourceKind?)null;
-                var condition = reader.ReadBoolean() ? (KeystoneConditionKind?)reader.ReadInt32() : (KeystoneConditionKind?)null;
-                if (condition.HasValue && !Enum.IsDefined(typeof(KeystoneConditionKind), condition.Value))
-                    throw new FormatException("Unknown keystone condition.");
-                decimal conditionPercent = condition.HasValue ? reader.ReadDecimal() : 0m;
                 var sourceSelectors = Selectors(reader); var receiverSelectors = Selectors(reader);
                 var scope = new KeystoneScope(memories, effects, ids, receivers, recipient, payload, argument, source,
-                    condition, conditionPercent, sourceSelectors, receiverSelectors);
+                    sourceSelectors, receiverSelectors);
                 switch (operation)
                 {
                     case KeystoneOperation.Scale: result[i] = KeystoneTransform.Scale(layer, field, magnitude, scope); break;
                     case KeystoneOperation.SetSeconds: result[i] = KeystoneTransform.SetSeconds(field, seconds, scope); break;
                     case KeystoneOperation.AddTargets: result[i] = KeystoneTransform.AddTargets(targets, scope); break;
                     case KeystoneOperation.SetEveryN: result[i] = KeystoneTransform.SetEveryN(targets, scope); break;
-                    case KeystoneOperation.Disable: result[i] = KeystoneTransform.Disable(layer, scope); break;
-                    case KeystoneOperation.RedistributeWound: result[i] = KeystoneTransform.RedistributeWound(magnitude, duration, scope); break;
                     case KeystoneOperation.Set: result[i] = KeystoneTransform.Set(layer, field, seconds, scope, from); break;
                     case KeystoneOperation.Add: result[i] = KeystoneTransform.Add(layer, field, seconds, scope, maximum); break;
                     default: throw new FormatException("Unknown keystone operation.");

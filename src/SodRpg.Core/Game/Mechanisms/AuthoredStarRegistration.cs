@@ -238,7 +238,7 @@ namespace SodRpg.Core.Game
                     Mechanism = mechanism,
                     KeystoneDefinition = effect.KeystoneDefinition, ReceiverOnlyBridge = original.ReceiverOnlyBridge,
                     SourceDocument = original.SourceDocument, MechanismIds = original.MechanismIds.ToArray(),
-                    Notes = original.Notes, KeystoneUpside = original.KeystoneUpside, KeystoneDownside = original.KeystoneDownside });
+                    Notes = original.Notes });
             }
             return result.AsReadOnly();
         }

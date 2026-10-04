@@ -25688,21 +25688,12 @@
       "options": null,
       "keystone": {
         "upside": "PのBurst/Echo/RicochetのValue+100%",
-        "downside": "P本体の爆発ダメージ-30%",
         "upsideSpec": [
           {
             "memory": "St_D_SalamanderPowder",
             "effect": "Burst/Echo/Ricochet",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_SalamanderPowder",
-            "effect": "NativeExplosion",
-            "field": "Damage",
-            "pct": -30
           }
         ]
       },
@@ -25737,21 +25728,12 @@
       "options": null,
       "keystone": {
         "upside": "DのEcho/BurstのValue+100%",
-        "downside": "DのSap/Rampart/Primedの持続時間-50%",
         "upsideSpec": [
           {
             "memory": "St_D_DoubleTap",
             "effect": "Echo/Burst",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_D_DoubleTap",
-            "effect": "Sap/Rampart/Primed",
-            "field": "Duration",
-            "pct": -50
           }
         ]
       },
@@ -25786,7 +25768,6 @@
       "options": null,
       "keystone": {
         "upside": "HのBurst範囲半径+100%、HのEchoのValue+80%",
-        "downside": "H本体の直接ダメージ-25%",
         "upsideSpec": [
           {
             "memory": "St_Q_HandCannon",
@@ -25799,14 +25780,6 @@
             "effect": "Echo",
             "field": "Value",
             "pct": 80
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_HandCannon",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -25841,7 +25814,6 @@
       "options": null,
       "keystone": {
         "upside": "IのRampartのValueを2%まで引き上げ、持続時間+100%",
-        "downside": "I本体の追加火炎ダメージ-25%",
         "upsideSpec": [
           {
             "memory": "St_Q_IncendiaryRounds",
@@ -25854,14 +25826,6 @@
             "effect": "Rampart",
             "field": "Duration",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_Q_IncendiaryRounds",
-            "effect": "NativeAddedFire",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -25896,7 +25860,6 @@
       "options": null,
       "keystone": {
         "upside": "QのRicochet対象数+1（合計最大2）、同効果のValue+50%",
-        "downside": "Q本体の各貫通弾ダメージ-25%",
         "upsideSpec": [
           {
             "memory": "St_R_QuickTrigger",
@@ -25910,14 +25873,6 @@
             "effect": "Ricochet",
             "field": "Value",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_QuickTrigger",
-            "effect": "NativePierceShot",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -25952,21 +25907,12 @@
       "options": null,
       "keystone": {
         "upside": "SのEchoのValue+120%",
-        "downside": "S本体の直接ダメージ-25%",
         "upsideSpec": [
           {
             "memory": "St_R_PrecisionShot",
             "effect": "Echo",
             "field": "Value",
             "pct": 120
-          }
-        ],
-        "downsideSpec": [
-          {
-            "memory": "St_R_PrecisionShot",
-            "effect": "NativeDamage",
-            "field": "Damage",
-            "pct": -25
           }
         ]
       },
@@ -26001,21 +25947,12 @@
       "options": null,
       "keystone": {
         "upside": "N1でMへ渡すRechargeのValue+100%（既存の橋の段階値は対象外）",
-        "downside": "H/I/Q/Sの直接ダメージ-20%",
         "upsideSpec": [
           {
             "effect": "Recharge",
             "field": "Value",
             "pct": 100,
             "receiver": "St_M_NimbleDodge"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectDamage",
-            "field": "Damage",
-            "pct": -20,
-            "scope": "HIQS"
           }
         ]
       },
@@ -26053,7 +25990,6 @@
       "options": null,
       "keystone": {
         "upside": "H/I/Q/Sの既存Gimmick Healを味方にも適用（Arg1）、そのValue+200%、範囲半径+100%",
-        "downside": "H/I/Q/Sの直接ダメージ-20%",
         "upsideSpec": [
           {
             "effect": "Heal",
@@ -26071,14 +26007,6 @@
             "effect": "Heal",
             "field": "Radius",
             "pct": 100,
-            "scope": "HIQS"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectDamage",
-            "field": "Damage",
-            "pct": -20,
             "scope": "HIQS"
           }
         ]
@@ -27048,16 +26976,7 @@
       "options": null,
       "keystone": {
         "upside": "既存Power.Ember60を保持。通常攻撃で60%相当の追加着火",
-        "downside": "H/I/Q/Sの直接ダメージ-12%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectDamage",
-            "field": "Damage",
-            "pct": -12,
-            "scope": "HIQS"
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -27067,7 +26986,7 @@
       ],
       "nameJa": "サラマンダーの火種",
       "nameEn": "Salamander Ember",
-      "notes": "表C: 既存核。基礎Power.Ember60を保持し代償を追加。K1の記憶別最終倍率（記憶ダメージの減少は本体記憶の最終ダメージへ乗算、仕掛けの追加ダメージには二重適用しない、移動は対象外）。P/Dどちらでも成立。"
+      "notes": "表C: 既存核。基礎Power.Ember60を保持（代償は #47 で撤廃）。P/Dどちらでも成立。"
     },
     {
       "id": "h.lacerta.key2",
@@ -27084,16 +27003,7 @@
       "options": null,
       "keystone": {
         "upside": "既存Power.OpeningStrike70を保持。HP90%以上への初手基本攻撃を強化",
-        "downside": "H/I/Q/Sの直接ダメージ-15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectDamage",
-            "field": "Damage",
-            "pct": -15,
-            "scope": "HIQS"
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -27103,7 +27013,7 @@
       ],
       "nameJa": "一番手の銃声",
       "nameEn": "Opening Shot",
-      "notes": "表C: 既存核。基礎Power.OpeningStrike70を保持し代償を追加。K1。無傷を狙う通常攻撃と記憶の継続火力を交換。"
+      "notes": "表C: 既存核。基礎Power.OpeningStrike70を保持（代償は #47 で撤廃）。K1。"
     }
   ]
 }

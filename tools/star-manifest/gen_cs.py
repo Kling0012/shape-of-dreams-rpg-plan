@@ -53,7 +53,7 @@ WARDS = {"AlliedWard", "SummonWard", "AllyWard", "AllyShield"}
 # supports every parameter. Explicit targets are checked against concrete rows.
 DURATION = {"Shield", "Empower", "Quicken", "Wound", "Daze", "Rampart", "Primed", "Crescendo", "Sap", "Weakspot"}
 
-# Legacy keystones whose upside is their existing Power, kept unchanged. Only the downside is typed in the manifest.
+# Legacy keystones whose upside is their existing Power, kept unchanged; their manifest carries no typed spec.
 # h.yubar.key2 keeps its Power and migrates the value 20->15 in the same ID (row `power` field; ManifestKeystone's
 # migratedPowerValue), which is still the baseline Power as the upside, never a re-typed second source.
 RETAINED_POWER_KEYS = {"h.vesper.key", "h.vesper.key2", "h.lacerta.key", "h.lacerta.key2", "h.cetus.key",
@@ -619,7 +619,7 @@ class Compiler:
                 + ", " + cs(spec.get("recipient")) + ", GimmickEffect." + (spec.get("effect") or "None") + ", " + str(spec.get("arg", 0)) + ", " + values + ", "
                 + ("true" if g.get("once") else "false") + ")")
 
-    def key_spec(self, sid, spec, path, wound_lifetime=None):
+    def key_spec(self, sid, spec, path):
         effect, field = spec["effect"], spec["field"]
         members = {"Layer": "KeystoneLayer.ModEffect"}
         scope = []
@@ -713,26 +713,8 @@ class Compiler:
             scope.append("argument: 1")
         if sid == "vesper.key.shared-flame" and field == "Radius":
             scope.append("argument: 1")
-        condition = spec.get("condition")
-        if condition is not None:
-            kind, separator, argument = condition.partition(":")
-            if effect not in ("DirectQR", "DirectDamage", "NativeDamage", "DirectBasicAttack", "SummonDirectDamage"):
-                self.fail(sid, path + ".condition", condition, "a typed condition gates final native damage only; other layers have no event facts")
-            elif kind == "TargetHealthBelow":
-                if not separator or not re.fullmatch(r"(100|[1-9]?\d)(\.\d+)?", argument):
-                    self.fail(sid, path + ".condition", condition, "TargetHealthBelow needs a 0-100 percent argument")
-                else:
-                    scope.append("condition: KeystoneConditionKind.TargetHealthBelow, conditionPercent: " + dec(Decimal(argument)))
-            elif condition == "OutsideRetaliationWindow":
-                scope.append("condition: KeystoneConditionKind.OutsideRetaliationWindow")
-            else:
-                self.fail(sid, path + ".condition", condition, "no typed condition kind for this expression")
         members["Scope"] = "new KeystoneScope(" + ", ".join(dict.fromkeys(scope)) + ")"
-        if field == "Enabled":
-            if spec.get("to") != 0:
-                self.fail(sid, path + ".to", spec.get("to"), "Enabled only supports exact Disable (to: 0)")
-            members["Disable"] = "true"
-        elif field == "Grant":
+        if field == "Grant":
             grant_row = {"id": sid + ".grant", "memory": spec.get("memory"), "receiver": spec.get("receiver"), "gimmick": spec.get("gimmick"), "maxRank": 1}
             if not grant_row["gimmick"]:
                 self.fail(sid, path + ".gimmick", None, "Grant requires a concrete payload")
@@ -748,8 +730,6 @@ class Compiler:
             for key, target in (("pct", "Percent"), ("from", "From"), ("to", "To"), ("delta", "Delta"), ("max", "Maximum")):
                 if key in spec:
                     members[target] = dec(spec[key])
-            if wound_lifetime is not None:
-                members["WoundLifetimePercent"] = dec(wound_lifetime)
         return obj("AuthoredKeystoneSpec", members)
 
     def keystone(self, sid, row):
@@ -762,33 +742,23 @@ class Compiler:
             if baseline is None or not re.search(r"Power\." + baseline[0] + r"\s*=?\s*" + baseline[1] + r"(?!\d)", key["upside"]):
                 self.fail(sid, "keystone.upside", key["upside"], "retained-Power key does not name the baseline Power " + display_value(baseline))
                 return None
-        if (key["upsideSpec"] is None and not retained) or key["downsideSpec"] is None:
-            if retained:
-                self.fail(sid, "keystone.downsideSpec", None, "retained-Power upside is mapped, but the typed downside has no manifest spec; prose-only downside needs an explicit design-to-typed translation: " + key["downside"])
-            else:
-                self.fail(sid, "keystone.upsideSpec" if key["upsideSpec"] is None else "keystone.downsideSpec", None,
-                          "prose-only key requires an explicit design-to-typed translation for both sides; no translation for this ID")
+        if key["upsideSpec"] is None and not retained:
+            self.fail(sid, "keystone.upsideSpec", None,
+                      "prose-only key requires an explicit design-to-typed translation; no translation for this ID")
             return None
-        up, down = ([] if retained else list(key["upsideSpec"])), list(key["downsideSpec"])
-        lifetime = next((s for s in down if s["effect"] == "Wound" and s["field"] in ("Duration", "Lifetime") and "pct" in s), None)
-        total = next((s for s in up if s["effect"] == "Wound" and s["field"] == "Total"), None)
-        if lifetime and total:
-            down.remove(lifetime)
-        sides = []
-        for title, specs in (("upsideSpec", up), ("downsideSpec", down)):
-            expressions = [self.key_spec(sid, s, "keystone." + title + "[" + str(i) + "]",
-                lifetime["pct"] if s is total and lifetime else None) for i, s in enumerate(specs)]
-            sides.append(array(expressions, "AuthoredKeystoneSpec"))
-        required = sorted({s["receiver"] for s in up + down if s.get("receiver") and s["receiver"].startswith("St_")})
+        up = [] if retained else list(key["upsideSpec"])
+        expressions = [self.key_spec(sid, s, "keystone.upsideSpec[" + str(i) + "]") for i, s in enumerate(up)]
+        sides = array(expressions, "AuthoredKeystoneSpec")
+        required = sorted({s["receiver"] for s in up if s.get("receiver") and s["receiver"].startswith("St_")})
         cost = "Content.KeystoneCost" if row["region"] == "migration" else whole(row["rankCost"])
         # A migration row's `power` re-states the baseline Power as the typed upside. The Power must be the baseline
         # keystone's own; a different value is the design's explicit same-ID migration (旧StarShield20→15).
         migrated = self.typed_power(sid, row)
         if retained:
-            return ("ManifestKeystone(" + cs(self.hero) + ", " + cs(sid) + ", " + array(required) + ", " + sides[0] + ", " + sides[1]
+            return ("ManifestKeystone(" + cs(self.hero) + ", " + cs(sid) + ", " + array(required) + ", " + sides
                 + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost
                 + (", migratedPowerValue: " + migrated[1] if migrated and migrated[1] != BASELINE_KEYS[sid][1] else "") + ")")
-        return ("AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", " + array(required) + ", " + sides[0] + ", " + sides[1]
+        return ("AuthoredKeystoneCompiler.Compile(" + cs(sid) + ", " + array(required) + ", " + sides
             + ", prerequisites: " + array(row["requires"]) + ", cost: " + cost
             + (", retainedPower: Power." + migrated[0] + ", retainedPowerValue: " + migrated[1] if migrated else "") + ")")
 
@@ -1073,7 +1043,7 @@ class Compiler:
         schema_errors, _ = canonical.check(self.name, self.legacy, self.route_rows, self.effects, canonical.collect_effects())
         outer_errors, _ = canonical.check("outer", self.legacy, self.route_rows, self.effects, canonical.collect_effects())
         for error in schema_errors + outer_errors:
-            owner = error.split(":", 1)[0].split("#", 1)[0].split(".upsideSpec", 1)[0].split(".downsideSpec", 1)[0]
+            owner = error.split(":", 1)[0].split("#", 1)[0].split(".upsideSpec", 1)[0]
             affected = [owner] if owner in self.by_id else [s["id"] for s in self.rows]
             for sid in affected:
                 self.fail(sid, "canonical", None, error)
@@ -1243,7 +1213,7 @@ def report(results):
         failed = {f.star.split(".grant", 1)[0] for f in result.failures}
         lines.append(f"| {result.hero} | {len(result.rows) - 160} | 160 | {len(result.mapped)} | {len(failed)} |")
     lines += ["", "## Retained-Power keystones", "",
-              "A legacy keystone whose manifest upside is its existing Power (`h.<hero>.key` / `key2`) compiles with `ManifestKeystone`, which reads the Power and its value from the baseline node (`KeystoneDefinition.RetainedPower`). `Build.Compute` adds that Power once from the keystone node; the typed downside comes from the manifest. Keys whose Power is replaced, or whose downside has no typed manifest spec, stay failures below.", "",
+              "A legacy keystone whose manifest upside is its existing Power (`h.<hero>.key` / `key2`) compiles with `ManifestKeystone`, which reads the Power and its value from the baseline node (`KeystoneDefinition.RetainedPower`). `Build.Compute` adds that Power once from the keystone node. Keys whose Power is replaced stay failures below.", "",
               "Baseline Vesper has 73 purchase nodes; the intended complete tree has 73 + 645 private new + 160 outer = **878 purchase stars, plus the layout start node**. Manifest rows include 33 baseline replacements, not 33 extra graph nodes.", ""]
     for result in results:
         lines += ["## " + result.hero, ""]

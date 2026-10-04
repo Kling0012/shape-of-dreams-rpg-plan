@@ -115,8 +115,8 @@ STRIKE_SHAPES = {'ForwardLine', 'ForwardArc'}
 TUNINGS = {'KillingFlowKeepSpeed': ('St_D_TheKillingFlow', 0.01, 90), 'KillingFlowOnHitHealScale': ('St_D_TheKillingFlow', 100, 400),
            'StanceSwordQiAttackBasis': ('St_R_AnnihilationStance', 100, 100)}
 STRIKE_KEYS = {'mode', 'element', 'shape', 'range', 'width', 'maxTargets', 'windowSeconds', 'bonusSpeed'}
-KS_KEYS = ['upside', 'downside', 'upsideSpec', 'downsideSpec']
-SPEC_KEYS = {'memory', 'memories', 'effect', 'field', 'pct', 'from', 'to', 'delta', 'max', 'receiver', 'scope', 'gimmick', 'condition'}
+KS_KEYS = ['upside', 'upsideSpec']
+SPEC_KEYS = {'memory', 'memories', 'effect', 'field', 'pct', 'from', 'to', 'delta', 'max', 'receiver', 'scope', 'gimmick'}
 
 # 記憶ID または スロット選択子（@ID/@Q/@R/@M、@Q(St_A|St_B) の制約付き、| で連結可）
 MEM = r'St_[A-Za-z0-9_]+'
@@ -416,9 +416,6 @@ def check_spec_list(lst, ctx, legacy, hero, refs, errors):
                 errors.append(f'{c2}: bad {k} {e[k]!r}')
         if 'memories' in e and not (isinstance(e['memories'], list) and e['memories'] and all(memory_ok(x) and x for x in e['memories'])):
             errors.append(f'{c2}: bad memories')
-        if 'condition' in e and not (isinstance(e['condition'], str)
-                                     and re.fullmatch(r'TargetHealthBelow:(100|[1-9]?\d)(\.\d+)?|OutsideRetaliationWindow', e['condition'])):
-            errors.append(f'{c2}: bad condition {e.get("condition")!r} (TargetHealthBelow:<0-100> or OutsideRetaliationWindow)')
         if e.get('field') == 'Grant':
             if not isinstance(e.get('gimmick'), dict):
                 errors.append(f'{c2}: Grant needs gimmick')
@@ -504,11 +501,9 @@ def check(name, legacy, routes, enum_effects, all_effects):
             if not isinstance(ks, dict) or list(ks) != KS_KEYS:
                 errors.append(f'{sid}: keystone keys must be exactly {KS_KEYS}')
             else:
-                for k in ('upside', 'downside'):
-                    if not (isinstance(ks[k], str) and ks[k]):
-                        errors.append(f'{sid}: keystone.{k} missing')
+                if not (isinstance(ks['upside'], str) and ks['upside']):
+                    errors.append(f'{sid}: keystone.upside missing')
                 check_spec_list(ks['upsideSpec'], f'{sid}.upsideSpec', legacy, name, refs, errors)
-                check_spec_list(ks['downsideSpec'], f'{sid}.downsideSpec', legacy, name, refs, errors)
             if s['gimmick'] or s['power'] or s['options']:
                 errors.append(f'{sid}: Keystone effects go to keystone.*Spec (gimmick/power/options must be null)')
             if s['cluster'] != f'{name}.key':
@@ -593,11 +588,10 @@ def check(name, legacy, routes, enum_effects, all_effects):
                 errors.append(f'{sid}: Choice must keep effect fields null (use options)')
         elif k == 'Keystone':
             ks = s['keystone']
-            if not isinstance(ks, dict) or list(ks) != KS_KEYS or not ks['upside'] or not ks['downside']:
+            if not isinstance(ks, dict) or list(ks) != KS_KEYS or not ks['upside']:
                 errors.append(f'{sid}: bad keystone object')
             else:
                 check_spec_list(ks['upsideSpec'], f'{sid}.upsideSpec', legacy, name, refs, errors)
-                check_spec_list(ks['downsideSpec'], f'{sid}.downsideSpec', legacy, name, refs, errors)
         else:
             check_effect_obj(s, sid, 'migration', legacy, name, refs, errors, S, effects)
         if k != 'Keystone' and s['keystone'] is not None:

@@ -26958,25 +26958,11 @@
       "options": null,
       "keystone": {
         "upside": "本人のGimmick EchoのValue+100%（最終乗算2倍）",
-        "downside": "Echo待ち時間が0.3秒→1.2秒、直接Q/Rダメージ-10%",
         "upsideSpec": [
           {
             "effect": "Echo",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Echo",
-            "field": "Delay",
-            "from": 0.3,
-            "to": 1.2
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
           }
         ]
       },
@@ -27011,24 +26997,11 @@
       "options": null,
       "keystone": {
         "upside": "本人のGimmick BurstのValue+100%",
-        "downside": "そのBurst半径-50%（面積は25%）、直接Q/Rダメージ-10%",
         "upsideSpec": [
           {
             "effect": "Burst",
             "field": "Value",
             "pct": 100
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Burst",
-            "field": "Radius",
-            "pct": -50
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
           }
         ]
       },
@@ -27063,24 +27036,11 @@
       "options": null,
       "keystone": {
         "upside": "本人のWound合計ダメージ+80%",
-        "downside": "Wound持続時間+100%、直接Q/Rダメージ-10%",
         "upsideSpec": [
           {
             "effect": "Wound",
             "field": "Total",
             "pct": 80
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Wound",
-            "field": "Duration",
-            "pct": 100
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
           }
         ]
       },
@@ -27115,24 +27075,11 @@
       "options": null,
       "keystone": {
         "upside": "星図Gimmick Shieldの量+80%",
-        "downside": "星図Gimmick Healの量-50%、直接Q/Rダメージ-5%",
         "upsideSpec": [
           {
             "effect": "Shield",
             "field": "Value",
             "pct": 80
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Heal",
-            "field": "Value",
-            "pct": -50
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -5
           }
         ]
       },
@@ -27167,7 +27114,6 @@
       "options": null,
       "keystone": {
         "upside": "Heal Arg1の味方への量+100%、その半径+50%",
-        "downside": "同じHealの自分への量-50%、直接Q/Rダメージ-5%",
         "upsideSpec": [
           {
             "effect": "Heal",
@@ -27178,18 +27124,6 @@
             "effect": "Heal",
             "field": "Radius",
             "pct": 50
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Heal",
-            "field": "SelfValue",
-            "pct": -50
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -5
           }
         ]
       },
@@ -27224,20 +27158,12 @@
       "options": null,
       "keystone": {
         "upside": "重装タックルを受け手とするRecvの量+40%",
-        "downside": "直接Q/Rダメージ-20%",
         "upsideSpec": [
           {
             "effect": "Recharge",
             "field": "Value",
             "pct": 40,
             "receiver": "St_M_Charge"
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -20
           }
         ]
       },
@@ -27272,7 +27198,6 @@
       "options": null,
       "keystone": {
         "upside": "Gimmick Primedの量+80%、予約の寿命5秒→8秒",
-        "downside": "Gimmick Burstの量-40%、直接Q/Rダメージ-10%",
         "upsideSpec": [
           {
             "effect": "Primed",
@@ -27284,18 +27209,6 @@
             "field": "Lifetime",
             "from": 5,
             "to": 8
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Burst",
-            "field": "Value",
-            "pct": -40
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
           }
         ]
       },
@@ -27330,24 +27243,11 @@
       "options": null,
       "keystone": {
         "upside": "Gimmick ElementEdgeの1種類あたりValue+80%",
-        "downside": "Gimmick Echoの量-40%、直接Q/Rダメージ-10%",
         "upsideSpec": [
           {
             "effect": "ElementEdge",
             "field": "ValuePerType",
             "pct": 80
-          }
-        ],
-        "downsideSpec": [
-          {
-            "effect": "Echo",
-            "field": "Value",
-            "pct": -40
-          },
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
           }
         ]
       },
@@ -28553,15 +28453,7 @@
       "options": null,
       "keystone": {
         "upside": "既存 Power.Retaliation=25（被弾後3秒、攻撃力・魔力+25%、重ならず更新）を維持",
-        "downside": "装備Q/Rの直接ダメージ-10%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -10
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28571,7 +28463,7 @@
       ],
       "nameJa": "審問の構え",
       "nameEn": "Inquisitor's Stance",
-      "notes": "既存刻印に代償を追加（ID・既存Powerは維持、強化なし）。利点: 既存 Power.Retaliation=25（被弾後3秒、攻撃力・魔力+25%、重ならず更新）を維持／代償: 装備Q/Rの直接ダメージ-10%。M4の記憶限定負倍率（C07）。被弾を強制せず決意/慈悲の両方を維持。"
+      "notes": "既存刻印（ID・既存Powerは維持、強化なし）。被弾を強制せず決意/慈悲の両方を維持（代償は #47 で撤廃）。"
     },
     {
       "id": "h.vesper.key2",
@@ -28588,15 +28480,7 @@
       "options": null,
       "keystone": {
         "upside": "既存 Power.Frenzy=4（6m内の敵1体につき攻撃速度+4%、8体で+32%まで）を維持",
-        "downside": "装備Q/Rの直接ダメージ-15%",
-        "upsideSpec": null,
-        "downsideSpec": [
-          {
-            "effect": "DirectQR",
-            "field": "Damage",
-            "pct": -15
-          }
-        ]
+        "upsideSpec": null
       },
       "requires": [],
       "requiresAny": [],
@@ -28606,7 +28490,7 @@
       ],
       "nameJa": "鉄壁の審問",
       "nameEn": "Unbreakable Inquisition",
-      "notes": "既存刻印に代償を追加（ID・既存Powerは維持、強化なし）。利点: 既存 Power.Frenzy=4（6m内の敵1体につき攻撃速度+4%、8体で+32%まで）を維持／代償: 装備Q/Rの直接ダメージ-15%。M4の記憶限定負倍率（C07）。被弾を強制せず決意/慈悲の両方を維持。"
+      "notes": "既存刻印（ID・既存Powerは維持、強化なし）。被弾を強制せず決意/慈悲の両方を維持（代償は #47 で撤廃）。"
     }
   ]
 }

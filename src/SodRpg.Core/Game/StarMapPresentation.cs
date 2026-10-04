@@ -46,11 +46,10 @@ namespace SodRpg.Core.Game
         }
 
         private const string NL = "\n";
-        public const string BenefitHeading = "<color=#9fe0b0><b>利点</b></color>";
-        public const string DrawbackHeading = "<color=#ffb0a0><b>代償</b></color>";
+        public const string BenefitHeading = "<color=#9fe0b0><b>効果</b></color>";
 
         /// <summary>
-        /// 刻印の効果。利点と代償を見出し付きの別々の段落にする（旧来の刻印は利点のみ・代償なし）。
+        /// 刻印の効果。効果と必要ポイントだけを示す（刻印にデバフは付かない）。
         /// 必要ポイントは最後の1行だけで、ツリー側の説明では繰り返さない。
         /// </summary>
         public static string KeystoneDescription(TalentDef star)
@@ -60,23 +59,19 @@ namespace SodRpg.Core.Game
             {
                 var key = star.KeystoneDefinition;
                 if (key.Cost <= 0) throw new InvalidOperationException("Invalid keystone cost: " + star.Id);
-                return KeystoneSections(star.AuthoredStar?.KeystoneUpside?.ToString() ?? DescribeKeySide(key, true),
-                    star.AuthoredStar?.KeystoneDownside?.ToString() ?? DescribeKeySide(key, false), key.Cost);
+                return KeystoneSections(DescribeKeySide(key), key.Cost);
             }
             if (!star.IsKeystone) throw new InvalidOperationException("Not a keystone: " + star.Id);
-            // 旧来の刻印：効果の本文が利点。説明文は利点の補足で、代償はない。
+            // 旧来の刻印：効果の本文がPowerの説明。
             string benefit = Content.FormatPower(star.Power, star.PowerValue);
             if (star.Description != null && !string.IsNullOrWhiteSpace(star.Description.ToString())) benefit += NL + star.Description;
-            return KeystoneSections(benefit, null, Content.KeystoneCost);
+            return KeystoneSections(benefit, Content.KeystoneCost);
         }
 
-        /// <summary>利点・代償・必要ポイントを組み立てる（代償が null か空なら「なし」）。</summary>
-        public static string KeystoneSections(string benefit, string drawback, int cost)
+        /// <summary>効果・必要ポイントを組み立てる。</summary>
+        public static string KeystoneSections(string benefit, int cost)
         {
-            if (string.IsNullOrWhiteSpace(drawback))
-                drawback = Loc.T("なし（この刻印に欠点はありません）", "None (this keystone has no drawback)");
-            return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Benefit</b></color>") + NL + benefit
-                + NL + NL + Loc.T(DrawbackHeading, "<color=#ffb0a0><b>Drawback</b></color>") + NL + drawback
+            return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>") + NL + benefit
                 + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} points");
         }
 
@@ -212,16 +207,16 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("Invalid two-option choice: " + star.Id);
         }
 
-        internal static string DescribeKeySide(KeystoneDefinition key, bool upside)
+        internal static string DescribeKeySide(KeystoneDefinition key)
         {
             var lines = new List<string>();
-            if (upside && key.RetainedPower != Power.None)
+            if (key.RetainedPower != Power.None)
                 lines.Add(Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
-            foreach (var transform in upside ? key.Upside : key.Downside)
+            foreach (var transform in key.Upside)
             {
                 string layer = EnumText(transform.TargetLayer, Loc.Japanese, new[] { "記憶固有のダメージ", "星による記憶ダメージ", "追加生成ダメージ", "仕掛けの効果" }, new[] { "native memory damage", "star memory damage", "generated damage", "gimmick effect" });
                 string field = EnumText(transform.Field, Loc.Japanese, new[] { "効果量", "持続時間", "効果半径", "発生までの時間", "対象数", "発火間隔", "確率", "効果の種類" }, new[] { "effect value", "duration", "radius", "delay", "target count", "interval", "chance", "effect type" });
-                string operation = EnumText(transform.Operation, Loc.Japanese, new[] { "増減率", "秒数", "追加数", "発動に必要な回数", "無効化", "傷の再配分", "設定値", "加算量" }, new[] { "scale", "seconds", "extra count", "required count", "disable", "wound redistribution", "set value", "additive amount" });
+                string operation = EnumText(transform.Operation, Loc.Japanese, new[] { "増減率", "秒数", "追加数", "発動に必要な回数", "設定値", "加算量" }, new[] { "scale", "seconds", "extra count", "required count", "set value", "additive amount" });
                 var scope = transform.Scope;
                 var targets = new List<string>();
                 targets.AddRange(scope.TargetMemorySet.Select(m => Links.Name(m).ToString()));
@@ -244,8 +239,6 @@ namespace SodRpg.Core.Game
                 switch (transform.Operation)
                 {
                     case KeystoneOperation.Scale: valueText = Number(transform.MagnitudeUnits.Percent) + "%"; break;
-                    case KeystoneOperation.RedistributeWound: valueText = Number(transform.MagnitudeUnits.Percent) + Loc.T("%、持続時間の増減率 ", "%, lifetime change ") + Number(transform.WoundDurationUnits.Percent) + "%"; break;
-                    case KeystoneOperation.Disable: valueText = ""; break;
                     case KeystoneOperation.SetSeconds: valueText = Number(transform.Seconds) + Loc.T("秒", "s"); break;
                     case KeystoneOperation.Set:
                     case KeystoneOperation.Add: valueText = Number(transform.Seconds); break;
@@ -255,9 +248,8 @@ namespace SodRpg.Core.Game
                     + (transform.ExpectedFrom.HasValue ? Loc.T("（変更前 ", " (from ") + Number(transform.ExpectedFrom.Value) + Loc.T("）", ")") : "")
                     + (transform.Maximum.HasValue ? Loc.T("（上限 ", " (max ") + Number(transform.Maximum.Value) + Loc.T("）", ")") : ""));
             }
-            if (upside)
-                foreach (var grant in key.Grants)
-                    lines.Add(Loc.T("付与：", "Grant: ") + DescribeMechanism(grant));
+            foreach (var grant in key.Grants)
+                lines.Add(Loc.T("付与：", "Grant: ") + DescribeMechanism(grant));
             return string.Join("\n", lines);
         }
 

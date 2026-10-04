@@ -120,7 +120,7 @@ namespace SodRpg.Mod
                         var preparation = spec.Primed;
                         var primedResult = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.MechanismPayload(spec),
                             preparation.SourceMemory, null, KeystoneSourceKind.NativeMemory);
-                        if (!primedResult.Disabled && primedResult.Value > 0)
+                        if (primedResult.Value > 0)
                             primed.Add(new MemoryPrimedDefinition(preparation.ChannelId, preparation.SourceMemory, preparation.Trigger,
                                 primedResult.Value * 100m, (float)primedResult.DurationSeconds, preparation.Budget));
                         break;
@@ -128,7 +128,7 @@ namespace SodRpg.Mod
                         var window = spec.Relay;
                         var relayResult = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.MechanismPayload(spec),
                             RelayWindowDefinition.SourceMemory, window.TargetMemory, KeystoneSourceKind.NativeMemory);
-                        if (!relayResult.Disabled && relayResult.Value > 0)
+                        if (relayResult.Value > 0)
                             relay.Add(RelayWindowDefinition.FromEffective(window.ChannelId, window.TargetMemory,
                                 relayResult.Value * 100m, (float)relayResult.DurationSeconds));
                         break;
@@ -387,7 +387,7 @@ namespace SodRpg.Mod
                 {
                     var probability = TransformAuthoredPayload(rt.Hero, AuthoredKeystoneComposer.MechanismPayload(spec),
                         source.Memory, null, sourceKind);
-                    if (!probability.Disabled && probability.ProbabilityPercent > 0)
+                    if (probability.ProbabilityPercent > 0)
                         dividends.Add(PressureDividendChannel.FromEffective(spec.Dividend.SourceMemory, spec.Dividend.RequiredMemories,
                             spec.Dividend.ContributorIds, probability.ProbabilityPercent * 100m));
                 }

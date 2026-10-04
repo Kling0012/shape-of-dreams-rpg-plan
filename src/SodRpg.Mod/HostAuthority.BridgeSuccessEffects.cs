@@ -103,7 +103,6 @@ namespace SodRpg.Mod
                 {
                     var shield = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
                         transaction.Notification.SourceMemory, null, KeystoneSourceKind.NativeMemory);
-                    if (shield.Disabled) continue;
                     AwardModShield(owner, hero, ModShieldPoolKind.Ordinary,
                         SupportStats.AmplifyShield(hero.maxHealth * (float)(shield.Value / 100m), owner.Powers.Build.Get(Stat.ShieldPower)),
                         (float)shield.DurationSeconds, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner));
@@ -130,7 +129,6 @@ namespace SodRpg.Mod
                 float basis = payload.DamageBasis == BridgeDamageBasis.NativeHit ? transaction.NativeDamage : Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
                 var effective = TransformAuthoredPayload(hero, AuthoredKeystoneComposer.BridgePayload(payload),
                     transaction.Notification.SourceMemory, null, KeystoneSourceKind.NativeMemory);
-                if (effective.Disabled) continue;
                 float amount = TransformAuthoredGeneratedDamage(hero, basis * (float)(effective.Value / 100m),
                     transaction.Notification.SourceMemory, payload.ChannelId, GimmickEffect.None);
                 _pairDamageDepth++;
@@ -160,7 +158,7 @@ namespace SodRpg.Mod
                     var result = TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.ModEffect, units / 100m,
                         new KeystoneCaps(100), KeystonePayloadKind.Gimmick, GimmickEffect.Expose, channel),
                         source, null, KeystoneSourceKind.NativeMemory);
-                    return !result.Disabled ? result.Value * 100m : 0m;
+                    return result.Value * 100m;
                 }) / 100m);
         }
     }

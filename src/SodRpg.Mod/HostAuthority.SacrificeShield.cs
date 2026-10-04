@@ -123,7 +123,7 @@ namespace SodRpg.Mod
         {
             public HeroRuntime Owner;
             public ScopedKeystoneModifiers Keystone;
-            public Func<bool> NativeDownsideIsBound;
+            public Func<bool> Verified;
             public long KeystoneEpoch = -1, ShieldEpoch = -1, CaptureEpoch;
         }
 
@@ -131,15 +131,15 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, SacrificeBinding> _sacrificeBindings = new Dictionary<Hero, SacrificeBinding>();
         private long _sacrificeEpoch;
 
-        // Data/C02 integration must install the exact native downside and provide its live binding check.
+        // C02 integration installs the exact native self-sacrifice adapters and provides their live verification.
         // There are deliberately no default registrations, and a missing counterpart rejects binding.
-        internal void BindSacrificeShield(Hero hero, ScopedKeystoneModifiers keystone, Func<bool> nativeDownsideIsBound)
+        internal void BindSacrificeShield(Hero hero, ScopedKeystoneModifiers keystone, Func<bool> verified)
         {
             if (hero == null || keystone == null) throw new ArgumentNullException(hero == null ? nameof(hero) : nameof(keystone));
-            if (nativeDownsideIsBound == null || !nativeDownsideIsBound())
-                throw new InvalidOperationException("C11 requires its verified simultaneous C07 native damage downside binding.");
+            if (verified == null || !verified())
+                throw new InvalidOperationException("C11 requires its verified host adapter binding.");
             if (!_runtimes.TryGetValue(hero, out var owner)) throw new InvalidOperationException("Sacrifice shield owner is not attached.");
-            var binding = new SacrificeBinding { Owner = owner, Keystone = keystone, NativeDownsideIsBound = nativeDownsideIsBound };
+            var binding = new SacrificeBinding { Owner = owner, Keystone = keystone, Verified = verified };
             _sacrificeShields.RemoveOwner(hero.GetInstanceID());
             _sacrificeBindings.Remove(hero);
             RefreshSacrificeBinding(binding);
@@ -156,8 +156,8 @@ namespace SodRpg.Mod
                 binding.CaptureEpoch = checked(++_sacrificeEpoch);
             }
             bool enabled = Alive(binding.Owner.Hero) && binding.Keystone.HasPayload(KeystonePayloadKind.SacrificeShield);
-            if (enabled && !binding.NativeDownsideIsBound())
-                throw new InvalidOperationException("C11 native downside binding was removed while its upside remains selected.");
+            if (enabled && !binding.Verified())
+                throw new InvalidOperationException("C11 host adapter binding was lost while its shield remains selected.");
             if (enabled)
                 foreach (var definition in binding.Keystone.SelectedDefinitions)
                     foreach (string memory in definition.RequiredMemories)

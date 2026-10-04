@@ -170,7 +170,8 @@ namespace SodRpg.Mod
         // Version 13 requires replayable authoritative death facts; version 12 cannot settle unknown dead classifications.
         // Version 13 adds authored mechanisms, scoped keystones and registry negotiation.
         // Version 14 carries every selected keystone (up to the traveler's slots) in the build envelope.
-        public const int Version = 14;
+        // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
+        public const int Version = 15;
     }
 
     [Serializable]

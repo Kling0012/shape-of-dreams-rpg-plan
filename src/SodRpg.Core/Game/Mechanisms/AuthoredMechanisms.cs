@@ -108,7 +108,7 @@ namespace SodRpg.Core.Game
         }
         public static string Key(AuthoredMechanismSpec spec) => AuthoredMechanismCodec.EncodeSpec(spec);
         public static string Describe(AuthoredMechanismSpec spec) => StarMapPresentation.DescribeMechanism(spec);
-        public static string DescribeKeystone(KeystoneDefinition definition, bool upside) => StarMapPresentation.DescribeKeySide(definition, upside);
+        public static string DescribeKeystone(KeystoneDefinition definition) => StarMapPresentation.DescribeKeySide(definition);
         internal static void ValidateBindings(IReadOnlyList<TalentDef> tree)
         {
             var all = tree.SelectMany(t => t.IsChoice ? t.Choices : new[] { t }).ToArray();
@@ -685,7 +685,6 @@ namespace SodRpg.Core.Game
                             || receiver.Memory == source.Memory && receiver.Slot != source.Slot)) continue;
                     var final = AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, source.Memory, receiver.Memory,
                         recipient: recipient, sourceSlot: source.Slot, recipientSlot: receiver.Slot, heroKey: heroKey);
-                    if (final.Disabled) continue;
                     decimal value = final.Value;
                     if (GeneratedDamageEffect(payload.Effect) || payload.Kind == KeystonePayloadKind.BridgeSuccess)
                     {
@@ -693,7 +692,6 @@ namespace SodRpg.Core.Game
                             new KeystonePayload(KeystoneLayer.GeneratedDamage, value, new KeystoneCaps(decimal.MaxValue),
                                 effect: payload.Effect, effectId: payload.EffectId), source.Memory, receiver.Memory,
                             sourceKind: KeystoneSourceKind.Generated, recipient: recipient, sourceSlot: source.Slot, recipientSlot: receiver.Slot, heroKey: heroKey);
-                        if (generated.Disabled) continue;
                         value = generated.Value;
                     }
                     string predicate = head + final.Argument + tail + Scenario(source.Memory, source.Slot, receiver.Memory, receiver.Slot);
