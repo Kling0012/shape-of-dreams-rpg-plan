@@ -113,12 +113,12 @@ namespace SodRpg.Mod
                 {
                     long epoch = RefreshMemoryAttributionEquipment(rt.Hero);
                     string key = BuildAggregation.GimmickStateKey(configured);
-                    bool hadKey = rt.Powers.Build.SelectedKeystone != null;
+                    bool hadKey = rt.Powers.Build.SelectedKeystones.Count > 0;
                     pending.AuthoredChannelId = configured.StarId;
                     pending.AuthoredIsCurrent = () => epoch == RefreshMemoryAttributionEquipment(rt.Hero)
                         && LegacyGimmickForRequest(rt, configured.StarId) is GimmickEntry current
                         && (BuildAggregation.GimmickStateKey(current) == key
-                            || hadKey && rt.Powers.Build.SelectedKeystone == null && SameLegacyPendingBaseline(configured, current));
+                            || hadKey && rt.Powers.Build.SelectedKeystones.Count == 0 && SameLegacyPendingBaseline(configured, current));
                     pending.AuthoredDefinition = () => TransformLegacyGimmick(rt,
                         LegacyGimmickForRequest(rt, configured.StarId)?.Def, request.Entry.Memory,
                         request.SourceKind ?? KeystoneSourceKind.NativeMemory, configured.StarId);

@@ -75,8 +75,10 @@ namespace SodRpg.Core.Game
         /// 刻印の取得条件を、実際の数字つきの1文にする。
         /// 例：「この旅人の星を合計6段取得し、熟練度3に達する必要があります（今は星3段・熟練度10）。」
         /// <paramref name="masteryNeeded"/> が 0 なら熟練度は条件にしない（汎用ツリーの刻印）。
+        /// slots/starLevel にはこの旅人の刻印の枠数と星のレベルを渡し、選べる数と次の枠の条件も添える。
         /// </summary>
-        public static string KeystoneRequirement(bool heroTree, int ranksNeeded, int ranksHave, int masteryNeeded, int masteryHave, bool connected)
+        public static string KeystoneRequirement(bool heroTree, int ranksNeeded, int ranksHave, int masteryNeeded, int masteryHave, bool connected,
+            int slots = 1, int starLevel = 0)
         {
             string scopeJa = heroTree ? "この旅人の星" : "同じ系統の星", scopeEn = heroTree ? "this Traveler's stars" : "stars of the same line";
             string ja = $"{scopeJa}を合計{ranksNeeded}段取得" + (masteryNeeded > 0 ? $"し、熟練度{masteryNeeded}に達する" : "する")
@@ -85,8 +87,20 @@ namespace SodRpg.Core.Game
                 + " (now: " + ranksHave + " ranks" + (masteryNeeded > 0 ? ", mastery " + masteryHave : "") + ").";
             string text = Loc.T(ja, en);
             if (!connected) text += Loc.T("さらに、取得済みの星と線でつながっている必要があります。", " It must also connect to your acquired stars.");
-            return Loc.T("刻印は1つだけ選べます。", "Only one keystone can be selected. ") + text;
+            return Loc.T($"刻印は星のレベルに応じて最大{slots}つまで選べます。", $"Up to {slots} keystones can be selected, depending on the star level. ") + text
+                + NextSlotText(starLevel);
         }
+
+        /// <summary>次の枠が開く星のレベルの1文。開く枠がなければ空文字。</summary>
+        public static string NextSlotText(int starLevel)
+        {
+            int next = KeystoneSlots.NextUnlockLevel(starLevel);
+            return next < 0 ? "" : Loc.T($"次の枠は星のレベル{next}で開きます。", $"The next slot unlocks at star level {next}.");
+        }
+
+        /// <summary>刻印の帯に出す「刻印 n/枠数」。</summary>
+        public static string KeystoneSlotStatus(int selected, int slots)
+            => Loc.T($"刻印 {selected}/{slots}", $"Keystones {selected}/{slots}");
 
         /// <summary>
         /// 星の状態を1文で。条件の説明と「振れます」を重ねて出さないよう、状態はここで1つだけ決める。

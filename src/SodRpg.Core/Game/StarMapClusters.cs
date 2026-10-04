@@ -215,7 +215,7 @@ namespace SodRpg.Core.Game
             for (int i = 0; i < cluster.NodeCount; i++)
             {
                 var talent = layout.Nodes[cluster.NodeIndex(i)].Talent;
-                if (talent.IsKeystone ? string.Equals(state.Keystone, talent.Id, StringComparison.Ordinal)
+                if (talent.IsKeystone ? state.HasKeystone(talent.Id)
                     : state.Talents.TryGetValue(talent.Id, out int rank) && rank > 0)
                     allocated++;
             }

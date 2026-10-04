@@ -104,7 +104,7 @@ namespace SodRpg.Core.Tests
                         games[key] = Task.Factory.StartNew(() =>
                         {
                             var game = new Played();
-                            game.Profile = MaxPointProfile(key, out game.Keystone, out game.Refused);
+                            game.Profile = MaxPointProfile(key, out game.Keystones, out game.Refused);
                             return game;
                         }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
                     }
@@ -124,7 +124,7 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        internal sealed class Played { public Profile Profile; public string Keystone; public List<string> Refused; }
+        internal sealed class Played { public Profile Profile; public List<string> Keystones; public List<string> Refused; }
 
         private void WithHero(string hero, Action<IReadOnlyList<TalentDef>> body)
         {
@@ -258,7 +258,7 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        internal static Profile MaxPointProfile(string hero, out string keystone, out List<string> refused)
+        internal static Profile MaxPointProfile(string hero, out List<string> keystones, out List<string> refused)
         {
             var profile = Profile.CreateNew(1331);
             var state = profile.Hero(hero);
@@ -268,23 +268,30 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < Content.MaxCodexBonus * Content.CodexPerPoint; i++) profile.Codex.Add("acceptance.codex." + i);
             Assert.Equal(StarProgression.MaxSpendablePoints, profile.TalentPoints(hero));
             var layout = HeroTreeLayout.ForHero(hero);
-            int reserve = layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).Min(n => n.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
+            int KeyCost(HeroTreeNode node) => node.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            int slots = KeystoneSlots.CountFor(StarProgression.MaxPoints);
+            // 最大ポイントでは枠が3つ。そのぶんの費用を最初に確保しておく。
+            int reserve = layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).Select(KeyCost).OrderBy(cost => cost).Take(slots).Sum();
             refused = new List<string>();
             BuyGreedily(profile, hero, layout, reserve, refused);
-            keystone = null;
+            keystones = new List<string>();
             var failures = new List<string>();
-            foreach (var node in layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).OrderBy(n => n.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost).ThenBy(n => n.Id, StringComparer.Ordinal))
+            foreach (var node in layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).OrderBy(KeyCost).ThenBy(n => n.Id, StringComparer.Ordinal))
             {
+                if (keystones.Count >= state.KeystoneSlotCount) break;
                 try
                 {
                     // C15/C07: a keystone whose drawback disables already-bought stars is selectable only through
                     // the explicit approval path. Preview, approve exactly the previewed refund set, apply (SetKeystone),
                     // then verify the refund: every refunded rank is gone and the points moved by exactly its cost.
+                    // v2.0.2: 2つ目・3つ目も同じ経路で選ぶ（重複と枠の超過は Rules.SetKeystone が拒否する）。
                     var plan = Rules.PreviewAllocationChange(profile, hero,
                         new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = node.Id });
                     if (!plan.CanApply)
                     {
-                        failures.Add(node.Id + ": " + string.Join(", ", plan.PrerequisiteViolations.Concat(plan.SaturatedChannels)));
+                        string reason = node.Id + ": " + string.Join(", ", plan.PrerequisiteViolations.Concat(plan.SaturatedChannels));
+                        failures.Add(reason);
+                        refused.Add("keystone " + reason);
                         continue;
                     }
                     int spentBefore = Rules.SpentPoints(state, hero);
@@ -295,13 +302,13 @@ namespace SodRpg.Core.Tests
                             refund.StarId + " kept ranks the approved refund was supposed to return");
                     Assert.Equal(spentBefore - plan.RefundCost + (node.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost),
                         Rules.SpentPoints(state, hero));
-                    keystone = node.Id;
-                    break;
+                    keystones.Add(node.Id);
                 }
                 catch (Exception error) when (error is InvalidOperationException || error is AllocationValidationException)
-                { failures.Add(node.Id + ": " + error.Message); }
+                { failures.Add(node.Id + ": " + error.Message); refused.Add("keystone " + failures[failures.Count - 1]); }
             }
-            Assert.True(keystone != null, "No keystone was selectable after the greedy purchase: " + string.Join(" | ", failures));
+            Assert.True(keystones.Count > 0, "No keystone was selectable after the greedy purchase: " + string.Join(" | ", failures));
+            Assert.InRange(keystones.Count, 1, slots);
             BuyGreedily(profile, hero, layout, 0, refused);
             return profile;
         }
@@ -324,7 +331,7 @@ namespace SodRpg.Core.Tests
             WithHero(hero, tree =>
             {
                 var game = Play(hero);
-                var profile = game.Profile; string keystone = game.Keystone; var refused = game.Refused;
+                var profile = game.Profile; var keystones = game.Keystones; var refused = game.Refused;
                 var state = profile.Hero(hero);
                 int spent = Rules.SpentPoints(state, hero);
                 int smallest = tree.Where(t => !t.IsKeystone && (!state.Talents.TryGetValue(t.Id, out int r) || r < t.MaxRank)).Select(t => t.RankCost).DefaultIfEmpty(int.MaxValue).Min();
@@ -332,7 +339,14 @@ namespace SodRpg.Core.Tests
                 Assert.True(StarProgression.MaxSpendablePoints - spent < Math.Max(1, smallest) || Rules.FreePoints(profile, hero) == 0,
                     "Points were left unspent although a reachable star is affordable: spent " + spent
                     + "; refused as capped or inert: " + string.Join("; ", refused.Take(20)));
-                Assert.Equal(keystone, state.Keystone);
+                Assert.Equal(keystones, state.Keystones.Where(k => k != null).ToList());
+                // 枠まで選べるだけ選ぶ。データ上どうしても選べない刻印（条件・飽和）は、全て理由付きで拒否されたことまで確認する。
+                int keystoneNodes = tree.Count(t => t.IsKeystone);
+                Assert.True(keystones.Count <= state.KeystoneSlotCount,
+                    keystones.Count + " keystones selected but only " + state.KeystoneSlotCount + " slots are allowed");
+                if (keystones.Count < state.KeystoneSlotCount)
+                    Assert.Equal(keystoneNodes, keystones.Count
+                        + refused.Count(r => r.StartsWith("keystone ", StringComparison.Ordinal)));
 
                 var build = Build.Compute(profile, hero, 0);
                 Assert.Equal(spent, build.SpentStarPoints);
@@ -342,7 +356,7 @@ namespace SodRpg.Core.Tests
                 var decoded = Build.Decode(encoded);
                 Assert.NotNull(decoded);
                 Assert.Equal(encoded, decoded.Encode());
-                Assert.Equal(build.SelectedKeystone?.KeystoneId, decoded.SelectedKeystone?.KeystoneId);
+                Assert.Equal(build.SelectedKeystones.Select(k => k.KeystoneId).ToList(), decoded.SelectedKeystones.Select(k => k.KeystoneId).ToList());
                 Assert.Equal(build.Mechanisms.Count, decoded.Mechanisms.Count);
 
                 // The host's protocol-13 envelope accepts the same build and recomputes an identical result.
@@ -359,7 +373,7 @@ namespace SodRpg.Core.Tests
             WithHero(hero, tree =>
             {
                 var game = Play(hero);
-                var profile = game.Profile; string keystone = game.Keystone; var refused = game.Refused;
+                var profile = game.Profile; var keystones = game.Keystones; var refused = game.Refused;
                 var summary = StarSummary.Compute(profile, hero);
                 var listed = new HashSet<string>(StringComparer.Ordinal);
                 foreach (var line in summary.Stats.Concat(summary.Powers).Concat(summary.Choices).Concat(summary.Keystone)
@@ -377,7 +391,7 @@ namespace SodRpg.Core.Tests
                     if (effectful && !listed.Contains(star.Id)) missing.Add(star.Id);
                 }
                 Assert.True(missing.Count == 0, "Allocated effectful stars missing from StarSummary: " + string.Join(", ", missing.Take(20)));
-                Assert.Contains(keystone, listed);
+                foreach (string keystone in keystones) Assert.Contains(keystone, listed);
             });
         }
     }

@@ -50,4 +50,31 @@ namespace SodRpg.Core.Game
             if (amount > 0) hero.StarXp = (int)Math.Min(int.MaxValue, (long)hero.StarXp + amount);
         }
     }
+
+    /// <summary>
+    /// 星のレベルで増える刻印の枠（v2.0.2 設計）。閾値はこの表にだけ持つ：
+    /// レベル200で2つ目、400で3つ目が開く。レベルは StarProgression.Points（獲得ポイント、上限500）。
+    /// </summary>
+    public static class KeystoneSlots
+    {
+        public const int Max = 3;
+
+        /// <summary>i 個目（2 始まり）の枠が開く星のレベル。</summary>
+        public static readonly int[] UnlockLevels = { 200, 400 };
+
+        /// <summary>星のレベルに対して同時に選べる刻印の数。</summary>
+        public static int CountFor(int starLevel)
+        {
+            int slots = 1;
+            foreach (int unlock in UnlockLevels) if (starLevel >= unlock) slots++;
+            return Math.Max(1, Math.Min(Max, slots));
+        }
+
+        /// <summary>次の枠が開く星のレベル。開く枠が無ければ -1。</summary>
+        public static int NextUnlockLevel(int starLevel)
+        {
+            foreach (int unlock in UnlockLevels) if (starLevel < unlock) return unlock;
+            return -1;
+        }
+    }
 }

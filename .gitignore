@@ -5,3 +5,4 @@ obj/
 TestResults/
 .ref/
 tests/SodRpg.Core.Tests/Diagnostics/
+__pycache__/

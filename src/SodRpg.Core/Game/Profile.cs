@@ -15,7 +15,11 @@ namespace SodRpg.Core.Game
         /// <summary>Allocated choice stars: zero-based option indices.</summary>
         public Dictionary<string, int> TalentChoices { get; } = new Dictionary<string, int>(StringComparer.Ordinal);
 
-        public string Keystone { get; set; }
+        /// <summary>選択中の到達刻印（枠）。前詰めで、Keystones[i] が i+1 個目。未選択は null。枠数は星のレベルで増える（KeystoneSlots）。</summary>
+        public string[] Keystones { get; } = new string[KeystoneSlots.Max];
+
+        /// <summary>1つ目の刻印（Keystones[0]）。互換のためプロパティのまま残す。</summary>
+        public string Keystone { get => Keystones[0]; set => Keystones[0] = value; }
         /// <summary>Last explicit authored-effect migration applied to this hero's saved local IDs.</summary>
         public int AuthoredMigrationVersion { get; set; }
 
@@ -25,14 +29,53 @@ namespace SodRpg.Core.Game
         /// <summary>この旅人の星の経験。獲得ポイントは StarProgression で求める。</summary>
         private int _starXp;
         public int StarXp { get => _starXp; set => _starXp = Math.Max(0, value); }
-
         public HeroState Clone()
         {
-            var c = new HeroState { Keystone = Keystone, Kills = Kills, StarXp = StarXp, AuthoredMigrationVersion = AuthoredMigrationVersion };
+            var c = new HeroState { Kills = Kills, StarXp = StarXp, AuthoredMigrationVersion = AuthoredMigrationVersion };
+            c.CopyKeystonesFrom(this);
             Array.Copy(Equipped, c.Equipped, Equipped.Length);
             foreach (var kv in Talents) c.Talents[kv.Key] = kv.Value;
             foreach (var kv in TalentChoices) c.TalentChoices[kv.Key] = kv.Value;
             return c;
+        }
+
+        /// <summary>選択中の刻印の数（前詰めなので、null の前の連続した枠の数）。</summary>
+        public int KeystoneCount
+        {
+            get { int n = 0; while (n < Keystones.Length && Keystones[n] != null) n++; return n; }
+        }
+
+        /// <summary>星のレベル（StarProgression.Points(StarXp)）で決まる、この旅人の刻印の枠数。</summary>
+        public int KeystoneSlotCount => KeystoneSlots.CountFor(StarProgression.Points(StarXp));
+
+        public bool HasKeystone(string id) => id != null && Array.IndexOf(Keystones, id) >= 0;
+
+        /// <summary>空き枠へ刻印を追加する（重複はここでは確かめない）。追加した枠の番号、枠が無ければ -1。</summary>
+        public int AddKeystone(string id)
+        {
+            int slot = KeystoneCount;
+            if (slot >= Keystones.Length) return -1;
+            Keystones[slot] = id;
+            return slot;
+        }
+
+        /// <summary>選択中の刻印を1つ外し、残りを前詰めに詰める。外せたら true。</summary>
+        public bool RemoveKeystone(string id)
+        {
+            int index = id == null ? -1 : Array.IndexOf(Keystones, id);
+            if (index < 0) return false;
+            for (int i = index; i < Keystones.Length - 1; i++) Keystones[i] = Keystones[i + 1];
+            Keystones[Keystones.Length - 1] = null;
+            return true;
+        }
+
+        public void ClearKeystones() => Array.Clear(Keystones, 0, Keystones.Length);
+
+        /// <summary>他の状態の刻印枠をそのままコピーする（Clone と任意の一部コピーの共用）。</summary>
+        public void CopyKeystonesFrom(HeroState other)
+        {
+            ClearKeystones();
+            for (int i = 0; i < Keystones.Length && i < other.Keystones.Length; i++) Keystones[i] = other.Keystones[i];
         }
     }
 

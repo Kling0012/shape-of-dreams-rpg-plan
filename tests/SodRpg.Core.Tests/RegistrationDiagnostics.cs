@@ -141,8 +141,8 @@ namespace SodRpg.Core.Tests
             try
             {
                 StarClusters.RegisterAuthored(hero, definitions);
-                var profile = GeneratedHeroAcceptanceTests.MaxPointProfile(hero, out string keystone, out var refused);
-                return "plays (keystone " + keystone + ", " + Rules.SpentPoints(profile.Hero(hero), hero) + " points spent)";
+                var profile = GeneratedHeroAcceptanceTests.MaxPointProfile(hero, out var keystones, out var refused);
+                return "plays (keystones " + keystones.Count + ", " + Rules.SpentPoints(profile.Hero(hero), hero) + " points spent)";
             }
             catch (Exception error) { return "FAILS: " + error.GetType().Name + ": " + error.Message; }
             finally { StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }

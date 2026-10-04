@@ -24,11 +24,11 @@ namespace SodRpg.Core.Game
             return new Txt(ja, en);
         }
 
-        /// <summary>刻印の列の見出し（旅人の名前入り）。</summary>
+        /// <summary>刻印の列の見出し（旅人の名前入り）。選んだ数は画面側で「刻印 n/枠数」と添える。</summary>
         public static string KeystoneHeader(string heroKey)
         {
             var name = Of(heroKey);
-            return Loc.T(name.Ja + "の刻印（1つ）：", name.En + " keystone (one):");
+            return Loc.T(name.Ja + "の刻印：", name.En + " keystones:");
         }
 
         /// <summary>現在の言語での表示名。</summary>

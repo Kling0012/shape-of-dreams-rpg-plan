@@ -229,9 +229,22 @@ namespace SodRpg.Core.Game
                 if (!node.IsKeystone)
                     for (int cost = budget; cost >= node.Cost; cost--)
                         best[cost] = Math.Max(best[cost], checked(best[cost - node.Cost] + value(node)));
+            // A traveler may hold up to KeystoneSlots.Max keystones (v2.0.2), each in addition to the star ranks.
+            var withKeys = new int[KeystoneSlots.Max + 1][];
+            withKeys[0] = best;
+            for (int k = 1; k <= KeystoneSlots.Max; k++) withKeys[k] = new int[budget + 1];
+            foreach (var node in nodes)
+            {
+                if (!node.IsKeystone) continue;
+                for (int k = KeystoneSlots.Max - 1; k >= 0; k--)
+                    for (int cost = budget; cost >= node.Cost; cost--)
+                    {
+                        int candidate = checked(withKeys[k][cost - node.Cost] + value(node));
+                        if (candidate > withKeys[k + 1][cost]) withKeys[k + 1][cost] = candidate;
+                    }
+            }
             int maximum = best[budget];
-            foreach (var key in nodes)
-                if (key.IsKeystone && key.Cost <= budget) maximum = Math.Max(maximum, checked(best[budget - key.Cost] + value(key)));
+            for (int k = 1; k <= KeystoneSlots.Max; k++) maximum = Math.Max(maximum, withKeys[k][budget]);
             return maximum;
         }
     }

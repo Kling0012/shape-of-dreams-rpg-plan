@@ -262,9 +262,27 @@ namespace SodRpg.Core.Tests
             try
             {
                 Loc.Japanese = true;
-                Assert.Equal("ミストの刻印（1つ）：", HeroNames.KeystoneHeader("Hero_Mist"));
+                Assert.Equal("ミストの刻印：", HeroNames.KeystoneHeader("Hero_Mist"));
                 Loc.Japanese = false;
-                Assert.Equal("Mist keystone (one):", HeroNames.KeystoneHeader("Hero_Mist"));
+                Assert.Equal("Mist keystones:", HeroNames.KeystoneHeader("Hero_Mist"));
+            }
+            finally { Loc.Japanese = previous; }
+        }
+
+        [Fact]
+        public void Keystone_slot_status_and_next_slot_text_name_the_real_level()
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = true;
+                Assert.Equal("刻印 2/3", StarMapPresentation.KeystoneSlotStatus(2, 3));
+                Assert.Equal("次の枠は星のレベル200で開きます。", StarMapPresentation.NextSlotText(199));
+                Assert.Equal("次の枠は星のレベル400で開きます。", StarMapPresentation.NextSlotText(200));
+                Assert.Equal("", StarMapPresentation.NextSlotText(500));
+                Loc.Japanese = false;
+                Assert.Equal("Keystones 1/2", StarMapPresentation.KeystoneSlotStatus(1, 2));
+                Assert.Equal("The next slot unlocks at star level 200.", StarMapPresentation.NextSlotText(0));
             }
             finally { Loc.Japanese = previous; }
         }

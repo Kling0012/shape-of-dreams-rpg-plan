@@ -182,7 +182,7 @@ namespace SodRpg.Core.Game
 
         public TalentDef Talent(string id) => id != null && definitions.TryGetValue(id, out var talent) ? talent : null;
         public bool CanReach(HeroState hero, TalentDef talent) => hero != null && talent != null && layout.CanReach(hero, talent);
-        public bool AllocationsConnected(HeroState hero) => hero != null && layout.AllocationsConnected(hero, null, hero.Keystone);
+        public bool AllocationsConnected(HeroState hero) => hero != null && layout.AllocationsConnected(hero, null, hero.Keystones);
 
         /// <summary>All unallocated alternatives are evaluated explicitly. Tooling may supply an attainable owned-prerequisite allocation.</summary>
         public IReadOnlyList<AllocationHeadroom> AnalyzeHeadroom(Profile profile, string heroKey, HeroState attainableAllocation = null)
@@ -221,7 +221,9 @@ namespace SodRpg.Core.Game
 
         public int SpentPoints(HeroState hero)
         {
-            long spent = hero.Keystone == null ? 0 : Talent(hero.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
+            long spent = 0;
+            foreach (string keystone in hero.Keystones)
+                if (keystone != null) spent += Talent(keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
             foreach (var rank in hero.Talents)
             {
                 var talent = Talent(rank.Key) ?? throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + rank.Key);
@@ -284,12 +286,12 @@ namespace SodRpg.Core.Game
                     break;
                 }
             }
-            if (change.Kind == AllocationChangeKind.Keystone && proposed.Keystone != null)
+            if (change.Kind == AllocationChangeKind.Keystone && change.KeystoneId != null && proposed.HasKeystone(change.KeystoneId))
             {
                 var withoutKey = proposed.Clone();
-                withoutKey.Keystone = null;
+                withoutKey.RemoveKeystone(change.KeystoneId);
                 candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed));
-                if (!candidateEffective) saturated.Add(proposed.Keystone);
+                if (!candidateEffective) saturated.Add(change.KeystoneId);
             }
             if (candidateEffective)
             {
@@ -359,19 +361,19 @@ namespace SodRpg.Core.Game
                         changed = true;
                     }
                     if (!candidateEffective) break;
-                    if (proposed.Keystone != null)
+                    foreach (string selected in proposed.Keystones)
                     {
-                        var key = Talent(proposed.Keystone);
-                        if (!KeystoneUnlocked(proposed, heroKey, key))
-                        {
-                            if (change.Kind == AllocationChangeKind.Keystone && proposed.Keystone == change.KeystoneId)
-                            { violations.Add(proposed.Keystone); break; }
-                            if (original.Keystone != proposed.Keystone || !KeystoneUnlocked(original, heroKey, key)) continue;
-                            Refund(proposed, key, proposed.Keystone, 1, refunds);
-                            scope.ProposedChanged(key.Id);
-                            changed = true;
-                        }
+                        if (selected == null) continue;
+                        var key = Talent(selected);
+                        if (KeystoneUnlocked(proposed, heroKey, key)) continue;
+                        if (change.Kind == AllocationChangeKind.Keystone && selected == change.KeystoneId)
+                        { violations.Add(selected); break; }
+                        if (!original.HasKeystone(selected) || !KeystoneUnlocked(original, heroKey, key)) continue;
+                        Refund(proposed, key, selected, 1, refunds);
+                        scope.ProposedChanged(key.Id);
+                        changed = true;
                     }
+                    if (violations.Count > 0) break;
                 } while (changed);
                 foreach (var allocation in proposed.Talents)
                 {
@@ -384,8 +386,12 @@ namespace SodRpg.Core.Game
             // Explicitly requested refunds count too, using the original definition's actual cost.
             if (change.Kind == AllocationChangeKind.Refund)
                 RecordRefund(refunds, candidate.Id, 1, candidate.IsKeystone ? candidate.KeystoneDefinition?.Cost ?? Content.KeystoneCost : candidate.RankCost);
-            if (change.Kind == AllocationChangeKind.Keystone && original.Keystone != null && proposed.Keystone == null && !refunds.ContainsKey(original.Keystone))
-                RecordRefund(refunds, original.Keystone, 1, Talent(original.Keystone)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
+            if (change.Kind == AllocationChangeKind.Keystone)
+                foreach (string selected in original.Keystones)
+                {
+                    if (selected == null || proposed.HasKeystone(selected) || refunds.ContainsKey(selected)) continue;
+                    RecordRefund(refunds, selected, 1, Talent(selected)?.KeystoneDefinition?.Cost ?? Content.KeystoneCost);
+                }
             var ids = new List<string>(refunds.Keys);
             var refundRows = new List<AllocationRefund>(refunds.Values);
             int cost = 0;
@@ -422,7 +428,7 @@ namespace SodRpg.Core.Game
             target.TalentChoices.Clear();
             foreach (var choice in plan.Proposed.TalentChoices) target.TalentChoices.Add(choice.Key, choice.Value);
             Array.Copy(plan.Proposed.Equipped, target.Equipped, target.Equipped.Length);
-            target.Keystone = plan.Proposed.Keystone;
+            target.CopyKeystonesFrom(plan.Proposed);
         }
 
         public EffectiveAllocationPlan Apply(Profile profile, string heroKey, AllocationChange change, IReadOnlyCollection<string> approvedRefundIds = null)
@@ -449,9 +455,15 @@ namespace SodRpg.Core.Game
             }
             if (change.Kind == AllocationChangeKind.Keystone)
             {
-                if (change.KeystoneId != null && !KeystoneUnlocked(hero, heroKey, Talent(change.KeystoneId)))
+                if (change.KeystoneId == null) { hero.ClearKeystones(); return; }
+                var definition = Talent(change.KeystoneId);
+                if (!KeystoneUnlocked(hero, heroKey, definition))
                     throw new InvalidOperationException(RuleMessages.KeystoneNotReady.ToString());
-                hero.Keystone = change.KeystoneId;
+                if (hero.HasKeystone(change.KeystoneId))
+                    throw new InvalidOperationException(RuleMessages.KeystoneDuplicate.ToString());
+                if (hero.KeystoneCount >= hero.KeystoneSlotCount)
+                    throw new InvalidOperationException(RuleMessages.KeystoneSlotsFull.ToString());
+                hero.AddKeystone(change.KeystoneId);
                 return;
             }
             if (talent == null || !Rules.BelongsTo(talent, heroKey)) throw new InvalidOperationException(RuleMessages.UnknownStar.ToString());
@@ -460,8 +472,8 @@ namespace SodRpg.Core.Game
             {
                 if (talent.IsKeystone)
                 {
-                    if (hero.Keystone != talent.Id) throw new InvalidOperationException(RuleMessages.KeystoneNotAllocated.ToString());
-                    hero.Keystone = null;
+                    if (!hero.HasKeystone(talent.Id)) throw new InvalidOperationException(RuleMessages.KeystoneNotAllocated.ToString());
+                    hero.RemoveKeystone(talent.Id);
                 }
                 else
                 {
@@ -547,7 +559,7 @@ namespace SodRpg.Core.Game
 
             // Dependency analysis (see StarDependencies). Unused by headroom analysis, which has no single change to compare against.
             private readonly StarDependencies dependencies = new StarDependencies();
-            private readonly Dictionary<string, KeystoneDefinition> appliedKeystones = new Dictionary<string, KeystoneDefinition>(StringComparer.Ordinal);
+            private readonly Dictionary<string, IReadOnlyList<KeystoneDefinition>> appliedKeystones = new Dictionary<string, IReadOnlyList<KeystoneDefinition>>(StringComparer.Ordinal);
             private readonly HashSet<string> changedStars = new HashSet<string>(StringComparer.Ordinal);
             private HashSet<string> dirtyRoots, dirtyNeighbours;
             private bool directResolved, regionsOk;
@@ -566,7 +578,7 @@ namespace SodRpg.Core.Game
                 proposedKeyValid = false;
                 version++;
                 // The keystone's route gate counts every star's ranks, so once ranks change under a selected keystone nothing is provably local.
-                if (Original.Keystone != null || Proposed.Keystone != null) { pruning = false; regionsOk = false; }
+                if (Original.KeystoneCount > 0 || Proposed.KeystoneCount > 0) { pruning = false; regionsOk = false; }
                 if (changedStars.Add(refundedStarId)) { dirtyRoots = null; dirtyNeighbours = null; directResolved = false; }
             }
 
@@ -582,10 +594,10 @@ namespace SodRpg.Core.Game
                     || change.Kind == AllocationChangeKind.Refund || change.Kind == AllocationChangeKind.Keystone;
                 pruning = (change.Kind == AllocationChangeKind.Purchase || change.Kind == AllocationChangeKind.Choice
                         || change.Kind == AllocationChangeKind.Refund)
-                    && candidate != null && !candidate.IsKeystone && original.Keystone == proposed.Keystone;
+                    && candidate != null && !candidate.IsKeystone && SameKeystones(original, proposed);
                 if (!pruning) return;
                 // A keystone that is (un)locked by this change transforms every output.
-                if (original.Keystone != null && !ReferenceEquals(AppliedKeystone(original), AppliedKeystone(proposed))) { pruning = false; return; }
+                if (original.KeystoneCount > 0 && !SameAppliedKeystones(original, proposed)) { pruning = false; return; }
                 changedStars.Add(candidate.Id);
                 var ids = new HashSet<string>(original.Talents.Keys, StringComparer.Ordinal);
                 ids.UnionWith(proposed.Talents.Keys);
@@ -599,10 +611,26 @@ namespace SodRpg.Core.Game
                 dirtyRoots = null; dirtyNeighbours = null; directResolved = false;
             }
 
-            private KeystoneDefinition AppliedKeystone(HeroState hero)
+            private IReadOnlyList<KeystoneDefinition> AppliedKeystonesOf(HeroState hero)
             {
-                appliedKeystones.TryGetValue(KeyOf(hero) + "\u0005" + KeyOf(hero), out var key);
-                return key;
+                appliedKeystones.TryGetValue(KeyOf(hero) + "\u0005" + KeyOf(hero), out var keys);
+                return keys;
+            }
+
+            private static bool SameKeystones(HeroState a, HeroState b)
+            {
+                for (int i = 0; i < a.Keystones.Length && i < b.Keystones.Length; i++)
+                    if (a.Keystones[i] != b.Keystones[i]) return false;
+                return true;
+            }
+
+            private bool SameAppliedKeystones(HeroState a, HeroState b)
+            {
+                var left = AppliedKeystonesOf(a);
+                var right = AppliedKeystonesOf(b);
+                if (left == null || right == null || left.Count != right.Count) return false;
+                for (int i = 0; i < left.Count; i++) if (!ReferenceEquals(left[i], right[i])) return false;
+                return true;
             }
 
             private void ResolveDirect()
@@ -641,7 +669,8 @@ namespace SodRpg.Core.Game
                 bool unchanged = hero.Talents.TryGetValue(starId, out int current) && current == rank;
                 string key = version.ToString(CultureInfo.InvariantCulture) + "" + (unchanged ? "r" + region.Handle.ToString(CultureInfo.InvariantCulture) : starId + "" + rank.ToString(CultureInfo.InvariantCulture));
                 if (regionCaptures.TryGetValue(key, out var hit)) return hit;
-                var allocation = new HeroState { Keystone = hero.Keystone, Kills = hero.Kills, StarXp = hero.StarXp, AuthoredMigrationVersion = hero.AuthoredMigrationVersion };
+                var allocation = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp, AuthoredMigrationVersion = hero.AuthoredMigrationVersion };
+                allocation.CopyKeystonesFrom(hero);
                 Array.Copy(hero.Equipped, allocation.Equipped, hero.Equipped.Length);
                 foreach (string id in region.Ids)
                 {
@@ -705,7 +734,8 @@ namespace SodRpg.Core.Game
             private static string ContentKey(HeroState hero)
             {
                 var sb = new StringBuilder(64 + hero.Talents.Count * 24);
-                sb.Append(hero.Keystone).Append('\u0001').Append(hero.Kills.ToString(CultureInfo.InvariantCulture))
+                foreach (string keystone in hero.Keystones) sb.Append(keystone).Append('\u0004');
+                sb.Append(hero.Kills.ToString(CultureInfo.InvariantCulture))
                     .Append('\u0001').Append(hero.StarXp.ToString(CultureInfo.InvariantCulture)).Append('\u0001');
                 foreach (string uid in hero.Equipped) sb.Append(uid).Append(',');
                 sb.Append('\u0002');
@@ -725,9 +755,9 @@ namespace SodRpg.Core.Game
                 if (!pinned.TryGetValue(key, out var channels))
                 {
                     // Pinned snapshots (original and proposed) are the ones whose outputs are compared, so they record dependencies.
-                    dependencies.AppliedKeystone = null;
+                    dependencies.AppliedKeystones = Array.Empty<KeystoneDefinition>();
                     pinned.Add(key, channels = Compute(allocation, reach, reachKey, dependencies));
-                    appliedKeystones[key] = dependencies.AppliedKeystone;
+                    appliedKeystones[key] = dependencies.AppliedKeystones;
                 }
                 return channels;
             }
@@ -812,7 +842,7 @@ namespace SodRpg.Core.Game
                 foreach (string id in disabled)
                 {
                     effective.Talents.Remove(id);
-                    if (effective.Keystone == id) effective.Keystone = null;
+                    effective.RemoveKeystone(id);
                 }
             }
             string capFingerprint = FractionalScopedModifiers.CapRegistryFingerprint;
@@ -877,7 +907,7 @@ namespace SodRpg.Core.Game
                     value = decimal.Floor(value / stack) * stack + Math.Min(stack, value % stack + Gimmicks.ChanceProbabilityUnits(def) * 10m);
                 }
                 decimal duration = transformed.DurationSeconds * 100m;
-                if (def.Effect == GimmickEffect.Wound && build.SelectedKeystone == null && !entry.Def.EffectiveWoundTotal)
+                if (def.Effect == GimmickEffect.Wound && build.SelectedKeystones.Count == 0 && !entry.Def.EffectiveWoundTotal)
                     duration = Math.Min(duration, 36000m / entry.Def.EffectiveValueOrAuthored);
                 result.Add(new EffectiveAllocationChannel
                 {
@@ -970,7 +1000,7 @@ namespace SodRpg.Core.Game
             foreach (var rule in policy.PermanentDisables)
             {
                 if (rule == null) throw new InvalidOperationException(RuleMessages.MissingDisableRule.ToString());
-                if (rule.KeystoneId != null && hero.Keystone != rule.KeystoneId) continue;
+                if (rule.KeystoneId != null && !hero.HasKeystone(rule.KeystoneId)) continue;
                 if (rule.EquippedUid != null && Array.IndexOf(hero.Equipped, rule.EquippedUid) < 0) continue;
                 foreach (string id in rule.StarIds)
                 {
@@ -993,13 +1023,13 @@ namespace SodRpg.Core.Game
 
         private sealed class ProjectedMechanism
         {
-            public KeystoneDefinition Keystone;
+            public string Keystones;
             public string CapFingerprint;
             public EffectiveAllocationChannel[] Channels;
         }
 
         // Projecting a mechanism into its channels is the most expensive step of a capture and is a pure function of the composed entry,
-        // the selected keystone and the registered caps. Entries whose provenance (contributors, applied modifiers, ranks) is known are
+        // the applied keystones and the registered caps. Entries whose provenance (contributors, applied modifiers, ranks) is known are
         // therefore projected once; the channel objects are never modified after creation.
         private readonly System.Collections.Concurrent.ConcurrentDictionary<ProjectionKey, ProjectedMechanism> projectedMechanisms =
             new System.Collections.Concurrent.ConcurrentDictionary<ProjectionKey, ProjectedMechanism>();
@@ -1007,18 +1037,30 @@ namespace SodRpg.Core.Game
         private sealed class ProjectionKey : IEquatable<ProjectionKey>
         {
             private readonly MechanismProvenance provenance;
-            private readonly KeystoneDefinition keystone;
-            internal ProjectionKey(MechanismProvenance provenance, KeystoneDefinition keystone) { this.provenance = provenance; this.keystone = keystone; }
-            public bool Equals(ProjectionKey other) => other != null && ReferenceEquals(keystone, other.keystone) && provenance.Equals(other.provenance);
+            private readonly string keystones;
+            internal ProjectionKey(MechanismProvenance provenance, string keystones) { this.provenance = provenance; this.keystones = keystones; }
+            public bool Equals(ProjectionKey other) => other != null && keystones == other.keystones && provenance.Equals(other.provenance);
             public override bool Equals(object obj) => Equals(obj as ProjectionKey);
-            public override int GetHashCode() => provenance.GetHashCode() * 31 + (keystone == null ? 0 : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(keystone));
+            public override int GetHashCode() => provenance.GetHashCode() * 31 + (keystones == null ? 0 : keystones.GetHashCode());
+        }
+
+        private static string KeystoneProjectionSignature(Build build)
+        {
+            if (build.SelectedKeystones.Count == 0) return null;
+            // The id alone is not enough: re-registered content can redefine a keystone while this engine (and its cache) lives on.
+            var ids = new string[build.SelectedKeystones.Count];
+            for (int i = 0; i < ids.Length; i++)
+                ids[i] = build.SelectedKeystones[i].KeystoneId + "@"
+                    + System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(build.SelectedKeystones[i]).ToString(CultureInfo.InvariantCulture);
+            return string.Join("|", ids);
         }
 
         private EffectiveAllocationChannel[] MechanismChannels(AuthoredMechanismEntry entry, Build build, string heroKey, string capFingerprint)
         {
-            var key = entry.Provenance == null ? null : new ProjectionKey(entry.Provenance, build.SelectedKeystone);
+            string signature = KeystoneProjectionSignature(build);
+            var key = entry.Provenance == null ? null : new ProjectionKey(entry.Provenance, signature);
             if (key != null && projectedMechanisms.TryGetValue(key, out var hit)
-                && ReferenceEquals(hit.Keystone, build.SelectedKeystone) && hit.CapFingerprint == capFingerprint) return hit.Channels;
+                && hit.Keystones == signature && hit.CapFingerprint == capFingerprint) return hit.Channels;
             var spec = entry.Spec;
             var list = new List<string> { "G:" + spec.ChannelId };
             if (spec.PairId != null) list.Add("Q:" + spec.PairId);
@@ -1030,7 +1072,7 @@ namespace SodRpg.Core.Game
             if (key != null)
             {
                 if (projectedMechanisms.Count >= 4096) projectedMechanisms.Clear();
-                projectedMechanisms[key] = new ProjectedMechanism { Keystone = build.SelectedKeystone, CapFingerprint = capFingerprint, Channels = projected };
+                projectedMechanisms[key] = new ProjectedMechanism { Keystones = signature, CapFingerprint = capFingerprint, Channels = projected };
             }
             return projected;
         }
@@ -1178,17 +1220,24 @@ namespace SodRpg.Core.Game
         private static void Refund(HeroState hero, TalentDef talent, string id, int ranks, SortedDictionary<string, AllocationRefund> refunds)
         {
             if (talent == null) throw new InvalidOperationException(RuleMessages.UnknownStarId.ToString() + id);
-            if (talent.IsKeystone) hero.Keystone = null;
+            if (talent.IsKeystone) hero.RemoveKeystone(id);
             else SetRank(hero, id, hero.Talents[id] - ranks);
             RecordRefund(refunds, id, ranks, checked(ranks * (talent.IsKeystone ? talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost : talent.RankCost)));
         }
 
         private static bool SameState(HeroState a, HeroState b)
         {
-            if (a.Keystone != b.Keystone || a.StarXp != b.StarXp || a.Kills != b.Kills || a.Talents.Count != b.Talents.Count || a.TalentChoices.Count != b.TalentChoices.Count) return false;
+            if (!SameKeystoneSlots(a, b) || a.StarXp != b.StarXp || a.Kills != b.Kills || a.Talents.Count != b.Talents.Count || a.TalentChoices.Count != b.TalentChoices.Count) return false;
             for (int i = 0; i < a.Equipped.Length; i++) if (a.Equipped[i] != b.Equipped[i]) return false;
             foreach (var rank in a.Talents) if (!b.Talents.TryGetValue(rank.Key, out int other) || other != rank.Value) return false;
             foreach (var choice in a.TalentChoices) if (!b.TalentChoices.TryGetValue(choice.Key, out int other) || other != choice.Value) return false;
+            return true;
+        }
+
+        private static bool SameKeystoneSlots(HeroState a, HeroState b)
+        {
+            for (int i = 0; i < a.Keystones.Length && i < b.Keystones.Length; i++)
+                if (a.Keystones[i] != b.Keystones[i]) return false;
             return true;
         }
     }

@@ -1664,8 +1664,9 @@ namespace SodRpg.Core.Game
             long n = 0;
             foreach (var kv in h.Talents)
                 n += (long)Math.Max(0, kv.Value) * (Content.TryGetTalent(kv.Key, out var t) ? t.RankCost : 1);
-            if (h.Keystone != null)
-                n += Content.TryGetTalent(h.Keystone, out var key) ? key.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost;
+            foreach (string keystone in h.Keystones)
+                if (keystone != null)
+                    n += Content.TryGetTalent(keystone, out var key) ? key.KeystoneDefinition?.Cost ?? Content.KeystoneCost : Content.KeystoneCost;
             return (int)Math.Min(int.MaxValue, n);
         }
 
@@ -1754,23 +1755,40 @@ namespace SodRpg.Core.Game
             }, approval);
         }
 
-        /// <summary>One cost-bearing keystone. No substitute is selected; disabled/dependent allocations are refunded atomically.</summary>
+        /// <summary>
+        /// 刻印を選ぶ。keystoneId は最初の空き枠に入る（重複不可・枠は星のレベルで増える）。
+        /// null なら選んでいる刻印をすべて外す。代償で星が無効になる場合は C15 の承認（approvedRefundIds）が要る。
+        /// </summary>
         public static void SetKeystone(Profile p, string heroKey, string keystoneId,
             IReadOnlyCollection<string> approvedRefundIds = null)
         {
+            var h = p.Hero(heroKey);
+            if (keystoneId != null && h.HasKeystone(keystoneId))
+                throw new InvalidOperationException(RuleMessages.KeystoneDuplicate.ToString());
+            if (keystoneId != null && h.KeystoneCount >= h.KeystoneSlotCount)
+                throw new InvalidOperationException(RuleMessages.KeystoneSlotsFull.ToString());
             IReadOnlyCollection<string> approval = approvedRefundIds;
-            string old = p.Hero(heroKey).Keystone;
-            if (keystoneId == null && old != null)
+            if (keystoneId == null && h.KeystoneCount > 0)
             {
                 var ids = approvedRefundIds == null
                     ? new HashSet<string>(StringComparer.Ordinal) : new HashSet<string>(approvedRefundIds, StringComparer.Ordinal);
-                ids.Add(old);
+                foreach (string selected in h.Keystones) if (selected != null) ids.Add(selected);
                 approval = ids;
             }
             ApplyAllocationChange(p, heroKey, new AllocationChange
             {
                 Kind = AllocationChangeKind.Keystone, KeystoneId = keystoneId,
             }, approval);
+        }
+
+        /// <summary>選択中の刻印を1つだけ外す（費用は自動的に払い戻る）。外すもので星が無効になる場合は承認が要る。</summary>
+        public static void RemoveKeystone(Profile p, string heroKey, string keystoneId,
+            IReadOnlyCollection<string> approvedRefundIds = null)
+        {
+            var h = p.Hero(heroKey);
+            if (keystoneId == null || !h.HasKeystone(keystoneId))
+                throw new InvalidOperationException(RuleMessages.KeystoneNotAllocated.ToString());
+            RemoveTalentRank(p, heroKey, keystoneId, approvedRefundIds);
         }
 
         /// <summary>ノードがその旅人のツリーに属するか。</summary>
@@ -1784,7 +1802,7 @@ namespace SodRpg.Core.Game
             var h = p.Hero(heroKey);
             h.Talents.Clear();
             h.TalentChoices.Clear();
-            h.Keystone = null;
+            h.ClearKeystones();
         }
     }
 }
