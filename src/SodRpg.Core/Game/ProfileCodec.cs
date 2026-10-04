@@ -87,6 +87,7 @@ namespace SodRpg.Core.Game
                     .Add("waypointRoom", (long)r.WaypointRoom).Add("waypointRelicsInRoom", (long)r.WaypointRelicsInRoom)
                     .Add("waypointLootRooms", r.WaypointLootRooms.OrderBy(x => x).Select(x => (object)(long)x).ToList())
                     .Add("waypointSlotCursor", (long)r.WaypointSlotCursor)
+                    .Add("waypointHoardReleased", r.WaypointHoardReleased)
                     .Add("deferredWaypointRelics", WriteRelics(r.DeferredWaypointRelics))
                     .Add("deferredWaypointShards", (long)r.DeferredWaypointShards).Add("deferredWaypointTuning", (long)r.DeferredWaypointTuning)
                     .Add("shards", (long)r.SatchelShards).Add("tuning", (long)r.SatchelTuning)
@@ -413,6 +414,7 @@ namespace SodRpg.Core.Game
                     WaypointRoom = rj.TryGet("waypointRoom", out _) ? Clamp(Long(rj, "waypointRoom"), -1, int.MaxValue) : -1,
                     WaypointRelicsInRoom = Clamp(Long(rj, "waypointRelicsInRoom"), 0, int.MaxValue),
                     WaypointSlotCursor = Clamp(Long(rj, "waypointSlotCursor"), 0, int.MaxValue),
+                    WaypointHoardReleased = Bool(rj, "waypointHoardReleased", false),
                     DeferredWaypointShards = Clamp(Long(rj, "deferredWaypointShards"), 0, int.MaxValue),
                     DeferredWaypointTuning = Clamp(Long(rj, "deferredWaypointTuning"), 0, int.MaxValue),
                     SatchelShards = Clamp(Long(rj, "shards"), 0, int.MaxValue),

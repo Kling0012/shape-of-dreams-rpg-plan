@@ -410,6 +410,17 @@ namespace SodRpg.Mod
                 sb.Append("\n<size=13>").Append(Loc.T(
                     $"未確保：遺物{run.Satchel.Count}/{Workshop.SatchelCapacity(p)}・欠片{run.SatchelShards}・調律石{run.SatchelTuning}",
                     $"Unsecured: {run.Satchel.Count}/{Workshop.SatchelCapacity(p)} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning")).Append("</size>");
+                if (run.ActiveWaypoint == Waypoint.BossHoard)
+                {
+                    sb.Append("\n<size=13><color=#a8e9cd>");
+                    if (run.WaypointHoardReleased)
+                        sb.Append(Loc.T("宝庫：開封済み・撃破戦利品 ×3", "Hoard: opened · kill loot ×3"));
+                    else
+                        sb.Append(Loc.T(
+                            $"宝庫保留（倍率前）：遺物{run.DeferredWaypointRelics.Count}・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}\nボス撃破で払い出し ×3・未開封で離れると失う",
+                            $"Hoard held (before ×3): {run.DeferredWaypointRelics.Count} relics, {run.DeferredWaypointShards} shards, {run.DeferredWaypointTuning} tuning\nBoss defeat pays ×3; leaving unopened forfeits it"));
+                    sb.Append("</color></size>");
+                }
                 if (p.LostAndFound.Count > 0 && !run.LostRecovered)
                 {
                     int rooms = Workshop.RoomsToRecover(p);

@@ -6,6 +6,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 宝庫の戦利品と討伐通知（#52）
+
+- **討伐通知**：「封じられた宝庫」のボス撃破で大量の遺物が払い出されても、同じ撃破のドロップ通知に悪夢・変種の討伐通知が押し出されないよう、討伐通知を最後に表示します。撃破統計・経験・覚醒・依頼と、通常敵／悪夢の戦利品をボス撃破時に3倍にする処理は変更していません。 / **Kill notifications**: nightmare/variant kill notices now follow the kill's other notifications, so a bulk Sealed Hoard payout does not evict its own kill notice. Kill statistics, experience, awakening, bounties and the threefold boss payout for ordinary/nightmare loot are unchanged.
+- **戦利品の消失**：ボス撃破後の敵（本体が倒す残敵を含む）の戦利品が再び保留され、ゾーン移動で消える問題を修正しました。宝庫の開封状態を保存し、開封後の敵の戦利品はその場で3倍受け取れます。保留分・開封状態は保存／読込で維持され、同じゾーンのホスト設定の再受信でも消えません。未開封でゾーンを離れる場合は、従来の仕様どおり保留分を失います。 / **Lost loot**: kills after the boss, including native boss-cleanup victims, no longer become deferred loot that disappears on travel. The hoard's opened state is saved; later enemy loot pays out threefold immediately. Held loot/opened state survive save/load and repeated same-zone host rules. Leaving unopened still forfeits held loot as intended.
+- **表示・説明**：HUDに倍率前の保留数と開封状態を追加し、払い出し時は「宝庫の払い出し ×3」と遺物・欠片・調律石の数を表示します。未開封のまま離脱したときも失った数を通知します。説明文に敵の戦利品が対象であること、開封後の3倍払い出し、上限超過時の欠片への変換を明記しました（日英）。 / **Display/description**: the HUD shows pre-multiplier held counts or opened status. A “Hoard payout ×3” notice gives relic/shard/tuning totals, and unopened forfeiture reports lost counts. Bilingual wording clarifies enemy loot, immediate threefold rewards after opening, and capacity overflow conversion to shards.
+- **復帰の制約**：旧版で既に消えた戦利品や、開封状態を記録していない旧セーブの履歴は復元できません。クラッシュ時は最後に書き込みが完了した保存地点からの復帰となり、未書き込みの撃破まで保証する変更ではありません。 / **Recovery limits**: already-lost loot and historical opened state absent from older saves cannot be reconstructed. Crash recovery uses the last completed save; this does not guarantee kills whose checkpoint was not yet written.
+- **確認範囲**：撃破APIの直接実行で通知の押し出しとボス後の保留消失を修正前に再現し、修正後は開封後の報酬がゾーン移動でも残ることを確認しました。夢の深さ0／5・確保／潜行・通常／悪夢の8経路で、高レアを含む3倍払い出し、保存／読込、同じゾーンのホスト設定再適用を確認しました。実機のHUD・協力プレイ、および報告されたクラッシュとの因果は未確認です。 / **Verification scope**: direct kill API execution reproduced notification eviction and post-boss deferred-loot loss before the fixes; later loot now survives travel. Eight paths covering depth 0/5, Secure/Delve and ordinary/nightmare kills confirmed threefold payouts including high-rarity relics, save/load and repeated same-zone host rules. In-game HUD/co-op and the link to the reported crash remain unverified.
+
+---
+
+
 ## 未公開 — 純白ルートの選択と勝利確保（#53・#54）
 
 - **純白の入口**：`Rift_Sidetrack_TheDream` が移動する `Zone_Primus` では、戦闘や撃破だけで確保／潜行を自動決定せず、道標・確保／潜行・契約を明示的に選べるようにしました。通常ルートの戦闘による自動潜行は変更しません。道標は従来どおりホスト共有、確保／潜行と契約は各自の選択です。 / **Pure-white entrance**: choices in `Zone_Primus` remain pending until explicitly selected instead of auto-delving on combat. Ordinary routes are unchanged; waypoints remain host-shared, while securing/delving and pacts remain personal.

@@ -104,6 +104,7 @@ namespace SodRpg.Core.Game
         public int WaypointRelicsInRoom { get; set; }
         public HashSet<int> WaypointLootRooms { get; } = new HashSet<int>();
         public int WaypointSlotCursor { get; set; }
+        public bool WaypointHoardReleased { get; set; }
         public List<Relic> DeferredWaypointRelics { get; } = new List<Relic>();
         public int DeferredWaypointShards { get; set; }
         public int DeferredWaypointTuning { get; set; }
@@ -166,6 +167,7 @@ namespace SodRpg.Core.Game
                 WaypointRoom = WaypointRoom,
                 WaypointRelicsInRoom = WaypointRelicsInRoom,
                 WaypointSlotCursor = WaypointSlotCursor,
+                WaypointHoardReleased = WaypointHoardReleased,
                 DeferredWaypointShards = DeferredWaypointShards,
                 DeferredWaypointTuning = DeferredWaypointTuning,
                 SatchelShards = SatchelShards,
