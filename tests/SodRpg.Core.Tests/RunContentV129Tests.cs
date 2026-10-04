@@ -480,7 +480,7 @@ namespace SodRpg.Core.Tests
             int tuning = p.Material(Materials.Tuning);
             Rules.UseEvent(p, DreamEvent.MemoryWell);
             var changed = Assert.Single(p.Stash, r => !before[r.Uid].SequenceEqual(r.Powers.Select(x => (x.Power, x.Value))));
-            Assert.Equal(tuning - 1, p.Material(Materials.Tuning));
+            Assert.Equal(tuning - 2, p.Material(Materials.Tuning));
             Assert.Equal(before[changed.Uid].Skip(1), changed.Powers.Skip(1).Select(x => (x.Power, x.Value)));
             Assert.DoesNotContain(before[changed.Uid], line => line.Power == changed.Powers[0].Power);
             Assert.Contains(Content.PowerPool(changed.Slot), range => range.Power == changed.Powers[0].Power);

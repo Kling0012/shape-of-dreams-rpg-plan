@@ -27,15 +27,16 @@ namespace SodRpg.Core.Tests
         {
             decimal m = 1;
             for (int i = 0; i < rerolls; i++) m *= 1.5m;
-            return ((int)decimal.Ceiling(60 * ((int)rarity + 1) * m), (int)decimal.Ceiling(2 * ((int)rarity + 1) * m));
+            int multiplier = rarity >= Rarity.Epic ? 2 : 1;
+            return ((int)decimal.Ceiling(60 * ((int)rarity + 1) * multiplier * m), (int)decimal.Ceiling(2 * ((int)rarity + 1) * multiplier * m));
         }
 
         [Fact]
         public void Epic_cost_after_35_rerolls_is_exact_and_not_negative()
         {
-            // Issue #30：240×3^35 は long を超えるが、費用そのものは int に収まる
+            // Issue #30：480×3^35 は long を超えるが、費用そのものは int に収まる
             var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
-            Assert.Equal((349_466_306, 11_648_877), Rules.AffixRerollCost(r));
+            Assert.Equal((698_932_611, 23_297_754), Rules.AffixRerollCost(r));
         }
 
         [Theory]
@@ -64,7 +65,7 @@ namespace SodRpg.Core.Tests
         [InlineData(Rarity.Rare)]
         [InlineData(Rarity.Epic)]
         [InlineData(Rarity.Legendary)]
-        public void Cost_is_shards60_and_tuning2_times_rarity_plus_one_growing_by_ceiling_of_1_5(Rarity rarity)
+        public void Cost_grows_by_ceiling_of_1_5_with_doubled_high_rarity_bases(Rarity rarity)
         {
             for (int n = 0; n <= 6; n++)
             {
@@ -239,16 +240,16 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Missing_materials_are_refused_with_the_real_costs_in_both_languages()
         {
-            var (p, r) = WithRelic(Rarity.Legendary, shards: 100, tuning: 5); // 欠片300・調律石10がいる
+            var (p, r) = WithRelic(Rarity.Legendary, shards: 100, tuning: 5); // 欠片600・調律石20がいる
             var affixes = r.Affixes.Select(a => (a.Stat, a.Value)).ToList();
             var ex = Assert.Throws<InvalidOperationException>(() => Rules.AffixReroll(p, r.Uid));
-            Assert.Contains("300", ex.Message);
-            Assert.Contains("10", ex.Message);
+            Assert.Contains("600", ex.Message);
+            Assert.Contains("20", ex.Message);
             Loc.Japanese = false;
             try
             {
                 ex = Assert.Throws<InvalidOperationException>(() => Rules.AffixReroll(p, r.Uid));
-                Assert.Contains("300 shards and 10 tuning stones needed", ex.Message);
+                Assert.Contains("600 shards and 20 tuning stones needed", ex.Message);
             }
             finally { Loc.Japanese = true; }
             Assert.Equal(affixes, r.Affixes.Select(a => (a.Stat, a.Value)).ToList());

@@ -984,7 +984,7 @@ namespace SodRpg.Mod
             "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
-            "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。いらない物は分解して欠片に戻せます。\n" +
+            "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の2倍です。いらない物は分解して欠片に戻せます。\n" +
             "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
@@ -1000,7 +1000,7 @@ namespace SodRpg.Mod
             "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
-            "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options, salvage the rest into shards.\n" +
+            "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options. Epics and legendaries pay twice the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
             "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
             "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose up to three keystones as your star level rises. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
@@ -1646,12 +1646,13 @@ namespace SodRpg.Mod
                 int maxEnhance = Content.MaxEnhanceFor(sel);
                 if (sel.Enhance < maxEnhance)
                 {
-                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.RetuneOffer == null && p.Material(Materials.Shard) >= Content.EnhanceCost(sel.Enhance);
+                    int enhanceCost = Content.EnhanceCost(sel.Enhance) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
+                    GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.RetuneOffer == null && p.Material(Materials.Shard) >= enhanceCost;
                     bool confirm = _confirmEnhance == sel && _confirmEnhanceTarget == sel.Enhance + 1;
                     string enhanceLabel = confirm
-                        ? Loc.T($"<color=#ff8080>もう一度押すと強化 +{sel.Enhance + 1}を確定します（欠片{Content.EnhanceCost(sel.Enhance)}）</color>",
-                            $"<color=#ff8080>Press again to confirm Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)</color>")
-                        : Loc.T($"強化 +{sel.Enhance + 1}（欠片{Content.EnhanceCost(sel.Enhance)}）", $"Enhance +{sel.Enhance + 1} ({Content.EnhanceCost(sel.Enhance)} shards)");
+                        ? Loc.T($"<color=#ff8080>もう一度押すと強化 +{sel.Enhance + 1}を確定します（欠片{enhanceCost}）</color>",
+                            $"<color=#ff8080>Press again to confirm Enhance +{sel.Enhance + 1} ({enhanceCost} shards)</color>")
+                        : Loc.T($"強化 +{sel.Enhance + 1}（欠片{enhanceCost}）", $"Enhance +{sel.Enhance + 1} ({enhanceCost} shards)");
                     if (GUILayout.Button(enhanceLabel, _st.ButtonWrap, ShrinkMin32))
                     {
                         if (failureChance > 0 && !confirm)
@@ -1732,7 +1733,7 @@ namespace SodRpg.Mod
                         if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonWrapSel : _st.ButtonWrap, ShrinkWidth)) _retuneIndex = i;
                     }
                     GUILayout.EndHorizontal();
-                    int rtCost = Content.RetuneCost(sel.Retunes);
+                    int rtCost = Content.RetuneCost(sel.Retunes) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
                     bool rtAfford = p.Material(Materials.Tuning) >= rtCost;
                     GUI.enabled = _retuneIndex >= 0 && rtAfford && !_s.Trades.IsReserved(sel.Uid);
                     string rtLabel = !rtAfford ? Loc.T($"調律石が足りません（{rtCost}必要・所持{p.Material(Materials.Tuning)}）", $"Not enough tuning stones ({rtCost} needed, have {p.Material(Materials.Tuning)})")
@@ -1845,7 +1846,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             int maxBreaks = Content.MaxLimitBreaks(sel.Rarity);
             int n = sel.LimitBreaks + 1;
-            int tuningCost = Content.LimitBreakTuningCost(n), shardCost = Content.LimitBreakShardCost(n);
+            int tuningCost = Content.LimitBreakTuningCost(n) * (sel.Rarity >= Rarity.Epic ? 2 : 1), shardCost = Content.LimitBreakShardCost(n) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
             int capNow = Content.MaxEnhanceFor(sel), capNext = Content.MaxEnhanceFor(sel.Rarity, n);
             if (_limitBreakTarget != sel.Uid)
             {
@@ -1917,7 +1918,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             if (!Open || _tab != 1 || _selected != r.Uid || p.FindStash(r.Uid) != r
                 || r.Enhance + 1 != _confirmEnhanceTarget || r.Enhance >= Content.MaxEnhanceFor(r)
-                || p.Material(Materials.Shard) < Content.EnhanceCost(r.Enhance)
+                || p.Material(Materials.Shard) < Content.EnhanceCost(r.Enhance) * (r.Rarity >= Rarity.Epic ? 2 : 1)
                 || _s.Trades.IsReserved(r.Uid) || p.RetuneOffer != null)
                 _confirmEnhance = null;
         }
@@ -2966,8 +2967,8 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T($"<color=#8a8aa0>次は {DailyRollover()} に切り替わります。</color>", $"<color=#8a8aa0>Changes at {DailyRollover()}.</color>"), _st.Small);
             GUILayout.Label(Loc.T("記録", "Records"), _st.Header);
             GUILayout.Label(Loc.T(
-                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\n救済：次のボスでエピック以上が確定する確率 {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}%（エピックが出ないボスを倒すたびに上がり、出ると元に戻ります。普段の抽選とは別です）",
-                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nPity: next boss guarantees Epic+ at {(int)(Loot.EpicPityChance(p.EpicPity) * 100)}% (rises with each boss that drops no Epic, resets when one does; on top of the normal roll)"), _st.Small);
+                $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\n救済：次のボスの主報酬がエピック以上になる追加確率 {Loot.EpicPityChance(p.EpicPity) * 100:0.###}%（主報酬がエピック未満のボスを倒すたびに上がり、主報酬がエピック以上なら元に戻ります。追加の遺物は数えず、普段の抽選とは別です）",
+                $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}\nPity: extra chance for the next boss's primary relic to be Epic+ {Loot.EpicPityChance(p.EpicPity) * 100:0.###}% (rises when a boss's primary relic is below Epic, resets when its primary relic is Epic+; bonus relics do not count; on top of the normal roll)"), _st.Small);
             if (p.Run != null)
             {
                 GUILayout.Label(Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);

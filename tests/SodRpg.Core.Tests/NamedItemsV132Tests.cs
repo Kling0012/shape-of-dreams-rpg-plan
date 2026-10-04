@@ -640,8 +640,9 @@ namespace SodRpg.Core.Tests
             var p = ProfileAtEvent(DreamEvent.TwinMirror, 6004);
             var named = NamedRelic("named.test.w3");
             p.Run.Satchel.Add(named);
-            p.Run.SatchelShards = 30;
+            p.Run.SatchelShards = 60;
             Rules.UseEvent(p, DreamEvent.TwinMirror);
+            Assert.Equal(0, p.Run.SatchelShards);
             var copy = p.Run.Satchel.Single(r => r.Uid != named.Uid);
             Assert.Equal(named.BaseId, copy.BaseId);
             Assert.Equal(Rarity.Epic, copy.Rarity);

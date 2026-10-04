@@ -365,13 +365,13 @@ namespace SodRpg.Core.Game
             {
                 case Rarity.Common: return 5;
                 case Rarity.Uncommon: return 5;
-                case Rarity.Rare: return 6;
-                default: return 8;
+                case Rarity.Rare: return 12;
+                default: return 16;
             }
         }
         /// <summary>覚醒の段の数（v1.27 で1段から3段に）。</summary>
         public const int MaxAwakenLevel = 3;
-        private static readonly int[] AwakenThresholds = { 0, 2000, 6000, 15000 }; // 1回の遠征で約460溜まる（BalanceSim の前提）。約4・13・32回
+        private static readonly int[] AwakenThresholds = { 0, 5000, 15000, 37500 }; // 1回の遠征で約460溜まる（BalanceSim の前提）。約11・33・82回
         private static readonly int[] AwakenPowerPcts = { 100, 125, 150, 180 };
         private static readonly int[] AwakenAffixPcts = { 100, 110, 120, 130 };
         /// <summary>v1.26 までに覚醒した遺物が入る段（倍率が当時と同じ）。</summary>
@@ -5481,7 +5481,7 @@ namespace SodRpg.Core.Game
             return EnhancePowerPcts[Math.Max(0, Math.Min(enhance, EnhanceMilestoneFifth))];
         }
 
-        /// <summary>+6以降の強化1回の欠片（+6〜+10が180・230・290・360・440、+11〜+15は1.5倍、+16〜+20は2倍）。</summary>
+        /// <summary>+6以降の強化1回の基本欠片（+6〜+10が180・230・290・360・440、+11〜+15は1.5倍、+16〜+20は2倍。支払いはエピック以上でさらに2倍）。</summary>
         private static readonly int[] LimitBreakEnhanceCosts = { 180, 230, 290, 360, 440 };
 
         public static int EnhanceCost(int currentEnhance)
@@ -5511,12 +5511,13 @@ namespace SodRpg.Core.Game
         public static int MaxEnhanceFor(Rarity rarity, int limitBreaks)
             => MaxEnhance + EnhanceStepPerBreak * Math.Max(0, Math.Min(MaxLimitBreaks(rarity), limitBreaks));
 
-        /// <summary>限界突破 n 回目（1〜3）に要る調律石。</summary>
+        /// <summary>限界突破 n 回目（1〜3）に要る基本調律石（支払いはエピック以上で2倍）。</summary>
         public static int LimitBreakTuningCost(int n) => n <= 1 ? 5 : n == 2 ? 10 : 20;
 
-        /// <summary>限界突破 n 回目（1〜3）に要る欠片。</summary>
+        /// <summary>限界突破 n 回目（1〜3）に要る基本欠片（支払いはエピック以上で2倍）。</summary>
         public static int LimitBreakShardCost(int n) => n <= 1 ? 200 : n == 2 ? 400 : 800;
 
+        /// <summary>再調律の基本調律石（支払いはエピック以上で2倍）。</summary>
         public static int RetuneCost(int retunesDone) => retunesDone + 1;
 
         public static int SalvageShards(Rarity r)

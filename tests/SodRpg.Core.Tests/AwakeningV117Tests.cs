@@ -63,20 +63,26 @@ namespace SodRpg.Core.Tests
             var events = new List<GameEvent>();
             void Kill(int n) { for (int i = 0; i < n; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey)); }
 
-            Kill(99);
-            Assert.Equal(1980, r.AwakenPoints);
+            Kill(249);
+            Assert.Equal(4980, r.AwakenPoints);
             Assert.False(r.Awakened);
             Assert.DoesNotContain(events, IsAwakening);
 
-            Kill(1); // 2000：覚醒Ⅰ
+            Kill(1); // 5000：覚醒Ⅰ
             Assert.Equal(1, r.AwakenLevel);
             Assert.Equal(1, p.Stats.RelicsAwakened);
             Assert.Contains("feat.awakening.1", p.Feats);
             Assert.Single(events, IsAwakening);
 
-            Kill(200); // 6000：覚醒Ⅱ
+            Kill(499);
+            Assert.Equal(14980, r.AwakenPoints);
+            Assert.Equal(1, r.AwakenLevel);
+            Kill(1); // 15000：覚醒Ⅱ
             Assert.Equal(2, r.AwakenLevel);
-            Kill(450); // 15000：覚醒Ⅲ
+            Kill(1124);
+            Assert.Equal(37480, r.AwakenPoints);
+            Assert.Equal(2, r.AwakenLevel);
+            Kill(1); // 37500：覚醒Ⅲ
             Assert.Equal(3, r.AwakenLevel);
             Assert.Equal(Content.AwakenThreshold, r.AwakenPoints);
             Assert.Equal(3, events.Count(IsAwakening));
@@ -95,7 +101,7 @@ namespace SodRpg.Core.Tests
             {
                 var unique = Content.Uniques.First(u => Content.GetBase(u.BaseId).Slot == slot);
                 var r = Loot.RollUnique(new Rng((ulong)(20 + (int)slot)), unique, 1);
-                r.AwakenPoints = 1999;
+                r.AwakenPoints = 4999;
                 p.Stash.Add(r);
                 Rules.Equip(p, HeroKey, r.Uid);
             }
@@ -105,7 +111,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Content.SlotCount, events.Count(IsAwakening));
             Assert.All(p.Stash, r =>
             {
-                Assert.Equal(2009, r.AwakenPoints);
+                Assert.Equal(5009, r.AwakenPoints);
                 Assert.Equal(1, r.AwakenLevel);
             });
         }
@@ -119,7 +125,7 @@ namespace SodRpg.Core.Tests
         {
             Assert.Equal(affixPct, Content.AwakenAffixPctAt(level));
             Assert.Equal(powerPct, Content.AwakenPowerPctAt(level));
-            Assert.Equal(new[] { 0, 2000, 6000, 15000 }[level], Content.AwakenThresholdFor(level));
+            Assert.Equal(new[] { 0, 5000, 15000, 37500 }[level], Content.AwakenThresholdFor(level));
         }
 
         [Theory]
@@ -205,9 +211,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(123, false)]
-        [InlineData(6000, true)]
-        public void Save_round_trip_preserves_awakening_and_progress_continues(int points, bool awakened)
+        [InlineData(123, false, 123)]
+        [InlineData(6000, true, 15000)]
+        public void Save_round_trip_preserves_awakening_and_progress_continues(int points, bool awakened, int expectedPoints)
         {
             var r = Legendary();
             var p = Equipped(r);
@@ -218,18 +224,22 @@ namespace SodRpg.Core.Tests
             var q = ProfileCodec.Read(ProfileCodec.Write(p.Clone()), notes);
             var loaded = q.FindStash(r.Uid);
             Assert.Empty(notes);
-            Assert.Equal(points, loaded.AwakenPoints);
+            Assert.Equal(expectedPoints, loaded.AwakenPoints);
+            Assert.Equal(r.AwakenLevel, loaded.AwakenLevel);
             Assert.Equal(awakened, loaded.Awakened);
             Assert.Equal(p.Stats.RelicsAwakened, q.Stats.RelicsAwakened);
             Rules.OnKill(q, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey);
-            Assert.Equal(points + 20, loaded.AwakenPoints);
+            Assert.Equal(expectedPoints + 20, loaded.AwakenPoints);
+            Assert.Equal(r.AwakenLevel, loaded.AwakenLevel);
             Assert.Equal(awakened ? 1 : 0, q.Stats.RelicsAwakened);
         }
 
         [Theory]
         [InlineData(-1, 0)]
-        [InlineData(15001, 15000)]
-        [InlineData(int.MaxValue, 15000)]
+        [InlineData(15001, 15001)]
+        [InlineData(37500, 37500)]
+        [InlineData(37501, 37500)]
+        [InlineData(int.MaxValue, 37500)]
         public void Loading_clamps_awakening_points(int saved, int expected)
         {
             var r = Legendary();
@@ -332,8 +342,11 @@ namespace SodRpg.Core.Tests
             var q = ProfileCodec.Read(Json.Write(oldSave), new List<string>());
             var loaded = q.FindStash(r.Uid);
             Assert.Equal(Content.LegacyAwakenLevel, loaded.AwakenLevel);
-            Assert.Equal(6000, loaded.AwakenPoints);
+            Assert.Equal(15000, loaded.AwakenPoints);
             Assert.Equal(150, Content.AwakenPowerPctAt(loaded.AwakenLevel)); // 当時と同じ倍率
+            Rules.OnKill(q, MonsterTier.Boss, 1, NightmareAffix.None, HeroKey);
+            Assert.Equal(15020, loaded.AwakenPoints);
+            Assert.Equal(Content.LegacyAwakenLevel, loaded.AwakenLevel);
         }
 
         private static object StripKey(object value, string key)

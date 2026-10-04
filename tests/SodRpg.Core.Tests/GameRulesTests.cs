@@ -88,7 +88,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Boss_epic_pity_guarantees_within_twenty_kills()
+        public void Boss_epic_pity_guarantees_by_the_113th_kill_and_resets_on_the_main_reward()
         {
             var rng = new Rng(11);
             for (int trial = 0; trial < 200; trial++)
@@ -101,8 +101,15 @@ namespace SodRpg.Core.Tests
                     kills++;
                     var rw = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity);
                     got = rw.Relics.Count > 0 && rw.Relics[0].Rarity >= Rarity.Epic;
-                    Assert.True(kills <= 20, "pity must trigger by the 20th boss kill");
+                    Assert.True(kills <= 113, "pity must trigger by the 113th boss kill");
                 }
+                Assert.Equal(0, pity);
+
+                // 112 misses must guarantee the next main reward, regardless of the bonus reward.
+                pity = 112;
+                var guaranteed = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity);
+                Assert.True(guaranteed.Relics[0].Rarity >= Rarity.Epic);
+                Assert.Equal(0, pity);
             }
         }
 

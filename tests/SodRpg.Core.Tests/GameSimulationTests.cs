@@ -247,8 +247,41 @@ namespace SodRpg.Core.Tests
             var rng = new Rng(2024);
             double Rate(MonsterTier t, int n)
             {
-                int pity = 0, drops = 0;
-                for (int i = 0; i < n; i++) drops += Loot.RollKill(rng, t, 10, 0, ref pity).Relics.Count;
+                int pity = 0, drops = 0, shards = 0, tuning = 0;
+                var rarities = new int[5];
+                for (int i = 0; i < n; i++)
+                {
+                    var reward = Loot.RollKill(rng, t, 10, 0, ref pity);
+                    drops += reward.Relics.Count;
+                    shards += reward.Shards;
+                    tuning += reward.Tuning;
+                    foreach (var relic in reward.Relics) rarities[(int)relic.Rarity]++;
+                }
+
+                // The rebalance must not reduce low-tier equipment or material income.
+                if (t == MonsterTier.Normal)
+                {
+                    Assert.InRange((double)rarities[(int)Rarity.Common] / n, 0.0148, 0.0182);
+                    Assert.InRange((double)rarities[(int)Rarity.Uncommon] / n, 0.0064, 0.0085);
+                    Assert.InRange((double)rarities[(int)Rarity.Rare] / n, 0.0020, 0.0035);
+                    Assert.InRange((double)shards / n, 0.16, 0.20);
+                    Assert.Equal(0, tuning);
+                }
+                else if (t == MonsterTier.Lesser)
+                {
+                    Assert.InRange((double)shards / n, 0.045, 0.055);
+                    Assert.Equal(0, tuning);
+                }
+                else if (t == MonsterTier.MiniBoss)
+                {
+                    Assert.InRange((double)shards / n, 7.3, 7.7);
+                    Assert.InRange((double)tuning / n, 0.18, 0.22);
+                }
+                else
+                {
+                    Assert.InRange((double)shards / n, 24.7, 25.3);
+                    Assert.Equal(n, tuning);
+                }
                 return (double)drops / n;
             }
             Assert.InRange(Rate(MonsterTier.Lesser, 100000), 0.006, 0.010); // v1.19：6枠に合わせて約3割増し

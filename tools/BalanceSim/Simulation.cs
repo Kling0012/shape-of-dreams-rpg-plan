@@ -257,7 +257,7 @@ public sealed class Simulation
             {
                 var relic = Rules.EquippedRelic(p, Hero, (Slot)slot);
                 if (relic == null || relic.Enhance >= Content.MaxEnhanceFor(relic)
-                    || Content.EnhanceCost(relic.Enhance) > p.Material(Materials.Shard)) continue;
+                    || Content.EnhanceCost(relic.Enhance) * (relic.Rarity >= Rarity.Epic ? 2 : 1) > p.Material(Materials.Shard)) continue;
                 if (next == null || relic.Enhance < next.Enhance) next = relic;
             }
             if (next == null) break;

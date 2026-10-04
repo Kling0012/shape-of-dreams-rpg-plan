@@ -98,9 +98,9 @@ namespace SodRpg.Core.Tests
             p.Materials[Materials.Shard] = 0;
 
             Assert.Throws<InvalidOperationException>(() => Rules.LimitBreak(p, r.Uid, m.Uid)); // 調律石不足
-            p.AddMaterial(Materials.Tuning, Content.LimitBreakTuningCost(1));
+            p.AddMaterial(Materials.Tuning, 10);
             Assert.Throws<InvalidOperationException>(() => Rules.LimitBreak(p, r.Uid, m.Uid)); // 欠片不足
-            p.AddMaterial(Materials.Shard, Content.LimitBreakShardCost(1));
+            p.AddMaterial(Materials.Shard, 400);
 
             var e = Rules.LimitBreak(p, r.Uid, m.Uid);
             Assert.Equal(EventKind.LevelUp, e.Kind);
@@ -110,12 +110,12 @@ namespace SodRpg.Core.Tests
             Assert.Null(p.FindStash(m.Uid)); // 素材は消える
             Assert.Equal(10, Content.MaxEnhanceFor(r));
 
-            // 2回目は調律石10・欠片400
+            // 2回目は調律石20・欠片800
             p.AddMaterial(Materials.Shard, 10000);
             MaxOut(p, r);
             var m2 = AddRelic(p, Rarity.Epic, Slot.Weapon, 13);
-            p.Materials[Materials.Tuning] = Content.LimitBreakTuningCost(2);
-            p.Materials[Materials.Shard] = Content.LimitBreakShardCost(2);
+            p.Materials[Materials.Tuning] = 20;
+            p.Materials[Materials.Shard] = 800;
             Rules.LimitBreak(p, r.Uid, m2.Uid);
             Assert.Equal(2, r.LimitBreaks);
             Assert.Equal(0, p.Material(Materials.Tuning));

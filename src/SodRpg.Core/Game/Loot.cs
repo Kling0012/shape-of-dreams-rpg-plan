@@ -20,7 +20,8 @@ namespace SodRpg.Core.Game
     /// </summary>
     public static class Loot
     {
-        private static readonly int[] BaseRarityWeights = { 1200, 540, 200, 30, 2 };
+        // Keep Common/Uncommon/Rare in the same proportions; Epic/Legendary have 40% of their former relative weight.
+        private static readonly int[] BaseRarityWeights = { 3000, 1350, 500, 30, 2 };
 
         /// <summary>夢の深度1あたりの装備ドロップ率の増分。</summary>
         public const double HeatDropBonus = 0.35;
@@ -50,8 +51,8 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>救済の確率。k は未取得が続いたボス撃破数（付録B4）。</summary>
-        public static double EpicPityChance(int k) => Math.Min(1.0, 0.05 + 0.035 * Math.Max(0, k));
+        /// <summary>主報酬でエピック以上が出ないボスの救済。k=112（113体目）で確定。追加報酬はkを更新しない。</summary>
+        public static double EpicPityChance(int k) => Math.Min(1.0, 0.025 + 0.00875 * Math.Max(0, k));
 
         /// <summary>
         /// 画面に出す「良い遺物の出やすさ」の%。レア度が1段上がるごとに、抽選の重みがこの%だけ多く掛かる（RollRarity の f = 1 + 0.6×luck）。
