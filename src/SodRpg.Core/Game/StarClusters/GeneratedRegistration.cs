@@ -10,7 +10,7 @@ namespace SodRpg.Core.Game
         private static bool generatedRegistered;
 
         /// <summary>Heroes whose complete star map was generated from the manifest (never a partial hero).</summary>
-        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Bismuth", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Nachia", "Hero_Vesper", "Hero_Yubar" });
+        public static readonly IReadOnlyList<string> GeneratedHeroes = Array.AsReadOnly(new string[] { "Hero_Aurena", "Hero_Bismuth", "Hero_Cetus", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Nachia", "Hero_Vesper", "Hero_Yubar" });
 
         /// <summary>Every hero whose manifest compiled to C# (a superset of GeneratedHeroes; used by the registration diagnostics).</summary>
         public static readonly IReadOnlyList<string> CompiledHeroes = Array.AsReadOnly(new string[] { "Hero_Aurena", "Hero_Bismuth", "Hero_Cetus", "Hero_Husk", "Hero_Lacerta", "Hero_Mist", "Hero_Nachia", "Hero_Vesper", "Hero_Yubar" });

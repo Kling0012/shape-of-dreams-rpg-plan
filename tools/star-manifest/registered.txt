@@ -6,3 +6,5 @@ bismuth
 mist
 yubar
 nachia
+cetus
+aurena

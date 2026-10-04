@@ -98,37 +98,45 @@ namespace SodRpg.Core.Game
             // Only implicit roots attach to the closest trunk; authored roots retain their exact access edge.
             int originalCount = nodes.Count;
             int outerOrder = 0;
-            foreach (var talent in talents)
+            // Baseline and retained-legacy outer anchors keep the ring slots saved profiles grew around; newly authored
+            // anchors search for space only afterwards, so registering a generated map never moves a shipped star.
+            void PlaceOuterAnchors(bool newlyAuthored)
             {
-                if (!talent.IsOuterAnchor) continue;
-                double angle = Angle(outerOrder++, 8);
-                float x, y;
-                float radius = 1350f;
-                do
+                foreach (var talent in talents)
                 {
-                    x = (float)(radius * Math.Cos(angle));
-                    y = (float)(radius * Math.Sin(angle));
-                    radius += MinimumSpacing;
-                } while (!grid.Free(x, y));
-                if (HasExplicitOuterAttachment(talent))
-                {
-                    Add(talent, x, y);
-                    continue;
+                    if (!talent.IsOuterAnchor) continue;
+                    if ((talent.AuthoredStar != null && !talent.AuthoredStar.RetainedLegacy) != newlyAuthored) continue;
+                    double angle = Angle(outerOrder++, 8);
+                    float x, y;
+                    float radius = 1350f;
+                    do
+                    {
+                        x = (float)(radius * Math.Cos(angle));
+                        y = (float)(radius * Math.Sin(angle));
+                        radius += MinimumSpacing;
+                    } while (!grid.Free(x, y));
+                    if (HasExplicitOuterAttachment(talent))
+                    {
+                        Add(talent, x, y);
+                        continue;
+                    }
+                    int closest = -1;
+                    float best = float.MaxValue;
+                    for (int i = 1; i < originalCount; i++)
+                    {
+                        var candidate = nodes[i];
+                        if (candidate.Talent.RouteId == null || candidate.Talent.RouteOrder < 7) continue;
+                        float dx = candidate.X - x, dy = candidate.Y - y;
+                        float distance = dx * dx + dy * dy;
+                        if (distance < best) { best = distance; closest = i; }
+                    }
+                    if (closest < 0) throw new InvalidOperationException("Outer anchor has no trunk tip: " + talent.Id);
+                    Join(closest, Add(talent, x, y));
                 }
-                int closest = -1;
-                float best = float.MaxValue;
-                for (int i = 1; i < originalCount; i++)
-                {
-                    var candidate = nodes[i];
-                    if (candidate.Talent.RouteId == null || candidate.Talent.RouteOrder < 7) continue;
-                    float dx = candidate.X - x, dy = candidate.Y - y;
-                    float distance = dx * dx + dy * dy;
-                    if (distance < best) { best = distance; closest = i; }
-                }
-                if (closest < 0) throw new InvalidOperationException("Outer anchor has no trunk tip: " + talent.Id);
-                Join(closest, Add(talent, x, y));
             }
-
+            PlaceOuterAnchors(false);
+            List<List<TalentDef>> ClusterGroups(bool retained)
+            {
             var clusters = new List<List<TalentDef>>();
             var byCluster = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var talent in talents)
@@ -142,17 +150,28 @@ namespace SodRpg.Core.Game
                 }
                 if (!indices.ContainsKey(talent.Id)) clusters[group].Add(talent);
             }
+            for (int i = clusters.Count - 1; i >= 0; i--)
+                if (clusters[i].Count == 0 || (clusters[i][0].AuthoredStar == null || clusters[i][0].AuthoredStar.RetainedLegacy) != retained) clusters.RemoveAt(i);
             // Bridge clusters claim the free space next to their ring star first, so their entry line stays short and the
             // large memory clusters flow around them; keystones are placed last, each beside its own anchor.
             var ordered = new List<List<TalentDef>>(clusters.Count);
-            for (int pass = 0; pass < 3; pass++)
+            // A cluster whose entry star is wired to three or more stars of a route needs one place close to all of them, so it
+            // claims space before the bridges that would otherwise fence that route in.
+            for (int pass = 0; pass < 4; pass++)
                 foreach (var candidate in clusters)
                 {
-                    if (candidate.Count == 0) { if (pass == 1) ordered.Add(candidate); continue; }
+                    if (candidate.Count == 0) { if (pass == 2) ordered.Add(candidate); continue; }
                     var kind = candidate[0].Cluster.Region.Kind;
-                    if ((kind == ClusterRegionKind.Bridge ? 0 : kind == ClusterRegionKind.Keystone ? 2 : 1) == pass) ordered.Add(candidate);
+                    int rank = kind == ClusterRegionKind.Bridge ? 1 : kind == ClusterRegionKind.Keystone ? 3 : 2;
+                    if (rank == 2 && OutsideEdgeStars(candidate, indices).Count >= 3) rank = 0;
+                    if (rank == pass) ordered.Add(candidate);
                 }
-            if (fixedPositions == null) clusters = ordered;
+            return fixedPositions == null ? ordered : clusters;
+            }
+
+            var keystonePoints = new List<StarMapPoint>();
+            void PlaceClusterGroups(List<List<TalentDef>> clusters)
+            {
             bool AnchorsReady(List<TalentDef> group)
             {
                 if (IsKeystoneGroup(group))
@@ -162,7 +181,6 @@ namespace SodRpg.Core.Game
                 }
                 return indices.ContainsKey(group[0].Cluster.Anchor);
             }
-            var keystonePoints = new List<StarMapPoint>();
             for (int groupIndex = 0; groupIndex < clusters.Count; groupIndex++)
             {
                 // Preserve author order among ready groups; an anchor may live in a later cluster.
@@ -211,12 +229,18 @@ namespace SodRpg.Core.Game
                 if (Math.Abs(entryOffset.X) > 0.001f || Math.Abs(entryOffset.Y) > 0.001f)
                     for (int i = 0; i < offsets.Length; i++) offsets[i] = new StarMapPoint(offsets[i].X - entryOffset.X, offsets[i].Y - entryOffset.Y);
                 var positions = new StarMapPoint[group.Count];
-                var origin = nodes[anchor];
-                double outward = Math.Atan2(origin.Y, origin.X);
+                // Every star the entry star's authored edges reach outside the cluster is a candidate to sit beside; the nearest
+                // free shell around any of them wins (the primary anchor first on ties), so crowded hubs still get a short line.
+                var homes = new List<int> { anchor };
+                foreach (int other in OutsideEdgeStars(group, indices)) if (!homes.Contains(other)) homes.Add(other);
                 bool placed = fixedPositions != null;
-                // Search nearest free shells around the anchor, retaining the whole shape as one rigid unit.
+                // Search nearest free shells around the anchors, retaining the whole shape as one rigid unit.
                 for (int shell = 1; !placed; shell++)
                 {
+                    foreach (int home in homes)
+                    {
+                    var origin = nodes[home];
+                    double outward = Math.Atan2(origin.Y, origin.X);
                     int directions = 24 + shell * 8;
                     for (int direction = 0; direction < directions && !placed; direction++)
                     {
@@ -234,6 +258,8 @@ namespace SodRpg.Core.Game
                             positions[i] = new StarMapPoint(x, y);
                         }
                         placed = clear;
+                    }
+                    if (placed) break;
                     }
                 }
                 var added = new int[group.Count];
@@ -269,6 +295,10 @@ namespace SodRpg.Core.Game
                     if (cluster.Shape == ClusterShape.Ring && added.Length > 2) Join(added[added.Length - 1], added[0]);
                 }
             }
+            }
+            PlaceClusterGroups(ClusterGroups(true));
+            PlaceOuterAnchors(true);
+            PlaceClusterGroups(ClusterGroups(false));
             // Explicit topology replaces inferred shape edges; cross-cluster endpoints resolve after placement.
             foreach (var talent in talents)
             {
@@ -306,6 +336,23 @@ namespace SodRpg.Core.Game
                 if (!inside) return other;
             }
             return entry.Cluster.Anchor;
+        }
+
+        /// <summary>Already placed stars outside the group that the entry star's authored edges reach, in edge order.</summary>
+        private static List<int> OutsideEdgeStars(List<TalentDef> group, Dictionary<string, int> placed)
+        {
+            var result = new List<int>();
+            var entry = group[0];
+            if (entry.AuthoredStar == null) return result;
+            foreach (var edge in entry.AuthoredStar.Edges)
+            {
+                string other = edge.To == entry.Id ? edge.From : edge.From == entry.Id ? edge.To : null;
+                if (other == null || !placed.TryGetValue(other, out int index)) continue;
+                bool inside = false;
+                foreach (var star in group) if (star.Id == other) { inside = true; break; }
+                if (!inside && !result.Contains(index)) result.Add(index);
+            }
+            return result;
         }
 
         private static string KeystoneAnchor(TalentDef star) => star.AuthoredStar.AnchorId ?? star.Cluster.Anchor;
