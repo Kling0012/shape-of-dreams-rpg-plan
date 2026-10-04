@@ -75,7 +75,7 @@ namespace SodRpg.Core.Game
             D(Waypoint.GlassAegis, "硝子の障壁", "Glass Aegis", "次のゾーンでは受ける回復が50%減る代わりに、得る障壁の量が100%増えます。", "In the next zone, healing received is reduced by 50%, but shield amounts increase by 100%.", new Totals { HealingMultiplier = .5, ShieldMultiplier = 2 }),
             D(Waypoint.ResonantRoad, "反応の小径", "Road of Reactions", "次のゾーンでは装備による属性の反応の威力が2倍になります。ダメージ・被ダメージ増加・付与する火・障壁の量が対象です。範囲・時間・間隔・鈍足は変わりません。", "Equipment-based elemental reactions have double strength in the next zone. This doubles damage, damage vulnerability, Fire applied and shield amounts. Radius, duration, interval and slow stay the same.", new Totals { ReactionMultiplier = 2 }),
             D(Waypoint.EndlessNight, "明けない夜", "Endless Night", "次のゾーンではすべての敵が悪夢化し、撃破で得る覚醒の力が3倍になります。", "Every enemy becomes a nightmare in the next zone, and awakening points from kills are tripled.", new Totals { AllNightmares = true, AwakeningMultiplier = 3 }),
-            D(Waypoint.BossHoard, "封じられた宝庫", "Sealed Hoard", "次のゾーンの遺物・欠片・調律石はボスを倒すまで預けられ、倒すと3倍受け取れます。ボスを倒さずゾーンを離れると失います。経験はその場で得ます。", "Relics, shards and tuning stones in the next zone are held until a boss falls, then paid out threefold. Leaving without defeating a boss forfeits the hoard. Experience is immediate.", new Totals { DelayDropsUntilBoss = true }),
+            D(Waypoint.BossHoard, "封じられた宝庫", "Sealed Hoard", "次のゾーンで敵から得る遺物・欠片・調律石はボスを倒すまで保留され、倒すとボスの分も含め3倍受け取れます。ボス撃破後の戦利品もその場で3倍受け取れます。未開封でゾーンを離れると保留分を失います。保留・所持の上限を超えた遺物は欠片になります。経験はその場で得ます。", "Enemy relics, shards and tuning stones in the next zone are held until a boss falls, then paid out threefold, including the boss's loot. Later kills also pay out threefold immediately. Leaving before opening the hoard forfeits held loot. Relics beyond holding or inventory capacity become shards. Experience is immediate.", new Totals { DelayDropsUntilBoss = true }),
             D(Waypoint.TemperedFinds, "焼き入れの道", "Tempered Road", "次のゾーンの遺物は最初から強化+2。ただし敵から得られる遺物は1部屋につき1つまでです。", "Relics from enemies in the next zone start at enhancement +2, but only one relic can be found per room.", new Totals { Enhancement = 2, MaxRelicsPerRoom = 1 }),
             D(Waypoint.FleetingMemories, "駆ける記憶", "Fleeting Memories", "次のゾーンでは通常記憶のクールダウンが20%短くなり、夢の圧による敵のHPと攻撃の倍率が25%増えます。回避と奥義は対象外です。", "Normal memory cooldowns are 20% shorter in the next zone, while dream pressure's enemy health and damage multipliers rise by 25%. Dodge and Ultimate are excluded.", new Totals { MemoryCooldownMultiplier = .8, PressureMultiplier = 1.25 }),
             D(Waypoint.SummonerTrail, "群れの小径", "Trail of the Pack", "次のゾーンでは召喚獣の与えるダメージが50%増え、旅人の最大HPが15%減ります。", "In the next zone, summons deal 50% more damage and the Traveler has 15% less maximum health.", new Totals { SummonPowerMultiplier = 1.5, HeroHealthMultiplier = .85 }),
@@ -127,6 +127,7 @@ namespace SodRpg.Core.Game
             run.DeferredWaypointRelics.Clear();
             run.DeferredWaypointShards = 0;
             run.DeferredWaypointTuning = 0;
+            run.WaypointHoardReleased = false;
         }
 
         internal static void Activate(RunState run)
@@ -201,24 +202,30 @@ namespace SodRpg.Core.Game
                 reward.Shards = 0;
             }
             if (!t.DelayDropsUntilBoss) return;
-            run.DeferredWaypointShards = Add(run.DeferredWaypointShards, reward.Shards);
-            run.DeferredWaypointTuning = Add(run.DeferredWaypointTuning, reward.Tuning);
-            foreach (var r in reward.Relics)
+            if (!run.WaypointHoardReleased)
             {
-                if (run.DeferredWaypointRelics.Count < MaximumDeferredRelics) run.DeferredWaypointRelics.Add(r);
-                else run.DeferredWaypointShards = Add(run.DeferredWaypointShards, Content.SalvageShards(r.Rarity));
+                run.DeferredWaypointShards = Add(run.DeferredWaypointShards, reward.Shards);
+                run.DeferredWaypointTuning = Add(run.DeferredWaypointTuning, reward.Tuning);
+                foreach (var r in reward.Relics)
+                {
+                    if (run.DeferredWaypointRelics.Count < MaximumDeferredRelics) run.DeferredWaypointRelics.Add(r);
+                    else run.DeferredWaypointShards = Add(run.DeferredWaypointShards, Content.SalvageShards(r.Rarity));
+                }
+                reward.Relics.Clear();
+                reward.Shards = 0;
+                reward.Tuning = 0;
+                if (tier != MonsterTier.Boss) return;
+                reward.Relics.AddRange(run.DeferredWaypointRelics);
+                reward.Shards = run.DeferredWaypointShards;
+                reward.Tuning = run.DeferredWaypointTuning;
+                run.DeferredWaypointRelics.Clear();
+                run.DeferredWaypointShards = 0;
+                run.DeferredWaypointTuning = 0;
+                run.WaypointHoardReleased = true;
             }
-            reward.Relics.Clear();
-            reward.Shards = 0;
-            reward.Tuning = 0;
-            if (tier != MonsterTier.Boss) return;
-            reward.Relics.AddRange(run.DeferredWaypointRelics);
             Duplicate(reward.Relics, 3, rng);
-            reward.Shards = DreamDepth.ScaleReward(run.DeferredWaypointShards, 3);
-            reward.Tuning = DreamDepth.ScaleReward(run.DeferredWaypointTuning, 3);
-            run.DeferredWaypointRelics.Clear();
-            run.DeferredWaypointShards = 0;
-            run.DeferredWaypointTuning = 0;
+            reward.Shards = DreamDepth.ScaleReward(reward.Shards, 3);
+            reward.Tuning = DreamDepth.ScaleReward(reward.Tuning, 3);
         }
 
         private static int Add(int a, int b) => (int)Math.Min(int.MaxValue, (long)a + b);

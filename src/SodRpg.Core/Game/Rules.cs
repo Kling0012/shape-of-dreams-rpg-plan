@@ -163,6 +163,8 @@ namespace SodRpg.Core.Game
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
             var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
+            bool hoardPayout = run.ActiveWaypoint == Waypoint.BossHoard
+                && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
             if (!string.IsNullOrEmpty(heroKey))
             {
@@ -252,6 +254,10 @@ namespace SodRpg.Core.Game
             }
             ev.AddRange(AddXp(p, reward.Xp));
             ev.AddRange(Feats.Check(p));
+            if (hoardPayout)
+                ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                    $"宝庫の払い出し ×3：遺物{reward.Relics.Count}個・欠片{reward.Shards}・調律石{reward.Tuning}（未確保。鞄を超えた遺物は欠片になります）。",
+                    $"Hoard payout ×3: {reward.Relics.Count} relic(s), {reward.Shards} shards, {reward.Tuning} tuning (unsecured; relics beyond satchel capacity become shards).")));
             // 宝庫の一括払い出しで討伐通知がトーストの表示上限から押し出されないよう、最後に送る。
             if (killNotice != null) ev.Add(killNotice);
             return ev;
@@ -301,6 +307,7 @@ namespace SodRpg.Core.Game
             var run = p.Run;
             if (run == null) return ev;
             if (run.AwaitingChoice) return ev;
+            NotifyForfeitedHoard(run, ev);
             Waypoints.Expire(run);
             if (run.WaypointGeneration < int.MaxValue) run.WaypointGeneration++;
             run.StarSecureRewarded = false;
@@ -314,6 +321,15 @@ namespace SodRpg.Core.Game
             p.StoreRng(rng);
             AddHint(p, Hint.FirstSecurePoint, ev);
             return ev;
+        }
+
+        private static void NotifyForfeitedHoard(RunState run, List<GameEvent> ev)
+        {
+            if (run.DeferredWaypointRelics.Count == 0 && run.DeferredWaypointShards == 0
+                && run.DeferredWaypointTuning == 0) return;
+            ev.Add(new GameEvent(EventKind.Lost, Loc.T(
+                $"宝庫が未開封のため、保留中の遺物{run.DeferredWaypointRelics.Count}個・欠片{run.DeferredWaypointShards}・調律石{run.DeferredWaypointTuning}を失いました。",
+                $"Hoard left unopened: forfeited {run.DeferredWaypointRelics.Count} held relic(s), {run.DeferredWaypointShards} shards and {run.DeferredWaypointTuning} tuning.")));
         }
 
         /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
@@ -562,6 +578,7 @@ namespace SodRpg.Core.Game
             p.LastReport = report;
             run.EventDropBonus = 0;
             run.EventLuck = 0;
+            NotifyForfeitedHoard(run, ev);
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
             p.Run = null;
