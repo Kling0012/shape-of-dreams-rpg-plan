@@ -221,7 +221,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Waypoint.WeaponRoad, client.Awards.Last().Waypoint);
             Assert.Equal(Slot.Weapon, client.Profile.Run.Satchel.Last().Slot);
             Assert.Equal(3, client.Profile.Run.Kills);
-            Assert.Equal(2, client.Profile.Run.Satchel.Count);
+            Assert.Equal(3, client.Profile.Run.Satchel.Count);
             Assert.True(client.Progress.CanConclude("run"));
             Assert.Equal(0, client.Advance());
             Assert.Equal(0, client.Flush(2));

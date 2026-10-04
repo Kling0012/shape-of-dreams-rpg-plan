@@ -11,6 +11,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.053個/遠征。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.053 per expedition, preserving low-rarity supply and boss reward counts.
 - **救済と鍛冶**：ボス救済の天井29→113体目。上位合成の材料・費用とエピック以上の強化・再調律・洗い直し・限界突破費用を2倍、覚醒必要量を2.5倍。高レアのイベント入手も難化。 / **Pity and crafting**: pity ceiling 29 → 113 bosses; upper-tier transmute requirements and Epic+ improvement fees doubled, awakening thresholds multiplied by 2.5, and high-rarity event acquisition tightened.
 - 保存形式・通信構造・Protocol番号は変更なし。協力時は全員同じビルドにしてください（既存の内容指紋は今回の数値差を検出しません）。比較値・例外・計測条件は[仕様](docs/specs/rare-gear-difficulty.md)を参照。 / Save and wire formats and protocol number unchanged; use matching builds in co-op, as the existing content fingerprint does not detect these balance differences. See the comparison specification for assumptions and retained guarantees.
+- **テスト**：承認済みの新費用・覚醒しきい値に既存テストを更新。113体目の救済天井、上位合成の材料不足・正確な消費、低レア装備と素材の供給維持を既存シナリオで検証。 / **Tests**: existing scenarios updated for approved fees and awakening thresholds, covering the 113th-boss pity ceiling, upper-tier transmute rejection and exact consumption, and preserved low-rarity gear and material income.
 
 ## 未公開 — 星図の二択・相関表示（#46）
 

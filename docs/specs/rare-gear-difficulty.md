@@ -118,9 +118,9 @@ kは主報酬でEpic以上が出なかったボス数。主報酬Epic以上で�
 - `ContentFingerprint.cs:35-53` は今回の抽選重み・pity・費用を含まない。この数値差では内容指紋の交渉は旧新を区別しない。
   混在を防ぐため全員同じビルドにする必要がある。#47/#48のProtocol更新と合わせて旧版排除を調整する（この変更では番号を上げない）。
 - 指定Releaseビルド成功（警告5、エラー0）。BalanceSim旧新2方針とWikiGenの実行成功、生成ガイドの費用/覚醒値を確認。
-- 実機検証なし。テストの追加・変更なし。特殊道標の保証維持と二段階合成の4倍化は、標準遠征とは別に判断が必要な調整点。
+- 実装時点では実機検証なし、テストの追加・変更なし。後述の既存テスト更新で自動検証を完了。特殊道標の保証維持と二段階合成の4倍化は、標準遠征とは別に判断が必要な調整点。
 
-### 既存テスト結果・失敗一覧（テストは変更しない）
+### 更新前の既存テスト結果・失敗一覧
 指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py`：3000成功、30失敗、2スキップ（3032件）。初回300秒打切り後、制限なしで完走。
 以下は `SodRpg.Core.Tests.` 省略。パラメータ別失敗を併記し、旧期待→同じ入力の実測（費用欄は旧→新仕様）を示す。
 
@@ -147,3 +147,11 @@ kは主報酬でEpic以上が出なかったボス数。主報酬Epic以上で�
 | `AwakeningV117Tests.Loading_clamps_awakening_points` (saved=15001/int.MaxValue) | 15000→15001/37500（2件） |
 | `AwakeningV117Tests.Crossing_the_threshold_clamps_and_awaken_all_equipped_legendaries` | 旧しきい値直前からの覚醒数6→0 |
 | `EnhancementRiskV131Tests.Seeded_failure_spends_shards_resets_enhancement_and_preserves_earned_progress` | 支払後欠片99120→98240（+20の費用880→1760） |
+
+### 既存テスト更新後の検証（2026-10-05）
+
+- 利用者の明示許可に基づき、製品コードを変更せず既存テストを新仕様へ更新。新規テストメソッド・削除なし。覚醒上限の境界パラメータを2件追加。
+- 既存シナリオで、pityのk=111/112境界と113体目の主報酬保証・リセット、Rare12個＋欠片60とEpic16個＋欠片300＋調律石4の合成・不足時の拒否・正確な消費、低レア装備と素材の供給を検証。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all`：**3032成功、0失敗、2スキップ（3034件）**。
+- `DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -c Release -- --runs 3 --players 30 --seed 1 --policy secure`：正常終了。初Rare以上の中央値1遠征、初Epic以上2遠征。小規模の動作確認であり、旧新の供給量比較を再計測したものではない。
+- 製品コードの新たな疑義は確認されなかった。内容指紋が数値差を検出しない既知の同期上の制約は維持。実機・協力プレイの検証なし。

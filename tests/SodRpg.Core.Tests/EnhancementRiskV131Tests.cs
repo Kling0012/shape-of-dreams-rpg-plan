@@ -66,7 +66,7 @@ namespace SodRpg.Core.Tests
             var affixes = r.Affixes.Select(a => (a.Stat, a.Value)).ToArray();
             var powers = r.Powers.Select(a => (a.Power, a.Value)).ToArray();
             int shards = p.Material(Materials.Shard);
-            int cost = Content.EnhanceCost(19);
+            const int cost = 1760; // Legendary +20 costs twice the base enhancement fee.
             p.StoreRng(new Rng(3));
             var result = Rules.Enhance(p, r.Uid);
             Assert.Equal(EventKind.Info, result.Kind);

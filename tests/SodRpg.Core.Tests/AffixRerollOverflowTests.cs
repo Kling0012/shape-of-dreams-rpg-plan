@@ -20,7 +20,7 @@ namespace SodRpg.Core.Tests
         public void Epic_relic_with_35_rerolls_costs_the_exact_ceiling_not_a_wrapped_negative()
         {
             var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
-            Assert.Equal((349_466_306, 11_648_877), Rules.AffixRerollCost(r));
+            Assert.Equal((698_932_611, 23_297_754), Rules.AffixRerollCost(r));
         }
 
         [Theory]
@@ -32,11 +32,12 @@ namespace SodRpg.Core.Tests
         public void Cost_is_exact_nonnegative_and_nondecreasing_across_the_overflow_boundaries(Rarity rarity)
         {
             int prevShards = 0, prevTuning = 0;
+            int multiplier = rarity >= Rarity.Epic ? 2 : 1;
             for (int n = 0; n <= 120; n++)
             {
                 var (shards, tuning) = Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = n });
-                Assert.Equal(Expected(60 * ((int)rarity + 1), n), shards);
-                Assert.Equal(Expected(2 * ((int)rarity + 1), n), tuning);
+                Assert.Equal(Expected(60 * ((int)rarity + 1) * multiplier, n), shards);
+                Assert.Equal(Expected(2 * ((int)rarity + 1) * multiplier, n), tuning);
                 Assert.True(shards >= prevShards && tuning >= prevTuning, $"cost decreased at {n} rerolls");
                 prevShards = shards;
                 prevTuning = tuning;
@@ -76,10 +77,10 @@ namespace SodRpg.Core.Tests
             r.AffixRerolls = 35;
             p.Stash.Add(r);
             p.AddMaterial(Materials.Shard, 300_000_000); // 欠片は足りないが、調律石は足りている
-            p.AddMaterial(Materials.Tuning, 20_000_000);
+            p.AddMaterial(Materials.Tuning, 30_000_000);
             Assert.Throws<InvalidOperationException>(() => Rules.AffixReroll(p, r.Uid));
             Assert.Equal(300_000_000, p.Material(Materials.Shard));
-            Assert.Equal(20_000_000, p.Material(Materials.Tuning));
+            Assert.Equal(30_000_000, p.Material(Materials.Tuning));
             Assert.Equal(35, r.AffixRerolls);
         }
 
@@ -90,11 +91,11 @@ namespace SodRpg.Core.Tests
             var r = Loot.RollRelic(new Rng(7), Rarity.Epic, 5, Slot.Weapon);
             r.AffixRerolls = 35;
             p.Stash.Add(r);
-            p.AddMaterial(Materials.Shard, 400_000_000);
-            p.AddMaterial(Materials.Tuning, 20_000_000);
+            p.AddMaterial(Materials.Shard, 700_000_000);
+            p.AddMaterial(Materials.Tuning, 30_000_000);
             Rules.AffixReroll(p, r.Uid);
-            Assert.Equal(400_000_000 - 349_466_306, p.Material(Materials.Shard));
-            Assert.Equal(20_000_000 - 11_648_877, p.Material(Materials.Tuning));
+            Assert.Equal(700_000_000 - 698_932_611, p.Material(Materials.Shard));
+            Assert.Equal(30_000_000 - 23_297_754, p.Material(Materials.Tuning));
             Assert.Equal(36, r.AffixRerolls);
         }
     }

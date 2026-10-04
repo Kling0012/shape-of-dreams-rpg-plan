@@ -33,7 +33,7 @@ namespace SodRpg.Core.Tests
             Assert.False(DreamEvents.CanUse(p, DreamEvent.ForgeShrine, out _)); // 欠片も遺物もない
             Give(p, Rarity.Common);
             var best = Give(p, Rarity.Epic);
-            p.Run.SatchelShards = 25;
+            p.Run.SatchelShards = 45;
             Rules.UseEvent(p, DreamEvent.ForgeShrine);
             Assert.Equal(1, best.Enhance);
             Assert.Equal(5, p.Run.SatchelShards);
@@ -46,7 +46,7 @@ namespace SodRpg.Core.Tests
             var p = AtEvent(DreamEvent.TwinMirror);
             var leg = Loot.RollRelic(new Rng(3), Rarity.Legendary, 5);
             p.Run.Satchel.Add(leg);
-            p.Run.SatchelShards = 30;
+            p.Run.SatchelShards = 60;
             Rules.UseEvent(p, DreamEvent.TwinMirror);
             Assert.Equal(2, p.Run.Satchel.Count);
             var copy = p.Run.Satchel.Single(r => r.Uid != leg.Uid);
