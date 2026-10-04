@@ -6,42 +6,50 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v1.31 — 星図を10倍に（2026-10-03・未公開・作業中。実装済みの一部は v1.30.2 に入っています）
+## v1.31.0 — 星図を10倍に（2026-10-04・Pre）
 
-旅人ごとに星を700個以上へ増やす「星図10倍」の作業中の記録です。**実装済み**と**設計のみ**を分けて書きます。実機での画面・戦闘・協力通信は未検証です。 / Work in progress: the star map grows to 700+ stars per traveler. Implemented and design-only items are listed separately; live-game screens, combat and co-op are unverified.
+9人の旅人すべての星図が、約70個から**700〜860個の星**へ広がりました。記憶ごとの星団、2つの記憶をつなぐ橋、外縁の星団、旅人ごとに8〜10個の刻印から、遊び方に合わせて伸ばし方を選べます。 / Every traveler's star map grows from about 70 to **700–860 stars**: memory clusters, bridges between two memories, outer clusters and 8–10 keystones per traveler.
 
-### 実装済み / Implemented
+### 更新前に確認 / Before updating
 
-- **セットが6部位になりました**：48のセットすべてに足りない3部位（各セットに合う土台）を加え、6つそろえたときのセット効果を追加しました。新しい部位も従来のセット部位と同じく、固有効果は持たず、セット効果で強さを出します。 / **Sets now have six pieces**: every one of the 48 sets gains its 3 missing slots and a new 6-piece bonus. New pieces, like existing set pieces, have no own unique power; their strength comes from the set bonuses.
-- **鞄と保管庫を大きく広げられるようになりました**（工房）：大きな鞄は10段まで（最大80個）、広い保管庫は10段まで（最大420個）。遺物の一覧は見えている行だけを描くので、数が増えても重くなりません。 / **Satchel and stash can grow much larger** (Workshop): satchel up to 80, stash up to 420; the relic list draws only visible rows.
-- **特性を洗い直せるようになりました**（鍛冶タブ）：遺物の特性を全部まとめて引き直します。特性の数・レア度・土台・強化値・限界突破・覚醒・固有品の固有効果はそのままで、新しい遺物を作るときと同じ抽選で引き直ります。費用は同じ遺物で使うたびに上がり、回数は遺物に保存されます。鍵つき・装着中・取引中・再調律の候補が出ている遺物は対象外です。 / **Affix reroll** (Forge tab): redraw every affix on a relic at once; affix count, rarity, base, enhancement, limit breaks, awakening and unique powers are all kept, and the redraw uses the same roll as a freshly made relic. The cost rises with each use on the same relic and the count is stored on the relic. Locked, equipped, trade-pending and retune-offered relics are excluded.
-- **悪夢化「棘皮」と、棘を返す変種を弱めました**：跳ね返すダメージは、与えたダメージの15%で、1回につき攻撃した旅人の最大HPの1.5%まで（夢の圧と潜行で増えます）。同じ敵からは0.4秒に1回までです。火力が上がるほど自分が削られる問題を直しました。 / **Thorned nightmares and thorny variants are weaker**: reflection is 15% of damage dealt, capped at 1.5% of the attacker's max HP per hit (raised by pressure and delve), at most once per 0.4 s per enemy.
-- **まとめて分解するレア度を選べるようになりました**（鍛冶タブ）：コモンまで／アンコモンまで／レアまで／エピックまで。固有品・鍵つき・装着中の遺物は対象外です。レア以上を含むときは、件数を示したうえで2回押しで確定します。 / **Choose the rarity for bulk salvage**: up to Common / Uncommon / Rare / Epic; legendaries, locked and equipped relics are never included.
-- **強化に失敗の可能性が付きました**（鍛冶タブ）：失敗すると遺物は残り、強化値が+0に戻ります。確定前に失敗の確率を表示し、失敗の可能性があるときは2回押しで確定します。 / **Forge enhancement can now fail**: the relic is kept, but its enhancement resets to +0. The failure chance is shown before confirmation; risky enhancements require two presses.
-- **協力の再接続・途中参加・MOD再読み込みを修正（通信版13）**：移動前の確定した道標を再送し、古いゾーンの未払い報酬を元のルールで精算します。悪夢・変種の撃破はホストが記録した分類を待って一度だけ報酬にし、ホストが読み直されたら古い表示を消してビルドをすぐ送り直します。終了前に未払い報酬と結果を保存し、終わった遠征を読み直しで再開しません。協力では全員を同じ版へ更新してください。保存形式3は維持。 / **Co-op reconnect, late join and mod reload fixes (protocol 13)**: finalized zone rules are replayed, old-zone rewards use their original rules, and special kills wait for authoritative classification and pay once. Host reload clears stale tags and immediately resends Builds. Unpaid rewards/results survive shutdown; completed expeditions cannot restart on reload. Update every co-op participant together; profile format 3 is unchanged. [修正・検証記録](docs/specs/v1.31-mpfix-sol2.md)
-- **夢の深さで部屋が増える**：深さ1ごとに各ゾーンの部屋（ノード）を2個ずつ増やします（深さ5で+10）。ホストのゾーン生成時にだけ一時的にゲーム側のノード数オフセットへ足し、生成が例外で終わっても必ず元に戻します。特別生成のゾーンと深さ0は変わりません。 / **Depth adds rooms**: each depth step adds 2 rooms (world nodes) per zone (+10 at depth 5). The host adds to the game's node-count offset only for the duration of zone generation and restores it even if generation throws; special-generation zones and depth 0 are unchanged.
-- **星のポイント上限を500に**（従来150）。経験の曲線は変えず、500個目まで取れるようにしました。「夢の圧」の星の係数は据え置きで、500星ならそのぶん比例して圧が増えます。 / Star points are capped at 500 (was 150); the XP curve is unchanged. The Dream Pressure star coefficient is unchanged, so 500 stars give proportionally more pressure.
-- **大きな星図の描画**：線は1本ごとに回転した四角1枚で描き、画面に見える物だけを処理し、重なる星の名前は間引きます。 / **Large-map rendering**: each line is one rotated quad, only visible items are processed, and overlapping names are thinned out.
-- **星の検索**：名前や効果で該当する星を光らせ、「次の星へ」で順に移動できます。 / **Star search**: matches by name or effect are highlighted, and "Next star" jumps between them.
-- **星団エンジン**：記憶・橋・外縁の星団を固定IDと扇形・輪形・鎖形の配置から生成し、既存の星のIDと位置は維持します。記憶ごとの仕掛けの効果量・持続時間・半径・対象数・属性追加確率をBuildからホストの既存の効果経路まで反映し、意味のないパラメータは登録時に拒否します。選択の星は2効果から選び、遠征の外では無料で切り替えられ、保存・複製され、払い戻しと振り直しで解除されます。Cetusに3領域の実効例があります。仕様は [星団エンジン](docs/specs/v1.31-cluster-engine.md)。 / **Cluster engine**: Memory, Bridge and Outer clusters are generated from fixed IDs with Fan/Ring/Chain layouts that keep existing star IDs and positions; gimmick value/duration/radius/target-count/chance modifiers reach the host effect paths, unsupported parameters fail validation, and two-option choice stars support free switching outside expeditions, persistence, cloning and respec. Three working Cetus examples.
-- **通信の版13・機構の統合**：固定ID登録→実効購入→Build→ホスト処理を接続。発動予算、指定先リチャージ、橋の成功条件、障壁プール、刻印の両側と各payload、rank/once/EveryN/identity/replacementを型付きで保持します。小数と最終上限前の値を失わず、両端の内容・cap・装備カテゴリの一致後だけ適用。既存の通信容量・512 channel上限を維持します。永久に無効になる配分は一覧の明示承認後に原子払い戻し。/ **Protocol 13 integration**: authored registration, allocation, Build and host consumers are connected; complete typed scopes, budgets and key sides retain pre-cap precision, mutual identity admission and the existing envelope. Permanent invalid allocations require explicit atomic refunds. [生成器・統合契約](docs/specs/v1.31-integration.md)
-- **C01〜C15の機構コードは統合済み、内容表の生成は別作業**：型付き登録APIとnative API adapter試験、オフラインの実DLLフック検証を追加。実機画面・戦闘・co-opは未検証で、9人の全設計表を既に登録したという意味ではありません。 / **C01–C15 mechanism code is integrated; content generation is separate.** Native API adapter coverage and offline installed-assembly hook checks do not claim live-game verification or registration of every designed star. [正式仕様](docs/specs/v1.31-new-mechanisms.md)
-- **Cetus と Aurena の星図を登録**：マニフェストから生成した星図の登録済み旅人が8人になりました（Vesper・Husk・Lacerta・Bismuth・Mist・Yubar・Cetus・Aurena）。Cetus の旧サンプル星団（13星と外周の受け1つ、計14ID）はID・段数・費用・位置を変えずに効果だけ設計表の内容へ移行し、保存した星図はそのまま読み込めます。刻印の代償が既に買った星を無効にするときは、影響する星と点数を一覧で示して承認後にまとめて払い戻し、それから刻印を選びます（C15の既定動作）。 / **Cetus and Aurena star maps registered**: eight travelers now install their manifest-generated maps. Cetus's shipped sample clusters (13 stars plus the outer anchor, 14 IDs) keep their IDs, ranks, costs and positions while their effects migrate to the design tables, so saved maps load unchanged. When a keystone drawback disables already-bought stars, the affected stars and points are listed, refunded together after approval, and only then is the keystone selected (C15's intended flow).
-- **アイコン**：v1.29で増えた土台180種、新しい夢の出来事13種、星図の星の記号30種を追加（これで土台360種すべてに絵が付きました）。 / **Icons**: 180 bases added in v1.29, 13 dream events and 30 star-map symbols (all 360 bases now have icons).
+- **協力プレイは全員を同じ版に**してください（通信の版13）。版が違うとホストと参加者の画面に警告が出ます。 / Everyone in co-op must use the same version (protocol 13); a mismatch shows a warning.
+- **保存データはそのまま引き継げます**（保存形式4。リセットはありません）。振っていた星・ポイント・刻印はそのまま残ります。効果が変わった既存の星は、読み込み時に一度だけ外され、使ったポイントが全額戻ります（戻した星は画面で知らせます）。 / Saves carry over (format 4, no reset). Stars, points and keystones are kept; existing stars whose effect changed are cleared once on load with a full refund, and you are told which.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
 
-### 設計のみ（まだ遊べません）/ Design only
+### 星図 / Star map
 
-- **9人分の星団設計表**：旅人ごとの購入できる星は735〜892個、合計7,502個（既存663＋新規5,399＋共有の外縁160を9人分）。刻印は旅人ごとに8〜10（合計82）、全体の能力値だけの星は各4〜5%（合計で4.4%）。内訳は Vesper 878・Cetus 892・Lacerta 878・Husk 879・Mist 885・Yubar 877・Aurena 743・Nachia 735・Bismuth 735。表は `docs/specs/v1.31-clusters-*.md`（旅人9人＋共有の外縁）。 / **Design tables for 9 travelers**: 735–892 purchasable stars per traveler, 7,502 in total, 8–10 keystones each (82 total), global stat-only stars about 4–5% (4.4% overall).
-- **独立レビュー**：表の違反（傷の上限、障壁は最大値、移動の記憶は受け手のみ、帰属など）を修正。IDは消さず、300ポイントで取れるのは全体の3〜4割程度。数値のつり合いは実装後に調整します。 / **Independent review** fixed rule violations in the tables; no IDs are removed, 300 points cover roughly 30–40% of a tree, and balance is tuned after implementation. [設計レビュー](docs/specs/v1.31-design-review.md)
-- 星の機械可読マニフェスト（`tools/star-manifest/`）を作成中です。 / A machine-readable star manifest is being written.
+- **星が10倍に**：Vesper 838・Cetus 856・Husk 835・Lacerta 831・Mist 842・Yubar 833・Aurena 714・Bismuth 701・Nachia 698（共有の外縁160を含む）。記憶の仕掛けの効果量・持続・範囲・対象数を伸ばす星、記憶から別の記憶へクールダウンを渡す星、橋の合わせ技を強める星、味方を守る星などがあります。 / **10× stars** with memory-gimmick, recharge, bridge-combo and ally-ward stars.
+- **ポイント上限を500に**（従来150、図鑑のボーナスで最大504）。経験の曲線はそのまま延長し、初期ポイントの配布はありません。夢の圧は振った星の数に応じて従来どおり増えます。 / **Star point cap 500** (was 150; up to 504 with codex). The XP curve continues unchanged; no free starting points; dream pressure keeps scaling with spent stars.
+- **2択の星**：2つの効果を並べて見比べ、遠征の外なら無料で切り替えられます。 / **Choice stars**: compare both effects side by side; switch for free outside expeditions.
+- **刻印**：説明は「利点」と「代償」に分かれました。代償で既に振った星が効かなくなるときは、外れる星とポイントを一覧で示し、承認すると払い戻してから刻印を選びます。 / **Keystones** show benefit and drawback separately; if a drawback disables stars you own, they are listed and refunded after you approve.
+- **見やすさ**：星図はほぼ全画面になり、星団の一覧から移動・始まりに戻る・検索（名前や効果で光らせ「次の星へ」）・凡例に対応しました。取得した効果の一覧は同じ効果をまとめて表示します。 / Near full-screen map, cluster list, back-to-start, search, legend, and an acquired-effects list that merges identical effects.
+- **軽さ**：800星超の星図でも描画は軽く、500ポイント振った状態でも星を買う操作はすぐに反映されます。 / Large maps stay smooth and buying stays responsive even at 500 points.
+- 星の名前は、効果が想像できる自然な名前にしました。 / Stars have natural, distinct names.
 
-### 方針 / Policy
+### 装備と鍛冶 / Gear and forge
 
-- 実機で確かめていない星や仕組みも、Coreの試験が通れば有効にしてよい（利用者の指示）。実機の確認は後からまとめて行います。 / Stars and mechanisms not yet verified in the live game may be enabled once the Core tests pass; live checks follow later.
+- **セットが6部位に**：48のセットすべてに3部位を加え、6つそろえたときのセット効果を追加しました。 / **Six-piece sets**: all 48 sets gain 3 pieces and a 6-piece bonus.
+- **特性の洗い直し**（鍛冶タブ）：遺物の特性をまとめて引き直します。強化値や固有効果などはそのままです。 / **Affix reroll** keeps enhancement, unique powers and the rest.
+- **強化に失敗の可能性**：失敗すると強化値が+0に戻ります（遺物は残ります）。確定前に確率を表示し、危険なときは2回押しで確定します。 / **Enhancement can fail** (resets to +0; the relic is kept); the chance is shown first.
+- **まとめて分解のレア度を選択**：コモン／アンコモン／レア／エピックまで。レア以上を含むときは2回押しで確定します。 / **Bulk salvage rarity** selectable; rare+ needs two presses.
+- **鞄と保管庫を大きく**（工房）：鞄は最大80個、保管庫は最大420個まで広げられます。 / **Satchel up to 80, stash up to 420** (Workshop).
 
-### 調べたこと
+### 遠征と調整 / Expeditions and balance
 
-- **#19 3Dモデルの導入**：環境とAPIの互換性、同じゲームの前例、方式A（実行時にGLBを読む）と方式Bの比較、方式Aのアニメーション・差し替え地点・協力同期の調査をまとめました。実装はまだです。 / **#19**: research only (environment, API compatibility, precedents, approach A vs B, animation and sync for approach A); not implemented. [第1段](docs/specs/issue19-model-import-research.md) / [第2段](docs/specs/issue19-stage2-approach-a.md)
+- **夢の深さで部屋が増える**：深さ1ごとに各ゾーンの部屋が2つ増えます（深さ5で+10）。 / Each depth step adds 2 rooms per zone.
+- **悪夢化「棘皮」と棘を返す変種を弱めました**：跳ね返すダメージは与えたダメージの15%で、1回につき攻撃した旅人の最大HPの1.5%まで、同じ敵からは0.4秒に1回までです。 / **Thorns weakened**: 15% of damage dealt, capped at 1.5% of the attacker's max HP per hit, once per 0.4 s per enemy.
+
+### 不具合の修正 / Fixes
+
+- 協力プレイの再接続・途中参加・MOD再読み込みで、報酬や道標が正しく引き継がれるようにしました。 / Co-op reconnect, late join and mod reload keep rewards and waypoints correct.
+- 他のMODと組み合わせたとき、精髄の枠が増え続けることがある不具合を直しました。 / Essence slots no longer keep growing alongside other mods.
+- 日本語の画面に英語の警告や内部の名前が出ていた箇所を直しました。旅人の名前も日本語で表示します。 / No more English warnings or internal names in the Japanese UI; traveler names are shown in Japanese.
+- アイコン：土台360種すべて、新しい夢の出来事、星の記号に絵が付きました。 / Icons for all 360 bases, new dream events and star symbols.
+
+### 確認したこと / Verification
+
+- Coreの試験2,851件が成功。9人それぞれ、星図の登録・全星への到達・最大ポイントまでの購入と協力通信の送受信を試験しています。 / 2,851 Core tests pass, including per-traveler registration, reachability, max-point purchases and co-op build transfer.
+- ゲーム内で9人の星図の表示・ツールチップ・購入の反応（450ポイント以上でも約55ms）・遠征を確認しました。新しい星の効果を戦闘ですべて確かめたわけではありません。気づいた点は Issue で教えてください。 / Checked in game: all 9 maps, tooltips, purchase latency (~55 ms at 450+ points) and an expedition. Not every new star effect has been verified in combat; please report issues.
 
 ## v1.30.3 — 協力プレイで参加者に報酬が入らない不具合の修正（2026-10-03・Pre）
 

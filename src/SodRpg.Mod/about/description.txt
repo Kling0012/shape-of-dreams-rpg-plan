@@ -1,5 +1,5 @@
-[b]v1.30.3 Pre: save format 3; older profiles are archived and restarted. Protocol 13; update all co-op players. Restart the game after updating.[/b]
-[b]保存形式3より古いプロフィールは写しを残して再開始します。協力は全員同じ版へ更新し、ゲームを再起動してください。追加分は実機未検証です。[/b]
+[b]v1.31.0 Pre: star maps grow to 700-860 stars per traveler (cap 500 points). Saves carry over (format 4). Protocol 13; update all co-op players. Restart the game after updating.[/b]
+[b]星図が旅人ごとに700〜860星に広がりました（上限500ポイント）。保存データはそのまま引き継げます。協力は全員同じ版へ更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
