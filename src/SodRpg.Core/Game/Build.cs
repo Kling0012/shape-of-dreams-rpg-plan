@@ -206,13 +206,6 @@ namespace SodRpg.Core.Game
                 b.Lines.TryGetValue(r.Base.Line, out int n);
                 b.Lines[r.Base.Line] = n + 1;
             }
-            foreach (var total in equippedLinks.Values)
-                b.Links.Add(new LinkDef
-                {
-                    Requires = total.Link.Requires, Kind = total.Link.Kind,
-                    ValueMilli = CappedLinkMilli(total.Base, total.Scaled,
-                        global::SodRpg.Core.Game.Links.EquippedCap(total.Link.Kind, total.Link.Requires.Length)),
-                });
             foreach (var kv in b.Lines)
                 foreach (var s in Content.SetBonus(kv.Key, kv.Value)) Add(rawStats, s.Stat, s.Value);
             // 同じ部位（固有品ID）を重複して数えない。6つ装着は6種類の部位がそろった時だけ有効。
@@ -233,7 +226,26 @@ namespace SodRpg.Core.Game
                 if (kv.Value >= 2) foreach (var s in set.TwoPiece) Add(rawStats, s.Stat, s.Value);
                 if (kv.Value >= 3) foreach (var pw in set.ThreePiece) AddPower(pw.Power, pw.Value);
                 if (kv.Value >= 6 && set.HasSixPiece) foreach (var pw in set.SixPiece) AddPower(pw.Power, pw.Value);
+                var stageLink = set.SelectLinkStage(kv.Value)?.Link;
+                if (stageLink != null)
+                {
+                    // Set stages are fixed values, independent of the pieces' enhancement and awakening.
+                    if (stageLink.Kind == LinkKind.MemorySurge) b.Links.Add(stageLink);
+                    else
+                    {
+                        string linkKey = BuildAggregation.LinkKey(stageLink);
+                        equippedLinks.TryGetValue(linkKey, out var total);
+                        equippedLinks[linkKey] = (stageLink, total.Base + stageLink.Value, total.Scaled + stageLink.Value);
+                    }
+                }
             }
+            foreach (var total in equippedLinks.Values)
+                b.Links.Add(new LinkDef
+                {
+                    Requires = total.Link.Requires, Kind = total.Link.Kind,
+                    ValueMilli = CappedLinkMilli(total.Base, total.Scaled,
+                        global::SodRpg.Core.Game.Links.EquippedCap(total.Link.Kind, total.Link.Requires.Length)),
+                });
             // 組（小セット・v1.32 設計 3.2/4）。同じ組の別々の銘品だけを数え、SetDef の集計とは別に足す（重複して数えない）。
             var miniPieces = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
             foreach (string uid in h.Equipped)

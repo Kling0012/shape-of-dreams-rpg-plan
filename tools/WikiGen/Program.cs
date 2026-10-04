@@ -137,10 +137,16 @@ foreach (var slot in slots)
             string desc = BiBr(() => Content.FormatPower(p.Power, p.Value));
             lines.Add($"**{Bi(() => Content.PowerName(p.Power))}** {desc}");
         }
-        string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照）" : string.Join(NL, lines);
+        string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照 / No part powers; see set bonuses）" : string.Join(NL, lines);
         string set = "-";
-        if (u.SetId != null && sets.TryGetValue(u.SetId, out var sd)) set = $"{TxtBi(sd.Name)} → {Link("sets", "セット装備")}";
         string link = u.Link == null ? "-" : BiBr(() => Links.Describe(u.Link));
+        if (u.SetId != null && sets.TryGetValue(u.SetId, out var sd))
+        {
+            set = $"{TxtBi(sd.Name)} → {Link("sets", "セット装備 / Sets")}";
+            if (sd.LinkStages.Length > 0)
+                link = string.Join(NL, sd.LinkStages.Select(stage =>
+                    $"**{stage.RequiredPieces}部位 / pieces**: " + BiBr(() => Links.Describe(stage.Link))));
+        }
         string lore = string.IsNullOrEmpty(u.Lore.Ja) ? "" : $"{NL}<sub>{Esc(u.Lore.Ja)} / {Esc(u.Lore.En)}</sub>";
         rows.Add($"| {TxtBi(u.Name)}{lore} | {BaseCell(u.BaseId)} | {powers} | {set} | {link} |");
     }
@@ -155,26 +161,18 @@ foreach (var slot in slots)
 {
     var sb = new StringBuilder();
     sb.Append(H1("セット装備 (Sets)"));
-    sb.Append("2つ装着・3つ装着（6部位のセットは6つ装着も）でボーナスが付く名前付きの組です。ボーナスの数値は基本値です。\n\n[[dreamforge:start|ホームへ戻る]]\n\n");
+    sb.Append("2・3・6部位の通常ボーナスは累積します。ボス限定セットの任意連携は、自分の対象記憶／エッセンス装着と2・4・6部位で最高の1段階だけ有効です。部位の組合せは任意です。数値は強化・覚醒前の基本値です。\n\nNormal 2/3/6-piece bonuses stack. Optional boss-set links require your own target memory/essence equipped; only the highest eligible 2/4/6-piece stage applies, with any combination of parts. Values are before enhancement/awakening.\n\n[[dreamforge:start|ホームへ戻る / Home]]\n\n");
     foreach (var s in Content.Sets)
     {
         sb.Append(H2(TxtBi(s.Name)));
-        sb.Append("^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^\n");
+        sb.Append(BiBr(() => s.Describe())).Append("\n\n");
+        sb.Append("^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^ 固有効果 (Part powers) ^\n");
         foreach (var u in Content.Uniques.Where(u => u.SetId == s.Id))
         {
             string bs = Content.TryGetBase(u.BaseId, out var bd) ? SlotTitle(bd.Slot) : "-";
-            sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} |\n");
-        }
-        sb.Append('\n');
-        sb.Append("  * **2つ装着 (2 pieces)**: ").Append(string.Join(" / ", s.TwoPiece.Select(t => Bi(() => Content.FormatStat(t.Stat, t.Value))))).Append('\n');
-        sb.Append("  * **3つ装着 (3 pieces)**\n");
-        foreach (var p in s.ThreePiece)
-            sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
-        if (s.HasSixPiece)
-        {
-            sb.Append("  * **6つ装着 (6 pieces)**\n");
-            foreach (var p in s.SixPiece)
-                sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
+            string powers = u.Powers.Count == 0 ? "-" : string.Join(NL,
+                u.Powers.Select(p => BiBr(() => Content.FormatPower(p.Power, p.Value))));
+            sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} | {powers} |\n");
         }
         sb.Append('\n');
     }

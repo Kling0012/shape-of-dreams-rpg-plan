@@ -148,7 +148,8 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null,
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -166,6 +167,11 @@ namespace SodRpg.Core.Game
             bool hoardPayout = run.ActiveWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
+            if (tier == MonsterTier.Boss)
+            {
+                var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
+                if (bossPiece != null) reward.Relics.Add(bossPiece);
+            }
             if (!string.IsNullOrEmpty(heroKey))
             {
                 var hs = p.Hero(heroKey);

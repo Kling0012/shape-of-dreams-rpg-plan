@@ -177,7 +177,8 @@ namespace SodRpg.Mod
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
-                variantId: kill.VariantId, roomIndex: kill.RoomIndex));
+                variantId: kill.VariantId, roomIndex: kill.RoomIndex, bossTypeName: kill.BossTypeName,
+                bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth));
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {

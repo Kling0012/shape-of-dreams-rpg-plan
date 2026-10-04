@@ -1208,6 +1208,7 @@ namespace SodRpg.Mod
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
                 GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/{(set.HasSixPiece ? 6 : 3)}", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#ccd>" + set.Describe() + "</color>", _st.Small);
+                DrawSetLinkProgress(set, kv.Value);
             }
             foreach (var kv in build.Lines)
             {
@@ -1559,10 +1560,24 @@ namespace SodRpg.Mod
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
+                {
                     GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#ccd>" + set.Describe() + "</color>", _st.Small);
+                    var build = _s.CurrentBuild(HeroKey);
+                    build.Sets.TryGetValue(set.Id, out int count);
+                    DrawSetLinkProgress(set, count);
+                }
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
             }
+        }
+
+        private void DrawSetLinkProgress(SetDef set, int count)
+        {
+            if (set.LinkStages.Length == 0) return;
+            var marks = LinkMarks();
+            var stage = set.SelectLinkStage(count) ?? set.LinkStages[0];
+            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences);
+            GUILayout.Label(UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff"), _st.Small);
         }
 
         /// <summary>固有品の覚醒の進み具合、または覚醒済みの印。</summary>

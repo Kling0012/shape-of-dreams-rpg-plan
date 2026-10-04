@@ -37,7 +37,14 @@ namespace SodRpg.Core.Game
             var ids = new List<string>();
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
             foreach (var u in Content.Uniques) ids.Add("u:" + u.Id);
-            foreach (var s in Content.Sets) ids.Add("s:" + s.Id);
+            foreach (var s in Content.Sets)
+            {
+                ids.Add("s:" + s.Id);
+                if (!string.IsNullOrEmpty(s.BossTypeName)) ids.Add("boss-source:" + s.BossTypeName + ":" + s.Id);
+                foreach (var stage in s.LinkStages)
+                    ids.Add("set-link:" + s.Id + ":" + stage.RequiredPieces + ":" + (int)stage.Link.Kind
+                        + ":" + stage.Link.ValueMilli + ":" + string.Join(",", stage.Link.Requires));
+            }
             foreach (var t in Content.Talents) ids.Add("t:" + t.Id);
             foreach (var t in HeroSigils.All) ids.Add("h:" + t.Id);
             foreach (var p in PairCombos.All) ids.Add("p:" + p.Id);
@@ -48,6 +55,8 @@ namespace SodRpg.Core.Game
             ids.Add("run-growth:v1:" + Enum.GetValues(typeof(RunGrowthTrigger)).Length + ":" + RunGrowth.MaxEntries);
             ids.Add("currency-stars:v1:" + Content.PowerCap(Power.KillGoldPct) + "/" + Content.PowerCap(Power.EliteKillGoldPct)
                 + "/" + Content.PowerCap(Power.DreamDustPct) + "/" + Content.PowerCap(Power.DreamDustDelvePct));
+            ids.Add("boss-drop:" + BossSets.NormalDropPercent + ":" + BossSets.NightmareBonusPercent
+                + ":" + BossSets.DepthBonusPercent + ":" + BossSets.MaxDropDepth + ":" + BossSets.MaxDropPercent);
             ids.Add("mechanisms:v13:" + caps + "/" + authored);
             ids.Add("mechanism-memory-facts:" + VerifiedMechanismSlots.Fingerprint);
             ids.Sort(StringComparer.Ordinal);

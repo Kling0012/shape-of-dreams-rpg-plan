@@ -16,13 +16,19 @@ namespace SodRpg.Core.Game
         public string HeroKey { get; }
         public string EventId { get; }
         public uint MonsterNetId { get; }
+        public string BossTypeName { get; }
+        public bool BossDropNightmare { get; }
+        public int BossDropDepth { get; }
 
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
-            NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0)
+            NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0,
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
             EventId = eventId; MonsterNetId = monsterNetId;
+            BossTypeName = bossTypeName; BossDropNightmare = bossDropNightmare;
+            BossDropDepth = Math.Max(0, Math.Min(5, bossDropDepth));
         }
     }
 

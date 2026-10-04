@@ -66,13 +66,17 @@ namespace SodRpg.Core.Game
             .Add("runId", kill.RunId).Add("zone", (long)kill.ZoneIndex).Add("room", (long)kill.RoomIndex)
             .Add("tier", (long)kill.Tier).Add("level", (long)kill.Level).Add("nightmare", (long)kill.Nightmare)
             .Add("variant", kill.VariantId).Add("hero", kill.HeroKey)
-            .Add("eventId", kill.EventId).Add("monster", (long)kill.MonsterNetId);
+            .Add("eventId", kill.EventId).Add("monster", (long)kill.MonsterNetId)
+            .Add("bossTypeName", kill.BossTypeName).Add("bossDropNightmare", kill.BossDropNightmare)
+            .Add("bossDropDepth", (long)kill.BossDropDepth);
 
         private static PendingRunKill ReadPendingKill(JsonObject j) => new PendingRunKill(
             Str(j, "runId"), Clamp(Long(j, "zone"), -1, int.MaxValue), Clamp(Long(j, "room"), 0, int.MaxValue),
             (MonsterTier)Clamp(Long(j, "tier"), 0, (int)MonsterTier.Boss), Clamp(Long(j, "level"), 1, int.MaxValue),
             (NightmareAffix)Long(j, "nightmare"), Str(j, "variant"), Str(j, "hero"), Str(j, "eventId"),
-            (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))));
+            (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))),
+            Str(j, "bossTypeName"), NullableBool(j, "bossDropNightmare") ?? false,
+            Clamp(Long(j, "bossDropDepth"), 0, 5));
 
         private static JsonObject WriteKillClassification(KillClassificationCheckpoint state)
         {
@@ -82,7 +86,9 @@ namespace SodRpg.Core.Game
                     .Add("kill", WritePendingKill(x.Kill))).ToList())
                 .Add("facts", state.Facts.Select(x => (object)new JsonObject().Add("runId", x.RunId)
                     .Add("eventId", x.EventId).Add("monster", (long)x.MonsterNetId).Add("zone", (long)x.ZoneIndex)
-                    .Add("nightmare", (long)x.Nightmare).Add("variant", x.VariantId)).ToList())
+                    .Add("nightmare", (long)x.Nightmare).Add("variant", x.VariantId)
+                    .Add("bossTypeName", x.BossTypeName).Add("bossDropNightmare", x.BossDropNightmare)
+                    .Add("bossDropDepth", (long)x.BossDropDepth)).ToList())
                 .Add("resolved", state.ResolvedEventIds.Select(x => (object)x).ToList());
         }
 
@@ -97,7 +103,9 @@ namespace SodRpg.Core.Game
                 if (item is JsonObject fact)
                     state.Facts.Add(new AuthoritativeRunKill(Str(fact, "runId"), Str(fact, "eventId"),
                         (uint)Long(fact, "monster"), Clamp(Long(fact, "zone"), -1, int.MaxValue),
-                        (NightmareAffix)Long(fact, "nightmare"), Str(fact, "variant")));
+                        (NightmareAffix)Long(fact, "nightmare"), Str(fact, "variant"),
+                        Str(fact, "bossTypeName"), NullableBool(fact, "bossDropNightmare") ?? false,
+                        Clamp(Long(fact, "bossDropDepth"), 0, 5)));
             foreach (object item in Array(j, "resolved"))
                 if (item is string id) state.ResolvedEventIds.Add(id);
             return state;

@@ -112,6 +112,13 @@ namespace SodRpg.Core.Game
             Powers = Array.Empty<PowerLine>();
         }
 
+        /// <summary>固有効果を1つ持つボス限定セットの部位。</summary>
+        public UniqueDef(string id, string baseId, Txt name, string setId, Power power, int value)
+            : this(id, baseId, name, setId)
+        {
+            Powers = new[] { new PowerLine(power, value) };
+        }
+
         public string Id { get; }
         public string BaseId { get; }
         public Txt Name { get; }
@@ -123,6 +130,18 @@ namespace SodRpg.Core.Game
         public LinkDef Link { get; set; }
     }
 
+    public sealed class SetLinkStage
+    {
+        public SetLinkStage(int requiredPieces, LinkDef link)
+        {
+            RequiredPieces = requiredPieces;
+            Link = link;
+        }
+
+        public int RequiredPieces { get; }
+        public LinkDef Link { get; }
+    }
+
     /// <summary>名前付きのセット装備。2点・3点でボーナス、6部位のセットは6点で追加効果（v1.31）。</summary>
     public sealed class SetDef
     {
@@ -132,6 +151,41 @@ namespace SodRpg.Core.Game
         public PowerLine[] ThreePiece;
         /// <summary>6つ装着の効果（v1.31）。6部位化が済むまでは null / 空。4つ・5つ装着には効果を付けない。</summary>
         public PowerLine[] SixPiece;
+        /// <summary>このセットだけを落とすボスの完全一致型名。通常セットは null。</summary>
+        public string BossTypeName;
+        private SetLinkStage[] linkStages = Array.Empty<SetLinkStage>();
+        public SetLinkStage[] LinkStages
+        {
+            get => linkStages;
+            set
+            {
+                var stages = value ?? Array.Empty<SetLinkStage>();
+                if (stages.Length != 0 && stages.Length != 3)
+                    throw new ArgumentException("Set links require exactly the 2/4/6-piece stages.", nameof(value));
+                LinkDef first = null;
+                decimal previous = 0;
+                for (int i = 0; i < stages.Length; i++)
+                {
+                    var stage = stages[i];
+                    var link = stage?.Link;
+                    if (stage == null || stage.RequiredPieces != (i + 1) * 2 || !Links.Validate(link)
+                        || link.Requires.Length != 1 || link.Value <= 0 || link.Value < previous
+                        || link.Value > Links.Cap(link.Kind, 1)
+                        || (first != null && (link.Kind != first.Kind || link.Requires[0] != first.Requires[0])))
+                        throw new ArgumentException("Invalid set link stage.", nameof(value));
+                    first = first ?? link;
+                    previous = link.Value;
+                }
+                linkStages = stages;
+            }
+        }
+
+        public SetLinkStage SelectLinkStage(int count)
+        {
+            for (int i = LinkStages.Length - 1; i >= 0; i--)
+                if (count >= LinkStages[i].RequiredPieces) return LinkStages[i];
+            return null;
+        }
 
         /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
         public bool HasSixPiece => SixPiece != null && SixPiece.Length > 0;
@@ -146,7 +200,33 @@ namespace SodRpg.Core.Game
                 string six = string.Join("\n", SixPiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
+            if (BossTypeName != null)
+                text += Loc.T($"\n出所：{Name}のボス限定（{BossTypeName}）", $"\nSource: {Name} boss only ({BossTypeName})");
+            foreach (var stage in LinkStages)
+                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：", $"\nOptional {stage.RequiredPieces}-piece link: ") + Links.Describe(stage.Link);
             return text;
+        }
+
+        public string DescribeLinkProgress(int count, bool satisfied)
+        {
+            if (LinkStages.Length == 0) return "";
+            var stage = SelectLinkStage(count);
+            string target = Links.Name(LinkStages[0].Link.Requires[0]).ToString();
+            string status = Loc.T(
+                $"現在{count}つ装着。対象『{target}』：{(satisfied ? "装着済み" : "未装着")}。",
+                $"{count} pieces equipped. Target {target}: {(satisfied ? "equipped" : "not equipped")}.");
+            status += stage != null && satisfied
+                ? Loc.T($"有効な連携：{stage.RequiredPieces}つ装着段階。", $"Active link: {stage.RequiredPieces}-piece stage.")
+                : Loc.T("有効な連携：なし。", "Active link: none.");
+            if (stage != null)
+                status += Loc.T($"\n選択段階（{stage.RequiredPieces}つ装着）：", $"\nSelected {stage.RequiredPieces}-piece stage: ") + Links.Describe(stage.Link);
+            foreach (var next in LinkStages)
+            {
+                if (next.RequiredPieces <= count) continue;
+                int missing = next.RequiredPieces - count;
+                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着段階。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.");
+            }
+            return status + Loc.T("\n最終段階です。", "\nFinal stage reached.");
         }
 
         /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>
@@ -4452,6 +4532,18 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.breakoutcorps.weapon", "weapon.gatehouse_maul", new Txt("突破隊の破城槌", "Breakout Ram"), "set.breakoutcorps"),
             new UniqueDef("set.breakoutcorps.hands", "hands.ironvein_gauntlets", new Txt("突破隊の鉄手", "Breakout Ironhands"), "set.breakoutcorps"),
             new UniqueDef("set.breakoutcorps.charm", "charm.iron_feather", new Txt("突破隊の鉄羽根", "Breakout Ironfeather"), "set.breakoutcorps"),
+            new UniqueDef("set.boss_demon.weapon", "weapon.shield_maul", new Txt("根砕きの槌", "Rootbreaker Maul"), "set.boss_demon", Power.Retaliation, 3),
+            new UniqueDef("set.boss_demon.armor", "armor.root_mail", new Txt("年輪の胴鎧", "Growthring Mail"), "set.boss_demon", Power.Bulwark, 3),
+            new UniqueDef("set.boss_demon.charm", "charm.pulsing_core", new Txt("森震の核", "Forestquake Core"), "set.boss_demon", Power.SecondWind, 3),
+            new UniqueDef("set.boss_demon.head", "head.moss_crown", new Txt("樹冠の面", "Canopy Mask"), "set.boss_demon", Power.Vigor, 2),
+            new UniqueDef("set.boss_demon.hands", "hands.rootgrip_gloves", new Txt("棘根の拳", "Thornroot Fists"), "set.boss_demon", Power.Thorns, 3),
+            new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("踏み固めの長靴", "Stompbound Boots"), "set.boss_demon", Power.Whirlwind, 8),
+            new UniqueDef("set.boss_skoll.weapon", "weapon.icevein_blade", new Txt("氷雨の剣", "Icerain Sword"), "set.boss_skoll", Power.Frost, 4),
+            new UniqueDef("set.boss_skoll.armor", "armor.hoarfrost_mail", new Txt("氷刃の帷子", "Iceblade Mail"), "set.boss_skoll", Power.Barrier, 1),
+            new UniqueDef("set.boss_skoll.charm", "charm.ice_heart", new Txt("雪嶺の核", "Snowcrest Core"), "set.boss_skoll", Power.SecondWind, 3),
+            new UniqueDef("set.boss_skoll.head", "head.frost_helm", new Txt("氷輪の冠", "Icering Crown"), "set.boss_skoll", Power.Vigor, 2),
+            new UniqueDef("set.boss_skoll.hands", "hands.frost_mitts", new Txt("霜裂きの手甲", "Frostrend Grips"), "set.boss_skoll", Power.BrittleIce, 4),
+            new UniqueDef("set.boss_skoll.feet", "feet.froststride_shoes", new Txt("氷渦の鉄靴", "Icewhorl Sabatons"), "set.boss_skoll", Power.Whirlwind, 8),
         };
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
@@ -4734,6 +4826,34 @@ namespace SodRpg.Core.Game
                 TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.MoveSpeedPct, 4) },
                 ThreePiece = new[] { new PowerLine(Power.Breakout, 10), new PowerLine(Power.UnbowedMind, 7), new PowerLine(Power.ImmovableStance, 9) },
                 SixPiece = new[] { new PowerLine(Power.Frenzy, 3), new PowerLine(Power.Shatter, 45) } },
+            new SetDef
+            {
+                Id = "set.boss_demon", Name = new Txt("根踏みの戦装", "Rootstomp Wargear"),
+                BossTypeName = "Mon_Forest_BossDemon",
+                TwoPiece = new[] { new StatLine(Stat.Armor, 11), new StatLine(Stat.MaxHealthPct, 8) },
+                ThreePiece = new[] { new PowerLine(Power.Bulwark, 49), new PowerLine(Power.Aegis, 35) },
+                SixPiece = new[] { new PowerLine(Power.Breakout, 17), new PowerLine(Power.UnbowedMind, 11) },
+                LinkStages = new[]
+                {
+                    new SetLinkStage(2, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.MemorySurge, Value = 12 }),
+                    new SetLinkStage(4, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.MemorySurge, Value = 20 }),
+                    new SetLinkStage(6, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.MemorySurge, Value = 30 }),
+                },
+            },
+            new SetDef
+            {
+                Id = "set.boss_skoll", Name = new Txt("氷刃の王装", "Iceblade Regalia"),
+                BossTypeName = "Mon_SnowMountain_BossSkoll",
+                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 14), new StatLine(Stat.Armor, 8) },
+                ThreePiece = new[] { new PowerLine(Power.Frost, 63), new PowerLine(Power.Bulwark, 42) },
+                SixPiece = new[] { new PowerLine(Power.BrittleIce, 81), new PowerLine(Power.ImmovableStance, 19) },
+                LinkStages = new[]
+                {
+                    new SetLinkStage(2, new LinkDef { Requires = new[] { "Gem_U_GlacialCore" }, Kind = LinkKind.Guard, Value = 8 }),
+                    new SetLinkStage(4, new LinkDef { Requires = new[] { "Gem_U_GlacialCore" }, Kind = LinkKind.Guard, Value = 14 }),
+                    new SetLinkStage(6, new LinkDef { Requires = new[] { "Gem_U_GlacialCore" }, Kind = LinkKind.Guard, Value = 20 }),
+                },
+            },
         };
 
         /// <summary>

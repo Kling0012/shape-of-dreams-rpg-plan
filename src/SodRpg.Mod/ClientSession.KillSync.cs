@@ -31,7 +31,8 @@ namespace SodRpg.Mod
         private void OnMonsterKill(DreamforgeMonsterKillMsg msg)
         {
             if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0
-                || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)) return;
+                || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)
+                || !string.IsNullOrEmpty(msg.bossTypeName) && !MechanismHandshakeAccepted) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(gameRunId) || msg.runId != gameRunId || msg.runId == _completedRunId) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;

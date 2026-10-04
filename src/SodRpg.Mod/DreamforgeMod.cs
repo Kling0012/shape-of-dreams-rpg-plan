@@ -316,9 +316,11 @@ namespace SodRpg.Mod
             var p = _session.Profile;
             var rng = p.TakeRng();
             int given = 0;
+            int excluded = 0;
             foreach (var u in Content.Uniques)
             {
                 if (string.IsNullOrEmpty(prefix) || !u.Id.StartsWith(prefix, StringComparison.Ordinal)) continue;
+                if (BossSets.IsExclusive(u)) { excluded++; continue; }
                 var r = Loot.RollUnique(rng, u, Math.Max(1, p.BestItemLevel));
                 given++;
                 if (p.Run != null) p.Run.Satchel.Add(r);
@@ -327,6 +329,14 @@ namespace SodRpg.Mod
             }
             p.StoreRng(rng);
             Debug.Log($"[DreamforgeRPG] giveunique '{prefix}': {given} item(s) added to the {(p.Run != null ? "satchel" : "stash")}.");
+            if (excluded > 0)
+            {
+                string message = Loc.T(
+                    $"ボス限定装備{excluded}点を除外しました。対応ボスの撃破報酬でのみ入手できます。",
+                    $"Excluded {excluded} boss-exclusive item(s). They can only be obtained as rewards for defeating their corresponding boss.");
+                Debug.Log("[DreamforgeRPG] " + message);
+                _ui.Notify(new GameEvent(EventKind.Drop, "[debug] " + message));
+            }
             _session.MarkDirty(true);
             _session.SaveNow();
         }

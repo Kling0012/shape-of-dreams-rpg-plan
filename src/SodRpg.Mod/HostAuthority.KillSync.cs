@@ -22,12 +22,29 @@ namespace SodRpg.Mod
                 || runtime.KillEventId != null || monster.disableLoot) return;
             if (monster.Status != null && monster.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter)
                 && !hunter.enableGoldAndExpDrops) return;
-            string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            var game = NetworkedManagerBase<GameManager>.softInstance;
+            string runId = game?.runId;
             if (string.IsNullOrEmpty(runId)) return;
             runtime.KillEventId = Guid.NewGuid().ToString("N");
             _nightmares.TryGetValue(monster, out var nightmare);
+            string bossTypeName = null;
+            bool bossDropNightmare = false;
+            int bossDropDepth = 0;
+            if (monster is BossMonster && monster.type == Monster.MonsterType.Boss)
+            {
+                string typeName = monster.GetType().Name;
+                if (BossSets.TryGetSet(typeName, out _))
+                {
+                    bossTypeName = typeName;
+                    // Native difficulty names are also used by GameResultManager and DewSave.
+                    string difficulty = game.difficulty?.name;
+                    bossDropNightmare = difficulty == "diffNightmare" || difficulty == "diffLimbo";
+                    bossDropDepth = DreamDepth.Clamp(ClientSession.HostRun?.DreamDepth ?? 0);
+                }
+            }
             var fact = new AuthoritativeRunKill(runId, runtime.KillEventId, monster.netId,
-                _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id);
+                _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id,
+                bossTypeName, bossDropNightmare, bossDropDepth);
             _killFactPublishedAt[fact.EventId] = Time.time;
             // Record before native object cleanup. Reload restores this immutable history from the profile.
             ClientSession.PublishHostKillFact(fact);

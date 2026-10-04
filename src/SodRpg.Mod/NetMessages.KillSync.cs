@@ -15,15 +15,20 @@ namespace SodRpg.Mod
         public int zoneIndex;
         public int affixes;
         public string variantId;
+        public string bossTypeName;
+        public bool bossDropNightmare;
+        public int bossDropDepth;
 
         public static DreamforgeMonsterKillMsg FromFact(AuthoritativeRunKill fact, ulong authority) => new DreamforgeMonsterKillMsg
         {
             protocol = Protocol.Version, authorityGeneration = authority, runId = fact.RunId,
             eventId = fact.EventId, netId = fact.MonsterNetId, zoneIndex = fact.ZoneIndex,
             affixes = (int)fact.Nightmare, variantId = fact.VariantId,
+            bossTypeName = fact.BossTypeName, bossDropNightmare = fact.BossDropNightmare,
+            bossDropDepth = fact.BossDropDepth,
         };
 
         public AuthoritativeRunKill ToFact() => new AuthoritativeRunKill(runId, eventId, netId,
-            zoneIndex, (NightmareAffix)affixes, variantId);
+            zoneIndex, (NightmareAffix)affixes, variantId, bossTypeName, bossDropNightmare, bossDropDepth);
     }
 }

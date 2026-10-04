@@ -214,6 +214,9 @@ namespace SodRpg.Mod
                 sb.Append("  ").Append(Colored(slotLine, Dim));
                 if (pc.Id == currentPieceId) sb.Append(Colored(Loc.T("  ←この装備", "  <- this one"), Dim));
                 sb.Append('\n');
+                if (got)
+                    foreach (var pw in pc.Powers)
+                        sb.Append("  ").Append(Colored(Content.FormatPower(pw.Power, pw.Value), Purple)).Append('\n');
             }
         }
 

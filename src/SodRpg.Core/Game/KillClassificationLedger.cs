@@ -12,13 +12,20 @@ namespace SodRpg.Core.Game
         public int ZoneIndex { get; }
         public NightmareAffix Nightmare { get; }
         public string VariantId { get; }
+        public string BossTypeName { get; }
+        public bool BossDropNightmare { get; }
+        public int BossDropDepth { get; }
 
         public AuthoritativeRunKill(string runId, string eventId, uint monsterNetId, int zoneIndex,
-            NightmareAffix nightmare, string variantId)
+            NightmareAffix nightmare, string variantId, string bossTypeName = null,
+            bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             RunId = runId; EventId = eventId; MonsterNetId = monsterNetId; ZoneIndex = zoneIndex;
             VariantId = Variants.Get(variantId)?.Id;
             Nightmare = VariantId == null ? Nightmares.Sanitize((int)nightmare) : NightmareAffix.None;
+            BossTypeName = bossTypeName;
+            BossDropNightmare = bossDropNightmare;
+            BossDropDepth = Math.Max(0, Math.Min(5, bossDropDepth));
         }
     }
 
@@ -104,7 +111,8 @@ namespace SodRpg.Core.Game
                 if (!_resolvedEventIds.Add(fact.EventId)) continue;
                 var native = death.Kill;
                 kill = new PendingRunKill(native.RunId, native.ZoneIndex, native.RoomIndex, native.Tier,
-                    native.Level, fact.Nightmare, fact.VariantId, native.HeroKey, fact.EventId, death.MonsterNetId);
+                    native.Level, fact.Nightmare, fact.VariantId, native.HeroKey, fact.EventId, death.MonsterNetId,
+                    fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth);
                 return true;
             }
             return false;
