@@ -152,8 +152,18 @@ namespace SodRpg.Core.Tests
                 var pieces = Content.Uniques.Where(u => u.SetId == set.Id).ToList();
                 Assert.Equal(6, pieces.Count);
                 Assert.Equal(6, pieces.Select(u => Content.GetBase(u.BaseId).Slot).Distinct().Count());
-                Assert.NotEmpty(set.TwoPiece);
-                Assert.NotEmpty(set.ThreePiece);
+                if (set.BossTypeName != null)
+                {
+                    // #48: boss sets carry their stages as fixed boss profiles, not stat/power rows.
+                    Assert.Empty(set.TwoPiece);
+                    Assert.Empty(set.ThreePiece);
+                    Assert.NotEmpty(set.BossStages);
+                }
+                else
+                {
+                    Assert.NotEmpty(set.TwoPiece);
+                    Assert.NotEmpty(set.ThreePiece);
+                }
                 Assert.False(string.IsNullOrWhiteSpace(set.Describe()));
             }
         }
@@ -184,7 +194,8 @@ namespace SodRpg.Core.Tests
             var rng = new Rng(55);
             var seen = new HashSet<string>();
             for (int i = 0; i < 4000; i++) seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
-            foreach (var u in Content.Uniques.Where(x => x.SetId != null)) Assert.Contains(u.Id, seen);
+            // Boss-limited pieces never enter the generic pool (#48); their exclusion is covered separately.
+            foreach (var u in Content.Uniques.Where(x => x.SetId != null && !BossSets.IsExclusive(x))) Assert.Contains(u.Id, seen);
         }
     }
 }

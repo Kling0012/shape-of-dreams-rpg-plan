@@ -80,10 +80,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(14, bySlot(Slot.Hands));
             Assert.Equal(9, bySlot(Slot.Feet));
             Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(1334, Content.Uniques.Count); // Includes all reviewed P37 content.
+            Assert.Equal(1340, Content.Uniques.Count); // Reviewed P37 + 6 boss-demon pieces (#48 stage A).
             Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
             Assert.Equal(357, Content.Uniques.Count(u => u.Link != null)); // Includes all reviewed P37 content.
-            Assert.Equal(48, Content.Sets.Count); // Includes all reviewed P37 content.
+            Assert.Equal(49, Content.Sets.Count); // 48 generic + set.boss_demon (#48 stage A).
             Assert.Equal(24, Content.Uniques.Count(u => u.SetId != null && Pass1SetIds.Contains(u.SetId))); // 6部位化後
         }
 
