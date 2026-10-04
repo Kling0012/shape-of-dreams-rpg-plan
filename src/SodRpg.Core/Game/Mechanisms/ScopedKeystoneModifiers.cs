@@ -373,7 +373,7 @@ namespace SodRpg.Core.Game
         /// <summary>構成済みの刻印（枠順）。選択が空なら空。</summary>
         public IReadOnlyList<KeystoneDefinition> SelectedDefinitions => _selected;
         public long EquipmentEpoch { get; private set; }
-        /// <summary>少なくとも1つの刻印が有効（装備・前提・入力の許可を満たしている）。</summary>
+        /// <summary>少なくとも1つの刻印が、入力許可と必要装備を同一刻印で満たしている。</summary>
         public bool Active { get; private set; }
         public int SelectedCost { get { int total = 0; foreach (var key in _selected) total = checked(total + key.Cost); return total; } }
 
@@ -390,11 +390,22 @@ namespace SodRpg.Core.Game
         }
 
         private bool KeyEquipped(KeystoneDefinition key) => key.RequiredMemories.All(_equipped.Contains);
+        private bool KeyEligible(int index) => _selectedEnabled[index] && KeyEquipped(_selected[index]);
+
+        /// <summary>同一刻印が「許可済み・必要な装備あり」を満たすか。照会・変換・ネイティブ接続で共有する唯一の判定（#49）。</summary>
+        public bool IsKeystoneActive(string keystoneId)
+        {
+            if (!Active) return false;
+            for (int i = 0; i < _selected.Length; i++)
+                if (_selected[i].KeystoneId == keystoneId) return KeyEligible(i);
+            return false;
+        }
 
         public bool HasPayload(KeystonePayloadKind kind)
         {
             if (!Active) return false;
-            foreach (var key in _selected) if (KeyEquipped(key) && key.Payloads.Contains(kind)) return true;
+            for (int i = 0; i < _selected.Length; i++)
+                if (KeyEligible(i) && _selected[i].Payloads.Contains(kind)) return true;
             return false;
         }
 
@@ -424,8 +435,10 @@ namespace SodRpg.Core.Game
             if (_configuration != null && (equipmentEpoch < EquipmentEpoch || (configuration != _configuration && equipmentEpoch == EquipmentEpoch)))
                 throw new InvalidOperationException("Selection or equipment changes require a new epoch.");
             _configuration = configuration; _selected = definitions; _selectedEnabled = admitted; _equipped = equipment; EquipmentEpoch = equipmentEpoch;
-            Active = enabled && definitions.Any(definition => definition.RequiredMemories.All(equipment.Contains))
-                && admitted.Any(a => a);
+            bool anyEligible = false;
+            for (int i = 0; i < definitions.Length; i++)
+                if (admitted[i] && definitions[i].RequiredMemories.All(equipment.Contains)) { anyEligible = true; break; }
+            Active = enabled && anyEligible;
         }
 
         public KeystoneResult Apply(KeystonePayload payload, KeystoneContext context)
@@ -453,7 +466,7 @@ namespace SodRpg.Core.Game
                 for (int i = 0; i < _selected.Length; i++)
                 {
                     var key = _selected[i];
-                    if (!_selectedEnabled[i] || !key.RequiredMemories.All(_equipped.Contains)) continue;
+                    if (!KeyEligible(i)) continue;
                     if (context.SourceKind == KeystoneSourceKind.MovementEvent && key.KeystoneId != "h.husk.key2") continue;
                     anyApplied = true;
                     result.KeystoneId = key.KeystoneId;
@@ -461,17 +474,10 @@ namespace SodRpg.Core.Game
                         if (transform.TargetLayer == payload.Layer && transform.Scope.Matches(payload, context)) ApplyTransform(payload, result, transform);
                 }
                 if (!anyApplied) result.KeystoneId = null;
-                if (context.SourceKind == KeystoneSourceKind.MovementEvent && !HasKey("h.husk.key2"))
+                if (context.SourceKind == KeystoneSourceKind.MovementEvent && !IsKeystoneActive("h.husk.key2"))
                     throw new InvalidOperationException("Only the existing movement keystone may consume a movement event.");
             }
             return ApplyCaps(payload, result);
-        }
-
-        private bool HasKey(string keystoneId)
-        {
-            for (int i = 0; i < _selected.Length; i++)
-                if (_selectedEnabled[i] && _selected[i].KeystoneId == keystoneId && _selected[i].RequiredMemories.All(_equipped.Contains)) return true;
-            return false;
         }
 
         public static KeystoneResult ApplyUnmodified(KeystonePayload payload)
