@@ -594,7 +594,6 @@ namespace SodRpg.Mod
                 bool merchant = e == DreamEvent.Merchant;
                 bool ok = DreamEvents.CanUse(_s.Profile, e, merchant, out string why, _s.Trades);
                 if (merchant && ok && _s.LocalGold < _s.MerchantPrice()) { ok = false; why = Loc.T($"ゴールドが足りません（{_s.MerchantPrice()}G）", $"Not enough gold ({_s.MerchantPrice()}G)"); }
-                if (merchant && _s.TradePending(TradeKind.MerchantGold)) { ok = false; why = Loc.T("取引の応答を待っています。", "Waiting for the trade to complete."); }
                 GUILayout.BeginHorizontal();
                 var art = GUILayoutUtility.GetRect(64, 64, GUILayout.Width(64), GUILayout.Height(64));
                 if (Event.current.type == EventType.Repaint) RelicIcons.DrawArt(art, EventArtKey(e));
