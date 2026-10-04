@@ -190,15 +190,20 @@ namespace SodRpg.Core.Game
                         anchor = original.RequiredStarIds.FirstOrDefault() ?? original.RequiredAnyStarIds.FirstOrDefault();
                 }
                 // Placement ownership is group-level; canonical per-node anchors remain explicit graph edges below.
-                if (original.Region.Kind == ClusterRegionKind.Memory)
-                    anchor = existing.FirstOrDefault(x => x.HeroKey == original.HeroKey && x.RouteId == original.Region.Id)?.Id ?? anchor;
-                else if (original.Region.Kind == ClusterRegionKind.Bridge)
-                    anchor = PairCombos.ForBridge(original.Region.Id)?.BridgeId ?? anchor;
-                else if (original.Region.Kind == ClusterRegionKind.Outer)
+                // A retained legacy star already carries the anchor of the baseline cluster it saved with
+                // (Cetus's shipped engine samples): re-canonicalizing it here would move saved nodes.
+                if (!original.RetainedLegacy)
                 {
-                    var root = definitions.FirstOrDefault(x => x != null && x.HeroKey == original.HeroKey && x.ClusterId == original.ClusterId
-                        && x.Effect?.Kind == ClusterStarKind.Stat && x.Effect.Amount > 0);
-                    if (root != null) anchor = root.LocalStarId;
+                    if (original.Region.Kind == ClusterRegionKind.Memory)
+                        anchor = existing.FirstOrDefault(x => x.HeroKey == original.HeroKey && x.RouteId == original.Region.Id)?.Id ?? anchor;
+                    else if (original.Region.Kind == ClusterRegionKind.Bridge)
+                        anchor = PairCombos.ForBridge(original.Region.Id)?.BridgeId ?? anchor;
+                    else if (original.Region.Kind == ClusterRegionKind.Outer)
+                    {
+                        var root = definitions.FirstOrDefault(x => x != null && x.HeroKey == original.HeroKey && x.ClusterId == original.ClusterId
+                            && x.Effect?.Kind == ClusterStarKind.Stat && x.Effect.Amount > 0);
+                        if (root != null) anchor = root.LocalStarId;
+                    }
                 }
                 var edges = new List<AuthoredStarEdge>(original.Edges ?? Array.Empty<AuthoredStarEdge>());
                 if (original.AnchorId != null && original.AnchorId != original.LocalStarId)

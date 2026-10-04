@@ -176,7 +176,9 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(tree.Count, tree.Select(t => t.Id).Distinct(StringComparer.Ordinal).Count());
                 foreach (string id in manifest.NewIds) Assert.Contains(tree, t => t.Id == id);
                 Assert.Equal(tree.Count + 1, HeroTreeLayout.ForHero(hero).Nodes.Count);
-                Assert.InRange(tree.Count, 730, 890);
+                // Designed per-hero totals are 735–892 purchasable IDs (docs/specs/v1.31-design-review.md).
+                // Cetus's 892 = 87 retained baseline (73 + the 14 shipped engine-sample IDs) + 645 new + 160 shared outer.
+                Assert.InRange(tree.Count, 730, 892);
             });
         }
 
@@ -271,7 +273,29 @@ namespace SodRpg.Core.Tests
             var failures = new List<string>();
             foreach (var node in layout.Nodes.Where(n => n.Talent != null && n.Talent.IsKeystone).OrderBy(n => n.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost).ThenBy(n => n.Id, StringComparer.Ordinal))
             {
-                try { Rules.SetKeystone(profile, hero, node.Id); keystone = node.Id; break; }
+                try
+                {
+                    // C15/C07: a keystone whose drawback disables already-bought stars is selectable only through
+                    // the explicit approval path. Preview, approve exactly the previewed refund set, apply (SetKeystone),
+                    // then verify the refund: every refunded rank is gone and the points moved by exactly its cost.
+                    var plan = Rules.PreviewAllocationChange(profile, hero,
+                        new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = node.Id });
+                    if (!plan.CanApply)
+                    {
+                        failures.Add(node.Id + ": " + string.Join(", ", plan.PrerequisiteViolations.Concat(plan.SaturatedChannels)));
+                        continue;
+                    }
+                    int spentBefore = Rules.SpentPoints(state, hero);
+                    var held = plan.Refunds.ToDictionary(r => r.StarId, r => state.Talents.TryGetValue(r.StarId, out int rank) ? rank : 0);
+                    Rules.SetKeystone(profile, hero, node.Id, plan.AffectedRefundIds.Count == 0 ? null : plan.AffectedRefundIds);
+                    foreach (var refund in plan.Refunds)
+                        Assert.True((state.Talents.TryGetValue(refund.StarId, out int refunded) ? refunded : 0) == held[refund.StarId] - refund.Ranks,
+                            refund.StarId + " kept ranks the approved refund was supposed to return");
+                    Assert.Equal(spentBefore - plan.RefundCost + (node.Talent.KeystoneDefinition?.Cost ?? Content.KeystoneCost),
+                        Rules.SpentPoints(state, hero));
+                    keystone = node.Id;
+                    break;
+                }
                 catch (Exception error) when (error is InvalidOperationException || error is AllocationValidationException)
                 { failures.Add(node.Id + ": " + error.Message); }
             }
