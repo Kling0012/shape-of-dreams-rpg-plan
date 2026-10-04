@@ -6,6 +6,14 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未公開 — 宝庫の討伐通知（#52）
+
+- **討伐通知**：「封じられた宝庫」のボス撃破で大量の遺物が払い出されても、同じ撃破のドロップ通知に悪夢・変種の討伐通知が押し出されないよう、討伐通知を最後に表示します。撃破統計・経験・覚醒・依頼と、通常敵／悪夢の戦利品をボス撃破時に3倍にする処理は変更していません。 / **Kill notifications**: nightmare/variant kill notices now follow the kill's other notifications, so a bulk Sealed Hoard payout does not evict its own kill notice. Kill statistics, experience, awakening, bounties and the threefold boss payout for ordinary/nightmare loot are unchanged.
+- **確認範囲**：コード調査と撃破APIの直接実行で、修正前は宝庫の34件の通知から討伐表示が押し出され、修正後は最後に残ることを確認しました。実機・協力プレイでの表示、および報告されたログ消失・クラッシュとの因果は未確認です。 / **Verification scope**: source inspection and direct kill API execution reproduced a hoard payout's 34 notifications evicting the kill notice before the fix and retaining it last afterward. In-game/co-op display and the link to the reported missing logs/crash remain unverified.
+
+---
+
+
 ## 未公開 — 純白ルートの選択と勝利確保（#53・#54）
 
 - **純白の入口**：`Rift_Sidetrack_TheDream` が移動する `Zone_Primus` では、戦闘や撃破だけで確保／潜行を自動決定せず、道標・確保／潜行・契約を明示的に選べるようにしました。通常ルートの戦闘による自動潜行は変更しません。道標は従来どおりホスト共有、確保／潜行と契約は各自の選択です。 / **Pure-white entrance**: choices in `Zone_Primus` remain pending until explicitly selected instead of auto-delving on combat. Ordinary routes are unchanged; waypoints remain host-shared, while securing/delving and pacts remain personal.

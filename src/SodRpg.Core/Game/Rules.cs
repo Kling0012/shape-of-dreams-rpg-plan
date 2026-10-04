@@ -202,15 +202,16 @@ namespace SodRpg.Core.Game
                         $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? ": keystones unlocked" : ""))));
                 }
             }
+            GameEvent killNotice = null;
             if (variant != null)
             {
                 p.Stats.VariantsSlain++;
-                ev.Add(new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!")));
+                killNotice = new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!"));
             }
             else if (isNightmare)
             {
                 p.Stats.NightmaresSlain++;
-                ev.Add(new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!")));
+                killNotice = new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!"));
                 AddHint(p, Hint.FirstNightmare, ev);
             }
             p.EpicPity = pity;
@@ -251,6 +252,8 @@ namespace SodRpg.Core.Game
             }
             ev.AddRange(AddXp(p, reward.Xp));
             ev.AddRange(Feats.Check(p));
+            // 宝庫の一括払い出しで討伐通知がトーストの表示上限から押し出されないよう、最後に送る。
+            if (killNotice != null) ev.Add(killNotice);
             return ev;
         }
 
