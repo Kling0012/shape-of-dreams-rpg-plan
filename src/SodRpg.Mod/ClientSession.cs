@@ -39,10 +39,12 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeMonsterCueMsg> _onMonsterCue;
         private readonly Action<DreamforgeTradeResultMsg> _onTradeResult;
         private readonly Action<DreamforgeBountyReportMsg> _onBountyReport;
-        private readonly Action<PendingTrade> _onTradeExpired;
+        private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         private readonly TradeLedger _trades = new TradeLedger();
         public TradeLedger Trades => _trades;
         public bool HasPendingTrades => _trades.PendingCount > 0;
+        /// <summary>応答待ちに加えて、期限切れで結果不明のまま残っている取引もあるか。プロフィールの切り替えなど、対価の行き先が変わる操作を止めるのに使う。</summary>
+        public bool HasHeldTrades => _trades.HeldCount > 0;
         private readonly Action<DewPlayer> _onChaos;
         private readonly Action<Hero, Mirror.NetworkBehaviour> _onBought, _onUpgraded, _onDismantled;
         private readonly Action<Hero, Gem> _onMerged;
@@ -108,7 +110,6 @@ namespace SodRpg.Mod
             _onMonsterCue = OnMonsterCue;
             _onTradeResult = OnTradeResult;
             _onBountyReport = OnBountyReport;
-            _onTradeExpired = RestoreSalvageTrade;
             _onChaos = pl => { if (pl != null && pl == DewPlayer.local) GameAction(BountyKind.ChaosSeeker); };
             _onBought = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Patron); };
             _onUpgraded = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Refiner); };
@@ -163,6 +164,9 @@ namespace SodRpg.Mod
                 case "dust": return Loc.T("取引できませんでした。ドリームダストが足りません。", "Trade failed: not enough Dream Dust.");
                 case "protocol": return Loc.T("取引できませんでした。ホストと Dreamforge の版が違います。全員が同じ版を入れてください。", "Trade failed: the host runs a different Dreamforge version. Everyone needs the same version.");
                 case "dup": return Loc.T("取引できませんでした。この遺物の分解は今回の遠征で受け付け済みです。", "Trade failed: this relic was already salvaged in this run.");
+                case "unknown":
+                case "cancelled": return Loc.T("取引は成立していませんでした。ゴールドとドリームダストは減っていません。", "The trade did not go through. Your gold and Dream Dust were not spent.");
+                case "conflict": return Loc.T("取引できませんでした。取引の識別が重複しました。もう一度試してください。", "Trade failed: the trade id clashed. Please try again.");
                 default: return Loc.T("取引できませんでした。もう一度試してください。", "Trade failed. Please try again.");
             }
         }
@@ -216,12 +220,40 @@ namespace SodRpg.Mod
 
         private void TickSalvageExpiry()
         {
-            // GLM (mp-ui-save #7): every pending trade times out and is rolled back, not only salvage.
-            if (_trades.Expire(Time.unscaledTime, _onTradeExpired) <= 0) return;
-            Emit(new GameEvent(EventKind.Warning, Loc.T(
-                "取引の応答がなかったため、待ちを解除しました。ゴールドとドリームダストの増減をご確認ください。",
-                "No trade response; the pending trade was released. Please check your gold and Dream Dust.")));
-            SaveNow();
+            // GLM (mp-ui-save #7): the wait on screen is released for every trade kind after the timeout, but the trade
+            // itself is kept as unresolved and queried against the host (#26): a payment the host already made still
+            // grants its reward exactly once, and a trade the host never ran is returned.
+            if (_trades.Expire(Time.unscaledTime) > 0)
+            {
+                Emit(new GameEvent(EventKind.Warning, Loc.T(
+                    "取引の応答が遅れています。待ちは解除しました。ホストに結果を確認しています。",
+                    "The trade response is late. The wait was released; checking the result with the host.")));
+                SaveNow();
+            }
+            SendDueTradeQueries();
+        }
+
+        /// <summary>結果不明の取引を、同じ取引idでホストへ照会する。接続していないときは次の機会まで待つ。</summary>
+        private void SendDueTradeQueries()
+        {
+            if (_trades.UnresolvedCount == 0 || _clientRpcOn == null || !NetworkClient.active) return;
+            _dueTradeQueries.Clear();
+            if (_trades.CollectDueQueries(Time.unscaledTime, _dueTradeQueries) == 0) return;
+            TradeWire.EncodeQuery(out int spendGold, out int spendDust, out int earnDust);
+            foreach (var t in _dueTradeQueries)
+            {
+                try
+                {
+                    _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
+                    {
+                        token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Log.Error("Client TradeQuery: " + ex.Message);
+                }
+            }
         }
 
         private void TickPeriodicSave()
@@ -303,10 +335,11 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
                 }
                 _clientRpcOn = actor;
-                _trades.Clear();
+                // 接続が替わったら、応答待ちの取引は結果不明にして新しい接続から照会する（捨てると、支払い済みの対価や預かった遺物を失う）。
+                _trades.MarkAllUnresolved(Time.unscaledTime);
                 if (Profile.PendingSalvage.Count > 0)
                 {
-                    Emit(Rules.RestorePendingSalvage(Profile));
+                    Emit(Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids()));
                     SaveNow();
                 }
                 Nightmare.Clear();
@@ -464,7 +497,8 @@ namespace SodRpg.Mod
         /// <summary>初めての起動：初期装備を配り、ようこその案内を出す。</summary>
         public void FirstLaunch()
         {
-            Emit(Rules.RestorePendingSalvage(Profile));
+            _trades.Restore(Profile.PendingTrades, Time.unscaledTime); // 前回の終了時に結果が出ていなかった取引は、起動後すぐにホストへ照会する
+            Emit(Rules.RestorePendingSalvage(Profile, keepUids: _trades.ReservedSalvageUids()));
             if (!Profile.StarterGranted)
             {
                 Onboarding.GrantStarterKit(Profile);
@@ -638,6 +672,7 @@ namespace SodRpg.Mod
                 Log.Error("Client SendTrade: " + ex.Message);
                 return Loc.T("取引を送れませんでした。", "Could not send the trade.");
             }
+            SaveNow(); // 送った取引は保存する：MODの再読み込みや終了をまたいでも、結果を照会して対価を受け取れる
             return null;
         }
 
@@ -1015,6 +1050,8 @@ namespace SodRpg.Mod
         public void SaveNow()
         {
             PersistRunDurability();
+            Profile.PendingTrades.Clear();
+            Profile.PendingTrades.AddRange(_trades.Snapshot());
             _dirty = false;
             _nextSave = Time.unscaledTime + 30f;
             if (_store == null) return;
