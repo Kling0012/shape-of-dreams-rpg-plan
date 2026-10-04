@@ -46,6 +46,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystonePackets.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystonePackets.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.IdentityStrikes.cs" Link="ModUnderTest/HostAuthority.IdentityStrikes.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryTunings.cs" Link="ModUnderTest/HostAuthority.MemoryTunings.cs" />
+    <Compile Include="../../src/SodRpg.Mod/CodexPresenter.cs" Link="ModUnderTest/CodexPresenter.cs" />
   </ItemGroup>
 
 </Project>
