@@ -111,9 +111,7 @@ namespace SodRpg.Core.Tests
         private static KeystoneDefinition Key(string id, string memory = Q, KeystonePayloadKind[] payloads = null,
             AuthoredMechanismSpec[] grants = null) => new KeystoneDefinition(id, new[] { memory },
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(10000),
-                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(-2000),
-                    new KeystoneScope(targetMemorySet: new[] { memory })) }, payloads: payloads, grants: grants);
+                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) }, payloads: payloads, grants: grants);
 
         [Fact]
         public void Authored_allocation_roundtrip_changes_real_remaining_cooldown_and_retransmission_keeps_every_n()
@@ -194,9 +192,7 @@ namespace SodRpg.Core.Tests
                     new MemorySelector(MemorySelectorKind.EquippedMovement), new[] { 500 }, everyN: 4) };
             var key = new KeystoneDefinition("test.cadence.key", new[] { Q },
                 new[] { KeystoneTransform.SetEveryN(2, new KeystoneScope(payloadKind: KeystonePayloadKind.DirectedRecharge,
-                    sourceKind: KeystoneSourceKind.OwnedBasicAttack)) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(-1000),
-                    new KeystoneScope(targetMemorySet: new[] { Q })) });
+                    sourceKind: KeystoneSourceKind.OwnedBasicAttack)) });
             var build = Decoded(spec); build.SelectedKeystone = key;
             var (host, runtime) = Setup(Build.Decode(build.Encode()));
             runtime.Hero.Skill.Skills[HeroSkillLocation.Identity] = new St_D_CircleOfLife { owner = runtime.Hero };
@@ -342,12 +338,12 @@ namespace SodRpg.Core.Tests
             var build = Allocated("Hero_Vesper", new[] { spec }, out _, Key("test.native.key"));
             var (host, runtime) = Setup(build); var enemy = Enemy();
             var activation = host.Activation(runtime.Hero, Q); var native = new DamageData(120);
-            host.NativeKeyDamage(runtime, enemy, activation, ref native); Assert.Equal(96, native.currentAmount, 4);
+            host.NativeKeyDamage(runtime, enemy, activation, ref native); Assert.Equal(120, native.currentAmount, 4);
             host.NotifyAuthored(runtime, Event(host, activation, MemoryEventKind.Hit, enemy), enemy, native.currentAmount);
-            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(923.2f, enemy.currentHealth, 3);
-            var next = host.Activation(runtime.Hero, Q); host.NotifyAuthored(runtime, Event(host, next, MemoryEventKind.Hit, enemy), enemy, 96);
+            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(904f, enemy.currentHealth, 3);
+            var next = host.Activation(runtime.Hero, Q); host.NotifyAuthored(runtime, Event(host, next, MemoryEventKind.Hit, enemy), enemy, 120);
             build.SelectedKeystone = null; host.BindAuthored(runtime, Build.Decode(build.Encode()));
-            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(884.8f, enemy.currentHealth, 3);
+            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(856f, enemy.currentHealth, 3);
         }
 
         [Fact]
@@ -357,16 +353,14 @@ namespace SodRpg.Core.Tests
             spec.Source = Source(Q); spec.Gimmick.UncappedValue = .00000001m;
             var key = new KeystoneDefinition("test.fine.echo.key", new[] { Q },
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(1),
-                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(-2000),
-                    new KeystoneScope(targetMemorySet: new[] { Q })) });
+                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) });
             var (host, runtime) = Setup(Allocated("Hero_Vesper", new[] { spec }, out _, key));
             var enemy = Enemy(); enemy.currentHealth = .0000001f;
             var activation = host.Activation(runtime.Hero, Q); var damage = new DamageData(100);
             host.NativeKeyDamage(runtime, enemy, activation, ref damage);
             host.NotifyAuthored(runtime, Event(host, activation, MemoryEventKind.Hit, enemy), enemy, damage.currentAmount);
             UnityEngine.Time.time = .3f; host.FlushAuthored(runtime);
-            Assert.InRange(enemy.currentHealth, .0000000919991f, .0000000919993f);
+            Assert.InRange(enemy.currentHealth, .0000000899989f, .0000000899991f);
         }
 
         [Fact]
@@ -374,20 +368,18 @@ namespace SodRpg.Core.Tests
         {
             var key = new KeystoneDefinition("test.legacy.cap.key", new[] { Q },
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(-7500),
-                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(-2000),
-                    new KeystoneScope(targetMemorySet: new[] { Q })) });
+                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) });
             var build = new Build { SelectedKeystone = key };
             build.Gimmicks.Add(new GimmickEntry { StarId = "test.legacy.echo", Memory = Q,
                 Def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Echo, Value = 1000, UncappedValue = 2000 } });
             var (host, runtime) = Setup(Build.Decode(build.Encode())); var enemy = Enemy();
             var identity = host.Activation(runtime.Hero, Q); var native = new DamageData(100);
-            host.NativeKeyDamage(runtime, enemy, identity, ref native); Assert.Equal(80, native.currentAmount, 4);
+            host.NativeKeyDamage(runtime, enemy, identity, ref native); Assert.Equal(100, native.currentAmount, 4);
             host.LegacyNativeHit(runtime, enemy, identity, native.currentAmount);
-            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(600, enemy.currentHealth, 4);
+            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(500, enemy.currentHealth, 4);
             identity = host.Activation(runtime.Hero, Q); host.LegacyNativeHit(runtime, enemy, identity, 10);
             build.SelectedKeystone = null; host.BindAuthored(runtime, Build.Decode(build.Encode()));
-            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(500, enemy.currentHealth, 4);
+            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(400, enemy.currentHealth, 4);
         }
 
         [Fact]
@@ -395,9 +387,7 @@ namespace SodRpg.Core.Tests
         {
             var key = new KeystoneDefinition("test.legacy.primed.key", new[] { Q },
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(10000),
-                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Primed })) },
-                new[] { KeystoneTransform.Scale(KeystoneLayer.NativeDamage, KeystoneField.Value, new KeystoneMagnitude(-1000),
-                    new KeystoneScope(targetMemorySet: new[] { Q })) });
+                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Primed })) });
             var build = new Build { SelectedKeystone = key };
             build.Powers.Add(Power.EchoingDodge, 10);
             build.Gimmicks.Add(new GimmickEntry { StarId = "test.legacy.preparation", Memory = Q,
@@ -426,7 +416,7 @@ namespace SodRpg.Core.Tests
 
 
         [Fact]
-        public void Exact_native_sacrifice_wrapper_awards_next_update_with_simultaneous_verified_downside()
+        public void Exact_native_sacrifice_wrapper_awards_next_update_without_reducing_native_damage()
         {
             HostAuthority.InstallFinalNativeKeyHook();
             HostAuthority.InstallNativeSacrificeHook();
@@ -438,7 +428,7 @@ namespace SodRpg.Core.Tests
             var host = new HostAuthority(); Mirror.NetworkServer.active = true; UnityEngine.Time.time = 0;
             host.BindAuthored(runtime, Build.Decode(build.Encode()));
             var native = new DamageData(100); var identity = host.Activation(hero, "St_Q_GoldenBurst");
-            host.NativeKeyDamage(runtime, Enemy(), identity, ref native); Assert.Equal(80, native.currentAmount, 4);
+            host.NativeKeyDamage(runtime, Enemy(), identity, ref native); Assert.Equal(100, native.currentAmount, 4);
             host.PaySacrifice(runtime, 20); Assert.Equal(980, hero.currentHealth); Assert.Equal(0, hero.Status.currentShield);
             host.FlushAuthored(runtime); Assert.Equal(10, hero.Status.currentShield);
             host.FlushAuthored(runtime); Assert.Equal(10, hero.Status.currentShield);
@@ -447,7 +437,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Missing_verified_hp_payment_callsite_disables_both_key_halves_without_cancelling_native_cost()
+        public void Missing_verified_hp_payment_callsite_disables_shield_upside_without_cancelling_native_cost()
         {
             HostAuthority.InstallFinalNativeKeyHook(); HostAuthority.InstallNativeSacrificeHook();
             var build = new Build { SelectedKeystone = Key("h.aurena.key2", "St_Q_GoldenBurst", new[] { KeystonePayloadKind.SacrificeShield }) };

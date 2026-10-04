@@ -22,17 +22,14 @@ namespace SodRpg.Core.Tests
         {
             var scope = new KeystoneScope(targetEffectIds: new[] { EffectId });
             transform.Scope = scope;
-            var key = AuthoredKeystoneCompiler.Compile("test.precap.key", new[] { Memory },
-                transform.Percent > 0 ? new[] { transform } : new[] { new AuthoredKeystoneSpec
-                {
-                    Grant = new AuthoredMechanismSpec
-                    {
-                        Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.precap.granted-heal",
-                        Source = MemorySelector.Parse(Memory), Trigger = MemoryEventKind.Hit,
-                        Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Heal, Value = 1m }
-                    }
-                } },
-                transform.Percent > 0 ? new[] { new AuthoredKeystoneSpec { Layer = KeystoneLayer.NativeDamage, Percent = -10 } } : new[] { transform });
+            var key = AuthoredKeystoneCompiler.Compile("test.precap.key", new[] { Memory }, new[] {
+                transform,
+                new AuthoredKeystoneSpec { Grant = new AuthoredMechanismSpec {
+                    Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.precap.granted-heal",
+                    Source = MemorySelector.Parse(Memory), Trigger = MemoryEventKind.Hit,
+                    Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Heal, Value = 1m }
+                } }
+            });
             var anchor = HeroSigils.TreeFor(Hero).First(t => t.RouteMemory == Memory && t.RouteOrder == 7);
             var stars = new List<AuthoredStarDef>
             {
@@ -104,27 +101,27 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Allocated_ordinary_boost_and_negative_key_use_raw_value_before_native_primed_cap()
+        public void Allocated_ordinary_boost_and_key_apply_native_primed_cap_after_scaling()
         {
-            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 120 },
-                100, new AuthoredKeystoneSpec { Percent = -50 });
+            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 40 },
+                300, new AuthoredKeystoneSpec { Percent = 50 });
             var request = Fire(build);
             Assert.Equal(120m, request.Entry.Def.EffectiveValueOrAuthored);
             Assert.Equal(120f, request.Entry.Def.ValuePercent);
         }
 
         [Theory]
-        [InlineData(GimmickEffect.Empower, GimmickParam.Duration, KeystoneField.Duration, 400, 10)]
-        [InlineData(GimmickEffect.Burst, GimmickParam.Radius, KeystoneField.Radius, 400, 10)]
+        [InlineData(GimmickEffect.Empower, GimmickParam.Duration, KeystoneField.Duration, 400, 16)]
+        [InlineData(GimmickEffect.Burst, GimmickParam.Radius, KeystoneField.Radius, 400, 16)]
         [InlineData(GimmickEffect.Ricochet, GimmickParam.ExtraTargets, KeystoneField.TargetCount, 30, 2 + Gimmicks.MaxExtraTargets)]
-        [InlineData(GimmickEffect.Element, GimmickParam.Chance, KeystoneField.Probability, 150, 75)]
+        [InlineData(GimmickEffect.Element, GimmickParam.Chance, KeystoneField.Probability, 100, 100)]
         public void Allocated_parameters_transform_raw_then_apply_native_final_cap(GimmickEffect effect, GimmickParam parameter,
             KeystoneField field, decimal amount, decimal expected)
         {
             var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = effect, Value = 1,
                 Arg = effect == GimmickEffect.Ricochet ? 2 : 0 }, 0,
-                field == KeystoneField.TargetCount ? new AuthoredKeystoneSpec { Field = field, Delta = -1 }
-                    : new AuthoredKeystoneSpec { Field = field, Percent = -50 }, parameter, amount);
+                field == KeystoneField.TargetCount ? new AuthoredKeystoneSpec { Field = field, Delta = 1 }
+                    : new AuthoredKeystoneSpec { Field = field, Percent = 50 }, parameter, amount);
             var def = Fire(build).Entry.Def;
             if (parameter == GimmickParam.Duration) Assert.Equal((float)expected, Gimmicks.Duration(def, 4));
             else if (parameter == GimmickParam.Radius) Assert.Equal((float)expected, Gimmicks.Radius(def, effect == GimmickEffect.Ricochet ? 8 : 4));
@@ -137,10 +134,10 @@ namespace SodRpg.Core.Tests
         {
             const string cap = "test.precap.duration";
             FractionalScopedModifiers.RegisterScopedCapProfile(new ScopedModifierCapProfile
-                { Id = cap, Param = GimmickParam.Duration, MaximumModifier = ModifierUnits.FromPercent(200) });
+                { Id = cap, Param = GimmickParam.Duration, MaximumModifier = ModifierUnits.FromPercent(50) });
             var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Empower, Value = 1 }, 0,
-                new AuthoredKeystoneSpec { Field = KeystoneField.Duration, Percent = -50 }, GimmickParam.Duration, 400, cap);
-            Assert.Equal(6f, Gimmicks.Duration(Fire(build).Entry.Def, 4));
+                new AuthoredKeystoneSpec { Field = KeystoneField.Duration, Percent = 25 }, GimmickParam.Duration, 100, cap);
+            Assert.Equal(7.5f, Gimmicks.Duration(Fire(build).Entry.Def, 4));
         }
 
         [Fact]
@@ -209,8 +206,8 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Malformed_duplicate_unknown_and_oversized_raw_rows_reject_the_whole_build()
         {
-            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 120 },
-                100, new AuthoredKeystoneSpec { Percent = -50 });
+            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 40 },
+                300, new AuthoredKeystoneSpec { Percent = 50 });
             string wire = build.Encode();
             string raw = wire.Split(';').Single(section => section.StartsWith("r:", StringComparison.Ordinal));
             Assert.Null(Build.Decode(wire.Replace(raw, raw + "," + raw.Substring(2))));

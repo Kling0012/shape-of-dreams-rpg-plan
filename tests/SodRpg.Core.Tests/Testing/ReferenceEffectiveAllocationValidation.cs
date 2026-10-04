@@ -433,7 +433,6 @@ namespace SodRpg.Core.Tests.Testing
                         new KeystonePayload(KeystoneLayer.GeneratedDamage, value / BuildPrecision.Scale,
                             new KeystoneCaps(decimal.MaxValue), effect: def.Effect, effectId: entry.StarId), entry.Memory,
                         sourceKind: KeystoneSourceKind.Generated, sourceSlot: sourceSlot, heroKey: heroKey);
-                    if (generated.Disabled) continue;
                     value = generated.Value * BuildPrecision.Scale;
                 }
                 if (def.Effect == GimmickEffect.Element)
