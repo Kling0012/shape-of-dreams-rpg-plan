@@ -1467,15 +1467,17 @@ namespace SodRpg.Core.Game
         /// <summary>value × 1.5^times を 3^times / 2^times の有理数として整数だけで切り上げる（浮動小数点の誤差を持ち込まない）。</summary>
         private static int TimesThreeHalves(int value, int times)
         {
-            long num = 1, den = 1;
-            for (int i = 0; i < times; i++)
-            {
-                // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。
-                if (num > long.MaxValue / 3 || den > long.MaxValue / 2 || num > long.MaxValue / Math.Max(1, value)) return int.MaxValue;
-                num *= 3;
-                den *= 2;
-            }
-            return (int)Math.Min(int.MaxValue, ((long)value * num + den - 1) / den);
+            if (value <= 0) return 0;
+            // 欠片の所持上限（int）を超える費用は表せる範囲外なので、上限に張り付く。value ≥ 1 なら 1.5^56 は int.MaxValue を必ず超える。
+            if (value > 400) throw new ArgumentOutOfRangeException(nameof(value)); // 呼び出しは最大 60×5=300。decimal で厳密に扱える範囲
+            if (times >= 56) return int.MaxValue;
+            // 途中の long 上限に達しても本来 int に収まる費用を過大にしないよう、最後の乗算と切り上げの加算まで正確に計算する。
+            // decimal は整数なら 28 桁まで正確（value ≤ 400、3^55 ≈ 1.7e26 なので積は 7e28 未満で decimal の上限 7.9e28 に収まる）。除算は丸めが入るので余りで切り上げる。
+            decimal num = value, den = 1m;
+            for (int i = 0; i < times; i++) { num *= 3m; den *= 2m; }
+            decimal rem = decimal.Remainder(num, den);
+            decimal cost = (num - rem) / den + (rem > 0m ? 1m : 0m);
+            return cost >= int.MaxValue ? int.MaxValue : (int)cost;
         }
 
         /// <summary>
@@ -1491,6 +1493,7 @@ namespace SodRpg.Core.Game
             if (r.Locked) throw new InvalidOperationException(Loc.T("鍵のかかった遺物は洗い直せません。", "Locked relics cannot be rerolled."));
             if (p.IsEquippedAnywhere(uid)) throw new InvalidOperationException(Loc.T("装着中の遺物は洗い直せません。", "Equipped relics cannot be rerolled."));
             var (shards, tuning) = AffixRerollCost(r);
+            if (shards < 0 || tuning < 0) throw new InvalidOperationException(Loc.T("洗い直しの費用が不正です。", "Invalid reroll cost.")); // 負の費用は支払いが加算になるので受け付けない
             if (p.Material(Materials.Shard) < shards || p.Material(Materials.Tuning) < tuning)
                 throw new InvalidOperationException(Loc.T($"素材が足りません（欠片{shards}・調律石{tuning}必要）。", $"Not enough materials ({shards} shards and {tuning} tuning stones needed)."));
             int count = r.Affixes.Count;
