@@ -2,7 +2,7 @@
 
 ## 1. 概要・確定方針
 
-14セット・84部位を、実際のボス技と固有報酬の仕組みに沿って再設計した仕様書。**設計のみで実装しない**。Demonの993ee1dの遊び方・数値は維持し、全体で使う機構へ定義方式を共通化する。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
+14セット・84部位を、実際のボス技と固有報酬の仕組みに沿って再設計した承認済み仕様書。段階Aは共通機構とDemonを実装し、残り13セットは設計のまま。Demonの993ee1dの遊び方・数値は維持し、全体で使う機構へ定義方式を共通化する。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
 
 | 項目 | 方針 |
 | --- | --- |
@@ -15,6 +15,27 @@
 | 報酬なし | PrimusAeron / Polaris は本体報酬との連携なし。追加の任意要素も今回は採用しない |
 | 同期 | ボス型名・抽選条件はホストの撃破factが正。抽選結果は個人別、戦闘効果はホストが適用 |
 | 名称・自立性 | 日英名は§3を採用。任意の2/3部位で段階機構が成立し、6部位も特定記憶・別の召喚手段を必須にしない |
+
+### 段階Aの実装境界
+
+- Coreは`BossProfiles`／`BossMoveProfile`／`BossRewardProfile`、`UniqueDef.BossMove`、`SetDef.BossStages`へ接続。`Build.BossMoves`／`BossRewards`は独立した`b:`／`z:` codec節に入り、各64件上限・既知ID・重複・channel／stage検証を行う。`HostBuildValidation`は装備から再導出する。`Relic.AuthoredEffectCount`で強化の固有効果枠を扱い、旧Demonの保存Powerは読み込み時に撤去する。
+- 共通runtimeは`HostAuthority.BossRuntime.cs`の`BossCombatState`。`TickBossEffects`／`ClearBossEffects`を統合入口に、native主撃・ConfirmedUse・移動完了・damage・報酬instance・時計／modeを有限actionへdispatchする。
+
+| 機構 | 実装クラス |
+| --- | --- |
+| M1 | `BossShapeAttack` |
+| M2 | `BossProjectileExecutor` |
+| M3 | `BossFieldExecutor`（同じowner/setで全予約tokenを合計4まで、地点列は1token） |
+| M4 | `BossMovementExecutor` |
+| M5 | `BossEnemyMovementExecutor` |
+| M6 | `BossDeployableExecutor`（非Entity射手の生成。native召喚は検証済み個体登録のみ） |
+| M7 | `BossDefenseExecutor`（独立container・shield・StatBonusの個別除去） |
+| M8 | `BossProgressLedger`（印8対象・counter6・mode期限・activation gate） |
+
+- `HostAuthority.BossNativeAdapters.cs`はcast／instance／displacement寿命と帰属packetを結合し、`Se_U_Hysteria`の生成時に返った固有SpeedEffectのみ捕捉する。装備なしでも固定64枠の捕捉だけを保持し、装備変更時に既に生存する状態へ現行段階を適用できる。生成済み爪の再発行はしない。
+- 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。環・樹木の線・移動する弾の軌跡というMOD幾何描画を使用し、ボスモデル／network prefabは要求しない。
+- Protocolはmainの15から**16**へ更新。旧Skollの6部位・段階・Guard連携は撤去し、段階Aの専用取得登録はDemonだけ。旧Skoll品は既存の未知Unique処理で除外される。新Skollを含む残り13セット・78部位、残り10報酬adapterは未実装で、以下の各節はその承認設計を保持する。
+- WikiGenの実行で新Demonの部位／段階／報酬連携の日英出力を確認した。ゲーム実行ファイルがなくManaged DLLだけのため、実機の戦闘・表示・協力通信・較正は未確認。テストの設計・追加・変更は行わない。
 
 ### 設計原則
 
@@ -63,7 +84,7 @@
 - 深度はホストが遠征前に共有選択した**夢の深さ `ClientSession.HostRun.DreamDepth`（0〜5）**を使用。個人の潜行Heat、本体Limbo深度、ゾーン番号、危険度とは別軸であり、重ね掛けしない。難易度／夢の深さは撃破時ホストがfactへ凍結し、保留報酬の解放時に取り直さない。
 - ホストで `m is BossMonster`、本来のtier=Boss、許可14型との完全一致を満たす撃破だけ型名を付ける。`disableLoot`／無報酬ハンター等の既存除外を維持。幻影・召喚雑魚・Polarisの石・Crawlerは対象外。同じ許可型の変種も、そのボス自身の報酬として扱う。
 - `Rules.OnKill` の `Waypoints.ApplyKill` 後、`Profile.StoreRng` 前に個人の既存RNGで専用抽選を1回行う。当選時は6部位を各1/6、重複ありで1点選び、`Loot.RollUnique` 生成品を `reward.Relics` 末尾へ加える。通常の図鑑・統計・通知・未確保鞄・満杯時処理を共用。対象外／型名欠落では追加乱数を消費しない。所持数・狙い系統・人数・幸運でpや部位比率を変えない。
-- 既存のボス通常ドロップは率100%、2点目60%、floor=Uncommon、エピックpity `min(1, 0.05 + 0.035k)`。これを残す。専用当選はpityを進行／リセットせず、通常側の救済にも失敗回数にも数えない。専用pity・重複救済は追加しない。
+- 既存のボス通常ドロップは率100%、2点目60%、floor=Uncommon。mainの#56追従後のエピックpityは`min(1, 0.025 + 0.00875k)`（113体目で確定）を維持する。専用当選はpityを進行／リセットせず、通常側の救済にも失敗回数にも数えない。専用pity・重複救済は追加しない。
 - 既存 `SetPieceWeight=4` / `SetCompletionWeight=60` は汎用セット専用。新セットは対象外。専用品は道標変換の後置きなので、BossTribute等の格上げ、強制部位、個数制限、複製、SupplyLine等の分解、覚醒への変換に通さない（鞄満杯時の既存処理は残す）。本体の魂の祠（固有報酬10%／隠し100%）とも独立、祠の使用は不要。
 - 均等重複ありで6種完成までの期待当選数は `6H6=14.7`。表は固定pで `14.7 / p` を算出した期待値であり、当選品を保持できる前提。完成回数の保証ではなく、出現機会が少ないボスでは収集が長期化する。率・補正・上限は§5の確定値を使用する。
 
