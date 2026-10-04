@@ -90,8 +90,43 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 | `triggerByIdentity` | `{ Identity記憶: trigger }` の対応（装備Identityごとに発火元が違う） |
 | `replaces` | 置き換える星のID（二重発動しない） |
 | `basis` / `pool` | 値の基準（例 RecipientMaxHP）と障壁プール（例 Ordinary） |
+| `strike` | `effect: "IdentityStrike"` と必ず対。アイデンティティ記憶が与える追加ダメージ（下記 5a） |
+| `tuning` | `effect: "MemoryTuning"` と必ず対。名前付きの本体記憶の静的な挙動変更（下記 5b） |
 
 これ以外の欄（旧 `pair` `pairResolved` `maxCharge` など）は使わない。必要な補足は `notes` へ。
+
+#### 5a. IdentityStrike（アイデンティティ記憶そのものが与えるダメージ）
+
+空殻の風の傷・一歩一殺のように、**本体の追跡・増幅（神聖なる信仰など）が見える「記憶のダメージ」**を足す。実行は `HostAuthority.IdentityStrikes.cs`（ダメージ発生元を装備中のアイデンティティ記憶のSkillTriggerにする。`hero.PureDamage` ではない）。`memory` は `St_D_ScarOfTheWind` か `St_D_TheKillingFlow`、`trigger: "OnHit"`（自分の通常攻撃の命中）、`arg: 0`、`cooldown: 0`、`target: null`。`value` は攻撃力・魔力の**高い方**に対する百分率（60 = 60%）。
+
+```json
+"gimmick": {"trigger": "OnHit", "effect": "IdentityStrike", "value": 60, "arg": 0, "cooldown": 0, "target": null,
+  "strike": {"mode": "AfterDisplacement", "element": "Dark", "shape": "ForwardArc", "range": 4.5, "width": 120, "maxTargets": 8, "windowSeconds": 4}}
+```
+
+| `strike.mode` | 意味 | 必須／禁止 |
+|---|---|---|
+| `AfterDisplacement` | ダッシュ・テレポートのあとの次の通常攻撃の命中で1回（1回の移動につき1回）。風の傷専用 | `windowSeconds` 必須（0.5〜10）。`everyN`・`bonusSpeed` は不可 |
+| `EveryNthBasicAttack` | 通常攻撃がN回命中するごと（`gimmick.everyN`、1 = 毎回）。一歩一殺専用 | `everyN` 必須（1〜100）。`bonusSpeed` は任意：変換した追加攻撃速度1%ごとの上乗せ%（0.2 = 0.2%）。`windowSeconds` は不可 |
+| `DashBonusAsMemory` | ダッシュ攻撃の追加分（闇75%）を風の傷のダメージとして数える（ダメージは増えない）。風の傷専用 | `value: 0`。他の欄は不可 |
+
+`element` は `None/Fire/Cold/Light/Dark`、`shape` は `ForwardLine`（`width` = 幅m）／`ForwardArc`（`width` = 角度）、`range` は1〜15m、`maxTargets` は1〜16（既定8）。`condition/once/valuesByRank/triggerByIdentity/replaces/basis/pool` は不可。
+
+#### 5b. MemoryTuning（名前付きの本体記憶の静的な変更）
+
+発動イベントを持たず、その記憶を装備している間だけホストが適用する。`trigger: "OnUse"`、`arg: 0`、`cooldown: 0`、`target: null`、`value` は百分率。実行は `HostAuthority.MemoryTunings.cs`（一歩一殺）・`HostAuthority.StanceTuning.cs`（滅殺態勢）。
+
+```json
+"gimmick": {"trigger": "OnUse", "effect": "MemoryTuning", "value": 40, "arg": 0, "cooldown": 0, "target": null, "tuning": {"kind": "KillingFlowKeepSpeed"}}
+```
+
+| `tuning.kind` | `memory` | `value` | 効果 |
+|---|---|---|---|
+| `KillingFlowKeepSpeed` | `St_D_TheKillingFlow` | 0.01〜90（残す割合%） | 追加攻撃速度のこの割合は攻撃力に変換せず攻撃速度として残す（変換した攻撃力も同じ割合だけ戻す） |
+| `KillingFlowOnHitHealScale` | `St_D_TheKillingFlow` | 100〜400（上限%。200 = 最大2倍） | 命中ごとの回復（吸血）に、変換で失った攻撃速度の倍率を掛ける |
+| `StanceSwordQiAttackBasis` | `St_R_AnnihilationStance` | 100（固定） | 剣気が魔力ではなく攻撃力で伸び（係数は同じ）、物理ダメージになる |
+
+2つの新機構は刻印のGrantには使えない（通常の星のみ）。`validate.py` が形を、`gen_cs.py` が `IdentityStrikeDefinition` / `MemoryTuningDefinition` の型付き生成を行う。設計は [v1.32 星の追加](../../docs/specs/v1.32-star-additions.md) C、実装と未検証事項は [v1.32-identity-strike-impl.md](../../docs/specs/v1.32-identity-strike-impl.md)。
 
 ### 選択肢（Choice の `options`）
 `options[0]` = 選択肢A、`options[1]` = B。キーは `kind, memory, value, param, receiver, target, gimmick, power, stat, nameJa, nameEn`（この順・全て必須、使わない欄と無い名前は `null`）。`kind` は Choice/Keystone 以外。GimmickBoost/GimmickParam の選択肢は星と同じく `target` を持つ。旧 `label` は廃止（順序で表す）。

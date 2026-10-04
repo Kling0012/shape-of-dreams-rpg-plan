@@ -355,7 +355,10 @@ namespace SodRpg.Mod
             packet.DamageAmount = info.damage.amount;
             long victim = AttributedVictimLifetime(info.victim);
             if (packet.MainBasic)
+            {
                 PublishMemoryActivation(packet.Identity.Event(MemoryEventKind.OwnedBasicAttackHit, packet.Serial, victim), hero, info.victim, info.damage.amount);
+                OnIdentityStrikeBasicHit(hero, info.victim, packet.Identity.ActivationId);
+            }
             if (packet.Identity.SourceMemory.Length != 0)
             {
                 PublishMemoryActivation(packet.Identity.Event(MemoryEventKind.Hit, packet.Serial, victim), hero, info.victim, info.damage.amount);

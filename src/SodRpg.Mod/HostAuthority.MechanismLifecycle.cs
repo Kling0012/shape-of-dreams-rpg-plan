@@ -44,6 +44,8 @@ namespace SodRpg.Mod
             RemoveMemoryPrimedRelay(hero);
             ClearAuthoredKeystone(hero);
             _authoredMechanisms.Remove(hero);
+            ForgetIdentityStrikes(hero);
+            ForgetMemoryTunings(hero);
         }
 
         private void ClearAssignedMechanismSession()
@@ -55,6 +57,9 @@ namespace SodRpg.Mod
             ClearCalmStunBindings();
             _memoryPrimedRelay.Clear();
             _authoredMechanisms.Clear();
+            _identityStrikes.Clear();
+            ClearMemoryTunings();
+            _identityDashBonus.Clear();
             // Subscriptions belong to this HostAuthority instance and survive reconnects.
         }
     }

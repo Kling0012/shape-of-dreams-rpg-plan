@@ -129,6 +129,8 @@ namespace SodRpg.Core.Game
                     case AuthoredMechanismKind.AlliedWard: return Loc.T("味方への障壁付与", "Allied shield ward");
                     case AuthoredMechanismKind.PressureDividend: return Loc.T("敵の強化に応じた追加報酬", "Pressure dividend");
                     case AuthoredMechanismKind.StunSourceFilter: return Loc.T("記憶のスタンによる障壁", "Native memory stun shield");
+                    case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の挙動の変更", "Memory behavior change");
+                    case AuthoredMechanismKind.IdentityStrike: return Loc.T("アイデンティティ記憶の追加攻撃", "Identity memory strike");
                     default: throw new InvalidOperationException("Unknown mechanism: " + star.Id);
                 }
             }

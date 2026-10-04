@@ -8,9 +8,10 @@ namespace UnityEngine
 {
     public partial struct Vector3
     {
-        public float x, y;
-        public float sqrMagnitude => x * x + y * y;
-        public static Vector3 operator -(Vector3 a, Vector3 b) => new Vector3 { x = a.x - b.x, y = a.y - b.y };
+        public float x, y, z;
+        public Vector3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public float sqrMagnitude => x * x + y * y + z * z;
+        public static Vector3 operator -(Vector3 a, Vector3 b) => new Vector3 { x = a.x - b.x, y = a.y - b.y, z = a.z - b.z };
     }
 }
 namespace SodRpg.Mod
@@ -96,12 +97,17 @@ namespace SodRpg.Mod
         private HashSet<Type> _markers;
         private float _amplification;
         private readonly float _amount;
-        public DamageData(float amount) { actor = null; _markers = null; _amplification = 1f; _amount = amount; attackEffectType = AttackEffectType.None; _attributes = 0; }
+        public DamageData(float amount) { actor = null; _markers = null; _amplification = 1f; _amount = amount; attackEffectType = AttackEffectType.None; _attributes = 0; Elemental = null; }
         public float currentAmount => _amount * _amplification;
         public void ApplyAmplification(float value) => _amplification *= 1f + value;
         public bool IsAmountModifiedBy(Type type) => _markers != null && _markers.Contains(type);
         public DamageData SetAmountModifiedBy(Type type) { if (_markers == null) _markers = new HashSet<Type>(); _markers.Add(type); return this; }
-        public void Dispatch(Entity target) => target.currentHealth -= currentAmount;
+        public void Dispatch(Entity target)
+        {
+            // Mirrors Actor.DealDamage: dealt processors then ActorEvent_OnDealDamage, both walking the dealing Actor's parent chain.
+            actor?.SimulateDealDamage(ref this, target);
+            target.currentHealth -= currentAmount;
+        }
     }
     internal sealed partial class DewPlayer
     {

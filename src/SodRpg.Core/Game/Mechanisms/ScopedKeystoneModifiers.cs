@@ -276,6 +276,8 @@ namespace SodRpg.Core.Game
                     case AuthoredMechanismKind.AlliedWard: admittedKinds.Add(KeystonePayloadKind.AlliedWard); break;
                     case AuthoredMechanismKind.BridgeSuccess: admittedKinds.Add(KeystonePayloadKind.BridgeSuccess); break;
                     case AuthoredMechanismKind.PressureDividend: admittedKinds.Add(KeystonePayloadKind.PressureDividend); break;
+                    case AuthoredMechanismKind.MemoryTuning: throw new ArgumentException("A memory tuning is an ordinary star mechanism, never a keystone grant.");
+                    case AuthoredMechanismKind.IdentityStrike: throw new ArgumentException("An identity strike is an ordinary star mechanism, never a keystone grant.");
                 }
             }
             Payloads = Array.AsReadOnly(admittedKinds.OrderBy(k => k).ToArray());

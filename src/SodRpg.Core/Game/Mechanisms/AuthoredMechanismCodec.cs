@@ -112,6 +112,12 @@ namespace SodRpg.Core.Game
                     w.Write(ward.BaseTargets); w.Write(ward.Targets - ward.BaseTargets); w.Write(ward.MaxTargets); w.Write((int)ward.Limits); w.Write((int)ward.Budget); break;
                 case AuthoredMechanismKind.PressureDividend:
                     var d = s.Dividend; w.Write(d.SourceMemory); w.Write(d.ProbabilityUnits); Strings(w, d.RequiredMemories); Strings(w, d.ContributorIds); break;
+                case AuthoredMechanismKind.MemoryTuning:
+                    var tuning = s.Tuning; w.Write(tuning.ChannelId); w.Write((int)tuning.Kind); w.Write(tuning.ValueUnits); break;
+                case AuthoredMechanismKind.IdentityStrike:
+                    var strike = s.IdentityStrike; w.Write(strike.ChannelId); w.Write(strike.Identity); w.Write((int)strike.Trigger); w.Write(strike.EveryN);
+                    w.Write(strike.WindowSeconds); w.Write(strike.AdUnits); w.Write(strike.BonusSpeedUnitsPerPercent); w.Write((int)strike.Element);
+                    w.Write((int)strike.Shape); w.Write(strike.RangeMetres); w.Write(strike.WidthOrArc); w.Write(strike.MaxTargets); w.Write((int)strike.Basis); break;
                 case AuthoredMechanismKind.BridgeSuccess:
                     var b = s.Bridge; w.Write(b.PairId); w.Write(b.Rank); w.Write((int)b.GateKind); Selector(w, b.OpeningSource); w.Write((int)b.OpeningTrigger);
                     Selector(w, b.PayoffSource); w.Write((int)b.PayoffTrigger); w.Write((int)b.Budget); w.Write((int)b.SourcePhase); w.Write(b.UsesNativeWindowLifetime);
@@ -154,6 +160,12 @@ namespace SodRpg.Core.Game
                     if (ids.Length == 0) throw new FormatException("Missing dividend contributors.");
                     // Effective probability is carried once; the contributor set is attribution metadata, not extra chance.
                     s.Dividend = PressureDividendChannel.FromEffective(source, requirements, ids, probability); break;
+                case AuthoredMechanismKind.MemoryTuning:
+                    s.Tuning = new MemoryTuningDefinition(Text(r), (MemoryTuningKind)r.ReadInt32(), r.ReadInt32()); break;
+                case AuthoredMechanismKind.IdentityStrike:
+                    s.IdentityStrike = new IdentityStrikeDefinition(Text(r), Text(r), (IdentityStrikeTrigger)r.ReadInt32(), r.ReadInt32(), r.ReadSingle(),
+                        r.ReadInt32(), r.ReadInt32(), (IdentityStrikeElement)r.ReadInt32(), (IdentityStrikeShape)r.ReadInt32(), r.ReadSingle(), r.ReadSingle(),
+                        r.ReadInt32(), (IdentityStrikeBasis)r.ReadInt32()); break;
                 case AuthoredMechanismKind.BridgeSuccess:
                     string pair = Text(r); int rank = r.ReadInt32(); var gate = (BridgeGateKind)r.ReadInt32(); var opening = Selector(r);
                     var openingTrigger = (MemoryEventKind)r.ReadInt32(); var payoff = Selector(r); var payoffTrigger = (MemoryEventKind)r.ReadInt32();

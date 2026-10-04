@@ -97,6 +97,50 @@ namespace SodRpg.Core.Game
             }
         }
 
+        private static string DescribeMemoryTuning(MemoryTuningDefinition tuning)
+        {
+            switch (tuning.Kind)
+            {
+                case MemoryTuningKind.KillingFlowKeepSpeed:
+                    return Loc.T("追加攻撃速度の" + Number(tuning.ValueUnits / 100m) + "%は攻撃力に変換せず、攻撃速度として残す。",
+                        Number(tuning.ValueUnits / 100m) + "% of the bonus attack speed is kept as attack speed instead of being converted.");
+                case MemoryTuningKind.KillingFlowOnHitHealScale:
+                    return Loc.T("命中ごとの回復に、変換で失った攻撃速度の倍率を掛ける（最大" + Number(tuning.ValueUnits / 10000m) + "倍）。",
+                        "On-hit healing is multiplied by the attack speed multiplier lost to the conversion (up to x" + Number(tuning.ValueUnits / 10000m) + ").");
+                case MemoryTuningKind.StanceSwordQiAttackBasis:
+                    return Loc.T("剣気は魔力ではなく攻撃力で伸び（係数は同じ）、物理ダメージになる。", "The sword qi scales with attack damage instead of ability power (same coefficient) and becomes physical damage.");
+                default: throw new InvalidOperationException("Unknown tuning: " + tuning.Kind);
+            }
+        }
+        private static string DescribeIdentityStrike(IdentityStrikeDefinition strike)
+        {
+            string memory = Links.Name(strike.Identity).ToString();
+            if (!strike.DealsDamage)
+                return Loc.T("突進攻撃の追加ダメージを、通常攻撃ではなく" + memory + "のダメージとして扱う（ダメージは増えない）。",
+                    "The dash attack's bonus portion counts as " + memory + " damage instead of basic attack damage (no extra damage).");
+            string element = strike.Element == IdentityStrikeElement.None ? "" : Loc.T(ElementName(strike.Element) + "属性の", ElementName(strike.Element) + " ");
+            string basis = strike.Basis == IdentityStrikeBasis.AttackDamage ? Loc.T("攻撃力", "attack damage") : Loc.T("攻撃力・魔力の高い方", "the higher of attack damage and ability power");
+            string amount = Percent(strike.AdUnits) + Loc.T("の", " of ") + basis
+                + (strike.BonusSpeedUnitsPerPercent > 0 ? Loc.T("＋変換した追加攻撃速度1%ごとに", " + per 1% converted bonus attack speed ") + Percent(strike.BonusSpeedUnitsPerPercent) : "");
+            string shape = (strike.Shape == IdentityStrikeShape.ForwardLine ? Loc.T("前方の直線", "a forward line") : Loc.T("前方の扇形", "a forward arc"))
+                + " " + Number(strike.RangeMetres) + "m";
+            string when = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit
+                ? Loc.T("ダッシュ・テレポートのあとの次の通常攻撃が命中すると（1回の移動につき1回）", "After a dash or teleport, the next basic attack hit (once per displacement)")
+                : strike.EveryN == 1 ? Loc.T("通常攻撃が命中するたびに", "Every basic attack hit") : Loc.T("通常攻撃が" + strike.EveryN + "回命中するごとに", "Every " + strike.EveryN + " basic attack hits");
+            return when + Loc.T("、" + memory + "として", ", " + memory + " strikes ") + shape + Loc.T("へ" + element + amount + "の斬撃。", " for " + element + amount + ".");
+        }
+        private static string ElementName(IdentityStrikeElement element)
+        {
+            switch (element)
+            {
+                case IdentityStrikeElement.Fire: return Loc.T("火", "fire");
+                case IdentityStrikeElement.Cold: return Loc.T("冷気", "cold");
+                case IdentityStrikeElement.Light: return Loc.T("光", "light");
+                case IdentityStrikeElement.Dark: return Loc.T("闇", "dark");
+                default: throw new InvalidOperationException("Unknown element: " + element);
+            }
+        }
+
         internal static string DescribeMechanism(AuthoredMechanismSpec spec)
         {
             AuthoredMechanisms.Validate(spec);
@@ -155,6 +199,8 @@ namespace SodRpg.Core.Game
                         + ward.Targets + Loc.T("体。", " targets. ") + PoolText(ward.PoolKind));
                     break;
                 case AuthoredMechanismKind.PressureDividend: lines.Add(spec.Dividend.Describe()); break;
+                case AuthoredMechanismKind.MemoryTuning: lines.Add(DescribeMemoryTuning(spec.Tuning)); break;
+                case AuthoredMechanismKind.IdentityStrike: lines.Add(DescribeIdentityStrike(spec.IdentityStrike)); break;
                 case AuthoredMechanismKind.SacrificeShield:
                     lines.Add(Loc.T("指定された固有のHP支払いの50%を障壁に変換。新たに付与する量は最大HPの10%まで。", "Converts 50% of qualified native HP payment to a shield; each new award is capped at 10% maximum HP.")); break;
                 case AuthoredMechanismKind.StunSourceFilter:

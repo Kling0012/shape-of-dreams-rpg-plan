@@ -121,6 +121,8 @@ namespace SodRpg.Core.Tests
                 Trigger = MemoryEventKind.Kill, Budget = AttributionBudget.PerKill,
                 Dividend = new PressureDividendChannel(new[] { new PressureDividendContribution("test.presentation", Memory, 100) }) };
             yield return new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.StunSourceFilter, ChannelId = id };
+            yield return IdentityStrikeTests.Spec(IdentityStrikeTests.WindStrike(id));
+            yield return IdentityStrikeTests.Spec(MemoryTuningDefinition.KeepSpeed(id, 4000));
         }
 
         [Fact]

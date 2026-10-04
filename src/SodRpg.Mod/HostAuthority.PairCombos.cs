@@ -347,7 +347,12 @@ namespace SodRpg.Mod
                 try
                 {
                     if (r.ChainDamage > 0) DamageAround(hero, victim.position, PowerRuntime.ChainRange, r.ChainDamage, victim, PowerRuntime.ChainTargets, magic: true);
-                    if (r.Heal > 0) hero.Heal(r.Heal).Dispatch(hero);
+                    if (r.Heal > 0)
+                    {
+                        // On-hit healing (lifesteal): the Killing Flow heal scale applies to exactly this dispatch.
+                        _onHitHealDepth++;
+                        try { hero.Heal(r.Heal).Dispatch(hero); } finally { _onHitHealDepth--; }
+                    }
                     if (r.ExecuteDamage > 0) hero.PureDamage(r.ExecuteDamage, 0f).Dispatch(victim);
                     if (r.BlazeDamage > 0 && victim.isActive) hero.MagicDamage(r.BlazeDamage, 0f).Dispatch(victim);
                     if (victim.isActive)

@@ -253,7 +253,7 @@ class Compiler:
         effects = [] if value is None else value.split("/")
         resolved = []
         for effect in effects:
-            concrete = "Recharge" if effect in RECHARGE else "Shield" if effect in WARDS else None if effect in ("RelayWindow", "PressureDividend") else effect
+            concrete = "Recharge" if effect in RECHARGE else "Shield" if effect in WARDS else None if effect in ("RelayWindow", "PressureDividend", "IdentityStrike", "MemoryTuning") else effect
             if concrete is None:
                 continue  # These typed payloads are bound by exact target IDs.
             if concrete not in self.effects or concrete == "None":
@@ -383,6 +383,10 @@ class Compiler:
             if kind == "baseline":
                 override = LEGACY_OPENING_OVERRIDES.get(sid)
                 return "ManifestPair(" + cs(self.hero) + ", " + cs(sid) + (", openingOverride: MemoryEventKind." + TRIGGERS[override] if override else "") + ")"
+        if e == "IdentityStrike":
+            return self.identity_strike(sid, row, g, prefix)
+        if e == "MemoryTuning":
+            return self.memory_tuning(sid, row, g, prefix)
         members = {"ChannelId": cs(sid), "Source": selector(source), "Trigger": "MemoryEventKind." + trigger,
                    "Budget": "AttributionBudget." + budget}
         if "condition" in g:
@@ -487,6 +491,50 @@ class Compiler:
         if e not in RECHARGE and e not in ORDINARY and g["cooldown"] != 0:
             self.fail(sid, prefix + ".cooldown", g["cooldown"], "typed payload has no seconds-cooldown field")
         return obj("AuthoredMechanismSpec", members)
+
+    def identity_strike(self, sid, row, g, prefix):
+        """IdentityStrike: damage dealt by the equipped identity memory itself (the SkillTrigger is the damage Actor), see
+        HostAuthority.IdentityStrikes.cs. Units: gimmick.value = percent of the higher of AD/AP; strike.bonusSpeed = extra percent per 1% converted bonus attack speed."""
+        source, st = row.get("memory"), g["strike"]
+        mode = st["mode"]
+        if not source or source.startswith("@") or source not in ("St_D_ScarOfTheWind", "St_D_TheKillingFlow"):
+            self.fail(sid, "memory", source, "IdentityStrike needs one concrete verified Husk identity memory (St_D_ScarOfTheWind or St_D_TheKillingFlow)")
+            return None
+        if row.get("receiver") or self.pairs.get(sid):
+            self.fail(sid, prefix, g, "IdentityStrike has no receiver and cannot be a bridge payload")
+            return None
+        if mode == "DashBonusAsMemory":
+            if source != "St_D_ScarOfTheWind":
+                self.fail(sid, "memory", source, "the dash-bonus attribution exists only for St_D_ScarOfTheWind")
+                return None
+            payload = "IdentityStrikeDefinition.DashBonusAsMemory(" + cs(sid) + ")"
+        else:
+            if mode == "AfterDisplacement" and source != "St_D_ScarOfTheWind" or mode == "EveryNthBasicAttack" and source != "St_D_TheKillingFlow":
+                self.fail(sid, prefix + ".strike.mode", mode, "AfterDisplacement belongs to Wind Scar and EveryNthBasicAttack to Killing Flow")
+                return None
+            common = ", IdentityStrikeElement." + st["element"] + ", IdentityStrikeShape." + st["shape"] + ", " + format(number(st["range"]), "f") + "f, "                 + format(number(st["width"]), "f") + "f, " + str(st.get("maxTargets", 8))
+            if mode == "AfterDisplacement":
+                payload = "IdentityStrikeDefinition.AfterDisplacement(" + cs(sid) + ", " + cs(source) + ", " + units(g["value"]) + common                     + ", windowSeconds: " + format(number(st["windowSeconds"]), "f") + "f)"
+            else:
+                payload = "IdentityStrikeDefinition.EveryNth(" + cs(sid) + ", " + cs(source) + ", " + str(g["everyN"]) + ", " + units(g["value"])                     + ", " + units(st.get("bonusSpeed", 0)) + common + ")"
+        return obj("AuthoredMechanismSpec", {"ChannelId": cs(sid), "Kind": "AuthoredMechanismKind.IdentityStrike", "Source": selector(source),
+                   "Trigger": "MemoryEventKind.OwnedBasicAttackHit", "Budget": "AttributionBudget.PerOwnedBasicAttack", "IdentityStrike": payload})
+
+    def memory_tuning(self, sid, row, g, prefix):
+        """MemoryTuning: a static, host-authoritative change of one named native memory (HostAuthority.MemoryTunings.cs / StanceTuning.cs)."""
+        source, kind = row.get("memory"), g["tuning"]["kind"]
+        expected, _, _ = canonical.TUNINGS[kind]
+        if source != expected:
+            self.fail(sid, "memory", source, "tuning " + kind + " belongs to " + expected)
+            return None
+        if row.get("receiver") or self.pairs.get(sid):
+            self.fail(sid, prefix, g, "MemoryTuning has no receiver and cannot be a bridge payload")
+            return None
+        factory = {"KillingFlowKeepSpeed": "KeepSpeed(" + cs(sid) + ", " + units(g["value"]) + ")",
+                   "KillingFlowOnHitHealScale": "HealScale(" + cs(sid) + ", " + units(g["value"]) + ")",
+                   "StanceSwordQiAttackBasis": "SwordQiAttackBasis(" + cs(sid) + ")"}[kind]
+        return obj("AuthoredMechanismSpec", {"ChannelId": cs(sid), "Kind": "AuthoredMechanismKind.MemoryTuning", "Source": selector(source),
+                   "Trigger": "MemoryEventKind.ConfirmedUse", "Budget": "AttributionBudget.PerActivation", "Tuning": "MemoryTuningDefinition." + factory})
 
     def pair_success(self, bridge):
         pair = self.pairs[bridge]

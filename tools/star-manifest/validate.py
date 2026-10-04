@@ -36,7 +36,15 @@ MIG_KEYS = ['id', 'region', 'kind', 'memory', 'value', 'param', 'receiver', 'tar
             'options', 'keystone', 'requires', 'requiresAny', 'maxRank', 'mechanisms', 'nameJa', 'nameEn', 'notes']
 OPT_KEYS = ['kind', 'memory', 'value', 'param', 'receiver', 'target', 'gimmick', 'power', 'stat', 'nameJa', 'nameEn']
 G_REQUIRED = ['trigger', 'effect', 'value', 'arg', 'cooldown', 'target']
-G_OPTIONAL = ['condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool']
+G_OPTIONAL = ['condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool', 'strike', 'tuning']
+# IdentityStrike（アイデンティティ記憶そのものが与える追加ダメージ）。gimmick.strike の正準形。
+STRIKE_MODES = {'AfterDisplacement', 'EveryNthBasicAttack', 'DashBonusAsMemory'}
+STRIKE_ELEMENTS = {'None', 'Fire', 'Cold', 'Light', 'Dark'}
+STRIKE_SHAPES = {'ForwardLine', 'ForwardArc'}
+# MemoryTuning（名前付きの本体記憶の挙動の静的な変更）。gimmick.tuning の正準形。value は百分率（40 = 40%）。
+TUNINGS = {'KillingFlowKeepSpeed': ('St_D_TheKillingFlow', 0.01, 90), 'KillingFlowOnHitHealScale': ('St_D_TheKillingFlow', 100, 400),
+           'StanceSwordQiAttackBasis': ('St_R_AnnihilationStance', 100, 100)}
+STRIKE_KEYS = {'mode', 'element', 'shape', 'range', 'width', 'maxTargets', 'windowSeconds', 'bonusSpeed'}
 KS_KEYS = ['upside', 'downside', 'upsideSpec', 'downsideSpec']
 SPEC_KEYS = {'memory', 'memories', 'effect', 'field', 'pct', 'from', 'to', 'delta', 'max', 'receiver', 'scope', 'gimmick', 'condition'}
 
@@ -97,7 +105,7 @@ def memory_ok(v):
     return v is None or (isinstance(v, str) and MEMORY_RE.match(v) is not None)
 
 
-def check_gimmick(g, ctx, legacy, hero, refs, errors):
+def check_gimmick(g, ctx, legacy, hero, refs, errors, memory=None):
     if not isinstance(g, dict):
         errors.append(f'{ctx}: gimmick must be object')
         return
@@ -142,6 +150,84 @@ def check_gimmick(g, ctx, legacy, hero, refs, errors):
     for k in ('basis', 'pool'):
         if k in g and not (isinstance(g[k], str) and g[k]):
             errors.append(f'{ctx}: {k} must be string')
+    check_strike(g, ctx, errors)
+    check_tuning(g, ctx, errors, memory)
+
+
+def check_tuning(g, ctx, errors, memory):
+    """effect == MemoryTuning と gimmick.tuning は必ず対。トリガーは OnUse、効果量は gimmick.value（百分率）。"""
+    is_tuning = g.get('effect') == 'MemoryTuning'
+    if is_tuning != ('tuning' in g):
+        errors.append(f'{ctx}: gimmick.effect MemoryTuning and gimmick.tuning must appear together')
+        return
+    if not is_tuning:
+        return
+    t = g['tuning']
+    if not (isinstance(t, dict) and set(t) == {'kind'} and t['kind'] in TUNINGS):
+        errors.append(f'{ctx}: tuning must be {{"kind": one of {sorted(TUNINGS)}}}')
+        return
+    mem, lo, hi = TUNINGS[t['kind']]
+    if memory is not None and memory != mem:
+        errors.append(f'{ctx}: tuning {t["kind"]} belongs to {mem}, not {memory}')
+    if g.get('trigger') != 'OnUse' or g.get('cooldown') != 0 or g.get('arg') != 0 or g.get('target') is not None:
+        errors.append(f'{ctx}: MemoryTuning needs trigger OnUse (a static modification), arg 0, cooldown 0, target null')
+    for k in ('condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool', 'strike'):
+        if k in g:
+            errors.append(f'{ctx}: MemoryTuning does not take gimmick.{k}')
+    v = g.get('value')
+    if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
+        errors.append(f'{ctx}: MemoryTuning {t["kind"]} value is a percentage in {lo}..{hi}')
+    elif t['kind'] == 'StanceSwordQiAttackBasis' and v != 100:
+        errors.append(f'{ctx}: StanceSwordQiAttackBasis takes no amount (value 100)')
+
+
+def check_strike(g, ctx, errors, memory=None):
+    """effect == IdentityStrike と gimmick.strike は必ず対。モードごとの必須・禁止欄を厳密に検査する。"""
+    is_strike = g.get('effect') == 'IdentityStrike'
+    if is_strike != ('strike' in g):
+        errors.append(f'{ctx}: gimmick.effect IdentityStrike and gimmick.strike must appear together')
+        return
+    if not is_strike:
+        return
+    st = g['strike']
+    if not isinstance(st, dict) or not set(st) <= STRIKE_KEYS or st.get('mode') not in STRIKE_MODES:
+        errors.append(f'{ctx}: strike must be an object with mode in {sorted(STRIKE_MODES)} and keys within {sorted(STRIKE_KEYS)}')
+        return
+    mode = st['mode']
+    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    if g.get('trigger') != 'OnHit' or g.get('cooldown') != 0 or g.get('arg') != 0 or g.get('target') is not None:
+        errors.append(f'{ctx}: IdentityStrike needs trigger OnHit (own basic attack hit), arg 0, cooldown 0, target null')
+    for k in ('condition', 'once', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool'):
+        if k in g:
+            errors.append(f'{ctx}: IdentityStrike does not take gimmick.{k}')
+    if mode == 'DashBonusAsMemory':
+        if set(st) != {'mode'} or g.get('value') != 0 or 'everyN' in g:
+            errors.append(f'{ctx}: DashBonusAsMemory carries only mode, value 0 and no everyN (it adds no damage)')
+        return
+    need = {'mode', 'element', 'shape', 'range', 'width'} | ({'windowSeconds'} if mode == 'AfterDisplacement' else set())
+    if not need <= set(st):
+        errors.append(f'{ctx}: strike {mode} needs {sorted(need - set(st))}')
+        return
+    if st['element'] not in STRIKE_ELEMENTS or st['shape'] not in STRIKE_SHAPES:
+        errors.append(f'{ctx}: bad strike element/shape')
+    if not (num(g.get('value')) and 0 < g['value'] <= 200):
+        errors.append(f'{ctx}: IdentityStrike value is the attack damage % (0 < value <= 200)')
+    if not (num(st['range']) and 1 <= st['range'] <= 15) or not (num(st['width']) and st['width'] > 0):
+        errors.append(f'{ctx}: strike range must be 1..15 m and width > 0 (line width in m / arc angle in degrees)')
+    elif st['shape'] == 'ForwardArc' and st['width'] > 360 or st['shape'] == 'ForwardLine' and st['width'] > 15:
+        errors.append(f'{ctx}: strike width exceeds its shape limit (arc <= 360 degrees, line <= 15 m)')
+    if 'maxTargets' in st and not (isinstance(st['maxTargets'], int) and 1 <= st['maxTargets'] <= 16):
+        errors.append(f'{ctx}: strike maxTargets must be an int 1..16')
+    if mode == 'AfterDisplacement':
+        if 'everyN' in g or 'bonusSpeed' in st:
+            errors.append(f'{ctx}: AfterDisplacement takes neither everyN nor bonusSpeed')
+        if not (num(st['windowSeconds']) and 0.5 <= st['windowSeconds'] <= 10):
+            errors.append(f'{ctx}: strike windowSeconds must be 0.5..10')
+    else:
+        if not (isinstance(g.get('everyN'), int) and 1 <= g['everyN'] <= 100) or 'windowSeconds' in st:
+            errors.append(f'{ctx}: EveryNthBasicAttack needs gimmick.everyN 1..100 (1 = every basic attack) and no windowSeconds')
+        if 'bonusSpeed' in st and not (num(st['bonusSpeed']) and 0 <= st['bonusSpeed'] <= 10):
+            errors.append(f'{ctx}: strike bonusSpeed is the extra attack damage % per 1% bonus attack speed (0..10)')
 
 
 def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
@@ -161,7 +247,7 @@ def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
             errors.append(f'{ctx}: {o.get("param")} needs a bridge GimmickParam with target.star = h.{hero}.ring.* and no target.effect')
     g = o.get('gimmick')
     if g is not None:
-        check_gimmick(g, ctx, legacy, hero, refs, errors)
+        check_gimmick(g, ctx, legacy, hero, refs, errors, mem)
         gt = g.get('target') if isinstance(g, dict) else None
         if gt and rec != gt:
             errors.append(f'{ctx}: receiver {rec!r} must equal gimmick.target {gt!r}')

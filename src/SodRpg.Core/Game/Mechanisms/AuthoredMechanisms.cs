@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SodRpg.Core.Game
 {
-    public enum AuthoredMechanismKind { Gimmick, DirectedRecharge, BridgeSuccess, MemoryPrimed, RelayWindow, SacrificeShield, AlliedWard, PressureDividend, StunSourceFilter }
+    public enum AuthoredMechanismKind { Gimmick, DirectedRecharge, BridgeSuccess, MemoryPrimed, RelayWindow, SacrificeShield, AlliedWard, PressureDividend, StunSourceFilter, IdentityStrike, MemoryTuning }
     public enum AuthoredMechanismCondition { Always, BridgeSuccess, BridgeMark, BridgeWindow }
 
     /// <summary>Typed authoring contract. Only the payload selected by Kind may be populated.</summary>
@@ -22,6 +22,8 @@ namespace SodRpg.Core.Game
         public RelayWindowDefinition Relay { get; set; }
         public AlliedWardDefinition Ward { get; set; }
         public PressureDividendChannel Dividend { get; set; }
+        public IdentityStrikeDefinition IdentityStrike { get; set; }
+        public MemoryTuningDefinition Tuning { get; set; }
         public int EveryN { get; set; } = 1;
         public bool Once { get; set; }
         public int[] ValuesByRank { get; set; } = Array.Empty<int>();
@@ -209,7 +211,7 @@ namespace SodRpg.Core.Game
                     throw new InvalidOperationException("Invalid identity trigger.");
             MechanismAdmission.ValidateBudgetTrigger(spec.Budget, spec.Trigger);
             int count = (spec.Gimmick == null ? 0 : 1) + (spec.Recharge == null ? 0 : 1) + (spec.Bridge == null ? 0 : 1)
-                + (spec.Primed == null ? 0 : 1) + (spec.Relay == null ? 0 : 1) + (spec.Ward == null ? 0 : 1) + (spec.Dividend == null ? 0 : 1);
+                + (spec.Primed == null ? 0 : 1) + (spec.Relay == null ? 0 : 1) + (spec.Ward == null ? 0 : 1) + (spec.Dividend == null ? 0 : 1) + (spec.IdentityStrike == null ? 0 : 1) + (spec.Tuning == null ? 0 : 1);
             bool flag = spec.Kind == AuthoredMechanismKind.SacrificeShield || spec.Kind == AuthoredMechanismKind.StunSourceFilter;
             if (count != (flag ? 0 : 1)) throw new InvalidOperationException("Mechanism requires exactly its typed payload.");
             bool correct = flag || spec.Kind == AuthoredMechanismKind.Gimmick && spec.Gimmick != null
@@ -218,7 +220,9 @@ namespace SodRpg.Core.Game
                 || spec.Kind == AuthoredMechanismKind.MemoryPrimed && spec.Primed != null
                 || spec.Kind == AuthoredMechanismKind.RelayWindow && spec.Relay != null
                 || spec.Kind == AuthoredMechanismKind.AlliedWard && spec.Ward != null
-                || spec.Kind == AuthoredMechanismKind.PressureDividend && spec.Dividend != null;
+                || spec.Kind == AuthoredMechanismKind.PressureDividend && spec.Dividend != null
+                || spec.Kind == AuthoredMechanismKind.IdentityStrike && spec.IdentityStrike != null
+                || spec.Kind == AuthoredMechanismKind.MemoryTuning && spec.Tuning != null;
             if (!correct) throw new InvalidOperationException("Mechanism kind does not match its payload.");
             if (spec.Gimmick != null && !Gimmicks.ValidDef(spec.Gimmick)) throw new InvalidOperationException("Invalid mechanism gimmick.");
             if (spec.Recharge != null && (!CanBeSource(spec.Recharge.Source) || spec.Recharge.ChannelId != spec.ChannelId)) throw new InvalidOperationException("Invalid recharge source/channel.");
@@ -228,6 +232,18 @@ namespace SodRpg.Core.Game
                 || spec.Primed.ChannelId != spec.ChannelId)) throw new InvalidOperationException("Invalid preparation source/channel.");
             if (spec.Relay != null && spec.Relay.ChannelId != spec.ChannelId || spec.Ward != null && spec.Ward.ChannelId != spec.ChannelId)
                 throw new InvalidOperationException("Inconsistent payload channel.");
+            if (spec.IdentityStrike != null && (spec.IdentityStrike.ChannelId != spec.ChannelId || spec.Source == null
+                || spec.Source.Kind != MemorySelectorKind.Memory || spec.Source.Memory != spec.IdentityStrike.Identity
+                || spec.Trigger != MemoryEventKind.OwnedBasicAttackHit || spec.Budget != AttributionBudget.PerOwnedBasicAttack
+                || spec.EveryN != 1 || spec.Condition != AuthoredMechanismCondition.Always || spec.Once || spec.ValuesByRank.Length != 0
+                || spec.TriggerByIdentity.Count != 0))
+                throw new InvalidOperationException("Invalid identity strike channel: it is sourced from its own identity memory on own basic attack hits.");
+            if (spec.Tuning != null && (spec.Tuning.ChannelId != spec.ChannelId || spec.Source == null
+                || spec.Source.Kind != MemorySelectorKind.Memory || spec.Source.Memory != spec.Tuning.Memory
+                || spec.Trigger != MemoryEventKind.ConfirmedUse || spec.Budget != AttributionBudget.PerActivation
+                || spec.EveryN != 1 || spec.Condition != AuthoredMechanismCondition.Always || spec.Once || spec.ValuesByRank.Length != 0
+                || spec.TriggerByIdentity.Count != 0))
+                throw new InvalidOperationException("Invalid memory tuning channel: it is a static modification of its own native memory.");
             if (spec.Bridge != null && (!Gimmicks.ValidStarId(spec.Bridge.PairId) || !CanBeSource(spec.Bridge.OpeningSource) || !CanBeSource(spec.Bridge.PayoffSource)))
                 throw new InvalidOperationException("Invalid typed real pair.");
         }
@@ -245,7 +261,7 @@ namespace SodRpg.Core.Game
             ?? (s.Recharge != null ? GimmickEffect.Recharge : s.Primed != null ? GimmickEffect.Primed
             : s.Ward != null || s.Kind == AuthoredMechanismKind.SacrificeShield ? GimmickEffect.Shield : GimmickEffect.None);
         internal static string SourceMemory(AuthoredMechanismSpec s) => s.Primed?.SourceMemory
-            ?? (s.Relay != null ? RelayWindowDefinition.SourceMemory : s.Dividend?.SourceMemory)
+            ?? (s.Relay != null ? RelayWindowDefinition.SourceMemory : s.Dividend?.SourceMemory ?? s.IdentityStrike?.Identity ?? s.Tuning?.Memory)
             ?? s.Recharge?.Source.Memory ?? s.Source?.Memory;
         internal static string ReceiverMemory(AuthoredMechanismSpec s) => s.Recharge?.Recipient.Memory ?? s.Relay?.TargetMemory ?? SourceMemory(s);
         internal static bool Matches(ScopedModifierDef modifier, AuthoredMechanismEntry entry)
@@ -288,7 +304,7 @@ namespace SodRpg.Core.Game
 
         private static decimal BaseValue(AuthoredMechanismSpec s) => s.UncappedValueUnits
             ?? (s.Gimmick != null ? (s.Gimmick.UncappedValue ?? s.Gimmick.EffectiveValueOrAuthored) * 100m
-            : s.Recharge?.EffectiveValueUnits ?? s.Primed?.ValueUnits ?? s.Relay?.ValueUnits ?? s.Ward?.ValueUnits ?? s.Dividend?.ProbabilityUnits ?? 1m);
+            : s.Recharge?.EffectiveValueUnits ?? s.Primed?.ValueUnits ?? s.Relay?.ValueUnits ?? s.Ward?.ValueUnits ?? s.Dividend?.ProbabilityUnits ?? (s.IdentityStrike != null && s.IdentityStrike.DealsDamage ? s.IdentityStrike.AdUnits : s.Tuning != null ? s.Tuning.ValueUnits : 1m));
         private static void SetValue(AuthoredMechanismSpec s, decimal value, IEnumerable<string> contributors = null)
         {
             s.UncappedValueUnits = value;
@@ -316,6 +332,8 @@ namespace SodRpg.Core.Game
             }
             else if (s.Dividend != null) s.Dividend = PressureDividendChannel.FromEffective(s.Dividend.SourceMemory, s.Dividend.RequiredMemories,
                 contributors ?? new[] { s.ChannelId }, Math.Min(4000, value));
+            else if (s.IdentityStrike != null) s.IdentityStrike = s.IdentityStrike.WithAdUnits(Math.Min(IdentityStrikeDefinition.MaxAdUnits, value));
+            else if (s.Tuning != null) s.Tuning = s.Tuning.WithValue(value);
         }
         internal static void Compose(Build build, IReadOnlyList<KeyValuePair<TalentDef, int>> selected)
         {
@@ -531,6 +549,12 @@ namespace SodRpg.Core.Game
                 decimal value = Math.Min(4000, s.UncappedValueUnits.Value);
                 s.Dividend = PressureDividendChannel.FromEffective(d.SourceMemory, d.RequiredMemories, entry.ContributorIds, value);
             }
+            else if (s.IdentityStrike != null)
+            {
+                // A rank/boost rescales the damage terms together; the dash-bonus attribution has nothing to scale.
+                s.UncappedValueUnits = s.IdentityStrike.DealsDamage ? s.IdentityStrike.AdUnits * factor : (decimal?)null;
+                s.IdentityStrike = s.IdentityStrike.Scaled(factor);
+            }
             else if (s.Bridge != null)
             {
                 var b = s.Bridge;
@@ -691,6 +715,17 @@ namespace SodRpg.Core.Game
         internal static IEnumerable<EffectiveAllocationChannel> EffectiveChannels(AuthoredMechanismEntry entry, Build build, string heroKey = null)
         {
             var s = entry.Spec;
+            if (s.IdentityStrike != null || s.Tuning != null)
+            {
+                // A typed static/strike payload is one never-saturating channel of its own: it is effective exactly while its star is allocated.
+                yield return new EffectiveAllocationChannel
+                {
+                    Key = "typed:" + (int)s.Kind + ":" + s.ChannelId, PredicateKey = "typed:" + (int)s.Kind + ":" + s.ChannelId, StarId = entry.StarId,
+                    ContributorIds = entry.ContributorIds, Memory = SourceMemory(s), ValueMilli = BaseValue(s) * BuildPrecision.Scale / 100m,
+                    ValueCeiling = long.MaxValue / 4
+                };
+                yield break;
+            }
             if (s.Bridge != null)
             {
                 var bridge = s.Bridge;

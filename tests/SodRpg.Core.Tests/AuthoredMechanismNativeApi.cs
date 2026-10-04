@@ -40,8 +40,16 @@ namespace SodRpg.Mod
     internal sealed class ProcessorList<T>
     {
         public readonly List<T> Entries = new List<T>();
-        public void Add(T value, int priority = 0) => Entries.Add(value);
-        public void Remove(T value) => Entries.Remove(value);
+        public readonly List<int> Priorities = new List<int>();
+        public void Add(T value, int priority = 0) { Entries.Add(value); Priorities.Add(priority); }
+        public void Remove(T value) { int i = Entries.IndexOf(value); if (i >= 0) { Entries.RemoveAt(i); Priorities.RemoveAt(i); } }
+        /// <summary>Ascending priority, stable for equal priorities (DataProcessorGroup.Add semantics).</summary>
+        public IEnumerable<T> InOrder()
+        {
+            var order = new List<int>(); for (int i = 0; i < Entries.Count; i++) order.Add(i);
+            order.Sort((a, b) => Priorities[a] != Priorities[b] ? Priorities[a].CompareTo(Priorities[b]) : a.CompareTo(b));
+            foreach (int i in order) yield return Entries[i];
+        }
     }
     internal partial struct FinalStats { public float maxHealth; }
     internal partial class Actor
@@ -190,7 +198,8 @@ namespace SodRpg.Mod
         public AttackEffectType attackEffectType;
         private DamageAttribute _attributes;
         public void ApplyReduction(float percent) => _amplification *= 1 - percent;
-        public DamageData SetElemental(object elemental) => this;
+        public object Elemental;
+        public DamageData SetElemental(object elemental) { Elemental = elemental; return this; }
         public DamageData SetAttr(DamageAttribute attribute) { _attributes |= attribute; return this; }
         public bool HasAttr(DamageAttribute attribute) => (_attributes & attribute) != 0;
         public void Dispatch(Entity target, ReactionChain chain) => Dispatch(target);

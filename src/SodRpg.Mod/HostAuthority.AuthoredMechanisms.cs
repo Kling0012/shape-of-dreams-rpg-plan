@@ -100,6 +100,8 @@ namespace SodRpg.Mod
             var bridges = new List<BridgeSuccessDefinition>();
             var primed = new List<MemoryPrimedDefinition>();
             var relay = new List<RelayWindowDefinition>();
+            var strikes = new List<KeyValuePair<string, IdentityStrikeDefinition>>();
+            var tunings = new List<MemoryTuningDefinition>();
             bool calm = false, sacrifice = false;
             foreach (var entry in build.Mechanisms)
             {
@@ -129,6 +131,8 @@ namespace SodRpg.Mod
                             relay.Add(RelayWindowDefinition.FromEffective(window.ChannelId, window.TargetMemory,
                                 relayResult.Value * 100m, (float)relayResult.DurationSeconds));
                         break;
+                    case AuthoredMechanismKind.MemoryTuning: tunings.Add(spec.Tuning); break;
+                    case AuthoredMechanismKind.IdentityStrike: strikes.Add(new KeyValuePair<string, IdentityStrikeDefinition>(key, spec.IdentityStrike)); break;
                     case AuthoredMechanismKind.StunSourceFilter: calm |= AuthoredKeyContributor(entry, build.SelectedKeystone?.KeystoneId); break;
                     case AuthoredMechanismKind.SacrificeShield: sacrifice |= AuthoredKeyContributor(entry, build.SelectedKeystone?.KeystoneId); break;
                 }
@@ -144,6 +148,8 @@ namespace SodRpg.Mod
             SetBridgeSuccessEffects(hero, bridges, build.MechanismEndpointRanks);
             ConfigureMemoryPreparations(hero, primed);
             ConfigureRelayWindows(hero, relay);
+            ConfigureIdentityStrikes(hero, strikes);
+            ConfigureMemoryTunings(hero, tunings);
             calm = calm && build.SelectedKeystone?.KeystoneId == CalmShieldGrant.ConsumerId && AuthoredKeystoneActive(hero);
             if (build.SelectedKeystone != null)
                 foreach (var payload in build.SelectedKeystone.Payloads) if (payload == KeystonePayloadKind.SacrificeShield) sacrifice = true;
@@ -400,6 +406,7 @@ namespace SodRpg.Mod
         { channel.Count = 0; channel.Counted.Clear(); }
         private void ClearAuthoredMechanismTransients(Hero hero = null)
         {
+            ResetIdentityStrikes(hero);
             foreach (var pair in _authoredMechanisms)
                 if (hero == null || pair.Key == hero)
                     foreach (var channel in pair.Value.Channels.Values) ResetAuthoredChannel(channel);

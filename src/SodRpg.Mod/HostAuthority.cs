@@ -277,6 +277,7 @@ namespace SodRpg.Mod
             foreach (var rt in _runtimes.Values) FlushNewPowers(rt);
             foreach (var rt in _runtimes.Values) UpdateReactions(rt);
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
+            UpdateIdentityStrikes();
             foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
             foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
             UpdateModShieldPools(now);
@@ -1237,12 +1238,13 @@ namespace SodRpg.Mod
                     captured.NewPowers.PositionKnown = false;
                     captured.NewPowers.SpecialMovementUntil = Time.time + .1f;
                     OnHeroTeleport(captured);
+                    OnIdentityStrikeDisplacement(captured.Hero);
                 };
                 rt.OnDisplacement = disp =>
                 {
                     captured.NewPowers.SpecialMovementUntil = Time.time + .1f;
                     // Displacement has no source: the game's own Husk crit effects use isFriendly.
-                    if (disp != null && disp.isFriendly) OnHeroSelfMovement(captured);
+                    if (disp != null && disp.isFriendly) { OnHeroSelfMovement(captured); OnIdentityStrikeDisplacement(captured.Hero); }
                 };
                 hero.Control.ClientEvent_OnTeleport += rt.OnTeleport;
                 hero.Control.ClientEvent_OnDisplacementStarted += rt.OnDisplacement;
