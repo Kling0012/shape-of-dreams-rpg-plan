@@ -3,3 +3,5 @@ obj/
 *.user
 .vs/
 TestResults/
+.ref/
+tests/SodRpg.Core.Tests/Diagnostics/

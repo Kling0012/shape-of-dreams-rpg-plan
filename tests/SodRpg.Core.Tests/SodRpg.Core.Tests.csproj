@@ -15,6 +15,35 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SodRpg.Core\SodRpg.Core.csproj" />
+    <ProjectReference Include="..\..\tools\BalanceSim\BalanceSim.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../docs/specs/v1.29-uniques-table.md" Link="ReviewedV129.md" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.UnbowedMind.cs" Link="ModUnderTest/HostAuthority.UnbowedMind.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeMemoryCasts.cs" Link="ModUnderTest/HostAuthority.NativeMemoryCasts.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystones.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystones.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BridgeSuccessEffects.cs" Link="ModUnderTest/HostAuthority.BridgeSuccessEffects.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryPrimedRelay.cs" Link="ModUnderTest/HostAuthority.MemoryPrimedRelay.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.ModShieldPools.cs" Link="ModUnderTest/HostAuthority.ModShieldPools.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.StunSourceFilter.cs" Link="ModUnderTest/HostAuthority.StunSourceFilter.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.SacrificeShield.cs" Link="ModUnderTest/HostAuthority.SacrificeShield.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AlliedWard.cs" Link="ModUnderTest/HostAuthority.AlliedWard.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.PressureDividend.cs" Link="ModUnderTest/HostAuthority.PressureDividend.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.GimmicksV129.cs" Link="ModUnderTest/HostAuthority.GimmicksV129.cs" />
+    <Compile Include="../../src/SodRpg.Mod/DreamforgeUi.AllocationRefund.cs" Link="ModUnderTest/DreamforgeUi.AllocationRefund.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystonePackets.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystonePackets.cs" />
   </ItemGroup>
 
 </Project>

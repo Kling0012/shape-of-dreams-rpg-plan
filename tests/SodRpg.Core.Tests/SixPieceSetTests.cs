@@ -1,0 +1,199 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using SodRpg.Core.Game;
+using Xunit;
+
+namespace SodRpg.Core.Tests
+{
+    [CollectionDefinition("SixPieceSets", DisableParallelization = true)]
+    public class SixPieceSetsCollection { }
+
+    /// <summary>
+    /// v1.31：6つ装着の効果（エンジン）。実データの set.gale（6部位）の SixPiece を
+    /// 既知の値に一時的に差し替えて検証する（静的な Content を書き換えるため、他のテストと並列に動かさない）。
+    /// </summary>
+    [Collection("SixPieceSets")]
+    public class SixPieceSetTests
+    {
+        private const string Hero = "Hero_A";
+        private const string SetId = "set.gale";
+        private static readonly PowerLine[] Six = { new PowerLine(Power.Breakout, 3) };
+
+        private sealed class Patch : IDisposable
+        {
+            private readonly SetDef _set = Content.GetSet(SetId);
+            private readonly PowerLine[] _old;
+
+            public Patch()
+            {
+                _old = _set.SixPiece;
+                _set.SixPiece = Six;
+            }
+
+            public void Dispose()
+            {
+                _set.SixPiece = _old;
+            }
+        }
+
+        private static readonly string[] PieceIds =
+        {
+            "set.gale.head", "set.gale.hands", "set.gale.feet", "set.gale.weapon", "set.gale.armor", "set.gale.charm",
+        };
+
+        private static Relic Roll(string uniqueId, ulong seed)
+        {
+            Content.TryGetUnique(uniqueId, out var u);
+            return Loot.RollUnique(new Rng(seed), u, 5);
+        }
+
+        private static Profile Equipped(int pieces, int duplicates = 0)
+        {
+            var p = Profile.CreateNew(22);
+            ulong seed = 100;
+            for (int i = 0; i < pieces; i++)
+            {
+                var r = Roll(PieceIds[i], seed++);
+                p.Stash.Add(r);
+                Rules.Equip(p, Hero, r.Uid);
+            }
+            for (int i = 0; i < duplicates; i++) // 同じ部位の2個目。枠が埋まっているので入れ替わるだけ
+            {
+                var r = Roll(PieceIds[0], seed++);
+                p.Stash.Add(r);
+                Rules.Equip(p, Hero, r.Uid);
+            }
+            return p;
+        }
+
+        [Fact]
+        public void Five_pieces_give_only_two_and_three_piece_bonuses_and_six_add_the_new_power()
+        {
+            using (new Patch())
+            {
+                var set = Content.GetSet(SetId);
+                var five = Build.Compute(Equipped(5), Hero, 0);
+                Assert.Equal(5, five.Sets[SetId]);
+                foreach (var pw in set.ThreePiece) Assert.True(five.Get(pw.Power) >= pw.Value);
+                int breakoutAt5 = five.Get(Power.Breakout);
+
+                var six = Build.Compute(Equipped(6), Hero, 0);
+                Assert.Equal(6, six.Sets[SetId]);
+                Assert.Equal(breakoutAt5 + Six[0].Value, six.Get(Power.Breakout));
+                Assert.Equal(five.Get(Power.UnbowedMind), six.Get(Power.UnbowedMind));
+            }
+        }
+
+        [Fact]
+        public void Six_piece_power_goes_through_the_same_aggregate_cap_as_other_sources()
+        {
+            using (new Patch())
+            {
+                Content.GetSet(SetId).SixPiece = new[] { new PowerLine(Power.Breakout, 1000) };
+                var b = Build.Compute(Equipped(6), Hero, 0);
+                Assert.True(b.Get(Power.Breakout) < 1000, "capped by PowerCaps aggregation");
+            }
+        }
+
+        [Fact]
+        public void Without_six_piece_data_six_pieces_add_nothing_extra()
+        {
+            using (new Patch())
+            {
+                var with = Build.Compute(Equipped(6), Hero, 0);
+                Content.GetSet(SetId).SixPiece = null;
+                var without = Build.Compute(Equipped(6), Hero, 0);
+                Assert.Equal(with.Get(Power.Breakout) - Six[0].Value, without.Get(Power.Breakout));
+            }
+        }
+
+        [Fact]
+        public void Duplicate_copies_of_one_piece_do_not_count_twice()
+        {
+            using (new Patch())
+            {
+                var b = Build.Compute(Equipped(5, duplicates: 1), Hero, 0);
+                Assert.Equal(5, b.Sets[SetId]);
+                Assert.Equal(Build.Compute(Equipped(5), Hero, 0).Get(Power.Breakout), b.Get(Power.Breakout));
+            }
+        }
+
+        [Fact]
+        public void Host_reconstruction_matches_the_client_with_six_pieces()
+        {
+            using (new Patch())
+            {
+                var p = Equipped(6);
+                var client = Build.Compute(p, Hero, 0);
+                string packet = HostBuildValidation.Encode(client, p, Hero, 0);
+                Assert.True(HostBuildValidation.TryAccept(packet, Hero, out var accepted, out var reason), reason);
+                Assert.Equal(client.Encode(), accepted.Encode());
+                Assert.Equal(client.Get(Power.Breakout), accepted.Get(Power.Breakout));
+            }
+        }
+
+        [Fact]
+        public void Describe_and_Progress_cover_the_six_piece_stages()
+        {
+            using (new Patch())
+            {
+                var set = Content.GetSet(SetId);
+                string d = set.Describe();
+                Assert.Contains("3つ装着", d);
+                Assert.Contains("6つ装着", d);
+                Assert.Contains(Content.FormatPower(Six[0].Power, Six[0].Value), d.Substring(d.IndexOf("6つ装着", StringComparison.Ordinal)));
+                Assert.Contains("あと3つで、6つ装着の効果が加わります", set.Progress(3));
+                Assert.Contains("あと2つで、6つ装着の効果が加わります", set.Progress(4));
+                Assert.Contains("あと1つで、6つ装着の効果が加わります", set.Progress(5));
+                Assert.Contains("6つそろっています", set.Progress(6));
+                Assert.Contains("あと1つで、3つ装着", set.Progress(2));
+            }
+            // 6つ装着のデータがないセットは従来どおりの文面
+            using (new Patch())
+            {
+                var plain = Content.GetSet(SetId);
+                plain.SixPiece = null;
+                Assert.DoesNotContain("6つ装着", plain.Describe());
+                Assert.Contains("3つそろっています", plain.Progress(3));
+            }
+            // 実データ：全セットが6つ装着を持つ
+            foreach (var real in Content.Sets)
+            {
+                Assert.Contains("6つ装着", real.Describe());
+                Assert.Contains("6つそろっています", real.Progress(6));
+            }
+        }
+
+        [Fact]
+        public void Missing_piece_weighting_does_not_depend_on_the_set_size()
+        {
+            using (new Patch())
+            {
+                var owned = new List<Relic> { Roll("set.gale.head", 7) };
+                int Hits(IReadOnlyList<Relic> list)
+                {
+                    int hits = 0;
+                    for (ulong s = 0; s < 200; s++)
+                        if (Loot.RollRelic(new Rng(1000 + s), Rarity.Legendary, 5, Slot.Hands, null, list, null).UniqueId == "set.gale.hands") hits++;
+                    return hits;
+                }
+                int withSet = Hits(owned), without = Hits(null);
+                Assert.True(withSet > without * 5 && withSet > 60, $"missing piece boost: {withSet} vs {without}");
+            }
+        }
+
+        [Fact]
+        public void Every_set_has_six_piece_data_once_the_flag_is_set()
+        {
+            if (!Content.SixPieceSetsComplete) return; // データ入力中は未入力を許容する（Content.SixPieceSetsComplete）
+            foreach (var set in Content.Sets)
+            {
+                Assert.True(set.HasSixPiece, set.Id + " lacks SixPiece");
+                Assert.Equal(6, Content.SetPieceCount(set.Id));
+                foreach (var pw in set.SixPiece) Assert.True(pw.Value <= Content.PowerCap(pw.Power), set.Id);
+            }
+        }
+    }
+}

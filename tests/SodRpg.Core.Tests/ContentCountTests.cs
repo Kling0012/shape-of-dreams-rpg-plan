@@ -1,0 +1,63 @@
+using System;
+using System.Linq;
+using SodRpg.Core.Game;
+using Xunit;
+using Xunit.Abstractions;
+
+namespace SodRpg.Core.Tests
+{
+    /// <summary>遊ぶのに十分な量があるか（内容を削りすぎたら落ちる）。数は出力に記録する。</summary>
+    public class ContentCountTests
+    {
+        private readonly ITestOutputHelper _out;
+        public ContentCountTests(ITestOutputHelper output) => _out = output;
+
+        [Fact]
+        public void Content_volume_is_enough_for_many_runs()
+        {
+            var slots = (Slot[])Enum.GetValues(typeof(Slot));
+            int affixes = slots.Sum(s => Content.AffixPool(s).Count);
+            int powers = slots.Sum(s => Content.PowerPool(s).Count);
+            var counts = new (string Name, int Count, int Min)[]
+            {
+                ("bases", Content.Bases.Count, 360),
+                ("uniques", Content.Uniques.Count, 1190), // Includes all reviewed P37 content.
+                ("sets", Content.Sets.Count, 48), // Includes all reviewed P37 content.
+                ("talents", Content.Talents.Count, 15),
+                ("keystones", Content.Talents.Count(t => t.IsKeystone), 3),
+                ("heroSigils", HeroSigils.All.Count, 4),
+                ("affixes", affixes, 32),
+                ("powers", powers, 9),
+                ("pacts", Pacts.All.Count, 40),
+                ("nightmareAffixes", Nightmares.AllAffixes.Length, 20),
+                ("monsterVariants", Variants.All.Count, 30),
+                ("dailyDreams", DailyDream.All.Count, 60),
+                ("dreamEvents", Enum.GetValues(typeof(DreamEvent)).Length, 26),
+                ("bountyKinds", Enum.GetValues(typeof(BountyKind)).Length, 44),
+                ("hints", Onboarding.All.Count, 5),
+                ("feats", Feats.All.Count, 90),
+                ("workshop", Workshop.All.Count, 6),
+            };
+            foreach (var c in counts)
+            {
+                _out.WriteLine($"{c.Name}: {c.Count}");
+                Assert.True(c.Count >= c.Min, $"{c.Name} {c.Count} < {c.Min}");
+            }
+        }
+
+        [Fact]
+        public void Every_set_has_weapon_armor_and_charm_and_covers_all_four_elements()
+        {
+            foreach (var set in Content.Sets)
+            {
+                var pieces = Content.Uniques.Where(u => u.SetId == set.Id).ToList();
+                Assert.Equal(6, pieces.Count);
+                // v1.31：どのセットも6つの別々の枠（武器・防具・護符・頭・手・足）。
+                var slots = pieces.Select(u => { Assert.True(Content.TryGetBase(u.BaseId, out var b)); return b.Slot; }).ToList();
+                Assert.Equal(6, slots.Distinct().Count());
+            }
+            var elements = Content.Sets.SelectMany(s => s.ThreePiece).Select(pw => pw.Power).ToHashSet();
+            Assert.Subset(elements, new[] { Power.Ember, Power.Frost, Power.Radiance, Power.Umbra }.ToHashSet());
+        }
+    }
+}

@@ -1,0 +1,267 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using HarmonyLib;
+using Mirror;
+using SodRpg.Core.Game;
+
+namespace SodRpg.Mod
+{
+    // Replace the exact receiver call so C07 sees every ordinary processor, including flat additions,
+    // and runs before FinalDamageData's armor/caps. Raw original-amount multiplication is incorrect here.
+    [HarmonyPatch(typeof(Actor), nameof(Actor.DealDamage))]
+    internal static class NativeAuthoredKeystoneDamage
+    {
+        internal static bool Bound { get; private set; }
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            Bound = false;
+            var native = AccessTools.Method(typeof(Entity), nameof(Entity.ProcessReceivedDamage), new[] { typeof(DamageData).MakeByRefType(), typeof(Actor) });
+            var wrapper = AccessTools.Method(typeof(NativeAuthoredKeystoneDamage), nameof(ProcessReceived));
+            var result = new List<CodeInstruction>(); int count = 0;
+            foreach (var instruction in instructions)
+            {
+                if (instruction.Calls(native)) { instruction.opcode = OpCodes.Call; instruction.operand = wrapper; count++; }
+                result.Add(instruction);
+            }
+            if (count != 1) throw new InvalidOperationException("C07 final native damage callsite is unavailable.");
+            Bound = true; return result;
+        }
+        private static void ProcessReceived(Entity target, ref DamageData damage, Actor actor)
+        {
+            // M6 conditional key downsides read the victim's health immediately before the hit (HP90%判定は命中直前).
+            float healthBefore = target.currentHealth, maxHealthBefore = target.maxHealth;
+            target.ProcessReceivedDamage(ref damage, actor);
+            if (NetworkServer.active) HostAuthority.NativeInstance?.ApplyAuthoredFinalNativeDamage(ref damage, actor, target,
+                healthBefore, maxHealthBefore);
+        }
+    }
+
+    internal sealed partial class HostAuthority
+    {
+        private sealed class AuthoredKeystoneBinding
+        {
+            internal Build Build;
+            internal ScopedKeystoneModifiers Runtime;
+            internal long NativeEpoch = -1;
+            internal long Epoch;
+            internal string Key;
+            internal MechanismEquipment Equipment;
+            internal bool? Admission;
+            internal int HookSignature = -1;
+        }
+        private readonly Dictionary<Hero, AuthoredKeystoneBinding> _authoredKeystones = new Dictionary<Hero, AuthoredKeystoneBinding>();
+        private long _authoredKeystoneEpoch;
+
+        internal void ConfigureAuthoredKeystone(Hero hero, Build build)
+        {
+            if (hero == null || build == null) throw new ArgumentNullException();
+            string signature = build.SelectedKeystone == null ? null : AuthoredKeystoneCodec.Encode(build.SelectedKeystone);
+            if (_authoredKeystones.TryGetValue(hero, out var existing) && existing.Key == signature)
+            { existing.Build = build; RefreshAuthoredKeystone(hero); return; }
+            StopSacrificeShield(hero);
+            if (existing != null || signature != null) ClearAuthoredGimmickPrimed(hero);
+            if (build.SelectedKeystone == null) { _authoredKeystones.Remove(hero); return; }
+            var key = build.SelectedKeystone;
+            var binding = new AuthoredKeystoneBinding { Build = build, Key = signature,
+                Runtime = new ScopedKeystoneModifiers(new[] { key }), Epoch = checked(++_authoredKeystoneEpoch) };
+            _authoredKeystones[hero] = binding;
+            RefreshAuthoredKeystone(hero);
+        }
+
+        internal void ClearAuthoredKeystone(Hero hero)
+        {
+            if (ReferenceEquals(hero, null)) return;
+            StopSacrificeShield(hero);
+            ClearAuthoredGimmickPrimed(hero);
+            _authoredKeystones.Remove(hero);
+        }
+
+        private void ClearAuthoredGimmickPrimed(Hero hero)
+        {
+            if (_runtimes.TryGetValue(hero, out var owner)) owner.Powers.ClearGimmickPrimed();
+        }
+
+        internal void RefreshAuthoredKeystone(Hero hero)
+        {
+            if (hero == null || !_authoredKeystones.TryGetValue(hero, out var binding)) return;
+            long nativeEpoch = RefreshMemoryAttributionEquipment(hero);
+            var key = binding.Build.SelectedKeystone;
+            int hooks = key.Payloads.Contains(KeystonePayloadKind.SacrificeShield)
+                ? (NativeAuthoredKeystoneDamage.Bound ? 1 : 0) | (NativeSacrificeShieldDispatch.GoldenBound ? 2 : 0)
+                    | (NativeSacrificeShieldDispatch.ReductionBound ? 4 : 0) : 0;
+            if (binding.NativeEpoch == nativeEpoch && binding.HookSignature == hooks) return;
+            if (binding.NativeEpoch >= 0) ClearAuthoredGimmickPrimed(hero);
+            binding.HookSignature = hooks;
+            var equipment = binding.NativeEpoch == nativeEpoch && binding.Equipment != null
+                ? binding.Equipment : CollectMechanismEquipment(hero, hero.GetInstanceID());
+            bool admitted = SacrificeBindingAvailable(key, equipment);
+            if (binding.NativeEpoch == nativeEpoch && binding.Admission == admitted) return;
+            binding.NativeEpoch = nativeEpoch; binding.Admission = admitted;
+            binding.Epoch = checked(++_authoredKeystoneEpoch); binding.Equipment = equipment;
+            binding.Runtime.Configure(new[] { key.KeystoneId }, binding.Epoch, equipment.Memories.Select(m => m.Memory),
+                key.Prerequisites, Array.Empty<KeystoneAllocatedEffect>(), admitted);
+            if (key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
+            {
+                if (!binding.Runtime.Active) StopSacrificeShield(hero);
+                else if (_runtimes.ContainsKey(hero)) BindAuthoredSacrificeShield(hero);
+            }
+        }
+
+        internal void ValidateAuthoredSacrificeBinding(Hero hero, Build build)
+        {
+            var key = build?.SelectedKeystone;
+            if (key == null || !key.Payloads.Contains(KeystonePayloadKind.SacrificeShield)) return;
+            if (key.KeystoneId != "h.aurena.key2") throw new InvalidOperationException("C11 requires its named authored keystone.");
+            var equipment = CollectMechanismEquipment(hero, hero.GetInstanceID());
+            foreach (string required in key.RequiredMemories) if (equipment.Find(required) == null) return;
+            foreach (var memory in equipment.Memories)
+                if (IsSacrificeMemory(memory.Memory) && !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch,
+                    memory.Memory, equipment: equipment)))
+                    throw new InvalidOperationException("C11 requires the simultaneous downside on its exact equipped sacrifice source.");
+            // Missing verified host adapters disable the whole key through Configure, never just its shield half.
+        }
+
+        private static bool IsSacrificeMemory(string memory) => memory == "St_Q_GoldenBurst" || memory == "St_Q_Reduction";
+
+        private static bool SacrificeBindingAvailable(KeystoneDefinition key, MechanismEquipment equipment)
+        {
+            if (!key.Payloads.Contains(KeystonePayloadKind.SacrificeShield)) return true;
+            if (key.KeystoneId != "h.aurena.key2" || !NativeAuthoredKeystoneDamage.Bound) return false;
+            bool source = false;
+            foreach (var memory in equipment.Memories)
+            {
+                if (!IsSacrificeMemory(memory.Memory)) continue;
+                source = true;
+                if (!NativeSacrificeShieldDispatch.IsBoundFor(memory.Memory)
+                    || !key.HasNativeDownside(new KeystoneContext(equipment.EquipmentEpoch, memory.Memory, equipment: equipment))) return false;
+            }
+            return source;
+        }
+
+        internal bool AuthoredKeystoneActive(Hero hero)
+        {
+            RefreshAuthoredKeystone(hero);
+            return hero != null && _authoredKeystones.TryGetValue(hero, out var binding) && binding.Runtime.Active;
+        }
+
+        internal long AuthoredKeystoneEpoch(Hero hero)
+        {
+            RefreshAuthoredKeystone(hero);
+            return hero != null && _authoredKeystones.TryGetValue(hero, out var binding) ? binding.Epoch : 0;
+        }
+
+        internal void BindAuthoredSacrificeShield(Hero hero)
+        {
+            RefreshAuthoredKeystone(hero);
+            if (!_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.HasPayload(KeystonePayloadKind.SacrificeShield))
+            { StopSacrificeShield(hero); return; }
+            if (_sacrificeBindings.TryGetValue(hero, out var existing) && ReferenceEquals(existing.Keystone, binding.Runtime)) return;
+            bool Verified()
+            {
+                RefreshAuthoredKeystone(hero);
+                return binding.Runtime.Active && _authoredKeystones.TryGetValue(hero, out var current)
+                    && ReferenceEquals(current, binding) && binding.Admission == true;
+            }
+            BindSacrificeShield(hero, binding.Runtime, Verified);
+        }
+
+        internal KeystoneResult TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver,
+            KeystoneSourceKind sourceKind, KeystoneRecipientKind recipient = KeystoneRecipientKind.Self,
+            float? targetHealthPercent = null, bool? retaliationWindowOpen = null)
+        {
+            RefreshAuthoredKeystone(hero);
+            if (!_authoredKeystones.TryGetValue(hero, out var binding) || !binding.Runtime.Active)
+                return ScopedKeystoneModifiers.ApplyUnmodified(payload);
+            return binding.Runtime.Apply(payload, new KeystoneContext(binding.Epoch, source, sourceKind, receiver, recipient,
+                binding.Equipment, targetHealthPercent: targetHealthPercent, retaliationWindowOpen: retaliationWindowOpen));
+        }
+
+        internal float TransformAuthoredMemoryDamage(Hero hero, string memory, float percent)
+        {
+            if (percent <= 0 || memory == null || !_authoredKeystones.ContainsKey(hero)) return percent;
+            return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.StarMemoryDamage, (decimal)percent,
+                new KeystoneCaps(decimal.MaxValue)), memory, null, KeystoneSourceKind.NativeMemory).Value;
+        }
+
+        internal void ApplyAuthoredFinalNativeDamage(ref DamageData damage, Actor actor, Entity target,
+            float targetHealthBefore = float.NaN, float targetMaxHealthBefore = float.NaN)
+        {
+            var packet = NativeAttributedDamagePacket.Current;
+            if (packet == null || packet.Actor != actor || packet.Victim != target || !packet.Admitted
+                || damage.currentAmount <= 0 || damage.IsAmountModifiedBy(typeof(NativeAuthoredKeystoneDamage))) return;
+            var hero = AttributedOwner(packet.Identity.OwnerId);
+            if (hero == null || !_authoredKeystones.ContainsKey(hero)) return;
+            var identity = packet.Identity;
+            var sourceKind = identity.NativePayloadKind == NativePayloadKind.MainBasicAttack ? KeystoneSourceKind.OwnedBasicAttack
+                : identity.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
+            string effectId = identity.NativeAdapterId;
+            var family = NativeAuthoredKeystonePacketFamily.Current;
+            if (family != null && family.Depth == 1 && family.Actor == actor && family.Victim == target
+                && family.Memory == identity.SourceMemory) effectId = family.EffectId;
+            var payload = new KeystonePayload(KeystoneLayer.NativeDamage, (decimal)damage.currentAmount,
+                new KeystoneCaps(decimal.MaxValue), effectId: effectId);
+            // Typed event facts: the victim's pre-hit health percent and the owner's existing Retaliation window (M6).
+            float? healthPercent = targetMaxHealthBefore > 0f && !float.IsNaN(targetHealthBefore) && !float.IsNaN(targetMaxHealthBefore)
+                ? (float?)(targetHealthBefore / targetMaxHealthBefore * 100f) : null;
+            bool? retaliation = _runtimes.TryGetValue(hero, out var ownerRuntime)
+                ? (bool?)ownerRuntime.Powers.WithinRetaliationWindow(UnityEngine.Time.time) : null;
+            var result = TransformAuthoredPayload(hero, payload, identity.SourceMemory.Length == 0 ? null : identity.SourceMemory, null, sourceKind,
+                targetHealthPercent: healthPercent, retaliationWindowOpen: retaliation);
+            float ratio = (float)(result.Value / payload.Value);
+            if (ratio < 1f) damage.ApplyReduction(1f - ratio);
+            else if (ratio > 1f) damage.ApplyAmplification(ratio - 1f);
+            damage.SetAmountModifiedBy(typeof(NativeAuthoredKeystoneDamage));
+        }
+
+        internal GimmickDef TransformAuthoredGimmick(Hero hero, GimmickDef def, string source, string receiver,
+            KeystoneSourceKind sourceKind, string effectId = null, float sourceCooldown = 0f)
+        {
+            if (!_authoredKeystones.ContainsKey(hero)) return def;
+            return TransformAuthoredGimmickPayload(hero, def, AuthoredKeystoneComposer.GimmickPayload(def, effectId,
+                durationBaseOverride: AuthoredGimmickDurationBase(def, sourceCooldown)),
+                source, receiver, sourceKind);
+        }
+
+        internal GimmickDef TransformAuthoredGimmick(Hero hero, AuthoredMechanismSpec spec, string source, string receiver,
+            KeystoneSourceKind sourceKind, float sourceCooldown = 0f)
+        {
+            if (spec?.Gimmick == null) throw new ArgumentException("A concrete gimmick mechanism is required.");
+            if (!_authoredKeystones.ContainsKey(hero)) return spec.Gimmick;
+            return TransformAuthoredGimmickPayload(hero, spec.Gimmick, AuthoredKeystoneComposer.MechanismPayload(spec,
+                durationBaseOverride: AuthoredGimmickDurationBase(spec.Gimmick, sourceCooldown)),
+                source, receiver, sourceKind);
+        }
+
+        private static decimal? AuthoredGimmickDurationBase(GimmickDef def, float sourceCooldown) =>
+            def.Effect == GimmickEffect.Crescendo
+                ? (decimal)Math.Max(8f, Gimmicks.Finite(sourceCooldown) && sourceCooldown > 0 ? sourceCooldown * 1.5f : 0f)
+                : (decimal?)null;
+
+        private GimmickDef TransformAuthoredGimmickPayload(Hero hero, GimmickDef def, KeystonePayload payload,
+            string source, string receiver, KeystoneSourceKind sourceKind)
+        {
+            var result = TransformAuthoredPayload(hero, payload, source, receiver, sourceKind);
+            var effective = AuthoredKeystoneComposer.EffectiveGimmick(def, result);
+            if (effective != null && (def.Effect == GimmickEffect.Heal || def.Effect == GimmickEffect.Siphon))
+                effective.EffectiveAllyValuePercent = TransformAuthoredPayload(hero, payload, source, receiver, sourceKind,
+                    KeystoneRecipientKind.AlliedHero).Value;
+            return effective;
+        }
+
+        internal int TransformAuthoredEveryN(Hero hero, string source, AuthoredMechanismSpec spec,
+            KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory)
+        {
+            return TransformAuthoredPayload(hero, AuthoredKeystoneComposer.MechanismPayload(spec),
+                source, spec.Recharge?.Recipient.Memory ?? spec.Relay?.TargetMemory ?? source, sourceKind).EveryN;
+        }
+
+        internal float TransformAuthoredGeneratedDamage(Hero hero, float amount, string source, string effectId, GimmickEffect effect)
+        {
+            if (amount <= 0 || !_authoredKeystones.ContainsKey(hero)) return amount;
+            return (float)TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.GeneratedDamage, (decimal)amount,
+                new KeystoneCaps(decimal.MaxValue), effect: effect, effectId: effectId), source, null, KeystoneSourceKind.Generated).Value;
+        }
+    }
+}
