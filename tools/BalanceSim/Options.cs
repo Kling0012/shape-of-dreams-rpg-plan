@@ -24,6 +24,7 @@ internal sealed class Options
     public string Mode { get; private set; } = "expeditions";
     public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
     public bool Stars => Mode == "stars";
+    public bool Sets => Mode == "sets";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -65,8 +66,8 @@ internal sealed class Options
                     o.Out = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars"))
-                        throw new ArgumentException("--mode は expeditions / stars です。");
+                    if (value is not ("expeditions" or "stars" or "sets"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets です。");
                     o.Mode = value;
                     break;
                 case "--dream-level":
@@ -114,7 +115,7 @@ internal sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）
+          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）/ sets（v1.32 セット6部位）
           --dream-level 30   stars: 夢の圧に仮定する夢レベル（1〜30）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --help             この説明を表示

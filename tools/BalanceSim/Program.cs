@@ -33,6 +33,21 @@ internal static class Program
                 Console.Write(starReport);
                 return 0;
             }
+            if (options.Sets)
+            {
+                var sets = SetBalance.MeasureAll();
+                timer.Stop();
+                string setReport = SetReport.Render(sets, timer.Elapsed);
+                if (options.Out != null)
+                {
+                    string setPath = Path.GetFullPath(options.Out);
+                    string? setDirectory = Path.GetDirectoryName(setPath);
+                    if (setDirectory != null) Directory.CreateDirectory(setDirectory);
+                    File.WriteAllText(setPath, setReport, new UTF8Encoding(false));
+                }
+                Console.Write(setReport);
+                return 0;
+            }
             var simulation = new Simulation(options);
             string report = Report.Render(options, simulation, timer.Elapsed);
             if (options.Out != null)

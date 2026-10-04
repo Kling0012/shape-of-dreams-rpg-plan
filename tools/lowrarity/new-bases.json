@@ -1,0 +1,2402 @@
+[
+ {
+  "id": "weapon.plain_edge",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "無垢の直刀",
+  "nameEn": "Unblemished Blade",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.soldier_saber",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "兵の軍刀",
+  "nameEn": "Soldier's Saber",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "weapon.rough_cleaver",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "無骨な鉈",
+  "nameEn": "Unrefined Cleaver",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "weapon.apprentice_wand",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Plain",
+  "nameJa": "見習いの短杖",
+  "nameEn": "Apprentice's Wand",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.icevein_blade",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "氷脈の刀",
+  "nameEn": "Icevein Blade",
+  "stat": "ColdAmp",
+  "value": 10
+ },
+ {
+  "id": "weapon.hoarfrost_dirk",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Frost",
+  "nameJa": "霧氷の短剣",
+  "nameEn": "Hoarfrost Dirk",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "weapon.winterbrand_mace",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "冬の戦鎚",
+  "nameEn": "Winterbrand Mace",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "weapon.frozen_oath_blade",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "凍てつく誓いの剣",
+  "nameEn": "Frozen-Oath Blade",
+  "stat": "Tenacity",
+  "value": 8
+ },
+ {
+  "id": "weapon.inferno_lash",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "業火の鞭",
+  "nameEn": "Inferno Lash",
+  "stat": "FireAmp",
+  "value": 10
+ },
+ {
+  "id": "weapon.firedance_saber",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火舞の細剣",
+  "nameEn": "Firedance Saber",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "weapon.phoenix_plume_sword",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "鳳羽の剣",
+  "nameEn": "Phoenix-Plume Sword",
+  "stat": "AttackRangePct",
+  "value": 5
+ },
+ {
+  "id": "weapon.cauterizing_estoc",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "焼灼の刺突剣",
+  "nameEn": "Cauterizing Estoc",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "weapon.daybreak_blade",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "夜明けの刃",
+  "nameEn": "Daybreak Blade",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.halo_blade",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Light",
+  "nameJa": "光環の剣",
+  "nameEn": "Halo Blade",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "weapon.seraph_rod",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "煌めく天使の杖",
+  "nameEn": "Seraph's Rod",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "weapon.lamplighter_sword",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Light",
+  "nameJa": "灯守の剣",
+  "nameEn": "Lamplighter Sword",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "weapon.shadowfang_knife",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "影牙の短刀",
+  "nameEn": "Shadowfang Knife",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "weapon.nightreaver_axe",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "夜刈りの斧",
+  "nameEn": "Nightreaver Axe",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.eclipsed_rapier",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "蝕刻の突剣",
+  "nameEn": "Eclipsed Rapier",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "weapon.shadowstitch_kodachi",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "影縫いの小太刀",
+  "nameEn": "Shadowstitch Kodachi",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "weapon.sentry_halberd",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "哨兵の斧槍",
+  "nameEn": "Sentry's Halberd",
+  "stat": "Armor",
+  "value": 7
+ },
+ {
+  "id": "weapon.bulwark_greatsword",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "壁衛の大剣",
+  "nameEn": "Bulwark Greatsword",
+  "stat": "Armor",
+  "value": 9
+ },
+ {
+  "id": "weapon.oakheart_club",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "樫心の棍",
+  "nameEn": "Oakheart Club",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "weapon.vanguard_hammer",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "先陣の戦鎚",
+  "nameEn": "Vanguard Hammer",
+  "stat": "MaxHealthPct",
+  "value": 6
+ },
+ {
+  "id": "weapon.whirlwind_naginata",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "旋風の薙刀",
+  "nameEn": "Whirlwind Naginata",
+  "stat": "AttackRangePct",
+  "value": 6
+ },
+ {
+  "id": "weapon.gale_tossed_blades",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "疾風の投刃",
+  "nameEn": "Gale-Tossed Blades",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "weapon.stormstring_bow",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "風鳴りの弓",
+  "nameEn": "Stormstring Bow",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.tailwind_saber",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "追風の細剣",
+  "nameEn": "Tailwind Saber",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "weapon.mercy_staff",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "慈悲の杖",
+  "nameEn": "Staff of Mercy",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "weapon.herbalist_sickle",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "薬草鎌",
+  "nameEn": "Herbalist's Sickle",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "weapon.soothing_chime_staff",
+  "slot": "Weapon",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "癒し鈴の杖",
+  "nameEn": "Soothing-Chime Staff",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "weapon.dewdrop_wand",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "露滴の細杖",
+  "nameEn": "Dewdrop Wand",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "weapon.callers_greatsword",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Summon",
+  "nameJa": "喚起の大剣",
+  "nameEn": "Caller's Greatsword",
+  "stat": "SummonPower",
+  "value": 8
+ },
+ {
+  "id": "weapon.beast_tamer_whip",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "獣使いの鞭",
+  "nameEn": "Beast-Tamer's Whip",
+  "stat": "AttackFlat",
+  "value": 7
+ },
+ {
+  "id": "weapon.pact_dagger",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "契約の短剣",
+  "nameEn": "Pact Dagger",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "weapon.spirit_call_lance",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "霊呼びの槍",
+  "nameEn": "Spirit-Call Lance",
+  "stat": "AttackRangePct",
+  "value": 5
+ },
+ {
+  "id": "weapon.remembrance_blade",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "追憶の剣",
+  "nameEn": "Remembrance Blade",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "weapon.yesteryear_staff",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "在りし日の杖",
+  "nameEn": "Yesteryear Staff",
+  "stat": "PowerFlat",
+  "value": 7
+ },
+ {
+  "id": "weapon.dusk_memory_scythe",
+  "slot": "Weapon",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "夕闇の追憶鎌",
+  "nameEn": "Dusk-Memory Scythe",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "weapon.relic_hunter_blade",
+  "slot": "Weapon",
+  "line": "Offense",
+  "family": "Memory",
+  "nameJa": "遺跡巡りの刀",
+  "nameEn": "Relic-Hunter Blade",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "armor.sturdy_jerkin",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Plain",
+  "nameJa": "頑丈な革胴",
+  "nameEn": "Sturdy Jerkin",
+  "stat": "Armor",
+  "value": 6
+ },
+ {
+  "id": "armor.militia_cuirass",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Plain",
+  "nameJa": "郷勇の胸当て",
+  "nameEn": "Militia Cuirass",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "armor.roadworn_jacket",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "旅路の上着",
+  "nameEn": "Roadworn Jacket",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "armor.padded_vest",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Plain",
+  "nameJa": "詰め物の胴着",
+  "nameEn": "Padded Vest",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "armor.hoarfrost_mail",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "霧氷の鎖帷子",
+  "nameEn": "Hoarfrost Mail",
+  "stat": "ColdAmp",
+  "value": 10
+ },
+ {
+  "id": "armor.frozen_rampart",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "氷塁の胸当て",
+  "nameEn": "Frozen Rampart",
+  "stat": "Armor",
+  "value": 7
+ },
+ {
+  "id": "armor.snowdrift_coat",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "雪どけの上衣",
+  "nameEn": "Snowdrift Coat",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "armor.iceskimmer_wrap",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "氷滑りの帯衣",
+  "nameEn": "Iceskimmer Wrap",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "armor.cinderplate",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "燃殻の板金鎧",
+  "nameEn": "Cinderplate",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "armor.furnace_guard",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Flame",
+  "nameJa": "火床の胸当て",
+  "nameEn": "Furnace Guard",
+  "stat": "MaxHealthPct",
+  "value": 6
+ },
+ {
+  "id": "armor.ember_flare_jacket",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火焔閃の上着",
+  "nameEn": "Ember-Flare Jacket",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "armor.slowfire_bandolier",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Flame",
+  "nameJa": "燠りの帯衣",
+  "nameEn": "Slowfire Bandolier",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "armor.dawnweave_harness",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "暁織りの胸綱",
+  "nameEn": "Dawnweave Harness",
+  "stat": "LightAmp",
+  "value": 10
+ },
+ {
+  "id": "armor.sanctum_vest",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "聖域の胴衣",
+  "nameEn": "Sanctum Vest",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "armor.clearsky_corset",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Light",
+  "nameJa": "晴空の胴衣",
+  "nameEn": "Clear-Sky Corset",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "armor.lamplight_sash",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "灯火の飾り帯",
+  "nameEn": "Lamplight Sash",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "armor.midnight_hauberk",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "真夜中の鎖帷子",
+  "nameEn": "Midnight Hauberk",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "armor.wraithweave_coat",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "幽織りの外套",
+  "nameEn": "Wraithweave Coat",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "armor.nightprowler_jacket",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "夜盗の上着",
+  "nameEn": "Nightprowler's Jacket",
+  "stat": "AttackFlat",
+  "value": 7
+ },
+ {
+  "id": "armor.shadowstep_cloak",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Dark",
+  "nameJa": "影歩みの外套",
+  "nameEn": "Shadowstep Cloak",
+  "stat": "MoveSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "armor.keepers_plate",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "預かり人の板金鎧",
+  "nameEn": "Keeper's Plate",
+  "stat": "Armor",
+  "value": 9
+ },
+ {
+  "id": "armor.deepwell_cuirass",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "深井戸の胴鎧",
+  "nameEn": "Deepwell Cuirass",
+  "stat": "MaxHealthFlat",
+  "value": 30
+ },
+ {
+  "id": "armor.unyielding_ply",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "屈しぬ腹当て",
+  "nameEn": "Unyielding Ply",
+  "stat": "Tenacity",
+  "value": 12
+ },
+ {
+  "id": "armor.warden_sigil_vest",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "番印の胴衣",
+  "nameEn": "Warden-Sigil Vest",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "armor.windcutter_vest",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "風切りの胸当て",
+  "nameEn": "Windcutter Vest",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "armor.skyclad_sash",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "天衣の帯",
+  "nameEn": "Skyclad Sash",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "armor.darting_wrap",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "疾走の帯衣",
+  "nameEn": "Darting Wrap",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "armor.cyclone_cloak",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "竜巻の外套",
+  "nameEn": "Cyclone Cloak",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "armor.herb_pouch_vest",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "薬袋の胴着",
+  "nameEn": "Herb-Pouch Vest",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "armor.gentle_rain_jacket",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "慈雨の上着",
+  "nameEn": "Gentle-Rain Jacket",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "armor.bandage_wrap",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "包帯の巻衣",
+  "nameEn": "Bandage Wrap",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "armor.longevity_coat",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "長命の上衣",
+  "nameEn": "Longevity Coat",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "armor.whistle_call_vest",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "呼笛の胴衣",
+  "nameEn": "Whistle-Call Vest",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "armor.lair_woven_mail",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Summon",
+  "nameJa": "巣織りの帷子",
+  "nameEn": "Lair-Woven Mail",
+  "stat": "MaxHealthFlat",
+  "value": 25
+ },
+ {
+  "id": "armor.familiars_shawl",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Summon",
+  "nameJa": "使い魔の肩掛け",
+  "nameEn": "Familiar's Shawl",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "armor.pack_leader_wrap",
+  "slot": "Armor",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "群れ率びの腹巻",
+  "nameEn": "Pack-Leader Wrap",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "armor.annals_robe",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "年代記の法衣",
+  "nameEn": "Annals Robe",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "armor.afterglow_vest",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "名残りの胴衣",
+  "nameEn": "Afterglow Vest",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "armor.keepsake_cloak",
+  "slot": "Armor",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "形見の外套",
+  "nameEn": "Keepsake Cloak",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "armor.lingering_image_coat",
+  "slot": "Armor",
+  "line": "Guard",
+  "family": "Memory",
+  "nameJa": "面影の上衣",
+  "nameEn": "Lingering-Image Coat",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "charm.copper_band",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "銅の腕輪",
+  "nameEn": "Copper Band",
+  "stat": "AttackFlat",
+  "value": 7
+ },
+ {
+  "id": "charm.rough_hewn_charm",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "荒削りの御守り",
+  "nameEn": "Rough-Hewn Charm",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "charm.simple_sigil",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Plain",
+  "nameJa": "素朴な印章",
+  "nameEn": "Simple Sigil",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "charm.journeythread_ring",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Plain",
+  "nameJa": "旅緒の指輪",
+  "nameEn": "Journeythread Ring",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "charm.glacier_locket",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "氷晶のロケット",
+  "nameEn": "Glacier Locket",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "charm.frostlock_ring",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "霜鎖の指輪",
+  "nameEn": "Frostlock Ring",
+  "stat": "Tenacity",
+  "value": 12
+ },
+ {
+  "id": "charm.frost_breath_charm",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "白息の御守り",
+  "nameEn": "Frost-Breath Charm",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "charm.north_sky_charm",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "北空の飾り",
+  "nameEn": "North-Sky Charm",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "charm.sparkcase_pendant",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火種の垂飾り",
+  "nameEn": "Sparkcase Pendant",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "charm.melt_ore_locket",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "熔鉱のロケット",
+  "nameEn": "Melt-Ore Locket",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "charm.flarewheel_brooch",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火輪のブローチ",
+  "nameEn": "Flarewheel Brooch",
+  "stat": "AttackRangePct",
+  "value": 5
+ },
+ {
+  "id": "charm.tinder_band",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火口の腕輪",
+  "nameEn": "Tinder Band",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "charm.sunrise_locket",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "朝焼けのロケット",
+  "nameEn": "Sunrise Locket",
+  "stat": "LightAmp",
+  "value": 10
+ },
+ {
+  "id": "charm.kindness_beads",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "慈愛の数珠",
+  "nameEn": "Beads of Kindness",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "charm.sanctuary_seal",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Light",
+  "nameJa": "聖域の印章",
+  "nameEn": "Sanctuary Seal",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "charm.broad_day_charm",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "白昼の御守り",
+  "nameEn": "Broad-Daylight Charm",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "charm.night_owl_charm",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "梟の御守り",
+  "nameEn": "Night-Owl Charm",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "charm.grave_bell_ring",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "墓鈴の指輪",
+  "nameEn": "Grave-Bell Ring",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "charm.funeral_band",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "葬列の腕輪",
+  "nameEn": "Funeral Band",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "charm.dusk_mist_band",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Dark",
+  "nameJa": "宵霧の腕輪",
+  "nameEn": "Dusk-Mist Band",
+  "stat": "MoveSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "charm.heavy_chain_charm",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "重鎖の飾り",
+  "nameEn": "Heavy-Chain Charm",
+  "stat": "Armor",
+  "value": 8
+ },
+ {
+  "id": "charm.immovable_ring",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "不動の指輪",
+  "nameEn": "Immovable Ring",
+  "stat": "MaxHealthFlat",
+  "value": 25
+ },
+ {
+  "id": "charm.wellspring_amulet",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "湧き泉の護符",
+  "nameEn": "Wellspring Amulet",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "charm.watchpost_badge",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "見張り番の徽章",
+  "nameEn": "Watchpost Badge",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "charm.tailwind_plume",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "追風の羽飾り",
+  "nameEn": "Tailwind Plume",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "charm.skylark_bell",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "雲雀の鈴",
+  "nameEn": "Skylark Bell",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "charm.far_flight_charm",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "遠翔の御守り",
+  "nameEn": "Far-Flight Charm",
+  "stat": "AttackRangePct",
+  "value": 6
+ },
+ {
+  "id": "charm.gust_band",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "疾風の腕輪",
+  "nameEn": "Gust Band",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "charm.healing_sachet",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "癒しの香袋",
+  "nameEn": "Healing Sachet",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "charm.restful_heart_ring",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "心休まる指輪",
+  "nameEn": "Restful-Heart Ring",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "charm.lotus_bloom_seal",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "蓮華の印",
+  "nameEn": "Lotus-Bloom Seal",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "charm.salve_case_charm",
+  "slot": "Charm",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "薬盒の飾り",
+  "nameEn": "Salve-Case Charm",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "charm.packfang_pendant",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "群牙の垂飾り",
+  "nameEn": "Packfang Pendant",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "charm.bone_whistle_charm",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Summon",
+  "nameJa": "骨笛の飾り",
+  "nameEn": "Bone-Whistle Charm",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "charm.wildheart_locket",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "野性のロケット",
+  "nameEn": "Wildheart Locket",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "charm.rein_ring",
+  "slot": "Charm",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "手綱の指輪",
+  "nameEn": "Rein Ring",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "charm.unaddressed_letter",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "宛先なき手紙",
+  "nameEn": "Unaddressed Letter",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "charm.old_coin_charm",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "古銭の御守り",
+  "nameEn": "Old-Coin Charm",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "charm.forgotten_name_charm",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "忘れ名の飾り",
+  "nameEn": "Forgotten-Name Charm",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "charm.memory_bookmark",
+  "slot": "Charm",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "思い出の栞",
+  "nameEn": "Bookmark of Memories",
+  "stat": "PowerFlat",
+  "value": 7
+ },
+ {
+  "id": "head.broad_brim_hat",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "つばの広い帽子",
+  "nameEn": "Broad-Brim Hat",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "head.cotton_hood",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "木綿の頭巾",
+  "nameEn": "Cotton Hood",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "head.straw_hat",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "麦わら帽子",
+  "nameEn": "Straw Hat",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "head.sweatband",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Plain",
+  "nameJa": "汗の鉢巻",
+  "nameEn": "Sweatband",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "head.aurora_circlet",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "極光の額冠",
+  "nameEn": "Aurora Circlet",
+  "stat": "ColdAmp",
+  "value": 10
+ },
+ {
+  "id": "head.snowlight_hood",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "雪明りの頭巾",
+  "nameEn": "Snowlight Hood",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "head.everfrost_hood",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "不凍の頭巾",
+  "nameEn": "Everfrost Hood",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "head.icicle_crown",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "氷柱の冠",
+  "nameEn": "Icicle Crown",
+  "stat": "Armor",
+  "value": 6
+ },
+ {
+  "id": "head.brazier_crown",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火鉢の冠",
+  "nameEn": "Brazier Crown",
+  "stat": "FireAmp",
+  "value": 10
+ },
+ {
+  "id": "head.flashfire_band",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火閃の鉢巻",
+  "nameEn": "Flashfire Band",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "head.scorched_mask",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "焦土の面",
+  "nameEn": "Scorched-Earth Mask",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "head.forge_hood",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Flame",
+  "nameJa": "鍛冶場の頭巾",
+  "nameEn": "Forge-Hood",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "head.hope_circlet",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "望みの額冠",
+  "nameEn": "Circlet of Hope",
+  "stat": "LightAmp",
+  "value": 10
+ },
+ {
+  "id": "head.nurses_veil",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "看護のヴェール",
+  "nameEn": "Nurse's Veil",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "head.first_light_band",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "夜明けの鉢巻",
+  "nameEn": "First-Light Band",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "head.clear_gaze_glasses",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Light",
+  "nameJa": "澄眼の眼鏡",
+  "nameEn": "Clear-Gaze Glasses",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "head.nightmare_visage",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "悪夢の面",
+  "nameEn": "Nightmare Visage",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "head.funeral_crown",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "葬列の冠",
+  "nameEn": "Funeral Crown",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "head.shroud_hood",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "死装束の頭巾",
+  "nameEn": "Shroud Hood",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "head.moth_wing_mask",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Dark",
+  "nameJa": "蛾翅の仮面",
+  "nameEn": "Moth-Wing Mask",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "head.siege_helm",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "攻城戦の兜",
+  "nameEn": "Siege Helm",
+  "stat": "Armor",
+  "value": 8
+ },
+ {
+  "id": "head.locked_visor",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "閉扉の面頬",
+  "nameEn": "Locked Visor",
+  "stat": "Tenacity",
+  "value": 12
+ },
+ {
+  "id": "head.patrol_hood",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "巡視の頭巾",
+  "nameEn": "Patrol Hood",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "head.heartwood_circlet",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "心材の冠",
+  "nameEn": "Heartwood Circlet",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "head.sprinting_veil",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "疾走のヴェール",
+  "nameEn": "Sprinting Veil",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "head.kite_mask",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "凧の面",
+  "nameEn": "Kite Mask",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "head.wind_crest_band",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "風紋の鉢巻",
+  "nameEn": "Wind-Crest Band",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "head.far_horizon_cap",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "遠地平の帽子",
+  "nameEn": "Far-Horizon Cap",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "head.pilgrim_doctor_hat",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "巡礼医の帽子",
+  "nameEn": "Pilgrim-Doctor Hat",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "head.balm_band",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "香膏の鉢巻",
+  "nameEn": "Balm Band",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "head.soothing_wreath",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "癒やしの花冠",
+  "nameEn": "Soothing Wreath",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "head.quiet_prayer_veil",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "静祷のヴェール",
+  "nameEn": "Quiet-Prayer Veil",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "head.beast_ear_hood",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "獣耳の頭巾",
+  "nameEn": "Beast-Ear Hood",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "head.falconers_hood",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "鷹狩りの頭巾",
+  "nameEn": "Falconer's Hood",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "head.den_mother_circlet",
+  "slot": "Head",
+  "line": "Guard",
+  "family": "Summon",
+  "nameJa": "巣守りの額冠",
+  "nameEn": "Den-Mother Circlet",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "head.calling_whistle_band",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Summon",
+  "nameJa": "呼び笛の鉢巻",
+  "nameEn": "Calling-Whistle Band",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "head.nostalgia_band",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "追憶の鉢巻",
+  "nameEn": "Nostalgia Band",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "head.old_tales_hood",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "昔話の頭巾",
+  "nameEn": "Old-Tales Hood",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "head.star_calendar_cap",
+  "slot": "Head",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "星暦の帽子",
+  "nameEn": "Star-Calendar Cap",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "head.relic_eye_monocle",
+  "slot": "Head",
+  "line": "Offense",
+  "family": "Memory",
+  "nameJa": "遺物眼の単眼鏡",
+  "nameEn": "Relic-Eye Monocle",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "hands.work_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "作業手袋",
+  "nameEn": "Work Gloves",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "hands.tumblers_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "軽業の手袋",
+  "nameEn": "Tumbler's Gloves",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "hands.iron_thumb_gauntlet",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "鉄親指の籠手",
+  "nameEn": "Iron-Thumb Gauntlet",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "hands.cotton_wraps",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Plain",
+  "nameJa": "木綿の手巻き",
+  "nameEn": "Cotton Wraps",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "hands.rimeguard_gauntlets",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "霧氷の籠手",
+  "nameEn": "Rimeguard Gauntlets",
+  "stat": "ColdAmp",
+  "value": 10
+ },
+ {
+  "id": "hands.frozen_grip",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "氷結の握り",
+  "nameEn": "Frozen Grip",
+  "stat": "Tenacity",
+  "value": 10
+ },
+ {
+  "id": "hands.snow_weight_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Frost",
+  "nameJa": "雪重りの手袋",
+  "nameEn": "Snow-Weight Gloves",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "hands.winter_ready_gloves",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "冬支度の手袋",
+  "nameEn": "Winter-Ready Gloves",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "hands.volcanic_grips",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火山岩の握り",
+  "nameEn": "Volcanic Grips",
+  "stat": "FireAmp",
+  "value": 10
+ },
+ {
+  "id": "hands.fire_tong_mitts",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火箸の指なし",
+  "nameEn": "Fire-Tong Mitts",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "hands.slag_knuckles",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "鉱滓の拳当て",
+  "nameEn": "Slag Knuckles",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "hands.brand_iron_fingerless",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "焼印の指抜き",
+  "nameEn": "Brand-Iron Fingerless",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "hands.morninglight_gloves",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "朝光の手袋",
+  "nameEn": "Morninglight Gloves",
+  "stat": "LightAmp",
+  "value": 8
+ },
+ {
+  "id": "hands.first_aid_mitts",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "手当ての指なし",
+  "nameEn": "First-Aid Mitts",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "hands.gospel_gloves",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "福音の手袋",
+  "nameEn": "Gospel Gloves",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "hands.sunhold_bands",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "日向の腕輪",
+  "nameEn": "Sunhold Bands",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "hands.gravediggers_claws",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "墓掘りの爪",
+  "nameEn": "Gravedigger's Claws",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "hands.assassins_fingerless",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "暗殺者の指抜き",
+  "nameEn": "Assassin's Fingerless",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "hands.gloomfang_knuckles",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "闇牙の拳当て",
+  "nameEn": "Gloomfang Knuckles",
+  "stat": "AttackSpeedPct",
+  "value": 5
+ },
+ {
+  "id": "hands.night_rose_gloves",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Dark",
+  "nameJa": "夜薔薇の手袋",
+  "nameEn": "Night-Rose Gloves",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "hands.bastion_mitts",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "砦の指なし",
+  "nameEn": "Bastion Mitts",
+  "stat": "Armor",
+  "value": 8
+ },
+ {
+  "id": "hands.anvil_gauntlets",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "金床の籠手",
+  "nameEn": "Anvil Gauntlets",
+  "stat": "Armor",
+  "value": 10
+ },
+ {
+  "id": "hands.steadfast_grips",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "不動の握り",
+  "nameEn": "Steadfast Grips",
+  "stat": "MaxHealthFlat",
+  "value": 25
+ },
+ {
+  "id": "hands.iron_will_wraps",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "鉄意志の手巻き",
+  "nameEn": "Iron-Will Wraps",
+  "stat": "Tenacity",
+  "value": 15
+ },
+ {
+  "id": "hands.quicksilver_bands",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "迅銀の腕輪",
+  "nameEn": "Quicksilver Bands",
+  "stat": "AttackSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "hands.galefinger_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "風指の手袋",
+  "nameEn": "Galefinger Gloves",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "hands.hawking_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "鷹寄せの手袋",
+  "nameEn": "Hawking Gloves",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "hands.windstep_wraps",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "風歩きの手巻き",
+  "nameEn": "Windstep Wraps",
+  "stat": "MoveSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "hands.repair_gloves",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "繕いの手袋",
+  "nameEn": "Repair Gloves",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "hands.supporting_gloves",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "支えの手袋",
+  "nameEn": "Supporting Gloves",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "hands.splint_wraps",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "副木の手巻き",
+  "nameEn": "Splint Wraps",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "hands.spring_breeze_grips",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "春風の握り",
+  "nameEn": "Spring-Breeze Grips",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "hands.beasthide_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "獣皮の手袋",
+  "nameEn": "Beasthide Gloves",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "hands.tamers_mitts",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "調教の指なし",
+  "nameEn": "Tamer's Mitts",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "hands.alpha_grips",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "頭領の握り",
+  "nameEn": "Alpha Grips",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "hands.kennel_keeper_gloves",
+  "slot": "Hands",
+  "line": "Guard",
+  "family": "Summon",
+  "nameJa": "番犬飼いの手袋",
+  "nameEn": "Kennel-Keeper Gloves",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "hands.palimpsest_gloves",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "重写本の手袋",
+  "nameEn": "Palimpsest Gloves",
+  "stat": "PowerFlat",
+  "value": 7
+ },
+ {
+  "id": "hands.keepsake_bands",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "形見の腕輪",
+  "nameEn": "Keepsake Bands",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "hands.tale_teller_gloves",
+  "slot": "Hands",
+  "line": "Offense",
+  "family": "Memory",
+  "nameJa": "昔語りの手袋",
+  "nameEn": "Tale-Teller Gloves",
+  "stat": "CritChancePct",
+  "value": 3
+ },
+ {
+  "id": "hands.duskthread_wraps",
+  "slot": "Hands",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "夕糸の手巻き",
+  "nameEn": "Duskthread Wraps",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "feet.hobnail_boots",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Plain",
+  "nameJa": "鉄釘の長靴",
+  "nameEn": "Hobnail Boots",
+  "stat": "Armor",
+  "value": 6
+ },
+ {
+  "id": "feet.everyday_shoes",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "日常の靴",
+  "nameEn": "Everyday Shoes",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "feet.work_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Plain",
+  "nameJa": "仕事靴",
+  "nameEn": "Work Boots",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "feet.earth_stained_sandals",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Plain",
+  "nameJa": "土の付いた草鞋",
+  "nameEn": "Earth-Stained Sandals",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "feet.blizzard_gaiters",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "吹雪の脚絆",
+  "nameEn": "Blizzard Gaiters",
+  "stat": "ColdAmp",
+  "value": 10
+ },
+ {
+  "id": "feet.floe_skimmer_shoes",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "流氷滑りの靴",
+  "nameEn": "Floe-Skimmer Shoes",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "feet.ice_road_boots",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Frost",
+  "nameJa": "氷道の長靴",
+  "nameEn": "Ice-Road Boots",
+  "stat": "HealthRegen",
+  "value": 2
+ },
+ {
+  "id": "feet.frostwind_slippers",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Frost",
+  "nameJa": "霜風の上履き",
+  "nameEn": "Frostwind Slippers",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "feet.scorching_footwear",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "灼熱の履き物",
+  "nameEn": "Scorching Footwear",
+  "stat": "FireAmp",
+  "value": 10
+ },
+ {
+  "id": "feet.firewalk_sandals",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "火渡りの草鞋",
+  "nameEn": "Firewalk Sandals",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "feet.cinder_trail_shoes",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "燼跡の靴",
+  "nameEn": "Cinder-Trail Shoes",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "feet.smelter_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Flame",
+  "nameJa": "溶鉱の長靴",
+  "nameEn": "Smelter Boots",
+  "stat": "CritDamagePct",
+  "value": 12
+ },
+ {
+  "id": "feet.sunpath_sandals",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "日の道の草鞋",
+  "nameEn": "Sunpath Sandals",
+  "stat": "LightAmp",
+  "value": 10
+ },
+ {
+  "id": "feet.pilgrim_light_shoes",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "巡礼灯の靴",
+  "nameEn": "Pilgrim-Light Shoes",
+  "stat": "HealPower",
+  "value": 5
+ },
+ {
+  "id": "feet.morningstar_shoes",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "暁星の靴",
+  "nameEn": "Morningstar Shoes",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "feet.beacon_steps",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Light",
+  "nameJa": "灯台の足取り",
+  "nameEn": "Beacon Steps",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ },
+ {
+  "id": "feet.graveshade_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "墓影の長靴",
+  "nameEn": "Graveshade Boots",
+  "stat": "DarkAmp",
+  "value": 10
+ },
+ {
+  "id": "feet.soundless_shoes",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "無音の靴",
+  "nameEn": "Soundless Shoes",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "feet.shadowstrider_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Dark",
+  "nameJa": "影渡りの靴",
+  "nameEn": "Shadowstrider Boots",
+  "stat": "CritDamagePct",
+  "value": 14
+ },
+ {
+  "id": "feet.torchless_shoes",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Dark",
+  "nameJa": "灯無しの靴",
+  "nameEn": "Torchless Shoes",
+  "stat": "Tenacity",
+  "value": 12
+ },
+ {
+  "id": "feet.gatehouse_sabatons",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "城門の鉄鞋",
+  "nameEn": "Gatehouse Sabatons",
+  "stat": "Armor",
+  "value": 9
+ },
+ {
+  "id": "feet.mountain_boots",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "山岳の重靴",
+  "nameEn": "Mountain Boots",
+  "stat": "Armor",
+  "value": 10
+ },
+ {
+  "id": "feet.night_watch_boots",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "夜警の長靴",
+  "nameEn": "Night-Watch Boots",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "feet.patrol_sandals",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Guard",
+  "nameJa": "巡回兵の草鞋",
+  "nameEn": "Patrol-Soldier Sandals",
+  "stat": "HealthRegen",
+  "value": 3
+ },
+ {
+  "id": "feet.updraft_greaves",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "上昇風の脛当て",
+  "nameEn": "Updraft Greaves",
+  "stat": "Haste",
+  "value": 5
+ },
+ {
+  "id": "feet.breeze_runners",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Gale",
+  "nameJa": "微風の走り靴",
+  "nameEn": "Breeze Runners",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "feet.swallow_flight_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "燕飛びの靴",
+  "nameEn": "Swallow-Flight Boots",
+  "stat": "AttackFlat",
+  "value": 5
+ },
+ {
+  "id": "feet.long_stride_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Gale",
+  "nameJa": "大股の長靴",
+  "nameEn": "Long-Stride Boots",
+  "stat": "AttackRangePct",
+  "value": 5
+ },
+ {
+  "id": "feet.hospice_slippers",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "病院の上履き",
+  "nameEn": "Hospice Slippers",
+  "stat": "PowerFlat",
+  "value": 5
+ },
+ {
+  "id": "feet.comfort_sandals",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "安らぎの草鞋",
+  "nameEn": "Comfort Sandals",
+  "stat": "ShieldPower",
+  "value": 5
+ },
+ {
+  "id": "feet.herb_garden_shoes",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Mend",
+  "nameJa": "薬草園の靴",
+  "nameEn": "Herb-Garden Shoes",
+  "stat": "Haste",
+  "value": 4
+ },
+ {
+  "id": "feet.night_nurse_boots",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Mend",
+  "nameJa": "夜看の長靴",
+  "nameEn": "Night-Nurse Boots",
+  "stat": "MaxHealthFlat",
+  "value": 20
+ },
+ {
+  "id": "feet.pack_trot_boots",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "群れ駆けの長靴",
+  "nameEn": "Pack-Trot Boots",
+  "stat": "AttackSpeedPct",
+  "value": 4
+ },
+ {
+  "id": "feet.beast_path_shoes",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "獣径の靴",
+  "nameEn": "Beast-Path Shoes",
+  "stat": "AttackFlat",
+  "value": 6
+ },
+ {
+  "id": "feet.howling_greaves",
+  "slot": "Feet",
+  "line": "Offense",
+  "family": "Summon",
+  "nameJa": "遠吠えの脛当て",
+  "nameEn": "Howling Greaves",
+  "stat": "CritDamagePct",
+  "value": 10
+ },
+ {
+  "id": "feet.den_warden_sabatons",
+  "slot": "Feet",
+  "line": "Guard",
+  "family": "Summon",
+  "nameJa": "巣番の鉄鞋",
+  "nameEn": "Den-Warden Sabatons",
+  "stat": "MaxHealthPct",
+  "value": 5
+ },
+ {
+  "id": "feet.old_road_boots",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "旧道の長靴",
+  "nameEn": "Old-Road Boots",
+  "stat": "PowerFlat",
+  "value": 6
+ },
+ {
+  "id": "feet.twilight_stroll_shoes",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "黄昏散策の靴",
+  "nameEn": "Twilight-Stroll Shoes",
+  "stat": "DarkAmp",
+  "value": 8
+ },
+ {
+  "id": "feet.remembered_steps",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "思い出の足取り",
+  "nameEn": "Remembered Steps",
+  "stat": "Haste",
+  "value": 6
+ },
+ {
+  "id": "feet.once_worn_sandals",
+  "slot": "Feet",
+  "line": "Resonance",
+  "family": "Memory",
+  "nameJa": "昔履きの草鞋",
+  "nameEn": "Once-Worn Sandals",
+  "stat": "MoveSpeedPct",
+  "value": 3
+ }
+]
