@@ -904,7 +904,7 @@ namespace SodRpg.Core.Game
                 };
                 switch (parameter)
                 {
-                    case GimmickParam.Duration:
+                    case GimmickParam.Duration: case GimmickParam.WindowDuration: case GimmickParam.MarkDuration:
                         row.Field = AllocationEffectiveField.Duration; row.Unit = AllocationValueUnit.Hundredths;
                         row.EffectiveValue = channel.DurationUnits; row.Ceiling = channel.DurationCeilingUnits;
                         row.DominatingValue = dominating?.DurationUnits ?? 0; break;
@@ -928,7 +928,8 @@ namespace SodRpg.Core.Game
                     row.CapProfileId = profileId;
                     row.DeclaredModifierCeilingUnits = maximum;
                     row.DeclaredModifierUnit = parameter == GimmickParam.ExtraTargets ? AllocationValueUnit.Count : AllocationValueUnit.Hundredths;
-                    if (parameter == GimmickParam.Duration || parameter == GimmickParam.Radius || parameter == GimmickParam.ExtraTargets)
+                    if (parameter == GimmickParam.Duration || parameter == GimmickParam.WindowDuration || parameter == GimmickParam.MarkDuration
+                        || parameter == GimmickParam.Radius || parameter == GimmickParam.ExtraTargets)
                         row.Ceiling = Math.Min(row.Ceiling, maximum);
                     else if (parameter == GimmickParam.Chance)
                         row.Ceiling = Math.Min(10000m, channel.IntrinsicProbabilityUnits + maximum);
@@ -957,6 +958,10 @@ namespace SodRpg.Core.Game
             if (modifier != null)
             {
                 if (channel.Memory != modifier.ScopeMemory) return false;
+                // A bridge's gate lifetimes are their own channels: only WindowDuration / MarkDuration target them, and they target nothing else.
+                bool window = channel.Key.StartsWith(AuthoredMechanisms.BridgeWindowChannel, StringComparison.Ordinal);
+                bool mark = channel.Key.StartsWith(AuthoredMechanisms.BridgeMarkChannel, StringComparison.Ordinal);
+                if (modifier.Param == GimmickParam.WindowDuration ? !window : modifier.Param == GimmickParam.MarkDuration ? !mark : window || mark) return false;
                 if (modifier.TargetEffects.Length > 0)
                 {
                     bool matchesEffect = false;

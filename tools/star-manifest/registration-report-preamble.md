@@ -10,7 +10,7 @@
 | Husk | 4 | 0 | Choiceの所有記憶宣言を修正 |
 | Lacerta | 69 | 0 | Reload記憶の全体B、Recv先の二重強化、Choiceの所有記憶を修正 |
 | Mist | 62 | 0 | Reload記憶（Fleche）の全体Bを修正 |
-| Nachia | 121 | 5 | 残り5件は橋の窓Duration（下記・未解決）。`h.nachia.key2` 除外 |
+| Nachia | 121 | 0 | 橋の窓/印のDuration（`WindowDuration`/`MarkDuration`）を追加して解消。`h.nachia.key2` 除外 |
 | Vesper | 0 | 0 | 変更なし（再生成で全体Bの宛先がID指定に変わった） |
 | Yubar | 12 | 0 | 他記憶へのRecv、全体B修正。`h.yubar.key2` 除外 |
 
@@ -24,9 +24,12 @@
 6. **外殻アンカーと混在Choice（Cetus）**: `ManifestRetained` は登録済みの外縁アンカー（`h.cetus.outer.abyssal-shell`）を Keystone 領域にしていたため「Stats ... in Outer clusters」で拒否された。`IsOuterAnchor` は Outer 領域にした。混在Choice（Shield と Recharge が同一ID）への Duration は、効果集合でも絞った。
 7. **召喚Ward（Aurena）**: `outer.summons.a2/b2` の `AlliedWard arg=1`（召喚への Ward）に Aurena だけ `includeOwner: true` を付けており、`AlliedWardDefinition` が「Owned-summon selection cannot include a traveler」で構築時に例外。召喚向けには旅人を含めない。
 
-### 未解決（登録されない星）
+### 橋の窓/印の持続時間（Nachia、設計決定による追加）
 
-- **Nachia 橋の窓Duration（5星: `nachia.bridge.b1/b2/b5/b6/b8.q` の Duration 選択肢）**: 設計表は「中心の印／窓の Duration +20%」。契約の `AuthoredMechanisms.Supports` は橋の Duration を払い出し（Ward・OrdinaryShield・Duration付き Gimmick）の持続としてしか扱わず、Recharge/Burst/Heal 払い出しの橋には「窓の持続」を変える手段がない（`BridgeSuccessDefinition.WindowSeconds` は固定）。実装には、窓 Duration の新しい対象フィールド（と UI・コーデック・テスト）が必要。さらに `b7.q` は「印Duration／Shield Duration」の2択が機械可読では同じ `Duration` で区別できず、現在は払い出し（Shield）の Duration として登録される（印Duration は表現できていない）。設計側の決定待ち。
+`GimmickParam` に `WindowDuration`（その橋のペアの窓 `BridgeSuccessDefinition.WindowSeconds`、native lifetime の窓は host が渡す終了までの残りを拡大）と `MarkDuration`（Markペアの印 `MarkSeconds`、既定4秒）を追加した。%の意味・上限（`ScopedModifierCapProfile`）は他の Duration と同じで、窓は60秒、印は12秒を上限にする。契約（`AuthoredMechanisms.Supports`）は WindowDuration を Window ペア、MarkDuration を Mark ペアにだけ許し、他は登録時に拒否する。コーデック・指紋・host（`PairComboRuntime` の窓/印の寿命）・星の説明・割り当て検証（専用チャンネル）に通した。マニフェストは `nachia.bridge.b1.q`（印）、`b2/b5/b6/b8.q`（窓）、`b7.q` の印の選択肢（Shield の選択肢は `Duration` のまま）。`validate.py` は橋の `GimmickParam` で target.star が ring ID の行にだけ許し、Window/Mark の別は `gen_cs.py` が実際のペアで検査する。
+
+### 未解決
+
 - 旧鍵の行 `h.<hero>.key` / `key2`（別担当で修正中）。診断は除外して行っているため、鍵が入った後に再実行して Aurena/Bismuth/Cetus/Mist/Nachia/Yubar を確認する。
 
 ### 再現

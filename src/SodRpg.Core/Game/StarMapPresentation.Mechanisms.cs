@@ -149,7 +149,7 @@ namespace SodRpg.Core.Game
                     lines.Add(bridge.GateKind == BridgeGateKind.Mark ? Loc.T("同じ敵の印を起点に発動。", "Triggers from a mark on the same enemy.")
                         : bridge.GateKind == BridgeGateKind.Window ? Loc.T("橋の受付時間内に発動。", "Triggers within the bridge window.")
                         : Loc.T("指定した受け手に直接発動。", "Triggers directly for the specified recipient."));
-                    lines.Add(Loc.T("受付時間：", "Window: ") + Number(bridge.WindowSeconds) + Loc.T("秒、発動間隔：", "s; interval: ") + Number(bridge.CooldownSeconds) + Loc.T("秒。", "s."));
+                    lines.Add(Loc.T("受付時間：", "Window: ") + Number(bridge.WindowSeconds) + (bridge.GateKind == BridgeGateKind.Mark ? Loc.T("秒、印：", "s; mark: ") + Number(bridge.MarkSeconds) : "") + Loc.T("秒、発動間隔：", "s; interval: ") + Number(bridge.CooldownSeconds) + Loc.T("秒。", "s."));
                     lines.Add(DescribeBridgePayload(bridge.BasePayoff));
                     foreach (var payload in bridge.Extras) lines.Add(DescribeBridgePayload(payload));
                     break;

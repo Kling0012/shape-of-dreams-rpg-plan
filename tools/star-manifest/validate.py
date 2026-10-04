@@ -23,7 +23,8 @@ EXPECTED = {
 KINDS = {'MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Notable', 'Choice', 'Stat', 'Keystone'}
 OPTION_KINDS = KINDS - {'Choice', 'Keystone'}
 REGIONS = {'memory', 'bridge', 'outer', 'keystone'}
-PARAMS = {None, 'Duration', 'Radius', 'ExtraTargets', 'Chance'}
+PARAMS = {None, 'Duration', 'Radius', 'ExtraTargets', 'Chance', 'WindowDuration', 'MarkDuration'}
+GATE_PARAMS = {'WindowDuration', 'MarkDuration'}
 TRIGGERS = {'OnUse', 'OnHit', 'OnKill', 'OnCrit', 'OnBasicAttack'}
 SHAPES = {None, 'fan', 'ring', 'chain'}
 MECH = re.compile(r'^C(0[1-9]|1[0-5])$')
@@ -153,6 +154,11 @@ def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
         errors.append(f'{ctx}: bad receiver {rec!r}')
     if o.get('param') not in PARAMS:
         errors.append(f'{ctx}: bad param {o.get("param")}')
+    if o.get('param') in GATE_PARAMS:
+        # 橋の受付時間 / 印の持続時間。橋の星団の行で、対象が橋のringID（effect なし）のときだけ。Window/Mark の別は gen_cs.py が実際のペアで検査する。
+        t = o.get('target') or {}
+        if kind != 'GimmickParam' or kind_rule == 'migration' or not str(t.get('star') or '').startswith(f'h.{hero}.ring.') or t.get('effect'):
+            errors.append(f'{ctx}: {o.get("param")} needs a bridge GimmickParam with target.star = h.{hero}.ring.* and no target.effect')
     g = o.get('gimmick')
     if g is not None:
         check_gimmick(g, ctx, legacy, hero, refs, errors)

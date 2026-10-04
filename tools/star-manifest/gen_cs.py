@@ -37,6 +37,7 @@ ROOT = HERE.parent.parent
 OUTPUT = ROOT / "src/SodRpg.Core/Game/StarClusters"
 DIAGNOSTICS = ROOT / "tests/SodRpg.Core.Tests/Diagnostics"
 HEROES = tuple(sorted(name for name in canonical.EXPECTED if name != "outer"))
+GATE_PARAMS = {"WindowDuration": "Window", "MarkDuration": "Mark"}
 TRIGGERS = {"OnUse": "ConfirmedUse", "OnHit": "Hit", "OnKill": "Kill",
             "OnCrit": "CriticalHit", "OnBasicAttack": "OwnedBasicAttackFired"}
 FIELDS = {"Value": "Value", "Damage": "Value", "ValuePerType": "Value", "Total": "Value",
@@ -260,6 +261,16 @@ class Compiler:
             elif concrete not in resolved:
                 resolved.append(concrete)
         return array(["GimmickEffect." + e for e in resolved], "GimmickEffect")
+
+    def bridge_gate(self, bridge):
+        """Mark / Window / DirectReceiver: the gate of a bridge's pair (registered PairCombos step or the authored pair's declared gate)."""
+        pair = self.pairs[bridge]
+        if pair.get("authored"):
+            return pair["authored"]["gate"]
+        table = pair["table"]
+        if table is None:
+            raise ValueError("no pair table row for " + bridge)
+        return {"Mark": "Mark", "Window": "Window"}.get(table[3], "DirectReceiver")
 
     def payoff_memory(self, bridge):
         """The memory whose events pay a bridge off (AuthoredMechanisms.SourceMemory of its BridgeSuccess spec)."""
@@ -793,6 +804,14 @@ class Compiler:
                 self.fail(sid, option_path + "memory", memory, "ScopedModifierDef needs one concrete owned scope memory")
             members["Memory"] = cs(memory)
             param = row["param"] if kind == "GimmickParam" else None
+            if param in GATE_PARAMS:
+                # WindowDuration / MarkDuration lengthen one bridge's own gate: only on a bridge-region row that names that bridge's pair, and
+                # only when the pair has that gate (Window / Mark). The contract (AuthoredMechanisms.Supports) enforces the same.
+                bridge = target["star"]
+                if self.by_id[sid]["region"] != "bridge" or bridge not in self.pairs or target["effect"]:
+                    self.fail(sid, option_path + "param", param, param + " is only valid on a bridge-region row whose target.star is the bridge's ring ID (target.effect null)")
+                elif self.bridge_gate(bridge) != GATE_PARAMS[param]:
+                    self.fail(sid, option_path + "param", param, param + " needs a " + GATE_PARAMS[param] + " pair but " + bridge + " has a " + self.bridge_gate(bridge) + " gate")
             # ScopeKind.Receiver needs an explicit recipient effect set even when
             # authored target is broad. It means recharge receipt, not movement use.
             if scope == "Receiver" and not effects and not ids:

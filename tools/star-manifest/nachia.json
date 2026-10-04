@@ -16585,7 +16585,7 @@
           "kind": "GimmickParam",
           "memory": "St_D_HeartOfThePack",
           "value": 20,
-          "param": "Duration",
+          "param": "MarkDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.force",
@@ -17128,7 +17128,7 @@
           "kind": "GimmickParam",
           "memory": "St_Q_SylvanCall",
           "value": 20,
-          "param": "Duration",
+          "param": "WindowDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.insight",
@@ -18765,7 +18765,7 @@
           "kind": "GimmickParam",
           "memory": "St_D_CircleOfLife",
           "value": 20,
-          "param": "Duration",
+          "param": "WindowDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.recall",
@@ -19308,7 +19308,7 @@
           "kind": "GimmickParam",
           "memory": "St_Q_MoonlightPact",
           "value": 20,
-          "param": "Duration",
+          "param": "WindowDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.rhythm",
@@ -19850,7 +19850,7 @@
           "kind": "GimmickParam",
           "memory": "St_R_SerpentineBlessing",
           "value": 20,
-          "param": "Duration",
+          "param": "MarkDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.resolve",
@@ -20393,7 +20393,7 @@
           "kind": "GimmickParam",
           "memory": "St_D_CircleOfLife",
           "value": 20,
-          "param": "Duration",
+          "param": "WindowDuration",
           "receiver": null,
           "target": {
             "star": "h.nachia.ring.renewal",

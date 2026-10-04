@@ -128,6 +128,11 @@ namespace SodRpg.Core.Game
         public bool UsesNativeWindowLifetime { get; }
         public float CooldownSeconds { get; }
         public float WindowSeconds { get; }
+        /// <summary>How long a mark on one victim lasts (4 seconds unless a MarkDuration star lengthens it).</summary>
+        public float MarkSeconds { get; }
+        /// <summary>Scales the host-provided native ending of a native-lifetime window (1 unless a WindowDuration star lengthens it).</summary>
+        public float WindowLifetimeScale { get; }
+        public const float BaseMarkSeconds = 4f, MaxMarkSeconds = 12f, MaxWindowSeconds = 60f, MaxWindowLifetimeScale = 3f;
         /// <summary>The one documented exception to the three-rank limit: the center is a retained legacy ring star with five ranks and a per-rank table. Mark Expose is rank + 1 percent (2/3/4/5/6).</summary>
         public bool RetainedFiveRanks { get; }
         public BridgeSuccessDefinition(string pairId, IEnumerable<BridgeEndpointRequirement> endpoints, int rank,
@@ -135,10 +140,13 @@ namespace SodRpg.Core.Game
             MemorySelector payoffSource, MemoryEventKind payoffTrigger, BridgePayload basePayoff,
             IEnumerable<BridgePayload> extras, AttributionBudget budget = AttributionBudget.PerActivation,
             BridgeSourcePhase sourcePhase = BridgeSourcePhase.Any, bool usesNativeWindowLifetime = false,
-            float cooldownSeconds = 0, float windowSeconds = 4, bool retainedFiveRanks = false)
+            float cooldownSeconds = 0, float windowSeconds = 4, bool retainedFiveRanks = false,
+            float markSeconds = BaseMarkSeconds, float windowLifetimeScale = 1f)
         {
             if (!Gimmicks.Finite(cooldownSeconds) || cooldownSeconds < 0 || cooldownSeconds > Gimmicks.MaxCooldown
-                || !Gimmicks.Finite(windowSeconds) || windowSeconds <= 0 || windowSeconds > 60)
+                || !Gimmicks.Finite(windowSeconds) || windowSeconds <= 0 || windowSeconds > MaxWindowSeconds
+                || !Gimmicks.Finite(markSeconds) || markSeconds < BaseMarkSeconds || markSeconds > MaxMarkSeconds
+                || !Gimmicks.Finite(windowLifetimeScale) || windowLifetimeScale < 1f || windowLifetimeScale > MaxWindowLifetimeScale)
                 throw new ArgumentException("Invalid bridge interval or window.");
             if (string.IsNullOrWhiteSpace(pairId) || endpoints == null || rank < 1
                 || retainedFiveRanks && gateKind == BridgeGateKind.DirectReceiver
@@ -179,6 +187,7 @@ namespace SodRpg.Core.Game
             OpeningTrigger = openingTrigger; PayoffSource = payoffSource; PayoffTrigger = payoffTrigger; BasePayoff = basePayoff;
             Extras = extraCopy.AsReadOnly(); Budget = budget; SourcePhase = sourcePhase; UsesNativeWindowLifetime = usesNativeWindowLifetime;
             CooldownSeconds = cooldownSeconds; WindowSeconds = windowSeconds; RetainedFiveRanks = retainedFiveRanks;
+            MarkSeconds = markSeconds; WindowLifetimeScale = windowLifetimeScale;
         }
         internal string Key
         {
@@ -187,7 +196,8 @@ namespace SodRpg.Core.Game
                 string key = PairId + "|" + Rank + "|" + GateKind + "|" + OpeningSource.Key + "|" + OpeningTrigger + "|" + PayoffSource.Key
                     + "|" + PayoffTrigger + "|" + Budget + "|" + SourcePhase + "|" + UsesNativeWindowLifetime + "|" + BasePayoff.Key
                     + "|" + CooldownSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
-                    + "|" + WindowSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "|" + RetainedFiveRanks;
+                    + "|" + WindowSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "|" + RetainedFiveRanks
+                    + "|" + MarkSeconds.ToString("R", System.Globalization.CultureInfo.InvariantCulture) + "|" + WindowLifetimeScale.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
                 foreach (var endpoint in Endpoints) key += "|" + endpoint.StarId + ":" + endpoint.MinimumRank + ":" + endpoint.Memory;
                 foreach (var extra in Extras) key += "|" + extra.Key;
                 return key;
@@ -391,13 +401,13 @@ namespace SodRpg.Core.Game
                     if (definition.GateKind == BridgeGateKind.Mark)
                     {
                         if (notification.VictimId != 0)
-                        { state.Marks[notification.VictimId] = now + 4f; state.MarkSources[notification.VictimId] = source.Memory; }
+                        { state.Marks[notification.VictimId] = now + definition.MarkSeconds; state.MarkSources[notification.VictimId] = source.Memory; }
                     }
                     else if (definition.UsesNativeWindowLifetime)
                     {
                         if (!Gimmicks.Finite(nativeWindowUntil) || nativeWindowUntil <= now)
                             throw new InvalidOperationException("A native-lifetime bridge requires a verified native ending time.");
-                        state.WindowUntil = nativeWindowUntil;
+                        state.WindowUntil = now + (nativeWindowUntil - now) * definition.WindowLifetimeScale;
                     }
                     else state.WindowUntil = now + definition.WindowSeconds;
                     state.OpenedNotifications.Add(openingKey);

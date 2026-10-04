@@ -143,3 +143,6 @@ python tools/star-manifest/validate.py cetus      # 1人
 
 - `python tools/star-manifest/gen_cs.py --all` は、全星がC#に写せた旅人だけ `<Hero>.Generated.cs` を出す（部分的な旅人は出さない）。`GeneratedRegistration.cs` の `CompiledHeroes` は生成できた旅人、`GeneratedHeroes` は **`registered.txt` に書いた旅人だけ**（実際の `StarClusters.RegisterAuthored` を通り、`GeneratedHeroAcceptanceTests` が通ることを確認したもの）。登録に失敗する旅人を載せるとゲームが起動時に落ちるので、`registered.txt` には確認済みの旅人だけを足す。
 - `--diagnostic` は鍵の行などの失敗行を除いた診断用の写しを `tests/SodRpg.Core.Tests/Diagnostics/`（git管理外）に作る。`RegistrationDiagnostics`（環境変数 `DREAMFORGE_REG_REPORT` で出力先を指定）が全旅人の登録拒否を全件集め、`docs/specs/v1.31-registration-report.md` を作る。前文は `registration-report-preamble.md`（`DREAMFORGE_REG_PREAMBLE`）。
+
+### 橋の窓/印の持続時間
+`GimmickParam` の `param` には `"WindowDuration"`（橋の窓）と `"MarkDuration"`（橋の印）も使える。橋の星団の行で `target.star` がその橋の ring ID（`target.effect` は null）のときだけ許され、Window ペアには WindowDuration、Mark ペアには MarkDuration だけを使える（`validate.py` が形、`gen_cs.py` が実際のペアの種類を検査し、契約も登録時に拒否する）。意味は他の Duration と同じ%で、その橋のペアの窓／印だけが延びる。

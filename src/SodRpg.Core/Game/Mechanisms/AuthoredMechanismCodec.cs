@@ -115,7 +115,7 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.BridgeSuccess:
                     var b = s.Bridge; w.Write(b.PairId); w.Write(b.Rank); w.Write((int)b.GateKind); Selector(w, b.OpeningSource); w.Write((int)b.OpeningTrigger);
                     Selector(w, b.PayoffSource); w.Write((int)b.PayoffTrigger); w.Write((int)b.Budget); w.Write((int)b.SourcePhase); w.Write(b.UsesNativeWindowLifetime);
-                    w.Write(b.CooldownSeconds); w.Write(b.WindowSeconds); w.Write(b.RetainedFiveRanks);
+                    w.Write(b.CooldownSeconds); w.Write(b.WindowSeconds); w.Write(b.RetainedFiveRanks); w.Write(b.MarkSeconds); w.Write(b.WindowLifetimeScale);
                     w.Write(b.Endpoints.Count); foreach (var endpoint in b.Endpoints.OrderBy(x => x.StarId, StringComparer.Ordinal))
                     { w.Write(endpoint.StarId); w.Write(endpoint.Memory); w.Write(endpoint.MinimumRank); }
                     Payload(w, b.BasePayoff); w.Write(b.Extras.Count); foreach (var extra in b.Extras.OrderBy(x => x.ChannelId, StringComparer.Ordinal)) Payload(w, extra); break;
@@ -158,12 +158,12 @@ namespace SodRpg.Core.Game
                     string pair = Text(r); int rank = r.ReadInt32(); var gate = (BridgeGateKind)r.ReadInt32(); var opening = Selector(r);
                     var openingTrigger = (MemoryEventKind)r.ReadInt32(); var payoff = Selector(r); var payoffTrigger = (MemoryEventKind)r.ReadInt32();
                     var budget = (AttributionBudget)r.ReadInt32(); var phase = (BridgeSourcePhase)r.ReadInt32(); bool nativeLifetime = r.ReadBoolean();
-                    float cooldown = r.ReadSingle(), window = r.ReadSingle(); bool fiveRanks = r.ReadBoolean();
+                    float cooldown = r.ReadSingle(), window = r.ReadSingle(); bool fiveRanks = r.ReadBoolean(); float markSeconds = r.ReadSingle(), lifetimeScale = r.ReadSingle();
                     var endpoints = new List<BridgeEndpointRequirement>(); int endpointCount = Count(r);
                     for (int i = 0; i < endpointCount; i++) endpoints.Add(new BridgeEndpointRequirement(Text(r), Text(r), r.ReadInt32()));
                     var basePayoff = Payload(r); var extras = new List<BridgePayload>(); int extraCount = Count(r);
                     for (int i = 0; i < extraCount; i++) extras.Add(Payload(r));
-                    s.Bridge = new BridgeSuccessDefinition(pair, endpoints, rank, gate, opening, openingTrigger, payoff, payoffTrigger, basePayoff, extras, budget, phase, nativeLifetime, cooldown, window, fiveRanks); break;
+                    s.Bridge = new BridgeSuccessDefinition(pair, endpoints, rank, gate, opening, openingTrigger, payoff, payoffTrigger, basePayoff, extras, budget, phase, nativeLifetime, cooldown, window, fiveRanks, markSeconds, lifetimeScale); break;
                 case AuthoredMechanismKind.SacrificeShield: case AuthoredMechanismKind.StunSourceFilter: break;
                 default: throw new FormatException("Unknown mechanism kind.");
             }

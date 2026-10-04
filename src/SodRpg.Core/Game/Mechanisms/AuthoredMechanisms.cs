@@ -266,6 +266,9 @@ namespace SodRpg.Core.Game
             if (s.Gimmick != null) return Gimmicks.SupportsParameter(s.Gimmick, param);
             if (s.Bridge != null)
             {
+                // The gate lifetimes are bridge-only fields: a window is lengthened by WindowDuration only on a Window pair, a mark by MarkDuration only on a Mark pair.
+                if (param == GimmickParam.WindowDuration) return s.Bridge.GateKind == BridgeGateKind.Window;
+                if (param == GimmickParam.MarkDuration) return s.Bridge.GateKind == BridgeGateKind.Mark;
                 bool SupportsPayload(BridgePayload payload) => payload.Ward != null ? param == GimmickParam.Duration || param == GimmickParam.Radius || param == GimmickParam.ExtraTargets
                     : payload.Gimmick != null
                     ? Gimmicks.SupportsParameter(payload.Gimmick, param)
@@ -414,7 +417,7 @@ namespace SodRpg.Core.Game
         {
             var s = entry.Spec;
             s.EveryN = EffectiveEveryN(s);
-            long boost = 0, duration = 0, radius = 0, chance = 0, targets = 0;
+            long boost = 0, duration = 0, radius = 0, chance = 0, targets = 0, windowDuration = 0, markDuration = 0;
             bool sourceBoost = false, receiverBoost = false;
             var caps = new Dictionary<int, ScopedModifierCapProfile>();
             foreach (var row in selected)
@@ -435,6 +438,8 @@ namespace SodRpg.Core.Game
                 switch (m.Param)
                 {
                     case GimmickParam.Duration: duration += amount; break;
+                    case GimmickParam.WindowDuration: windowDuration += amount; break;
+                    case GimmickParam.MarkDuration: markDuration += amount; break;
                     case GimmickParam.Radius: radius += amount; break;
                     case GimmickParam.Chance: chance += (long)m.Probability.Units * row.Value; break;
                     case GimmickParam.ExtraTargets: targets += (long)m.ExtraTargets * row.Value; break;
@@ -444,6 +449,8 @@ namespace SodRpg.Core.Game
             if (sourceBoost && receiverBoost) throw new InvalidOperationException("Source/receiver double boost is forbidden: " + s.ChannelId);
             if (caps.TryGetValue(-1, out var bc)) boost = Math.Min(boost, bc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Duration, out var dc)) duration = Math.Min(duration, dc.MaximumModifier.Units);
+            if (caps.TryGetValue((int)GimmickParam.WindowDuration, out var wc)) windowDuration = Math.Min(windowDuration, wc.MaximumModifier.Units);
+            if (caps.TryGetValue((int)GimmickParam.MarkDuration, out var mc)) markDuration = Math.Min(markDuration, mc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Radius, out var rc)) radius = Math.Min(radius, rc.MaximumModifier.Units);
             if (caps.TryGetValue((int)GimmickParam.Chance, out var cc)) chance = Math.Min(chance, cc.MaximumProbability.Units);
             if (caps.TryGetValue((int)GimmickParam.ExtraTargets, out var tc)) targets = Math.Min(targets, tc.MaximumTargets);
@@ -546,7 +553,10 @@ namespace SodRpg.Core.Game
                         raw, rawProbability, p.CapUnits, rawDuration, rawRadius, rawTargets, p.DurationCapSeconds, ward);
                 }
                 s.Bridge = new BridgeSuccessDefinition(b.PairId, b.Endpoints, applyRankValues ? rank : b.Rank, b.GateKind, b.OpeningSource, b.OpeningTrigger,
-                    b.PayoffSource, b.PayoffTrigger, Payload(b.BasePayoff), b.Extras.Select(Payload), b.Budget, b.SourcePhase, b.UsesNativeWindowLifetime, b.CooldownSeconds, b.WindowSeconds, b.RetainedFiveRanks);
+                    b.PayoffSource, b.PayoffTrigger, Payload(b.BasePayoff), b.Extras.Select(Payload), b.Budget, b.SourcePhase, b.UsesNativeWindowLifetime, b.CooldownSeconds,
+                    Math.Min(BridgeSuccessDefinition.MaxWindowSeconds, b.WindowSeconds * (1f + windowDuration / 10000f)), b.RetainedFiveRanks,
+                    Math.Min(BridgeSuccessDefinition.MaxMarkSeconds, b.MarkSeconds * (1f + markDuration / 10000f)),
+                    Math.Min(BridgeSuccessDefinition.MaxWindowLifetimeScale, b.WindowLifetimeScale * (1f + windowDuration / 10000f)));
             }
             Validate(s);
         }
@@ -652,6 +662,7 @@ namespace SodRpg.Core.Game
                 }
         }
 
+        internal const string BridgeWindowChannel = "bridge-window:", BridgeMarkChannel = "bridge-mark:";
         internal static IEnumerable<EffectiveAllocationChannel> EffectiveChannels(AuthoredMechanismEntry entry, Build build, string heroKey = null)
         {
             var s = entry.Spec;
@@ -664,6 +675,19 @@ namespace SodRpg.Core.Game
                         KeystonePayloadKind.Gimmick, GimmickEffect.Expose, bridge.PairId + ".Expose");
                     foreach (var channel in ProjectPayload(entry, build, expose, bridge.OpeningSource,
                         discriminator: bridge.PairId + ".Expose", trigger: bridge.OpeningTrigger, heroKey: heroKey)) yield return channel;
+                }
+                // The gate lifetime is a channel of its own: a WindowDuration / MarkDuration star is effective exactly when it lengthens it.
+                if (bridge.GateKind != BridgeGateKind.DirectReceiver)
+                {
+                    bool markGate = bridge.GateKind == BridgeGateKind.Mark;
+                    decimal seconds = markGate ? (decimal)bridge.MarkSeconds : (decimal)bridge.WindowSeconds;
+                    yield return new EffectiveAllocationChannel
+                    {
+                        Key = (markGate ? BridgeMarkChannel : BridgeWindowChannel) + bridge.PairId, StarId = entry.StarId, Memory = SourceMemory(s),
+                        ContributorIds = entry.ContributorIds.Length == 0 ? new[] { entry.StarId } : entry.ContributorIds,
+                        DurationUnits = seconds * 100m,
+                        DurationCeilingUnits = (decimal)(markGate ? BridgeSuccessDefinition.MaxMarkSeconds : BridgeSuccessDefinition.MaxWindowSeconds) * 100m
+                    };
                 }
                 foreach (var payoff in new[] { bridge.BasePayoff }.Concat(bridge.Extras))
                     foreach (var channel in ProjectPayload(entry, build, AuthoredKeystoneComposer.BridgePayload(payoff),

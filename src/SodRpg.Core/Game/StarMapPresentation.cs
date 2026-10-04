@@ -154,6 +154,8 @@ namespace SodRpg.Core.Game
                 switch (star.GimmickParameter.Value)
                 {
                     case GimmickParam.Duration: return Loc.T("仕掛けの持続時間", "Gimmick duration");
+                    case GimmickParam.WindowDuration: return Loc.T("橋の受付時間", "Bridge window duration");
+                    case GimmickParam.MarkDuration: return Loc.T("橋の印の持続時間", "Bridge mark duration");
                     case GimmickParam.Radius: return Loc.T("仕掛けの効果半径", "Gimmick radius");
                     case GimmickParam.ExtraTargets: return Loc.T("仕掛けの追加対象", "Gimmick additional targets");
                     case GimmickParam.Chance: return Loc.T("仕掛けの属性追加確率", "Gimmick extra-element chance");

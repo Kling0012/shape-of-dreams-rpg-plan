@@ -188,6 +188,8 @@ namespace SodRpg.Core.Game
             switch (modifier.Param)
             {
                 case GimmickParam.Duration: return Loc.T(scope + "の指定効果の持続時間 +" + value + "%", scope + " effect duration +" + value + "%") + cap;
+                case GimmickParam.WindowDuration: return Loc.T(scope + "の橋の受付時間 +" + value + "%", scope + " bridge window duration +" + value + "%") + cap;
+                case GimmickParam.MarkDuration: return Loc.T(scope + "の橋の印の持続時間 +" + value + "%", scope + " bridge mark duration +" + value + "%") + cap;
                 case GimmickParam.Radius: return Loc.T(scope + "の指定効果の半径 +" + value + "%", scope + " effect radius +" + value + "%") + cap;
                 case GimmickParam.Chance: return Loc.T(scope + "の指定効果の発動確率 +" + value + "パーセントポイント", scope + " effect chance +" + value + " percentage points") + cap;
                 case GimmickParam.ExtraTargets: return Loc.T(scope + "の指定効果の追加対象 +" + modifier.ExtraTargets + "体", scope + " effect additional targets +" + modifier.ExtraTargets) + cap;

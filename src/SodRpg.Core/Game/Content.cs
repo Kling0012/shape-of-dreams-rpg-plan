@@ -281,6 +281,7 @@ namespace SodRpg.Core.Game
             {
                 case GimmickParam.Duration: return Loc.T($"『{memory}』の仕掛けの持続時間 +{GimmickParamAmount}%",
                     $"{memory} gimmick duration +{GimmickParamAmount}%");
+                case GimmickParam.WindowDuration: case GimmickParam.MarkDuration: throw new InvalidOperationException("A bridge gate duration is a typed scoped modifier, not a legacy gimmick parameter: " + Id);
                 case GimmickParam.Radius: return Loc.T($"『{memory}』の仕掛けの半径 +{GimmickParamAmount}%",
                     $"{memory} gimmick radius +{GimmickParamAmount}%");
                 case GimmickParam.ExtraTargets: return Loc.T($"『{memory}』の仕掛けの追加対象 +{GimmickParamAmount}体",

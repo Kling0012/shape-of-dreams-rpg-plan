@@ -5,7 +5,8 @@ using System.Globalization;
 namespace SodRpg.Core.Game
 {
     public enum ClusterStarKind { MemoryDamage, MemoryHaste, GimmickBoost, GimmickParam, Notable, Choice, Stat, Keystone }
-    public enum GimmickParam { Duration, Radius, ExtraTargets, Chance }
+    /// <summary>WindowDuration / MarkDuration scale the gate lifetime of one bridge pair (its window / its mark), never a payload's own duration.</summary>
+    public enum GimmickParam { Duration, Radius, ExtraTargets, Chance, WindowDuration, MarkDuration }
     public enum ClusterShape { Fan, Ring, Chain }
     public enum ClusterRegionKind { Memory, Bridge, Outer, Keystone }
 
