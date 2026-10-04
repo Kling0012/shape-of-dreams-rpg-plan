@@ -10,6 +10,7 @@ namespace SodRpg.Mod
         private RunState _modifierRun;
         private Waypoint _modifierWaypoint;
         private int _modifierDepth = -1;
+        private int _partyDepthSeen = -1;
         private bool _resolvingWaypointCombat;
 
         private sealed class WaypointHeroRuntime
@@ -34,7 +35,8 @@ namespace SodRpg.Mod
             _resolvingWaypointCombat = true;
             try
             {
-                if (!ClientSession.CommitHostCombatChoice()) return;
+                // 純白の入口は戦闑では選択を解決できない。確定しないままでも、必須の敵初期化だけは進める。
+                if (!ClientSession.CommitHostCombatChoice() && !ClientSession.HostCombatChoiceSuspended) return;
                 RefreshRunModifiers();
                 RefreshPressure();
                 ProcessSpawns();
@@ -47,16 +49,48 @@ namespace SodRpg.Mod
             var run = ClientSession.HostRun;
             int depth = run?.DreamDepth ?? 0;
             var waypoint = run?.ActiveWaypoint ?? Waypoint.None;
-            if (ReferenceEquals(run, _modifierRun) && depth == _modifierDepth && waypoint == _modifierWaypoint) return;
-            _modifierRun = run;
-            _modifierDepth = depth;
-            _modifierWaypoint = waypoint;
-            _pressureDirty = true;
-            foreach (var hero in _waypointHeroes.Keys)
+            if (!ReferenceEquals(run, _modifierRun) || depth != _modifierDepth || waypoint != _modifierWaypoint)
             {
-                if (hero == null || hero.Status == null) continue;
-                hero.Status.MarkStatsDirty();
-                hero.Status.CalculateStatsIfDirty();
+                _modifierRun = run;
+                _modifierDepth = depth;
+                _modifierWaypoint = waypoint;
+                _pressureDirty = true;
+                foreach (var hero in _waypointHeroes.Keys)
+                {
+                    if (hero == null || hero.Status == null) continue;
+                    hero.Status.MarkStatsDirty();
+                    hero.Status.CalculateStatsIfDirty();
+                }
+            }
+            AlignDepthBonuses(PartyDepth());
+        }
+
+        /// <summary>
+        /// 潜行が深まったとき（確保／潜行の確定・協力プレイの深いBuildの到着）だけ、初期化済みの生存敵の
+        /// 深度ボーナスを新しい深度へ置き換える。浅く確保しても下げないので、撃破報酬の深度と足並みが揃い、
+        /// 二重適用も起きない。現在HPは保存されるため、戦闘中の置き換えで回復しない。
+        /// </summary>
+        private void AlignDepthBonuses(int partyDepth)
+        {
+            if (partyDepth <= _partyDepthSeen)
+            {
+                if (partyDepth < _partyDepthSeen) _partyDepthSeen = partyDepth;
+                return;
+            }
+            bool firstSighting = _partyDepthSeen < 0;
+            _partyDepthSeen = partyDepth;
+            if (firstSighting) return; // 出現処理が現在の深度で初期化するため、置き換えは不要
+            _monsterScratch.Clear();
+            foreach (var kv in _monsters)
+                if (kv.Value.SpawnProcessed && SpawnInitRules.RealignsDepthBonus(kv.Value.DepthApplied, partyDepth))
+                    _monsterScratch.Add(kv.Key);
+            foreach (var m in _monsterScratch)
+            {
+                if (m == null || !m.isActive || m.Status == null || m.Status.maxHealth <= 0
+                    || !_monsters.TryGetValue(m, out var rt) || !rt.SpawnProcessed
+                    || !SpawnInitRules.RealignsDepthBonus(rt.DepthApplied, partyDepth)) continue;
+                try { ApplyDepthBonus(rt, (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type), partyDepth); }
+                catch (Exception ex) { Log.Error("Host: align depth bonus " + ex); }
             }
         }
 
@@ -160,6 +194,7 @@ namespace SodRpg.Mod
             _modifierRun = null;
             _modifierDepth = -1;
             _modifierWaypoint = Waypoint.None;
+            _partyDepthSeen = -1;
         }
 
         private void ApplyWaypointMemoryCooldown(Hero hero, EventInfoSkillUse info)
