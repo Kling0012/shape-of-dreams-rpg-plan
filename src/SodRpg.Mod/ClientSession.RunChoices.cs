@@ -105,6 +105,7 @@ namespace SodRpg.Mod
 
         private void TickRunChoices()
         {
+            TickKillClassification();
             NotifyPersonalDreamEvent();
             TryFinishSecureArrival();
             if (CanChooseRunRules && InPureWhiteRoute && InGameUIManager.instance != null

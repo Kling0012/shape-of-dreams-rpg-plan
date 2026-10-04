@@ -40,6 +40,7 @@ namespace SodRpg.Core.Game
         public List<PendingMonsterDeath> Deaths { get; } = new List<PendingMonsterDeath>();
         public List<AuthoritativeRunKill> Facts { get; } = new List<AuthoritativeRunKill>();
         public List<string> ResolvedEventIds { get; } = new List<string>();
+        public List<uint> ExpiredMonsterNetIds { get; } = new List<uint>();
 
         public KillClassificationCheckpoint Clone()
         {
@@ -47,21 +48,37 @@ namespace SodRpg.Core.Game
             copy.Deaths.AddRange(Deaths);
             copy.Facts.AddRange(Facts);
             copy.ResolvedEventIds.AddRange(ResolvedEventIds);
+            copy.ExpiredMonsterNetIds.AddRange(ExpiredMonsterNetIds);
             return copy;
         }
     }
 
     /// <summary>
-    /// Joins native eligibility with authoritative classification in either delivery order. Facts remain
-    /// replayable for the entire run; event identities survive checkpoint restore and duplicate delivery.
+    /// Joins native eligibility with authoritative classification in either delivery order. Missing facts
+    /// expire without rewards; facts and expired victim identities remain replay-safe across checkpoint restore.
     /// </summary>
     public sealed class KillClassificationLedger
     {
-        private readonly Queue<PendingMonsterDeath> _deaths = new Queue<PendingMonsterDeath>();
+        public const double MissingFactTimeoutSeconds = 30;
+
+        private readonly struct WaitingDeath
+        {
+            public PendingMonsterDeath Death { get; }
+            public double Deadline { get; }
+
+            public WaitingDeath(PendingMonsterDeath death, double now)
+            {
+                Death = death;
+                Deadline = now + MissingFactTimeoutSeconds;
+            }
+        }
+
+        private readonly Queue<WaitingDeath> _deaths = new Queue<WaitingDeath>();
         private readonly HashSet<uint> _observedVictims = new HashSet<uint>();
         private readonly Dictionary<uint, AuthoritativeRunKill> _facts = new Dictionary<uint, AuthoritativeRunKill>();
         private readonly HashSet<string> _eventIds = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> _resolvedEventIds = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<uint> _expiredVictims = new HashSet<uint>();
 
         public string RunId { get; private set; }
         public int PendingCount => _deaths.Count;
@@ -74,12 +91,12 @@ namespace SodRpg.Core.Game
             RunId = runId;
         }
 
-        public bool ObserveDeath(PendingMonsterDeath death)
+        public bool ObserveDeath(PendingMonsterDeath death, double now = 0)
         {
             if (death.MonsterNetId == 0 || string.IsNullOrEmpty(death.Kill.RunId)) return false;
             BeginRun(death.Kill.RunId);
             if (!_observedVictims.Add(death.MonsterNetId)) return false;
-            _deaths.Enqueue(death);
+            _deaths.Enqueue(new WaitingDeath(death, now));
             return true;
         }
 
@@ -92,14 +109,21 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        public bool TryResolve(out PendingRunKill kill)
+        public bool TryResolve(out PendingRunKill kill, double now = 0)
         {
             kill = default;
             // Preserve native event order, including rewards waiting for preceding-zone rules.
             while (_deaths.Count > 0)
             {
-                var death = _deaths.Peek();
-                if (!_facts.TryGetValue(death.MonsterNetId, out var fact)) return false;
+                var waiting = _deaths.Peek();
+                var death = waiting.Death;
+                if (!_facts.TryGetValue(death.MonsterNetId, out var fact))
+                {
+                    if (now < waiting.Deadline) return false;
+                    _deaths.Dequeue();
+                    _expiredVictims.Add(death.MonsterNetId);
+                    continue;
+                }
                 _deaths.Dequeue();
                 if (!_resolvedEventIds.Add(fact.EventId)) continue;
                 var native = death.Kill;
@@ -113,13 +137,14 @@ namespace SodRpg.Core.Game
         public KillClassificationCheckpoint Capture()
         {
             var saved = new KillClassificationCheckpoint { RunId = RunId };
-            saved.Deaths.AddRange(_deaths);
+            foreach (var waiting in _deaths) saved.Deaths.Add(waiting.Death);
             saved.Facts.AddRange(_facts.Values);
             saved.ResolvedEventIds.AddRange(_resolvedEventIds);
+            saved.ExpiredMonsterNetIds.AddRange(_expiredVictims);
             return saved;
         }
 
-        public void Restore(KillClassificationCheckpoint saved)
+        public void Restore(KillClassificationCheckpoint saved, double now = 0)
         {
             Clear();
             if (saved == null || string.IsNullOrEmpty(saved.RunId)) return;
@@ -128,8 +153,15 @@ namespace SodRpg.Core.Game
                 if (fact.RunId == RunId) ReceiveFact(fact);
             foreach (string eventId in saved.ResolvedEventIds)
                 if (!string.IsNullOrEmpty(eventId)) _resolvedEventIds.Add(eventId);
+            foreach (uint monsterNetId in saved.ExpiredMonsterNetIds)
+                if (monsterNetId != 0)
+                {
+                    _expiredVictims.Add(monsterNetId);
+                    _observedVictims.Add(monsterNetId);
+                }
+            // Unscaled clocks do not survive reload. Pending deaths get a fresh bounded wait.
             foreach (var death in saved.Deaths)
-                if (death.Kill.RunId == RunId) ObserveDeath(death);
+                if (death.Kill.RunId == RunId) ObserveDeath(death, now);
         }
 
         public void Clear()
@@ -140,6 +172,7 @@ namespace SodRpg.Core.Game
             _facts.Clear();
             _eventIds.Clear();
             _resolvedEventIds.Clear();
+            _expiredVictims.Clear();
         }
     }
 }

@@ -52,7 +52,7 @@ namespace SodRpg.Mod
 
         private void CaptureNativeKill(uint monsterNetId, PendingRunKill kill)
         {
-            if (!_killClassifications.ObserveDeath(new PendingMonsterDeath(monsterNetId, kill))) return;
+            if (!_killClassifications.ObserveDeath(new PendingMonsterDeath(monsterNetId, kill), Time.unscaledTime)) return;
             ResolveClassifiedDeaths();
             DeferKillSave();
         }
@@ -68,9 +68,22 @@ namespace SodRpg.Mod
             if (_nextSave > deadline) _nextSave = deadline;
         }
 
+        private void TickKillClassification()
+        {
+            int before = _killClassifications.PendingCount;
+            if (before == 0) return;
+            DrainClassifiedDeaths();
+            if (_killClassifications.PendingCount != before) DeferKillSave();
+        }
+
+        private void DrainClassifiedDeaths()
+        {
+            while (_killClassifications.TryResolve(out var kill, Time.unscaledTime)) _pendingRunRewards.Add(kill);
+        }
+
         private void ResolveClassifiedDeaths()
         {
-            while (_killClassifications.TryResolve(out var kill)) _pendingRunRewards.Add(kill);
+            DrainClassifiedDeaths();
             FlushPendingRunRewards();
             TryFinishSecureArrival();
             TryConcludeRun();
@@ -79,9 +92,9 @@ namespace SodRpg.Mod
         private void CaptureKillClassification() => Profile.KillClassification = _killClassifications.Capture();
         private void RestoreKillClassification()
         {
-            _killClassifications.Restore(Profile.KillClassification);
+            _killClassifications.Restore(Profile.KillClassification, Time.unscaledTime);
             // A restored eligible death and its already-cached fact may have arrived in either order.
-            while (_killClassifications.TryResolve(out var kill)) _pendingRunRewards.Add(kill);
+            DrainClassifiedDeaths();
         }
 
     }
