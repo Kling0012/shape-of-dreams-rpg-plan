@@ -6,84 +6,36 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## 未公開 — 刻印ごとの許可判定（#49）
+## v2.0.2 — 高レアの希少化と刻印のデバフ撤廃（2026-10-05）
 
-- **不許可の刻印の効果が別刻印で動く問題**：複数刻印の選択時、効果の照会（HasPayload）と全体の有効判定（Active）が刻印ごとの許可を確認せず、個別に不許可の刻印（例：満ちた聖杯）の固有効果が別の刻印の許可状態で有効化される経路がありました。照会・変換・ネイティブ接続（犠牲シールドの接続確認）と刻印由来チャネルの有効判定で「同一刻印が許可済みかつ必要装備あり」を満たすかの共通判定を使い、Active は「全条件を満たす刻印が1つ以上ある」場合のみ真とします。 / **Fix**: per-keystone eligibility (admitted and fully equipped on the same keystone) is now the single check shared by payload queries, transforms, the native sacrifice-shield connection and keystone-owned channels; `Active` requires at least one keystone meeting all of its own requirements.
-- **再設定の取りこぼし**：ホストの再設定比較を刻印ごとの許可ベクトルに変更しました。同じ装備状態（native epoch）のままで接続状態だけが変わっても、全体のAny(true)が同じでも、対象刻印の許可変化が反映されます。 / **Reconfiguration**: the host now compares the per-keystone admission vector, so a connection-only change within the same equipment epoch still switches the target keystone's effects even when the aggregate stays true.
-- **検証**：Core単体試験3件とホスト経路の試験1件を追加（不許可の聖杯が変換・シールドとも無効で兄弟刻印のみ有効、GoldenBurst装備→使用、同じepochでの許可false→true→false、3刻印・選択順入替・遅延効果）。修正前は最小条件で HasPayload が真を返すことを再現済み。実機でのゲーム接続は未確認。 / **Verification**: three Core unit tests and one host-path test added (unadmitted chalice keeps transform, shield and native connection off while the sibling works; equip→use; false→true→false within one epoch; three keystones, order swap, delayed recompute). The pre-fix minimal condition was reproduced (HasPayload returned true). Real-game wiring remains unverified.
-
----
-
-
-## 未公開 — 純白の保留中の敵補正（#60）
-
-- **保留中の戦闘**：純白の入口で確保／潜行の選択を保留・非表示にして戦っても、敵に夢の圧・潜行深度の補正・悪夢化の初期化が届くようにしました。選択は明示のまま自動で消えず、未確定の道標も勝手に使いません。通常ルートの「最初の戦闘で潜行を確定してから初期化」は変更していません。 / **Deferred combat**: while the pure-white entrance choice stays pending or hidden, enemies still receive dream pressure, delve-depth bonuses and nightmare initialization. The choice stays explicit and the pending waypoint is never auto-picked; ordinary routes keep resolving on first combat.
-- **確定後の再整合**：保留中に初期化済みの敵は、明示的に潜行を深めたときだけ深度ボーナスを新しい深度へ置き換えます。古いボーナスを外してから足すため二重に掛からず、現在HPも保存されます。浅く確保しても下げないため、撃破報酬が参照する潜行深度と敵側の難易度が揃います。 / **Post-commit alignment**: enemies initialized during deferral get their depth bonus replaced only when delving deeper; the old bonus is removed first, so nothing doubles and current health is preserved. Securing shallower never weakens them, keeping enemy difficulty in step with kill-reward depth.
-- **復帰・再初期化**：出現処理の選択待ちガードを純白の保留中は通過するため、途中セーブの復帰やホスト側の再初期化でも、既存の生存敵が補正なしのまま残りません。 / **Restore/re-init**: the spawn-processing gate passes while the pure-white choice is pending, so existing enemies no longer sit uncorrected after a save restore or host re-init.
-- **検証**：追加した PureWhiteDeferralTests で、保留中の出現処理ゲート・深度再整合の規則・深度ボーナスの単調性と、接続層（RunChoiceSnapshot／RunChoiceProgress）での選択保持・確定後の深度一致をソロ（権威）と協力（参加側）の両経路で確認。全テスト成功、Release ビルド成功（警告5・エラー0）。実機・実セーブでの純白と2台協力プレイは未確認です。 / **Verification**: new PureWhiteDeferralTests cover the deferred spawn gate, the depth-realignment rule, depth-bonus monotonicity, and connection-layer choice preservation and post-commit depth agreement for both solo (authority) and co-op (participant) paths. Full test suite passes; Release build succeeded (5 warnings, 0 errors). Real-game pure-white runs and two-machine co-op remain unverified.
-
----
-
-
-## 未公開 — 伝説ドロップの天井（救済）を撤廃
-
-- **天井なし**：ボスの主報酬へのエピック以上の救済抽選と、その天井（未取得112回の次で確定）を撤廃しました。主報酬も追加報酬も通常の抽選のみになり、連続して出なくても確定はありません。通常の抽選率は変えません。 / **No pity**: the Epic+ pity roll and its ceiling on boss primary rewards are removed; primary and bonus rewards use only the normal roll, with no guarantee after consecutive misses. Normal roll rates are unchanged.
-- **表示**：記録タブにあった救済カウンタ（次のボスの主報酬がエピック以上になる追加確率）を削除しました。 / **HUD**: the records-tab pity counter is removed.
-- **互換**：保存形式・通信構造・Protocol番号は変更なし。旧セーブの救済カウンタ（epicPity）は読み込めるまま無視します。協力時は全員同じビルドにしてください。 / **Compatibility**: save and wire formats and protocol number unchanged; the stored pity counter is loaded but ignored. Use matching builds in co-op.
-
----
-
-
-## 未公開 — 宝庫の戦利品と討伐通知（#52）
-
-- **討伐通知**：「封じられた宝庫」のボス撃破で大量の遺物が払い出されても、同じ撃破のドロップ通知に悪夢・変種の討伐通知が押し出されないよう、討伐通知を最後に表示します。撃破統計・経験・覚醒・依頼と、通常敵／悪夢の戦利品をボス撃破時に3倍にする処理は変更していません。 / **Kill notifications**: nightmare/variant kill notices now follow the kill's other notifications, so a bulk Sealed Hoard payout does not evict its own kill notice. Kill statistics, experience, awakening, bounties and the threefold boss payout for ordinary/nightmare loot are unchanged.
-- **戦利品の消失**：ボス撃破後の敵（本体が倒す残敵を含む）の戦利品が再び保留され、ゾーン移動で消える問題を修正しました。宝庫の開封状態を保存し、開封後の敵の戦利品はその場で3倍受け取れます。保留分・開封状態は保存／読込で維持され、同じゾーンのホスト設定の再受信でも消えません。未開封でゾーンを離れる場合は、従来の仕様どおり保留分を失います。 / **Lost loot**: kills after the boss, including native boss-cleanup victims, no longer become deferred loot that disappears on travel. The hoard's opened state is saved; later enemy loot pays out threefold immediately. Held loot/opened state survive save/load and repeated same-zone host rules. Leaving unopened still forfeits held loot as intended.
-- **表示・説明**：HUDに倍率前の保留数と開封状態を追加し、払い出し時は「宝庫の払い出し ×3」と遺物・欠片・調律石の数を表示します。未開封のまま離脱したときも失った数を通知します。説明文に敵の戦利品が対象であること、開封後の3倍払い出し、上限超過時の欠片への変換を明記しました（日英）。 / **Display/description**: the HUD shows pre-multiplier held counts or opened status. A “Hoard payout ×3” notice gives relic/shard/tuning totals, and unopened forfeiture reports lost counts. Bilingual wording clarifies enemy loot, immediate threefold rewards after opening, and capacity overflow conversion to shards.
-- **復帰の制約**：旧版で既に消えた戦利品や、開封状態を記録していない旧セーブの履歴は復元できません。クラッシュ時は最後に書き込みが完了した保存地点からの復帰となり、未書き込みの撃破まで保証する変更ではありません。 / **Recovery limits**: already-lost loot and historical opened state absent from older saves cannot be reconstructed. Crash recovery uses the last completed save; this does not guarantee kills whose checkpoint was not yet written.
-- **確認範囲**：撃破APIの直接実行で通知の押し出しとボス後の保留消失を修正前に再現し、修正後は開封後の報酬がゾーン移動でも残ることを確認しました。夢の深さ0／5・確保／潜行・通常／悪夢の8経路で、高レアを含む3倍払い出し、保存／読込、同じゾーンのホスト設定再適用を確認しました。実機のHUD・協力プレイ、および報告されたクラッシュとの因果は未確認です。 / **Verification scope**: direct kill API execution reproduced notification eviction and post-boss deferred-loot loss before the fixes; later loot now survives travel. Eight paths covering depth 0/5, Secure/Delve and ordinary/nightmare kills confirmed threefold payouts including high-rarity relics, save/load and repeated same-zone host rules. In-game HUD/co-op and the link to the reported crash remain unverified.
-
----
-
-
-## 未公開 — 純白ルートの選択と勝利確保（#53・#54）
-
-- **純白の入口**：`Rift_Sidetrack_TheDream` が移動する `Zone_Primus` では、戦闘や撃破だけで確保／潜行を自動決定せず、道標・確保／潜行・契約を明示的に選べるようにしました。通常ルートの戦闘による自動潜行は変更しません。道標は従来どおりホスト共有、確保／潜行と契約は各自の選択です。 / **Pure-white entrance**: choices in `Zone_Primus` remain pending until explicitly selected instead of auto-delving on combat. Ordinary routes are unchanged; waypoints remain host-shared, while securing/delving and pacts remain personal.
-- **途中の保存**：既存の純白途中セーブは遠征と鞄を維持し、入口の選択を一度だけ補います。選択待ちなら既存の提示を維持し、新しい保存用の印で再読込による再提示を防ぎます。保存形式の番号は変えません。 / **Existing saves**: retain the active expedition and satchel, backfill the entrance choice once, preserve an already-pending offer, and persist a marker against repeated offers on reload; no profile-format reset.
-- **ボス撃破**：Primus 撃破から本体の `StartPrimusDeath` が始まった時点で、既存の勝利精算・終端履歴の同期を開始します。エンディングのカットシーン終了まで待たず、ホストと参加者の未確保品を持ち帰ります。 / **Boss victory**: native `StartPrimusDeath` starts the existing victory settlement and terminal-history replay, without waiting for the ending cutscene.
-- **調査・確認範囲**：本体資料の Loc に日本語「純白」の一致はなく、`MainLocalization` のリソース本体も未提供です。ルートは上記入口と `Primus_Ending → PureWhiteDream` のコードで対応付けました。#53 の即時自動潜行が報告時にも起きたか、クラッシュとの因果、実機UI・2台協力プレイは未確認です。権威側の撃破情報を失った保存については、分類や報酬を推測して補いません。 / **Limits**: Japanese localization assets, reporter logs, real-game UI and two-machine co-op are unavailable; the reported auto-delve timing and crash relationship remain unverified. Missing authoritative kill facts are not invented.
-- **検証**：指定の Release ビルド成功（警告5・エラー0）。指定の既存テストは .NET 8 ランタイム不足で中断後、`DOTNET_ROLL_FORWARD=Major` を付けて成功2018・失敗0・スキップ2。テストの追加・変更なし。 / **Verification**: Release build succeeded with 5 warnings and no errors; existing changed tests passed 2018, failed 0, skipped 2 with major runtime roll-forward because .NET 8 was unavailable. No tests added or changed.
-
----
-
-## v2.0.3 — 刻印からデバフを撤廃（2026-10-05）
-
-刻印（星図の紫の大星）に付いていたデバフ（代償）を、説明文だけでなく実効果からもすべて撤廃しました（#47）。残る効果の説明は対象・条件つきで自動生成され、効果一覧・選択画面・実効果が同じソースから作られるため、食い違いが起きません。 / Every keystone drawback is removed from the actual effects, not just the text (#47). The remaining effect text is generated from the same typed data the game applies, so descriptions, the selection screen and the effect list cannot disagree.
+今回の版では、高レア装備を手に入りにくくし、刻印のデバフ（代償）をなくしました。あわせて、v2.0.1 のあとに報告された不具合をまとめて直しています。 / This release makes high-rarity gear rarer, removes keystone drawbacks, and fixes the bugs reported since v2.0.1.
 
 ### 更新前に確認 / Before updating
 
-- **保存データはそのまま引き継げます**（保存形式4）。刻印の選択はそのまま残り、振り直しは不要です。 / Saves carry over (format 4); keystone selections are kept, no respec needed.
-- **協力プレイは全員を同じ版に**してください（通信の版15）。 / Everyone in co-op must use the same version (protocol 15).
+- **保存データはそのまま引き継げます**。振った星と刻印の選択もそのまま残ります。 / Saves carry over, including spent stars and chosen keystones.
+- **協力プレイは全員この版に**してください。通信の版が変わりました。 / Everyone in co-op must update; the network protocol changed.
 - 更新後はゲームを再起動してください。 / Restart the game after updating.
 
-### 変更 / Changes
+### バランス / Balance
 
-- **刻印**: 82個すべての刻印からデバフ（ダメージ減少・効果の無効化・持続時間の伸びによる実質弱体化など）を撤廃しました。効果と必要ポイントだけが適用されます。C11「満ちた聖杯」のHP支払い→障壁変換はそのまま残ります。 / All 82 keystones lose their drawbacks (damage reductions, effect disables, duration trades); only the effect and its point cost apply. Aurena's sacrifice-to-shield conversion (Brimming Chalice) keeps working.
-- **説明**: 刻印の説明は「効果／必要ポイント」の2段だけになり、効果本文は実効果の型付きデータから自動生成します。凡例の「利点と代償の両方があります」は削除しました。 / Keystone descriptions now show only the effect and cost, with the body text generated from the typed effect data. The legend line about benefits and drawbacks is gone.
-- 照合表（刻印ごとの残る効果と撤廃したデバフ）: [docs/specs/issue-47-sigils.md](docs/specs/issue-47-sigils.md)。 / Per-keystone reconciliation table: [docs/specs/issue-47-sigils.md](docs/specs/issue-47-sigils.md).
+- **高レア装備が手に入りにくくなりました**。エピックと伝説は、これまでの約4分の1しか出ません。合成に必要な素材は2倍、エピック以上の強化・調律などの費用も2倍、覚醒に必要な量は2.5倍です。低レアの出方と、ボスの確定報酬の数は変えていません。 / **High-rarity gear is much rarer**: Epic and Legendary drops are about a quarter of before, transmute materials and Epic+ upgrade fees double, and awakening needs 2.5x. Low-rarity drops and boss reward counts are unchanged.
+- **伝説の天井（救済）をなくしました**。出なかった回数が積み上がっても、確定では出ません。 / **No more Legendary pity**: missed drops no longer add up to a guaranteed one.
+- **刻印からデバフをなくしました**。82個すべての刻印で、ダメージ減少などのデバフが実際の効果からも消え、効果だけが残ります。説明文は実際の効果から作るので、食い違いは起きません。 / **Keystones have no drawbacks**: all 82 keystones keep only their benefits, and descriptions are generated from the real effects, so they always match.
+- **刻印を最大3つまで選べます**。星のレベル200で2つ、400で3つになります。 / **Up to three keystones**: a second slot at star level 200 and a third at 400.
 
+### 不具合の修正 / Fixes
 
-## 未リリース — 高レア装備と合成の難易度調整（2026-10-05）
+- **封じられた宝庫**：ボスを倒したあとの戦利品が、ゾーンを移ると消えていた問題を直しました。払い出しは「×3」と表示され、HUD でため込んだ数も見えるようになりました。悪夢化した敵の討伐ログが、払い出しの通知に押し流されることもなくなりました。 / **Sealed Hoard**: post-boss loot no longer vanishes when you travel, payouts show as "x3" with the held count on the HUD, and nightmare kill notices are no longer pushed out by payout messages.
+- **純白ルート**：入ったときに、道標・確保/潜行・契約の選択がきちんと出るようになりました。ボスを倒すと確保され、持ち帰れます。選択を保留したまま戦っても、敵の強さは正しく上がります。 / **Pure-white route**: the waypoint, Secure/Delve and pact choices now appear, defeating its boss secures your loot, and enemies scale correctly even while the choice is pending.
+- **長いプレイで重くなる・固まる**：敵を倒すたびに保存していたのを、まとめて保存するようにしました。ボスを倒すと雑魚が一斉に倒れる場面で、固まりにくくなります。 / **Slowdowns and freezes on long runs**: saves are now batched instead of written on every kill, which helps when a boss dies and every enemy dies with it.
+- **刻印**：複数の刻印を選んだとき、条件を満たしていない刻印の効果が、別の刻印の条件で動いてしまう問題を直しました。 / **Keystones**: with several keystones chosen, one keystone's effect can no longer activate on another keystone's conditions.
 
-- **上位装備**：エピック・伝説の相対抽選重みを40%へ。標準シミュレーションの伝説発見数は約0.113→0.027個/遠征（天井撤廃後の再計測）。低レア供給・ボスの確定ドロップと追加報酬は維持。 / **High-rarity gear**: Epic/Legendary relative weights reduced to 40%; simulated Legendary finds about 0.113 → 0.027 per expedition (re-measured after pity removal), preserving low-rarity supply and boss reward counts.
-- **鍛冶**：上位合成の材料・費用とエピック以上の強化・再調律・洗い直し・限界突破費用を2倍、覚醒必要量を2.5倍。高レアのイベント入手も難化。 / **Crafting**: upper-tier transmute requirements and Epic+ improvement fees doubled, awakening thresholds multiplied by 2.5, and high-rarity event acquisition tightened.
-- 保存形式・通信構造・Protocol番号は変更なし。協力時は全員同じビルドにしてください（既存の内容指紋は今回の数値差を検出しません）。比較値・例外・計測条件は[仕様](docs/specs/rare-gear-difficulty.md)を参照。 / Save and wire formats and protocol number unchanged; use matching builds in co-op, as the existing content fingerprint does not detect these balance differences. See the comparison specification for assumptions and retained guarantees.
-- **テスト**：承認済みの新費用・覚醒しきい値に既存テストを更新。上位合成の材料不足・正確な消費、低レア装備と素材の供給維持を既存シナリオで検証。 / **Tests**: existing scenarios updated for approved fees and awakening thresholds, covering upper-tier transmute rejection and exact consumption, and preserved low-rarity gear and material income.
+### 星図 / Star map
 
-## 未公開 — 星図の二択・相関表示（#46）
+- **ドラッグ**：星を選んでいるときに、ドラッグが引っかかる・図が飛ぶ・意図せず星が選ばれる、といった問題を直しました。 / **Dragging**: no more stutter, jumps or accidental star picks while a star is selected.
+- **二択の星**：両方の候補を左右に並べて、比べられるようにしました。マウスを乗せた星と、つながっている星を色付きの輪で示します。 / **Choice stars**: both options are shown side by side, and rings highlight the hovered star and its connected stars.
 
-- **二択の比較**：効果A/Bを左右のカードで常時表示し、候補名・本文・選択状態を分離しました。本文と操作欄はカードごとに折り返し・スクロールし、長い説明でももう一方を隠しません。ツールチップの二つの説明も見出しと空行で分けました。 / **Choice comparison**: both A/B cards stay visible, with separate names, effects and chosen states. Each card wraps and scrolls independently; tooltip effects also have headings and paragraph spacing.
-- **相関表示**：ホバー中と二択を開いた星を青い輪、接続先と合わせ技の前提となる両端を淡青の輪、注目中の星への接続を太い線で示します。取得済みの金の枠・線は残し、接続による解放と合わせ技の条件を凡例に記載しました。 / **Relationships**: blue rings mark hovered/open-choice stars; pale-blue rings mark connections and combo endpoint prerequisites; thick line borders mark focused connections. Acquired gold frames/line cores remain, with unlock and combo requirements explained in the legend.
-- **表示・操作**：選択パネルのボタン・スクロールバー以外からも星図をドラッグできます。隠れた星への誤クリックは防ぎます。星図だけは画面に1600×960の論理領域が収まるよう実効倍率を制限し、二択パネルは最大幅1000・キャンバス内の高さで表示します（設定倍率は変更しません）。選択確定のRules・同期経路は従来どおりです。 / **Layout/input**: pan from non-control areas of the choice panel without clicking obscured stars. Only the star-map screen limits effective scale to fit a 1600×960 logical viewport; choice panels use at most 1000 logical units of width and fit the canvas height. Configured scale and Rules/synchronization remain unchanged.
+不具合の多くはコードから原因を突き止めて直したもので、実際のゲームと協力プレイでの確認は一部まだです。おかしな点があれば教えてください。 / Many fixes were found by reading the code and are not yet fully checked in the live game and co-op. Please report anything odd.
 
 ---
 
