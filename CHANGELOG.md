@@ -6,6 +6,21 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.1.1 — 取引の保存順序の修正（2026-10-04）
+
+v2.1.0 の取引まわりの修正です。新しい機能はありません。**実機（ゲーム本体・2台での協力プレイ）での確認はまだ**のため、試験版（pre-release）として公開します。 / A fix to trade saving; no new features. Not yet verified in the real game or in two-player co-op, so this is published as a pre-release.
+
+### 更新前に確認 / Before updating
+
+- **保存データはそのまま引き継げます**。未確定の取引も保存されます。 / Saves carry over; unresolved trades are saved too.
+- **協力プレイは全員を同じ版に**してください。 / Everyone in co-op must use the same version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+- **取引**：購入・交換・分解の要求を、記録（取引の識別子・内容・ホストの台帳・分解の予約）がディスクへ確実に保存できてからホストへ送るようにしました（#40）。書き込みに失敗したとき、または保存先が無効なときは、取引を送らず（ホストの通貨は動かず）、メッセージを出してやり直せる状態に戻します。これまでは、ホストが支払いを済ませた後に保存の失敗や異常終了が起きると、結果を照会するための識別子を失い、対価を受け取れないことがありました。 / A trade request is now sent to the host only after its record (id, contents, host ledger, salvage reservation) is confirmed written to disk. If the write fails or saving is unavailable, nothing is sent (host currency is untouched) and the trade can be retried. Before, a save failure or crash after the host had charged could lose the id needed to settle the trade.
+
+
+---
+
 ## v2.1.0 — 取引の安全性と図鑑の修正（2026-10-04）
 
 v2.0.0 後の修正をまとめた版です。**実機（ゲーム本体・2台での協力プレイ）での確認はまだ**のため、試験版（pre-release）として公開します。 / Fixes since v2.0.0. Not yet verified in the real game or in two-player co-op, so this is published as a pre-release.

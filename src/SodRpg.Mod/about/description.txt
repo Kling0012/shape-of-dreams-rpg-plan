@@ -1,5 +1,5 @@
-[b]v2.1.0: safer co-op trades (late trade responses are kept and settled once), codex shows Named relics and Mini sets, forge reroll fix. Saves carry over. Update all co-op players. Restart the game after updating.[/b]
-[b]協力プレイの取引を安全にしました（遅れた返事を捨てず、一度だけ決済）。図鑑に銘品と組の分類が加わり、鍛冶の再抽選の費用の不具合も直しました。保存データはそのまま引き継げます。協力は全員同じ版へ更新し、ゲームを再起動してください。[/b]
+[b]v2.1.1: a trade is now sent to the host only after its record is safely saved, so a save failure or crash can no longer lose a paid trade. (v2.1.0: safer co-op trades, codex shows Named relics and Mini sets, forge reroll fix.) Saves carry over. Update all co-op players. Restart the game after updating.[/b]
+[b]v2.1.1：取引の記録が安全に保存できてからホストへ送るようにしました（保存の失敗や異常終了で、支払い済みの取引を失わなくなります）。v2.1.0：協力プレイの取引を安全にし、図鑑に銘品と組の分類を加え、鍛冶の再抽選の費用の不具合も直しました。保存データはそのまま引き継げます。協力は全員同じ版へ更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
