@@ -1,5 +1,5 @@
-[b]v2.0.2: high-rarity gear is much rarer (no more Legendary pity), keystones lose their drawbacks and up to three can be chosen, plus fixes for the Sealed Hoard, the pure-white route, long-run slowdowns and the star map. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.0.2：高レア装備がかなり出にくくなり（伝説の天井もなし）、刻印のデバフがなくなって最大3つまで選べるようになりました。封じられた宝庫・純白ルート・長いプレイでの重さ・星図の不具合も直しています。セーブはそのまま使えます。協力プレイは全員この版にして、ゲームを再起動してください。[/b]
+[b]v2.0.3: bug-fix release — runs no longer get stuck in co-op when a kill record is missing, failed saves are retried, plus fixes for the merchant, the pure-white route and notifications, and less slowdown on long runs. Saves carry over, but once saved in this version they cannot be loaded by older versions. Update all co-op players and restart the game.[/b]
+[b]v2.0.3：不具合の修正版です。協力プレイで遠征が進まなくなることがある不具合や、セーブの失敗で進行が失われることがある不具合、商人・純白ルート・通知の不具合を直し、長時間のプレイで重くなる問題も改善しました。セーブデータは引き継げますが、この版で一度セーブすると古い版では読み込めなくなります。協力プレイは全員この版にして、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.

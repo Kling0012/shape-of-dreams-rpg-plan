@@ -6,9 +6,34 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## v2.0.2 — 高レアの希少化と刻印のデバフ撤廃（2026-10-05）
+## v2.0.3 — 不具合の修正と軽量化（2026-10-05）
 
-今回の版では、高レア装備を手に入りにくくし、刻印のデバフ（代償）をなくしました。あわせて、v2.0.1 のあとに報告された不具合をまとめて直しています。 / This release makes high-rarity gear rarer, removes keystone drawbacks, and fixes the bugs reported since v2.0.1.
+v2.0.2 のあとにまとめて見直しを行い、見つかった不具合を直しました。長いプレイで重くなる問題も、さらに軽くしています。 / After a full review following v2.0.2, this release fixes the bugs it found and further reduces slowdowns on long runs.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**。ただし、この版で一度セーブするとセーブデータの形式が新しくなり、古い版の MOD ではそのセーブデータを読み込めなくなります（セーブデータが消えるわけではありません）。古い版に戻すかもしれない場合は、更新の前にセーブデータを控えておいてください。 / Saves carry over. Once this version saves, the save format is upgraded and older mod versions can no longer load that save (it is not deleted). If you might roll back, back up your save before updating.
+- **協力プレイは全員この版に**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Fixes
+
+- **遠征が進まなくなる**：協力プレイで撃破の記録が1件でも届かないと、確保や遠征の決着が止まったままになることがありました。届かない記録は30秒で打ち切り、遠征が先に進むようにしました。 / **Runs getting stuck**: in co-op, one missing kill record could stop securing and the end of the run indefinitely. A missing record is now settled after 30 seconds so the run moves on.
+- **進行が失われる**：セーブの書き込みに失敗したとき、やり直さずにそのままになっていました。失敗したら再試行するようにしました。報酬を付与する途中で問題が起きても、撃破の報酬が消えないようにしました。 / **Lost progress**: a failed save write was never retried; it now is. Kill rewards are no longer lost if something goes wrong while granting them.
+- **商人**：購入の応答が遅れたとき、同じ商人から何度も買えたり、次のゾーンの商人が消えたり、品物の質が購入時と違う深さで決まったりしていました。 / **Merchant**: when a purchase reply was slow, you could buy from the same merchant again, the next zone's merchant could vanish, and item quality could use the wrong delve depth.
+- **純白ルート**：選択を保留したまま倒した敵が、戦った深さとは違う深さで精算されていました。勝ったときに深さや確保のボーナスが1段多くなることもありました。 / **Pure-white route**: kills made while the choice was pending were settled at the wrong depth, and winning could add one extra depth step to bonuses.
+- **潜行を深めると敵が回復する**：純白で潜行を深めたとき、削った敵の HP が一緒に増えていました。 / **Enemies healing on delve**: deepening the delve in the pure-white route raised damaged enemies' current HP.
+- **通知の名前**：星図ポイントや熟練度の通知に、旅人の内部名（Hero_Vesper など）が出ていました。 / **Notification names**: star-point and mastery notices showed internal traveler IDs such as Hero_Vesper.
+- **ホストの処理が止まる**：ホスト側で1か所に問題が起きると、ほかの処理まで止まっていました。悪夢・変種の敵の名前表示が一斉に消えることもありました。 / **Host processing stalls**: one failing step on the host stopped everything after it, and nightmare/variant nameplates could all disappear at once.
+- **長いプレイで重くなる**：戦闘中の処理の負荷と、撃破の記録の再送、セーブデータの大きさを減らしました。途中参加や再接続でホストが固まることも減ります。 / **Slowdowns on long runs**: combat work, kill-record resends and save size are reduced, and hosts no longer freeze when someone joins mid-run or reconnects.
+
+不具合の多くはコードから原因を突き止めて直したもので、実際のゲームと協力プレイでの確認は一部まだです。おかしな点があれば教えてください。 / Many fixes were found by reading the code and are not yet fully checked in the live game and co-op. Please report anything odd.
+
+---
+
+## v2.0.2 — 刻印を最大3つまで・不具合の修正（2026-10-05）
+
+今回の版では、刻印を最大3つまで選べるようにし、v2.0.1 のあとに報告された不具合をまとめて直しました。 / This release lets you choose up to three keystones and fixes the bugs reported since v2.0.1.
 
 ### 更新前に確認 / Before updating
 
@@ -16,11 +41,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **協力プレイは全員この版に**してください。通信の版が変わりました。 / Everyone in co-op must update; the network protocol changed.
 - 更新後はゲームを再起動してください。 / Restart the game after updating.
 
-### バランス / Balance
+### 追加 / New
 
-- **高レア装備が手に入りにくくなりました**。エピックと伝説は、これまでの約4分の1しか出ません。合成に必要な素材は2倍、エピック以上の強化・調律などの費用も2倍、覚醒に必要な量は2.5倍です。低レアの出方と、ボスの確定報酬の数は変えていません。 / **High-rarity gear is much rarer**: Epic and Legendary drops are about a quarter of before, transmute materials and Epic+ upgrade fees double, and awakening needs 2.5x. Low-rarity drops and boss reward counts are unchanged.
-- **伝説の天井（救済）をなくしました**。出なかった回数が積み上がっても、確定では出ません。 / **No more Legendary pity**: missed drops no longer add up to a guaranteed one.
-- **刻印からデバフをなくしました**。82個すべての刻印で、ダメージ減少などのデバフが実際の効果からも消え、効果だけが残ります。説明文は実際の効果から作るので、食い違いは起きません。 / **Keystones have no drawbacks**: all 82 keystones keep only their benefits, and descriptions are generated from the real effects, so they always match.
 - **刻印を最大3つまで選べます**。星のレベル200で2つ、400で3つになります。 / **Up to three keystones**: a second slot at star level 200 and a third at 400.
 
 ### 不具合の修正 / Fixes
