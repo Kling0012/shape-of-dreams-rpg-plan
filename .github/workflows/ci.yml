@@ -6,13 +6,63 @@ on:
   pull_request:
 
 jobs:
-  build-test:
+  # Fast set: Speed=Slow exhaustive tests are skipped unless SODRPG_SLOW=1
+  # (see SlowFactAttribute). Jobs build only what they test; projects run in
+  # parallel because each test assembly serializes its own tests (shared
+  # StarClusters/Loc game state).
+  core-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - run: dotnet restore
-      - run: dotnet build -c Release --no-restore
-      - run: dotnet test -c Release --no-build --verbosity normal
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - run: dotnet build -c Release tests/SodRpg.Core.Tests
+      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build
+
+  mod-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [tests/Issue73.Native.Tests, tests/SodRpg.Mod.Startup.Tests]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - run: dotnet build -c Release ${{ matrix.project }}
+      - run: dotnet test -c Release ${{ matrix.project }} --no-build
+
+  # Full exhaustive set (all heroes, all seeds) after merges to main and for
+  # releases; PRs only pay for the fast set above.
+  slow-tests:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+      - run: dotnet build -c Release tests/SodRpg.Core.Tests
+      - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow"
+        env:
+          SODRPG_SLOW: "1"

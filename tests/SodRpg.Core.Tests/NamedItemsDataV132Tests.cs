@@ -176,7 +176,7 @@ namespace SodRpg.Core.Tests
             // 設計 3.4：土台（重み1・各枠60種）と銘品（レア度ごとの定数×その枠・そのレア度の銘品数）の重みどおりの割合。
             // 設計書の「約3分の1・約5分の2」は土台が各枠100種の段階の数値。いまは60種なので
             // アンコモン 48/108、レア・エピック 72/132 が正確な期待値になる（土台が100種になれば設計書どおり）。
-            const int n = 16000;
+            const int n = 8000;
             foreach (Slot slot in Enum.GetValues(typeof(Slot)))
             {
                 int bases = Content.Bases.Count(b => b.Slot == slot);

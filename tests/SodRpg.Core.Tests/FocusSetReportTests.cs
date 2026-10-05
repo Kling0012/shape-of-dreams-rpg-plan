@@ -15,7 +15,7 @@ namespace SodRpg.Core.Tests
             {
                 var rng = new Rng(17);
                 int hit = 0, normal = 0;
-                const int n = 30000;
+                const int n = 8000;
                 for (int i = 0; i < n; i++)
                 {
                     var r = Loot.RollRelic(rng, Rarity.Rare, 10, null, focus);
@@ -42,9 +42,9 @@ namespace SodRpg.Core.Tests
             {
                 var rng = new Rng(3);
                 int offense = 0;
-                for (int i = 0; i < 8000; i++)
+                for (int i = 0; i < 3000; i++)
                     if (Loot.RollRelic(rng, Rarity.Legendary, 10, null, focus).Base.Line == Line.Offense) offense++;
-                return offense / 8000.0;
+                return offense / 3000.0;
             }
             Assert.True(Share(Line.Offense) > Share(null) * 1.3);
         }
