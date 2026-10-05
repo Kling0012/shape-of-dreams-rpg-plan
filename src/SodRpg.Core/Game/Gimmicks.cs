@@ -452,6 +452,19 @@ namespace SodRpg.Core.Game
                 }
             }
             _entries = next;
+            _hasExposeEntries = false;
+            _hasSapEntries = false;
+            _hasWeakspotEntries = false;
+            _hasCrescendoEntries = false;
+            foreach (var entry in _entries)
+            {
+                var effect = entry.Entry.Def.Effect;
+                if (effect == GimmickEffect.Expose) _hasExposeEntries = true;
+                else if (effect == GimmickEffect.Sap) _hasSapEntries = true;
+                else if (effect == GimmickEffect.Weakspot) _hasWeakspotEntries = true;
+                else if (effect == GimmickEffect.Crescendo) _hasCrescendoEntries = true;
+            }
+
             _activeStates.Clear();
             foreach (var state in _entries)
             {
@@ -459,6 +472,8 @@ namespace SodRpg.Core.Game
                 _activeStates.AddRange(state.SourceStates.Values);
             }
         }
+        // 命中ごとに走る Expose/Sap/Weakspot 参照を、その効果が1つもないビルドでは全走査なしで返す（#161）。
+        private bool _hasExposeEntries, _hasSapEntries, _hasWeakspotEntries, _hasCrescendoEntries;
         private readonly List<ActiveEntry> _activeStates = new List<ActiveEntry>();
         private IReadOnlyList<ActiveEntry> ActiveStates() => _activeStates;
 
@@ -562,7 +577,7 @@ namespace SodRpg.Core.Game
 
         public float ExposePercent(int victimId, float now)
         {
-            if (!Gimmicks.Finite(now)) return 0;
+            if (!_hasExposeEntries || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             long strongest = 0;
             foreach (ActiveEntry state in ActiveStates())

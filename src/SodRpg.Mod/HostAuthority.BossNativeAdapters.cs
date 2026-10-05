@@ -374,8 +374,21 @@ namespace SodRpg.Mod
             && (rt.AppliedBuild.Build.BossMoves.Count != 0 || rt.AppliedBuild.Build.BossRewards.Count != 0);
         private bool BossNativeAnyProfiles()
         {
-            foreach (var rt in _runtimes.Values) if (BossNativeHasProfiles(rt) && Alive(rt.Hero)) return true;
-            return false;
+            // #161: ダメージイベントごとに走査せず、ティックごとに1回（Tick が null に戻す）。
+            // テスト（NetworkServer 非アクティブ）では毎回計算して古い値を返さない。
+            if (NetworkServer.active)
+            {
+                if (_tickBossProfiles.HasValue) return _tickBossProfiles.Value;
+            }
+            else
+            {
+                foreach (var rt in _runtimes.Values) if (BossNativeHasProfiles(rt) && Alive(rt.Hero)) return true;
+                return false;
+            }
+            bool any = false;
+            foreach (var rt in _runtimes.Values) if (BossNativeHasProfiles(rt) && Alive(rt.Hero)) { any = true; break; }
+            _tickBossProfiles = any;
+            return any;
         }
         private bool BossNativeCastCurrent(BossNativeCast cast)
         {

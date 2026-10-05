@@ -171,7 +171,7 @@ namespace SodRpg.Core.Game
 
         public float CrescendoPercent(string memory, float now)
         {
-            if (!Gimmicks.Finite(now)) return 0;
+            if (!_hasCrescendoEntries || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             decimal result = 0;
             foreach (var state in ActiveStates())
@@ -193,7 +193,9 @@ namespace SodRpg.Core.Game
 
         private float TargetPercent(GimmickEffect effect, int victimId, float now)
         {
-            if (!Gimmicks.Finite(now)) return 0;
+            bool present = effect == GimmickEffect.Sap ? _hasSapEntries
+                : effect == GimmickEffect.Weakspot ? _hasWeakspotEntries : _hasExposeEntries;
+            if (!present || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             decimal strongest = 0;
             foreach (var state in ActiveStates())
