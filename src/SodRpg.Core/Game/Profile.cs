@@ -354,6 +354,13 @@ namespace SodRpg.Core.Game
         public RunRecoveryState RunRecovery { get; set; }
         public KillClassificationCheckpoint KillClassification { get; set; }
 
+        /// <summary>Native continue points, oldest first. Snapshot strings are immutable and shared by Clone.</summary>
+        public List<RunCheckpoint> ContinueCheckpoints { get; } = new List<RunCheckpoint>();
+        /// <summary>Profile at the stable lobby boundary, without nested continue data.</summary>
+        public string ContinueLobbyBaseline { get; set; }
+        /// <summary>The native resume session already applied locally.</summary>
+        public string ContinueResumeSession { get; set; }
+
         /// <summary>狙い系統。設定するとその系統の装備が出やすくなる。null は狙いなし。</summary>
         public Line? Focus { get; set; }
 
@@ -417,6 +424,61 @@ namespace SodRpg.Core.Game
 
         public void StoreRng(Rng rng) => RngState = rng.State;
 
+        /// <summary>Installs an owned, decoded checkpoint without replacing the slot's Profile reference.</summary>
+        internal void RestoreFrom(Profile source)
+        {
+            LoadedVersion = source.LoadedVersion;
+            Revision = source.Revision;
+            RngState = source.RngState;
+            DreamLevel = source.DreamLevel;
+            DreamXp = source.DreamXp;
+            EpicPity = source.EpicPity;
+            BulkSalvageMaxRarity = source.BulkSalvageMaxRarity;
+            BestItemLevel = source.BestItemLevel;
+            Japanese = source.Japanese;
+            StartDepth = source.StartDepth;
+            LastDreamDepth = source.LastDreamDepth;
+            Focus = source.Focus;
+            HintsOff = source.HintsOff;
+            StarterGranted = source.StarterGranted;
+            StarterV119Granted = source.StarterV119Granted;
+            Stats = source.Stats;
+            Run = source.Run;
+            CompletedRunId = source.CompletedRunId;
+            RunRecovery = source.RunRecovery;
+            KillClassification = source.KillClassification;
+            LastReport = source.LastReport;
+            RetuneOffer = source.RetuneOffer;
+            ContinueLobbyBaseline = source.ContinueLobbyBaseline;
+            ContinueResumeSession = source.ContinueResumeSession;
+            Materials.Clear();
+            foreach (var kv in source.Materials) Materials.Add(kv.Key, kv.Value);
+            Stash.Clear();
+            Stash.AddRange(source.Stash);
+            LostAndFound.Clear();
+            LostAndFound.AddRange(source.LostAndFound);
+            PendingSalvage.Clear();
+            PendingSalvage.AddRange(source.PendingSalvage);
+            PendingTrades.Clear();
+            PendingTrades.AddRange(source.PendingTrades);
+            Heroes.Clear();
+            foreach (var kv in source.Heroes) Heroes.Add(kv.Key, kv.Value);
+            Codex.Clear();
+            Codex.UnionWith(source.Codex);
+            Feats.Clear();
+            Feats.UnionWith(source.Feats);
+            FeatsClaimed.Clear();
+            FeatsClaimed.UnionWith(source.FeatsClaimed);
+            Upgrades.Clear();
+            foreach (var kv in source.Upgrades) Upgrades.Add(kv.Key, kv.Value);
+            SeenHints.Clear();
+            SeenHints.UnionWith(source.SeenHints);
+            StarterUids.Clear();
+            StarterUids.AddRange(source.StarterUids);
+            ContinueCheckpoints.Clear();
+            ContinueCheckpoints.AddRange(source.ContinueCheckpoints);
+        }
+
         public Profile Clone()
         {
             var c = new Profile
@@ -436,11 +498,14 @@ namespace SodRpg.Core.Game
                 CompletedRunId = CompletedRunId,
                 RunRecovery = RunRecovery?.Clone(),
                 KillClassification = KillClassification?.Clone(),
+                ContinueLobbyBaseline = ContinueLobbyBaseline,
+                ContinueResumeSession = ContinueResumeSession,
                 Focus = Focus,
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),
             };
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
+            c.ContinueCheckpoints.AddRange(ContinueCheckpoints);
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());

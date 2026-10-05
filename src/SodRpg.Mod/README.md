@@ -44,6 +44,16 @@
 
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
 
+### 中断と「続きから」（Issue #97）
+
+- ロビー・タイトルへ戻っても未完了の遠征は残る。メニューの全タブに中断中の案内を表示し、遠征が終わるまでプロフィールの切替と星図の変更はできない。装備・鍛冶の操作条件は従来どおり。
+- 本体の保存があるときは「続きから」で再開する。本体の保存に結び付いたMODチェックポイントへ、同じ遠征IDの鞄・未確保の欠片・撃破と報酬の状態を戻す。MODの最新プロフィールだけをそのまま重ねるのではなく、本体が再開する地点にそろえる。
+- 再開時は、その後の遠征で得た経験・確保済み報酬と保留取引も保存地点に合わせ、本体の通貨と取引台帳を一緒に戻す。ロビーの装備変更は残し、鍛冶・工房などの変更も保存地点の遺物・素材で成立する場合は残す。巻き戻りで必要な遺物・素材がなくなる場合は、ロビーの財産変更をまとめて戻し、画面に理由を表示する。
+- 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
+- チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 17と中断対応の相互確認を使う。
+- **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
+
 ### 純白の保留中の撃破の精算（Issue #71・#88）
 
 - 純白の入口で選択を保留したまま戦った撃破には、戦ったときの潜行深度と道標を記録し、精算ではその値を使う。確保・潜行・勝利のどれで確定しても、戦った深度より浅くも深くもならず、次のゾーン用に選んだ道標（封じられた宝庫など）は当てはまらない。

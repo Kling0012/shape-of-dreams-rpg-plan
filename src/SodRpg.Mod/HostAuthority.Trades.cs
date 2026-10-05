@@ -17,6 +17,7 @@ namespace SodRpg.Mod
         private void OnTrade(DreamforgeTradeMsg msg, DewPlayer caller)
         {
             if (caller == null || msg == null) return;
+            ApplyContinueTrades();
             bool ok = false;
             string reason = null;
             long ledgerId = 0;
@@ -52,8 +53,8 @@ namespace SodRpg.Mod
             });
         }
 
-        /// <summary>取引の台帳の鍵：接続ごと（本体の netId）。再接続したプレイヤーは別の鍵で最初から数える。</summary>
-        private static string TradePlayerKey(DewPlayer caller) => caller.netId.ToString(CultureInfo.InvariantCulture);
+        /// <summary>中断保存と再接続をまたぐ本人の鍵。本体の通貨保存も guid ごとに復元される。</summary>
+        private static string TradePlayerKey(DewPlayer caller) => caller.guid;
 
         /// <summary>現在のランの識別子（分解の重複排除の区切り）。取引中でなければ空。</summary>
         private static string TradeRunId()

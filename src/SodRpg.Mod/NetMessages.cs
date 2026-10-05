@@ -40,6 +40,8 @@ namespace SodRpg.Mod
         public string content;
         public string killObservationSessionId;
         public ulong authorityGeneration;
+        public string continueRunId, continueCheckpointId, continueResumeSession;
+        public bool continueCheckpoints;
     }
 
     public class DreamforgeAppliedMsg
@@ -179,6 +181,7 @@ namespace SodRpg.Mod
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
         // Version 16 adds sequenced kill facts and persisted receipt ACKs for compact, recoverable checkpoints.
         // Version 17 requires each Pure White participant to resolve their own choice before kill settlement.
+        // Version 17 also binds MOD checkpoint barriers and resume handshakes to native continue saves.
         public const int Version = 17;
     }
 
