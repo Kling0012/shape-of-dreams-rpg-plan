@@ -29,7 +29,7 @@ namespace SodRpg.Core.Tests
         private static void Apply(Profile p, KillReward reward, MonsterTier tier = MonsterTier.Normal, bool nightmare = false, int room = 4)
         {
             var rng = p.TakeRng();
-            Waypoints.ApplyKill(p, tier, nightmare, rng, reward, 10, null, room, out _, out _);
+            Waypoints.ApplyKill(p, tier, nightmare, rng, reward, 10, null, room, p.Run.ActiveWaypoint, out _, out _);
             p.StoreRng(rng);
         }
 
@@ -281,12 +281,13 @@ namespace SodRpg.Core.Tests
         public void Star_and_awakening_offerings_convert_the_resources()
         {
             var star = Reward();
-            Waypoints.ApplyKill(Run(Waypoint.StarOffering), MonsterTier.Normal, false, new Rng(17), star, 10, null, 1, out int starXp, out int awakening);
+            var offering = Run(Waypoint.StarOffering);
+            Waypoints.ApplyKill(offering, MonsterTier.Normal, false, new Rng(17), star, 10, null, 1, Waypoint.StarOffering, out int starXp, out int awakening);
             Assert.Equal(40, starXp);
             Assert.Equal(0, star.Shards);
             Assert.Equal(0, awakening);
             var pilgrim = Reward(2);
-            Waypoints.ApplyKill(Run(Waypoint.AwakeningPilgrimage), MonsterTier.Normal, false, new Rng(17), pilgrim, 10, null, 1, out starXp, out awakening);
+            Waypoints.ApplyKill(Run(Waypoint.AwakeningPilgrimage), MonsterTier.Normal, false, new Rng(17), pilgrim, 10, null, 1, Waypoint.AwakeningPilgrimage, out starXp, out awakening);
             Assert.Equal(0, starXp);
             Assert.Equal(40, awakening);
             Assert.Empty(pilgrim.Relics);

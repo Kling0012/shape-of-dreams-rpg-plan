@@ -131,13 +131,13 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。</summary>
-        public static Pacts.Totals KillModifiers(RunState run)
+        /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。waypoint は戦ったときの道標（#71）。</summary>
+        public static Pacts.Totals KillModifiers(RunState run, Waypoint? waypoint = null)
         {
             var t = Pacts.Sum(run.Pacts);
             t.DropBonus += LimboDropBonus * run.LimboDepth + run.EventDropBonus;
             t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
-            t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(run.ActiveWaypoint).Luck;
+            t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(waypoint ?? run.ActiveWaypoint).Luck;
             var d = DailyDream.Get(run.DailyId);
             if (d != null)
             {
@@ -148,7 +148,8 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null,
+        /// <summary>撃破報酬。heat/waypoint は戦ったときの値（保留していた撃破の精算用、#71）。省略時は現在の状態。</summary>
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null,
             string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             var ev = new List<GameEvent>();
@@ -156,17 +157,18 @@ namespace SodRpg.Core.Game
             if (run == null) return ev;
             if (string.IsNullOrEmpty(heroKey)) heroKey = run.HeroKey;
             var rng = p.TakeRng();
-            int pity = p.EpicPity;
             var variant = Variants.Get(variantId);
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+            int killHeat = heat ?? run.Heat;
+            Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, ref pity, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex);
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
-            bool hoardPayout = run.ActiveWaypoint == Waypoint.BossHoard
+            bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
-            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
+            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening);
             if (tier == MonsterTier.Boss)
             {
                 var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
@@ -178,7 +180,7 @@ namespace SodRpg.Core.Game
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
                 AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev);
                 int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
-                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(run.ActiveWaypoint).AwakeningMultiplier);
+                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
@@ -204,7 +206,7 @@ namespace SodRpg.Core.Game
                 if (after > before && after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey)) AddHint(p, Hint.KeystoneReady, ev);
                 if (after > before)
                 {
-                    string name = heroKey.StartsWith("Hero_") ? heroKey.Substring(5) : heroKey;
+                    string name = HeroNames.Display(heroKey);
                     ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
                         $"{name}の熟練度が{after}「{Mastery.Title(after)}」に上がりました。" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? "到達刻印を選べるようになりました。" : ""),
                         $"{name} mastery {after} \"{Mastery.Title(after)}\"" + (after == HeroSigils.KeystoneMastery && HeroSigils.HasTree(heroKey) ? ": keystones unlocked" : ""))));
@@ -222,7 +224,6 @@ namespace SodRpg.Core.Game
                 killNotice = new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!"));
                 AddHint(p, Hint.FirstNightmare, ev);
             }
-            p.EpicPity = pity;
             p.StoreRng(rng);
 
             run.GearWindow = false;
@@ -241,7 +242,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(run.ActiveWaypoint).ShardMultiplier == 0);
+                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(killWaypoint).ShardMultiplier == 0);
                 AddHint(p, Hint.FirstDrop, ev);
                 AdvanceRelicBounties(p, relic, ev);
             }
@@ -322,6 +323,7 @@ namespace SodRpg.Core.Game
             run.OfferedPacts.Clear();
             var rng = p.TakeRng();
             run.OfferedPacts.AddRange(Pacts.Offer(rng, run.Pacts, Workshop.PactsOffered(p)));
+            run.OfferedEventId = Guid.NewGuid().ToString("N");
             run.OfferedEvent = DreamEvents.Roll(rng, p, trades);
             run.OfferedWaypoints.AddRange(Waypoints.Offer(rng));
             p.StoreRng(rng);
@@ -338,8 +340,22 @@ namespace SodRpg.Core.Game
                 $"Hoard left unopened: forfeited {run.DeferredWaypointRelics.Count} held relic(s), {run.DeferredWaypointShards} shards and {run.DeferredWaypointTuning} tuning.")));
         }
 
-        /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
-        public static List<GameEvent> Secure(Profile p) => Secure(p, true);
+        /// <summary>確保する。分解予約中の遺物は預かりに隔離し、残りを保管庫へ移す。深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
+        public static List<GameEvent> Secure(Profile p, TradeLedger trades = null)
+        {
+            var run = p.Run;
+            if (run != null && trades != null && trades.HeldCount > 0)
+            {
+                for (int i = 0; i < run.Satchel.Count; i++)
+                {
+                    var relic = run.Satchel[i];
+                    if (!trades.IsReserved(relic.Uid)) continue;
+                    p.PendingSalvage.Add(new PendingSalvage(relic, SalvageReturnTarget.Stash));
+                    run.Satchel.RemoveAt(i--);
+                }
+            }
+            return Secure(p, true);
+        }
 
         /// <summary>Choose one offered waypoint, or None, for the zone entered after this secure point.</summary>
         public static List<GameEvent> PickWaypoint(Profile p, Waypoint waypoint)
@@ -619,7 +635,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Merchant:
                 {
                     if (!goldPaid) p.AddMaterial(Materials.Shard, -DreamEvents.MerchantCost(run.Heat));
-                    GiveMerchantRelic(p, rng, ev, trades);
+                    GiveMerchantRelic(p, rng, ev, run.Heat, trades);
                     break;
                 }
                 case DreamEvent.Fountain:
@@ -875,23 +891,26 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>ホストが支払いを確定した商人の遺物を渡す。出来事や確保地点が終わっていても付与する。</summary>
-        public static List<GameEvent> GrantPaidMerchant(Profile p, TradeLedger trades = null)
+        public static List<GameEvent> GrantPaidMerchant(Profile p, TradeLedger trades = null, PendingTrade purchase = null)
         {
             var ev = new List<GameEvent>();
             var rng = p.TakeRng();
-            GiveMerchantRelic(p, rng, ev, trades);
+            GiveMerchantRelic(p, rng, ev, purchase?.Heat ?? 0, trades);
             p.StoreRng(rng);
             p.Stats.EventsUsed++;
-            if (p.Run?.OfferedEvent == DreamEvent.Merchant) p.Run.OfferedEvent = DreamEvent.None;
+            // 旧取引は購入元不明。対価は渡すが、現在の提示を購入元と決めつけない。
+            if (!string.IsNullOrEmpty(purchase?.MerchantOfferId)
+                && p.Run?.OfferedEvent == DreamEvent.Merchant
+                && p.Run.OfferedEventId == purchase.MerchantOfferId) p.Run.OfferedEvent = DreamEvent.None;
             AdvanceBounty(p, BountyKind.EventTaker, 1, false, ev);
             ev.AddRange(Feats.Check(p));
             return ev;
         }
 
-        private static void GiveMerchantRelic(Profile p, Rng rng, List<GameEvent> ev, TradeLedger trades)
+        private static void GiveMerchantRelic(Profile p, Rng rng, List<GameEvent> ev, int heat, TradeLedger trades)
         {
             var run = p.Run;
-            var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * (run?.Heat ?? 0), true, Rarity.Uncommon);
+            var rarity = Loot.RollRarity(rng, 1.0 + Loot.HeatLuck * Loot.ClampHeat(heat), true, Rarity.Uncommon);
             var relic = Loot.RollRelic(rng, rarity, p.BestItemLevel, null,
                 p.Focus ?? DailyDream.Get(run?.DailyId ?? 0)?.FeaturedLine, p.Stash, run?.Satchel, p.Codex);
             p.Codex.Add(relic.CodexId);
@@ -1143,9 +1162,10 @@ namespace SodRpg.Core.Game
             StarProgression.AddXp(hero, amount);
             int gained = StarProgression.Points(hero.StarXp) - before;
             if (gained <= 0) return;
+            string name = HeroNames.Display(heroKey);
             ev.Add(new GameEvent(EventKind.LevelUp, Loc.T(
-                $"{heroKey}の星図ポイントが{gained}増えました。",
-                $"{heroKey} earned {gained} star map point(s).")));
+                $"{name}の星図ポイントが{gained}増えました。",
+                $"{name} earned {gained} star map point(s).")));
             AddHint(p, Hint.TalentPoints, ev);
         }
 

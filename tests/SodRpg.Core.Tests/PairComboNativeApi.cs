@@ -59,6 +59,7 @@ namespace SodRpg.Mod
     {
         public static BasicAttackContext Current;
         public bool Primary;
+        public long Serial;
     }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum SkillType { Normal, Ultimate }
@@ -79,8 +80,26 @@ namespace SodRpg.Mod
     internal sealed partial class HeroSkill
     {
         public Hero hero;
-        public readonly Dictionary<HeroSkillLocation, SkillTrigger> Skills = new Dictionary<HeroSkillLocation, SkillTrigger>();
+        public readonly SkillEquipment Skills;
+        public HeroSkill() { Skills = new SkillEquipment(this); }
         public SkillTrigger GetSkill(HeroSkillLocation slot) => Skills.TryGetValue(slot, out var skill) ? skill : null;
+    }
+    // Fixture dictionary mutations stand in for EntityAbility.SetAbility/RemoveAbility notifications.
+    internal sealed class SkillEquipment : Dictionary<HeroSkillLocation, SkillTrigger>
+    {
+        private readonly HeroSkill _skills;
+        internal SkillEquipment(HeroSkill skills) { _skills = skills; }
+        public new SkillTrigger this[HeroSkillLocation slot]
+        {
+            get => base[slot];
+            set { base[slot] = value; HostAuthority.NativeInstance?.EquipmentChangedForTest(_skills.hero); }
+        }
+        public new bool Remove(HeroSkillLocation slot)
+        {
+            bool removed = base.Remove(slot);
+            if (removed) HostAuthority.NativeInstance?.EquipmentChangedForTest(_skills.hero);
+            return removed;
+        }
     }
     internal partial class Hero
     {
@@ -172,7 +191,7 @@ namespace SodRpg.Mod
         private static readonly HeroSkillLocation[] LinkSkills = { HeroSkillLocation.Identity, HeroSkillLocation.Movement,
             HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R };
         private static readonly object EnemyFilter = new object();
-        private readonly System.Random _rng = new System.Random(1);
+        private System.Random _rng = new System.Random(1);
         private int _gimmickDamageDepth, _pairDamageDepth, _reactionEffectDepth;
         internal struct PendingGimmick
         {
@@ -182,10 +201,9 @@ namespace SodRpg.Mod
             public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
-            public Func<GimmickDef> AuthoredDefinition;
+            public AuthoredPendingGimmick Authored;
             public string AuthoredChannelId;
             public float QueuedAt;
-            public Func<bool> AuthoredIsCurrent;
         }
         internal sealed partial class HeroRuntime
         {

@@ -85,6 +85,8 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
+            public uint GrowthOwnerNetId;
+            public string GrowthOwnerKey;
         }
 
         internal struct PendingGimmick
@@ -95,8 +97,7 @@ namespace SodRpg.Mod
             public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
-            public Func<bool> AuthoredIsCurrent;
-            public Func<GimmickDef> AuthoredDefinition;
+            public AuthoredPendingGimmick Authored;
             public string AuthoredChannelId;
             public float QueuedAt;
         }
@@ -106,6 +107,7 @@ namespace SodRpg.Mod
             public Monster Monster;
             public float QueuedAt;
             public bool SpawnProcessed;
+            public int DepthApplied;
             public StatBonus DepthBonus;
             public StatBonus SpecialBonus;
             public bool PressureApplied;
@@ -114,6 +116,12 @@ namespace SodRpg.Mod
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
             public string KillEventId;
+            public string KillEventStreamId;
+            public uint KillEventNetId;
+            public uint SyncNetId;
+            public bool ClassificationQueued;
+            public NightmareAffix ClassificationNightmare;
+            public string ClassificationVariant;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -230,7 +238,11 @@ namespace SodRpg.Mod
             _dailyIdOfHost = dailyIdOfHost;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
-            _onPressurePlayerAdded = player => _pressureDirty = true;
+            _onPressurePlayerAdded = player =>
+            {
+                _pressureDirty = true;
+                if (player != null) RegisterKillPeer(player);
+            };
             _onPressurePlayerRemoved = player =>
             {
                 if (!ReferenceEquals(player, null))
@@ -238,6 +250,7 @@ namespace SodRpg.Mod
                     _builds.Remove(player);
                     _incomingBuilds.Remove(player);
                     RemoveBuildValidationPeer(player);
+                    RemoveKillPeer(player);
                 }
                 _pressureDirty = true;
             };
@@ -267,6 +280,14 @@ namespace SodRpg.Mod
 
         public bool IsActive => _registeredOn != null;
 
+        // Each stage runs on its own: one persistently failing stage must not stop monster pruning,
+        // behaviors or the periodic resync for everyone, and must not flood the log (#74).
+        // Same shape as ClientSession.Tick: per-stage try/catch with a 10 s log limit per stage.
+        private Action[] _tickStages;
+        private string[] _tickStageNames;
+        private TickGuard _tickGuard;
+        private float _tickNow;
+
         public void Tick()
         {
             if (!NetworkServer.active)
@@ -277,47 +298,110 @@ namespace SodRpg.Mod
             EnsureRegistered();
             NativeInstance = this;
             if (_registeredOn == null) return;
-            UpdateSacrificeShields();
-            float now = Time.time;
-            ProcessBuildUpdates(Time.unscaledTime);
-            RefreshRunModifiers();
+            if (_tickStages == null) BuildTickStages();
+            _tickNow = Time.time;
+            _tickGuard.Run(Time.unscaledTime);
+        }
+
+        private void BuildTickStages()
+        {
+            _tickStageNames = new[]
+            {
+                "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
+                "gem slots", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
+                "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
+                "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
+                "nightmare regen", "classification resync",
+            };
+            _tickStages = new Action[]
+            {
+                UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
+                TickGemSlots, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
+                StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
+                StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
+                StageNightmareRegen, StageClassificationResync,
+            };
+            _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
+        }
+
+        private void StageBuildUpdates() => ProcessBuildUpdates(Time.unscaledTime);
+
+        private void StagePressure()
+        {
             if (_pressureDirty) RefreshPressure();
-            PruneAndApplyPending();
-            TickGemSlots();
-            SyncWaypointHeroes();
-            bool scan = now >= _nextAreaScan;
-            if (scan)
-            {
-                _nextAreaScan = now + 0.25f;
-                ScanArea();
-            }
+        }
+
+        private void StageAreaScan()
+        {
+            if (_tickNow < _nextAreaScan) return;
+            _nextAreaScan = _tickNow + 0.25f;
+            ScanArea();
+        }
+
+        private void StageNewPowers()
+        {
             foreach (var rt in _runtimes.Values) FlushNewPowers(rt);
+        }
+
+        private void StageReactions()
+        {
             foreach (var rt in _runtimes.Values) UpdateReactions(rt);
-            foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
-            foreach (var rt in _runtimes.Values) TickBossEffects(rt, now);
-            TickBossVisualSnapshots();
-            UpdateIdentityStrikes();
-            foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
-            PruneSapProcessors(now);
-            foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
-            foreach (var rt in _runtimes.Values) ApplyRunGrowth(rt, now);
-            SyncCurrency(now);
-            UpdateModShieldPools(now);
-            ProcessSpawns();
-            PruneMonsters(now);
-            TickMonsterBehaviors(now);
-            ExpireSunders(now);
-            if (now >= _nextRegen)
-            {
-                _nextRegen = now + 0.5f;
-                RegenNightmares();
-            }
-            if (now >= _nextNightmareSync)
-            {
-                _nextNightmareSync = now + 5f;
-                ResyncMonsterClassifications();
-                SendPressure();
-            }
+        }
+
+        private void StageGimmickApply()
+        {
+            foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
+        }
+
+        private void StageBossEffects()
+        {
+            foreach (var rt in _runtimes.Values) TickBossEffects(rt, _tickNow);
+        }
+
+        private void StageGimmicksV129()
+        {
+            foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, _tickNow);
+        }
+
+        private void StageSapPrune() => PruneSapProcessors(_tickNow);
+
+        private void StageRuntimes()
+        {
+            foreach (var rt in _runtimes.Values) UpdateRuntime(rt, _tickNow);
+        }
+
+        private void StageRunGrowth()
+        {
+            foreach (var rt in _runtimes.Values) ApplyRunGrowth(rt, _tickNow);
+        }
+
+        private void StageCurrency() => SyncCurrency(_tickNow);
+
+        private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
+
+        private void StageMonsterPrune()
+        {
+            PruneMonsters(_tickNow);
+            PrunePressureDividendDeaths();
+        }
+
+        private void StageMonsterBehaviors() => TickMonsterBehaviors(_tickNow);
+
+        private void StageSunders() => ExpireSunders(_tickNow);
+
+        private void StageNightmareRegen()
+        {
+            if (_tickNow < _nextRegen) return;
+            _nextRegen = _tickNow + 0.5f;
+            RegenNightmares();
+        }
+
+        private void StageClassificationResync()
+        {
+            if (_tickNow < _nextNightmareSync) return;
+            _nextNightmareSync = _tickNow + 5f;
+            ResyncMonsterClassifications();
+            SendPressure();
         }
 
         private void RefreshPressure(bool synchronize = false)
@@ -441,7 +525,7 @@ namespace SodRpg.Mod
                 foreach (var heroRuntime in _runtimes.Values) heroRuntime.Powers.ForgetNewPowerTarget(e.GetInstanceID());
             if (!ReferenceEquals(e, null) && _nativeDeathEntities.Remove(e)) e.EntityEvent_OnDeath -= _onDeath;
             if (e is Monster m) RemoveMonster(m);
-            if (e is Monster removedMonster) _pressureDividendSpawns.Remove(removedMonster);
+            if (e is Monster removedMonster) ForgetPressureDividendSpawn(removedMonster);
         }
 
         private void OnMonsterDeath(EventInfoKill info)
@@ -496,13 +580,15 @@ namespace SodRpg.Mod
             if (_monsters.TryGetValue(m, out var rt))
             {
                 _monsters.Remove(m);
+                SendMonsterRemoval(rt);
                 Unhook(rt);
             }
             _nightmares.Remove(m);
             _regen.Remove(m);
-            // PruneMonsters also reaches monsters whose ActorManager removal event has not fired (or never will
-            // for destroyed objects); drop every spawn-scoped side table here so they cannot accumulate over a run (#55).
-            _pressureDividendSpawns.Remove(m);
+            // Combat hooks are released on death, before Actor.InvokeOnKill attributes the memory.
+            // Keep the immutable reward snapshot until entity removal or its bounded expiry.
+            if (!_pressureDividendSpawns.TryGetValue(m, out var spawn) || spawn.Death == null)
+                ForgetPressureDividendSpawn(m);
             _generatedPairDeaths.Remove(m.GetInstanceID());
             if (_pairEntities.Remove(m))
             {
@@ -516,9 +602,9 @@ namespace SodRpg.Mod
 
         private void UnhookMonsters()
         {
-            foreach (var rt in _monsters.Values) Unhook(rt);
+            foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
-            _pressureDividendSpawns.Clear();
+            ClearPressureDividendSpawns();
             foreach (var entity in _pairEntities)
             {
                 if (entity == null) continue;
@@ -754,7 +840,9 @@ namespace SodRpg.Mod
         {
             if (_spawnQueue.Count == 0) return;
             if (_zone != null && _zone.isInAnyTransition) return;
-            if (ClientSession.HostRun?.AwaitingChoice == true) return;
+            // 戦闑では選択を解決できない純白の入口でも、戦う敵への必須の圧・深度補正は確定を待たない。
+            if (!SpawnInitRules.ProcessesWhileAwaitingChoice(
+                ClientSession.HostRun?.AwaitingChoice == true, ClientSession.HostCombatChoiceSuspended)) return;
             float now = Time.time;
             int depth = PartyDepth();
             int dailyId = _dailyIdOfHost != null ? _dailyIdOfHost() : 0;
@@ -779,20 +867,15 @@ namespace SodRpg.Mod
                 // Pressure is already active; give the initial depth build time to arrive.
                 if (_builds.Count == 0 && now - _spawnQueue[i].Value < 15f) continue;
                 _spawnQueue.RemoveAt(i);
-                if (depth <= 0 && !ActiveWaypointTotals.AllNightmares && ActiveWaypointTotals.NightmareChanceMultiplier <= 1) continue;
                 var tier = (MonsterTier)Math.Min((int)MonsterTier.Boss, (int)m.type);
                 if (rt.SpawnProcessed) continue;
+                // 深さ0では深度ボーナス・悪夢化の初期化をしないが、処理済みとして印を付ける（#71）。
+                // 潜行で深さが1以上になれば、#60 の揃え直しの対象になる。
                 rt.SpawnProcessed = true;
+                if (SpawnInitRules.SkipsDepthInit(depth, ActiveWaypointTotals.AllNightmares, ActiveWaypointTotals.NightmareChanceMultiplier)) continue;
                 try
                 {
-                    var stats = Nightmares.DepthBonus(tier, depth);
-                    if (stats.Count > 0)
-                    {
-                        var bonus = ToMonsterStatBonus(stats);
-                        rt.DepthBonus = bonus;
-                        m.Status.AddStatBonus(bonus);
-                        m.Status.CalculateStatsIfDirty();
-                    }
+                    ApplyDepthBonus(rt, tier, depth);
                     var variant = ActiveWaypointTotals.AllNightmares ? null : Variants.Roll(_rng, m.GetType().Name, depth, _roomHasVariant);
                     if (variant != null)
                     {
@@ -808,6 +891,35 @@ namespace SodRpg.Mod
                     Log.Error("Host: ProcessSpawns " + ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// 深度ボーナスを置き換える。出現時も、潜行が深まった確定後の再適用もこの入口を通る。
+        /// 古いボーナスを外してから足し直すため、二重には掛からない。本体の再計算はHPの割合を保つため、
+        /// 再計算後には現在HPを置き換え前の絶対値へ戻す（満タンの敵は新しい最大HPのまま、#68）。
+        /// </summary>
+        private void ApplyDepthBonus(MonsterRuntime rt, MonsterTier tier, int depth)
+        {
+            rt.DepthApplied = depth;
+            var m = rt.Monster;
+            var stats = Nightmares.DepthBonus(tier, depth);
+            if (m == null || m.Status == null) return;
+            float healthBefore = m.Status.currentHealth;
+            float maxHealthBefore = m.Status.maxHealth;
+            if (rt.DepthBonus != null)
+            {
+                m.Status.RemoveStatBonus(rt.DepthBonus);
+                rt.DepthBonus = null;
+            }
+            if (stats.Count > 0)
+            {
+                var bonus = ToMonsterStatBonus(stats);
+                rt.DepthBonus = bonus;
+                m.Status.AddStatBonus(bonus);
+            }
+            m.Status.CalculateStatsIfDirty();
+            float healthAfter = SpawnInitRules.HealthAfterDepthRealign(healthBefore, maxHealthBefore, m.Status.maxHealth);
+            if (healthAfter != m.Status.currentHealth) m.Status.SetHealth(healthAfter);
         }
 
         private static StatBonus ToMonsterStatBonus(IReadOnlyList<StatLine> stats)
@@ -841,10 +953,7 @@ namespace SodRpg.Mod
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
-            {
-                netId = m.netId, affixes = (int)affix, authorityGeneration = ClientSession.HostAuthorityGeneration,
-            });
+            SendMonsterClassification(rt);
         }
 
         private void MakeVariant(MonsterRuntime rt, VariantDef variant)
@@ -876,10 +985,7 @@ namespace SodRpg.Mod
                 _loggedVariantSpawn = true;
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
             }
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
-            {
-                netId = m.netId, variantId = variant.Id, authorityGeneration = ClientSession.HostAuthorityGeneration,
-            });
+            SendMonsterClassification(rt);
         }
 
         private void ApplyMonsterAffixes(MonsterRuntime rt, NightmareAffix affix, float regen)
@@ -950,6 +1056,7 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
                 }
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
@@ -959,9 +1066,7 @@ namespace SodRpg.Mod
                 ClearBuildValidationPeers();
                 _pressurePlayerCount = -1;
                 _pressureDirty = true;
-                _killReplayPlayers.Clear();
-                _killFactPublishedAt.Clear();
-                _lastKillReplayAt = 0f;
+                ResetKillReplayConnections();
                 _registeredOn = actor;
                 if (actor != null)
                 {
@@ -972,6 +1077,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeKillReceiptMsg>(nameof(DreamforgeKillReceiptMsg), OnKillReceipt);
                     RegisterHello(actor);
                     Log.Info("Host: registered build handler.");
                 }
@@ -988,6 +1094,7 @@ namespace SodRpg.Mod
                 }
                 UnhookShrines();
                 UnhookMonsters();
+                ClearQueuedMonsterSync();
                 ClearSunders();
                 ClearNativeDeathHooks();
                 _am = am;
@@ -1084,7 +1191,9 @@ namespace SodRpg.Mod
             ReleasePactCurses();
             Unsubscribe();
             UnhookShrines();
+            ClearRemoteMonsterState();
             UnhookMonsters();
+            ResetKillReplayConnections(true);
             ClearSunders();
             if (_zone != null)
             {
@@ -1119,6 +1228,7 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
                 UnregisterHello(_registeredOn);
                 _registeredOn = null;
             }

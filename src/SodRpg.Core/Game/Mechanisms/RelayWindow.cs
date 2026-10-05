@@ -54,6 +54,16 @@ namespace SodRpg.Core.Game
         private readonly HashSet<long> _uses = new HashSet<long>();
         private string _targetQ;
         private long _sourceEpoch, _targetEpoch;
+        private readonly List<long> _useScratch = new List<long>();
+        private readonly List<string> _expiredScratch = new List<string>();
+        private MemoryActivationAttribution _attribution;
+        public void PruneAttribution(MemoryActivationAttribution attribution)
+        {
+            _attribution = attribution;
+            _useScratch.Clear();
+            foreach (long use in _uses) if (!attribution.IsActivationRetained(use)) _useScratch.Add(use);
+            foreach (long use in _useScratch) _uses.Remove(use);
+        }
 
         public RelayWindowRuntime(long ownerId)
         {
@@ -87,17 +97,17 @@ namespace SodRpg.Core.Game
             _sourceEpoch = sourceEpoch; _targetQ = targetQ; _targetEpoch = targetEpoch;
         }
 
-        public bool OnSourceEvent(MemoryActivationEvent use, float now, Func<RelayWindowDefinition, bool> filter = null)
+        public bool OnSourceEvent(MemoryActivationEvent use, float now, Func<RelayWindowDefinition, bool> filter = null, string channelId = null)
         {
             if (!Gimmicks.Finite(now)) throw new ArgumentOutOfRangeException(nameof(now));
             if (use.OwnerId != _ownerId || use.EventKind != MemoryEventKind.ConfirmedUse
                 || use.SourceMemory != RelayWindowDefinition.SourceMemory || use.GeneratedOrigin != GeneratedOrigin.None
                 || use.ActivationId <= 0 || _sourceEpoch == 0 || _targetQ == null || use.EquipmentEpoch != _sourceEpoch
-                || !_uses.Add(use.ActivationId)) return false;
+                || _attribution != null && !_attribution.IsEventRetained(use) || !_uses.Add(use.ActivationId)) return false;
             bool opened = false;
             foreach (var definition in _definitions.Values)
             {
-                if (filter != null && !filter(definition)) continue;
+                if (channelId != null && definition.ChannelId != channelId || filter != null && !filter(definition)) continue;
                 if (definition.TargetMemory != _targetQ) continue;
                 float expires = now + definition.DurationSeconds;
                 if (!Gimmicks.Finite(expires)) throw new ArgumentOutOfRangeException(nameof(now));
@@ -118,7 +128,8 @@ namespace SodRpg.Core.Game
                 || nativeDamage.NativePayloadKind == NativePayloadKind.MainBasicAttack
                 || nativeDamage.NativePayloadKind == NativePayloadKind.SummonAttack) return 0;
             decimal units = 0;
-            var expired = new List<string>();
+            var expired = _expiredScratch;
+            expired.Clear();
             foreach (var entry in _window)
             {
                 if (now >= entry.Value.ExpiresAt) expired.Add(entry.Key);

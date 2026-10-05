@@ -64,7 +64,7 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all]
 選択されたテストクラスから `dotnet test <project> --filter` 式を組み立てる。
 フィルタは `FullyQualifiedName~名前空間.クラス` 条件を `|` で連結した 1 本の式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
-テストプロジェクトは `tests/` 配下の `.csproj`（現在は `SodRpg.Core.Tests`）。
+テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
 
 - `dotnet` コマンド: 既定では `%LOCALAPPDATA%\dotnet-sdk\dotnet.exe` を使う。
   環境変数 `DOTNET` に実行ファイルのパスがあればそれを優先する。
@@ -91,10 +91,30 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## #62 圧の追加報酬の死亡順序
+
+`AuthoredMechanismNativeTests` の `Pressure_dividend_*`（3メソッド、17ケース）は、
+実装の `OnEntityAdd → OnMonsterDeath → RemoveMonster → NativeAttributedKill.Postfix
+→ PublishAttributedKill → OnEntityRemove` を通す。死亡記録を直接作る旧ヘルパーは使わない。
+`extract_issue62_native.py` が製品ソースの該当メソッドと通常撃破の
+`CaptureAuthoritativeRunKill` をビルド時に抽出し、APIダブルとコンパイルする。
+抽出結果は `obj/` のみで、製品ソースは変更しない。ビルドには `python` が必要。
+
+- CoinExplosion／Shout × ローカル／協力プレイ所有者の4ケースで、乱数を0に固定し、
+  抽選1回・所有者宛の未確保欠片+1・同一通知／別packet／親Actor通知の重複防止を確認。
+  通常撃破の分類記録をledgerで解決し、通常報酬を先に比較してから追加欠片を適用する。
+- 圧不足・報酬無効・召喚敵・生成ダメージ・未確認spawn・帰属packetなしを両記憶で確認。
+- entity削除なしでも、非スケール時間の9.99秒では保持、10秒で回収。
+  32死亡を繰り返し、当選済み／未受付のspawn・期限・出所・抽選記録が残らないことを確認。
+
+検証境界: Unity／Harmony実機ではなくAPIダブルを使用する。ダメージpacketの帰属と
+生成ダメージの不許可フラグは入力として与え、ネットワークは宛先とreceiptを記録する。
+実機2台の配送、nativeダメージpacketの生成処理、通常敵以外のDeathBurst／elite goldは対象外。
+
 ## #47 刻印の代償撤廃の回帰確認
 
 - `GeneratedHeroAcceptanceTests` は全82刻印の型付き効果、ダメージ・傷の非弱体化、
-  日英説明に「代償／Drawback」がないこと、通信版15のビルド往復を確認する。
+  日英説明に「代償／Drawback」がないこと、現在の通信仕様でのビルド往復を確認する。
 - `StarCarryoverV131Tests` は従来の形式3/4互換に加え、v1.31移行済みの形式4で
   保存した刻印IDが現在の生成定義に解決され、保持するPowerが引き継がれることを確認する。
   v1.31未移行の保存には、別仕様の効果変更時返却が引き続き適用される。
@@ -114,6 +134,26 @@ python tools/test_changed.py --all
 - Linuxでの全体実行：
   `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all`
 - このハーネスは実ゲームの戦闘、Unity描画、Mirror協力同期、GC／frame時間を検証しない。
+
+## #73 台帳・戦闘バッファ・差分同期の回帰確認
+
+- `Issue73LedgerTests` は形式4→5の保存互換、連番の欠落・順序逆転・保存再読込を
+  含む報酬の過不足防止、30秒期限、曖昧な復旧、旧 `expiredMonsters` の移行を確認する。
+- `tests/Issue73.Native.Tests` は本番 Mod ソースをリンクする独立ハーネス。
+  途中参加の再送と差分の32 RPC/フレーム枠、FIFO合流・種類間公平性、保存済みACK後の圧縮、
+  空の仮peerの除外、配当の5秒遅延保存と書込済みリビジョン、入れ子のバッファ再利用、
+  Harmony経由の直接 `RemoveAbility` と装備epochを確認する。
+- ネイティブの通信・時計・エンティティだけをスタブ化する。配当の保存は実際の
+  `ProfileStore` / `AsyncProfileWriter` で一時ディレクトリへ書き、試験後に除去する。
+  `NativePersistence.targets` は SDK の Roslyn AST で `ClientSession.cs` の保存メソッドを
+  選び、そのままテストへコンパイルする。製品側の保存処理は複製・変更しない。
+- Core既存ハーネスの `ExposeAuthoredPendingMetadata` は、テスト公開の `PendingGimmick` と
+  アクセス範囲を揃えるため、生成したコンパイル単位だけで `AuthoredPendingGimmick` を
+  `internal` にする。製品ソースと値型メタデータの処理内容は変更しない。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` で
+  両プロジェクトを実行する。単独確認は `dotnet test <project> --filter FullyQualifiedName~Issue73LedgerTests`
+  または `FullyQualifiedName~NativeAcceptanceTests`。
+  実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
 
 ## マッピングロジックの単体テスト
 

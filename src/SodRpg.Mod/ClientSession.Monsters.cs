@@ -25,7 +25,6 @@ namespace SodRpg.Mod
         private sealed class MonsterCueVisual
         {
             public int Cue;
-            public float SeenAt;
             public Monster Monster;
             public EntityVisual Visual;
             public EntityColorModifier Color;
@@ -36,7 +35,7 @@ namespace SodRpg.Mod
 
         private void OnMonsterCue(DreamforgeMonsterCueMsg msg)
         {
-            if (msg == null || msg.netId == 0 || msg.cue < 0 || msg.cue > 4) return;
+            if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0 || msg.cue < 0 || msg.cue > 4) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;
             if (msg.cue == 0)
             {
@@ -45,12 +44,10 @@ namespace SodRpg.Mod
             }
             if (!_monsterCues.TryGetValue(msg.netId, out var state))
             {
-                if (_monsterCues.Count >= 300) ClearMonsterCues();
                 state = new MonsterCueVisual();
                 _monsterCues[msg.netId] = state;
             }
             state.Cue = msg.cue;
-            state.SeenAt = Time.unscaledTime;
             // Handles messages arriving before spawn/model, not just already-visible monsters.
             if (state.Color != null) state.Color.emission = MonsterCues.ColorFor(state.Cue);
         }
@@ -62,16 +59,15 @@ namespace SodRpg.Mod
             foreach (var kv in _monsterCues)
             {
                 var state = kv.Value;
-                bool pending = state.Monster == null && Time.unscaledTime - state.SeenAt <= 10f;
                 if (!NetworkClient.spawned.TryGetValue(kv.Key, out var identity) || identity == null)
                 {
-                    if (!pending) _monsterCueScratch.Add(kv.Key);
+                    StopMonsterCue(state);
                     continue;
                 }
                 var m = identity.GetComponent<Monster>();
                 if (m == null || !m.isActive || !m.isAlive)
                 {
-                    if (m == null || !pending) _monsterCueScratch.Add(kv.Key);
+                    if (m == null || !m.isAlive) _monsterCueScratch.Add(kv.Key);
                     continue;
                 }
                 var visual = m.Visual;

@@ -138,14 +138,15 @@ namespace SodRpg.Core.Game
             run.OfferedWaypoints.Clear();
         }
 
-        /// <summary>Transform only newly rolled enemy rewards; existing inventory and event rewards are untouched.</summary>
-        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, out int starXp, out int awakening)
+        /// <summary>Transform only newly rolled enemy rewards; existing inventory and event rewards are untouched.
+        /// waypoint is the one active when the kill happened (#71); pass run.ActiveWaypoint for immediate kills.</summary>
+        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening)
         {
             starXp = 0;
             awakening = 0;
             var run = p.Run;
-            if (run.ActiveWaypoint == Waypoint.None) return;
-            var t = Sum(run.ActiveWaypoint);
+            if (waypoint == Waypoint.None) return;
+            var t = Sum(waypoint);
             if (run.WaypointRoom != roomIndex)
             {
                 run.WaypointRoom = roomIndex;

@@ -30,7 +30,7 @@ namespace SodRpg.Mod
         {
             if (!RunActive) return;
             int awarded = _pendingPressureDividends.Drain(Profile, e => Emit(new[] { e }));
-            if (awarded > 0) SaveNow();
+            if (awarded > 0) DeferKillSave();
         }
     }
 }

@@ -158,7 +158,7 @@ namespace SodRpg.Mod
             SkillTrigger trigger = source as SkillTrigger;
             if (trigger == null) trigger = source.FindFirstAncestorOfType<SkillTrigger>();
             if (trigger == null || !(trigger.owner is Hero hero) || !Alive(hero)) return null;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             if (FindMemory(hero, trigger.GetType().Name) != trigger) return null;
             string expected;
             switch (adapter)

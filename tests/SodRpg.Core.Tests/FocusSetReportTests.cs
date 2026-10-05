@@ -56,8 +56,7 @@ namespace SodRpg.Core.Tests
             Rules.SetFocus(p, Line.Resonance);
             Rules.BeginRun(p, "f");
             var rng = new Rng(p.RngState);
-            int pity = p.EpicPity;
-            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, Line.Resonance, null,
+            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Resonance, null,
                 p.Stash, p.Run.Satchel, p.Codex); // Rules.OnKill と同じ引数（銘品の重みは図鑑・所持で変わる）
             Rules.OnKill(p, MonsterTier.Boss, 10);
             Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), p.Run.Satchel.Select(r => r.Uid + r.BaseId));

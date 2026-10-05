@@ -27,7 +27,9 @@ namespace SodRpg.Mod
         {
             if (ReferenceEquals(hero, null)) return;
             _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
-            ReleaseAttributedEquipment(hero);
+            _attributionEquipment.Remove(hero);
+            _mechanismEquipment.Remove(hero);
+            _attributionMemoryIds.Remove(hero);
             ClearDirectedRecharge(hero);
             ClearBridgeSuccessEffects(hero);
             ClearMemoryPrimedRelay(hero);

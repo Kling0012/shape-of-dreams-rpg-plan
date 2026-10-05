@@ -233,6 +233,8 @@ namespace SodRpg.Core.Game
             switch (e)
             {
                 case DreamEvent.Merchant:
+                    if (trades != null && trades.IsMerchantReserved(run.OfferedEventId))
+                        return Loc.T("この商人の取引は未確定です。", "This merchant's trade is unresolved.");
                     if (!goldPaid && p.Material(Materials.Shard) < MerchantCost(run.Heat)) reason = Loc.T("欠片が足りません。", "Not enough shards.");
                     break;
                 case DreamEvent.Fountain:

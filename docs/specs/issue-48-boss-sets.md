@@ -20,6 +20,7 @@
 
 - Coreは`BossProfiles`／`BossMoveProfile`／`BossRewardProfile`、`UniqueDef.BossMove`、`SetDef.BossStages`へ接続。`Build.BossMoves`／`BossRewards`は独立した`b:`／`z:` codec節に入り、各64件上限・既知ID・重複・channel／stage検証を行う。`HostBuildValidation`は装備から再導出する。`Relic.AuthoredEffectCount`で強化の固有効果枠を扱い、旧Demonの保存Powerは読み込み時に撤去する。
 - 共通runtimeは`HostAuthority.BossRuntime.cs`の`internal BossCombatState`。`TickBossEffects`／`ClearBossEffects`を統合入口に、native主撃・ConfirmedUse・移動完了・damage・報酬instance・時計／modeを有限actionへdispatchする。移動完了には検証済み出発点、記憶使用には実castのforwardを短いscopeで渡す。
+- main統合後はProtocol18・保存形式5。ボス型名と抽選条件は#73の連番／stream付き撃破factと共通の保存・再送経路へ載せ、ボスだけの再送経路は持たない。記憶の照合は`_attributionEquipment`とそのepochを共有し、`EntityAbility.SetAbility`／`RemoveAbility`からボス報酬adapterと障壁を更新する。ボス側の定期装備再走査と別の障壁装備cacheは撤去し、エッセンスの変更は既存のEquipGem／UnequipGem hookで報酬の比較用snapshotを更新する。
 
 | 機構 | 実装クラス |
 | --- | --- |
@@ -39,7 +40,7 @@
 - M3の有限列は最大32pulseで1token、同owner/setの全予約合計4まで。Nyx／Erebosではmarker／seed／遅延列／channelを合計2・最古置換とし、置換したtokenの弾も解除する。同じE2は2点配置→部位→6点場の順で、新しい6点場を優先する。M2は波内の同敵hit数を制限し、従来の終点弾は飛行damage／壁爆発なし。Polaris6の槍だけは直撃を保ち、実際の最初の敵／壁／射程終端で1回の中立爆発を予約する。Seekerの追尾orbは8m／2秒以内の着弾・終端で1回だけ爆発、Primusの光弾は寿命1.5秒を延長せず異なる最大3敵へ連鎖する。M1の線／柱とM5は地形を越えず、短stun／slowは正の最終generated damageが成立した通常敵だけ。最大HP盾は吸収後の実残量から線形減衰し、補充しない。白夜の同target shieldは最高量だけを使い、古いshieldを復活させない。
 - 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。属性色・扇／線／放射・固定幻影・対象ID・残数／予算・縮小域をMOD幾何描画で表示し、ボスモデル／network prefab／新規Summonは要求しない。
 - live装備変更ではnative親寿命付きの予約・印・shield・予算・CD・消費済みactivationを保持する。旧／新buildの報酬profile／段階・実装着objectとpool世代・owner／部屋を差分照合し、不変の報酬は再bindせず、変更した報酬だけ予約ごと解除する。build objectや無関係な装備epoch変更をnative寿命と同一視しない。通常入力由来の予約／印は装備epochで破棄する。死亡・遷移開始・部屋移動・owner離脱で全破棄する。
-- Protocolは段階B-1から**17のまま**、wire／codec schemaの追加なし。保存形式4を維持し、内容指紋へB-3のprofile・native contract・event orderを含める。専用取得登録は全14セット84部位・11種adapter。旧Skollの汎用Power／Guard連携・互換aliasは復活させない。Primus／Polarisには報酬連携を登録しない。
+- Protocolはmainの17にボス専用wire／codec節と表示・撃破factを加えるため**18**。保存形式はmainの5を維持し、ボス項目は省略可能。内容指紋へB-3のprofile・native contract・event orderを含める。専用取得登録は全14セット84部位・11種adapter。旧Skollの汎用Power／Guard連携・互換aliasは復活させない。Primus／Polarisには報酬連携を登録しない。
 - native契約は`NativePatchPreflight`でPatchAll前に検証する。実対象の解決・Prepare・field／delegate・他MODとの合成transpilerをHarmony自身のcopierで最後までdry変換し、契約不成立なら稼働しない。適用途中／初期化の失敗も自MODのHarmony ownerだけrollbackし、session／host／UI・性能設定・入力状態を停止／解放する。BigChompの追加量はsource／ancestor／target処理後の実倍率で補正し、SoulPrison追加盾は所有する正確なcontainerの最終処理量だけcapする。元native量・無期限盾・消費は変更しない。
 - B-3の指定Releaseビルド成功（警告5・エラー0）。本体資料側に`Mods`がなく自動配置条件が成立しないため、ビルド済みDLLと既存about／iconsを`/tmp/sod-deploy-i48`へ明示配置した。B-3部位の強化／覚醒は§2.1どおり元式内cap適用後に最大3倍、通常／連携段階には掛けない。WikiGenを`/tmp/sod-wiki-i48-b3`へ実行して62セット・1418固有品、全14ボスセット84部位・11種adapterと新4セットの日英出力、Polarisの連携欄なしを確認した。本体資料とDLLのILはリポジトリ外でのみ参照。Managed DLLのみのため実機戦闘・表示・協力通信・GC／frame時間計測・較正は未確認。tests/・test csprojを変更せず、テストの設計・計画・追加・実行は行っていない。
 
@@ -596,7 +597,7 @@ M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、ho
 | 連携 | 自分の対応セット部位数で2/4/6の最高段階を1つ選び、自分の対象報酬装着で成立。減装・解除で再判定し旧余韻を失効。白夜／暗月の部位数は別集計。対象起点・上限はホストが適用 |
 | 互換 | マージ順で確定するProtocol版と内容指紋の一致が前提。旧版混在時に「同じ表示なのにホストだけ効果不反映」を正常運用扱いしない |
 
-全14セットを同じ設計原則で改訂済み。下表は現在の実装境界。Demonの専用Power案は共通profileへ置換済みで、旧汎用効果との併存・aliasを残さない。
+全14セットを同じ設計原則で改訂済み。下表は段階別の実装履歴（Protocol欄は統合前の値。現在は18）。Demonの専用Power案は共通profileへ置換済みで、旧汎用効果との併存・aliasを残さない。
 
 | 実装段階 | 範囲 |
 | --- | --- |
@@ -606,7 +607,7 @@ M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、ho
 | 段階B-3（実装済み） | §3.11〜§3.14の光の精霊／大顎／オブリヴィアクス／Polaris、4セット24部位、WorldCracker／BigChomp／ShoutOfOblivion adapter。Polarisは連携なし。全14セットと共通M1〜M8／native帰属／表示を事前確保・有界化、Protocol17を維持。較正は未実施 |
 | 段階間 | 最終IDを最初から使用し、無効仮定義・互換aliasを残さない。データだけの追加は内容指紋、wire／schema追加はその都度Protocolを次版へ上げる |
 
-既存への影響（テスト設計・修正はしない）：段階Aの49セット・1340固有品、B-1の53セット・1364固有品、B-2の58セット・1394固有品から、B-3で62セット・1418固有品へ増加。全セット部位は372（既存288＋ボス84）、通常ボス段階42・報酬profile12／連携段階36・distinct adapter11。全14組の承認設計をデータ登録済み。既存単品Linkの件数／倍率は不変。Loot／Build／HostGearValidation／説明／図鑑／装備codecのprofile導出と強化milestoneの著作済み効果判定、KillSync／予約表示同期が影響範囲。Protocol17・保存版4・既存ID・プロフィールリセットなしを維持する。保存済みボス部位の旧定義Powerは新版ロード時に新版定義から正規化し、旧Powerとの二重発動を残さない。
+既存への影響（テスト設計・追加はしない）：段階Aの49セット・1340固有品、B-1の53セット・1364固有品、B-2の58セット・1394固有品から、B-3で62セット・1418固有品へ増加。全セット部位は372（既存288＋ボス84）、通常ボス段階42・報酬profile12／連携段階36・distinct adapter11。全14組の承認設計をデータ登録済み。既存単品Linkの件数／倍率は不変。Loot／Build／HostGearValidation／説明／図鑑／装備codecのprofile導出と強化milestoneの著作済み効果判定、KillSync／予約表示同期が影響範囲。main統合後はProtocol18・保存版5・既存ID・プロフィールリセットなし。ボスの保存項目は省略可能な追加のみ。保存済みボス部位の旧定義Powerは新版ロード時に新版定義から正規化し、旧Powerとの二重発動を残さない。
 
 ## 5. 確定事項（利用者指定）
 

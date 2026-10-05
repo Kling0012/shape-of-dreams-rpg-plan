@@ -111,7 +111,13 @@ namespace SodRpg.Mod
             }
             catch (Exception ex)
             {
-                Log.Error("Host tick: " + ex);
+                // HostAuthority.Tick の内部は工程単位で守られている。ここは登録までの保険で、
+                // 毎フレーム例外が出てもログがあふれないように間引く（#74）。
+                if (Time.unscaledTime >= _nextHostTickErrorLog)
+                {
+                    _nextHostTickErrorLog = Time.unscaledTime + 10f;
+                    Log.Error("Host tick: " + ex);
+                }
             }
             // GUILayout を使うパネルが無いときは、IMGUI のレイアウト処理（OnGUI の Layout イベント）自体を止める。
             if (_ui != null)
@@ -128,6 +134,8 @@ namespace SodRpg.Mod
                     $" | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
             }
         }
+
+        private float _nextHostTickErrorLog;
 
         // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
         private bool _perfLogEnabled;

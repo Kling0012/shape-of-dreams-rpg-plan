@@ -52,6 +52,7 @@ namespace SodRpg.Mod
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeHelloMsg
                 {
                     protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
+                    killObservationSessionId = KillObservationSessionId(_clientRpcOn),
                 });
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
@@ -68,6 +69,7 @@ namespace SodRpg.Mod
             _helloAnswered = true;
             bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
             _acceptedHostContent = same ? msg.content : null;
+            if (same && msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
             string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
             HostVersionWarning = same ? null : Loc.T(
                 $"ホストと Dreamforge の版が違います（ホスト {theirs} / 自分 {HostAuthority.ModVersion}）。装備の効果が反映されず、報酬も入りません。全員同じ版にしてください。",

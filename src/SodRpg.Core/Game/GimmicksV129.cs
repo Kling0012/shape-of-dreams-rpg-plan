@@ -202,6 +202,17 @@ namespace SodRpg.Core.Game
             return (float)strongest;
         }
 
+        private readonly List<long> _retiredAttributionCasts = new List<long>();
+        public void PruneAttribution(MemoryActivationAttribution attribution)
+        {
+            foreach (var state in ActiveStates())
+            {
+                _retiredAttributionCasts.Clear();
+                foreach (long cast in state.SeenCasts.Keys)
+                    if (cast < 0 && !attribution.IsActivationRetained(-cast)) _retiredAttributionCasts.Add(cast);
+                foreach (long cast in _retiredAttributionCasts) { state.SeenCasts.Remove(cast); state.CastVictims.Remove(cast); }
+            }
+        }
         public void ForgetActivation(long activationId)
         {
             foreach (var state in ActiveStates())

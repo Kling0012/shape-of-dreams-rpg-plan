@@ -174,14 +174,17 @@ namespace SodRpg.Mod
     internal sealed class Ai_L_CoinExplosion_Explosion : AbilityInstance { }
     internal sealed class Ai_U_ShoutOfOblivion : AbilityInstance { }
     internal sealed class RoomMonsters { }
-    internal sealed class Monster : Entity
+    internal class Monster : Entity
     {
         public enum MonsterType { Lesser, Normal, MiniBoss, Boss }
+        public uint netId = 62;
         public MonsterType type;
         public bool disableLoot;
     }
+    internal sealed class BossMonster : Monster { }
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops = true; }
-    internal sealed class GameManager { public string runId = "native-run"; }
+    internal sealed class GameManager { public string runId = "native-run"; public NativeDifficulty difficulty; }
+    internal sealed class NativeDifficulty { public string name; }
     internal sealed partial class ZoneManager { public int currentZoneIndex; public int currentHuntLevel; }
     internal static class NetworkedManagerBase<T> where T : new() { public static T softInstance = new T(); public static T instance = new T(); }
     internal struct EventInfoCast { public Actor instance, trigger; }
@@ -215,22 +218,59 @@ namespace SodRpg.Mod
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
         private readonly MemoryActivationAttribution _memoryAttribution = new MemoryActivationAttribution();
-        private readonly Dictionary<Hero, List<SkillTrigger>> _equipment = new Dictionary<Hero, List<SkillTrigger>>();
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment = new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
+        private readonly Dictionary<Hero, MechanismEquipment> _mechanismEquipment = new Dictionary<Hero, MechanismEquipment>();
+        private readonly Dictionary<Hero, HashSet<string>> _attributionMemoryIds = new Dictionary<Hero, HashSet<string>>();
         private bool _nativePublicationConnected;
         private long RefreshMemoryAttributionEquipment(Hero hero)
         {
-            var current = new List<SkillTrigger>(); var names = new List<string>();
-            foreach (var slot in LinkSkills) { var skill = hero.Skill.GetSkill(slot); current.Add(skill); if (skill != null) names.Add(skill.GetType().Name); }
-            var installed = new Dictionary<HeroSkillLocation, SkillTrigger>();
-            foreach (var slot in LinkSkills) { var skill = hero.Skill.GetSkill(slot); if (skill != null) installed.Add(slot, skill); }
-            _attributionEquipment[hero] = installed;
-            bool changed = !_equipment.TryGetValue(hero, out var old);
-            for (int i = 0; !changed && i < current.Count; i++) changed = current[i] != old[i];
-            if (changed) { _memoryAttribution.InvalidateOwner(hero.GetInstanceID()); _equipment[hero] = current; }
-            long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), names);
-            if (changed) MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
+            if (hero == null) return 0;
+            bool changed = !_attributionEquipment.TryGetValue(hero, out var equipment);
+            int count = 0;
+            foreach (var location in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(location);
+                if (skill == null) continue;
+                count++;
+                if (!changed && (!equipment.TryGetValue(location, out var previous) || previous != skill)) changed = true;
+            }
+            changed |= equipment != null && equipment.Count != count;
+            if (!changed) return _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
+            var memories = new List<string>();
+            var mechanisms = new List<EquippedMechanismMemory>();
+            foreach (var location in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(location);
+                if (skill == null) continue;
+                equipment.Add(location, skill);
+                string memory = skill.GetType().Name;
+                memories.Add(memory);
+                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
+                    skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
+            }
+            _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
+            long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
+            _attributionEquipment[hero] = equipment;
+            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
+            _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
+            if (_runtimes.TryGetValue(hero, out var rt))
+            {
+                ModShieldEquipmentEpoch(rt);
+                BossEnsure(rt);
+            }
+            MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
             return epoch;
+        }
+        internal void EquipmentChangedForTest(Hero hero)
+        {
+            if (Mirror.NetworkServer.active && hero != null && _runtimes.ContainsKey(hero))
+                RefreshMemoryAttributionEquipment(hero);
+        }
+        private long EnsureMemoryAttributionEquipment(Hero hero)
+        {
+            long epoch = _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            return epoch != 0 ? epoch : RefreshMemoryAttributionEquipment(hero);
         }
         private long AttributedActivationSerial(Actor actor) => actor != null && _memoryAttribution.TryGetInstance(actor.GetInstanceID(), out var identity) ? identity.ActivationId : 0;
         private long AttributedVictimLifetime(Entity victim) => victim != null ? victim.GetInstanceID() : 0;
@@ -241,7 +281,16 @@ namespace SodRpg.Mod
         private static string MemorySource(Actor actor) => actor?.FindFirstOfType<SkillTrigger>()?.GetType().Name;
         private static float BasicCritChanceV129(Actor actor, Hero hero) => 0;
         private void CreditShieldGranted(HeroRuntime owner, Entity target, float amount) { ShieldAmount = target.Status.currentShield; Shields++; }
-        private sealed class MonsterRuntime { public Monster Monster; public DataProcessor<FinalStats> PressureHealth; }
+        private sealed class MonsterRuntime
+        {
+            public Monster Monster;
+            public DataProcessor<FinalStats> PressureHealth;
+            public float QueuedAt;
+            public VariantDef Variant;
+            public bool DeathBurstTriggered;
+            public string KillEventId, KillEventStreamId;
+            public uint KillEventNetId, SyncNetId;
+        }
         private DreamPressure _pressure = DreamPressure.Neutral;
         internal void BindAuthored(HeroRuntime runtime, Build build)
         {
@@ -294,11 +343,6 @@ namespace SodRpg.Mod
             var data = new DamageData(amount); ApplyRelayWindowDamage(runtime, ref data, victim); return data.currentAmount;
         }
         internal void AdmitNativeScope(Actor actor, MemoryActivationIdentity identity) => _memoryAttribution.BindInstance(actor.GetInstanceID(), identity);
-        internal void PressureEnemy(Monster monster, double applied, bool native)
-        {
-            TrackPressureDividendSpawn(monster); _pressureDividendSpawns[monster].RecordAppliedHpMultiplier(applied);
-            if (native) MarkPressureDividendLootSpawn(monster); CapturePressureDividendDeath(monster);
-        }
         internal void LegacyNativeHit(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, float damage)
         {
             var native = new AbilityInstance { parentActor = FindMemory(runtime.Hero, identity.SourceMemory), info = new CastInfo(runtime.Hero) };
@@ -307,15 +351,6 @@ namespace SodRpg.Mod
         }
         internal void LegacyNativeUse(HeroRuntime runtime, string memory) =>
             QueueGimmicks(runtime, GimmickTrigger.OnUse, memory, null, 0);
-        internal void NativeKill(HeroRuntime runtime, Actor actor, Monster victim)
-        {
-            if (!TryGetMemoryActivation(actor, out var identity)
-                || !_memoryAttribution.CanAdmit(identity, actor.gem != null, actor is ElementalStatusEffect,
-                    !actor.chain.Equals(default(ReactionChain)))
-                || actor.firstTrigger != FindMemory(runtime.Hero, identity.SourceMemory)) return;
-            PublishMemoryActivation(identity.Event(MemoryEventKind.Kill, _memoryAttribution.NewPacketId(),
-                AttributedVictimLifetime(victim)), runtime.Hero, victim);
-        }
         internal void NativeKeyDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, ref DamageData data)
         {
             NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet { Actor = runtime.Hero, Victim = victim, Identity = identity, Admitted = true };

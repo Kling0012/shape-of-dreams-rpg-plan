@@ -493,7 +493,7 @@ namespace SodRpg.Core.Tests
                 Assert.False(Profile.Run.AwaitingChoice);
                 Awards.Add((kill.ZoneIndex, kill.RoomIndex, Profile.Run.ActiveWaypoint, Profile.Run.WaypointGeneration));
                 Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
-                    variantId: kill.VariantId, roomIndex: kill.RoomIndex));
+                    variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint));
             }
         }
     }

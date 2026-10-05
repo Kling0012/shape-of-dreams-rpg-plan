@@ -48,15 +48,16 @@ namespace SodRpg.Mod
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
                 bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
-                bool firstAcceptance = same && !_acceptedMechanismContent.ContainsKey(caller);
                 if (same)
                 {
                     _versionMismatches.Remove(caller);
                     _acceptedMechanismContent[caller] = msg.content;
+                    BindKillObservationSession(caller, msg.killObservationSessionId);
                 }
                 else
                 {
                     _acceptedMechanismContent.Remove(caller);
+                    RemoveKillPeer(caller);
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     _versionMismatches[caller] = Loc.T(
                         $"{caller.playerName} の Dreamforge の版が違います（ホスト {ModVersion} / 相手 {theirs}）。この人の装備の効果は反映されません。",
@@ -67,9 +68,8 @@ namespace SodRpg.Mod
                 _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeHelloMsg
                 {
                     protocol = Protocol.Version, modVer = ModVersion, content = ContentFingerprint.Value,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
                 });
-                // Boss facts rejected before Hello must be replayed after the content gate opens.
-                if (firstAcceptance) ReplayAuthoritativeBossKills(caller);
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }
         }

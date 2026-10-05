@@ -12,6 +12,13 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         internal static HostAuthority NativeInstance;
+        internal float NativeShieldBeforeDamage(Entity target)
+        {
+            if (!(target is Hero hero) || !_runtimes.TryGetValue(hero, out var rt)
+                || rt.Powers?.Build == null
+                || !rt.Powers.Build.Powers.TryGetValue(Power.ShieldbreakBurst, out int value) || value <= 0) return 0f;
+            return CurrentNativeShield(hero);
+        }
         internal static float CurrentNativeShield(Entity entity)
         {
             if (entity == null || entity.Status == null) return 0f;
@@ -54,31 +61,32 @@ namespace SodRpg.Mod
 
         private int _powerSupportDepth;
 
-        private readonly struct NormalMemoryRange
+        private readonly struct NormalMemoryEnumerable
         {
             private readonly Hero _hero;
-            internal NormalMemoryRange(Hero hero) { _hero = hero; }
+            internal NormalMemoryEnumerable(Hero hero) { _hero = hero; }
             public Enumerator GetEnumerator() => new Enumerator(_hero);
-            internal struct Enumerator
+            public struct Enumerator
             {
                 private readonly Hero _hero;
                 private int _index;
                 public SkillTrigger Current { get; private set; }
-                internal Enumerator(Hero hero) { _hero = hero; _index = -1; Current = null; }
+                internal Enumerator(Hero hero) { _hero = hero; _index = 0; Current = null; }
                 public bool MoveNext()
                 {
                     if (_hero == null || _hero.Skill == null) return false;
-                    while (++_index < NormalMemorySlots.Length)
+                    while (_index < NormalMemorySlots.Length)
                     {
-                        var skill = _hero.Skill.GetSkill(NormalMemorySlots[_index]);
+                        var skill = _hero.Skill.GetSkill(NormalMemorySlots[_index++]);
                         if (skill == null || skill.type != SkillType.Normal) continue;
-                        Current = skill; return true;
+                        Current = skill;
+                        return true;
                     }
-                    Current = null; return false;
+                    return false;
                 }
             }
         }
-        private static NormalMemoryRange NormalMemories(Hero hero) => new NormalMemoryRange(hero);
+        private static NormalMemoryEnumerable NormalMemories(Hero hero) => new NormalMemoryEnumerable(hero);
 
         internal static bool AllNormalMemoriesReady(Entity entity)
         {

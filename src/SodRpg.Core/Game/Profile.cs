@@ -136,6 +136,8 @@ namespace SodRpg.Core.Game
         public int RerollsUsed { get; set; }
         /// <summary>確保地点に現れている出来事（選択待ちの間だけ）。</summary>
         public DreamEvent OfferedEvent { get; set; }
+        /// <summary>個人の出来事の提示識別子。共有の道標世代から独立し、次の提示では更新する。</summary>
+        public string OfferedEventId { get; set; }
         /// <summary>出来事による撃破時の遺物ドロップ率の上乗せ（次の確保まで）。</summary>
         public double EventDropBonus { get; set; }
         /// <summary>出来事による撃破時の幸運（次の確保まで）。</summary>
@@ -185,6 +187,7 @@ namespace SodRpg.Core.Game
                 StartDepth = StartDepth,
                 RerollsUsed = RerollsUsed,
                 OfferedEvent = OfferedEvent,
+                OfferedEventId = OfferedEventId,
                 EventDropBonus = EventDropBonus,
                 EventLuck = EventLuck,
                 LimboDepth = LimboDepth,
@@ -250,7 +253,7 @@ namespace SodRpg.Core.Game
         LostAndFound,
     }
 
-    /// <summary>遠征の精算から外した、分解の応答待ちの遺物。</summary>
+    /// <summary>確保・遠征の精算から外した、分解の応答待ちの遺物。</summary>
     public sealed class PendingSalvage
     {
         public PendingSalvage(Relic relic, SalvageReturnTarget returnTarget)
@@ -289,11 +292,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4 に上げた。内容（星団の星・選択の星など）を足す版では必ず上げる。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアの保存で 5 に上げた。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;
@@ -305,6 +308,7 @@ namespace SodRpg.Core.Game
         public ulong RngState { get; set; }
         public int DreamLevel { get; set; } = 1;
         public int DreamXp { get; set; }
+        /// <summary>旧版のボス救済（天井）のカウンタ。天井は撤廃済みで、保存互換のために読み書きだけ続ける。抽選には使わない。</summary>
         public int EpicPity { get; set; }
         /// <summary>まとめて分解の対象にする最高のレア度（コモン〜エピック。固有品は入らない）。</summary>
         public Rarity BulkSalvageMaxRarity { get; set; } = Rarity.Uncommon;
@@ -440,12 +444,7 @@ namespace SodRpg.Core.Game
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
-            foreach (var trade in PendingTrades) c.PendingTrades.Add(new PendingTrade
-            {
-                Token = trade.Token, Kind = trade.Kind, SpendGold = trade.SpendGold, SpendDust = trade.SpendDust, EarnDust = trade.EarnDust,
-                Uid = trade.Uid, Heat = trade.Heat, Batches = trade.Batches, Rarity = trade.Rarity, Enhance = trade.Enhance,
-                LedgerId = trade.LedgerId, Lost = trade.Lost,
-            });
+            foreach (var trade in PendingTrades) c.PendingTrades.Add(trade.Clone());
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);

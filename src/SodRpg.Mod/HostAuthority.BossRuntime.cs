@@ -47,7 +47,7 @@ namespace SodRpg.Mod
             public readonly long[] ObservedEssenceLives = new long[32], ObservedEssenceSkillLives = new long[32];
             public readonly SkillTrigger[] ObservedEssenceSkills = new SkillTrigger[32];
             public int ObservedEssenceCount;
-            public float NextEquipmentRefresh;
+            public bool EquipmentDirty = true;
             public readonly BossShapeAttack Shapes = new BossShapeAttack();
             public readonly BossProjectileExecutor Projectiles = new BossProjectileExecutor();
             public readonly BossFieldExecutor Fields = new BossFieldExecutor();
@@ -243,21 +243,20 @@ namespace SodRpg.Mod
                 return false;
             }
             var build = rt.Powers.Build;
-            // Native creation hooks still capture their parents without Boss gear. Only
-            // active Boss builds need the bounded equipment reconciliation below.
+            // Native creation hooks still capture their parents without Boss gear.
+            // Boss adapters share the attribution cache and its mutation-driven epoch.
             if (build == null || build.BossMoves.Count == 0 && build.BossRewards.Count == 0)
             {
                 if (state.Build != null) ClearBossEffects(rt);
                 return false;
             }
             var room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
+            ModShieldEquipmentEpoch(rt);
             string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
             long ownerLife = BossNativeActorLife(rt.Hero);
             bool changed = state.Build != build || state.Epoch != rt.ShieldEquipmentEpoch
                 || state.Room != room || state.Run != run || state.OwnerLife != ownerLife;
-            float now = Time.time;
-            if (!changed && now < state.NextEquipmentRefresh) return true;
-            state.NextEquipmentRefresh = now + .1f;
+            if (!changed && !state.EquipmentDirty) return true;
             if (!BossEquipmentSnapshot(rt, state, ref changed)) { ClearBossEffects(rt); return false; }
             if (changed)
             {
@@ -275,14 +274,16 @@ namespace SodRpg.Mod
                 for (int i = 0; i < build.BossMoves.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossMoves[i].SetId);
                 for (int i = 0; i < build.BossRewards.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossRewards[i].SetId);
             }
+            state.EquipmentDirty = false;
             return true;
         }
 
         private bool BossEquipmentSnapshot(HeroRuntime rt, BossCombatState state, ref bool changed)
         {
+            var equipment = _attributionEquipment[rt.Hero];
             for (int i = 0; i < LinkSkills.Length; i++)
             {
-                var memory = rt.Hero.Skill?.GetSkill(LinkSkills[i]);
+                equipment.TryGetValue(LinkSkills[i], out var memory);
                 long life = memory != null ? BossNativeActorLife(memory) : 0;
                 state.ObservedMemories[i] = memory; state.ObservedMemoryLives[i] = life;
                 if (!ReferenceEquals(state.Memories[i], memory) || state.MemoryLives[i] != life) changed = true;
@@ -378,7 +379,7 @@ namespace SodRpg.Mod
         internal void RefreshBossGemEquipment(HeroSkill skill)
         {
             if (skill == null || skill.hero == null || !_runtimes.TryGetValue(skill.hero, out var rt)) return;
-            rt.Boss.NextEquipmentRefresh = 0;
+            rt.Boss.EquipmentDirty = true;
             BossEnsure(rt);
         }
 
@@ -459,7 +460,7 @@ namespace SodRpg.Mod
             Array.Clear(s.EssenceSkillLives, 0, s.EssenceSkillLives.Length);
             if (!keepEquipmentSnapshot)
             {
-                s.OwnerLife = 0; s.NextEquipmentRefresh = 0; s.ObservedEssenceCount = 0;
+                s.OwnerLife = 0; s.EquipmentDirty = true; s.ObservedEssenceCount = 0;
                 Array.Clear(s.ObservedMemories, 0, s.ObservedMemories.Length);
                 Array.Clear(s.ObservedMemoryLives, 0, s.ObservedMemoryLives.Length);
                 Array.Clear(s.ObservedEssences, 0, s.ObservedEssences.Length);

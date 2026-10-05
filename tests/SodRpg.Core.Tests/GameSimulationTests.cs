@@ -247,11 +247,11 @@ namespace SodRpg.Core.Tests
             var rng = new Rng(2024);
             double Rate(MonsterTier t, int n)
             {
-                int pity = 0, drops = 0, shards = 0, tuning = 0;
+                int drops = 0, shards = 0, tuning = 0;
                 var rarities = new int[5];
                 for (int i = 0; i < n; i++)
                 {
-                    var reward = Loot.RollKill(rng, t, 10, 0, ref pity);
+                    var reward = Loot.RollKill(rng, t, 10, 0);
                     drops += reward.Relics.Count;
                     shards += reward.Shards;
                     tuning += reward.Tuning;

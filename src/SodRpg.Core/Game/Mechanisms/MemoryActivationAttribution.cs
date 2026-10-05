@@ -86,8 +86,8 @@ namespace SodRpg.Core.Game
             internal long Epoch;
             internal readonly HashSet<string> Memories = CreateMemorySet();
             internal bool InUse;
-            internal readonly Dictionary<(string Channel, long Serial, long Victim, int Kind), byte> Notifications =
-                new Dictionary<(string, long, long, int), byte>(512);
+            internal readonly HashSet<(string Channel, long Serial, long Victim, int Kind)> Notifications =
+                new HashSet<(string, long, long, int)>();
             internal readonly HashSet<(string Channel, AttributionBudget Budget, long Serial, long Victim)> Budgets =
                 new HashSet<(string, AttributionBudget, long, long)>();
         }
@@ -106,6 +106,47 @@ namespace SodRpg.Core.Game
         private static void ReleaseOwner(OwnerState state)
         {
             state.Epoch = 0; state.InUse = false; state.Memories.Clear(); state.Notifications.Clear(); state.Budgets.Clear();
+        }
+        // Retire finished identities, not a time-based approximation of native projectile/DoT lifetimes.
+        private readonly Dictionary<long, int> _boundActivations = new Dictionary<long, int>();
+        private readonly HashSet<long> _retainedActivations = new HashSet<long>();
+        private readonly HashSet<long> _retainedVictims = new HashSet<long>();
+        private readonly List<(string Channel, long Serial, long Victim, int Kind)> _notificationScratch =
+            new List<(string, long, long, int)>();
+        private readonly List<(string Channel, AttributionBudget Budget, long Serial, long Victim)> _budgetScratch =
+            new List<(string, AttributionBudget, long, long)>();
+        private long _retiredSerial;
+        public long Serial => _serial;
+        public long RetiredSerial => _retiredSerial;
+        public bool IsActivationRetained(long activationId) => activationId > _retiredSerial
+            || _boundActivations.ContainsKey(activationId) || _retainedActivations.Contains(activationId);
+        public bool IsVictimRetained(long victimId) => victimId > _retiredSerial || _retainedVictims.Contains(victimId);
+
+        /// <summary>Retain actual deferred work and live victim lifetimes; older packets are rejected, never readmitted.</summary>
+        public void PruneLedgers(IEnumerable<long> deferredActivations, IEnumerable<long> liveVictims, int recentSerials = 4096)
+        {
+            if (deferredActivations == null || liveVictims == null) throw new ArgumentNullException();
+            if (recentSerials < 1) throw new ArgumentOutOfRangeException(nameof(recentSerials));
+            _retainedActivations.Clear();
+            foreach (long activation in deferredActivations) _retainedActivations.Add(activation);
+            _retainedVictims.Clear();
+            foreach (long victim in liveVictims) _retainedVictims.Add(victim);
+            _retiredSerial = Math.Max(_retiredSerial, _serial - recentSerials);
+            foreach (var owner in _owners.Values)
+            {
+                _notificationScratch.Clear();
+                foreach (var entry in owner.Notifications)
+                    if (((entry.Kind & 256) == 0 ? !IsActivationRetained(entry.Serial) : entry.Serial <= _retiredSerial)
+                        || entry.Victim != 0 && !IsVictimRetained(entry.Victim))
+                        _notificationScratch.Add(entry);
+                foreach (var entry in _notificationScratch) owner.Notifications.Remove(entry);
+                _budgetScratch.Clear();
+                foreach (var entry in owner.Budgets)
+                    if (entry.Budget == AttributionBudget.PerKill ? !IsVictimRetained(entry.Serial)
+                        : !IsActivationRetained(entry.Serial) || entry.Victim != 0 && !IsVictimRetained(entry.Victim))
+                        _budgetScratch.Add(entry);
+                foreach (var entry in _budgetScratch) owner.Budgets.Remove(entry);
+            }
         }
 
         public long NewPacketId() => NextSerial();
@@ -155,13 +196,15 @@ namespace SodRpg.Core.Game
             if (_owners.TryGetValue(ownerId, out var state)) { _owners.Remove(ownerId); ReleaseOwner(state); }
             _instanceScratch.Clear();
             foreach (var pair in _instances) if (pair.Value.OwnerId == ownerId) _instanceScratch.Add(pair.Key);
-            for (int i = 0; i < _instanceScratch.Count; i++) _instances.Remove(_instanceScratch[i]);
+            foreach (long key in _instanceScratch) EndInstanceLifetime(key);
         }
 
         public void Reset()
         {
-            _owners.Clear(); _instances.Clear();
+            _owners.Clear(); _instances.Clear(); _boundActivations.Clear();
             for (int i = 0; i < _ownerPool.Length; i++) ReleaseOwner(_ownerPool[i]);
+            _retainedActivations.Clear(); _retainedVictims.Clear();
+            _retiredSerial = _serial;
             // Never reuse serials after a zone/session reset while deferred events may still exist.
         }
 
@@ -227,12 +270,21 @@ namespace SodRpg.Core.Game
         {
             if (instanceId == 0) throw new ArgumentOutOfRangeException(nameof(instanceId));
             if (!IsCurrent(identity)) throw new InvalidOperationException("Cannot bind an expired equipment epoch.");
-            if (_instances.Count >= 4096 && !_instances.ContainsKey(instanceId)) return;
+            EndInstanceLifetime(instanceId);
             _instances[instanceId] = identity;
+            _boundActivations.TryGetValue(identity.ActivationId, out int count);
+            _boundActivations[identity.ActivationId] = count + 1;
         }
 
         /// <summary>Call at the native pooled lifetime boundary; recycled Unity object IDs cannot inherit a tag.</summary>
-        public void EndInstanceLifetime(long instanceId) => _instances.Remove(instanceId);
+        public void EndInstanceLifetime(long instanceId)
+        {
+            if (!_instances.TryGetValue(instanceId, out var identity)) return;
+            _instances.Remove(instanceId);
+            int count = _boundActivations[identity.ActivationId];
+            if (count == 1) _boundActivations.Remove(identity.ActivationId);
+            else _boundActivations[identity.ActivationId] = count - 1;
+        }
 
         public bool TryGetInstance(long instanceId, out MemoryActivationIdentity identity)
         {
@@ -240,11 +292,11 @@ namespace SodRpg.Core.Game
             identity = default(MemoryActivationIdentity); return false;
         }
 
-        public bool IsCurrent(MemoryActivationIdentity identity) => identity.ActivationId > 0
+        public bool IsCurrent(MemoryActivationIdentity identity) => identity.ActivationId > 0 && IsActivationRetained(identity.ActivationId)
             && _owners.TryGetValue(identity.OwnerId, out var owner) && owner.Epoch == identity.EquipmentEpoch
             && (identity.SourceMemory.Length == 0 || owner.Memories.Contains(identity.SourceMemory));
 
-        public bool IsCurrent(MemoryActivationEvent notification) => notification.ActivationId > 0
+        public bool IsCurrent(MemoryActivationEvent notification) => notification.ActivationId > 0 && IsActivationRetained(notification.ActivationId)
             && _owners.TryGetValue(notification.OwnerId, out var owner) && owner.Epoch == notification.EquipmentEpoch
             && (string.IsNullOrEmpty(notification.SourceMemory)
                 ? notification.NativePayloadKind == NativePayloadKind.MainBasicAttack : owner.Memories.Contains(notification.SourceMemory));
@@ -259,17 +311,15 @@ namespace SodRpg.Core.Game
             CheckChannel(channel);
             if (!ValidNotification(notification)) return false;
             long serial = notification.DamagePacketId > 0 ? notification.DamagePacketId : notification.ActivationId;
-            var notifications = _owners[notification.OwnerId].Notifications;
-            var key = (channel, serial, notification.VictimId, (int)notification.EventKind);
-            if (notifications.ContainsKey(key)) return false;
-            notifications.Add(key, 0);
-            return true;
+            return _owners[notification.OwnerId].Notifications.Add((channel, serial, notification.VictimId,
+                (int)notification.EventKind | (notification.DamagePacketId > 0 ? 256 : 0)));
         }
         public void ForgetNotification(string channel, MemoryActivationEvent notification)
         {
             if (!_owners.TryGetValue(notification.OwnerId, out var owner)) return;
             long serial = notification.DamagePacketId > 0 ? notification.DamagePacketId : notification.ActivationId;
-            owner.Notifications.Remove((channel, serial, notification.VictimId, (int)notification.EventKind));
+            owner.Notifications.Remove((channel, serial, notification.VictimId,
+                (int)notification.EventKind | (notification.DamagePacketId > 0 ? 256 : 0)));
         }
 
         /// <summary>Reserve only after a successful effect condition; a rejected probability/target does not spend quota.</summary>
@@ -300,11 +350,17 @@ namespace SodRpg.Core.Game
             return _owners[notification.OwnerId].Budgets.Add((channel, budget, serial, victim));
         }
 
+        public bool IsEventRetained(MemoryActivationEvent notification) => IsActivationRetained(notification.ActivationId)
+            && (notification.DamagePacketId <= 0 || notification.DamagePacketId > _retiredSerial)
+            && (notification.VictimId == 0 || IsVictimRetained(notification.VictimId));
+        public bool IsNotificationCurrent(MemoryActivationEvent notification) => ValidNotification(notification);
         private bool ValidNotification(MemoryActivationEvent notification)
         {
             if (!IsCurrent(notification) || notification.GeneratedOrigin != GeneratedOrigin.None
                 || (uint)notification.EventKind > (uint)MemoryEventKind.OwnedBasicAttackHit
-                || (uint)notification.NativePayloadKind > (uint)NativePayloadKind.NativeEndingPhase) return false;
+                || (uint)notification.NativePayloadKind > (uint)NativePayloadKind.NativeEndingPhase
+                || notification.DamagePacketId > 0 && notification.DamagePacketId <= _retiredSerial
+                || notification.VictimId != 0 && !IsVictimRetained(notification.VictimId)) return false;
             if (notification.EventKind == MemoryEventKind.Hit || notification.EventKind == MemoryEventKind.CriticalHit
                 || notification.EventKind == MemoryEventKind.OwnedBasicAttackHit)
                 return notification.DamagePacketId > 0 && notification.VictimId != 0;

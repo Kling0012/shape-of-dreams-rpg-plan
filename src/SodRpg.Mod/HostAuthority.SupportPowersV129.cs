@@ -11,8 +11,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         // Expiry calls Entity.Kill using its stale last attacker. Retain the actual lethal damage scope instead.
-        private readonly Dictionary<Summon, NativeDamageContext.Hit> _summonLethalHits =
-            new Dictionary<Summon, NativeDamageContext.Hit>();
+        private readonly Dictionary<Summon, long> _summonLethalHits =
+            new Dictionary<Summon, long>();
 
         private void HookSupportSummonV129(Summon summon)
         {
@@ -37,16 +37,17 @@ namespace SodRpg.Mod
                 || hit.Health <= 0f || summon.currentHealth > .00001f || info.damage.amount <= 0f) return;
             var attacker = info.actor != null ? info.actor.firstEntity : null;
             if (attacker != null && attacker.GetRelation(summon) == EntityRelation.Enemy)
-                _summonLethalHits[summon] = hit;
+                _summonLethalHits[summon] = hit.Serial;
         }
 
         private void OnSupportDeathV129(EventInfoKill info)
         {
             if (info.victim is Summon summon)
             {
-                if (!_summonLethalHits.TryGetValue(summon, out var hit)) return;
+                if (!_summonLethalHits.TryGetValue(summon, out var serial)) return;
                 _summonLethalHits.Remove(summon);
-                if (hit != NativeDamageContext.Current || hit.Target != summon
+                var hit = NativeDamageContext.Current;
+                if (hit == null || hit.Serial != serial || hit.Target != summon
                     || _gimmickDamageDepth != 0 || _reactionEffectDepth != 0) return;
                 var rt = summon.hero != null && _runtimes.TryGetValue(summon.hero, out var owner) ? owner : null;
                 if (rt == null || !Alive(rt.Hero)) return;

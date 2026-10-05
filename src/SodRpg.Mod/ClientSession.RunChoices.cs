@@ -12,7 +12,9 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeRunChoicesMsg> _onRunChoices;
         private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
         private RunChoiceSnapshot _receivedRunChoices => _runChoiceProgress.Received;
-        private readonly RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private Actor _hostAuthorityActor;
+        private bool _hostAuthorityNeedsRenewal;
         private string _encodedRunChoices;
         private float _nextChoicesSync;
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
@@ -27,9 +29,12 @@ namespace SodRpg.Mod
             ? DreamDepth.Clamp(HostRun?.DreamDepth ?? _hostSession.Profile.LastDreamDepth) : 0;
         internal static string HostRunChoices => NetworkServer.active ? _hostSession?.EncodeRunChoices() : null;
         internal static ulong HostAuthorityGeneration => NetworkServer.active && _hostSession != null
-            ? _hostSession._choicePublisher.AuthorityGeneration : 0;
+            ? _hostSession.ObserveHostAuthorityPublisher() : 0;
         internal static bool CommitHostCombatChoice() => NetworkServer.active && _hostSession != null
             && _hostSession.CommitCombatChoice();
+        /// <summary>戦闑では選択を解決できない経路（純白の入口）。この間は敵の必須初期化を確定待ちで止めない。</summary>
+        internal static bool HostCombatChoiceSuspended => NetworkServer.active && _hostSession != null
+            && _hostSession.RunActive && _hostSession.InPureWhiteRoute;
 
         public bool CanChooseRunRules => NetworkServer.active || !NetworkClient.active;
         public bool CanChooseDepth => !InGame && CanChooseRunRules;
@@ -76,8 +81,30 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private string EncodeRunChoices() => _encodedRunChoices = _choicePublisher.Encode(
-            RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
+        private ulong ObserveHostAuthorityPublisher()
+        {
+            var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
+            if (actor == null || ReferenceEquals(actor, _hostAuthorityActor)) return _choicePublisher.AuthorityGeneration;
+            if (!ReferenceEquals(_hostAuthorityActor, null) || _hostAuthorityNeedsRenewal)
+            {
+                var previous = _choicePublisher;
+                _choicePublisher = new RunChoicePublisher();
+                // Only transport authority/revisions change; run, zone and waypoint generations remain intact.
+                _choicePublisher.RestoreFinalized(previous.ExportFinalized(), previous.TerminalChoices, previous.TerminalVictory);
+                _encodedRunChoices = null;
+                _nextChoicesSync = 0;
+            }
+            _hostAuthorityActor = actor;
+            _hostAuthorityNeedsRenewal = false;
+            return _choicePublisher.AuthorityGeneration;
+        }
+
+        private string EncodeRunChoices()
+        {
+            if (NetworkServer.active) ObserveHostAuthorityPublisher();
+            return _encodedRunChoices = _choicePublisher.Encode(
+                RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
+        }
 
         private void PublishRunChoices()
         {
@@ -102,6 +129,7 @@ namespace SodRpg.Mod
 
         private void TickRunChoices()
         {
+            TickKillClassification();
             NotifyPersonalDreamEvent();
             TryFinishSecureArrival();
             if (CanChooseRunRules && InPureWhiteRoute && InGameUIManager.instance != null
@@ -124,7 +152,13 @@ namespace SodRpg.Mod
         private void FlushPendingRunRewards()
         {
             if (!RunActive) return;
+            // 勝利の確定は潜行しない（#71）。選択待ちだけを解けば、保留中の撃破は戦った深度のまま精算される。
+            // ホストも参加者もここで解くため、確定後の深度・確保ボーナスが両者で一致する。
+            if (_pendingRunVictory == true && Profile.Run.AwaitingChoice) Profile.Run.AwaitingChoice = false;
             FlushPendingPressureDividends();
+            // Shared waypoint settlement unlocks the participant's buttons, not their personal choice (#88).
+            // Pure White keeps the personal choice pending until an explicit choice or the run's conclusion.
+            if (InPureWhiteRoute && Profile.Run.AwaitingChoice && !_pendingRunVictory.HasValue) return;
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
 
@@ -133,8 +167,10 @@ namespace SodRpg.Mod
             if (!RunActive || !_runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules)) return false;
             // Primus can begin combat at the entrance. Combat must not silently skip this route's choice.
             if (InPureWhiteRoute && !concluding) return false;
+            // 勝利の確定は戦った深度のまま確保する。潜行で深さを増やさず、選択待ちだけを解く（#71）。
+            if (concluding) Profile.Run.AwaitingChoice = false;
             // Continuing combat chooses no pact. Delve leaves inventory and reserved trades untouched.
-            Emit(Rules.Delve(Profile, Pact.None));
+            else Emit(Rules.Delve(Profile, Pact.None));
             MarkDirty(true);
             SaveNow();
             if (publish) PublishRunChoices();
@@ -177,8 +213,8 @@ namespace SodRpg.Mod
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
-                variantId: kill.VariantId, roomIndex: kill.RoomIndex, bossTypeName: kill.BossTypeName,
-                bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth));
+                variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint,
+                bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth));
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {

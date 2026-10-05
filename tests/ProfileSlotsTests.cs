@@ -362,6 +362,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(ProfileSlot.Solo, slots.ActiveSlot);
             Assert.Equal(text, disk.ReadAllText(MultiPath));
             fs.FailPath = null;
+            // A failed switch latches until an explicit choice re-arms it (#72).
+            slots.SetMode(ProfileSlotMode.Multi);
             Assert.True(slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
             Assert.Equal(14, slots.Profile.DreamLevel);
         }
@@ -382,8 +384,35 @@ namespace SodRpg.Core.Tests
             Assert.Same(store, slots.Store);
             Assert.False(disk.Exists(MultiPath));
             fs.Disarm();
+            // A failed switch latches until an explicit choice re-arms it (#72).
+            slots.SetMode(ProfileSlotMode.Multi);
             Assert.True(slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
             Assert.Equal(29UL, Read(disk, MultiPath).RngState);
+        }
+
+        [Fact]
+        public void Failed_switch_is_not_retried_automatically_and_needs_an_explicit_choice()
+        {
+            var disk = new InMemoryFileSystem();
+            var future = Profile.CreateNew(7);
+            disk.Put(MultiPath, ProfileCodec.Write(future).Replace(
+                "\"version\":" + Profile.CurrentVersion, "\"version\":" + (Profile.CurrentVersion + 1)));
+            var fs = new FaultyFileSystem(disk);
+            var slots = Create(fs);
+            slots.SetMode(ProfileSlotMode.Multi);
+            var profile = slots.Profile;
+            Assert.Throws<LedgerVersionException>(() => slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
+            Assert.Same(profile, slots.Profile);
+            // The latch holds: repeated ticks neither write (a full old-slot save per attempt would
+            // stall the lobby) nor throw again.
+            fs.Arm(-1, FaultMode.IoError);
+            for (int i = 0; i < 3; i++)
+                Assert.False(slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
+            Assert.Equal(0, fs.OpCount);
+            // An explicit mode choice re-arms exactly one attempt.
+            slots.SetMode(ProfileSlotMode.Multi);
+            Assert.Throws<LedgerVersionException>(() => slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
+            Assert.False(slots.TrySwitch(ProfileSessionKind.Multi, NoWriter));
         }
 
         [Fact]
@@ -631,11 +660,11 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(0, false)]
-        [InlineData(1, false)]
-        [InlineData(2, true)]
-        [InlineData(3, true)]
-        public void Failed_copy_never_changes_active_profile_and_reservation_prevents_second_overwrite(int operation, bool reserved)
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
+        public void Failed_copy_keeps_the_once_only_right_for_a_later_retry(int operation)
         {
             var disk = new InMemoryFileSystem();
             var fs = new FaultyFileSystem(disk);
@@ -648,16 +677,15 @@ namespace SodRpg.Core.Tests
             Assert.Throws<IOException>(() => slots.CopySolo(NoWriter));
             Assert.Same(original, slots.Profile);
             Assert.Equal(multi, disk.ReadAllText(MultiPath));
-            Assert.Equal(reserved, disk.Exists(MarkerPath));
+            // A failed copy (marker write or profile save) must not consume the copy-once right (#72).
+            Assert.False(disk.Exists(MarkerPath));
             fs.Disarm();
             var restarted = Create(fs);
             Assert.True(restarted.TrySwitch(ProfileSessionKind.Multi, NoWriter));
-            Assert.Equal(!reserved, restarted.CanCopySolo);
-            if (!reserved)
-            {
-                Assert.True(restarted.CopySolo(NoWriter));
-                Assert.Equal(27, restarted.Profile.Material(Materials.Shard));
-            }
+            Assert.True(restarted.CanCopySolo);
+            Assert.True(restarted.CopySolo(NoWriter));
+            Assert.Equal(27, restarted.Profile.Material(Materials.Shard));
+            Assert.True(disk.Exists(MarkerPath));
         }
 
         [Theory]

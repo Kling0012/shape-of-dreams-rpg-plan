@@ -96,8 +96,7 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(p, "f", DailyDream.Get(2)); // 鋼の日：守勢
             p.Run.Bounties.Clear();
             var rng = new Rng(p.RngState);
-            int pity = p.EpicPity;
-            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, Line.Guard, Rules.KillModifiers(p.Run),
+            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Guard, Rules.KillModifiers(p.Run),
                 p.Stash, p.Run.Satchel, p.Codex); // Rules.OnKill と同じ引数（銘品の重みは図鑑・所持で変わる）
             Rules.OnKill(p, MonsterTier.Boss, 10);
             Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), p.Run.Satchel.Select(r => r.Uid + r.BaseId));
@@ -107,8 +106,7 @@ namespace SodRpg.Core.Tests
             Rules.BeginRun(q, "f", DailyDream.Get(2));
             q.Run.Bounties.Clear();
             rng = new Rng(q.RngState);
-            pity = q.EpicPity;
-            expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, ref pity, Line.Offense, Rules.KillModifiers(q.Run),
+            expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Offense, Rules.KillModifiers(q.Run),
                 q.Stash, q.Run.Satchel, q.Codex);
             Rules.OnKill(q, MonsterTier.Boss, 10);
             Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), q.Run.Satchel.Select(r => r.Uid + r.BaseId));
@@ -152,7 +150,7 @@ namespace SodRpg.Core.Tests
             var events = new List<GameEvent>();
             for (int i = 0; i < 100; i++) events.AddRange(Rules.OnKill(p, MonsterTier.Lesser, 1, NightmareAffix.None, "Hero_Vesper"));
             Assert.Equal(100, p.Hero("Hero_Vesper").Kills);
-            Assert.Contains(events, e => e.Kind == EventKind.LevelUp && e.Text.Contains("Vesper"));
+            Assert.Equal(1, Mastery.Level(p.Hero("Hero_Vesper").Kills));
             var b = Build.Compute(p, "Hero_Vesper", 0);
             Assert.Equal(0, b.Get(Stat.AttackPct)); // v1.2：熟練度は能力%ではなく到達刻印の解放条件
             var q = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());

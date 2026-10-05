@@ -24,13 +24,18 @@
 
   <ItemGroup>
     <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
+    <Compile Include="../ProfileSlotLoaderTests.cs" Link="ProfileSlotLoaderTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/TickGuard.cs" Link="ModUnderTest/TickGuard.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NameplateTrim.cs" Link="ModUnderTest/NameplateTrim.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.UnbowedMind.cs" Link="ModUnderTest/HostAuthority.UnbowedMind.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
+    <Compile Include="$(IntermediateOutputPath)Issue62.Native.cs" Link="ModUnderTest/Issue62.Native.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeMemoryCasts.cs" Link="ModUnderTest/HostAuthority.NativeMemoryCasts.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystones.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystones.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
@@ -46,6 +51,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystonePackets.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystonePackets.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.IdentityStrikes.cs" Link="ModUnderTest/HostAuthority.IdentityStrikes.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryTunings.cs" Link="ModUnderTest/HostAuthority.MemoryTunings.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.SpawnInit.cs" Link="ModUnderTest/HostAuthority.SpawnInit.cs" />
     <Compile Include="../../src/SodRpg.Mod/CodexPresenter.cs" Link="ModUnderTest/CodexPresenter.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossRuntime.cs" Link="ModUnderTest/HostAuthority.BossRuntime.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossNativeAdapters.cs" Link="ModUnderTest/HostAuthority.BossNativeAdapters.cs" />
@@ -77,5 +83,10 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
   </ItemGroup>
+
+
+  <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile">
+    <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
+  </Target>
 
 </Project>

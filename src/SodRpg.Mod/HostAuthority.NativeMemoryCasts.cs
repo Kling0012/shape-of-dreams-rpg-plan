@@ -39,7 +39,7 @@ namespace SodRpg.Mod
         internal NativeAttributedMemoryCast.Cast BeginAttributedMemoryCast(SkillTrigger skill)
         {
             if (!(skill.owner is Hero hero) || !Alive(hero) || AttributionGeneratedOrigin() != GeneratedOrigin.None) return null;
-            if (RefreshMemoryAttributionEquipment(hero) == 0) return null;
+            EnsureMemoryAttributionEquipment(hero);
             bool source = false;
             foreach (var pair in _attributionEquipment[hero])
                 if (pair.Value == skill) { source = pair.Key != HeroSkillLocation.Movement; break; }

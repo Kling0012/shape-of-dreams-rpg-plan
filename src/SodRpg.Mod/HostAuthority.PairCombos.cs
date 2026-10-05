@@ -84,7 +84,7 @@ namespace SodRpg.Mod
                 rt.PairCombos.Fire((PairComboTrigger)trigger, memory, now,
                     victim != null ? victim.GetInstanceID() : 0, damage,
                     pairGenerated || _gimmickDamageDepth != 0 || _pairDamageDepth != 0,
-                    rt.PairMemories, HasOwnSummons(rt), requests, PairActivation(rt, actor), PairHitKind(actor));
+                    rt.PairMemories, HasOwnSummons(rt), requests, hitKind: PairHitKind(actor), activationSerial: PairActivation(rt, actor));
             }
             QueueGimmickRequests(rt, victim, now);
         }
@@ -111,17 +111,12 @@ namespace SodRpg.Mod
                 var configured = LegacyGimmickForRequest(rt, request.Entry.StarId);
                 if (configured != null)
                 {
-                    long epoch = RefreshMemoryAttributionEquipment(rt.Hero);
+                    long epoch = EnsureMemoryAttributionEquipment(rt.Hero);
                     string key = BuildAggregation.GimmickStateKey(configured);
                     bool hadKey = rt.Powers.Build.SelectedKeystones.Count > 0;
                     pending.AuthoredChannelId = configured.StarId;
-                    pending.AuthoredIsCurrent = () => epoch == RefreshMemoryAttributionEquipment(rt.Hero)
-                        && LegacyGimmickForRequest(rt, configured.StarId) is GimmickEntry current
-                        && (BuildAggregation.GimmickStateKey(current) == key
-                            || hadKey && rt.Powers.Build.SelectedKeystones.Count == 0 && SameLegacyPendingBaseline(configured, current));
-                    pending.AuthoredDefinition = () => TransformLegacyGimmick(rt,
-                        LegacyGimmickForRequest(rt, configured.StarId)?.Def, request.Entry.Memory,
-                        request.SourceKind ?? KeystoneSourceKind.NativeMemory, configured.StarId);
+                    pending.Authored = new AuthoredPendingGimmick { Enabled = true, EquipmentEpoch = epoch,
+                        Legacy = configured, LegacyKey = key, HadKeystone = hadKey };
                 }
                 rt.PendingGimmicks.Add(pending);
             }
@@ -182,17 +177,7 @@ namespace SodRpg.Mod
             for (int i = pending.Count - 1; i >= 0; i--)
             {
                 var effect = pending[i];
-                if (effect.AuthoredIsCurrent != null && !effect.AuthoredIsCurrent()) { pending.RemoveAt(i); continue; }
-                if (effect.AuthoredDefinition != null)
-                {
-                    var effective = effect.AuthoredDefinition();
-                    if (effective == null) { pending.RemoveAt(i); continue; }
-                    effect.Request.Entry = new GimmickEntry { StarId = effect.Request.Entry.StarId, Memory = effect.Request.Entry.Memory, Def = effective };
-                    if (effective.Effect == GimmickEffect.Burst || effect.Request.AreaRadius > 0)
-                        effect.Request.AreaRadius = Gimmicks.Radius(effective, Gimmicks.AreaRadius);
-                    if (effective.Effect == GimmickEffect.Echo)
-                        effect.Due = effect.QueuedAt + (effective.EffectiveDelaySeconds ?? 0.3f);
-                }
+                if (!RefreshAuthoredPendingGimmick(rt, ref effect)) { pending.RemoveAt(i); continue; }
                 if (effect.Due > now) { pending[i] = effect; continue; }
                 pending.RemoveAt(i);
                 if (effect.Pair != null && (FindMemory(rt.Hero, effect.Pair.RouteA) == null

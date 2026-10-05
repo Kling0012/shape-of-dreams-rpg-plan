@@ -26,3 +26,9 @@ dotnet test
 ## ゲーム内MOD
 
 `SodRpg.Mod/` はゲーム本体のアセンブリを参照するMOD（Dreamforge RPG / 夢鍛RPG）。`Game/` のルールを取り込んで1つのDLLにする。ゲームのDLLが必要なため `SodRpg.sln`（CI）には含めない。詳細は [SodRpg.Mod/README.md](SodRpg.Mod/README.md)。
+
+### 撃破分類の待ち期限（Issue #70）
+
+`Game/KillClassificationLedger.cs` は、本体で観測した撃破とホストの分類記録を発生順に照合する。ホスト・参加者ともに `ClientSession.TickKillClassification` で待ちを進め、記録が欠けた撃破は観測から実時間30秒（`Time.unscaledTime`）で報酬なしとして解決する。権威未確定・復旧候補なし・候補が曖昧な死亡にも同じ期限を適用する。後続の記録済み撃破は通常どおり精算し、確保到着・純白選択・勝利確定を欠落1件で永久に止めない。
+
+期限切れはストリーム・敵ID・観測セッションを持つ `killClassification.expiredVictims` として保存・複製・復元する。後から分類記録が届いても、同じ撃破を再観測しても報酬を付与しない。旧形式4の `expiredMonsters` も読み込み、旧記録の二重付与防止を維持する。保存形式5・Protocol 16では、新しいストリームでの敵ID再利用を旧撃破と混同しない。再読込時は未解決の撃破だけ新たに30秒待ち、期限切れの撃破は復活させない。ACKは引き続き実際に保存済みの受信境界だけを通知する。

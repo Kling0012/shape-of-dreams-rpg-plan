@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>Value-only reward facts captured while the host's run choices are still in transit.</summary>
+    /// <summary>戦ったときの深度と道標を保持する、保留中の撃破の記録（#71）。精算はこれを使う。</summary>
     public readonly struct PendingRunKill
     {
         public string RunId { get; }
@@ -19,14 +19,20 @@ namespace SodRpg.Core.Game
         public string BossTypeName { get; }
         public bool BossDropNightmare { get; }
         public int BossDropDepth { get; }
+        /// <summary>戦ったときの潜行深度。null は記録前の保存データで、精算時の現在深度を使う。</summary>
+        public int? Heat { get; }
+        /// <summary>戦ったときの道標。null は記録前の保存データで、精算時の道標を使う。</summary>
+        public Waypoint? Waypoint { get; }
 
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
             NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0,
-            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
+            int? heat = null, Waypoint? waypoint = null, string bossTypeName = null,
+            bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
             EventId = eventId; MonsterNetId = monsterNetId;
+            Heat = heat; Waypoint = waypoint;
             BossTypeName = bossTypeName; BossDropNightmare = bossDropNightmare;
             BossDropDepth = Math.Max(0, Math.Min(5, bossDropDepth));
         }
@@ -42,7 +48,11 @@ namespace SodRpg.Core.Game
         public void Add(PendingRunKill kill) { if (!string.IsNullOrEmpty(kill.RunId)) _kills.Enqueue(kill); }
         public void Clear() => _kills.Clear();
 
-        /// <summary>Preserve event order and never replay a fact into a different expedition.</summary>
+        /// <summary>
+        /// Preserve event order and never replay a fact into a different expedition.
+        /// A kill leaves the queue only after its reward succeeded: a throwing reward keeps the
+        /// fact queued (at the head) so settlement can retry it instead of dropping it (#72).
+        /// </summary>
         public int Drain(string runId, int zoneIndex, Action<PendingRunKill> reward)
         {
             int awarded = 0;
@@ -51,8 +61,8 @@ namespace SodRpg.Core.Game
                 var kill = _kills.Peek();
                 if (kill.RunId != runId) { _kills.Dequeue(); continue; }
                 if (kill.ZoneIndex != zoneIndex) break;
-                _kills.Dequeue();
                 reward(kill);
+                _kills.Dequeue();
                 awarded++;
             }
             return awarded;

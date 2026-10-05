@@ -45,8 +45,9 @@ namespace SodRpg.Mod
             internal long Epoch;
             internal string Key;
             internal MechanismEquipment Equipment;
-            internal bool? Admission;
+            internal string Admission;
             internal int HookSignature = -1;
+            internal bool HasSacrificePayload;
         }
         private readonly Dictionary<Hero, AuthoredKeystoneBinding> _authoredKeystones = new Dictionary<Hero, AuthoredKeystoneBinding>();
         private long _authoredKeystoneEpoch;
@@ -63,6 +64,9 @@ namespace SodRpg.Mod
             if (build.SelectedKeystones.Count == 0) { _authoredKeystones.Remove(hero); return; }
             var binding = new AuthoredKeystoneBinding { Build = build, Key = signature,
                 Runtime = new ScopedKeystoneModifiers(build.SelectedKeystones), Epoch = checked(++_authoredKeystoneEpoch) };
+            foreach (var key in build.SelectedKeystones)
+                foreach (var payload in key.Payloads)
+                    if (payload == KeystonePayloadKind.SacrificeShield) binding.HasSacrificePayload = true;
             _authoredKeystones[hero] = binding;
             RefreshAuthoredKeystone(hero);
         }
@@ -83,9 +87,9 @@ namespace SodRpg.Mod
         internal void RefreshAuthoredKeystone(Hero hero)
         {
             if (hero == null || !_authoredKeystones.TryGetValue(hero, out var binding)) return;
-            long nativeEpoch = RefreshMemoryAttributionEquipment(hero);
+            long nativeEpoch = EnsureMemoryAttributionEquipment(hero);
             var keys = binding.Build.SelectedKeystones;
-            int hooks = keys.Any(key => key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
+            int hooks = binding.HasSacrificePayload
                 ? (NativeAuthoredKeystoneDamage.Bound ? 1 : 0) | (NativeSacrificeShieldDispatch.GoldenBound ? 2 : 0)
                     | (NativeSacrificeShieldDispatch.ReductionBound ? 4 : 0) : 0;
             if (binding.NativeEpoch == nativeEpoch && binding.HookSignature == hooks) return;
@@ -94,9 +98,10 @@ namespace SodRpg.Mod
             var equipment = binding.NativeEpoch == nativeEpoch && binding.Equipment != null
                 ? binding.Equipment : CollectMechanismEquipment(hero, hero.GetInstanceID());
             // 入手確認（ネイティブアダプター）は刻印ごとに判定する。未承認の刻印だけ止めても、他は動かす。
+            // #49: 比較は刻印ごとの許可ベクトルで行う。全体のAny(true)が同じでも個別許可の変化を再設定から漏らさない。
             var admission = new Dictionary<string, bool>(StringComparer.Ordinal);
             foreach (var key in keys) admission[key.KeystoneId] = SacrificeBindingAvailable(key, equipment);
-            bool admitted = admission.Values.Any(a => a);
+            string admitted = string.Join("|", keys.Select(key => admission[key.KeystoneId] ? "1" : "0"));
             if (binding.NativeEpoch == nativeEpoch && binding.Admission == admitted) return;
             binding.NativeEpoch = nativeEpoch; binding.Admission = admitted;
             binding.Epoch = checked(++_authoredKeystoneEpoch); binding.Equipment = equipment;
@@ -140,10 +145,12 @@ namespace SodRpg.Mod
             return source;
         }
 
-        internal bool AuthoredKeystoneActive(Hero hero)
+        /// <summary>指定刻印が「許可済み・必要装備あり」を満たすか（#49: 全体Activeではなく刻印ごとに判定）。</summary>
+        internal bool AuthoredKeystoneActive(Hero hero, string keystoneId)
         {
             RefreshAuthoredKeystone(hero);
-            return hero != null && _authoredKeystones.TryGetValue(hero, out var binding) && binding.Runtime.Active;
+            return hero != null && keystoneId != null && _authoredKeystones.TryGetValue(hero, out var binding)
+                && binding.Runtime.IsKeystoneActive(keystoneId);
         }
 
         internal long AuthoredKeystoneEpoch(Hero hero)
@@ -160,9 +167,10 @@ namespace SodRpg.Mod
             if (_sacrificeBindings.TryGetValue(hero, out var existing) && ReferenceEquals(existing.Keystone, binding.Runtime)) return;
             bool Verified()
             {
+                // #49: 犠牲シールドの接続確認も、その刻印自身の許可・装備（HasPayload）で判定する。
                 RefreshAuthoredKeystone(hero);
-                return binding.Runtime.Active && _authoredKeystones.TryGetValue(hero, out var current)
-                    && ReferenceEquals(current, binding) && binding.Admission == true;
+                return _authoredKeystones.TryGetValue(hero, out var current) && ReferenceEquals(current, binding)
+                    && binding.Runtime.HasPayload(KeystonePayloadKind.SacrificeShield);
             }
             BindSacrificeShield(hero, binding.Runtime, Verified);
         }

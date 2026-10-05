@@ -395,8 +395,9 @@ namespace SodRpg.Mod
             && NetworkedManagerBase<ZoneManager>.softInstance?.isInAnyTransition != true;
         private static bool BossNativeEquippedSkill(Hero hero, SkillTrigger skill)
         {
-            if (skill == null || skill is St_U_Hysteria || skill.owner != hero) return false;
-            foreach (var location in LinkSkills) if (hero.Skill.GetSkill(location) == skill) return true;
+            if (hero == null || skill == null || skill is St_U_Hysteria || skill.owner != hero || NativeInstance == null) return false;
+            if (NativeInstance.EnsureMemoryAttributionEquipment(hero) == 0) return false;
+            foreach (var installed in NativeInstance._attributionEquipment[hero].Values) if (installed == skill) return true;
             return false;
         }
         internal BossNativeCast BeginBossNativeCast(AbilityTrigger trigger, CastInfo info)
