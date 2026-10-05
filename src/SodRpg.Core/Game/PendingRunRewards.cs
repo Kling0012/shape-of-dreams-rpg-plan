@@ -47,6 +47,8 @@ namespace SodRpg.Core.Game
         private readonly Queue<PendingRunKill> _kills = new Queue<PendingRunKill>();
         public int Count => _kills.Count;
         public IEnumerable<PendingRunKill> Facts => _kills;
+        /// <summary>Publish side effects only after a successfully rewarded kill has left the queue.</summary>
+        public event Action RewardSettled;
         public bool HasFor(string runId, int zoneIndex) => _kills.Count > 0
             && _kills.Peek().RunId == runId && _kills.Peek().ZoneIndex == zoneIndex;
         public void Add(PendingRunKill kill) { if (!string.IsNullOrEmpty(kill.RunId)) _kills.Enqueue(kill); }
@@ -77,6 +79,7 @@ namespace SodRpg.Core.Game
                 reward(kill);
                 _kills.Dequeue();
                 awarded++;
+                RewardSettled?.Invoke();
             }
             return awarded;
         }

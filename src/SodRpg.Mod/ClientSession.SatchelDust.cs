@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -7,6 +8,46 @@ namespace SodRpg.Mod
 {
     internal sealed partial class ClientSession
     {
+        private readonly List<PendingTrade> _preparedKillOverflowTrades = new List<PendingTrade>();
+        private bool _preparingKillOverflows;
+
+        private void EmitPendingKillEvents()
+        {
+            var events = _pendingKillEvents;
+            _pendingKillEvents = null;
+            if (events == null) return;
+            _dirty = true;
+            // Register every overflow (including its ledger ID) before the first confirmed save.
+            // A crash after the first send can then recover even the not-yet-sent trades by query.
+            try
+            {
+                _preparingKillOverflows = true;
+                try
+                {
+                    foreach (var e in events)
+                        if (e.SatchelOverflow != null) Emit(e);
+                }
+                finally { _preparingKillOverflows = false; }
+                foreach (var trade in _preparedKillOverflowTrades)
+                {
+                    try
+                    {
+                        string error = SendTrade(trade);
+                        if (error != null) Log.Warn("Satchel overflow: " + error);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Preserve prepared tokens: a receipt, not a send exception, decides payment.
+                        _trades.MarkAllUnresolved(Time.unscaledTime);
+                        Log.Warn("Satchel overflow conversion unavailable: " + ex.Message);
+                    }
+                }
+            }
+            finally { _preparedKillOverflowTrades.Clear(); }
+            foreach (var e in events)
+                if (e.SatchelOverflow == null) Emit(e);
+        }
+
         // Runs only when Core removes an overflowing relic; no extra frame polling.
         private void ConvertSatchelOverflow(GameEvent overflow)
         {
@@ -27,6 +68,12 @@ namespace SodRpg.Mod
                     return;
                 }
                 trade = _trades.BeginSatchelOverflow(relic, runId, overflow.SatchelOverflowShards, Time.unscaledTime);
+                if (_preparingKillOverflows)
+                {
+                    trade.LedgerId = _hostLedgerId;
+                    _preparedKillOverflowTrades.Add(trade);
+                    return;
+                }
                 string error = SendTrade(trade);
                 if (error != null) Log.Warn("Satchel overflow: " + error);
             }

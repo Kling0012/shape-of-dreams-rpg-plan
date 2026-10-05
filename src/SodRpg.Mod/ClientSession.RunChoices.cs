@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
@@ -19,6 +20,7 @@ namespace SodRpg.Mod
         private float _nextChoicesSync;
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
         private readonly Action<PendingRunKill> _grantPendingKill;
+        private List<GameEvent> _pendingKillEvents;
         private bool? _pendingRunVictory;
         private string _pendingResultRunId;
         private string _completedRunId;
@@ -231,9 +233,9 @@ namespace SodRpg.Mod
                 throw new InvalidOperationException("Infinity save receipts disagree; rewards remain pending.");
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
-            Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
+            var events = Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint,
-                bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth));
+                bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth);
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {
@@ -241,6 +243,8 @@ namespace SodRpg.Mod
                 _nextSave = 0;
             }
             if (kill.Tier >= MonsterTier.MiniBoss) _nextSave = 0;
+            // Drain removes the kill before these events can confirm a trade preparation save.
+            _pendingKillEvents = events;
         }
 
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)

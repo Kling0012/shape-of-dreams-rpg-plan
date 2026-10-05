@@ -109,6 +109,7 @@ namespace SodRpg.Mod
             _onPressure = OnPressure;
             _onRunChoices = OnRunChoices;
             _grantPendingKill = GrantPendingKill;
+            _pendingRunRewards.RewardSettled += EmitPendingKillEvents;
             _onNightmare = OnNightmare;
             _onVariant = OnVariant;
             _onMonsterCue = OnMonsterCue;
