@@ -309,6 +309,7 @@ namespace SodRpg.Mod
         private AsyncProfileWriter _writer;
         private ProfileStore _store;
         private readonly TradeLedger _trades = new TradeLedger();
+        private long _hostLedgerId;
         private bool _dirty, _saveErrorFromWriteFailure;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;

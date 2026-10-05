@@ -228,6 +228,7 @@ namespace SodRpg.Mod
             _trades.Clear();
             _satchelOverflowQueue.Clear();
             _satchelOverflowDrain.Clear();
+            _satchelOverflowBatch.Clear();
             _pendingRunRewards.Clear();
             _pendingRunVictory = null;
             _pendingResultRunId = null;
