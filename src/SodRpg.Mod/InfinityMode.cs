@@ -51,7 +51,9 @@ namespace SodRpg.Mod
             if (!_unavailable) Available = true;
         }
 
-        internal static void DisableFeature(string reason)
+        internal static void DisableFeature(string reason) => DisableFeature(reason, null);
+
+        internal static void DisableFeature(string reason, Exception error)
         {
             Available = false;
             _restoring = false;
@@ -63,7 +65,7 @@ namespace SodRpg.Mod
             if (reason != _lastDisableLog)
             {
                 _lastDisableLog = reason;
-                Log.Warn("Infinity disabled; normal mode remains available. " + reason);
+                Log.Warn("Infinity disabled; normal mode remains available. " + reason + FirstStackFrames(error));
             }
             if (_unavailable) return;
             _unavailable = true;
@@ -78,7 +80,27 @@ namespace SodRpg.Mod
         }
 
         internal static void InterceptionFailed(string hook, Exception error)
-            => DisableFeature(hook + ": " + error.Message);
+            => DisableFeature(hook + ": " + error.Message, error);
+
+        // #157: an interception exception logs its first stack frames so the next Player.log
+        // pinpoints the failing line. Best effort: empty when the runtime stripped the trace.
+        // Rides the once-per-distinct-reason gate above; the lobby notice stays reason-only.
+        private static string FirstStackFrames(Exception error)
+        {
+            if (error?.StackTrace == null) return "";
+            string[] frames = error.StackTrace.Split('\n');
+            var sb = new System.Text.StringBuilder();
+            int appended = 0;
+            for (int i = 0; i < frames.Length && appended < 3; i++)
+            {
+                string frame = frames[i].Trim();
+                if (frame.Length == 0) continue;
+                if (sb.Length > 0) sb.Append(' ');
+                sb.Append(frame.Length <= 160 ? frame : frame.Substring(0, 160));
+                appended++;
+            }
+            return appended == 0 ? "" : " | stack: " + sb;
+        }
         private static readonly HashSet<int> ReferencedModifiers = new HashSet<int>();
         private static readonly List<int> RetiredModifiers = new List<int>();
         private static Actor _ackActor;
