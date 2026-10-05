@@ -838,7 +838,7 @@ namespace SodRpg.Mod
             }
         }
 
-        /// <summary>未確保の遺物を予約し、成功応答を受けてから鞄か遠征終了後の預かりから取り除く。</summary>
+        /// <summary>未確保の遺物を予約し、成功応答を受けてから鞄か確保・遠征終了後の預かりから取り除く。</summary>
         public string SalvageUnsecured(string uid)
         {
             try
@@ -1040,7 +1040,7 @@ namespace SodRpg.Mod
             if (Profile.Run == null) return null;
             if (!CanResolveSecureChoice) return SecureChoiceUnavailable();
             int pacts = Profile.Run.Pacts.Count;
-            Emit(Rules.Secure(Profile));
+            Emit(Rules.Secure(Profile, _trades));
             // 契約が1つでも解けたら、潜行で付いた呪いをホストから消す。
             if (pacts > 0) SendCurseClear();
             _buildDirty = true;

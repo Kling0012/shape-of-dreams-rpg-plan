@@ -253,7 +253,7 @@ namespace SodRpg.Core.Game
         LostAndFound,
     }
 
-    /// <summary>遠征の精算から外した、分解の応答待ちの遺物。</summary>
+    /// <summary>確保・遠征の精算から外した、分解の応答待ちの遺物。</summary>
     public sealed class PendingSalvage
     {
         public PendingSalvage(Relic relic, SalvageReturnTarget returnTarget)

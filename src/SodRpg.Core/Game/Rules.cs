@@ -334,8 +334,22 @@ namespace SodRpg.Core.Game
                 $"Hoard left unopened: forfeited {run.DeferredWaypointRelics.Count} held relic(s), {run.DeferredWaypointShards} shards and {run.DeferredWaypointTuning} tuning.")));
         }
 
-        /// <summary>確保する。未確保品を保管庫へ移し、深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
-        public static List<GameEvent> Secure(Profile p) => Secure(p, true);
+        /// <summary>確保する。分解予約中の遺物は預かりに隔離し、残りを保管庫へ移す。深度に応じて欠片の上乗せを受け、深度を0に戻す。</summary>
+        public static List<GameEvent> Secure(Profile p, TradeLedger trades = null)
+        {
+            var run = p.Run;
+            if (run != null && trades != null && trades.HeldCount > 0)
+            {
+                for (int i = 0; i < run.Satchel.Count; i++)
+                {
+                    var relic = run.Satchel[i];
+                    if (!trades.IsReserved(relic.Uid)) continue;
+                    p.PendingSalvage.Add(new PendingSalvage(relic, SalvageReturnTarget.Stash));
+                    run.Satchel.RemoveAt(i--);
+                }
+            }
+            return Secure(p, true);
+        }
 
         /// <summary>Choose one offered waypoint, or None, for the zone entered after this secure point.</summary>
         public static List<GameEvent> PickWaypoint(Profile p, Waypoint waypoint)
