@@ -1,5 +1,5 @@
-[b]v2.1.1: urgent fix — the mod could fail to start at all in v2.1.0; boss gear icons now show. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.1.1：緊急の修正版です。v2.1.0 で MOD が起動しないことがある不具合と、ボス装備のアイコンが表示されない不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.1.2: fixes crafted relics that could vanish after resuming a run with Continue. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.1.2：「続きから」で遠征を再開したあとに鍛冶で作った遺物が、消えることがある不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
