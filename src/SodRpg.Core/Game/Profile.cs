@@ -338,6 +338,25 @@ namespace SodRpg.Core.Game
         /// 支払い済みの対価・返却を取りこぼさないために保存する。起動後にホストへ照会して解決する。
         /// </summary>
         public List<PendingTrade> PendingTrades { get; } = new List<PendingTrade>();
+
+        // Transient tick totals. Only settled material balances enter a save/checkpoint.
+        internal int UncreditedSatchelOverflowShards;
+        internal int SatchelOverflowShards, SatchelOverflowCount, SatchelOverflowDiscarded;
+
+        internal void QueueSatchelOverflow(int shards, bool suppressed)
+        {
+            UncreditedSatchelOverflowShards = (int)Math.Min(int.MaxValue, (long)UncreditedSatchelOverflowShards + shards);
+            SatchelOverflowShards = (int)Math.Min(int.MaxValue, (long)SatchelOverflowShards + shards);
+            if (SatchelOverflowCount < int.MaxValue) SatchelOverflowCount++;
+            if (suppressed && SatchelOverflowDiscarded < int.MaxValue) SatchelOverflowDiscarded++;
+        }
+
+        internal void SettleSatchelOverflow()
+        {
+            if (UncreditedSatchelOverflowShards == 0) return;
+            AddMaterial(Game.Materials.Shard, UncreditedSatchelOverflowShards);
+            UncreditedSatchelOverflowShards = 0;
+        }
         public SortedDictionary<string, HeroState> Heroes { get; } = new SortedDictionary<string, HeroState>(StringComparer.Ordinal);
         public SortedSet<string> Codex { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>達成済みの偉業のID。</summary>
@@ -499,6 +518,10 @@ namespace SodRpg.Core.Game
             PendingSalvage.AddRange(source.PendingSalvage);
             PendingTrades.Clear();
             PendingTrades.AddRange(source.PendingTrades);
+            UncreditedSatchelOverflowShards = source.UncreditedSatchelOverflowShards;
+            SatchelOverflowShards = source.SatchelOverflowShards;
+            SatchelOverflowCount = source.SatchelOverflowCount;
+            SatchelOverflowDiscarded = source.SatchelOverflowDiscarded;
             Heroes.Clear();
             foreach (var kv in source.Heroes) Heroes.Add(kv.Key, kv.Value);
             Codex.Clear();
@@ -548,6 +571,10 @@ namespace SodRpg.Core.Game
                 Focus = Focus,
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),
+                UncreditedSatchelOverflowShards = UncreditedSatchelOverflowShards,
+                SatchelOverflowShards = SatchelOverflowShards,
+                SatchelOverflowCount = SatchelOverflowCount,
+                SatchelOverflowDiscarded = SatchelOverflowDiscarded,
             };
             Game.InfinityRecords.CloneInto(this, c);
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;

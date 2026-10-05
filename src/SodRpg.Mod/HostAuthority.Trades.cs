@@ -12,6 +12,7 @@ namespace SodRpg.Mod
         private bool _satchelDustDisabled;
         private bool _manualTradesDisabled;
 
+        // Kept solely to settle/replay overflow obligations persisted by v2.3.1–v2.4.0.
         private TradeDecision GrantSatchelOverflow(DreamforgeTradeMsg message, DewPlayer owner, TradeRequest request)
         {
             string playerKey = TradePlayerKey(owner);
@@ -20,7 +21,7 @@ namespace SodRpg.Mod
                 || string.IsNullOrEmpty(playerKey) || string.IsNullOrEmpty(runId)
                 || message.runId != runId || !MechanismHandshakeAccepted(owner))
             {
-                Log.Error("Host: satchel overflow owner/expedition unavailable; using shards.");
+                Log.Error("Host: legacy satchel overflow owner/expedition unavailable; using shards.");
                 return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request);
             }
 
@@ -40,13 +41,13 @@ namespace SodRpg.Mod
             {
                 // EarnDreamDust can mutate the SyncVar before a later callback fails. Never pay again.
                 // Restore a partial/native mismatch to the prior balance before selecting shard fallback.
-                Log.Error("Host: satchel overflow Dream Dust grant failed: " + ex.Message);
+                Log.Error("Host: legacy satchel overflow Dream Dust grant failed: " + ex.Message);
                 _satchelDustDisabled = true;
                 if (owner.dreamDust - (long)before == decision.EarnDust) return decision;
                 try { owner.dreamDust = before; }
                 catch (Exception restoreError)
                 {
-                    Log.Error("Host: satchel overflow balance restore failed: " + restoreError.Message);
+                    Log.Error("Host: legacy satchel overflow balance restore failed: " + restoreError.Message);
                 }
                 return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request, executionFailed: true);
             }

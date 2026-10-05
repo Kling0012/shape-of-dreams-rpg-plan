@@ -2,7 +2,7 @@
 
 Dreamforge RPG の遠征を、ゲーム本体を起動せずに繰り返す .NET 8 のコンソールアプリです。新しいプロフィールから何回遊ぶと育つかを調べるために使います。コアの数値は変更せず、開始、撃破、部屋突破、確保、帰還、装備、強化、分解、依頼の進捗を `SodRpg.Core.Game.Rules` の公開APIに通します。
 
-鞄の上限超過は低レア度、同レア度なら低スコアから分解します。本ツールには本体の `DewPlayer` がいないため、Coreのダスト換金結果を明示的に欠片へフォールバックします。実機MODの持ち主別ダスト付与・通信の測定ではありません。
+鞄の上限超過は低レア度、同レア度なら低スコアから欠片へ換えます。Coreと同じ集約分をシミュレーションのtickでローカルプロフィールへ確定し、ダスト換金・ホスト取引や欠片フォールバックは使いません。実機MODの通信・描画・ログI/Oの測定ではありません。 / Satchel overflow converts the lowest-rarity, then lowest-score relic into shards. Each simulated tick settles the same Core batch into the local profile without Dust trades, host authority, or shard fallbacks. Native networking, rendering, and log I/O are not measured.
 
 ## 使い方
 

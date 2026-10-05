@@ -12,11 +12,7 @@ using Xunit;
 
 namespace Issue73.Native.Tests
 {
-    /// <summary>
-    /// #146: 実際の撃破精算・換金準備保存をディスクから復元し、同じ遠征への再参加で
-    /// 熟練度・経験値・戦利品が再付与されないことを確認する。
-    /// Mod のリンク／抽出メソッドを API ダブルと実ディスクの ProfileStore で動かす。
-    /// </summary>
+    /// <summary>Settled guest rewards persist through a normal save without granting overflow twice.</summary>
     public sealed class SatchelOverflowSaveTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -38,7 +34,7 @@ namespace Issue73.Native.Tests
         }
 
         [Fact]
-        public void The_prepared_save_of_an_overflow_keeps_no_settled_kills_and_a_rejoin_pays_never_twice()
+        public void A_normal_save_keeps_settled_kills_and_local_overflow_shards_without_rejoin_double_grants()
         {
             var session = GuestSession(146, out var actor, out string storePath);
             var profile = session.Profile;
@@ -47,11 +43,13 @@ namespace Issue73.Native.Tests
                 heat: profile.Run.Heat, waypoint: Waypoint.None);
 
             // 同じ乱数・同じ鞄で、この撃破が生むあふれを先に確かめる（1つの撃破から複数あふれ）。
-            var probeEvents = Rules.OnKill(profile.Clone(), kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
+            var probe = profile.Clone();
+            var probeEvents = Rules.OnKill(probe, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint);
-            var overflowUids = probeEvents.Where(e => e.SatchelOverflow != null)
-                .Select(e => e.SatchelOverflow.Uid).ToList();
-            Assert.True(overflowUids.Count >= 2, "この種子では1撃破から複数のあふれが出ない");
+            int overflowCount = probeEvents.Count(e => e.Kind == EventKind.Drop);
+            Assert.True(overflowCount >= 2);
+            int expectedShards = overflowCount * Content.SalvageShards(Rarity.Common);
+            int materialsBefore = profile.Material(Materials.Shard);
 
             Progress(session).Rewards.Add(kill);
             int killsBefore = profile.Run.Kills;
@@ -60,29 +58,27 @@ namespace Issue73.Native.Tests
 
             Call(session, "FlushPendingRunRewards");
 
-            // 撃破は精算済みでキューは空。全あふれが、台帳の識別子付きで一度ずつ送られた。
             Assert.Equal(0, Progress(session).Rewards.Count);
-            var held = ((TradeLedger)Get(session, "_trades")).Snapshot()
-                .Where(t => t.Kind == TradeKind.SatchelOverflowDust).ToList();
-            Assert.Equal(overflowUids.Count, held.Count);
-            Assert.Equal(overflowUids.OrderBy(u => u), held.Select(t => t.Uid).OrderBy(u => u));
-            Assert.All(held, t => Assert.Equal(LedgerId, t.LedgerId));
-            var sent = actor.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>().ToList();
-            Assert.Equal(held.Count, sent.Count);
-            Assert.Equal(held.Select(t => t.Token).OrderBy(t => t), sent.Select(m => m.token).OrderBy(t => t));
-
-            // 送信前の確定保存をディスクから読み直す: 精算済みの撃破は残らず、全あふれの取引が保存済み。
+            Assert.Empty(((TradeLedger)Get(session, "_trades")).Snapshot());
+            Assert.Empty(actor.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
+            Assert.Equal(0, Get(session, "_saveCount"));
+            Assert.Equal(materialsBefore, profile.Material(Materials.Shard));
+            Assert.Equal(0, DewPlayer.local.dreamDust);
+            session.SaveNow();
+            session.FlushSaves();
+            Assert.Equal(materialsBefore + expectedShards, profile.Material(Materials.Shard));
+            Call(session, "TickSatchelOverflow");
+            Assert.Equal(materialsBefore + expectedShards, profile.Material(Materials.Shard));
             var reloaded = new ProfileStore(new RealFileSystem(), storePath, 146).Load();
-            var saved = reloaded.PendingTrades.Where(t => t.Kind == TradeKind.SatchelOverflowDust).ToList();
-            Assert.Equal(held.Count, saved.Count);
-            Assert.All(saved, t => Assert.Equal(LedgerId, t.LedgerId));
-            Assert.Equal(held.Select(t => t.Token).OrderBy(t => t), saved.Select(t => t.Token).OrderBy(t => t));
+            Assert.Empty(reloaded.PendingTrades);
+            Assert.Equal(profile.Material(Materials.Shard), reloaded.Material(Materials.Shard));
 
             // 保存済みの状態で同じ遠征・同じゾーンへ再参加（巻き戻しなし）して報酬を流しても、二重には増えない。
             int killsAfterSettle = reloaded.Run.Kills;
             long masteryAfterSettle = reloaded.Hero("hero").Kills;
             int statsKillsAfterSettle = reloaded.Stats.Kills;
             int shardsAfterSettle = reloaded.Run.SatchelShards;
+            int materialsAfterSettle = reloaded.Material(Materials.Shard);
             int levelAfterSettle = reloaded.DreamLevel;
             int xpAfterSettle = reloaded.DreamXp;
             ulong rngAfterSettle = reloaded.RngState;
@@ -102,6 +98,7 @@ namespace Issue73.Native.Tests
             Assert.Equal(rngAfterSettle, reloaded.RngState);
             Assert.Equal(statsKillsAfterSettle, reloaded.Stats.Kills);
             Assert.Equal(shardsAfterSettle, reloaded.Run.SatchelShards);
+            Assert.Equal(materialsAfterSettle, reloaded.Material(Materials.Shard));
             Assert.Equal(satchelAfterSettle, reloaded.Run.Satchel.Select(r => r.Uid));
             Assert.Empty(rejoinedActor.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
             Assert.Empty(pendingKillsAtSave);
@@ -124,7 +121,7 @@ namespace Issue73.Native.Tests
             return GuestSession(profile, out actor, storePath);
         }
 
-        /// <summary>あふれの換金が成立する接続済みの参加者（ホストの台帳の識別子は照会済みと同じにする）。</summary>
+        /// <summary>A connected guest whose rewards are applied locally.</summary>
         private ClientSession GuestSession(Profile profile, out Actor actor, string storePath = null)
         {
             NetworkServer.active = false;

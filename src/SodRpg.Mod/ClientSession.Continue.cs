@@ -207,8 +207,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
         private void PrepareContinueSnapshot()
         {
             SyncInfinityContinueSnapshot();
-            // 本体通貨は既に保存済みのことがある。ここでは対価の義務だけを記録し、支払いは Capture 後へ。
-            PrepareSatchelOverflow();
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());
@@ -271,9 +270,6 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
         {
             if (BlockLobbyReturnedContinue(checkpoint.RunId)) return;
             FlushSaves();
-            // 保存地点より後の未送信分を、復元した取引と一緒に決済しない。
-            _satchelOverflowQueue.Clear();
-            _satchelOverflowBatch.Clear();
             var notes = new List<string>();
             checkpoint.Restore(Profile, notes: notes);
             ResetInfinityContinueState();

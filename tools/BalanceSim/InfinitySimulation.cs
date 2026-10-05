@@ -195,10 +195,9 @@ internal sealed class InfinitySimulation
 
     private static void Observe(List<GameEvent> events, InfinityRow? row, Profile profile)
     {
+        Rules.SettleSatchelOverflow(profile);
         foreach (var e in events)
         {
-            if (e.SatchelOverflow != null)
-                Rules.CompleteSatchelOverflowFallback(profile, e.SatchelOverflow, profile.Run?.RunId, e.SatchelOverflowShards);
             if (row == null || e.Kind != EventKind.Drop || !e.Rarity.HasValue) continue;
             row.Relics++;
             if (e.Rarity == Rarity.Epic) row.Epic++;
