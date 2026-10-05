@@ -223,6 +223,7 @@ namespace SodRpg.Mod
                     && shared.ChoiceRevision == state.ChoiceRevision && shared.SegmentEpoch == state.SegmentEpoch)
                 {
                     state.FixedZoneId = shared.FixedZoneId; state.Interval = shared.Interval;
+                    state.DifficultyId = shared.DifficultyId;
                     state.GraphEpoch = shared.GraphEpoch; state.RoomEpoch = shared.RoomEpoch;
                     state.ClearedCombatTotal = shared.ClearedCombatTotal; state.ClearsInCycle = shared.ClearsInCycle;
                     state.Phase = shared.Phase; state.SoulObserved = shared.SoulObserved;

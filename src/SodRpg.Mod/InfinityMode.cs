@@ -145,6 +145,8 @@ namespace SodRpg.Mod
             return native.RunId == run.RunId && native.NativeZoneIndex == zone.currentZoneIndex
                 && native.WorldSeed == zone.worldSeed && zone.currentZone != null && zone.currentZone.name == b.FixedZoneId
                 && a.FixedZoneId == b.FixedZoneId && a.Interval == b.Interval
+                && a.DifficultyId == b.DifficultyId
+                && (b.DifficultyId == null || b.DifficultyId == NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name)
                 && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
                 && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
                 && a.Phase == b.Phase && a.ChoiceRevision == b.ChoiceRevision
@@ -220,6 +222,7 @@ namespace SodRpg.Mod
             if (State == null) _initial = new InfinityRunState
             {
                 FixedZoneId = asset.name, Interval = ClientSession.HostChosenInfinityInterval,
+                DifficultyId = NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name,
             };
             if (State.FixedZoneId != asset.name) { Halt("Infinity fixed-zone identity changed."); return; }
             if (_refresh)

@@ -12,6 +12,7 @@ namespace SodRpg.Core.Game
             if (state == null) return null;
             return new JsonObject().Add("version", 1L).Add("fixedZone", state.FixedZoneId)
                 .Add("interval", (long)state.Interval).Add("total", state.ClearedCombatTotal)
+                .Add("difficulty", state.DifficultyId)
                 .Add("cycle", (long)state.ClearsInCycle).Add("graph", state.GraphEpoch)
                 .Add("segment", state.SegmentEpoch).Add("room", state.RoomEpoch).Add("phase", (long)state.Phase)
                 .Add("lastNode", (long)state.LastCountedNode).Add("soul", state.SoulObserved)
@@ -38,9 +39,13 @@ namespace SodRpg.Core.Game
                 throw new LedgerFormatException("Invalid infinity zone or interval");
             if (!j.TryGet("intent", out object intent) || (intent != null && !(intent is string)))
                 throw new LedgerFormatException("Invalid infinity transition intent");
+            if (j.TryGet("difficulty", out object difficulty) && difficulty != null
+                && (!(difficulty is string difficultyName) || difficultyName.Length == 0 || difficultyName.Length > 256))
+                throw new LedgerFormatException("Invalid infinity difficulty");
             var state = new InfinityRunState
             {
                 FixedZoneId = zone, Interval = interval, ClearedCombatTotal = InfinityLong(j, "total"),
+                DifficultyId = Str(j, "difficulty"),
                 ClearsInCycle = (int)InfinityLong(j, "cycle", 0, interval), GraphEpoch = InfinityLong(j, "graph"),
                 SegmentEpoch = InfinityLong(j, "segment"), RoomEpoch = InfinityLong(j, "room"),
                 Phase = (InfinityPhase)InfinityLong(j, "phase", 0, (long)InfinityPhase.Returning),

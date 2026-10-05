@@ -324,6 +324,9 @@ namespace SodRpg.Core.Game
         public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
         public bool LastInfinityEnabled { get; set; }
         public int LastInfinityInterval { get; set; } = 10;
+        public InfinityRewardBudget InfinityRewardBudget { get; set; } = new InfinityRewardBudget();
+        public SortedDictionary<string, InfinityRecord> InfinityRecords { get; } = new SortedDictionary<string, InfinityRecord>(StringComparer.Ordinal);
+        public long InfinityRecordsRevision { get; internal set; }
 
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
@@ -439,6 +442,7 @@ namespace SodRpg.Core.Game
                 LastDreamDepth = LastDreamDepth,
                 LastInfinityEnabled = LastInfinityEnabled,
                 LastInfinityInterval = LastInfinityInterval,
+                InfinityRewardBudget = InfinityRewardBudget.Clone(),
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 CompletedRunId = CompletedRunId,
@@ -449,6 +453,7 @@ namespace SodRpg.Core.Game
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),
             };
+            Game.InfinityRecords.CloneInto(this, c);
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());

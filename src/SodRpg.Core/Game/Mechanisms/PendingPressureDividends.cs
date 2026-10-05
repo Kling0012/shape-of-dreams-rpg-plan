@@ -63,7 +63,7 @@ namespace SodRpg.Core.Game
                 var result = Rules.ApplyPressureDividend(profile, reward);
                 _pending.Dequeue();
                 count++;
-                notify?.Invoke(result);
+                if (result != null) notify?.Invoke(result);
             }
             return count;
         }

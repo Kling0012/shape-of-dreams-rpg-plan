@@ -118,6 +118,8 @@ namespace SodRpg.Core.Game
                 .Add("lastDreamDepth", (long)p.LastDreamDepth)
                 .Add("lastInfinityEnabled", p.LastInfinityEnabled)
                 .Add("lastInfinityInterval", (long)p.LastInfinityInterval)
+                .Add("infinityRewardBudget", WriteInfinityRewardBudget(p.InfinityRewardBudget))
+                .Add("infinityRecords", WriteInfinityRecords(p))
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
@@ -226,6 +228,7 @@ namespace SodRpg.Core.Game
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
                 .Add("milestonePowerApplied", r.MilestonePowerApplied)
                 .Add("developerGranted", r.DeveloperGranted)
+                .Add("infinityFreeSupply", r.InfinityFreeSupply)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -251,6 +254,8 @@ namespace SodRpg.Core.Game
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
             ReadInfinitySettings(p, b);
+            p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
+            ReadInfinityRecords(p, b);
             p.CompletedRunId = Str(b, "completedRunId");
             if (b.TryGet("completedRunSecuredReturn", out object securedReturn))
             {
@@ -612,6 +617,7 @@ namespace SodRpg.Core.Game
                 AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
                 DeveloperGranted = Bool(j, "developerGranted", false),
+                InfinityFreeSupply = j.TryGet("infinityFreeSupply", out _) && RequiredInfinityBool(j, "infinityFreeSupply"),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)
                     ? Clamp(Long(j, "awakenLevel"), 0, Content.MaxAwakenLevel)

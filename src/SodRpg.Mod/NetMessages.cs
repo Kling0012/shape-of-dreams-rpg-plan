@@ -182,7 +182,8 @@ namespace SodRpg.Mod
         // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
         // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
-        public const int Version = 19;
+        // Version 20 requires persistent Infinity reward caps; cap-less participants are incompatible.
+        public const int Version = 20;
     }
 
     [Serializable]

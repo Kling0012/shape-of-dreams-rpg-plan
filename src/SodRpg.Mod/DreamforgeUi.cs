@@ -79,6 +79,10 @@ namespace SodRpg.Mod
         private string _selected;
         private string _heroSel;
         private Vector2 _scrollList, _scrollDetail, _scrollRecords;
+        private long _infinityRecordsRevision;
+        private Profile _infinityRecordsProfile;
+        private bool _infinityRecordsJapanese;
+        private string _infinityRecordsText;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
         private string _confirmAffixReroll;
@@ -579,8 +583,11 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             DrawWaypointPicker(run);
             if (run.Infinity != null)
+            {
                 GUILayout.Label(Loc.T("インフィニティ：確保は全員帰還して終了、潜行は全員続行。ホストが決定します。",
                     "Infinity: Secure returns everyone and ends the run; Delve continues for everyone. The host decides."), _st.Warn);
+                DrawInfinityCaps();
+            }
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
             int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
@@ -595,6 +602,9 @@ namespace SodRpg.Mod
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
+            if (run.Infinity != null)
+                GUILayout.Label(Loc.T("以下の潜行ボーナス・満杯時の欠片化は上限前の見積もりです。無料出力予算で減少し、抑止分の代替報酬はありません。",
+                    "Delve bonuses and overflow-to-shard amounts below are pre-cap estimates. Free-output budgets may reduce them; withheld rewards have no substitute."), _st.Warn);
             GUILayout.Label(_secureBonusText, _st.Small);
             if (_secureOverflowText != null) GUILayout.Label(_secureOverflowText, _st.Warn);
             GUILayout.Label(_secureDelveText, _st.Small);
@@ -729,10 +739,12 @@ namespace SodRpg.Mod
                 if (def == null) continue;
                 if (!_waypointCards.TryGetValue(id, out var label))
                     _waypointCards[id] = label = $"<b>{def.Name}</b>\n<color=#a8e9cd>{def.Description}</color>";
-                GUI.enabled = _s.CanChooseRunRules;
+                bool rewardAvailable = InfinityRewards.CanChooseWaypoint(_s.Profile, id, out string unavailableReason);
+                GUI.enabled = _s.CanChooseRunRules && rewardAvailable;
                 if (GUILayout.Button(label, _st.RowWrap, GUILayout.MinHeight(56)))
                     SetStatus(_s.ChooseWaypoint(id));
                 GUI.enabled = true;
+                if (!rewardAvailable) GUILayout.Label(unavailableReason, _st.Warn);
             }
             if (run.OfferedWaypoints.Count > 0)
             {
@@ -3084,6 +3096,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T(
                 $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}",
                 $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}"), _st.Small);
+            DrawInfinityRecords(p);
             if (p.Run != null)
             {
                 GUILayout.Label(Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
@@ -3139,6 +3152,73 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawInfinityCaps()
+        {
+            GUILayout.Label(Loc.T("報酬上限：部屋ごとの撃破機会50%＋実戦闘時間予算。戦闘1時間あたり無料遺物24個、Epic以上の保証は別枠0.25個。待機・休止・ロード・再接続では補充しません。",
+                "Reward caps: 50% kill opportunities per room plus combat-time budgets. Free relics: 24/combat hour; Epic+ guarantees: a separate 0.25/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
+            GUILayout.Label(Loc.T("欠片・調律石・夢XP・星XP・覚醒・換金機会にも上限があります。Heatボーナスと満杯時の欠片化も対象です。支払済みの対価・旧所持品の回収・有償製作は無料供給と別扱いです。",
+                "Shards, tuning, Dream XP, Star XP, awakening and exchange opportunities are capped too, including Heat bonuses and overflow conversion. Paid rewards, recovered existing items and paid crafting are separate from free supply."), _st.Small);
+            GUILayout.Label(Loc.T("インフィニティ中のMOD追加ゴールド／ダストボーナスは0です。本体の基本収入は変更せず、旧資産を使う有償取得も含めた総取得量の上限ではありません。",
+                "MOD-added gold/dust bonuses are zero in Infinity. Native base income is unchanged; these are not total-acquisition caps including spending existing assets."), _st.Small);
+        }
+
+        private void DrawInfinityRecords(Profile profile)
+        {
+            GUILayout.Space(6);
+            GUILayout.Label(Loc.T("インフィニティ ─ 設定別の確保帰還", "Infinity ─ secured returns by settings"), _st.Header);
+            GUILayout.Label(Loc.T("最深確保は帰還時の累計Combatクリア部屋数で比較し、その帰還の圧段階を併記します。敗北・切断・未帰還の到達は更新しません。",
+                "Best secured return is ranked by cumulative cleared Combat rooms, with pressure at that return. Defeats, disconnects and unreturned progress do not update it."), _st.Small);
+            CacheInfinityRecords(profile);
+            GUILayout.Label(_infinityRecordsText, _st.Small);
+            if (profile.InfinityRecords.Count >= InfinityRecords.MaximumConfigurations)
+                GUILayout.Label(Loc.T("設定グループの保存上限です。既存グループだけ更新できます。",
+                    "Configuration storage is full. Only existing groups can be updated."), _st.Warn);
+            DrawInfinityCaps();
+        }
+
+        private void CacheInfinityRecords(Profile profile)
+        {
+            if (_infinityRecordsText != null && ReferenceEquals(_infinityRecordsProfile, profile)
+                && _infinityRecordsJapanese == Loc.Japanese && _infinityRecordsRevision == profile.InfinityRecordsRevision) return;
+            _infinityRecordsProfile = profile;
+            _infinityRecordsJapanese = Loc.Japanese;
+            _infinityRecordsRevision = profile.InfinityRecordsRevision;
+            if (profile.InfinityRecords.Count == 0)
+            {
+                _infinityRecordsText = Loc.T("確保して帰還した記録はまだありません。", "No secured-return records yet.");
+                return;
+            }
+            var text = new System.Text.StringBuilder();
+            foreach (var pair in profile.InfinityRecords)
+            {
+                var record = pair.Value;
+                if (text.Length > 0) text.Append("\n\n");
+                string zone = InfinitySettingName(record.FixedZoneId, false);
+                string difficulty = InfinitySettingName(record.DifficultyId, true);
+                text.Append(Loc.T(
+                    $"<b>{zone} · {difficulty}</b>　周期{record.Interval}部屋 · 夢の深さ{record.DreamDepth}\n最高帰還：累計{record.BestReturnedRooms}部屋 · 圧段階{record.PressureAtBestReturn}/100　帰還{record.ReturnCount}回",
+                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/100  Returns {record.ReturnCount}"));
+                if (record.LastReturnedRooms.HasValue)
+                    text.Append(Loc.T(
+                        $"\n直近の帰還：累計{record.LastReturnedRooms.Value}部屋 · 圧段階{record.LastPressure.Value}/100",
+                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/100"));
+            }
+            _infinityRecordsText = text.ToString();
+        }
+
+        private static string InfinitySettingName(string id, bool difficulty)
+        {
+            if (string.IsNullOrEmpty(id)) return Loc.T("難易度未記録", "Unrecorded difficulty");
+            string key = difficulty ? "Difficulty_" + id + "_Name" : id + "_Name";
+            var languages = DewLocalization.buildData.dataByLanguage;
+            if (languages.TryGetValue(Loc.Japanese ? "ja-JP" : "en-US", out var language)
+                && language.ui.TryGetValue(key, out string label)) return label;
+            if (languages.TryGetValue("en-US", out language) && language.ui.TryGetValue(key, out label)) return label;
+            string readable = id.StartsWith(difficulty ? "diff" : "Zone_", StringComparison.Ordinal)
+                ? id.Substring(difficulty ? 4 : 5) : id;
+            return readable.Replace('_', ' ').Replace("<", "").Replace(">", "");
         }
     }
 }

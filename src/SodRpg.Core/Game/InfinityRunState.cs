@@ -11,6 +11,7 @@ namespace SodRpg.Core.Game
         public const int MaximumGraphNodes = 4096;
         public bool Enabled => true;
         public string FixedZoneId { get; set; }
+        public string DifficultyId { get; set; }
         public int Interval { get; set; } = 10;
         public long ClearedCombatTotal { get; set; }
         public int ClearsInCycle { get; set; }
@@ -93,6 +94,7 @@ namespace SodRpg.Core.Game
         {
             var copy = new InfinityRunState {
                 FixedZoneId = FixedZoneId, Interval = Interval, ClearedCombatTotal = ClearedCombatTotal,
+                DifficultyId = DifficultyId,
                 ClearsInCycle = ClearsInCycle, GraphEpoch = GraphEpoch, SegmentEpoch = SegmentEpoch,
                 RoomEpoch = RoomEpoch, Phase = Phase, LastCountedNode = LastCountedNode, SoulObserved = SoulObserved,
                 TransitionIntent = TransitionIntent, ChoiceRevision = ChoiceRevision,
