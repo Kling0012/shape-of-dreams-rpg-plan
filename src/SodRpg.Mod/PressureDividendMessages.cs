@@ -11,6 +11,9 @@ namespace SodRpg.Mod
         public uint heroNetId;
         public string runId;
         public int zoneId;
+        public long graphEpoch;
+        public long segmentEpoch;
+        public long roomEpoch;
         public long spawnId;
         public string ownerId;
         public string rewardNonce;
@@ -20,12 +23,13 @@ namespace SodRpg.Mod
         {
             protocol = Protocol.Version, heroNetId = heroNetId, runId = reward.RunId, zoneId = reward.ZoneId,
             spawnId = reward.SpawnId, ownerId = reward.OwnerId, rewardNonce = reward.RewardNonce, shardCount = reward.ShardCount,
+            graphEpoch = reward.GraphEpoch, segmentEpoch = reward.SegmentEpoch, roomEpoch = reward.RoomEpoch,
         };
 
         public PressureDividendReward ToReward()
         {
             if (protocol != Protocol.Version || shardCount != 1) throw new InvalidOperationException("Invalid pressure dividend receipt.");
-            return new PressureDividendReward(runId, zoneId, spawnId, ownerId, rewardNonce);
+            return new PressureDividendReward(runId, zoneId, spawnId, ownerId, rewardNonce, graphEpoch, segmentEpoch, roomEpoch);
         }
     }
 }

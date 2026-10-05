@@ -68,6 +68,31 @@ namespace SodRpg.Mod
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
+    // Fixture Infinity patch classes (name prefix "FixtureInfinity") let the production
+    // PatchEachClass infinity branches run under real Harmony. The stub mirrors the real
+    // CompletePatchInstallation contract: fewer native patches than classes disables only
+    // Infinity; the rest of the mod keeps running.
+    internal static class InfinityMode
+    {
+        internal const int NativePatchClassCount = 2;
+        internal static readonly List<string> DisabledReasons = new List<string>();
+        internal static int? CompletedInstallCount;
+        internal static bool Available { get; private set; }
+        internal static void Reset() { DisabledReasons.Clear(); CompletedInstallCount = null; Available = false; }
+        internal static bool IsNativePatch(Type patch) =>
+            patch != null && patch.Name.StartsWith("FixtureInfinity", StringComparison.Ordinal);
+        internal static void CompletePatchInstallation(int installedCount)
+        {
+            CompletedInstallCount = installedCount;
+            if (installedCount != NativePatchClassCount)
+            {
+                Available = false;
+                DisabledReasons.Add("Infinity native interception is incomplete.");
+            }
+            else Available = true;
+        }
+        internal static void DisableFeature(string reason) => DisabledReasons.Add(reason);
+    }
     internal sealed class PerfMeter
     {
         public void Frame(float delta) { }

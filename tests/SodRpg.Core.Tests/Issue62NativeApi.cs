@@ -5,6 +5,12 @@ using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
+    // Existing native scenarios model ordinary runs only; their native Infinity state is OFF.
+    internal static class InfinityMode
+    {
+        internal static InfinityRunState State => null;
+        internal static bool Available => false;
+    }
     internal struct EventInfoKill { public Actor actor; public Entity victim; }
     internal partial class Entity
     {

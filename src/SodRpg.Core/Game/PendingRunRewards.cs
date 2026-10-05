@@ -8,6 +8,9 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; }
         public int ZoneIndex { get; }
+        public long GraphEpoch { get; }
+        public long SegmentEpoch { get; }
+        public long RoomEpoch { get; }
         public int RoomIndex { get; }
         public MonsterTier Tier { get; }
         public int Level { get; }
@@ -27,11 +30,12 @@ namespace SodRpg.Core.Game
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
             NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0,
             int? heat = null, Waypoint? waypoint = null, string bossTypeName = null,
-            bool bossDropNightmare = false, int bossDropDepth = 0)
+            bool bossDropNightmare = false, int bossDropDepth = 0, long graphEpoch = 0, long segmentEpoch = 0, long roomEpoch = 0)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
             EventId = eventId; MonsterNetId = monsterNetId;
+            GraphEpoch = graphEpoch; SegmentEpoch = segmentEpoch; RoomEpoch = roomEpoch;
             Heat = heat; Waypoint = waypoint;
             BossTypeName = bossTypeName; BossDropNightmare = bossDropNightmare;
             BossDropDepth = Math.Max(0, Math.Min(5, bossDropDepth));
@@ -46,6 +50,14 @@ namespace SodRpg.Core.Game
         public bool HasFor(string runId, int zoneIndex) => _kills.Count > 0
             && _kills.Peek().RunId == runId && _kills.Peek().ZoneIndex == zoneIndex;
         public void Add(PendingRunKill kill) { if (!string.IsNullOrEmpty(kill.RunId)) _kills.Enqueue(kill); }
+        public bool HasBeforeGraph(string runId, long graph) {
+            foreach (var kill in _kills) if (kill.RunId == runId && kill.GraphEpoch < graph) return true;
+            return false;
+        }
+        public bool HasBeforeSegment(string runId, long segment) {
+            foreach (var kill in _kills) if (kill.RunId == runId && kill.SegmentEpoch < segment) return true;
+            return false;
+        }
         public void Clear() => _kills.Clear();
 
         /// <summary>
@@ -53,7 +65,7 @@ namespace SodRpg.Core.Game
         /// A kill leaves the queue only after its reward succeeded: a throwing reward keeps the
         /// fact queued (at the head) so settlement can retry it instead of dropping it (#72).
         /// </summary>
-        public int Drain(string runId, int zoneIndex, Action<PendingRunKill> reward)
+        public int Drain(string runId, int zoneIndex, Action<PendingRunKill> reward, long? segmentEpoch = null)
         {
             int awarded = 0;
             while (_kills.Count > 0)
@@ -61,6 +73,7 @@ namespace SodRpg.Core.Game
                 var kill = _kills.Peek();
                 if (kill.RunId != runId) { _kills.Dequeue(); continue; }
                 if (kill.ZoneIndex != zoneIndex) break;
+                if (segmentEpoch.HasValue && kill.SegmentEpoch != segmentEpoch.Value) break;
                 reward(kill);
                 _kills.Dequeue();
                 awarded++;

@@ -38,7 +38,9 @@ namespace SodRpg.Mod
         private string _killRetirementRunId;
         private int _killRetirementZone = -1;
         private KillClassificationCheckpoint _hostKillRestore;
+        private long _killRetirementGraph;
 
+        private long _dividendRetirementGraph;
         internal static KillClassificationCheckpoint TakeHostKillClassification(string runId)
         {
             if (_hostSession == null) return null;
@@ -285,11 +287,25 @@ namespace SodRpg.Mod
                 {
                     _killRetirementRunId = _killClassifications.RunId;
                     _killRetirementZone = -1;
+                    _killRetirementGraph = 0;
+                    _dividendRetirementGraph = 0;
                 }
                 if (_zone.currentZoneIndex > _killRetirementZone)
                 {
                     _killRetirementZone = _zone.currentZoneIndex;
                     _killClassifications.RetireUnobservedFactsBeforeZone(_killRetirementZone);
+                }
+                long graph = Profile.Run?.Infinity?.GraphEpoch ?? 0;
+                if (graph > _killRetirementGraph)
+                {
+                    _killRetirementGraph = graph;
+                    _killClassifications.RetireUnobservedFactsBeforeGraph(graph);
+                    DeferKillSave();
+                }
+                if (graph > _dividendRetirementGraph && _pendingPressureDividends.RetireBeforeGraph(graph))
+                {
+                    _dividendRetirementGraph = graph;
+                    DeferKillSave();
                 }
             }
             if (_writer != null && _killSaveRevision > 0 && _writer.WrittenRevision >= _killSaveRevision)

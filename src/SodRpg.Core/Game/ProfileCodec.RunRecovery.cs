@@ -11,6 +11,11 @@ namespace SodRpg.Core.Game
             if (state == null) return null;
             return new JsonObject().Add("runId", state.RunId).Add("zone", (long)state.ZoneIndex)
                 .Add("lastArrival", (long)state.LastArrival)
+                .Add("graph", state.GraphEpoch).Add("segment", state.SegmentEpoch)
+                .Add("retiredSegment", state.RetiredBeforeSegment).Add("arrivalGraph", state.ArrivalGraph.HasValue ? (object)state.ArrivalGraph.Value : null)
+                .Add("arrivalSegment", state.ArrivalSegment).Add("publisherRetiredSegment", state.PublisherRetiredBeforeSegment)
+                .Add("dividendRetiredGraph", state.DividendRetiredBeforeGraph)
+                .Add("dividendReceiptGraphs", state.DividendReceiptGraphs.Select(x => (object)new JsonObject().Add("key", x.Key).Add("graph", x.Value)).ToList())
                 .Add("arrivals", state.Arrivals.Select(x => (object)(long)x).ToList())
                 .Add("committed", state.CommittedChoices.Select(x => (object)x).ToList())
                 .Add("kills", state.PendingKills.Select(x => (object)WritePendingKill(x)).ToList())
@@ -20,7 +25,8 @@ namespace SodRpg.Core.Game
                 .Add("publisherVictory", state.PublisherVictory.HasValue ? (object)state.PublisherVictory.Value : null)
                 .Add("dividendRunId", state.DividendRunId)
                 .Add("dividends", state.PendingDividends.Select(x => (object)new JsonObject().Add("runId", x.RunId)
-                    .Add("zone", (long)x.ZoneId).Add("spawn", x.SpawnId).Add("owner", x.OwnerId).Add("nonce", x.RewardNonce)).ToList())
+                    .Add("zone", (long)x.ZoneId).Add("spawn", x.SpawnId).Add("owner", x.OwnerId).Add("nonce", x.RewardNonce)
+                    .Add("graph", x.GraphEpoch).Add("segment", x.SegmentEpoch).Add("roomEpoch", x.RoomEpoch)).ToList())
                 .Add("dividendNonces", state.DividendNonces.Select(x => (object)x).ToList())
                 .Add("dividendDeaths", state.DividendDeaths.Select(x => (object)x).ToList())
                 .Add("growthRunId", state.GrowthRunId)
@@ -35,6 +41,11 @@ namespace SodRpg.Core.Game
             {
                 RunId = Str(j, "runId"), ZoneIndex = Clamp(Long(j, "zone"), -1, int.MaxValue),
                 LastArrival = Clamp(Long(j, "lastArrival"), -1, int.MaxValue),
+                GraphEpoch = OptionalInfinityLong(j, "graph"), SegmentEpoch = OptionalInfinityLong(j, "segment"),
+                RetiredBeforeSegment = OptionalInfinityLong(j, "retiredSegment"), ArrivalSegment = OptionalInfinityLong(j, "arrivalSegment"),
+                ArrivalGraph = j.TryGet("arrivalGraph", out object arrivalGraph) && arrivalGraph != null ? (long?)InfinityLong(j, "arrivalGraph") : null,
+                PublisherRetiredBeforeSegment = OptionalInfinityLong(j, "publisherRetiredSegment"),
+                DividendRetiredBeforeGraph = OptionalInfinityLong(j, "dividendRetiredGraph"),
                 PendingResultRunId = Str(j, "resultRunId"), PendingVictory = NullableBool(j, "victory"),
                 PublisherTerminalChoices = Str(j, "publisherTerminal"), PublisherVictory = NullableBool(j, "publisherVictory"),
                 DividendRunId = Str(j, "dividendRunId"), GrowthRunId = Str(j, "growthRunId"),
@@ -50,11 +61,22 @@ namespace SodRpg.Core.Game
             foreach (object item in Array(j, "dividends"))
                 if (item is JsonObject dividend)
                     state.PendingDividends.Add(new PressureDividendReward(Str(dividend, "runId"),
-                        (int)Long(dividend, "zone"), Long(dividend, "spawn"), Str(dividend, "owner"), Str(dividend, "nonce")));
+                        (int)Long(dividend, "zone"), Long(dividend, "spawn"), Str(dividend, "owner"), Str(dividend, "nonce"),
+                        OptionalInfinityLong(dividend, "graph"), OptionalInfinityLong(dividend, "segment"), OptionalInfinityLong(dividend, "roomEpoch")));
             foreach (object item in Array(j, "dividendNonces"))
                 if (item is string nonce) state.DividendNonces.Add(nonce);
             foreach (object item in Array(j, "dividendDeaths"))
                 if (item is string death) state.DividendDeaths.Add(death);
+            if (j.TryGet("dividendReceiptGraphs", out object graphReceipts) && !(graphReceipts is List<object>))
+                throw new LedgerFormatException("Invalid infinity dividend receipt graphs");
+            foreach (object item in Array(j, "dividendReceiptGraphs"))
+            {
+                if (!(item is JsonObject receipt)) throw new LedgerFormatException("Invalid infinity dividend receipt");
+                string key = Str(receipt, "key");
+                if (string.IsNullOrEmpty(key) || key.Length < 3 || (key[0] != 'n' && key[0] != 'd') || key[1] != ':'
+                    || state.DividendReceiptGraphs.ContainsKey(key)) throw new LedgerFormatException("Invalid infinity dividend receipt key");
+                state.DividendReceiptGraphs[key] = InfinityLong(receipt, "graph");
+            }
             foreach (object item in Array(j, "growth"))
                 if (item is JsonObject growth)
                     state.Growth.Add(new RunGrowthSave { Owner = Str(growth, "owner"), GrowthId = Str(growth, "id"),
@@ -68,6 +90,7 @@ namespace SodRpg.Core.Game
                 .Add("runId", kill.RunId).Add("zone", (long)kill.ZoneIndex).Add("room", (long)kill.RoomIndex)
                 .Add("tier", (long)kill.Tier).Add("level", (long)kill.Level).Add("nightmare", (long)kill.Nightmare)
                 .Add("variant", kill.VariantId).Add("hero", kill.HeroKey)
+                .Add("graph", kill.GraphEpoch).Add("segment", kill.SegmentEpoch).Add("roomEpoch", kill.RoomEpoch)
                 .Add("eventId", kill.EventId).Add("monster", (long)kill.MonsterNetId);
             // #71: 戦ったときの深度と道標。記録のない旧保存データは読み込み時に null へ戻る。
             if (kill.Heat.HasValue) j.Add("heat", (long)kill.Heat.Value);
@@ -91,13 +114,14 @@ namespace SodRpg.Core.Game
                 (NightmareAffix)Long(j, "nightmare"), Str(j, "variant"), Str(j, "hero"), Str(j, "eventId"),
                 (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))), heat, waypoint,
                 Str(j, "bossTypeName"), NullableBool(j, "bossDropNightmare") ?? false,
-                Clamp(Long(j, "bossDropDepth"), 0, 5));
+                Clamp(Long(j, "bossDropDepth"), 0, 5), OptionalInfinityLong(j, "graph"), OptionalInfinityLong(j, "segment"), OptionalInfinityLong(j, "roomEpoch"));
         }
 
         private static JsonObject WriteKillClassification(KillClassificationCheckpoint state)
         {
             if (state == null) return null;
             return new JsonObject().Add("runId", state.RunId).Add("clientId", state.ClientId)
+                .Add("retiredGraph", state.RetiredBeforeGraph)
                 .Add("receipts", state.Receipts.Select(x => (object)new JsonObject().Add("stream", x.StreamId)
                     .Add("receivedThrough", x.ReceivedThrough).Add("acknowledgedThrough", x.AcknowledgedThrough)
                     .Add("skippedThrough", x.SkippedThrough).Add("skippedFrom", x.SkippedFrom)
@@ -109,7 +133,7 @@ namespace SodRpg.Core.Game
                 .Add("resolved", state.ResolvedEventIds.Select(x => (object)x).ToList())
                 .Add("expiredMonsters", state.ExpiredMonsterNetIds.Select(x => (object)(long)x).ToList())
                 .Add("expiredVictims", state.ExpiredVictims.Select(x => (object)new JsonObject()
-                    .Add("stream", x.StreamId).Add("monster", (long)x.MonsterNetId).Add("observer", x.ObservationSessionId)).ToList())
+                    .Add("stream", x.StreamId).Add("monster", (long)x.MonsterNetId).Add("observer", x.ObservationSessionId).Add("graph", x.GraphEpoch)).ToList())
                 .Add("legacyVictims", state.LegacyResolvedVictims.Select(x => (object)(long)x).ToList())
                 .Add("hostSequence", state.HostSequence)
                 .Add("hostFacts", state.HostFacts.Select(x => (object)WriteKillFact(x)).ToList())
@@ -126,6 +150,7 @@ namespace SodRpg.Core.Game
             var j = new JsonObject()
                 .Add("runId", fact.RunId).Add("eventId", fact.EventId).Add("monster", (long)fact.MonsterNetId)
                 .Add("zone", (long)fact.ZoneIndex).Add("nightmare", (long)fact.Nightmare)
+                .Add("graph", fact.GraphEpoch).Add("segment", fact.SegmentEpoch).Add("roomEpoch", fact.RoomEpoch)
                 .Add("variant", fact.VariantId).Add("sequence", fact.Sequence).Add("stream", fact.StreamId);
             if (!string.IsNullOrEmpty(fact.BossTypeName))
                 j.Add("bossTypeName", fact.BossTypeName).Add("bossDropNightmare", fact.BossDropNightmare)
@@ -138,7 +163,7 @@ namespace SodRpg.Core.Game
             Clamp(Long(fact, "zone"), -1, int.MaxValue), (NightmareAffix)Long(fact, "nightmare"),
             Str(fact, "variant"), Long(fact, "sequence"), Str(fact, "stream"),
             Str(fact, "bossTypeName"), NullableBool(fact, "bossDropNightmare") ?? false,
-            Clamp(Long(fact, "bossDropDepth"), 0, 5));
+            Clamp(Long(fact, "bossDropDepth"), 0, 5), OptionalInfinityLong(fact, "graph"), OptionalInfinityLong(fact, "segment"), OptionalInfinityLong(fact, "roomEpoch"));
 
         private static KillClassificationCheckpoint ReadKillClassification(JsonObject parent)
         {
@@ -147,6 +172,7 @@ namespace SodRpg.Core.Game
             {
                 RunId = Str(j, "runId"), ClientId = Str(j, "clientId"),
                 HostSequence = System.Math.Max(0, Long(j, "hostSequence")),
+                RetiredBeforeGraph = OptionalInfinityLong(j, "retiredGraph"),
             };
             foreach (object item in Array(j, "receipts"))
                 if (item is JsonObject r)
@@ -207,7 +233,7 @@ namespace SodRpg.Core.Game
                 {
                     long monster = Long(victim, "monster");
                     if (monster > 0 && monster <= uint.MaxValue)
-                        state.ExpiredVictims.Add(new KillVictimKey(Str(victim, "stream"), (uint)monster, Str(victim, "observer")));
+                        state.ExpiredVictims.Add(new KillVictimKey(Str(victim, "stream"), (uint)monster, Str(victim, "observer"), OptionalInfinityLong(victim, "graph")));
                 }
             return state;
         }
@@ -217,5 +243,8 @@ namespace SodRpg.Core.Game
 
         private static bool? NullableBool(JsonObject parent, string key) =>
             parent.TryGet(key, out object value) && value is bool result ? result : (bool?)null;
+
+        private static long OptionalInfinityLong(JsonObject parent, string key) =>
+            parent.TryGet(key, out _) ? InfinityLong(parent, key) : 0;
     }
 }
