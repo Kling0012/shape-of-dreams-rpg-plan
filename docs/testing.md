@@ -100,6 +100,17 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## #146 鞄あふれ準備保存後の再参加
+
+`Issue73.Native.Tests.SatchelOverflowSaveTests` の1件は、参加者の満杯の鞄から
+`GrantPendingKill → Emit → 換金準備保存` を実行し、実ディスクの保存を読み直して
+同じ遠征・ゾーンへ再参加する。精算済みの撃破が保存の `PendingKills` に残らず、
+熟練度・経験値・乱数・戦利品が再付与されないことを確認する。
+複数のあふれの取引が台帳ID付きで保存されることも同じケースで確認する。
+一括化前の `5ea38b5` の Mod 精算・換金・保存経路へ差し替えた一時環境では、
+再参加後の撃破数が期待値1に対して2となり、同じテストが失敗することを確認した。
+本体API・通信はダブルであり、ゲーム実機の異常終了・実通信は対象外。
+
 ## #62 圧の追加報酬の死亡順序
 
 `AuthoredMechanismNativeTests` の `Pressure_dividend_*`（3メソッド、17ケース）は、

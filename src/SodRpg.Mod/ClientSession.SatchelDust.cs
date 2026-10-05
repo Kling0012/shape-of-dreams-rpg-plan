@@ -56,6 +56,7 @@ namespace SodRpg.Mod
                         count = 0;
                     }
                 }
+                long ledgerId = _hostLedgerId; // TradeUnavailable で確認済みの非0の台帳を、準備保存より前に全件へ設定する。
                 int next = 0;
                 try
                 {
@@ -63,11 +64,10 @@ namespace SodRpg.Mod
                     {
                         try
                         {
-                            var trade = _trades.BeginSatchelOverflow(
+                            var t = _trades.BeginSatchelOverflow(
                                 drained[next].SatchelOverflow, runId, drained[next].SatchelOverflowShards, Time.unscaledTime);
-                            // 未送信でも復元後に「同じ台帳に記録なし」を確かめられるよう、保存より先に設定する。
-                            trade.LedgerId = _hostLedgerId;
-                            _satchelOverflowBatch.Add(trade);
+                            t.LedgerId = ledgerId;
+                            _satchelOverflowBatch.Add(t);
                         }
                         catch (Exception ex)
                         {

@@ -137,8 +137,8 @@ namespace SodRpg.Mod
     internal struct EventInfoAttackEffect { public Actor actor; public Entity victim; public ReactionChain chain; }
     internal sealed class DewPlayer
     {
-        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static DewPlayer local;
+        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
@@ -313,6 +313,7 @@ namespace SodRpg.Mod
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
+        internal static bool ExpeditionHalted => false;
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
         internal static bool IsTechnicalRefresh => false;
@@ -336,6 +337,7 @@ namespace SodRpg.Mod
     }
     internal sealed partial class ClientSession
     {
+        internal static void StopInfinityRun(string notice = null) { }
         public Profile Profile;
         public Hero LocalHero;
         // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。
@@ -354,6 +356,7 @@ namespace SodRpg.Mod
         private readonly TradeLedger _trades = new TradeLedger();
         private long _hostLedgerId;
         private double _nextLedgerProbeAt;
+        // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
         private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         public bool HostConfirmed;
         private long _infinityObservedClears;

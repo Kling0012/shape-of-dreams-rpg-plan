@@ -151,7 +151,8 @@ namespace SodRpg.Core.Game
                 || b.GuaranteedRelics + 1e-9 < guaranteedOutputs || b.Relics + 1e-9 < guaranteedOutputs)))
             { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
             double ev = ExpectedKillCosts(p.Run, rollTier, heat, waypoint, nightmare, tier == MonsterTier.Boss ? bossTypeName : null, bossDropNightmare, bossDropDepth, out double legendary);
-            if (guaranteed) { ev = tier == MonsterTier.Boss && BossSets.TryGetSet(bossTypeName, out _) ? BossSets.DropChance(bossDropNightmare, bossDropDepth) : 0; legendary = ev; }
+            // The guarantee covers the Epic floor, not random Legendary rolls; legendary already includes the boss set once.
+            if (guaranteed) ev = tier == MonsterTier.Boss && BossSets.TryGetSet(bossTypeName, out _) ? BossSets.DropChance(bossDropNightmare, bossDropDepth) : 0;
             if (b.HighRare + 1e-12 < ev || b.Legendary + 1e-12 < legendary)
             { if (b.RejectedKills < long.MaxValue) b.RejectedKills++; return false; }
             if (rollTier == MonsterTier.Lesser) { b.LesserTime = Math.Max(0, b.LesserTime - 1); b.LesserRoom = Math.Max(0, b.LesserRoom - 1); }
