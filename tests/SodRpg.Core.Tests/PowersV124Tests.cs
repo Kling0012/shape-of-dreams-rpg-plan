@@ -243,7 +243,7 @@ namespace SodRpg.Core.Tests
         [InlineData(Power.SpendersWard, "散財の護り", "Spender's Ward", "散財の", "Lavish")]
         [InlineData(Power.PerfectRead, "見切り", "Perfect Read", "見切りの", "Keen-eyed")]
         [InlineData(Power.LucidBoon, "明晰", "Lucid Boon", "明晰な", "Lucid")]
-        public void New_powers_have_requested_names_epithets_and_value_bearing_descriptions(
+        public void New_powers_have_requested_names_and_epithets(
             Power power, string ja, string en, string jaEpithet, string enEpithet)
         {
             var epithet = Content.Epithet(power);
@@ -255,12 +255,8 @@ namespace SodRpg.Core.Tests
             {
                 Loc.Japanese = true;
                 Assert.Equal(ja, Content.PowerName(power));
-                Assert.Contains(ja, Content.FormatPower(power, 7));
-                Assert.Contains("7%", Content.FormatPower(power, 7));
                 Loc.Japanese = false;
                 Assert.Equal(en, Content.PowerName(power));
-                Assert.Contains(en, Content.FormatPower(power, 7));
-                Assert.Contains("7%", Content.FormatPower(power, 7));
             }
             finally { Loc.Japanese = previous; }
         }

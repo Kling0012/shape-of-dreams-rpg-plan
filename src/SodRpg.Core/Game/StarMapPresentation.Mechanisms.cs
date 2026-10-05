@@ -11,11 +11,12 @@ namespace SodRpg.Core.Game
         private static string StarName(string id)
         {
             string[] parts = id?.Split('.');
-            if (parts != null && parts.Length > 1 && parts[1].Length > 0)
+            string slug = parts != null && parts.Length > 1 ? (parts[0] == "h" ? parts[1] : parts[0]) : null;
+            if (!string.IsNullOrEmpty(slug))
             {
-                string hero = "Hero_" + char.ToUpperInvariant(parts[1][0]) + parts[1].Substring(1);
+                string hero = "Hero_" + char.ToUpperInvariant(slug[0]) + slug.Substring(1);
                 foreach (var talent in HeroSigils.TreeFor(hero))
-                    if (talent.Id == id) return Loc.T("「" + talent.Name.Ja + "」", "\"" + talent.Name.En + "\"");
+                    if (talent.Id == id) return Loc.T("星『" + talent.Name.Ja + "』", "star “" + talent.Name.En + "”");
             }
             return Loc.T("（名前のない星）", "(unnamed star)");
         }
@@ -34,12 +35,12 @@ namespace SodRpg.Core.Game
         {
             switch (trigger)
             {
-                case MemoryEventKind.ConfirmedUse: return Loc.T("使用が成立したとき", "on confirmed use");
-                case MemoryEventKind.Hit: return Loc.T("敵に命中したとき", "on hit");
-                case MemoryEventKind.CriticalHit: return Loc.T("会心が命中したとき", "on critical hit");
-                case MemoryEventKind.Kill: return Loc.T("敵を倒したとき", "on kill");
-                case MemoryEventKind.OwnedBasicAttackFired: return Loc.T("自分の通常攻撃を放ったとき", "on own basic attack fired");
-                case MemoryEventKind.OwnedBasicAttackHit: return Loc.T("自分の通常攻撃が命中したとき", "on own basic attack hit");
+                case MemoryEventKind.ConfirmedUse: return Loc.T("を使用したとき", " is used");
+                case MemoryEventKind.Hit: return Loc.T("が敵に命中したとき", " hits an enemy");
+                case MemoryEventKind.CriticalHit: return Loc.T("が敵に会心で命中したとき", " critically hits an enemy");
+                case MemoryEventKind.Kill: return Loc.T("で敵を倒したとき", " kills an enemy");
+                case MemoryEventKind.OwnedBasicAttackFired: return Loc.T("による自分の通常攻撃を放ったとき", " fires your basic attack");
+                case MemoryEventKind.OwnedBasicAttackHit: return Loc.T("による自分の通常攻撃が命中したとき", " hits with your basic attack");
                 default: throw new InvalidOperationException("Unknown mechanism trigger: " + trigger);
             }
         }
@@ -48,10 +49,10 @@ namespace SodRpg.Core.Game
         {
             switch (budget)
             {
-                case AttributionBudget.PerActivation: return Loc.T("1回の使用につき1回まで", "at most once per activation");
-                case AttributionBudget.PerActivationVictim: return Loc.T("1回の使用につき敵1体ごとに1回まで", "at most once per victim per activation");
-                case AttributionBudget.PerKill: return Loc.T("倒した敵1体につき1回まで", "at most once per kill");
-                case AttributionBudget.PerOwnedBasicAttack: return Loc.T("自分の通常攻撃1回につき1回まで", "at most once per own basic attack");
+                case AttributionBudget.PerActivation: return Loc.T("1回の使用につき1回まで。", "At most once per use.");
+                case AttributionBudget.PerActivationVictim: return Loc.T("1回の使用につき敵1体ごとに1回まで。", "At most once per enemy per use.");
+                case AttributionBudget.PerKill: return Loc.T("倒した敵1体につき1回まで。", "At most once per enemy killed.");
+                case AttributionBudget.PerOwnedBasicAttack: return Loc.T("自分の通常攻撃1回につき1回まで。", "At most once per basic attack you make.");
                 default: throw new InvalidOperationException("Unknown mechanism budget: " + budget);
             }
         }
@@ -60,9 +61,9 @@ namespace SodRpg.Core.Game
         {
             switch (pool)
             {
-                case ModShieldPoolKind.Ordinary: return Loc.T("通常の障壁枠", "ordinary shield pool");
-                case ModShieldPoolKind.Rampart: return Loc.T("防壁の枠", "rampart pool");
-                case ModShieldPoolKind.Allied: return Loc.T("味方用の障壁枠", "allied shield pool");
+                case ModShieldPoolKind.Ordinary: return Loc.T("通常の星の障壁とは重ならず、大きい残量を維持して持続時間を更新（受け手の最大HPの15%まで）。", "Does not stack with ordinary star shields; keeps the larger remaining amount and refreshes duration (up to 15% of the recipient's maximum HP).");
+                case ModShieldPoolKind.Rampart: return Loc.T("通常の星の障壁とは別に保持（最大HPの10%まで）。", "Separate from ordinary star shields (up to 10% maximum HP).");
+                case ModShieldPoolKind.Allied: return Loc.T("同じ付与者からの障壁は重ならず、受け手の最大HPの3%まで。", "Shields from the same caster do not stack; up to 3% of the recipient's maximum HP.");
                 default: throw new InvalidOperationException("Unknown shield pool: " + pool);
             }
         }
@@ -71,70 +72,79 @@ namespace SodRpg.Core.Game
         {
             switch (effect)
             {
-                case GimmickEffect.Element: return Loc.T("属性付与", "element stacks");
-                case GimmickEffect.Burst: return Loc.T("範囲攻撃", "area burst");
-                case GimmickEffect.Shield: return Loc.T("障壁", "shield");
-                case GimmickEffect.Heal: return Loc.T("回復", "healing");
-                case GimmickEffect.Recharge: return Loc.T("クールダウン短縮", "cooldown reduction");
-                case GimmickEffect.Quicken: return Loc.T("攻撃速度強化", "attack speed enhancement");
-                case GimmickEffect.Empower: return Loc.T("攻撃力・魔力強化", "offense enhancement");
-                case GimmickEffect.Expose: return Loc.T("被ダメージ増加", "damage vulnerability");
-                case GimmickEffect.Echo: return Loc.T("反響", "echo damage");
+                case GimmickEffect.Element: return Loc.T("火・冷気・光・闇の付与", "Fire, Cold, Light or Dark application");
+                case GimmickEffect.Burst: return Loc.T("範囲追加ダメージ", "area extra damage");
+                case GimmickEffect.Shield: return Loc.T("自分の障壁量", "self shield amount");
+                case GimmickEffect.Heal: return Loc.T("HP回復量", "HP restored");
+                case GimmickEffect.Recharge: return Loc.T("残りクールダウン短縮量", "remaining cooldown reduction");
+                case GimmickEffect.Quicken: return Loc.T("攻撃速度増加量", "attack speed bonus");
+                case GimmickEffect.Empower: return Loc.T("攻撃力・魔力増加量", "attack damage and ability power bonus");
+                case GimmickEffect.Expose: return Loc.T("敵が自分から受けるダメージ増加量", "enemy damage taken from you");
+                case GimmickEffect.Echo: return Loc.T("0.3秒後の追撃ダメージ", "follow-up damage after 0.3s");
                 case GimmickEffect.Reload: return Loc.T("使用回数回復", "charge restoration");
-                case GimmickEffect.RechargeOther: return Loc.T("ほかの通常記憶のクールダウン短縮", "other normal memory cooldown reduction");
-                case GimmickEffect.Wound: return Loc.T("傷", "wound damage");
-                case GimmickEffect.Daze: return Loc.T("よろめき", "daze");
-                case GimmickEffect.Ricochet: return Loc.T("跳弾", "ricochet");
-                case GimmickEffect.Siphon: return Loc.T("生命吸収", "life siphon");
-                case GimmickEffect.Rampart: return Loc.T("防壁", "rampart");
-                case GimmickEffect.Primed: return Loc.T("次の通常攻撃強化", "next basic attack enhancement");
-                case GimmickEffect.Crescendo: return Loc.T("段階的強化", "crescendo");
-                case GimmickEffect.ElementEdge: return Loc.T("属性の刃", "element edge");
-                case GimmickEffect.PackMend: return Loc.T("仲間の回復", "pack healing");
-                case GimmickEffect.Sap: return Loc.T("弱体化", "sap");
-                case GimmickEffect.Weakspot: return Loc.T("弱点", "weakspot");
+                case GimmickEffect.RechargeOther: return Loc.T("ほかの通常記憶の残りクールダウン短縮量", "other normal memory remaining cooldown reduction");
+                case GimmickEffect.Wound: return Loc.T("継続ダメージ", "damage over time");
+                case GimmickEffect.Daze: return Loc.T("敵のスタン時間", "enemy stun duration");
+                case GimmickEffect.Ricochet: return Loc.T("近くの別の敵への追加ダメージ", "extra damage to other nearby enemies");
+                case GimmickEffect.Siphon: return Loc.T("直接ダメージによるHP回復量", "HP restored from direct damage");
+                case GimmickEffect.Rampart: return Loc.T("命中した敵の数に応じた障壁量", "shield amount per enemy hit");
+                case GimmickEffect.Primed: return Loc.T("次の通常攻撃の追加ダメージ", "next basic attack extra damage");
+                case GimmickEffect.Crescendo: return Loc.T("同じ記憶の累積ダメージ増加量", "stacking damage bonus for the same memory");
+                case GimmickEffect.ElementEdge: return Loc.T("敵の属性の種類数に応じた追加ダメージ", "extra damage per element type on the enemy");
+                case GimmickEffect.PackMend: return Loc.T("自分の召喚獣のHP回復量", "HP restored to your summons");
+                case GimmickEffect.Sap: return Loc.T("敵の与ダメージ減少量", "enemy damage dealt reduction");
+                case GimmickEffect.Weakspot: return Loc.T("同じ敵への会心率増加量", "critical chance bonus against the same enemy");
                 default: throw new InvalidOperationException("Unknown effect: " + effect);
             }
         }
 
         private static string DescribeMemoryTuning(MemoryTuningDefinition tuning)
         {
+            string equipped = Loc.T(" " + Links.ItemName(tuning.Memory) + "を装備中、", " While " + Links.ItemName(tuning.Memory) + " is equipped, ");
             switch (tuning.Kind)
             {
                 case MemoryTuningKind.KillingFlowKeepSpeed:
-                    return Loc.T("追加攻撃速度の" + Number(tuning.ValueUnits / 100m) + "%は攻撃力に変換せず、攻撃速度として残す。",
-                        Number(tuning.ValueUnits / 100m) + "% of the bonus attack speed is kept as attack speed instead of being converted.");
+                    return Loc.T("攻撃速度を維持（追加分の" + Percent(tuning.ValueUnits) + "）。",
+                        "Retain " + Percent(tuning.ValueUnits) + " of bonus attack speed.")
+                        + equipped + Loc.T("追加攻撃速度のこの割合は攻撃力へ変換せず、攻撃速度として残す（変換で得る攻撃力はその分減る）。",
+                            "this share is not converted to attack damage (the attack damage gained from conversion decreases accordingly).");
                 case MemoryTuningKind.KillingFlowOnHitHealScale:
-                    return Loc.T("命中ごとの回復に、変換で失った攻撃速度の倍率を掛ける（最大" + Number(tuning.ValueUnits / 10000m) + "倍）。",
-                        "On-hit healing is multiplied by the attack speed multiplier lost to the conversion (up to x" + Number(tuning.ValueUnits / 10000m) + ").");
+                    return Loc.T("命中時のHP回復量 ×最大" + Number(tuning.ValueUnits / 10000m) + "。",
+                        "On-hit HP restored × up to " + Number(tuning.ValueUnits / 10000m) + ".")
+                        + equipped + Loc.T("この記憶の回復量に、変換前の攻撃速度倍率÷変換後の攻撃速度倍率を掛ける（最低1倍）。",
+                            "multiply this memory's healing by attack speed multiplier before conversion ÷ multiplier after conversion (at least ×1).");
                 case MemoryTuningKind.StanceSwordQiAttackBasis:
-                    return Loc.T("剣気は魔力ではなく攻撃力で伸び（係数は同じ）、物理ダメージになる。", "The sword qi scales with attack damage instead of ability power (same coefficient) and becomes physical damage.");
+                    return Loc.T("剣気のダメージ基準：魔力 → 攻撃力。", "Sword-qi damage basis: ability power → attack damage.")
+                        + equipped + Loc.T("剣気は係数を変えず攻撃力を基準にし、物理ダメージになる。態勢の攻撃力・攻撃速度強化は変わらない。",
+                            "sword qi keeps its coefficient but scales with attack damage and deals physical damage. The stance's attack damage and attack speed bonuses are unchanged.");
                 default: throw new InvalidOperationException("Unknown tuning: " + tuning.Kind);
             }
         }
         private static string DescribeIdentityStrike(IdentityStrikeDefinition strike)
         {
-            string memory = Links.Name(strike.Identity).ToString();
+            string memory = Links.ItemName(strike.Identity);
             if (!strike.DealsDamage)
-                return Loc.T("突進攻撃の追加ダメージを、通常攻撃ではなく" + memory + "のダメージとして扱う（ダメージは増えない）。",
-                    "The dash attack's bonus portion counts as " + memory + " damage instead of basic attack damage (no extra damage).");
-            string element = strike.Element == IdentityStrikeElement.None ? "" : Loc.T(ElementName(strike.Element) + "属性の", ElementName(strike.Element) + " ");
+                return Loc.T("追加ダメージ量は変化なし。", "Extra damage amount unchanged.")
+                    + Loc.T(" " + memory + "を装備中、突進攻撃の元々の追加ダメージ部分だけを、この記憶のダメージとして扱う（通常攻撃としては扱わない）。",
+                        " While " + memory + " is equipped, only the dash attack's existing bonus damage counts as this memory's damage, rather than basic attack damage.");
+            string element = strike.Element == IdentityStrikeElement.None ? Loc.T("無属性", "non-elemental") : ElementName(strike.Element);
             string basis = strike.Basis == IdentityStrikeBasis.AttackDamage ? Loc.T("攻撃力", "attack damage") : Loc.T("攻撃力・魔力の高い方", "the higher of attack damage and ability power");
-            string amount = Percent(strike.AdUnits) + Loc.T("の", " of ") + basis
-                + (strike.BonusSpeedUnitsPerPercent > 0 ? Loc.T("＋変換した追加攻撃速度1%ごとに", " + per 1% converted bonus attack speed ") + Percent(strike.BonusSpeedUnitsPerPercent) : "");
-            string shape = (strike.Shape == IdentityStrikeShape.ForwardLine ? Loc.T("前方の直線", "a forward line") : Loc.T("前方の扇形", "a forward arc"))
-                + " " + Number(strike.RangeMetres) + "m";
+            string amount = Percent(strike.AdUnits)
+                + (strike.BonusSpeedUnitsPerPercent > 0 ? Loc.T("＋変換済みの追加攻撃速度1%につき", " + per 1% converted bonus attack speed ") + Percent(strike.BonusSpeedUnitsPerPercent) : "");
+            string shape = strike.Shape == IdentityStrikeShape.ForwardLine
+                ? Loc.T("前方" + Number(strike.RangeMetres) + "m・幅" + Number(strike.WidthOrArc) + "mの直線内",
+                    "a forward line " + Number(strike.RangeMetres) + "m long and " + Number(strike.WidthOrArc) + "m wide")
+                : Loc.T("前方" + Number(strike.RangeMetres) + "m・角度" + Number(strike.WidthOrArc) + "度の扇形内",
+                    "a forward arc of " + Number(strike.RangeMetres) + "m and " + Number(strike.WidthOrArc) + "°");
             if (strike.IsCriticalMechanism)
             {
-                string identity = Loc.T("記憶『" + memory + "』", "Memory \"" + memory + "\"");
+                string identity = memory;
                 string timing = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
                     ? Loc.T("ダッシュ・瞬間移動後" + Number(strike.WindowSeconds) + "秒以内の最初の通常攻撃が会心すると（非会心でも準備を消費）、",
                         "If the first basic attack hit within " + Number(strike.WindowSeconds) + "s after a dash or teleport is critical (a noncritical hit also consumes readiness), ")
                     : Loc.T("同じ敵に通常攻撃の会心を3回連続で命中させると（各命中間隔" + Number(strike.WindowSeconds) + "秒以内。非会心・別の敵への命中・時間切れで連続数をリセット）、",
                         "On three consecutive critical basic attack hits against the same enemy (each gap at most " + Number(strike.WindowSeconds) + "s; a noncritical hit, a different enemy or an expired window resets the sequence), ");
-                string geometry = shape + (strike.Shape == IdentityStrikeShape.ForwardLine
-                    ? Loc.T("・幅" + Number(strike.WidthOrArc) + "m", ", " + Number(strike.WidthOrArc) + "m wide")
-                    : Loc.T("・角度" + Number(strike.WidthOrArc) + "度", ", " + Number(strike.WidthOrArc) + " degrees"));
+                string geometry = shape;
                 string damage = Loc.T(identity + "の斬撃が対象と" + geometry + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "に相当する闇ダメージを与えます（計" + strike.MaxTargets + "体まで、発動間隔" + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "秒）。",
                     identity + " deals dark damage equal to " + Percent(strike.AdUnits) + " of " + basis + " to the target and enemies in " + geometry + " (up to " + strike.MaxTargets + " enemies total; " + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "s interval).");
                 string partners = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
@@ -146,9 +156,13 @@ namespace SodRpg.Core.Game
                     " Essence \"Divine Faith\" socketed to " + identity + " amplifies this damage and gains stacks from kills within 6s of the hit (the strike also works without that Essence).");
             }
             string when = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit
-                ? Loc.T("ダッシュ・テレポートのあとの次の通常攻撃が命中すると（1回の移動につき1回）", "After a dash or teleport, the next basic attack hit (once per displacement)")
-                : strike.EveryN == 1 ? Loc.T("通常攻撃が命中するたびに", "Every basic attack hit") : Loc.T("通常攻撃が" + strike.EveryN + "回命中するごとに", "Every " + strike.EveryN + " basic attack hits");
-            return when + Loc.T("、" + memory + "として", ", " + memory + " strikes ") + shape + Loc.T("へ" + element + amount + "の斬撃。", " for " + element + amount + ".");
+                ? Loc.T("ダッシュ・瞬間移動後" + Number(strike.WindowSeconds) + "秒以内に次の自分の通常攻撃が命中すると（移動1回につき1回、重ならない）",
+                    "when your next basic attack hits within " + Number(strike.WindowSeconds) + "s after a dash or teleport (once per displacement; does not stack)")
+                : Loc.T("自分の通常攻撃が" + strike.EveryN + "回命中するごとに（同じ通常攻撃の複数命中は1回と数える）",
+                    "every " + strike.EveryN + " basic attacks you make that hit (multiple hits from one attack count once)");
+            return Loc.T("追加ダメージ ＋" + basis + "の（" + amount + "）。", "Extra damage +" + amount + " of " + basis + ".")
+                + Loc.T(" " + memory + "を装備中、" + when + "、" + shape + "の敵最大" + strike.MaxTargets + "体へ" + element + "の斬撃。この記憶のダメージとして扱う。時間による再発動制限なし。",
+                    " While " + memory + " is equipped, " + when + ", strike up to " + strike.MaxTargets + " enemies in " + shape + " for " + element + " damage attributed to this memory. No time-based cooldown.");
         }
         private static string ElementName(IdentityStrikeElement element)
         {
@@ -168,88 +182,125 @@ namespace SodRpg.Core.Game
             var lines = new List<string>();
             string source = spec.Source != null ? SelectorText(spec.Source)
                 : spec.Recharge != null ? SelectorText(spec.Recharge.Source)
-                : spec.Primed != null ? Links.Name(spec.Primed.SourceMemory).ToString()
-                : spec.Relay != null ? Links.Name(RelayWindowDefinition.SourceMemory).ToString()
-                : spec.Dividend != null ? Links.Name(spec.Dividend.SourceMemory).ToString()
+                : spec.Primed != null ? Links.ItemName(spec.Primed.SourceMemory)
+                : spec.Relay != null ? Links.ItemName(RelayWindowDefinition.SourceMemory)
+                : spec.Dividend != null ? Links.ItemName(spec.Dividend.SourceMemory)
                 : Loc.T("装備中の移動以外の記憶", "equipped nonmovement memories");
-            lines.Add(source + Loc.T("：", ": ") + EventText(spec.Trigger));
             switch (spec.Kind)
             {
                 case AuthoredMechanismKind.Gimmick:
-                    // Concrete sources use the existing complete effect formatter, never a fabricated memory.
-                    if (spec.Source?.Kind == MemorySelectorKind.Memory && spec.Source.Alternatives.Count == 0)
-                    {
-                        string description = Gimmicks.Describe(spec.Gimmick, spec.Source.Memory);
-                        if (description.Length == 0) throw new InvalidOperationException("Unmapped gimmick source: " + spec.Source.Memory);
-                        lines.Add(description);
-                    }
-                    else lines.Add(EffectText(spec.Gimmick.Effect) + Loc.T("の基本効果量：", " base value: ")
-                        + Number(spec.Gimmick.Value) + Loc.T("（効果の百分率）", "%")
-                        + Loc.T("、効果の指定：", ", effect argument: ") + spec.Gimmick.Arg
-                        + Loc.T("、発動間隔：", ", interval: ") + Number(spec.Gimmick.Cooldown) + Loc.T("秒", "s"));
+                    string triggerText = Loc.T("発動条件：", "Triggered when ") + (spec.TriggerByIdentity.Count == 0
+                        ? source + EventText(spec.Trigger)
+                        : string.Join(Loc.T("、または", ", or "), spec.TriggerByIdentity.Select(t => Links.ItemName(t.Key) + EventText(t.Value))));
+                    string description = Gimmicks.DescribeForSource(spec.Gimmick, source, triggerText: triggerText);
+                    if (description.Length == 0) throw new InvalidOperationException("Unmapped effect source.");
+                    lines.Add(description);
                     break;
                 case AuthoredMechanismKind.DirectedRecharge:
                     var recharge = spec.Recharge;
-                    lines.Add(SelectorText(recharge.Recipient) + Loc.T("の残りクールダウンを", ": reduce remaining cooldown by ")
-                        + Percent(recharge.EffectiveValueUnits) + Loc.T("短縮。発動確率", "; chance ") + Percent(recharge.ProbabilityUnits)
-                        + Loc.T($"。{recharge.EveryN}回ごとに発動。", $"; every {recharge.EveryN} qualifying events."));
+                    lines.Add(Loc.T("残りクールダウン −", "Remaining cooldown −") + Percent(recharge.EffectiveValueUnits)
+                        + Loc.T("。対象：", ". Recipient: ") + SelectorText(recharge.Recipient) + Loc.T("。", "."));
+                    lines.Add(source + EventText(recharge.SourceTrigger) + Loc.T("、発動確率", "; chance ") + Percent(recharge.ProbabilityUnits)
+                        + (recharge.EveryN > 1 ? Loc.T($"。条件を満たす{recharge.EveryN}回ごとに抽選。", $"; rolled every {recharge.EveryN} qualifying events.") : Loc.T("。", "."))
+                        + Loc.T("残り時間を基準に短縮し、使用回数は直接回復しない。", " Reduces the remaining time, not charges directly."));
                     switch (recharge.Condition)
                     {
                         case RechargeConditionKind.Always: break;
-                        case RechargeConditionKind.ChangedTarget: lines.Add(Loc.T("前回と異なる敵に命中した場合のみ。", "Requires a different target from the previous hit.")); break;
+                        case RechargeConditionKind.ChangedTarget: lines.Add(Loc.T("前回と異なる敵に命中した場合のみ（最初の命中では発動しない）。", "Requires a different target from the previous hit (the first hit does not trigger it).")); break;
                         case RechargeConditionKind.Shielded: lines.Add(Loc.T("障壁がある間のみ。", "Requires an active shield.")); break;
                         case RechargeConditionKind.ElementTypesAtLeast: lines.Add(Loc.T($"敵に{recharge.RequiredElementTypes}種類以上の属性がある場合のみ。", $"Requires at least {recharge.RequiredElementTypes} element types on the enemy.")); break;
                         default: throw new InvalidOperationException("Unknown recharge condition: " + recharge.Condition);
                     }
                     break;
                 case AuthoredMechanismKind.MemoryPrimed:
-                    lines.Add(Loc.T("次の自分の通常攻撃を", "Enhances the next own basic attack by ") + Percent(spec.Primed.ValueUnits)
-                        + Loc.T("強化。準備の持続：", "; preparation lasts ") + Number(spec.Primed.DurationSeconds) + Loc.T("秒。", "s."));
+                    lines.Add(Loc.T("次の通常攻撃の追加ダメージ ＋攻撃力・魔力の高い方の", "Next basic attack extra damage +")
+                        + Percent(spec.Primed.ValueUnits) + Loc.T("。", " of the higher of attack damage and ability power."));
+                    lines.Add(source + EventText(spec.Primed.Trigger) + Loc.T("、", ": ")
+                        + Number(spec.Primed.DurationSeconds) + Loc.T("秒以内の次の自分の通常攻撃に上乗せ（重ならない）。ほかの次の通常攻撃への上乗せと比べ、最大の1つだけを消費し、残りは保持。",
+                            "s to use on your next basic attack (does not stack). Only the largest of all next-basic-attack bonuses is consumed; the others remain ready."));
                     break;
                 case AuthoredMechanismKind.RelayWindow:
-                    lines.Add(Links.Name(spec.Relay.TargetMemory) + Loc.T("の固有ダメージを", " native damage +") + Percent(spec.Relay.ValueUnits)
-                        + Loc.T("強化。持続：", "; duration ") + Number(spec.Relay.DurationSeconds) + Loc.T("秒。", "s."));
+                    lines.Add(Loc.T("記憶の直接ダメージ ＋", "Memory direct damage +") + Percent(spec.Relay.ValueUnits)
+                        + Loc.T("。対象：", ". Target: ") + Links.ItemName(spec.Relay.TargetMemory) + Loc.T("。", "."));
+                    lines.Add(source + EventText(MemoryEventKind.ConfirmedUse) + Loc.T("から", ": ")
+                        + Number(spec.Relay.DurationSeconds) + Loc.T("秒間、この記憶の元々のダメージを強化（星による追加ダメージは対象外）。両方の記憶を装備する必要がある。",
+                            "s of increased damage from the memory itself, excluding star-generated extra damage. Both memories must be equipped."));
                     break;
                 case AuthoredMechanismKind.AlliedWard:
-                    var ward = spec.Ward;
-                    lines.Add((ward.RecipientKind == WardRecipientKind.AlliedTravelers ? Loc.T("味方の旅人", "allied travelers") : Loc.T("自分の召喚物", "owned summons"))
-                        + (ward.IncludeOwner ? Loc.T("（自分を含む）", " (including self)") : Loc.T("（自分を除く）", " (excluding self)"))
-                        + Loc.T("に", ": ") + (ward.AmountBasis == WardAmountBasis.RecipientMaxHP ? Loc.T("受け手の最大HP", "recipient maximum HP") : Loc.T("付与者の攻撃力・魔力の高い方", "caster's higher offense"))
-                        + Loc.T("の", " × ") + Percent(ward.ValueUnits) + Loc.T("の障壁。", " shield.")
-                        + Loc.T("半径", " Radius ") + Number(ward.RadiusMetres) + "m / " + Number(ward.DurationSeconds) + Loc.T("秒 / 最大", "s / up to ")
-                        + ward.Targets + Loc.T("体。", " targets. ") + PoolText(ward.PoolKind));
+                    lines.Add(DescribeWard(spec.Ward));
+                    if (spec.TriggerByIdentity.Count == 0)
+                        lines.Add(Loc.T("発動条件：", "Trigger: ") + source + EventText(spec.Trigger) + Loc.T("。", "."));
                     break;
-                case AuthoredMechanismKind.PressureDividend: lines.Add(spec.Dividend.Describe()); break;
+                case AuthoredMechanismKind.PressureDividend:
+                    lines.Add(Loc.T("未確保の欠片 ＋1個（確率", "Unsecured shards +1 (chance ") + Percent(spec.Dividend.ProbabilityUnits) + Loc.T("、上限40%）。", ", capped at 40%)."));
+                    lines.Add(source + Loc.T("で、夢の圧により最大HPが25%以上増えた敵を倒したときに抽選。同じ敵からは1人につき最大1個。",
+                        " must kill an enemy whose maximum HP was increased by at least 25% by dream pressure. You can receive at most 1 shard from the same enemy."));
+                    if (spec.Dividend.RequiredMemories.Count > 0)
+                        lines.Add(Loc.T("すべて装備が必要：", "All must be equipped: ") + string.Join(Loc.T("、", ", "), spec.Dividend.RequiredMemories.Select(Links.ItemName)));
+                    break;
                 case AuthoredMechanismKind.MemoryTuning: lines.Add(DescribeMemoryTuning(spec.Tuning)); break;
                 case AuthoredMechanismKind.IdentityStrike: lines.Add(DescribeIdentityStrike(spec.IdentityStrike)); break;
                 case AuthoredMechanismKind.SacrificeShield:
-                    lines.Add(Loc.T("指定された固有のHP支払いの50%を障壁に変換。新たに付与する量は最大HPの10%まで。", "Converts 50% of qualified native HP payment to a shield; each new award is capped at 10% maximum HP.")); break;
+                    lines.Add(Loc.T("障壁 ＋実際に支払ったHPの50%（4秒間・1回の付与は最大HPの10%まで）。",
+                        "Shield +50% of HP actually paid (4s; each award capped at 10% maximum HP)."));
+                    lines.Add(Loc.T(Links.ItemName("St_Q_GoldenBurst") + "または" + Links.ItemName("St_Q_Reduction") + "の元々のHP支払いが対象。通常の被ダメージは対象外。HP支払い自体は減らさない。間隔制限なし。",
+                        "Applies only to the original HP payment of " + Links.ItemName("St_Q_GoldenBurst") + " or " + Links.ItemName("St_Q_Reduction") + ", not ordinary damage taken. Does not reduce the HP cost. No cooldown."));
+                    lines.Add(PoolText(ModShieldPoolKind.Ordinary));
+                    break;
                 case AuthoredMechanismKind.StunSourceFilter:
-                    lines.Add(Loc.T("装備中のQ/Rの固有効果でスタンに成功すると最大HPの6%の障壁（3秒間・発動間隔2秒）。", "A successful native stun from equipped Q/R grants a 6% maximum HP shield for 3s, at most once every 2s.")); break;
+                    lines.Add(Loc.T("障壁 ＋最大HPの6%（3秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで2秒。",
+                        "Shield +6% maximum HP for 3s. Gain it when the original effect of your equipped Q or R memory stuns an enemy, excluding star-generated stuns. Cooldown: 2s."));
+                    lines.Add(PoolText(ModShieldPoolKind.Ordinary));
+                    break;
                 case AuthoredMechanismKind.BridgeSuccess:
                     var bridge = spec.Bridge;
+                    lines.Add(DescribeBridgePayload(bridge.BasePayoff, SelectorText(bridge.PayoffSource)));
+                    foreach (var payload in bridge.Extras) lines.Add(DescribeBridgePayload(payload, SelectorText(bridge.PayoffSource)));
                     foreach (var endpoint in bridge.Endpoints)
-                        lines.Add(Links.Name(endpoint.Memory) + Loc.T($"：端点の星{StarName(endpoint.StarId)}に{endpoint.MinimumRank}段以上必要。", $": endpoint star {StarName(endpoint.StarId)} needs {endpoint.MinimumRank}+ ranks."));
-                    lines.Add(SelectorText(bridge.OpeningSource) + " / " + EventText(bridge.OpeningTrigger)
-                        + " → " + SelectorText(bridge.PayoffSource) + " / " + EventText(bridge.PayoffTrigger));
-                    lines.Add(bridge.GateKind == BridgeGateKind.Mark ? Loc.T("同じ敵の印を起点に発動。", "Triggers from a mark on the same enemy.")
-                        : bridge.GateKind == BridgeGateKind.Window ? Loc.T("橋の受付時間内に発動。", "Triggers within the bridge window.")
-                        : Loc.T("指定した受け手に直接発動。", "Triggers directly for the specified recipient."));
-                    lines.Add(Loc.T("受付時間：", "Window: ") + Number(bridge.WindowSeconds) + (bridge.GateKind == BridgeGateKind.Mark ? Loc.T("秒、印：", "s; mark: ") + Number(bridge.MarkSeconds) : "") + Loc.T("秒、発動間隔：", "s; interval: ") + Number(bridge.CooldownSeconds) + Loc.T("秒。", "s."));
-                    lines.Add(DescribeBridgePayload(bridge.BasePayoff));
-                    foreach (var payload in bridge.Extras) lines.Add(DescribeBridgePayload(payload));
+                        lines.Add(Loc.T("装備が必要：", "Required equipped: ") + Links.ItemName(endpoint.Memory)
+                            + Loc.T("。必要な取得星：", ". Required star: ") + StarName(endpoint.StarId)
+                            + Loc.T($"を{endpoint.MinimumRank}段以上。", $" at rank {endpoint.MinimumRank} or higher."));
+                    string opening = SelectorText(bridge.OpeningSource) + EventText(bridge.OpeningTrigger);
+                    string payoff = SelectorText(bridge.PayoffSource) + EventText(bridge.PayoffTrigger);
+                    if (bridge.GateKind == BridgeGateKind.Mark)
+                    {
+                        string markedPayoff = SelectorText(bridge.PayoffSource) + EventText(bridge.PayoffTrigger)
+                            .Replace(Loc.T("敵", "an enemy"), Loc.T("印のある同じ敵", "the same marked enemy"));
+                        lines.Add(Loc.T("成立条件：" + opening + "、その敵に" + Number(bridge.MarkSeconds) + "秒間の印を付ける。" + markedPayoff + "、追加効果が発動（印は消費しない）。",
+                            "Combo condition: when " + opening + ", mark that enemy for " + Number(bridge.MarkSeconds) + "s. When " + markedPayoff + ", apply the extra effects (does not consume the mark)."));
+                    }
+                    else if (bridge.GateKind == BridgeGateKind.Window)
+                        lines.Add(Loc.T("成立条件：" + opening + "から、" + (bridge.UsesNativeWindowLifetime ? "元々の効果の残り持続時間の" + Number(bridge.WindowLifetimeScale) + "倍" : Number(bridge.WindowSeconds) + "秒") + "以内に" + payoff + "、追加効果が発動。",
+                            "Combo condition: when " + opening + ", then " + payoff + " within " + (bridge.UsesNativeWindowLifetime ? Number(bridge.WindowLifetimeScale) + "× the original effect's remaining duration" : Number(bridge.WindowSeconds) + "s") + ", apply the extra effects."));
+                    else lines.Add(Loc.T("成立条件：", "Combo condition: ") + payoff + Loc.T("、受け手の記憶へ直接適用（印・先行使用は不要）。",
+                        "; apply directly to the recipient memory (no mark or opening use required)."));
+                    if (bridge.SourcePhase != BridgeSourcePhase.Any)
+                        lines.Add(bridge.SourcePhase == BridgeSourcePhase.InitialExplosion
+                            ? Loc.T("受け手の記憶の最初の爆発が命中したときだけ発動（途中・最後の爆発は対象外）。", "Only the payoff memory's initial explosion qualifies, not intermediate or ending hits.")
+                            : Loc.T("受け手の記憶の最後の爆発が命中したときだけ発動（最初・途中の爆発は対象外）。", "Only the payoff memory's ending explosion qualifies, not initial or intermediate hits."));
+                    lines.Add(bridge.CooldownSeconds > 0 ? Loc.T("再発動まで", "Cooldown: ") + Number(bridge.CooldownSeconds) + Loc.T("秒。", "s.") : Loc.T("間隔制限なし。", "No cooldown."));
                     break;
                 default: throw new InvalidOperationException("Unknown authored mechanism: " + spec.Kind);
             }
-            lines.Add(BudgetText(spec.Budget));
-            if (spec.EveryN > 1) lines.Add(Loc.T($"発火元の通知{spec.EveryN}回ごとに発動。", $"Triggers every {spec.EveryN} source notifications."));
-            if (spec.Once) lines.Add(Loc.T("同じ使用からは1回だけ発動。", "Only once from the same activation."));
+            bool eventDriven = spec.Kind != AuthoredMechanismKind.MemoryTuning && spec.Kind != AuthoredMechanismKind.IdentityStrike
+                && spec.Kind != AuthoredMechanismKind.SacrificeShield && spec.Kind != AuthoredMechanismKind.StunSourceFilter;
+            var budget = spec.Bridge?.Budget ?? spec.Recharge?.Budget ?? spec.Primed?.Budget ?? spec.Budget;
+            if (eventDriven) lines.Add(BudgetText(budget));
+            if (eventDriven && spec.Gimmick == null && spec.Bridge == null)
+                lines.Add(Loc.T("時間による再発動制限なし。", "No time-based cooldown."));
+            if (eventDriven && spec.EveryN > 1 && spec.Recharge == null)
+                lines.Add(Loc.T($"条件を満たす発動{spec.EveryN}回ごとに適用。", $"Applies every {spec.EveryN} qualifying events."));
+            if (spec.Once && budget != AttributionBudget.PerActivation)
+                lines.Add(Loc.T("同じ使用からは1回だけ発動。", "Only once per memory use."));
             if (spec.ValuesByRank.Length > 0)
-                lines.Add(Loc.T("各段の効果量：", "Values by rank: ") + string.Join(" / ", spec.ValuesByRank.Select(v => Percent(v))));
+                lines.Add(Loc.T("1段目から順に：", "From rank 1 onward: ")
+                    + string.Join(" / ", spec.ValuesByRank.Select(v => MechanismRankValue(spec, v))));
             foreach (var trigger in spec.TriggerByIdentity)
-                lines.Add(Links.Name(trigger.Key) + Loc.T("の条件：", " trigger: ") + EventText(trigger.Value));
-            if (spec.RequiredMemories.Length > 0)
-                lines.Add(Loc.T("必要な装備記憶：", "Required equipped memories: ") + string.Join(Loc.T("、", ", "), spec.RequiredMemories.Select(m => Links.Name(m).ToString())));
+                lines.Add(Loc.T("発動条件：", "Trigger: ") + Links.ItemName(trigger.Key) + EventText(trigger.Value) + Loc.T("。", "."));
+            string requiredNames = string.Join(Loc.T("、", ", "), spec.RequiredMemories
+                .Where(id => spec.Bridge == null || !spec.Bridge.Endpoints.Any(endpoint => endpoint.Memory == id)).Select(Links.ItemName));
+            if (requiredNames.Length > 0)
+                lines.Add(Loc.T("すべて装備が必要：", "All must be equipped: ") + requiredNames);
             if (spec.Replaces.Length > 0) lines.Add(Loc.T("置き換える星：", "Replaces stars: ") + string.Join(Loc.T("、", ", "), spec.Replaces.Select(StarName)));
             switch (spec.Condition)
             {
@@ -262,25 +313,58 @@ namespace SodRpg.Core.Game
             return string.Join("\n", lines);
         }
 
-        private static string DescribeBridgePayload(BridgePayload payload)
+        private static string DescribeBridgePayload(BridgePayload payload, string source)
         {
             switch (payload.Kind)
             {
                 case BridgePayloadKind.Damage:
-                    return (payload.DamageBasis == BridgeDamageBasis.NativeHit ? Loc.T("命中した固有ダメージ", "native hit damage") : Loc.T("攻撃力・魔力の高い方", "higher offense"))
-                        + Loc.T("の", " × ") + Percent(payload.ValueUnits) + Loc.T("の追加ダメージ。", " extra damage.");
+                    return Loc.T("追加ダメージ ＋", "Extra damage +") + Percent(payload.ValueUnits)
+                        + Loc.T("（基準：", " of ") + (payload.DamageBasis == BridgeDamageBasis.NativeHit
+                            ? Loc.T("発動した命中の元々のダメージ", "the payoff hit's original damage")
+                            : Loc.T("攻撃力・魔力の高い方", "the higher of attack damage and ability power"))
+                        + Loc.T("）。成立時に命中した敵が対象。", ". Targets the enemy hit when the combo succeeds.");
                 case BridgePayloadKind.Recharge:
-                    return SelectorText(payload.Recipient) + Loc.T("の残りクールダウンを", ": reduce remaining cooldown by ") + Percent(payload.ValueUnits) + Loc.T("短縮。", ".");
+                    return Loc.T("残りクールダウン −", "Remaining cooldown −") + Percent(payload.ValueUnits)
+                        + Loc.T("。対象：", ". Recipient: ") + SelectorText(payload.Recipient) + Loc.T("。", ".");
                 case BridgePayloadKind.OrdinaryShield:
-                    return Loc.T("最大HPの", "Maximum HP × ") + Percent(payload.ValueUnits) + Loc.T("の障壁（", " shield (")
-                        + Number(payload.DurationSeconds) + Loc.T("秒・通常の障壁枠）。", "s, ordinary pool).");
+                    return Loc.T("自分の障壁 ＋最大HPの", "Self shield +") + Percent(payload.ValueUnits)
+                        + Loc.T("（", " maximum HP (") + Number(payload.DurationSeconds) + Loc.T("秒間）。", "s). ") + PoolText(ModShieldPoolKind.Ordinary);
                 case BridgePayloadKind.Gimmick:
-                    return EffectText(payload.Gimmick.Effect) + Loc.T("：効果量", ": value ") + Number(payload.Gimmick.Value) + "%";
+                    return Gimmicks.DescribeForSource(payload.Gimmick, source,
+                        triggerText: Loc.T("この合わせ技が成立したときに発動", "Triggered when this combo succeeds"));
                 case BridgePayloadKind.AlliedWard:
-                    return Loc.T("自分と近くの味方旅人へ、攻撃力・魔力の高い方の", "Ally ward: higher offense × ") + Percent(payload.Ward.ValueUnits)
-                        + Loc.T("の障壁（", " (") + Number(payload.Ward.DurationSeconds) + Loc.T("秒・最大", "s, up to ") + payload.Ward.Targets + Loc.T("体）。", " allies).");
+                    return DescribeWard(payload.Ward);
                 default: throw new InvalidOperationException("Unknown bridge payload: " + payload.Kind);
             }
+        }
+
+        private static string MechanismRankValue(AuthoredMechanismSpec spec, int units)
+        {
+            var gimmick = spec.Gimmick ?? spec.Bridge?.BasePayoff.Gimmick;
+            if (gimmick?.Effect == GimmickEffect.Element)
+            {
+                decimal value = units / 100m;
+                int stacks = (int)(value / 100m);
+                decimal chance = value % 100m;
+                return (stacks > 0 ? stacks + Loc.T("個", " stacks") : "")
+                    + (chance > 0 ? (stacks > 0 ? Loc.T("＋追加1個の確率", " + chance of one more: ") : Loc.T("1個付与の確率", "chance of one stack: ")) + Number(chance) + "%" : "");
+            }
+            if (gimmick?.Effect == GimmickEffect.Daze)
+                return Number(units / 1000m) + Loc.T("秒のスタン", "s stun");
+            return Percent(units);
+        }
+
+        private static string DescribeWard(AlliedWardDefinition ward)
+        {
+            string basis = ward.AmountBasis == WardAmountBasis.RecipientMaxHP
+                ? Loc.T("受け手の最大HP", "the recipient's maximum HP")
+                : Loc.T("付与者の攻撃力・魔力の高い方", "the caster's higher of attack damage and ability power");
+            return Loc.T("障壁 ＋", "Shield +") + Percent(ward.ValueUnits) + Loc.T("（基準：" + basis + "）。", " of " + basis + ".")
+                + Loc.T("対象：", " Targets: ") + (ward.RecipientKind == WardRecipientKind.AlliedTravelers
+                    ? Loc.T("味方の旅人", "allied travelers") : Loc.T("自分の召喚獣", "your summons"))
+                + (ward.IncludeOwner ? Loc.T("と自分", " and yourself") : Loc.T("（自分を除く）", " (excluding yourself)"))
+                + Loc.T("。自分から", " within ") + Number(ward.RadiusMetres) + Loc.T("m以内・最大", "m of you, up to ") + ward.Targets
+                + Loc.T("体へ", " targets, for ") + Number(ward.DurationSeconds) + Loc.T("秒間。", "s. ") + PoolText(ward.PoolKind);
         }
     }
 }
