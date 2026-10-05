@@ -180,6 +180,12 @@ Spec の要素は次のキーだけ：
 - `requires` / `requiresAny` は設計表がその既存星に**追加する取得前提**。接続の辺だけを足す変更は `notes` に書く。
 - 既存刻印（`h.<hero>.key` / `key2`）は `kind: "Keystone"` と `keystone`（旧Powerの利点＋追加された代償）。
 
+### 7b. 改訂（`revisions.json`）
+すでに作った星（新規星や輪の中心）の中身をあとから作り替えるときは、その星のIDを `revisions.json` の `<hero>.stars` に列挙し、`revision`（2以上）を付ける。`gen_cs.py` が `AuthoredStarMigration` の改訂ルールを出力し、`AuthoredMigrationVersion` が改訂より古いセーブはその星を払い戻して取り直しにする（新規プロフィールは最初から最新の改訂）。
+- ID は `<hero>.json` の星、または輪の中心（`h.<hero>.ring.*`）。同じIDを移行行（revision 1）と二重に挙げない。
+- 空殻の改訂2は設計 [v2.4-husk-trio-starmap.md](../../docs/specs/v2.4-husk-trio-starmap.md)。
+- 橋の星が**隣の橋の印**を `gimmick.condition` に使うときは、生成器がその記憶を `MemoryOwnership.SourceMemories` に明示する（自分の橋の2記憶以外を使うための所有の宣言）。
+
 ### その他
 - 星の `mechanisms` は C01〜C15。`maxRank` は新規星では通常1。`rankCost` は新規星が1、旧星の費用は維持（移行行には書かない）。
 

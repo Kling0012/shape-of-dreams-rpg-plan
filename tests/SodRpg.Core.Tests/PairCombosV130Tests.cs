@@ -15,7 +15,7 @@ namespace SodRpg.Core.Tests
             ["Hero_Lacerta"] = new[] { "powder", "hand-cannon", "quick-trigger", "nimble-dodge", "double-tap", "incendiary", "precision" },
             ["Hero_Cetus"] = new[] { "icy-veins", "embrace-chill", "back-off", "frost-charge", "charged", "boreal-chunk", "frozen-fists" },
             ["Hero_Yubar"] = new[] { "exotic-matter", "ethereal", "cataclysm", "flicker", "converging-stars", "supernova", "tranquility" },
-            ["Hero_Husk"] = new[] { "killing-flow", "laceration", "annihilation", "flash-step", "wind-scar", "death-mark", "deception" },
+            ["Hero_Husk"] = new[] { "killing-flow", "laceration", "annihilation", "wind-scar", "flash-step", "death-mark", "deception" },
             ["Hero_Mist"] = new[] { "en-garde", "lunge", "determination", "fast-feet", "priorite", "fleche", "parry" },
             ["Hero_Nachia"] = new[] { "pack-heart", "sylvan-call", "natures-whisper", "dreamy-waltz", "circle-life", "moonlight-pact", "serpent-blessing" },
             ["Hero_Aurena"] = new[] { "claw", "golden-burst", "dangerous-theory", "feathery-dash", "beautiful-threat", "reduction", "chain-reaction" },
@@ -89,8 +89,8 @@ namespace SodRpg.Core.Tests
             Assert.Equal(5, Entry(Def("Nachia", 4), 3).Value);
             Assert.DoesNotContain(PairCombos.All, d => d.MovementOrigin);
             Assert.Equal(2, PairCombos.All.Count(d => d.Cooldown > 0));
-            Assert.Equal(28, PairCombos.All.Count(d => d.OncePerActivation));
-            Assert.Equal(6, PairCombos.All.Count(d => d.KillByPayoffMemory));
+            Assert.Equal(29, PairCombos.All.Count(d => d.OncePerActivation));
+            Assert.Equal(7, PairCombos.All.Count(d => d.KillByPayoffMemory));
             Assert.Equal(1.5f, Def("Nachia", 2).Cooldown);
             Assert.Equal(1f, Def("Nachia", 5).Cooldown);
         }
@@ -288,6 +288,7 @@ namespace SodRpg.Core.Tests
         [InlineData("Lacerta", 4)]
         [InlineData("Yubar", 4)]
         [InlineData("Husk", 4)]
+        [InlineData("Husk", 5)]
         [InlineData("Mist", 4)]
         [InlineData("Aurena", 4)]
         [InlineData("Bismuth", 3)]

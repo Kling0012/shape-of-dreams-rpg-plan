@@ -75,6 +75,18 @@ namespace SodRpg.Core.Game
             return new LegacyStarMigration(id, maxRank, original.IsKeystone ? Content.KeystoneCost : original.RankCost, changedEffect: true);
         }
 
+        // A later star-map revision (tools/star-manifest/revisions.json) redefines a star that is already authored: the manifest row
+        // supplies its rank limit and cost, and whether it was already a Choice (its saved option index then belongs to the old effect).
+        internal static LegacyStarMigration ManifestRevision(string hero, string id, int maxRank, int rankCost, bool wasChoice, int revision)
+            => new LegacyStarMigration(id, maxRank, rankCost, changedEffect: true, revision: revision, wasChoice: wasChoice);
+
+        // Same, for a retained baseline star (a ring center whose pair was redefined); rank limit and cost come from the baseline tree.
+        internal static LegacyStarMigration ManifestRevisedBaseline(string hero, string id, int revision)
+        {
+            var original = HeroSigils.BaselineTreeFor(hero).Single(x => x.Id == id);
+            return new LegacyStarMigration(id, original.MaxRank, original.RankCost, changedEffect: true, revision: revision, wasChoice: original.IsChoice);
+        }
+
         private static MemoryEventKind ManifestPairTrigger(PairComboTrigger trigger)
         {
             switch (trigger)

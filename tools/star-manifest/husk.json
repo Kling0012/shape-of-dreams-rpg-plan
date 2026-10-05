@@ -2824,15 +2824,15 @@
       "memory": "St_D_ScarOfTheWind",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "@R",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
-        "effect": "Echo",
-        "value": 5.75,
+        "effect": "Recharge",
+        "value": 1.15,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": "@R"
       },
       "power": null,
       "stat": null,
@@ -2840,13 +2840,14 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C02"
+        "C02",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "遅れて鳴る風",
-      "nameEn": "Late-Sounding Wind",
-      "notes": ""
+      "nameJa": "風が呼ぶ構え",
+      "nameEn": "Wind Calls the Stance",
+      "notes": "v2.4：風の傷の固有斬りが当たるたびに、装備中のRの残りクールダウンを短縮する（滅殺態勢でも撹乱でも同じ）。"
     },
     {
       "id": "husk.mem.wind-scar.c4.e4",
@@ -2989,15 +2990,15 @@
       "memory": "St_D_ScarOfTheWind",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "@Q",
       "target": null,
       "gimmick": {
         "trigger": "OnKill",
-        "effect": "Heal",
-        "value": 1.15,
+        "effect": "Recharge",
+        "value": 4.6,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": "@Q"
       },
       "power": null,
       "stat": null,
@@ -3005,13 +3006,14 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C02"
+        "C02",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "凪の癒やし",
-      "nameEn": "Healing Calm",
-      "notes": ""
+      "nameJa": "風が呼ぶ一太刀",
+      "nameEn": "Wind Calls the Blade",
+      "notes": "v2.4：風の傷の固有斬りで倒すたびに、装備中のQの残りクールダウンを短縮する（裂傷でも死の刻印でも同じ）。"
     },
     {
       "id": "husk.mem.wind-scar.c4.choice",
@@ -4316,15 +4318,15 @@
       "memory": "St_Q_Laceration",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "@R",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
-        "effect": "Element",
-        "value": 28.75,
-        "arg": 2,
+        "effect": "Recharge",
+        "value": 0.58,
+        "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": "@R"
       },
       "power": null,
       "stat": null,
@@ -4332,13 +4334,14 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C02"
+        "C02",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "裂け目の光",
-      "nameEn": "Light in the Rift",
-      "notes": ""
+      "nameJa": "裂け目が呼ぶ構え",
+      "nameEn": "Rend Calls the Stance",
+      "notes": "v2.4：裂傷が当たるたびに、装備中のRの残りクールダウンを短縮する（滅殺態勢でも撹乱でも同じ）。旧「裂け目の光」を置き換えた。"
     },
     {
       "id": "husk.mem.laceration.c4.e4",
@@ -4469,15 +4472,15 @@
       "memory": "St_Q_Laceration",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "@R",
       "target": null,
       "gimmick": {
-        "trigger": "OnHit",
-        "effect": "ElementEdge",
-        "value": 4.6,
+        "trigger": "OnKill",
+        "effect": "Recharge",
+        "value": 3.45,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": "@R"
       },
       "power": null,
       "stat": null,
@@ -4485,13 +4488,14 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C02"
+        "C02",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "重なる刃色",
-      "nameEn": "Layered Blade Hues",
-      "notes": ""
+      "nameJa": "決着が呼ぶ構え",
+      "nameEn": "Finish Calls the Stance",
+      "notes": "v2.4：裂傷で倒すたびに、装備中のRの残りクールダウンを短縮する（滅殺態勢でも撹乱でも同じ）。旧「重なる刃色」を置き換えた。"
     },
     {
       "id": "husk.mem.laceration.c4.choice",
@@ -7279,15 +7283,15 @@
       "memory": "St_R_AnnihilationStance",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "@Q",
       "target": null,
       "gimmick": {
-        "trigger": "OnKill",
-        "effect": "Burst",
-        "value": 23,
+        "trigger": "OnHit",
+        "effect": "Recharge",
+        "value": 1.15,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": "@Q"
       },
       "power": null,
       "stat": null,
@@ -7295,13 +7299,14 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C02"
+        "C02",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "撃ち砕く剣気",
-      "nameEn": "Shattering Aura",
-      "notes": ""
+      "nameJa": "剣気が呼ぶ一太刀",
+      "nameEn": "Aura Calls the Blade",
+      "notes": "v2.4：剣気が当たるたびに、装備中のQの残りクールダウンを短縮する（裂傷でも死の刻印でも同じ）。旧「撃ち砕く剣気」（撃破時Burst）を置き換えた。"
     },
     {
       "id": "husk.mem.annihilation.c4.e4",
@@ -11436,7 +11441,9 @@
         "husk.bridge.b2.choice"
       ],
       "requires": [
-        "husk.bridge.b2.e6"
+        "husk.bridge.b2.e6",
+        "h.husk.ring.vessel",
+        "h.husk.route.wind-scar.4"
       ],
       "requiresAny": [],
       "kind": "Notable",
@@ -11447,12 +11454,12 @@
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
-        "effect": "Heal",
-        "value": 1.15,
+        "effect": "Primed",
+        "value": 11.5,
         "arg": 0,
         "cooldown": 0,
         "target": null,
-        "condition": "BridgeMark:h.husk.ring.insight"
+        "condition": "BridgeMark:h.husk.ring.vessel"
       },
       "power": null,
       "stat": null,
@@ -11465,9 +11472,9 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "癒やしの太刀",
-      "nameEn": "Healing Blade",
-      "notes": ""
+      "nameJa": "風を纏う二の太刀",
+      "nameEn": "Second Stroke in the Wind",
+      "notes": "v2.4 三印：風の印（vessel）が付いた敵へ裂傷が当たると、次の通常攻撃へ高い方のAD/AP 11.5% を上乗せする（風の傷の次の固有斬りへつながる）。風の傷・滅殺態勢・裂傷の3つを装備し、vessel の中心と風の傷の幹4番が必要。"
     },
     {
       "id": "husk.bridge.b2.choice",
@@ -11729,7 +11736,7 @@
       "requires": [
         "h.husk.ring.vessel",
         "h.husk.route.annihilation.4",
-        "h.husk.route.flash-step.4"
+        "h.husk.route.wind-scar.4"
       ],
       "requiresAny": [],
       "kind": "MemoryDamage",
@@ -11749,9 +11756,9 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "剣気の鋭さ",
-      "nameEn": "Sharpness of the Aura",
-      "notes": "設計表は「旧中心→e1→…→p5の鎖を2本の小さな扇へ曲げる」とだけ書き、辺の具体形は無い。購入順の1本鎖（旧中心→e1→e2→e3→n1→e4→e5→e6→n2→choice→p1..p5）で記録した。"
+      "nameJa": "風上の剣気",
+      "nameEn": "Windward Aura",
+      "notes": ""
     },
     {
       "id": "husk.bridge.b3.e2",
@@ -11764,19 +11771,15 @@
         "husk.bridge.b3.e3"
       ],
       "requires": [
-        "husk.bridge.b3.e1",
-        "h.husk.route.flash-step.4"
+        "husk.bridge.b3.e1"
       ],
       "requiresAny": [],
-      "kind": "GimmickBoost",
-      "memory": null,
-      "value": 1.15,
+      "kind": "MemoryDamage",
+      "memory": "St_D_ScarOfTheWind",
+      "value": 2,
       "param": null,
-      "receiver": "St_M_FlashStep",
-      "target": {
-        "star": null,
-        "effect": null
-      },
+      "receiver": null,
+      "target": null,
       "gimmick": null,
       "power": null,
       "stat": null,
@@ -11784,13 +11787,12 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03",
-        "C04"
+        "C03"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "影の呼び水",
-      "nameEn": "Shadow Priming",
+      "nameJa": "剣気を呼ぶ風",
+      "nameEn": "Wind That Calls the Aura",
       "notes": ""
     },
     {
@@ -11830,8 +11832,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "剣気の名残",
-      "nameEn": "Aura's Remnants",
+      "nameJa": "剣気の研ぎ",
+      "nameEn": "Refining the Aura",
       "notes": ""
     },
     {
@@ -11852,16 +11854,16 @@
       "memory": "St_R_AnnihilationStance",
       "value": null,
       "param": null,
-      "receiver": "St_M_FlashStep",
+      "receiver": null,
       "target": null,
       "gimmick": {
-        "trigger": "OnKill",
-        "effect": "Recharge",
+        "trigger": "OnHit",
+        "effect": "Echo",
         "value": 5.75,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FlashStep",
-        "condition": "BridgeSuccess:h.husk.ring.vessel"
+        "target": null,
+        "condition": "BridgeMark:h.husk.ring.vessel"
       },
       "power": null,
       "stat": null,
@@ -11870,14 +11872,13 @@
       "mechanisms": [
         "C01",
         "C02",
-        "C04",
         "C05"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "撃破の歩み",
-      "nameEn": "Slaying Stride",
-      "notes": "設計表の「印なし」を条件 bridgeSuccess（印を使わない）として記録。 条件メモ: 印なし（印を使わない）。"
+      "nameJa": "風印への追い剣気",
+      "nameEn": "Aura Chasing the Wind Mark",
+      "notes": "v2.4：風の傷の印（vessel）がある敵への剣気に遅れて重なる追撃。"
     },
     {
       "id": "husk.bridge.b3.e4",
@@ -11890,15 +11891,17 @@
         "husk.bridge.b3.e5"
       ],
       "requires": [
-        "husk.bridge.b3.n1",
-        "h.husk.route.flash-step.4"
+        "husk.bridge.b3.n1"
       ],
-      "requiresAny": [],
+      "requiresAny": [
+        "h.husk.route.wind-scar.2",
+        "h.husk.route.wind-scar.4"
+      ],
       "kind": "GimmickBoost",
-      "memory": null,
+      "memory": "St_D_ScarOfTheWind",
       "value": 1.15,
       "param": null,
-      "receiver": "St_M_FlashStep",
+      "receiver": null,
       "target": {
         "star": null,
         "effect": null
@@ -11910,13 +11913,12 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03",
-        "C04"
+        "C03"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "満ちる影足",
-      "nameEn": "Filling Shadow-Steps",
+      "nameJa": "風の研ぎ",
+      "nameEn": "Sharpening the Wind",
       "notes": ""
     },
     {
@@ -11931,41 +11933,6 @@
       ],
       "requires": [
         "husk.bridge.b3.e4"
-      ],
-      "requiresAny": [],
-      "kind": "MemoryDamage",
-      "memory": "St_R_AnnihilationStance",
-      "value": 2,
-      "param": null,
-      "receiver": null,
-      "target": null,
-      "gimmick": null,
-      "power": null,
-      "stat": null,
-      "options": null,
-      "keystone": null,
-      "mechanisms": [
-        "C01",
-        "C03"
-      ],
-      "maxRank": 1,
-      "rankCost": 1,
-      "nameJa": "剣気の奔流",
-      "nameEn": "Torrent of Aura",
-      "notes": ""
-    },
-    {
-      "id": "husk.bridge.b3.e6",
-      "region": "bridge",
-      "cluster": "husk.bridge.b3",
-      "shape": "fan",
-      "anchor": null,
-      "edges": [
-        "husk.bridge.b3.e5",
-        "husk.bridge.b3.n2"
-      ],
-      "requires": [
-        "husk.bridge.b3.e5"
       ],
       "requiresAny": [],
       "kind": "MemoryHaste",
@@ -11985,8 +11952,43 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "続けざまの剣気",
-      "nameEn": "Consecutive Auras",
+      "nameJa": "早まる剣気",
+      "nameEn": "Quickening Aura",
+      "notes": ""
+    },
+    {
+      "id": "husk.bridge.b3.e6",
+      "region": "bridge",
+      "cluster": "husk.bridge.b3",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "husk.bridge.b3.e5",
+        "husk.bridge.b3.n2"
+      ],
+      "requires": [
+        "husk.bridge.b3.e5"
+      ],
+      "requiresAny": [],
+      "kind": "MemoryDamage",
+      "memory": "St_D_ScarOfTheWind",
+      "value": 2,
+      "param": null,
+      "receiver": null,
+      "target": null,
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C03"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "唸る風刃",
+      "nameEn": "Howling Wind Blade",
       "notes": ""
     },
     {
@@ -12000,22 +12002,25 @@
         "husk.bridge.b3.choice"
       ],
       "requires": [
-        "husk.bridge.b3.e6"
+        "husk.bridge.b3.e6",
+        "h.husk.ring.insight",
+        "h.husk.route.laceration.4"
       ],
       "requiresAny": [],
       "kind": "Notable",
-      "memory": "St_R_AnnihilationStance",
+      "memory": "St_D_ScarOfTheWind",
       "value": null,
       "param": null,
-      "receiver": "St_M_FlashStep",
+      "receiver": "St_R_AnnihilationStance",
       "target": null,
       "gimmick": {
         "trigger": "OnHit",
         "effect": "Recharge",
-        "value": 0.58,
+        "value": 1.15,
         "arg": 0,
         "cooldown": 0,
-        "target": "St_M_FlashStep"
+        "target": "St_R_AnnihilationStance",
+        "condition": "BridgeMark:h.husk.ring.insight"
       },
       "power": null,
       "stat": null,
@@ -12029,9 +12034,9 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "剣気の歩幅",
-      "nameEn": "Pace of the Aura",
-      "notes": "条件メモ: 印なし（印を使わない）。"
+      "nameJa": "気に染まる風",
+      "nameEn": "Wind Dyed by the Aura",
+      "notes": "v2.4 三印：剣気の印（insight）が付いた敵へ風の傷の固有斬りが当たると、滅殺態勢の残りクールダウンを短縮する。裂傷・滅殺態勢・風の傷の3つを装備し、insight の中心と裂傷の幹4番が必要。"
     },
     {
       "id": "husk.bridge.b3.choice",
@@ -12044,8 +12049,7 @@
         "husk.bridge.b3.p1"
       ],
       "requires": [
-        "husk.bridge.b3.n2",
-        "h.husk.route.flash-step.4"
+        "husk.bridge.b3.n2"
       ],
       "requiresAny": [],
       "kind": "Choice",
@@ -12059,32 +12063,27 @@
       "stat": null,
       "options": [
         {
-          "kind": "Notable",
-          "memory": "St_R_AnnihilationStance",
-          "value": null,
-          "param": null,
-          "receiver": "St_M_FlashStep",
-          "target": null,
-          "gimmick": {
-            "trigger": "OnKill",
-            "effect": "Recharge",
-            "value": 3.45,
-            "arg": 0,
-            "cooldown": 0,
-            "target": "St_M_FlashStep",
-            "condition": "BridgeSuccess:h.husk.ring.vessel"
+          "kind": "GimmickParam",
+          "memory": "St_D_ScarOfTheWind",
+          "value": 23,
+          "param": "MarkDuration",
+          "receiver": null,
+          "target": {
+            "star": "h.husk.ring.vessel",
+            "effect": null
           },
+          "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "撃破の足音",
-          "nameEn": "Footsteps of the Kill"
+          "nameJa": "風の印を長く残す",
+          "nameEn": "Wind Mark Lingers"
         },
         {
           "kind": "GimmickBoost",
-          "memory": null,
+          "memory": "St_D_ScarOfTheWind",
           "value": 3.45,
           "param": null,
-          "receiver": "St_M_FlashStep",
+          "receiver": null,
           "target": {
             "star": null,
             "effect": null
@@ -12092,8 +12091,8 @@
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "深い影足",
-          "nameEn": "Deeper Shadow-Steps"
+          "nameJa": "深く刻む風",
+          "nameEn": "Deeply Carving Wind"
         }
       ],
       "keystone": null,
@@ -12101,14 +12100,13 @@
         "C01",
         "C02",
         "C03",
-        "C04",
         "C05"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "歩みの伸ばし方",
-      "nameEn": "Stretching the Stride",
-      "notes": "条件メモ: 印なし（印を使わない）。"
+      "nameJa": "風の選択",
+      "nameEn": "Choice of Wind",
+      "notes": "v2.4 三印：風の印（vessel）の持続時間を +23%（4秒→4.92秒）にするか、風の傷の固有斬りの効果を +3.45% にするかの2択。"
     },
     {
       "id": "husk.bridge.b3.p1",
@@ -12141,8 +12139,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "鋭利な気刃",
-      "nameEn": "Keen Air Blade",
+      "nameJa": "研ぎ澄まされた気",
+      "nameEn": "Whetted Spirit",
       "notes": ""
     },
     {
@@ -12156,19 +12154,15 @@
         "husk.bridge.b3.p3"
       ],
       "requires": [
-        "husk.bridge.b3.p1",
-        "h.husk.route.flash-step.4"
+        "husk.bridge.b3.p1"
       ],
       "requiresAny": [],
-      "kind": "GimmickBoost",
-      "memory": null,
-      "value": 1.15,
+      "kind": "MemoryDamage",
+      "memory": "St_D_ScarOfTheWind",
+      "value": 2,
       "param": null,
-      "receiver": "St_M_FlashStep",
-      "target": {
-        "star": null,
-        "effect": null
-      },
+      "receiver": null,
+      "target": null,
       "gimmick": null,
       "power": null,
       "stat": null,
@@ -12176,13 +12170,12 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03",
-        "C04"
+        "C03"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "戻る足音",
-      "nameEn": "Returning Footsteps",
+      "nameJa": "風の切れ味",
+      "nameEn": "Edge of the Wind",
       "notes": ""
     },
     {
@@ -12222,8 +12215,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "滅殺の高鳴り",
-      "nameEn": "Surge of Annihilation",
+      "nameJa": "高まる気迫",
+      "nameEn": "Rising Resolve",
       "notes": ""
     },
     {
@@ -12238,6 +12231,46 @@
       ],
       "requires": [
         "husk.bridge.b3.p3"
+      ],
+      "requiresAny": [
+        "h.husk.route.wind-scar.2",
+        "h.husk.route.wind-scar.4"
+      ],
+      "kind": "GimmickBoost",
+      "memory": "St_D_ScarOfTheWind",
+      "value": 1.15,
+      "param": null,
+      "receiver": null,
+      "target": {
+        "star": null,
+        "effect": null
+      },
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C03"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "深まる風",
+      "nameEn": "Deepening Wind",
+      "notes": ""
+    },
+    {
+      "id": "husk.bridge.b3.p5",
+      "region": "bridge",
+      "cluster": "husk.bridge.b3",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "husk.bridge.b3.p4"
+      ],
+      "requires": [
+        "husk.bridge.b3.p4"
       ],
       "requiresAny": [],
       "kind": "MemoryHaste",
@@ -12259,45 +12292,6 @@
       "rankCost": 1,
       "nameJa": "巡る剣気",
       "nameEn": "Cycling Aura",
-      "notes": ""
-    },
-    {
-      "id": "husk.bridge.b3.p5",
-      "region": "bridge",
-      "cluster": "husk.bridge.b3",
-      "shape": "fan",
-      "anchor": null,
-      "edges": [
-        "husk.bridge.b3.p4"
-      ],
-      "requires": [
-        "husk.bridge.b3.p4",
-        "h.husk.route.flash-step.4"
-      ],
-      "requiresAny": [],
-      "kind": "GimmickBoost",
-      "memory": null,
-      "value": 1.15,
-      "param": null,
-      "receiver": "St_M_FlashStep",
-      "target": {
-        "star": null,
-        "effect": null
-      },
-      "gimmick": null,
-      "power": null,
-      "stat": null,
-      "options": null,
-      "keystone": null,
-      "mechanisms": [
-        "C01",
-        "C03",
-        "C04"
-      ],
-      "maxRank": 1,
-      "rankCost": 1,
-      "nameJa": "影道の捷径",
-      "nameEn": "Shortcut of the Shadow Path",
       "notes": ""
     },
     {
@@ -12900,8 +12894,8 @@
       ],
       "requires": [
         "h.husk.ring.recall",
-        "h.husk.route.death-mark.4",
-        "h.husk.route.wind-scar.4"
+        "h.husk.route.flash-step.4",
+        "h.husk.route.death-mark.4"
       ],
       "requiresAny": [],
       "kind": "MemoryDamage",
@@ -12922,8 +12916,8 @@
       "maxRank": 1,
       "rankCost": 1,
       "nameJa": "標的の中心",
-      "nameEn": "Center of the Mark",
-      "notes": "設計表は「旧中心→e1→…→p5の鎖を2本の小さな扇へ曲げる」とだけ書き、辺の具体形は無い。購入順の1本鎖（旧中心→e1→e2→e3→n1→e4→e5→e6→n2→choice→p1..p5）で記録した。"
+      "nameEn": "Heart of the Target",
+      "notes": ""
     },
     {
       "id": "husk.bridge.b5.e2",
@@ -12936,15 +12930,19 @@
         "husk.bridge.b5.e3"
       ],
       "requires": [
-        "husk.bridge.b5.e1"
+        "husk.bridge.b5.e1",
+        "h.husk.route.flash-step.4"
       ],
       "requiresAny": [],
-      "kind": "MemoryDamage",
-      "memory": "St_D_ScarOfTheWind",
-      "value": 2,
+      "kind": "GimmickBoost",
+      "memory": null,
+      "value": 1.15,
       "param": null,
-      "receiver": null,
-      "target": null,
+      "receiver": "St_M_FlashStep",
+      "target": {
+        "star": null,
+        "effect": null
+      },
       "gimmick": null,
       "power": null,
       "stat": null,
@@ -12952,12 +12950,13 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03"
+        "C03",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "追い風の勢い",
-      "nameEn": "Tailwind Force",
+      "nameJa": "瞬きの間",
+      "nameEn": "Blink of an Interval",
       "notes": ""
     },
     {
@@ -12998,7 +12997,7 @@
       "maxRank": 1,
       "rankCost": 1,
       "nameJa": "楔の研ぎ",
-      "nameEn": "Refining the Wedge",
+      "nameEn": "Sharpening the Wedge",
       "notes": ""
     },
     {
@@ -13016,18 +13015,18 @@
       ],
       "requiresAny": [],
       "kind": "Notable",
-      "memory": "St_D_ScarOfTheWind",
+      "memory": "St_Q_DeathMark",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "St_M_FlashStep",
       "target": null,
       "gimmick": {
-        "trigger": "OnCrit",
-        "effect": "Echo",
+        "trigger": "OnKill",
+        "effect": "Recharge",
         "value": 5.75,
         "arg": 0,
         "cooldown": 0,
-        "target": null,
+        "target": "St_M_FlashStep",
         "condition": "BridgeMark:h.husk.ring.recall"
       },
       "power": null,
@@ -13037,12 +13036,13 @@
       "mechanisms": [
         "C01",
         "C02",
+        "C04",
         "C05"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の残響",
-      "nameEn": "Echo of Dark",
+      "nameJa": "楔の帰郷",
+      "nameEn": "Wedge's Homecoming",
       "notes": ""
     },
     {
@@ -13056,17 +13056,15 @@
         "husk.bridge.b5.e5"
       ],
       "requires": [
-        "husk.bridge.b5.n1"
+        "husk.bridge.b5.n1",
+        "h.husk.route.flash-step.4"
       ],
-      "requiresAny": [
-        "h.husk.route.wind-scar.2",
-        "h.husk.route.wind-scar.4"
-      ],
+      "requiresAny": [],
       "kind": "GimmickBoost",
-      "memory": "St_D_ScarOfTheWind",
+      "memory": null,
       "value": 1.15,
       "param": null,
-      "receiver": null,
+      "receiver": "St_M_FlashStep",
       "target": {
         "star": null,
         "effect": null
@@ -13078,12 +13076,13 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03"
+        "C03",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "風の研ぎ",
-      "nameEn": "Whetting the Wind",
+      "nameJa": "待たぬ影",
+      "nameEn": "Unwaiting Shadow",
       "notes": ""
     },
     {
@@ -13100,7 +13099,7 @@
         "husk.bridge.b5.e4"
       ],
       "requiresAny": [],
-      "kind": "MemoryHaste",
+      "kind": "MemoryDamage",
       "memory": "St_Q_DeathMark",
       "value": 2,
       "param": null,
@@ -13117,8 +13116,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "早まる楔",
-      "nameEn": "Hastened Wedge",
+      "nameJa": "沈む闇",
+      "nameEn": "Sinking Dark",
       "notes": ""
     },
     {
@@ -13132,15 +13131,19 @@
         "husk.bridge.b5.n2"
       ],
       "requires": [
-        "husk.bridge.b5.e5"
+        "husk.bridge.b5.e5",
+        "h.husk.route.flash-step.4"
       ],
       "requiresAny": [],
-      "kind": "MemoryDamage",
-      "memory": "St_D_ScarOfTheWind",
-      "value": 2,
+      "kind": "GimmickBoost",
+      "memory": null,
+      "value": 1.15,
       "param": null,
-      "receiver": null,
-      "target": null,
+      "receiver": "St_M_FlashStep",
+      "target": {
+        "star": null,
+        "effect": null
+      },
       "gimmick": null,
       "power": null,
       "stat": null,
@@ -13148,12 +13151,13 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03"
+        "C03",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "身を裂く風",
-      "nameEn": "Flesh-Cutting Wind",
+      "nameJa": "足の記憶",
+      "nameEn": "Memory of the Feet",
       "notes": ""
     },
     {
@@ -13171,18 +13175,18 @@
       ],
       "requiresAny": [],
       "kind": "Notable",
-      "memory": "St_D_ScarOfTheWind",
+      "memory": "St_Q_DeathMark",
       "value": null,
       "param": null,
-      "receiver": null,
+      "receiver": "St_M_FlashStep",
       "target": null,
       "gimmick": {
-        "trigger": "OnCrit",
-        "effect": "Heal",
-        "value": 1.15,
+        "trigger": "OnHit",
+        "effect": "Recharge",
+        "value": 0.58,
         "arg": 0,
         "cooldown": 0,
-        "target": null,
+        "target": "St_M_FlashStep",
         "condition": "BridgeMark:h.husk.ring.recall"
       },
       "power": null,
@@ -13192,12 +13196,13 @@
       "mechanisms": [
         "C01",
         "C02",
+        "C04",
         "C05"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の恵み",
-      "nameEn": "Boon of Dark",
+      "nameJa": "刻んで戻る",
+      "nameEn": "Carve and Return",
       "notes": ""
     },
     {
@@ -13211,7 +13216,8 @@
         "husk.bridge.b5.p1"
       ],
       "requires": [
-        "husk.bridge.b5.n2"
+        "husk.bridge.b5.n2",
+        "h.husk.route.flash-step.4"
       ],
       "requiresAny": [],
       "kind": "Choice",
@@ -13225,41 +13231,55 @@
       "stat": null,
       "options": [
         {
-          "kind": "MemoryDamage",
+          "kind": "Notable",
           "memory": "St_Q_DeathMark",
-          "value": 4,
+          "value": null,
           "param": null,
-          "receiver": null,
+          "receiver": "St_M_FlashStep",
           "target": null,
-          "gimmick": null,
+          "gimmick": {
+            "trigger": "OnKill",
+            "effect": "Recharge",
+            "value": 3.45,
+            "arg": 0,
+            "cooldown": 0,
+            "target": "St_M_FlashStep",
+            "condition": "BridgeMark:h.husk.ring.recall"
+          },
           "power": null,
           "stat": null,
-          "nameJa": "刺さる楔",
-          "nameEn": "Biting Wedge"
+          "nameJa": "楔の還る足",
+          "nameEn": "Wedge-Returning Steps"
         },
         {
-          "kind": "MemoryDamage",
-          "memory": "St_D_ScarOfTheWind",
-          "value": 4,
+          "kind": "GimmickBoost",
+          "memory": null,
+          "value": 3.45,
           "param": null,
-          "receiver": null,
-          "target": null,
+          "receiver": "St_M_FlashStep",
+          "target": {
+            "star": null,
+            "effect": null
+          },
           "gimmick": null,
           "power": null,
           "stat": null,
-          "nameJa": "鋭まる風",
-          "nameEn": "Sharpening Wind"
+          "nameJa": "増える影足",
+          "nameEn": "Multiplying Shadow-Steps"
         }
       ],
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03"
+        "C02",
+        "C03",
+        "C04",
+        "C05"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "闇の行方",
-      "nameEn": "Where the Dark Goes",
+      "nameJa": "刻印と足の約束",
+      "nameEn": "Pact of Mark and Steps",
       "notes": ""
     },
     {
@@ -13293,8 +13313,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "沈む闇",
-      "nameEn": "Sinking Dark",
+      "nameJa": "刻印の余波",
+      "nameEn": "Aftermath of the Mark",
       "notes": ""
     },
     {
@@ -13308,15 +13328,19 @@
         "husk.bridge.b5.p3"
       ],
       "requires": [
-        "husk.bridge.b5.p1"
+        "husk.bridge.b5.p1",
+        "h.husk.route.flash-step.4"
       ],
       "requiresAny": [],
-      "kind": "MemoryDamage",
-      "memory": "St_D_ScarOfTheWind",
-      "value": 2,
+      "kind": "GimmickBoost",
+      "memory": null,
+      "value": 1.15,
       "param": null,
-      "receiver": null,
-      "target": null,
+      "receiver": "St_M_FlashStep",
+      "target": {
+        "star": null,
+        "effect": null
+      },
       "gimmick": null,
       "power": null,
       "stat": null,
@@ -13324,12 +13348,13 @@
       "keystone": null,
       "mechanisms": [
         "C01",
-        "C03"
+        "C03",
+        "C04"
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "風の切れ味",
-      "nameEn": "Cutting Wind",
+      "nameJa": "影の潮",
+      "nameEn": "Tide of Shadow",
       "notes": ""
     },
     {
@@ -13370,7 +13395,7 @@
       "maxRank": 1,
       "rankCost": 1,
       "nameJa": "満ちる闇の気",
-      "nameEn": "Rising Dark",
+      "nameEn": "Rising Dark Spirit",
       "notes": ""
     },
     {
@@ -13386,48 +13411,8 @@
       "requires": [
         "husk.bridge.b5.p3"
       ],
-      "requiresAny": [
-        "h.husk.route.wind-scar.2",
-        "h.husk.route.wind-scar.4"
-      ],
-      "kind": "GimmickBoost",
-      "memory": "St_D_ScarOfTheWind",
-      "value": 1.15,
-      "param": null,
-      "receiver": null,
-      "target": {
-        "star": null,
-        "effect": null
-      },
-      "gimmick": null,
-      "power": null,
-      "stat": null,
-      "options": null,
-      "keystone": null,
-      "mechanisms": [
-        "C01",
-        "C03"
-      ],
-      "maxRank": 1,
-      "rankCost": 1,
-      "nameJa": "深まる風",
-      "nameEn": "Deepening Wind",
-      "notes": ""
-    },
-    {
-      "id": "husk.bridge.b5.p5",
-      "region": "bridge",
-      "cluster": "husk.bridge.b5",
-      "shape": "fan",
-      "anchor": null,
-      "edges": [
-        "husk.bridge.b5.p4"
-      ],
-      "requires": [
-        "husk.bridge.b5.p4"
-      ],
       "requiresAny": [],
-      "kind": "MemoryHaste",
+      "kind": "MemoryDamage",
       "memory": "St_Q_DeathMark",
       "value": 2,
       "param": null,
@@ -13444,8 +13429,47 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "続けざまの一射",
-      "nameEn": "Consecutive Shots",
+      "nameJa": "深い刻印",
+      "nameEn": "Deep Mark",
+      "notes": ""
+    },
+    {
+      "id": "husk.bridge.b5.p5",
+      "region": "bridge",
+      "cluster": "husk.bridge.b5",
+      "shape": "fan",
+      "anchor": null,
+      "edges": [
+        "husk.bridge.b5.p4"
+      ],
+      "requires": [
+        "husk.bridge.b5.p4",
+        "h.husk.route.flash-step.4"
+      ],
+      "requiresAny": [],
+      "kind": "GimmickBoost",
+      "memory": null,
+      "value": 1.15,
+      "param": null,
+      "receiver": "St_M_FlashStep",
+      "target": {
+        "star": null,
+        "effect": null
+      },
+      "gimmick": null,
+      "power": null,
+      "stat": null,
+      "options": null,
+      "keystone": null,
+      "mechanisms": [
+        "C01",
+        "C03",
+        "C04"
+      ],
+      "maxRank": 1,
+      "rankCost": 1,
+      "nameJa": "速やかな影",
+      "nameEn": "Swift Shadow",
       "notes": ""
     },
     {

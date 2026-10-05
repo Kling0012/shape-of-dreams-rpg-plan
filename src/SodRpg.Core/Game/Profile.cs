@@ -401,7 +401,7 @@ namespace SodRpg.Core.Game
             if (!Heroes.TryGetValue(heroKey, out var h))
             {
                 // A hero created now never held stars under a redefined effect, so it starts at the current revision.
-                h = new HeroState { AuthoredMigrationVersion = StarClusters.MigrationsFor(heroKey).Count > 0 ? AuthoredStarMigration.CurrentVersion : 0 };
+                h = new HeroState { AuthoredMigrationVersion = StarClusters.MigrationVersionFor(heroKey) };
                 Heroes[heroKey] = h;
             }
             return h;

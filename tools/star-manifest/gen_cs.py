@@ -1015,6 +1015,19 @@ class Compiler:
             sources = sorted({m for e in effects for m in re.findall(r"St_\w+", e.get("memory") or "") if m in self.known_memories}
                              | set(receivers[1:]) | identities)
             ownership = obj("MemoryOwnership", {"TargetMemory": cs(receivers[0]), "SourceMemories": array(sources)})
+        own_bridge = next((s.get("anchor") for s in self.rows if row["region"] == "bridge" and s.get("cluster") == row["cluster"]
+                           and s.get("anchor") in self.pairs), None)
+        if own_bridge:
+            # A bridge star conditioned on another pair's mark/success equips that pair's memories: they are explicit cross-sources.
+            own = {self.pairs[own_bridge]["a"], self.pairs[own_bridge]["b"]}
+            conditioned = {m for e in effects for c in [(e.get("gimmick") or {}).get("condition")]
+                           if c and c.split(":", 1)[1] in self.pairs and c.split(":", 1)[1] != own_bridge
+                           for m in (self.pairs[c.split(":", 1)[1]]["a"], self.pairs[c.split(":", 1)[1]]["b"])}
+            extra = sorted(conditioned - own - set(receivers[:1]))
+            if extra and receivers:
+                ownership = obj("MemoryOwnership", {"TargetMemory": cs(receivers[0]), "SourceMemories": array(sorted(set(sources) | set(extra)))})
+            elif extra:
+                ownership = obj("MemoryOwnership", {"SourceMemories": array(extra)})
         receiver_only = self.receiver_only_bridge(row)
         if receiver_only:
             owned = RECEIVER_ONLY_BRIDGES[receiver_only]
@@ -1095,12 +1108,40 @@ class Compiler:
             lines.append("        }")
         # One rule per manifest migration row: the star keeps its ID and ranks, its effect changed. Cost is read from the baseline node.
         migrations = ["ManifestMigration(" + cs(self.hero) + ", " + cs(row["id"]) + ", " + str(row["maxRank"]) + ")"
-                      for row in self.rows if row["region"] == "migration"]
+                      for row in self.rows if row["region"] == "migration"] + revision_rules(self)
         lines += ["", "        public static LegacyStarMigration[] Create" + title + "Migrations()", "        {",
                   "            return new LegacyStarMigration[]", "            {"]
         lines += ["                " + expression + ("," if i < len(migrations) - 1 else "") for i, expression in enumerate(migrations)]
         lines += ["            };", "        }"]
         return "\n".join(lines + ["    }", "}", ""])
+
+
+def revision_rules(result, skip=()):
+    """Rules for a later star-map revision of an already authored hero (tools/star-manifest/revisions.json, README「星図の改訂」).
+
+    `stars` are authored rows whose effect was redefined; `centers` are retained ring centers whose pair was redefined.
+    A saved hero stamped with an older revision is refunded for each of them once, at the cost it paid."""
+    path = HERE / "revisions.json"
+    if not path.is_file():
+        return []
+    entry = json.loads(path.read_text(encoding="utf-8")).get(result.name)
+    if not entry:
+        return []
+    revision = entry["revision"]
+    if not isinstance(revision, int) or revision < 2:
+        raise SystemExit("revisions.json: " + result.name + " revision must be an integer >= 2 (1 is the v1.31 rewrite)")
+    rules = []
+    for sid in entry.get("stars", []):
+        row = result.by_id.get(sid)
+        if row is None or row["region"] == "migration":
+            raise SystemExit("revisions.json: " + sid + " is not an authored row of " + result.name + ".json")
+        if sid in skip:
+            continue
+        rules.append("ManifestRevision(" + cs(result.hero) + ", " + cs(sid) + ", " + str(row["maxRank"]) + ", " + str(row["rankCost"])
+                     + ", " + ("true" if row["kind"] == "Choice" else "false") + ", " + str(revision) + ")")
+    for sid in entry.get("centers", []):
+        rules.append("ManifestRevisedBaseline(" + cs(result.hero) + ", " + cs(sid) + ", " + str(revision) + ")")
+    return rules
 
 
 def render_diagnostic(result):
@@ -1141,7 +1182,7 @@ def render_diagnostic(result):
         lines += ["            definitions[" + str(i * 32 + j) + "] = Guard(failures, " + cs(sid) + ", () => " + expression + ");" for j, (sid, expression) in enumerate(chunk)]
         lines.append("        }")
     migrations = ["ManifestMigration(" + cs(result.hero) + ", " + cs(row["id"]) + ", " + str(row["maxRank"]) + ")"
-                  for row in result.rows if row["region"] == "migration" and row["id"] not in failed_ids]
+                  for row in result.rows if row["region"] == "migration" and row["id"] not in failed_ids] + revision_rules(result, failed_ids)
     lines += ["", "        public static LegacyStarMigration[] Migrations()", "        {", "            return new LegacyStarMigration[]", "            {"]
     lines += ["                " + expression + ("," if i < len(migrations) - 1 else "") for i, expression in enumerate(migrations)]
     lines += ["            };", "        }", "    }", "}", ""]
