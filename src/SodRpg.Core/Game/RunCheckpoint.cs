@@ -35,10 +35,11 @@ namespace SodRpg.Core.Game
         public Profile Restore(Profile current, Profile lobbyBaseline = null, List<string> notes = null)
         {
             if (current == null) throw new ArgumentNullException(nameof(current));
-            var restored = ProfileCodec.ReadCheckpointProfile(Snapshot, notes);
+            var restored = ProfileCodec.ReadCheckpointProfile(Snapshot, notes, current);
             if (restored.Run?.RunId != RunId) throw new LedgerFormatException("Checkpoint expedition does not match its ID.");
             if (lobbyBaseline == null && !string.IsNullOrEmpty(current.ContinueLobbyBaseline))
-                lobbyBaseline = ProfileCodec.ReadCheckpointProfile(current.ContinueLobbyBaseline, notes);
+                // The baseline is only a comparison input, not the profile being restored.
+                lobbyBaseline = ProfileCodec.ReadCheckpointProfile(current.ContinueLobbyBaseline);
             if (lobbyBaseline != null)
             {
                 if (!ReplayLobbyEconomy(restored, lobbyBaseline, current))

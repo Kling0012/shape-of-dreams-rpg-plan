@@ -214,9 +214,7 @@ namespace SodRpg.Mod
 
         private void UpdateProfileLoadNotes()
         {
-            string storeNotes = _store.Notes.Count > 0 ? string.Join("\n", _store.Notes) : null;
             LoadNotes = _profileSlots.Note;
-            if (storeNotes != null) LoadNotes = LoadNotes == null ? storeNotes : LoadNotes + "\n" + storeNotes;
             if (LoadNotes != null) Log.Warn("Profile load notes:\n" + LoadNotes);
         }
 
