@@ -12,6 +12,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.1.0 — ボス限定の装備セット（2026-10-05）
+
+14体のボスに、それぞれのボスだけが落とす装備セットを追加しました。 / Fourteen bosses now each drop their own exclusive gear set.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.0.3〜v2.0.5 と同じです）。 / Saves carry over (same format as v2.0.3–v2.0.5).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 追加 / New
+
+- **ボス限定の装備セット（14セット・84部位）**：森の悪魔、スコール、インフェルヌス、白夜、暗月、ニュクス、エレボス、シーカー、アズラク、プリムス、光の精霊、大顎、オブリヴィアクス、ポラリスの14体が、それぞれ全部位（6部位）の専用セットを落とします。そのボスを倒したときにしか手に入りません。 / **Boss-exclusive sets (14 sets, 84 pieces)**: each of fourteen bosses drops its own full six-piece set, obtainable only by defeating that boss.
+- **ボスの技を使う装備**：各部位とセット効果は、そのボスの技をプレイヤーが使える形にしたものです。2・3・6部位とそろえるごとに、戦い方が変わります。たとえば森の悪魔のセットでは、踏みつけの衝撃波や、時間差で噴き出す樹木で戦います。 / **Gear that fights like the boss**: piece and set effects turn the boss's own moves into player abilities, and the way you fight changes at 2, 3 and 6 pieces — the Forest Demon set, for example, stomps and grows trees that burst out after a delay.
+- **記憶・エッセンスとの連携**：そのボスが落とす記憶やエッセンスと一緒に装備すると、それらの固有の効果に作用する連携効果が発動します。2・4・6部位で段階的に強くなります。セットだけでも、記憶・エッセンスだけでも、これまでどおり使えます。 / **Links with the boss's memory or essence**: equipping the matching memory or essence adds a link that changes how that reward works, growing at 2, 4 and 6 pieces. Each still works on its own.
+- **専用のアイコン**：84部位すべてに、ボスごとの色と意匠でそろえた専用のアイコンを付けました。 / **Dedicated icons**: all 84 pieces have their own icons, styled per boss.
+- **確認用のコマンド**：開発者用のコマンドで、セットの受け取りや、ボス撃破の抽選を試せます（開発者モードのときだけ）。 / Developer-only console commands let you grant a set or test the boss drop roll.
+
+### 不具合の修正 / Fixes
+
+- **「続きから」の再開**：メニューからロビーに戻り、タイトルの「続きから」で再開したとき、ゲーム本体だけが前の保存地点に戻り、MOD の鞄や撃破の記録は戻らないことがありました。巻き戻った部屋の報酬を二重に得られる可能性があったので、MOD の状態も同じ保存地点にそろえるようにしました。あわせて、ロビーで中断中の遠征があるときは、その旨と、遠征を終えるまで利用できない操作を表示します。 / **Continue**: after returning to the lobby and using Continue, the game could roll back to an earlier save point while the mod's satchel and kill records did not, allowing rewards to be earned twice. The mod now rolls back to the same point, and the lobby shows when an expedition is suspended and what is locked until it ends.
+
+追加した効果の多くは、まだ通常のプレイや協力プレイでのテストが十分ではありません。おかしな点があれば教えてください。 / Many of the new effects are not yet fully tested in the live game and co-op. Please report anything odd.
+
+---
+
 ## v2.0.5 — 分解・純白ルート・起動時の読み込みの修正（2026-10-05）
 
 v2.0.4 のあとに見つかった不具合を3つ直しました。 / This release fixes three bugs found after v2.0.4.

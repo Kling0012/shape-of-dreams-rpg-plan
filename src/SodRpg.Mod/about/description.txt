@@ -1,5 +1,5 @@
-[b]v2.0.5: bug-fix release — salvaging then securing no longer keeps both the relic and the salvage reward, pure-white co-op rewards wait for each player's own choice, and a read error on the first save load no longer stops the mod. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.0.5：不具合の修正版です。分解を待つあいだに確保すると遺物と分解の対価の両方が残る不具合、純白ルートの協力プレイで参加者の報酬が本人の選択を待たずに精算される不具合、セーブデータの初回の読み込みでエラーが起きると MOD が動かなくなる不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.1.0: fourteen bosses now each drop their own six-piece set that fights like the boss, with links to that boss's memory or essence and dedicated icons. Also fixes Continue so the mod rolls back with the game. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.1.0：14体のボスが、それぞれ専用の装備セット（全6部位）を落とすようになりました。ボスの技を自分で使える装備で、同じボスの記憶・エッセンスと連携し、専用のアイコンも付いています。「続きから」の再開で MOD の状態がずれる不具合も直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
