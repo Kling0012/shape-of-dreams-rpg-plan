@@ -6,6 +6,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — ボス限定セット（#48 段階B-2）
+
+- **新5セット**：星海の主衣 / Starsea Sovereign Raiment、終星の流衣 / Laststar Vesture、幻彩の追装 / Mirage Spectrum Gear、轟召の重装 / Roarcall Heavy Gear、三相の武装 / Threefold Armamentを承認仕様§3.6〜§3.10へ接続。各6部位と累積2/3/6段階を専用profileで実行します。PrimusAeronには報酬・任意Linkを追加しません。 / Added five six-piece boss sets and their cumulative2/3/6 stages from the approved profiles; Primus Aeron has no reward or optional link.
+- **Her World / Last Starlight**：本人native状態の実tick・自然終了child／元iteratorだけを使い、有界吸引・半径・記録対象爆発と、準備／稼働wait期限・1回再配置を接続。元の吸引軌道・ロック・死亡割込・native packetを維持し、解除時には自前差分だけを復元します。 / Scoped native ticks and natural-end children power Her World; Last Starlight retains its original iterator while adapting bounded wait deadlines and one preparatory relocation. Native movement, locks, death interruption and packets remain intact.
+- **Soul Prison / Burrow**：同じnative救命healへ10%加算（追加cap0.20H）、overflow由来の本人／最近味方shieldを有界追加。本体消費を確認したshieldは元の残存時間まで維持し、手動解除・装備変更・死亡・部屋移動では解除します。Burrowは実Emergeのstun／daze引数と1packetを変更し、本人CD8秒・全対象共有の追加予算を保持します。 / Added bounded native rescue-heal and overflow-shield bonuses, preserving committed shields through confirmed native gem consumption only. Burrow modifies actual Emerge arguments and packets with one owner cooldown and activation-wide budget.
+- **有限実行**：Nyx／Erebosはmarker・seed・遅延場を本人合計2・最古置換、tokenに結合した弾も解除。Seekerの終端／追尾orbは1回爆発し、短stunは正の最終damage成功時だけ。Primusは最大3異敵の光連鎖、検証済み出発点の相紋、異なる3入力の合流、吸収後残量からの最大HP盾の線形減衰を共有M1〜M8で実行します。 / Common bounded executors cover total-two replacement fields, once-only terminal/homing orbs, successful-hit stuns, distinct-target chains, departure glyphs, distinct-input finishers and non-refilling decaying MAXHP shields.
+- **互換・説明**：`BossCombatState`をinternalへ変更。Protocolは**17のまま**、保存形式4・既存ID・プロフィールリセットなしを維持。日英名／説明とWikiGenを更新し、現在10ボスセット60部位・8種adapter、残り4セット24部位・3adapterは未登録です。 / BossCombatState is internal. Protocol stays17 with profile format4, existing IDs and no reset. Bilingual WikiGen now lists10 boss sets,60 parts and8 distinct adapters; four sets and three adapters remain unregistered.
+- **検証**：指定Releaseビルド成功（警告5・エラー0、配置先`/tmp/sod-deploy-i48`）。WikiGenを`/tmp/sod-wiki-i48-b2`へ実行し、58セット・1394固有品と新5セットの日英部位／通常段階／連携出力、Primusの連携なしを確認。本体資料・ILはリポジトリ外だけで参照しました。Managed DLLのみのため実機戦闘・表示・協力同期・較正は未確認。tests/・test csprojを変更せず、テストの設計・追加・実行は行っていません。 / Release build and production WikiGen succeeded; live-game combat, visuals, co-op and balance remain unverified. Native sources and IL stayed outside the repository; no test work.
+
+---
+
 ## 未リリース — ボス限定セット（#48 段階B-1）
 
 - **新4セット**：氷刃の王装 / Iceblade Regalia、噴火炉の軍装 / Eruptionforge Warplate、白蓮の守装 / White Lotus Vestments、黒月の刃装 / Black Moon Armamentを追加。各6部位と累積2/3/6段階を承認仕様§3.2〜§3.5の専用profileへ接続しました。旧汎用Power・Guard連携は復活させません。 / Added four six-piece boss sets and their cumulative2/3/6 stages using the approved authored profiles, without restoring legacy generic powers or Guard links.
