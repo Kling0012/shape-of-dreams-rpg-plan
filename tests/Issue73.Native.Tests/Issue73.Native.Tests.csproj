@@ -18,6 +18,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryActivationAttribution.cs" Link="ModUnderTest/HostAuthority.MemoryActivationAttribution.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.RunChoices.cs" Link="ModUnderTest/ClientSession.RunChoices.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Durability.cs" Link="ModUnderTest/ClientSession.Durability.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
