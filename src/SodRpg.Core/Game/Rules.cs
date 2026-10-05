@@ -1392,11 +1392,11 @@ namespace SodRpg.Core.Game
             var rng = p.TakeRng();
             if (rng.Chance(EnhanceFailureChance(r) / 100.0))
             {
-                r.Enhance = 0;
+                r.Enhance = Math.Max(0, r.Enhance - 1);
                 p.StoreRng(rng);
                 return new GameEvent(EventKind.Info, Loc.T(
-                    $"「{r.PlainName}」の強化に失敗し、強化値が+0に戻りました。欠片{cost}は消費されました。",
-                    $"Enhancement failed for \"{r.PlainName}\" and reset it to +0. The {cost} shards were spent."), r.Rarity);
+                    $"「{r.PlainName}」の強化に失敗し、強化値が1段下がりました（+{r.Enhance}）。欠片{cost}は消費されました。",
+                    $"Enhancement failed for \"{r.PlainName}\" and lowered it by one level to +{r.Enhance}. The {cost} shards were spent."), r.Rarity);
             }
             r.Enhance++;
             string milestone = GrantEnhanceMilestones(rng, r);

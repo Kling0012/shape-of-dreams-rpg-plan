@@ -55,7 +55,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Seeded_failure_spends_shards_resets_enhancement_and_preserves_earned_progress()
+        public void Seeded_failure_spends_shards_lowers_enhancement_and_preserves_earned_progress()
         {
             var (p, r) = Legendary();
             r.Enhance = 20;
@@ -71,7 +71,7 @@ namespace SodRpg.Core.Tests
             var result = Rules.Enhance(p, r.Uid);
             Assert.Equal(EventKind.Info, result.Kind);
             Assert.Same(r, p.FindStash(r.Uid));
-            Assert.Equal(0, r.Enhance);
+            Assert.Equal(18, r.Enhance);
             Assert.Equal(shards - cost, p.Material(Materials.Shard));
             Assert.Equal(3, r.LimitBreaks);
             Assert.Equal(2, r.AwakenLevel);
@@ -86,8 +86,28 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
+        [InlineData(19, 18, 3UL)] // 85% failure at +20 target; seed 3 rolls it.
+        [InlineData(4, 3, 10UL)]  // 5% failure at +5 target; seed 10 rolls it.
+        public void Failed_forge_lowers_enhancement_by_one_level_and_keeps_earned_history(int start, int expected, ulong seed)
+        {
+            var (p, r) = Legendary();
+            r.Enhance = start;
+            Rules.GrantEnhanceMilestones(new Rng(131), r);
+            int milestones = r.EnhanceMilestones;
+            int shards = p.Material(Materials.Shard);
+            int cost = Content.EnhanceCost(start) * 2; // Epic+ relics pay twice the base enhancement fee.
+            p.StoreRng(new Rng(seed));
+            var result = Rules.Enhance(p, r.Uid);
+            Assert.Equal(expected, r.Enhance);
+            Assert.Equal(milestones, r.EnhanceMilestones);
+            Assert.Equal(shards - cost, p.Material(Materials.Shard));
+            Assert.Contains($"+{expected}", result.Text);
+            Assert.DoesNotContain("+0", result.Text);
+        }
+
+        [Theory]
         [InlineData(0UL, 20)]
-        [InlineData(3UL, 0)]
+        [InlineData(3UL, 18)]
         public void Saved_rng_replays_forge_outcome_and_persists_the_consumed_state(ulong seed, int expectedLevel)
         {
             var (p, r) = Legendary();
@@ -127,7 +147,7 @@ namespace SodRpg.Core.Tests
             Rules.Enhance(p, r.Uid);
             var saved = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             var loaded = saved.FindStash(r.Uid);
-            Assert.Equal(0, loaded.Enhance);
+            Assert.Equal(18, loaded.Enhance);
             Assert.Equal(boosted, loaded.Powers[0].Value);
             Assert.True(loaded.MilestonePowerApplied);
             int affixes = loaded.Affixes.Count;

@@ -1736,8 +1736,8 @@ namespace SodRpg.Mod
                 ValidateEnhanceConfirmation();
                 int failureChance = Rules.EnhanceFailureChance(sel);
                 if (failureChance > 0)
-                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると+0に戻ります）",
-                        $"Failure chance: {failureChance}% (failure resets enhancement to +0)"), "#ff8080"), _st.Small);
+                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると1段下がります）",
+                        $"Failure chance: {failureChance}% (failure lowers enhancement by one level)"), "#ff8080"), _st.Small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 int maxEnhance = Content.MaxEnhanceFor(sel);
