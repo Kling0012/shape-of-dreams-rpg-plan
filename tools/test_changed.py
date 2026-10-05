@@ -7,8 +7,9 @@ Usage:
 Changed files are collected from ``git diff --name-only <base>...HEAD`` plus
 staged/unstaged working-tree changes and untracked .cs files.  They are mapped
 to test classes (see ``select_tests``); for production files the unified diff
-narrows the mapping to the tokens (members, string constants) the change
-touches.  The selected classes run with ``dotnet test <project> --filter ...``.
+narrows the mapping to touched tokens (members, string constants), retaining
+file-level type dependencies for object initialization changes.  The selected
+classes run with ``dotnet test <project> --filter ...``.
 
 The three test projects serialize their own tests (shared game state), so the
 projects are built serially and then run in parallel for wall-clock time.
@@ -188,9 +189,9 @@ def select_tests(changed, files, diffs=None) -> Selection:
       1. a changed test .cs under tests/ selects the classes it declares;
       2. a changed production .cs under src/ selects, for each declared type,
          every test file mentioning the type as a whole word -> its classes;
-         with a diff, the tokens (members, string constants) touched by the
-         change replace the whole-file type list, except that a widely used
-         declared type still selects everything;
+         with a diff, use the tokens (members, string constants) touched by the
+         change, retaining file types for object initialization or unrecognized
+         changes; a widely used declared type still selects everything;
       3. changed data files (tools/star-manifest/*.json, tools/lowrarity/*.json,
          generated .cs) select test files that reference their path or types;
       4. build files (*.csproj, Directory.Build.*) or types used by more than
@@ -213,13 +214,17 @@ def select_tests(changed, files, diffs=None) -> Selection:
             types = declared_types(content)
             diff = (diffs or {}).get(path)
             if diff is not None:
-                candidates = diff_candidates(*unified_diff_plus_minus(diff))
+                plus, minus = unified_diff_plus_minus(diff)
+                candidates = diff_candidates(plus, minus)
                 if candidates is None:
                     selection.reasons.append(f"{path}: comment/whitespace-only change")
                     continue
-                if types and candidates.isdisjoint(types):
-                    # Fallback safety: nothing recognizable in the hunks (e.g. a
-                    # reformatted body) -> keep the whole-file type mapping.
+                creates_objects = any(re.search(r"\bnew\b", strip_comments(line))
+                                      for line in plus + minus)
+                if types and (creates_objects or candidates.isdisjoint(types)):
+                    # Constructor types do not identify the owning catalog.
+                    # Keep its readers even when expectations come from a table;
+                    # unrecognized hunks also retain file-level dependencies.
                     candidates.update(types)
                 mentions = {tf: {c for c in candidates
                                  if re.search(rf"\b{re.escape(c)}\b", files[tf])}

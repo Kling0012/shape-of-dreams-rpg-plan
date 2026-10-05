@@ -11,7 +11,7 @@ namespace SodRpg.Core.Game
         public readonly ModShieldPoolKind Kind;
         public ModShieldPoolKey(long ownerId, long recipientId, ModShieldPoolKind kind)
         {
-            if (ownerId == 0 || recipientId == 0 || !Enum.IsDefined(typeof(ModShieldPoolKind), kind))
+            if (ownerId == 0 || recipientId == 0 || kind < ModShieldPoolKind.Ordinary || kind > ModShieldPoolKind.Allied)
                 throw new ArgumentException("Invalid shield pool identity.");
             OwnerId = ownerId; RecipientId = recipientId; Kind = kind;
         }
@@ -72,22 +72,27 @@ namespace SodRpg.Core.Game
             if (_pools.TryGetValue(key, out var pool) && (pool.Epoch != equipmentEpoch || pool.Expiry <= now
                 || !pool.Adapter.IsAlive(pool.Handle))) { Remove(key); pool = null; }
             if (rawAmount == 0f) return false;
-            if (pool == null)
+            if (pool != null)
             {
-                T handle = adapter.CreateRaw(rawAmount, seconds, awardCap);
-                if (handle == null) throw new InvalidOperationException("Native shield creation returned no handle.");
-                float remaining = adapter.Remaining(handle); Validate(remaining, "processedAmount");
-                if (!adapter.IsAlive(handle)) return false; // Native receiver processors may legitimately negate an award.
-                if (remaining > awardCap + .00001f) { adapter.Destroy(handle); throw new InvalidOperationException("Shield adapter did not cap before native publication."); }
-                _pools.Add(key, new Pool { Handle = handle, Adapter = adapter, Epoch = equipmentEpoch, Expiry = now + seconds });
-                return remaining > 0f;
+                float processed = pool.Adapter.ProcessRaw(pool.Handle, rawAmount); Validate(processed, "processedAmount");
+                // Native processors can retire the activation while processing a refresh.
+                if (pool.Adapter.IsAlive(pool.Handle))
+                {
+                    float actual = pool.Adapter.Remaining(pool.Handle); Validate(actual, "remainingAmount");
+                    pool.Adapter.SetProcessed(pool.Handle, Math.Min(poolCap, Math.Max(actual, Math.Min(awardCap, processed))));
+                    pool.Adapter.Refresh(pool.Handle, seconds);
+                    pool.Expiry = now + seconds;
+                    return true;
+                }
+                Remove(key);
             }
-            float processed = pool.Adapter.ProcessRaw(pool.Handle, rawAmount); Validate(processed, "processedAmount");
-            float actual = pool.Adapter.Remaining(pool.Handle); Validate(actual, "remainingAmount");
-            pool.Adapter.SetProcessed(pool.Handle, Math.Min(poolCap, Math.Max(actual, Math.Min(awardCap, processed))));
-            pool.Adapter.Refresh(pool.Handle, seconds);
-            pool.Expiry = now + seconds;
-            return true;
+            T handle = adapter.CreateRaw(rawAmount, seconds, awardCap);
+            // OnCreate/support callbacks may already have destroyed or negated this award.
+            if (handle == null || !adapter.IsAlive(handle)) return false;
+            float remaining = adapter.Remaining(handle); Validate(remaining, "processedAmount");
+            if (remaining > awardCap + .00001f) { adapter.Destroy(handle); throw new InvalidOperationException("Shield adapter did not cap before native publication."); }
+            _pools.Add(key, new Pool { Handle = handle, Adapter = adapter, Epoch = equipmentEpoch, Expiry = now + seconds });
+            return remaining > 0f;
         }
         public void Maintain(ModShieldPoolKey key, float maxHealth, double now, long equipmentEpoch, bool ownerAndRecipientAlive)
         {

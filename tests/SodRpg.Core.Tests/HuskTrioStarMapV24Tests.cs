@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using SodRpg.Core.Game;
+using SodRpg.Core.Tests.Testing;
 using Xunit;
 
 namespace SodRpg.Core.Tests
@@ -82,8 +83,12 @@ namespace SodRpg.Core.Tests
             finally { foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
         }
 
-        [Fact]
-        public void A_revision_one_husk_save_refunds_the_redefined_stars_once_and_keeps_the_rest()
+        [Theory]
+        [InlineData(-1, FaultMode.IoError)]
+        [InlineData(0, FaultMode.IoError)]
+        [InlineData(1, FaultMode.CrashBefore)]
+        [InlineData(1, FaultMode.CrashAfter)]
+        public void A_revision_one_husk_store_refunds_and_notifies_once_even_after_continue_or_interrupted_save(int faultAt, FaultMode faultMode)
         {
             try
             {
@@ -99,25 +104,76 @@ namespace SodRpg.Core.Tests
                 Rules.AddTalentRank(p, Husk, route);
                 TreeTestPaths.Connect(p, Husk, redefined);
                 Rules.AddTalentRank(p, Husk, redefined);
+                const string dependent = "husk.mem.wind-scar.c4.choice";
+                TreeTestPaths.Connect(p, Husk, dependent);
+                Rules.AddTalentRank(p, Husk, dependent, 0);
                 Assert.True(h.Talents.ContainsKey(kept)); // Connect bought the path up to the redefined star
                 h.AuthoredMigrationVersion = 1; // a save written before revision 2
                 int points = p.TalentPoints(Husk), spent = Rules.SpentPoints(h, Husk);
 
-                var notes = new List<string>();
-                var q = ProfileCodec.Read(ProfileCodec.Write(p), notes);
+                p.Run = new RunState { RunId = "husk-refund", HeroKey = Husk };
+                var checkpoint = RunCheckpoint.Capture(p, "before-revision-two");
+                p.ContinueCheckpoints.Add(checkpoint);
+                p.ContinueLobbyBaseline = ProfileCodec.WriteCheckpointProfile(p);
+                const string path = "/husk/profile.json";
+                var disk = new InMemoryFileSystem();
+                string oldText = ProfileCodec.Write(p);
+                disk.Put(path, oldText);
+                disk.Put(path + ".bak", oldText);
+                var fs = new FaultyFileSystem(disk);
+                if (faultAt >= 0) fs.Arm(faultAt, faultMode);
+                var store = new ProfileStore(fs, path, 41);
+                var q = store.Load();
                 var loaded = q.Hero(Husk);
                 Assert.True(loaded.Talents.ContainsKey(kept));
                 Assert.False(loaded.Talents.ContainsKey(redefined));
+                Assert.False(loaded.Talents.ContainsKey(dependent));
                 Assert.Equal(2, loaded.AuthoredMigrationVersion);
                 Assert.Equal(points, q.TalentPoints(Husk));
                 Assert.True(Rules.SpentPoints(loaded, Husk) < spent);
                 Assert.Equal(points, Rules.SpentPoints(loaded, Husk) + Rules.FreePoints(q, Husk));
-                Assert.Contains(notes, n => n.Contains(redefined));
+                Assert.Single(store.Notes, n => n.Contains(redefined));
+                Assert.Single(store.Notes, n => n.Contains(dependent));
+                int free = Rules.FreePoints(q, Husk);
+                int refundCost = Rules.SpentPoints(h, Husk) - Rules.SpentPoints(loaded, Husk);
+                Assert.Equal(refundCost, free - Rules.FreePoints(p, Husk));
 
-                var again = new List<string>();
-                var r = ProfileCodec.Read(ProfileCodec.Write(q), again);
-                Assert.Empty(again);
-                Assert.Equal(Rules.FreePoints(q, Husk), Rules.FreePoints(r, Husk));
+                // The native Continue path migrates its old snapshot, not the active allocation again.
+                var continueNotes = new List<string>();
+                checkpoint.Restore(q, notes: continueNotes);
+                Assert.Empty(continueNotes);
+                Assert.Equal(free, Rules.FreePoints(q, Husk));
+                // If Continue is the first migration, report each reason once, not again for the lobby baseline.
+                var firstContinue = p.Clone();
+                checkpoint.Restore(firstContinue, notes: continueNotes);
+                Assert.Single(continueNotes, n => n.Contains(redefined));
+                Assert.Single(continueNotes, n => n.Contains(dependent));
+                Assert.Equal(free, Rules.FreePoints(firstContinue, Husk));
+
+                fs.Disarm();
+                var nextStore = new ProfileStore(fs, path, 41);
+                var r = nextStore.Load(); // before any ordinary game save
+                Assert.Equal(free, Rules.FreePoints(r, Husk));
+                Assert.Equal(2, r.Hero(Husk).AuthoredMigrationVersion);
+                bool committed = faultAt < 0 || faultMode == FaultMode.CrashAfter;
+                if (committed) Assert.Empty(nextStore.Notes); // the old backup must stay silent
+                else
+                {
+                    Assert.Single(nextStore.Notes, n => n.Contains(redefined));
+                    Assert.Single(nextStore.Notes, n => n.Contains(dependent));
+                    var afterRetry = new ProfileStore(fs, path, 41);
+                    Assert.Equal(free, Rules.FreePoints(afterRetry.Load(), Husk));
+                    Assert.Empty(afterRetry.Notes);
+                }
+                // New effects bought after revision 2 survive the next disk load.
+                TreeTestPaths.Connect(r, Husk, redefined);
+                Rules.AddTalentRank(r, Husk, redefined);
+                nextStore.Save(r);
+                var repurchased = new ProfileStore(fs, path, 41);
+                var s = repurchased.Load();
+                Assert.Equal(1, s.Hero(Husk).Talents[redefined]);
+                Assert.Equal(Rules.FreePoints(r, Husk), Rules.FreePoints(s, Husk));
+                Assert.Empty(repurchased.Notes);
             }
             finally { foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
         }
