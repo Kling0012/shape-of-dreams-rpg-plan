@@ -429,9 +429,27 @@ namespace SodRpg.Core.Game
         /// <summary>図鑑の節目（6種ごと）で得る星図ポイント。最大4。</summary>
         public int CodexBonusPoints => Math.Min(Content.MaxCodexBonus, Codex.Count / Content.CodexPerPoint);
 
-        public Rng TakeRng() => new Rng(RngState);
+        public Rng TakeRng() => new Rng(RngState, this);
 
         public void StoreRng(Rng rng) => RngState = rng.State;
+
+        internal bool ContainsRelicUid(string uid)
+        {
+            foreach (var relic in Stash)
+                if (relic.Uid == uid) return true;
+            foreach (var relic in LostAndFound)
+                if (relic.Uid == uid) return true;
+            foreach (var pending in PendingSalvage)
+                if (pending.Relic.Uid == uid) return true;
+            if (Run != null)
+            {
+                foreach (var relic in Run.Satchel)
+                    if (relic.Uid == uid) return true;
+                foreach (var relic in Run.DeferredWaypointRelics)
+                    if (relic.Uid == uid) return true;
+            }
+            return false;
+        }
 
         /// <summary>Installs an owned, decoded checkpoint without replacing the slot's Profile reference.</summary>
         internal void RestoreFrom(Profile source)
