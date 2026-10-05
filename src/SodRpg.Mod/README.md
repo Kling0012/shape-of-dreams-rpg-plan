@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このInfinity統合ブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.1、#48・#97・#99、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このInfinity統合ブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2、#48・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
