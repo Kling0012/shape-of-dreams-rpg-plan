@@ -369,7 +369,7 @@ namespace SodRpg.Core.Game
                 if (x < weight)
                 {
                     int raw = rng.Range(a.Min, a.Max);
-                    int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(itemLevel) : 100;
+                    int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(itemLevel, a.Stat) : 100;
                     int pct = Content.RarityValuePct(rarity) * level / 100;
                     return new StatLine(a.Stat, Relic.Scale(raw, pct));
                 }

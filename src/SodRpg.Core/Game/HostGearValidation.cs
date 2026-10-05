@@ -102,7 +102,7 @@ namespace SodRpg.Core.Game
 
                 // Loot.RollAffix is also the source for milestone and retune/craft affixes. Raw
                 // values include rarity/item-level rounding, NEVER enhancement/awakening again.
-                int levelPct = Content.ScalesWithItemLevel(line.Stat) ? Content.LevelScalePct(source.ItemLevel) : 100;
+                int levelPct = Content.ScalesWithItemLevel(line.Stat) ? Content.LevelScalePct(source.ItemLevel, line.Stat) : 100;
                 int cap = Relic.Scale(definition.Max, Content.RarityValuePct(source.Rarity) * levelPct / 100);
                 result.Affixes.Add(new StatLine(line.Stat, ClampAmount(line.Value, cap)));
             }

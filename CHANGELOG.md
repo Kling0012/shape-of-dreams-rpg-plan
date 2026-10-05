@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **装備の攻撃力・魔力の固定値を強化**：公開の攻略記事によると本体の攻撃力は序盤から数百あり、装備の固定値（1行あたり約29）は終盤でも数%にとどまっていました。攻撃力・魔力の固定値だけ、アイテムレベルでの伸びを1レベルあたり+3%から+8%（レベル40で217%→412%）に、上限を150から400に引き上げ、2つのセット（助走の突撃隊・結晶の回路）の2部位効果の固定値を10から25にしました。レベル1の値は変わりません。保存済みの装備はそのまま使えます。協力プレイでは全員の更新が必要です。分析と次の段の案は [docs/specs/v2.2-power-curve-review.md](docs/specs/v2.2-power-curve-review.md) を参照。 / **Stronger flat Attack/Power on gear**: flat Attack Damage and Ability Power now grow +8% per item level instead of +3% (412% instead of 217% at level 40), their cap is raised from 150 to 400, and the 2-piece flat bonus of two sets (Runup Charge Corps, Crystal Circuit Array) goes from 10 to 25. Level-1 values are unchanged and saved gear keeps working. Everyone in co-op must update. See the linked review for the analysis and the proposed next step.
+
 - **墜聖の双装（Polaris）**：利用者の判断により、部位と2・6部位効果のダメージ・障壁・回復の係数と上限を2倍にしました。3部位効果で移される踏みつけも2倍です。同時数・再使用時間・範囲、部位の強化／覚醒倍率（元式内上限の適用後に最大3倍）は変更していません。日英の説明数値も更新しました。 / **Fallen Sanctity Regalia (Polaris)**: doubled damage, shield and healing coefficients and caps for its parts and 2-/6-piece effects by user decision. The stomp relocated by the 3-piece effect is also doubled. Instance limits, cooldowns, ranges and part enhancement/awakening scaling (up to 3 times after the base formula cap) are unchanged. Japanese and English description values are updated.
 
 ---

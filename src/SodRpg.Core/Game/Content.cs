@@ -4816,7 +4816,7 @@ namespace SodRpg.Core.Game
                 ThreePiece = new[] { new PowerLine(Power.PilingLuck, 2), new PowerLine(Power.BrittleIce, 50), new PowerLine(Power.WeakPointWound, 90) },
                 SixPiece = new[] { new PowerLine(Power.CriticalEcho, 5), new PowerLine(Power.ReturningBlade, 14) } },
             new SetDef { Id = "set.runupcharge", Name = new Txt("助走の突撃隊", "Runup Charge Corps"),
-                TwoPiece = new[] { new StatLine(Stat.MoveSpeedPct, 5), new StatLine(Stat.AttackFlat, 10) },
+                TwoPiece = new[] { new StatLine(Stat.MoveSpeedPct, 5), new StatLine(Stat.AttackFlat, 25) },
                 ThreePiece = new[] { new PowerLine(Power.RunUp, 70), new PowerLine(Power.StrafeShot, 25), new PowerLine(Power.SpilloverStrike, 60) },
                 SixPiece = new[] { new PowerLine(Power.Breakout, 9), new PowerLine(Power.Frenzy, 3) } },
             new SetDef { Id = "set.medleyband", Name = new Txt("連奏の楽団", "Medley Ensemble"),
@@ -4832,7 +4832,7 @@ namespace SodRpg.Core.Game
                 ThreePiece = new[] { new PowerLine(Power.BareHandedPride, 2), new PowerLine(Power.Spellsweep, 45), new PowerLine(Power.CriticalEcho, 5) },
                 SixPiece = new[] { new PowerLine(Power.DuelistsWay, 30), new PowerLine(Power.FocusFire, 45) } },
             new SetDef { Id = "set.crystalcircuit", Name = new Txt("結晶の回路", "Crystal Circuit Array"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 10), new StatLine(Stat.PowerFlat, 10) },
+                TwoPiece = new[] { new StatLine(Stat.Haste, 10), new StatLine(Stat.PowerFlat, 25) },
                 ThreePiece = new[] { new PowerLine(Power.CrystalCircuit, 12), new PowerLine(Power.CrystalResonance, 2), new PowerLine(Power.Finale, 22) },
                 SixPiece = new[] { new PowerLine(Power.CrystalResonance, 2), new PowerLine(Power.PileOn, 28) } },
             new SetDef { Id = "set.dreamvigil", Name = new Txt("夢見の寝ずの番", "Dreamwatch Vigil"),
@@ -5372,8 +5372,8 @@ namespace SodRpg.Core.Game
         {
             [Stat.AttackPct] = 100, // v1.28：120 → 100（星図の分が最大約60あるので、装備の分を残す）
             [Stat.PowerPct] = 100,
-            [Stat.AttackFlat] = 150,
-            [Stat.PowerFlat] = 150,
+            [Stat.AttackFlat] = 400, // v2.2：150 → 400（装備の固定値の伸びに合わせた。本体の攻撃力は序盤で数百）
+            [Stat.PowerFlat] = 400,
             [Stat.AttackSpeedPct] = 80,
             [Stat.CritChancePct] = 50,
             [Stat.CritDamagePct] = 150,
@@ -5589,6 +5589,21 @@ namespace SodRpg.Core.Game
         {
             int l = Math.Max(1, Math.Min(itemLevel, ItemLevelScalingCap));
             return 100 + 3 * (l - 1);
+        }
+
+        /// <summary>攻撃力・魔力の固定値がアイテムレベル1つで伸びる量（%）。他の固定値は 3。</summary>
+        public const int OffenseFlatLevelStepPct = 8;
+
+        /// <summary>
+        /// 能力値ごとのアイテムレベル倍率（%）。攻撃力・魔力の固定値だけ、本体の攻撃力・魔力（序盤で数百）に対して
+        /// 終盤の装備が薄くならないよう、レベル1つにつき +8%（レベル40以上で412%）で伸びる。レベル1は100%のまま。
+        /// 他の固定値は <see cref="LevelScalePct(int)"/> と同じ（+3%・最大217%）。
+        /// </summary>
+        public static int LevelScalePct(int itemLevel, Stat stat)
+        {
+            if (stat != Stat.AttackFlat && stat != Stat.PowerFlat) return LevelScalePct(itemLevel);
+            int l = Math.Max(1, Math.Min(itemLevel, ItemLevelScalingCap));
+            return 100 + OffenseFlatLevelStepPct * (l - 1);
         }
 
         /// <summary>強化の累計倍率（%）。1段ごとの伸びは上限に近づくほど小さくなる。</summary>
