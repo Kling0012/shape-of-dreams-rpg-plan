@@ -242,7 +242,7 @@ namespace SodRpg.Mod
                     _builds.Remove(player);
                     _incomingBuilds.Remove(player);
                     RemoveBuildValidationPeer(player);
-                    _killReplayPlayers.Remove(player);
+                    RemoveKillPeer(player);
                 }
                 _pressureDirty = true;
             };

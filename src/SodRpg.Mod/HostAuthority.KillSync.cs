@@ -109,6 +109,7 @@ namespace SodRpg.Mod
         private readonly Dictionary<DewPlayer, KillReplayCursor> _killReplayPlayers = new Dictionary<DewPlayer, KillReplayCursor>();
         private readonly List<DewPlayer> _killReplayDeparted = new List<DewPlayer>();
         private readonly List<long> _killAckPrune = new List<long>();
+        private readonly List<string> _emptyKillPeers = new List<string>();
         private readonly List<KillReplayCursor> _killReplayRound = new List<KillReplayCursor>();
         private readonly List<DewPlayer> _killReplayTargets = new List<DewPlayer>();
         private readonly MonsterSyncQueue<MonsterClassificationDelta> _queuedMonsterClassifications = new MonsterSyncQueue<MonsterClassificationDelta>();
@@ -169,7 +170,7 @@ namespace SodRpg.Mod
             _killSequence = saved.HostSequence;
             _killStreamBaseline = saved.HostSequence;
             foreach (var peer in saved.HostPeers)
-                if (!string.IsNullOrEmpty(peer.Id)) _killPeers[peer.Id] = peer.Clone();
+                if (!string.IsNullOrEmpty(peer.Id) && ShouldPersistKillPeer(peer)) _killPeers[peer.Id] = peer.Clone();
             foreach (var fact in saved.HostFacts) RestoreHostFact(fact);
             // Legacy saves kept replay history in the local classification ledger.
             foreach (var fact in saved.Facts)
@@ -234,8 +235,51 @@ namespace SodRpg.Mod
             _killReplayPlayers.Add(player, cursor);
             if (!_killPeers.ContainsKey(id)) _killPeers.Add(id, new KillReplayPeer { Id = id, NativeOwnerId = player.guid });
             _killPeers[id].Participation.Add(cursor.Participation);
-            ClientSession.DirtyHostKillReplay();
             if (_registeredOn != null) SendKillStreamControl(player, cursor);
+        }
+
+        private static bool IsProvisionalKillPeer(KillReplayPeer peer) =>
+            peer.Id.StartsWith("connection.", StringComparison.Ordinal);
+
+        private static bool ShouldPersistKillPeer(KillReplayPeer peer)
+        {
+            if (!IsProvisionalKillPeer(peer)) return true;
+            foreach (var range in peer.Participation)
+                if (range.Through > range.After && range.Through > peer.ReceivedThrough(range.StreamId)) return true;
+            return false;
+        }
+
+        private bool IsKillPeerActive(string peerId)
+        {
+            foreach (var cursor in _killReplayPlayers.Values)
+                if (cursor.PeerId == peerId) return true;
+            return false;
+        }
+
+        private void PruneKillParticipation(KillReplayPeer peer)
+        {
+            for (int i = peer.Participation.Count - 1; i >= 0; i--)
+            {
+                var range = peer.Participation[i];
+                // An empty interval has no receipt to wait for, even when its frontier is nonzero.
+                if (range.Through > range.After && range.Through > peer.ReceivedThrough(range.StreamId)) continue;
+                bool active = false;
+                foreach (var cursor in _killReplayPlayers.Values)
+                    if (ReferenceEquals(cursor.Participation, range)) { active = true; break; }
+                if (!active) peer.Participation.RemoveAt(i);
+            }
+        }
+
+        private void RemoveKillPeer(DewPlayer player)
+        {
+            if (!_killReplayPlayers.TryGetValue(player, out var cursor)) return;
+            _killReplayPlayers.Remove(player);
+            cursor.Monsters.Clear();
+            cursor.Requested.Clear();
+            if (!_killPeers.TryGetValue(cursor.PeerId, out var peer)) return;
+            PruneKillParticipation(peer);
+            if (IsProvisionalKillPeer(peer) && peer.Participation.Count == 0 && !IsKillPeerActive(peer.Id))
+                _killPeers.Remove(peer.Id);
         }
 
         private void BindKillObservationSession(DewPlayer player, string observationSessionId)
@@ -415,16 +459,15 @@ namespace SodRpg.Mod
                 _killHistory.RemoveRange(kept, _killHistory.Count - kept);
                 foreach (var cursor in _killReplayPlayers.Values) cursor.FactIndex = FindFirstKillAfter(cursor.LastFactSequence);
             }
+            _emptyKillPeers.Clear();
             foreach (var peer in _killPeers.Values)
-                for (int i = peer.Participation.Count - 1; i >= 0; i--)
-                {
-                    var range = peer.Participation[i];
-                    if (range.Through > peer.ReceivedThrough(range.StreamId)) continue;
-                    bool active = false;
-                    foreach (var cursor in _killReplayPlayers.Values)
-                        if (ReferenceEquals(cursor.Participation, range)) { active = true; break; }
-                    if (!active) peer.Participation.RemoveAt(i);
-                }
+            {
+                PruneKillParticipation(peer);
+                if (IsProvisionalKillPeer(peer) && peer.Participation.Count == 0 && !IsKillPeerActive(peer.Id))
+                    _emptyKillPeers.Add(peer.Id);
+            }
+            foreach (string id in _emptyKillPeers) _killPeers.Remove(id);
+            _emptyKillPeers.Clear();
         }
 
         private static bool PeerNeedsFact(KillReplayPeer peer, AuthoritativeRunKill fact)
@@ -454,7 +497,8 @@ namespace SodRpg.Mod
             PruneAcknowledgedKills();
             saved.HostSequence = _killSequence;
             foreach (var fact in _killUnacknowledged.Values) saved.HostFacts.Add(fact);
-            foreach (var peer in _killPeers.Values) saved.HostPeers.Add(peer.Clone());
+            foreach (var peer in _killPeers.Values)
+                if (ShouldPersistKillPeer(peer)) saved.HostPeers.Add(peer.Clone());
         }
 
         private void CaptureAuthoritativeRunKill(Monster monster)
@@ -643,7 +687,7 @@ namespace SodRpg.Mod
             _killReplayDeparted.Clear();
             foreach (var player in _killReplayPlayers.Keys)
                 if (player == null || !DewPlayer.gamePlayers.Contains(player)) _killReplayDeparted.Add(player);
-            foreach (var player in _killReplayDeparted) _killReplayPlayers.Remove(player);
+            foreach (var player in _killReplayDeparted) RemoveKillPeer(player);
             foreach (var player in DewPlayer.gamePlayers)
                 if (player != null) RegisterKillPeer(player);
             _killReplayRound.Clear();

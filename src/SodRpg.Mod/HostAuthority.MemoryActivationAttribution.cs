@@ -159,21 +159,23 @@ namespace SodRpg.Mod
         private static void Prefix(Actor __instance) { HostAuthority.NativeInstance?.ClearAttributedActorLifetime(__instance); }
     }
 
-    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.UnequipSkill))]
-    internal static class NativeAttributedUnequip
+    // Direct memory destruction also removes abilities here. Set's postfix waits for owner/index linkage;
+    // its nested Remove publishes the empty slot before the replacement is equipped.
+    [HarmonyPatch(typeof(EntityAbility), nameof(EntityAbility.RemoveAbility), new[] { typeof(int) })]
+    internal static class NativeAttributedAbilityRemoved
     {
-        private static void Postfix(HeroSkill __instance)
+        private static void Postfix(EntityAbility __instance, int index)
         {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshMemoryAttributionEquipment(__instance.hero);
+            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index);
         }
     }
 
-    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.EquipSkill))]
-    internal static class NativeAttributedEquip
+    [HarmonyPatch(typeof(EntityAbility), nameof(EntityAbility.SetAbility), new[] { typeof(int), typeof(AbilityTrigger) })]
+    internal static class NativeAttributedAbilitySet
     {
-        private static void Postfix(HeroSkill __instance)
+        private static void Postfix(EntityAbility __instance, int index)
         {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshMemoryAttributionEquipment(__instance.hero);
+            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index);
         }
     }
 
@@ -194,6 +196,14 @@ namespace SodRpg.Mod
         private bool _attributionAdaptersRegistered;
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
+
+        internal void RefreshNativeMemoryAttributionEquipment(EntityAbility ability, int index)
+        {
+            if (index < (int)HeroSkillLocation.Q || index > (int)HeroSkillLocation.Movement
+                || ability == null || !(ability.entity is Hero hero) || hero == null || !hero.isActive
+                || hero.Ability != ability || hero.Skill == null) return;
+            RefreshMemoryAttributionEquipment(hero);
+        }
 
         internal long RefreshMemoryAttributionEquipment(Hero hero)
         {
