@@ -390,22 +390,213 @@ namespace Issue73.Native.Tests
             Assert.Contains("run", restored.Profile.LobbyReturnedRunIds);
         }
 
+        /// <summary>
+        /// #131: 報酬停止中（Infinity 無効化後）の「ロビーに戻る」は敗北精算待ちに入らない。
+        /// その回は中断のまま警告1回・機能は無効化せず、同じプロセスで始めた別 runId の
+        /// 通常モード遠征を正常に開始できる（旧ランは通常の未解決ランと同じ扱い）。
+        /// </summary>
+        [Fact]
+        public void Lobby_return_with_infinity_rewards_paused_skips_and_the_next_normal_run_still_starts()
+        {
+            Actor actor;
+            var session = HostSession(out actor);
+            GrantThrough(session);
+            session.Profile.Run.Infinity = new InfinityRunState
+            {
+                FixedZoneId = "Zone_Mist", Interval = 10, DifficultyId = "diffNormal",
+            };
+            int defeats = session.Profile.Stats.Defeats;
+
+            InfinityMode.NativeSaveAgreement = false; // DisableFeature 相当: 報酬は停止中
+            try
+            {
+                Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+                Assert.NotNull(session.Profile.Run);                       // 中断のまま
+                Assert.Equal(defeats, session.Profile.Stats.Defeats);      // 精算しない
+                Assert.Empty(session.Profile.LobbyReturnedRunIds);         // 敗北待ちにしない
+                Assert.Null(Get(session, "_pendingResultRunId"));
+                Assert.DoesNotContain(actor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>(),
+                    m => m.lobbyReturnRunId != null);
+                Assert.False(LobbyReturnDisabled());                       // 機能は無効化しない
+                Assert.Single(_warnings, w => w.Contains("Infinity rewards are paused"));
+
+                Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager()); // 警告は1回だけ
+                Assert.Single(_warnings);
+
+                // 同じプロセスで通常モード（別 runId）を選ぶ: MOD の遠征は問題なく始まる。
+                var next = new GameManager { runId = "run2" };
+                NetworkedManagerBase<GameManager>.softInstance = next;
+                Call(session, "ObserveContinueGame", next);
+                Call(session, "TrackRun");
+                Assert.Equal("run2", session.Profile.Run.RunId);
+                Assert.Equal("run2", session.ActiveRunId);
+                Assert.Equal(defeats + 1, session.Profile.Stats.Defeats);  // 旧ランは未確保の終わり
+                Assert.Empty(session.Profile.LobbyReturnedRunIds);
+            }
+            finally { InfinityMode.NativeSaveAgreement = false; }
+        }
+
+        /// <summary>
+        /// #131: 敗北精算待ちの保存・再読込を経て、その後 Infinity が停止しても、別 runId の
+        /// 遠征開始を無期限に塞がない。精算待ちの放棄は1回警告し、帰還済み記録は保持し、
+        /// 旧ランは通常の未解決ランと同じ扱い（次の開始で未確保の終わり）になる。
+        /// </summary>
+        [Fact]
+        public void A_restored_pending_infinity_defeat_releases_when_rewards_pause_and_a_different_run_begins()
+        {
+            Actor actor;
+            var session = HostSession(out actor);
+            GrantThrough(session);
+            session.Profile.Run.Infinity = new InfinityRunState
+            {
+                FixedZoneId = "Zone_Mist", Interval = 10, DifficultyId = "diffNormal",
+            };
+            // 分類待ちの撃破を残す: 帰還時は精算が保留に残る（PR #130 の精算待ち）。
+            var ledger = (KillClassificationLedger)Get(session, "_killClassifications");
+            Assert.True(ledger.ObserveDeath(new PendingMonsterDeath(42,
+                new PendingRunKill("run", 0, 1, MonsterTier.Normal, 8, NightmareAffix.None, null, "hero"),
+                PendingMonsterDeath.UnidentifiedStreamId, null), Time.unscaledTime));
+            int defeats = session.Profile.Stats.Defeats;
+
+            InfinityMode.NativeSaveAgreement = true; // 帰還時は照合一致: 精算待ちに入る
+            try
+            {
+                Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+                Assert.Contains("run", session.Profile.LobbyReturnedRunIds);
+                Assert.NotNull(session.Profile.Run);                     // 分類待ちで精算は保留
+                Assert.Equal(defeats, session.Profile.Stats.Defeats);
+
+                // 保留中の保存を再起動後に読み込む。
+                Call(session, "PersistRunDurability");
+                var restored = new ClientSession { Profile = session.Profile, LocalHero = new Hero { netId = 7 } };
+                Set(typeof(ClientSession), "_hostSession", restored);
+                Set(restored, "_zone", new ZoneManager { currentZoneIndex = 0 });
+                GrantThrough(restored);
+                Call(restored, "RestoreRunDurability");
+                Assert.Equal("run", restored.ActiveRunId);              // 精算待ちが戻る
+
+                // その後 Infinity が停止し、プレイヤーが別の通常遠征を選ぶ。
+                InfinityMode.NativeSaveAgreement = false;
+                var next = new GameManager { runId = "run2" };
+                NetworkedManagerBase<GameManager>.softInstance = next;
+                Call(restored, "ObserveContinueGame", next);
+                Call(restored, "TrackRun");
+
+                Assert.Equal("run2", restored.Profile.Run.RunId);       // 新しい遠征が始まる
+                Assert.Equal("run2", restored.ActiveRunId);
+                Assert.Equal(defeats + 1, restored.Profile.Stats.Defeats);
+                Assert.Contains("run", restored.Profile.LobbyReturnedRunIds); // 帰還済み記録は保持
+                Assert.Null(Get(restored, "_pendingRunVictory"));
+                Assert.Null(Get(restored, "_pendingResultRunId"));
+                Assert.Single(_warnings, w => w.Contains("released"));
+            }
+            finally { InfinityMode.NativeSaveAgreement = false; }
+        }
+
+        /// <summary>
+        /// #132: 参加者の MOD 遠征がまだ始まっていない（観戦・ロード中・ゾーン番号未着）ときに
+        /// 正しい帰還通知が届いても、この機能は無効化されない。その通知は見送るだけで、
+        /// 同じセッションで次に通常参加した遠征は一度だけ精算され、後でホストになっても
+        /// 帰還精算は機能する。
+        /// </summary>
+        [Fact]
+        public void A_return_notification_before_the_participants_run_starts_skips_without_disabling_the_feature()
+        {
+            Actor actor;
+            var host = HostSession(out actor);
+            GrantThrough(host);
+            Fight(host.Profile, MonsterTier.Boss, 1);
+            Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+            var notice = actor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>()
+                .Single(m => m.lobbyReturnRunId != null);
+
+            // 参加者A: 本体 runId と Hello 完了、まだヒーローがいない（観戦・ロード中）。
+            var game = new GameManager { runId = "run" };
+            NetworkedManagerBase<GameManager>.softInstance = game;
+            var spectator = GuestWithoutRun(game, hero: false);
+            Call(spectator, "OnRunChoices", notice);
+            Assert.False(LobbyReturnDisabled());                    // 機能は無効化されない
+            Assert.Null(spectator.Profile.Run);                     // 精算対象なしのまま
+            Assert.Empty(spectator.Profile.LobbyReturnedRunIds);
+
+            // 参加者B: ヒーローはいるがゾーン番号未着（Profile.Run は null）。
+            var loading = GuestWithoutRun(game, hero: true);
+            Call(loading, "OnRunChoices", notice);
+            Assert.False(LobbyReturnDisabled());
+            Assert.Null(loading.Profile.Run);
+            Assert.Equal(2, _warnings.Count(w => w.Contains("not active"))); // 見送りは各1回
+
+            // 同じセッションで別の遠征に通常参加し、正しい通知で一度だけ精算する。
+            var run2 = new GameManager { runId = "run2" };
+            NetworkedManagerBase<GameManager>.softInstance = run2;
+            Call(spectator, "ObserveContinueGame", run2);
+            Call(spectator, "ReceiveContinueHandshake", Hello("run2"));
+            Rules.BeginRun(spectator.Profile, "run2", heroKey: "hero", dreamDepth: 3);
+            spectator.Profile.Run.Bounties.Clear();
+            spectator.ActiveRunId = "run2";
+            Set(spectator, "_zone", new ZoneManager { currentZoneIndex = 0 });
+            Progress(spectator).BeginRun("run2", 0);
+            GrantThrough(spectator);
+            var secondHost = HostInGame("run2", out var secondActor);
+            GrantThrough(secondHost);
+            Fight(secondHost.Profile, MonsterTier.Boss, 1);
+            NetworkServer.active = true;  // ホストの「ロビーに戻る」
+            NetworkClient.active = false;
+            Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+            var secondNotice = secondActor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>()
+                .Single(m => m.lobbyReturnRunId != null);
+
+            NetworkServer.active = false; // 参加者は参加者のまま通知を処理する
+            NetworkClient.active = true;
+            NetworkedManagerBase<GameManager>.softInstance = run2;
+            int defeats = spectator.Profile.Stats.Defeats;
+            Call(spectator, "OnRunChoices", secondNotice);
+            Assert.Null(spectator.Profile.Run);                     // 一度だけ敗北精算
+            Assert.Equal(defeats + 1, spectator.Profile.Stats.Defeats);
+            Assert.Equal("run2", spectator.Profile.CompletedRunId);
+            Assert.Contains("run2", spectator.Profile.LobbyReturnedRunIds);
+            Call(spectator, "OnRunChoices", secondNotice);          // 再送では二重にならない
+            Assert.Equal(defeats + 1, spectator.Profile.Stats.Defeats);
+
+            // この後ホストに移動しても帰還精算は機能する。
+            var laterHost = HostInGame("run3", out var thirdActor);
+            GrantThrough(laterHost);
+            Fight(laterHost.Profile, MonsterTier.Boss, 1);
+            Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+            Assert.Null(laterHost.Profile.Run);
+            Assert.False(LobbyReturnDisabled());
+        }
+
+        /// <summary>本体の runId と Hello は完了しているが、MOD の遠征はまだ始まっていない参加者。</summary>
+        private static ClientSession GuestWithoutRun(GameManager game, bool hero)
+        {
+            NetworkServer.active = false;
+            NetworkClient.active = true;
+            var session = new ClientSession { Profile = Profile.CreateNew(112) };
+            if (hero) session.LocalHero = new Hero { netId = 9 };
+            Call(session, "ObserveContinueGame", game);
+            Call(session, "ReceiveContinueHandshake", Hello(game.runId));
+            return session;
+        }
+
         // ───────────── 本体との境界（ContinueSaveTests と同じ呼び出し） ─────────────
 
-        private static ClientSession HostSession(out Actor actor)
+        private static ClientSession HostSession(out Actor actor) => HostInGame("run", out actor);
+
+        private static ClientSession HostInGame(string runId, out Actor actor)
         {
             NetworkServer.active = true;
             NetworkClient.active = false;
             var profile = Profile.CreateNew(112);
-            Rules.BeginRun(profile, "run", heroKey: "hero", dreamDepth: 3);
+            Rules.BeginRun(profile, runId, heroKey: "hero", dreamDepth: 3);
             profile.Run.Bounties.Clear();
             var session = new ClientSession { Profile = profile, LocalHero = new Hero { netId = 7 } };
-            session.ActiveRunId = "run";
+            session.ActiveRunId = runId;
             Set(typeof(ClientSession), "_hostSession", session);
-            var game = new GameManager { runId = "run" };
+            var game = new GameManager { runId = runId };
             NetworkedManagerBase<GameManager>.softInstance = game;
             Set(session, "_zone", new ZoneManager { currentZoneIndex = 0 });
-            Progress(session).BeginRun("run", 0);
+            Progress(session).BeginRun(runId, 0);
             actor = new Actor();
             NetworkedManagerBase<ActorManager>.softInstance = new ActorManager { serverActor = actor };
             Call(session, "ObserveContinueGame", game);
@@ -519,6 +710,7 @@ namespace Issue73.Native.Tests
             Loc.Japanese = true;
             DewPlayer.gamePlayers.Clear();
             HostAuthority.NativeInstance = null;
+            InfinityMode.NativeSaveAgreement = false;
             NetworkedManagerBase<GameManager>.softInstance = null;
             NetworkedManagerBase<ActorManager>.softInstance = null;
             typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, null);

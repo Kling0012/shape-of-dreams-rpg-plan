@@ -239,9 +239,22 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
                 if (game == null || game.runId != runId) return false; // stale or another expedition
                 if (_pendingRunVictory.HasValue) return false;
                 if (!msg.terminal || msg.victory || !RunChoiceSnapshot.TryDecode(msg.choices, out var snapshot)
-                    || snapshot.RunId != runId || !RunActive || ActiveRunId != runId || Profile.Run.RunId != runId)
+                    || snapshot.RunId != runId)
                 {
                     DisableLobbyReturn("host return notification does not match the active expedition");
+                    return false;
+                }
+                // Spectating, still loading or a run mismatch is an ordinary state on this side:
+                // skip only this notification instead of disabling the feature for the process (#132).
+                if (!RunActive || ActiveRunId != runId || Profile.Run?.RunId != runId)
+                {
+                    SkipLobbyReturn(runId, "the local expedition is not active for this return");
+                    return false;
+                }
+                // The defeat could never settle while Infinity rewards are paused (#131).
+                if (Profile.Run.Infinity != null && !InfinityMode.NativeSaveAgreement)
+                {
+                    SkipLobbyReturn(runId, "Infinity rewards are paused");
                     return false;
                 }
                 if (!ObserveMonsterAuthority(snapshot.AuthorityGeneration)) return false;
@@ -262,6 +275,18 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
             // Committed snapshots remain sufficient to settle a saved defeat without a native resume.
             foreach (string encoded in Profile.RunRecovery.CommittedChoices)
                 if (RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) _runChoiceProgress.Receive(snapshot);
+        }
+
+        // A pending Infinity defeat whose settlement is blocked (rewards paused) must not block
+        // later expeditions forever: keep the returned-run record, drop the wait and let the
+        // ordinary unresolved-run path end it once a different native run begins (#131).
+        private void AbandonLobbyReturnSettlement()
+        {
+            _lobbyReturnSkippedRunId = Profile.Run.RunId;
+            _pendingRunVictory = null;
+            _pendingResultRunId = null;
+            _lobbyReturnWarning?.Invoke("Return-to-lobby defeat settlement released; the expedition stays unsecured: Infinity rewards are paused.");
+            SaveNow();
         }
 
         private bool BlockLobbyReturnedContinue(string runId)
