@@ -180,6 +180,200 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, Actor.SimDamageLog.Count);
         }
 
+        [Fact]
+        public void Displacement_critical_strike_needs_a_critical_first_hit_and_refunds_the_dodge_memory()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var movement = new SkillTrigger { owner = hero };
+            movement.currentConfigUnscaledCooldownTime = 4f; // 4 s of the 10 s maximum remaining
+            hero.Skill.Skills[HeroSkillLocation.Movement] = movement;
+            var target = Enemy(0, 2);
+
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // nothing is primed without a displacement
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: false); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // a noncritical first hit consumes the readiness ...
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // ... and the consumed preparation never fires
+            Assert.Equal(4f, movement.currentConfigUnscaledCooldownTime);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            UnityEngine.Time.time = 1f;
+            host.OnIdentityStrikeBasicHit(hero, target, 4, critical: true);
+            Assert.Empty(Actor.SimDamageLog); // deferred to the host tick
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Same(skill, strike.Dealer);
+            Assert.Equal(120f, strike.Amount, 3); // 120% of the higher of AD/AP, dark
+            Assert.Equal(ElementalType.Dark, strike.Element);
+            Assert.Equal(2.6f, movement.currentConfigUnscaledCooldownTime, 3); // 35% of the remaining 4 s comes off
+
+            host.OnIdentityStrikeDisplacement(hero); // armed until t = 4
+            UnityEngine.Time.time = 5f;
+            host.OnIdentityStrikeBasicHit(hero, target, 5, critical: true); host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // the 3 s window has closed
+            Assert.Equal(2.6f, movement.currentConfigUnscaledCooldownTime, 3); // no strike, no refund
+
+            UnityEngine.Time.time = 10f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 6, critical: true); host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count);
+            Assert.Equal(1.69f, movement.currentConfigUnscaledCooldownTime, 3);
+            UnityEngine.Time.time = 10.5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 7, critical: true); host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // at most one strike per second
+            // a second qualifying hit before the host tick waits instead of queueing twice
+            UnityEngine.Time.time = 11.5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 8, critical: true);
+            UnityEngine.Time.time = 13f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 9, critical: true);
+            host.UpdateIdentityStrikes(); host.UpdateIdentityStrikes();
+            Assert.Equal(3, Actor.SimDamageLog.Count); // one strike ran; the overlapping trigger was dropped
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(120f, entry.Amount, 3); Assert.Same(target, entry.Victim); });
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_needs_three_crits_on_one_enemy_and_resets_on_any_break()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var movement = new SkillTrigger { owner = hero };
+            hero.Skill.Skills[HeroSkillLocation.Movement] = movement;
+            var a = Enemy(0, 2); var b = Enemy(5, 0); // b lies outside the 2 m line towards a
+            int activation = 0;
+            void Hit(Entity victim, float now, bool critical, long lifetime)
+            {
+                UnityEngine.Time.time = now;
+                host.OnIdentityStrikeBasicHit(hero, victim, ++activation, critical, lifetime);
+            }
+
+            Hit(a, 0f, false, 11); Hit(a, 0.2f, true, 11); Hit(a, 0.4f, true, 11); Hit(a, 0.6f, false, 11); // a noncritical hit resets
+            Hit(a, 0.8f, true, 11); Hit(a, 1f, true, 11);
+            host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // two crits since the reset: not three yet
+            Hit(a, 1.2f, true, 11); // the third consecutive crit on the same enemy
+            Assert.Empty(Actor.SimDamageLog); // deferred to the host tick
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Same(skill, strike.Dealer); Assert.Same(a, strike.Victim);
+            Assert.Equal(180f, strike.Amount, 3); // 180% of the higher of AD/AP, dark
+            Assert.Equal(ElementalType.Dark, strike.Element);
+            Assert.Equal(10f, movement.currentConfigUnscaledCooldownTime); // only the displacement mode refunds the dodge
+
+            Hit(a, 2f, true, 11); Hit(a, 2.2f, true, 11); Hit(b, 2.4f, true, 22); // a different enemy resets
+            Hit(b, 7f, true, 22); Hit(b, 7.2f, true, 22); // 7 s after the last crit on b: the 4 s window has closed
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // neither break ever completes a third crit
+            Hit(b, 7.4f, true, 22); // three fresh crits on b inside the window
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count);
+            Hit(b, 8f, true, 22); Hit(b, 8.2f, true, 22); Hit(b, 8.3f, true, 22); // the third lands inside the 1 s interval
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // consumed without a strike
+            Hit(b, 9f, true, 22); Hit(b, 9.2f, true, 22); Hit(b, 9.4f, true, 22);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(3, Actor.SimDamageLog.Count);
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(180f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+        }
+
+        [Fact]
+        public void Critical_strikes_reach_at_most_six_enemies_in_their_shape()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var target = Enemy(0, 2);
+            for (int i = 0; i < 7; i++) Enemy(-1.5f + 0.5f * i, 3); // seven more inside the 120 degree fan
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(6, Actor.SimDamageLog.Count); // the victim plus five: at most six enemies total
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(120f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+
+            var (flowHost, flowRuntime, flowHero, flowSkill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var flowTarget = Enemy(0, 2);
+            for (int i = 0; i < 7; i++) Enemy(0, 2.5f + 0.4f * i); // seven more along the 6 m line
+            for (int activation = 1; activation <= 3; activation++) flowHost.OnIdentityStrikeBasicHit(flowHero, flowTarget, activation, critical: true, victimLifetime: 77);
+            flowHost.UpdateIdentityStrikes();
+            Assert.Equal(6, Actor.SimDamageLog.Count); // Setup cleared the log: six along the line
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(flowSkill, entry.Dealer); Assert.Equal(180f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+        }
+
+        [Fact]
+        public void A_critical_strike_never_rechains_mechanisms_or_itself()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var depth = typeof(HostAuthority).GetField("_gimmickDamageDepth", BindingFlags.NonPublic | BindingFlags.Instance);
+            var target = Enemy(0, 2);
+            var outside = Enemy(5, 0); // outside the fan: only a nested trigger could ever reach it
+            int observed = 0, depthDuringStrike = 0;
+            hero.ActorEvent_OnDealDamage += info =>
+            {
+                observed++;
+                depthDuringStrike = (int)depth.GetValue(host);
+                host.OnIdentityStrikeDisplacement(hero); // primes a fresh preparation ...
+                host.OnIdentityStrikeBasicHit(hero, outside, 999, critical: true, victimLifetime: 55); // ... whose hit must be ignored inside the strike
+            };
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.True(observed > 0); // the hook really saw the strike's own damage packets
+            Assert.Equal(1, depthDuringStrike); // the strike runs as generated origin: no authored mechanism chains from it
+            Assert.Single(Actor.SimDamageLog);
+            Assert.Same(target, Actor.SimDamageLog.Single().Victim);
+            Assert.Equal(1000f, outside.currentHealth); // the nested trigger was dropped, not queued for later
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog);
+
+            // the same guard holds while any other mechanism's damage is running
+            host.SetDepths(1, 0, 0);
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // generated (gimmick) damage never triggers a strike
+            host.SetDepths(0, 0, 0);
+            UnityEngine.Time.time = 5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // back outside generated damage the channel works again
+            Assert.Equal(1000f, outside.currentHealth);
+        }
+
+        [Fact]
+        public void A_failing_strike_channel_is_disabled_with_one_warning_and_the_mod_keeps_running()
+        {
+            Log.Warnings.Clear();
+            var (host, runtime, hero, wind) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var flowHero = new Hero();
+            var flow = new St_D_TheKillingFlow { owner = flowHero, parentActor = flowHero };
+            flowHero.Skill.Skills[HeroSkillLocation.Identity] = flow;
+            flowHero.owner = new DewPlayer { hero = flowHero, isHumanPlayer = true };
+            var flowBuild = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.FlowStrike("t.flow.other")));
+            host.BindAuthored(new HostAuthority.HeroRuntime { Hero = flowHero, HeroKey = "Hero_Husk", Powers = new PowerRuntime(flowBuild, 0) }, flowBuild);
+            var target = Enemy(0, 2); var flowTarget = Enemy(0, 3);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true); // the critical channel queues its strike ...
+            host.OnIdentityStrikeBasicHit(flowHero, flowTarget, 1); // ... and the flow channel queues its own
+            hero.Status = null; // the strike's own dispatch now fails
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // the failing channel did not stop the mod's other channel
+            Assert.All(Actor.SimDamageLog, entry => Assert.Same(flow, entry.Dealer));
+            Assert.Single(Log.Warnings);
+            Assert.Contains("t.windcrit", Log.Warnings.Single());
+            Assert.Contains("disabled", Log.Warnings.Single());
+
+            host.OnIdentityStrikeDisplacement(hero); // the disabled channel stays silent
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.OnIdentityStrikeBasicHit(flowHero, flowTarget, 2);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(4, Actor.SimDamageLog.Count); // the flow channel keeps firing
+            Assert.Single(Log.Warnings); // one warning, never repeated
+            Assert.All(Actor.SimDamageLog, entry => Assert.Same(flow, entry.Dealer));
+        }
+
         // ---- the dash attack bonus portion ----------------------------------------------------------------------------------------------
 
         private static List<CodeInstruction> Disassemble(MethodInfo method)
