@@ -175,7 +175,7 @@ namespace SodRpg.Mod
         {
             if (_bridgeSuccessEffects.TryGetValue(hero, out var state)) state.Runtime.ClearSuccessEffectsTransient();
         }
-        private float BridgeSuccessExposePercent(Hero hero, Entity victim)
+        internal float BridgeSuccessExposePercent(Hero hero, Entity victim)
         {
             if (!_bridgeSuccessEffects.TryGetValue(hero, out var state)) return 0;
             return (float)(state.Runtime.BridgeExposeUnits(AttributedVictimLifetime(victim), Time.time,
