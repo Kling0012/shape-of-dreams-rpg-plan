@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
 {
-    /// <summary>Value-only reward facts captured while the host's run choices are still in transit.</summary>
+    /// <summary>戦ったときの深度と道標を保持する、保留中の撃破の記録（#71）。精算はこれを使う。</summary>
     public readonly struct PendingRunKill
     {
         public string RunId { get; }
@@ -16,13 +16,19 @@ namespace SodRpg.Core.Game
         public string HeroKey { get; }
         public string EventId { get; }
         public uint MonsterNetId { get; }
+        /// <summary>戦ったときの潜行深度。null は記録前の保存データで、精算時の現在深度を使う。</summary>
+        public int? Heat { get; }
+        /// <summary>戦ったときの道標。null は記録前の保存データで、精算時の道標を使う。</summary>
+        public Waypoint? Waypoint { get; }
 
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
-            NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0)
+            NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0,
+            int? heat = null, Waypoint? waypoint = null)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
             EventId = eventId; MonsterNetId = monsterNetId;
+            Heat = heat; Waypoint = waypoint;
         }
     }
 

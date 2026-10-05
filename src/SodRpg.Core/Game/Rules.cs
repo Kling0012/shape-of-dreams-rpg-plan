@@ -131,13 +131,13 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。</summary>
-        public static Pacts.Totals KillModifiers(RunState run)
+        /// <summary>契約・出来事・Limbo・今日の夢を合わせた撃破報酬の補正。waypoint は戦ったときの道標（#71）。</summary>
+        public static Pacts.Totals KillModifiers(RunState run, Waypoint? waypoint = null)
         {
             var t = Pacts.Sum(run.Pacts);
             t.DropBonus += LimboDropBonus * run.LimboDepth + run.EventDropBonus;
             t.Luck += LimboLuck * run.LimboDepth + run.EventLuck;
-            t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(run.ActiveWaypoint).Luck;
+            t.Luck += DreamDepth.RarityLuck(run.DreamDepth) + Waypoints.Sum(waypoint ?? run.ActiveWaypoint).Luck;
             var d = DailyDream.Get(run.DailyId);
             if (d != null)
             {
@@ -148,7 +148,8 @@ namespace SodRpg.Core.Game
             return t;
         }
 
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null)
+        /// <summary>撃破報酬。heat/waypoint は戦ったときの値（保留していた撃破の精算用、#71）。省略時は現在の状態。</summary>
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -159,19 +160,21 @@ namespace SodRpg.Core.Game
             // 夢の変種は、悪夢と同じく一段上の戦利品・覚醒の力2倍・悪夢の依頼に数える。
             bool isNightmare = nightmare != NightmareAffix.None || variant != null;
             var rollTier = isNightmare ? Nightmares.RewardTier(tier) : tier;
+            int killHeat = heat ?? run.Heat;
+            Waypoint killWaypoint = waypoint ?? run.ActiveWaypoint;
             var focus = p.Focus ?? DailyDream.Get(run.DailyId)?.FeaturedLine;
-            var reward = Loot.RollKill(rng, rollTier, itemLevel, run.Heat, focus, KillModifiers(run), p.Stash, run.Satchel, p.Codex);
+            var reward = Loot.RollKill(rng, rollTier, itemLevel, killHeat, focus, KillModifiers(run, killWaypoint), p.Stash, run.Satchel, p.Codex);
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = reward.Shards * variant.ShardBonusPct / 100 + 10;
-            bool hoardPayout = run.ActiveWaypoint == Waypoint.BossHoard
+            bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
-            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, out int waypointStarXp, out int waypointAwakening);
+            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening);
             if (!string.IsNullOrEmpty(heroKey))
             {
                 var hs = p.Hero(heroKey);
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
                 AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev);
                 int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
-                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(run.ActiveWaypoint).AwakeningMultiplier);
+                    DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
@@ -233,7 +236,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(run.ActiveWaypoint).ShardMultiplier == 0);
+                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(killWaypoint).ShardMultiplier == 0);
                 AddHint(p, Hint.FirstDrop, ev);
                 AdvanceRelicBounties(p, relic, ev);
             }

@@ -128,6 +128,9 @@ namespace SodRpg.Mod
         private void FlushPendingRunRewards()
         {
             if (!RunActive) return;
+            // 勝利の確定は潜行しない（#71）。選択待ちだけを解けば、保留中の撃破は戦った深度のまま精算される。
+            // ホストも参加者もここで解くため、確定後の深度・確保ボーナスが両者で一致する。
+            if (_pendingRunVictory == true && Profile.Run.AwaitingChoice) Profile.Run.AwaitingChoice = false;
             FlushPendingPressureDividends();
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
@@ -137,8 +140,10 @@ namespace SodRpg.Mod
             if (!RunActive || !_runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules)) return false;
             // Primus can begin combat at the entrance. Combat must not silently skip this route's choice.
             if (InPureWhiteRoute && !concluding) return false;
+            // 勝利の確定は戦った深度のまま確保する。潜行で深さを増やさず、選択待ちだけを解く（#71）。
+            if (concluding) Profile.Run.AwaitingChoice = false;
             // Continuing combat chooses no pact. Delve leaves inventory and reserved trades untouched.
-            Emit(Rules.Delve(Profile, Pact.None));
+            else Emit(Rules.Delve(Profile, Pact.None));
             MarkDirty(true);
             SaveNow();
             if (publish) PublishRunChoices();
@@ -181,7 +186,7 @@ namespace SodRpg.Mod
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
-                variantId: kill.VariantId, roomIndex: kill.RoomIndex));
+                variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint));
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {

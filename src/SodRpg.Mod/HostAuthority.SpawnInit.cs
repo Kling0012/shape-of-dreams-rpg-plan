@@ -27,5 +27,11 @@ namespace SodRpg.Mod
             if (healthBefore >= maxHealthBefore) return maxHealthAfter;
             return Math.Min(healthBefore, maxHealthAfter);
         }
+
+        /// 深さ0で出た敵の初期化（#71）。深度ボーナスも悪夢化も当たらないため初期化はしないが、
+        /// 処理済みにはする。さもないと、あとで潜行して深さが1以上になっても揃え直しの対象から漏れる。
+        /// </summary>
+        public static bool SkipsDepthInit(int depth, bool allNightmares, double nightmareChanceMultiplier)
+            => depth <= 0 && !allNightmares && nightmareChanceMultiplier <= 1;
     }
 }

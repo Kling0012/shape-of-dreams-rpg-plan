@@ -62,17 +62,32 @@ namespace SodRpg.Core.Game
             return state;
         }
 
-        private static JsonObject WritePendingKill(PendingRunKill kill) => new JsonObject()
-            .Add("runId", kill.RunId).Add("zone", (long)kill.ZoneIndex).Add("room", (long)kill.RoomIndex)
-            .Add("tier", (long)kill.Tier).Add("level", (long)kill.Level).Add("nightmare", (long)kill.Nightmare)
-            .Add("variant", kill.VariantId).Add("hero", kill.HeroKey)
-            .Add("eventId", kill.EventId).Add("monster", (long)kill.MonsterNetId);
+        private static JsonObject WritePendingKill(PendingRunKill kill)
+        {
+            var j = new JsonObject()
+                .Add("runId", kill.RunId).Add("zone", (long)kill.ZoneIndex).Add("room", (long)kill.RoomIndex)
+                .Add("tier", (long)kill.Tier).Add("level", (long)kill.Level).Add("nightmare", (long)kill.Nightmare)
+                .Add("variant", kill.VariantId).Add("hero", kill.HeroKey)
+                .Add("eventId", kill.EventId).Add("monster", (long)kill.MonsterNetId);
+            // #71: 戦ったときの深度と道標。記録のない旧保存データは読み込み時に null へ戻る。
+            if (kill.Heat.HasValue) j.Add("heat", (long)kill.Heat.Value);
+            if (kill.Waypoint.HasValue) j.Add("waypoint", (long)kill.Waypoint.Value);
+            return j;
+        }
 
-        private static PendingRunKill ReadPendingKill(JsonObject j) => new PendingRunKill(
-            Str(j, "runId"), Clamp(Long(j, "zone"), -1, int.MaxValue), Clamp(Long(j, "room"), 0, int.MaxValue),
-            (MonsterTier)Clamp(Long(j, "tier"), 0, (int)MonsterTier.Boss), Clamp(Long(j, "level"), 1, int.MaxValue),
-            (NightmareAffix)Long(j, "nightmare"), Str(j, "variant"), Str(j, "hero"), Str(j, "eventId"),
-            (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))));
+        private static PendingRunKill ReadPendingKill(JsonObject j)
+        {
+            int? heat = j.TryGet("heat", out object heatValue) && heatValue is long heatLong
+                ? Loot.ClampHeat((int)Clamp(heatLong, 0, int.MaxValue)) : (int?)null;
+            Waypoint? waypoint = j.TryGet("waypoint", out object waypointValue) && waypointValue is long waypointLong
+                && ((Waypoint)waypointLong == Waypoint.None || Waypoints.Get((Waypoint)waypointLong) != null)
+                ? (Waypoint)waypointLong : (Waypoint?)null;
+            return new PendingRunKill(
+                Str(j, "runId"), Clamp(Long(j, "zone"), -1, int.MaxValue), Clamp(Long(j, "room"), 0, int.MaxValue),
+                (MonsterTier)Clamp(Long(j, "tier"), 0, (int)MonsterTier.Boss), Clamp(Long(j, "level"), 1, int.MaxValue),
+                (NightmareAffix)Long(j, "nightmare"), Str(j, "variant"), Str(j, "hero"), Str(j, "eventId"),
+                (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))), heat, waypoint);
+        }
 
         private static JsonObject WriteKillClassification(KillClassificationCheckpoint state)
         {
