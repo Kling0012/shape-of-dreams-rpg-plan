@@ -6,6 +6,12 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース / Unreleased
+
+- **墜聖の双装（Polaris）**：利用者の判断により、部位と2・6部位効果のダメージ・障壁・回復の係数と上限を2倍にしました。3部位効果で移される踏みつけも2倍です。同時数・再使用時間・範囲、部位の強化／覚醒倍率（元式内上限の適用後に最大3倍）は変更していません。日英の説明数値も更新しました。 / **Fallen Sanctity Regalia (Polaris)**: doubled damage, shield and healing coefficients and caps for its parts and 2-/6-piece effects by user decision. The stomp relocated by the 3-piece effect is also doubled. Instance limits, cooldowns, ranges and part enhancement/awakening scaling (up to 3 times after the base formula cap) are unchanged. Japanese and English description values are updated.
+
+---
+
 ## v2.0.5 — 分解・純白ルート・起動時の読み込みの修正（2026-10-05）
 
 v2.0.4 のあとに見つかった不具合を3つ直しました。 / This release fixes three bugs found after v2.0.4.
