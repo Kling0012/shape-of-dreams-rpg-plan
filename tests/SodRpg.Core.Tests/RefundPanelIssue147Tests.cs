@@ -12,6 +12,8 @@ namespace SodRpg.Core.Tests
     /// はみ出しを下端から順に切る。だから承認・取消ボタンとステータス行は、タブの中身より先
     /// （見出しの直後）に描く。末尾に描くと一番下のボタンから消える（#128 の「鍵が押せない」と同じ型）。
     /// 併せて工房タブの「解放」ボタンはスクロールの中に入れ、強化の行が増えても枠の外に出ないようにする。
+    /// その残り：払い戻しパネルが出ている装備タブでは左欄も約80px足りず、下端の狙い系統のボタンが
+    /// 切れていた。左欄をまるごと1つのスクロールに入れ、どのボタンも切れない（DreamforgeUi.GearColumn.cs）。
     /// </summary>
     public class RefundPanelIssue147Tests : IDisposable
     {
@@ -76,6 +78,28 @@ namespace SodRpg.Core.Tests
             Assert.True(status >= 0, "status line rendered: " + string.Join("|", ops));
             Assert.True(status < content,
                 "the status line must render above the tab content; below it a tall tab clips the feedback away");
+        }
+
+        [Fact]
+        public void Gear_left_column_scrolls_so_every_button_stays_reachable()
+        {
+            // 払い戻しパネルが出ている装備タブ（このクラスの状態）で、左欄は約80pxはみ出し、
+            // 下端の狙い系統のボタンから切れていた。欄全体が1つのスクロールに入り、最初のボタン
+            // （旅人の「<」）から最後のボタン（狙い系統の「なし」）までその中にあれば、はみ出しても
+            // スクロールして押せる。
+            _ui.DrawGearColumnUi(-1);
+            var ops = UnityEngine.GUILayout.Ops;
+            int scroll = ops.IndexOf("scroll");
+            int endScroll = ops.IndexOf("endscroll");
+            Assert.True(scroll >= 0 && scroll < endScroll,
+                "the left column renders inside one scroll: " + string.Join("|", ops));
+            int first = ops.FindIndex(op => op.StartsWith("button:"));
+            int focusNone = ops.FindIndex(op => op.EndsWith("なし") || op.EndsWith("None"));
+            Assert.True(first >= 0, "first column button rendered: " + string.Join("|", ops));
+            Assert.True(focusNone >= 0, "focus button rendered: " + string.Join("|", ops));
+            Assert.True(scroll < first && first < endScroll, "the traveler and slot buttons must stay inside the column scroll");
+            Assert.True(scroll < focusNone && focusNone < endScroll,
+                "the focus buttons must stay inside the column scroll; at a clipped column end they disappear first");
         }
 
         [Fact]

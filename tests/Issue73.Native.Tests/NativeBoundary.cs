@@ -131,6 +131,7 @@ namespace SodRpg.Mod
     internal struct EventInfoAttackEffect { public Actor actor; public Entity victim; public ReactionChain chain; }
     internal sealed class DewPlayer
     {
+        public static DewPlayer local;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public uint netId;
         public string guid;
@@ -170,7 +171,11 @@ namespace SodRpg.Mod
     }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
-    internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
+    internal static class Log
+    {
+        public static void Error(string message) => throw new InvalidOperationException(message);
+        public static void Warn(string message) { }
+    }
     internal static class NativeAttributedMemoryCast
     {
         internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }
@@ -308,14 +313,15 @@ namespace SodRpg.Mod
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
-        private readonly Action<GameEvent> _notify = null;
+        private readonly Action<GameEvent> _notify;
         private float _nextDreamEventNotice;
+        private long _hostLedgerId;
+        private double _nextLedgerProbeAt;
         private string _curseSyncedKey = "";
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
-        private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
+        public ClientSession() { _notify = Events.Add; }
         public event Action ProfileChanged;
-        public void Emit(GameEvent e) => Events.Add(e);
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();
         private string CurseKey() => "";

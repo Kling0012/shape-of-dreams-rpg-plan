@@ -21,7 +21,18 @@ namespace SodRpg.Core.Game
 
     public static class Loc
     {
-        public static bool Japanese = true;
+        // プロセス共有の言語設定（既定は日本語）と、スレッドごとの上書きの2層。
+        // 実運用では UI スレッドで一度設定するだけなので、set が共有値にも書けば
+        // AsyncProfileWriter など設定しない他スレッドは共有値を読んで従来どおり。
+        // テストは各スレッドの上書きを読むので、並行実行でも干渉しない（#151: 並列化の妨げだった全体共有状態を解消）。
+        private static bool _sharedJapanese = true;
+        [ThreadStatic] private static bool? _japanese;
+
+        public static bool Japanese
+        {
+            get => _japanese ?? _sharedJapanese;
+            set { _sharedJapanese = value; _japanese = value; }
+        }
 
         public static string T(string ja, string en) => Japanese ? ja : en;
     }

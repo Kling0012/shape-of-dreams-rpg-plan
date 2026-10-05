@@ -230,4 +230,27 @@ namespace SodRpg.Core.Game
             foreach (string source in _sourceScratch) _slots.Remove(source);
         }
     }
+
+    /// <summary>
+    /// リレー系の状態は記憶の型名で鍵を握るため、同じ記憶が2つの枠に入るときは最初の枠だけを代表にする。
+    /// 本体のデータでは Q と R に同じ候補を持つのはビスマスだけ（docs/specs/v1.27-traveler-kits.md）で、
+    /// 同じ本を2つ装備したロードアウトは本体の検証でも有効。ラン中に同じ汎用記憶を2つ拾う場合も同じ。
+    /// 重複は例外ではなく最初の枠で縮退させ、呼び出し側は警告1回に収める。
+    /// </summary>
+    public static class RelayMemorySelection
+    {
+        /// <summary>枠順に並んだ（記憶名, 実体）から、記憶名ごとの最初の実体を選ぶ。重複があったかを返す。</summary>
+        public static void SelectFirstSlotPerMemory<TValue>(
+            IEnumerable<KeyValuePair<string, TValue>> equippedBySlot,
+            Dictionary<string, TValue> selected,
+            out bool hadDuplicates)
+        {
+            hadDuplicates = false;
+            foreach (var pair in equippedBySlot)
+            {
+                if (selected.ContainsKey(pair.Key)) { hadDuplicates = true; continue; }
+                selected.Add(pair.Key, pair.Value);
+            }
+        }
+    }
 }

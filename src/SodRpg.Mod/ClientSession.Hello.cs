@@ -17,6 +17,8 @@ namespace SodRpg.Mod
         private string _acceptedHostContent;
         private bool _hostInfinityAvailable;
         internal static bool RemoteHostInfinityAvailable => _hostSession?._hostInfinityAvailable == true;
+        // #144: a participant with no host answer yet is "waiting", not "disabled".
+        internal static bool RemoteHostHelloAnswered => _hostSession?._helloAnswered == true;
         private bool MechanismHandshakeAccepted => NetworkServer.active
             || _helloAnswered && string.Equals(_acceptedHostContent, ContentFingerprint.Value, StringComparison.Ordinal);
 

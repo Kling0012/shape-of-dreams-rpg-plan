@@ -418,6 +418,8 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         private ZoneManager _zone = new ZoneManager();
+        // Production: HostAuthority.cs（#161 のティック単位メモ）。
+        private bool? _tickBossProfiles;
         // Production builds this from Actor-assignable game types (MemoryActivationAttribution);
         // the double mirrors the name-only mapping the boss runtime consumes.
         private static string NativeActorTypeName(Actor actor) => actor != null ? actor.GetType().Name : string.Empty;

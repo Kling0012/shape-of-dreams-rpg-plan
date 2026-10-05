@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
@@ -20,7 +19,6 @@ namespace SodRpg.Mod
         private float _nextChoicesSync;
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
         private readonly Action<PendingRunKill> _grantPendingKill;
-        private List<GameEvent> _pendingKillEvents;
         private bool? _pendingRunVictory;
         private string _pendingResultRunId;
         private string _completedRunId;
@@ -166,6 +164,8 @@ namespace SodRpg.Mod
                 if (!InfinityMode.NativeSaveAgreement) return;
                 FlushPendingPressureDividends();
                 _pendingRunRewards.Drain(Profile.Run.RunId, ChoiceZoneIndex, _grantPendingKill, Profile.Run.Infinity.SegmentEpoch);
+                // 撃破のあふれを、確保・決着の判断より先に1回にまとめて確定する（#167）。
+                FlushSatchelOverflow();
                 return;
             }
             // 勝利の確定は潜行しない（#71）。選択待ちだけを解けば、保留中の撃破は戦った深度のまま精算される。
@@ -176,6 +176,8 @@ namespace SodRpg.Mod
             // Pure White keeps the personal choice pending until an explicit choice or the run's conclusion.
             if (InPureWhiteRoute && Profile.Run.AwaitingChoice && !_pendingRunVictory.HasValue) return;
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
+            // 夢の出来事などで外れた分も含めて、確保・決着の判断より先にまとめて確定する（#167）。
+            FlushSatchelOverflow();
         }
 
         private bool CommitCombatChoice(bool publish = true, bool concluding = false)
@@ -233,9 +235,9 @@ namespace SodRpg.Mod
                 throw new InvalidOperationException("Infinity save receipts disagree; rewards remain pending.");
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
-            var events = Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
+            Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint,
-                bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth);
+                bossTypeName: kill.BossTypeName, bossDropNightmare: kill.BossDropNightmare, bossDropDepth: kill.BossDropDepth));
             if (Mastery.Level(Profile.Hero(kill.HeroKey).Kills) > masteryBefore) _buildDirty = true;
             if (Rules.EquippedAwakenLevels(Profile, kill.HeroKey) > awakenBefore)
             {
@@ -243,8 +245,6 @@ namespace SodRpg.Mod
                 _nextSave = 0;
             }
             if (kill.Tier >= MonsterTier.MiniBoss) _nextSave = 0;
-            // Drain removes the kill before these events can confirm a trade preparation save.
-            _pendingKillEvents = events;
         }
 
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)

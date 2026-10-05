@@ -78,6 +78,7 @@ namespace SodRpg.Mod
     public sealed class DewPlayer
     {
         public string guid;
+        public string playerName;
         public bool isHumanPlayer;
         public static DewPlayer local;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
@@ -86,8 +87,14 @@ namespace SodRpg.Mod
     public class Actor
     {
         public bool isActive;
+        public string name;
+        // The harness records custom-RPC traffic so lobby handshake tests can observe the host's answer.
+        public static readonly List<(DewPlayer player, object message)> SentToClients = new List<(DewPlayer, object)>();
+        public static readonly List<(string name, Delegate handler)> ServerHandlers = new List<(string, Delegate)>();
         public void CustomRpc_SendMessageToServer<T>(T message) { }
-        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler) { }
+        public void CustomRpc_SendMessageToClient<T>(DewPlayer player, T message) => SentToClients.Add((player, message));
+        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler)
+            => ServerHandlers.Add((name, handler));
         public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
     }
     public sealed class Shrine_BossSoul : Actor { }
@@ -209,7 +216,7 @@ namespace SodRpg.Mod
         internal static ClientSession _hostSession;
         internal static bool HostInfinityRewardsSettled, HostInfinityReturnCommitted;
         internal static void PrepareNativeInfinityContinue() { }
-        internal static bool RemoteHostInfinityAvailable;
+        internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
         internal static bool PersistHostInfinityState() => false;
         internal static void CountHostInfinityRoom() { }
@@ -217,12 +224,10 @@ namespace SodRpg.Mod
         internal static void FinishNativeContinueRestore() { }
     }
     internal sealed class EncodableBuild { public string Encode() => ""; }
-    internal sealed class HostAuthority
+    // The real HostAuthority.Infinity.cs / HostAuthority.Hello.cs compile into this partial;
+    // the instance kill-ledger surface they touch is modeled in HostAuthorityLobbyHarness.cs.
+    internal sealed partial class HostAuthority
     {
-        public static string ModVersion;
-        public static bool InfinityCanAdvance, InfinityBoundarySettled;
-        public static long InfinityRetireBeforeSegment(long current) => current;
-        public static bool InfinityRosterCompatible(IReadOnlyList<DewPlayer> players) => true;
         public bool IsActive;
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }
@@ -278,9 +283,15 @@ namespace SodRpg.Mod
         public readonly List<object> visitedNodesSaveData = new List<object>();
         public bool IsNodeConnected(int from, int to) => false;
         public void CmdTravelToNode(int node) { }
-        public void GenerateWorldAuto() { }
-        public void TravelToNode(int to, bool advanceTurn, bool isSidetrackTransition, bool ignoreInterrupts) { }
-        public void TravelToZone(Zone prefab, bool noAdvance) { }
+        // The harness records the native calls so patched routing and suppression are observable.
+        public int? LastTravelTo;
+        public int TravelToNodeCalls, GenerateWorldAutoCalls, TravelToZoneCalls;
+        public Zone LastTravelToZone; public bool LastTravelNoAdvance;
+        public void GenerateWorldAuto() { GenerateWorldAutoCalls++; }
+        public void TravelToNode(int to, bool advanceTurn, bool isSidetrackTransition, bool ignoreInterrupts)
+        { LastTravelTo = to; TravelToNodeCalls++; }
+        public void TravelToZone(Zone prefab, bool noAdvance)
+        { LastTravelToZone = prefab; LastTravelNoAdvance = noAdvance; TravelToZoneCalls++; }
         public void CallOnReadyAfterTransition(Action action) => action();
     }
     public sealed class WorldNode

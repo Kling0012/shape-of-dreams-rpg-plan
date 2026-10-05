@@ -29,8 +29,11 @@ namespace SodRpg.Mod
                 if (projectile.FindFirstAncestorOfType<St_R_AnnihilationStance>() == null) return;
                 var status = hero.Status;
                 float armor = status.armor, addedHp = status.GetBonusHealth(), crit = status.critChance;
-                float ratio = MemoryTuningMath.AttackBasisRatio(status.attackDamage, status.abilityPower,
-                    power => projectile.damage.GetValue(projectile.effectiveLevel, status.attackDamage, power, armor, addedHp, crit));
+                // #161: 剣気のパケットごとにクロージャとデリゲートを割り当てない。評価式は MemoryTuningMath.AttackBasisRatio と同一。
+                float native = projectile.damage.GetValue(projectile.effectiveLevel, status.attackDamage, status.abilityPower, armor, addedHp, crit);
+                float attack = status.attackDamage;
+                float ratio = float.IsNaN(native) || native <= 0f || float.IsNaN(attack) || attack < 0f ? 1f
+                    : projectile.damage.GetValue(projectile.effectiveLevel, attack, attack, armor, addedHp, crit) / native;
                 if (ratio <= 0f || float.IsNaN(ratio) || float.IsInfinity(ratio)) return;
                 data = data.ApplyRawMultiplier(ratio).SetSourceType(DamageData.SourceType.Physical).SetAmountModifiedBy(typeof(Ai_R_AnnihilationStance_Projectile));
             };

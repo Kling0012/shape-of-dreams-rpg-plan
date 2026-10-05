@@ -8,9 +8,30 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- **星図の配置（#106・段階B）**：記憶ごとの扇形区画、前提から外側へ進む半径階層、群の halo を分ける配置に変更しました。形状を保った決定的な局所調整を行い、取得済みの星ID・接続・登録順は変えていません。配置はキャッシュされ、広い星図も「全体を表示」とホイール操作で同じ範囲まで縮小できます。書き出し道具に before/after の指標比較と計算時間を追加しました。交差・星の上を通る線の目標未達と、群を分離したことで線長のばらつきが増えた旅人は比較レポートに記録します。 / **Star-map layout (#106, phase B)**: assign memory sectors and outward prerequisite layers, separate cluster halos, and apply deterministic shape-preserving refinement. Saved star IDs, edges and registration order are unchanged. Layouts are cached; full-map fit and wheel zoom share a bounds-derived minimum. The exporter now reports before/after metrics and timings, including unmet targets and the edge-length variation tradeoff.
+- **MOD 画面表示中の UI 例外（#171）**：入力遮断のため本体の EventSystem を無効化すると、本体のクリック判定・ツールチップで NullReferenceException が繰り返し発生していました。EventSystem は有効のまま残し、MOD パネル表示中はポインタ／ゲームパッドの UI 入力、クリック可否判定、ツールチップ更新を入口で遮断します。パッチ対象が見つからない場合は警告を出し、その遮断機能だけを無効にします。 / **UI exceptions while MOD panels are open (#171)**: disabling the native EventSystem repeatedly broke clickability and tooltip raycasts. Keep it enabled and gate pointer/gamepad UI input, clickability and tooltip updates at their entry points while a MOD panel blocks input. Missing patch targets warn and disable only the affected gate.
 
-- **墜聖の双装（Polaris）**：利用者の判断により、部位と2・6部位効果のダメージ・障壁・回復の係数と上限を2倍にしました。3部位効果で移される踏みつけも2倍です。同時数・再使用時間・範囲、部位の強化／覚醒倍率（元式内上限の適用後に最大3倍）は変更していません。日英の説明数値も更新しました。 / **Fallen Sanctity Regalia (Polaris)**: doubled damage, shield and healing coefficients and caps for its parts and 2-/6-piece effects by user decision. The stomp relocated by the 3-piece effect is also doubled. Instance limits, cooldowns, ranges and part enhancement/awakening scaling (up to 3 times after the base formula cap) are unchanged. Japanese and English description values are updated.
+- **空殻＋「華麗なる芸術家」で非常に重くなる（#161）**：爆発が多数の敵に同時に当たると、MOD の命中ごとの処理（装備した記憶の確認、弱点・刻印の検索、報告の送信）が爆発の数と掛け算で増えていました。効果量は一切変えずに、記憶の装備はエポックが変わるまでキャッシュし、弱点（Expose/Sap/Weakspot/Crescendo）の参照はその効果を持つ星がないビルドでは走査なしで 0 を返し、滅殺態勢の剣気のダメージ補正でパケットごとに発生していたクロージャの割り当てをなくし、仕掛け発動の報告（図鑑のカウント）は1フレーム分を1通にまとめて送るようにしました（合計は変わりません）。 / **Severe slowdown with Husk + Explosion Artist (#161)**: when explosions hit many enemies at once, the mod's per-hit work (equipped-memory checks, vulnerability lookups, bounty reports) multiplied with the number of explosion hits. With no change to effect values, equipped memories are now cached per equipment epoch, Expose/Sap/Weakspot/Crescendo queries return 0 without scanning when no star provides them, the per-packet closure allocation in the Annihilation Stance sword-qi rescale is gone, and gimmick-trigger bounty reports (codex counters) are coalesced into one message per frame (totals unchanged).
+
+---
+
+## v2.3.1 — インフィニティと重さの修正（2026-10-06）
+
+v2.3.0 でインフィニティが使えなかった問題と、遊んでいると重くなる問題を直しました。 / Fixes Infinity being unusable in v2.3.0 and several causes of heavy slowdowns.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.3.0 と同じです）。 / Saves carry over (same format as v2.3.0).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください（Protocol 21 のままですが、ホストの判定が変わっています）。 / Everyone in co-op should update (still Protocol 21, but host-side checks changed).
+
+### 不具合の修正 / Bug fixes
+
+- **インフィニティを開始できない**：ロビーで理由なく「インフィニティは無効です」と出たり、ソロやホストでも「全員の対応MODが必要です」と出て開始できなかったりしました。ホスト自身は確認の対象から外し、参加者だけを確認するようにしました。参加者の画面では、ホストの返事を待つ間「ホストの設定を待っています…」と表示します。 / **Infinity could not start**: the lobby showed "Infinity is disabled" without a reason, and solo or host games were blocked by the "everyone needs a compatible mod" check. The host is no longer checked against itself; only joining players are. Joining players see "Waiting for the host's settings…" until the host answers.
+- **インフィニティで開始しても通常のマップになる**：開始直後のマップ作成で MOD 側の処理が失敗し、インフィニティが止まって通常のマップとボス部屋になっていました。最初のマップから正しくインフィニティになるようにしました。 / **Infinity started on a normal map**: a failure right after the first map was generated turned Infinity off, leaving the normal map with a boss room. Infinity now applies from the first map.
+- **夢のダストへの変換で固まる**：鞄が満杯のときに敵をたくさん倒すと、あふれた遺物1個ごとに保存が走り、ゲームが大きくカクついたり固まったりしていました。あふれはまとめて処理し、保存は1回にしました。どの遺物がダストになるか・量は変わりません。 / **Freezes when overflow turns into Dream Dust**: with a full satchel, every overflowing relic triggered a full save, causing heavy stutter during mass kills. Overflow is now settled in one batch with a single save; which relics convert and the amounts are unchanged.
+- **爆発が多いと重くなる**：「華麗なる芸術家」など爆発をたくさん起こす記憶や多段ヒットで、MOD の命中ごとの処理が増えて重くなっていました。効果は変えずに処理を軽くしました。 / **Slowdown with many explosions**: memories such as Explosion Artist and multi-hit attacks multiplied the mod's per-hit work. It is now much lighter, with no change to effects.
+- **ビスマスの記憶スロットが空になる（ホスト）**：Q と R に同じ本を装備して始めると、記憶が装備されないことがありました。 / **Bismuth's memory slots were empty (host)**: starting with the same book in Q and R could leave memories unequipped.
+- **同じ記憶を2枠に入れると星・連携が動かなくなる**：同じ記憶を2つの枠に装備すると、ほかの記憶の星や連携まで動かなくなることがありました。 / **Stars and links stopped with the same memory in two slots**: it could also stop stars and links of your other memories.
+- **装備タブのボタンが画面外に出る**：変更と払い戻しの欄が出ているとき、装備タブの左の欄をスクロールできるようにし、下のボタンが押せるようにしました。 / **Gear tab buttons off screen**: the gear tab's left column now scrolls, so its lower buttons stay reachable while the refund panel is open.
 
 ---
 

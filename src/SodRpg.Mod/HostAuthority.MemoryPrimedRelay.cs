@@ -17,6 +17,7 @@ namespace SodRpg.Mod
             internal bool HasPreparations;
             internal long Generation;
             internal long NativeEquipmentEpoch;
+            internal bool DuplicateNotified;
             internal MemoryPrimedRelayState(long owner) { Primed = new MemoryPrimedRuntime(owner); Relay = new RelayWindowRuntime(owner); }
         }
         private readonly Dictionary<Hero, MemoryPrimedRelayState> _memoryPrimedRelay = new Dictionary<Hero, MemoryPrimedRelayState>();
@@ -87,19 +88,32 @@ namespace SodRpg.Mod
         {
             long nativeEpoch = EnsureMemoryAttributionEquipment(hero);
             if (state.NativeEquipmentEpoch == nativeEpoch) return;
-            var equipped = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
-            var epochs = new Dictionary<string, long>(StringComparer.Ordinal);
+            // One relay state per memory name: the first equipped slot represents the memory when the
+            // same memory occupies two slots (Bismuth alone has shared Q/R candidates; identical
+            // dropped memories are the in-run case). Throwing here used to abort the native
+            // EntityAbility.SetAbility chain during HeroSkill.OnLateStartServer and left the
+            // remaining loadout slots unequipped.
+            var bySlot = new List<KeyValuePair<string, SkillTrigger>>(LinkSkills.Length);
             foreach (var slot in LinkSkills)
             {
                 if (slot == HeroSkillLocation.Movement) continue;
                 var skill = hero.Skill.GetSkill(slot);
                 if (skill == null) continue;
-                string memory = skill.GetType().Name;
-                if (equipped.ContainsKey(memory)) throw new InvalidOperationException("A memory source has more than one equipped instance.");
-                equipped.Add(memory, skill);
-                long epoch = state.Equipment.TryGetValue(memory, out var prior) && prior == skill
-                    ? state.Epochs[memory] : _memoryAttribution.NewPacketId();
-                epochs.Add(memory, epoch);
+                bySlot.Add(new KeyValuePair<string, SkillTrigger>(skill.GetType().Name, skill));
+            }
+            var equipped = new Dictionary<string, SkillTrigger>(bySlot.Count, StringComparer.Ordinal);
+            RelayMemorySelection.SelectFirstSlotPerMemory(bySlot, equipped, out bool hadDuplicates);
+            if (hadDuplicates && !state.DuplicateNotified)
+            {
+                state.DuplicateNotified = true;
+                Log.Warn("Host: " + hero.GetType().Name + " equips the same memory in more than one slot; relay and preparation effects follow the first slot.");
+            }
+            var epochs = new Dictionary<string, long>(equipped.Count, StringComparer.Ordinal);
+            foreach (var pair in equipped)
+            {
+                long epoch = state.Equipment.TryGetValue(pair.Key, out var prior) && prior == pair.Value
+                    ? state.Epochs[pair.Key] : _memoryAttribution.NewPacketId();
+                epochs.Add(pair.Key, epoch);
             }
             state.Primed.SetEquipment(epochs);
             var q = hero.Skill.GetSkill(HeroSkillLocation.Q);

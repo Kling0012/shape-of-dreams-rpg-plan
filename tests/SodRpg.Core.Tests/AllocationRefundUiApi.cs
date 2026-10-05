@@ -12,11 +12,13 @@ namespace UnityEngine
     }
     internal static class GUI { public static bool enabled = true; }
     internal sealed class GUILayoutOption { internal float Height, Width; }
+    internal sealed class GUIContent { public string text; }
     internal static class GUILayout
     {
         internal static readonly List<string> Labels = new List<string>();
         internal static int PressButton = -1, ButtonIndex, LayoutDepth;
         internal static void BeginVertical(object style) => LayoutDepth++;
+        internal static void BeginVertical(object style, params GUILayoutOption[] options) => LayoutDepth++;
         internal static void EndVertical() => LayoutDepth--;
         internal static void BeginHorizontal() => LayoutDepth++;
         internal static void EndHorizontal() => LayoutDepth--;
@@ -24,6 +26,7 @@ namespace UnityEngine
         internal static void EndArea() => LayoutDepth--;
         internal static void Label(string text, object style) { Labels.Add(text); Ops.Add("label:" + text); }
         internal static void Label(string text, object style, params GUILayoutOption[] options) => Label(text, style);
+        internal static void Label(GUIContent content, object style, params GUILayoutOption[] options) => Label(content.text, style);
         internal static Vector2 BeginScrollView(Vector2 position, params GUILayoutOption[] options)
         { Ops.Add("scroll"); LayoutDepth++; return position; }
         internal static void EndScrollView() { LayoutDepth--; Ops.Add("endscroll"); }
@@ -49,18 +52,21 @@ namespace SodRpg.Mod
         internal Profile Profile;
         internal readonly TradeLedger Trades = new TradeLedger();
         internal bool CanEditTalents = true, CanEditLoadout = true, Dirty, InGame;
+        internal object LocalHero;
         internal readonly List<GameEvent> Notices = new List<GameEvent>();
         internal void MarkDirty(bool build) => Dirty |= build;
         internal void Emit(GameEvent notice) => Notices.Add(notice);
+        internal Build CurrentBuild(string hero) => new Build();
     }
     internal sealed class RefundUiStyles
     {
         internal readonly object Panel = new object(), Label = new object(), Warn = new object(), Small = new object(), Button = new object(),
-            Window = new object(), Title = new object(), Tab = new object(), TabSel = new object(), Header = new object();
+            Window = new object(), Title = new object(), Tab = new object(), TabSel = new object(), Header = new object(),
+            Row = new object(), RowSel = new object(), ButtonSel = new object();
     }
     // 実機の DreamforgeConfig（InputSystem 依存）の代わり。メニューの描画で読むのは menuKey だけ。
     internal class DreamforgeConfig { public string menuKey = "F6"; }
-    internal sealed class UiStyles { internal static string Colored(string text, string hex) => text; }
+    internal sealed class UiStyles { internal static string Colored(string text, string hex) => text; internal static string RelicTitle(Relic r) => r.Uid; }
     internal sealed partial class DreamforgeUi
     {
         private readonly RefundUiSession _s;
@@ -92,6 +98,17 @@ namespace SodRpg.Mod
         { UnityEngine.GUILayout.Input(pressedButton); DrawGearDetail(_s.Profile, _hero, _s.Profile.Stash[0]); }
         private void RelicDetail(Relic r) { }
         private void Comparison(Relic next, Relic cur) { }
+        // 装備タブの左の欄（DreamforgeUi.GearColumn.cs）を試験で動かすための足りない部品。
+        private Slot _slot;
+        private string _selected, _heroSel, _linkHeroKey;
+        private readonly HashSet<string> _linkMemories = new HashSet<string>();
+        private readonly HashSet<string> _linkEssences = new HashSet<string>();
+        private readonly HashSet<string> _linkAllies = new HashSet<string>();
+        private static void IconSlot(Relic r, float size) { }
+        private Func<string, bool> LinkMarks() => null;
+        private void DrawSetLinkProgress(SetDef set, int count) { }
+        internal void DrawGearColumnUi(int pressedButton)
+        { UnityEngine.GUILayout.Input(pressedButton); DrawGearColumn(_s.Profile, _hero); }
         // メニューの窓（DreamforgeUi.Window.cs）を試験で動かすための足りない部品。
         internal void DrawMenu(int tab, int pressedButton)
         { UnityEngine.GUILayout.Input(pressedButton); _tab = tab; DrawWindow(1920f, 1080f, new DreamforgeConfig()); }

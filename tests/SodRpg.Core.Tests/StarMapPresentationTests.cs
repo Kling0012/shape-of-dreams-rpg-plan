@@ -195,7 +195,11 @@ namespace SodRpg.Core.Tests
                     ? "付与者と受け手の組み合わせごとに、受け手の最大HPの15%まで"
                     : "up to 15% of the recipient's maximum HP per caster and recipient", description);
             }
-            finally { Loc.Japanese = previous; }
+            finally
+            {
+                Loc.Japanese = previous;
+                StarClusters.RegisterAuthored("Hero_Yubar", Array.Empty<AuthoredStarDef>());
+            }
         }
     }
 }
