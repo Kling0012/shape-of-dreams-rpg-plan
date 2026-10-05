@@ -51,12 +51,12 @@ namespace SodRpg.Mod
 
     internal static class BossDisplacementReuse
     {
-        private static readonly Action<Displacement, bool> SetStarted = (Action<Displacement, bool>)Delegate.CreateDelegate(typeof(Action<Displacement, bool>), AccessTools.PropertySetter(typeof(Displacement), nameof(Displacement.hasStarted)));
-        private static readonly Action<Displacement, float> SetElapsed = (Action<Displacement, float>)Delegate.CreateDelegate(typeof(Action<Displacement, float>), AccessTools.PropertySetter(typeof(Displacement), nameof(Displacement.elapsedTime)));
+        private static readonly Action<Displacement, bool> SetStarted = SafeReflection.Setter<Displacement, bool>(nameof(Displacement.hasStarted));
+        private static readonly Action<Displacement, float> SetElapsed = SafeReflection.Setter<Displacement, float>(nameof(Displacement.elapsedTime));
         internal static void Prewarm() { _ = SetStarted; _ = SetElapsed; }
         public static bool Reset(DispByDestination displacement)
         {
-            if (displacement.isAlive) return false;
+            if (displacement.isAlive || SetStarted == null || SetElapsed == null) return false;
             SetStarted(displacement, false); SetElapsed(displacement, 0);
             return true;
         }
@@ -64,12 +64,12 @@ namespace SodRpg.Mod
 
     internal static class BossBasicEffectReuse
     {
-        private static readonly Action<BasicEffect, Entity> SetVictim = (Action<BasicEffect, Entity>)Delegate.CreateDelegate(typeof(Action<BasicEffect, Entity>), AccessTools.PropertySetter(typeof(BasicEffect), nameof(BasicEffect.victim)));
-        private static readonly Action<BasicEffect, StatusEffect> SetParent = (Action<BasicEffect, StatusEffect>)Delegate.CreateDelegate(typeof(Action<BasicEffect, StatusEffect>), AccessTools.PropertySetter(typeof(BasicEffect), nameof(BasicEffect.parent)));
+        private static readonly Action<BasicEffect, Entity> SetVictim = SafeReflection.Setter<BasicEffect, Entity>(nameof(BasicEffect.victim));
+        private static readonly Action<BasicEffect, StatusEffect> SetParent = SafeReflection.Setter<BasicEffect, StatusEffect>(nameof(BasicEffect.parent));
         internal static void Prewarm() { _ = SetVictim; _ = SetParent; }
         public static void Reset(BasicEffect basic)
         {
-            SetVictim(basic, null); SetParent(basic, null);
+            SetVictim?.Invoke(basic, null); SetParent?.Invoke(basic, null);
         }
     }
 }
