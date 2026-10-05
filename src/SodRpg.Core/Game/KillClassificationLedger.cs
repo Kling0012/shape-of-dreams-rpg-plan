@@ -91,7 +91,7 @@ namespace SodRpg.Core.Game
             RunId = runId;
         }
 
-        public bool ObserveDeath(PendingMonsterDeath death, double now = 0)
+        public bool ObserveDeath(PendingMonsterDeath death, double now)
         {
             if (death.MonsterNetId == 0 || string.IsNullOrEmpty(death.Kill.RunId)) return false;
             BeginRun(death.Kill.RunId);
@@ -109,7 +109,7 @@ namespace SodRpg.Core.Game
             return true;
         }
 
-        public bool TryResolve(out PendingRunKill kill, double now = 0)
+        public bool TryResolve(out PendingRunKill kill, double now)
         {
             kill = default;
             // Preserve native event order, including rewards waiting for preceding-zone rules.
@@ -145,7 +145,7 @@ namespace SodRpg.Core.Game
             return saved;
         }
 
-        public void Restore(KillClassificationCheckpoint saved, double now = 0)
+        public void Restore(KillClassificationCheckpoint saved, double now)
         {
             Clear();
             if (saved == null || string.IsNullOrEmpty(saved.RunId)) return;

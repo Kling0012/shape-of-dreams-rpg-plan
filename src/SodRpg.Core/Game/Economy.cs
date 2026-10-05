@@ -78,6 +78,17 @@ namespace SodRpg.Core.Game
         public int Batches;
         /// <summary>SalvageForDust：分解対象の希少度（(int)Rarity）と強化値。</summary>
         public int Rarity, Enhance;
+        /// <summary>
+        /// 全フィールドを写した写し。Profile.Clone と TradeLedger が使う。フィールドを足すときはここにも必ず並べる
+        /// （試験が全 public フィールドの一致を見るので、コピー漏れはすぐ分かる）。
+        /// </summary>
+        public PendingTrade Clone() => new PendingTrade
+        {
+            Token = Token, Kind = Kind, SpendGold = SpendGold, SpendDust = SpendDust, EarnDust = EarnDust, Uid = Uid,
+            StartedAt = StartedAt, Unresolved = Unresolved, Queries = Queries, NextQueryAt = NextQueryAt,
+            LedgerId = LedgerId, Lost = Lost, Heat = Heat, MerchantOfferId = MerchantOfferId,
+            Batches = Batches, Rarity = Rarity, Enhance = Enhance,
+        };
     }
 
     /// <summary>ホストの応答を台帳へ反映した結果。</summary>
@@ -250,7 +261,7 @@ namespace SodRpg.Core.Game
         public List<PendingTrade> Snapshot()
         {
             var list = new List<PendingTrade>();
-            foreach (var t in _pending.Values) list.Add(CloneOf(t));
+            foreach (var t in _pending.Values) list.Add(t.Clone());
             list.Sort((x, y) => x.Token.CompareTo(y.Token));
             return list;
         }
@@ -267,7 +278,7 @@ namespace SodRpg.Core.Game
             {
                 if (saved == null || saved.Token <= 0 || _pending.ContainsKey(saved.Token)) continue;
                 if (_pending.Count >= MaxRestored) { dropped++; continue; }
-                var t = CloneOf(saved);
+                var t = saved.Clone();
                 t.Unresolved = true;
                 t.Queries = 0;
                 t.NextQueryAt = now;
@@ -277,13 +288,6 @@ namespace SodRpg.Core.Game
             return dropped;
         }
 
-        private static PendingTrade CloneOf(PendingTrade t) => new PendingTrade
-        {
-            Token = t.Token, Kind = t.Kind, SpendGold = t.SpendGold, SpendDust = t.SpendDust, EarnDust = t.EarnDust, Uid = t.Uid,
-            StartedAt = t.StartedAt, Heat = t.Heat, Batches = t.Batches, Rarity = t.Rarity, Enhance = t.Enhance,
-            Unresolved = t.Unresolved, Queries = t.Queries, NextQueryAt = t.NextQueryAt, LedgerId = t.LedgerId, Lost = t.Lost,
-            MerchantOfferId = t.MerchantOfferId,
-        };
 
         /// <summary>上限に達していたら、取引の登録も通信も通貨の変更も始めさせない（呼び出し側は先に CanBegin で案内する）。</summary>
         private void EnsureRoom()
