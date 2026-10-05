@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-この#48開発ブランチは **Protocol 18・保存形式5（プロフィールリセットなし）**。mainのv2.0.4と#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+この#97統合ブランチは **Protocol 19・保存形式5（プロフィールリセットなし）**。最新mainのv2.0.5と#48・#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -43,6 +43,17 @@
 | 夢の圧（v1.27） | ゲームに参加中の人間の夢レベル・使用済み星ポイントの平均で敵HPと与ダメージを乗算。HP＝1＋0.025×max(0, 平均夢レベル−5)＋0.0025×平均星、与ダメージ＝1＋0.012×max(0, 平均夢レベル−5)＋0.00125×平均星（v1.31 で星の係数を半分に。300星＝旧150星と同じ圧）。本体の人数補正・深度・悪夢・変種とは別の乗算で、ボスにも有効。HUDにホストの現在値を表示 |
 
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
+
+### 中断と「続きから」（Issue #97）
+
+- ロビー・タイトルへ戻っても未完了の遠征は残る。メニューの全タブに中断中の案内を表示し、遠征が終わるまでプロフィールの切替と星図の変更はできない。装備・鍛冶の操作条件は従来どおり。
+- 本体の保存があるときは「続きから」で再開する。本体の保存に結び付いたMODチェックポイントへ、同じ遠征IDの鞄・未確保の欠片・撃破と報酬の状態を戻す。MODの最新プロフィールだけをそのまま重ねるのではなく、本体が再開する地点にそろえる。
+- 再開時は、その後の遠征で得た経験・確保済み報酬と保留取引も保存地点に合わせ、本体の通貨と取引台帳を一緒に戻す。ロビーの装備変更は残し、鍛冶・工房などの変更も保存地点の遺物・素材で成立する場合は残す。巻き戻りで必要な遺物・素材がなくなる場合は、ロビーの財産変更をまとめて戻し、画面に理由を表示する。
+- 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
+- チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 19と中断対応の相互確認を使う。
+- #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
+- **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
 

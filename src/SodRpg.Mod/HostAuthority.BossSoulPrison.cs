@@ -130,11 +130,18 @@ namespace SodRpg.Mod
             if(hero.Skill==null || !hero.Skill.gems.TryGetValue(gem.location,out var equipped) || !ReferenceEquals(equipped,gem)) return default;
             return new SeekerSoulRescueScope.Scope{Status=status,Gem=gem,Hero=hero,Skill=gem.skill,Location=gem.location,Parent=status.parentActor,StatusLife=BossNativeActorLife(status),GemLife=BossNativeActorLife(gem),HeroLife=BossNativeActorLife(hero),SkillLife=gem.skill!=null?BossNativeActorLife(gem.skill):0,ParentLife=BossNativeActorLife(status.parentActor),Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,Run=NetworkedManagerBase<GameManager>.softInstance?.runId};
         }
+        // Native identity/lifetime validation only: no BossEnsure, no snapshot refresh.
+        // Cleanup runs while BossEnsure still holds the old Build/epoch/equipment
+        // snapshot, so a nested ensure from there would clear again and never return (#99).
+        private bool SeekerSoulNativeValid(SeekerSoulRescueScope.Scope scope)
+        {
+            return BossAlive(scope.Hero) && scope.Status!=null && scope.Status.isActive && scope.Gem!=null && scope.Gem.isActive && scope.Status.gem==scope.Gem && scope.Status.victim==scope.Hero && scope.Status.info.caster==scope.Hero && scope.Status.parentActor==scope.Parent && scope.Parent==scope.Gem && scope.Gem.owner==scope.Hero && scope.Gem.skill==scope.Skill && (scope.Skill==null || BossNativeEquippedSkill(scope.Hero,scope.Skill) && BossNativeSameLife(scope.Skill,scope.SkillLife))
+                && BossNativeSameLife(scope.Status,scope.StatusLife) && BossNativeSameLife(scope.Gem,scope.GemLife) && BossNativeSameLife(scope.Hero,scope.HeroLife) && BossNativeSameLife(scope.Parent,scope.ParentLife) && BossNativeContextCurrent(scope.Room,scope.Run) && _runtimes.ContainsKey(scope.Hero) && scope.Hero.Skill!=null && scope.Hero.Skill.gems.TryGetValue(scope.Gem.location,out var equipped) && ReferenceEquals(equipped,scope.Gem);
+        }
         private bool SeekerSoulCurrent(SeekerSoulRescueScope.Scope scope,out HeroRuntime rt)
         {
             rt=null;
-            return BossAlive(scope.Hero) && scope.Status!=null && scope.Status.isActive && scope.Gem!=null && scope.Gem.isActive && scope.Status.gem==scope.Gem && scope.Status.victim==scope.Hero && scope.Status.info.caster==scope.Hero && scope.Status.parentActor==scope.Parent && scope.Parent==scope.Gem && scope.Gem.owner==scope.Hero && scope.Gem.skill==scope.Skill && (scope.Skill==null || BossNativeEquippedSkill(scope.Hero,scope.Skill) && BossNativeSameLife(scope.Skill,scope.SkillLife))
-                && BossNativeSameLife(scope.Status,scope.StatusLife) && BossNativeSameLife(scope.Gem,scope.GemLife) && BossNativeSameLife(scope.Hero,scope.HeroLife) && BossNativeSameLife(scope.Parent,scope.ParentLife) && BossNativeContextCurrent(scope.Room,scope.Run) && _runtimes.TryGetValue(scope.Hero,out rt) && scope.Hero.Skill!=null && scope.Hero.Skill.gems.TryGetValue(scope.Gem.location,out var equipped) && ReferenceEquals(equipped,scope.Gem) && BossEnsure(rt) && BossRewardStage(rt,BossProfiles.SeekerRewardId)>0;
+            return SeekerSoulNativeValid(scope) && _runtimes.TryGetValue(scope.Hero,out rt) && BossEnsure(rt) && BossRewardStage(rt,BossProfiles.SeekerRewardId)>0;
         }
         private bool SeekerSoulConsumedCurrent(SeekerSoulRescueScope.Scope scope)
         {
@@ -236,9 +243,12 @@ namespace SodRpg.Mod
         private void ClearSeekerSoulPrison(HeroRuntime rt,bool preserveRewards)
         {
             if(!_seekerSoulStates.TryGetValue(rt,out var state)) return;
+            // The stage half of the keep decision already arrived in preserveRewards
+            // (BossRewardUnchanged across the observed old/new Builds); the gem's slot
+            // identity is checked natively, so this must never re-enter BossEnsure (#99).
             if(preserveRewards && BossAlive(rt.Hero) && BossNativeSameLife(rt.Hero,state.Scope.HeroLife)
                 && BossNativeContextCurrent(state.Scope.Room,state.Scope.Run)
-                && (state.Consumed ? SeekerSoulConsumedCurrent(state.Scope) : SeekerSoulCurrent(state.Scope,out _)))
+                && (state.Consumed ? SeekerSoulConsumedCurrent(state.Scope) : SeekerSoulNativeValid(state.Scope)))
                 return;
             _seekerSoulStates.Remove(rt);
             for(int i=0;i<state.ShieldCount;i++) SeekerSoulRemoveShield(rt,state.Shields[i]);

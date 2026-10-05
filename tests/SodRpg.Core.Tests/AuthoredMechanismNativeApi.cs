@@ -73,7 +73,7 @@ namespace SodRpg.Mod
         public float ProcessShieldAmount(float amount, Entity target) => amount * target.Status.ShieldMultiplier;
         public T CreateStatusEffect<T>(Entity target, CastInfo cast, Action<T> setup) where T : StatusEffect, new()
         {
-            var effect = new T { info = cast, parentActor = this, Recipient = target };
+            var effect = new T { info = cast, parentActor = this, Recipient = target, victim = target };
             setup(effect);
             if (effect is Se_GenericShield_OneShot shield)
             {

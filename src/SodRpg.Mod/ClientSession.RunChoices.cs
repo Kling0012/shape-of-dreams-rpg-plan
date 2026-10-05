@@ -130,6 +130,7 @@ namespace SodRpg.Mod
 
         private void TickRunChoices()
         {
+            if (!ContinueReady || _nativeContinueCheckpoint != null) return;
             TickInfinity();
             TickKillClassification();
             NotifyPersonalDreamEvent();
@@ -246,7 +247,7 @@ namespace SodRpg.Mod
 
         private void ReceiveRunChoices(string encoded, bool? victory = null)
         {
-            if (NetworkServer.active || !RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) return;
+            if (NetworkServer.active || !ContinueReady || !RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (!string.IsNullOrEmpty(snapshot.RunId) && !string.IsNullOrEmpty(gameRunId) && snapshot.RunId != gameRunId) return;
             if (!string.IsNullOrEmpty(snapshot.RunId) && snapshot.RunId == _completedRunId) return;

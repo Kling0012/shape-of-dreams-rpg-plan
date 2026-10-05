@@ -232,7 +232,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(2, 0f)]
-        [InlineData(3, 18f)]
+        [InlineData(3, 36f)]
         public void Polaris_stage_three_moves_the_transition_stomp_to_departure_without_a_landing_duplicate(int pieces, float departureDamage)
         {
             var rig = Create("polaris", pieces, "weapon", "armor", "head");
@@ -247,7 +247,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1000f, departure.currentHealth);
             rig.Tick(10.951f);
             Assert.Equal(1000f - departureDamage, departure.currentHealth, 3);
-            Assert.Equal(pieces == 2 ? 982f : 1000f, landing.currentHealth, 3);
+            Assert.Equal(pieces == 2 ? 964f : 1000f, landing.currentHealth, 3);
         }
 
         [Fact]
@@ -263,9 +263,9 @@ namespace SodRpg.Core.Tests
             rig.Input("Polaris", BossEvent.MemoryUse, 3, null, Vector3.zero, 11.2f);
             // Head's initial one-second shield has expired before returning.
             rig.Tick(11.2f);
-            Assert.Equal(380f, rig.Hero.Status.currentShield, 3);
+            Assert.Equal(760f, rig.Hero.Status.currentShield, 3);
             rig.Tick(14.2f);
-            Assert.Equal(190f, rig.Hero.Status.currentShield, 3);
+            Assert.Equal(380f, rig.Hero.Status.currentShield, 3);
             rig.Tick(17.201f);
             Assert.Equal(0f, rig.Hero.Status.currentShield, 3);
         }

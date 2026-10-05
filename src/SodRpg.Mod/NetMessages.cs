@@ -40,6 +40,8 @@ namespace SodRpg.Mod
         public string content;
         public string killObservationSessionId;
         public ulong authorityGeneration;
+        public string continueRunId, continueCheckpointId, continueResumeSession;
+        public bool continueCheckpoints;
     }
 
     public class DreamforgeAppliedMsg
@@ -181,6 +183,7 @@ namespace SodRpg.Mod
         // Version 17 requires each Pure White participant to resolve their own choice before kill settlement.
         // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
+        // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
         // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
         // Version 20 requires persistent Infinity reward caps; cap-less participants are incompatible.
         public const int Version = 20;

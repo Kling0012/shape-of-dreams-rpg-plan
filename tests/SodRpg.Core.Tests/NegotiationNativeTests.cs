@@ -14,11 +14,14 @@ namespace SodRpg.Core.Tests
             var actor = host.RegisterNegotiation();
             var peer = new DewPlayer();
             Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = 12, content = ContentFingerprint.Value }, peer);
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = 12, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
             Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = "different-registry" }, peer);
-            Assert.False(host.AcceptsNegotiatedBuild(peer));
+            // 中断チェックポイント非対応の旧クライアントは登録が同じでも受け入れない（Protocol 17 相互確認）。
             host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value }, peer);
+            Assert.False(host.AcceptsNegotiatedBuild(peer));
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = "different-registry", continueCheckpoints = true }, peer);
+            Assert.False(host.AcceptsNegotiatedBuild(peer));
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
             Assert.True(host.AcceptsNegotiatedBuild(peer));
             var reply = Assert.IsType<DreamforgeHelloMsg>(actor.ClientMessages.Last());
             Assert.True(ContentFingerprint.Matches(reply.protocol, reply.content, Protocol.Version));
@@ -34,16 +37,16 @@ namespace SodRpg.Core.Tests
             host.RegisterNegotiation();
             var peer = new DewPlayer();
             string previous = ContentFingerprint.Value;
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous }, peer);
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous, continueCheckpoints = true }, peer);
             Assert.True(host.AcceptsNegotiatedBuild(peer));
             FractionalScopedModifiers.RegisterCapProfile(new NativeStarCapProfile {
                 Id = "integration.negotiation.host", Kind = LinkKind.MemoryDamage,
                 Maximum = ValueUnits.FromPercent(80m)
             });
             Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous }, peer);
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = previous, continueCheckpoints = true }, peer);
             Assert.False(host.AcceptsNegotiatedBuild(peer));
-            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value }, peer);
+            host.ReceiveNegotiation(new DreamforgeHelloMsg { protocol = Protocol.Version, content = ContentFingerprint.Value, continueCheckpoints = true }, peer);
             Assert.True(host.AcceptsNegotiatedBuild(peer));
             host.DetachNegotiation();
         }

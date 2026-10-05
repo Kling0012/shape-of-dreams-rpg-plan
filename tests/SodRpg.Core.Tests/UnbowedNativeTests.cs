@@ -18,7 +18,23 @@ namespace HarmonyLib
     internal enum Priority { First = 400, Last = 800 }
     internal sealed class HarmonyPriority : Attribute { public HarmonyPriority(Priority priority) { } }
 }
-namespace Mirror { internal static class NetworkServer { public static bool active = true; } internal static class NetworkTime { public static double time; } }
+namespace Mirror
+{
+    internal static class NetworkServer
+    {
+        private static bool _active = true;
+        // BossEnsure reads this once per entry, so tests use it as a recursion depth
+        // guard for the boss cleanup cycle (see BossSoulPrisonCleanupTests, #99).
+        // Armed only by the arming thread; other threads read the plain backing value.
+        internal static Action<int> ActiveRead;
+        internal static bool active
+        {
+            get { ActiveRead?.Invoke(Environment.CurrentManagedThreadId); return _active; }
+            set { _active = value; }
+        }
+    }
+    internal static class NetworkTime { public static double time; }
+}
 namespace UnityEngine { internal static class Time { public static float time, unscaledTime; } }
 namespace SodRpg.Mod
 {

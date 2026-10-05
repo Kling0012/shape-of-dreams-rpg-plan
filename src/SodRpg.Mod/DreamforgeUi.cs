@@ -1193,8 +1193,8 @@ namespace SodRpg.Mod
                     "Earn star XP per Traveler and grow along connections from the starting star. Respec is free. Dream Level and spent stars also raise dream pressure, strengthening enemies.");
                 case 3: return Loc.T("余った欠片と調律石で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。強さは上がりませんが、遠征がぐっと楽になります。",
                     "Spend spare shards and tuning stones on permanent conveniences such as a bigger satchel and stash. They don't make you stronger, but they make expeditions much easier.");
-                default: return Loc.T("遊び方の確認、今回の遠征の様子、これまでの記録と図鑑を見られます。",
-                    "Read how to play, check this expedition, and browse your records and codex.");
+                default: return Loc.T("遊び方の確認、遠征の状態、これまでの記録と図鑑を見られます。",
+                    "Read how to play, check expedition status, and browse your records and codex.");
             }
         }
 
@@ -2409,7 +2409,10 @@ namespace SodRpg.Mod
             EnsureStarTextStyles();
             GUILayout.Label(_starProgress, _starHelpStyle);
             if (_starFree < 0) GUILayout.Label(Loc.T("振った星が現在のポイントを超えています。無料で振り直せます。", "Your spent stars exceed your current points. Respec is free."), _st.Warn);
-            if (!_s.CanEditTalents || p.Run != null) GUILayout.Label(Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
+            if (!_s.CanEditTalents || p.Run != null)
+                GUILayout.Label(!_s.InGame && p.Run != null
+                    ? Loc.T("中断中の遠征が終わるまで、星図は変更できません。", "Star Map edits are locked until the suspended expedition ends.")
+                    : Loc.T("星図は遠征に出ていないときだけ変更できます。", "The star map can only be changed outside expeditions."), _st.Warn);
             DrawKeystoneBar(p, hero);
             if (Event.current.type == EventType.Layout) _starChoiceShown = _starChoiceId != null;
             StarDrawSearch();
@@ -3099,7 +3102,9 @@ namespace SodRpg.Mod
             DrawInfinityRecords(p);
             if (p.Run != null)
             {
-                GUILayout.Label(Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
+                GUILayout.Label(_s.InGame
+                    ? Loc.T($"今回の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"This expedition ({p.Run.Satchel.Count} relics not yet secured)")
+                    : Loc.T($"中断中の遠征（まだ持ち帰っていない遺物{p.Run.Satchel.Count}個）", $"Suspended expedition ({p.Run.Satchel.Count} relics not yet secured)"), _st.Header);
                 int rerolls = Rules.RerollsLeft(p);
                 for (int i = 0; i < p.Run.Bounties.Count; i++)
                 {

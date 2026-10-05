@@ -47,7 +47,7 @@ namespace SodRpg.Mod
             try
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
-                bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+                bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
                 if (same)
                 {
                     _versionMismatches.Remove(caller);
@@ -69,6 +69,10 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, modVer = ModVersion, content = ContentFingerprint.Value,
                     authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    continueRunId = ClientSession.ContinueRunId,
+                    continueCheckpointId = ClientSession.ContinueCheckpointId,
+                    continueResumeSession = ClientSession.ContinueResumeSession,
+                    continueCheckpoints = true,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }

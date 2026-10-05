@@ -8,6 +8,8 @@
       <SourcePath ParameterType="System.String" Required="true" />
       <OutputPath ParameterType="System.String" Required="true" />
       <RoslynPath ParameterType="System.String" Required="true" />
+      <ClassName ParameterType="System.String" Required="true" />
+      <Methods ParameterType="System.String" Required="true" />
     </ParameterGroup>
     <Task>
       <Using Namespace="System.Linq" />
@@ -25,17 +27,17 @@
         var descend = root.GetType().GetMethods().Single(m => m.Name == "DescendantNodes" && m.GetParameters().Length == 2);
         var nodes = ((System.Collections.IEnumerable)descend.Invoke(root, new object[] { null, false })).Cast<object>();
         System.Func<object, string> identifier = node => {
-            var token = node.GetType().GetProperty("Identifier").GetValue(node);
-            return (string)token.GetType().GetProperty("ValueText").GetValue(token);
+          var token = node.GetType().GetProperty("Identifier").GetValue(node);
+          return (string)token.GetType().GetProperty("ValueText").GetValue(token);
         };
         System.Func<object, string> sourceText = node => (string)node.GetType().GetMethod("ToFullString", System.Type.EmptyTypes).Invoke(node, null);
-        var session = nodes.Single(n => n.GetType().Name == "ClassDeclarationSyntax" && identifier(n) == "ClientSession");
+        var wanted = Methods.Split(';');
+        var session = nodes.Single(n => n.GetType().Name == "ClassDeclarationSyntax" && identifier(n) == ClassName);
         var members = ((System.Collections.IEnumerable)session.GetType().GetProperty("Members").GetValue(session)).Cast<object>();
-        var methods = members.Where(m => m.GetType().Name == "MethodDeclarationSyntax"
-            && new[] { "MarkDirty", "TickPeriodicSave", "SaveNow", "FlushSaves", "Secure", "Delve" }.Contains(identifier(m))).ToArray();
-        if (methods.Length != 7) throw new System.InvalidOperationException("Native persistence method contract changed; review the harness extraction.");
+        var methods = members.Where(m => m.GetType().Name == "MethodDeclarationSyntax" && wanted.Contains(identifier(m))).ToArray();
+        if (methods.Length == 0 || wanted.Any(w => !methods.Any(m => identifier(m) == w))) throw new System.InvalidOperationException("Native persistence method contract changed; review the harness extraction.");
         var imports = ((System.Collections.IEnumerable)root.GetType().GetProperty("Usings").GetValue(root)).Cast<object>();
-        var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { internal sealed partial class ClientSession {\n"
+        var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { internal sealed partial class " + ClassName + " {\n"
             + string.Join("\n", methods.Select(sourceText)) + "\n} }\n";
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputPath));
         System.IO.File.WriteAllText(OutputPath, source);
@@ -43,9 +45,18 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <!-- The profile slot notice (#97) lives in the UI partial of ProfileSlotView.cs; compile its
+       exact draw methods against the harness session instead of copying their implementation. -->
+  <Target Name="CompileProfileSlotUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ProfileSlotView.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ProfileSlotUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawProfileSlots;DrawProfileMode" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)ProfileSlotUi.g.cs" />
     </ItemGroup>
   </Target>
 </Project>
