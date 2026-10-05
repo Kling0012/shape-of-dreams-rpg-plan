@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **インフィニティ開始後に移動できなくなる**：未確認の参加者から Hello が届かないと遠征全体の移動が止まり続ける問題を修正しました。ゲーム内の通信準備後に参加者ごとに30秒待ち、返事がなければ理由を1回通知してその遠征だけ通常モードへ戻します。ロビー待機時間は含めず、参加者・通信先・遠征の変更時は待機時間をリセットします。互換性確認と報酬の安全条件は維持します。 / **Infinity travel blocked by a silent guest**: after the game-scene transport is ready, each unconfirmed guest gets 30 seconds to send Hello. A missing reply falls back to normal mode for that expedition with one notice. Lobby time does not count; peer, transport and expedition changes reset the wait. Compatibility and reward-safety checks remain enforced.
+
 - **Epic保証道標のLegendary予算漏れ（#183）**：インフィニティのEpic以上保証でも通常抽選のLegendary期待値を予約し、実ボス限定セット分は一度だけ計上します。抽選量・保存形式・通信形式は変更しません。 / **Missing Legendary budget under Epic-guarantee waypoints (#183)**: Infinity now reserves ordinary Legendary-roll expectation even with an Epic-or-better guarantee, counting the actual boss-exclusive set chance only once. Loot quantities, save format and wire format are unchanged.
 
 - **参加者がいるロビーでインフィニティを開始できない（#144 続き）**：ゲームシーンの Hello をロビーの必須条件にしていたため、対応済み参加者も開始を止められていました。未確認では開始を止めず、確認済みの Protocol 不一致だけをロビーで拒否します。開始後に MOD 内容・Protocol・インフィニティ対応の不一致が分かった場合は、その遠征のインフィニティだけを解除して通常モードで続行し、理由をログとホスト画面へ1回通知します。 / **Infinity blocked in a lobby with guests (#144 follow-up)**: requiring the game-scene Hello in the lobby blocked even compatible guests. Unconfirmed guests no longer block startup; only known protocol mismatches are rejected in the lobby. Incompatible mod content, protocol or Infinity support discovered after startup disables Infinity only for that expedition, continues in normal mode, and reports the reason once in the log and on the host's screen.
