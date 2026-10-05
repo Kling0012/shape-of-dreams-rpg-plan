@@ -159,7 +159,7 @@ namespace SodRpg.Core.Game
         /// would have hidden a refund. Never set in production.
         /// </summary>
         internal static bool VerifyPruning;
-        /// <summary>With <see cref="VerifyPruning"/>: a skipped star must have exactly the same marginal effectiveness before and after the change, not only avoid a refund.</summary>
+        /// <summary>With <see cref="VerifyPruning"/>: a skipped star must have exactly the same rank-retention eligibility before and after the change, not only avoid a refund.</summary>
         internal static bool VerifyPruningStrict;
         /// <summary>Test hook: when set, a pruning violation is recorded here instead of thrown, so a whole purchase sequence can be audited.</summary>
         internal static List<string> PruningViolations;
@@ -328,8 +328,8 @@ namespace SodRpg.Core.Game
                             scope.Pruned++;
                             if (VerifyPruning)
                                 for (int r = 1; r <= rank; r++)
-                                    if (VerifyPruningStrict ? RankEffective(scope, proposed, node, r) != RankEffective(scope, original, node, r)
-                                        : !RankEffective(scope, proposed, node, r) && RankEffective(scope, original, node, r))
+                                    if (VerifyPruningStrict ? CanRetainRank(scope, proposed, node, r) != CanRetainRank(scope, original, node, r)
+                                        : !CanRetainRank(scope, proposed, node, r) && CanRetainRank(scope, original, node, r))
                                     {
                                         string message = Loc.T("依存の絞り込みが払い戻しを見落とすところでした（試験用の検査）：", "Dependency pruning would have hidden a refund: ") + id + "#" + r.ToString(CultureInfo.InvariantCulture);
                                         if (PruningViolations == null) throw new InvalidOperationException(message);
@@ -343,14 +343,14 @@ namespace SodRpg.Core.Game
                         {
                             // A positive answer on the star's own region is final; anything else is settled on the whole allocation.
                             bool effective = region != null && RankEffectiveRegion(scope, proposed, node, r, region);
-                            if (effective && VerifyPruning && !RankEffective(scope, proposed, node, r))
+                            if (effective && VerifyPruning && !CanRetainRank(scope, proposed, node, r))
                             {
                                 string message = "Region evaluation disagrees with the full allocation: " + id + "#" + r.ToString(CultureInfo.InvariantCulture);
                                 if (PruningViolations == null) throw new InvalidOperationException(message);
                                 PruningViolations.Add(message + " (change " + change.CandidateStarId + ")");
                             }
-                            if (effective || RankEffective(scope, proposed, node, r) || !RankEffective(scope, original, node, r)) continue;
-                            RankEffective(scope, proposed, node, r, details);
+                            if (effective || CanRetainRank(scope, proposed, node, r) || !CanRetainRank(scope, original, node, r)) continue;
+                            CanRetainRank(scope, proposed, node, r, details);
                             retained = r - 1;
                             break;
                         }
@@ -527,10 +527,15 @@ namespace SodRpg.Core.Game
                 return marginal;
             }, hero);
             bool effective = HasPositiveDifference(with, without);
-            if (!effective && (IsPendingRouteReceiver(hero, talent, rank, with, without) || IsReplacedByOwned(hero, talent))) return true;
+            if (!effective && !IsReplacedByOwned(hero, talent) && IsPendingRouteReceiver(hero, talent, rank, with, without)) return true;
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
         }
+
+        // Replacement preserves already-owned prerequisite ranks during refund reconciliation only.
+        // Candidate purchases, choice changes, and headroom still need their own attainable output.
+        private bool CanRetainRank(PreviewScope scope, HeroState hero, TalentDef talent, int rank, List<AllocationSaturation> details = null) =>
+            IsReplacedByOwned(hero, talent) || RankEffective(scope, hero, talent, rank, details);
 
         /// <summary>
         /// A movement memory's receiver boosts (for example Husk's Flash Step Readiness, or the dream ring and deep star beside the route)

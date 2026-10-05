@@ -619,7 +619,13 @@ namespace SodRpg.Core.Tests
         [InlineData("Hero_Mist", "h.mist.route.fast-feet.1", false)]
         [InlineData("Hero_Husk", "h.husk.route.flash-step.1", true)]
         [InlineData("Hero_Mist", "h.mist.route.fast-feet.1", true)]
-        public void Movement_route_entry_matches_the_reference_without_a_recipient_and_respects_disables(
+        [InlineData("Hero_Mist", "h.mist.deep.life", false)]
+        [InlineData("Hero_Mist", "h.mist.deep.life", true)]
+        [InlineData("Hero_Mist", "h.mist.ring.renewal", false)]
+        [InlineData("Hero_Mist", "h.mist.ring.renewal", true)]
+        [InlineData("Hero_Husk", "h.husk.ring.renewal", false)]
+        [InlineData("Hero_Husk", "h.husk.ring.renewal", true)]
+        public void Movement_receiver_matches_the_reference_without_a_recipient_and_respects_disables(
             string hero, string starId, bool disabled)
         {
             WithVerification(() => WithGeneratedHero(hero, tree =>
@@ -649,7 +655,7 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(!disabled, plan.CanApply);
                     Assert.Empty(plan.AffectedRefundIds);
                     // No recharge source is owned: the paid rank is pending and must not invent an effective output.
-                    Assert.DoesNotContain(plan.NewEffectiveChannels, c => c.Memory == talent.RouteMemory);
+                    Assert.DoesNotContain(plan.NewEffectiveChannels, c => c.Memory == talent.ScopedModifier.ScopeMemory);
                     Assert.Equal(plan.OldEffectiveChannels.Select(Describe), plan.NewEffectiveChannels.Select(Describe));
                     if (disabled)
                     {
@@ -667,6 +673,44 @@ namespace SodRpg.Core.Tests
                     Assert.Equal(talent.MaxRank - 1, duo.ProductionProfile.Hero(hero).Talents[starId]);
                     duo.Buy(starId);
                 }
+            }));
+        }
+
+        // Known #199 regional-evaluation defect, outside this purchase-vs-retention fix:
+        // the e1 region omits the replacer and resurrects the ring. Full evaluation instead refunds
+        // the bridge satellites and rejects q. Keep the independent comparison runnable without
+        // changing that unresolved eligibility rule or silently accepting the production answer.
+        // SODRPG_REPLACEMENT_DIAGNOSTICS=1 dotnet test --filter Category=ReplacementDiagnostic
+        private sealed class ReplacementDiagnosticTheoryAttribute : TheoryAttribute
+        {
+            public ReplacementDiagnosticTheoryAttribute()
+            {
+                if (Environment.GetEnvironmentVariable("SODRPG_REPLACEMENT_DIAGNOSTICS") != "1")
+                    Skip = "Known #199 region mismatch. Set SODRPG_REPLACEMENT_DIAGNOSTICS=1 to reproduce; satellite retention needs a design decision.";
+            }
+        }
+
+        [ReplacementDiagnosticTheory, Trait("Category", "ReplacementDiagnostic")]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void Replaced_prerequisite_retention_and_inert_purchase_match_the_reference(int ownedRanks)
+        {
+            const string hero = ReplacedStarPurchaseTests.Hero;
+            WithVerification(() => WithGeneratedHero(hero, tree =>
+            {
+                var duo = new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero,
+                    () => FundedProfile(62UL, hero, 250, relics: 0));
+                foreach (string id in ReplacedStarPurchaseTests.Prerequisites)
+                    Assert.Empty(duo.Buy(id).AffectedRefundIds);
+                for (int rank = 1; rank < ownedRanks; rank++) Assert.Empty(duo.Buy(ReplacedStarPurchaseTests.Ring).AffectedRefundIds);
+                Assert.Empty(duo.Buy(ReplacedStarPurchaseTests.Choice, 1).AffectedRefundIds);
+                Assert.Equal(ownedRanks, duo.ProductionProfile.Hero(hero).Talents[ReplacedStarPurchaseTests.Ring]);
+                var rejected = duo.Step(new AllocationChange
+                {
+                    Kind = AllocationChangeKind.Purchase, CandidateStarId = ReplacedStarPurchaseTests.Ring,
+                }).Plan;
+                Assert.False(rejected.CanApply);
+                Assert.Empty(rejected.AffectedRefundIds);
             }));
         }
 
