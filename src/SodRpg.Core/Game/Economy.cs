@@ -34,7 +34,7 @@ namespace SodRpg.Core.Game
 
         public static int SalvageDust(Rarity rarity, int enhance) => Content.SalvageShards(rarity) * 5 + enhance * 10;
 
-        /// <summary>Automatic overflow uses the established unenhanced salvage rate, independent of enhancement.</summary>
+        /// <summary>Legacy overflow dust trade recovery uses the established unenhanced salvage rate.</summary>
         public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);
     }
 
@@ -43,6 +43,7 @@ namespace SodRpg.Core.Game
         MerchantGold = 0,
         DustToShards = 1,
         SalvageForDust = 2,
+        // Persisted v2.3.1–v2.4.0 obligations only; new overflow credits profile shards directly.
         SatchelOverflowDust = 3,
     }
 
@@ -365,25 +366,6 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(uid)) throw new ArgumentNullException(nameof(uid));
             EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.SalvageForDust, EarnDust = Economy.SalvageDust(rarity, enhance), Uid = uid, Rarity = (int)rarity, Enhance = enhance, StartedAt = now };
-            _pending[t.Token] = t;
-            return t;
-        }
-
-        /// <summary>Capture the removed relic and its already capped fallback independently of manual reservations.</summary>
-        public PendingTrade BeginSatchelOverflow(Relic relic, string runId, int fallbackShards, double now)
-        {
-            if (relic == null) throw new ArgumentNullException(nameof(relic));
-            if (string.IsNullOrEmpty(relic.Uid)) throw new ArgumentException("Overflow relic requires a UID.", nameof(relic));
-            if (string.IsNullOrEmpty(runId)) throw new ArgumentNullException(nameof(runId));
-            if (fallbackShards < 0) throw new ArgumentOutOfRangeException(nameof(fallbackShards));
-            // Leave the entire manual budget available, including space in persisted snapshots.
-            if (_pending.Count >= MaxRestored - MaxHeld) throw new InvalidOperationException("Too many unresolved overflow trades.");
-            var t = new PendingTrade
-            {
-                Token = _next++, Kind = TradeKind.SatchelOverflowDust, Uid = relic.Uid,
-                Rarity = (int)relic.Rarity, EarnDust = Economy.SatchelOverflowDust(relic.Rarity),
-                RunId = runId, Relic = relic.Clone(), FallbackShards = fallbackShards, StartedAt = now,
-            };
             _pending[t.Token] = t;
             return t;
         }

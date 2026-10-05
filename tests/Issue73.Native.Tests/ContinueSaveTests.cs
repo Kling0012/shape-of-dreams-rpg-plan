@@ -410,47 +410,11 @@ namespace Issue73.Native.Tests
             Assert.Equal(atSave.Material(Materials.Shard), profile.Material(Materials.Shard));
         }
 
-        /// <summary>ロビーに未精算の遠征があるとき、その旨とプロフィール切替・星図変更ができないことが表示される。</summary>
-        [Fact]
-        public void Lobby_shows_the_suspended_expedition_notice_with_what_it_locks()
-        {
-            Loc.Japanese = true;
-            var profile = Profile.CreateNew(97);
-            Rules.BeginRun(profile, "run", heroKey: "hero", dreamDepth: 3);
-            var session = new ClientSession { Profile = profile };
-            var ui = new DreamforgeUi(session);
-
-            NetworkedManagerBase<GameManager>.softInstance = null; // ロビー
-            ui.DrawProfileSlotBar();
-            Assert.Contains(UnityEngine.GUILayout.Labels, l => l.Contains("中断中の遠征あり"));
-            Assert.Contains(UnityEngine.GUILayout.Labels, l => l.Contains("プロフィール切替・星図変更はできません"));
-            Assert.Contains(UnityEngine.GUILayout.Labels, l => l.Contains("参加者はホストに従ってください"));
-
-            NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" }; // 遠征中
-            UnityEngine.GUILayout.Labels.Clear();
-            ui.DrawProfileSlotBar();
-            Assert.DoesNotContain(UnityEngine.GUILayout.Labels, l => l.Contains("中断中の遠征あり"));
-
-            // 巻き戻しでロビーの変更を戻したときの理由も同じ場所に表示される。
-            NetworkedManagerBase<GameManager>.softInstance = null;
-            typeof(ClientSession).GetProperty(nameof(ClientSession.ContinueWarning), Hidden)
-                .SetValue(session, "ロビーでの鍛冶・取引の変更を戻しました。");
-            UnityEngine.GUILayout.Labels.Clear();
-            ui.DrawProfileSlotBar();
-            Assert.Contains(UnityEngine.GUILayout.Labels, l => l.Contains("ロビーでの鍛冶・取引の変更を戻しました"));
-        }
-
-        /// <summary>
-        /// #178: 通常の既存キューと、共有クリア数の受信後・次の Tick より前の Infinity 保存障壁。
-        /// 後者は実際の OnContinueCheckpoint → Sync → TickInfinity → 回収 → Emit であふれる。
-        /// 保存後の支払いをホストも巻き戻す場合と、支払い済みホストへ参加者だけが戻る場合を区別する。
-        /// </summary>
+        /// <summary>Guest normal and Infinity checkpoints restore already-paid local shards, not overflow obligations.</summary>
         [Theory]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
-        [InlineData(true, false)]
-        [InlineData(true, true)]
-        public void Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once(bool infinity, bool retainPayment)
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Local_overflow_shards_at_continue_checkpoint_restore_without_double_grants(bool infinity)
         {
             string directory = Path.Combine(Path.GetTempPath(), "issue178-native-" + Guid.NewGuid().ToString("N"));
             var session = GuestInGame("run");
@@ -508,9 +472,7 @@ namespace Issue73.Native.Tests
                         session.Emit(e);
                 }
                 Assert.Empty(transport.Sent);
-                string nativeTradesAtCheckpoint = host.CaptureContinueTrades();
-                RunCheckpoint checkpointAtSend = null;
-                transport.BeforeSendToServer = message => checkpointAtSend = profile.ContinueCheckpoints.SingleOrDefault();
+                Assert.Equal(0, owner.dreamDust);
                 Call(session, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
                 {
                     protocol = Protocol.Version, runId = "run", checkpointId = "checkpoint-178",
@@ -520,37 +482,28 @@ namespace Issue73.Native.Tests
                 var saved = store.Load();
                 var checkpoint = Assert.Single(saved.ContinueCheckpoints);
                 var atCheckpoint = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
-                // 修正前は取り除きだけが保存され、この取引がない。ID の早期設定だけでも直らない。
-                var pending = Assert.Single(atCheckpoint.PendingTrades);
-                Assert.Equal(ledgerId, pending.LedgerId);
-                Assert.Equal(TradeKind.SatchelOverflowDust, pending.Kind);
-                Assert.Equal(overflow.Uid, pending.Uid);
-                Assert.Equal(Content.SalvageShards(overflow.Rarity), pending.FallbackShards);
+                Assert.Empty(atCheckpoint.PendingTrades);
+                int checkpointShards = bankedShards + Content.SalvageShards(overflow.Rarity);
+                Assert.Equal(checkpointShards, atCheckpoint.Material(Materials.Shard));
                 Assert.True(atCheckpoint.Run.LostRecovered);
                 Assert.Empty(atCheckpoint.LostAndFound);
                 Assert.DoesNotContain(atCheckpoint.Run.Satchel, r => r.Uid == overflow.Uid);
                 Assert.Contains(atCheckpoint.Run.Satchel, r => r.Uid == recovered.Uid);
                 Assert.Equal(7, atCheckpoint.Run.SatchelShards);
                 Assert.Equal(roomsToRecover, atCheckpoint.Run.RoomsCleared);
-                // 支払い要求が出る時点で、既に対価の義務を含むチェックポイントがある。
-                Assert.NotNull(checkpointAtSend);
-                Assert.Equal(pending.Token, Assert.Single(ProfileCodec.ReadCheckpointProfile(checkpointAtSend.Snapshot).PendingTrades).Token);
+                Assert.Empty(transport.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
                 Assert.Equal(0, owner.dreamDust);
-                var request = Assert.IsType<DreamforgeTradeMsg>(Assert.Single(transport.Sent).Message);
-                Assert.Equal(pending.Token, request.token);
-                var paid = SendHostTrade(host, owner, request);
-                Assert.True(paid.ok);
-                Assert.Equal(pending.EarnDust, owner.dreamDust);
-                if (!retainPayment)
-                {
-                    // 保存後の成功応答・通常保存でも、既存チェックポイントの義務は消えない。
-                    Call(session, "OnTradeResult", paid);
-                    session.SaveNow();
-                    session.FlushSaves();
-                    // 本体の同じ保存境界へ、通貨と受領台帳を両方戻す。
-                    owner.dreamDust = 0;
-                    HostAuthority.RestoreContinueTrades(nativeTradesAtCheckpoint);
-                }
+                // A second overflow after the checkpoint must disappear on rollback, then pay once when replayed.
+                var later = Loot.RollRelic(new Rng(180), Rarity.Common, 1);
+                var laterEvents = new List<GameEvent>();
+                typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { profile, later, laterEvents, null, false });
+                var laterOverflow = Assert.Single(laterEvents, e => e.SatchelOverflow != null);
+                int laterShards = Content.SalvageShards(laterOverflow.SatchelOverflow.Rarity);
+                foreach (var e in laterEvents) session.Emit(e);
+                Assert.Equal(checkpointShards + laterShards, profile.Material(Materials.Shard));
+                session.SaveNow();
+                session.FlushSaves();
                 // 別の参加者セッションがディスクから読み、保存障壁の地点へ戻る。
                 resumed = GuestInGame("run");
                 resumed.Profile = store.Load();
@@ -558,21 +511,19 @@ namespace Issue73.Native.Tests
                 var queryTransport = new Actor();
                 Set(resumed, "_clientRpcOn", queryTransport);
                 Call(resumed, "ReceiveContinueHandshake", Hello("run", "checkpoint-178", "resume-178"));
-                var restoredTrade = Assert.Single(((TradeLedger)Get(resumed, "_trades")).Snapshot());
-                Assert.Equal(pending.Token, restoredTrade.Token);
-                Assert.Equal(ledgerId, restoredTrade.LedgerId);
+                Assert.Empty(((TradeLedger)Get(resumed, "_trades")).Snapshot());
                 Call(resumed, "SendDueTradeQueries");
-                var query = Assert.IsType<DreamforgeTradeMsg>(Assert.Single(queryTransport.Sent).Message);
-                var answer = SendHostTrade(host, owner, query);
-                Assert.Equal(retainPayment, answer.ok);
-                Call(resumed, "OnTradeResult", answer);
-                // 応答の重複、照会の再送、遅れて届く元要求で欠片もダストも二重に付けない。
-                Call(resumed, "OnTradeResult", answer);
-                Call(resumed, "OnTradeResult", SendHostTrade(host, owner, query));
-                Call(resumed, "OnTradeResult", SendHostTrade(host, owner, request));
-                Assert.Equal(retainPayment ? pending.EarnDust : 0, owner.dreamDust);
-                Assert.Equal(7 + (retainPayment ? 0 : pending.FallbackShards), resumed.Profile.Run.SatchelShards);
-                Assert.Equal(bankedShards, resumed.Profile.Material(Materials.Shard));
+                Assert.Empty(queryTransport.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
+                Assert.Equal(checkpointShards, resumed.Profile.Material(Materials.Shard));
+                Assert.Equal(7, resumed.Profile.Run.SatchelShards);
+                laterEvents.Clear();
+                typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { resumed.Profile, later.Clone(), laterEvents, null, false });
+                Assert.Single(laterEvents, e => e.SatchelOverflow != null);
+                Assert.Equal(checkpointShards + laterShards, resumed.Profile.Material(Materials.Shard));
+                Call(resumed, "ReceiveContinueHandshake", Hello("run", "checkpoint-178", "resume-178"));
+                Assert.Equal(checkpointShards + laterShards, resumed.Profile.Material(Materials.Shard));
+                Assert.Equal(0, owner.dreamDust);
                 Assert.Equal(0, ((TradeLedger)Get(resumed, "_trades")).HeldCount);
                 Assert.DoesNotContain(resumed.Profile.Run.Satchel, r => r.Uid == overflow.Uid);
                 Assert.Empty(resumed.Profile.LostAndFound);
@@ -583,16 +534,6 @@ namespace Issue73.Native.Tests
                 session.FlushSaves();
                 if (Directory.Exists(directory)) Directory.Delete(directory, true);
             }
-        }
-
-        private static DreamforgeTradeResultMsg SendHostTrade(HostAuthority host, DewPlayer owner, DreamforgeTradeMsg message)
-        {
-            var transport = (Actor)Get(host, "_registeredOn");
-            transport.Sent.Clear();
-            NetworkServer.active = true;
-            try { Call(host, "OnTrade", message, owner); }
-            finally { NetworkServer.active = false; }
-            return Assert.IsType<DreamforgeTradeResultMsg>(Assert.Single(transport.Sent).Message);
         }
 
         private static ClientSession HostSession()

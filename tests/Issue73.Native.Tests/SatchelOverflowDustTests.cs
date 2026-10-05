@@ -12,13 +12,12 @@ using Xunit;
 
 namespace Issue73.Native.Tests
 {
-    /// <summary>#176: 本物のあふれバッチの準備保存から、未送信分を同じホスト台帳で回復する。</summary>
     public sealed class SatchelOverflowDustTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
         private const string RunId = "overflow-prepared";
         private const string Owner = "guest";
-        private readonly string _directory = Path.Combine(Path.GetTempPath(), "issue176-native-" + Guid.NewGuid().ToString("N"));
+        private readonly string _directory = Path.Combine(Path.GetTempPath(), "issue200-native-" + Guid.NewGuid().ToString("N"));
         private readonly List<ClientSession> _sessions = new List<ClientSession>();
 
         public SatchelOverflowDustTests()
@@ -40,33 +39,66 @@ namespace Issue73.Native.Tests
             Time.unscaledTime = 0;
         }
 
-        [Theory]
-        [InlineData(1)]
-        [InlineData(128)]
-        public void Prepared_batch_save_contains_the_known_ledger_id_for_every_trade_before_the_first_send(int count)
+        [Fact]
+        public void A_hundred_guest_overflows_bank_shards_without_trade_sends_or_saves()
         {
-            var host = new TradeAuthority(generation: 176);
-            long ledgerId = host.LedgerIdOf(Owner, RunId);
-            Assert.NotEqual(0, ledgerId);
-            var prepared = PrepareBatch(count, ledgerId);
-
-            Assert.Equal(count, prepared.PendingTrades.Count);
-            Assert.All(prepared.PendingTrades, trade => Assert.Equal(ledgerId, trade.LedgerId));
+            var profile = Profile.CreateNew(176);
+            Rules.BeginRun(profile, RunId);
+            for (int i = 0; i < Workshop.SatchelCapacity(profile); i++)
+                profile.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)i + 1), Rarity.Legendary, 20));
+            var transport = new Actor();
+            var session = Session(profile, transport, 0, "local.json");
+            var pickup = typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic);
+            int before = profile.Material(Materials.Shard);
+            int expected = 0;
+            for (int i = 0; i < 100; i++)
+            {
+                var events = new List<GameEvent>();
+                pickup.Invoke(null, new object[] { profile,
+                    Loot.RollRelic(new Rng((ulong)i + 1000), (Rarity)(i % 5), 1),
+                    events, Ledger(session), false });
+                var overflow = Assert.Single(events, e => e.SatchelOverflow != null);
+                expected += Content.SalvageShards(overflow.SatchelOverflow.Rarity);
+                foreach (var e in events) session.Emit(e);
+                Assert.Equal(before + expected, profile.Material(Materials.Shard));
+            }
+            Assert.Equal(0, Get(session, "_saveCount"));
+            Assert.Empty(transport.Sent);
+            Assert.Empty(Ledger(session).Snapshot());
+            Assert.Empty(profile.PendingTrades);
+            Assert.Equal(0, DewPlayer.local.dreamDust);
+            Assert.Equal(0, profile.Run.SatchelShards);
+            session.SaveNow();
+            session.FlushSaves();
+            var restored = new ProfileStore(new RealFileSystem(), Path.Combine(_directory, "local.json"), 176).Load();
+            Assert.Equal(before + expected, restored.Material(Materials.Shard));
+            Assert.Empty(restored.PendingTrades);
         }
 
         [Theory]
-        [InlineData(1)]
-        [InlineData(128)]
-        public void Restoring_the_pre_send_batch_queries_unknown_and_recovers_shards_only_once(int count)
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Persisted_legacy_overflows_query_and_recover_exactly_once(bool alreadyPaid)
         {
+            const int count = 2;
             var host = new TradeAuthority(generation: 176);
-            var prepared = PrepareBatch(count, host.LedgerIdOf(Owner, RunId));
+            var prepared = PrepareLegacy(count, host.LedgerIdOf(Owner, RunId));
+            if (alreadyPaid)
+            {
+                foreach (var trade in prepared.PendingTrades)
+                {
+                    TradeWire.Encode(trade, out int gold, out int dust, out int earn);
+                    Assert.True(TradeWire.TryDecode(trade.Token, gold, dust, earn, out var request));
+                    var paid = host.Evaluate(Owner, RunId, request, 0, 0);
+                    Assert.True(paid.Ok);
+                    DewPlayer.local.dreamDust += paid.EarnDust;
+                }
+            }
+            int dustBefore = DewPlayer.local.dreamDust;
             var savedTrades = prepared.PendingTrades.ToDictionary(trade => trade.Token);
             var transport = new Actor();
             var restored = Session(prepared, transport, host.LedgerIdOf(Owner, RunId), "restored.json");
             Assert.Equal(0, Ledger(restored).Restore(prepared.PendingTrades, Time.unscaledTime));
-
-            // 本物の照会経路は、再接続先の現在のIDではなく保存された取引のIDを送る。
             Call(restored, "SendDueTradeQueries");
             var queries = transport.Sent.Select(sent => sent.Message).OfType<DreamforgeTradeMsg>().ToArray();
             Assert.Equal(count, queries.Length);
@@ -75,53 +107,42 @@ namespace Issue73.Native.Tests
             {
                 Assert.True(TradeWire.TryDecode(message.token, message.spendGold, message.spendDust, message.earnDust, out var query));
                 var decision = host.Evaluate(Owner, RunId, query, gold: 0, dust: 0);
-                Assert.False(decision.Ok);
-                Assert.Equal("unknown", decision.Reason);
+                Assert.Equal(alreadyPaid, decision.Ok);
+                if (alreadyPaid) Assert.True(decision.Replayed);
+                else Assert.Equal("unknown", decision.Reason);
                 var result = new DreamforgeTradeResultMsg
                 {
-                    token = message.token,
-                    ok = decision.Ok,
+                    token = message.token, ok = decision.Ok,
                     reason = TradeWire.ComposeReason(decision.Reason, decision.LedgerId),
                 };
-                expectedShards += savedTrades[message.token].FallbackShards;
+                if (!alreadyPaid) expectedShards += savedTrades[message.token].FallbackShards;
                 Call(restored, "OnTradeResult", result);
                 Assert.Equal(expectedShards, prepared.Run.SatchelShards);
-                Call(restored, "OnTradeResult", result); // 同じ応答を再受信しても欠片は増えない。
+                Call(restored, "OnTradeResult", result);
                 Assert.Equal(expectedShards, prepared.Run.SatchelShards);
             }
             Assert.Equal(0, Ledger(restored).HeldCount);
-            Assert.Equal(0, DewPlayer.local.dreamDust);
+            Assert.Equal(dustBefore, DewPlayer.local.dreamDust);
         }
 
-        private Profile PrepareBatch(int count, long ledgerId)
+        private static Profile PrepareLegacy(int count, long ledgerId)
         {
             var profile = Profile.CreateNew(176);
             Rules.BeginRun(profile, RunId);
             profile.Run.SatchelShards = 7;
-            for (int i = 0; i < Workshop.SatchelCapacity(profile); i++)
-                profile.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)i + 1), Rarity.Legendary, 20));
-            var transport = new Actor();
-            var session = Session(profile, transport, ledgerId, "prepared.json");
-            var queue = (List<GameEvent>)Get(session, "_satchelOverflowQueue");
-            var pickup = typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic);
             for (int i = 0; i < count; i++)
             {
-                var events = new List<GameEvent>();
                 var relic = Loot.RollRelic(new Rng((ulong)i + 1000), Rarity.Common, 1);
-                pickup.Invoke(null, new object[] { profile, relic, events, Ledger(session), false });
-                queue.Add(Assert.Single(events, e => e.SatchelOverflow != null));
+                profile.PendingTrades.Add(new PendingTrade
+                {
+                    Token = (176L << 32) | (uint)(i + 1),
+                    Kind = TradeKind.SatchelOverflowDust, LedgerId = ledgerId,
+                    Uid = relic.Uid, Relic = relic, Rarity = (int)relic.Rarity,
+                    RunId = RunId, EarnDust = Economy.SatchelOverflowDust(relic.Rarity),
+                    FallbackShards = Content.SalvageShards(relic.Rarity),
+                });
             }
-
-            // 境界はRPCをホストへ配送しない。最初の送信直前に、確認保存済みのディスク内容を捕捉する。
-            string preparedText = null;
-            transport.BeforeSendToServer = _ =>
-            {
-                if (preparedText == null) preparedText = File.ReadAllText(Path.Combine(_directory, "prepared.json"));
-            };
-            session.FlushSatchelOverflow();
-            Assert.NotNull(preparedText);
-            Assert.Equal(1, Get(session, "_saveCount")); // #167: あふれN個でも準備保存は1回。
-            return ProfileCodec.Read(preparedText, new List<string>());
+            return ProfileCodec.Read(ProfileCodec.Write(profile), new List<string>());
         }
 
         private ClientSession Session(Profile profile, Actor transport, long ledgerId, string fileName)

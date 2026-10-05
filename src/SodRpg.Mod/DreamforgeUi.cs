@@ -138,12 +138,6 @@ namespace SodRpg.Mod
         public void Notify(GameEvent e)
         {
             if (e == null) return;
-            // Console-generated Core results also pass through the session's currency settlement.
-            if (e.SatchelOverflow != null)
-            {
-                _s.Emit(e);
-                return;
-            }
             InvalidateHud();
             if (e.Kind == EventKind.Hint)
             {
@@ -1050,7 +1044,7 @@ namespace SodRpg.Mod
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
             "<b>1回の遠征の流れ</b>\n" +
             "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
-            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から、持ち主の夢のダストに変わります。付与できないときは欠片になり、道標による報酬停止中は何も得られません。\n" +
+            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から欠片に換え、その場で持ち主のプロフィールに付与します。協力プレイの参加者も各自のローカルで付与し、通常のまとめて／定期保存に任せます。道標による報酬停止中は何も得られません。\n" +
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
@@ -1066,7 +1060,7 @@ namespace SodRpg.Mod
             "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
             "<b>One expedition</b>\n" +
             "1. Enemies drop relics. In co-op every player gets their own drops, so there is no fighting over loot.\n" +
-            "2. What you pick up goes into your unsecured satchel. Overflow converts the lowest-rarity relic (lowest score within that rarity) into its owner's Dream Dust. If dust cannot be granted, it becomes shards; a reward-suppressing waypoint grants nothing.\n" +
+            "2. What you pick up goes into your unsecured satchel. Overflow converts the lowest-rarity relic (lowest score within that rarity) into shards, credited immediately to its owner's profile. Co-op participants receive them locally too, using normal batched/periodic saves. A reward-suppressing waypoint grants nothing.\n" +
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +

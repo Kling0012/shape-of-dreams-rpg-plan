@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **鞄あふれを欠片へ変換（#200）**：低レア度・同レア最低スコアの遺物を、従来の欠片フォールバック量で持ち主のローカルプロフィールへ即時付与します。新規の取引・送信・あふれごとの保存を廃止し、通常保存と再開地点にまとめます。旧未確定取引の照会・回復と手動分解は維持。 / **Satchel overflow now grants shards (#200)**: convert the lowest-rarity, then lowest-score relic into the existing shard-fallback amount, credited immediately to its owner's local profile. No new trades, sends, or per-overflow saves; normal saves and resume checkpoints persist the credit. Legacy pending-trade queries/recovery and manual salvage remain unchanged.
+
 - **空殻の払い戻し通知の重複（#169・改訂2）**：移行結果を読み込み時に保存し、採用した本体またはバックアップだけを通知します。通知の二重連結と続きからでの再通知を修正し、保存失敗時は警告して続行します。保存形式・ポイント総数は変更ありません。 / **Duplicate Husk refund notices (#169, revision 2)**: persist migration on load, report only the selected main or backup, and avoid duplicate concatenation and repeated Continue notices. Save failures warn without stopping play; save format and total points are unchanged.
 - **前提を満たしているのに取れない星・自分を前提にした星（全キャラの星図の総点検）**：全キャラの星図を実際に買い進めて調べ、次を直しました。（1）ナキアの蛇の祝福の星が、自分より奥の星を前提にして取れない。（2）ヴェスパーの防壁・規律の星が、奥の星を前提にして取れない。（3）鍵の星だけを親にしていた奥の星が、鍵の星を選ばないと届かなかった（全キャラ）。普通の星からも線をつなぎました。（4）ミスト・空殻の移動の記憶の奥の星（命の星・再生の輪）が「受け手なし」で断られていた。（5）ナキアの橋の選択星が、自分の前提の星を置き換える案を選ぶと前提が払い戻されて選べなかった。あわせて、全星が前提どおりに取れることを確かめるテストを追加しました。 / Audited every hero's star map by actually walking it. Fixed stars that could never be bought: Nachia's Serpent Blessing and Vesper's Bulwark/Discipline listed stars behind them as prerequisites; deep stars hung only off a keystone (all heroes); Mist's and Husk's movement-memory deep/ring stars were refused for lacking a recipient; Nachia's bridge choices that replace their own prerequisite were refused. Added tests that walk every hero's whole map.
 

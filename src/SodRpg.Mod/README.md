@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このブランチは **Protocol 22・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2（#48・#95・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正）、#112 のロビー復帰時の敗北精算、#123 の鞄あふれ時の夢のダスト換金、#180 の本体保存確定に連動したチェックポイント整理に対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 22・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2（#48・#95・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正）、#112 のロビー復帰時の敗北精算、#200 の鞄あふれ時のローカル欠片化、#180 の本体保存確定に連動したチェックポイント整理に対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -62,17 +62,15 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
 
-### 鞄のあふれと夢のダスト（Issue #123）
+### 鞄のあふれと欠片（Issue #200）
 
-- 容量を超えると、レア度の低い遺物から外し、同レア度ではスコアの低いものを先に外す。取引予約中の遺物は対象外。道標の報酬停止中はダストも欠片も得られない。保管庫・遺失物のあふれは従来どおり欠片。
-- 1個あたりコモン15／アンコモン30／レア60／エピック150／伝説300。強化値は加算しない。既存の `Economy.SalvageDust(rarity, 0)`（欠片3／6／12／30／60 ×5）と同額にし、手動分解との換金差を作らない。
-- 本体 r.1.4.0.13 の逆コンパイルでは、通常撃破は `PickupManager.OnKill` → `GameManager.GetKillGoldAmount` でゴールド、Jonasショップもゴールド払い。ダスト箱は `Shrine_DreamdustBox` の初期倍率0.25 × `GameManager.GetSpecialRewardAmount_DreamDust`。箱・ボス報酬と強化井戸のダスト価格は `DewGameplayExperienceSettings` のシリアライズされたFormulaで、提供されたDLL・逆コンパイルには数値アセットがない。「通常敵数体／ショップ1回」との正確な比較は復元できず、上記量の根拠は既存MODレート。本体の累計ダスト450の実績は規模の参考であり、ショップ価格ではない。
-- Coreは外した遺物と欠片の代替量を結果イベントとして返す。各持ち主のClientSessionが既存の取引台帳へ登録し、送信前に保存。ホストはRPCの送信者の `guid`、遠征ID、取引token／遺物Uidを照合し、その本人の `DewPlayer.EarnDreamDust` だけを呼ぶ。ホスト本人も同じ経路。
-- #146 は #167 の一括化で解消：撃破報酬の `Emit` はあふれをキューへ積むだけで、`PendingRunRewards.Drain` の完了後に準備保存・送信する。報酬処理が例外を投げた撃破は従来どおりキューへ残す。撃破／宝庫で複数のあふれが出ても、全取引のtoken・内容・台帳識別子を準備保存前に登録する（#176）。準備保存失敗時は送らず欠片へ戻し、送信結果が不明な取引は受領記録の照会で解決する。保存形式・Protocol は変更しない。
-- 成功・失敗の受領記録と上限で忘れたtokenの下限は既存の本体中断保存へ含め、本体の通貨と同じ地点へ復元する。再送・再接続は記録を照会し、重複応答は消費済みtokenとして無視。送信例外などで支払い済みか不明な間は、欠片も追加せず既存の照会経路で確認する。
-- 持ち主不在・遠征外・接続未準備・保存不可・付与失敗は警告して欠片へ戻す。本体の不一致・例外では以後この自動ダスト機能だけを無効化し、ほかの機能は継続する。`EarnDreamDust` は通貨を更新してからRPCを送るため、例外でも全額増えていれば成功として記録し、再付与も欠片付与もしない。確認不能な取引を利用者が明示放棄した場合、すでにダストが支払われた可能性のある自動分解には欠片を重ねない。
-- 保存形式5は変更せず、保留取引の省略可能な項目を追加。遠征IDと自動分解の通信を追加するため、mainのProtocol 20から21へ更新。フレームごとの処理は追加せず、あふれ発生時だけ処理する。
-- **EN:** Overflow removes the lowest rarity, then the lowest score, excluding reserved relics. Common/Uncommon/Rare/Epic/Legendary grant 15/30/60/150/300 Dream Dust through the host to the RPC owner only. Existing persisted trade receipts prevent duplicate payments; confirmed failures grant shards and reward-suppressing waypoints grant nothing. Native numeric chest/upgrade assets are unavailable, so rates match established unenhanced MOD salvage, not an inferred native enemy/shop price.
+- 容量を超えると、レア度の低い遺物から外し、同レア度ではスコアの低いものを先に外す。取引予約中の遺物は対象外。保管庫・遺失物のあふれも従来どおり欠片。
+- 1個あたりコモン3／アンコモン6／レア12／エピック30／伝説60欠片（`Content.SalvageShards`）。強化値は加算しない。Infinityの無料供給上限と道標による素材化の抑止は従来どおりで、抑止された分は別素材へ振り替えない。
+- `Rules.AddToSatchel` が持ち主のローカル `Profile` の `Materials.Shard` に即時加算する。未確保の鞄素材には入れず、確保やホストの返事を待たない。結果イベントは付与済みの欠片量を通知するだけで、夢のダスト・取引・RPCは新規に発生しない。
+- 保存は通常のまとめ保存と既存のチェックポイントに従い、あふれごとの準備保存は行わない。通信はProtocol 22、保存形式5のまま。鍛冶・記録タブで利用者が選ぶ手動分解の報酬・取引処理は変更しない。
+- **旧保存の互換復旧（v2.3.1〜v2.4.0・旧 #123）**：保存に残るあふれの `PendingTrades` は削除せず、既存の受領記録を繰り返し照会して解決する。旧ダスト取引そのものは再送しない。同じ台帳で未払い・未送信と確認された旧義務は、既存の欠片回復処理に従う。支払い済みならダストも欠片も重複付与しない。支払い済みか不明な間は保留を残して欠片を追加せず照会を続け、確認不能な取引を利用者が明示放棄した場合も、支払われた可能性のあるダストに欠片を重ねない。本体中断保存と台帳の復元も維持する。この経路は旧義務専用で、新しいあふれには使わない。
+- **EN:** Overflow removes the lowest-rarity, then lowest-score relic, excluding reserved relics, and immediately credits 3/6/12/30/60 shards for Common/Uncommon/Rare/Epic/Legendary to the owner's local profile, not unsecured satchel materials. Enhancement adds nothing. Infinity free-supply limits and waypoint suppression are unchanged. New overflow creates no Dream Dust, trade, RPC, or per-overflow save; notifications report shards already credited, and the usual batched saves/checkpoints persist them. Manual forge/record-tab salvage, Protocol 22, and save format 5 are unchanged.
+- **EN — legacy saves:** v2.3.1–v2.4.0 overflow `PendingTrades` remain recoverable through repeated receipt queries, not retransmission of Dust trades. Obligations confirmed unpaid/unsent in the same ledger use the existing shard fallback; recorded payment grants neither Dust nor shards again. Unknown payment status preserves the hold without extra shards, including when explicitly abandoning an unverifiable transaction that may already have paid Dust. Native checkpoint/ledger recovery remains in place for these old obligations only.
 
 ### 中断と「続きから」（Issue #97）
 

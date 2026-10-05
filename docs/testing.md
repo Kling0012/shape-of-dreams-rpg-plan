@@ -102,7 +102,20 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
-## #146 鞄あふれ準備保存後の再参加
+## #200 ローカル欠片化と旧取引の互換復旧
+
+`tests/Issue73.Native.Tests` の現行回帰ケース：
+
+- `A_hundred_guest_overflows_bank_shards_without_trade_sends_or_saves`：参加者の容量超過100回をローカル欠片として加算し、取引送信・容量超過による保存を行わず、明示した通常保存で永続化する。
+- `A_normal_save_keeps_settled_kills_and_local_overflow_shards_without_rejoin_double_grants`：通常保存から再参加しても、精算済み撃破と容量超過の欠片を重複付与しない。
+- `Local_overflow_shards_at_continue_checkpoint_restore_without_double_grants(bool infinity)`：通常／Infinityの参加者でチェックポイント時点の欠片を復元し、その後の容量超過を巻き戻して再実行しても1回分だけ付与する。
+- `Persisted_legacy_overflows_query_and_recover_exactly_once(bool alreadyPaid)`：保存済みの旧義務を照会し、未払いなら既存の欠片回復を1回、支払い済みなら重複付与なしで解決する。
+
+Coreの回帰ケースは最低レア度・最低スコア順、即時 `Materials.Shard` 加算、連続容量超過で新規取引がないこと、Infinity無料供給上限を扱う。手動分解の既存テストは変更しない。ネイティブハーネスはAPIダブルを使い、実ゲーム描画・実通信・実機の異常終了は対象外。
+
+## #146 鞄あふれ準備保存後の再参加（旧経路の検証記録）
+
+以下は #200 より前のダスト換金経路で得た検証記録。現在の新しい鞄あふれはローカルプロフィールへ欠片を即時加算し、準備保存・取引キューを作らない。旧保存の `PendingTrades` は受領記録の照会を繰り返し、ダスト取引自体は再送しない。同じ台帳で未払い・未送信と確認された場合は既存の欠片回復処理を使い、支払い済みは重複付与せず、確認不能な間は保留を維持する。現行の利用者向け仕様は [MOD README](../src/SodRpg.Mod/README.md#鞄のあふれと欠片issue-200) を参照。
 
 `Issue73.Native.Tests.SatchelOverflowSaveTests` の1件は、参加者の満杯の鞄から
 `GrantPendingKill → Emit → 換金準備保存` を実行し、実ディスクの保存を読み直して
@@ -172,9 +185,10 @@ python tools/test_changed.py --all
   `NativePersistence.targets` は SDK の Roslyn AST で保存・Emit・取引／照会と
   `ClientSession.Infinity.cs` のチェックポイント準備同期を選び、そのままコンパイルする。
   製品側の処理は複製・変更しない。
-  `ContinueSaveTests.Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once`
+  #200 より前の `ContinueSaveTests.Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once`
   は通常の既存キュー／Infinity準備中の回収 × 未実行／支払い済みの4ケースで、
-  台帳ID付き義務の保存、別セッションへの復元、欠片の一度だけの回復とダストの二重払い防止を確認する。
+  台帳ID付き義務の保存、別セッションへの復元、欠片の一度だけの回復とダストの二重払い防止を検証した。
+  これは旧ダスト換金経路の記録であり、現在の新しいあふれに取引義務を作る仕様ではない。
 - Core既存ハーネスの `ExposeAuthoredPendingMetadata` は、テスト公開の `PendingGimmick` と
   アクセス範囲を揃えるため、生成したコンパイル単位だけで `AuthoredPendingGimmick` を
   `internal` にする。製品ソースと値型メタデータの処理内容は変更しない。

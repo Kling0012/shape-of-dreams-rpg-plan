@@ -33,7 +33,7 @@ namespace SodRpg.Core.Game
         public string Text { get; }
         public Rarity? Rarity { get; }
         public Relic Relic { get; internal set; }
-        /// <summary>Removed overflow relic awaiting host dust settlement; null for ordinary notifications.</summary>
+        /// <summary>Removed overflow relic, already converted into profile shards; null for ordinary notifications.</summary>
         public Relic SatchelOverflow { get; internal set; }
         public int SatchelOverflowShards { get; internal set; }
         /// <summary>Kind が Hint のときのヒント。</summary>
@@ -308,25 +308,27 @@ namespace SodRpg.Core.Game
                 }
                 int shards = Content.SalvageShards(worst.Rarity);
                 if (worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
+                // Removal and local credit belong to the same profile snapshot, including continue saves.
+                p.AddMaterial(Materials.Shard, shards);
                 ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"持ち歩ける数を超えたため、「{worst.DisplayName}」を自動分解しています。",
-                    $"Satchel full: automatically salvaging \"{worst.DisplayName}\"."), worst.Rarity)
+                    $"鞄があふれたため、「{worst.DisplayName}」を欠片+{shards}に換えました。",
+                    $"Satchel overflow: \"{worst.DisplayName}\" was converted into {shards} shards."), worst.Rarity)
                 { SatchelOverflow = worst, SatchelOverflowShards = shards });
             }
         }
 
-        /// <summary>Call only after TradeLedger has consumed a definitive successful overflow result.</summary>
+        /// <summary>Legacy pending dust trades only: call after consuming a definitive successful result.</summary>
         public static GameEvent CompleteSatchelOverflowDust(PendingTrade trade)
         {
             if (trade == null || trade.Kind != TradeKind.SatchelOverflowDust) return null;
             string name = trade.Relic?.DisplayName ?? trade.Uid;
             string rarity = Content.RarityName((Rarity)trade.Rarity).ToString();
             return new GameEvent(EventKind.Info, Loc.T(
-                $"鞄があふれたため、『{name}』（{rarity}）を夢のダスト {trade.EarnDust} に換えました",
-                $"Satchel overflow: \"{name}\" ({rarity}) was converted into {trade.EarnDust} Dream Dust."), (Rarity)trade.Rarity);
+                $"以前の鞄あふれ取引を回復しました：『{name}』（{rarity}）の夢のダスト {trade.EarnDust} は付与済みです。",
+                $"Recovered a legacy overflow trade: {trade.EarnDust} Dream Dust for \"{name}\" ({rarity}) has already been granted."), (Rarity)trade.Rarity);
         }
 
-        /// <summary>Fallback shards are capped at removal time, not again at settlement. Call once before send or after consuming a failed result.</summary>
+        /// <summary>Legacy failed dust trades only. Fallback shards were capped at removal time; call after consuming a failed result.</summary>
         public static GameEvent CompleteSatchelOverflowFallback(Profile p, Relic relic, string runId, int shards)
         {
             if (p == null) throw new ArgumentNullException(nameof(p));
@@ -336,8 +338,8 @@ namespace SodRpg.Core.Game
                 p.Run.SatchelShards = SaturatingAdd(p.Run.SatchelShards, shards);
             else p.AddMaterial(Materials.Shard, shards);
             return new GameEvent(EventKind.Warning, Loc.T(
-                $"鞄からあふれた「{relic.DisplayName}」のドリームダストを付与できなかったため、欠片+{shards}に換えました。",
-                $"Could not grant Dream Dust for overflowing \"{relic.DisplayName}\"; granted {shards} shards instead."), relic.Rarity);
+                $"以前の鞄あふれ取引の夢のダストを付与できなかったため、「{relic.DisplayName}」を欠片+{shards}に換えました。",
+                $"Could not grant Dream Dust for legacy overflowing \"{relic.DisplayName}\"; granted {shards} shards instead."), relic.Rarity);
         }
 
         /// <summary>新しく見つけた遺物を依頼へ反映する。鞄が満杯で欠片になった場合も数える。</summary>
