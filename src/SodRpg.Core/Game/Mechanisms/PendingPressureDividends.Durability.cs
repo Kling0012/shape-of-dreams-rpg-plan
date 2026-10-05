@@ -8,6 +8,8 @@ namespace SodRpg.Core.Game
             state.PendingDividends.AddRange(_pending);
             state.DividendNonces.AddRange(_nonces);
             state.DividendDeaths.AddRange(_deaths);
+            state.DividendRetiredBeforeGraph = _retiredBeforeGraph;
+            foreach (var receipt in _receiptGraphs) state.DividendReceiptGraphs[receipt.Key] = receipt.Value;
         }
 
         public void Restore(RunRecoveryState state)
@@ -15,6 +17,8 @@ namespace SodRpg.Core.Game
             Clear();
             if (state == null) return;
             _runId = state.DividendRunId;
+            _retiredBeforeGraph = state.DividendRetiredBeforeGraph;
+            foreach (var receipt in state.DividendReceiptGraphs) _receiptGraphs[receipt.Key] = receipt.Value;
             foreach (var reward in state.PendingDividends) _pending.Enqueue(reward);
             foreach (string nonce in state.DividendNonces) _nonces.Add(nonce);
             foreach (string death in state.DividendDeaths) _deaths.Add(death);

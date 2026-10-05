@@ -107,17 +107,24 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; }
         public int ZoneId { get; }
+        public long GraphEpoch { get; }
+        public long SegmentEpoch { get; }
+        public long RoomEpoch { get; }
         public long SpawnId { get; }
         public long AppliedVersion { get; private set; }
         public double AppliedHpMultiplier { get; private set; }
         public PressureDividendDeath Death { get; private set; }
 
-        public PressureDividendEnemy(string runId, int zoneId, long spawnId)
+        public PressureDividendEnemy(string runId, int zoneId, long spawnId, long graphEpoch = 0, long segmentEpoch = 0, long roomEpoch = 0)
         {
             PressureDividendChannel.RequireToken(runId, nameof(runId));
             if (zoneId < 0) throw new ArgumentOutOfRangeException(nameof(zoneId));
             if (spawnId <= 0) throw new ArgumentOutOfRangeException(nameof(spawnId));
             RunId = runId; ZoneId = zoneId; SpawnId = spawnId;
+            if (graphEpoch < 0) throw new ArgumentOutOfRangeException(nameof(graphEpoch));
+            GraphEpoch = graphEpoch;
+            if (segmentEpoch < 0 || roomEpoch < 0) throw new ArgumentOutOfRangeException("Infinity dividend epoch");
+            SegmentEpoch = segmentEpoch; RoomEpoch = roomEpoch;
         }
 
         public void RecordAppliedHpMultiplier(double multiplier)
@@ -140,6 +147,9 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; }
         public int ZoneId { get; }
+        public long GraphEpoch { get; }
+        public long SegmentEpoch { get; }
+        public long RoomEpoch { get; }
         public long SpawnId { get; }
         public long AppliedVersion { get; }
         public double AppliedHpMultiplier { get; }
@@ -147,6 +157,8 @@ namespace SodRpg.Core.Game
         internal PressureDividendDeath(PressureDividendEnemy enemy, bool eligible)
         {
             RunId = enemy.RunId; ZoneId = enemy.ZoneId; SpawnId = enemy.SpawnId;
+            GraphEpoch = enemy.GraphEpoch;
+            SegmentEpoch = enemy.SegmentEpoch; RoomEpoch = enemy.RoomEpoch;
             AppliedVersion = enemy.AppliedVersion; AppliedHpMultiplier = enemy.AppliedHpMultiplier;
             RewardEligible = eligible;
         }
@@ -178,14 +190,22 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; }
         public int ZoneId { get; }
+        public long GraphEpoch { get; }
+        public long SegmentEpoch { get; }
+        public long RoomEpoch { get; }
         public long SpawnId { get; }
         public string OwnerId { get; }
         public string RewardNonce { get; }
         public int ShardCount => 1;
-        internal string DeathOwnerKey => RunId + ":" + ZoneId.ToString(CultureInfo.InvariantCulture) + ":"
-            + SpawnId.ToString(CultureInfo.InvariantCulture) + ":" + OwnerId;
+        internal string DeathOwnerKey => Identity(RunId, ZoneId, GraphEpoch, SpawnId, OwnerId);
 
-        public PressureDividendReward(string runId, int zoneId, long spawnId, string ownerId, string rewardNonce)
+        internal static string Identity(string runId, int zoneId, long graphEpoch, long spawnId, string ownerId) =>
+            runId + ":" + zoneId.ToString(CultureInfo.InvariantCulture) + ":"
+            + (graphEpoch == 0 ? "" : graphEpoch.ToString(CultureInfo.InvariantCulture) + ":")
+            + spawnId.ToString(CultureInfo.InvariantCulture) + ":" + ownerId;
+
+        public PressureDividendReward(string runId, int zoneId, long spawnId, string ownerId, string rewardNonce,
+            long graphEpoch = 0, long segmentEpoch = 0, long roomEpoch = 0)
         {
             PressureDividendChannel.RequireToken(runId, nameof(runId));
             PressureDividendChannel.RequireToken(ownerId, nameof(ownerId));
@@ -193,6 +213,10 @@ namespace SodRpg.Core.Game
             if (zoneId < 0) throw new ArgumentOutOfRangeException(nameof(zoneId));
             if (spawnId <= 0) throw new ArgumentOutOfRangeException(nameof(spawnId));
             RunId = runId; ZoneId = zoneId; SpawnId = spawnId; OwnerId = ownerId; RewardNonce = rewardNonce;
+            if (graphEpoch < 0) throw new ArgumentOutOfRangeException(nameof(graphEpoch));
+            GraphEpoch = graphEpoch;
+            if (segmentEpoch < 0 || roomEpoch < 0) throw new ArgumentOutOfRangeException("Infinity dividend epoch");
+            SegmentEpoch = segmentEpoch; RoomEpoch = roomEpoch;
         }
     }
 
@@ -220,13 +244,13 @@ namespace SodRpg.Core.Game
                 selected = channel;
             }
             if (selected == null) return null;
-            string key = death.RunId + ":" + death.ZoneId.ToString(CultureInfo.InvariantCulture) + ":"
-                + death.SpawnId.ToString(CultureInfo.InvariantCulture) + ":" + attribution.OwnerId;
+            string key = PressureDividendReward.Identity(death.RunId, death.ZoneId, death.GraphEpoch, death.SpawnId, attribution.OwnerId);
             if (!_rolled.Add(key)) return null;
             decimal roll = rollUnits();
             if (roll < 0 || roll >= 10000) throw new InvalidOperationException("Host probability roll must be in [0, 10000).");
             if (roll >= selected.ProbabilityUnits) return null;
-            return new PressureDividendReward(death.RunId, death.ZoneId, death.SpawnId, attribution.OwnerId, createNonce());
+            return new PressureDividendReward(death.RunId, death.ZoneId, death.SpawnId, attribution.OwnerId, createNonce(),
+                death.GraphEpoch, death.SegmentEpoch, death.RoomEpoch);
         }
     }
 }

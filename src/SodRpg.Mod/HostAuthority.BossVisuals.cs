@@ -13,12 +13,24 @@ namespace SodRpg.Mod
 
         private static class BossVisualTransport
         {
-            internal static readonly Action<Actor, NetworkConnectionToClient, string, string> Send =
-                (Action<Actor, NetworkConnectionToClient, string, string>)Delegate.CreateDelegate(
-                    typeof(Action<Actor, NetworkConnectionToClient, string, string>),
-                    AccessTools.Method(typeof(Actor), "TpcHandleRpc_Imp",
-                        new[] { typeof(NetworkConnectionToClient), typeof(string), typeof(string) })
-                        ?? throw new MissingMethodException(typeof(Actor).FullName, "TpcHandleRpc_Imp"));
+            internal static readonly Action<Actor, NetworkConnectionToClient, string, string> Send = ResolveSend();
+
+            private static Action<Actor, NetworkConnectionToClient, string, string> ResolveSend()
+            {
+                try
+                {
+                    var method = AccessTools.Method(typeof(Actor), "TpcHandleRpc_Imp",
+                        new[] { typeof(NetworkConnectionToClient), typeof(string), typeof(string) });
+                    if (method == null) throw new MissingMethodException(typeof(Actor).FullName, "TpcHandleRpc_Imp");
+                    return (Action<Actor, NetworkConnectionToClient, string, string>)Delegate.CreateDelegate(
+                        typeof(Action<Actor, NetworkConnectionToClient, string, string>), method);
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"BossVisualTransport disabled: Actor.TpcHandleRpc_Imp is unavailable: {ex.Message}");
+                    return null;
+                }
+            }
         }
         internal static void PrewarmBossVisualTransport() => _ = BossVisualTransport.Send;
 
@@ -228,6 +240,8 @@ namespace SodRpg.Mod
         private void SendBossVisualMessage(BossVisualState state, DreamforgeBossEffect[] effects, bool snapshot)
         {
             if (_registeredOn == null || string.IsNullOrEmpty(state.RunId)) return;
+            var send = BossVisualTransport.Send;
+            if (send == null) return;
             var msg = state.Message;
             msg.protocol = Protocol.Version; msg.content = ContentFingerprint.Value;
             msg.authorityGeneration = ClientSession.HostAuthorityGeneration;
@@ -245,7 +259,7 @@ namespace SodRpg.Mod
                 if (player != null && player.isHumanPlayer && MechanismHandshakeAccepted(player))
                 {
                     if (serialized == null) serialized = DewPersistence.ToJson(msg);
-                    BossVisualTransport.Send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);
+                    send(_registeredOn, player, nameof(DreamforgeBossEffectsMsg), serialized);
                     recipients++;
                 }
             }

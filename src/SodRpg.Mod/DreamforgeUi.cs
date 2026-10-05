@@ -79,6 +79,10 @@ namespace SodRpg.Mod
         private string _selected;
         private string _heroSel;
         private Vector2 _scrollList, _scrollDetail, _scrollRecords;
+        private long _infinityRecordsRevision;
+        private Profile _infinityRecordsProfile;
+        private bool _infinityRecordsJapanese;
+        private string _infinityRecordsText;
         private int _retuneIndex = -1;
         private string _confirmSalvage;
         private string _confirmAffixReroll;
@@ -377,6 +381,20 @@ namespace SodRpg.Mod
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
             else sb.Append(Loc.T("ホストの確認待ち", "awaiting host"));
             sb.Append("</size>");
+            if (run?.Infinity != null)
+            {
+                var infinity = run.Infinity;
+                sb.Append("\n<size=13>").Append(Loc.T("インフィニティ · クリア ", "Infinity · cleared "))
+                    .Append(infinity.ClearedCombatTotal).Append(Loc.T("部屋 · 周期 ", " rooms · cycle "))
+                    .Append(infinity.ClearsInCycle).Append('/').Append(infinity.Interval)
+                    .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
+                if (infinity.PressureStage == 100) sb.Append(Loc.T("（上限）", " (cap)"));
+                sb.Append("</size>");
+                if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
+                    sb.Append("\n<color=#ffb070>").Append(InfinityMode.UnavailableNotice).Append("</color>");
+                else if (!InfinityMode.NativeSaveAgreement)
+                    sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required")).Append("</color>");
+            }
             string sectionTags = SectionTagNotice();
             if (sectionTags != null)
                 sb.Append("\n<size=13><color=#ffd27f>").Append(sectionTags).Append("</color></size>");
@@ -566,6 +584,12 @@ namespace SodRpg.Mod
             _scrollSecure = GUILayout.BeginScrollView(_scrollSecure);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             DrawWaypointPicker(run);
+            if (run.Infinity != null)
+            {
+                GUILayout.Label(Loc.T("インフィニティ：確保は全員帰還して終了、潜行は全員続行。ホストが決定します。",
+                    "Infinity: Secure returns everyone and ends the run; Delve continues for everyone. The host decides."), _st.Warn);
+                DrawInfinityCaps();
+            }
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
             int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
@@ -580,6 +604,9 @@ namespace SodRpg.Mod
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
+            if (run.Infinity != null)
+                GUILayout.Label(Loc.T("以下の潜行ボーナス・満杯時の欠片化は上限前の見積もりです。無料出力予算で減少し、抑止分の代替報酬はありません。",
+                    "Delve bonuses and overflow-to-shard amounts below are pre-cap estimates. Free-output budgets may reduce them; withheld rewards have no substitute."), _st.Warn);
             GUILayout.Label(_secureBonusText, _st.Small);
             if (_secureOverflowText != null) GUILayout.Label(_secureOverflowText, _st.Warn);
             GUILayout.Label(_secureDelveText, _st.Small);
@@ -699,7 +726,9 @@ namespace SodRpg.Mod
                 return;
             }
             GUILayout.Label(Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
-            GUILayout.Label(Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
+            GUILayout.Label(run.Infinity != null
+                ? Loc.T("ボス後の選択はホストが全員分を確定します。戦闘で自動潜行しません。", "The host confirms the post-boss choice for everyone. Combat does not auto-delve.")
+                : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
             if (_waypointCardsJapanese != Loc.Japanese)
             {
                 _waypointCardsJapanese = Loc.Japanese;
@@ -712,10 +741,12 @@ namespace SodRpg.Mod
                 if (def == null) continue;
                 if (!_waypointCards.TryGetValue(id, out var label))
                     _waypointCards[id] = label = $"<b>{def.Name}</b>\n<color=#a8e9cd>{def.Description}</color>";
-                GUI.enabled = _s.CanChooseRunRules;
+                bool rewardAvailable = InfinityRewards.CanChooseWaypoint(_s.Profile, id, out string unavailableReason);
+                GUI.enabled = _s.CanChooseRunRules && rewardAvailable;
                 if (GUILayout.Button(label, _st.RowWrap, GUILayout.MinHeight(56)))
                     SetStatus(_s.ChooseWaypoint(id));
                 GUI.enabled = true;
+                if (!rewardAvailable) GUILayout.Label(unavailableReason, _st.Warn);
             }
             if (run.OfferedWaypoints.Count > 0)
             {
@@ -743,11 +774,44 @@ namespace SodRpg.Mod
             GUI.enabled = true;
             GUILayout.Label(Loc.T("ホストが選択・遠征中は固定", "Chosen by the host; fixed during the expedition"), _st.Small);
             GUILayout.EndHorizontal();
+            DrawInfinityChoice();
             if (!_s.HasHostRunChoices)
                 GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
             else GUILayout.Label(Loc.T(
                 $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}・部屋 +{DreamDepth.ExtraZoneNodes(depth)}",
                 $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
+        }
+
+        private static readonly int[] InfinityIntervals = { 10, 15, 20 };
+        private static readonly string[] InfinityIntervalLabels = { "10", "15", "20" };
+
+        private void DrawInfinityChoice()
+        {
+            bool enabled = _s.ChosenInfinityEnabled;
+            int interval = _s.ChosenInfinityInterval;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("インフィニティ", "Infinity mode"), _st.Label, GUILayout.Width(110));
+            GUI.enabled = _s.CanChooseDepth;
+            if (GUILayout.Button(Loc.T("オフ（通常）", "Off (normal)"), !enabled ? _st.TabSel : _st.Tab, GUILayout.Width(112)))
+                SetStatus(_s.ChooseInfinity(false, interval));
+            GUI.enabled = _s.CanChooseDepth && InfinityMode.Available;
+            if (GUILayout.Button(Loc.T("オン", "On"), enabled ? _st.TabSel : _st.Tab, GUILayout.Width(64)))
+                SetStatus(_s.ChooseInfinity(true, interval));
+            GUILayout.Label(Loc.T("ボス周期", "Boss interval"), _st.Small, GUILayout.Width(85));
+            GUI.enabled = _s.CanChooseDepth && (!enabled || InfinityMode.Available);
+            for (int i = 0; i < InfinityIntervals.Length; i++)
+            {
+                int value = InfinityIntervals[i];
+                if (GUILayout.Button(InfinityIntervalLabels[i], value == interval ? _st.TabSel : _st.Tab, GUILayout.Width(36)))
+                    SetStatus(_s.ChooseInfinity(enabled, value));
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
+                GUILayout.Label(InfinityMode.UnavailableNotice, _st.Warn);
+            if (enabled)
+                GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。報酬速度の上限は段階2です。",
+                    "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts. Reward rate limits are deferred to stage 2."), _st.Small);
         }
 
         private Vector2 _scrollSecure;
@@ -867,7 +931,10 @@ namespace SodRpg.Mod
             var rect = new Rect(w / 2 - width / 2, h * 0.16f, width, Mathf.Min(_reportHeight, h * 0.8f));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
+            GUILayout.Label(r.SecuredReturn
+                ? Loc.T("インフィニティの結果：確保して帰還しました", "Infinity: Secured and returned")
+                : r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered")
+                : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
             GUILayout.Label(text, _st.Label);
             if (note != null) GUILayout.Label(note, _st.Small);
             GUILayout.FlexibleSpace();
@@ -2597,14 +2664,19 @@ namespace SodRpg.Mod
             try
             {
                 var viewport = new Rect(0, 0, canvas.width, canvas.height);
-                if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                float minZoom = StarMinZoom;
+                if (_starNeedsFit || e.type == EventType.ScrollWheel)
                 {
-                    // Fit the whole tree, including the outermost stars, inside the canvas.
-                    _starNeedsFit = false;
+                    // Large layouts must fit below the usual zoom floor; scrolling uses the same lower bound.
                     StarMapMath.FitView(viewport.width, viewport.height, _starMinX, _starMaxX, _starMinY, _starMaxY,
-                        StarFitMargin, StarMinZoom, StarMaxZoom, out float fitZoom, out var fitPan);
-                    _starZoom = fitZoom;
-                    _starPan = new Vector2(fitPan.X, fitPan.Y);
+                        StarFitMargin, 0f, StarMaxZoom, out float fitZoom, out var fitPan);
+                    minZoom = Mathf.Min(StarMinZoom, fitZoom);
+                    if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                    {
+                        _starNeedsFit = false;
+                        _starZoom = fitZoom;
+                        _starPan = new Vector2(fitPan.X, fitPan.Y);
+                    }
                 }
                 Vector2 mouse = e.mousePosition;
                 Vector2 windowMouse = mouse + canvas.position;
@@ -2617,7 +2689,7 @@ namespace SodRpg.Mod
                 if (inside) hover = _starView.Hit(mouse);
                 if (inside && e.type == EventType.ScrollWheel)
                 {
-                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), StarMinZoom, StarMaxZoom);
+                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), minZoom, StarMaxZoom);
                     _starPan = mouse - viewport.center - (mouse - viewport.center - _starPan) * (zoom / _starZoom);
                     _starZoom = zoom;
                     e.Use();
@@ -3027,6 +3099,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T(
                 $"夢のレベル {p.DreamLevel}（{p.DreamXp}/{need}）\n遠征 {st.Runs}回　踏破 {st.Victories}　全滅 {st.Defeats}\n撃破 {st.Kills}　遺物 {st.RelicsFound}個（固有品 {st.LegendariesFound}）\n確保した最高潜行 {st.BestHeatSecured}　図鑑 {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}",
                 $"Dream Level {p.DreamLevel} ({p.DreamXp}/{need})\nRuns {st.Runs}  Victories {st.Victories}  Defeats {st.Defeats}\nKills {st.Kills}  Relics {st.RelicsFound} (legendary {st.LegendariesFound})\nBest secured depth {st.BestHeatSecured}  Codex {p.Codex.Count}/{Content.Bases.Count + Content.Uniques.Count}"), _st.Small);
+            DrawInfinityRecords(p);
             if (p.Run != null)
             {
                 GUILayout.Label(_s.InGame
@@ -3084,6 +3157,73 @@ namespace SodRpg.Mod
 
             GUILayout.EndHorizontal();
             GUILayout.EndScrollView();
+        }
+
+        private void DrawInfinityCaps()
+        {
+            GUILayout.Label(Loc.T("報酬上限：部屋ごとの撃破機会50%＋実戦闘時間予算。戦闘1時間あたり無料遺物24個、Epic以上の保証は別枠0.25個。待機・休止・ロード・再接続では補充しません。",
+                "Reward caps: 50% kill opportunities per room plus combat-time budgets. Free relics: 24/combat hour; Epic+ guarantees: a separate 0.25/combat hour. Idle, pause, loading and reconnecting do not refill budgets."), _st.Small);
+            GUILayout.Label(Loc.T("欠片・調律石・夢XP・星XP・覚醒・換金機会にも上限があります。Heatボーナスと満杯時の欠片化も対象です。支払済みの対価・旧所持品の回収・有償製作は無料供給と別扱いです。",
+                "Shards, tuning, Dream XP, Star XP, awakening and exchange opportunities are capped too, including Heat bonuses and overflow conversion. Paid rewards, recovered existing items and paid crafting are separate from free supply."), _st.Small);
+            GUILayout.Label(Loc.T("インフィニティ中のMOD追加ゴールド／ダストボーナスは0です。本体の基本収入は変更せず、旧資産を使う有償取得も含めた総取得量の上限ではありません。",
+                "MOD-added gold/dust bonuses are zero in Infinity. Native base income is unchanged; these are not total-acquisition caps including spending existing assets."), _st.Small);
+        }
+
+        private void DrawInfinityRecords(Profile profile)
+        {
+            GUILayout.Space(6);
+            GUILayout.Label(Loc.T("インフィニティ ─ 設定別の確保帰還", "Infinity ─ secured returns by settings"), _st.Header);
+            GUILayout.Label(Loc.T("最深確保は帰還時の累計Combatクリア部屋数で比較し、その帰還の圧段階を併記します。敗北・切断・未帰還の到達は更新しません。",
+                "Best secured return is ranked by cumulative cleared Combat rooms, with pressure at that return. Defeats, disconnects and unreturned progress do not update it."), _st.Small);
+            CacheInfinityRecords(profile);
+            GUILayout.Label(_infinityRecordsText, _st.Small);
+            if (profile.InfinityRecords.Count >= InfinityRecords.MaximumConfigurations)
+                GUILayout.Label(Loc.T("設定グループの保存上限です。既存グループだけ更新できます。",
+                    "Configuration storage is full. Only existing groups can be updated."), _st.Warn);
+            DrawInfinityCaps();
+        }
+
+        private void CacheInfinityRecords(Profile profile)
+        {
+            if (_infinityRecordsText != null && ReferenceEquals(_infinityRecordsProfile, profile)
+                && _infinityRecordsJapanese == Loc.Japanese && _infinityRecordsRevision == profile.InfinityRecordsRevision) return;
+            _infinityRecordsProfile = profile;
+            _infinityRecordsJapanese = Loc.Japanese;
+            _infinityRecordsRevision = profile.InfinityRecordsRevision;
+            if (profile.InfinityRecords.Count == 0)
+            {
+                _infinityRecordsText = Loc.T("確保して帰還した記録はまだありません。", "No secured-return records yet.");
+                return;
+            }
+            var text = new System.Text.StringBuilder();
+            foreach (var pair in profile.InfinityRecords)
+            {
+                var record = pair.Value;
+                if (text.Length > 0) text.Append("\n\n");
+                string zone = InfinitySettingName(record.FixedZoneId, false);
+                string difficulty = InfinitySettingName(record.DifficultyId, true);
+                text.Append(Loc.T(
+                    $"<b>{zone} · {difficulty}</b>　周期{record.Interval}部屋 · 夢の深さ{record.DreamDepth}\n最高帰還：累計{record.BestReturnedRooms}部屋 · 圧段階{record.PressureAtBestReturn}/100　帰還{record.ReturnCount}回",
+                    $"<b>{zone} · {difficulty}</b>  Interval {record.Interval} rooms · Dream Depth {record.DreamDepth}\nBest return: {record.BestReturnedRooms} cumulative rooms · pressure {record.PressureAtBestReturn}/100  Returns {record.ReturnCount}"));
+                if (record.LastReturnedRooms.HasValue)
+                    text.Append(Loc.T(
+                        $"\n直近の帰還：累計{record.LastReturnedRooms.Value}部屋 · 圧段階{record.LastPressure.Value}/100",
+                        $"\nLast return: {record.LastReturnedRooms.Value} cumulative rooms · pressure {record.LastPressure.Value}/100"));
+            }
+            _infinityRecordsText = text.ToString();
+        }
+
+        private static string InfinitySettingName(string id, bool difficulty)
+        {
+            if (string.IsNullOrEmpty(id)) return Loc.T("難易度未記録", "Unrecorded difficulty");
+            string key = difficulty ? "Difficulty_" + id + "_Name" : id + "_Name";
+            var languages = DewLocalization.buildData.dataByLanguage;
+            if (languages.TryGetValue(Loc.Japanese ? "ja-JP" : "en-US", out var language)
+                && language.ui.TryGetValue(key, out string label)) return label;
+            if (languages.TryGetValue("en-US", out language) && language.ui.TryGetValue(key, out label)) return label;
+            string readable = id.StartsWith(difficulty ? "diff" : "Zone_", StringComparison.Ordinal)
+                ? id.Substring(difficulty ? 4 : 5) : id;
+            return readable.Replace('_', ' ').Replace("<", "").Replace(">", "");
         }
     }
 }

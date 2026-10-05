@@ -267,3 +267,16 @@ If only a newer .NET runtime is installed, build `tools/WikiGen/WikiGen.csproj` 
 - `template-counts.tsv` lists observed formatter branches with distinct parent-star, direct-use and candidate-use counts. `text-template-counts.tsv` additionally lists bilingual rendered shapes after lexical replacement of names, numbers and colors; these are text shapes, not a semantic equivalence claim.
 - `surface-templates.tsv` reads bilingual literal legend/tooltip/state/action templates from the current UI source and records source lines. Interpolations retain placeholders; these shared templates have no per-star usage denominator.
 - Files are UTF-8 TSV with `\\`, `\t`, `\r`, `\n` escaping inside cells. Decode this escaping before parsing JSON cells. Rich-text tags are preserved; original full bodies are never rewritten by template normalization.
+## 星図のオフスクリーン描画・比較（issue #106）
+
+登録済みのゲーム用レイアウトをSVGで保存し、`rsvg-convert` がPATHにあればPNGも保存する。レポートは既定で出力先の `metrics.md`。リポジトリのルートから実行する。
+
+```sh
+dotnet run --project tools/StarMapRender -c Release -- /home/wang/dev/sod-prompts/starmaps/after --before /home/wang/dev/sod-prompts/starmaps/before/metrics.md
+```
+
+`--before <metrics.md>` は以前のStarMapRenderの生メトリクス表を読み、旅人ごとの線交差、線が星の上に通る組数/線数、線長CV、最近傍が他群である割合を before → after で追加する。交差・組数が各beforeの1/3以下、混在率が10%以下かをPASS/FAILで示す。現在の生メトリクス表と定義は残す。BeforeのCV・混在率は元表の丸め値であり、Afterの混在率の判定は丸め前の実測値を使う。未達の構造的原因は集計だけから推定せず、SVG/PNGなどの根拠とともに別途記録する。
+
+`--before` を省くと現在の生メトリクスのみを記録する。`--max-edge 2000` は画像の最大辺（400以上）、`--no-png` はSVGのみ、`--metrics <file>` はレポート先の変更（`-` は標準出力）。
+
+標準出力とレポートには初回 `RegisterAllGenerated()` の全旅人構築・登録時間を記録する（静的初期化/JIT込み、dotnet build・プロセス起動・描画・集計は除外）。旅人別時間はその後の `RegisterGeneratedHero` 1回による**暖まったプロセスでの再構築・登録**で、Coldではない。Cached `ForHero` は1回ウォームアップ後の10,000回平均µs/callであり、レイアウト構築時間ではない。

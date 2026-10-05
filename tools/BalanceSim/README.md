@@ -12,6 +12,20 @@ dotnet run --project tools/BalanceSim -c Release -- --runs 20 --players 300 --se
 
 Markdownを標準出力に表示し、`--out` を指定した場合は同じ内容をUTF-8（BOMなし）のファイルにも保存します。出力先の親ディレクトリは自動で作ります。引数を間違えた場合の終了コードは2、ファイル出力に失敗した場合は1です。
 
+## Infinity報酬モード
+
+```sh
+DOTNET_ROLL_FORWARD=Major dotnet run --project tools/BalanceSim -c Release -- --mode infinity --players 2000 --seed 95 --out tools/BalanceSim/result-infinity.md
+```
+
+通常20戦闘部屋＋4ボス／35戦闘分の比較基準と、Infinityの周期10/15/20・30/60/120分を、同じ `Rules` / `Loot` / `BossSets` / `InfinityRewards` の実経路で測ります。通常速度・4倍速、深度5の悪夢昇格、宝庫×3、保証付き道標の4時間認可待ちを分けて計測します。抽選Epic+とLegendaryの解析予算・実際の機会認可／抑止・保証別枠・資源・合法確保帰還後のclone/codec記録を出力します。通常の4ボスのうち登録済みボスセット対象は1体、Infinityは固定対象です。解析予算は本体対象ボス出現頻度の未実測を理由にセット分を比較基準から除外します。
+
+Infinityの抽選予算は、深度を変更した遠征へcreditを持ち越しても安全な深度0の下限（Epic以上0.586805／時・Legendary0.052875／時）で補充します。保証の実行機会と最終出力予約は各0.25／時の別枠。初期0で、貯めたcreditのburstを許す累積戦闘時間のrate上限であり、任意の短時間窓の厳密上限ではありません。135分の戦闘creditを実APIで蓄積した認可済み実ボスの観測も分離し、#48の通常10%抽選が上限の内側で動く経路を計測します。
+
+この環境は.NET 10のみのため、net8.0のツールをMajor roll-forwardで実行しています。対象frameworkは変更しません。
+
+`--players`、`--seed`、`--item-level`、`--out`を使用し、期間・周期・撃破構成は比較表の固定条件です（`--runs`、`--zones`、`--rooms`等はこのモードでは使いません）。結果は全セッションを実戦闘時間とする経済モデルであり、本体の実時間測定ではありません。有限サンプルの高レア実数が通常を上回ることはあり、抽選の時間あたり期待値認可上限と同義ではありません。
+
 ## 星振りモード（v1.31）
 
 `--mode stars` で遠征ではなく星図の振り方を調べます。300ポイント（`StarProgression.MaxPoints`）までの購入を `Rules.AddTalentRank` / `Rules.SetKeystone` で実際に行い、`Build.Compute` の結果を節目 0/50/100/150/200/250/300 で記録します。ツリーは実行時に `HeroSigils.TreeFor` が返すもの（authored 星群の登録があれば自動でそれ）を使うため、星群データの差し替えにこのツールの変更は要りません。

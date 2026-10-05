@@ -1187,7 +1187,7 @@ namespace SodRpg.Core.Game
                 Power.UltimateSurge, 25, Power.Radiance, 75),
             new UniqueDef("unique.sig.husk", "weapon.twin_fang", new Txt("空殻の牙", "Hollow Fang"),
                 new Txt("影の中では、急所しか見えない。（空殻）", "In the shadows, only weak points are visible. (Husk)"),
-                Power.Umbra, 100, Power.Executioner, 40),
+                Power.Umbra, 115, Power.Executioner, 46),
             new UniqueDef("unique.sig.mist", "weapon.chain_sword", new Txt("霧払いの太刀", "Mistcutter"),
                 new Txt("避けた一閃が、次の一閃を呼ぶ。（Mist）", "Each evaded strike calls the next. (Mist)"),
                 Power.EchoingDodge, 98, Power.Momentum, 4),

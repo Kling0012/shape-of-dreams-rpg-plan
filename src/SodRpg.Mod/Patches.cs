@@ -49,7 +49,7 @@ namespace SodRpg.Mod
         private static MethodInfo _moveNext;
         private static FieldInfo _caster;
 
-        // Startup preflight treats a missing contract as a whole-MOD failure; no partial patch fallback.
+        // Reject only this adapter when its native iterator/caster contract is unavailable.
         private static bool Prepare()
         {
             try
@@ -63,7 +63,7 @@ namespace SodRpg.Mod
                 _moveNext = null;
                 _caster = null;
             }
-            if (_moveNext == null || _caster == null) Log.Error("WinterDive native contract unavailable (target not found)");
+            if (_moveNext == null || _caster == null) Log.Warn("WinterDive teleport attribution disabled: native target/caster unavailable.");
             return _moveNext != null && _caster != null;
         }
 

@@ -44,9 +44,8 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
-                // The preflight only warns. Stopping the whole mod on a native mismatch (another mod's
-                // Harmony, a game update) left players with no mod at all (v2.1.0). Each patch class is
-                // installed on its own instead, and a failing class is rolled back and skipped.
+                // Native prerequisites gate only their dependent feature groups. The composed-IL
+                // diagnostic is advisory; unrelated classes can still install if its copier fails.
                 try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
                 stage = "patch installation";
@@ -367,23 +366,66 @@ namespace SodRpg.Mod
         private void PatchEachClass()
         {
             int installed = 0;
+            int installedInfinity = 0;
             var skipped = new List<string>();
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
-                if (HarmonyMethodExtensions.GetFromType(type).Count == 0) continue;
+                bool infinity = InfinityMode.IsNativePatch(type);
+                if (NativePatchPreflight.TryGetDisabledFeature(type, out var featureName))
+                {
+                    if (infinity) InfinityMode.DisableFeature("Infinity patch skipped: native feature " + featureName + " is unavailable or unconfirmed: " + type.FullName);
+                    skipped.Add(type.FullName);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": native feature " + featureName + " is unavailable or unconfirmed.");
+                    continue;
+                }
                 try
                 {
-                    harmony.CreateClassProcessor(type).Patch();
+                    if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
+                    {
+                        if (infinity) InfinityMode.DisableFeature("Infinity patch has no native target: " + type.FullName);
+                        continue;
+                    }
+                    var targets = harmony.CreateClassProcessor(type).Patch();
+                    if (infinity)
+                    {
+                        if (targets == null || targets.Count == 0 || !HasInstalledClass(type))
+                        {
+                            InfinityMode.DisableFeature("Infinity patch was not installed: " + type.FullName);
+                            skipped.Add(type.FullName);
+                            continue;
+                        }
+                        installedInfinity++;
+                    }
                     installed++;
                 }
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex);
-                    RollBackClass(type);
+                    if (infinity)
+                    {
+                        InfinityMode.DisableFeature("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
+                        try { RollBackClass(type); }
+                        catch (Exception rollback) { Log.Warn("Infinity patch rollback failed; its hooks remain disabled: " + rollback); }
+                    }
+                    else RollBackClass(type);
                 }
             }
+            InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+        }
+
+        private bool HasInstalledClass(Type type)
+        {
+            foreach (var target in harmony.GetPatchedMethods())
+            {
+                var info = Harmony.GetPatchInfo(target);
+                if (info == null) continue;
+                foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
+                    foreach (var patch in list)
+                        if (patch.owner == harmony.Id && IsSameOrNested(patch.PatchMethod.DeclaringType, type)) return true;
+            }
+            return false;
         }
 
         /// <summary>Remove only the patch methods declared by this class (and its nested types), leaving every other patch in place.</summary>

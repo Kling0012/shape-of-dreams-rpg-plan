@@ -1,10 +1,28 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-この#97統合ブランチは **Protocol 19・保存形式5（プロフィールリセットなし）**。最新mainのv2.0.5と#48・#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このInfinity統合ブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2、#48・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
 計画書 Ver1.0 を目安に、最初に遊べる形へまとめたMOD。計画書の全要素ではなく、「持ち帰る装備」「帰還（確保）の決断」「自分の戦い方」「協力」の4本を、本作の既存ループ（ゾーン→ボス）の上に載せた。
+
+## 本体連携の利用可否（Issue #109）
+
+`NativePatchPreflight` は機能ごとの前提を独立に確認し、不一致・検査例外・未確認の機能だけを無効にする。判定は起動ごとに未確認へ戻し、1機能の検査例外が残りの確認を飛ばさない。無効化は機能名とパッチクラス名を `Log.Warn` に出す。Harmony内部copierによる合成ILのdry変換は診断用であり、失敗をMOD全体の起動条件にしない。適用中に失敗したクラスは自MODの該当パッチだけを戻し、別ownerのパッチは残す。
+
+| 機能 | 無効になる条件 |
+| --- | --- |
+| エレボス LastStarlight 連携（関連5クラス） | 本体列挙子を解決できない、または既存transpiler適用後の `MoveNext` に `SI.WaitForSeconds` の生成が正確に2箇所ない |
+| Feather 帰属（関連4クラス） | 捕捉したsource／effectが非staticの所定型でない、または遅延dispatch対象を解決できない |
+| Baptism buff／コルーチン帰属（関連3クラス） | buff／effect／iteratorのclosureフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない。独立した終了時爆発の連携は止めない |
+| DoubleTap 帰属（関連5クラス） | source／firedフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない |
+| Nyx HerWorld 連携（関連11クラス） | 本体 `ActiveLogicUpdate` のメソッド本体を取得できない、またはlocal 1が `Entity` 互換でない |
+| 白夜／暗月 InkBeam 連携（関連4クラス） | 本体 `Hit` を取得できない、または既存transpiler適用後のdamage dispatch／heal dispatch／敵判定がそれぞれ正確に1箇所ない |
+| HP実損失の帰属（`NativeAttributedHpDamage`） | 本体 `currentHealth` setterのtyped delegateを取得できない |
+| ボス効果表示の送信 | 本体RPC送信のtyped delegateを取得できない。表示送信だけを止め、ゲームプレイは継続する |
+| WinterDive のテレポート帰属 | 本体列挙子またはcaster捕捉フィールドを取得できない。従来の `Prepare` 判定を維持し、無効化ログを `Log.Warn` に統一 |
+
+LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正規に装着した有効なgem／skillで、エレボス報酬段階が正の場合だけ行う。通常のLastStarlightはラップも値変更もしない。実行中に3回目の待機が現れた場合は、その列挙について警告を1回だけ出し、自分の値差分と表示を解除する。本体列挙子はそこで破棄せず、その待機から以後のyieldと完了処理をそのまま通す。正常な2回待機の遅延・持続時間の連携は維持する。保存形式・Protocolは変更しない。
 
 ## 遊び
 
@@ -52,10 +70,18 @@
 - #104：製作・上等製作・合成など、乱数を使うロビー変更を残す場合は、その結果とロビー変更後の乱数状態を一緒に引き継ぐ。保存後の遠征で消費した乱数も含む現在の状態を採用し、消費回数の加算では再構成しない。ロビー変更を戻す場合や乱数を使う変更がない場合は、乱数も保存地点へ戻す。プロフィールから生成する遺物Uidは、保管庫・遺失物・分解待ち・鞄・保留報酬の既存Uidとの重複を避ける。確認はUid生成時だけ行い、毎フレームの処理や保存項目は増やさない。ホスト・参加者ともに同じCore処理を使う。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 19と中断対応の相互確認を使う。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 20と中断対応の相互確認を使う。
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
+- Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
-- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 and Protocol 19 remain unchanged.
+- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 and Protocol 20 remain unchanged.
+
+### Infinity割り込みの互換性
+
+- native対象の不足、パッチ適用・実行の失敗では、警告を出して **Infinityだけを無効化**する。MOD全体を停止せず、ゲーム全体をpauseしない。preflightは警告のみで、Harmonyの非公開内部APIや厳密なIL検査を起動の必須条件にしない。
+- 必要なInfinityパッチがすべて適用できた場合だけ、ロビーからONにできる。無効時もOFFへ切り替えて通常遠征を開始できる。参加者のInfinity可否はProtocol・内容照合とは別に交換するため、Infinityが使えない参加者の通常モードの装備・報酬まで拒否しない。
+- 無効化されたInfinityの保存内容は通常遠征へ書き換えずに保持し、新しいInfinity進行・報酬だけを止める。
+
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
 
@@ -124,6 +150,7 @@ Gemini案より実コードを優先した箇所：
 - F6：Dreamforge のメニュー（装備・鍛冶・星図・工房・記録）
 - F7：確保する、F8：深く潜る（確保地点のパネル表示中）
 - キー・言語・表示倍率・拾得通知・HUD の表示量（詳しく／簡潔／なし）はゲームのMOD設定から変更できる
+- 星図の「全体を表示」は現在の星の位置から表示倍率を決め、端に余白を残す。拡大縮小は通常0.15〜3倍だが、大きな星図では全体が収まる倍率まで下限を下げる。星の検索・星群一覧からは現在の倍率のまま目的の星へ移動できる。
 - **ゲーム全体の軽量化（v1.8）**：MOD設定の「ゲームが裏にあるときのFPS上限」（既定20、0で無効）と「軽量化」（なし／軽め／強め）。
   - 裏にあるときのFPS上限：Alt+Tab などでゲームが裏に回っている間、フレーム数を抑えて電力と発熱を減らす。戻ると本体の設定に戻る。
   - 軽め：影の届く距離を6割にし、影の段階を2つまで、追加ライトを2つまでにし、遠くの物を早めに粗く描き、キャラのメッシュの焼き込み間隔を0.15秒にする。

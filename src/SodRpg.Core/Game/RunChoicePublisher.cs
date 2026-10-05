@@ -27,6 +27,7 @@ namespace SodRpg.Core.Game
             var old = _encodedState;
             bool unchanged = old != null && old.RunId == (run?.RunId ?? "") && old.Depth == depth
                 && old.ZoneIndex == zone && old.Generation == (run?.WaypointGeneration ?? 0)
+                && SameInfinity(old.Infinity, run?.Infinity)
                 && old.Active == (run?.ActiveWaypoint ?? Waypoint.None)
                 && old.Pending == (run?.PendingWaypoint ?? Waypoint.None)
                 && old.Chosen == (run?.WaypointChosen ?? false)
@@ -45,10 +46,19 @@ namespace SodRpg.Core.Game
             var snapshot = RunChoiceSnapshot.Capture(run, selectedDepth, zoneIndex,
                 checked(++_revision), AuthorityGeneration);
             string encoded = snapshot.Encode();
-            RememberFinalized(snapshot.RunId, zoneIndex, encoded);
+            RememberFinalized(snapshot, encoded);
             Invalidate();
             return encoded;
         }
+
+        private static bool SameInfinity(InfinityRunState a, InfinityRunState b) =>
+            a == null ? b == null : b != null && a.FixedZoneId == b.FixedZoneId && a.Interval == b.Interval
+                && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
+                && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
+                && a.Phase == b.Phase && a.SoulObserved == b.SoulObserved && a.ChoiceRevision == b.ChoiceRevision
+                && a.TransitionIntent == b.TransitionIntent && a.LastCountedNode == b.LastCountedNode
+                && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
+                && a.ClearedNodes.Count == b.ClearedNodes.Count;
 
         /// <summary>Resend freshly captured state without forgetting this host session's identity or sequence.</summary>
         public void Invalidate()

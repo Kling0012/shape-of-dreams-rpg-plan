@@ -57,6 +57,7 @@ namespace SodRpg.Mod
         }
 
         public bool CanResolveSecureChoice => RunActive && !HasPendingTrades
+            && (Profile.Run.Infinity == null || CanChooseRunRules && InfinityMode.NativeSaveAgreement)
             && _runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules);
 
         public string ChooseDreamDepth(int depth)
@@ -130,6 +131,7 @@ namespace SodRpg.Mod
         private void TickRunChoices()
         {
             if (!ContinueReady || _nativeContinueCheckpoint != null) return;
+            TickInfinity();
             TickKillClassification();
             NotifyPersonalDreamEvent();
             TryFinishSecureArrival();
@@ -153,6 +155,13 @@ namespace SodRpg.Mod
         private void FlushPendingRunRewards()
         {
             if (!RunActive) return;
+            if (Profile.Run.Infinity != null)
+            {
+                if (!InfinityMode.NativeSaveAgreement) return;
+                FlushPendingPressureDividends();
+                _pendingRunRewards.Drain(Profile.Run.RunId, ChoiceZoneIndex, _grantPendingKill, Profile.Run.Infinity.SegmentEpoch);
+                return;
+            }
             // 勝利の確定は潜行しない（#71）。選択待ちだけを解けば、保留中の撃破は戦った深度のまま精算される。
             // ホストも参加者もここで解くため、確定後の深度・確保ボーナスが両者で一致する。
             if (_pendingRunVictory == true && Profile.Run.AwaitingChoice) Profile.Run.AwaitingChoice = false;
@@ -166,6 +175,7 @@ namespace SodRpg.Mod
         private bool CommitCombatChoice(bool publish = true, bool concluding = false)
         {
             if (!RunActive || !_runChoiceProgress.CanResolveChoice(Profile.Run, ChoiceZoneIndex, CanChooseRunRules)) return false;
+            if (Profile.Run.Infinity != null && !concluding) return false;
             // Primus can begin combat at the entrance. Combat must not silently skip this route's choice.
             if (InPureWhiteRoute && !concluding) return false;
             // 勝利の確定は戦った深度のまま確保する。潜行で深さを増やさず、選択待ちだけを解く（#71）。
@@ -180,6 +190,7 @@ namespace SodRpg.Mod
 
         private void TryFinishSecureArrival()
         {
+            if (Profile.Run?.Infinity != null) return;
             if (!RunActive || HasPendingKillClassification || _runChoiceProgress.TryAdvance(Profile, CanChooseRunRules, _trades,
                 Emit, _grantPendingKill, PublishRunChoicesForZone) == 0) return;
             MarkDirty(true);
@@ -195,6 +206,7 @@ namespace SodRpg.Mod
         private void EnsurePureWhiteChoice()
         {
             if (!RunActive || !InPureWhiteRoute || _zone.isInAnyTransition || _pendingRunVictory.HasValue
+                || Profile.Run.Infinity != null
                 || Profile.Run.PureWhiteChoiceReached || HasPendingKillClassification
                 || _runChoiceProgress.HasPendingArrival || _runChoiceProgress.ZoneIndex != ChoiceZoneIndex) return;
             if (!CanChooseRunRules && _runChoiceProgress.Snapshots.GetForZone(ChoiceZoneIndex) == null) return;
@@ -211,6 +223,8 @@ namespace SodRpg.Mod
 
         private void GrantPendingKill(PendingRunKill kill)
         {
+            if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement)
+                throw new InvalidOperationException("Infinity save receipts disagree; rewards remain pending.");
             int masteryBefore = Mastery.Level(Profile.Hero(kill.HeroKey).Kills);
             int awakenBefore = Rules.EquippedAwakenLevels(Profile, kill.HeroKey);
             Emit(Rules.OnKill(Profile, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey, _trades,
@@ -254,6 +268,7 @@ namespace SodRpg.Mod
 
         private void ApplyHostRunChoices()
         {
+            if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
             if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
             if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
             MarkDirty(true);
@@ -270,6 +285,7 @@ namespace SodRpg.Mod
 
         private void TryConcludeRun()
         {
+            if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
             if (!_pendingRunVictory.HasValue || !RunActive || HasPendingKillClassification || ActiveRunId != _pendingResultRunId) return;
             if (CanChooseRunRules)
             {

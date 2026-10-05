@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,7 +29,13 @@ namespace SodRpg.Mod.Startup.Tests
             PerformanceTuner.FailStart = false;
             Log.Errors.Clear();
             Log.Warnings.Clear();
+            NativeFeatherDelayedContract.Restore();
+            Ai_Gem_U_LastStarlight.Completions = 0;
+            ErebosLastStarlightSequence.Captures = 0;
+            ErebosLastStarlightSequence.WaitAdaptations = 0;
             BlockInputWhileMenuOpen.MenuOpen = false;
+            InfinityStartupFixtures.Reset();
+            InfinityMode.Reset();
         }
 
         [Fact]
@@ -72,7 +79,8 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(777, NativeContractTarget.First());
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
-            Assert.Empty(owner.GetPatchedMethods());
+            // The other feature classes of this mod still install; only the failing class is gone.
+            Assert.DoesNotContain(First, owner.GetPatchedMethods());
             // v2.1.1: a native mismatch skips only the failing patch class; the mod keeps running.
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
@@ -97,7 +105,8 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(314159, NativeContractTarget.Second());
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
-            Assert.Empty(owner.GetPatchedMethods());
+            // The other feature classes of this mod still install; only the failing class is rolled back.
+            Assert.DoesNotContain(First, owner.GetPatchedMethods());
             // v2.1.1: the failing class is rolled back and skipped; the rest of the mod starts.
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
@@ -105,6 +114,97 @@ namespace SodRpg.Mod.Startup.Tests
 
             Invoke(mod, "OnDestroy");
             Assert.Equal(314166, NativeContractTarget.First());
+        }
+
+        // #109: a native LastStarlight sequence that waits three times (changed by another mod or a
+        // game update) must disable only the LastStarlight feature. The native three waits and its
+        // completion run as-is, the other owner's patches survive, and the rest of the mod starts.
+        [Fact]
+        public void ThreeWaitNativeSequenceDisablesOnlyTheLastStarlightFeatureAndRunsNativeAsIs()
+        {
+            var factory = AccessTools.DeclaredMethod(typeof(Ai_Gem_U_LastStarlight), "OnCreateSequenced");
+            var moveNext = AccessTools.EnumeratorMoveNext(factory);
+            // The other owner makes the native sequence wait a third time: visible both in the
+            // iterator IL (the preflight counts newobj WaitForSeconds) and at runtime.
+            other.Patch(moveNext, transpiler: new HarmonyMethod(typeof(NativeStartupTests), nameof(AddThirdNativeWait)));
+            other.Patch(factory, postfix: new HarmonyMethod(typeof(NativeStartupTests), nameof(ExtraWaitPostfix)));
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            // The mod itself keeps running and its unrelated features are installed.
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Equal(271828, NativeContractTarget.First());
+            // The LastStarlight wrapper is not applied, and the disablement is logged by feature name.
+            Assert.Equal(0, ErebosLastStarlightSequence.Captures);
+            Assert.DoesNotContain(factory, owner.GetPatchedMethods());
+            Assert.Contains(Log.Warnings, m => m.Contains("Native feature disabled: LastStarlight"));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.ErebosLastStarlightSequence: native feature LastStarlight is unavailable or unconfirmed."));
+            // The native sequence still waits three times and completes exactly as the other owner changed it.
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            int waits = 0, steps = 0;
+            while (sequence.MoveNext()) { steps++; if (sequence.Current is SI.WaitForSeconds) waits++; }
+            Assert.Equal(3, waits);
+            Assert.Equal(3, steps);
+            Assert.Equal(1, Ai_Gem_U_LastStarlight.Completions);
+            // The other owner keeps its patches on both the factory and the native iterator.
+            Assert.Contains(other.Id, Harmony.GetPatchInfo(factory).Owners);
+            Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(factory).Owners);
+            Assert.Contains(other.Id, Harmony.GetPatchInfo(moveNext).Owners);
+            Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(moveNext).Owners);
+        }
+
+        // #109: the shipped two-wait sequence keeps the integration active with its wait adaptation.
+        [Fact]
+        public void TwoWaitNativeSequenceKeepsTheLastStarlightIntegrationEnabled()
+        {
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("LastStarlight"));
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.False(sequence.MoveNext());
+            Assert.Equal(1, Ai_Gem_U_LastStarlight.Completions);
+            Assert.Equal(1, ErebosLastStarlightSequence.Captures);
+            Assert.Equal(2, ErebosLastStarlightSequence.WaitAdaptations);
+            Assert.Equal(271828, NativeContractTarget.First());
+        }
+
+        // #109: a single feature check failing mid-preflight disables that feature only. Features
+        // checked before and after it stay enabled, and the mod as a whole still starts.
+        [Fact]
+        public void OneFeatureCheckFailureDisablesOnlyThatFeatureAndTheModStillStarts()
+        {
+            NativeFeatherDelayedContract.Source = null;
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            // The whole Feather feature group is unavailable, not just the class that failed.
+            Assert.Equal(11, NativeFeatureTarget.Feather());
+            Assert.Contains(Log.Warnings, m => m.Contains("Native feature disabled: Feather"));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.NativeFeatherLifetime: native feature Feather is unavailable or unconfirmed."));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.NativeFeatherDispatch: native feature Feather is unavailable or unconfirmed."));
+            // Independently checked features before and after Feather stay enabled: the preflight
+            // itself never failed wholesale.
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("Native preflight failed"));
+            Assert.Equal(26, NativeFeatureTarget.Baptism());
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.Equal(271828, NativeContractTarget.First());
         }
 
         [Fact]
@@ -126,6 +226,36 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(314159, NativeContractTarget.First());
         }
 
+        /// <summary>
+        /// #95: インフィニティの本体割り込みパッチの一部が入らない場合、インフィニティ機能だけが無効になる。
+        /// 通常パッチはインストールされたままMOD全体は起動し、無効化の理由と適用数が記録される。
+        /// </summary>
+        [Fact]
+        public void FailingInfinityPatchDisablesOnlyInfinityAndKeepsTheModRunning()
+        {
+            InfinityStartupFixtures.Enabled = true;
+            InfinityStartupFixtures.FailBossSoul = true;
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(271828, NativeContractTarget.First());  // 通常パッチは機能したまま
+            Assert.Equal(333333, FixtureNativeGraph.ZoneTravel()); // 入ったインフィニティパッチも機能する
+            Assert.Equal(222222, FixtureNativeGraph.BossSoul());   // 失敗したクラスは巻き戻される
+            Assert.False(InfinityMode.Available);                  // インフィニティだけ無効
+            Assert.Equal(1, InfinityMode.CompletedInstallCount);
+            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("FixtureInfinityBossSoul"));
+            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("incomplete"));
+            // MOD全体は止まらない: 通常モードと残りの初期化は続いている
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Empty(Log.Errors);
+
+            Invoke(mod, "OnDestroy");
+            Assert.Equal(314159, NativeContractTarget.First());
+            Assert.Equal(111111, FixtureNativeGraph.ZoneTravel());
+        }
+
         private static void Invoke(DreamforgeMod mod, string name)
             => AccessTools.Method(typeof(DreamforgeMod), name).Invoke(mod, null);
 
@@ -141,15 +271,48 @@ namespace SodRpg.Mod.Startup.Tests
             }
         }
 
+        // Appends one unreachable WaitForSeconds construction after the iterator's final return;
+        // only the static newobj count is observed by the preflight.
+        private static IEnumerable<CodeInstruction> AddThirdNativeWait(IEnumerable<CodeInstruction> instructions)
+        {
+            var list = new List<CodeInstruction>(instructions);
+            int lastRet = list.FindLastIndex(i => i.opcode == OpCodes.Ret);
+            var constructor = AccessTools.DeclaredConstructor(typeof(SI.WaitForSeconds), new[] { typeof(float) });
+            list.Insert(lastRet + 1, new CodeInstruction(OpCodes.Ldc_R4, 3f));
+            list.Insert(lastRet + 2, new CodeInstruction(OpCodes.Newobj, constructor));
+            list.Insert(lastRet + 3, new CodeInstruction(OpCodes.Pop));
+            return list;
+        }
+
+        // The other owner's runtime change: after the native sequence completes, one extra wait.
+        private static IEnumerator ExtraWaitPostfix(IEnumerator result) => new ExtraWait(result);
+
+        private sealed class ExtraWait : IEnumerator
+        {
+            private readonly IEnumerator _native;
+            private SI.WaitForSeconds _extra;
+            internal ExtraWait(IEnumerator native) { _native = native; }
+            public object Current => _extra ?? _native.Current;
+            public bool MoveNext()
+            {
+                if (_extra != null) { _extra = null; return false; }
+                if (_native.MoveNext()) return true;
+                _extra = new SI.WaitForSeconds(3);
+                return true;
+            }
+            public void Reset() => throw new NotSupportedException();
+        }
+
         public void Dispose()
         {
             NativeContractPatch.FailInstallationCleanup = false;
+            InfinityStartupFixtures.Reset();
+            InfinityMode.Reset();
             foreach (var harmony in new[] { owner, other })
                 foreach (var target in harmony.GetPatchedMethods().ToArray())
                     harmony.Unpatch(target, HarmonyPatchType.All, harmony.Id);
             NativeContractPatch.Reset();
-            PerformanceTuner.FailStart = false;
-            BlockInputWhileMenuOpen.MenuOpen = false;
+            NativeFeatherDelayedContract.Restore();
         }
     }
 
@@ -213,5 +376,61 @@ namespace SodRpg.Mod.Startup.Tests
             CompletedContracts = 0;
             ValueObservedBeforeFailure = 0;
         }
+    }
+
+    /// <summary>
+    /// #95: インフィニティの本体割り込みパッチの一部が入らないとき、インフィニティ機能だけが無効になり、
+    /// 通常モード（通常パッチ・MOD全体）は止まらない。本物の PatchEachClass と巻き戻しを動かす。
+    /// </summary>
+    internal static class InfinityStartupFixtures
+    {
+        internal static bool Enabled, FailBossSoul;
+        internal static void Reset() { Enabled = false; FailBossSoul = false; }
+    }
+
+    internal static class FixtureNativeGraph
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ZoneTravel() => 111111;
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int BossSoul() => 222222;
+    }
+
+    [HarmonyPatch]
+    internal static class FixtureInfinityZoneTravel
+    {
+        [HarmonyTargetMethods]
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.ZoneTravel));
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(ref int __result) => __result = 333333;
+
+        [HarmonyCleanup]
+        private static Exception Cleanup(MethodBase original, Exception exception) =>
+            exception ?? (!InfinityStartupFixtures.Enabled && original != null
+                ? new InvalidOperationException("Fixture Infinity patch inactive in this test")
+                : null);
+    }
+
+    [HarmonyPatch]
+    internal static class FixtureInfinityBossSoul
+    {
+        [HarmonyTargetMethods]
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.BossSoul));
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(ref int __result) => __result = 444444;
+
+        [HarmonyCleanup]
+        private static Exception Cleanup(MethodBase original, Exception exception) =>
+            exception ?? ((!InfinityStartupFixtures.Enabled || InfinityStartupFixtures.FailBossSoul) && original != null
+                ? new InvalidOperationException("Injected failure after the first native detour was installed")
+                : null);
     }
 }

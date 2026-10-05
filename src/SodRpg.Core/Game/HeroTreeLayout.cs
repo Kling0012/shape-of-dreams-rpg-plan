@@ -38,6 +38,8 @@ namespace SodRpg.Core.Game
         public const float MinimumSpacing = 80f;
         private const float InnerRadius = 180f;
         private const float DeepRadius = 330f;
+        // Reference geometry resolves shipped implicit outer access edges before sector placement.
+        // Final hero coordinates come exclusively from PlaceSectors; topology keeps registration order.
         private const float BranchRadius = 480f;
         private const float BranchStep = 95f;
         // Loadout A/B order, independent of route registration and persistent node ids.
@@ -193,7 +195,7 @@ namespace SodRpg.Core.Game
                 }
                 branchNodes.Add(ordered);
             }
-            // Seven bridges encircle the fourth stars; the eighth crosses the first gap farther out.
+            // Preserve the shipped cyclic bridge endpoints (the eighth uses the later route stars).
             for (int i = 0; i < ring.Count; i++)
             {
                 int branch = i % branches.Count;
@@ -202,7 +204,7 @@ namespace SodRpg.Core.Game
                 Join(branchNodes[branch][order], bridge);
                 Join(bridge, branchNodes[(branch + 1) % branches.Count][order]);
             }
-            // Two earlier crossings let travelers change direction before reaching the outer bridges.
+            // Preserve the two early direct access edges; the sector pass may move their endpoints.
             Join(branchNodes[1][2], branchNodes[2][2]);
             Join(branchNodes[4][2], branchNodes[5][2]);
             PlaceClusters(nodes, neighbors, edges, talents);
