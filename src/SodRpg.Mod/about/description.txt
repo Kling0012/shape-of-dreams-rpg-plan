@@ -1,5 +1,5 @@
-[b]v2.3.0: a clearer star map (layout, descriptions, per-star list), satchel overflow turns into Dream Dust, failed forge enhancements no longer reset to +0, Return to Lobby ends the run as a defeat, and bug fixes (hidden gear buttons, nightmare bosses). Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.3.0：星図を見やすく作り直しました（並び・説明・左の一覧）。鞄があふれると夢のダストに換わり、鍛冶の強化に失敗しても+0に戻らなくなりました。遠征中の「ロビーに戻る」は失敗扱いになります。装備のボタンが見えない不具合、ボスが悪夢化する不具合なども直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.3.1: fixes Infinity Mode (could not start, or started on a normal map), heavy freezes when satchel overflow turns into Dream Dust, slowdowns with many explosions, and empty memory slots for Bismuth. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.3.1：インフィニティモードが開始できない・開始しても通常のマップになる不具合、鞄あふれの夢のダスト変換で固まる不具合、爆発が多いと重くなる不具合、ビスマスの記憶スロットが空になる不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
