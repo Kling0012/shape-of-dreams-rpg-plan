@@ -1343,6 +1343,8 @@ namespace SodRpg.Mod
             {
                 var r = list[i];
                 stateHash = stateHash * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
+                // 記憶の井戸で先頭の固有効果が変わると、数・Scoreが同じでもエピックの銘が変わる。
+                stateHash = stateHash * 31 + (r.Powers.Count > 0 ? (int)r.Powers[0].Power : 0);
             }
             string key = _sortedKey.TryGetValue(id, out var k) ? k + ":" + _selected + ":" + _seenUids.Count + ":" + equipHash + ":" + stateHash + (Loc.Japanese ? ":j" : ":e") : null;
             if (key != null && _rowCacheKey.TryGetValue(id, out var ck) && ck == key && _rowCacheFor.TryGetValue(id, out var forList) && forList == list && _rowCache.TryGetValue(id, out var cached))
