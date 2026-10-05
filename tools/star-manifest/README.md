@@ -123,6 +123,8 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
   "strike": {"mode": "ConsecutiveCritical", "element": "Dark", "shape": "ForwardLine", "range": 6, "width": 2, "maxTargets": 6, "windowSeconds": 4}}
 ```
 
+会心モードの斬撃は生成ダメージとして実行する（仕掛け・橋・同じ斬撃への連鎖なし）。ホストのダメージ処理器（`rt.DamageDealt`）は生成ダメージでは補正の適用箇所の前で打ち切るため、この2モードだけは `FireIdentityStrike` が処理器がゲートの後に適用するのと同じ補正（構えに応じた与ダメージ増幅・「記憶の冴え」・中継窓・被ダメージ増加）をパケットごとに1回だけ自分で適用する（`ApplyMemoryPacketCorrections` ＋ `StrongestExposePercent`）。通常モードは `rt.DamageDealt` 経由のままなので、二重にはならない。
+
 発生元はそれぞれ装備中の記憶『風の傷』／『一歩一殺』で、Identityに装着したエッセンス『神聖なる信仰』の本体のダメージ増幅・6秒の撃破追跡に入る。このエッセンスは斬撃の発動条件ではない。
 
 #### 5b. MemoryTuning（名前付きの本体記憶の静的な変更）

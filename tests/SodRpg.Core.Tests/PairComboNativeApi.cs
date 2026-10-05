@@ -214,6 +214,21 @@ namespace SodRpg.Mod
             public readonly HashSet<string> PairMemories = new HashSet<string>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
+        }
+        // Production: HostAuthority.cs logs a link's first application; the linked memory-correction helper reuses it.
+        private void LogLinkApplied(LinkDef link) { }
+        internal int GeneratedDamageDepth => _gimmickDamageDepth;
+        // Production: HostAuthority.NewPowers.cs — a normal memory sits in Q/W/E/R with SkillType.Normal (the identity slot is not one).
+        internal static bool IsNormalMemory(Hero hero, string memory)
+        {
+            if (memory == null) return false;
+            foreach (var slot in new[] { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R })
+            {
+                var skill = hero?.Skill.GetSkill(slot);
+                if (skill != null && skill.type == SkillType.Normal && skill.GetType().Name == memory) return true;
+            }
+            return false;
         }
         private void SendBountyReport(HeroRuntime rt, BountyReportKind kind, int count) { }
         private void EnterGenerated(Hero owner) => _gimmickDamageDepth++;
