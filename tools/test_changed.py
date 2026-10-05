@@ -5,7 +5,7 @@ Usage:
     python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 
 Changed files are collected from ``git diff --name-only <base>...HEAD`` plus
-staged/unstaged working-tree changes and untracked .cs files.  They are mapped
+staged/unstaged working-tree changes and untracked C#/data/generator files. They are mapped
 to test classes (see ``select_tests``); for production files the unified diff
 narrows the mapping to touched tokens (members, string constants), retaining
 file-level type dependencies for object initialization changes.  The selected
@@ -41,7 +41,7 @@ WIDE_TYPE_THRESHOLD = 0.6
 MAX_FILTER_CHARS = 15000
 
 # Non-code directories whose files are read by tests at run time.
-DATA_DIRS = ("tools/star-manifest", "tools/lowrarity")
+DATA_DIRS = ("tools/star-manifest", "tools/lowrarity", "tools/balance")
 
 TYPE_DECL_RE = re.compile(
     r"\b(?:class|struct|enum|interface|record)(?:\s+(?:class|struct))?\s+([A-Za-z_]\w*)"
@@ -193,9 +193,9 @@ def select_tests(changed, files, diffs=None) -> Selection:
          change, retaining file types for object initialization or unrecognized
          changes; a widely used declared type still selects everything;
       3. changed data files (tools/star-manifest/*.json, tools/lowrarity/*.json,
-         generated .cs) select test files that reference their path or types;
-      4. build files (*.csproj, Directory.Build.*) or types used by more than
-         60% of the test files select everything.
+         tools/balance/*.json, generated .cs) select tests referencing their path or types;
+      4. build files (*.csproj, Directory.Build.*), the forge inputs, or types
+         used by more than 60% of the test files select everything.
     """
     selection = Selection()
     test_files = sorted(p for p in files if p.startswith("tests/") and p.endswith(".cs"))
@@ -205,6 +205,11 @@ def select_tests(changed, files, diffs=None) -> Selection:
         if is_build_file(path):
             selection.run_all = True
             selection.reasons.append(f"build file changed: {path}")
+            continue
+        if path in ("tools/balance/forge.json", "tools/balance/gen_cs.py",
+                    "src/SodRpg.Core/Game/Balance/Forge.Generated.cs"):
+            selection.run_all = True
+            selection.reasons.append(f"forge balance input changed: {path}")
             continue
         if path.startswith("tests/") and path.endswith(".cs"):
             # Rule 1: the test file itself changed.
@@ -322,7 +327,7 @@ def collect_changed(root: Path, base: str) -> list[str]:
         changed.add(line.strip().replace("\\", "/"))
     for line in run_git(root, "ls-files", "--others", "--exclude-standard").splitlines():
         path = line.strip().replace("\\", "/")
-        if path.endswith(".cs"):
+        if path.endswith(".cs") or is_data_file(path) or path == "tools/balance/gen_cs.py":
             changed.add(path)
     return sorted(p for p in changed if p and not p.startswith(".ref/"))
 
