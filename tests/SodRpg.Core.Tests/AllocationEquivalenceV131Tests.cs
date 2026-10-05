@@ -593,7 +593,14 @@ namespace SodRpg.Core.Tests
                 hero, tree, true, seed, 110, hero);
         }
 
+        // Fast run keeps the two most demanding trees (Vesper: authored mechanisms, Mist: largest tree);
+        // the SlowFact Extended variant below runs all four heroes with more seeds and longer sequences.
         public static IEnumerable<object[]> GeneratedHeroes() => new[]
+        {
+            new object[] { "Hero_Vesper", 41 }, new object[] { "Hero_Mist", 43 },
+        };
+
+        public static IEnumerable<object[]> AllGeneratedHeroes() => new[]
         {
             new object[] { "Hero_Vesper", 41 }, new object[] { "Hero_Nachia", 42 }, new object[] { "Hero_Mist", 43 }, new object[] { "Hero_Lacerta", 44 },
         };
@@ -610,15 +617,15 @@ namespace SodRpg.Core.Tests
         public void Production_engine_matches_the_original_algorithm_on_generated_v131_hero_trees(string hero, int seed)
         {
             WithGeneratedHero(hero, tree =>
-                RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)seed, hero, 150, relics: 4)),
-                    hero, tree, true, seed, 45, hero));
+                RunRandom(() => new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () => FundedProfile((ulong)seed, hero, 80, relics: 4)),
+                    hero, tree, true, seed, 30, hero));
         }
 
         /// <summary>More seeds and longer sequences on the generated trees (slow: the original algorithm costs seconds per step there).</summary>
         [SlowFact, Trait("Speed", "Slow")]
         public void Extended_random_equivalence_over_the_generated_v131_hero_trees()
         {
-            foreach (var row in GeneratedHeroes())
+            foreach (var row in AllGeneratedHeroes())
             {
                 string hero = (string)row[0];
                 WithGeneratedHero(hero, tree =>

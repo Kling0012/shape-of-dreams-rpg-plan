@@ -176,6 +176,94 @@ class SelectTestsFromContents(unittest.TestCase):
         self.assertEqual(selection.classes, set())
 
 
+class DiffNarrowingTests(unittest.TestCase):
+    """select_tests with unified diffs narrows src/ changes to touched tokens."""
+
+    def corpus(self):
+        files = {
+            "tests/A/StarSummaryTests.cs": USING_TESTS,
+            "tests/A/UnrelatedTests.cs": PLAIN_TESTS,
+            "tests/A/Unrelated2Tests.cs": PLAIN_TESTS,
+            "tests/A/Unrelated3Tests.cs": PLAIN_TESTS,
+            "tests/A/PartialWordTests.cs": PARTIAL_WORD_TESTS,
+            CORE: CORE_CONTENT,
+        }
+        return files
+
+    def diff(self, plus=(), minus=()):
+        body = "\n".join("+" + line for line in plus) + "\n" + \
+               "\n".join("-" + line for line in minus)
+        return f"--- a/{CORE}\n+++ b/{CORE}\n@@ -1,1 +1,1 @@\n{body}\n"
+
+    def test_member_change_selects_tests_mentioning_the_member(self):
+        # Only the Compute signature changed; tests naming Compute run.
+        files = self.corpus()
+        files["tests/A/ComputeTests.cs"] = test_file("T", "ComputeTests") + "// calls StarSummary.Compute\n"
+        selection = tc.select_tests([CORE], files, {CORE: self.diff(
+            plus=["    public StarSummaryLine Compute(int mode) => null;"],
+            minus=["    public StarSummaryLine Compute() => null;"])})
+        self.assertIn("T.ComputeTests", selection.classes)
+        self.assertFalse(selection.run_all)
+
+    def test_data_row_change_selects_tests_naming_the_id(self):
+        files = self.corpus()
+        files["tests/A/VigilTests.cs"] = test_file("T", "VigilTests") + '// asserts "unique.vigil_coif"\n'
+        selection = tc.select_tests([CORE], files, {CORE: self.diff(
+            plus=['            new UniqueDef("unique.vigil_coif", "head.iron_coif"),'],
+            minus=['            new UniqueDef("unique.old_coif", "head.iron_coif"),'])})
+        self.assertIn("T.VigilTests", selection.classes)
+        self.assertNotIn("SodRpg.Core.Tests.UnrelatedTests", selection.classes)
+
+    def test_comment_only_change_selects_nothing(self):
+        selection = tc.select_tests([CORE], self.corpus(), {CORE: self.diff(
+            plus=["    // fixed a typo"], minus=["    // fixed a tpyo"])})
+        self.assertFalse(selection.run_all)
+        self.assertEqual(selection.classes, set())
+
+    def test_unparsable_hunks_fall_back_to_file_types(self):
+        # A reformatted body without recognizable tokens keeps the file-level mapping.
+        selection = tc.select_tests([CORE], self.corpus(), {CORE: self.diff(
+            plus=["    ;"], minus=[";"])})
+        self.assertEqual(
+            selection.classes,
+            {"SodRpg.Core.Tests.StarSummaryTests", "SodRpg.Core.Tests.PartialWordTests"},
+        )
+
+    def test_wide_declared_type_change_still_runs_everything(self):
+        files = {
+            "tests/A/T1.cs": test_file("T", "T1") + "// uses StarSummary\n",
+            "tests/A/T2.cs": test_file("T", "T2") + "// uses StarSummary\n",
+            "tests/A/T3.cs": test_file("T", "T3"),
+            CORE: CORE_CONTENT,
+        }
+        selection = tc.select_tests([CORE], files, {CORE: self.diff(
+            plus=["public class StarSummary {"], minus=["public class StarSummary {"])})
+        self.assertTrue(selection.run_all)
+
+    def test_wide_member_token_is_dropped_not_escalated(self):
+        # "Compute" is ubiquitous in test files; as a member token it must be
+        # dropped (no full run) while the specific token still selects its tests.
+        files = {
+            "tests/A/T1.cs": test_file("T", "T1") + "// uses Compute\n",
+            "tests/A/T2.cs": test_file("T", "T2") + "// uses Compute\n",
+            "tests/A/T3.cs": test_file("T", "T3") + "// uses Compute\n",
+            "tests/A/SpecificTests.cs": test_file("T", "SpecificTests") + '// uses unique.vigil_coif\n',
+            CORE: CORE_CONTENT,
+        }
+        selection = tc.select_tests([CORE], files, {CORE: self.diff(
+            plus=['            new UniqueDef("unique.vigil_coif"),  // Compute'],
+            minus=['            new UniqueDef("unique.old"),  // Compute'])})
+        self.assertFalse(selection.run_all)
+        self.assertEqual(selection.classes, {"T.SpecificTests"})
+
+    def test_no_diff_behaves_like_before(self):
+        selection = tc.select_tests([CORE], self.corpus(), None)
+        self.assertEqual(
+            selection.classes,
+            {"SodRpg.Core.Tests.StarSummaryTests", "SodRpg.Core.Tests.PartialWordTests"},
+        )
+
+
 class FilterChunkTests(unittest.TestCase):
     def test_chunks_preserve_terms_and_respect_limit(self):
         classes = [f"N.T.ClassNumber{i}Tests" for i in range(500)]

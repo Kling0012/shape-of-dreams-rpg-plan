@@ -32,6 +32,10 @@ methods += [block("src/SodRpg.Mod/HostAuthority.KillSync.cs", r"private void Cap
 patch = block(attribution, r"internal static class NativeAttributedKill\b")
 output = Path(sys.argv[1])
 output.parent.mkdir(parents=True, exist_ok=True)
-output.write_text("using System; using System.Collections.Generic; using SodRpg.Core.Game; using UnityEngine; using Mirror;\n"
-                  "namespace SodRpg.Mod {\n" + patch + "\ninternal sealed partial class HostAuthority {\n"
-                  + "\n".join(methods) + "\n}}\n")
+text = ("using System; using System.Collections.Generic; using SodRpg.Core.Game; using UnityEngine; using Mirror;\n"
+        "namespace SodRpg.Mod {\n" + patch + "\ninternal sealed partial class HostAuthority {\n"
+        + "\n".join(methods) + "\n}}\n")
+# Only rewrite when the content differs: an unconditional write changes the timestamp and
+# recompiles the whole test project on every build (issue #151).
+if not output.exists() or output.read_text(encoding="utf-8") != text:
+    output.write_text(text, encoding="utf-8")
