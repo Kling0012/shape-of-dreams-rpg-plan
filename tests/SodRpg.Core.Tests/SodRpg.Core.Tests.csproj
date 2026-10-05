@@ -25,6 +25,7 @@
   <ItemGroup>
     <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/TickGuard.cs" Link="ModUnderTest/TickGuard.cs" />
     <Compile Include="../../src/SodRpg.Mod/NameplateTrim.cs" Link="ModUnderTest/NameplateTrim.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
@@ -33,6 +34,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
     <Compile Include="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
+    <Compile Include="$(IntermediateOutputPath)Issue62.Native.cs" Link="ModUnderTest/Issue62.Native.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeMemoryCasts.cs" Link="ModUnderTest/HostAuthority.NativeMemoryCasts.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystones.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystones.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
@@ -60,6 +62,10 @@
     </PropertyGroup>
     <WriteLinesToFile File="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs"
                       Lines="$(AuthoredMechanismsSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile">
+    <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
   </Target>
 
 </Project>

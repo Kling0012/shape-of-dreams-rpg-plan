@@ -175,6 +175,7 @@ namespace SodRpg.Mod
     internal sealed class Monster : Entity
     {
         public enum MonsterType { Lesser, Normal, MiniBoss, Boss }
+        public uint netId = 62;
         public MonsterType type;
         public bool disableLoot;
     }
@@ -192,6 +193,7 @@ namespace SodRpg.Mod
         public Entity Victim;
         public MemoryActivationIdentity Identity;
         public long Serial;
+        public float DamageAmount;
     }
     internal partial struct DamageData
     {
@@ -269,7 +271,16 @@ namespace SodRpg.Mod
         private static string MemorySource(Actor actor) => actor?.FindFirstOfType<SkillTrigger>()?.GetType().Name;
         private static float BasicCritChanceV129(Actor actor, Hero hero) => 0;
         private void CreditShieldGranted(HeroRuntime owner, Entity target, float amount) { ShieldAmount = target.Status.currentShield; Shields++; }
-        private sealed class MonsterRuntime { public Monster Monster; public DataProcessor<FinalStats> PressureHealth; }
+        private sealed class MonsterRuntime
+        {
+            public Monster Monster;
+            public DataProcessor<FinalStats> PressureHealth;
+            public float QueuedAt;
+            public VariantDef Variant;
+            public bool DeathBurstTriggered;
+            public string KillEventId, KillEventStreamId;
+            public uint KillEventNetId, SyncNetId;
+        }
         private DreamPressure _pressure = DreamPressure.Neutral;
         internal void BindAuthored(HeroRuntime runtime, Build build)
         {
@@ -322,11 +333,6 @@ namespace SodRpg.Mod
             var data = new DamageData(amount); ApplyRelayWindowDamage(runtime, ref data, victim); return data.currentAmount;
         }
         internal void AdmitNativeScope(Actor actor, MemoryActivationIdentity identity) => _memoryAttribution.BindInstance(actor.GetInstanceID(), identity);
-        internal void PressureEnemy(Monster monster, double applied, bool native)
-        {
-            TrackPressureDividendSpawn(monster); _pressureDividendSpawns[monster].RecordAppliedHpMultiplier(applied);
-            if (native) MarkPressureDividendLootSpawn(monster); CapturePressureDividendDeath(monster);
-        }
         internal void LegacyNativeHit(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, float damage)
         {
             var native = new AbilityInstance { parentActor = FindMemory(runtime.Hero, identity.SourceMemory), info = new CastInfo(runtime.Hero) };
@@ -335,15 +341,6 @@ namespace SodRpg.Mod
         }
         internal void LegacyNativeUse(HeroRuntime runtime, string memory) =>
             QueueGimmicks(runtime, GimmickTrigger.OnUse, memory, null, 0);
-        internal void NativeKill(HeroRuntime runtime, Actor actor, Monster victim)
-        {
-            if (!TryGetMemoryActivation(actor, out var identity)
-                || !_memoryAttribution.CanAdmit(identity, actor.gem != null, actor is ElementalStatusEffect,
-                    !actor.chain.Equals(default(ReactionChain)))
-                || actor.firstTrigger != FindMemory(runtime.Hero, identity.SourceMemory)) return;
-            PublishMemoryActivation(identity.Event(MemoryEventKind.Kill, _memoryAttribution.NewPacketId(),
-                AttributedVictimLifetime(victim)), runtime.Hero, victim);
-        }
         internal void NativeKeyDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, ref DamageData data)
         {
             NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = runtime.Hero, Victim = victim, Identity = identity, Admitted = true };
