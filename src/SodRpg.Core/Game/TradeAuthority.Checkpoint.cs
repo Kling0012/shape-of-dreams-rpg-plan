@@ -76,9 +76,13 @@ namespace SodRpg.Core.Game
                     bool ok = CheckpointBool(executed, "ok");
                     string fingerprint = CheckpointString(executed, "fingerprint");
                     string receiptReason = executed.TryGet("reason", out object reason) ? reason as string : null;
+                    bool nativeFailure = fingerprint.StartsWith("o:", StringComparison.Ordinal) && receiptReason == "native";
+                    bool manualFailure = (fingerprint.StartsWith("m:", StringComparison.Ordinal)
+                        || fingerprint.StartsWith("d:", StringComparison.Ordinal) || fingerprint.StartsWith("s:", StringComparison.Ordinal))
+                        && (receiptReason == "error" || receiptReason == TradeWire.LostReason);
                     if (ledger.Executed.ContainsKey(token)
                         || CheckpointLong(executed, "ledger", 1, long.MaxValue) != id
-                        || (!ok && (!fingerprint.StartsWith("o:", StringComparison.Ordinal) || receiptReason != "native"
+                        || (!ok && ((!nativeFailure && !manualFailure)
                             || CheckpointLong(executed, "gold", 0, int.MaxValue) != 0
                             || CheckpointLong(executed, "dust", 0, int.MaxValue) != 0
                             || CheckpointLong(executed, "earn", 0, int.MaxValue) != 0)))
