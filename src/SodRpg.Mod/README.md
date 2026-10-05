@@ -6,6 +6,24 @@
 
 計画書 Ver1.0 を目安に、最初に遊べる形へまとめたMOD。計画書の全要素ではなく、「持ち帰る装備」「帰還（確保）の決断」「自分の戦い方」「協力」の4本を、本作の既存ループ（ゾーン→ボス）の上に載せた。
 
+## 本体連携の利用可否（Issue #109）
+
+`NativePatchPreflight` は機能ごとの前提を独立に確認し、不一致・検査例外・未確認の機能だけを無効にする。判定は起動ごとに未確認へ戻し、1機能の検査例外が残りの確認を飛ばさない。無効化は機能名とパッチクラス名を `Log.Warn` に出す。Harmony内部copierによる合成ILのdry変換は診断用であり、失敗をMOD全体の起動条件にしない。適用中に失敗したクラスは自MODの該当パッチだけを戻し、別ownerのパッチは残す。
+
+| 機能 | 無効になる条件 |
+| --- | --- |
+| エレボス LastStarlight 連携（関連5クラス） | 本体列挙子を解決できない、または既存transpiler適用後の `MoveNext` に `SI.WaitForSeconds` の生成が正確に2箇所ない |
+| Feather 帰属（関連4クラス） | 捕捉したsource／effectが非staticの所定型でない、または遅延dispatch対象を解決できない |
+| Baptism buff／コルーチン帰属（関連3クラス） | buff／effect／iteratorのclosureフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない。独立した終了時爆発の連携は止めない |
+| DoubleTap 帰属（関連5クラス） | source／firedフィールドが非staticの所定型でない、またはfactory／`MoveNext`を解決できない |
+| Nyx HerWorld 連携（関連11クラス） | 本体 `ActiveLogicUpdate` のメソッド本体を取得できない、またはlocal 1が `Entity` 互換でない |
+| 白夜／暗月 InkBeam 連携（関連4クラス） | 本体 `Hit` を取得できない、または既存transpiler適用後のdamage dispatch／heal dispatch／敵判定がそれぞれ正確に1箇所ない |
+| HP実損失の帰属（`NativeAttributedHpDamage`） | 本体 `currentHealth` setterのtyped delegateを取得できない |
+| ボス効果表示の送信 | 本体RPC送信のtyped delegateを取得できない。表示送信だけを止め、ゲームプレイは継続する |
+| WinterDive のテレポート帰属 | 本体列挙子またはcaster捕捉フィールドを取得できない。従来の `Prepare` 判定を維持し、無効化ログを `Log.Warn` に統一 |
+
+LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正規に装着した有効なgem／skillで、エレボス報酬段階が正の場合だけ行う。通常のLastStarlightはラップも値変更もしない。実行中に3回目の待機が現れた場合は、その列挙について警告を1回だけ出し、自分の値差分と表示を解除する。本体列挙子はそこで破棄せず、その待機から以後のyieldと完了処理をそのまま通す。正常な2回待機の遅延・持続時間の連携は維持する。保存形式・Protocolは変更しない。
+
 ## 遊び
 
 | 仕組み | 内容 |

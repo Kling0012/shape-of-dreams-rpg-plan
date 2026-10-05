@@ -44,9 +44,8 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
-                // The preflight only warns. Stopping the whole mod on a native mismatch (another mod's
-                // Harmony, a game update) left players with no mod at all (v2.1.0). Each patch class is
-                // installed on its own instead, and a failing class is rolled back and skipped.
+                // Native prerequisites gate only their dependent feature groups. The composed-IL
+                // diagnostic is advisory; unrelated classes can still install if its copier fails.
                 try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
                 stage = "patch installation";
@@ -371,6 +370,12 @@ namespace SodRpg.Mod
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
                 if (HarmonyMethodExtensions.GetFromType(type).Count == 0) continue;
+                if (NativePatchPreflight.TryGetDisabledFeature(type, out var featureName))
+                {
+                    skipped.Add(type.FullName);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": native feature " + featureName + " is unavailable or unconfirmed.");
+                    continue;
+                }
                 try
                 {
                     harmony.CreateClassProcessor(type).Patch();
