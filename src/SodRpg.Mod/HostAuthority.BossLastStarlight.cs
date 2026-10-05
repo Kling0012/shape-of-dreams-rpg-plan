@@ -62,50 +62,90 @@ namespace SodRpg.Mod
             internal string Run;
             internal long Life,GemLife,SkillLife,OwnerLife,Epoch,Visual;
             internal float Creation,Delay,Duration,Attraction,TickRadius,DelayDelta,DurationDelta,AttractionDelta,TickDelta;
-            internal float WaitStart;
+            internal float WaitStart,LastReconcile = float.NegativeInfinity;
             internal Vector3 OriginalCenter,Center;
-            internal bool Active,Relocated,Retired,Waiting;
+            internal bool Active,Relocated,Retired,Waiting,Detached;
             internal int Stage;
+            internal HostAuthority Host;
+            internal object Build;
+            internal readonly LastStarlightSequence Sequence;
+            internal LastStarlightState() { Sequence=new LastStarlightSequence(this); }
+            internal void Reset()
+            {
+                Instance=null; Gem=null; Skill=null; Runtime=null; Owner=null; Room=null; Run=null; Host=null; Build=null;
+                Life=GemLife=SkillLife=OwnerLife=Epoch=Visual=0;
+                Creation=Delay=Duration=Attraction=TickRadius=DelayDelta=DurationDelta=AttractionDelta=TickDelta=WaitStart=0;
+                LastReconcile=float.NegativeInfinity; OriginalCenter=Center=default;
+                Active=Relocated=Retired=Waiting=Detached=false; Stage=0;
+            }
         }
         private sealed class LastStarlightSequence : IEnumerator,IDisposable
         {
-            private readonly HostAuthority _host;
-            private readonly IEnumerator _native;
+            private HostAuthority _host;
+            private IEnumerator _native;
             private readonly LastStarlightState _state;
+            private readonly object _wait;
             private int _waits;
+            private bool _moving,_disposed;
             private object _current;
-            internal LastStarlightSequence(HostAuthority host,IEnumerator native,LastStarlightState state)
-            { _host=host; _native=native; _state=state; }
+            internal bool Bound => _native!=null;
+            internal LastStarlightSequence(LastStarlightState state)
+            { _state=state; _wait=new SI.WaitForCondition(WaitFinished); }
+            internal void Bind(HostAuthority host,IEnumerator native)
+            { _host=host; _native=native; _waits=0; _moving=_disposed=false; _current=null; }
             public object Current => _current;
             public bool MoveNext()
             {
-                // Never run a continuation against a reused pooled instance.
-                if (!_host.BossNativeSameLife(_state.Instance,_state.Life)) return false;
-                bool result=_native.MoveNext();
-                if (!result) { _state.Waiting=false; return false; }
-                _current=_native.Current;
-                if (!(_current is SI.WaitForSeconds)) return true;
-                if (++_waits>2) throw new InvalidOperationException("LastStarlight native sequence unexpectedly added a wait.");
-                _state.Active=_waits==2;
-                _state.WaitStart=Time.time;
-                _state.Waiting=true;
-                _host.ReconcileLastStarlight(_state,Time.time);
-                _current=new SI.WaitForCondition(WaitFinished);
-                _host.LastStarlightVisual(_state,Time.time);
-                return true;
+                if (_native==null) return false;
+                if (!_host.BossNativeSameLife(_state.Instance,_state.Life)) { Complete(); return false; }
+                _moving=true;
+                bool result=false;
+                try
+                {
+                    result=_native.MoveNext();
+                    if(_disposed || !result) return false;
+                    _current=_native.Current;
+                    if (!(_current is SI.WaitForSeconds)) return true;
+                    if (++_waits>2) throw new InvalidOperationException("LastStarlight native sequence unexpectedly added a wait.");
+                    _state.Active=_waits==2; _state.WaitStart=Time.time; _state.Waiting=true;
+                    _host.ReconcileLastStarlight(_state,Time.time);
+                    _current=_wait;
+                    _host.LastStarlightVisual(_state,Time.time);
+                    return true;
+                }
+                catch { _disposed=true; throw; }
+                finally
+                {
+                    _moving=false;
+                    if(_disposed || !result) Complete();
+                }
             }
             private bool WaitFinished()
             {
-                if (!_host.BossNativeSameLife(_state.Instance,_state.Life)) return true;
+                if (_native==null || _disposed || !_host.BossNativeSameLife(_state.Instance,_state.Life)) return true;
                 _host.ReconcileLastStarlight(_state,Time.time);
                 float seconds=_state.Active?_state.Duration+_state.DurationDelta:_state.Delay+_state.DelayDelta;
                 return Time.time>=_state.WaitStart+Math.Max(0,seconds);
             }
             public void Reset() => throw new NotSupportedException();
-            public void Dispose() { (_native as IDisposable)?.Dispose(); }
+            public void Dispose()
+            {
+                if(_native==null) return;
+                _disposed=true;
+                if(!_moving) Complete();
+            }
+            private void Complete()
+            {
+                if(_native==null) return;
+                var native=_native; var host=_host;
+                _native=null; _host=null; _current=null; _state.Waiting=false;
+                try { (native as IDisposable)?.Dispose(); }
+                finally { host.FinishLastStarlightSequence(_state); }
+            }
         }
-        private readonly Dictionary<Ai_Gem_U_LastStarlight,LastStarlightState> _lastStarlights = new Dictionary<Ai_Gem_U_LastStarlight,LastStarlightState>();
-        private readonly List<Ai_Gem_U_LastStarlight> _lastStarlightScratch = new List<Ai_Gem_U_LastStarlight>();
+        private readonly Dictionary<Ai_Gem_U_LastStarlight,LastStarlightState> _lastStarlights = new Dictionary<Ai_Gem_U_LastStarlight,LastStarlightState>(128);
+        private readonly BossObjectPool<LastStarlightState> _lastStarlightPool = new BossObjectPool<LastStarlightState>(128,()=>new LastStarlightState());
+        private readonly List<Ai_Gem_U_LastStarlight> _lastStarlightScratch = new List<Ai_Gem_U_LastStarlight>(128);
         internal object CaptureLastStarlight(Ai_Gem_U_LastStarlight instance)
         {
             if (!NetworkServer.active || instance==null || AttributionGeneratedOrigin()!=GeneratedOrigin.None
@@ -116,23 +156,35 @@ namespace SodRpg.Mod
                 || !LastStarlightEquipped(hero,gem,gem.skill)) return null;
             if (_lastStarlights.ContainsKey(instance)) ReleaseLastStarlight(instance);
             if (_lastStarlights.Count>=128) return null;
-            var state=new LastStarlightState { Instance=instance,Gem=gem,Skill=gem.skill,Owner=hero,Runtime=rt,
-                Life=BossNativeActorLife(instance),GemLife=BossNativeActorLife(gem),SkillLife=BossNativeActorLife(gem.skill),OwnerLife=BossNativeActorLife(hero),
-                Epoch=rt.ShieldEquipmentEpoch,Creation=instance.creationTime,Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,
-                Run=NetworkedManagerBase<GameManager>.softInstance?.runId,Delay=instance.delay,Duration=instance.duration,
-                Attraction=instance.attractionRadius,TickRadius=instance.tickDamageRadius,OriginalCenter=instance.info.point,Center=instance.info.point };
-            if (!BossNativeContextCurrent(state.Room,state.Run)) return null;
+            var state=_lastStarlightPool.Rent(); if(state==null) return null;
+            state.Host=this; state.Instance=instance; state.Gem=gem; state.Skill=gem.skill; state.Owner=hero; state.Runtime=rt;
+            state.Life=BossNativeActorLife(instance); state.GemLife=BossNativeActorLife(gem);
+            state.SkillLife=BossNativeActorLife(gem.skill); state.OwnerLife=BossNativeActorLife(hero);
+            state.Epoch=rt.ShieldEquipmentEpoch; state.Creation=instance.creationTime;
+            state.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom; state.Run=NetworkedManagerBase<GameManager>.softInstance?.runId;
+            state.Delay=instance.delay; state.Duration=instance.duration; state.Attraction=instance.attractionRadius;
+            state.TickRadius=instance.tickDamageRadius; state.OriginalCenter=state.Center=instance.info.point;
+            if (!BossNativeContextCurrent(state.Room,state.Run)) { state.Reset(); _lastStarlightPool.Return(state); return null; }
             _lastStarlights.Add(instance,state);
             ReconcileLastStarlight(state,Time.time);
             return state;
         }
         internal IEnumerator WrapLastStarlight(IEnumerator native,object capture)
-            => new LastStarlightSequence(this,native,(LastStarlightState)capture);
+        {
+            var state=(LastStarlightState)capture;
+            if(native==null) { ReleaseLastStarlight(state.Instance); return null; }
+            state.Sequence.Bind(this,native); return state.Sequence;
+        }
+        private void FinishLastStarlightSequence(LastStarlightState state)
+        {
+            if(!state.Detached && _lastStarlights.TryGetValue(state.Instance,out var current) && ReferenceEquals(current,state))
+                ReleaseLastStarlight(state.Instance);
+            else { state.Reset(); _lastStarlightPool.Return(state); }
+        }
         private static bool LastStarlightEquipped(Hero hero,Gem_U_LastStarlight gem,SkillTrigger skill)
         {
             if (hero.Skill==null || gem.skill!=skill || skill.owner!=hero) return false;
-            foreach (var slot in hero.Skill.gems) if (ReferenceEquals(slot.Value,gem)) return true;
-            return false;
+            return hero.Skill.gems.TryGetValue(gem.location,out var equipped) && ReferenceEquals(equipped,gem);
         }
         private bool LastStarlightCurrent(LastStarlightState state)
         {
@@ -147,6 +199,8 @@ namespace SodRpg.Mod
         private void ReconcileLastStarlight(LastStarlightState state,float now)
         {
             if (!BossNativeSameLife(state.Instance,state.Life)) return;
+            if(!state.Retired && state.LastReconcile==now && state.Epoch==state.Runtime.ShieldEquipmentEpoch && ReferenceEquals(state.Build,state.Runtime.Powers.Build)) return;
+            state.LastReconcile=now;
             bool current=LastStarlightCurrent(state);
             int stage=current && BossEnsure(state.Runtime)?BossRewardStage(state.Runtime,BossProfiles.ErebosRewardId):0;
             float delayDelta=stage>0?-Math.Min(.2f,Math.Max(0,state.Delay-.25f)):0;
@@ -161,6 +215,7 @@ namespace SodRpg.Mod
             bool changed=state.Stage!=stage || state.DelayDelta!=delayDelta || state.DurationDelta!=durationDelta
                 || state.AttractionDelta!=attractionDelta || state.TickDelta!=tickDelta;
             state.DelayDelta=delayDelta; state.DurationDelta=durationDelta; state.AttractionDelta=attractionDelta; state.TickDelta=tickDelta; state.Stage=stage;
+            state.Build=state.Runtime.Powers.Build;
             if (current) state.Epoch=state.Runtime.ShieldEquipmentEpoch;
             else state.Retired=true;
             if (changed && state.Waiting) LastStarlightVisual(state,now);
@@ -198,6 +253,8 @@ namespace SodRpg.Mod
         }
         private void TickLastStarlight(HeroRuntime rt,float now)
         {
+            if (now < rt.BossNative.StarlightPoll) return;
+            rt.BossNative.StarlightPoll = now + .1f;
             _lastStarlightScratch.Clear();
             foreach (var pair in _lastStarlights)
                 if (pair.Value.Runtime==rt)
@@ -217,6 +274,8 @@ namespace SodRpg.Mod
             if (!_lastStarlights.TryGetValue(instance,out var state)) return;
             state.Retired=true; ReconcileLastStarlight(state,Time.time); LastStarlightVisual(state,Time.time,true);
             _lastStarlights.Remove(instance);
+            state.Detached=true;
+            if(!state.Sequence.Bound) { state.Reset(); _lastStarlightPool.Return(state); }
         }
         private void ClearLastStarlight(HeroRuntime rt)
         {

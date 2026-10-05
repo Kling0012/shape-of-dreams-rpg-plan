@@ -41,6 +41,7 @@ namespace SodRpg.Mod
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public readonly BossCombatState Boss = new BossCombatState();
+            internal readonly BossNativeOwner BossNative = new BossNativeOwner();
             public long ShieldEquipmentEpoch;
             public Action<EventInfoDamage> OnMemoryDamage;
             public Action<EventInfoKill> OnMemoryKill;
@@ -220,6 +221,12 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> dailyIdOfHost)
         {
             InitializeAssignedMechanisms();
+            InitializeMemoryAttribution();
+            BasicAttackContext.Prewarm(); NativeDamageContext.Prewarm(); ElementApplicationContext.Prewarm();
+            BossDisplacementReuse.Prewarm(); BossBasicEffectReuse.Prewarm();
+            NativeAttributedHpDamage.Prewarm(); PrewarmNativeShieldSnapshot();
+            _ = _runtimes.Values; _ = _attributionEquipment.Keys; _ = _attributionEquipment.Values;
+            _ = _bossHysteriaStates.Values; _ = _lastStarlights.Values;
             _dailyIdOfHost = dailyIdOfHost;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
@@ -1258,6 +1265,7 @@ namespace SodRpg.Mod
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
+                RefreshMemoryAttributionEquipment(hero);
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
                 rt.OnSkill = info => OnSkillUse(captured, info);

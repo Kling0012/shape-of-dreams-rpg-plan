@@ -64,6 +64,7 @@ namespace SodRpg.Core.Game
         public Stat? ModifierStat { get; }
         public int RequiredMarks { get; }
         public bool ConsumeMarks { get; }
+        public string RuntimeKey { get; internal set; }
         public BossAction(BossEvent @event, BossMechanism mechanism, BossPayload payload, string channelId = null,
             BossShape shape = BossShape.Circle, BossAnchor anchor = BossAnchor.Owner, int cooldownMillis = 0,
             int delayMillis = 0, int lifetimeMillis = 0, int intervalMillis = 0, int count = 1, int maxTargets = 64,
@@ -120,6 +121,7 @@ namespace SodRpg.Core.Game
                 || c.Any(x => x == null) || a.Any(x => x == null) || c.Select(x => x.ChannelId).Distinct(StringComparer.Ordinal).Count() != c.Length
                 || a.Any(x => x.ChannelId != null && !c.Any(y => y.ChannelId == x.ChannelId))) throw new ArgumentException("Invalid boss profile payload.");
             Id = id; SetId = setId; Description = description; Channels = Array.AsReadOnly(c); Actions = Array.AsReadOnly(a);
+            for (int i = 0; i < a.Length; i++) a[i].RuntimeKey = id + "." + i;
         }
     }
     public sealed class BossRewardAction

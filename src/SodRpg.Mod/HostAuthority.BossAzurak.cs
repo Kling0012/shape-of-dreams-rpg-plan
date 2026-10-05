@@ -15,17 +15,27 @@ namespace SodRpg.Mod
             internal float HitsUntil, HavenDue, HavenUntil, HavenAmount, BurrowReady;
             internal Vector3 HavenPoint;
             internal bool HavenChecked;
+            internal void Reset()
+            {
+                Hits=0; LastMain=HitVisual=HavenVisual=0; HitsUntil=HavenDue=HavenUntil=HavenAmount=BurrowReady=0;
+                HavenPoint=default; HavenChecked=false;
+            }
         }
-        private readonly Dictionary<HeroRuntime, AzurakState> _azurakStates = new Dictionary<HeroRuntime, AzurakState>();
+        private readonly Dictionary<HeroRuntime, AzurakState> _azurakStates = new Dictionary<HeroRuntime, AzurakState>(64);
+        private readonly BossObjectPool<AzurakState> _azurakPool = new BossObjectPool<AzurakState>(64,()=>new AzurakState());
         private AzurakState AzurakOwner(HeroRuntime rt)
         {
-            if (!_azurakStates.TryGetValue(rt, out var state)) _azurakStates.Add(rt, state = new AzurakState());
+            if (!_azurakStates.TryGetValue(rt,out var state))
+            {
+                if(_azurakStates.Count>=64 || (state=_azurakPool.Rent())==null) return null;
+                _azurakStates.Add(rt,state);
+            }
             return state;
         }
         private static bool AzurakAvailable(HeroRuntime rt, BossAction action, float now)
-            => rt.Boss.ActionKeys.TryGetValue(action, out var key) && (!rt.Boss.Ready.TryGetValue(key, out var due) || now >= due);
+            => rt.Boss.Ready.TryGetValue(action.RuntimeKey,out var due) ? now>=due : rt.Boss.Ready.Count<128;
         private static void AzurakCommit(HeroRuntime rt, BossAction action, float now)
-            => BossReady(rt, rt.Boss.ActionKeys[action], now, action.CooldownMillis);
+            => BossReady(rt, action.RuntimeKey, now, action.CooldownMillis);
         private bool AzurakStomp(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, Vector3 center, float now)
         {
             var action = profile.Actions[0];
@@ -41,9 +51,10 @@ namespace SodRpg.Mod
                 PublishBossVisual(rt, ++rt.Boss.NextId, 1, center, center, action.RadiusMilli / 1000f, now, now + 0.25f);
                 return true;
             }
-            var pulses = new BossScheduledPulse[action.Count];
-            for (int i = 0; i < pulses.Length; i++)
-                pulses[i] = new BossScheduledPulse(action, center, center, amount, magic, action.DelayMillis + i * action.IntervalMillis);
+            if(action.Count>32) return false;
+            var pulses=rt.Boss.Sequence.Reset();
+            for (int i=0;i<action.Count;i++)
+                if(!pulses.Add(new BossScheduledPulse(action,center,center,amount,magic,action.DelayMillis+i*action.IntervalMillis))) return false;
             if (!BossReserveSequence(rt, profile.SetId, profile.Id, pulses, now, 1)) return false;
             AzurakCommit(rt, action, now);
             return true;
@@ -60,7 +71,7 @@ namespace SodRpg.Mod
             Vector3 owner = rt.Hero.agentPosition;
             if (kind == BossEvent.MainHit && BossFind(rt, "boss_azurak.stage2", out var stageEntry, out var stageProfile))
             {
-                var state = AzurakOwner(rt);
+                var state=AzurakOwner(rt); if(state==null) return;
                 if (state.LastMain != activation)
                 {
                     state.LastMain = activation;
@@ -88,14 +99,15 @@ namespace SodRpg.Mod
                     AzurakPublishHits(rt, state, now);
                 }
             }
-            foreach (var entry in rt.Powers.Build.BossMoves)
+            for(int bossMoveIndex=0;bossMoveIndex<rt.Powers.Build.BossMoves.Count;bossMoveIndex++)
             {
+                var entry=rt.Powers.Build.BossMoves[bossMoveIndex];
                 if (entry.SetId != BossProfiles.AzurakSetId || !BossProfiles.TryGetMove(entry.ProfileId, out var profile)
                     || profile.Id == "boss_azurak.stage2" || profile.Id == "boss_azurak.stage3" || profile.Id == "boss_azurak.stage6") continue;
                 var action = profile.Actions[0];
                 if (action.Event != kind || !AzurakAvailable(rt, action, now)) continue;
                 // Native event admission is shared; this action gate also excludes duplicate callbacks per activation.
-                string key = rt.Boss.ActionKeys[action];
+                string key = action.RuntimeKey;
                 if (!rt.Boss.Ledger.Advance(key, activation, 1, 0, now)) continue;
                 if (profile.Id == "boss_azurak.armor")
                 {
@@ -104,9 +116,9 @@ namespace SodRpg.Mod
                 }
                 else if (profile.Id == "boss_azurak.head")
                 {
+                    var state=AzurakOwner(rt); if(state==null) continue;
                     if (!BossGround(owner, owner, 0, out var center)
-                        || !BossReserveSequence(rt, profile.SetId, profile.Id, Array.Empty<BossScheduledPulse>(), now, 1, action.LifetimeMillis)) continue;
-                    var state = AzurakOwner(rt);
+                        || !BossReserveSequence(rt, profile.SetId, profile.Id, rt.Boss.Sequence.Reset(), now, 1, action.LifetimeMillis)) continue;
                     state.HavenPoint = center; state.HavenDue = now + action.DelayMillis / 1000f;
                     state.HavenUntil = now + action.LifetimeMillis / 1000f;
                     state.HavenAmount = BossAmount(rt, entry, profile, action.ChannelId); state.HavenChecked = false;
@@ -134,14 +146,15 @@ namespace SodRpg.Mod
         {
             if (_azurakStates.TryGetValue(rt, out var state))
             {
-                if (state.Hits > 0 && (now >= state.HitsUntil || !BossFind(rt, "boss_azurak.stage2", out _, out _)))
+                if (state.Hits>0 && now>=state.HitsUntil)
                 { state.Hits = 0; AzurakPublishHits(rt, state, now); }
                 if (state.HavenVisual != 0)
                 {
-                    if (!BossFind(rt, "boss_azurak.head", out _, out var profile) || now >= state.HavenUntil)
+                    if (now>=state.HavenUntil)
                         AzurakClearHaven(rt, state, now);
                     else if (!state.HavenChecked && now >= state.HavenDue)
                     {
+                        if(!BossFind(rt,"boss_azurak.head",out _,out var profile)) { AzurakClearHaven(rt,state,now); return; }
                         state.HavenChecked = true;
                         if (BossAlive(rt.Hero) && BossDirectionDistance(rt.Hero.agentPosition, state.HavenPoint) <= 2
                             && Math.Abs(rt.Hero.agentPosition.y - state.HavenPoint.y) <= 2)
@@ -158,9 +171,10 @@ namespace SodRpg.Mod
                 state.Hits = 0; state.LastMain = 0;
                 if (state.HitVisual != 0) AzurakPublishHits(rt, state, Time.time);
                 AzurakClearHaven(rt, state, Time.time);
-                foreach (string source in new[]{"boss_azurak.armor", "boss_azurak.head", "boss_azurak.stage6"})
-                    rt.Boss.Defense.CancelSource(this, rt, source);
-                if (!preserveRewards) _azurakStates.Remove(rt);
+                rt.Boss.Defense.CancelSource(this,rt,"boss_azurak.armor");
+                rt.Boss.Defense.CancelSource(this,rt,"boss_azurak.head");
+                rt.Boss.Defense.CancelSource(this,rt,"boss_azurak.stage6");
+                if (!preserveRewards) { _azurakStates.Remove(rt); state.Reset(); _azurakPool.Return(state); }
             }
             if (!preserveRewards) ClearAzurakBurrow(rt);
         }

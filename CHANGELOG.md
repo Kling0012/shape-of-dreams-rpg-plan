@@ -6,6 +6,17 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — ボス限定セット（#48 段階B-3・全14組の性能見直し）
+
+- **新4セット**：光裂の法装 / Radiant Fracture Raiment、飢影の狩装 / Ravenous Shadow Gear、忘針の襲装 / Oblivion Needle Gear、墜聖の双装 / Fallen Sanctity Regaliaを§3.11〜§3.14へ接続。各6部位・累積2/3/6段階を登録し、全14ボスセット84部位が揃いました。 / Added the final four six-piece sets and cumulative2/3/6 stages; all14 boss sets and84 parts are registered.
+- **native報酬3種**：WorldCrackerの loaded旋回／半径と元tickの実clip終端、BigChompの実敵weightと元Heal／GiveShield／firstTrigger CD、Shout自身のhunt増幅／backstep／hit-stunへ有界追加。channel・cost・元damage／proc・祠報酬取得は維持します。 / Added scoped WorldCracker, Big Chomp and Shout adapters while preserving native channel/cost/damage/procs and Maw's shrine reward route.
+- **独立段階とHP-only処理**：光相の次入力消費と地形clip済み落雷、大顎の実HP減少だけを使う回復／吸収、別activationで射つ残影砲座、Polarisの段階盾終了によるBeast移行・出発印への踏撃移動・8秒往還を接続。Polarisに報酬／Linkはなく、盾／回復だけ最大HP基準です。 / Added independent phase, actual-HP absorption, separate-input turret and Polaris guard/seal/return-cycle mechanics; Polaris has no reward link and uses MAXHP for shields/healing.
+- **全14組の性能**：runtime／adapter／M1〜M8／帰属scope／専用表示を事前確保poolと固定bufferへ移行。入力時の一時配列・closure・動的key・interface列挙を撤去し、対象処理128〜256・本人128弾／64場／32射手／64防護・予約32pulseへ有界化。set maskで不要dispatch／tickを省略し、adapter保守100ms・表示同値抑制／counter100ms・描画64effect／2048segmentの上限を設定しました。 / Prewarmed bounded storage replaces boss-path temporary allocations; cached set masks, bounded candidates/effects, throttled maintenance/notifications and fixed rendering budgets limit MOD-owned work.
+- **説明・互換**：日英名／説明・WikiGenと仕様書末尾18行の「性能」を更新。62セット・1418固有品、12報酬profile・11種adapter。Protocolは**17のまま**、wire／schema・保存形式4・既存IDは変更せず、旧aliasを追加しません。 / Updated bilingual content, WikiGen and the18-line performance section; protocol17, wire/save schemas and existing IDs remain unchanged.
+- **検証**：指定Releaseビルド成功（警告5・エラー0、`/tmp/sod-deploy-i48`）。 production WikiGenを`/tmp/sod-wiki-i48-b3`へ実行し、新4セット・84ボス部位・11種adapter・Polarisの報酬欄なしを確認。本体資料は外部参照のみ。tests/・test csprojの変更とテスト作業なし。Managed DLLのみのため実機戦闘／表示／協力同期／GC・frame時間／較正は未確認で、native physics・status・JSON・Mirror・Unity内部までzero-GCを保証する変更ではありません。 / Release build and production WikiGen succeeded; native-game behavior, visuals, co-op, allocation/frame-time measurements and balance remain unverified. No test work or native-source copies.
+
+---
+
 ## 未リリース — ボス限定セット（#48 段階B-2）
 
 - **新5セット**：星海の主衣 / Starsea Sovereign Raiment、終星の流衣 / Laststar Vesture、幻彩の追装 / Mirage Spectrum Gear、轟召の重装 / Roarcall Heavy Gear、三相の武装 / Threefold Armamentを承認仕様§3.6〜§3.10へ接続。各6部位と累積2/3/6段階を専用profileで実行します。PrimusAeronには報酬・任意Linkを追加しません。 / Added five six-piece boss sets and their cumulative2/3/6 stages from the approved profiles; Primus Aeron has no reward or optional link.

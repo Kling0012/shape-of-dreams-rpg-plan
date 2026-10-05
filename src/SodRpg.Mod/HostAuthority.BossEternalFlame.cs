@@ -122,18 +122,27 @@ namespace SodRpg.Mod
         private sealed class EternalFlameOwner
         {
             internal readonly BossNativeSeen MainPackets = new BossNativeSeen();
-            internal Entity[] Targets;
-            internal long[] TargetLife;
-            internal float[] TargetReady;
+            internal readonly Entity[] Targets = new Entity[3];
+            internal readonly long[] TargetLife = new long[3];
+            internal readonly float[] TargetReady = new float[3];
+            internal readonly List<Se_U_EternalFlame_Curse> Curses = new List<Se_U_EternalFlame_Curse>(128);
             internal float StackReady, CritReady;
             internal long CritVisual;
             internal bool CritVisualReady;
             internal float CritVisualUntil;
             internal int Stage;
         }
-        private readonly Dictionary<Se_U_EternalFlame_Curse, EternalFlameCurse> _eternalFlameCurses = new Dictionary<Se_U_EternalFlame_Curse, EternalFlameCurse>();
-        private readonly Dictionary<HeroRuntime, EternalFlameOwner> _eternalFlameOwners = new Dictionary<HeroRuntime, EternalFlameOwner>();
-        private readonly List<Se_U_EternalFlame_Curse> _eternalFlameScratch = new List<Se_U_EternalFlame_Curse>();
+        private readonly BossObjectPool<EternalFlameCurse> _eternalFlameCursePool = new BossObjectPool<EternalFlameCurse>(128, () => new EternalFlameCurse());
+        private readonly BossObjectPool<EternalFlameOwner> _eternalFlameOwnerPool = new BossObjectPool<EternalFlameOwner>(64, () => new EternalFlameOwner());
+        private readonly Dictionary<Se_U_EternalFlame_Curse, EternalFlameCurse> _eternalFlameCurses = new Dictionary<Se_U_EternalFlame_Curse, EternalFlameCurse>(128);
+        private readonly Dictionary<HeroRuntime, EternalFlameOwner> _eternalFlameOwners = new Dictionary<HeroRuntime, EternalFlameOwner>(64);
+        private readonly List<Se_U_EternalFlame_Curse> _eternalFlameScratch = new List<Se_U_EternalFlame_Curse>(128);
+        private static readonly BossRewardProfile EternalFlameRewardProfile=LoadEternalFlameRewardProfile();
+        private static BossRewardProfile LoadEternalFlameRewardProfile()
+        {
+            BossProfiles.TryGetReward(BossProfiles.InfernusRewardId,out var profile);
+            return profile;
+        }
         private bool _eternalFlameWritingTimer;
         internal bool EternalFlameGeneratedDamage() => AttributionGeneratedOrigin() != GeneratedOrigin.None;
         private bool EternalFlameEquipped(Gem_U_EternalFlame gem, out HeroRuntime rt)
@@ -141,20 +150,19 @@ namespace SodRpg.Mod
             rt = null;
             if (!NetworkServer.active || gem == null || !gem.isValid || gem.owner == null || gem.skill == null
                 || gem.skill.owner != gem.owner || !_runtimes.TryGetValue(gem.owner, out rt) || !Alive(gem.owner) || gem.owner.isKnockedOut) return false;
-            bool slot = false;
-            foreach (var installed in gem.owner.Skill.gems) if (installed.Value == gem) { slot = true; break; }
-            if (!slot) return false;
+            if(gem.owner.Skill==null || !gem.owner.Skill.gems.TryGetValue(gem.location,out var equippedGem) || equippedGem!=gem) return false;
             foreach (var location in LinkSkills) if (gem.owner.Skill.GetSkill(location) == gem.skill) return true;
             return false;
         }
         private BossRewardAction EternalFlameAction(int stage, int index)
-            => BossProfiles.TryGetReward(BossProfiles.InfernusRewardId, out var profile) ? profile.Stages[stage - 1].Actions[index] : null;
+            => EternalFlameRewardProfile.Stages[stage - 1].Actions[index];
         private EternalFlameOwner EternalFlameState(HeroRuntime rt, int stage)
         {
             if (!_eternalFlameOwners.TryGetValue(rt, out var state))
             {
-                var stack = EternalFlameAction(2, 1);
-                state = new EternalFlameOwner { Targets = new Entity[stack.Count], TargetLife = new long[stack.Count], TargetReady = new float[stack.Count], Stage = stage };
+                state = _eternalFlameOwnerPool.Rent();
+                if(state==null) return null;
+                state.Stage=stage;
                 _eternalFlameOwners.Add(rt, state);
             }
             return state;
@@ -167,9 +175,13 @@ namespace SodRpg.Mod
                 || !curse.maxDuration.HasValue || !curse.remainingDuration.HasValue) return;
             if (!_eternalFlameCurses.TryGetValue(curse, out var capture) || !EternalFlameCurseCurrent(capture) || capture.Gem != gem)
             {
-                capture = new EternalFlameCurse { Curse = curse, Gem = gem, Runtime = rt, NativeMaximum = curse.maxDuration.Value,
-                    Life = BossNativeActorLife(curse), GemLife = BossNativeActorLife(gem), HeroLife = BossNativeActorLife(rt.Hero), VictimLife = BossNativeActorLife(curse.victim) };
-                _eternalFlameCurses[curse] = capture;
+                if(capture!=null) ReleaseEternalFlameCurse(curse);
+                var owner=EternalFlameState(rt,BossRewardStage(rt,BossProfiles.InfernusRewardId));
+                if(owner==null || owner.Curses.Count>=128) return;
+                capture=_eternalFlameCursePool.Rent(); if(capture==null) return;
+                capture.Curse=curse; capture.Gem=gem; capture.Runtime=rt; capture.NativeMaximum=curse.maxDuration.Value;
+                capture.Life=BossNativeActorLife(curse); capture.GemLife=BossNativeActorLife(gem); capture.HeroLife=BossNativeActorLife(rt.Hero); capture.VictimLife=BossNativeActorLife(curse.victim);
+                _eternalFlameCurses[curse] = capture; owner.Curses.Add(curse);
             }
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
             if (stage > 0 && capture.AddedMaximum == 0) ExtendEternalFlameTimer(capture, curse.maxDuration.Value, curse.remainingDuration.Value, stage);
@@ -242,6 +254,7 @@ namespace SodRpg.Mod
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
             if (stage < 2) return;
             var state = EternalFlameState(rt, stage);
+            if(state==null) return;
             var action = EternalFlameAction(stage, 1);
             float now = Time.time;
             if (now < state.StackReady) return;
@@ -267,10 +280,11 @@ namespace SodRpg.Mod
         internal bool ClaimEternalFlameMainPacket(Gem_U_EternalFlame gem, Actor actor, Entity target)
         {
             if (!EternalFlameNativePacket(gem, actor, target, out var rt, out var packet)
-                || packet.Identity.NativePayloadKind != NativePayloadKind.Skill || packet.Identity.SourceMemory != gem.skill.GetType().Name
+                || packet.Identity.NativePayloadKind != NativePayloadKind.Skill || packet.Identity.SourceMemory != NativeActorTypeName(gem.skill)
                 || (actor != gem.skill && actor.FindFirstAncestorOfType<SkillTrigger>() != gem.skill)) return false;
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
-            return stage == 3 && EternalFlameState(rt, stage).MainPackets.Add(packet.Identity.ActivationId);
+            var state=stage==3?EternalFlameState(rt,stage):null;
+            return state!=null && state.MainPackets.Add(packet.Identity.ActivationId);
         }
         internal int EternalFlameCritThreshold(int original, Gem_U_EternalFlame gem, Actor actor, Entity target, BossEternalFlameCritGate.Scope scope)
         {
@@ -278,13 +292,16 @@ namespace SodRpg.Mod
                 || !EternalFlameNativePacket(gem, actor, target, out var rt, out _) || BossRewardStage(rt, BossProfiles.InfernusRewardId) != 3) return original;
             var action = EternalFlameAction(3, 2);
             int threshold = action.ValueMilli / 1000;
-            if (target.Status.fireStack < threshold || target.Status.fireStack >= original || Time.time < EternalFlameState(rt, 3).CritReady) return original;
-            bool ownCurse = false;
-            foreach (var effect in target.Status.statusEffects)
-                if (effect is Se_U_EternalFlame_Curse curse && curse.isActive && curse.parentActor == gem && curse.info.caster == rt.Hero)
-                { ownCurse = true; break; }
-            if (!ownCurse) return original;
             var state = EternalFlameState(rt, 3);
+            if(state==null || target.Status.fireStack < threshold || target.Status.fireStack >= original || Time.time < state.CritReady) return original;
+            bool ownCurse = false;
+            for(int i=0;i<state.Curses.Count;i++)
+            {
+                var curse=state.Curses[i];
+                if(curse!=null && curse.victim==target && curse.isActive && curse.parentActor==gem && curse.info.caster==rt.Hero)
+                { ownCurse=true; break; }
+            }
+            if (!ownCurse) return original;
             state.CritReady = Time.time + action.CooldownMillis / 1000f;
             EternalFlameCritVisual(rt, state, Time.time);
             return threshold;
@@ -303,30 +320,30 @@ namespace SodRpg.Mod
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
             if (_eternalFlameOwners.TryGetValue(rt, out var state))
             {
-                if (state.Stage != stage) { ClearEternalFlame(rt); state = null; }
+                if (state.Stage != stage) { ClearEternalFlame(rt); state.Stage=stage; }
                 else if (stage == 3 && (state.CritVisual == 0 || state.CritVisualReady != (now >= state.CritReady) || now >= state.CritVisualUntil))
                     EternalFlameCritVisual(rt, state, now);
             }
             else if (stage > 0) state = EternalFlameState(rt, stage);
-            _eternalFlameScratch.Clear();
-            foreach (var pair in _eternalFlameCurses)
+            if(state==null) return;
+            for(int i=state.Curses.Count-1;i>=0;i--)
             {
-                var capture = pair.Value;
-                if (capture.Runtime != rt) continue;
-                if (!EternalFlameCurseCurrent(capture))
-                { RestoreEternalFlameTimer(capture); _eternalFlameScratch.Add(pair.Key); continue; }
-                if (stage == 0 || capture.Curse.parentActor != capture.Gem || capture.Curse.info.caster != rt.Hero
-                    || capture.Gem.owner != rt.Hero || !EternalFlameEquipped(capture.Gem, out _)) RestoreEternalFlameTimer(capture);
-                else if (capture.AddedMaximum == 0) CaptureEternalFlameCurse(capture.Curse);
+                var curse=state.Curses[i]; var capture=_eternalFlameCurses[curse];
+                if(!EternalFlameCurseCurrent(capture))
+                { RestoreEternalFlameTimer(capture); ReleaseEternalFlameCurse(curse); continue; }
+                if(stage==0 || capture.Curse.parentActor!=capture.Gem || capture.Curse.info.caster!=rt.Hero
+                    || capture.Gem.owner!=rt.Hero || !EternalFlameEquipped(capture.Gem,out _)) RestoreEternalFlameTimer(capture);
+                else if(capture.AddedMaximum==0) CaptureEternalFlameCurse(capture.Curse);
             }
-            foreach (var curse in _eternalFlameScratch) _eternalFlameCurses.Remove(curse);
+            if(stage==0 && state.Curses.Count==0) { _eternalFlameOwners.Remove(rt); _eternalFlameOwnerPool.Return(state); }
         }
         private void ClearEternalFlame(HeroRuntime rt)
         {
-            foreach (var pair in _eternalFlameCurses) if (pair.Value.Runtime == rt) RestoreEternalFlameTimer(pair.Value);
-            if (_eternalFlameOwners.TryGetValue(rt, out var state) && state.CritVisual != 0)
-                PublishBossVisual(rt, state.CritVisual, 9, rt.Hero.agentPosition, rt.Hero.agentPosition, 0, Time.time, Time.time, true);
-            _eternalFlameOwners.Remove(rt);
+            if(!_eternalFlameOwners.TryGetValue(rt,out var state)) return;
+            for(int i=0;i<state.Curses.Count;i++) RestoreEternalFlameTimer(_eternalFlameCurses[state.Curses[i]]);
+            if(state.CritVisual!=0) PublishBossVisual(rt,state.CritVisual,9,rt.Hero.agentPosition,rt.Hero.agentPosition,0,Time.time,Time.time,true);
+            state.MainPackets.Clear(); Array.Clear(state.Targets,0,state.Targets.Length); Array.Clear(state.TargetLife,0,state.TargetLife.Length); Array.Clear(state.TargetReady,0,state.TargetReady.Length);
+            state.StackReady=state.CritReady=state.CritVisualUntil=0; state.CritVisual=0; state.CritVisualReady=false; state.Stage=0;
         }
         internal void ClearEternalFlameActor(Actor actor)
         {
@@ -334,7 +351,7 @@ namespace SodRpg.Mod
             {
                 if (!_eternalFlameCurses.TryGetValue(curse, out var capture)) return;
                 RestoreEternalFlameTimer(capture);
-                _eternalFlameCurses.Remove(curse);
+                ReleaseEternalFlameCurse(curse);
                 return;
             }
             if (!(actor is Gem_U_EternalFlame) && !(actor is Hero)) return;
@@ -342,8 +359,21 @@ namespace SodRpg.Mod
             foreach (var pair in _eternalFlameCurses)
                 if (pair.Value.Gem == actor || pair.Value.Runtime.Hero == actor)
                 { RestoreEternalFlameTimer(pair.Value); _eternalFlameScratch.Add(pair.Key); }
-            foreach (var removed in _eternalFlameScratch) _eternalFlameCurses.Remove(removed);
-            if (actor is Hero hero && _runtimes.TryGetValue(hero, out var rt)) ClearEternalFlame(rt);
+            foreach (var removed in _eternalFlameScratch) ReleaseEternalFlameCurse(removed);
+            if(actor is Hero hero && _runtimes.TryGetValue(hero,out var rt))
+            {
+                ClearEternalFlame(rt);
+                if(_eternalFlameOwners.TryGetValue(rt,out var owner)) { _eternalFlameOwners.Remove(rt); owner.Curses.Clear(); _eternalFlameOwnerPool.Return(owner); }
+            }
+        }
+        private void ReleaseEternalFlameCurse(Se_U_EternalFlame_Curse curse)
+        {
+            if(!_eternalFlameCurses.TryGetValue(curse,out var capture)) return;
+            _eternalFlameCurses.Remove(curse);
+            if(_eternalFlameOwners.TryGetValue(capture.Runtime,out var owner)) owner.Curses.Remove(curse);
+            capture.Curse=null; capture.Gem=null; capture.Runtime=null; capture.NativeMaximum=capture.AddedMaximum=capture.AddedRemaining=0;
+            capture.Life=capture.GemLife=capture.HeroLife=capture.VictimLife=0;
+            _eternalFlameCursePool.Return(capture);
         }
     }
 }

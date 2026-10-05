@@ -4568,7 +4568,8 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("瞬駆の根履", "Blinkstride Treads"), "set.boss_demon", "boss_demon.feet"),
         }.Concat(BossProfiles.CreateSkollPieces()).Concat(BossProfiles.CreateInfernusPieces()).Concat(BossProfiles.CreateInkPieces())
             .Concat(BossProfiles.CreateNyxPieces()).Concat(BossProfiles.CreateErebosPieces()).Concat(BossProfiles.CreateSeekerPieces())
-            .Concat(BossProfiles.CreateAzurakPieces()).Concat(BossProfiles.CreatePrimusPieces()).ToArray();
+            .Concat(BossProfiles.CreateAzurakPieces()).Concat(BossProfiles.CreatePrimusPieces())
+            .Concat(BossProfiles.CreateLightPieces()).Concat(BossProfiles.CreateMawPieces()).Concat(BossProfiles.CreateObliviaxPieces()).Concat(BossProfiles.CreatePolarisPieces()).ToArray();
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
         {
@@ -4868,7 +4869,8 @@ namespace SodRpg.Core.Game
             },
         }.Concat(BossProfiles.CreateSkollSets()).Concat(BossProfiles.CreateInfernusSets()).Concat(BossProfiles.CreateInkSets())
             .Concat(BossProfiles.CreateNyxSets()).Concat(BossProfiles.CreateErebosSets()).Concat(BossProfiles.CreateSeekerSets())
-            .Concat(BossProfiles.CreateAzurakSets()).Concat(BossProfiles.CreatePrimusSets()).ToArray();
+            .Concat(BossProfiles.CreateAzurakSets()).Concat(BossProfiles.CreatePrimusSets())
+            .Concat(BossProfiles.CreateLightSets()).Concat(BossProfiles.CreateMawSets()).Concat(BossProfiles.CreateObliviaxSets()).Concat(BossProfiles.CreatePolarisSets()).ToArray();
 
         /// <summary>
         /// 48組すべてに SixPiece を入れ終えたら true にする（v1.31）。false の間は未入力のセットを許容し、

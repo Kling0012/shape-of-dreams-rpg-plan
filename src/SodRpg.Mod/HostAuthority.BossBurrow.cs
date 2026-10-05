@@ -111,10 +111,21 @@ namespace SodRpg.Mod
             internal string Run;
             internal float H, Spent;
             internal bool BudgetAdmitted, BudgetRejected;
-            internal DataProcessor<DamageData, Actor, Entity> Processor;
+            internal HostAuthority Host;
+            internal readonly DataProcessor<DamageData, Actor, Entity> Processor;
+            internal AzurakBurrowExit() { Processor=Process; }
+            private void Process(ref DamageData damage,Actor actor,Entity target)
+            { Host?.AzurakBurrowFlat(this,ref damage,actor,target); }
+            internal void Reset()
+            {
+                Host=null; Runtime=null; Instance=null; Parent=null; ParentActor=null; Skill=null; Room=null; Run=null;
+                InstanceLife=ParentLife=ParentActorLife=SkillLife=HeroLife=LastPacket=Visual=0;
+                H=Spent=0; BudgetAdmitted=BudgetRejected=false;
+            }
         }
-        private readonly Dictionary<Ai_U_Burrow_Emerge, AzurakBurrowExit> _azurakBurrows = new Dictionary<Ai_U_Burrow_Emerge, AzurakBurrowExit>();
-        private readonly List<Ai_U_Burrow_Emerge> _azurakBurrowExpired = new List<Ai_U_Burrow_Emerge>();
+        private readonly Dictionary<Ai_U_Burrow_Emerge, AzurakBurrowExit> _azurakBurrows = new Dictionary<Ai_U_Burrow_Emerge, AzurakBurrowExit>(64);
+        private readonly BossObjectPool<AzurakBurrowExit> _azurakBurrowPool = new BossObjectPool<AzurakBurrowExit>(64,()=>new AzurakBurrowExit());
+        private readonly List<Ai_U_Burrow_Emerge> _azurakBurrowExpired = new List<Ai_U_Burrow_Emerge>(64);
         internal void BeginAzurakBurrow(Ai_U_Burrow_Emerge instance, Se_U_Burrow parent)
         {
             if (instance != null && _azurakBurrows.TryGetValue(instance, out var existing)
@@ -127,16 +138,13 @@ namespace SodRpg.Mod
                 || !BossEnsure(rt) || BossRewardStage(rt, BossProfiles.AzurakRewardId) == 0
                 || !skill.isActive || skill.owner != hero || FindMemory(hero, nameof(St_U_Burrow)) != skill
                 || _azurakBurrows.Count >= 64) return;
-            var capture = new AzurakBurrowExit
-            {
-                Runtime = rt, Instance = instance, Parent = parent, ParentActor = parent.parentActor, Skill = skill,
-                InstanceLife = BossNativeActorLife(instance), ParentLife = BossNativeActorLife(parent),
-                ParentActorLife = BossNativeActorLife(parent.parentActor), SkillLife = BossNativeActorLife(skill), HeroLife = BossNativeActorLife(hero),
-                Room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,
-                Run = NetworkedManagerBase<GameManager>.softInstance?.runId,
-                H = Math.Max(hero.Status.attackDamage, hero.Status.abilityPower), Visual = ++rt.Boss.NextId
-            };
-            capture.Processor = (ref DamageData damage, Actor actor, Entity target) => AzurakBurrowFlat(capture, ref damage, actor, target);
+            if(AzurakOwner(rt)==null) return;
+            var capture=_azurakBurrowPool.Rent(); if(capture==null) return;
+            capture.Host=this; capture.Runtime=rt; capture.Instance=instance; capture.Parent=parent; capture.ParentActor=parent.parentActor; capture.Skill=skill;
+            capture.InstanceLife=BossNativeActorLife(instance); capture.ParentLife=BossNativeActorLife(parent);
+            capture.ParentActorLife=BossNativeActorLife(parent.parentActor); capture.SkillLife=BossNativeActorLife(skill); capture.HeroLife=BossNativeActorLife(hero);
+            capture.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom; capture.Run=NetworkedManagerBase<GameManager>.softInstance?.runId;
+            capture.H=Math.Max(hero.Status.attackDamage,hero.Status.abilityPower); capture.Visual=++rt.Boss.NextId;
             _azurakBurrows.Add(instance, capture);
             // Process after ordinary native amplifiers: compensate them rather than amplifying the flat budget again.
             instance.dealtDamageProcessor.Add(capture.Processor, int.MaxValue - 1);
@@ -191,7 +199,7 @@ namespace SodRpg.Mod
             if (nativeAmount <= 0 || multiplier <= 0 || float.IsNaN(nativeAmount) || float.IsInfinity(nativeAmount)
                 || float.IsNaN(multiplier) || float.IsInfinity(multiplier) || damage.isBlockedByImmunity) return;
             float now = Time.time;
-            var owner = AzurakOwner(capture.Runtime);
+            var owner=AzurakOwner(capture.Runtime); if(owner==null) return;
             if (!capture.BudgetAdmitted)
             {
                 if (now < owner.BurrowReady) { capture.BudgetRejected = true; return; }
@@ -215,6 +223,7 @@ namespace SodRpg.Mod
             if (instance != null && BossNativeSameLife(instance, capture.InstanceLife)) instance.dealtDamageProcessor.Remove(capture.Processor);
             PublishBossVisual(capture.Runtime, capture.Visual, 9, capture.Runtime.Hero.agentPosition, capture.Runtime.Hero.agentPosition, 0,
                 Time.time, Time.time, true, nativeLife: capture.InstanceLife);
+            capture.Reset(); _azurakBurrowPool.Return(capture);
         }
         private void TickAzurakBurrow(HeroRuntime rt)
         {

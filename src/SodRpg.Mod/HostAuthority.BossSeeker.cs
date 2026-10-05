@@ -16,21 +16,36 @@ namespace SodRpg.Mod
             internal Vector3 DoublePoint;
             internal bool Echo;
             internal string DoubleProfile;
+            internal void Reset()
+            { Phase=0; MainActivation=DoubleVisual=PhaseVisual=0; DoubleUntil=0; DoublePoint=default; Echo=false; DoubleProfile=null; }
         }
-        private readonly Dictionary<HeroRuntime,SeekerState> _seekerStates = new Dictionary<HeroRuntime,SeekerState>();
+        private readonly Dictionary<HeroRuntime,SeekerState> _seekerStates = new Dictionary<HeroRuntime,SeekerState>(64);
+        private readonly BossObjectPool<SeekerState> _seekerPool = new BossObjectPool<SeekerState>(64,()=>new SeekerState());
         private SeekerState SeekerGet(HeroRuntime rt)
         {
-            if (!_seekerStates.TryGetValue(rt,out var state)) _seekerStates.Add(rt,state=new SeekerState());
+            if (!_seekerStates.TryGetValue(rt,out var state))
+            {
+                if(_seekerStates.Count>=64 || (state=_seekerPool.Rent())==null) return null;
+                _seekerStates.Add(rt,state);
+            }
             return state;
         }
-        private static bool SeekerReady(HeroRuntime rt,BossAction action,float now) => !rt.Boss.Ready.TryGetValue(rt.Boss.ActionKeys[action],out var due) || now>=due;
-        private static void SeekerCommit(HeroRuntime rt,BossAction action,float now) => BossReady(rt,rt.Boss.ActionKeys[action],now,action.CooldownMillis);
+        private static bool SeekerReady(HeroRuntime rt,BossAction action,float now) => rt.Boss.Ready.TryGetValue(action.RuntimeKey,out var due) ? now>=due : rt.Boss.Ready.Count<128;
+        private static void SeekerCommit(HeroRuntime rt,BossAction action,float now) => BossReady(rt,action.RuntimeKey,now,action.CooldownMillis);
         private Entity SeekerNearestEnemy(HeroRuntime rt,float radius)
         {
             ListReturnHandle<Entity> handle;
             var enemies=DewPhysics.OverlapCircleAllEntities(out handle,rt.Hero.agentPosition,radius,EnemyFilter,rt.Hero);
             Entity nearest=null; float best=float.MaxValue;
-            try { foreach(var enemy in enemies) if(BossAlive(enemy)) { float d=(enemy.agentPosition-rt.Hero.agentPosition).Flattened().sqrMagnitude; if(d<best || d==best && (nearest==null || enemy.netId<nearest.netId)) { best=d; nearest=enemy; } } }
+            try
+            {
+                for(int i=0,limit=Math.Min(256,enemies.Count);i<limit;i++)
+                {
+                    var enemy=enemies[i]; if(!BossAlive(enemy)) continue;
+                    float d=(enemy.agentPosition-rt.Hero.agentPosition).Flattened().sqrMagnitude;
+                    if(d<best || d==best && (nearest==null || enemy.netId<nearest.netId)) { best=d; nearest=enemy; }
+                }
+            }
             finally { handle.Return(); }
             return nearest;
         }
@@ -50,12 +65,17 @@ namespace SodRpg.Mod
             if(!BossGround(origin,point,8,out var legal)) return false;
             var action=phase.Actions[index];
             if(index==0) return rt.Boss.Projectiles.Execute(this,rt,BossProfiles.SeekerSetId,action,origin,legal,amount,BossMagic(rt),now,explodeAtEnd:true,terminalRadius:1.5f,profile:source);
-            return BossReserveSequence(rt,BossProfiles.SeekerSetId,source,new[]{new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),action.DelayMillis)},now,1);
+            var pulses=rt.Boss.Sequence.Reset();
+            pulses.Add(new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),action.DelayMillis));
+            return BossReserveSequence(rt,BossProfiles.SeekerSetId,source,pulses,now,1);
         }
         private void DispatchSeekerBoss(HeroRuntime rt,BossEvent kind,long activation,Entity victim,Vector3 point,float now)
         {
             if(!NetworkServer.active || activation==0 || !BossAlive(rt.Hero)) return;
-            var state=SeekerGet(rt); var origin=rt.Hero.agentPosition;
+            bool owned=false;
+            for(int i=0;i<rt.Boss.Build.BossMoves.Count;i++) if(rt.Boss.Build.BossMoves[i].SetId==BossProfiles.SeekerSetId) { owned=true; break; }
+            if(!owned) return;
+            var state=SeekerGet(rt); if(state==null) return; var origin=rt.Hero.agentPosition;
             if(state.DoubleUntil>0 && now>=state.DoubleUntil) SeekerRemoveDouble(rt,state,now);
             if(kind==BossEvent.MainHit && state.MainActivation!=activation && BossFind(rt,"boss_seeker.stage2",out var phaseEntry,out var phase))
             {
@@ -74,8 +94,9 @@ namespace SodRpg.Mod
                 SeekerDouble(rt,state,rt.Boss.MovementOrigin,now,3000,true,doubleProfile.Id); SeekerCommit(rt,doubleProfile.Actions[0],now);
             }
             Entity nearest=null; bool searched=false;
-            foreach(var entry in rt.Powers.Build.BossMoves)
+            for(int bossMoveIndex=0;bossMoveIndex<rt.Powers.Build.BossMoves.Count;bossMoveIndex++)
             {
+                var entry=rt.Powers.Build.BossMoves[bossMoveIndex];
                 if(entry.SetId!=BossProfiles.SeekerSetId || entry.ProfileId=="boss_seeker.stage2" || entry.ProfileId=="boss_seeker.stage3" || !BossProfiles.TryGetMove(entry.ProfileId,out var profile)) continue;
                 var action=profile.Actions[0]; if(action.Event!=kind || !SeekerReady(rt,action,now)) continue;
                 float amount=BossAmount(rt,entry,profile,action.ChannelId); bool success=false;
@@ -90,26 +111,46 @@ namespace SodRpg.Mod
                 }
                 else if(profile.Id=="boss_seeker.feet")
                 {
-                    if(rt.Boss.MovementOriginValid) { var departure=rt.Boss.MovementOrigin; success=BossReserveSequence(rt,profile.SetId,profile.Id,new[]{new BossScheduledPulse(action,departure,departure,amount,BossMagic(rt),300,stunMillis:250)},now,1); }
+                    if(rt.Boss.MovementOriginValid)
+                    {
+                        var departure=rt.Boss.MovementOrigin; var pulses=rt.Boss.Sequence.Reset();
+                        pulses.Add(new BossScheduledPulse(action,departure,departure,amount,BossMagic(rt),300,stunMillis:250));
+                        success=BossReserveSequence(rt,profile.SetId,profile.Id,pulses,now,1);
+                    }
                 }
                 else if(profile.Id=="boss_seeker.head")
                 {
-                    if(BossGround(origin,point,8,out var legal)) success=BossReserveSequence(rt,profile.SetId,profile.Id,new[]{new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),400)},now,1);
+                    if(BossGround(origin,point,8,out var legal))
+                    {
+                        var pulses=rt.Boss.Sequence.Reset();
+                        pulses.Add(new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),400));
+                        success=BossReserveSequence(rt,profile.SetId,profile.Id,pulses,now,1);
+                    }
                 }
                 else
                 {
                     if(!searched) { nearest=SeekerNearestEnemy(rt,8); searched=true; }
                     if(nearest==null || !BossGround(origin,nearest.agentPosition,8,out var legal)) continue;
                     if(profile.Id=="boss_seeker.charm") success=rt.Boss.Projectiles.Execute(this,rt,profile.SetId,action,origin,legal,amount,BossMagic(rt),now,explodeAtEnd:true,terminalRadius:1.5f,profile:profile.Id,adoptedTarget:nearest,explodeOnHit:true,homing:true,expireAtLifetime:true);
-                    else if(profile.Id=="boss_seeker.hands") success=BossReserveSequence(rt,profile.SetId,profile.Id,new[]{new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),500),new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),1500)},now,1,2000);
+                    else if(profile.Id=="boss_seeker.hands")
+                    {
+                        var pulses=rt.Boss.Sequence.Reset();
+                        pulses.Add(new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),500));
+                        pulses.Add(new BossScheduledPulse(action,legal,legal,amount,BossMagic(rt),1500));
+                        success=BossReserveSequence(rt,profile.SetId,profile.Id,pulses,now,1,2000);
+                    }
                     else if(profile.Id=="boss_seeker.stage6")
                     {
                         var direction=BossDirection(origin,legal); if(direction==Vector3.zero) direction=rt.Hero.transform.forward.Flattened().normalized;
                         var end=legal+direction*4;
                         if(BossGround(legal,end,4,out end))
                         {
-                            success=BossReserveSequence(rt,profile.SetId,profile.Id,new[]{new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),500),new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),750),new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),1000)},now,1);
-                            if(success) rt.Boss.Defense.Execute(this,rt,profile.Id+".shield",profile.Actions[1],BossAmount(rt,entry,profile,"SeekerClawGuard"),now);
+                            var pulses=rt.Boss.Sequence.Reset();
+                            pulses.Add(new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),500));
+                            pulses.Add(new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),750));
+                            pulses.Add(new BossScheduledPulse(action,legal,end,amount/3,BossMagic(rt),1000));
+                            success=BossReserveSequence(rt,profile.SetId,profile.Id,pulses,now,1);
+                            if(success) rt.Boss.Defense.Execute(this,rt,"boss_seeker.stage6.shield",profile.Actions[1],BossAmount(rt,entry,profile,"SeekerClawGuard"),now);
                         }
                     }
                 }
@@ -127,7 +168,11 @@ namespace SodRpg.Mod
         }
         private void ClearSeekerBoss(HeroRuntime rt,bool preserveRewards=false)
         {
-            if(_seekerStates.TryGetValue(rt,out var state)) { SeekerRemoveDouble(rt,state,Time.time); _seekerStates.Remove(rt); }
+            if(_seekerStates.TryGetValue(rt,out var state))
+            {
+                SeekerRemoveDouble(rt,state,Time.time); _seekerStates.Remove(rt);
+                state.Reset(); _seekerPool.Return(state);
+            }
             ClearSeekerSoulPrison(rt,preserveRewards);
         }
     }

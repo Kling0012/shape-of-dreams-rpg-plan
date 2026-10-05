@@ -18,6 +18,13 @@ namespace SodRpg.Mod
             internal float CycleUntil, GlyphUntil, ModeRefresh;
             internal Vector3 Glyph;
             internal long ModeVisual, CycleVisual, GlyphVisual;
+            internal long Epoch;
+            internal void Reset()
+            {
+                MainInputs.Clear(); MemoryInputs.Clear(); MovementInputs.Clear(); DamageInputs.Clear();
+                Mode=-1; SeenKinds=EquippedMask=0; CycleUntil=GlyphUntil=ModeRefresh=0; Glyph=default;
+                ModeVisual=CycleVisual=GlyphVisual=Epoch=0;
+            }
         }
         private static readonly string[] PrimusProfiles =
         {
@@ -25,21 +32,23 @@ namespace SodRpg.Mod
             "boss_primus_aeron.head", "boss_primus_aeron.hands", "boss_primus_aeron.feet",
             "boss_primus_aeron.stage2", "boss_primus_aeron.stage3", "boss_primus_aeron.stage6",
         };
-        private readonly Dictionary<HeroRuntime, PrimusCombat> _primusCombat = new Dictionary<HeroRuntime, PrimusCombat>();
+        private readonly Dictionary<HeroRuntime, PrimusCombat> _primusCombat = new Dictionary<HeroRuntime, PrimusCombat>(64);
+        private readonly BossObjectPool<PrimusCombat> _primusPool = new BossObjectPool<PrimusCombat>(64,()=>new PrimusCombat());
         private PrimusCombat PrimusState(HeroRuntime rt)
         {
             if (!_primusCombat.TryGetValue(rt, out var state))
             {
-                _primusCombat.Add(rt, state = new PrimusCombat());
+                if(_primusCombat.Count>=64 || (state=_primusPool.Rent())==null) return null;
+                state.Epoch=rt.ShieldEquipmentEpoch; _primusCombat.Add(rt,state);
                 for (int i = 0; i < PrimusProfiles.Length; i++)
                     if (BossFind(rt, PrimusProfiles[i], out _, out _)) state.EquippedMask |= 1 << i;
             }
             return state;
         }
         private static bool PrimusAvailable(HeroRuntime rt, BossAction action, float now)
-            => rt.Boss.ActionKeys.TryGetValue(action, out var key) && (!rt.Boss.Ready.TryGetValue(key, out var due) || now >= due);
+            => rt.Boss.Ready.TryGetValue(action.RuntimeKey,out var due) ? now>=due : rt.Boss.Ready.Count<128;
         private static void PrimusCommit(HeroRuntime rt, BossAction action, float now)
-            => rt.Boss.Ready[rt.Boss.ActionKeys[action]] = now + action.CooldownMillis / 1000f;
+            => BossReady(rt,action.RuntimeKey,now,action.CooldownMillis);
         private static Vector3 PrimusDirection(HeroRuntime rt, BossEvent kind)
         {
             Vector3 direction = kind == BossEvent.MemoryUse && rt.Boss.MemoryDirectionValid
@@ -49,20 +58,23 @@ namespace SodRpg.Mod
         }
         private static float PrimusAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool shield = false)
         {
-            foreach (var channel in profile.Channels)
+            for(int i=0;i<profile.Channels.Count;i++)
+            {
+                var channel=profile.Channels[i];
                 if (channel.ChannelId == channelId)
                     return Math.Max(0f, shield ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
                         * Math.Min(BossCoefficient(entry, profile, channel.ChannelId), channel.CapMilli / 100000f);
+            }
             return 0;
         }
         private void DispatchPrimusBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;
             bool owned = false;
-            foreach (var entry in rt.Boss.Build.BossMoves)
-                if (entry.SetId == BossProfiles.PrimusSetId) { owned = true; break; }
+            for(int i=0;i<rt.Boss.Build.BossMoves.Count;i++)
+                if(rt.Boss.Build.BossMoves[i].SetId==BossProfiles.PrimusSetId) { owned=true; break; }
             if (!owned) return;
-            var state = PrimusState(rt);
+            var state=PrimusState(rt); if(state==null) return;
             bool admitted = kind == BossEvent.MainHit ? state.MainInputs.Add(activation)
                 : kind == BossEvent.MemoryUse ? state.MemoryInputs.Add(activation)
                 : kind == BossEvent.MovementCompleted ? state.MovementInputs.Add(activation)
@@ -70,8 +82,9 @@ namespace SodRpg.Mod
             if (!admitted) return;
             if (kind == BossEvent.MainHit || kind == BossEvent.MemoryUse || kind == BossEvent.MovementCompleted)
                 PrimusPhaseInput(rt, state, kind, point, now);
-            foreach (var entry in rt.Boss.Build.BossMoves)
+            for(int bossMoveIndex=0;bossMoveIndex<rt.Boss.Build.BossMoves.Count;bossMoveIndex++)
             {
+                var entry=rt.Boss.Build.BossMoves[bossMoveIndex];
                 if (entry.SetId != BossProfiles.PrimusSetId || entry.ProfileId == PrimusProfiles[6]
                     || entry.ProfileId == PrimusProfiles[7] || entry.ProfileId == PrimusProfiles[8]
                     || !BossProfiles.TryGetMove(entry.ProfileId, out var profile)) continue;
@@ -95,11 +108,12 @@ namespace SodRpg.Mod
                         if (!BossGround(center, point, action.RangeMilli / 1000f, out var legal)) continue;
                         center = legal; end = legal;
                     }
-                    var pulses = new BossScheduledPulse[action.Count];
+                    if(action.Count>32) continue;
+                    var pulses=rt.Boss.Sequence.Reset();
                     float amount = PrimusAmount(rt, entry, profile, action.ChannelId) / action.Count;
                     bool magic = BossMagic(rt);
-                    for (int i = 0; i < pulses.Length; i++)
-                        pulses[i] = new BossScheduledPulse(action, center, end, amount, magic, action.DelayMillis + i * action.IntervalMillis);
+                    for (int i=0;i<action.Count;i++)
+                        if(!pulses.Add(new BossScheduledPulse(action,center,end,amount,magic,action.DelayMillis+i*action.IntervalMillis))) return;
                     success = BossReserveSequence(rt, entry.SetId, profile.Id, pulses, now, action.MaxInstances);
                 }
                 if (success) PrimusCommit(rt, action, now);
@@ -135,9 +149,9 @@ namespace SodRpg.Mod
             bool glyph = kind != BossEvent.MovementCompleted && PrimusGlyphOrigin(rt, state, now, out origin);
             int delay = glyph ? 350 : 0;
             var end = origin + direction * (action.RangeMilli / 1000f);
-            if (!BossReserveSequence(rt, entry.SetId, profile.Id,
-                new[] { new BossScheduledPulse(action, origin, end, PrimusAmount(rt, entry, profile, action.ChannelId), BossMagic(rt), delay) },
-                now, 1)) return;
+            var pulses=rt.Boss.Sequence.Reset();
+            pulses.Add(new BossScheduledPulse(action,origin,end,PrimusAmount(rt,entry,profile,action.ChannelId),BossMagic(rt),delay));
+            if (!BossReserveSequence(rt,entry.SetId,profile.Id,pulses,now,1)) return;
             PrimusCommit(rt, shared, now);
             if (glyph) PrimusClearGlyph(rt, state, now);
         }
@@ -161,11 +175,11 @@ namespace SodRpg.Mod
             PrimusGlyphOrigin(rt, state, now, out var origin);
             float amount = PrimusAmount(rt, entry, profile, "PrimusConfluence") / 3f;
             bool magic = BossMagic(rt);
-            var pulses = new BossScheduledPulse[3];
-            for (int i = 0; i < pulses.Length; i++)
+            var pulses=rt.Boss.Sequence.Reset();
+            for (int i=0;i<3;i++)
             {
                 var action = profile.Actions[1 + i];
-                pulses[i] = new BossScheduledPulse(action, origin, origin + direction * (action.RangeMilli / 1000f), amount, magic, action.DelayMillis);
+                pulses.Add(new BossScheduledPulse(action,origin,origin+direction*(action.RangeMilli/1000f),amount,magic,action.DelayMillis));
             }
             if (BossReserveSequence(rt, entry.SetId, profile.Id, pulses, now, 1))
             {
@@ -231,25 +245,27 @@ namespace SodRpg.Mod
             BossCancelProfileReservations(rt, BossProfiles.PrimusSetId, id);
             rt.Boss.Defense.CancelSource(this, rt, id);
             if (BossProfiles.TryGetMove(id, out var profile))
-                for (int i = 0; i < profile.Actions.Count; i++) rt.Boss.Ready.Remove(id + "." + i);
+                for (int i=0;i<profile.Actions.Count;i++) rt.Boss.Ready.Remove(profile.Actions[i].RuntimeKey);
         }
         private void TickPrimusBoss(HeroRuntime rt, float now)
         {
             if (!_primusCombat.TryGetValue(rt, out var state)) return;
             if (rt.Boss.Build == null || !BossAlive(rt.Hero)) { ClearPrimusBoss(rt); return; }
-            int equippedMask = 0;
-            for (int i = 0; i < PrimusProfiles.Length; i++)
+            if(state.Epoch!=rt.ShieldEquipmentEpoch)
             {
-                if (BossFind(rt, PrimusProfiles[i], out _, out _)) equippedMask |= 1 << i;
-                else if ((state.EquippedMask & (1 << i)) != 0) PrimusCancelProfile(rt, PrimusProfiles[i]);
+                state.Epoch=rt.ShieldEquipmentEpoch;
+                int equippedMask=0;
+                for(int i=0;i<PrimusProfiles.Length;i++)
+                {
+                    if(BossFind(rt,PrimusProfiles[i],out _,out _)) equippedMask|=1<<i;
+                    else if((state.EquippedMask&(1<<i))!=0) PrimusCancelProfile(rt,PrimusProfiles[i]);
+                }
+                state.EquippedMask=equippedMask;
+                if(equippedMask==0) { ClearPrimusBoss(rt); return; }
+                if((equippedMask&(1<<6))==0) { state.Mode=-1; PrimusModeVisual(rt,state,now); }
+                if((equippedMask&(1<<7))==0) PrimusClearGlyph(rt,state,now);
+                if((equippedMask&(1<<8))==0) { state.SeenKinds=0; state.CycleUntil=0; PrimusCycleVisual(rt,state,now); }
             }
-            state.EquippedMask = equippedMask;
-            if (equippedMask == 0) { ClearPrimusBoss(rt); return; }
-            if ((equippedMask & (1 << 6)) == 0)
-            { state.Mode = -1; PrimusModeVisual(rt, state, now); }
-            if ((equippedMask & (1 << 7)) == 0) PrimusClearGlyph(rt, state, now);
-            if ((equippedMask & (1 << 8)) == 0)
-            { state.SeenKinds = 0; state.CycleUntil = 0; PrimusCycleVisual(rt, state, now); }
             PrimusExpire(rt, state, now);
             if (state.Mode >= 0 && now >= state.ModeRefresh) PrimusModeVisual(rt, state, now);
         }
@@ -262,6 +278,7 @@ namespace SodRpg.Mod
                 state.Mode = -1; PrimusModeVisual(rt, state, now);
                 state.SeenKinds = 0; PrimusCycleVisual(rt, state, now);
                 _primusCombat.Remove(rt);
+                state.Reset(); _primusPool.Return(state);
             }
             foreach (var id in PrimusProfiles) PrimusCancelProfile(rt, id);
         }

@@ -16,12 +16,15 @@ namespace SodRpg.Mod
         {
             if (entity == null || entity.Status == null) return 0f;
             float amount = 0f;
-            foreach (var status in entity.Status.statusEffects)
-                if (status != null && status.isActive)
-                    foreach (var effect in status.basicEffects)
-                        if (effect is ShieldEffect shield && shield.isAlive) amount += Math.Max(0f, shield.amount);
+            var effects = NativeShieldEffects(entity.Status);
+            for (int i = 0; i < effects.Count && i < 256; i++)
+                if (effects[i] is ShieldEffect shield && shield.isAlive && shield.parent != null && shield.parent.isActive)
+                    amount += Math.Max(0f, shield.amount);
             return amount;
         }
+        private static readonly HarmonyLib.AccessTools.FieldRef<EntityStatus, List<BasicEffect>> NativeShieldEffects =
+            HarmonyLib.AccessTools.FieldRefAccess<EntityStatus, List<BasicEffect>>("_basicEffects");
+        private static void PrewarmNativeShieldSnapshot() { _ = NativeShieldEffects; }
         private readonly HashSet<Entity> _nativeDeathEntities = new HashSet<Entity>();
         internal void OnNativeElementApplied(EventInfoApplyElemental info) => OnApplyElemental(info);
 
@@ -51,15 +54,31 @@ namespace SodRpg.Mod
 
         private int _powerSupportDepth;
 
-        private static IEnumerable<SkillTrigger> NormalMemories(Hero hero)
+        private readonly struct NormalMemoryRange
         {
-            if (hero == null || hero.Skill == null) yield break;
-            foreach (var loc in NormalMemorySlots)
+            private readonly Hero _hero;
+            internal NormalMemoryRange(Hero hero) { _hero = hero; }
+            public Enumerator GetEnumerator() => new Enumerator(_hero);
+            internal struct Enumerator
             {
-                var skill = hero.Skill.GetSkill(loc);
-                if (skill != null && skill.type == SkillType.Normal) yield return skill;
+                private readonly Hero _hero;
+                private int _index;
+                public SkillTrigger Current { get; private set; }
+                internal Enumerator(Hero hero) { _hero = hero; _index = -1; Current = null; }
+                public bool MoveNext()
+                {
+                    if (_hero == null || _hero.Skill == null) return false;
+                    while (++_index < NormalMemorySlots.Length)
+                    {
+                        var skill = _hero.Skill.GetSkill(NormalMemorySlots[_index]);
+                        if (skill == null || skill.type != SkillType.Normal) continue;
+                        Current = skill; return true;
+                    }
+                    Current = null; return false;
+                }
             }
         }
+        private static NormalMemoryRange NormalMemories(Hero hero) => new NormalMemoryRange(hero);
 
         internal static bool AllNormalMemoriesReady(Entity entity)
         {

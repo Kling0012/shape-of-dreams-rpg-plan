@@ -13,23 +13,29 @@ namespace SodRpg.Mod
             internal int Marks;
             internal float MarksUntil;
             internal long MarkVisual;
-            internal readonly Dictionary<Gem_U_GlacialCore, SkollCoreState> Cores = new Dictionary<Gem_U_GlacialCore, SkollCoreState>();
-            internal readonly List<Gem_U_GlacialCore> ExpiredCores = new List<Gem_U_GlacialCore>();
+            internal readonly Dictionary<Gem_U_GlacialCore, SkollCoreState> Cores = new Dictionary<Gem_U_GlacialCore, SkollCoreState>(BossProfiles.MaxEntries);
+            internal readonly List<Gem_U_GlacialCore> ExpiredCores = new List<Gem_U_GlacialCore>(BossProfiles.MaxEntries);
         }
-        private readonly Dictionary<HeroRuntime, SkollState> _skollStates = new Dictionary<HeroRuntime, SkollState>();
+        private readonly BossObjectPool<SkollState> _skollStatePool = new BossObjectPool<SkollState>(64, () => new SkollState());
+        private readonly Dictionary<HeroRuntime, SkollState> _skollStates = new Dictionary<HeroRuntime, SkollState>(64);
         private SkollState SkollOwnerState(HeroRuntime rt)
         {
-            if (!_skollStates.TryGetValue(rt, out var state)) _skollStates.Add(rt, state = new SkollState());
+            if (!_skollStates.TryGetValue(rt, out var state))
+            {
+                state = _skollStatePool.Rent();
+                if (state == null) return null;
+                _skollStates.Add(rt, state);
+            }
             return state;
         }
         private static bool SkollCooldownAvailable(HeroRuntime rt, BossAction action, float now)
-            => !rt.Boss.Ready.TryGetValue(rt.Boss.ActionKeys[action], out var due) || now >= due;
+            => !rt.Boss.Ready.TryGetValue(action.RuntimeKey, out var due) || now >= due;
         private static void SkollCommitAction(HeroRuntime rt, BossAction action, float now)
         {
-            BossReady(rt, rt.Boss.ActionKeys[action], now, action.CooldownMillis);
-            if (action.MainHits > 0) rt.Boss.Ledger.Consume(rt.Boss.ActionKeys[action]);
+            BossReady(rt, action.RuntimeKey, now, action.CooldownMillis);
+            if (action.MainHits > 0) rt.Boss.Ledger.Consume(action.RuntimeKey);
         }
-        private bool SkollReserve(HeroRuntime rt, BossMoveProfile profile, BossAction action, BossScheduledPulse[] pulses, float now, int lifetime = 0)
+        private bool SkollReserve(HeroRuntime rt, BossMoveProfile profile, BossAction action, BossPulseBuffer pulses, float now, int lifetime = 0)
         {
             if (!SkollCooldownAvailable(rt, action, now)
                 || !BossReserveSequence(rt, profile.SetId, profile.Id, pulses, now, action.MaxInstances, lifetime)) return false;
@@ -51,17 +57,19 @@ namespace SodRpg.Mod
             var end = fixedPoint + dir * (action.RangeMilli / 2000f);
             if (!BossGround(fixedPoint, start, action.RangeMilli / 2000f, out start)
                 || !BossGround(start, end, action.RangeMilli / 1000f, out end)) return false;
-            return SkollReserve(rt, profile, action, new[] { new BossScheduledPulse(action,start,end,BossAmount(rt,entry,profile,action.ChannelId),BossMagic(rt),action.DelayMillis) }, now);
+            var pulses = rt.Boss.Sequence.Reset();
+            if (!pulses.Add(new BossScheduledPulse(action,start,end,BossAmount(rt,entry,profile,action.ChannelId),BossMagic(rt),action.DelayMillis))) return false;
+            return SkollReserve(rt, profile, action, pulses, now);
         }
         private void SkollArrowField(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, Vector3 fixedPoint, float now)
         {
             var initial = profile.Actions[0]; var ticks = profile.Actions[1];
             if (!SkollCooldownAvailable(rt, initial, now)) return;
-            var pulses = new BossScheduledPulse[1 + ticks.Count];
+            var pulses = rt.Boss.Sequence.Reset();
             bool magic = BossMagic(rt);
-            pulses[0] = new BossScheduledPulse(initial,fixedPoint,fixedPoint,BossAmount(rt,entry,profile,initial.ChannelId),magic,initial.DelayMillis);
+            if (!pulses.Add(new BossScheduledPulse(initial,fixedPoint,fixedPoint,BossAmount(rt,entry,profile,initial.ChannelId),magic,initial.DelayMillis))) return;
             float tickDamage = BossAmount(rt,entry,profile,ticks.ChannelId);
-            for (int i = 0; i < ticks.Count; i++) pulses[i + 1] = new BossScheduledPulse(ticks,fixedPoint,fixedPoint,tickDamage,magic,ticks.DelayMillis + i * ticks.IntervalMillis);
+            for (int i = 0; i < ticks.Count; i++) if (!pulses.Add(new BossScheduledPulse(ticks,fixedPoint,fixedPoint,tickDamage,magic,ticks.DelayMillis + i * ticks.IntervalMillis))) return;
             SkollReserve(rt,profile,initial,pulses,now,initial.DelayMillis + initial.LifetimeMillis);
         }
         private void SkollRain(HeroRuntime rt, Vector3 fixedPoint, float now)
@@ -69,7 +77,7 @@ namespace SodRpg.Mod
             if (!BossFind(rt,"boss_skoll.stage6",out var entry,out var profile)) return;
             var rain = profile.Actions[0]; var shield = profile.Actions[1];
             if (!SkollCooldownAvailable(rt,rain,now)) return;
-            var pulses = new BossScheduledPulse[rain.Count + 1];
+            var pulses = rt.Boss.Sequence.Reset();
             float damage = BossAmount(rt,entry,profile,rain.ChannelId) / rain.Count;
             bool magic = BossMagic(rt);
             for (int i = 0; i < rain.Count; i++)
@@ -77,9 +85,9 @@ namespace SodRpg.Mod
                 var dir = Quaternion.Euler(0,360f * i / rain.Count,0) * Vector3.forward;
                 var desired = fixedPoint + dir * (rain.RangeMilli / 1000f);
                 if (!BossGround(fixedPoint,desired,rain.RangeMilli / 1000f,out var legal)) return;
-                pulses[i] = new BossScheduledPulse(rain,legal,legal,damage,magic,rain.DelayMillis + i * rain.IntervalMillis);
+                if (!pulses.Add(new BossScheduledPulse(rain,legal,legal,damage,magic,rain.DelayMillis + i * rain.IntervalMillis))) return;
             }
-            pulses[rain.Count] = new BossScheduledPulse(shield,rt.Hero.agentPosition,rt.Hero.agentPosition,BossAmount(rt,entry,profile,shield.ChannelId),magic,shield.DelayMillis);
+            if (!pulses.Add(new BossScheduledPulse(shield,rt.Hero.agentPosition,rt.Hero.agentPosition,BossAmount(rt,entry,profile,shield.ChannelId),magic,shield.DelayMillis))) return;
             SkollReserve(rt,profile,rain,pulses,now);
         }
         private void SkollPublishMarks(HeroRuntime rt, SkollState state, float now)
@@ -94,7 +102,9 @@ namespace SodRpg.Mod
             var owner = rt.Hero.agentPosition;
             if ((kind == BossEvent.MainHit || kind == BossEvent.MemoryUse) && BossFind(rt,"boss_skoll.stage2",out var sealEntry,out var sealProfile))
             {
-                var state = SkollOwnerState(rt); var mark = sealProfile.Actions[kind == BossEvent.MainHit ? 0 : 1]; var slash = sealProfile.Actions[2];
+                var state = SkollOwnerState(rt);
+                if (state == null) return;
+                var mark = sealProfile.Actions[kind == BossEvent.MainHit ? 0 : 1]; var slash = sealProfile.Actions[2];
                 if (now >= state.MarksUntil) state.Marks = 0;
                 if (state.Marks >= mark.Count)
                 {
@@ -113,13 +123,15 @@ namespace SodRpg.Mod
                 }
                 SkollPublishMarks(rt,state,now);
             }
-            foreach (var entry in rt.Powers.Build.BossMoves)
+            var moves = rt.Powers.Build.BossMoves;
+            for (int moveIndex = 0; moveIndex < moves.Count && moveIndex < BossProfiles.MaxEntries; moveIndex++)
             {
+                var entry = moves[moveIndex];
                 if (entry.SetId != BossProfiles.SkollSetId || !BossProfiles.TryGetMove(entry.ProfileId,out var profile)
                     || profile.Id == "boss_skoll.stage2" || profile.Id == "boss_skoll.stage3" || profile.Id == "boss_skoll.stage6") continue;
                 var action = profile.Actions[0];
                 if (action.Event != kind) continue;
-                string key = rt.Boss.ActionKeys[action];
+                string key = action.RuntimeKey;
                 if (action.MainHits > 0 && !rt.Boss.Ledger.Advance(key,activation,action.MainHits,action.CounterLifetimeMillis / 1000f,now)
                     || !SkollCooldownAvailable(rt,action,now)) continue;
                 if (profile.Id == "boss_skoll.weapon") { SkollSlash(rt,entry,profile,action,point,now,out _); continue; }
@@ -132,25 +144,27 @@ namespace SodRpg.Mod
                 if (profile.Id == "boss_skoll.head")
                 {
                     var side = Vector3.Cross(Vector3.up,SkollFacing(rt,point));
-                    var pulses = new BossScheduledPulse[action.Count]; bool valid = true;
+                    var pulses = rt.Boss.Sequence.Reset(); bool valid = true;
                     for (int i = 0; i < action.Count; i++)
                     {
                         var desired = point + side * ((i - (action.Count - 1) / 2f) * action.WidthMilli / 1000f);
                         if (!BossGround(point,desired,Math.Abs(i - (action.Count - 1) / 2f) * action.WidthMilli / 1000f,out var legal)) { valid = false; break; }
-                        pulses[i] = new BossScheduledPulse(action,legal,legal,amount,magic,action.DelayMillis + i * action.IntervalMillis);
+                        if (!pulses.Add(new BossScheduledPulse(action,legal,legal,amount,magic,action.DelayMillis + i * action.IntervalMillis))) { valid = false; break; }
                     }
                     if (valid) SkollReserve(rt,profile,action,pulses,now);
                 }
                 else if (profile.Id == "boss_skoll.feet")
                 {
-                    var pulses = new BossScheduledPulse[action.Count];
-                    for (int i = 0; i < action.Count; i++) pulses[i] = new BossScheduledPulse(action,owner,owner,amount,magic,action.DelayMillis + i * action.IntervalMillis);
+                    var pulses = rt.Boss.Sequence.Reset(); bool valid = true;
+                    for (int i = 0; i < action.Count; i++) if (!pulses.Add(new BossScheduledPulse(action,owner,owner,amount,magic,action.DelayMillis + i * action.IntervalMillis))) { valid = false; break; }
+                    if (!valid) continue;
                     SkollReserve(rt,profile,action,pulses,now,action.LifetimeMillis);
                 }
                 else
                 {
                     var end = profile.Id == "boss_skoll.hands" ? owner + SkollFacing(rt,point) * (action.RangeMilli / 1000f) : owner;
-                    SkollReserve(rt,profile,action,new[] { new BossScheduledPulse(action,owner,end,amount,magic,action.DelayMillis) },now);
+                    var pulses = rt.Boss.Sequence.Reset();
+                    if (pulses.Add(new BossScheduledPulse(action,owner,end,amount,magic,action.DelayMillis))) SkollReserve(rt,profile,action,pulses,now);
                 }
             }
         }
@@ -169,6 +183,8 @@ namespace SodRpg.Mod
             if (!_skollStates.TryGetValue(rt,out var state)) return;
             ClearSkollCores(rt,state);
             _skollStates.Remove(rt);
+            state.Marks = 0; state.MarksUntil = 0; state.MarkVisual = 0;
+            _skollStatePool.Return(state);
         }
     }
 }

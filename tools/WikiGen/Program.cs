@@ -167,8 +167,8 @@ foreach (var slot in slots)
     var bossSets = Content.Sets.Where(s => s.BossTypeName != null).ToArray();
     int bossAdapters = BossProfiles.Rewards.Select(r => r.Adapter).Distinct().Count();
     sb.Append(H2("ボス限定セット / Boss-exclusive sets"));
-    sb.Append($"登録済み {bossSets.Length} セット・{bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} 部位・{bossAdapters} 種のnative報酬adapter。対応ボスからのみ入手します。白夜と暗月は部位数・通常段階・報酬profileを別々に集計し、同じ均衡の光線でも合算しません。三相の武装（Primus Aeron）には報酬連携がなく、減衰盾だけはHでなく最大HPを基準にします。\n\n");
-    sb.Append($"Registered: {bossSets.Length} sets, {bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} parts and {bossAdapters} distinct native reward adapters, obtained only from their matching boss. White Night and Dark Moon count parts, normal stages and reward profiles independently even when sharing Beam of Balance. Threefold Armament (Primus Aeron) has no reward link; its decaying shields scale with maximum HP rather than H.\n\n");
+    sb.Append($"登録済み {bossSets.Length} セット・{bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} 部位・{bossAdapters} 種のnative報酬adapter。対応ボスからのみ入手します。白夜と暗月は部位数・通常段階・報酬profileを別々に集計し、同じ均衡の光線でも合算しません。三相の武装（Primus Aeron）と墜聖の双装（Polaris）には報酬連携がありません。両セットのshieldとPolarisのhealはHでなく最大HPを基準にします。大顎の本体祠報酬は変更しません。\n\n");
+    sb.Append($"Registered: {bossSets.Length} sets, {bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} parts and {bossAdapters} distinct native reward adapters, obtained only from their matching boss. White Night and Dark Moon count parts, normal stages and reward profiles independently even when sharing Beam of Balance. Threefold Armament (Primus Aeron) and Fallen Sanctity Regalia (Polaris) have no reward link. Both sets' shields and Polaris healing scale with maximum HP rather than H. Maw's native shrine reward route remains unchanged.\n\n");
     sb.Append("^ セット (Set) ^ 出所 (Source type) ^ 任意報酬 (Optional reward) ^ Adapter ^\n");
     foreach (var s in bossSets)
     {

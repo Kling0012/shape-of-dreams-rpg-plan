@@ -91,6 +91,11 @@ namespace SodRpg.Core.Game
                     state.FiredActivations = new ConditionalWeakTable<object, State>();
             }
         }
+        public void ForgetActivation(object activation)
+        {
+            if (activation == null) return;
+            for (int i = 0; i < _states.Count; i++) _states[i].FiredActivations?.Remove(activation);
+        }
 
         /// <summary>Discard unavailable pairs' marks and windows before an event or damage query.</summary>
         public void RefreshEquipment(ICollection<string> equipped)

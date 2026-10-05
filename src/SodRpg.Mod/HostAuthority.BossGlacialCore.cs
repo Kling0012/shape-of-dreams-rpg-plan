@@ -25,6 +25,19 @@ namespace SodRpg.Mod
         private static readonly FieldInfo RoutineState = Routine == null ? null : AccessTools.DeclaredField(Routine,"<>1__state");
         private static readonly FieldInfo Core = Closure == null ? null : AccessTools.DeclaredField(Closure,"<>4__this");
         private static readonly FieldInfo Info = Closure == null ? null : AccessTools.DeclaredField(Closure,"info");
+        private static readonly Func<object,object> ReadClosure = FieldReader<object>(RoutineClosure);
+        private static readonly Func<object,int> ReadState = FieldReader<int>(RoutineState);
+        private static readonly Func<object,Gem_U_GlacialCore> ReadCore = FieldReader<Gem_U_GlacialCore>(Core);
+        private static readonly Func<object,EventInfoDamage> ReadInfo = FieldReader<EventInfoDamage>(Info);
+        private static Func<object,T> FieldReader<T>(FieldInfo field)
+        {
+            if(field==null) return null;
+            var method=new DynamicMethod("GlacialCoreField",typeof(T),new[]{typeof(object)},typeof(SkollCoreColdHealRoutine),true);
+            var il=method.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0); il.Emit(OpCodes.Castclass,field.DeclaringType); il.Emit(OpCodes.Ldfld,field);
+            il.Emit(OpCodes.Ret);
+            return (Func<object,T>)method.CreateDelegate(typeof(Func<object,T>));
+        }
         internal struct HealScope
         {
             internal object Routine;
@@ -46,14 +59,14 @@ namespace SodRpg.Mod
         }
         private static bool Read(object routine, out Gem_U_GlacialCore core, out EventInfoDamage info)
         {
-            var closure = RoutineClosure.GetValue(routine);
-            core = Core.GetValue(closure) as Gem_U_GlacialCore;
-            info = (EventInfoDamage)Info.GetValue(closure);
+            var closure = ReadClosure(routine);
+            core = ReadCore(closure);
+            info = ReadInfo(closure);
             return core != null;
         }
         private static void Prefix(object __instance)
         {
-            if (NetworkServer.active && (int)RoutineState.GetValue(__instance) == 0 && Read(__instance,out var core,out var info))
+            if (NetworkServer.active && ReadState(__instance) == 0 && Read(__instance,out var core,out var info))
                 HostAuthority.NativeInstance?.BeginSkollCoreHeal(__instance,core,info);
         }
         private static void Postfix(object __instance, bool __result)
@@ -180,7 +193,7 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
-        private sealed class SkollCorePending
+        private struct SkollCorePending
         {
             internal long Epoch, CoreLife, ActorLife, VictimLife, ParentLife;
             internal float CoreCreation, VictimCreation;
@@ -199,7 +212,14 @@ namespace SodRpg.Mod
             internal int Remaining;
             internal long BurstVisual;
             internal bool ApprovedThisUpdate;
-            internal readonly Dictionary<object, SkollCorePending> Pending = new Dictionary<object, SkollCorePending>();
+            internal readonly Dictionary<object, SkollCorePending> Pending = new Dictionary<object, SkollCorePending>(BossProfiles.MaxEntries);
+        }
+        private readonly BossObjectPool<SkollCoreState> _skollCorePool = new BossObjectPool<SkollCoreState>(128, () => new SkollCoreState());
+        private static readonly BossRewardProfile SkollCoreRewardProfile=LoadSkollCoreRewardProfile();
+        private static BossRewardProfile LoadSkollCoreRewardProfile()
+        {
+            BossProfiles.TryGetReward(BossProfiles.SkollRewardId,out var profile);
+            return profile;
         }
         private static readonly AccessTools.FieldRef<Gem_U_GlacialCore,Dictionary<ReactionChain,float>> SkollCoreBank
             = AccessTools.FieldRefAccess<Gem_U_GlacialCore,Dictionary<ReactionChain,float>>("_remainingDamages");
@@ -211,13 +231,12 @@ namespace SodRpg.Mod
             rt = null; state = null;
             if (!NetworkServer.active || core == null || !core.isValid || !BossAlive(core.owner) || !_runtimes.TryGetValue(core.owner,out rt)
                 || !BossEnsure(rt) || BossRewardStage(rt,BossProfiles.SkollRewardId) == 0) return false;
-            bool equipped = false;
-            if (rt.Hero.Skill != null) foreach (var slot in rt.Hero.Skill.gems) if (ReferenceEquals(slot.Value,core)) { equipped = true; break; }
-            if (!equipped) return false;
+            if(rt.Hero.Skill==null || !rt.Hero.Skill.gems.TryGetValue(core.location,out var equippedCore) || !ReferenceEquals(equippedCore,core)) return false;
             if (!_skollStates.TryGetValue(rt,out var owner))
             {
                 if (!create) return false;
                 owner = SkollOwnerState(rt);
+                if(owner==null) return false;
             }
             if (owner.Cores.TryGetValue(core,out state) && (!ReferenceEquals(state.Core,core) || !ReferenceEquals(state.Owner,rt.Hero)
                 || state.Creation != core.creationTime || !BossNativeSameLife(core,state.CoreLife) || !BossNativeSameLife(rt.Hero,state.OwnerLife)))
@@ -226,18 +245,21 @@ namespace SodRpg.Mod
                 state.Pending.Clear();
                 state.Remaining=0;
                 if (state.BurstVisual != 0) SkollPublishBurst(rt,state,Time.time);
-                owner.Cores.Remove(core); state = null;
+                owner.Cores.Remove(core);
+                SkollReleaseCore(state); state = null;
             }
             if (state == null && create)
             {
                 if (owner.Cores.Count >= BossProfiles.MaxEntries) return false;
-                owner.Cores.Add(core,state = new SkollCoreState { Core=core,Owner=rt.Hero,Creation=core.creationTime,
-                    CoreLife=BossNativeActorLife(core),OwnerLife=BossNativeActorLife(rt.Hero) });
+                state=_skollCorePool.Rent(); if(state==null) return false;
+                state.Core=core; state.Owner=rt.Hero; state.Creation=core.creationTime;
+                state.CoreLife=BossNativeActorLife(core); state.OwnerLife=BossNativeActorLife(rt.Hero);
+                owner.Cores.Add(core,state);
             }
             return state != null;
         }
         private BossRewardStage SkollCoreReward(HeroRuntime rt)
-            => BossProfiles.TryGetReward(BossProfiles.SkollRewardId,out var profile) ? profile.Stages[BossRewardStage(rt,profile.Id) - 1] : null;
+            => SkollCoreRewardProfile.Stages[BossRewardStage(rt,BossProfiles.SkollRewardId) - 1];
         internal void BeginSkollCoreHeal(object routine, Gem_U_GlacialCore core, EventInfoDamage info)
         {
             var packet = NativeAttributedDamagePacket.Current;
@@ -271,7 +293,7 @@ namespace SodRpg.Mod
             if (amount <= 0 || multiplier <= 0) return;
             float high = Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower);
             float bonus = Math.Min(amount * action.ValueMilli / 100000f,high * action.MagnitudeMilli / 100000f);
-            if (bonus <= 0 || !BossReady(rt,BossProfiles.SkollRewardId + ".heal",Time.time,action.CooldownMillis)) return;
+            if (bonus <= 0 || !BossReady(rt,"boss_skoll.glacial_core.heal",Time.time,action.CooldownMillis)) return;
             heal.AddAmount(bonus / multiplier);
         }
         internal void CompleteSkollCoreHeal(object routine, Gem_U_GlacialCore core, EventInfoDamage info)
@@ -284,7 +306,7 @@ namespace SodRpg.Mod
                 state.PriorityLife=BossNativeActorLife(info.victim);
                 state.PriorityUntil=now + actions[1].DurationMillis / 1000f;
             }
-            if (actions.Count > 2 && BossReady(rt,BossProfiles.SkollRewardId + ".burst",now,actions[2].CooldownMillis))
+            if (actions.Count > 2 && BossReady(rt,"boss_skoll.glacial_core.burst",now,actions[2].CooldownMillis))
             {
                 var action=actions[2]; state.Remaining=action.Count; state.BurstUntil=now + action.DurationMillis / 1000f;
                 if (state.BurstVisual == 0) state.BurstVisual=++rt.Boss.NextId;
@@ -305,13 +327,13 @@ namespace SodRpg.Mod
         {
             if (!SkollCoreRuntime(core,out var rt,out var state) || state.Remaining <= 0 || Time.time >= state.BurstUntil
                 || BossRewardStage(rt,BossProfiles.SkollRewardId) < 3) return nativeInterval;
-            float bank=0; foreach (var entry in SkollCoreBank(core)) bank += entry.Value;
+            float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
             var validator=SkollCoreTargets(core);
             if (validator == null) return nativeInterval;
             var enemies=DewPhysics.OverlapCircleAllEntities(out var handle,rt.Hero.position,core.shootRadius,validator);
             bool legal=false;
-            try { foreach (var enemy in enemies) if (BossAlive(enemy) && enemy.GetRelation(rt.Hero) == EntityRelation.Enemy) { legal=true; break; } }
+            try { for(int i=0;i<enemies.Count && i<256;i++) { var enemy=enemies[i]; if (BossAlive(enemy) && enemy.GetRelation(rt.Hero) == EntityRelation.Enemy) { legal=true; break; } } }
             finally { handle.Return(); }
             if (!legal) return nativeInterval;
             state.ApprovedThisUpdate=true;
@@ -359,13 +381,22 @@ namespace SodRpg.Mod
                 var state=owner.Cores[core]; state.Pending.Clear(); state.Remaining=0;
                 if (state.BurstVisual != 0) SkollPublishBurst(rt,state,now);
                 owner.Cores.Remove(core);
+                SkollReleaseCore(state);
             }
             owner.ExpiredCores.Clear();
         }
         private void ClearSkollCores(HeroRuntime rt, SkollState owner)
         {
-            foreach (var pair in owner.Cores) pair.Value.Pending.Clear();
+            foreach (var pair in owner.Cores) SkollReleaseCore(pair.Value);
             owner.Cores.Clear(); owner.ExpiredCores.Clear();
+        }
+        private void SkollReleaseCore(SkollCoreState state)
+        {
+            state.Pending.Clear(); state.Core=null; state.Owner=null; state.Priority=null;
+            state.Creation=state.BurstUntil=state.PriorityUntil=state.PriorityCreation=0;
+            state.CoreLife=state.OwnerLife=state.PriorityLife=state.BurstVisual=0;
+            state.Remaining=0; state.ApprovedThisUpdate=false;
+            _skollCorePool.Return(state);
         }
     }
 }

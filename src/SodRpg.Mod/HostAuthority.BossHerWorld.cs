@@ -194,7 +194,7 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
-        private sealed class NyxWorldTarget
+        private struct NyxWorldTarget
         {
             internal Entity Target;
             internal long Life;
@@ -212,11 +212,23 @@ namespace SodRpg.Mod
             internal Room Room;
             internal string Run;
             internal int Stage,Recorded;
-            internal bool Initialized,Natural,Interrupted,Ending,ChildBound;
-            internal float RadiusDelta,NextVisual;
-            internal Action<EventInfoDamage> Damaged;
+            internal bool Initialized,Natural,Interrupted,Ending,ChildBound,Detached;
+            internal float RadiusDelta,NextVisual,LastRefresh = float.NegativeInfinity;
+            internal HostAuthority Host;
+            internal object Build;
+            internal readonly Action<EventInfoDamage> Damaged;
             internal readonly NyxWorldTarget[] Hits=new NyxWorldTarget[3];
             internal readonly NyxMovedTarget[] Movement=new NyxMovedTarget[64];
+            internal NyxWorldState() { Damaged=OnDamaged; }
+            private void OnDamaged(EventInfoDamage info) { Host?.NyxWorldTickSuccess(this,info); }
+            internal void Reset()
+            {
+                Status=null; Runtime=null; Skill=null; Parent=null; Host=null; Room=null; Run=null; Build=null;
+                StatusLife=OwnerLife=SkillLife=ParentLife=Epoch=Visual=0; Stage=Recorded=0;
+                Initialized=Natural=Interrupted=Ending=ChildBound=Detached=false;
+                RadiusDelta=NextVisual=0; LastRefresh=float.NegativeInfinity;
+                Array.Clear(Hits,0,Hits.Length); Array.Clear(Movement,0,Movement.Length);
+            }
         }
         private sealed class NyxWorldEndToken
         {
@@ -226,10 +238,12 @@ namespace SodRpg.Mod
             internal float Until,H;
             internal bool Magic;
         }
-        private readonly Dictionary<Se_U_HerWorld_Blackhole,NyxWorldState> _nyxWorlds=new Dictionary<Se_U_HerWorld_Blackhole,NyxWorldState>();
-        private readonly Dictionary<Ai_U_HerWorld_Explosion,NyxWorldEndToken> _nyxWorldEnds=new Dictionary<Ai_U_HerWorld_Explosion,NyxWorldEndToken>();
-        private readonly List<Se_U_HerWorld_Blackhole> _nyxWorldScratch=new List<Se_U_HerWorld_Blackhole>();
-        private readonly List<Ai_U_HerWorld_Explosion> _nyxWorldEndScratch=new List<Ai_U_HerWorld_Explosion>();
+        private readonly Dictionary<Se_U_HerWorld_Blackhole,NyxWorldState> _nyxWorlds=new Dictionary<Se_U_HerWorld_Blackhole,NyxWorldState>(64);
+        private readonly Dictionary<Ai_U_HerWorld_Explosion,NyxWorldEndToken> _nyxWorldEnds=new Dictionary<Ai_U_HerWorld_Explosion,NyxWorldEndToken>(64);
+        private readonly BossObjectPool<NyxWorldState> _nyxWorldPool=new BossObjectPool<NyxWorldState>(128,()=>new NyxWorldState());
+        private readonly BossObjectPool<NyxWorldEndToken> _nyxWorldEndPool=new BossObjectPool<NyxWorldEndToken>(64,()=>new NyxWorldEndToken());
+        private readonly List<Se_U_HerWorld_Blackhole> _nyxWorldScratch=new List<Se_U_HerWorld_Blackhole>(64);
+        private readonly List<Ai_U_HerWorld_Explosion> _nyxWorldEndScratch=new List<Ai_U_HerWorld_Explosion>(64);
         private bool NyxWorldOwnerCurrent(NyxWorldState state)
             => NetworkServer.active && BossAlive(state.Runtime.Hero) && BossNativeSameLife(state.Runtime.Hero,state.OwnerLife)
                 && BossNativeContextCurrent(state.Room,state.Run) && state.Skill!=null && state.Skill.isActive && state.Skill.owner==state.Runtime.Hero
@@ -252,10 +266,13 @@ namespace SodRpg.Mod
                     || !_runtimes.TryGetValue(hero,out var rt) || !BossAlive(hero)) return;
                 DisableNyxWorld(status);
                 if(_nyxWorlds.Count>=64) return;
-                _nyxWorlds.Add(status,new NyxWorldState { Status=status,Runtime=rt,Skill=skill,Parent=info.actor,
-                    StatusLife=BossNativeActorLife(status),OwnerLife=BossNativeActorLife(hero),SkillLife=BossNativeActorLife(skill),
-                    ParentLife=BossNativeActorLife(info.actor),Epoch=rt.ShieldEquipmentEpoch,Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,
-                    Run=NetworkedManagerBase<GameManager>.softInstance?.runId,Visual=++rt.Boss.NextId });
+                var capture=_nyxWorldPool.Rent(); if(capture==null) return;
+                capture.Host=this; capture.Status=status; capture.Runtime=rt; capture.Skill=skill; capture.Parent=info.actor;
+                capture.StatusLife=BossNativeActorLife(status); capture.OwnerLife=BossNativeActorLife(hero);
+                capture.SkillLife=BossNativeActorLife(skill); capture.ParentLife=BossNativeActorLife(info.actor);
+                capture.Epoch=rt.ShieldEquipmentEpoch; capture.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
+                capture.Run=NetworkedManagerBase<GameManager>.softInstance?.runId; capture.Visual=++rt.Boss.NextId;
+                _nyxWorlds.Add(status,capture);
                 return;
             }
             if(!(info.instance is Ai_U_HerWorld_Explosion child) || !(info.actor is Se_U_HerWorld_Blackhole parent)
@@ -263,16 +280,18 @@ namespace SodRpg.Mod
                 || !state.Natural || state.Interrupted || state.Stage!=3 || child.parentActor!=parent || child.info.caster!=state.Runtime.Hero
                 || child.gem!=null || !NyxWorldOwnerCurrent(state) || state.Epoch!=state.Runtime.ShieldEquipmentEpoch
                 || BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)!=3 || !BossNativeSameLife(parent,state.StatusLife) || _nyxWorldEnds.Count>=64) return;
+            NyxWorldRemoveEnd(child);
+            var token=_nyxWorldEndPool.Rent(); if(token==null) return;
             state.ChildBound=true;
-            _nyxWorldEnds[child]=new NyxWorldEndToken { State=state,Child=child,ChildLife=BossNativeActorLife(child),Epoch=state.Epoch,
-                Until=Time.time+1,H=Math.Max(state.Runtime.Hero.Status.attackDamage,state.Runtime.Hero.Status.abilityPower),Magic=BossMagic(state.Runtime) };
+            token.State=state; token.Child=child; token.ChildLife=BossNativeActorLife(child); token.Epoch=state.Epoch;
+            token.Until=Time.time+1; token.H=Math.Max(state.Runtime.Hero.Status.attackDamage,state.Runtime.Hero.Status.abilityPower);
+            token.Magic=BossMagic(state.Runtime); _nyxWorldEnds.Add(child,token);
             NyxWorldPublishTargets(state,Time.time,Time.time+1);
         }
         internal void CreateNyxWorld(Se_U_HerWorld_Blackhole status)
         {
             if(!_nyxWorlds.TryGetValue(status,out var state) || !BossNativeSameLife(status,state.StatusLife) || state.Initialized) return;
             state.Initialized=true;
-            state.Damaged=info=>NyxWorldTickSuccess(state,info);
             status.ActorEvent_OnDealDamage+=state.Damaged;
             RefreshNyxWorld(status);
         }
@@ -285,6 +304,9 @@ namespace SodRpg.Mod
         internal void RefreshNyxWorld(Se_U_HerWorld_Blackhole status)
         {
             if(!_nyxWorlds.TryGetValue(status,out var state) || !state.Initialized) return;
+            float now=Time.time;
+            if(state.LastRefresh==now && state.Epoch==state.Runtime.ShieldEquipmentEpoch && ReferenceEquals(state.Build,state.Runtime.Powers.Build)) return;
+            state.LastRefresh=now;
             if(!NyxWorldNativeCurrent(state)) { NyxWorldRestoreRadius(state); return; }
             bool enabled=BossEnsure(state.Runtime);
             int stage=enabled ? BossRewardStage(state.Runtime,BossProfiles.NyxRewardId) : 0;
@@ -295,6 +317,7 @@ namespace SodRpg.Mod
                 state.Stage=stage;
             }
             state.Epoch=state.Runtime.ShieldEquipmentEpoch;
+            state.Build=state.Runtime.Powers.Build;
             float native=status.tickDamageRadius-state.RadiusDelta;
             float delta=stage>=2 && !float.IsNaN(native) && !float.IsInfinity(native) ? Math.Min(1,Math.Max(0,8-native)) : 0;
             status.tickDamageRadius=native+delta; state.RadiusDelta=delta;
@@ -310,12 +333,12 @@ namespace SodRpg.Mod
             for(int i=0;i<state.Movement.Length;i++)
             {
                 var row=state.Movement[i];
-                if(row!=null && row.Target==target && row.Life==life) { slot=i; break; }
-                if(slot<0 && row==null) slot=i;
+                if(row.Target==target && row.Life==life) { slot=i; break; }
+                if(slot<0 && row.Target==null) slot=i;
             }
             if(slot<0) return;
-            var movement=state.Movement[slot];
-            if(movement==null) state.Movement[slot]=movement=new NyxMovedTarget { Target=target,Life=life };
+            ref var movement=ref state.Movement[slot];
+            if(movement.Target==null) { movement.Target=target; movement.Life=life; }
             movement.Moved+=NyxAdditionalMove(state.Runtime,target,life,state.Runtime.Hero.position,Math.Min(2-movement.Moved,dt));
         }
         private void NyxWorldTickSuccess(NyxWorldState state,EventInfoDamage info)
@@ -363,6 +386,8 @@ namespace SodRpg.Mod
             PublishBossVisual(state.Runtime,state.Visual,4,state.Runtime.Hero.position,state.Runtime.Hero.position,0,Time.time,Time.time,true);
             if(!state.ChildBound) NyxWorldClearTargets(state,Time.time);
             _nyxWorlds.Remove(status);
+            state.Detached=true;
+            if(!state.ChildBound) { state.Reset(); _nyxWorldPool.Return(state); }
         }
         private bool NyxWorldEndCurrent(NyxWorldEndToken token)
         {
@@ -391,9 +416,10 @@ namespace SodRpg.Mod
         {
             if(!_nyxWorldEnds.TryGetValue(child,out var token) || !BossEnsure(token.State.Runtime) || !NyxWorldEndCurrent(token) || AttributionGeneratedOrigin()!=GeneratedOrigin.None
                 || !BossAlive(target) || target.GetRelation(token.State.Runtime.Hero)!=EntityRelation.Enemy) return;
-            foreach(var row in token.State.Hits)
+            for(int i=0;i<token.State.Hits.Length;i++)
             {
-                if(row==null || row.Used || row.Target!=target || !BossNativeSameLife(target,row.Life) || target.persistentNetId!=row.NetId) continue;
+                ref var row=ref token.State.Hits[i];
+                if(row.Target==null || row.Used || row.Target!=target || !BossNativeSameLife(target,row.Life) || target.persistentNetId!=row.NetId) continue;
                 row.Used=true;
                 PublishBossVisual(token.State.Runtime,row.Visual,9,target.position,target.position,0,Time.time,Time.time,true);
                 BossDamage(token.State.Runtime,target,token.H*.45f,token.Magic,BossElement.Light);
@@ -412,20 +438,24 @@ namespace SodRpg.Mod
         private void NyxWorldPublishTargets(NyxWorldState state,float now,float until)
         {
             foreach(var row in state.Hits)
-                if(row!=null && !row.Used && BossAlive(row.Target) && BossNativeSameLife(row.Target,row.Life))
+                if(row.Target!=null && !row.Used && BossAlive(row.Target) && BossNativeSameLife(row.Target,row.Life))
                     PublishBossVisual(state.Runtime,row.Visual,9,row.Target.position,row.Target.position,1,now,until,
                         element:BossElement.Light,count:1,targetNetId:row.NetId,nativeLife:state.StatusLife);
         }
         private void NyxWorldClearTargets(NyxWorldState state,float now)
         {
             foreach(var row in state.Hits)
-                if(row!=null) PublishBossVisual(state.Runtime,row.Visual,9,Vector3.zero,Vector3.zero,0,now,now,true);
+                if(row.Target!=null) PublishBossVisual(state.Runtime,row.Visual,9,Vector3.zero,Vector3.zero,0,now,now,true);
             Array.Clear(state.Hits,0,state.Hits.Length); state.Recorded=0;
         }
         private void NyxWorldRemoveEnd(Ai_U_HerWorld_Explosion child)
         {
             if(ReferenceEquals(child,null) || !_nyxWorldEnds.TryGetValue(child,out var token)) return;
-            NyxWorldClearTargets(token.State,Time.time); _nyxWorldEnds.Remove(child);
+            var state=token.State;
+            NyxWorldClearTargets(state,Time.time); _nyxWorldEnds.Remove(child); state.ChildBound=false;
+            token.State=null; token.Child=null; token.ChildLife=token.Epoch=0; token.Until=token.H=0; token.Magic=false;
+            _nyxWorldEndPool.Return(token);
+            if(state.Detached) { state.Reset(); _nyxWorldPool.Return(state); }
         }
         internal void ClearNyxWorldActor(Actor actor)
         {
@@ -466,7 +496,7 @@ namespace SodRpg.Mod
                     if(stage<3) NyxWorldClearTargets(state,Time.time);
                     state.Stage=stage;
                 }
-                state.Epoch=rt.ShieldEquipmentEpoch; state.Natural=false; state.NextVisual=0;
+                state.Epoch=rt.ShieldEquipmentEpoch; state.Natural=false; state.NextVisual=0; state.LastRefresh=float.NegativeInfinity;
             }
             _nyxWorldEndScratch.Clear();
             foreach(var pair in _nyxWorldEnds) if(pair.Value.State.Runtime==rt) _nyxWorldEndScratch.Add(pair.Key);

@@ -6,7 +6,7 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        internal sealed class BossClawPair
+        internal struct BossClawPair
         {
             public long First, Second; public bool FirstRight, FirstHit, SecondHit, FirstDone, SecondDone;
             public bool FirstCanCollect, SecondCanCollect;
@@ -21,7 +21,7 @@ namespace SodRpg.Mod
         }
         private void BossConfirmedMemoryUse(HeroRuntime rt, long activation, SkillTrigger skill)
         {
-            if (!BossEnsure(rt) || skill == null || skill.owner != rt.Hero || FindMemory(rt.Hero, skill.GetType().Name) != skill
+            if (!BossEnsure(rt) || skill == null || skill.owner != rt.Hero || !BossNativeEquippedSkill(rt.Hero, skill)
                 || skill.type != SkillType.Normal && skill.type != SkillType.Ultimate
                 || !rt.Boss.Ledger.Admit(BossEvent.MemoryUse, activation)) return;
             BossDispatch(rt, BossEvent.MemoryUse, activation, null, BossCursor(rt), Time.time, false);
@@ -48,9 +48,12 @@ namespace SodRpg.Mod
         private bool BossRegisterNativeDeployable(HeroRuntime rt, string profileId, Summon summon, SkillTrigger source)
         {
             if (!BossEnsure(rt) || !BossFind(rt, profileId, out var entry, out var profile)) return false;
-            foreach (var action in profile.Actions)
+            for (int i = 0; i < profile.Actions.Count; i++)
+            {
+                var action = profile.Actions[i];
                 if (action.Mechanism == BossMechanism.Deployable)
                     return rt.Boss.Deployables.RegisterNative(this, rt, entry.SetId, summon, source, action, Time.time);
+            }
             return false;
         }
 
@@ -64,55 +67,65 @@ namespace SodRpg.Mod
 
         private bool BossFind(HeroRuntime rt, string id, out BossMoveEntry entry, out BossMoveProfile profile)
         {
-            foreach (var e in rt.Powers.Build.BossMoves)
+            var moves = rt.Powers.Build.BossMoves;
+            for (int i = 0; i < moves.Count; i++)
+            {
+                var e = moves[i];
                 if (e.ProfileId == id && BossProfiles.TryGetMove(id, out profile) && e.SetId == profile.SetId) { entry = e; return true; }
+            }
             entry = null; profile = null; return false;
         }
         private void BossDispatch(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now, bool forest)
         {
+            uint mask = rt.Boss.SetMask;
             if (!forest)
             {
-                DispatchSkollBoss(rt, kind, activation, victim, point, now);
-                DispatchInfernusBoss(rt, kind, activation, victim, point, now);
-                DispatchInkBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 1)) != 0) DispatchSkollBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 2)) != 0) DispatchInfernusBoss(rt, kind, activation, victim, point, now);
+                if ((mask & ((1u << 3) | (1u << 4))) != 0) DispatchInkBoss(rt, kind, activation, victim, point, now);
                 if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                DispatchNyxBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 5)) != 0) DispatchNyxBoss(rt, kind, activation, victim, point, now);
                 if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                DispatchErebosBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 6)) != 0) DispatchErebosBoss(rt, kind, activation, victim, point, now);
                 if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                DispatchSeekerBoss(rt, kind, activation, victim, point, now);
-                DispatchAzurakBoss(rt, kind, activation, victim, point, now);
-                DispatchPrimusBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 7)) != 0) DispatchSeekerBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 8)) != 0) DispatchAzurakBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 9)) != 0) DispatchPrimusBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 10)) != 0) DispatchLightBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 11)) != 0) DispatchMawBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 12)) != 0) DispatchObliviaxBoss(rt, kind, activation, victim, point, now);
+                if ((mask & (1u << 13)) != 0) DispatchPolarisBoss(rt, kind, activation, victim, point, now);
                 if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
             }
+            if ((mask & 1u) == 0) return;
             long before = rt.Boss.NextId;
-            // Collection always precedes this event's new attacks/planting, regardless of equip slot order.
+            var moves = rt.Powers.Build.BossMoves;
             if (!forest)
-                foreach (var e in rt.Powers.Build.BossMoves)
-                    if (BossProfiles.TryGetMove(e.ProfileId, out var p) && p.SetId == e.SetId)
-                        foreach (var a in p.Actions)
-                            if (a.Event == kind && a.Payload == BossPayload.CollectBud)
-                            {
-                                if (a.RequiredMode >= 0 && a.RequiredMode != rt.Boss.Mode || a.RequiredMarks > 0 && rt.Boss.Ledger.MarkCount(victim, now, a.LedgerId ?? e.SetId) < a.RequiredMarks) continue;
-                                var origin = kind == BossEvent.MovementCompleted ? rt.Hero.agentPosition : point;
-                                var prefer = kind == BossEvent.MovementCompleted ? BossCursor(rt) : point;
-                                var bud = rt.Boss.Fields.Collect(this, rt, e.SetId, origin, prefer, a.RangeMilli / 1000f, now, before);
-                                if (bud != null)
-                                {
-                                    if (a.ConsumeMarks) rt.Boss.Ledger.ConsumeMarks(victim, a.RequiredMarks, now, a.LedgerId ?? e.SetId);
-                                    BossMarch(rt, bud.Center, now);
-                                }
-                            }
+                for (int i = 0; i < moves.Count; i++)
+                {
+                    var e = moves[i];
+                    if (e.SetId != BossProfiles.DemonSetId || !BossProfiles.TryGetMove(e.ProfileId, out var p)) continue;
+                    for (int j = 0; j < p.Actions.Count; j++)
+                    {
+                        var a = p.Actions[j];
+                        if (a.Event != kind || a.Payload != BossPayload.CollectBud) continue;
+                        if (a.RequiredMode >= 0 && a.RequiredMode != rt.Boss.Mode || a.RequiredMarks > 0 && rt.Boss.Ledger.MarkCount(victim, now, a.LedgerId ?? e.SetId) < a.RequiredMarks) continue;
+                        var origin = kind == BossEvent.MovementCompleted ? rt.Hero.agentPosition : point;
+                        var prefer = kind == BossEvent.MovementCompleted ? BossCursor(rt) : point;
+                        if (rt.Boss.Fields.Collect(this, rt, e.SetId, origin, prefer, a.RangeMilli / 1000f, now, before, out var collected))
+                        {
+                            if (a.ConsumeMarks) rt.Boss.Ledger.ConsumeMarks(victim, a.RequiredMarks, now, a.LedgerId ?? e.SetId);
+                            BossMarch(rt, collected, now);
+                        }
+                    }
+                }
             bool stomp = false; Vector3 stompPoint = point;
             bool arrival = kind == BossEvent.MainHit && rt.Boss.ArrivalUntil > now;
             if (kind == BossEvent.MainHit) rt.Boss.ArrivalUntil = 0;
-            foreach (var entry in rt.Powers.Build.BossMoves)
+            for (int i = 0; i < moves.Count; i++)
             {
-                if (!BossProfiles.TryGetMove(entry.ProfileId, out var profile) || entry.SetId != profile.SetId) continue;
-                if (profile.SetId == BossProfiles.SkollSetId || profile.SetId == BossProfiles.InfernusSetId
-                    || profile.SetId == BossProfiles.WhiteNightSetId || profile.SetId == BossProfiles.DarkMoonSetId
-                    || profile.SetId == BossProfiles.NyxSetId || profile.SetId == BossProfiles.ErebosSetId
-                    || profile.SetId == BossProfiles.SeekerSetId || profile.SetId == BossProfiles.AzurakSetId || profile.SetId == BossProfiles.PrimusSetId) continue;
+                var entry = moves[i];
+                if (entry.SetId != BossProfiles.DemonSetId || !BossProfiles.TryGetMove(entry.ProfileId, out var profile)) continue;
                 for (int index = 0; index < profile.Actions.Count; index++)
                 {
                     var a = profile.Actions[index];
@@ -124,7 +137,7 @@ namespace SodRpg.Mod
                     if (a.RequiredMarks > 0 && rt.Boss.Ledger.MarkCount(markedVictim, now, a.LedgerId ?? entry.SetId) < a.RequiredMarks) continue;
                     if (forest && profile.Id != "boss_demon.weapon" && profile.Id != "boss_demon.head" && profile.Id != "boss_demon.hands" && profile.Id != "boss_demon.feet") continue;
                     if (a.LedgerId == "DemonArrival" && a.Payload == BossPayload.Damage && !arrival) continue;
-                    string key = rt.Boss.ActionKeys[a];
+                    string key = a.RuntimeKey;
                     if (a.MainHits > 0 && !rt.Boss.Ledger.Advance(key, activation, a.MainHits, a.CounterLifetimeMillis / 1000f, now)) continue;
                     if (!BossReady(rt, key, now, a.CooldownMillis)) continue;
                     if (a.MainHits > 0) rt.Boss.Ledger.Consume(key);
@@ -134,7 +147,7 @@ namespace SodRpg.Mod
                     float amount = BossAmount(rt, entry, profile, a.ChannelId);
                     bool executed = BossExecute(rt, entry.SetId, profile.Id, a, victim, center, end, amount, BossMagic(rt), now, activation);
                     if (executed && a.ConsumeMarks) rt.Boss.Ledger.ConsumeMarks(markedVictim, a.RequiredMarks, now, a.LedgerId ?? entry.SetId);
-                    if (executed && profile.SetId == BossProfiles.DemonSetId && a.Mechanism == BossMechanism.ShapeAttack && a.Payload == BossPayload.Damage)
+                    if (executed && a.Mechanism == BossMechanism.ShapeAttack && a.Payload == BossPayload.Damage)
                     { if (!stomp) stompPoint = center; stomp = true; }
                 }
             }
@@ -168,7 +181,7 @@ namespace SodRpg.Mod
                     rt.Boss.Shapes.Execute(this, rt, a, center, end, amount, magic);
                     return true;
                 case BossMechanism.Deployable: return rt.Boss.Deployables.Execute(this, rt, set, a, center, end, amount, magic, now);
-                case BossMechanism.Defense: return rt.Boss.Defense.Execute(this, rt, rt.Boss.ActionKeys[a], a, amount, now);
+                case BossMechanism.Defense: return rt.Boss.Defense.Execute(this, rt, a.RuntimeKey, a, amount, now);
                 case BossMechanism.Ledger:
                     if (a.Payload == BossPayload.ArrivalWindow) rt.Boss.ArrivalUntil = now + a.LifetimeMillis / 1000f;
                     else if (a.Payload == BossPayload.Mark) rt.Boss.Ledger.MarkTarget(victim, a.Count, a.LifetimeMillis / 1000f, now, a.LedgerId ?? set);
@@ -186,7 +199,9 @@ namespace SodRpg.Mod
         private void BossPlantGrove(HeroRuntime rt, Vector3 point, float now)
         {
             if (!BossFind(rt, "boss_demon.stage3", out var entry, out var profile)) return;
-            foreach (var a in profile.Actions)
+            for (int i = 0; i < profile.Actions.Count; i++)
+            {
+                var a = profile.Actions[i];
                 if (a.Payload == BossPayload.Bud)
                 {
                     if (!BossReady(rt, BossProfiles.DemonSetId + ".plant", now, a.CooldownMillis)) return;
@@ -194,6 +209,7 @@ namespace SodRpg.Mod
                     rt.Boss.Fields.Reserve(this, rt, entry.SetId, profile.Id, a, legal, legal, BossAmount(rt, entry, profile, a.ChannelId), BossMagic(rt), now);
                     return;
                 }
+            }
         }
         private void BossMarch(HeroRuntime rt, Vector3 collected, float now)
         {
@@ -208,8 +224,8 @@ namespace SodRpg.Mod
                 desired = start + dir * (a.MagnitudeMilli / 1000f);
             }
             if (!BossGround(start, desired, a.RangeMilli / 1000f, out var end) || (end - start).Flattened().sqrMagnitude < 0.0001f
-                || !BossReady(rt, profile.Id + ".march", now, a.CooldownMillis)) return;
-            var points = new Vector3[a.Count];
+                || !BossReady(rt, a.RuntimeKey, now, a.CooldownMillis)) return;
+            var points = rt.Boss.MarchPoints;
             for (int i = 0; i < points.Length; i++)
             {
                 var requested = Vector3.Lerp(start, end, (i + 1f) / points.Length);
@@ -232,25 +248,30 @@ namespace SodRpg.Mod
             if (!BossEnsure(rt) || BossRewardStage(rt, BossProfiles.DemonRewardId) == 0 || stateLife == 0 || clawLife == 0) return;
             var s = rt.Boss; float now = Time.time;
             if (s.HysteriaState != stateLife) { s.ClawPairs.Clear(); s.HysteriaState = stateLife; s.PreviousClawLeft = false; }
-            BossClawPair pair = null;
-            foreach (var candidate in s.ClawPairs) if (candidate.First == clawLife || candidate.Second == clawLife) { pair = candidate; break; }
-            if (pair == null && !success && !completed)
+            int pairIndex = -1;
+            for (int i = 0; i < s.ClawPairs.Count; i++)
+                if (s.ClawPairs[i].First == clawLife || s.ClawPairs[i].Second == clawLife) { pairIndex = i; break; }
+            if (pairIndex < 0 && !success && !completed)
             {
                 bool rightCanCollect = right && s.PreviousClawLeft;
                 s.PreviousClawLeft = !right;
                 if (s.ClawPairs.Count != 0)
                 {
-                    var last = s.ClawPairs[s.ClawPairs.Count - 1];
-                    if (last.Second == 0 && last.FirstRight != right) { last.Second = clawLife; last.SecondCanCollect = rightCanCollect; pair = last; }
+                    int lastIndex = s.ClawPairs.Count - 1;
+                    var last = s.ClawPairs[lastIndex];
+                    if (last.Second == 0 && last.FirstRight != right)
+                    {
+                        last.Second = clawLife; last.SecondCanCollect = rightCanCollect;
+                        s.ClawPairs[lastIndex] = last;
+                        return;
+                    }
                 }
-                if (pair == null)
-                {
-                    if (s.ClawPairs.Count >= 8) s.ClawPairs.RemoveAt(0);
-                    s.ClawPairs.Add(new BossClawPair { First = clawLife, FirstRight = right, FirstCanCollect = rightCanCollect });
-                }
+                if (s.ClawPairs.Count >= 8) s.ClawPairs.RemoveAt(0);
+                s.ClawPairs.Add(new BossClawPair { First = clawLife, FirstRight = right, FirstCanCollect = rightCanCollect });
                 return;
             }
-            if (pair == null) return;
+            if (pairIndex < 0) return;
+            var pair = s.ClawPairs[pairIndex];
             bool first = pair.First == clawLife;
             if (success && !(first ? pair.FirstHit : pair.SecondHit))
             {
@@ -262,20 +283,21 @@ namespace SodRpg.Mod
                     if (!right) BossPlantGrove(rt, point, now);
                     else if (first ? pair.FirstCanCollect : pair.SecondCanCollect)
                     {
-                        var bud = s.Fields.Collect(this, rt, BossProfiles.DemonSetId, point, point, 4, now, s.NextId);
-                        if (bud != null && stage >= 3) BossMarch(rt, bud.Center, now);
+                        if (s.Fields.Collect(this, rt, BossProfiles.DemonSetId, point, point, 4, now, s.NextId, out var collected) && stage >= 3)
+                            BossMarch(rt, collected, now);
                     }
                 }
             }
+            if (s.HysteriaState != stateLife || pairIndex >= s.ClawPairs.Count || s.ClawPairs[pairIndex].First != pair.First) return;
             if (completed) { if (first) pair.FirstDone = true; else pair.SecondDone = true; }
-            if (pair.Second == 0 || !pair.FirstDone || !pair.SecondDone) return;
-            s.ClawPairs.Remove(pair);
+            if (pair.Second == 0 || !pair.FirstDone || !pair.SecondDone) { s.ClawPairs[pairIndex] = pair; return; }
+            s.ClawPairs.RemoveAt(pairIndex);
             if (!pair.FirstHit && !pair.SecondHit) return;
             BossDispatch(rt, BossEvent.MainHit, -pair.Second, null, pair.Point, now, true);
             if (BossFind(rt, "boss_demon.stage2", out var entry, out var profile))
             {
                 var a = profile.Actions[0];
-                if (BossReady(rt, rt.Boss.ActionKeys[a], now, a.CooldownMillis))
+                if (BossReady(rt, a.RuntimeKey, now, a.CooldownMillis))
                 {
                     var center = rt.Hero.agentPosition;
                     BossExecute(rt, entry.SetId, profile.Id, a, null, center, center, BossAmount(rt, entry, profile, a.ChannelId), BossMagic(rt), now);

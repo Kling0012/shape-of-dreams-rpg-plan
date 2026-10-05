@@ -12,13 +12,16 @@ namespace SodRpg.Mod
 
         internal readonly struct BossScheduledPulse
         {
-            public BossScheduledPulse(BossAction action, Vector3 center, Vector3 end, float amount, bool magic, int delayMillis, Entity target = null, int stunMillis = 0)
+            public BossScheduledPulse(BossAction action, Vector3 center, Vector3 end, float amount, bool magic, int delayMillis, Entity target = null, int stunMillis = 0,
+                int slowMillis = 0, int slowPct = 0, float healOnFirstHit = 0f, float absorbRatio = 0f, float absorbCap = 0f)
             {
                 Action = action; Center = center; End = end; Amount = amount; Magic = magic; DelayMillis = delayMillis;
                 Target = target; HasTarget = !ReferenceEquals(target, null); TargetCreation = target != null ? target.creationTime : 0;
                 TargetLife = target != null ? NativeInstance.BossNativeActorLife(target) : 0;
                 TargetNetId = target != null ? target.persistentNetId : 0;
                 StunMillis = Math.Max(0, Math.Min(250, stunMillis));
+                SlowMillis = Math.Max(0, Math.Min(500, slowMillis)); SlowPct = Math.Max(0, Math.Min(20, slowPct));
+                HealOnFirstHit = Math.Max(0, healOnFirstHit); AbsorbRatio = Math.Max(0, absorbRatio); AbsorbCap = Math.Max(0, absorbCap);
             }
             public BossAction Action { get; }
             public Vector3 Center { get; }
@@ -32,11 +35,21 @@ namespace SodRpg.Mod
             public long TargetLife { get; }
             public uint TargetNetId { get; }
             public int StunMillis { get; }
+            public int SlowMillis { get; }
+            public int SlowPct { get; }
+            public float HealOnFirstHit { get; }
+            public float AbsorbRatio { get; }
+            public float AbsorbCap { get; }
+            public BossScheduledPulse At(Vector3 point) => new BossScheduledPulse(Action, point, point + (End - Center), Amount, Magic, DelayMillis,
+                Target, StunMillis, SlowMillis, SlowPct, HealOnFirstHit, AbsorbRatio, AbsorbCap);
         }
 
-        private bool BossReserveSequence(HeroRuntime rt, string set, string profile, BossScheduledPulse[] pulses, float now,
+        private bool BossReserveSequence(HeroRuntime rt, string set, string profile, BossPulseBuffer pulses, float now,
             int maxInstances = 1, int lifetimeMillis = 0, long nativeLife = 0, int maxSetInstances = 4, bool replaceOldest = false)
-            => rt.Boss.Fields.ReserveSequence(this, rt, set, profile, pulses, now, maxInstances, lifetimeMillis, nativeLife, maxSetInstances, replaceOldest);
+        {
+            try { return rt.Boss.Fields.ReserveSequence(this, rt, set, profile, pulses, now, maxInstances, lifetimeMillis, nativeLife, maxSetInstances, replaceOldest); }
+            finally { pulses?.Reset(); }
+        }
         private static int BossFieldCount(HeroRuntime rt, string set, string profile = null) => rt.Boss.Fields.Count(set, profile);
         private static int BossFieldPulseCount(HeroRuntime rt, string set, string profile) => rt.Boss.Fields.PulseCount(set, profile);
         private static long BossReservationId(HeroRuntime rt, string set, string profile) => rt.Boss.Fields.Latest(set, profile);
@@ -55,55 +68,82 @@ namespace SodRpg.Mod
         }
 
         // M1: all pulses share the native enemy filter and one normal damage dispatch.
+        internal readonly struct BossHitResult
+        {
+            public BossHitResult(int positiveHits, float hpDamage) { PositiveHits = positiveHits; HpDamage = hpDamage; }
+            public int PositiveHits { get; }
+            public float HpDamage { get; }
+        }
         internal sealed class BossShapeAttack
         {
-            private readonly HashSet<int> _pulse = new HashSet<int>();
-            private readonly List<RaycastHit2D> _walls = new List<RaycastHit2D>(32);
-            public void Execute(HostAuthority host, HeroRuntime rt, BossAction action, Vector3 center, Vector3 end, float amount, bool magic,
-                BossShape? pulseShape = null, float? pulseRadius = null, float? pulseRange = null, int stunMillis = 0)
+            private sealed class Scratch
             {
-                _pulse.Clear();
-                var shape = pulseShape ?? action.Shape;
-                float radius = pulseRadius ?? action.RadiusMilli / 1000f;
-                float range = Math.Min(action.RangeMilli / 1000f, pulseRange ?? action.RangeMilli / 1000f);
-                bool line = shape == BossShape.Line || shape == BossShape.Column;
-                var direction = BossDirection(center, end);
-                if (direction == Vector3.zero) direction = rt.Hero.transform.forward;
-                if (line)
-                {
-                    var legalEnd = Dew.GetValidAgentDestination_LinearSweep(center, center + direction * range);
-                    if (!BossFinite(legalEnd) || Mathf.Abs(legalEnd.y - center.y) > 2f) return;
-                    range = Math.Min(range, BossDirectionDistance(center, legalEnd));
-                    if (Physics.Raycast(center + Vector3.up * .2f, direction, out var ground, range, LayerMasks.Ground)) range = ground.distance;
-                    _walls.Clear();
-                    var filter = new ContactFilter2D { useLayerMask = true, layerMask = LayerMasks.CollidableWithProjectile, useTriggers = true };
-                    Physics2D.CircleCast(center.ToXY(), action.WidthMilli / 2000f, direction.ToXY(), filter, _walls, range);
-                    foreach (var hit in _walls)
-                        if (!DewPhysics.TryGetEntity(hit.collider, out _) && DewPhysics.TryGetCollidableWithProjectile(hit.collider, out _))
-                            range = Math.Min(range, hit.distance);
-                    if (range <= .0001f) return;
-                }
-                ListReturnHandle<Entity> handle;
-                var found = line
-                    ? DewPhysics.SphereCastAllEntities(out handle, center, action.WidthMilli / 2000f, direction, range, EnemyFilter, rt.Hero)
-                    : DewPhysics.OverlapCircleAllEntities(out handle, center, shape == BossShape.Fan ? range : radius, EnemyFilter, rt.Hero);
+                public readonly int[] Hits = new int[64];
+                public readonly RaycastHit2D[] Walls = new RaycastHit2D[128];
+            }
+            private readonly BossObjectPool<Scratch> _scratch = new BossObjectPool<Scratch>(8, () => new Scratch());
+            public BossHitResult Execute(HostAuthority host, HeroRuntime rt, BossAction action, Vector3 center, Vector3 end, float amount, bool magic,
+                BossShape? pulseShape = null, float? pulseRadius = null, float? pulseRange = null, int stunMillis = 0, int slowMillis = 0, int slowPct = 0)
+            {
+                var scratch = _scratch.Rent();
+                if (scratch == null) return default;
+                int hitCount = 0, positive = 0; float hpDamage = 0;
+                var build = rt.Boss.Build; long epoch = rt.ShieldEquipmentEpoch, revision = rt.Boss.Revision;
                 try
                 {
-                    int count = 0;
-                    foreach (var victim in found)
+                    var shape = pulseShape ?? action.Shape;
+                    float radius = pulseRadius ?? action.RadiusMilli / 1000f;
+                    float range = Math.Min(action.RangeMilli / 1000f, pulseRange ?? action.RangeMilli / 1000f);
+                    bool line = shape == BossShape.Line || shape == BossShape.Column;
+                    var direction = BossDirection(center, end);
+                    if (direction == Vector3.zero) direction = rt.Hero.transform.forward;
+                    if (line)
                     {
-                        if (!BossAlive(victim) || !_pulse.Add(victim.GetInstanceID())) continue;
-                        if (shape == BossShape.Fan && Vector3.Angle(direction, BossDirection(center, victim.position)) > action.AngleMilli / 2000f) continue;
-                        if (count++ >= action.MaxTargets) break;
-                        bool accepted = host.BossDamage(rt, victim, amount, magic, action.Element);
-                        if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                        if (accepted && stunMillis > 0) rt.Boss.Defense.Stun(host, rt, victim, stunMillis, Time.time);
-                        if (action.Payload == BossPayload.Push || action.Payload == BossPayload.Pull)
-                            rt.Boss.EnemyMovement.Execute(rt, victim, line && action.Payload == BossPayload.Push ? victim.position - direction : center,
-                                action.Payload == BossPayload.Pull, action.MagnitudeMilli / 1000f, Time.time);
+                        var legalEnd = Dew.GetValidAgentDestination_LinearSweep(center, center + direction * range);
+                        if (!BossFinite(legalEnd) || Mathf.Abs(legalEnd.y - center.y) > 2f) return default;
+                        range = Math.Min(range, BossDirectionDistance(center, legalEnd));
+                        if (Physics.Raycast(center + Vector3.up * .2f, direction, out var ground, range, LayerMasks.Ground)) range = ground.distance;
+                        var filter = new ContactFilter2D { useLayerMask = true, layerMask = LayerMasks.CollidableWithProjectile, useTriggers = true };
+                        int walls = Physics2D.CircleCast(center.ToXY(), action.WidthMilli / 2000f, direction.ToXY(), filter, scratch.Walls, range);
+                        for (int i = 0; i < walls; i++)
+                        {
+                            var hit = scratch.Walls[i];
+                            if (!DewPhysics.TryGetEntity(hit.collider, out _) && DewPhysics.TryGetCollidableWithProjectile(hit.collider, out _))
+                                range = Math.Min(range, hit.distance);
+                        }
+                        if (walls == scratch.Walls.Length || range <= .0001f) return default;
                     }
+                    ListReturnHandle<Entity> handle;
+                    var found = line
+                        ? DewPhysics.SphereCastAllEntities(out handle, center, action.WidthMilli / 2000f, direction, range, EnemyFilter, rt.Hero)
+                        : DewPhysics.OverlapCircleAllEntities(out handle, center, shape == BossShape.Fan ? range : radius, EnemyFilter, rt.Hero);
+                    try
+                    {
+                        for (int i = 0; i < Math.Min(128, found.Count) && hitCount < Math.Min(64, action.MaxTargets); i++)
+                        {
+                            var victim = found[i];
+                            if (!BossAlive(victim)) continue;
+                            int id = victim.GetInstanceID(); bool duplicate = false;
+                            for (int j = 0; j < hitCount; j++) if (scratch.Hits[j] == id) { duplicate = true; break; }
+                            if (duplicate || shape == BossShape.Fan && Vector3.Angle(direction, BossDirection(center, victim.position)) > action.AngleMilli / 2000f) continue;
+                            scratch.Hits[hitCount++] = id;
+                            bool accepted = host.BossDamageHp(rt, victim, amount, magic, action.Element, out float hp);
+                            if (accepted) { positive++; hpDamage += hp; }
+                            if (rt.Boss.Build != build || rt.ShieldEquipmentEpoch != epoch || rt.Boss.Revision != revision || !BossAlive(rt.Hero)) break;
+                            if (accepted && stunMillis > 0) rt.Boss.Defense.Stun(host, rt, victim, stunMillis, Time.time);
+                            if (rt.Boss.Revision != revision) break;
+                            if (accepted && slowMillis > 0 && slowPct > 0) rt.Boss.Defense.Slow(host, rt, victim, slowMillis, slowPct, Time.time);
+                            if (rt.Boss.Revision != revision) break;
+                            if (action.Payload == BossPayload.Push || action.Payload == BossPayload.Pull)
+                                rt.Boss.EnemyMovement.Execute(rt, victim, line && action.Payload == BossPayload.Push ? victim.position - direction : center,
+                                    action.Payload == BossPayload.Pull, action.MagnitudeMilli / 1000f, Time.time);
+                            if (rt.Boss.Revision != revision) break;
+                        }
+                    }
+                    finally { handle.Return(); }
+                    return new BossHitResult(positive, hpDamage);
                 }
-                finally { handle.Return(); }
+                finally { _scratch.Return(scratch); }
             }
         }
 
@@ -112,43 +152,61 @@ namespace SodRpg.Mod
         {
             private sealed class Wave
             {
-                public readonly Dictionary<long, int> Hits = new Dictionary<long, int>();
-                public int Limit, MaxHitsPerTarget;
+                public readonly long[] Targets = new long[64];
+                public readonly int[] Hits = new int[64];
+                public int Count, Limit, MaxHitsPerTarget, Users;
+                public string Set, Profile;
+                public int Find(long target) { for (int i = 0; i < Count; i++) if (Targets[i] == target) return i; return -1; }
             }
             private sealed class Shot
             {
-                public long Id, NativeLife, ReservationId, TargetLife;
+                public long Id, NativeLife, ReservationId, TargetLife, TerminalId;
                 public string Set, Profile;
                 public Vector3 Point, Direction;
                 public float Remaining, Speed, Radius, Damage, Last, Expires, TerminalRadius, ChainRadius;
-                public int ChainRemaining, ChainDelayMillis;
-                public bool Magic, FirstHit, ExplodeAtEnd, ExplodeOnHit, Homing, ExpireAtLifetime;
+                public int ChainRemaining, ChainDelayMillis, HitCount;
+                public bool Active, Processing, Magic, FirstHit, ExplodeAtEnd, ExplodeOnHit, Homing, ExpireAtLifetime, TerminalAtWall;
                 public Entity Target;
                 public Wave Wave;
                 public BossElement Element;
                 public BossAction Action;
-                public readonly HashSet<long> Hits = new HashSet<long>();
+                public readonly long[] Hits = new long[64];
+                public bool Hit(long life) { for (int i = 0; i < HitCount; i++) if (Hits[i] == life) return true; return false; }
             }
-            private readonly List<Shot> _shots = new List<Shot>(64);
-            private readonly List<RaycastHit2D> _collisions = new List<RaycastHit2D>(64);
-            private readonly HashSet<Wave> _activeWaves = new HashSet<Wave>();
+            private readonly BossObjectPool<Shot> _pool = new BossObjectPool<Shot>(128, () => new Shot());
+            private readonly BossObjectPool<Wave> _waves = new BossObjectPool<Wave>(64, () => new Wave());
+            private readonly Shot[] _shots = new Shot[128];
+            private readonly RaycastHit2D[] _collisions = new RaycastHit2D[128];
+            private bool _ticking;
             public bool Execute(HostAuthority host, HeroRuntime rt, string set, BossAction a, Vector3 center, Vector3 end, float amount, bool magic, float now,
                 int shotCount = 0, int maxHitsPerTarget = 1, bool explodeAtEnd = false, float terminalRadius = 0f, string profile = null,
                 bool delayedAlready = false, long nativeLife = 0, Entity adoptedTarget = null, bool explodeOnHit = false, bool homing = false,
-                int chainCount = 0, float chainRadius = 0f, int chainDelayMillis = 150, bool expireAtLifetime = false, long reservationId = 0)
+                int chainCount = 0, float chainRadius = 0f, int chainDelayMillis = 150, bool expireAtLifetime = false, long reservationId = 0,
+                float spreadDegrees = 0f, BossScheduledPulse? terminalPulse = null, bool terminalAtWall = false)
             {
                 if (chainCount < 0 || chainCount > 3 || chainDelayMillis < 0 || !BossFinite(center) || !BossFinite(end)
-                    || float.IsNaN(chainRadius) || float.IsInfinity(chainRadius) || chainRadius < 0) return false;
+                    || float.IsNaN(chainRadius) || float.IsInfinity(chainRadius) || chainRadius < 0
+                    || float.IsNaN(spreadDegrees) || float.IsInfinity(spreadDegrees)) return false;
                 int count = shotCount > 0 ? Math.Min(a.Count, shotCount) : a.Count;
-                int owned = 0;
-                _activeWaves.Clear();
-                foreach (var shot in _shots)
-                    if (shot.Set == set)
-                    {
-                        owned++;
-                        if (profile != null && shot.Profile == profile) _activeWaves.Add(shot.Wave);
-                    }
-                if (owned + count > 64 || _shots.Count + count > 128 || profile != null && _activeWaves.Count >= a.MaxInstances) return false;
+                if (count < 1 || count > 64) return false;
+                int owned = 0, free = 0, profileWaves = 0;
+                for (int i = 0; i < _shots.Length; i++)
+                {
+                    var shot = _shots[i];
+                    if (shot == null) { free++; continue; }
+                    if (!shot.Active || shot.Set != set) continue;
+                    owned++;
+                    if (profile == null || shot.Profile != profile) continue;
+                    bool first = true;
+                    for (int j = 0; j < i; j++) if (_shots[j] != null && _shots[j].Active && ReferenceEquals(_shots[j].Wave, shot.Wave)) { first = false; break; }
+                    if (first) profileWaves++;
+                }
+                if (owned + count > 64 || free < count || profile != null && profileWaves >= a.MaxInstances
+                    || terminalPulse.HasValue && !rt.Boss.Fields.CanReserveTerminal(set, count)) return false;
+                var wave = _waves.Rent();
+                if (wave == null) return false;
+                wave.Count = 0; wave.Users = 0; wave.Limit = Math.Min(64, a.MaxTargets);
+                wave.MaxHitsPerTarget = Math.Max(1, Math.Min(count, maxHitsPerTarget)); wave.Set = set; wave.Profile = profile;
                 var direction = BossDirection(center, end);
                 if (direction == Vector3.zero) direction = rt.Hero.transform.forward;
                 float speed = a.SpeedMilli > 0 ? a.SpeedMilli / 1000f : 12;
@@ -156,23 +214,33 @@ namespace SodRpg.Mod
                 float delay = delayedAlready ? 0 : a.DelayMillis / 1000f;
                 if (explodeAtEnd && !explodeOnHit && !homing) range = Math.Min(range, BossDirectionDistance(center, end));
                 float lifetime = a.LifetimeMillis > 0 ? a.LifetimeMillis / 1000f : range / speed;
-                var wave = new Wave { Limit = a.MaxTargets, MaxHitsPerTarget = Math.Max(1, Math.Min(count, maxHitsPerTarget)) };
-                for (int i = 0; i < count; i++)
+                int created = 0;
+                for (int slot = 0; slot < _shots.Length && created < count; slot++)
                 {
-                    var dir = a.Shape == BossShape.Radial ? Quaternion.Euler(0, 360f * i / count, 0) * direction : direction;
-                    Entity target = homing ? adoptedTarget : a.Anchor == BossAnchor.Marked ? rt.Boss.Ledger.NearestMark(center, now, a.LedgerId ?? set) : null;
-                    var shot = new Shot
+                    if (_shots[slot] != null) continue;
+                    var shot = _pool.Rent();
+                    if (shot == null)
                     {
-                        Id = ++rt.Boss.NextId, Set = set, Profile = profile, Point = center, Direction = dir, Remaining = range, Speed = speed,
-                        Radius = a.WidthMilli > 0 ? a.WidthMilli / 2000f : .2f, Damage = amount, Magic = magic, Last = now + delay, Element = a.Element,
-                        Expires = now + delay + (expireAtLifetime ? lifetime : Math.Min(range / speed, lifetime)),
-                        FirstHit = a.FirstHitOnly, Wave = wave, ExplodeAtEnd = explodeAtEnd, ExplodeOnHit = explodeOnHit,
-                        TerminalRadius = terminalRadius, Action = a, NativeLife = nativeLife, ReservationId = reservationId,
-                        Target = target, TargetLife = target != null ? host.BossNativeActorLife(target) : 0,
-                        Homing = homing || a.Anchor == BossAnchor.Marked, ExpireAtLifetime = expireAtLifetime,
-                        ChainRemaining = chainCount, ChainRadius = chainRadius, ChainDelayMillis = chainDelayMillis,
-                    };
-                    _shots.Add(shot);
+                        for (int j = 0; j < _shots.Length; j++) if (_shots[j] != null && ReferenceEquals(_shots[j].Wave, wave)) Remove(host, rt, j, now);
+                        if (created == 0) _waves.Return(wave);
+                        return false;
+                    }
+                    int i = created++;
+                    var dir = a.Shape == BossShape.Radial ? Quaternion.Euler(0, 360f * i / count, 0) * direction
+                        : Quaternion.Euler(0, count == 1 ? 0 : -spreadDegrees / 2 + spreadDegrees * i / (count - 1), 0) * direction;
+                    Entity target = homing ? adoptedTarget : a.Anchor == BossAnchor.Marked ? rt.Boss.Ledger.NearestMark(center, now, a.LedgerId ?? set) : null;
+                    shot.Id = ++rt.Boss.NextId; shot.Set = set; shot.Profile = profile; shot.Point = center; shot.Direction = dir;
+                    shot.Remaining = range; shot.Speed = speed; shot.Radius = a.WidthMilli > 0 ? a.WidthMilli / 2000f : .2f;
+                    shot.Damage = amount; shot.Magic = magic; shot.Last = now + delay; shot.Element = a.Element;
+                    shot.Expires = now + delay + (expireAtLifetime ? lifetime : Math.Min(range / speed, lifetime));
+                    shot.FirstHit = a.FirstHitOnly; shot.Wave = wave; shot.ExplodeAtEnd = explodeAtEnd; shot.ExplodeOnHit = explodeOnHit;
+                    shot.TerminalRadius = terminalRadius; shot.Action = a; shot.NativeLife = nativeLife; shot.ReservationId = reservationId;
+                    shot.Target = target; shot.TargetLife = target != null ? host.BossNativeActorLife(target) : 0;
+                    shot.Homing = homing || a.Anchor == BossAnchor.Marked; shot.ExpireAtLifetime = expireAtLifetime;
+                    shot.ChainRemaining = chainCount; shot.ChainRadius = chainRadius; shot.ChainDelayMillis = chainDelayMillis;
+                    shot.HitCount = 0; shot.Active = true; shot.TerminalAtWall = terminalAtWall;
+                    shot.TerminalId = terminalPulse.HasValue ? rt.Boss.Fields.ReserveTerminal(rt, set, profile, terminalPulse.Value, nativeLife, now) : 0;
+                    wave.Users++; _shots[slot] = shot;
                     host.PublishBossVisual(rt, shot.Id, 5, center, center + dir * range, shot.Radius, shot.Last, shot.Expires,
                         element: a.Element, targetNetId: adoptedTarget != null ? adoptedTarget.persistentNetId : 0, nativeLife: nativeLife);
                 }
@@ -180,96 +248,122 @@ namespace SodRpg.Mod
             }
             public void Tick(HostAuthority host, HeroRuntime rt, float now)
             {
-                for (int i = _shots.Count - 1; i >= 0; i--)
+                if (_ticking) return;
+                _ticking = true; long before = rt.Boss.NextId;
+                try
                 {
-                    var s = _shots[i];
-                    if (now < s.Last) continue;
-                    if (s.Homing && BossAlive(s.Target) && host.BossNativeSameLife(s.Target, s.TargetLife))
-                        s.Direction = BossDirection(s.Point, s.Target.position);
-                    float distance = Math.Min(s.Remaining, s.Speed * Math.Max(0, Math.Min(now, s.Expires) - s.Last));
-                    s.Last = now;
-                    bool ended = false, blocked = false, impact = false, chained = false;
-                    if (distance > 0)
+                    for (int i = _shots.Length - 1; i >= 0; i--)
                     {
-                        var filter = new ContactFilter2D { useLayerMask = true, layerMask = LayerMasks.Entity | LayerMasks.CollidableWithProjectile, useTriggers = true };
-                        _collisions.Clear();
-                        Physics2D.CircleCast(s.Point.ToXY(), s.Radius, s.Direction.ToXY(), filter, _collisions, distance);
-                        float wall = distance + 1;
-                        if (Physics.Raycast(s.Point, s.Direction, out var ground, distance, LayerMasks.Ground)) wall = ground.distance;
-                        foreach (var hit in _collisions)
-                            if (!DewPhysics.TryGetEntity(hit.collider, out _) && DewPhysics.TryGetCollidableWithProjectile(hit.collider, out _) && hit.distance < wall)
-                                wall = hit.distance;
-                        float travelled = Math.Min(distance, wall);
-                        if (!s.ExplodeAtEnd || s.ExplodeOnHit)
-                        {
-                            ListReturnHandle<Entity> handle;
-                            var entities = DewPhysics.SphereCastAllEntities(out handle, s.Point, s.Radius, s.Direction, distance, EnemyFilter, rt.Hero);
-                            try
-                            {
-                                while (true)
-                                {
-                                    Entity nearest = null;
-                                    float first = wall;
-                                    foreach (var hit in _collisions)
-                                    {
-                                        if (hit.distance >= first || !DewPhysics.TryGetEntity(hit.collider, out var e) || !BossAlive(e)
-                                            || e.Status.hasUncollidable || e.GetRelation(rt.Hero) != EntityRelation.Enemy || !entities.Contains(e)) continue;
-                                        long life = host.BossNativeActorLife(e);
-                                        if (s.Hits.Contains(life) || s.ChainRemaining > 0 && s.Wave.Hits.ContainsKey(life)) continue;
-                                        nearest = e; first = hit.distance;
-                                    }
-                                    if (nearest == null) break;
-                                    long target = host.BossNativeActorLife(nearest);
-                                    s.Hits.Add(target);
-                                    if (s.ExplodeOnHit) { impact = true; ended = true; travelled = first; break; }
-                                    s.Wave.Hits.TryGetValue(target, out int hits);
-                                    if (hits < s.Wave.MaxHitsPerTarget && (hits > 0 || s.Wave.Hits.Count < s.Wave.Limit))
-                                    {
-                                        s.Wave.Hits[target] = hits + 1;
-                                        host.BossDamage(rt, nearest, s.Damage, s.Magic, s.Element);
-                                        if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                                    }
-                                    if (s.ChainRemaining > 0)
-                                    {
-                                        s.ChainRemaining--;
-                                        Vector3 hitPoint = nearest.position;
-                                        if (s.ChainRemaining > 0 && now < s.Expires)
-                                        {
-                                            Entity next = NextChainTarget(host, rt, s, hitPoint);
-                                            if (next != null)
-                                            {
-                                                s.Point = hitPoint; s.Target = next; s.TargetLife = host.BossNativeActorLife(next);
-                                                s.Direction = BossDirection(hitPoint, next.position); s.Remaining = s.ChainRadius;
-                                                s.Homing = true; s.Last = now + s.ChainDelayMillis / 1000f;
-                                                host.PublishBossVisual(rt, s.Id, 5, s.Point, next.position, s.Radius, s.Last, s.Expires,
-                                                    element: s.Element, targetNetId: next.persistentNetId, nativeLife: s.NativeLife);
-                                                chained = true; break;
-                                            }
-                                        }
-                                        ended = true; travelled = first; break;
-                                    }
-                                    if (s.FirstHit) { ended = true; travelled = first; break; }
-                                }
-                            }
-                            finally { handle.Return(); }
-                        }
-                        if (chained) continue;
-                        blocked = !impact && wall <= travelled;
-                        ended |= blocked;
-                        s.Point += s.Direction * travelled;
-                        s.Remaining = Math.Max(0, s.Remaining - travelled);
-                    }
-                    if (!ended && now < s.Expires && (s.Remaining > .0001f || s.ExpireAtLifetime)) continue;
-                    if (!blocked && (impact || s.ExplodeAtEnd && (!ended || s.ExplodeOnHit)))
-                    {
-                        rt.Boss.Shapes.Execute(host, rt, s.Action, s.Point, s.Point, s.Damage, s.Magic, BossShape.Circle, s.TerminalRadius);
+                        var s = _shots[i];
+                        if (s == null || !s.Active || s.Id > before || now < s.Last) continue;
+                        s.Processing = true;
+                        try { TickShot(host, rt, s, i, now); }
+                        finally { s.Processing = false; if (!s.Active) Release(i, s); }
                         if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
-                        host.PublishBossVisual(rt, ++rt.Boss.NextId, 1, s.Point, s.Point, s.TerminalRadius, now, now + .25f,
-                            element: s.Element, nativeLife: s.NativeLife);
                     }
-                    host.PublishBossVisual(rt, s.Id, 5, s.Point, s.Point, s.Radius, now, now, true);
-                    _shots.RemoveAt(i);
                 }
+                finally { _ticking = false; }
+            }
+            private void TickShot(HostAuthority host, HeroRuntime rt, Shot s, int index, float now)
+            {
+                if (s.Homing && BossAlive(s.Target) && host.BossNativeSameLife(s.Target, s.TargetLife)) s.Direction = BossDirection(s.Point, s.Target.position);
+                float distance = Math.Min(s.Remaining, s.Speed * Math.Max(0, Math.Min(now, s.Expires) - s.Last));
+                s.Last = now;
+                bool ended = false, blocked = false, impact = false, chained = false;
+                if (distance > 0)
+                {
+                    var filter = new ContactFilter2D { useLayerMask = true, layerMask = LayerMasks.Entity | LayerMasks.CollidableWithProjectile, useTriggers = true };
+                    int collisionCount = Physics2D.CircleCast(s.Point.ToXY(), s.Radius, s.Direction.ToXY(), filter, _collisions, distance);
+                    float wall = distance + 1;
+                    if (Physics.Raycast(s.Point, s.Direction, out var ground, distance, LayerMasks.Ground)) wall = ground.distance;
+                    for (int i = 0; i < collisionCount; i++)
+                    {
+                        var hit = _collisions[i];
+                        if (!DewPhysics.TryGetEntity(hit.collider, out _) && DewPhysics.TryGetCollidableWithProjectile(hit.collider, out _) && hit.distance < wall) wall = hit.distance;
+                    }
+                    // Saturation cannot prove a safe flight segment: refuse that segment rather than crossing an omitted wall.
+                    if (collisionCount == _collisions.Length) { Remove(host, rt, index, now); return; }
+                    for (int i = 1; i < collisionCount; i++)
+                    {
+                        var hit = _collisions[i]; int j = i - 1;
+                        while (j >= 0 && _collisions[j].distance > hit.distance) { _collisions[j + 1] = _collisions[j]; j--; }
+                        _collisions[j + 1] = hit;
+                    }
+                    float travelled = Math.Min(distance, wall);
+                    if (!s.ExplodeAtEnd || s.ExplodeOnHit)
+                    {
+                        ListReturnHandle<Entity> handle;
+                        var entities = DewPhysics.SphereCastAllEntities(out handle, s.Point, s.Radius, s.Direction, distance, EnemyFilter, rt.Hero);
+                        try
+                        {
+                            int cursor = 0;
+                            for (int step = 0; step < 64 && s.HitCount < 64; step++)
+                            {
+                                Entity nearest = null; float first = wall;
+                                while (cursor < collisionCount)
+                                {
+                                    var hit = _collisions[cursor++];
+                                    if (hit.distance >= wall) { cursor = collisionCount; break; }
+                                    if (!DewPhysics.TryGetEntity(hit.collider, out var e) || !BossAlive(e)
+                                        || e.Status.hasUncollidable || e.GetRelation(rt.Hero) != EntityRelation.Enemy) continue;
+                                    bool found = false;
+                                    for (int j = 0; j < Math.Min(128, entities.Count); j++) if (entities[j] == e) { found = true; break; }
+                                    if (!found) continue;
+                                    long life = host.BossNativeActorLife(e);
+                                    if (s.Hit(life) || s.ChainRemaining > 0 && s.Wave.Find(life) >= 0) continue;
+                                    nearest = e; first = hit.distance; break;
+                                }
+                                if (nearest == null) break;
+                                long target = host.BossNativeActorLife(nearest); s.Hits[s.HitCount++] = target;
+                                if (s.ExplodeOnHit) { impact = true; ended = true; travelled = first; break; }
+                                int targetSlot = s.Wave.Find(target);
+                                int hits = targetSlot < 0 ? 0 : s.Wave.Hits[targetSlot];
+                                if (hits < s.Wave.MaxHitsPerTarget && (targetSlot >= 0 || s.Wave.Count < s.Wave.Limit))
+                                {
+                                    if (targetSlot < 0) { targetSlot = s.Wave.Count++; s.Wave.Targets[targetSlot] = target; }
+                                    s.Wave.Hits[targetSlot] = hits + 1;
+                                    host.BossDamage(rt, nearest, s.Damage, s.Magic, s.Element);
+                                    if (!s.Active || rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                                }
+                                if (s.ChainRemaining > 0)
+                                {
+                                    s.ChainRemaining--; Vector3 hitPoint = nearest.position;
+                                    if (s.ChainRemaining > 0 && now < s.Expires)
+                                    {
+                                        Entity next = NextChainTarget(host, rt, s, hitPoint);
+                                        if (next != null)
+                                        {
+                                            s.Point = hitPoint; s.Target = next; s.TargetLife = host.BossNativeActorLife(next);
+                                            s.Direction = BossDirection(hitPoint, next.position); s.Remaining = s.ChainRadius;
+                                            s.Homing = true; s.Last = now + s.ChainDelayMillis / 1000f;
+                                            host.PublishBossVisual(rt, s.Id, 5, s.Point, next.position, s.Radius, s.Last, s.Expires,
+                                                element: s.Element, targetNetId: next.persistentNetId, nativeLife: s.NativeLife);
+                                            chained = true; break;
+                                        }
+                                    }
+                                    ended = true; travelled = first; break;
+                                }
+                                if (s.FirstHit) { ended = true; travelled = first; break; }
+                            }
+                        }
+                        finally { handle.Return(); }
+                    }
+                    if (chained) return;
+                    blocked = !impact && wall <= travelled; ended |= blocked;
+                    s.Point += s.Direction * travelled; s.Remaining = Math.Max(0, s.Remaining - travelled);
+                }
+                if (!ended && now < s.Expires && (s.Remaining > .0001f || s.ExpireAtLifetime)) return;
+                if (!blocked && (impact || s.ExplodeAtEnd && (!ended || s.ExplodeOnHit)))
+                {
+                    rt.Boss.Shapes.Execute(host, rt, s.Action, s.Point, s.Point, s.Damage, s.Magic, BossShape.Circle, s.TerminalRadius);
+                    if (!s.Active || rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                    host.PublishBossVisual(rt, ++rt.Boss.NextId, 1, s.Point, s.Point, s.TerminalRadius, now, now + .25f, element: s.Element, nativeLife: s.NativeLife);
+                }
+                if (s.TerminalId != 0 && (!blocked || s.TerminalAtWall))
+                {
+                    rt.Boss.Fields.CompleteTerminal(host, rt, s.TerminalId, s.Point, now); s.TerminalId = 0;
+                }
+                Remove(host, rt, index, now);
             }
             private static Entity NextChainTarget(HostAuthority host, HeroRuntime rt, Shot shot, Vector3 point)
             {
@@ -278,42 +372,53 @@ namespace SodRpg.Mod
                 Entity nearest = null; float best = float.MaxValue;
                 try
                 {
-                    foreach (var e in entities)
+                    for (int i = 0; i < Math.Min(128, entities.Count); i++)
                     {
-                        if (!BossAlive(e) || e.Status.hasUncollidable || shot.Wave.Hits.ContainsKey(host.BossNativeActorLife(e))) continue;
+                        var e = entities[i];
+                        if (!BossAlive(e) || e.Status.hasUncollidable || shot.Wave.Find(host.BossNativeActorLife(e)) >= 0) continue;
                         float distance = (e.position - point).Flattened().sqrMagnitude;
-                        if (distance < best || distance == best && (nearest == null || e.persistentNetId < nearest.persistentNetId))
-                        { nearest = e; best = distance; }
+                        if (distance < best || distance == best && (nearest == null || e.persistentNetId < nearest.persistentNetId)) { nearest = e; best = distance; }
                     }
                 }
                 finally { handle.Return(); }
                 return nearest;
             }
-            public void CancelReservation(HostAuthority host, HeroRuntime rt, long reservationId, float now)
+            public void CancelReservation(HostAuthority host, HeroRuntime rt, long id, float now)
             {
-                if (reservationId <= 0) return;
-                for (int i = _shots.Count - 1; i >= 0; i--) if (_shots[i].ReservationId == reservationId) Remove(host, rt, i, now);
+                if (id <= 0) return;
+                for (int i = 0; i < _shots.Length; i++) if (_shots[i] != null && (_shots[i].ReservationId == id || _shots[i].TerminalId == id)) Remove(host, rt, i, now);
             }
             public void CancelNative(HostAuthority host, HeroRuntime rt, string set, long nativeLife, float now)
             {
-                for (int i = _shots.Count - 1; i >= 0; i--)
-                    if (_shots[i].Set == set && _shots[i].NativeLife == nativeLife) Remove(host, rt, i, now);
+                for (int i = 0; i < _shots.Length; i++) if (_shots[i] != null && _shots[i].Set == set && _shots[i].NativeLife == nativeLife) Remove(host, rt, i, now);
             }
             public void CancelProfile(HostAuthority host, HeroRuntime rt, string set, string profile, float now)
             {
-                for (int i = _shots.Count - 1; i >= 0; i--)
-                    if (_shots[i].Set == set && _shots[i].Profile == profile) Remove(host, rt, i, now);
+                for (int i = 0; i < _shots.Length; i++) if (_shots[i] != null && _shots[i].Set == set && _shots[i].Profile == profile) Remove(host, rt, i, now);
             }
             private void Remove(HostAuthority host, HeroRuntime rt, int index, float now)
             {
-                var s = _shots[index];
-                host.PublishBossVisual(rt, s.Id, 5, s.Point, s.Point, s.Radius, now, now, true); _shots.RemoveAt(index);
+                var s = _shots[index]; if (s == null || !s.Active) return;
+                s.Active = false;
+                long terminal = s.TerminalId; s.TerminalId = 0;
+                if (terminal != 0) rt.Boss.Fields.CancelReservation(host, rt, terminal, now);
+                host.PublishBossVisual(rt, s.Id, 5, s.Point, s.Point, s.Radius, now, now, true);
+                if (!s.Processing) Release(index, s);
+            }
+            private void Release(int index, Shot s)
+            {
+                _shots[index] = null;
+                if (--s.Wave.Users == 0) { s.Wave.Set = s.Wave.Profile = null; _waves.Return(s.Wave); }
+                s.Wave = null; s.Target = null; s.Action = null; s.Set = s.Profile = null; _pool.Return(s);
             }
             public void Clear(bool preserveNative = false)
             {
-                if (!preserveNative) _shots.Clear();
-                else for (int i = _shots.Count - 1; i >= 0; i--) if (_shots[i].NativeLife == 0) _shots.RemoveAt(i);
-                _collisions.Clear(); _activeWaves.Clear();
+                for (int i = 0; i < _shots.Length; i++)
+                {
+                    var s = _shots[i]; if (s == null || preserveNative && s.NativeLife != 0) continue;
+                    s.Active = false; s.TerminalId = 0;
+                    if (!s.Processing) Release(i, s);
+                }
             }
         }
 
@@ -322,253 +427,328 @@ namespace SodRpg.Mod
         {
             internal sealed class Field
             {
-                public long Id; public string Set, Profile; public BossAction Action;
-                public Vector3 Center, End; public Vector3[] Points; public float Due, Created, Damage; public int Pulse, PulseCount;
-                public bool Magic, Bud, Collectible;
-                public BossScheduledPulse[] Scheduled;
-                public float Until;
-                public long[] VisualIds;
-                public long NativeLife;
+                public long Id, NativeLife; public string Set, Profile; public BossAction Action;
+                public Vector3 Center, End; public float Due, Created, Damage, Until, Absorbed; public int Pulse, PulseCount;
+                public bool Active, Processing, Magic, Bud, Collectible, Sequence, HasPoints, TerminalPending, Healed;
+                public readonly Vector3[] Points = new Vector3[32];
+                public readonly BossScheduledPulse[] Scheduled = new BossScheduledPulse[32];
+                public readonly long[] VisualIds = new long[32];
             }
-            private readonly List<Field> _fields = new List<Field>(32);
+            private readonly BossObjectPool<Field> _pool = new BossObjectPool<Field>(64, () => new Field());
+            private readonly Field[] _fields = new Field[64];
+            private bool _ticking;
+            private int FreeSlot() { for (int i = 0; i < _fields.Length; i++) if (_fields[i] == null) return i; return -1; }
+            private Field Rent(HeroRuntime rt, string set, string profile, float now)
+            {
+                int slot = FreeSlot(); if (slot < 0) return null;
+                var f = _pool.Rent(); if (f == null) return null;
+                f.Id = ++rt.Boss.NextId; f.Set = set; f.Profile = profile; f.Created = now;
+                f.Active = true; _fields[slot] = f; return f;
+            }
+            private void Release(int index, Field f)
+            {
+                _fields[index] = null; f.Set = f.Profile = null; f.Action = null;
+                Array.Clear(f.Scheduled, 0, 32); Array.Clear(f.VisualIds, 0, 32);
+                f.Active = f.Processing = f.Sequence = f.HasPoints = f.TerminalPending = f.Healed = f.Bud = f.Collectible = false;
+                f.Pulse = f.PulseCount = 0; f.NativeLife = 0; f.Absorbed = 0; _pool.Return(f);
+            }
+            private void Remove(HostAuthority host, HeroRuntime rt, int index, float now, bool visuals = true)
+            {
+                var f = _fields[index]; if (f == null || !f.Active) return;
+                f.Active = false;
+                if (visuals)
+                {
+                    if (!f.Sequence) host.PublishBossVisual(rt, f.Id, f.Bud ? (f.Collectible ? 2 : 3) : 4, f.Center, f.End, f.Action.RadiusMilli / 1000f, now, now, true);
+                    else for (int i = 0; i < f.PulseCount; i++) if (f.VisualIds[i] != 0)
+                        host.PublishBossVisual(rt, f.VisualIds[i], 4, Vector3.zero, Vector3.zero, 0, now, now, true);
+                }
+                if (!f.Processing) Release(index, f);
+            }
             public bool Reserve(HostAuthority host, HeroRuntime rt, string set, string profile, BossAction a, Vector3 center, Vector3 end, float amount, bool magic, float now, Vector3[] points = null)
             {
+                if (a.Count < 1 || a.Count > 32 || points != null && points.Length < a.Count) return false;
                 bool bud = a.Payload == BossPayload.Bud;
-                int owned = 0, sameProfile = 0; Field oldest = null;
-                foreach (var f in _fields)
-                    if (f.Set == set)
-                    {
-                        owned++;
-                        if (f.Profile == profile && f.Bud == bud) { sameProfile++; if (oldest == null || f.Created < oldest.Created) oldest = f; }
-                    }
+                int owned = 0, sameProfile = 0, oldest = -1;
+                for (int i = 0; i < _fields.Length; i++)
+                {
+                    var f = _fields[i]; if (f == null || !f.Active || f.Set != set) continue;
+                    owned++;
+                    if (f.Profile == profile && f.Bud == bud)
+                    { sameProfile++; if (oldest < 0 || f.Created < _fields[oldest].Created) oldest = i; }
+                }
+                if (FreeSlot() < 0) return false;
                 if (owned >= 4 || !bud && sameProfile >= a.MaxInstances)
                 {
-                    if (!a.ReplaceOldest || bud || oldest == null) return false;
-                    host.PublishBossVisual(rt, oldest.Id, 4, oldest.Center, oldest.End, oldest.Action.RadiusMilli / 1000f, now, now, true);
-                    _fields.Remove(oldest);
+                    if (!a.ReplaceOldest || bud || oldest < 0) return false;
+                    Remove(host, rt, oldest, now);
                 }
-                if (_fields.Count >= 128) return false;
-                var field = new Field { Id = ++rt.Boss.NextId, Set = set, Profile = profile, Action = a, Center = center, End = end, Points = points,
-                    Due = now + a.DelayMillis / 1000f, Created = now, Damage = amount, Magic = magic, Bud = bud, Collectible = a.Collectible, PulseCount = bud ? 1 : a.Count };
-                _fields.Add(field);
+                var field = Rent(rt, set, profile, now); if (field == null) return false;
+                field.Action = a; field.Center = center; field.End = end; field.HasPoints = points != null;
+                field.Due = now + a.DelayMillis / 1000f; field.Damage = amount; field.Magic = magic;
+                field.Bud = bud; field.Collectible = a.Collectible; field.PulseCount = bud ? 1 : a.Count;
+                if (points != null) Array.Copy(points, field.Points, field.PulseCount);
                 host.PublishBossVisual(rt, field.Id, bud ? (a.Collectible ? 2 : 3) : (points != null ? 6 : 4), center, end, a.RadiusMilli / 1000f,
-                    field.Due, field.Due + (field.PulseCount - 1) * a.IntervalMillis / 1000f + 0.2f);
+                    field.Due, field.Due + (field.PulseCount - 1) * a.IntervalMillis / 1000f + .2f);
                 return true;
             }
             public int Count(string set, string profile = null)
             {
                 int count = 0;
-                foreach (var f in _fields) if (f.Set == set && (profile == null || f.Profile == profile)) count++;
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Active && _fields[i].Set == set && (profile == null || _fields[i].Profile == profile)) count++;
                 return count;
             }
             public int PulseCount(string set, string profile)
             {
-                foreach (var f in _fields) if (f.Set == set && f.Profile == profile) return f.Pulse;
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Active && _fields[i].Set == set && _fields[i].Profile == profile) return _fields[i].Pulse;
                 return 0;
             }
             public long Latest(string set, string profile)
             {
                 long id = 0;
-                foreach (var f in _fields)
-                    if (f.Set == set && f.Profile == profile && f.Id > id) id = f.Id;
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Active && _fields[i].Set == set && _fields[i].Profile == profile && _fields[i].Id > id) id = _fields[i].Id;
                 return id;
             }
             public bool Contains(long id)
             {
-                foreach (var f in _fields) if (f.Id == id) return true;
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Active && _fields[i].Id == id) return true;
                 return false;
             }
             public void CancelReservation(HostAuthority host, HeroRuntime rt, long id, float now)
             {
-                for (int i = _fields.Count - 1; i >= 0; i--)
-                    if (_fields[i].Id == id)
-                    {
-                        var f = _fields[i];
-                        if (f.Scheduled == null) host.PublishBossVisual(rt, f.Id, 4, f.Center, f.End, 0, now, now, true);
-                        else foreach (long visual in f.VisualIds) if (visual != 0)
-                            host.PublishBossVisual(rt, visual, 4, Vector3.zero, Vector3.zero, 0, now, now, true);
-                        _fields.RemoveAt(i); break;
-                    }
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Id == id) { Remove(host, rt, i, now); break; }
                 rt.Boss.Projectiles.CancelReservation(host, rt, id, now);
             }
-            public bool ReserveSequence(HostAuthority host, HeroRuntime rt, string set, string profile, BossScheduledPulse[] pulses,
+            public bool ReserveSequence(HostAuthority host, HeroRuntime rt, string set, string profile, BossPulseBuffer pulses,
                 float now, int maxInstances, int lifetimeMillis, long nativeLife, int maxSetInstances, bool replaceOldest)
             {
-                if (pulses == null || pulses.Length > 32 || pulses.Length == 0 && lifetimeMillis <= 0 || maxInstances < 1 || maxInstances > 4
-                    || lifetimeMillis < 0 || nativeLife < 0 || maxSetInstances < 1 || maxSetInstances > 4) return false;
+                if (pulses == null || pulses.Count == 0 && lifetimeMillis <= 0 || maxInstances < 1 || maxInstances > 4
+                    || lifetimeMillis < 0 || nativeLife < 0 || maxSetInstances < 1 || maxSetInstances > 4 || FreeSlot() < 0) return false;
                 int lastDelay = 0;
-                foreach (var pulse in pulses)
+                for (int i = 0; i < pulses.Count; i++)
                 {
+                    var pulse = pulses[i];
                     if (pulse.Action == null || pulse.DelayMillis < lastDelay || !BossFinite(pulse.Center) || !BossFinite(pulse.End)
-                        || float.IsNaN(pulse.Amount) || float.IsInfinity(pulse.Amount) || pulse.Amount < 0) return false;
+                        || float.IsNaN(pulse.Amount) || float.IsInfinity(pulse.Amount) || pulse.Amount < 0
+                        || float.IsNaN(pulse.HealOnFirstHit) || float.IsInfinity(pulse.HealOnFirstHit)
+                        || float.IsNaN(pulse.AbsorbRatio) || float.IsInfinity(pulse.AbsorbRatio)
+                        || float.IsNaN(pulse.AbsorbCap) || float.IsInfinity(pulse.AbsorbCap)) return false;
                     lastDelay = pulse.DelayMillis;
                 }
                 while (Count(set) >= maxSetInstances || Count(set, profile) >= maxInstances)
                 {
                     if (!replaceOldest) return false;
-                    Field oldest = null;
-                    bool setFull = Count(set) >= maxSetInstances;
-                    foreach (var field in _fields)
-                        if (field.Set == set && (setFull || field.Profile == profile) && (oldest == null || field.Created < oldest.Created))
-                            oldest = field;
-                    if (oldest == null) return false;
-                    CancelReservation(host, rt, oldest.Id, now);
+                    int oldest = -1; bool setFull = Count(set) >= maxSetInstances;
+                    for (int i = 0; i < _fields.Length; i++)
+                    {
+                        var field = _fields[i];
+                        if (field != null && field.Active && field.Set == set && (setFull || field.Profile == profile)
+                            && (oldest < 0 || field.Created < _fields[oldest].Created)) oldest = i;
+                    }
+                    if (oldest < 0) return false;
+                    CancelReservation(host, rt, _fields[oldest].Id, now);
                 }
-                if (_fields.Count >= 128) return false;
-                float until = now + Math.Max(lifetimeMillis, lastDelay) / 1000f;
-                var f = new Field { Id = ++rt.Boss.NextId, Set = set, Profile = profile, Scheduled = pulses,
-                    VisualIds = pulses.Length == 0 ? Array.Empty<long>() : new long[pulses.Length], NativeLife = nativeLife,
-                    Created = now, Due = pulses.Length == 0 ? until : now + pulses[0].DelayMillis / 1000f,
-                    Until = until, PulseCount = pulses.Length };
-                _fields.Add(f);
-                for (int i = 0; i < pulses.Length; i++)
-                {
-                    var pulse = pulses[i];
-                    if (pulse.Action.Payload == BossPayload.Shield || pulse.Action.Payload == BossPayload.Heal) continue;
-                    int kind = pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column || pulse.Action.Shape == BossShape.Radial ? 6 : 4;
-                    float due = now + pulse.DelayMillis / 1000f;
-                    float range = pulse.Action.RangeMilli / 1000f;
-                    if (pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column)
-                        range = Math.Min(range, BossDirectionDistance(pulse.Center, pulse.End));
-                    f.VisualIds[i] = ++rt.Boss.NextId;
-                    host.PublishBossVisual(rt, f.VisualIds[i], kind, pulse.Center, pulse.End, pulse.Action.RadiusMilli / 1000f, due, due + 0.25f,
-                        element: pulse.Action.Element, shape: pulse.Action.Shape, range: range, width: pulse.Action.WidthMilli / 1000f,
-                        angle: pulse.Action.AngleMilli / 1000f, count: pulse.Action.Shape == BossShape.Radial ? pulse.Action.Count : 0,
-                        targetNetId: pulse.TargetNetId, nativeLife: nativeLife);
-                }
+                var f = Rent(rt, set, profile, now); if (f == null) return false;
+                f.Sequence = true; f.NativeLife = nativeLife; f.Until = now + Math.Max(lifetimeMillis, lastDelay) / 1000f;
+                f.PulseCount = pulses.Count; f.Due = pulses.Count == 0 ? f.Until : now + pulses[0].DelayMillis / 1000f;
+                for (int i = 0; i < pulses.Count; i++) { f.Scheduled[i] = pulses[i]; PublishPulse(host, rt, f, i); }
                 return true;
+            }
+            public bool CanReserveTerminal(string set, int count)
+            {
+                int free = 0; for (int i = 0; i < _fields.Length; i++) if (_fields[i] == null) free++;
+                return free >= count && Count(set) + count <= 4;
+            }
+            public long ReserveTerminal(HeroRuntime rt, string set, string profile, BossScheduledPulse pulse, long nativeLife, float now)
+            {
+                var f = Rent(rt, set, profile, now); if (f == null) return 0;
+                f.Sequence = f.TerminalPending = true; f.PulseCount = 1; f.Scheduled[0] = pulse; f.NativeLife = nativeLife;
+                f.Until = float.MaxValue; return f.Id;
+            }
+            public void CompleteTerminal(HostAuthority host, HeroRuntime rt, long id, Vector3 endpoint, float now)
+            {
+                for (int i = 0; i < _fields.Length; i++)
+                {
+                    var f = _fields[i]; if (f == null || !f.Active || f.Id != id || !f.TerminalPending) continue;
+                    f.Scheduled[0] = f.Scheduled[0].At(endpoint); f.TerminalPending = false;
+                    f.Created = now; f.Until = now + f.Scheduled[0].DelayMillis / 1000f;
+                    PublishPulse(host, rt, f, 0); return;
+                }
+            }
+            private static void PublishPulse(HostAuthority host, HeroRuntime rt, Field f, int index)
+            {
+                var pulse = f.Scheduled[index];
+                if (pulse.Action.Payload == BossPayload.Shield || pulse.Action.Payload == BossPayload.Heal) return;
+                int kind = pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column || pulse.Action.Shape == BossShape.Radial ? 6 : 4;
+                float due = f.Created + pulse.DelayMillis / 1000f, range = pulse.Action.RangeMilli / 1000f;
+                if (pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column) range = Math.Min(range, BossDirectionDistance(pulse.Center, pulse.End));
+                f.VisualIds[index] = ++rt.Boss.NextId;
+                host.PublishBossVisual(rt, f.VisualIds[index], kind, pulse.Center, pulse.End, pulse.Action.RadiusMilli / 1000f, due, due + .25f,
+                    element: pulse.Action.Element, shape: pulse.Action.Shape, range: range, width: pulse.Action.WidthMilli / 1000f,
+                    angle: pulse.Action.AngleMilli / 1000f, count: pulse.Action.Shape == BossShape.Radial ? pulse.Action.Count : 0,
+                    targetNetId: pulse.TargetNetId, nativeLife: f.NativeLife);
             }
             public void CancelProfile(HostAuthority host, HeroRuntime rt, string set, string profile, float now)
             {
-                for (int i = _fields.Count - 1; i >= 0; i--)
-                    if (_fields[i].Set == set && _fields[i].Profile == profile)
-                    {
-                        var f = _fields[i];
-                        if (f.Scheduled == null)
-                            host.PublishBossVisual(rt, f.Id, f.Bud ? (f.Collectible ? 2 : 3) : 4, f.Center, f.End, f.Action.RadiusMilli / 1000f, now, now, true);
-                        else
-                            foreach (long id in f.VisualIds)
-                                if (id != 0) host.PublishBossVisual(rt, id, 4, Vector3.zero, Vector3.zero, 0, now, now, true);
-                        _fields.RemoveAt(i);
-                    }
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Set == set && _fields[i].Profile == profile) Remove(host, rt, i, now);
             }
             public void CancelNative(HostAuthority host, HeroRuntime rt, string set, long nativeLife, float now)
             {
-                for (int i = _fields.Count - 1; i >= 0; i--)
-                    if (_fields[i].Set == set && _fields[i].NativeLife == nativeLife)
-                    {
-                        var f = _fields[i];
-                        foreach (long id in f.VisualIds)
-                            if (id != 0) host.PublishBossVisual(rt, id, 4, Vector3.zero, Vector3.zero, 0, now, now, true);
-                        _fields.RemoveAt(i);
-                    }
+                for (int i = 0; i < _fields.Length; i++) if (_fields[i] != null && _fields[i].Set == set && _fields[i].NativeLife == nativeLife) Remove(host, rt, i, now);
             }
-            public Field Collect(HostAuthority host, HeroRuntime rt, string set, Vector3 origin, Vector3 prefer, float range, float now, long before)
+            public bool Collect(HostAuthority host, HeroRuntime rt, string set, Vector3 origin, Vector3 prefer, float range, float now, long before, out Vector3 collectedCenter)
             {
-                Field best = null; float distance = float.MaxValue;
-                foreach (var f in _fields)
+                int best = -1; float distance = float.MaxValue; collectedCenter = default;
+                for (int i = 0; i < _fields.Length; i++)
                 {
-                    if (!f.Bud || !f.Collectible || f.Set != set || f.Id > before || now < f.Created + BossProfiles.BudCollectibleDelayMillis / 1000f || now >= f.Due
-                        || (f.Center - origin).sqrMagnitude > range * range) continue;
+                    var f = _fields[i];
+                    if (f == null || !f.Active || !f.Bud || !f.Collectible || f.Set != set || f.Id > before
+                        || now < f.Created + BossProfiles.BudCollectibleDelayMillis / 1000f || now >= f.Due || (f.Center - origin).sqrMagnitude > range * range) continue;
                     float d = (f.Center - prefer).sqrMagnitude;
-                    if (d < distance || d == distance && (best == null || f.Id < best.Id)) { best = f; distance = d; }
+                    if (d < distance || d == distance && (best < 0 || f.Id < _fields[best].Id)) { best = i; distance = d; }
                 }
-                if (best == null || !BossReady(rt, set, now, 1000)) return null;
-                _fields.Remove(best);
-                host.PublishBossVisual(rt, best.Id, best.Collectible ? 2 : 3, best.Center, best.End, best.Action.RadiusMilli / 1000f, now, now, true);
-                rt.Boss.Shapes.Execute(host, rt, best.Action, best.Center, best.End, best.Damage, best.Magic);
-                host.PublishBossVisual(rt, ++rt.Boss.NextId, best.Collectible ? 2 : 3, best.Center, best.Center, best.Action.RadiusMilli / 1000f, now, now + 0.3f);
-                return best;
+                if (best < 0 || !BossReady(rt, set, now, 1000)) return false;
+                var field = _fields[best]; field.Processing = true; collectedCenter = field.Center;
+                try
+                {
+                    Remove(host, rt, best, now);
+                    rt.Boss.Shapes.Execute(host, rt, field.Action, field.Center, field.End, field.Damage, field.Magic);
+                    host.PublishBossVisual(rt, ++rt.Boss.NextId, field.Collectible ? 2 : 3, field.Center, field.Center, field.Action.RadiusMilli / 1000f, now, now + .3f);
+                }
+                finally { field.Processing = false; Release(best, field); }
+                return true;
             }
             public void Tick(HostAuthority host, HeroRuntime rt, float now)
             {
-                for (int i = _fields.Count - 1; i >= 0; i--)
+                if (_ticking) return;
+                _ticking = true; long before = rt.Boss.NextId;
+                try
                 {
-                    var f = _fields[i];
-                    if (f.Scheduled != null)
+                    for (int i = _fields.Length - 1; i >= 0; i--)
                     {
-                        while (f.Pulse < f.Scheduled.Length && now >= f.Created + f.Scheduled[f.Pulse].DelayMillis / 1000f)
-                        {
-                            int pulseIndex = f.Pulse++;
-                            var pulse = f.Scheduled[pulseIndex];
-                            var center = pulse.Action.FollowOwner ? rt.Hero.agentPosition : pulse.Center;
-                            var end = pulse.Action.FollowOwner ? center + (pulse.End - pulse.Center) : pulse.End;
-                            if (pulse.HasTarget)
-                            {
-                                if (BossAlive(pulse.Target) && pulse.Target.creationTime == pulse.TargetCreation && host.BossNativeSameLife(pulse.Target, pulse.TargetLife)
-                                    && host.BossDamage(rt, pulse.Target, pulse.Amount, pulse.Magic, pulse.Action.Element)
-                                    && rt.Boss.Build != null && pulse.StunMillis > 0)
-                                    rt.Boss.Defense.Stun(host, rt, pulse.Target, pulse.StunMillis, now);
-                                if (f.VisualIds[pulseIndex] != 0)
-                                    host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, pulse.Center, pulse.End, pulse.Action.RadiusMilli / 1000f,
-                                        now, now + .25f, element: pulse.Action.Element, targetNetId: pulse.TargetNetId, nativeLife: f.NativeLife);
-                            }
-                            else if (pulse.Action.Payload == BossPayload.Shield || pulse.Action.Payload == BossPayload.Heal
-                                || pulse.Action.Payload == BossPayload.Modifier || pulse.Action.Payload == BossPayload.Unstoppable)
-                                rt.Boss.Defense.Execute(host, rt, f.Profile, pulse.Action, pulse.Amount, now);
-                            else if (pulse.Action.Mechanism == BossMechanism.Projectile)
-                            {
-                                if (f.VisualIds[pulseIndex] != 0)
-                                    host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, center, end, 0, now, now, true);
-                                rt.Boss.Projectiles.Execute(host, rt, f.Set, pulse.Action, center, end, pulse.Amount, pulse.Magic, now,
-                                    maxHitsPerTarget: pulse.Action.Shape == BossShape.Radial ? pulse.Action.Count : 1, profile: f.Profile,
-                                    delayedAlready: true, nativeLife: f.NativeLife);
-                            }
-                            else
-                            {
-                                float? range = pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column
-                                    ? (float?)BossDirectionDistance(center, end) : null;
-                                rt.Boss.Shapes.Execute(host, rt, pulse.Action, center, end, pulse.Amount, pulse.Magic, pulseRange: range, stunMillis: pulse.StunMillis);
-                                if (pulse.Action.FollowOwner && f.VisualIds[pulseIndex] != 0)
-                                    host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, center, end, pulse.Action.RadiusMilli / 1000f, now, now + 0.25f,
-                                        element: pulse.Action.Element, shape: pulse.Action.Shape, range: pulse.Action.RangeMilli / 1000f,
-                                        width: pulse.Action.WidthMilli / 1000f, angle: pulse.Action.AngleMilli / 1000f, nativeLife: f.NativeLife);
-                            }
-                            if (rt.Boss.Build == null) return;
-                        }
-                        if (f.Pulse == f.PulseCount && now >= f.Until) _fields.RemoveAt(i);
-                        continue;
+                        var f = _fields[i]; if (f == null || !f.Active || f.Id > before || f.TerminalPending) continue;
+                        f.Processing = true;
+                        try { TickField(host, rt, f, i, now); }
+                        finally { f.Processing = false; if (!f.Active) Release(i, f); }
+                        if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
                     }
-                    if (now < f.Due) continue;
-                    while (now >= f.Due && f.Pulse < f.PulseCount)
-                    {
-                        Vector3 point = f.Action.FollowOwner ? rt.Hero.agentPosition : f.Points != null ? f.Points[f.Pulse] : f.Center;
-                        if (BossFinite(point))
-                        {
-                            if (f.Action.Payload == BossPayload.Heal || f.Action.Payload == BossPayload.Shield || f.Action.Payload == BossPayload.Modifier || f.Action.Payload == BossPayload.Unstoppable)
-                                rt.Boss.Defense.Execute(host, rt, f.Profile, f.Action, f.Damage, now);
-                            else rt.Boss.Shapes.Execute(host, rt, f.Action, point, f.End, f.Damage, f.Magic, f.Points != null ? BossShape.Circle : (BossShape?)null);
-                            if (f.Bud) host.PublishBossVisual(rt, ++rt.Boss.NextId, f.Collectible ? 2 : 3, point, point, f.Action.RadiusMilli / 1000f, now, now + 0.3f);
-                            else if (f.Action.FollowOwner) host.PublishBossVisual(rt, f.Id, 4, point, point, f.Action.RadiusMilli / 1000f, now, f.Created + f.Action.DelayMillis / 1000f + f.Action.Count * f.Action.IntervalMillis / 1000f + 0.2f);
-                        }
-                        f.Pulse++; f.Due = f.Created + f.Action.DelayMillis / 1000f + f.Pulse * f.Action.IntervalMillis / 1000f;
-                    }
-                    if (f.Pulse < f.PulseCount) continue;
-                    host.PublishBossVisual(rt, f.Id, f.Bud ? (f.Collectible ? 2 : 3) : 4, f.Center, f.End, f.Action.RadiusMilli / 1000f, now, now, true);
-                    _fields.RemoveAt(i);
                 }
+                finally { _ticking = false; }
+            }
+            private void TickField(HostAuthority host, HeroRuntime rt, Field f, int index, float now)
+            {
+                if (f.Sequence)
+                {
+                    while (f.Pulse < f.PulseCount && now >= f.Created + f.Scheduled[f.Pulse].DelayMillis / 1000f)
+                    {
+                        int pulseIndex = f.Pulse++; var pulse = f.Scheduled[pulseIndex]; BossHitResult result = default;
+                        var center = pulse.Action.FollowOwner ? rt.Hero.agentPosition : pulse.Center;
+                        var end = pulse.Action.FollowOwner ? center + (pulse.End - pulse.Center) : pulse.End;
+                        if (pulse.HasTarget)
+                        {
+                            if (BossAlive(pulse.Target) && pulse.Target.creationTime == pulse.TargetCreation && host.BossNativeSameLife(pulse.Target, pulse.TargetLife)
+                                && host.BossDamageHp(rt, pulse.Target, pulse.Amount, pulse.Magic, pulse.Action.Element, out float hp))
+                            {
+                                result = new BossHitResult(1, hp);
+                                if (f.Active && rt.Boss.Build != null)
+                                {
+                                    if (pulse.StunMillis > 0) rt.Boss.Defense.Stun(host, rt, pulse.Target, pulse.StunMillis, now);
+                                    if (pulse.SlowMillis > 0 && pulse.SlowPct > 0) rt.Boss.Defense.Slow(host, rt, pulse.Target, pulse.SlowMillis, pulse.SlowPct, now);
+                                }
+                            }
+                            if (!f.Active || rt.Boss.Build == null) return;
+                            if (f.VisualIds[pulseIndex] != 0) host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, pulse.Center, pulse.End, pulse.Action.RadiusMilli / 1000f,
+                                now, now + .25f, element: pulse.Action.Element, targetNetId: pulse.TargetNetId, nativeLife: f.NativeLife);
+                        }
+                        else if (pulse.Action.Payload == BossPayload.Shield || pulse.Action.Payload == BossPayload.Heal
+                            || pulse.Action.Payload == BossPayload.Modifier || pulse.Action.Payload == BossPayload.Unstoppable)
+                            rt.Boss.Defense.Execute(host, rt, f.Profile, pulse.Action, pulse.Amount, now);
+                        else if (pulse.Action.Mechanism == BossMechanism.Projectile)
+                        {
+                            if (f.VisualIds[pulseIndex] != 0) host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, center, end, 0, now, now, true);
+                            rt.Boss.Projectiles.Execute(host, rt, f.Set, pulse.Action, center, end, pulse.Amount, pulse.Magic, now,
+                                maxHitsPerTarget: pulse.Action.Shape == BossShape.Radial ? pulse.Action.Count : 1, profile: f.Profile, delayedAlready: true, nativeLife: f.NativeLife);
+                        }
+                        else
+                        {
+                            float? range = pulse.Action.Shape == BossShape.Line || pulse.Action.Shape == BossShape.Column ? (float?)BossDirectionDistance(center, end) : null;
+                            result = rt.Boss.Shapes.Execute(host, rt, pulse.Action, center, end, pulse.Amount, pulse.Magic, pulseRange: range,
+                                stunMillis: pulse.StunMillis, slowMillis: pulse.SlowMillis, slowPct: pulse.SlowPct);
+                            if (!f.Active || rt.Boss.Build == null) return;
+                            if (pulse.Action.FollowOwner && f.VisualIds[pulseIndex] != 0)
+                                host.PublishBossVisual(rt, f.VisualIds[pulseIndex], 4, center, end, pulse.Action.RadiusMilli / 1000f, now, now + .25f,
+                                    element: pulse.Action.Element, shape: pulse.Action.Shape, range: pulse.Action.RangeMilli / 1000f,
+                                    width: pulse.Action.WidthMilli / 1000f, angle: pulse.Action.AngleMilli / 1000f, nativeLife: f.NativeLife);
+                        }
+                        if (!f.Active || rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                        float heal = 0;
+                        if (!f.Healed && result.PositiveHits > 0 && pulse.HealOnFirstHit > 0) { f.Healed = true; heal = pulse.HealOnFirstHit; }
+                        if (pulse.AbsorbRatio > 0 && pulse.AbsorbCap > f.Absorbed)
+                        {
+                            float award = Math.Min(pulse.AbsorbCap - f.Absorbed, result.HpDamage * pulse.AbsorbRatio);
+                            f.Absorbed += award; heal += award;
+                        }
+                        if (heal > 0) host.BossHeal(rt, heal);
+                        if (!f.Active || rt.Boss.Build == null) return;
+                    }
+                    if (f.Pulse == f.PulseCount && now >= f.Until) Remove(host, rt, index, now, false);
+                    return;
+                }
+                if (now < f.Due) return;
+                while (now >= f.Due && f.Pulse < f.PulseCount)
+                {
+                    Vector3 point = f.Action.FollowOwner ? rt.Hero.agentPosition : f.HasPoints ? f.Points[f.Pulse] : f.Center;
+                    if (BossFinite(point))
+                    {
+                        if (f.Action.Payload == BossPayload.Heal || f.Action.Payload == BossPayload.Shield || f.Action.Payload == BossPayload.Modifier || f.Action.Payload == BossPayload.Unstoppable)
+                            rt.Boss.Defense.Execute(host, rt, f.Profile, f.Action, f.Damage, now);
+                        else rt.Boss.Shapes.Execute(host, rt, f.Action, point, f.End, f.Damage, f.Magic, f.HasPoints ? BossShape.Circle : (BossShape?)null);
+                        if (!f.Active || rt.Boss.Build == null) return;
+                        if (f.Bud) host.PublishBossVisual(rt, ++rt.Boss.NextId, f.Collectible ? 2 : 3, point, point, f.Action.RadiusMilli / 1000f, now, now + .3f);
+                        else if (f.Action.FollowOwner) host.PublishBossVisual(rt, f.Id, 4, point, point, f.Action.RadiusMilli / 1000f, now,
+                            f.Created + f.Action.DelayMillis / 1000f + f.Action.Count * f.Action.IntervalMillis / 1000f + .2f);
+                    }
+                    f.Pulse++; f.Due = f.Created + f.Action.DelayMillis / 1000f + f.Pulse * f.Action.IntervalMillis / 1000f;
+                }
+                if (f.Pulse == f.PulseCount) Remove(host, rt, index, now);
             }
             public void Clear(bool preserveNative = false)
             {
-                if (!preserveNative) _fields.Clear();
-                else for (int i = _fields.Count - 1; i >= 0; i--) if (_fields[i].NativeLife == 0) _fields.RemoveAt(i);
+                for (int i = 0; i < _fields.Length; i++)
+                {
+                    var f = _fields[i]; if (f == null || preserveNative && f.NativeLife != 0) continue;
+                    f.Active = false; if (!f.Processing) Release(i, f);
+                }
             }
+        }
+
+        private void BossHeal(HeroRuntime rt, float amount)
+        {
+            if (amount <= 0 || !BossAlive(rt.Hero)) return;
+            EnterGenerated(rt.Hero);
+            try { rt.Hero.Heal(amount).Dispatch(rt.Hero); }
+            finally { ExitGenerated(rt.Hero); }
         }
 
         // M4: no terrain traversal or immunity; this never emits a native movement event.
         internal sealed class BossMovementExecutor
         {
+            private readonly DispByDestination _displacement = new DispByDestination();
+            private bool _starting;
+            public BossMovementExecutor() { BossDisplacementReuse.Reset(_displacement); }
             public bool Execute(HostAuthority host, HeroRuntime rt, BossAction a, Vector3 target, float now)
             {
-                if (rt.Hero.Control.isDisplacing || rt.Hero.Status.hasRoot || rt.Hero.Status.hasStun
-                    || !BossGround(rt.Hero.agentPosition, target, Math.Min(8, a.RangeMilli / 1000f), out var point)) return false;
+                if (_starting || _displacement.isAlive || rt.Hero.Control.isDisplacing || rt.Hero.Status.hasRoot || rt.Hero.Status.hasStun
+                    || !BossGround(rt.Hero.agentPosition, target, Math.Min(8, a.RangeMilli / 1000f), out var point)
+                    || !BossDisplacementReuse.Reset(_displacement)) return false;
+                _displacement.destination = point; _displacement.duration = Math.Max(.05f, a.LifetimeMillis / 1000f);
+                _displacement.isFriendly = true; _displacement.isDodging = false; _displacement.canGoOverTerrain = false; _displacement.isCanceledByCC = true;
+                _starting = true;
                 host.EnterGenerated(rt.Hero);
                 try
                 {
-                    rt.Hero.Control.StartDisplacement(new DispByDestination { destination = point, duration = Math.Max(0.05f, a.LifetimeMillis / 1000f),
-                        isFriendly = true, isDodging = false, canGoOverTerrain = false, isCanceledByCC = true });
+                    rt.Hero.Control.StartDisplacement(_displacement);
                 }
-                finally { host.ExitGenerated(rt.Hero); }
+                finally { _starting = false; host.ExitGenerated(rt.Hero); }
                 host.PublishBossVisual(rt, ++rt.Boss.NextId, 6, rt.Hero.agentPosition, point, 0.1f, now, now + Math.Max(0.05f, a.LifetimeMillis / 1000f));
                 return true;
             }
@@ -579,6 +759,14 @@ namespace SodRpg.Mod
         {
             private readonly Entity[] _targets = new Entity[64];
             private readonly float[] _ready = new float[64];
+            private readonly long[] _lives = new long[64];
+            private readonly Entity[] _owners = new Entity[64];
+            private readonly DispByDestination[] _displacements = new DispByDestination[64];
+            private readonly bool[] _starting = new bool[64];
+            public BossEnemyMovementExecutor()
+            {
+                for (int i = 0; i < 64; i++) { _displacements[i] = new DispByDestination(); BossDisplacementReuse.Reset(_displacements[i]); }
+            }
             public bool Execute(HeroRuntime rt, Entity victim, Vector3 origin, bool pull, float distance, float now, float duration = .2f, float gateSeconds = 1f)
             {
                 if (!BossAlive(victim) || victim == rt.Hero || victim.GetRelation(rt.Hero) != EntityRelation.Enemy || victim.IsAnyBoss()
@@ -587,17 +775,23 @@ namespace SodRpg.Mod
                 int slot = -1;
                 for (int i = 0; i < _targets.Length; i++)
                 {
-                    if (_targets[i] == victim) { if (_ready[i] > now) return false; slot = i; break; }
-                    if (slot < 0 && (_targets[i] == null || _ready[i] <= now)) slot = i;
+                    bool available = !_starting[i] && !_displacements[i].isAlive && (_owners[i] == null || !ReferenceEquals(_owners[i].Control.ongoingDisplacement, _displacements[i]));
+                    if (_targets[i] == victim && NativeInstance.BossNativeSameLife(victim, _lives[i]))
+                    { if (_ready[i] > now || !available) return false; slot = i; break; }
+                    if (slot < 0 && available && (_targets[i] == null || _ready[i] <= now)) slot = i;
                 }
                 if (slot < 0) return false;
                 var direction = BossDirection(pull ? victim.position : origin, pull ? origin : victim.position);
                 float length = Math.Min(2, Math.Max(0, distance));
                 if (pull) length = Math.Min(length, Vector3.Distance(victim.position, origin));
                 if (direction == Vector3.zero || !BossGround(victim.agentPosition, victim.agentPosition + direction * length, length, out var point)) return false;
-                _targets[slot] = victim; _ready[slot] = now + gateSeconds;
-                victim.Control.StartDisplacement(new DispByDestination { destination = point, duration = duration, isFriendly = false,
-                    isDodging = false, canGoOverTerrain = false, isCanceledByCC = true });
+                var displacement = _displacements[slot]; if (!BossDisplacementReuse.Reset(displacement)) return false;
+                displacement.destination = point; displacement.duration = duration; displacement.isFriendly = false;
+                displacement.isDodging = false; displacement.canGoOverTerrain = false; displacement.isCanceledByCC = true;
+                _targets[slot] = victim; _owners[slot] = victim; _lives[slot] = NativeInstance.BossNativeActorLife(victim); _ready[slot] = now + gateSeconds;
+                _starting[slot] = true;
+                try { victim.Control.StartDisplacement(displacement); }
+                finally { _starting[slot] = false; }
                 return true;
             }
             public void Clear() { Array.Clear(_targets, 0, _targets.Length); Array.Clear(_ready, 0, _ready.Length); }
@@ -609,63 +803,110 @@ namespace SodRpg.Mod
             private sealed class Deployable
             {
                 public long Id, Epoch; public string Set; public Hero Owner; public BossAction Action; public Vector3 Center, End;
-                public float Due, Until, Damage; public bool Magic, IsNative; public int Shots; public Summon Native; public float NativeCreation;
+                public float Due, Until, Damage, NativeCreation; public bool Magic, IsNative, Active, Processing; public int Shots; public Summon Native;
             }
-            private readonly List<Deployable> _owned = new List<Deployable>(16);
+            private readonly BossObjectPool<Deployable> _pool = new BossObjectPool<Deployable>(32, () => new Deployable());
+            private readonly Deployable[] _owned = new Deployable[32];
+            private bool _ticking;
+            private Deployable Rent(HeroRuntime rt, string set, int limit)
+            {
+                int count = 0, free = -1;
+                for (int i = 0; i < _owned.Length; i++)
+                {
+                    if (_owned[i] == null) { if (free < 0) free = i; }
+                    else if (_owned[i].Active && _owned[i].Set == set) count++;
+                }
+                if (count >= limit || free < 0) return null;
+                var d = _pool.Rent(); if (d == null) return null;
+                d.Id = ++rt.Boss.NextId; d.Epoch = rt.ShieldEquipmentEpoch; d.Set = set; d.Owner = rt.Hero; d.Active = true; _owned[free] = d;
+                return d;
+            }
             public bool Execute(HostAuthority host, HeroRuntime rt, string set, BossAction a, Vector3 center, Vector3 end, float amount, bool magic, float now)
             {
-                int count = 0; foreach (var d in _owned) if (d.Set == set) count++;
-                if (count >= Math.Min(2, a.MaxInstances) || _owned.Count >= 128 || a.LifetimeMillis <= 0) return false;
-                var entry = new Deployable { Id = ++rt.Boss.NextId, Epoch = rt.ShieldEquipmentEpoch, Set = set, Owner = rt.Hero, Action = a,
-                    Center = center, End = end, Due = now + a.DelayMillis / 1000f, Until = now + a.LifetimeMillis / 1000f, Damage = amount, Magic = magic };
-                _owned.Add(entry); host.PublishBossVisual(rt, entry.Id, 8, center, end, a.RadiusMilli / 1000f, entry.Due, entry.Until); return true;
+                if (a.LifetimeMillis <= 0 || a.Count < 1 || a.Count > 32) return false;
+                var d = Rent(rt, set, Math.Min(2, a.MaxInstances)); if (d == null) return false;
+                d.Action = a; d.Center = center; d.End = end; d.Due = now + a.DelayMillis / 1000f;
+                d.Until = now + a.LifetimeMillis / 1000f; d.Damage = amount; d.Magic = magic;
+                host.PublishBossVisual(rt, d.Id, 8, center, end, a.RadiusMilli / 1000f, d.Due, d.Until); return true;
             }
             public bool RegisterNative(HostAuthority host, HeroRuntime rt, string set, Summon summon, SkillTrigger source, BossAction action, float now)
             {
                 if (!NetworkServer.active || summon == null || !summon.isActive || source == null || source.owner != rt.Hero
-                    || FindMemory(rt.Hero, source.GetType().Name) != source || summon.hero != rt.Hero || summon.info.caster != rt.Hero
-                    || summon.FindFirstAncestorOfType<SkillTrigger>() != source || action.LifetimeMillis <= 0) return false;
-                int count = 0; foreach (var d in _owned) { if (d.Native == summon) return false; if (d.Set == set) count++; }
-                if (count >= 2 || _owned.Count >= 128) return false;
-                var native = new Deployable { Id = ++rt.Boss.NextId, Epoch = rt.ShieldEquipmentEpoch, Owner = rt.Hero, Set = set, Native = summon, IsNative = true,
-                    Center = summon.agentPosition, NativeCreation = summon.creationTime, Until = now + action.LifetimeMillis / 1000f };
-                _owned.Add(native);
-                host.PublishBossVisual(rt, native.Id, 8, native.Center, native.Center, action.RadiusMilli / 1000f, now, native.Until);
-                return true;
+                    || !BossNativeEquippedSkill(rt.Hero, source) || summon.hero != rt.Hero || summon.info.caster != rt.Hero || action.LifetimeMillis <= 0) return false;
+                Actor ancestor = summon.parentActor; SkillTrigger nearestSource = null;
+                for (int depth = 0; depth < 32 && ancestor != null; depth++, ancestor = ancestor.parentActor)
+                    if (ancestor is SkillTrigger skill) { nearestSource = skill; break; }
+                if (nearestSource != source) return false;
+                for (int i = 0; i < _owned.Length; i++) if (_owned[i] != null && _owned[i].Active && _owned[i].Native == summon) return false;
+                var d = Rent(rt, set, 2); if (d == null) return false;
+                d.Native = summon; d.IsNative = true; d.Center = summon.agentPosition; d.End = d.Center;
+                d.NativeCreation = summon.creationTime; d.Until = now + action.LifetimeMillis / 1000f;
+                host.PublishBossVisual(rt, d.Id, 8, d.Center, d.Center, action.RadiusMilli / 1000f, now, d.Until); return true;
             }
             public void Tick(HostAuthority host, HeroRuntime rt, float now)
             {
-                for (int i = _owned.Count - 1; i >= 0; i--)
+                if (_ticking) return;
+                _ticking = true; long before = rt.Boss.NextId;
+                try
                 {
-                    var d = _owned[i];
-                    if (d.Epoch != rt.ShieldEquipmentEpoch || d.Owner != rt.Hero || now >= d.Until
-                        || d.IsNative && (d.Native == null || !d.Native.isActive || d.Native.creationTime != d.NativeCreation || d.Native.hero != d.Owner))
+                    for (int i = _owned.Length - 1; i >= 0; i--)
                     {
-                        DestroyNative(d); host.PublishBossVisual(rt, d.Id, 8, d.Center, d.End, 0, now, now, true); _owned.RemoveAt(i); continue;
-                    }
-                    if (d.IsNative || d.Shots >= d.Action.Count || now < d.Due) continue;
-                    ListReturnHandle<Entity> handle;
-                    var enemies = DewPhysics.OverlapCircleAllEntities(out handle, d.Center, d.Action.RangeMilli / 1000f, EnemyFilter, rt.Hero);
-                    try
-                    {
-                        Entity nearest = null; float best = float.MaxValue;
-                        foreach (var e in enemies) if (BossAlive(e) && (e.position - d.Center).sqrMagnitude < best) { nearest = e; best = (e.position - d.Center).sqrMagnitude; }
-                        if (nearest != null)
+                        var d = _owned[i]; if (d == null || !d.Active || d.Id > before) continue;
+                        d.Processing = true;
+                        try
                         {
-                            if (d.Action.SpeedMilli > 0) rt.Boss.Projectiles.Execute(host, rt, d.Set, d.Action, d.Center, nearest.position, d.Damage, d.Magic, now, 1);
-                            else rt.Boss.Shapes.Execute(host, rt, d.Action, nearest.position, nearest.position, d.Damage, d.Magic);
-                            d.Shots++;
+                            if (d.Epoch != rt.ShieldEquipmentEpoch || d.Owner != rt.Hero || now >= d.Until
+                                || d.IsNative && (d.Native == null || !d.Native.isActive || d.Native.creationTime != d.NativeCreation || d.Native.hero != d.Owner))
+                            {
+                                Remove(i, d); host.PublishBossVisual(rt, d.Id, 8, d.Center, d.End, 0, now, now, true); continue;
+                            }
+                            if (d.IsNative || d.Shots >= d.Action.Count || now < d.Due) continue;
+                            ListReturnHandle<Entity> handle;
+                            var enemies = DewPhysics.OverlapCircleAllEntities(out handle, d.Center, d.Action.RangeMilli / 1000f, EnemyFilter, rt.Hero);
+                            try
+                            {
+                                Entity nearest = null; float best = float.MaxValue;
+                                for (int j = 0; j < Math.Min(128, enemies.Count); j++)
+                                {
+                                    var e = enemies[j];
+                                    if (BossAlive(e) && (e.position - d.Center).sqrMagnitude < best) { nearest = e; best = (e.position - d.Center).sqrMagnitude; }
+                                }
+                                if (nearest != null)
+                                {
+                                    bool admitted = true;
+                                    if (d.Action.SpeedMilli > 0) admitted = rt.Boss.Projectiles.Execute(host, rt, d.Set, d.Action, d.Center, nearest.position, d.Damage, d.Magic, now, 1);
+                                    else rt.Boss.Shapes.Execute(host, rt, d.Action, nearest.position, nearest.position, d.Damage, d.Magic);
+                                    if (!d.Active || rt.Boss.Build == null) return;
+                                    if (admitted) d.Shots++;
+                                }
+                            }
+                            finally { handle.Return(); }
+                            d.Due = now + Math.Max(.1f, d.Action.IntervalMillis / 1000f);
                         }
+                        finally { d.Processing = false; if (!d.Active) Release(i, d); }
                     }
-                    finally { handle.Return(); }
-                    d.Due = now + Math.Max(0.1f, d.Action.IntervalMillis / 1000f);
                 }
+                finally { _ticking = false; }
             }
             private static void DestroyNative(Deployable d)
             {
                 if (d.Native != null && d.Native.isActive && d.Native.hero == d.Owner && d.Native.creationTime == d.NativeCreation) d.Native.Destroy();
             }
-            public void Clear() { foreach (var d in _owned) DestroyNative(d); _owned.Clear(); }
+            private void Remove(int index, Deployable d)
+            {
+                if (!d.Active) return;
+                d.Active = false; bool processing = d.Processing; d.Processing = true;
+                try { DestroyNative(d); }
+                finally { d.Processing = processing; if (!processing) Release(index, d); }
+            }
+            private void Release(int index, Deployable d)
+            {
+                _owned[index] = null; d.Owner = null; d.Native = null; d.Action = null; d.Set = null; d.IsNative = false; d.Shots = 0; _pool.Return(d);
+            }
+            public void Clear()
+            {
+                for (int i = 0; i < _owned.Length; i++) if (_owned[i] != null) Remove(i, _owned[i]);
+            }
         }
 
         // M7: retain only exact independent containers; pool reuse never grants ownership.
@@ -673,115 +914,165 @@ namespace SodRpg.Mod
         {
             private sealed class Defense
             {
-                public long Id; public string Source, NativeId; public float Until, LastDecay, DecayRate; public StatusEffect Effect; public ShieldEffect Shield; public BasicEffect Basic; public float Creation;
-                public long Life;
-                public StatBonus Bonus;
-                public Entity Target;
-                public long TargetLife;
+                private static int _next;
+                public readonly string NativeId = "DreamforgeRPG.Boss.Container." + System.Threading.Interlocked.Increment(ref _next);
+                public readonly UnstoppableEffect Unstoppable = new UnstoppableEffect();
+                public readonly StunEffect Stun = new StunEffect();
+                public readonly SlowEffect Slow = new SlowEffect();
+                public readonly StatBonus Bonus = new StatBonus();
+                public long Id, Life, TargetLife; public string Source;
+                public float Until, LastDecay, DecayRate, Creation, BonusAmount;
+                public StatusEffect Effect; public ShieldEffect Shield; public BasicEffect Basic; public Entity Target;
+                public Stat BonusStat; public bool Active, Busy, BonusAttached;
             }
-            private readonly List<Defense> _active = new List<Defense>(16);
+            private readonly Defense[] _slots = new Defense[64];
+            public BossDefenseExecutor()
+            {
+                for (int i = 0; i < _slots.Length; i++)
+                {
+                    var d = _slots[i] = new Defense();
+                    BossBasicEffectReuse.Reset(d.Unstoppable); BossBasicEffectReuse.Reset(d.Stun); BossBasicEffectReuse.Reset(d.Slow);
+                }
+            }
+            private static bool NativeBusy(BasicEffect basic)
+                => basic.isAlive || basic.parent is Se_GenericEffectContainer container && container.isActive && ReferenceEquals(container.effect, basic);
+            private Defense Rent(HeroRuntime rt, Entity target, string source, float until, float now)
+            {
+                for (int i = 0; i < _slots.Length; i++)
+                {
+                    var d = _slots[i];
+                    if (d.Active || d.Busy || NativeBusy(d.Unstoppable) || NativeBusy(d.Stun) || NativeBusy(d.Slow)) continue;
+                    BossBasicEffectReuse.Reset(d.Unstoppable); BossBasicEffectReuse.Reset(d.Stun); BossBasicEffectReuse.Reset(d.Slow);
+                    d.Id = ++rt.Boss.NextId; d.Source = source; d.Target = target; d.TargetLife = NativeInstance.BossNativeActorLife(target);
+                    d.Until = until; d.LastDecay = now; d.DecayRate = 0; d.Effect = null; d.Shield = null; d.Basic = null;
+                    d.Active = d.Busy = true; return d;
+                }
+                return null;
+            }
             public bool Execute(HostAuthority host, HeroRuntime rt, string source, BossAction a, float amount, float now, bool linearDecay = false)
             {
                 if (a.Payload != BossPayload.Heal && a.Payload != BossPayload.Shield && a.Payload != BossPayload.Unstoppable && a.Payload != BossPayload.Modifier) return false;
                 if (a.Payload == BossPayload.Modifier && (!a.ModifierStat.HasValue || !BossNativeStat(a.ModifierStat.Value))) return false;
-                for (int i = _active.Count - 1; i >= 0; i--)
-                    if (_active[i].Source == source)
+                if (a.Payload != BossPayload.Heal && a.LifetimeMillis <= 0) return false;
+                if (a.Payload == BossPayload.Heal) { host.BossHeal(rt, amount); return true; }
+                // Reserve before replacing any existing source: failed admission leaves its exact container untouched.
+                var d = Rent(rt, rt.Hero, source, now + a.LifetimeMillis / 1000f, now); if (d == null) return false;
+                try
+                {
+                    for (int i = 0; i < _slots.Length; i++)
+                        if (!ReferenceEquals(_slots[i], d) && _slots[i].Active && _slots[i].Source == source) Remove(host, rt, _slots[i], now);
+                    if (!d.Active) return false;
+                    host.EnterGenerated(rt.Hero);
+                    try
                     {
-                        var old = _active[i]; Remove(host, rt, old);
-                        host.PublishBossVisual(rt, old.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, 0, now, now, true);
-                        _active.RemoveAt(i);
+                        if (a.Payload == BossPayload.Shield)
+                        {
+                            var shield = host._am?.serverActor?.GiveShield(rt.Hero, amount, a.LifetimeMillis / 1000f, false);
+                            d.Effect = shield; d.Shield = shield?.shield;
+                            if (linearDecay && d.Shield != null) d.DecayRate = Math.Max(0, d.Shield.amount) / (a.LifetimeMillis / 1000f);
+                        }
+                        else if (a.Payload == BossPayload.Unstoppable)
+                        {
+                            d.Basic = d.Unstoppable;
+                            d.Effect = host._am?.serverActor?.CreateBasicEffect(rt.Hero, d.Basic, a.LifetimeMillis / 1000f, d.NativeId);
+                        }
+                        else
+                        {
+                            d.BonusStat = a.ModifierStat.Value; d.BonusAmount = a.ChannelId != null ? amount : a.MagnitudeMilli / 1000f;
+                            AddNativeStat(d.Bonus, d.BonusStat, d.BonusAmount); d.BonusAttached = true;
+                            d.Target.Status.AddStatBonus(d.Bonus); d.Target.Status.CalculateStatsIfDirty();
+                        }
                     }
-                if (_active.Count >= 64 || a.Payload != BossPayload.Heal && a.LifetimeMillis <= 0) return false;
-                var d = new Defense { Id = ++rt.Boss.NextId, Source = source, Until = now + a.LifetimeMillis / 1000f,
-                    Target = rt.Hero, TargetLife = host.BossNativeActorLife(rt.Hero), LastDecay = now };
-                if (a.Payload == BossPayload.Heal)
-                {
-                    host.EnterGenerated(rt.Hero); try { rt.Hero.Heal(amount).Dispatch(rt.Hero); } finally { host.ExitGenerated(rt.Hero); } return true;
+                    finally { host.ExitGenerated(rt.Hero); }
+                    d.Creation = d.Effect != null ? d.Effect.creationTime : 0;
+                    d.Life = d.Effect != null ? host.BossNativeActorLife(d.Effect) : 0;
+                    if (!d.Active || d.Effect == null && !d.BonusAttached || !BossAlive(d.Target)) { Remove(host, rt, d, now); return false; }
+                    host.PublishBossVisual(rt, d.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, .6f, now, d.Until, targetNetId: rt.Hero.netId);
+                    return true;
                 }
-                if (a.Payload == BossPayload.Shield)
+                finally { try { if (!d.Active) Cleanup(host, rt, d); } finally { d.Busy = false; } }
+            }
+            public bool SourceActive(HostAuthority host, HeroRuntime rt, string source, float now)
+            {
+                for (int i = 0; i < _slots.Length; i++)
                 {
-                    var shield = host._am?.serverActor?.GiveShield(rt.Hero, amount, a.LifetimeMillis / 1000f, false);
-                    d.Effect = shield; d.Shield = shield?.shield;
-                    if (linearDecay && d.Shield != null) d.DecayRate = Math.Max(0, d.Shield.amount) / (a.LifetimeMillis / 1000f);
+                    var d = _slots[i];
+                    if (d.Active && d.Source == source && now < d.Until && d.Shield != null && d.Shield.amount > 0 && Owned(host, d)) return true;
                 }
-                else if (a.Payload == BossPayload.Unstoppable)
-                {
-                    d.NativeId = "DreamforgeRPG.Boss." + rt.Hero.GetInstanceID() + "." + d.Id;
-                    d.Basic = new UnstoppableEffect();
-                    d.Effect = host._am?.serverActor?.CreateBasicEffect(rt.Hero, d.Basic, a.LifetimeMillis / 1000f, d.NativeId);
-                }
-                else if (a.Payload == BossPayload.Modifier)
-                {
-                    d.Bonus = new StatBonus();
-                    AddNativeStat(d.Bonus, a.ModifierStat.Value, a.ChannelId != null ? amount : a.MagnitudeMilli / 1000f);
-                    rt.Hero.Status.AddStatBonus(d.Bonus);
-                    rt.Hero.Status.CalculateStatsIfDirty();
-                }
-                if (d.Effect == null && d.Bonus == null) return false;
-                d.Creation = d.Effect != null ? d.Effect.creationTime : 0;
-                d.Life = d.Effect != null ? host.BossNativeActorLife(d.Effect) : 0; _active.Add(d);
-                host.PublishBossVisual(rt, d.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, 0.6f, now, d.Until, targetNetId: rt.Hero.netId);
-                return true;
+                return false;
             }
             public void Tick(HostAuthority host, HeroRuntime rt, float now)
             {
-                for (int i = _active.Count - 1; i >= 0; i--)
+                for (int i = 0; i < _slots.Length; i++)
                 {
-                    var d = _active[i];
-                    if (now >= d.Until || !Owned(host, rt, d) || !BossAlive(d.Target))
-                    {
-                        Remove(host, rt, d);
-                        host.PublishBossVisual(rt, d.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, 0, now, now, true);
-                        _active.RemoveAt(i);
-                        continue;
-                    }
+                    var d = _slots[i]; if (!d.Active || d.Busy) continue;
+                    if (now >= d.Until || !Owned(host, d) || !BossAlive(d.Target)) { Remove(host, rt, d, now); continue; }
                     if (d.Shield != null && d.DecayRate > 0)
                     {
-                        d.Shield.amount = Math.Max(0, d.Shield.amount - d.DecayRate * Math.Max(0, now - d.LastDecay));
-                        d.LastDecay = now;
+                        d.Shield.amount = Math.Max(0, d.Shield.amount - d.DecayRate * Math.Max(0, now - d.LastDecay)); d.LastDecay = now;
                     }
                 }
             }
-            private static bool Owned(HostAuthority host, HeroRuntime rt, Defense d)
-                => d.Bonus != null || d.Effect != null && d.Effect.isActive && d.Effect.victim == d.Target && d.Effect.creationTime == d.Creation
-                    && host.BossNativeSameLife(d.Effect, d.Life)
-                    && host.BossNativeSameLife(d.Target, d.TargetLife)
-                    && (d.Shield != null ? d.Effect is Se_GenericShield_OneShot shield && shield.shield == d.Shield
-                        : d.Effect is Se_GenericEffectContainer container && container.id == d.NativeId
-                            && d.Basic != null && d.Basic.isAlive && d.Basic.parent == d.Effect);
-            private static void Remove(HostAuthority host, HeroRuntime rt, Defense d)
+            private static bool Owned(HostAuthority host, Defense d)
+                => d.BonusAttached && host.BossNativeSameLife(d.Target, d.TargetLife)
+                    || d.Effect != null && d.Effect.isActive && d.Effect.victim == d.Target && d.Effect.creationTime == d.Creation
+                        && host.BossNativeSameLife(d.Effect, d.Life) && host.BossNativeSameLife(d.Target, d.TargetLife)
+                        && (d.Shield != null ? d.Effect is Se_GenericShield_OneShot shield && ReferenceEquals(shield.shield, d.Shield)
+                            : d.Effect is Se_GenericEffectContainer container && container.id == d.NativeId && ReferenceEquals(container.effect, d.Basic)
+                                && d.Basic != null && d.Basic.isAlive && d.Basic.parent == d.Effect);
+            private static void Cleanup(HostAuthority host, HeroRuntime rt, Defense d)
             {
-                if (d.Bonus != null)
+                if (d.BonusAttached)
                 {
-                    rt.Hero.Status.RemoveStatBonus(d.Bonus); d.Bonus = null;
-                    rt.Hero.Status.CalculateStatsIfDirty();
+                    if (d.Target != null && host.BossNativeSameLife(d.Target, d.TargetLife))
+                    { d.Target.Status.RemoveStatBonus(d.Bonus); d.Target.Status.CalculateStatsIfDirty(); }
+                    AddNativeStat(d.Bonus, d.BonusStat, -d.BonusAmount); d.BonusAttached = false; d.BonusAmount = 0;
                 }
-                if (Owned(host, rt, d)) d.Effect.Destroy();
+                if (Owned(host, d)) d.Effect.Destroy();
+                d.Effect = null; d.Shield = null; d.Basic = null; d.Source = null; d.Target = null;
             }
-            public void Clear(HostAuthority host, HeroRuntime rt) { foreach (var d in _active) Remove(host, rt, d); _active.Clear(); }
+            private static void Remove(HostAuthority host, HeroRuntime rt, Defense d, float now)
+            {
+                bool active = d.Active; d.Active = false;
+                if (active) host.PublishBossVisual(rt, d.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, 0, now, now, true);
+                if (!d.Busy)
+                {
+                    d.Busy = true;
+                    try { Cleanup(host, rt, d); }
+                    finally { d.Busy = false; }
+                }
+            }
+            public void Clear(HostAuthority host, HeroRuntime rt)
+            {
+                for (int i = 0; i < _slots.Length; i++) if (_slots[i].Active) Remove(host, rt, _slots[i], Time.time);
+            }
             public void CancelSource(HostAuthority host, HeroRuntime rt, string source)
             {
-                for (int i = _active.Count - 1; i >= 0; i--)
-                    if (_active[i].Source == source)
-                    {
-                        var d = _active[i]; Remove(host, rt, d);
-                        host.PublishBossVisual(rt, d.Id, 7, rt.Hero.agentPosition, rt.Hero.agentPosition, 0, Time.time, Time.time, true);
-                        _active.RemoveAt(i);
-                    }
+                for (int i = 0; i < _slots.Length; i++) if (_slots[i].Active && _slots[i].Source == source) Remove(host, rt, _slots[i], Time.time);
             }
             public void Stun(HostAuthority host, HeroRuntime rt, Entity target, int durationMillis, float now)
+                => CrowdControl(host, rt, target, Math.Min(250, durationMillis), 0, now);
+            public void Slow(HostAuthority host, HeroRuntime rt, Entity target, int durationMillis, int percentage, float now)
             {
-                if (_active.Count >= 64 || durationMillis <= 0 || !BossAlive(target) || target == rt.Hero || target.IsAnyBoss()
+                if (percentage <= 0) return;
+                CrowdControl(host, rt, target, Math.Min(500, durationMillis), Math.Min(20, percentage), now);
+            }
+            private void CrowdControl(HostAuthority host, HeroRuntime rt, Entity target, int durationMillis, int slowPct, float now)
+            {
+                if (durationMillis <= 0 || !BossAlive(target) || target == rt.Hero || target.IsAnyBoss()
                     || target.GetRelation(rt.Hero) != EntityRelation.Enemy || target.Status.hasCrowdControlImmunity) return;
-                var d = new Defense { Id = ++rt.Boss.NextId, Target = target, TargetLife = host.BossNativeActorLife(target),
-                    Until = now + Math.Min(250, durationMillis) / 1000f, Basic = new StunEffect() };
-                d.NativeId = "DreamforgeRPG.Boss.Stun." + rt.Hero.GetInstanceID() + "." + d.Id;
-                host.EnterGenerated(rt.Hero);
-                try { d.Effect = host._am?.serverActor?.CreateBasicEffect(target, d.Basic, d.Until - now, d.NativeId); }
-                finally { host.ExitGenerated(rt.Hero); }
-                if (d.Effect == null) return;
-                d.Creation = d.Effect.creationTime; d.Life = host.BossNativeActorLife(d.Effect);
-                _active.Add(d);
+                var d = Rent(rt, target, null, now + durationMillis / 1000f, now); if (d == null) return;
+                try
+                {
+                    if (slowPct > 0) { d.Slow.strength = slowPct; d.Slow.decay = false; d.Basic = d.Slow; }
+                    else d.Basic = d.Stun;
+                    host.EnterGenerated(rt.Hero);
+                    try { d.Effect = host._am?.serverActor?.CreateBasicEffect(target, d.Basic, d.Until - now, d.NativeId); }
+                    finally { host.ExitGenerated(rt.Hero); }
+                    d.Creation = d.Effect != null ? d.Effect.creationTime : 0; d.Life = d.Effect != null ? host.BossNativeActorLife(d.Effect) : 0;
+                    if (!d.Active || d.Effect == null) Remove(host, rt, d, now);
+                }
+                finally { try { if (!d.Active) Cleanup(host, rt, d); } finally { d.Busy = false; } }
             }
             private static bool BossNativeStat(Stat stat)
             {

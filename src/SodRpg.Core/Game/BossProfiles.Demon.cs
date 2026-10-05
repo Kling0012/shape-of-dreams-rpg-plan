@@ -20,10 +20,12 @@ namespace SodRpg.Core.Game
         public const string VisualContract = "owner-run-zone-room-equipment-epoch-revision;max-live64;effect-id-update-only;snapshot1000ms-unscaled;game-time-deadlines;offset-synced-mirror-networktime-sentAt-times-timescale;remaining-time-only;invalidate-epoch;profile-element-shape-range-width-angle-count-budget-shrinking-radius;radial-kind4-arrowheads-angle180-inward-else-outward;frozen-adopted-target-persistent-net-id;shield-only-live-target-follow;host-only-native-life-scope-preserved-across-live-equipment-epoch";
         public static IReadOnlyList<BossMoveProfile> Moves { get; } = Array.AsReadOnly(CreateMoves()
             .Concat(CreateSkollMoves()).Concat(CreateInfernusMoves()).Concat(CreateInkMoves())
-            .Concat(CreateNyxMoves()).Concat(CreateErebosMoves()).Concat(CreateSeekerMoves()).Concat(CreateAzurakMoves()).Concat(CreatePrimusMoves()).ToArray());
+            .Concat(CreateNyxMoves()).Concat(CreateErebosMoves()).Concat(CreateSeekerMoves()).Concat(CreateAzurakMoves()).Concat(CreatePrimusMoves())
+            .Concat(CreateLightMoves()).Concat(CreateMawMoves()).Concat(CreateObliviaxMoves()).Concat(CreatePolarisMoves()).ToArray());
         public static IReadOnlyList<BossRewardProfile> Rewards { get; } = Array.AsReadOnly(CreateRewards()
             .Concat(CreateSkollRewards()).Concat(CreateInfernusRewards()).Concat(CreateInkRewards())
-            .Concat(CreateNyxRewards()).Concat(CreateErebosRewards()).Concat(CreateSeekerRewards()).Concat(CreateAzurakRewards()).ToArray());
+            .Concat(CreateNyxRewards()).Concat(CreateErebosRewards()).Concat(CreateSeekerRewards()).Concat(CreateAzurakRewards())
+            .Concat(CreateLightRewards()).Concat(CreateMawRewards()).Concat(CreateObliviaxRewards()).ToArray());
         private static readonly Dictionary<string, BossMoveProfile> moves = Moves.ToDictionary(x => x.Id, StringComparer.Ordinal);
         private static readonly Dictionary<string, BossRewardProfile> rewards = Rewards.ToDictionary(x => x.Id, StringComparer.Ordinal);
         public static bool TryGetMove(string id, out BossMoveProfile profile)
@@ -32,6 +34,27 @@ namespace SodRpg.Core.Game
         { profile = null; return id != null && rewards.TryGetValue(id, out profile); }
         public static string DescribeMove(string id) => TryGetMove(id, out var p) ? p.Description.ToString() : "";
         public static string DescribeReward(string id, int stage) => TryGetReward(id, out var p) && stage >= 1 && stage <= 3 ? p.Stages[stage - 1].Description.ToString() : "";
+        public static uint SetMask(string setId)
+        {
+            switch (setId)
+            {
+                case DemonSetId: return 1u;
+                case SkollSetId: return 1u << 1;
+                case InfernusSetId: return 1u << 2;
+                case WhiteNightSetId: return 1u << 3;
+                case DarkMoonSetId: return 1u << 4;
+                case NyxSetId: return 1u << 5;
+                case ErebosSetId: return 1u << 6;
+                case SeekerSetId: return 1u << 7;
+                case AzurakSetId: return 1u << 8;
+                case PrimusSetId: return 1u << 9;
+                case LightSetId: return 1u << 10;
+                case MawSetId: return 1u << 11;
+                case ObliviaxSetId: return 1u << 12;
+                case PolarisSetId: return 1u << 13;
+                default: return 0;
+            }
+        }
         private static BossChannelDef C(string id, int value, int cap, BossCoefficientKind kind = BossCoefficientKind.Damage) => new BossChannelDef(id, value * 1000, cap * 1000, kind);
         private static BossMoveProfile P(string id, string ja, string en, BossChannelDef channel, params BossAction[] actions)
             => new BossMoveProfile("boss_demon." + id, DemonSetId, new Txt(ja, en), new[] { channel }, actions);
@@ -102,6 +125,14 @@ namespace SodRpg.Core.Game
             yield return "boss-native:azurak:" + AzurakNativeContract;
             yield return "boss-order:primus:" + PrimusEventOrder;
             yield return "boss-native:primus:" + PrimusNativeContract;
+            yield return "boss-order:light:" + LightEventOrder;
+            yield return "boss-native:light:" + LightNativeContract;
+            yield return "boss-order:maw:" + MawEventOrder;
+            yield return "boss-native:maw:" + MawNativeContract;
+            yield return "boss-order:obliviax:" + ObliviaxEventOrder;
+            yield return "boss-native:obliviax:" + ObliviaxNativeContract;
+            yield return "boss-order:polaris:" + PolarisEventOrder;
+            yield return "boss-native:polaris:" + PolarisNativeContract;
             yield return "boss-combat:" + CombatContract;
             yield return "boss-visual:" + VisualContract;
             yield return "boss-profile-order:" + string.Join(",", Moves.Select(p => p.Id));

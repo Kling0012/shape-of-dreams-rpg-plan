@@ -83,6 +83,7 @@ namespace SodRpg.Mod
         }
         private sealed class InkBeamState
         {
+            internal HostAuthority Host;
             internal HeroRuntime Runtime;
             internal Se_U_BeamOfBalance Parent;
             internal Ai_U_BeamOfBalance_Beam Beam;
@@ -108,17 +109,42 @@ namespace SodRpg.Mod
             internal Action<EventInfoHeal> Healed;
             internal DataProcessor<DamageData,Actor,Entity> Processor;
             internal bool ProcessorAttached,DamageAttached,HealAttached;
-            internal readonly List<long> PhantomVisuals=new List<long>(4);
+            internal readonly List<long> PhantomVisuals=new List<long>(12);
             internal InkBeamState()
             {
                 int heroes=InkRewardAction(BossProfiles.WhiteNightRewardId,3,BossRewardActionKind.NativeShield).Count;
                 int enemies=InkRewardAction(BossProfiles.DarkMoonRewardId,3,BossRewardActionKind.NativeDamage).MagnitudeMilli;
                 WhiteHeroes=new Hero[heroes]; WhiteHeroLives=new long[heroes];
                 Dwell=new InkDwell[enemies]; DwellVisuals=new long[enemies];
+                Created=OnCreated; Damaged=OnDamage; Healed=OnHeal; Processor=OnProcess;
             }
+            private void OnCreated(EventInfoAbilityInstance info) => Host.BindInkBeam(this,info);
+            private void OnDamage(EventInfoDamage info) => Host.InkBeamDamage(this,info);
+            private void OnHeal(EventInfoHeal info) => Host.InkBeamHeal(this,info);
+            private void OnProcess(ref DamageData damage,Actor actor,Entity target) => Host.InkBeamFlat(this,ref damage,actor,target);
         }
-        private readonly Dictionary<Se_U_BeamOfBalance,InkBeamState> _inkBeams=new Dictionary<Se_U_BeamOfBalance,InkBeamState>();
-        private readonly List<Se_U_BeamOfBalance> _inkBeamScratch=new List<Se_U_BeamOfBalance>();
+        private static readonly BossRewardProfile InkWhiteRewardProfile=LoadInkRewardProfile(BossProfiles.WhiteNightRewardId);
+        private static readonly BossRewardProfile InkDarkRewardProfile=LoadInkRewardProfile(BossProfiles.DarkMoonRewardId);
+        private static readonly int InkWhiteShieldCap=LoadInkWhiteShieldCap();
+        private static BossRewardProfile LoadInkRewardProfile(string id)
+        {
+            BossProfiles.TryGetReward(id,out var profile);
+            return profile;
+        }
+        private static int LoadInkWhiteShieldCap()
+        {
+            BossProfiles.TryGetMove("boss_white_night.stage6",out var profile);
+            return profile.Actions[1].MagnitudeMilli;
+        }
+        private static readonly BossAction InkNativeSpearAction=CreateInkNativeSpearAction();
+        private static BossAction CreateInkNativeSpearAction()
+        {
+            var spear=InkRewardAction(BossProfiles.DarkMoonRewardId,2,BossRewardActionKind.NativeTarget);
+            return new BossAction(BossEvent.NativeDamageDealt,BossMechanism.Projectile,BossPayload.Damage,maxInstances:1,rangeMilli:spear.RangeMilli,widthMilli:spear.WidthMilli,speedMilli:spear.SpeedMilli,firstHitOnly:true,element:BossElement.Dark);
+        }
+        private readonly BossObjectPool<InkBeamState> _inkBeamPool=new BossObjectPool<InkBeamState>(64, () => new InkBeamState());
+        private readonly Dictionary<Se_U_BeamOfBalance,InkBeamState> _inkBeams=new Dictionary<Se_U_BeamOfBalance,InkBeamState>(64);
+        private readonly List<Se_U_BeamOfBalance> _inkBeamScratch=new List<Se_U_BeamOfBalance>(64);
         internal void BeginInkBeam(Se_U_BeamOfBalance parent)
         {
             if(parent==null || !(parent.info.caster is Hero hero) || !Alive(hero) || !_runtimes.TryGetValue(hero,out var rt) || AttributionGeneratedOrigin()!=GeneratedOrigin.None || parent.gem!=null) return;
@@ -126,21 +152,25 @@ namespace SodRpg.Mod
             if(skill==null || skill.owner!=hero || FindMemory(hero,nameof(St_U_BeamOfBalance))!=skill) return;
             EndInkBeam(parent);
             if(_inkBeams.Count>=64) return;
-            var ink=InkGet(rt); InkReconcile(rt,ink);
-            var state=new InkBeamState{Runtime=rt,Parent=parent,ParentCreation=parent.creationTime,ParentActor=parent.parentActor,Skill=skill,SkillCreation=skill.creationTime,H=Math.Max(hero.Status.attackDamage,hero.Status.abilityPower),Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,Run=NetworkedManagerBase<GameManager>.softInstance?.runId,Life=_memoryAttribution.NewPacketId(),Visual=++rt.Boss.NextId};
+            var ink=InkGet(rt); if(ink==null) return; InkReconcile(rt,ink);
+            var state=_inkBeamPool.Rent(); if(state==null) return;
+            state.Host=this; state.Runtime=rt; state.Parent=parent; state.ParentCreation=parent.creationTime; state.ParentActor=parent.parentActor; state.Skill=skill; state.SkillCreation=skill.creationTime;
+            state.H=Math.Max(hero.Status.attackDamage,hero.Status.abilityPower); state.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom; state.Run=NetworkedManagerBase<GameManager>.softInstance?.runId; state.Life=_memoryAttribution.NewPacketId(); state.Visual=++rt.Boss.NextId;
             state.ParentLife=BossNativeActorLife(parent); state.ParentActorLife=BossNativeActorLife(parent.parentActor); state.SkillLife=BossNativeActorLife(skill);
             state.DarkVisual=++rt.Boss.NextId;
             for(int i=0;i<state.DwellVisuals.Length;i++) state.DwellVisuals[i]=++rt.Boss.NextId;
             state.WhiteStage=BossRewardStage(rt,BossProfiles.WhiteNightRewardId); state.DarkStage=BossRewardStage(rt,BossProfiles.DarkMoonRewardId);
             InkConfigureBeam(state);
-            state.Created=info=>BindInkBeam(state,info);
             parent.ActorEvent_OnAbilityInstanceCreated+=state.Created;
             _inkBeams.Add(parent,state);
+            ink.Beams.Add(state);
         }
         private static BossRewardAction InkRewardAction(string id,int stage,BossRewardActionKind kind)
         {
-            if(stage<=0 || !BossProfiles.TryGetReward(id,out var profile)) return null;
-            foreach(var action in profile.Stages[stage-1].Actions) if(action.Kind==kind) return action;
+            if(stage<=0) return null;
+            var profile=id==BossProfiles.WhiteNightRewardId?InkWhiteRewardProfile:InkDarkRewardProfile;
+            var actions=profile.Stages[stage-1].Actions;
+            for(int i=0;i<actions.Count;i++) if(actions[i].Kind==kind) return actions[i];
             return null;
         }
         private static void InkConfigureBeam(InkBeamState state)
@@ -148,11 +178,9 @@ namespace SodRpg.Mod
             state.White=InkRewardAction(BossProfiles.WhiteNightRewardId,state.WhiteStage,BossRewardActionKind.NativeShield);
             state.Flat=InkRewardAction(BossProfiles.DarkMoonRewardId,state.DarkStage,BossRewardActionKind.NativeDamage);
             var spear=InkRewardAction(BossProfiles.DarkMoonRewardId,state.DarkStage,BossRewardActionKind.NativeTarget);
-            bool newSpear=!ReferenceEquals(state.Spear,spear);
             state.Spear=spear;
             state.Illumination=InkRewardAction(BossProfiles.DarkMoonRewardId,state.DarkStage,BossRewardActionKind.NativeMode);
-            if(newSpear && state.Spear!=null) state.SpearAction=new BossAction(BossEvent.NativeDamageDealt,BossMechanism.Projectile,BossPayload.Damage,maxInstances:1,rangeMilli:state.Spear.RangeMilli,widthMilli:state.Spear.WidthMilli,speedMilli:state.Spear.SpeedMilli,firstHitOnly:true,element:BossElement.Dark);
-            if(state.Spear==null) state.SpearAction=null;
+            state.SpearAction=state.Spear!=null?InkNativeSpearAction:null;
         }
         private void BindInkBeam(InkBeamState state,EventInfoAbilityInstance info)
         {
@@ -160,9 +188,6 @@ namespace SodRpg.Mod
             state.Beam=beam; state.BeamCreation=beam.creationTime;
             state.BeamLife=BossNativeActorLife(beam);
             state.H=Math.Max(state.Runtime.Hero.Status.attackDamage,state.Runtime.Hero.Status.abilityPower); state.Magic=BossMagic(state.Runtime);
-            state.Processor=(ref DamageData damage,Actor from,Entity target)=>InkBeamFlat(state,ref damage,from,target);
-            state.Damaged=damage=>InkBeamDamage(state,damage);
-            state.Healed=heal=>InkBeamHeal(state,heal);
             InkSyncBeamSubscriptions(state);
             InkPublishBeam(state,Time.time);
         }
@@ -265,8 +290,7 @@ namespace SodRpg.Mod
             float amount=Math.Min(info.discardedAmount*state.White.ValueMilli/1000f,Math.Min(state.H*state.White.TargetCapMilli/1000f,state.H*state.White.BudgetMilli/1000f-state.WhiteSpent));
             if(amount<=0) return;
             state.WhiteSpent+=amount;
-            BossProfiles.TryGetMove("boss_white_night.stage6",out var cap);
-            InkGiveShield(state.Runtime,InkGet(state.Runtime),target,amount,state.H,state.White.DurationMillis/1000f,true,Time.time,cap.Actions[1].MagnitudeMilli,state.Life);
+            InkGiveShield(state.Runtime,InkGet(state.Runtime),target,amount,state.H,state.White.DurationMillis/1000f,true,Time.time,InkWhiteShieldCap,state.Life);
             InkPublishBeam(state,Time.time);
         }
         private void InkBeamDamage(InkBeamState state,EventInfoDamage info)
@@ -316,15 +340,15 @@ namespace SodRpg.Mod
                 }
             }
         }
-        private void InkRegisterBeamVisual(long life,long visual)
+        private static void InkRegisterBeamVisual(InkBeamState state,long visual)
         {
-            if(life==0) return;
-            foreach(var state in _inkBeams.Values) if(state.Life==life) { state.PhantomVisuals.Add(visual); return; }
+            if(state!=null && state.PhantomVisuals.Count<12) state.PhantomVisuals.Add(visual);
         }
         private void InkReapplyBeamProfile(HeroRuntime rt,bool white)
         {
             if(!white) BossCancelProfileReservations(rt,BossProfiles.DarkMoonSetId,BossProfiles.DarkMoonRewardId);
-            foreach(var state in _inkBeams.Values) if(state.Runtime==rt)
+            if(!_inkStates.TryGetValue(rt,out var owner)) return;
+            foreach(var state in owner.Beams)
             {
                 if(white)
                 {
@@ -349,7 +373,8 @@ namespace SodRpg.Mod
         }
         private void InkReconcileBeamSkills(HeroRuntime rt)
         {
-            foreach(var state in _inkBeams.Values) if(state.Runtime==rt)
+            if(!_inkStates.TryGetValue(rt,out var owner)) return;
+            foreach(var state in owner.Beams)
             {
                 if(FindMemory(rt.Hero,nameof(St_U_BeamOfBalance))!=state.Skill) { state.WhiteDisabled=true; state.DarkDisabled=true; InkSyncBeamSubscriptions(state); continue; }
                 int white=BossRewardStage(rt,BossProfiles.WhiteNightRewardId),dark=BossRewardStage(rt,BossProfiles.DarkMoonRewardId);
@@ -363,13 +388,13 @@ namespace SodRpg.Mod
         }
         private void TickInkBeams(HeroRuntime rt,float now)
         {
-            _inkBeamScratch.Clear();
-            foreach(var pair in _inkBeams) if(pair.Value.Runtime==rt)
+            if(!_inkStates.TryGetValue(rt,out var owner)) return;
+            for(int i=owner.Beams.Count-1;i>=0;i--)
             {
-                if(!InkBeamCurrent(pair.Value)) _inkBeamScratch.Add(pair.Key);
-                else InkPublishBeam(pair.Value,now);
+                var state=owner.Beams[i];
+                if(!InkBeamCurrent(state)) EndInkBeam(state.Parent);
+                else InkPublishBeam(state,now);
             }
-            foreach(var parent in _inkBeamScratch) EndInkBeam(parent);
         }
         internal void EndInkBeamChild(Ai_U_BeamOfBalance_Beam beam)
         {
@@ -380,6 +405,7 @@ namespace SodRpg.Mod
         {
             if(ReferenceEquals(parent,null) || !_inkBeams.TryGetValue(parent,out var state)) return;
             _inkBeams.Remove(parent);
+            if(_inkStates.TryGetValue(state.Runtime,out var owner)) owner.Beams.Remove(state);
             if(state.Parent!=null && state.Parent.creationTime==state.ParentCreation && BossNativeSameLife(state.Parent,state.ParentLife)) state.Parent.ActorEvent_OnAbilityInstanceCreated-=state.Created;
             if(state.Beam!=null && state.Beam.creationTime==state.BeamCreation && BossNativeSameLife(state.Beam,state.BeamLife))
             {
@@ -397,6 +423,15 @@ namespace SodRpg.Mod
             foreach(long visual in state.DwellVisuals) PublishBossVisual(state.Runtime,visual,9,state.Runtime.Hero.position,state.Runtime.Hero.position,0,Time.time,Time.time,true);
             foreach(long visual in state.PhantomVisuals) PublishBossVisual(state.Runtime,visual,8,state.Runtime.Hero.position,state.Runtime.Hero.position,0,Time.time,Time.time,true);
             BossCancelNativeReservations(state.Runtime,BossProfiles.DarkMoonSetId,state.Life);
+            state.Host=null; state.Runtime=null; state.Parent=null; state.Beam=null; state.Skill=null; state.ParentActor=null; state.Room=null; state.Run=null;
+            state.ParentCreation=state.BeamCreation=state.SkillCreation=state.H=state.WhiteSpent=state.DarkSpent=state.NextVisual=0;
+            state.Life=state.LastAddedPacket=state.Visual=state.DarkVisual=state.ParentLife=state.BeamLife=state.SkillLife=state.ParentActorLife=0;
+            state.Magic=state.WhiteDisabled=state.DarkDisabled=state.ProcessorAttached=state.DamageAttached=state.HealAttached=false;
+            state.WhiteStage=state.DarkStage=state.Adds=state.Spears=state.Illuminations=state.WhiteTargets=0;
+            state.White=state.Flat=state.Spear=state.Illumination=null; state.SpearAction=null;
+            Array.Clear(state.WhiteHeroes,0,state.WhiteHeroes.Length); Array.Clear(state.WhiteHeroLives,0,state.WhiteHeroLives.Length);
+            Array.Clear(state.Dwell,0,state.Dwell.Length); Array.Clear(state.DwellVisuals,0,state.DwellVisuals.Length); state.PhantomVisuals.Clear();
+            _inkBeamPool.Return(state);
         }
         private void ClearInkBeams(HeroRuntime rt)
         {

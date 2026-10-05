@@ -17,6 +17,12 @@ namespace SodRpg.Mod
             internal bool Pull, Changed, Magic;
             internal int Next;
             internal readonly long[] Visuals = new long[3];
+            internal void Reset()
+            {
+                Token=0; Entry=null; Profile=null; Center=Direction=Origin=default;
+                Created=Until=Amount=SecondAmount=ThirdAmount=0; Pull=Changed=Magic=false; Next=0;
+                Array.Clear(Visuals,0,Visuals.Length);
+            }
         }
         private sealed class ErebosCombat
         {
@@ -26,23 +32,39 @@ namespace SodRpg.Mod
             internal int Boundary;
             internal float BoundaryUntil;
             internal long BoundaryVisual;
+            internal long Epoch;
+            internal void Reset()
+            {
+                Fields.Clear(); MainInputs.Clear(); MemoryInputs.Clear(); MovementInputs.Clear(); DamageInputs.Clear();
+                Boundary=0; BoundaryUntil=0; BoundaryVisual=Epoch=0;
+            }
         }
-        private readonly Dictionary<HeroRuntime,ErebosCombat> _erebosCombat = new Dictionary<HeroRuntime,ErebosCombat>();
+        private readonly Dictionary<HeroRuntime,ErebosCombat> _erebosCombat = new Dictionary<HeroRuntime,ErebosCombat>(64);
+        private readonly BossObjectPool<ErebosCombat> _erebosPool = new BossObjectPool<ErebosCombat>(64,()=>new ErebosCombat());
+        private readonly BossObjectPool<ErebosField> _erebosFields = new BossObjectPool<ErebosField>(128,()=>new ErebosField());
         private ErebosCombat ErebosState(HeroRuntime rt)
         {
-            if (!_erebosCombat.TryGetValue(rt,out var state)) _erebosCombat.Add(rt,state=new ErebosCombat());
+            if (!_erebosCombat.TryGetValue(rt,out var state))
+            {
+                if (_erebosCombat.Count>=64 || (state=_erebosPool.Rent())==null) return null;
+                state.Epoch=rt.ShieldEquipmentEpoch; _erebosCombat.Add(rt,state);
+            }
             return state;
         }
         private static bool ErebosAvailable(HeroRuntime rt, BossAction action, float now)
-            => !rt.Boss.Ready.TryGetValue(rt.Boss.ActionKeys[action],out float due) || now >= due;
+            => rt.Boss.Ready.TryGetValue(action.RuntimeKey,out float due) ? now>=due : rt.Boss.Ready.Count<128;
         private ErebosField ErebosReserve(HeroRuntime rt, ErebosCombat state, BossMoveEntry entry, BossMoveProfile profile,
             Vector3 center, Vector3 direction, float now, int lifetime)
         {
-            if (!BossReserveSequence(rt,entry.SetId,profile.Id,Array.Empty<BossScheduledPulse>(),now,2,lifetime,
+            if (!BossReserveSequence(rt,entry.SetId,profile.Id,rt.Boss.Sequence.Reset(),now,2,lifetime,
                 maxSetInstances:2,replaceOldest:true)) return null;
             ErebosReconcile(rt,state,now);
-            var field = new ErebosField { Token=BossReservationId(rt,entry.SetId,profile.Id),Entry=entry,Profile=profile,
-                Center=center,Origin=rt.Hero.agentPosition,Direction=direction,Created=now,Until=now+lifetime/1000f,Magic=BossMagic(rt) };
+            if(state.Fields.Count>=2) { BossCancelReservation(rt,BossReservationId(rt,entry.SetId,profile.Id)); return null; }
+            var field=_erebosFields.Rent();
+            if(field==null) { BossCancelReservation(rt,BossReservationId(rt,entry.SetId,profile.Id)); return null; }
+            field.Token=BossReservationId(rt,entry.SetId,profile.Id); field.Entry=entry; field.Profile=profile;
+            field.Center=center; field.Origin=rt.Hero.agentPosition; field.Direction=direction;
+            field.Created=now; field.Until=now+lifetime/1000f; field.Magic=BossMagic(rt);
             state.Fields.Add(field);
             return field;
         }
@@ -53,24 +75,27 @@ namespace SodRpg.Mod
             for (int i=0;i<field.Visuals.Length;i++) if (field.Visuals[i]!=0)
                 PublishBossVisual(rt,field.Visuals[i],4,field.Center,field.Center,0,now,now,true);
             state.Fields.RemoveAt(index);
+            field.Reset(); _erebosFields.Return(field);
         }
         private void ErebosReconcile(HeroRuntime rt, ErebosCombat state, float now)
         {
+            bool equipmentChanged=state.Epoch!=rt.ShieldEquipmentEpoch;
+            state.Epoch=rt.ShieldEquipmentEpoch;
             for (int i=state.Fields.Count-1;i>=0;i--)
-                if (!BossReservationExists(rt,state.Fields[i].Token) || !BossFind(rt,state.Fields[i].Profile.Id,out _,out _))
+                if (!BossReservationExists(rt,state.Fields[i].Token) || equipmentChanged && !BossFind(rt,state.Fields[i].Profile.Id,out _,out _))
                     ErebosRemove(rt,state,i,now);
-            if (state.Boundary>0 && (now>=state.BoundaryUntil || !BossFind(rt,"boss_erebos.stage3",out _,out _)))
+            if (state.Boundary>0 && (now>=state.BoundaryUntil || equipmentChanged && !BossFind(rt,"boss_erebos.stage3",out _,out _)))
             { state.Boundary=0; ErebosBoundaryVisual(rt,state,now); }
-            if (!BossFind(rt,"boss_erebos.stage6",out _,out _)) rt.Boss.Defense.CancelSource(this,rt,"boss_erebos.stage6");
+            if (equipmentChanged && !BossFind(rt,"boss_erebos.stage6",out _,out _)) rt.Boss.Defense.CancelSource(this,rt,"boss_erebos.stage6");
         }
         private void DispatchErebosBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
             if (kind!=BossEvent.MainHit && kind!=BossEvent.MemoryUse && kind!=BossEvent.MovementCompleted && kind!=BossEvent.NativeDamageTaken) return;
             bool equipped=false;
-            foreach (var move in rt.Powers.Build.BossMoves) if (move.SetId==BossProfiles.ErebosSetId) { equipped=true; break; }
+            for(int i=0;i<rt.Powers.Build.BossMoves.Count;i++) if(rt.Powers.Build.BossMoves[i].SetId==BossProfiles.ErebosSetId) { equipped=true; break; }
             if (!equipped) return;
-            var state=ErebosState(rt);
+            var state=ErebosState(rt); if(state==null) return;
             ErebosReconcile(rt,state,now);
             var inputs=kind==BossEvent.MainHit?state.MainInputs:kind==BossEvent.MemoryUse?state.MemoryInputs:
                 kind==BossEvent.MovementCompleted?state.MovementInputs:state.DamageInputs;
@@ -103,8 +128,9 @@ namespace SodRpg.Mod
                 && BossGround(rt.Hero.agentPosition,BossCursor(rt),8,out finaleCenter);
             if (finale) { state.Boundary=0; ErebosBoundaryVisual(rt,state,now); }
             if (kind==BossEvent.MemoryUse) ErebosMemory(rt,state,now);
-            foreach (var entry in rt.Powers.Build.BossMoves)
+            for(int bossMoveIndex=0;bossMoveIndex<rt.Powers.Build.BossMoves.Count;bossMoveIndex++)
             {
+                var entry=rt.Powers.Build.BossMoves[bossMoveIndex];
                 if (entry.SetId!=BossProfiles.ErebosSetId || !BossProfiles.TryGetMove(entry.ProfileId,out var profile)
                     || profile.Id=="boss_erebos.stage2" || profile.Id=="boss_erebos.stage3" || profile.Id=="boss_erebos.stage6") continue;
                 var action=profile.Actions[0];
@@ -123,7 +149,7 @@ namespace SodRpg.Mod
                     field.SecondAmount=BossAmount(rt,entry,profile,profile.Actions[1].ChannelId);
                     field.ThirdAmount=BossAmount(rt,entry,profile,profile.Actions[2].ChannelId);
                 }
-                BossReady(rt,rt.Boss.ActionKeys[action],now,action.CooldownMillis);
+                BossReady(rt,action.RuntimeKey,now,action.CooldownMillis);
                 if (profile.Id=="boss_erebos.hands")
                 {
                     float arrival=now+BossDirectionDistance(origin,center)/12;
@@ -157,7 +183,7 @@ namespace SodRpg.Mod
                 state.Boundary=3; ErebosBoundaryVisual(rt,state,now); return;
             }
             field.Amount=BossAmount(rt,entry,profile,"ErebosFinale");
-            BossReady(rt,rt.Boss.ActionKeys[profile.Actions[0]],now,10000);
+            BossReady(rt,profile.Actions[0].RuntimeKey,now,10000);
             rt.Boss.Defense.Execute(this,rt,profile.Id,profile.Actions[2],BossAmount(rt,entry,profile,"ErebosFinaleShield"),now);
             PublishBossVisual(rt,field.Visuals[0]=++rt.Boss.NextId,4,center,center,4,now,now+3,element:BossElement.Light);
         }
@@ -173,16 +199,17 @@ namespace SodRpg.Mod
                 // particular, consuming just before the four-second deadline must
                 // not discard the second ripple when the old token expires.
                 BossCancelReservation(rt,marker.Token);
-                if (!BossReserveSequence(rt,marker.Entry.SetId,marker.Profile.Id,Array.Empty<BossScheduledPulse>(),now,2,301,
+                if (!BossReserveSequence(rt,marker.Entry.SetId,marker.Profile.Id,rt.Boss.Sequence.Reset(),now,2,301,
                     maxSetInstances:2,replaceOldest:true)) { ErebosRemove(rt,state,i,now); return; }
                 marker.Token=BossReservationId(rt,marker.Entry.SetId,marker.Profile.Id);
                 marker.SecondAmount=BossAmount(rt,marker.Entry,marker.Profile,marker.Profile.Actions[2].ChannelId);
                 bool stage3=BossFind(rt,"boss_erebos.stage3",out _,out _);
                 if (stage3) ErebosMoveEnemies(rt,marker.Center,3,3,marker.Pull,.8f,.3f,now);
+                long markerToken=marker.Token;
                 rt.Boss.Shapes.Execute(this,rt,action,marker.Center,marker.Center,BossAmount(rt,marker.Entry,marker.Profile,action.ChannelId),marker.Magic);
-                if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
+                if (rt.Boss.Build==null || !BossAlive(rt.Hero) || marker.Token!=markerToken) return;
                 PublishBossVisual(rt,++rt.Boss.NextId,1,marker.Center,marker.Center,2,now,now+.25f,element:BossElement.Light);
-                BossReady(rt,rt.Boss.ActionKeys[action],now,6000);
+                BossReady(rt,action.RuntimeKey,now,6000);
                 marker.Next=1; marker.Created=now; marker.Until=now+.301f;
                 ErebosPulseVisual(rt,marker,0,marker.Profile.Actions[2],now+.3f);
                 if (stage3) { state.Boundary=Math.Min(3,state.Boundary+1); state.BoundaryUntil=now+12; ErebosBoundaryVisual(rt,state,now); }
@@ -196,8 +223,8 @@ namespace SodRpg.Mod
             try
             {
                 int moved=0;
-                foreach (var enemy in enemies)
-                    if (rt.Boss.EnemyMovement.Execute(rt,enemy,center,pull,distance,now,duration:duration) && ++moved>=max) break;
+                for(int i=0,limit=Math.Min(256,enemies.Count);i<limit;i++)
+                    if (rt.Boss.EnemyMovement.Execute(rt,enemies[i],center,pull,distance,now,duration:duration) && ++moved>=max) break;
             }
             finally { handle.Return(); }
         }
@@ -239,13 +266,14 @@ namespace SodRpg.Mod
             for (int i=state.Fields.Count-1;i>=0;i--)
             {
                 var field=state.Fields[i]; var action=field.Profile.Actions[0]; string id=field.Profile.Id;
+                long fieldToken=field.Token;
                 if (id=="boss_erebos.stage2")
                 {
                     if (field.Next==1 && now>=field.Created+.3f)
                     {
                         var ripple=field.Profile.Actions[2];
                         rt.Boss.Shapes.Execute(this,rt,ripple,field.Center,field.Center,field.SecondAmount,field.Magic);
-                        if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
+                        if (rt.Boss.Build==null || !BossAlive(rt.Hero) || field.Token!=fieldToken) return;
                         ErebosRemove(rt,state,i,now);
                     }
                     else if (field.Next==0 && now>=field.Until) ErebosRemove(rt,state,i,now);
@@ -261,14 +289,14 @@ namespace SodRpg.Mod
                         {
                             var direction=j==0?field.Direction:Quaternion.AngleAxis(90,Vector3.up)*field.Direction;
                             rt.Boss.Shapes.Execute(this,rt,line,field.Center-direction*3,field.Center+direction*3,field.Amount/4,field.Magic);
-                            if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
+                            if (rt.Boss.Build==null || !BossAlive(rt.Hero) || field.Token!=fieldToken) return;
                         }
                         field.Next=2;
                     }
                     if (field.Next==2 && now>=field.Created+3)
                     {
                         rt.Boss.Shapes.Execute(this,rt,action,field.Center,field.Center,field.Amount/2,field.Magic);
-                        if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
+                        if (rt.Boss.Build==null || !BossAlive(rt.Hero) || field.Token!=fieldToken) return;
                         ErebosRemove(rt,state,i,now);
                     }
                     continue;
@@ -292,7 +320,7 @@ namespace SodRpg.Mod
                     if (now<field.Created+delay/1000f) break;
                     rt.Boss.Shapes.Execute(this,rt,pulse,field.Center,field.Center+field.Direction*(pulse.RangeMilli/1000f),
                         id=="boss_erebos.feet"?(field.Next==0?field.Amount:field.Next==1?field.SecondAmount:field.ThirdAmount):field.Amount,field.Magic);
-                    if (rt.Boss.Build==null || !BossAlive(rt.Hero)) return;
+                    if (rt.Boss.Build==null || !BossAlive(rt.Hero) || field.Token!=fieldToken) return;
                     if (id=="boss_erebos.armor") ErebosMoveEnemies(rt,field.Center,2,64,false,.5f,.2f,now);
                     else if (id=="boss_erebos.charm") ErebosMoveEnemies(rt,field.Center,2.5f,3,false,.6f,.3f,now);
                     field.Next++;
@@ -307,6 +335,7 @@ namespace SodRpg.Mod
             {
                 for (int i=state.Fields.Count-1;i>=0;i--) ErebosRemove(rt,state,i,Time.time);
                 state.Boundary=0; ErebosBoundaryVisual(rt,state,Time.time); _erebosCombat.Remove(rt);
+                state.Reset(); _erebosPool.Return(state);
             }
             if (!preserveRewards) ClearLastStarlight(rt);
         }

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -8,18 +7,104 @@ namespace SodRpg.Mod
 {
     internal sealed partial class ClientSession
     {
+        private const int BossDisplayOwnerLimit = 16, BossDisplayEffectLimit = 64;
+        private const int BossDisplayRenderLimit = 64, BossDisplaySegmentLimit = 2048;
+        private const float BossDisplayDistance = 64f;
+
+        private sealed class BossEffectVisual
+        {
+            internal readonly DreamforgeBossEffect Effect = new DreamforgeBossEffect();
+            internal readonly byte[] Caption = new byte[64];
+            internal int CaptionLength, CaptionCount = -1;
+            internal float CaptionBudget = -1;
+        }
         private sealed class BossOwnerVisual
         {
+            internal uint NetId;
             internal long Epoch, EquipmentEpoch, Revision = -1;
-            internal readonly Dictionary<long, DreamforgeBossEffect> Effects = new Dictionary<long, DreamforgeBossEffect>();
-            internal readonly List<long> Expired = new List<long>();
-            internal readonly Dictionary<long, string> Captions = new Dictionary<long, string>();
-            internal void Clear() { Effects.Clear(); Captions.Clear(); }
+            internal float LastMessage;
+            internal int Count;
+            internal readonly BossEffectVisual[] Effects = new BossEffectVisual[BossDisplayEffectLimit];
+            internal BossOwnerVisual()
+            {
+                for (int i = 0; i < Effects.Length; i++) Effects[i] = new BossEffectVisual();
+            }
+            internal int Find(long id)
+            {
+                for (int i = 0; i < Count; i++) if (Effects[i].Effect.id == id) return i;
+                return -1;
+            }
+            internal void RemoveAt(int index)
+            {
+                var free = Effects[index];
+                int last = --Count;
+                Effects[index] = Effects[last]; Effects[last] = free;
+                free.Effect.expires = 0;
+            }
+            internal void Clear()
+            {
+                for (int i = 0; i < Count; i++) Effects[i].Effect.expires = 0;
+                Count = 0;
+            }
+            internal void Release()
+            {
+                Clear(); NetId = 0; Epoch = EquipmentEpoch = 0; Revision = -1; LastMessage = 0;
+            }
         }
-        private readonly Dictionary<uint, BossOwnerVisual> _bossOwnerVisuals = new Dictionary<uint, BossOwnerVisual>();
+        private readonly BossOwnerVisual[] _bossOwnerVisuals = CreateBossOwnerVisuals();
+        private readonly BossEffectVisual[] _bossRenderVisuals = new BossEffectVisual[BossDisplayRenderLimit];
+        private readonly float[] _bossRenderDistances = new float[BossDisplayRenderLimit];
+        private readonly Plane[] _bossVisualPlanes = new Plane[6];
+        private static readonly GUIContent[] BossCaptionGlyphs = CreateBossCaptionGlyphs();
         private Action<DreamforgeBossEffectsMsg> _onBossEffects;
         private string _bossVisualRun;
-        private int _bossVisualZone = -1, _bossVisualRoom = -1;
+        private int _bossVisualZone = -1, _bossVisualRoom = -1, _bossRenderCount, _bossSegmentsLeft;
+        private float _nextBossDisplayPrune, _nextBossRenderRefresh;
+
+        private static BossOwnerVisual[] CreateBossOwnerVisuals()
+        {
+            var owners = new BossOwnerVisual[BossDisplayOwnerLimit];
+            for (int i = 0; i < owners.Length; i++) owners[i] = new BossOwnerVisual();
+            return owners;
+        }
+        private static GUIContent[] CreateBossCaptionGlyphs()
+        {
+            return new[] { new GUIContent("0"), new GUIContent("1"), new GUIContent("2"), new GUIContent("3"),
+                new GUIContent("4"), new GUIContent("5"), new GUIContent("6"), new GUIContent("7"),
+                new GUIContent("8"), new GUIContent("9"), new GUIContent("."), new GUIContent(" "), new GUIContent("/") };
+        }
+        private static void BossAppendNumber(BossEffectVisual visual, double value)
+        {
+            // Fixed decimal display (two fractional places), written as indices into stable GUIContent glyphs.
+            double rounded = Math.Round(value * 100d, MidpointRounding.AwayFromZero);
+            double integer = Math.Floor(rounded / 100d);
+            int fraction = (int)Math.Max(0d, Math.Min(99d, rounded - integer * 100d));
+            double divisor = 1d;
+            while (integer / divisor >= 10d) divisor *= 10d;
+            do
+            {
+                int digit = (int)Math.Max(0d, Math.Min(9d, Math.Floor(integer / divisor)));
+                visual.Caption[visual.CaptionLength++] = (byte)digit;
+                integer = Math.Max(0d, integer - digit * divisor);
+                divisor /= 10d;
+            } while (divisor >= 1d);
+            if (fraction == 0) return;
+            visual.Caption[visual.CaptionLength++] = 10;
+            visual.Caption[visual.CaptionLength++] = (byte)(fraction / 10);
+            if (fraction % 10 != 0) visual.Caption[visual.CaptionLength++] = (byte)(fraction % 10);
+        }
+        private static void UpdateBossCaption(BossEffectVisual visual, int count, float budget)
+        {
+            if (visual.CaptionCount == count && visual.CaptionBudget == budget) return;
+            visual.CaptionCount = count; visual.CaptionBudget = budget; visual.CaptionLength = 0;
+            if (count > 0) BossAppendNumber(visual, count);
+            if (count > 0 && budget > 0)
+            {
+                visual.Caption[visual.CaptionLength++] = 11; visual.Caption[visual.CaptionLength++] = 12;
+                visual.Caption[visual.CaptionLength++] = 11;
+            }
+            if (budget > 0) BossAppendNumber(visual, budget);
+        }
 
         private void RegisterBossVisuals(Actor actor)
         {
@@ -33,7 +118,9 @@ namespace SodRpg.Mod
         }
         private void ClearBossDisplay()
         {
-            _bossOwnerVisuals.Clear();
+            for (int i = 0; i < _bossOwnerVisuals.Length; i++) _bossOwnerVisuals[i].Release();
+            Array.Clear(_bossRenderVisuals, 0, _bossRenderVisuals.Length);
+            _bossRenderCount = 0; _nextBossDisplayPrune = _nextBossRenderRefresh = 0;
             _bossVisualRun = null;
             _bossVisualZone = _bossVisualRoom = -1;
         }
@@ -79,11 +166,22 @@ namespace SodRpg.Mod
                     || !BossFinite(effect.finalRadius) || effect.finalRadius < -1 || effect.finalRadius > 32) return;
                 for (int j = 0; j < i; j++) if (msg.effects[j].id == effect.id) return;
             }
-            if (!_bossOwnerVisuals.TryGetValue(msg.ownerNetId, out var state))
+            if (NetworkClient.spawned.TryGetValue(msg.ownerNetId, out var ownerIdentity) && ownerIdentity != null)
             {
-                if (_bossOwnerVisuals.Count >= 64) return;
-                state = new BossOwnerVisual();
-                _bossOwnerVisuals.Add(msg.ownerNetId, state);
+                var hero = ownerIdentity.GetComponent<Hero>();
+                if (hero == null || !hero.isActive || !hero.isAlive || hero.isKnockedOut) return;
+            }
+            BossOwnerVisual state = null, free = null;
+            for (int i = 0; i < _bossOwnerVisuals.Length; i++)
+            {
+                var owner = _bossOwnerVisuals[i];
+                if (owner.NetId == msg.ownerNetId) { state = owner; break; }
+                if (owner.NetId == 0 && free == null) free = owner;
+            }
+            if (state == null)
+            {
+                if (free == null) return;
+                state = free; state.NetId = msg.ownerNetId;
             }
             if (msg.epoch < state.Epoch || msg.epoch == state.Epoch && msg.revision < state.Revision) return;
             if (msg.epoch == state.Epoch && msg.equipmentEpoch != state.EquipmentEpoch) return;
@@ -92,66 +190,133 @@ namespace SodRpg.Mod
             state.Epoch = msg.epoch;
             state.EquipmentEpoch = msg.equipmentEpoch;
             state.Revision = msg.revision;
+            state.LastMessage = Time.unscaledTime;
             double now = Time.time;
             double estimatedHostTime = msg.hostTime + Math.Max(0d, NetworkTime.time - msg.sentAt) * Time.timeScale;
             double clockOffset = now - estimatedHostTime;
-            foreach (var effect in msg.effects)
+            for (int i = 0; i < msg.effects.Length; i++)
             {
+                var effect = msg.effects[i];
                 double expires = effect.expires + clockOffset;
-                if (effect.removed || expires <= now) { state.Effects.Remove(effect.id); state.Captions.Remove(effect.id); }
-                else if (state.Effects.ContainsKey(effect.id) || state.Effects.Count < 64)
+                int index = state.Find(effect.id);
+                if (effect.removed || expires <= now)
                 {
-                    state.Effects[effect.id] = new DreamforgeBossEffect
-                    {
-                        id = effect.id, kind = effect.kind, center = effect.center, end = effect.end,
-                        radius = effect.radius, due = effect.due + clockOffset, expires = expires,
-                        element = effect.element, shape = effect.shape, count = effect.count, budget = effect.budget,
-                        range = effect.range, width = effect.width, angle = effect.angle, finalRadius = effect.finalRadius,
-                        targetNetId = effect.targetNetId,
-                    };
-                    state.Captions[effect.id] = effect.count > 0 && effect.budget > 0
-                        ? effect.count + " / " + effect.budget.ToString("0.##")
-                        : effect.budget > 0 ? effect.budget.ToString("0.##") : effect.count > 0 ? effect.count.ToString() : "";
+                    if (index >= 0) state.RemoveAt(index);
+                    continue;
                 }
+                if (index < 0)
+                {
+                    if (state.Count == BossDisplayEffectLimit) continue;
+                    index = state.Count++;
+                }
+                var visual = state.Effects[index];
+                var copy = visual.Effect;
+                copy.id = effect.id; copy.kind = effect.kind; copy.center = effect.center; copy.end = effect.end;
+                copy.radius = effect.radius; copy.due = effect.due + clockOffset; copy.expires = expires;
+                copy.element = effect.element; copy.shape = effect.shape; copy.count = effect.count; copy.budget = effect.budget;
+                copy.range = effect.range; copy.width = effect.width; copy.angle = effect.angle; copy.finalRadius = effect.finalRadius;
+                copy.targetNetId = effect.targetNetId; copy.removed = false;
+                UpdateBossCaption(visual, effect.count, effect.budget);
             }
         }
 
         private void TickBossDisplay()
         {
             RefreshBossDisplayRoom();
+            float clock = Time.unscaledTime;
+            if (clock < _nextBossDisplayPrune) return;
+            _nextBossDisplayPrune = clock + .25f;
             double now = Time.time;
-            foreach (var pair in _bossOwnerVisuals)
+            for (int i = 0; i < _bossOwnerVisuals.Length; i++)
             {
-                var state = pair.Value;
-                if (NetworkClient.spawned.TryGetValue(pair.Key, out var identity) && identity != null)
+                var state = _bossOwnerVisuals[i];
+                if (state.NetId == 0) continue;
+                if (NetworkClient.spawned.TryGetValue(state.NetId, out var identity) && identity != null)
                 {
                     var hero = identity.GetComponent<Hero>();
-                    if (hero == null || !hero.isActive || !hero.isAlive || hero.isKnockedOut) state.Clear();
+                    if (hero == null || !hero.isActive || !hero.isAlive || hero.isKnockedOut) { state.Release(); continue; }
                 }
-                state.Expired.Clear();
-                foreach (var effect in state.Effects)
-                    if (effect.Value.expires <= now) state.Expired.Add(effect.Key);
-                foreach (long id in state.Expired) { state.Effects.Remove(id); state.Captions.Remove(id); }
+                else if (clock - state.LastMessage >= 2f) { state.Release(); continue; }
+                for (int j = state.Count - 1; j >= 0; j--)
+                    if (state.Effects[j].Effect.expires <= now) state.RemoveAt(j);
             }
+        }
+
+        private Vector3 BossDisplayCenter(DreamforgeBossEffect effect)
+        {
+            if (effect.kind == 7 && effect.targetNetId != 0 && NetworkClient.spawned.TryGetValue(effect.targetNetId, out var target)
+                && target != null) return target.transform.position;
+            return effect.center;
+        }
+        private bool BossDisplayVisible(Camera camera, DreamforgeBossEffect effect, Vector3 center, out float distance)
+        {
+            float extent = Mathf.Max(effect.radius, Mathf.Max(effect.finalRadius, effect.range)) + effect.width + 2f;
+            var midpoint = (center + effect.end) * .5f;
+            extent += (effect.end - center).magnitude * .5f;
+            distance = (midpoint - camera.transform.position).sqrMagnitude;
+            float far = BossDisplayDistance + extent;
+            if (distance > far * far) return false;
+            for (int i = 0; i < _bossVisualPlanes.Length; i++)
+                if (_bossVisualPlanes[i].GetDistanceToPoint(midpoint) < -extent) return false;
+            return true;
+        }
+        private void RefreshBossRenderVisuals(Camera camera, double now)
+        {
+            float clock = Time.unscaledTime;
+            if (clock < _nextBossRenderRefresh) return;
+            _nextBossRenderRefresh = clock + .1f;
+            GeometryUtility.CalculateFrustumPlanes(camera, _bossVisualPlanes);
+            _bossRenderCount = 0;
+            // Admission is nearest-first with counters/glyphs ahead of generic geometry at the render-work cap.
+            for (int i = 0; i < _bossOwnerVisuals.Length; i++)
+            {
+                var owner = _bossOwnerVisuals[i];
+                for (int j = 0; j < owner.Count; j++)
+                {
+                    var visual = owner.Effects[j];
+                    var effect = visual.Effect;
+                    if (effect.expires <= now || !BossDisplayVisible(camera, effect, BossDisplayCenter(effect), out float distance)) continue;
+                    if (effect.kind == 9) distance -= 2000000f;
+                    else if (effect.kind == 1) distance -= 1000000f;
+                    int index = _bossRenderCount;
+                    if (index == BossDisplayRenderLimit)
+                    {
+                        if (distance >= _bossRenderDistances[index - 1]) continue;
+                        index--;
+                    }
+                    else _bossRenderCount++;
+                    while (index > 0 && distance < _bossRenderDistances[index - 1])
+                    {
+                        _bossRenderVisuals[index] = _bossRenderVisuals[index - 1];
+                        _bossRenderDistances[index] = _bossRenderDistances[index - 1]; index--;
+                    }
+                    _bossRenderVisuals[index] = visual; _bossRenderDistances[index] = distance;
+                }
+            }
+            for (int i = _bossRenderCount; i < _bossRenderVisuals.Length; i++) _bossRenderVisuals[i] = null;
         }
 
         internal void DrawBossEffects()
         {
-            if (Event.current.type != EventType.Repaint || _bossOwnerVisuals.Count == 0) return;
+            if (Event.current.type != EventType.Repaint) return;
             var camera = Camera.main;
             if (camera == null) return;
+            double now = Time.time;
+            RefreshBossRenderVisuals(camera, now);
+            if (_bossRenderCount == 0) return;
+            _bossSegmentsLeft = BossDisplaySegmentLimit;
+            int captionGlyphsLeft = 512;
             var oldColor = GUI.color;
             var oldMatrix = GUI.matrix;
             // This world projection must not inherit the inventory UI's logical-canvas transform.
             GUI.matrix = Matrix4x4.identity;
-            double now = Time.time;
-            foreach (var owner in _bossOwnerVisuals.Values)
-                foreach (var effect in owner.Effects.Values)
+            for (int visualIndex = 0; visualIndex < _bossRenderCount; visualIndex++)
                 {
+                    var visual = _bossRenderVisuals[visualIndex];
+                    var effect = visual.Effect;
                     if (effect.expires <= now) continue;
-                    var center = effect.center;
-                    if (effect.kind == 7 && effect.targetNetId != 0 && NetworkClient.spawned.TryGetValue(effect.targetNetId, out var shieldTarget)
-                        && shieldTarget != null) center = shieldTarget.transform.position;
+                    var center = BossDisplayCenter(effect);
+                    if (!BossDisplayVisible(camera, effect, center, out float distance)) continue;
                     bool pending = effect.due > now;
                     GUI.color = BossEffectColor(effect.kind, effect.element, pending);
                     if (effect.kind == 5)
@@ -173,9 +338,11 @@ namespace SodRpg.Mod
                     else if (effect.shape == (int)BossShape.Radial)
                     {
                         var direction = BossVisualDirection(effect);
-                        for (int i = 0; i < effect.count; i++)
+                        int spokes = Math.Min(effect.count, 16);
+                        for (int i = 0; i < spokes && _bossSegmentsLeft >= (effect.kind == 4 ? 3 : 1); i++)
                         {
-                            var spoke = Quaternion.Euler(0, 360f * i / effect.count, 0) * direction;
+                            int spokeIndex = i * effect.count / spokes;
+                            var spoke = Quaternion.Euler(0, 360f * spokeIndex / effect.count, 0) * direction;
                             var tip = effect.center + spoke * effect.range;
                             DrawBossWorldLine(camera, effect.center, tip, 2f);
                             if (effect.kind == 4)
@@ -216,10 +383,13 @@ namespace SodRpg.Mod
                         DrawBossWorldLine(camera, effect.center - Vector3.forward * .45f,
                             effect.center + Vector3.forward * .45f, 2f);
                     }
-                    if (owner.Captions.TryGetValue(effect.id, out var caption) && caption.Length > 0)
+                    if (visual.CaptionLength > 0 && captionGlyphsLeft > 0)
                     {
                         var at = camera.WorldToScreenPoint(center + Vector3.up * .7f);
-                        if (at.z > 0) GUI.Label(new Rect(at.x - 40f, Screen.height - at.y - 10f, 100f, 22f), caption);
+                        if (at.z > 0 && at.x >= 0 && at.x <= Screen.width && at.y >= 0 && at.y <= Screen.height)
+                            for (int i = 0; i < visual.CaptionLength && captionGlyphsLeft > 0; i++, captionGlyphsLeft--)
+                                GUI.Label(new Rect(at.x - 40f + i * 7f, Screen.height - at.y - 10f, 16f, 22f),
+                                    BossCaptionGlyphs[visual.Caption[i]]);
                     }
                 }
             GUI.color = oldColor;
@@ -251,8 +421,9 @@ namespace SodRpg.Mod
             var direction = effect.end - effect.center; direction.y = 0;
             return direction.sqrMagnitude > .0001f ? direction.normalized : Vector3.forward;
         }
-        private static void DrawBossWorldStrip(Camera camera, DreamforgeBossEffect effect, float width)
+        private void DrawBossWorldStrip(Camera camera, DreamforgeBossEffect effect, float width)
         {
+            if (_bossSegmentsLeft < 4) return;
             var direction = BossVisualDirection(effect);
             var end = effect.range > 0 ? effect.center + direction * effect.range : effect.end;
             var half = Vector3.Cross(Vector3.up, direction) * (effect.width * .5f);
@@ -261,10 +432,11 @@ namespace SodRpg.Mod
             DrawBossWorldLine(camera, effect.center - half, effect.center + half, width);
             DrawBossWorldLine(camera, end - half, end + half, width);
         }
-        private static void DrawBossWorldFan(Camera camera, DreamforgeBossEffect effect, float width)
+        private void DrawBossWorldFan(Camera camera, DreamforgeBossEffect effect, float width)
         {
             var direction = BossVisualDirection(effect);
-            const int segments = 24;
+            const int segments = 16;
+            if (_bossSegmentsLeft < segments + 2) return;
             var previous = effect.center + Quaternion.Euler(0, -effect.angle * .5f, 0) * direction * effect.range;
             DrawBossWorldLine(camera, effect.center, previous, width);
             for (int i = 1; i <= segments; i++)
@@ -274,9 +446,10 @@ namespace SodRpg.Mod
             }
             DrawBossWorldLine(camera, previous, effect.center, width);
         }
-        private static void DrawBossWorldRing(Camera camera, Vector3 center, float radius, float width)
+        private void DrawBossWorldRing(Camera camera, Vector3 center, float radius, float width)
         {
-            const int segments = 32;
+            const int segments = 24;
+            if (_bossSegmentsLeft < segments) return;
             Vector3 previous = center + Vector3.right * radius;
             for (int i = 1; i <= segments; i++)
             {
@@ -286,10 +459,14 @@ namespace SodRpg.Mod
                 previous = next;
             }
         }
-        private static void DrawBossWorldLine(Camera camera, Vector3 from, Vector3 to, float width)
+        private void DrawBossWorldLine(Camera camera, Vector3 from, Vector3 to, float width)
         {
+            if (_bossSegmentsLeft <= 0) return;
+            _bossSegmentsLeft--;
             Vector3 a = camera.WorldToScreenPoint(from), b = camera.WorldToScreenPoint(to);
-            if (a.z <= 0f || b.z <= 0f) return;
+            if (!BossFinite(a) || !BossFinite(b) || a.z <= 0f || b.z <= 0f
+                || a.x < 0 && b.x < 0 || a.x > Screen.width && b.x > Screen.width
+                || a.y < 0 && b.y < 0 || a.y > Screen.height && b.y > Screen.height) return;
             var start = new Vector2(a.x, Screen.height - a.y);
             var difference = new Vector2(b.x - a.x, a.y - b.y);
             float length = difference.magnitude;

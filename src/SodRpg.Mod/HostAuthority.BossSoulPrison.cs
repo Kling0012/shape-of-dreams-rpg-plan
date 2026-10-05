@@ -13,7 +13,7 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Se_Gem_U_SoulPrison_DeathInterrupt),"<OnCreate>b__3_1")]
     internal static class SeekerSoulRescueScope
     {
-        internal sealed class Scope
+        internal struct Scope
         {
             internal Se_Gem_U_SoulPrison_DeathInterrupt Status;
             internal Gem_U_SoulPrison Gem;
@@ -29,16 +29,16 @@ namespace SodRpg.Mod
         internal static Scope Current;
         private static void Prefix(Se_Gem_U_SoulPrison_DeathInterrupt __instance,out Scope __state)
         {
-            __state=Current; Current=null;
-            if(NetworkServer.active) Current=HostAuthority.NativeInstance?.BeginSeekerSoulRescue(__instance);
+            __state=Current; Current=default;
+            if(NetworkServer.active && HostAuthority.NativeInstance!=null) Current=HostAuthority.NativeInstance.BeginSeekerSoulRescue(__instance);
         }
         private static void Finalizer(Scope __state) { Current=__state; }
     }
     [HarmonyPatch(typeof(Actor),nameof(Actor.DoHeal))]
     internal static class SeekerSoulHealDepth
     {
-        private static void Prefix(out int __state) { var scope=SeekerSoulRescueScope.Current; __state=scope?.Depth??-1; if(__state>=0) scope.Depth++; }
-        private static void Finalizer(int __state) { if(__state>=0 && SeekerSoulRescueScope.Current!=null) SeekerSoulRescueScope.Current.Depth=__state; }
+        private static void Prefix(out int __state) { ref var scope=ref SeekerSoulRescueScope.Current; __state=scope.Status!=null?scope.Depth:-1; if(__state>=0) scope.Depth++; }
+        private static void Finalizer(int __state) { if(__state>=0 && SeekerSoulRescueScope.Current.Status!=null) SeekerSoulRescueScope.Current.Depth=__state; }
     }
     [HarmonyPatch(typeof(Entity),nameof(Entity.ProcessReceivedHeal))]
     internal static class SeekerSoulFinalHeal
@@ -46,8 +46,8 @@ namespace SodRpg.Mod
         [HarmonyPriority(Priority.Last)]
         private static void Postfix(Entity __instance,ref HealData data,Actor actor)
         {
-            var scope=SeekerSoulRescueScope.Current;
-            if(!NetworkServer.active || scope==null || scope.Applied || scope.Depth!=1 || scope.Status!=actor || data.actor!=actor || scope.Hero!=__instance) return;
+            ref var scope=ref SeekerSoulRescueScope.Current;
+            if(!NetworkServer.active || scope.Status==null || scope.Applied || scope.Depth!=1 || scope.Status!=actor || data.actor!=actor || scope.Hero!=__instance) return;
             scope.Applied=true; HostAuthority.NativeInstance?.AmplifySeekerSoulHeal(scope,ref data);
         }
     }
@@ -57,8 +57,8 @@ namespace SodRpg.Mod
     {
         private static void Postfix(Se_Gem_U_SoulPrison_DeathInterrupt __instance,EventInfoHeal heal)
         {
-            var scope=SeekerSoulRescueScope.Current;
-            if(!NetworkServer.active || scope==null || scope.Completed || !scope.Applied || scope.Depth!=1 || scope.Status!=__instance || heal.actor!=__instance || heal.target!=scope.Hero) return;
+            ref var scope=ref SeekerSoulRescueScope.Current;
+            if(!NetworkServer.active || scope.Status==null || scope.Completed || !scope.Applied || scope.Depth!=1 || scope.Status!=__instance || heal.actor!=__instance || heal.target!=scope.Hero) return;
             scope.Completed=true; HostAuthority.NativeInstance?.CompleteSeekerSoulHeal(scope,heal);
         }
     }
@@ -81,7 +81,7 @@ namespace SodRpg.Mod
     }
     internal sealed partial class HostAuthority
     {
-        private sealed class SeekerSoulShield
+        private struct SeekerSoulShield
         {
             internal Hero Target;
             internal StatusEffect Container;
@@ -92,24 +92,32 @@ namespace SodRpg.Mod
         private sealed class SeekerSoulState
         {
             internal SeekerSoulRescueScope.Scope Scope;
-            internal readonly List<SeekerSoulShield> Shields=new List<SeekerSoulShield>(2);
-            internal readonly List<BossMoveEntry> Moves=new List<BossMoveEntry>();
+            internal readonly SeekerSoulShield[] Shields=new SeekerSoulShield[2];
+            internal readonly BossMoveEntry[] Moves=new BossMoveEntry[128];
+            internal int ShieldCount,MoveCount;
+            internal long Lease;
             internal long Epoch;
             internal bool Consumed, ConsumptionReconcile;
+            internal void Reset()
+            {
+                Scope=default; Epoch=0; Consumed=ConsumptionReconcile=false; ShieldCount=MoveCount=0;
+                Array.Clear(Shields,0,Shields.Length); Array.Clear(Moves,0,Moves.Length);
+            }
         }
-        private readonly Dictionary<HeroRuntime,SeekerSoulState> _seekerSoulStates=new Dictionary<HeroRuntime,SeekerSoulState>();
+        private readonly Dictionary<HeroRuntime,SeekerSoulState> _seekerSoulStates=new Dictionary<HeroRuntime,SeekerSoulState>(64);
+        private readonly BossObjectPool<SeekerSoulState> _seekerSoulPool=new BossObjectPool<SeekerSoulState>(64,()=>new SeekerSoulState());
         private static bool SeekerSoulFinite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
         internal SeekerSoulRescueScope.Scope BeginSeekerSoulRescue(Se_Gem_U_SoulPrison_DeathInterrupt status)
         {
-            if(!NetworkServer.active || status==null || !status.isActive || !(status.gem is Gem_U_SoulPrison gem) || !(status.victim is Hero hero) || status.info.caster!=hero || status.parentActor!=gem || gem.owner!=hero || gem.skill!=null && !BossNativeEquippedSkill(hero,gem.skill) || !_runtimes.TryGetValue(hero,out var rt) || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return null;
-            if(hero.Skill==null || !hero.Skill.TryGetGemLocation(gem,out _)) return null;
+            if(!NetworkServer.active || status==null || !status.isActive || !(status.gem is Gem_U_SoulPrison gem) || !(status.victim is Hero hero) || status.info.caster!=hero || status.parentActor!=gem || gem.owner!=hero || gem.skill!=null && !BossNativeEquippedSkill(hero,gem.skill) || !_runtimes.TryGetValue(hero,out var rt) || AttributionGeneratedOrigin()!=GeneratedOrigin.None) return default;
+            if(hero.Skill==null || !hero.Skill.gems.TryGetValue(gem.location,out var equipped) || !ReferenceEquals(equipped,gem)) return default;
             return new SeekerSoulRescueScope.Scope{Status=status,Gem=gem,Hero=hero,Skill=gem.skill,Parent=status.parentActor,StatusLife=BossNativeActorLife(status),GemLife=BossNativeActorLife(gem),HeroLife=BossNativeActorLife(hero),SkillLife=gem.skill!=null?BossNativeActorLife(gem.skill):0,ParentLife=BossNativeActorLife(status.parentActor),Epoch=rt.ShieldEquipmentEpoch,Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom,Run=NetworkedManagerBase<GameManager>.softInstance?.runId};
         }
         private bool SeekerSoulCurrent(SeekerSoulRescueScope.Scope scope,out HeroRuntime rt)
         {
             rt=null;
-            return scope!=null && BossAlive(scope.Hero) && scope.Status!=null && scope.Status.isActive && scope.Gem!=null && scope.Gem.isActive && scope.Status.gem==scope.Gem && scope.Status.victim==scope.Hero && scope.Status.info.caster==scope.Hero && scope.Status.parentActor==scope.Parent && scope.Parent==scope.Gem && scope.Gem.owner==scope.Hero && scope.Gem.skill==scope.Skill && (scope.Skill==null || BossNativeEquippedSkill(scope.Hero,scope.Skill) && BossNativeSameLife(scope.Skill,scope.SkillLife))
-                && BossNativeSameLife(scope.Status,scope.StatusLife) && BossNativeSameLife(scope.Gem,scope.GemLife) && BossNativeSameLife(scope.Hero,scope.HeroLife) && BossNativeSameLife(scope.Parent,scope.ParentLife) && BossNativeContextCurrent(scope.Room,scope.Run) && _runtimes.TryGetValue(scope.Hero,out rt) && rt.ShieldEquipmentEpoch==scope.Epoch && scope.Hero.Skill.TryGetGemLocation(scope.Gem,out _) && BossEnsure(rt) && BossRewardStage(rt,BossProfiles.SeekerRewardId)>0;
+            return BossAlive(scope.Hero) && scope.Status!=null && scope.Status.isActive && scope.Gem!=null && scope.Gem.isActive && scope.Status.gem==scope.Gem && scope.Status.victim==scope.Hero && scope.Status.info.caster==scope.Hero && scope.Status.parentActor==scope.Parent && scope.Parent==scope.Gem && scope.Gem.owner==scope.Hero && scope.Gem.skill==scope.Skill && (scope.Skill==null || BossNativeEquippedSkill(scope.Hero,scope.Skill) && BossNativeSameLife(scope.Skill,scope.SkillLife))
+                && BossNativeSameLife(scope.Status,scope.StatusLife) && BossNativeSameLife(scope.Gem,scope.GemLife) && BossNativeSameLife(scope.Hero,scope.HeroLife) && BossNativeSameLife(scope.Parent,scope.ParentLife) && BossNativeContextCurrent(scope.Room,scope.Run) && _runtimes.TryGetValue(scope.Hero,out rt) && rt.ShieldEquipmentEpoch==scope.Epoch && scope.Hero.Skill!=null && scope.Hero.Skill.gems.TryGetValue(scope.Gem.location,out var equipped) && ReferenceEquals(equipped,scope.Gem) && BossEnsure(rt) && BossRewardStage(rt,BossProfiles.SeekerRewardId)>0;
         }
         internal void AmplifySeekerSoulHeal(SeekerSoulRescueScope.Scope scope,ref HealData data)
         {
@@ -125,25 +133,41 @@ namespace SodRpg.Mod
             if(!SeekerSoulCurrent(scope,out var rt) || !SeekerSoulFinite(heal.discardedAmount) || heal.discardedAmount<=0) return;
             int stage=BossRewardStage(rt,BossProfiles.SeekerRewardId); if(stage<2) return;
             ClearSeekerSoulPrison(rt,false);
-            var state=new SeekerSoulState{Scope=scope,Epoch=rt.ShieldEquipmentEpoch};
-            foreach(var move in rt.Powers.Build.BossMoves) state.Moves.Add(move);
+            var moves=rt.Powers.Build.BossMoves;
+            if(_seekerSoulStates.Count>=64 || moves.Count>128) return;
+            var state=_seekerSoulPool.Rent(); if(state==null) return;
+            state.Lease++; state.Scope=scope; state.Epoch=rt.ShieldEquipmentEpoch; state.MoveCount=moves.Count;
+            for(int i=0;i<moves.Count;i++) state.Moves[i]=moves[i];
             _seekerSoulStates.Add(rt,state);
+            long lease=state.Lease;
             float h=Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower);
             SeekerSoulGiveShield(rt,state,rt.Hero,Math.Min(heal.discardedAmount*.25f,h*.30f),6);
-            if(stage<3) return;
+            if(stage<3 || state.Lease!=lease || !_seekerSoulStates.TryGetValue(rt,out var current) || !ReferenceEquals(current,state)) return;
             Hero ally=null; float best=36;
             ListReturnHandle<Entity> handle; var entities=DewPhysics.OverlapCircleAllEntities(out handle,rt.Hero.agentPosition,6);
-            try { foreach(var entity in entities) if(entity is Hero target && target!=rt.Hero && BossAlive(target) && !rt.Hero.CheckEnemyOrNeutral(target)) { float d=(target.agentPosition-rt.Hero.agentPosition).Flattened().sqrMagnitude; if(d<=best && (d<best || ally==null || target.netId<ally.netId)) { ally=target; best=d; } } }
+            try
+            {
+                for(int i=0,limit=Math.Min(256,entities.Count);i<limit;i++)
+                {
+                    if(!(entities[i] is Hero target) || target==rt.Hero || !BossAlive(target) || rt.Hero.CheckEnemyOrNeutral(target)) continue;
+                    float d=(target.agentPosition-rt.Hero.agentPosition).Flattened().sqrMagnitude;
+                    if(d<=best && (d<best || ally==null || target.netId<ally.netId)) { ally=target; best=d; }
+                }
+            }
             finally { handle.Return(); }
             if(ally!=null) SeekerSoulGiveShield(rt,state,ally,Math.Min(heal.discardedAmount*.25f,h*.40f),3);
         }
         private void SeekerSoulGiveShield(HeroRuntime rt,SeekerSoulState state,Hero target,float amount,float duration)
         {
-            if(!SeekerSoulFinite(amount) || amount<=0) return;
+            if(!SeekerSoulFinite(amount) || amount<=0 || state.ShieldCount>=state.Shields.Length) return;
+            long lease=state.Lease;
             Se_GenericShield_OneShot container;
             EnterGenerated(rt.Hero); try { container=rt.Hero.GiveShield(target,amount,duration); } finally { ExitGenerated(rt.Hero); }
             if(container==null) return;
-            var shield=new SeekerSoulShield{Target=target,TargetLife=BossNativeActorLife(target),Container=container,Shield=container.shield,Life=BossNativeActorLife(container),Until=Time.time+duration,Visual=++rt.Boss.NextId}; state.Shields.Add(shield);
+            if(state.Lease!=lease || !_seekerSoulStates.TryGetValue(rt,out var current) || !ReferenceEquals(current,state))
+            { container.Destroy(); return; }
+            var shield=new SeekerSoulShield{Target=target,TargetLife=BossNativeActorLife(target),Container=container,Shield=container.shield,Life=BossNativeActorLife(container),Until=Time.time+duration,Visual=++rt.Boss.NextId};
+            state.Shields[state.ShieldCount++]=shield;
             PublishBossVisual(rt,shield.Visual,7,target.agentPosition,target.agentPosition,.6f,Time.time,shield.Until,targetNetId:target.netId,nativeLife:state.Scope.StatusLife);
         }
         internal void SeekerSoulUnequipped(Gem_U_SoulPrison gem,Se_Gem_U_SoulPrison_DeathInterrupt consumption)
@@ -156,7 +180,7 @@ namespace SodRpg.Mod
         }
         private static bool SeekerSoulMovesMatch(HeroRuntime rt,SeekerSoulState state)
         {
-            var moves=rt.Powers.Build?.BossMoves; if(moves==null || moves.Count!=state.Moves.Count) return false;
+            var moves=rt.Powers.Build?.BossMoves; if(moves==null || moves.Count!=state.MoveCount) return false;
             for(int i=0;i<moves.Count;i++) { var a=moves[i]; var b=state.Moves[i]; if(a.SetId!=b.SetId || a.ProfileId!=b.ProfileId || a.Channels.Count!=b.Channels.Count) return false; for(int j=0;j<a.Channels.Count;j++) if(a.Channels[j].ChannelId!=b.Channels[j].ChannelId || a.Channels[j].ValueMilli!=b.Channels[j].ValueMilli) return false; }
             return true;
         }
@@ -169,16 +193,24 @@ namespace SodRpg.Mod
         private void TickSeekerSoulPrison(HeroRuntime rt,float now)
         {
             if(!_seekerSoulStates.TryGetValue(rt,out var state)) return;
-            if(!BossAlive(rt.Hero) || !BossNativeSameLife(rt.Hero,state.Scope.HeroLife) || !BossNativeContextCurrent(state.Scope.Room,state.Scope.Run) || !SeekerSoulMovesMatch(rt,state) || state.Epoch!=rt.ShieldEquipmentEpoch || !state.Consumed && !SeekerSoulCurrent(state.Scope,out _)) { ClearSeekerSoulPrison(rt,false); return; }
-            for(int i=state.Shields.Count-1;i>=0;i--) if(now>=state.Shields[i].Until || !BossAlive(state.Shields[i].Target) || !SeekerSoulShieldOwned(state.Shields[i])) { SeekerSoulRemoveShield(rt,state.Shields[i]); state.Shields.RemoveAt(i); }
-            if(state.Shields.Count==0) _seekerSoulStates.Remove(rt);
+            long lease=state.Lease;
+            if(!BossAlive(rt.Hero) || !BossNativeSameLife(rt.Hero,state.Scope.HeroLife) || !BossNativeContextCurrent(state.Scope.Room,state.Scope.Run) || state.Epoch!=rt.ShieldEquipmentEpoch || !state.Consumed && !SeekerSoulCurrent(state.Scope,out _)) { ClearSeekerSoulPrison(rt,false); return; }
+            for(int i=state.ShieldCount-1;i>=0;i--) if(now>=state.Shields[i].Until || !BossAlive(state.Shields[i].Target) || !SeekerSoulShieldOwned(state.Shields[i]))
+            {
+                var shield=state.Shields[i];
+                state.Shields[i]=state.Shields[--state.ShieldCount]; state.Shields[state.ShieldCount]=default;
+                SeekerSoulRemoveShield(rt,shield);
+                if(state.Lease!=lease || !_seekerSoulStates.TryGetValue(rt,out var current) || !ReferenceEquals(current,state)) return;
+            }
+            if(state.ShieldCount==0) { _seekerSoulStates.Remove(rt); state.Reset(); _seekerSoulPool.Return(state); }
         }
         private void ClearSeekerSoulPrison(HeroRuntime rt,bool preserveRewards)
         {
             if(!_seekerSoulStates.TryGetValue(rt,out var state)) return;
             if(preserveRewards && state.Consumed && BossAlive(rt.Hero) && BossNativeContextCurrent(state.Scope.Room,state.Scope.Run) && SeekerSoulMovesMatch(rt,state) && (state.Epoch==rt.ShieldEquipmentEpoch || state.ConsumptionReconcile)) { state.Epoch=rt.ShieldEquipmentEpoch; state.ConsumptionReconcile=false; return; }
-            foreach(var shield in state.Shields) SeekerSoulRemoveShield(rt,shield);
             _seekerSoulStates.Remove(rt);
+            for(int i=0;i<state.ShieldCount;i++) SeekerSoulRemoveShield(rt,state.Shields[i]);
+            state.Reset(); _seekerSoulPool.Return(state);
         }
     }
 }

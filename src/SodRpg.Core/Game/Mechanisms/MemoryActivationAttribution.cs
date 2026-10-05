@@ -75,20 +75,38 @@ namespace SodRpg.Core.Game
     /// <summary>Pure C02 identity, lifetime, admission and condition-success quota engine. No wall-clock gates.</summary>
     public sealed class MemoryActivationAttribution
     {
+        private static readonly string[] MemoryWarmup = { "warm0", "warm1", "warm2", "warm3", "warm4", "warm5" };
+        private static HashSet<string> CreateMemorySet()
+        {
+            var set = new HashSet<string>(MemoryWarmup, StringComparer.Ordinal);
+            set.Clear(); return set;
+        }
         private sealed class OwnerState
         {
             internal long Epoch;
-            internal HashSet<string> Memories;
-            internal readonly HashSet<(string Channel, long Serial, long Victim, int Kind)> Notifications =
-                new HashSet<(string, long, long, int)>();
+            internal readonly HashSet<string> Memories = CreateMemorySet();
+            internal bool InUse;
+            internal readonly Dictionary<(string Channel, long Serial, long Victim, int Kind), byte> Notifications =
+                new Dictionary<(string, long, long, int), byte>(512);
             internal readonly HashSet<(string Channel, AttributionBudget Budget, long Serial, long Victim)> Budgets =
                 new HashSet<(string, AttributionBudget, long, long)>();
         }
 
-        private readonly Dictionary<long, OwnerState> _owners = new Dictionary<long, OwnerState>();
-        private readonly Dictionary<long, MemoryActivationIdentity> _instances = new Dictionary<long, MemoryActivationIdentity>();
+        private readonly Dictionary<long, OwnerState> _owners = new Dictionary<long, OwnerState>(64);
+        private readonly Dictionary<long, MemoryActivationIdentity> _instances = new Dictionary<long, MemoryActivationIdentity>(4096);
+        private readonly List<long> _instanceScratch = new List<long>(4096);
         private readonly Dictionary<string, NativeMemoryAdapter> _adapters = new Dictionary<string, NativeMemoryAdapter>(StringComparer.Ordinal);
         private long _serial;
+        private readonly OwnerState[] _ownerPool = new OwnerState[64];
+        private readonly HashSet<string> _equipmentScratch = CreateMemorySet();
+        public MemoryActivationAttribution()
+        {
+            for (int i = 0; i < _ownerPool.Length; i++) _ownerPool[i] = new OwnerState();
+        }
+        private static void ReleaseOwner(OwnerState state)
+        {
+            state.Epoch = 0; state.InUse = false; state.Memories.Clear(); state.Notifications.Clear(); state.Budgets.Clear();
+        }
 
         public long NewPacketId() => NextSerial();
         private long NextSerial() => checked(++_serial);
@@ -97,16 +115,35 @@ namespace SodRpg.Core.Game
         {
             if (ownerId == 0) throw new ArgumentOutOfRangeException(nameof(ownerId));
             if (memories == null) throw new ArgumentNullException(nameof(memories));
-            var next = new HashSet<string>(StringComparer.Ordinal);
-            foreach (string memory in memories)
+            var next = _equipmentScratch;
+            next.Clear();
+            if (memories is IReadOnlyList<string> list)
             {
-                if (string.IsNullOrWhiteSpace(memory)) throw new ArgumentException("Equipment contains an empty memory ID.", nameof(memories));
-                next.Add(memory);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(list[i])) throw new ArgumentException("Equipment contains an empty memory ID.", nameof(memories));
+                    next.Add(list[i]);
+                }
             }
-            if (_owners.TryGetValue(ownerId, out var state) && state.Memories.SetEquals(next)) return state.Epoch;
+            else
+                foreach (string memory in memories)
+                {
+                    if (string.IsNullOrWhiteSpace(memory)) throw new ArgumentException("Equipment contains an empty memory ID.", nameof(memories));
+                    next.Add(memory);
+                }
+            if (_owners.TryGetValue(ownerId, out var state) && state.Memories.Count == next.Count)
+            {
+                bool equal = true;
+                foreach (string memory in next) if (!state.Memories.Contains(memory)) { equal = false; break; }
+                if (equal) return state.Epoch;
+            }
             InvalidateOwner(ownerId);
-            state = new OwnerState { Epoch = NextSerial(), Memories = next };
-            _owners[ownerId] = state;
+            state = null;
+            for (int i = 0; i < _ownerPool.Length; i++) if (!_ownerPool[i].InUse) { state = _ownerPool[i]; break; }
+            if (state == null) throw new InvalidOperationException("Native attribution owner capacity exceeded.");
+            state.InUse = true; state.Epoch = NextSerial();
+            foreach (string memory in next) state.Memories.Add(memory);
+            _owners.Add(ownerId, state);
             return state.Epoch;
         }
 
@@ -115,15 +152,16 @@ namespace SodRpg.Core.Game
         /// <summary>Death, zone change and real equipment replacement invalidate all pending work for the owner.</summary>
         public void InvalidateOwner(long ownerId)
         {
-            _owners.Remove(ownerId);
-            var remove = new List<long>();
-            foreach (var pair in _instances) if (pair.Value.OwnerId == ownerId) remove.Add(pair.Key);
-            foreach (long key in remove) _instances.Remove(key);
+            if (_owners.TryGetValue(ownerId, out var state)) { _owners.Remove(ownerId); ReleaseOwner(state); }
+            _instanceScratch.Clear();
+            foreach (var pair in _instances) if (pair.Value.OwnerId == ownerId) _instanceScratch.Add(pair.Key);
+            for (int i = 0; i < _instanceScratch.Count; i++) _instances.Remove(_instanceScratch[i]);
         }
 
         public void Reset()
         {
             _owners.Clear(); _instances.Clear();
+            for (int i = 0; i < _ownerPool.Length; i++) ReleaseOwner(_ownerPool[i]);
             // Never reuse serials after a zone/session reset while deferred events may still exist.
         }
 
@@ -138,8 +176,8 @@ namespace SodRpg.Core.Game
             GeneratedOrigin generatedOrigin = GeneratedOrigin.None)
         {
             if (!_owners.TryGetValue(ownerId, out var owner)) throw new InvalidOperationException("Owner equipment is not registered.");
-            if (!Enum.IsDefined(typeof(NativePayloadKind), payloadKind)) throw new ArgumentOutOfRangeException(nameof(payloadKind));
-            if (!Enum.IsDefined(typeof(GeneratedOrigin), generatedOrigin)) throw new ArgumentOutOfRangeException(nameof(generatedOrigin));
+            if ((uint)payloadKind > (uint)NativePayloadKind.NativeEndingPhase) throw new ArgumentOutOfRangeException(nameof(payloadKind));
+            if ((uint)generatedOrigin > (uint)GeneratedOrigin.UnknownChain) throw new ArgumentOutOfRangeException(nameof(generatedOrigin));
             sourceMemory = sourceMemory ?? string.Empty;
             if (sourceMemory.Length == 0 && payloadKind != NativePayloadKind.MainBasicAttack)
                 throw new InvalidOperationException("A memory source is required except for an owned basic attack.");
@@ -189,6 +227,7 @@ namespace SodRpg.Core.Game
         {
             if (instanceId == 0) throw new ArgumentOutOfRangeException(nameof(instanceId));
             if (!IsCurrent(identity)) throw new InvalidOperationException("Cannot bind an expired equipment epoch.");
+            if (_instances.Count >= 4096 && !_instances.ContainsKey(instanceId)) return;
             _instances[instanceId] = identity;
         }
 
@@ -220,14 +259,24 @@ namespace SodRpg.Core.Game
             CheckChannel(channel);
             if (!ValidNotification(notification)) return false;
             long serial = notification.DamagePacketId > 0 ? notification.DamagePacketId : notification.ActivationId;
-            return _owners[notification.OwnerId].Notifications.Add((channel, serial, notification.VictimId, (int)notification.EventKind));
+            var notifications = _owners[notification.OwnerId].Notifications;
+            var key = (channel, serial, notification.VictimId, (int)notification.EventKind);
+            if (notifications.ContainsKey(key)) return false;
+            notifications.Add(key, 0);
+            return true;
+        }
+        public void ForgetNotification(string channel, MemoryActivationEvent notification)
+        {
+            if (!_owners.TryGetValue(notification.OwnerId, out var owner)) return;
+            long serial = notification.DamagePacketId > 0 ? notification.DamagePacketId : notification.ActivationId;
+            owner.Notifications.Remove((channel, serial, notification.VictimId, (int)notification.EventKind));
         }
 
         /// <summary>Reserve only after a successful effect condition; a rejected probability/target does not spend quota.</summary>
         public bool TrySpend(string channel, AttributionBudget budget, MemoryActivationEvent notification, bool conditionSucceeded)
         {
             CheckChannel(channel);
-            if (!Enum.IsDefined(typeof(AttributionBudget), budget)) throw new ArgumentOutOfRangeException(nameof(budget));
+            if ((uint)budget > (uint)AttributionBudget.PerOwnedBasicAttack) throw new ArgumentOutOfRangeException(nameof(budget));
             if (!conditionSucceeded || !ValidNotification(notification)) return false;
             long serial = notification.ActivationId;
             long victim = 0;
@@ -254,8 +303,8 @@ namespace SodRpg.Core.Game
         private bool ValidNotification(MemoryActivationEvent notification)
         {
             if (!IsCurrent(notification) || notification.GeneratedOrigin != GeneratedOrigin.None
-                || !Enum.IsDefined(typeof(MemoryEventKind), notification.EventKind)
-                || !Enum.IsDefined(typeof(NativePayloadKind), notification.NativePayloadKind)) return false;
+                || (uint)notification.EventKind > (uint)MemoryEventKind.OwnedBasicAttackHit
+                || (uint)notification.NativePayloadKind > (uint)NativePayloadKind.NativeEndingPhase) return false;
             if (notification.EventKind == MemoryEventKind.Hit || notification.EventKind == MemoryEventKind.CriticalHit
                 || notification.EventKind == MemoryEventKind.OwnedBasicAttackHit)
                 return notification.DamagePacketId > 0 && notification.VictimId != 0;
