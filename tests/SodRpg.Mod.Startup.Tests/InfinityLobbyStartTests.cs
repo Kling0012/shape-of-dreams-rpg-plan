@@ -68,6 +68,30 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.True(session.Profile.LastInfinityEnabled);
         }
 
+        // Real lobby order: the game-scene server actor and its Hello handler do not exist yet.
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void HostLobbyInfinityStartAllowsParticipantBeforeHello(bool authorityExists)
+        {
+            var session = StartSoloLobby(infinityEnabled: true);
+            var participant = JoinLobbyParticipant("compatible-guest");
+            if (authorityExists) RegisterHostAuthority();
+
+            bool allowed = new PlayLobbyManager().CheckStartGameCondition(out string reason, showMessage: false);
+
+            Assert.True(allowed, reason ?? "(blocked)");
+            Assert.Null(reason);
+
+            var zone = BeginGameWithRunAlreadyTracked(session, "compatible-run");
+            DewPlayer.gamePlayers.Add(participant);
+            FeedHello(HostAuthority.NativeInstance ?? RegisterHostAuthority(), participant,
+                Protocol.Version, ContentFingerprint.Value, infinityAvailable: true);
+            zone.GenerateWorldAuto();
+            Assert.True(InfinityMode.Enabled);
+            Assert.NotNull(session.Profile.Run.Infinity);
+        }
+
         /// <summary>ホスト＋同版の参加者（Hello で Protocol 21・内容一致・インフィニティ有効を確認済み）は開始できる。
         /// ホストは参加者へ自分のインフィニティ可否を返している。</summary>
         [Fact]
@@ -227,11 +251,72 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Null(reason);
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void NormalModeWithParticipantIgnoresInfinityCompatibility(bool knownMismatch)
+        {
+            StartSoloLobby(infinityEnabled: false);
+            var participant = JoinLobbyParticipant("normal-guest");
+            if (knownMismatch)
+                FeedHello(RegisterHostAuthority(), participant, Protocol.Version - 1,
+                    ContentFingerprint.Value, infinityAvailable: false);
+
+            Assert.True(new PlayLobbyManager().CheckStartGameCondition(out string reason, showMessage: false), reason);
+            Assert.Null(reason);
+        }
+
+        [Theory]
+        [InlineData(20, true, true)]
+        [InlineData(21, false, true)]
+        [InlineData(21, true, false)]
+        public void LateIncompatibleHelloFallsBackOnlyForThisExpedition(int protocol, bool infinityAvailable, bool sameContent)
+        {
+            var notices = new List<GameEvent>();
+            var session = StartSoloLobby(infinityEnabled: true, notify: notices.Add);
+            var participant = JoinLobbyParticipant("late-guest");
+            Assert.True(new PlayLobbyManager().CheckStartGameCondition(out _, showMessage: false));
+            var zone = BeginGameWithRunAlreadyTracked(session, "late-run");
+            DewPlayer.gamePlayers.Add(participant);
+            zone.GenerateWorldAuto();
+            Assert.NotNull(session.Profile.Run.Infinity);
+            session.Profile.Run.SatchelShards = 7;
+            var authority = RegisterHostAuthority();
+
+            FeedHello(authority, participant, protocol,
+                sameContent ? ContentFingerprint.Value : "different-content", infinityAvailable);
+            FeedHello(authority, participant, protocol,
+                sameContent ? ContentFingerprint.Value : "different-content", infinityAvailable);
+
+            Assert.True(InfinityMode.Available);
+            Assert.False(InfinityMode.Enabled);
+            Assert.Null(session.Profile.Run.Infinity);
+            Assert.Equal(7, session.Profile.Run.SatchelShards);
+            Assert.True(session.Profile.LastInfinityEnabled);
+            Assert.False(EnvelopeWritten());
+            Assert.Single(notices);
+            Assert.Single(Log.Warnings, w => w.StartsWith("Infinity stopped for this expedition;"));
+            Assert.Contains("late-guest", ClientSession.InfinitySupportNotice(canChooseRunRules: true));
+            zone.TravelToNode(2, advanceTurn: true, isSidetrackTransition: false, ignoreInterrupts: false);
+            Assert.Equal(2, zone.LastTravelTo);
+            Assert.True((bool)AccessTools.Method(typeof(InfinityNextZone), "Prefix").Invoke(null, null));
+
+            // A corrected peer can use Infinity again next expedition without restarting the MOD.
+            FeedHello(authority, participant, Protocol.Version, ContentFingerprint.Value, infinityAvailable: true);
+            NetworkedManagerBase<GameManager>.softInstance.runId = "next-run";
+            session.Profile.Run = new RunState { RunId = "next-run" };
+            ClientSession.HostRun = session.Profile.Run;
+            InfinityMode.StartNewGame();
+            zone.GenerateWorldAuto();
+            Assert.True(InfinityMode.Enabled);
+            Assert.NotNull(session.Profile.Run.Infinity);
+        }
+
         #region harness
 
-        private ClientSession StartSoloLobby(bool infinityEnabled)
+        private ClientSession StartSoloLobby(bool infinityEnabled, Action<GameEvent> notify = null)
         {
-            var session = new ClientSession("lobby-tests", null) { Profile = new Profile() };
+            var session = new ClientSession("lobby-tests", notify) { Profile = new Profile() };
             ClientSession._hostSession = session;
             session.Profile.LastInfinityEnabled = infinityEnabled;
             session.Profile.LastInfinityInterval = 10;

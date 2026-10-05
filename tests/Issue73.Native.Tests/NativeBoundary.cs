@@ -293,11 +293,13 @@ namespace SodRpg.Mod
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
+        internal static bool ExpeditionHalted => false;
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
     }
     internal sealed partial class ClientSession
     {
+        internal static void StopInfinityRun(string notice = null) { }
         public Profile Profile;
         public Hero LocalHero;
         // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。

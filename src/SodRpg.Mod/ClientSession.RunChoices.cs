@@ -269,6 +269,11 @@ namespace SodRpg.Mod
         private void ReceiveRunChoices(string encoded, bool? victory = null)
         {
             if (NetworkServer.active || !ContinueReady || !RunChoiceSnapshot.TryDecode(encoded, out var snapshot)) return;
+            if (InfinityMode.ExpeditionHalted)
+            {
+                StopInfinityRun();
+                if (snapshot.Infinity != null) return;
+            }
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (!string.IsNullOrEmpty(snapshot.RunId) && !string.IsNullOrEmpty(gameRunId) && snapshot.RunId != gameRunId) return;
             if (!string.IsNullOrEmpty(snapshot.RunId) && snapshot.RunId == _completedRunId) return;
@@ -290,6 +295,7 @@ namespace SodRpg.Mod
         private void ApplyHostRunChoices()
         {
             if (Profile.Run?.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
+            if (InfinityMode.ExpeditionHalted && _receivedRunChoices?.Infinity != null) return;
             if (!RunActive || (_zone != null && _zone.isInAnyTransition)) return;
             if (!_runChoiceProgress.ApplyCurrent(Profile, ChoiceZoneIndex)) return;
             MarkDirty(true);
