@@ -57,8 +57,8 @@
 - Phaseは `Exploring → BossDue → BossFight → WaitingSoulFinish → AwaitingChoice → Transitioning/Returning`。魂生成後の消滅と実クリアを順に観測し、単なる「魂がない」判定を使わない。
 - GraphEpoch＝技術的な地図再生成、SegmentEpoch＝選択と報酬規則の区間、RoomEpoch＝新規部屋の識別。native zoneIndex、WaypointGeneration、AuthorityGenerationの代用にしない。
 - 通常クリアはserverのRoom.onRoomClearで、active・非遷移・非revisit・Combat・未計数の当世代nodeだけを加算。MiniBossを含むCombatも1部屋。Start/Merchant/Event/再訪/ボス部屋は周期に数えない。
-- モードONではN部屋クリアでBossDueを立て、**次の新規戦闘部屋を固定ゾーンのExitBossにする**。早期入場を止めるだけでは足りない。clientから遠いboss indexをCmd送信せず、ホスト側で世代／Dueを再確認してserver TravelToNodeへ送る。
-- 新規Combatの到達候補が枯渇したら、同ゾーンをnoAdvanceで再生成。技術更新では新遠征・確保・イベント抽選・道標更新・ZoneTraveler依頼を発火させず、累計と周期を維持する。再生成中にDueだったら更新後もDueのまま。潜行確定時だけClearsInCycleとBossDueを戻す。
+- モードONではN部屋クリアでBossDueを立て、**次の新規部屋を固定ゾーンのExitBossにする**。#208ではホストがnative node statusで唯一の次室を開示し、clientはそのindexをCmdで選ぶ。server実bodyが開示済み移動先を検証してnative投票へ送り、`TravelToNode`でも世代・Due・精算条件を再確認する。
+- 次の未訪問通常部屋がなくなったら、同ゾーンをnoAdvanceで再生成。技術更新では新遠征・確保・イベント抽選・道標更新・ZoneTraveler依頼を発火させず、累計と周期を維持する。Dueなら枯渇更新より周期ボスを優先し、潜行確定時だけClearsInCycleとBossDueを戻す。
 - ボス撃破→魂生成待ち→全員の魂選択／報酬完了→魂消滅・Rift解錠・実クリア→MODの未決撃破／配当精算→確保画面。魂がまだ存在しない4秒間を「完了」と誤認しない。
 - **ボス以外の出口・N部屋ごとの確保は作らない。** ボス撃破と魂報酬完了後だけ既存確保画面を出す。確保は帰還して終了、潜行は継続。
 - **本体の同ゾーン更新に伴うKO復活・hunter/turn局所リセットを採用する。** 全員全回復ではなく、累計由来の圧は下げない（C/ZoneManager.cs:1307-1327,2372-2376）。Start再抽選やGoldenLizardの反復も段階2の報酬制限に含める。
@@ -189,3 +189,34 @@
 - 無効時はロビーONを拒否し、OFFへの切替と通常モードは残す。HelloのInfinity可否は通常のProtocol／内容照合と分離し、対応が欠ける参加者とのInfinity開始だけを拒否する。ホストの無効化は参加者のInfinity割り込み・新規報酬にも反映する。
 - ソースReleaseビルドは成功（エラー0・警告5）、配備先 `/tmp/sod-deploy-i95`。指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` は追加mainも含めて完走・終了コード0：Core 3237成功／既存2skip、Native 31成功、Startup 5成功、計3273成功・失敗0。main側の既存ケースを保持し、こちらでは部分クラス代役・反射呼出し・旧保存fixture補助関数だけを追従した。テストケース本体・期待値の変更や新規ケース作成は行っていない。残存コンパイル不備なし。
 - 既存BalanceSimを `--mode infinity --players 1 --seed 95` で実行し、通常／Infinity経済経路と合法帰還・clone・codec往復が完走した。帰還部屋10・圧1・帰還回数1・終了済み・Runなし・codec注記なしを観測し、既存2000人の結果ファイルは上書きしていない。本体起動プログラムがないため、実画面・実coop・実本体continueとInfinity native割り込み失敗時の実ゲーム挙動は未確認。
+
+## 17. #208：有限グラフを1部屋ずつ表示する設計Aの更新
+
+### 採用方式と本体の根拠
+- **設計Aを維持し、表示・選択だけを絞る。設計Bのノード追加は採用しない。** 本体の `nodes` は `SyncList<WorldNodeData>` と `SaveVar` の両方に対応し、`status` は既にMirror同期・native保存対象（C/ZoneManager.cs:138-149、WorldNodeData.cs:6-10）。部屋scene・modifier・寿命・狩り・距離行列は本体のまま。
+- 本体は生成時にボスを `Revealed` にし、到着時に全隣接部屋を開示する（C/ZoneManager.cs:2421,2771-2801）。Dew.UIの `UI_InGame_WorldMap.RefreshNodes` は未探索部屋も作り、NodeItemは「？」を表示する。したがってボスの早期移動禁止だけでは利用者の要求を満たさない。
+- Dew.UIの提供済み逆コンパイルはなかったため、実 `Dew.UI.dll` を一時ディレクトリで参照した。対象は `UI_InGame_WorldMap.RefreshNodes/TravelToNode/MoveSelection/FindClosestNodeIndex`、NodeItem、Edge、WorldNode tooltip。ゲーム資料は参照のみ、リポジトリへコピーしない。
+
+### 状態・表示・移動
+- `InfinityMapReveal.cs` でホストだけが既存node statusを書き戻す。`HasVisited` は訪問済み、**唯一の `RevealedFull` が次の1部屋**。他の未訪問部屋は `Unexplored` とし、通常の `Revealed` は表示対象にしない。共有asset・node数・距離行列を書き換えない。
+- 開始時は開始部屋＋次の1部屋。到着するたびにその部屋を訪問済みにし、次の未訪問部屋を1つ選ぶ。距離が最短、同距離ならnative indexが小さい部屋を選び、Start／Special／早期ExitBossを除外する。Combat以外の商人・イベントも次室になれるが、ボス周期には既存どおり実Combatクリアだけを数える。訪問済み部屋への移動では既に選ばれた次室を保持する。
+- 周期10／15／20に達した実クリアで、通常の次室を隠して固定ゾーンのnative ExitBossを唯一の次室にする。周期未到達のボスと未開示部屋は、地図だけでなくserverの移動・不正なCmd・古い投票結果からも入れない。
+- native Cmd実body `UserCode_CmdTravelToNode__Int32__NetworkConnectionToClient` のInfinity経路だけが、隣接条件を開示済み移動先へ置換する。sender確認、既存 `ShouldVoteOnTravel/StartVoteNextNode`、投票完了、`TravelToNode` 割り込み・scene読み込みは残す。非隣接の次室・周期ボスにも投票でき、実行時に移動先を再確認する。native `IsNodeConnected` をグローバルに変更しない。
+- 本体の全開示・複数開示はInfinity中だけ抑止。nativeクエストが訪問済み部屋のsceneを上書きしてstatusを下げる場合、scene上書きは残して訪問済み表示を保つ。
+- `InfinityMapPresentation.cs` はメイン／ミニ地図の生成を開示済みnodeに限定する。辺は圧縮した表示配列の位置ではなく**native index**で判定し、現在地→非隣接次室の線だけをUI上で補う。隠れた部屋のクリック、ゲームパッド選択、tooltip、ping位置も除外する。次室の説明にnative距離由来の「遠すぎる」を出さず、既存の移動確認・狩り警告は残す。
+- native node変更イベント／地図再表示で更新する。Unityの遅延Destroyより先に旧表示を無効化し、全体／ミニ地図のcache・hover・snap・古いtooltipを整理する。同じnode数の再生成でも旧表示を使わない。ゲームパッド選択・距離検索に毎フレームのcollection割り当ては追加しない。
+
+### 技術更新・協力・保存の互換
+- 通常の次室を作れなくなった地図では、最後の部屋の実クリア後に既存の技術境界receiptを配信する。全員の耐久保存ACK・未精算撃破／取引の完了後に同ゾーンを `noAdvance:true` で再生成し、開始部屋＋次室を直ちに用意する。技術境界に新しい選択画面を挟まず、累計・周期・native zoneIndexを保持する。BossDueならCombat枯渇による更新よりボスを優先する。
+- 訪問済み表示は**現GraphEpochの有限地図**に限定する。更新後の地図で旧世代indexやRectTransformを使わず、全世代の部屋履歴を蓄積しない。nativeのKOのみ復活・狩り局所リセットは従来どおり。
+- 表示の権威は既存のMirror node status。参加者はホストと違う距離順を持っていても次室を独自に選ばない。新しいRPC・共有選択payload・profile/envelope項目を増やさない。
+- **Protocol 23**：wireの追加項目はないが、旧クライアントは未探索nodeを表示し、非隣接の次室・ボスを選べない。同一パーティの表示と選択契約を保証するため22とは互換にしない。通常協力プレイも全員同版へ更新する。
+- **保存形式5／Infinity codec version 1は変更なし。** 開示状態と次室は既存native node statusに含まれ、MODの報酬receipt／チェックポイントは従来のまま。nativeは到着前に保存する（C/ZoneManager.cs:1410-1424）ため、続きからでは保存された移動先を訪問済みにして同じ次室を再構成する。部屋内保存の単一の次室は保持する。復元中は巻き戻し前の新しいHostRunではなく保存済みnative envelopeのPhaseを使い、復元完了・プロフィール照合後にも正規化する。
+- 旧Infinity保存も既存の訪問済み・現在地を保って開示を絞る。旧地図に複数の次室候補がある場合は距離／indexで選び直し、ボスは保存済み周期に従う。通常保存をInfinityへ変更しない。不一致・対象欠落・実行例外では既存のfail-softでInfinityだけを停止し、MOD全体・通常モードは止めない。
+
+### 検証
+- 指定Releaseビルド：成功、警告5・エラー0。追加のnative UI参照は本体の `UnityUIExtensions.dll`。
+- 実DLL＋Harmony 2.3.6-thin／MonoMod.Core 1.3.6の一時コンソールで、必要なInfinity31パッチクラスの公開Harmony APIによる実適用を確認し、`Available == true`。Unity実機ではなくCoreCLR上の起動診断。
+- 指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py --all`：終了コード0、Core 3358成功／既存5skip、Native 60成功、Startup 50成功、計3468成功・失敗0。必要最小限の#208回帰は開始＋1室、到着＋1室、周期10／15／20の非隣接ボス、hidden／不正Cmd／古い投票の拒否、耐久境界と同ゾーン更新、部屋内／遷移前保存の再演、ホストの状態による全体／ミニ地図・ゲームパッド・tooltip・cache更新、通常モード不変を確認した。
+- 一時コンソールから実製品ソースをリンクしたHarmony境界を直接実行：native node数7を保持し、表示 `[0,1] → [0,1,3]`、周期10クリア後 `[0,1,6]`・次室6、native投票先6、保存再演後 `[0,1,3]`・次室3、通常モードのnative全開示継続を観測した。一時コンソールとUI参照用逆コンパイルは検証後に削除済み。
+- ゲーム本体の実行プログラムはこの環境にない。Unityの実画面、実協力通信、scene遷移を伴う長時間プレイ・実Continueは実機確認が必要。境界テスト／CoreCLR起動診断はUnity内動作やFPSの保証ではない。

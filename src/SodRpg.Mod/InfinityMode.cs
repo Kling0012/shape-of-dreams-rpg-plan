@@ -8,7 +8,7 @@ using SodRpg.Core.Game;
 namespace SodRpg.Mod
 {
     /// <summary>Owns the native, finite graph. Profile receipts remain the reward authority.</summary>
-    internal static class InfinityMode
+    internal static partial class InfinityMode
     {
         internal const string RuntimeKey = "dreamforge.infinity.runtime";
         internal const string ChoiceKey = "dreamforge.infinity.choice";
@@ -47,7 +47,13 @@ namespace SodRpg.Mod
             typeof(InfinityRoomIdentity), typeof(InfinityTravel), typeof(InfinityNoSpecialRift),
             typeof(InfinityResult), typeof(InfinityExit), typeof(InfinityNativeSave),
             typeof(InfinityNativeRestore), typeof(InfinityZoneTravel), typeof(InfinityNoSpecialInvitation),
-            typeof(InfinityLobbyStartCondition),
+            typeof(InfinityLobbyStartCondition), typeof(InfinityRevealArrival), typeof(InfinityRevealWorld),
+            typeof(InfinityTravelCommand), typeof(InfinityRevealQuestOverride),
+            typeof(InfinityMapRefresh), typeof(InfinityMapDisable),
+            typeof(InfinityMapNodeSetup), typeof(InfinityMapTravelSelection), typeof(InfinityMapMoveSelection),
+            typeof(InfinityMapClosestNode), typeof(InfinityMapHover), typeof(InfinityMapNodeTooltip),
+            typeof(InfinityMapTooltip), typeof(InfinityMapTravelTooltip), typeof(InfinityMapDescription),
+            typeof(InfinityMapPingPosition), typeof(InfinityMapCacheChanged), typeof(InfinityMapEdgeStatus),
         };
 
         internal static bool Available { get; private set; }
@@ -130,10 +136,7 @@ namespace SodRpg.Mod
         private static readonly List<string> DepartedAcks = new List<string>();
         private static string _choiceText;
         private static InfinityChoice _choice;
-        private static readonly HashSet<int> ReachableNodes = new HashSet<int>();
-        private static readonly List<int> ReachableQueue = new List<int>();
-        private static long _reachableRoomEpoch = -1;
-        private static bool _hasReachableCombat;
+        private static bool HasNextRoom(ZoneManager zone) => RevealedNext(zone) >= 0;
 
         internal static InfinityRunState State
         {
@@ -234,7 +237,6 @@ namespace SodRpg.Mod
             _initial = null; _runId = null;
             _generationReportedRun = null;
             _choice = null; _choiceText = null; Acks.Clear();
-            _reachableRoomEpoch = -1;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (NetworkServer.active && settings != null)
             {
@@ -249,7 +251,7 @@ namespace SodRpg.Mod
         internal static void BeginRestore()
         {
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
-            _reachableRoomEpoch = -1; Acks.Clear(); _choice = null; _choiceText = null;
+            Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()
         {
@@ -302,7 +304,10 @@ namespace SodRpg.Mod
 
         internal static void ConfirmAgreement()
         {
-            if (NetworkServer.active) NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.Remove(HaltKey);
+            if (!NetworkServer.active) return;
+            NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.Remove(HaltKey);
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone != null) RefreshReveal(zone, zone.currentNodeIndex, RevealedNext(zone));
         }
 
         internal static void CompleteReturn(InfinityRunState state)
@@ -378,6 +383,7 @@ namespace SodRpg.Mod
                 if (!ReferencedModifiers.Contains(pair.Key)) RetiredModifiers.Add(pair.Key);
             foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
+            RefreshReveal(zone, 0);
             WriteEnvelope();
             ReportGenerationMode(zone, true);
         }
@@ -421,8 +427,8 @@ namespace SodRpg.Mod
                 if (before != state.Phase || seen != state.SoulObserved) ClientSession.PersistHostInfinityState();
                 if (state.Phase == InfinityPhase.AwaitingChoice) ClientSession.OpenHostInfinityChoice();
             }
-            else if ((state.Phase == InfinityPhase.Exploring || state.Phase == InfinityPhase.BossDue)
-                && room.didClearRoom && !HasNewCombat(zone))
+            else if (state.Phase == InfinityPhase.Exploring
+                && room.didClearRoom && !HasNextRoom(zone))
             {
                 var choice = CurrentChoice;
                 if (choice == null || choice.RunId != ClientSession.HostRun?.RunId || !choice.Boundary || choice.GraphEpoch != state.GraphEpoch)
@@ -434,32 +440,6 @@ namespace SodRpg.Mod
             }
         }
 
-        private static bool HasNewCombat(ZoneManager zone)
-        {
-            if (_reachableRoomEpoch == State.RoomEpoch) return _hasReachableCombat;
-            _reachableRoomEpoch = State.RoomEpoch;
-            _hasReachableCombat = false;
-            ReachableNodes.Clear(); ReachableQueue.Clear();
-            ReachableNodes.Add(zone.currentNodeIndex); ReachableQueue.Add(zone.currentNodeIndex);
-            for (int head = 0; head < ReachableQueue.Count && !_hasReachableCombat; head++)
-            {
-                int from = ReachableQueue[head];
-                for (int to = 0; to < zone.nodes.Count; to++)
-                {
-                    if (ReachableNodes.Contains(to) || zone.nodes[to].type == WorldNodeType.ExitBoss
-                        || zone.nodes[to].type == WorldNodeType.Special || !zone.IsNodeConnected(from, to)) continue;
-                    if (zone.nodes[to].type == WorldNodeType.Combat && to < zone.visitedNodesSaveData.Count
-                        && zone.visitedNodesSaveData[to] == null)
-                    {
-                        _hasReachableCombat = true;
-                        break;
-                    }
-                    ReachableNodes.Add(to); ReachableQueue.Add(to);
-                }
-            }
-            ReachableNodes.Clear(); ReachableQueue.Clear();
-            return _hasReachableCombat;
-        }
 
         internal static void OnRoomClear(Room room)
         {
@@ -470,7 +450,10 @@ namespace SodRpg.Mod
             if (zone.currentNode.type == WorldNodeType.Combat)
             {
                 if (state.TryCountCombatClear(state.GraphEpoch, zone.currentNodeIndex, room.isActive, zone.isInAnyTransition, room.isRevisit))
+                {
+                    RefreshReveal(zone, zone.currentNodeIndex, RevealedNext(zone));
                     ClientSession.CountHostInfinityRoom();
+                }
             }
             else if (zone.currentNode.type == WorldNodeType.ExitBoss && room.isActive && !zone.isInAnyTransition)
             {
@@ -489,17 +472,14 @@ namespace SodRpg.Mod
             if (state.Phase != InfinityPhase.Exploring && state.Phase != InfinityPhase.BossDue) return false;
             var room = SingletonDewNetworkBehaviour<Room>.softInstance;
             if (room == null || !room.didClearRoom) return false;
-            bool freshCombat = zone.nodes[to].type == WorldNodeType.Combat && zone.visitedNodesSaveData[to] == null;
-            if (state.Phase == InfinityPhase.BossDue && (freshCombat || zone.nodes[to].type == WorldNodeType.ExitBoss))
+            if (!IsRevealDestination(zone, to)) return false;
+            if (zone.nodes[to].type == WorldNodeType.ExitBoss && state.Phase != InfinityPhase.BossDue) return false;
+            if (state.Phase == InfinityPhase.BossDue && zone.nodes[to].type == WorldNodeType.ExitBoss)
             {
-                to = -1;
-                for (int i = 0; i < zone.nodes.Count; i++)
-                    if (zone.nodes[i].type == WorldNodeType.ExitBoss) { to = i; break; }
-                if (to < 0 || !state.TryEnterBoss()) return false;
+                if (!state.TryEnterBoss()) return false;
                 ClientSession.PersistHostInfinityState();
-                return true;
             }
-            return zone.nodes[to].type != WorldNodeType.ExitBoss;
+            return true;
         }
 
         internal static bool Regenerate(string intent)

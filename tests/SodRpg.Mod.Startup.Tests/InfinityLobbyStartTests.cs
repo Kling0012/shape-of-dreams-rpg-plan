@@ -16,7 +16,7 @@ namespace SodRpg.Mod.Startup.Tests
     /// 3) 遠征開始（TrackRun/BeginRun）が最初のゾーン生成より先に走っても、インフィニティが止まらず
     ///    Profile.Run へ状態が接続され、通常モードと同じ地図に落ちない。
     /// </summary>
-    public sealed class InfinityLobbyStartTests : IDisposable
+    public sealed partial class InfinityLobbyStartTests : IDisposable
     {
         private readonly Harmony owner = new Harmony("lobby-tests." + Guid.NewGuid().ToString("N"));
         private DreamforgeMod mod;
@@ -46,6 +46,10 @@ namespace SodRpg.Mod.Startup.Tests
             ClientSession.HostInfinityReturnCommitted = false;
             NetworkedManagerBase<GameSettingsManager>.softInstance = null;
             NetworkedManagerBase<GameManager>.softInstance = null;
+            NetworkedManagerBase<GameSettingsManager>.instance = null;
+            NetworkedManagerBase<ZoneManager>.instance = null;
+            InGameUIManager.instance = null;
+            SingletonBehaviour<UI_TooltipManager>.instance = null;
             NetworkedManagerBase<ZoneManager>.softInstance = null;
             NetworkedManagerBase<ActorManager>.softInstance = null;
             SingletonDewNetworkBehaviour<Room>.softInstance = null;
@@ -269,43 +273,40 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.NotNull(session.Profile.Run.Infinity);
         }
 
-        /// <summary>周期に満たない探索中はボス部屋への移動を止め、周期が来たら新規戦闘roomの移動を
-        /// ボス部屋へ差し替える（通常モードと同じ地図でも進行が無限側に制御される）。</summary>
-        [Fact]
-        public void BossRoomTravelIsRoutedOnlyWhenDue()
+        [Theory]
+        [InlineData(10)]
+        [InlineData(15)]
+        [InlineData(20)]
+        public void ScheduledBossIsChosenVisibleDestinationEvenWhenNonAdjacent(int interval)
         {
             var session = StartSoloLobby(infinityEnabled: true);
             var zone = BeginGameWithRunAlreadyTracked(session, "run-travel");
             zone.GenerateWorldAuto();
             var state = session.Profile.Run.Infinity;
-            state.Interval = 10;
-            state.ClearsInCycle = 0;
+            state.Interval = interval;
             RegisterHostAuthority();
             ClientSession.HostInfinityRewardsSettled = true;
-            var room = new Room { didClearRoom = true };
-            SingletonDewNetworkBehaviour<Room>.softInstance = room;
-            zone.nodes.AddRange(new[]
-            {
-                new WorldNode { type = WorldNodeType.Combat },   // 0 start-ish
-                new WorldNode { type = WorldNodeType.Combat },   // 1 fresh combat
-                new WorldNode { type = WorldNodeType.ExitBoss }, // 2 boss
-            });
-            zone.currentNodeIndex = 0;
-            zone.currentNode = zone.nodes[0];
-            zone.visitedNodesSaveData.AddRange(new object[] { new object(), null, null });
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
 
-            // Exploring: fresh combat is allowed, the boss room is not reachable.
-            zone.TravelToNode(1, advanceTurn: true, isSidetrackTransition: false, ignoreInterrupts: false);
-            Assert.Equal(1, zone.LastTravelTo);
-            zone.TravelToNode(2, advanceTurn: true, isSidetrackTransition: false, ignoreInterrupts: false);
-            Assert.Equal(1, zone.LastTravelTo); // unchanged: the boss travel was suppressed
+            Assert.False(InfinityMode.IsRevealVisible(zone, 2));
+            zone.TravelToNode(2);
+            Assert.Null(zone.LastTravelTo);
 
-            // Boss due: a fresh combat travel is redirected into the boss room.
-            state.ClearsInCycle = 10;
-            state.Phase = InfinityPhase.BossDue;
-            zone.LastTravelTo = null;
-            zone.TravelToNode(1, advanceTurn: true, isSidetrackTransition: false, ignoreInterrupts: false);
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            state.ClearsInCycle = interval - 1;
+            InfinityMode.OnRoomClear(SingletonDewNetworkBehaviour<Room>.softInstance);
+            Assert.Equal(InfinityPhase.BossDue, state.Phase);
+            Assert.Equal(2, InfinityMode.RevealedNext(zone));
+            Assert.True(InfinityMode.IsRevealVisible(zone, 2));
+            InfinityMode.Tick();
+            Assert.Null(InfinityMode.CurrentChoice);
+            Assert.Equal(1, zone.GenerateWorldAutoCalls);
+            zone.nodeDistanceMatrix[zone.nodes.Count * 1 + 2] = 5;
+            zone.nodeDistanceMatrix[zone.nodes.Count * 2 + 1] = 5;
+            Assert.False(zone.IsNodeConnected(1, 2));
+            zone.CmdTravelToNode(2, new NetworkConnectionToClient { Player = DewPlayer.local });
             Assert.Equal(2, zone.LastTravelTo);
+            Assert.Equal(InfinityPhase.BossFight, state.Phase);
         }
 
         /// <summary>ロビー開始条件の Postfix は、インフィニティ無効（Available==false）のときだけ
@@ -579,14 +580,6 @@ namespace SodRpg.Mod.Startup.Tests
             zone.GenerateWorldAuto();
             ClientSession.HostInfinityRewardsSettled = true;
             SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
-            zone.nodes.AddRange(new[] {
-                new WorldNode { type = WorldNodeType.Combat },
-                new WorldNode { type = WorldNodeType.Combat },
-                new WorldNode { type = WorldNodeType.ExitBoss },
-            });
-            zone.currentNodeIndex = 0;
-            zone.currentNode = zone.nodes[0];
-            zone.visitedNodesSaveData.AddRange(new object[] { new object(), null, null });
             CheckCompatibilityAt(0);
             return (session, guest, authority, zone);
         }
