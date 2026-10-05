@@ -213,7 +213,8 @@ namespace SodRpg.Core.Tests
             WithHero(hero, tree =>
             {
                 var manifest = ReadManifest(hero);
-                var rules = StarClusters.MigrationsFor(hero);
+                // Revision 1 is the v1.31 rewrite of the baseline tree; later revisions (the Husk trio) redefine already authored stars.
+                var rules = StarClusters.MigrationsFor(hero).Where(r => r.Revision == 1).ToList();
                 Assert.Equal(manifest.MigrationRows, rules.Count);
                 Assert.Equal(manifest.MigrationIds.OrderBy(x => x, StringComparer.Ordinal), rules.Select(r => r.LocalStarId).OrderBy(x => x, StringComparer.Ordinal));
                 Assert.All(rules, rule => Assert.True(rule.ChangedEffect));

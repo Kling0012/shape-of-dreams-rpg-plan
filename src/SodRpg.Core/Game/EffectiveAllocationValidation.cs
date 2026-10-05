@@ -527,8 +527,25 @@ namespace SodRpg.Core.Game
                 return marginal;
             }, hero);
             bool effective = HasPositiveDifference(with, without);
+            if (!effective && IsPendingRouteReceiver(hero, talent, rank, with, without)) return true;
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
+        }
+
+        /// <summary>
+        /// A movement route's receiver boosts (for example Husk's Flash Step Readiness) only act once a star recharges that movement memory,
+        /// and the route's own recharge source sits deeper in the same route behind these boosts. Refusing them as "no owned recipient" would
+        /// make the route impossible to enter, so a star with no recipient yet is pending, not inert. Saturated or dominated ranks stay refused.
+        /// </summary>
+        private bool IsPendingRouteReceiver(HeroState hero, TalentDef talent, int rank,
+            IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
+        {
+            var modifier = talent.ScopedModifier;
+            if (talent.RouteId == null || modifier == null || modifier.ScopeKind != ScopeKind.Receiver || talent.IsChoice) return false;
+            if (modifier.ScopeMemory == null || modifier.ScopeMemory != talent.RouteMemory || !talent.RouteMemory.StartsWith("St_M_", StringComparison.Ordinal)) return false;
+            if (DisabledIds(hero).Contains(talent.Id)) return false;
+            foreach (var channel in with) if (Targets(talent, channel)) return false;
+            return true;
         }
 
         private bool RankEffectiveRegion(PreviewScope scope, HeroState hero, TalentDef talent, int rank, PreviewScope.RegionInfo region) =>

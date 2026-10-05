@@ -16,6 +16,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         private readonly Dictionary<DewPlayer, string> _acceptedMechanismContent = new Dictionary<DewPlayer, string>();
         private readonly HashSet<DewPlayer> _infinityAvailablePeers = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _protocolMismatches = new HashSet<DewPlayer>();
+        private readonly HashSet<DewPlayer> _infinityRejectedPeers = new HashSet<DewPlayer>();
 
         private bool MechanismHandshakeAccepted(DewPlayer caller) => caller != null
             && (caller == DewPlayer.local
@@ -45,6 +47,8 @@ namespace SodRpg.Mod
             _versionMismatches.Clear();
             _acceptedMechanismContent.Clear();
             _infinityAvailablePeers.Clear();
+            _protocolMismatches.Clear();
+            _infinityRejectedPeers.Clear();
             RebuildMismatchList();
         }
 
@@ -54,6 +58,10 @@ namespace SodRpg.Mod
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
                 bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+                if (msg.protocol == Protocol.Version) _protocolMismatches.Remove(caller);
+                else _protocolMismatches.Add(caller);
+                if (same && msg.infinityAvailable) _infinityRejectedPeers.Remove(caller);
+                else _infinityRejectedPeers.Add(caller);
                 if (same && msg.infinityAvailable) _infinityAvailablePeers.Add(caller);
                 else _infinityAvailablePeers.Remove(caller);
                 if (same)
@@ -73,6 +81,7 @@ namespace SodRpg.Mod
                     Log.Warn($"Host: version mismatch with {caller.playerName}: protocol {msg.protocol} vs {Protocol.Version}, mod {theirs} vs {ModVersion}, content {msg.content} vs {ContentFingerprint.Value}");
                 }
                 RebuildMismatchList();
+                CheckInfinityRunCompatibility();
                 _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeHelloMsg
                 {
                     protocol = Protocol.Version, modVer = ModVersion, content = ContentFingerprint.Value,

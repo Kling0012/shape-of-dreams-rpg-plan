@@ -1,0 +1,38 @@
+{
+  "husk": {
+    "revision": 2,
+    "source": "docs/specs/v2.4-husk-trio-starmap.md",
+    "stars": [
+      "husk.mem.wind-scar.c4.n1",
+      "husk.mem.wind-scar.c4.n2",
+      "husk.mem.laceration.c4.n1",
+      "husk.mem.laceration.c4.n2",
+      "husk.mem.annihilation.c4.n1",
+      "husk.bridge.b2.n2",
+      "husk.bridge.b3.e2",
+      "husk.bridge.b3.n1",
+      "husk.bridge.b3.e4",
+      "husk.bridge.b3.e5",
+      "husk.bridge.b3.e6",
+      "husk.bridge.b3.n2",
+      "husk.bridge.b3.choice",
+      "husk.bridge.b3.p2",
+      "husk.bridge.b3.p4",
+      "husk.bridge.b3.p5",
+      "husk.bridge.b5.e2",
+      "husk.bridge.b5.n1",
+      "husk.bridge.b5.e4",
+      "husk.bridge.b5.e5",
+      "husk.bridge.b5.e6",
+      "husk.bridge.b5.n2",
+      "husk.bridge.b5.choice",
+      "husk.bridge.b5.p2",
+      "husk.bridge.b5.p4",
+      "husk.bridge.b5.p5"
+    ],
+    "centers": [
+      "h.husk.ring.vessel",
+      "h.husk.ring.recall"
+    ]
+  }
+}
