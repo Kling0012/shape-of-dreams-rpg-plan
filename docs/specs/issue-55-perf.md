@@ -58,3 +58,78 @@
 - `DOTNET_ROLL_FORWARD=Major DOTNET=/usr/bin/dotnet python tools/test_changed.py`：
   選択107クラス、Failed 0 / Passed 90（.NET 8 ランタイムが無い環境のため ROLL_FORWARD 必要）。
 - 実機での長期遠征・ボス一斉撃破の再現確認は未実施。perf.flag / `dreamforge_perf` で Update/OnGUI/save avg を観測可。
+
+## #73：残存する確保と長期遠征（2026-10-05）
+
+- `HostAuthority.NativePowers.cs`：基本攻撃・ダメージ・属性付与の同期スコープを、
+  ネスト深度ごとの再利用バッファに変更。参加者ではスナップショットを作らない。
+  外側スコープは Harmony Finalizer で復元し、使い終えた Actor/Entity 参照を解放する。
+- ダメージ前のシールド全走査は、ホストの `ShieldbreakBurst` を持つ旅人へのダメージだけに限定。
+  `IReadOnlyList<BasicEffect>` は添字で走査し、インターフェース列挙子の確保を避ける。
+- 再利用されるスコープの参照を発動・召喚獣の致死判定の識別子に使わず、
+  ディスパッチごとに増えるシリアルを使用する。古いスコープと新しい攻撃を混同しない。
+- `HostAuthority.NewPowers.cs`：通常記憶の走査は値型列挙子で行う。
+  `HostAuthority.RunGrowth.cs`：持ち主の netId 文字列は HeroRuntime に保持し、netId が変わったときだけ再生成する。
+- `DreamforgeUi.cs`：確保地点の動的説明とキー付きボタンの文字列は、
+  数値・設定・言語が変わったときだけ再生成。契約一覧の `ToList()` を除去し、
+  選択による一覧変更時は描画ループを終了する。
+  名札用 Monster 参照は NetworkIdentity ごとにキャッシュし、不要・破棄済みエントリを掃除する。
+  差分同期では、未スポーン・関心領域外という理由だけでタグを期限切れにせず、ホストの明示的な除去を待つ。
+- 帰属・発動の装備スナップショットは EquipSkill/UnequipSkill で更新し、
+  ダメージごとの装備辞書・リスト再構築を廃止する。パケット・要求・味方障壁の作業バッファは
+  同期ネストごとに再利用し、刻印のペア識別子・遅延発動のクロージャを値メタデータへ変更する。
+- 帰属台帳は256シリアルごとに、4096シリアル前までの終了済み履歴を掃除する。
+  生存中の投射物・DoT、被害者の予算、遅延処理・発動中のネイティブ終端は保持する。
+  退役済みのパケットは再入場できないため、通知や予算の二重消費を防ぐ。
+  発動成功時の配当・有効ペイロード等の結果オブジェクトの確保は残り、戦闘全体が確保ゼロになる変更ではない。
+- ネットワークは Protocol 16、保存形式は5へ更新。既存形式の読込を維持し、
+  新形式を扱えない旧バイナリには読込を拒否させる。
+  撃破チェックポイントは未対応の事実・死亡とストリーム別の連番受信境界・順序逆転の例外を保存し、
+  新たな解決済み全履歴の複製を廃止する。ホスト再起動では新しいストリームを開始し、
+  未保存の連番の再利用・native netId の再利用が古い受信境界に誤一致しないようにする。
+  旧 GUID 履歴は分割再送時に連番へ移行し、報酬を再付与しない。
+  旧形式には参加者の受信記録がないため、移行前のホスト履歴は固定の互換データとして遠征終了まで保持する。
+  新しい撃破はその互換履歴へ追加しない。
+- ACK は `AsyncProfileWriter.WrittenRevision` で確認した保存済み境界だけを送る。
+  未受信事実がある間は ACK を先へ進めない。新しいストリームではホストと参加者の未確認事実のみ保存・再送し、
+  切断した参加者については切断前の未確認区間だけを保持する。
+  不在中の将来の撃破は、その参加者の再送台帳へ加えない。
+- 復帰時は不在区間を受信境界から除外し、保存済みの未解決死亡はストリームと netId 指定の要求で回復する。
+  撃破再送・未受信事実の回復・生存敵の途中参加同期は、合計32 RPC メッセージ/フレームまでに分割する。
+  定期の分類・行動合図は差分だけを送り、死亡・除去は明示的に同期する。
+  差分は値を合流した FIFO で保持し、除去・分類・行動合図をラウンドロビンで処理する。
+  更新の多い敵が後続の敵を飢餓状態にしないよう、同じ netId の更新でも待ち順は変えない。
+  実際に新しく発生した撃破の事実と最初のストリーム通知は即時送信し、
+  native 死亡の通知より前に分類を送る順序を維持する（再送の32件枠とは別）。
+- 接続直後の未知の参加者は最初のストリーム通知までの区間だけを保持し、
+  互換性を確認した Hello/受信通知の後だけ将来の参加区間を延長する。
+  MOD 非導入の味方が、将来の全撃破を保存に滞留させることはない。
+  権威未確定の死亡は観測セッションIDを保存し、復旧候補が一意な場合だけ過去のストリームへ結び付ける。
+  RPC 登録・権威通知より前の強制保存に、ホスト側のチェックポイント喪失または候補の曖昧さが重なると、
+  未解決死亡が残り進行を保留し得る。未知の分類を捏造して解消する処理は入れない。
+- 夢の圧の配当も `DeferKillSave()` にまとめ、同一フレームでの全文保存の連続を避ける。
+  未解決・未保存の例外、および実際の所持品等の成長は保存に残るため、プロフィール全体の固定サイズは保証しない。
+
+本体資料は Managed DLL と逆コンパイルソースのみで、ゲームの起動プログラムを含まない。
+この環境では実戦の `dreamforge_perf` 前後比較、実画面、ホスト・参加者の再接続の実機確認はできない。
+ビルド・既存テストの結果と、実機で未確認の受入条件は納品報告で区別する。
+
+### #73 の検証結果
+
+- 指定の Release ビルド：成功、警告5件、エラー0件。
+- 指定の `tools/test_changed.py --all`：終了コード1。テストプロジェクトのコンパイルエラー20件で停止し、
+  テスト本体は未実行（runner の Passed 0 / Failed 0 は成功を意味しない）。
+- テスト側のネイティブ API スタブは変更していない。リンクした本番ソースの新しいキャッシュ・値メタデータ・同期メンバーが
+  スタブに存在しないため、次の CS0103 / CS1061 が発生した。下表のファイルはすべて `src/SodRpg.Mod/` 配下。
+
+| ファイル | 行 | 不足メンバー |
+| --- | --- | --- |
+| `HostAuthority.PairCombos.cs` | 114 / 118 | `EnsureMemoryAttributionEquipment` / `PendingGimmick.Authored` |
+| `HostAuthority.Hello.cs` | 55 / 60 / 71 | `BindKillObservationSession` / `_killReplayPlayers` / `ClientSession` |
+| `HostAuthority.AuthoredMechanisms.cs` | 303 / 363 / 438 / 476 / 483 | `PendingGimmick.Authored` / `_attributionMemoryIds` / `PendingGimmick.Authored` / `PendingGimmick.Authored` / `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.NativeMemoryCasts.cs` | 34 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.AuthoredKeystones.cs` | 90 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.DirectedRecharge.cs` | 52 / 53 | `EnsureMemoryAttributionEquipment` / `_mechanismEquipment` |
+| `HostAuthority.MemoryPrimedRelay.cs` | 88 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.StunSourceFilter.cs` | 59 / 86 / 101 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.GimmicksV129.cs` | 90 / 91 | `BasicAttackContext.Serial` |

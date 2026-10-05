@@ -203,6 +203,7 @@ namespace SodRpg.Mod
     {
         private readonly Dictionary<(Actor Star, Actor Buff), MemoryActivationIdentity> _nativeBaptismEndings =
             new Dictionary<(Actor, Actor), MemoryActivationIdentity>();
+        private readonly List<(Actor, Actor)> _nativeEndingScratch = new List<(Actor, Actor)>();
 
         private void RegisterNativeEndingAdapters()
         {
@@ -226,7 +227,7 @@ namespace SodRpg.Mod
             var trigger = source.FindFirstAncestorOfType<SkillTrigger>();
             if (!(trigger is St_D_BeautifulThreat) || !(trigger.owner is Hero hero) || !Alive(hero)
                 || source.info.caster != hero || FindMemory(hero, nameof(St_D_BeautifulThreat)) != trigger) return null;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             return new NativeMemoryPayloadScope
             {
                 Source = source, Owner = hero, Adapter = "native.feather.dispatch", ChildType = typeof(Ai_D_BeautifulThreat_Feather),
@@ -246,8 +247,10 @@ namespace SodRpg.Mod
                 || !TryGetNativeTriggerActivation(effect, out var input) || input.OwnerId != hero.GetInstanceID()) return null;
             if (!NativeFeatherDelayedContract.Lifetimes.TryGetValue(source, out var lifetime) || !ReferenceEquals(lifetime.Host, this))
                 throw new InvalidOperationException("C02 Feather has no captured native creation lifetime.");
-            return new NativeFeatherTriggerCapture
+            var capture = new NativeFeatherTriggerCapture
                 { Source = source, Victim = effect.victim, Chain = effect.chain, Input = input, Lifetime = lifetime.Serial, Host = this, Admitted = true };
+            RetainDeferredAttribution(capture, input);
+            return capture;
         }
 
         internal NativeMemoryPayloadScope CaptureNativeBaptismDamage(Se_R_BaptismOfSun_Buff buff, EventInfoAttackEffect effect)
@@ -267,6 +270,7 @@ namespace SodRpg.Mod
             };
             NativeBaptismCoroutineContract.CaptureLifetimes.Add(capture,
                 new NativeBaptismCoroutineContract.Lifetime { Serial = lifetime.Serial, Host = this });
+            RetainDeferredAttribution(capture, original);
             return capture;
         }
 
@@ -306,10 +310,13 @@ namespace SodRpg.Mod
 
         private void ClearNativeEndingActor(Actor actor)
         {
-            var remove = new List<(Actor, Actor)>();
+            if (_nativeBaptismEndings.Count == 0) return;
+            var remove = _nativeEndingScratch;
+            remove.Clear();
             foreach (var entry in _nativeBaptismEndings)
                 if (ReferenceEquals(entry.Key.Star, actor) || ReferenceEquals(entry.Key.Buff, actor)) remove.Add(entry.Key);
             foreach (var key in remove) _nativeBaptismEndings.Remove(key);
+            remove.Clear();
         }
 
         private void ResetNativeEndingAdapters() => _nativeBaptismEndings.Clear();

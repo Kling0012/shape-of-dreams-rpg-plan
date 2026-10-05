@@ -16,6 +16,7 @@ namespace SodRpg.Mod
             internal Dictionary<string, MemoryPrimedDefinition> Preparations = new Dictionary<string, MemoryPrimedDefinition>(StringComparer.Ordinal);
             internal bool HasPreparations;
             internal long Generation;
+            internal long NativeEquipmentEpoch;
             internal MemoryPrimedRelayState(long owner) { Primed = new MemoryPrimedRuntime(owner); Relay = new RelayWindowRuntime(owner); }
         }
         private readonly Dictionary<Hero, MemoryPrimedRelayState> _memoryPrimedRelay = new Dictionary<Hero, MemoryPrimedRelayState>();
@@ -84,6 +85,8 @@ namespace SodRpg.Mod
 
         private void SynchronizeMemoryPrimedRelay(Hero hero, MemoryPrimedRelayState state)
         {
+            long nativeEpoch = EnsureMemoryAttributionEquipment(hero);
+            if (state.NativeEquipmentEpoch == nativeEpoch) return;
             var equipped = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
             var epochs = new Dictionary<string, long>(StringComparer.Ordinal);
             foreach (var slot in LinkSkills)
@@ -107,6 +110,7 @@ namespace SodRpg.Mod
             state.Equipment.Clear(); state.Epochs.Clear();
             foreach (var pair in equipped) state.Equipment.Add(pair.Key, pair.Value);
             foreach (var pair in epochs) state.Epochs.Add(pair.Key, pair.Value);
+            state.NativeEquipmentEpoch = nativeEpoch;
         }
 
         private static MemoryActivationEvent WithPreparationEpoch(MemoryActivationEvent value, MemoryPrimedRelayState state)
@@ -129,7 +133,10 @@ namespace SodRpg.Mod
             }
             if (!state.HasPreparations || notification.EventKind != MemoryEventKind.OwnedBasicAttackHit || nativeDamage <= 0
                 || victim == null || !_runtimes.TryGetValue(hero, out var rt)) return;
-            var candidates = new List<NextBasicBonusCandidate>();
+            var buffers = RentMechanismDispatchBuffers();
+            try
+            {
+            var candidates = buffers.NextBasics;
             float higher = Math.Max(hero.Status.attackDamage, hero.Status.abilityPower);
             rt.Powers.CollectNextBasicBonuses(Time.time, higher, candidates);
             if (!state.Primed.TryConsume(notification, Time.time, higher, candidates, out var selected)) return;
@@ -148,6 +155,8 @@ namespace SodRpg.Mod
                     selected.ChannelId, GimmickEffect.Primed), 0f).SetElemental(null).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim); }
                 finally { ExitGenerated(hero); }
             });
+            }
+            finally { ReturnMechanismDispatchBuffers(buffers); }
         }
 
         private void ApplyRelayWindowDamage(HeroRuntime rt, ref DamageData damage, Entity target)

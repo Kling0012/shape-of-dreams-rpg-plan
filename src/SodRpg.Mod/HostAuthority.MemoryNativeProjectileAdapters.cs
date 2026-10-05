@@ -154,7 +154,7 @@ namespace SodRpg.Mod
             if (source == null || AttributionGeneratedOrigin() != GeneratedOrigin.None) return null;
             var trigger = source.FindFirstAncestorOfType<SkillTrigger>();
             if (trigger == null || !(trigger.owner is Hero hero) || !Alive(hero) || FindMemory(hero, trigger.GetType().Name) != trigger) return null;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             string expected;
             switch (adapter)
             {
@@ -193,13 +193,15 @@ namespace SodRpg.Mod
             if (source == null || !(source.victim is Hero hero) || !Alive(hero) || AttributionGeneratedOrigin() != GeneratedOrigin.None
                 || !(fired.actor is At_Atk_LacertaRifle attack) || attack.owner != hero || fired.info.caster != hero
                 || fired.instance == null || !NativeDoubleTapCoroutineContract.Lifetimes.TryGetValue(source, out var lifetime)) return null;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             var trigger = source.FindFirstAncestorOfType<St_D_DoubleTap>();
             if (trigger == null || trigger.owner != hero || FindMemory(hero, nameof(St_D_DoubleTap)) != trigger
                 || !_memoryAttribution.TryGetInstance(fired.instance.GetInstanceID(), out var original)
                 || original.OwnerId != hero.GetInstanceID() || !_memoryAttribution.IsCurrent(original)) return null;
-            return new NativeDoubleTapCoroutineContract.PendingDoubleTap
+            var pending = new NativeDoubleTapCoroutineContract.PendingDoubleTap
             { Host = this, Source = source, Owner = hero, Skill = trigger, Lifetime = lifetime, OriginalAttack = original };
+            RetainDeferredAttribution(pending, original);
+            return pending;
         }
 
         internal void BindDoubleTapSecondary(AttackTrigger attack, EventInfoCast cast, NativeDoubleTapCoroutineContract.PendingDoubleTap pending)
@@ -213,7 +215,7 @@ namespace SodRpg.Mod
                 _memoryAttribution.EndInstanceLifetime(cast.instance.GetInstanceID());
                 return;
             }
-            RefreshMemoryAttributionEquipment(pending.Owner);
+            EnsureMemoryAttributionEquipment(pending.Owner);
             if (!_memoryAttribution.IsCurrent(pending.OriginalAttack) || FindMemory(pending.Owner, nameof(St_D_DoubleTap)) != pending.Skill)
             {
                 _memoryAttribution.EndInstanceLifetime(cast.instance.GetInstanceID());

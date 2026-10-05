@@ -52,10 +52,12 @@ namespace SodRpg.Mod
                 {
                     _versionMismatches.Remove(caller);
                     _acceptedMechanismContent[caller] = msg.content;
+                    BindKillObservationSession(caller, msg.killObservationSessionId);
                 }
                 else
                 {
                     _acceptedMechanismContent.Remove(caller);
+                    _killReplayPlayers.Remove(caller);
                     string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
                     _versionMismatches[caller] = Loc.T(
                         $"{caller.playerName} の Dreamforge の版が違います（ホスト {ModVersion} / 相手 {theirs}）。この人の装備の効果は反映されません。",
@@ -66,6 +68,7 @@ namespace SodRpg.Mod
                 _registeredOn?.CustomRpc_SendMessageToClient(caller, new DreamforgeHelloMsg
                 {
                     protocol = Protocol.Version, modVer = ModVersion, content = ContentFingerprint.Value,
+                    authorityGeneration = ClientSession.HostAuthorityGeneration,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }

@@ -80,14 +80,32 @@ namespace SodRpg.Core.Game
 
     public static class AlliedWard
     {
+        private static readonly Comparison<WardCandidate> RecipientOrder = CompareRecipients;
+        private static int CompareRecipients(WardCandidate a, WardCandidate b)
+        {
+            int health = ((double)a.Health / a.MaxHealth).CompareTo((double)b.Health / b.MaxHealth);
+            if (health != 0) return health;
+            int distance = a.DistanceSquared.CompareTo(b.DistanceSquared);
+            return distance != 0 ? distance : a.InstanceId.CompareTo(b.InstanceId);
+        }
         public static IReadOnlyList<WardAward> Select(AlliedWardDefinition definition, long ownerId, bool ownerAlive,
             float casterAttackDamage, float casterAbilityPower, IEnumerable<WardCandidate> candidates)
         {
-            if (definition == null || candidates == null) throw new ArgumentNullException(nameof(definition));
+            var awards = new List<WardAward>();
+            Select(definition, ownerId, ownerAlive, casterAttackDamage, casterAbilityPower, candidates,
+                awards, new List<WardCandidate>(), new HashSet<long>());
+            return awards.AsReadOnly();
+        }
+
+        /// <summary>Caller-owned scratch must be exclusive for the duration of selection.</summary>
+        public static void Select(AlliedWardDefinition definition, long ownerId, bool ownerAlive,
+            float casterAttackDamage, float casterAbilityPower, IEnumerable<WardCandidate> candidates,
+            List<WardAward> awards, List<WardCandidate> eligible, HashSet<long> ids)
+        {
+            if (definition == null || candidates == null || awards == null || eligible == null || ids == null) throw new ArgumentNullException(nameof(definition));
             if (ownerId == 0 || float.IsNaN(casterAttackDamage) || float.IsInfinity(casterAttackDamage)
                 || float.IsNaN(casterAbilityPower) || float.IsInfinity(casterAbilityPower)) throw new ArgumentException("Invalid ward caster.");
-            var eligible = new List<WardCandidate>();
-            var ids = new HashSet<long>();
+            awards.Clear(); eligible.Clear(); ids.Clear();
             foreach (var candidate in candidates)
             {
                 if (!ids.Add(candidate.InstanceId)) throw new ArgumentException("Duplicate ward candidate identity.");
@@ -98,14 +116,7 @@ namespace SodRpg.Core.Game
                     : candidate.IsSummon && candidate.SummonOwnerId == ownerId && candidate.IsAllied;
                 if (qualifies) eligible.Add(candidate);
             }
-            eligible.Sort((a, b) =>
-            {
-                int health = ((double)a.Health / a.MaxHealth).CompareTo((double)b.Health / b.MaxHealth);
-                if (health != 0) return health;
-                int distance = a.DistanceSquared.CompareTo(b.DistanceSquared);
-                return distance != 0 ? distance : a.InstanceId.CompareTo(b.InstanceId);
-            });
-            var awards = new List<WardAward>();
+            eligible.Sort(RecipientOrder);
             for (int i = 0; i < eligible.Count && i < definition.Targets; i++)
             {
                 var recipient = eligible[i];
@@ -113,7 +124,6 @@ namespace SodRpg.Core.Game
                     : Math.Max(0f, Math.Max(casterAttackDamage, casterAbilityPower));
                 awards.Add(new WardAward(recipient.InstanceId, basis * (float)(definition.ValueUnits / 10000m)));
             }
-            return awards.AsReadOnly();
         }
     }
 

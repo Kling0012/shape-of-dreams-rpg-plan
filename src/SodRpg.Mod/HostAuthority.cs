@@ -83,6 +83,8 @@ namespace SodRpg.Mod
             public readonly HashSet<int> CritBasicVictims = new HashSet<int>();
             public float GrowthSentAt;
             public int GrowthSentVersion = -1;
+            public uint GrowthOwnerNetId;
+            public string GrowthOwnerKey;
         }
 
         private struct PendingGimmick
@@ -93,8 +95,7 @@ namespace SodRpg.Mod
             public PairComboDef Pair;
             public float Due;
             public Vector3 Center;
-            public Func<bool> AuthoredIsCurrent;
-            public Func<GimmickDef> AuthoredDefinition;
+            public AuthoredPendingGimmick Authored;
             public string AuthoredChannelId;
             public float QueuedAt;
         }
@@ -113,6 +114,12 @@ namespace SodRpg.Mod
             public DataProcessor<DamageData, Actor, Entity> HitCap;
             public bool DeathBurstTriggered;
             public string KillEventId;
+            public string KillEventStreamId;
+            public uint KillEventNetId;
+            public uint SyncNetId;
+            public bool ClassificationQueued;
+            public NightmareAffix ClassificationNightmare;
+            public string ClassificationVariant;
             public Se_GenericShield_OneShot Ward;
             public Action<EventInfoDamage> OnDamageDealt;
             public bool Reflects;
@@ -223,7 +230,11 @@ namespace SodRpg.Mod
             _dailyIdOfHost = dailyIdOfHost;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
-            _onPressurePlayerAdded = player => _pressureDirty = true;
+            _onPressurePlayerAdded = player =>
+            {
+                _pressureDirty = true;
+                if (player != null) RegisterKillPeer(player);
+            };
             _onPressurePlayerRemoved = player =>
             {
                 if (!ReferenceEquals(player, null))
@@ -231,6 +242,7 @@ namespace SodRpg.Mod
                     _builds.Remove(player);
                     _incomingBuilds.Remove(player);
                     RemoveBuildValidationPeer(player);
+                    _killReplayPlayers.Remove(player);
                 }
                 _pressureDirty = true;
             };
@@ -289,16 +301,16 @@ namespace SodRpg.Mod
             {
                 "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
                 "gem slots", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
-                "identity strikes", "gimmicks v129", "sap prune", "runtime", "run growth", "currency",
-                "shield pools", "spawns", "monster prune", "monster behaviors", "sunders",
+                "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
+                "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
             };
             _tickStages = new Action[]
             {
                 UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
                 TickGemSlots, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
-                UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, StageRuntimes, StageRunGrowth, StageCurrency,
-                StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, StageSunders,
+                UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
+                StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
@@ -551,6 +563,7 @@ namespace SodRpg.Mod
             if (_monsters.TryGetValue(m, out var rt))
             {
                 _monsters.Remove(m);
+                SendMonsterRemoval(rt);
                 Unhook(rt);
             }
             _nightmares.Remove(m);
@@ -571,7 +584,7 @@ namespace SodRpg.Mod
 
         private void UnhookMonsters()
         {
-            foreach (var rt in _monsters.Values) Unhook(rt);
+            foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
             _pressureDividendSpawns.Clear();
             foreach (var entity in _pairEntities)
@@ -922,10 +935,7 @@ namespace SodRpg.Mod
             _nightmares[m] = affix;
             ApplyMonsterAffixes(rt, affix, regen);
             Log.Info($"Nightmare: {m.GetType().Name} netId={m.netId} affixes={affix}");
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeNightmareMsg
-            {
-                netId = m.netId, affixes = (int)affix, authorityGeneration = ClientSession.HostAuthorityGeneration,
-            });
+            SendMonsterClassification(rt);
         }
 
         private void MakeVariant(MonsterRuntime rt, VariantDef variant)
@@ -957,10 +967,7 @@ namespace SodRpg.Mod
                 _loggedVariantSpawn = true;
                 Log.Info($"variant spawned: {variant.Id} {m.GetType().Name} netId={m.netId}");
             }
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeVariantMsg
-            {
-                netId = m.netId, variantId = variant.Id, authorityGeneration = ClientSession.HostAuthorityGeneration,
-            });
+            SendMonsterClassification(rt);
         }
 
         private void ApplyMonsterAffixes(MonsterRuntime rt, NightmareAffix affix, float regen)
@@ -1031,6 +1038,7 @@ namespace SodRpg.Mod
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                     try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                    try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
                 }
                 foreach (var rt in _runtimes.Values) { RemoveBonuses(rt); Unhook(rt); }
                 _runtimes.Clear();
@@ -1040,9 +1048,7 @@ namespace SodRpg.Mod
                 ClearBuildValidationPeers();
                 _pressurePlayerCount = -1;
                 _pressureDirty = true;
-                _killReplayPlayers.Clear();
-                _killFactPublishedAt.Clear();
-                _lastKillReplayAt = 0f;
+                ResetKillReplayConnections();
                 _registeredOn = actor;
                 if (actor != null)
                 {
@@ -1053,6 +1059,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeCurseClearMsg>(nameof(DreamforgeCurseClearMsg), _onCurseClear);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
+                    actor.CustomRpc_RegisterServerMessageHandler<DreamforgeKillReceiptMsg>(nameof(DreamforgeKillReceiptMsg), OnKillReceipt);
                     RegisterHello(actor);
                     Log.Info("Host: registered build handler.");
                 }
@@ -1069,6 +1076,7 @@ namespace SodRpg.Mod
                 }
                 UnhookShrines();
                 UnhookMonsters();
+                ClearQueuedMonsterSync();
                 ClearSunders();
                 ClearNativeDeathHooks();
                 _am = am;
@@ -1165,7 +1173,9 @@ namespace SodRpg.Mod
             ReleasePactCurses();
             Unsubscribe();
             UnhookShrines();
+            ClearRemoteMonsterState();
             UnhookMonsters();
+            ResetKillReplayConnections(true);
             ClearSunders();
             if (_zone != null)
             {
@@ -1200,6 +1210,7 @@ namespace SodRpg.Mod
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeCurseClearMsg>(_onCurseClear); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeTradeMsg>(_onTrade); } catch (Exception) { }
                 try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(_onPersonalDreamEvent); } catch (Exception) { }
+                try { _registeredOn.CustomRpc_UnregisterServerMessageHandler<DreamforgeKillReceiptMsg>(OnKillReceipt); } catch (Exception) { }
                 UnregisterHello(_registeredOn);
                 _registeredOn = null;
             }

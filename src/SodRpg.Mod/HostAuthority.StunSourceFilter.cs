@@ -56,7 +56,7 @@ namespace SodRpg.Mod
             if (hero.GetType().Name != "Hero_Cetus")
                 throw new InvalidOperationException("C08 is scoped to the Cetus Calm key.");
             if (applyOrdinaryPool == null) throw new ArgumentNullException(nameof(applyOrdinaryPool));
-            long epoch = RefreshMemoryAttributionEquipment(hero);
+            long epoch = EnsureMemoryAttributionEquipment(hero);
             if (!_calmBindings.TryGetValue(hero, out var binding))
                 _calmBindings.Add(hero, binding = new CalmBinding { Filter = new StunSourceFilter(hero.GetInstanceID()) });
             binding.ApplyOrdinaryPool = applyOrdinaryPool;
@@ -83,7 +83,7 @@ namespace SodRpg.Mod
             if (!_memoryAttribution.CanAdmit(identity, effect.parent.gem != null,
                 effect.parent is ElementalStatusEffect, !effect.parent.chain.Equals(default(ReactionChain)))
                 || !ExactNativeChainMatches(source, effect.parent.chain)) return null;
-            long epoch = RefreshMemoryAttributionEquipment(hero);
+            long epoch = EnsureMemoryAttributionEquipment(hero);
             if (identity.EquipmentEpoch != epoch) return null;
             var q = CalmMemoryAt(hero, HeroSkillLocation.Q);
             var r = CalmMemoryAt(hero, HeroSkillLocation.R);
@@ -98,7 +98,7 @@ namespace SodRpg.Mod
         {
             var hero = capture.Hero;
             if (hero == null || !Alive(hero) || !_calmBindings.TryGetValue(hero, out var binding)) return;
-            if (RefreshMemoryAttributionEquipment(hero) != capture.Identity.EquipmentEpoch) return;
+            if (EnsureMemoryAttributionEquipment(hero) != capture.Identity.EquipmentEpoch) return;
             bool succeeded = effect != null && effect.isAlive && effect.parent != null && effect.parent.isActive
                 && effect.victim != null && effect.victim.isActive && effect.victim.Status.hasStun
                 && !effect.victim.Status.hasCrowdControlImmunity;

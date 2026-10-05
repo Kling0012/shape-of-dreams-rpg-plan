@@ -47,6 +47,8 @@ namespace SodRpg.Mod
     {
         internal sealed class Dispatch { internal bool Claimed; internal bool Main; internal Entity Owner; }
         internal static Dispatch Current;
+        private static readonly List<Dispatch> Scopes = new List<Dispatch>();
+        private static int _depth;
         private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var native = AccessTools.Method(typeof(Actor), nameof(Actor.DealDamage), new[] { typeof(DamageData), typeof(Entity), typeof(ReactionChain) });
@@ -65,10 +67,14 @@ namespace SodRpg.Mod
         {
             var previous = Current;
             var basic = BasicAttackContext.Current;
-            Current = new Dispatch { Main = basic != null && basic.Actor == actor && basic.Primary,
-                Owner = basic != null ? basic.From : null };
+            if (_depth == Scopes.Count) Scopes.Add(new Dispatch());
+            var scope = Scopes[_depth++];
+            scope.Claimed = false;
+            scope.Main = basic != null && basic.Actor == actor && basic.Primary;
+            scope.Owner = basic != null ? basic.From : null;
+            Current = scope;
             try { actor.DealDamage(damage, target, chain); }
-            finally { Current = previous; }
+            finally { Current = previous; scope.Owner = null; _depth--; }
         }
     }
 
@@ -86,9 +92,18 @@ namespace SodRpg.Mod
             internal float DamageAmount;
         }
         internal static Packet Current;
-        private static void Prefix(Actor __instance, Entity target, ReactionChain chain, out Packet __state)
+        private static readonly List<Packet> Packets = new List<Packet>();
+        private static int _depth;
+        private struct Scope
         {
-            __state = Current;
+            internal Packet Previous, Rented;
+            internal bool Started;
+        }
+        private static void Prefix(Actor __instance, Entity target, ReactionChain chain, out Scope __state)
+        {
+            __state = new Scope { Previous = Current, Started = true };
+            Current = null;
+            if (!NetworkServer.active || HostAuthority.NativeInstance == null) return;
             bool main = false;
             long basicOwner = 0;
             var basic = NativeAttributedBasicPacket.Current;
@@ -98,10 +113,26 @@ namespace SodRpg.Mod
                 main = basic.Main && basic.Owner is Hero;
                 if (main) basicOwner = basic.Owner.GetInstanceID();
             }
-            Current = NetworkServer.active
-                ? HostAuthority.NativeInstance?.BeginAttributedDamagePacket(__instance, target, chain, main, basicOwner) : null;
+            if (_depth == Packets.Count) Packets.Add(new Packet());
+            var packet = Packets[_depth++];
+            __state.Rented = packet;
+            packet.Actor = null; packet.Victim = null; packet.Identity = default;
+            packet.Chain = default; packet.Serial = 0; packet.Admitted = false; packet.MainBasic = false; packet.DamageAmount = 0;
+            Current = null;
+            HostAuthority.NativeInstance.BeginAttributedDamagePacket(packet, __instance, target, chain, main, basicOwner);
+            Current = packet;
         }
-        private static void Finalizer(Packet __state) { Current = __state; }
+        private static void Finalizer(Scope __state)
+        {
+            if (!__state.Started) return;
+            var packet = __state.Rented;
+            if (packet != null)
+            {
+                packet.Actor = null; packet.Victim = null; packet.Chain = default; packet.Identity = default;
+                _depth--;
+            }
+            Current = __state.Previous;
+        }
     }
 
     [HarmonyPatch(typeof(Actor), nameof(Actor.InvokeOnDealDamage))]
@@ -152,6 +183,14 @@ namespace SodRpg.Mod
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment =
             new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
         private readonly Dictionary<Entity, long> _attributionVictimLifetimes = new Dictionary<Entity, long>();
+        private readonly Dictionary<Hero, MechanismEquipment> _mechanismEquipment = new Dictionary<Hero, MechanismEquipment>();
+        private readonly Dictionary<Hero, HashSet<string>> _attributionMemoryIds = new Dictionary<Hero, HashSet<string>>();
+        private readonly List<(WeakReference Capture, MemoryActivationIdentity Identity)> _deferredAttribution =
+            new List<(WeakReference, MemoryActivationIdentity)>();
+        private readonly HashSet<long> _deferredActivationScratch = new HashSet<long>();
+        private readonly HashSet<long> _liveVictimScratch = new HashSet<long>();
+        private readonly List<long> _attributionSerialScratch = new List<long>();
+        private long _lastAttributionPrune;
         private bool _attributionAdaptersRegistered;
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
@@ -166,27 +205,87 @@ namespace SodRpg.Mod
                 RegisterExactNativeMemoryAdapters();
                 _attributionAdaptersRegistered = true;
             }
-            var equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
+            bool changed = !_attributionEquipment.TryGetValue(hero, out var equipment);
+            int count = 0;
+            foreach (var location in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(location);
+                if (skill == null) continue;
+                count++;
+                if (!changed && (!equipment.TryGetValue(location, out var previous) || previous != skill)) changed = true;
+            }
+            changed |= equipment != null && equipment.Count != count;
+            if (!changed) return _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
             var memories = new List<string>();
+            var mechanisms = new List<EquippedMechanismMemory>();
             foreach (var location in LinkSkills)
             {
                 var skill = hero.Skill.GetSkill(location);
                 if (skill == null) continue;
                 equipment.Add(location, skill);
-                memories.Add(skill.GetType().Name);
+                string memory = skill.GetType().Name;
+                memories.Add(memory);
+                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
+                    skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
             }
-            bool changed = !_attributionEquipment.TryGetValue(hero, out var previous) || previous.Count != equipment.Count;
-            if (!changed)
-                foreach (var pair in equipment)
-                    if (!previous.TryGetValue(pair.Key, out var old) || old != pair.Value) { changed = true; break; }
-            if (changed)
-            {
-                _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
-                _attributionEquipment[hero] = equipment;
-            }
+            _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
             long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
-            if (changed) MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
+            _attributionEquipment[hero] = equipment;
+            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
+            _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
+            MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
             return epoch;
+        }
+
+        private long EnsureMemoryAttributionEquipment(Hero hero)
+        {
+            long epoch = _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            return epoch != 0 ? epoch : RefreshMemoryAttributionEquipment(hero);
+        }
+
+        private void RetainDeferredAttribution(object capture, MemoryActivationIdentity identity)
+            => _deferredAttribution.Add((new WeakReference(capture), identity));
+
+        private void PruneMemoryAttribution()
+        {
+            if (_memoryAttribution.Serial - _lastAttributionPrune < 256) return;
+            _lastAttributionPrune = _memoryAttribution.Serial;
+            _deferredActivationScratch.Clear();
+            for (int i = _deferredAttribution.Count - 1; i >= 0; i--)
+            {
+                var capture = _deferredAttribution[i];
+                if (!capture.Capture.IsAlive || !_memoryAttribution.IsCurrent(capture.Identity)) _deferredAttribution.RemoveAt(i);
+                else _deferredActivationScratch.Add(capture.Identity.ActivationId);
+            }
+            foreach (var ending in _nativeBaptismEndings.Values) _deferredActivationScratch.Add(ending.ActivationId);
+            if (NativeAttributedMemoryCast.Current != null) _deferredActivationScratch.Add(NativeAttributedMemoryCast.Current.Identity.ActivationId);
+            if (NativeAttributedDamagePacket.Current != null) _deferredActivationScratch.Add(NativeAttributedDamagePacket.Current.Identity.ActivationId);
+            foreach (var runtime in _runtimes.Values)
+                foreach (var pending in runtime.PendingGimmicks)
+                    if (pending.Authored.Enabled && pending.Authored.Legacy == null)
+                        _deferredActivationScratch.Add(pending.Authored.Notification.ActivationId);
+            _liveVictimScratch.Clear();
+            foreach (var victim in _attributionVictimLifetimes)
+                if (victim.Key != null && victim.Key.isActive && victim.Key.currentHealth > 0) _liveVictimScratch.Add(victim.Value);
+            _memoryAttribution.PruneLedgers(_deferredActivationScratch, _liveVictimScratch);
+            foreach (var owner in _authoredMechanisms.Values)
+                foreach (var channel in owner.Channels.Values)
+                {
+                    _attributionSerialScratch.Clear();
+                    foreach (long activation in channel.Counted)
+                        if (!_memoryAttribution.IsActivationRetained(activation)) _attributionSerialScratch.Add(activation);
+                    foreach (long activation in _attributionSerialScratch) channel.Counted.Remove(activation);
+                }
+            foreach (var owner in _gimmickV129)
+            {
+                owner.Key.Gimmicks.PruneAttribution(_memoryAttribution);
+                owner.Key.PairCombos.PruneAttributedActivations(_memoryAttribution);
+            }
+            foreach (var runtime in _directedRecharges.Values) runtime.PruneAttribution(_memoryAttribution);
+            foreach (var state in _bridgeSuccessEffects.Values) state.Runtime.PruneSuccessAttribution(_memoryAttribution);
+            foreach (var state in _memoryPrimedRelay.Values)
+            { state.Primed.PruneAttribution(_memoryAttribution); state.Relay.PruneAttribution(_memoryAttribution); }
         }
 
 
@@ -212,7 +311,7 @@ namespace SodRpg.Mod
             }
             if (instance == null || !(attack.owner is Hero hero) || info.caster != hero || !Alive(hero)
                 || AttributionGeneratedOrigin() != GeneratedOrigin.None) return;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             var identity = _memoryAttribution.BeginActivation(hero.GetInstanceID(), null, NativePayloadKind.MainBasicAttack);
             _memoryAttribution.BindInstance(instance.GetInstanceID(), identity);
             BindExactNativeBasicSource(attack, instance, hero, identity);
@@ -228,7 +327,7 @@ namespace SodRpg.Mod
                 if (hero.Skill.GetSkill(location) == trigger && location == HeroSkillLocation.Movement) return;
             for (var current = (Actor)summon; current != null; current = current.parentActor)
                 if (current is Gem || current is ElementalStatusEffect || current is AbilityInstance ability && ability.gem != null) return;
-            RefreshMemoryAttributionEquipment(hero);
+            EnsureMemoryAttributionEquipment(hero);
             _memoryAttribution.BindInstance(instance.GetInstanceID(),
                 _memoryAttribution.BeginActivation(hero.GetInstanceID(), trigger.GetType().Name, NativePayloadKind.SummonAttack));
         }
@@ -240,10 +339,12 @@ namespace SodRpg.Mod
             bool found = false;
             string authoritativeMemory = null;
             Hero owner = null;
-            var visited = new HashSet<Actor>();
+            Actor slow = actor, fast = actor;
             for (var current = actor; current != null; current = current.parentActor)
             {
-                if (!visited.Add(current)) throw new InvalidOperationException("Native actor ancestry contains a cycle.");
+                slow = slow != null ? slow.parentActor : null;
+                fast = fast != null && fast.parentActor != null ? fast.parentActor.parentActor : null;
+                if (slow != null && slow == fast) throw new InvalidOperationException("Native actor ancestry contains a cycle.");
                 if (current is Gem || current is ElementalStatusEffect
                     || current is AbilityInstance ability && ability.gem != null) return false;
                 bool tagged = _memoryAttribution.TryGetInstance(current.GetInstanceID(), out var tag);
@@ -259,7 +360,7 @@ namespace SodRpg.Mod
             }
             if (found && owner == null) owner = AttributedOwner(identity.OwnerId);
             if (!found || owner == null || !Alive(owner) || owner.GetInstanceID() != identity.OwnerId) return false;
-            RefreshMemoryAttributionEquipment(owner);
+            EnsureMemoryAttributionEquipment(owner);
             if (!_memoryAttribution.IsCurrent(identity)) return false;
             // The actual SkillTrigger parent is authoritative; never replace it using an Ai type-name guess.
             return identity.SourceMemory.Length == 0 && identity.NativePayloadKind == NativePayloadKind.MainBasicAttack
@@ -309,10 +410,10 @@ namespace SodRpg.Mod
             return TryGetMemoryActivation(actor, out var identity) ? identity.ActivationId : 0;
         }
 
-        internal NativeAttributedDamagePacket.Packet BeginAttributedDamagePacket(Actor actor, Entity target, ReactionChain chain, bool main, long basicOwner)
+        internal void BeginAttributedDamagePacket(NativeAttributedDamagePacket.Packet packet, Actor actor, Entity target, ReactionChain chain, bool main, long basicOwner)
         {
-            var packet = new NativeAttributedDamagePacket.Packet { Actor = actor, Victim = target,
-                Serial = _memoryAttribution.NewPacketId(), Chain = chain };
+            packet.Actor = actor; packet.Victim = target;
+            packet.Serial = _memoryAttribution.NewPacketId(); packet.Chain = chain;
             var direct = NativeMemoryPayloadScope.Current;
             if (!main && direct != null && direct.Source == actor && direct.ChildType == null)
                 packet.Admitted = TryGetExactNativeDirectPayload(actor, target, chain, out packet.Identity);
@@ -326,7 +427,6 @@ namespace SodRpg.Mod
                 && owner.Skill.GetSkill(HeroSkillLocation.Identity) is St_D_TheKillingFlow source
                 && source.owner == owner)
                 packet.Identity = _memoryAttribution.ProjectOwnedBasicSource(packet.Identity, "native.killing-flow.main");
-            return packet;
         }
 
         private bool TryGetNativeTriggerActivation(EventInfoAttackEffect input, out MemoryActivationIdentity identity)
@@ -400,12 +500,16 @@ namespace SodRpg.Mod
             {
                 _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
                 _attributionEquipment.Remove(hero);
+                _mechanismEquipment.Remove(hero);
+                _attributionMemoryIds.Remove(hero);
             }
         }
 
         private void ResetMemoryAttribution()
         {
-            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _attributionVictimLifetimes.Clear(); _attributedNativeChains.Clear();
+            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _mechanismEquipment.Clear();
+            _attributionMemoryIds.Clear();
+            _attributionVictimLifetimes.Clear(); _attributedNativeChains.Clear(); _deferredAttribution.Clear();
             ResetNativeEndingAdapters();
         }
     }

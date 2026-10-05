@@ -44,7 +44,7 @@ namespace SodRpg.Core.Game
         }
         public EquippedMechanismMemory Find(string memory)
         {
-            foreach (var item in Memories) if (item.Memory == memory) return item;
+            for (int i = 0; i < Memories.Count; i++) if (Memories[i].Memory == memory) return Memories[i];
             return null;
         }
         public bool Admits(MemoryActivationEvent notification)
@@ -240,20 +240,20 @@ namespace SodRpg.Core.Game
         public long RecipientInstanceId { get; }
         public decimal ValueUnits { get; }
         public bool RequiresOwnedSummon { get; }
-        private readonly Func<MechanismEquipment, bool> _originIsCurrent;
+        private readonly BridgeSuccessTransaction _origin;
         internal DirectedRechargeRequest(string channel, MemoryActivationEvent notification, EquippedMechanismMemory source, EquippedMechanismMemory recipient,
-            decimal units, Func<MechanismEquipment, bool> originIsCurrent = null)
+            decimal units, BridgeSuccessTransaction origin = null)
         {
             ChannelId = channel; OwnerId = notification.OwnerId; EquipmentEpoch = notification.EquipmentEpoch;
             SourceMemory = source.Memory; SourceInstanceId = source.InstanceId; RecipientMemory = recipient.Memory; RecipientInstanceId = recipient.InstanceId; ValueUnits = units;
             RequiresOwnedSummon = notification.EventKind == MemoryEventKind.OwnedBasicAttackFired && notification.NativePayloadKind == NativePayloadKind.MainBasicAttack;
-            _originIsCurrent = originIsCurrent;
+            _origin = origin;
         }
         public bool IsCurrent(MechanismEquipment equipment)
         {
             return equipment != null && equipment.OwnerId == OwnerId && equipment.EquipmentEpoch == EquipmentEpoch
                 && equipment.Find(SourceMemory)?.InstanceId == SourceInstanceId && equipment.Find(RecipientMemory)?.InstanceId == RecipientInstanceId
-                && (_originIsCurrent == null || _originIsCurrent(equipment));
+                && (_origin == null || _origin.IsCurrent(equipment));
         }
         public float NativeRatio(float currentRemaining, float currentMaximum)
         {
@@ -269,11 +269,32 @@ namespace SodRpg.Core.Game
             public DirectedRechargeChannel Channel;
             public int Count;
             public long PreviousVictim;
-            public readonly HashSet<string> Notifications = new HashSet<string>(StringComparer.Ordinal);
-            public readonly HashSet<string> TargetObservations = new HashSet<string>(StringComparer.Ordinal);
+            public readonly HashSet<(long Activation, long Victim)> Notifications = new HashSet<(long, long)>();
+            public readonly HashSet<(long Activation, long Packet, long Victim)> TargetObservations = new HashSet<(long, long, long)>();
         }
         private List<State> _states = new List<State>();
         private long _owner, _epoch;
+        private readonly List<(long Activation, long Victim)> _notificationScratch = new List<(long, long)>();
+        private readonly List<(long Activation, long Packet, long Victim)> _observationScratch = new List<(long, long, long)>();
+        private MemoryActivationAttribution _attribution;
+        public void PruneAttribution(MemoryActivationAttribution attribution)
+        {
+            _attribution = attribution;
+            foreach (var state in _states)
+            {
+                _notificationScratch.Clear();
+                foreach (var key in state.Notifications)
+                    if (state.Channel.Budget == AttributionBudget.PerKill ? !attribution.IsVictimRetained(key.Activation)
+                        : !attribution.IsActivationRetained(key.Activation) || key.Victim != 0 && !attribution.IsVictimRetained(key.Victim))
+                        _notificationScratch.Add(key);
+                foreach (var key in _notificationScratch) state.Notifications.Remove(key);
+                _observationScratch.Clear();
+                foreach (var key in state.TargetObservations)
+                    if (key.Packet > 0 ? key.Packet <= attribution.RetiredSerial : !attribution.IsActivationRetained(key.Activation))
+                        _observationScratch.Add(key);
+                foreach (var key in _observationScratch) state.TargetObservations.Remove(key);
+            }
+        }
         public void SetChannels(IEnumerable<DirectedRechargeChannel> channels)
         {
             if (channels == null) throw new ArgumentNullException(nameof(channels));
@@ -294,40 +315,47 @@ namespace SodRpg.Core.Game
         public void Notify(MemoryActivationEvent notification, MechanismEquipment equipment, RechargeConditionContext context,
             Func<double> roll, List<DirectedRechargeRequest> results, Func<DirectedRechargeChannel, bool> filter = null,
             bool triggerAlreadyAdmitted = false, Func<DirectedRechargeChannel, int> cadence = null,
-            Func<DirectedRechargeChannel, decimal> probabilityUnits = null)
+            Func<DirectedRechargeChannel, decimal> probabilityUnits = null, string channelId = null,
+            int? everyNOverride = null, decimal? probabilityOverride = null)
         {
             if (equipment == null || results == null || roll == null) throw new ArgumentNullException();
             if (_owner != equipment.OwnerId || _epoch != equipment.EquipmentEpoch)
             { ClearTransient(); _owner = equipment.OwnerId; _epoch = equipment.EquipmentEpoch; }
-            if (!equipment.Admits(notification)) return;
+            if (!equipment.Admits(notification) || _attribution != null && !_attribution.IsNotificationCurrent(notification)) return;
             var source = equipment.ResolveEventSource(notification, context.HasOwnedSummon);
             if (source == null) return;
             foreach (var state in _states)
             {
                 var channel = state.Channel;
-                if (filter != null && !filter(channel)) continue;
+                if (channelId != null && channel.ChannelId != channelId || filter != null && !filter(channel)) continue;
                 if (!triggerAlreadyAdmitted && channel.SourceTrigger != notification.EventKind || !channel.Source.Matches(source)) continue;
                 if (channel.Condition == RechargeConditionKind.ChangedTarget
-                    && !state.TargetObservations.Add(notification.ActivationId + ":" + notification.DamagePacketId + ":" + notification.VictimId)) continue;
+                    && !state.TargetObservations.Add((notification.ActivationId, notification.DamagePacketId, notification.VictimId))) continue;
                 bool condition = channel.Condition == RechargeConditionKind.Always
                     || channel.Condition == RechargeConditionKind.Shielded && context.Shielded
                     || channel.Condition == RechargeConditionKind.ElementTypesAtLeast && context.ElementTypeCount >= channel.RequiredElementTypes
                     || channel.Condition == RechargeConditionKind.ChangedTarget && notification.VictimId != 0 && state.PreviousVictim != 0 && notification.VictimId != state.PreviousVictim;
                 if (channel.Condition == RechargeConditionKind.ChangedTarget && notification.VictimId != 0) state.PreviousVictim = notification.VictimId;
                 if (!condition) continue;
-                var recipients = new List<EquippedMechanismMemory>();
-                foreach (var candidate in equipment.Memories) if (channel.Recipient.Matches(candidate, source.Memory)) recipients.Add(candidate);
-                if (recipients.Count == 0) continue;
-                string key = MechanismAdmission.Key(channel.Budget, notification);
-                if (key == null || state.Notifications.Contains(key)) continue;
+                bool hasRecipient = false;
+                for (int i = 0; i < equipment.Memories.Count; i++)
+                    if (channel.Recipient.Matches(equipment.Memories[i], source.Memory)) { hasRecipient = true; break; }
+                if (!hasRecipient) continue;
+                var key = MechanismAdmission.Key(channel.Budget, notification);
+                if (!key.HasValue || state.Notifications.Contains(key.Value)) continue;
                 double chance = roll();
                 if (double.IsNaN(chance) || chance < 0 || chance >= 1) throw new ArgumentOutOfRangeException(nameof(roll));
-                state.Notifications.Add(key);
+                state.Notifications.Add(key.Value);
                 state.Count++;
-                if (state.Count < (cadence != null ? cadence(channel) : channel.EveryN)) continue;
+                if (state.Count < (everyNOverride ?? (cadence != null ? cadence(channel) : channel.EveryN))) continue;
                 state.Count = 0;
-                if ((decimal)chance * 10000m >= (probabilityUnits != null ? probabilityUnits(channel) : channel.ProbabilityUnits)) continue;
-                foreach (var recipient in recipients) results.Add(new DirectedRechargeRequest(channel.ChannelId, notification, source, recipient, channel.EffectiveValueUnits));
+                if ((decimal)chance * 10000m >= (probabilityOverride ?? (probabilityUnits != null ? probabilityUnits(channel) : channel.ProbabilityUnits))) continue;
+                for (int i = 0; i < equipment.Memories.Count; i++)
+                {
+                    var recipient = equipment.Memories[i];
+                    if (channel.Recipient.Matches(recipient, source.Memory))
+                        results.Add(new DirectedRechargeRequest(channel.ChannelId, notification, source, recipient, channel.EffectiveValueUnits));
+                }
             }
         }
     }
@@ -344,16 +372,16 @@ namespace SodRpg.Core.Game
                     && trigger != MemoryEventKind.OwnedBasicAttackFired && trigger != MemoryEventKind.OwnedBasicAttackHit)
                 throw new ArgumentException("The attribution budget cannot admit the selected trigger.");
         }
-        internal static string Key(AttributionBudget budget, MemoryActivationEvent notification)
+        internal static (long Activation, long Victim)? Key(AttributionBudget budget, MemoryActivationEvent notification)
         {
             switch (budget)
             {
-                case AttributionBudget.PerActivation: return notification.ActivationId.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                case AttributionBudget.PerActivationVictim: return notification.VictimId == 0 ? null : notification.ActivationId + ":" + notification.VictimId;
-                case AttributionBudget.PerKill: return notification.EventKind == MemoryEventKind.Kill && notification.VictimId != 0 ? notification.VictimId.ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+                case AttributionBudget.PerActivation: return (notification.ActivationId, 0);
+                case AttributionBudget.PerActivationVictim: return notification.VictimId == 0 ? ((long, long)?)null : (notification.ActivationId, notification.VictimId);
+                case AttributionBudget.PerKill: return notification.EventKind == MemoryEventKind.Kill && notification.VictimId != 0 ? (notification.VictimId, 0) : ((long, long)?)null;
                 case AttributionBudget.PerOwnedBasicAttack: return notification.NativePayloadKind == NativePayloadKind.MainBasicAttack
                     && (notification.EventKind == MemoryEventKind.OwnedBasicAttackFired || notification.EventKind == MemoryEventKind.OwnedBasicAttackHit)
-                    ? notification.ActivationId.ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+                    ? (notification.ActivationId, 0) : ((long, long)?)null;
                 default: throw new ArgumentOutOfRangeException(nameof(budget));
             }
         }

@@ -38,6 +38,8 @@ namespace SodRpg.Mod
         public int protocol;
         public string modVer;
         public string content;
+        public string killObservationSessionId;
+        public ulong authorityGeneration;
     }
 
     public class DreamforgeAppliedMsg
@@ -106,8 +108,10 @@ namespace SodRpg.Mod
     [Serializable]
     public class DreamforgeNightmareMsg
     {
+        public int protocol;
         public uint netId;
         public int affixes;
+        public bool removed;
         public ulong authorityGeneration;
     }
 
@@ -115,6 +119,7 @@ namespace SodRpg.Mod
     [Serializable]
     public class DreamforgeVariantMsg
     {
+        public int protocol;
         public uint netId;
         public string variantId;
         public ulong authorityGeneration;
@@ -124,6 +129,7 @@ namespace SodRpg.Mod
     [Serializable]
     public class DreamforgeMonsterCueMsg
     {
+        public int protocol;
         public uint netId;
         public int cue;
         public ulong authorityGeneration;
@@ -171,7 +177,8 @@ namespace SodRpg.Mod
         // Version 13 adds authored mechanisms, scoped keystones and registry negotiation.
         // Version 14 carries every selected keystone (up to the traveler's slots) in the build envelope.
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
-        public const int Version = 15;
+        // Version 16 adds sequenced kill facts and persisted receipt ACKs for compact, recoverable checkpoints.
+        public const int Version = 16;
     }
 
     [Serializable]

@@ -483,27 +483,77 @@ namespace SodRpg.Mod
                 var def = Variants.Get(kv.Value);
                 if (def == null || def.Tags == VariantTag.None) continue;
                 if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
-                var m = id.GetComponent<Monster>();
+                var m = LabelMonster(kv.Key, id);
                 if (m == null || !m.isActive || m.section != section) continue;
                 tags |= def.Tags;
             }
             return tags == VariantTag.None ? null : Variants.ZoneNotice(tags);
         }
 
+        private (int Menu, int Secure, int Delve, int Panel, bool Japanese) _secureButtonKey;
+        private string _secureOpenButton, _secureButton, _delveButton, _gearButton, _secureHideButton;
+
+        private void CacheSecureButtons(DreamforgeConfig cfg)
+        {
+            var key = ((int)cfg.menuKey, (int)cfg.secureKey, (int)cfg.delveKey, (int)cfg.securePanelKey, Loc.Japanese);
+            if (_secureOpenButton != null && _secureButtonKey.Equals(key)) return;
+            _secureButtonKey = key;
+            _secureOpenButton = Loc.T($"確保地点を開く [{cfg.securePanelKey}]　（確保 [{cfg.secureKey}]・潜行 [{cfg.delveKey}]）",
+                $"Open secure point [{cfg.securePanelKey}]  (Secure [{cfg.secureKey}] · Delve [{cfg.delveKey}])");
+            _secureButton = Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]");
+            _delveButton = Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]");
+            _gearButton = Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]");
+            _secureHideButton = Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]");
+        }
+
         /// <summary>確保地点の画面を隠している間の、小さな呼び出しボタン。</summary>
         private void DrawSecureCollapsed(float w, DreamforgeConfig cfg)
         {
+            CacheSecureButtons(cfg);
             var rect = new Rect(w / 2 - 190, 12, 380, 44);
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            if (GUILayout.Button(Loc.T($"確保地点を開く [{cfg.securePanelKey}]　（確保 [{cfg.secureKey}]・潜行 [{cfg.delveKey}]）",
-                    $"Open secure point [{cfg.securePanelKey}]  (Secure [{cfg.secureKey}] · Delve [{cfg.delveKey}])"), _st.Button, GUILayout.Height(28)))
+            if (GUILayout.Button(_secureOpenButton, _st.Button, GUILayout.Height(28)))
                 _secureHidden = false;
             GUILayout.EndArea();
         }
 
+        private (int Count, int Shards, int Tuning, int Heat, int Bonus, int Free, double NightmareMult, bool Japanese) _secureTextKey;
+        private string _secureLootText, _secureBonusText, _secureOverflowText, _secureDelveText, _secureNightmareText, _secureExtraText;
+
+        private void CacheSecureText(RunState run, int bonus, int free, double nmMult)
+        {
+            var key = (run.Satchel.Count, run.SatchelShards, run.SatchelTuning, run.Heat, bonus, free, nmMult, Loc.Japanese);
+            if (_secureLootText != null && _secureTextKey.Equals(key)) return;
+            _secureTextKey = key;
+            int next = Math.Min(Content.MaxHeat, run.Heat + 1);
+            bool atCap = run.Heat >= Content.MaxHeat;
+            _secureLootText = Loc.T(
+                $"まだ持ち帰っていない物：遺物{run.Satchel.Count}個、欠片{run.SatchelShards}、調律石{run.SatchelTuning}",
+                $"Not yet secured: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning");
+            _secureExtraText = run.Satchel.Count > 14 ? $"+{run.Satchel.Count - 14}" : null;
+            _secureBonusText = UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
+                $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は0に戻ります。",
+                $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve resets to 0.");
+            _secureOverflowText = run.Satchel.Count > free ? Loc.T(
+                $"保管庫の空きは{free}個です。入りきらない{run.Satchel.Count - free}個は、弱い物から欠片になります。",
+                $"Your stash has room for {free}. The weakest {run.Satchel.Count - free} will become shards.") : null;
+            _secureDelveText = UiStyles.Colored(Loc.T("深く潜る：", "Delve: "), "#ffb070") + Loc.T(
+                (atCap ? $"持ち帰らずに次のゾーンへ進みます。潜行は{next}のままです（これ以上は深くなりません）。" : $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。")
+                + $"遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
+                (atCap ? $"Move on without securing; delve stays at {next} (the maximum)." : $"Move on without securing; delve becomes {next}.")
+                + $" Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found.");
+            int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
+            int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
+            string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
+            _secureNightmareText = UiStyles.Colored(Loc.T(
+                $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
+                $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0");
+        }
+
         private void DrawSecurePrompt(float w, float h, DreamforgeConfig cfg)
         {
+            CacheSecureButtons(cfg);
             var run = _s.Profile.Run;
             var rect = new Rect(w / 2 - 320, 80, 640, 330 + (run.Satchel.Count > 0 ? 42 : 0) + (run.OfferedPacts.Count > 0 ? 34 + 56 * run.OfferedPacts.Count : 0)
                 + (run.OfferedEvent != DreamEvent.None ? 84 : 0) + (_s.HasPendingTrades || _s.HasHeldTrades ? 24 : 0)
@@ -518,51 +568,33 @@ namespace SodRpg.Mod
             DrawWaypointPicker(run);
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
-            GUILayout.Label(Loc.T(
-                $"まだ持ち帰っていない物：遺物{run.Satchel.Count}個、欠片{run.SatchelShards}、調律石{run.SatchelTuning}",
-                $"Not yet secured: {run.Satchel.Count} relics, {run.SatchelShards} shards, {run.SatchelTuning} tuning"), _st.Label);
+            int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
+            CacheSecureText(run, bonus, free, DailyDream.Get(run.DailyId)?.NightmareMult ?? 1.0);
+            GUILayout.Label(_secureLootText, _st.Label);
             if (run.Satchel.Count > 0)
             {
                 // 持ち帰れる遺物を、良い物から順にアイコンで並べる（最大14個）。
                 GUILayout.BeginHorizontal();
                 foreach (var r in SatchelTop()) IconSlot(r, 36);
-                if (run.Satchel.Count > 14) GUILayout.Label($"+{run.Satchel.Count - 14}", _st.Small);
+                if (_secureExtraText != null) GUILayout.Label(_secureExtraText, _st.Small);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
             }
-            int next = Math.Min(Content.MaxHeat, run.Heat + 1);
-            bool atCap = run.Heat >= Content.MaxHeat;
-            GUILayout.Label(UiStyles.Colored(Loc.T("確保する：", "Secure: "), "#7af0c8") + Loc.T(
-                $"手に入れた物がすべて保管庫に入り、この先で全滅しても失いません。" + (bonus > 0 ? $"潜った分のボーナスとして欠片が{bonus}増えます。" : "") + "潜行は0に戻ります。",
-                $"Everything you carry goes to your stash and is safe even if you fall later." + (bonus > 0 ? $" Your delve bonus adds {bonus} shards." : "") + " Delve resets to 0."), _st.Small);
-            int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
-            if (run.Satchel.Count > free)
-                GUILayout.Label(Loc.T(
-                    $"保管庫の空きは{free}個です。入りきらない{run.Satchel.Count - free}個は、弱い物から欠片になります。",
-                    $"Your stash has room for {free}. The weakest {run.Satchel.Count - free} will become shards."), _st.Warn);
-            GUILayout.Label(UiStyles.Colored(Loc.T("深く潜る：", "Delve: "), "#ffb070") + Loc.T(
-                (atCap ? $"持ち帰らずに次のゾーンへ進みます。潜行は{next}のままです（これ以上は深くなりません）。" : $"持ち帰らずに次のゾーンへ進み、潜行が{next}になります。")
-                + $"遺物の出る量が{(int)(Loot.HeatDropBonus * 100 * next)}%増えてレア度も上がりますが、受けるダメージも{Build.DamageTakenPerDelvePct * next}%増えます。全滅すると、まだ持ち帰っていない物は遺失物になります。",
-                (atCap ? $"Move on without securing; delve stays at {next} (the maximum)." : $"Move on without securing; delve becomes {next}.")
-                + $" Relic drops +{(int)(Loot.HeatDropBonus * 100 * next)}% with better rarity, but you take {Build.DamageTakenPerDelvePct * next}% more damage. If your party falls, unsecured loot becomes Lost & Found."), _st.Small);
-            double nmMult = DailyDream.Get(run.DailyId)?.NightmareMult ?? 1.0;
-            int nmNormal = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.Normal, next) * nmMult) * 100);
-            int nmElite = (int)(Math.Min(1.0, Nightmares.Chance(MonsterTier.MiniBoss, next) * nmMult) * 100);
-            string nmDay = nmMult > 1.0 ? Loc.T("（今日の夢で増えています）", " (raised by today's dream)") : "";
-            GUILayout.Label(UiStyles.Colored(Loc.T(
-                $"潜行{next}では、通常の敵の{nmNormal}%、エリートの{nmElite}%が「悪夢化」して強くなります{nmDay}（ボスは対象外）。倒すと、一段上の戦利品が出ます。",
-                $"At delve {next}, {nmNormal}% of regular enemies and {nmElite}% of elites become stronger nightmares{nmDay} (bosses excluded). They drop loot a tier higher."), "#ff9ae0"), _st.Small);
+            GUILayout.Label(_secureBonusText, _st.Small);
+            if (_secureOverflowText != null) GUILayout.Label(_secureOverflowText, _st.Warn);
+            GUILayout.Label(_secureDelveText, _st.Small);
+            GUILayout.Label(_secureNightmareText, _st.Small);
             GUILayout.BeginHorizontal();
             GUI.enabled = _s.CanResolveSecureChoice;
-            if (GUILayout.Button(Loc.T($"確保する [{cfg.secureKey}]", $"Secure [{cfg.secureKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
-            if (GUILayout.Button(Loc.T($"深く潜る [{cfg.delveKey}]", $"Delve [{cfg.delveKey}]"), _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
+            if (GUILayout.Button(_secureButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Secure());
+            if (GUILayout.Button(_delveButton, _st.Button, GUILayout.Height(34))) SetStatus(_s.Delve());
             GUI.enabled = true;
-            if (GUILayout.Button(Loc.T($"装備を整える [{cfg.menuKey}]", $"Gear up [{cfg.menuKey}]"), _st.Button, GUILayout.Height(34)))
+            if (GUILayout.Button(_gearButton, _st.Button, GUILayout.Height(34)))
             {
                 Open = true;
                 _tab = 0;
             }
-            if (GUILayout.Button(Loc.T($"画面を隠す [{cfg.securePanelKey}]", $"Hide [{cfg.securePanelKey}]"), _st.Button, GUILayout.Height(34)))
+            if (GUILayout.Button(_secureHideButton, _st.Button, GUILayout.Height(34)))
                 _secureHidden = true;
             GUILayout.EndHorizontal();
             if (_s.HasPendingTrades)
@@ -633,11 +665,16 @@ namespace SodRpg.Mod
             {
                 GUILayout.Label(Loc.T("または、悪夢の契約を結んで潜ることもできます。代償を受ける代わりに見返りが増え、次に確保するまで効果が重なります。代償の呪いは本体の呪いと同じもので、契約した人の旅人にだけ付きます。", "Or delve with a nightmare pact: accept a drawback for a bigger reward. Pacts stack until you secure. The curse is one of the game's own curses and only affects the Traveler of whoever swore the pact."), _st.Small);
                 GUI.enabled = _s.CanResolveSecureChoice;
-                foreach (var id in run.OfferedPacts.ToList())
+                for (int i = 0; i < run.OfferedPacts.Count; i++)
                 {
+                    var id = run.OfferedPacts[i];
                     var d = Pacts.Get(id);
                     if (d == null) continue;
-                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52))) SetStatus(_s.Delve(id));
+                    if (GUILayout.Button($"<b>{d.Name}</b>\n<color=#ffb0a0>{d.Description}</color>", _st.RowWrap, GUILayout.Height(52)))
+                    {
+                        SetStatus(_s.Delve(id));
+                        break; // Delve can replace the offered collection during this GUI event.
+                    }
                 }
                 GUI.enabled = true;
             }
@@ -725,28 +762,37 @@ namespace SodRpg.Mod
 
         private readonly List<uint> _labelScratch = new List<uint>();
 
+        private readonly Dictionary<uint, (Mirror.NetworkIdentity Identity, Monster Monster)> _labelMonsters =
+            new Dictionary<uint, (Mirror.NetworkIdentity, Monster)>();
+
+        private Monster LabelMonster(uint netId, Mirror.NetworkIdentity identity)
+        {
+            if (_labelMonsters.TryGetValue(netId, out var cached) && cached.Identity == identity && cached.Monster != null)
+                return cached.Monster;
+            var monster = identity.GetComponent<Monster>();
+            if (monster != null) _labelMonsters[netId] = (identity, monster);
+            return monster;
+        }
+
         /// <summary>悪夢化した敵と夢の変種の頭上に名札を出す。</summary>
         private void DrawNightmareLabels(float scale)
         {
+            _labelScratch.Clear();
+            foreach (var entry in _labelMonsters)
+                if ((!_s.Nightmare.ContainsKey(entry.Key) && !_s.Variant.ContainsKey(entry.Key))
+                    || entry.Value.Identity == null || entry.Value.Monster == null)
+                    _labelScratch.Add(entry.Key);
+            foreach (uint netId in _labelScratch) _labelMonsters.Remove(netId);
             DrawVariantLabels(scale);
             if (_s.Nightmare.Count == 0) return;
             var cam = Camera.main;
             if (cam == null) return;
-            _labelScratch.Clear();
             foreach (var kv in _s.Nightmare)
             {
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
-                {
-                    // まだスポーンしていない可能性がある。10秒たっても現れなければ消す。
-                    if (!_s.NightmareSeenAt.TryGetValue(kv.Key, out float seen) || Time.unscaledTime - seen > 10f) _labelScratch.Add(kv.Key);
-                    continue;
-                }
-                var m = id.GetComponent<Monster>();
-                if (m == null || !m.isActive)
-                {
-                    _labelScratch.Add(kv.Key);
-                    continue;
-                }
+                // Delta sync retains tags outside the local spawn/interest window until host removal.
+                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
+                var m = LabelMonster(kv.Key, id);
+                if (m == null || !m.isActive) continue;
                 var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
                 if (sp.z <= 0) continue;
                 if (!_nightmareLabelCache.TryGetValue((int)kv.Value, out var lab))
@@ -759,11 +805,6 @@ namespace SodRpg.Mod
                 float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
                 GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
             }
-            foreach (var k in _labelScratch)
-            {
-                _s.Nightmare.Remove(k);
-                _s.NightmareSeenAt.Remove(k);
-            }
         }
 
         private void DrawVariantLabels(float scale)
@@ -771,22 +812,12 @@ namespace SodRpg.Mod
             if (_s.Variant.Count == 0) return;
             var cam = Camera.main;
             if (cam == null) return;
-            _labelScratch.Clear();
             foreach (var kv in _s.Variant)
             {
-                bool pending = _s.VariantSeenAt.TryGetValue(kv.Key, out float seen) && Time.unscaledTime - seen <= 10f;
-                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
-                {
-                    if (!pending) _labelScratch.Add(kv.Key);
-                    continue;
-                }
-                var m = id.GetComponent<Monster>();
+                if (!Mirror.NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null) continue;
+                var m = LabelMonster(kv.Key, id);
                 var def = Variants.Get(kv.Value);
-                if (m == null || def == null || !m.isActive)
-                {
-                    if (m == null || def == null || !pending) _labelScratch.Add(kv.Key);
-                    continue;
-                }
+                if (m == null || def == null || !m.isActive) continue;
                 var sp = cam.WorldToScreenPoint(m.position + Vector3.up * 3.2f);
                 if (sp.z <= 0) continue;
                 if (!_variantLabelCache.TryGetValue(kv.Value, out var lab))
@@ -799,7 +830,6 @@ namespace SodRpg.Mod
                 float x = sp.x / scale - lab.Size.x / 2, y = (Screen.height - sp.y) / scale - lab.Size.y;
                 GUI.Label(new Rect(x, y, lab.Size.x + 4, lab.Size.y), lab.Content, _st.Toast);
             }
-            foreach (uint netId in _labelScratch) _s.RemoveVariant(netId);
         }
 
         private bool _reportDismissed;

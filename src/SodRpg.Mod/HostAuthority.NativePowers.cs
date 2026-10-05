@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using Mirror;
 
@@ -13,19 +14,39 @@ namespace SodRpg.Mod
             internal Actor Actor;
             internal Entity From, Target;
             internal bool Primary, Guaranteed, CriticalAtNative;
+            internal long Serial;
         }
+        private struct Scope { internal Hit Previous; internal bool Started, Rented; }
         internal static Hit Current;
+        private static readonly List<Hit> Pool = new List<Hit>();
+        private static int _depth;
+        private static long _serial;
         private static void Prefix(Actor __instance, Entity from, Entity to, bool isMain,
-            ref bool isCriticalHit, out Hit __state)
+            ref bool isCriticalHit, out Scope __state)
         {
-            __state = Current;
-            Current = new Hit { Actor = __instance, From = from, Target = to, Primary = isMain,
-                Guaranteed = HostAuthority.IsGuaranteedBasicV129(__instance, from) };
+            __state = new Scope { Previous = Current, Started = true };
+            if (!NetworkServer.active) { Current = null; return; }
+            if (_depth == Pool.Count) Pool.Add(new Hit());
+            Current = Pool[_depth++];
+            __state.Rented = true;
+            Current.Actor = __instance; Current.From = from; Current.Target = to;
+            Current.Primary = isMain; Current.Serial = ++_serial;
+            Current.CriticalAtNative = false;
+            Current.Guaranteed = HostAuthority.IsGuaranteedBasicV129(__instance, from);
             if (NetworkServer.active && from is Hero hero)
                 HostAuthority.NativeInstance?.TryWeakspotBasic(hero, to, ref isCriticalHit);
             Current.CriticalAtNative = isCriticalHit;
         }
-        private static void Finalizer(Hit __state) { Current = __state; }
+        private static void Finalizer(Scope __state)
+        {
+            if (!__state.Started) return;
+            if (__state.Rented)
+            {
+                Current.Actor = null; Current.From = null; Current.Target = null;
+                _depth--;
+            }
+            Current = __state.Previous;
+        }
     }
 
     [HarmonyPatch(typeof(Actor), nameof(Actor.DealDamage))]
@@ -36,16 +57,35 @@ namespace SodRpg.Mod
             internal Actor Actor;
             internal Entity Target;
             internal float Health, Shield;
+            internal long Serial;
         }
+        private struct Scope { internal Hit Previous; internal bool Started, Rented; }
         internal static Hit Current;
-        private static void Prefix(Actor __instance, Entity target, out Hit __state)
+        private static readonly List<Hit> Pool = new List<Hit>();
+        private static int _depth;
+        private static long _serial;
+        private static void Prefix(Actor __instance, Entity target, out Scope __state)
         {
-            __state = Current;
-            Current = new Hit { Actor = __instance, Target = target,
-                Health = target != null ? target.currentHealth : 0f,
-                Shield = HostAuthority.CurrentNativeShield(target) };
+            __state = new Scope { Previous = Current, Started = true };
+            if (!NetworkServer.active) { Current = null; return; }
+            if (_depth == Pool.Count) Pool.Add(new Hit());
+            Current = Pool[_depth++];
+            __state.Rented = true;
+            Current.Actor = __instance; Current.Target = target; Current.Serial = ++_serial;
+            Current.Health = target != null ? target.currentHealth : 0f;
+            // Only Shieldbreak Burst consumes the pre-hit shield total.
+            Current.Shield = HostAuthority.NativeInstance?.NativeShieldBeforeDamage(target) ?? 0f;
         }
-        private static void Finalizer(Hit __state) { Current = __state; }
+        private static void Finalizer(Scope __state)
+        {
+            if (!__state.Started) return;
+            if (__state.Rented)
+            {
+                Current.Actor = null; Current.Target = null;
+                _depth--;
+            }
+            Current = __state.Previous;
+        }
     }
 
     // Server-side cast completion is authoritative even when an ally has no mod/client build.
@@ -76,16 +116,25 @@ namespace SodRpg.Mod
                 : Type == ElementalType.Light ? Light : Dark;
             internal bool Matches(EventInfoApplyElemental info) => Actor == info.actor && Target == info.victim && Type == info.type;
         }
+        private struct Scope { internal Application Previous; internal bool Started, Rented; }
 
         internal static Application Current;
+        private static readonly List<Application> Pool = new List<Application>();
+        private static int _depth;
 
-        private static void Prefix(Actor __instance, ElementalType type, Entity to, out Application __state)
+        private static void Prefix(Actor __instance, ElementalType type, Entity to, out Scope __state)
         {
-            __state = Current;
+            __state = new Scope { Previous = Current, Started = true };
+            if (!NetworkServer.active) { Current = null; return; }
             var status = to != null ? to.Status : null;
-            Current = new Application { Actor = __instance, Target = to, Type = type,
-                Fire = status != null ? status.fireStack : 0, Cold = status != null && status.hasCold ? 1 : 0,
-                Light = status != null ? status.lightStack : 0, Dark = status != null ? status.darkStack : 0 };
+            if (_depth == Pool.Count) Pool.Add(new Application());
+            Current = Pool[_depth++];
+            __state.Rented = true;
+            Current.Actor = __instance; Current.Target = to; Current.Type = type; Current.Notified = false;
+            Current.Fire = status != null ? status.fireStack : 0;
+            Current.Cold = status != null && status.hasCold ? 1 : 0;
+            Current.Light = status != null ? status.lightStack : 0;
+            Current.Dark = status != null ? status.darkStack : 0;
         }
 
         private static void Postfix(Actor __instance, ElementalType type, Entity to, int appliedStacks, ElementalStatusEffect __result)
@@ -99,7 +148,16 @@ namespace SodRpg.Mod
                 { actor = __instance, victim = to, type = type, addedStack = appliedStacks });
         }
 
-        private static void Finalizer(Application __state) => Current = __state;
+        private static void Finalizer(Scope __state)
+        {
+            if (!__state.Started) return;
+            if (__state.Rented)
+            {
+                Current.Actor = null; Current.Target = null;
+                _depth--;
+            }
+            Current = __state.Previous;
+        }
     }
 
     [HarmonyPatch(typeof(Actor), nameof(Actor.InvokeOnApplyElemental))]

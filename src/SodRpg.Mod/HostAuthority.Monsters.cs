@@ -26,8 +26,9 @@ namespace SodRpg.Mod
             public Action<EventInfoAttackFired> OnAttack;
             public Se_GenericShield_OneShot GrantedShield;
             public int Cue;
-            public bool CueSent;
-            public float NextCueSync;
+            public bool CueQueued;
+            public uint CueNetId;
+            public EntityVisual CueVisual;
             public bool HasAlly;
             public float AllyCheckedAt = -1f;
         }
@@ -230,11 +231,21 @@ namespace SodRpg.Mod
             rt.Monster.Status.MarkStatsDirty();
         }
 
-        private void SendMonsterBehaviorCue(MonsterRuntime rt, bool force)
+        private void SendMonsterBehaviorCue(MonsterRuntime rt, bool force, DewPlayer target = null)
         {
             var state = rt.Behavior;
             var m = rt.Monster;
-            if (state == null || m == null || m.Visual == null || !m.isActive) return;
+            if (m == null || !m.isActive || _registeredOn == null) return;
+            if (state == null)
+            {
+                if (target != null && ReserveMonsterSyncMessage())
+                    _registeredOn.CustomRpc_SendMessageToClient(target, new DreamforgeMonsterCueMsg
+                    {
+                        protocol = Protocol.Version, netId = m.netId, cue = 0,
+                        authorityGeneration = ClientSession.HostAuthorityGeneration,
+                    });
+                return;
+            }
             float now = Time.time;
             bool warning = ((state.Affixes & NightmareAffix.Beacon) != 0 && !state.BeaconSpent)
                 || (state.LastStandWarned && !state.LastStandSpent);
@@ -249,17 +260,34 @@ namespace SodRpg.Mod
             bool slowed = (state.Affixes & NightmareAffix.Skittish) != 0 && state.HasBeenHit
                 && now - state.LastHit < MonsterBehavior.HitSlowSeconds;
             int cue = recovering ? 3 : warning ? 1 : healing ? 4 : guarding ? 2 : slowed ? 3 : 0;
-            if (!force && state.CueSent && cue == state.Cue && now < state.NextCueSync) return;
-            state.Cue = cue;
-            state.CueSent = true;
-            state.NextCueSync = now + 5f;
-            _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg
+            if (target == null && !force && state.CueQueued && state.CueNetId == m.netId && cue == state.Cue)
             {
-                netId = m.netId, cue = cue, authorityGeneration = ClientSession.HostAuthorityGeneration,
-            });
-            // Verified ClientRpc also reaches clients without Dreamforge. Modded
-            // clients retain a separate modifier so model tint updates cannot erase warnings.
-            m.Visual.SetShaderProperty("_CMEmission", MonsterCues.ColorFor(cue));
+                // Model loading/replacement is a visual change, not a reason to resend every cue periodically.
+                if (m.Visual != null && state.CueVisual != m.Visual)
+                {
+                    state.CueVisual = m.Visual;
+                    m.Visual.SetShaderProperty("_CMEmission", MonsterCues.ColorFor(cue));
+                }
+                return;
+            }
+            if (target != null && !ReserveMonsterSyncMessage()) return;
+            var msg = target == null ? null : new DreamforgeMonsterCueMsg
+            {
+                protocol = Protocol.Version, netId = m.netId, cue = cue,
+                authorityGeneration = ClientSession.HostAuthorityGeneration,
+            };
+            if (target != null)
+            {
+                _registeredOn.CustomRpc_SendMessageToClient(target, msg);
+                return;
+            }
+            state.Cue = cue;
+            state.CueQueued = true;
+            state.CueNetId = m.netId;
+            QueueMonsterCue(m.netId, cue);
+            // Vanilla clients retain the native shader cue; modded clients retain their own modifier.
+            if (m.Visual != null) m.Visual.SetShaderProperty("_CMEmission", MonsterCues.ColorFor(cue));
+            state.CueVisual = m.Visual;
         }
 
         private void RemoveMonsterBehavior(MonsterRuntime rt)
@@ -281,14 +309,7 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Error("Host: remove beacon shield " + ex); }
                 try { if (m.Visual != null && m.isActive) m.Visual.SetShaderProperty("_CMEmission", Color.black); }
                 catch (Exception ex) { Log.Error("Host: reset monster cue " + ex); }
-                try
-                {
-                    _registeredOn?.CustomRpc_SendMessageToAllClients(new DreamforgeMonsterCueMsg
-                    {
-                        netId = m.netId, cue = 0, authorityGeneration = ClientSession.HostAuthorityGeneration,
-                    });
-                }
-                catch (Exception ex) { Log.Error("Host: clear monster cue snapshot " + ex); }
+                QueueMonsterCue(m.netId, 0);
             }
             try { if (rt.BehaviorShield != null && rt.BehaviorShield.isActive) rt.BehaviorShield.Destroy(); }
             catch (Exception ex) { Log.Error("Host: remove behavior shield " + ex); }

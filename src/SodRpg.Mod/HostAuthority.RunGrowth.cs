@@ -24,12 +24,17 @@ namespace SodRpg.Mod
     {
         internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
 
-        private static string GrowthOwner(Hero hero)
+        private static string GrowthOwner(HeroRuntime rt)
         {
-            var owner = hero != null ? hero.owner : null;
-            return ReferenceEquals(owner, null) || owner == null ? null : owner.netId.ToString(CultureInfo.InvariantCulture);
+            var owner = rt.Hero != null ? rt.Hero.owner : null;
+            if (ReferenceEquals(owner, null) || owner == null) return null;
+            if (rt.GrowthOwnerKey == null || rt.GrowthOwnerNetId != owner.netId)
+            {
+                rt.GrowthOwnerNetId = owner.netId;
+                rt.GrowthOwnerKey = owner.netId.ToString(CultureInfo.InvariantCulture);
+            }
+            return rt.GrowthOwnerKey;
         }
-
         private static void EnsureGrowthRun()
         {
             var game = NetworkedManagerBase<GameManager>.softInstance;
@@ -40,7 +45,7 @@ namespace SodRpg.Mod
         {
             var build = rt.Powers?.Build;
             if (build == null || build.RunGrowths.Count == 0 || !(units > 0d)) return;
-            string owner = GrowthOwner(rt.Hero);
+            string owner = GrowthOwner(rt);
             if (owner == null) return;
             EnsureGrowthRun();
             if (RunGrowthLedger.RunId == null) return;
@@ -99,7 +104,7 @@ namespace SodRpg.Mod
             {
                 try
                 {
-                    string owner = GrowthOwner(hero);
+                    string owner = GrowthOwner(rt);
                     rt.GrowthTotals.Clear();
                     var bonus = new StatBonus();
                     foreach (var entry in build.RunGrowths)
@@ -142,7 +147,7 @@ namespace SodRpg.Mod
             if (rt.GrowthSentVersion == version && now - rt.GrowthSentAt < 5f) return;
             var player = rt.Hero != null ? rt.Hero.owner : null;
             if (ReferenceEquals(player, null) || player == null || _registeredOn == null) return;
-            string owner = GrowthOwner(rt.Hero);
+            string owner = GrowthOwner(rt);
             var sb = new StringBuilder();
             foreach (var entry in build.RunGrowths)
             {

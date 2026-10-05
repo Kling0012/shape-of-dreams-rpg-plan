@@ -9,7 +9,8 @@ namespace SodRpg.Mod
     {
         /// <summary>Payload sink for a C02-admitted activation; registry/codec producers supply the explicit typed definition.</summary>
         private int DispatchAdmittedWard(HeroRuntime owner, AlliedWardDefinition definition, string sourceMemory, long shieldEquipmentEpoch,
-            Func<bool> admit = null, AuthoredMechanismSpec authored = null, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory)
+            AuthoredMechanismSpec authored = null, KeystoneSourceKind sourceKind = KeystoneSourceKind.NativeMemory,
+            string quota = null, MemoryActivationEvent notification = default, AttributionBudget budget = AttributionBudget.PerActivation)
         {
             if (!NetworkServer.active) throw new InvalidOperationException("Allied wards require host authority.");
             if (definition == null) throw new ArgumentNullException(nameof(definition));
@@ -25,7 +26,10 @@ namespace SodRpg.Mod
                 definition.PoolKind, transformed.Value * 100m, definition.IncludeOwner, (float)transformed.RadiusMetres,
                 (float)transformed.DurationSeconds, definition.BaseTargets,
                 Math.Max(0, transformed.TargetCount - definition.BaseTargets), definition.MaxTargets, definition.Limits, definition.Budget);
-            var entities = new Dictionary<long, Entity>();
+            var buffers = RentMechanismDispatchBuffers();
+            try
+            {
+            var entities = buffers.Entities;
             if (definition.RecipientKind == WardRecipientKind.AlliedTravelers)
             {
                 foreach (var player in DewPlayer.gamePlayers)
@@ -39,7 +43,7 @@ namespace SodRpg.Mod
                 foreach (var summon in owner.Hero.summons)
                     if (summon != null && summon.hero == owner.Hero) entities[summon.GetInstanceID()] = summon;
             }
-            var candidates = new List<WardCandidate>();
+            var candidates = buffers.Candidates;
             foreach (var pair in entities)
             {
                 var entity = pair.Value;
@@ -48,9 +52,10 @@ namespace SodRpg.Mod
                     entity is Hero, summon != null, entity is Hero traveler ? Alive(traveler) : entity.isActive, entity.GetRelation(owner.Hero) == EntityRelation.Ally,
                     entity.currentHealth, entity.maxHealth, (entity.agentPosition - owner.Hero.agentPosition).sqrMagnitude));
             }
-            var awards = AlliedWard.Select(definition, owner.Hero.GetInstanceID(), true,
-                owner.Hero.Status.attackDamage, owner.Hero.Status.abilityPower, candidates);
-            if (awards.Count == 0 || admit != null && !admit()) return 0;
+            var awards = buffers.Awards;
+            AlliedWard.Select(definition, owner.Hero.GetInstanceID(), true,
+                owner.Hero.Status.attackDamage, owner.Hero.Status.abilityPower, candidates, awards, buffers.Eligible, buffers.CandidateIds);
+            if (awards.Count == 0 || quota != null && !_memoryAttribution.TrySpend(quota, budget, notification, true)) return 0;
             int count = 0;
             foreach (var award in awards)
             {
@@ -67,6 +72,8 @@ namespace SodRpg.Mod
                     definition.DurationSeconds, sourceMemory, shieldEquipmentEpoch)) count++;
             }
             return count;
+            }
+            finally { ReturnMechanismDispatchBuffers(buffers); }
         }
     }
 }

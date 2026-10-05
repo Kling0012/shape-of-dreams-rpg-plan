@@ -18,6 +18,7 @@ namespace SodRpg.Core.Game
             public float LastFired;
             // Weak keys retain interleaved casts without retaining expired game activation objects.
             public ConditionalWeakTable<object, State> FiredActivations;
+            public HashSet<long> FiredSerials;
         }
         private struct Mark { public int Victim; public float Until; public int Expose; public bool Paid; }
         private List<State> _states = new List<State>();
@@ -47,6 +48,7 @@ namespace SodRpg.Core.Game
                         {
                             state = Create(entry, old.HasFired, old.LastFired);
                             state.FiredActivations = old.FiredActivations;
+                            state.FiredSerials = old.FiredSerials;
                             state.Marks = old.Marks;
                             state.WindowActive = old.WindowActive;
                             state.WindowUntil = old.WindowUntil;
@@ -66,6 +68,7 @@ namespace SodRpg.Core.Game
             {
                 Entry = entry, HasFired = fired, LastFired = last,
                 FiredActivations = def.OncePerActivation ? new ConditionalWeakTable<object, State>() : null,
+                FiredSerials = def.OncePerActivation ? new HashSet<long>() : null,
                 RequestEntry = new GimmickEntry
                 {
                     StarId = def.Id, Memory = def.RechargeMemory ?? def.PayoffMemory ?? def.TriggerMemory,
@@ -87,8 +90,28 @@ namespace SodRpg.Core.Game
                 state.Marks?.Clear();
                 state.WindowActive = false;
                 state.WindowUntil = 0f;
+                state.FiredSerials?.Clear();
                 if (state.Entry.Def.OncePerActivation)
                     state.FiredActivations = new ConditionalWeakTable<object, State>();
+            }
+        }
+
+        public void ForgetActivation(long activationSerial)
+        {
+            foreach (var state in _states) state.FiredSerials?.Remove(activationSerial);
+        }
+        private readonly List<long> _retiredPairSerials = new List<long>();
+        private MemoryActivationAttribution _pairAttribution;
+        public void PruneAttributedActivations(MemoryActivationAttribution attribution)
+        {
+            _pairAttribution = attribution;
+            foreach (var state in _states)
+            {
+                if (state.FiredSerials == null) continue;
+                _retiredPairSerials.Clear();
+                foreach (long serial in state.FiredSerials)
+                    if (serial < 0 && !attribution.IsActivationRetained(-serial)) _retiredPairSerials.Add(serial);
+                foreach (long serial in _retiredPairSerials) state.FiredSerials.Remove(serial);
             }
         }
 
@@ -147,11 +170,12 @@ namespace SodRpg.Core.Game
         /// </summary>
         public void Fire(PairComboTrigger trigger, string memory, float now, int victimId, float damage, bool generated,
             ICollection<string> equipped, bool hasSummons, List<GimmickRequest> results,
-            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any)
+            object activation = null, PairComboHitKind hitKind = PairComboHitKind.Any, long activationSerial = 0)
         {
             // Chain rejection precedes all mutations, including refresh and expiry cleanup.
             if (generated || results == null || !Gimmicks.Finite(now)
                 || trigger < PairComboTrigger.OnUse || trigger > PairComboTrigger.OnBasicAttack) return;
+            if (activationSerial < 0 && _pairAttribution != null && !_pairAttribution.IsActivationRetained(-activationSerial)) return;
             if (trigger == PairComboTrigger.OnBasicAttack && memory == null) memory = "St_D_CircleOfLife";
             if (memory == null ? trigger != PairComboTrigger.OnKill : !Links.IsMemory(memory)) return;
             if (trigger != PairComboTrigger.OnUse && trigger != PairComboTrigger.OnBasicAttack && victimId == 0) return;
@@ -207,11 +231,16 @@ namespace SodRpg.Core.Game
                 if (state.HasFired && def.Cooldown > 0 && now < state.LastFired + def.Cooldown) continue;
                 if (def.Effect == GimmickEffect.Echo && (!Gimmicks.Finite(damage) || damage <= 0)) continue;
                 if (def.OncePerActivation
-                    && (activation == null || state.FiredActivations.TryGetValue(activation, out _))) continue;
+                    && (activationSerial != 0 ? state.FiredSerials.Contains(activationSerial)
+                        : activation == null || state.FiredActivations.TryGetValue(activation, out _))) continue;
                 GimmickEntry requestEntry = state.RequestEntry;
                 state.HasFired = true;
                 state.LastFired = now;
-                if (def.OncePerActivation) state.FiredActivations.Add(activation, state);
+                if (def.OncePerActivation)
+                {
+                    if (activationSerial != 0) state.FiredSerials.Add(activationSerial);
+                    else state.FiredActivations.Add(activation, state);
+                }
                 if (def.OncePerVictim && markedIndex >= 0)
                 {
                     var mark = state.Marks[markedIndex];
