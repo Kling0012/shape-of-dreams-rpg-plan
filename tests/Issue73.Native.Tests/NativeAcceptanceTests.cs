@@ -336,7 +336,9 @@ namespace Issue73.Native.Tests
         {
             var profile = Profile.CreateNew(73);
             Rules.BeginRun(profile, "run");
-            return new ClientSession { Profile = profile, LocalHero = new Hero { netId = 7 } };
+            var session = new ClientSession { Profile = profile, LocalHero = new Hero { netId = 7 } };
+            session.ActiveRunId = "run"; // RunActive は本体実装と同じく TrackRun による runId の追跡が必要
+            return session;
         }
         private static HostAuthority Host(Actor actor)
         {
