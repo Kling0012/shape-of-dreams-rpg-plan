@@ -1,5 +1,5 @@
-[b]v2.1.2: fixes crafted relics that could vanish after resuming a run with Continue. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.1.2：「続きから」で遠征を再開したあとに鍛冶で作った遺物が、消えることがある不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.2.0: new Infinity Mode — an endless run in a single world, with a boss every 10/15/20 cleared rooms and a secure-or-delve choice after it. Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.2.0：新しい遊び方「インフィニティモード」を追加しました。ひとつの世界で終わりなく遠征が続き、決まった数の部屋をクリアするとボスが現れ、倒したあとに「確保して帰還」か「深く潜る」かを選べます。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
