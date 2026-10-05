@@ -1,15 +1,13 @@
 using System.Collections.Generic;
 using Mirror;
+using SodRpg.Core.Game;
 
 namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        // #144: the lobby start check runs before every handshake may exist. The local player
-        // IS the host (or the solo player): it never needs a Hello handshake, so a lobby or
-        // game where only the host plays must stay compatible even while HostAuthority has not
-        // registered its server actor yet. Remote participants still need the confirmed
-        // protocol/content + Infinity handshake before Infinity may start.
+        // Gameplay boundaries require confirmed support. Lobby admission is deliberately separate:
+        // Actor RPC Hello is not available until the PlayGame scene creates the server actor.
         internal static bool InfinityRosterCompatible(IReadOnlyList<DewPlayer> players)
         {
             if (!NetworkServer.active || !InfinityMode.Available) return false;
@@ -22,6 +20,39 @@ namespace SodRpg.Mod
                 if (host == null || !host.InfinityHandshakeAccepted(player)) return false;
             }
             return true;
+        }
+
+        internal static bool InfinityLobbyRosterCompatible(IReadOnlyList<DewPlayer> players)
+        {
+            if (!NetworkServer.active || !InfinityMode.Available || players == null) return false;
+            var host = NativeInstance;
+            if (host == null) return true;
+            for (int i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
+                if (host._protocolMismatches.Contains(player)) return false;
+            }
+            return true;
+        }
+
+        internal static void CheckInfinityRunCompatibility()
+        {
+            if (!NetworkServer.active || !InfinityMode.Enabled
+                || NetworkedManagerBase<GameManager>.softInstance == null) return;
+            var host = NativeInstance;
+            if (host == null) return;
+            var players = DewPlayer.gamePlayers;
+            for (int i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                if (player == null || !player.isHumanPlayer || player == DewPlayer.local) continue;
+                if (!host._infinityRejectedPeers.Contains(player)) continue;
+                InfinityMode.StopExpedition(Loc.T(
+                    $"{player.playerName} の Protocol・MOD内容・インフィニティ対応が一致しないため、この遠征は通常モードで続けます。",
+                    $"{player.playerName}'s protocol, mod content or Infinity support is incompatible; this expedition continues in normal mode."));
+                return;
+            }
         }
 
         internal static bool InfinityBoundarySettled
