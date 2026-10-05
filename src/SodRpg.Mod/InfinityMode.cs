@@ -31,9 +31,16 @@ namespace SodRpg.Mod
 
         internal static bool Available { get; private set; }
         internal static string UnavailableReason { get; private set; }
+        // #144: the lobby line must identify the cause when a player reports it. The first reason is
+        // appended in its internal wording, cut at 120 chars so the one-line report stays readable.
+        private const int NoticeReasonLimit = 120;
         internal static string UnavailableNotice => Loc.T(
             "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.")
-            + (string.IsNullOrEmpty(UnavailableReason) ? "" : " " + UnavailableReason);
+            + (string.IsNullOrEmpty(UnavailableReason) ? ""
+                : " " + Loc.T("（理由: ", "(Reason: ") + NoticeReason(UnavailableReason) + Loc.T("）", ")"));
+
+        private static string NoticeReason(string reason) => reason.Length <= NoticeReasonLimit
+            ? reason : reason.Substring(0, NoticeReasonLimit);
 
         internal static bool IsNativePatch(Type type) => Array.IndexOf(NativePatchClasses, type) >= 0;
 

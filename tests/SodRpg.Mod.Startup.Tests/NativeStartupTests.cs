@@ -286,6 +286,33 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(314159, NativeContractTarget.First());
         }
 
+        /// <summary>
+        /// #144: ロビーの無効表示には、最初に機能を止めた理由が「（理由: …）」として添えられる。
+        /// プレイヤーがこの1行を報告するだけで原因を特定できるようにするため。長い理由は120文字で切る。
+        /// </summary>
+        [Fact]
+        public void LobbyNoticeAppendsTheFirstDisableReasonShortened()
+        {
+            var reason = "PlayGameManager.LoadNextZone: native body changed, transpiler marker not found " + new string('x', 80);
+            InfinityMode.DisableFeature(reason);
+            InfinityMode.DisableFeature("check B failed");
+
+            Assert.StartsWith("インフィニティは無効です。通常モードは利用できます。", InfinityMode.UnavailableNotice);
+            Assert.Contains("（理由: " + reason.Substring(0, 120) + "）", InfinityMode.UnavailableNotice);
+            Assert.DoesNotContain("check B failed", InfinityMode.UnavailableNotice);
+
+            SodRpg.Core.Game.Loc.Japanese = false;
+            try
+            {
+                Assert.StartsWith("Infinity is disabled. Normal mode remains available.", InfinityMode.UnavailableNotice);
+                Assert.Contains("(Reason: " + reason.Substring(0, 120) + ")", InfinityMode.UnavailableNotice);
+            }
+            finally
+            {
+                SodRpg.Core.Game.Loc.Japanese = true;
+            }
+        }
+
         private static bool OwnsHook(MethodBase target, Type patchClass)
         {
             var info = Harmony.GetPatchInfo(target);
