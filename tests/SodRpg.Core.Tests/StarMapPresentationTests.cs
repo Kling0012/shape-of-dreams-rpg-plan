@@ -173,5 +173,29 @@ namespace SodRpg.Core.Tests
             }
             finally { Loc.Japanese = previous; }
         }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Ordinary_ward_text_scopes_non_stacking_and_cap_to_the_same_caster_and_recipient(bool japanese)
+        {
+            bool previous = Loc.Japanese;
+            try
+            {
+                Loc.Japanese = japanese;
+                StarClusters.RegisterGeneratedHero("Hero_Yubar");
+                // 爆発の加護：味方への通常枠の障壁。プールは付与者・受け手ごとなので、説明もその限定を示す。
+                var star = HeroSigils.TreeFor("Hero_Yubar").Single(t => t.Id == "yubar.mem.exotic-matter.c3.n2");
+                Assert.Equal(ModShieldPoolKind.Ordinary, star.Mechanism.Ward.PoolKind);
+                string description = StarMapPresentation.EffectDescription(star);
+                Assert.Contains(japanese
+                    ? "同じ付与者から同じ受け手への通常の星の障壁とは重ならず"
+                    : "Does not stack with ordinary star shields from the same caster to the same recipient", description);
+                Assert.Contains(japanese
+                    ? "付与者と受け手の組み合わせごとに、受け手の最大HPの15%まで"
+                    : "up to 15% of the recipient's maximum HP per caster and recipient", description);
+            }
+            finally { Loc.Japanese = previous; }
+        }
     }
 }

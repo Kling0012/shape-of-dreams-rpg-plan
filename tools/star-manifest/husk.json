@@ -27091,7 +27091,7 @@
         "effects": [
           {
             "stat": "AttackFlat",
-            "amount": 0.575
+            "amount": 0.69
           }
         ]
       },
@@ -28522,7 +28522,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_Q_Laceration",
-      "value": 2,
+      "value": 6,
       "param": null,
       "receiver": null,
       "target": null,
@@ -28547,7 +28547,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_Q_DeathMark",
-      "value": 2,
+      "value": 6,
       "param": null,
       "receiver": null,
       "target": null,
@@ -28572,7 +28572,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_R_AnnihilationStance",
-      "value": 2,
+      "value": 6,
       "param": null,
       "receiver": null,
       "target": null,
@@ -28597,7 +28597,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_R_Deception",
-      "value": 2,
+      "value": 6,
       "param": null,
       "receiver": null,
       "target": null,
