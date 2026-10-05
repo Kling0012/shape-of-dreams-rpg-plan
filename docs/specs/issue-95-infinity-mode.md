@@ -181,9 +181,10 @@
 
 ## 16. 最新main・#97の統合
 - v2.1.1の警告のみのpreflight、クラス単位のパッチ適用・巻き戻し、`SafeReflection`を維持する。#48の14ボスセット、Polaris強化、装備アイコン、#97/#99の変更はmain側の意図を残したmergeで取り込んだ。通信はProtocol20、保存形式5の省略可能項目を維持する。
+- 作業中に追加されたmainの#104も再mergeした。ロビーの乱数使用変更を残す際のRNG状態保持と遺物Uid重複回避を維持し、Infinityのチェックポイント復元へ統合した。上流の既存テスト補助関数も実際のnative完了callbackへ追従させた。
 - #97の非再帰チェックポイントは、Infinityの固定ゾーン・難易度・周期・累計／区間クリア数・世代・phase・選択receiptと、プロフィールの報酬予算・入場重複排除・帰還記録を保存する。復元は同じProfile参照へ所有済み状態を移し、帰還receiptと記録表示のrevisionも戻す。次回ロビー設定は現在の選択を残し、再開するrunの周期を変えない。
 - native保存前にクリア状態と未反映の戦闘creditを同期する。native完了callbackと地図ready後に対応チェックポイントを適用・照合し、同RunIdでもInfinity初期化・ミラー・クリア観測・ACK・予算時刻の一時状態を捨てる。ロード前の最新Profileとの誤照合や、ロード中の時刻差による補充を避ける。
 - Infinityの13パッチ（ロビー開始条件を含む）の対象・実適用を公開Harmony APIで確認し、欠落・適用失敗・実行例外ではInfinityだけをプロセス中無効にする。既に入ったフックも無効時は本体処理へ戻す。MOD全体の停止やゲーム全体のpauseは行わず、保存済みInfinityデータは保持する。
 - 無効時はロビーONを拒否し、OFFへの切替と通常モードは残す。HelloのInfinity可否は通常のProtocol／内容照合と分離し、対応が欠ける参加者とのInfinity開始だけを拒否する。ホストの無効化は参加者のInfinity割り込み・新規報酬にも反映する。
-- 最終Releaseビルドは成功（エラー0・警告5）、配備先 `/tmp/sod-deploy-i95`。指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` は完走・終了コード0：Core 3237成功／既存2skip、Native 23成功、Startup 5成功、計3265成功・失敗0。部分クラス代役・反射呼出し・旧保存fixture補助関数だけを追従し、テストケース本体・期待値の変更やテスト追加は行っていない。残存コンパイル不備なし。
+- 最終Releaseビルドは成功（エラー0・警告5）、配備先 `/tmp/sod-deploy-i95`。指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` は追加mainも含めて完走・終了コード0：Core 3237成功／既存2skip、Native 31成功、Startup 5成功、計3273成功・失敗0。main側の既存ケースを保持し、こちらでは部分クラス代役・反射呼出し・旧保存fixture補助関数だけを追従した。テストケース本体・期待値の変更や新規ケース作成は行っていない。残存コンパイル不備なし。
 - 既存BalanceSimを `--mode infinity --players 1 --seed 95` で実行し、通常／Infinity経済経路と合法帰還・clone・codec往復が完走した。帰還部屋10・圧1・帰還回数1・終了済み・Runなし・codec注記なしを観測し、既存2000人の結果ファイルは上書きしていない。本体起動プログラムがないため、実画面・実coop・実本体continueとInfinity native割り込み失敗時の実ゲーム挙動は未確認。

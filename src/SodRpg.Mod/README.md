@@ -56,7 +56,7 @@
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
-- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 and Protocol 19 remain unchanged.
+- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 and Protocol 20 remain unchanged.
 
 ### Infinity割り込みの互換性
 
