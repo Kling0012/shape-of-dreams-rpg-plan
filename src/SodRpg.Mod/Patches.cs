@@ -1,5 +1,8 @@
 using HarmonyLib;
 using System.Reflection;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace SodRpg.Mod
 {
@@ -12,6 +15,73 @@ namespace SodRpg.Mod
         private static void Postfix(ref bool __result)
         {
             if (MenuOpen) __result = false;
+        }
+    }
+
+    // Keep EventSystem.current alive for native raycasts. Disabling BaseInputModule is not
+    // sufficient: EventSystem.Update still calls Process on its retained current module.
+    [HarmonyPatch]
+    internal static class BlockUiInputWhileMenuOpen
+    {
+        private static MethodInfo _eventUpdate;
+        private static MethodInfo _gamepadInputs;
+
+        private static bool Prepare()
+        {
+            _eventUpdate = AccessTools.DeclaredMethod(typeof(EventSystem), "Update");
+            _gamepadInputs = AccessTools.DeclaredMethod(typeof(GlobalUIManager), "DoGamepadInputs");
+            if (_eventUpdate == null) Log.Warn("MOD panel pointer-input blocking disabled: EventSystem.Update unavailable.");
+            if (_gamepadInputs == null) Log.Warn("MOD panel gamepad-input blocking disabled: GlobalUIManager.DoGamepadInputs unavailable.");
+            return _eventUpdate != null || _gamepadInputs != null;
+        }
+
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            if (_eventUpdate != null) yield return _eventUpdate;
+            if (_gamepadInputs != null) yield return _gamepadInputs;
+        }
+
+        private static bool Prefix() => !BlockInputWhileMenuOpen.MenuOpen;
+    }
+
+    [HarmonyPatch(typeof(GlobalUIManager), "IsUIElementClickable", new[] { typeof(RectTransform) })]
+    internal static class BlockUiClickabilityWhileMenuOpen
+    {
+        private static bool Prepare()
+        {
+            bool available = AccessTools.DeclaredMethod(typeof(GlobalUIManager), "IsUIElementClickable",
+                new[] { typeof(RectTransform) }) != null;
+            if (!available) Log.Warn("MOD panel clickability blocking disabled: GlobalUIManager.IsUIElementClickable unavailable.");
+            return available;
+        }
+
+        private static bool Prefix(ref bool __result)
+        {
+            if (!BlockInputWhileMenuOpen.MenuOpen) return true;
+            // Bypass the native per-frame cache without writing a blocked result into it.
+            __result = false;
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(UI_TooltipManager), "LateUpdate")]
+    internal static class BlockUiTooltipWhileMenuOpen
+    {
+        private static bool Prepare()
+        {
+            bool available = AccessTools.DeclaredMethod(typeof(UI_TooltipManager), "LateUpdate") != null;
+            if (!available) Log.Warn("MOD panel tooltip blocking disabled: UI_TooltipManager.LateUpdate unavailable.");
+            return available;
+        }
+
+        private static bool Prefix(UI_TooltipManager __instance)
+        {
+            if (!BlockInputWhileMenuOpen.MenuOpen) return true;
+            if (__instance.isShowing) __instance.Hide();
+            // Preserve a refresh request for the first unblocked frame, including gamepad
+            // override tooltips which bypass Dew's raycasts in the native LateUpdate.
+            __instance.UpdateTooltip();
+            return false;
         }
     }
 

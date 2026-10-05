@@ -391,8 +391,11 @@ namespace SodRpg.Mod
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
                 if (infinity.PressureStage == 100) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
-                if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
-                    sb.Append("\n<color=#ffb070>").Append(InfinityMode.UnavailableNotice).Append("</color>");
+                // #144: host/solo judge only their own Infinity availability; participants wait
+                // for the host's answer instead of being told "disabled" without a reason.
+                string supportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);
+                if (supportNotice != null)
+                    sb.Append("\n<color=#ffb070>").Append(supportNotice).Append("</color>");
                 else if (!InfinityMode.NativeSaveAgreement)
                     sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required")).Append("</color>");
             }
@@ -808,8 +811,11 @@ namespace SodRpg.Mod
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
-            if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
-                GUILayout.Label(InfinityMode.UnavailableNotice, _st.Warn);
+            // #144: host/solo judge only their own availability; a participant without the host's
+            // answer yet sees "waiting for the host's setting", not an unexplained "disabled".
+            string lobbySupportNotice = ClientSession.InfinitySupportNotice(_s.CanChooseRunRules);
+            if (lobbySupportNotice != null)
+                GUILayout.Label(lobbySupportNotice, _st.Warn);
             if (enabled)
                 GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。報酬速度の上限は段階2です。",
                     "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts. Reward rate limits are deferred to stage 2."), _st.Small);
