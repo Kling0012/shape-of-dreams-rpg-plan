@@ -2,7 +2,7 @@
 
 ## 1. 概要・確定方針
 
-14セット・84部位を、実際のボス技と固有報酬の仕組みに沿って再設計した承認済み仕様書。段階Aは共通機構とDemonを実装し、残り13セットは設計のまま。Demonの993ee1dの遊び方・数値は維持し、全体で使う機構へ定義方式を共通化する。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
+14セット・84部位を、実際のボス技と固有報酬の仕組みに沿って再設計した承認済み仕様書。段階Aの共通機構とDemonに続き、段階B-1でSkoll／Infernus／白夜／暗月を実装した。現在は5セット30部位、残り9セットは設計のまま。Demonの993ee1dの遊び方・数値は維持し、全体で使う機構へ定義方式を共通化する。既存48セット・既存ID・本体報酬単独の挙動・§5のドロップ率は変更しない。数値は設計値であり、戦闘で較正済みではない。
 
 | 項目 | 方針 |
 | --- | --- |
@@ -16,7 +16,7 @@
 | 同期 | ボス型名・抽選条件はホストの撃破factが正。抽選結果は個人別、戦闘効果はホストが適用 |
 | 名称・自立性 | 日英名は§3を採用。任意の2/3部位で段階機構が成立し、6部位も特定記憶・別の召喚手段を必須にしない |
 
-### 段階Aの実装境界
+### 段階A／B-1の実装境界
 
 - Coreは`BossProfiles`／`BossMoveProfile`／`BossRewardProfile`、`UniqueDef.BossMove`、`SetDef.BossStages`へ接続。`Build.BossMoves`／`BossRewards`は独立した`b:`／`z:` codec節に入り、各64件上限・既知ID・重複・channel／stage検証を行う。`HostBuildValidation`は装備から再導出する。`Relic.AuthoredEffectCount`で強化の固有効果枠を扱い、旧Demonの保存Powerは読み込み時に撤去する。
 - 共通runtimeは`HostAuthority.BossRuntime.cs`の`BossCombatState`。`TickBossEffects`／`ClearBossEffects`を統合入口に、native主撃・ConfirmedUse・移動完了・damage・報酬instance・時計／modeを有限actionへdispatchする。
@@ -30,12 +30,15 @@
 | M5 | `BossEnemyMovementExecutor` |
 | M6 | `BossDeployableExecutor`（非Entity射手の生成。native召喚は検証済み個体登録のみ） |
 | M7 | `BossDefenseExecutor`（独立container・shield・StatBonusの個別除去） |
-| M8 | `BossProgressLedger`（印8対象・counter6・mode期限・activation gate） |
+| M8 | `BossProgressLedger`（印8対象・stack3・counter6・mode期限・activation gate、native親ごとのstack出所） |
 
 - `HostAuthority.BossNativeAdapters.cs`はcast／instance／displacement寿命と帰属packetを結合し、`Se_U_Hysteria`の生成時に返った固有SpeedEffectのみ捕捉する。装備なしでも固定64枠の捕捉だけを保持し、装備変更時に既に生存する状態へ現行段階を適用できる。生成済み爪の再発行はしない。
-- 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。環・樹木の線・移動する弾の軌跡というMOD幾何描画を使用し、ボスモデル／network prefabは要求しない。
-- Protocolはmainの15から**16**へ更新。旧Skollの6部位・段階・Guard連携は撤去し、段階Aの専用取得登録はDemonだけ。旧Skoll品は既存の未知Unique処理で除外される。新Skollを含む残り13セット・78部位、残り10報酬adapterは未実装で、以下の各節はその承認設計を保持する。
-- WikiGenの実行で新Demonの部位／段階／報酬連携の日英出力を確認した。ゲーム実行ファイルがなくManaged DLLだけのため、実機の戦闘・表示・協力通信・較正は未確認。テストの設計・追加・変更は行わない。
+- 段階B-1のnative報酬は`HostAuthority.BossGlacialCore.cs`／`BossEternalFlame.cs`／`BossBeam.cs`。Cold回復は元の最終native healへ有界加算して本体bankへ自然に入り、優先敵と実射加速は本体の射出だけに適用。EternalFlameはown curseの差分・成功proc・最初のnative packetだけを変更。白夜／暗月は1共通Beam adapterでnative分岐→暗月加算→native成功→白夜shield→暗月cadenceを処理し、部位数・予算・対象枠・解除は独立する。
+- M3の有限列は最大32pulseで1token、同owner/setの全予約合計4まで。M2は4方向の各弾hit数を同敵合計へ制限し、終点剣弾は飛行damage／壁爆発なし。M1の線／柱とM5は地形を越えない。白夜の同target shieldは最高量だけを使い、吸収量を全白夜出所の残量へ反映して古いshieldを復活させない。
+- 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。属性色・扇／線／放射・固定幻影・対象ID・残数／予算・縮小域をMOD幾何描画で表示し、ボスモデル／network prefab／新規Summonは要求しない。
+- live装備変更ではnative親寿命付きの予約・印・shield・予算・CDを保持し、変更したprofileだけを再判定して解除する。通常入力由来の予約／印は装備epochで破棄する。actorはcreation時刻だけでなくpool世代を照合し、死亡・遷移開始・部屋移動・owner離脱で全破棄する。
+- Protocolは段階Aの16から**17**へ更新、保存形式4を維持。現在の専用取得登録はDemon／Skoll／Infernus／白夜／暗月の5セット30部位・4adapter。旧Skollの汎用Power／Guard連携・互換aliasは復活させない。残り9セット54部位・7報酬adapterは未実装で、以下の承認設計を保持する。
+- 指定Releaseビルド成功（警告5・エラー0）。WikiGenを実行して53セット・1364固有品と新4セットの部位／段階／報酬連携の日英出力を確認した。本体資料はリポジトリ外でのみ参照。ゲーム実行ファイルがなくManaged DLLだけのため、実機の戦闘・表示・協力通信・較正は未確認。テストの設計・計画・追加・変更・実行は行わない。
 
 ### 設計原則
 
@@ -590,15 +593,16 @@ M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、ho
 | 連携 | 自分の対応セット部位数で2/4/6の最高段階を1つ選び、自分の対象報酬装着で成立。減装・解除で再判定し旧余韻を失効。白夜／暗月の部位数は別集計。対象起点・上限はホストが適用 |
 | 互換 | マージ順で確定するProtocol版と内容指紋の一致が前提。旧版混在時に「同じ表示なのにホストだけ効果不反映」を正常運用扱いしない |
 
-全14セットを同じ設計原則で改訂済み。下表は実装の分割であり、本依頼で実装を行う意味ではない。Demonの専用Power案も共通profileへ置換し、旧汎用効果との併存・aliasを残さない。
+全14セットを同じ設計原則で改訂済み。下表は現在の実装境界。Demonの専用Power案は共通profileへ置換済みで、旧汎用効果との併存・aliasを残さない。
 
 | 実装段階 | 範囲 |
 | --- | --- |
-| 段階1 | 専用取得基盤＋§2.4の共通8機構・統合3経路・Protocol／保存連携。Demon／Skollの2セット12部位と必要な報酬adapterを登録 |
-| 段階2 | 残り12セット72部位・残り報酬adapterを追加。白夜／暗月を独立登録、Primus／Polarisは連携なし。§2.3の比較母集団・予算基準で全14組を較正 |
+| 段階A（実装済み） | 専用取得基盤＋§2.4の共通8機構・統合3経路・Protocol16／保存連携。Demonの1セット6部位とHysteria adapter |
+| 段階B-1（実装済み） | §3.2〜§3.5のSkoll／Infernus／白夜／暗月、4セット24部位、GlacialCore／EternalFlame／共通Beam adapter。白夜／暗月は独立profile、Protocol17 |
+| 残り（設計のみ） | 9セット54部位・残り7adapter。Primus／Polarisは連携なし。§2.3の比較母集団・予算基準による全14組の較正は未実施 |
 | 段階間 | 最終IDを最初から使用し、無効仮定義・互換aliasを残さない。データだけの追加は内容指紋、wire／schema追加はその都度Protocolを次版へ上げる |
 
-既存への影響（テスト設計・修正はしない）：実装段階1のセット数48→50・部位288→300、全体62・372、連携段階は6→36定義。新profileは84部位・42通常段階、既存単品Linkの件数／倍率は不変。Loot／Build／HostGearValidation／説明／図鑑／装備codecのprofile導出と強化milestoneの著作済み効果判定、Protocol／KillSync／予約表示同期が影響範囲。保存済みボス部位の旧定義Powerは新版ロード時に新版定義から正規化し、旧Powerとの二重発動を残さない。土台・既存ID・保存版・プロフィールリセットなしの方針は維持する。
+既存への影響（テスト設計・修正はしない）：段階Aの49セット・1340固有品から、B-1で53セット・1364固有品へ増加。現在の全セット部位は318（既存288＋ボス30）、通常ボス段階15・報酬profile5／連携段階15。全14ボスの承認設計は84部位・42通常段階・12報酬profile／36連携段階であり、未実装分をデータ登録しない。既存単品Linkの件数／倍率は不変。Loot／Build／HostGearValidation／説明／図鑑／装備codecのprofile導出と強化milestoneの著作済み効果判定、Protocol／KillSync／予約表示同期が影響範囲。保存済みボス部位の旧定義Powerは新版ロード時に新版定義から正規化し、旧Powerとの二重発動を残さない。土台・既存ID・保存版・プロフィールリセットなしの方針は維持する。
 
 ## 5. 確定事項（利用者指定）
 

@@ -6,6 +6,19 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — ボス限定セット（#48 段階B-1）
+
+- **新4セット**：氷刃の王装 / Iceblade Regalia、噴火炉の軍装 / Eruptionforge Warplate、白蓮の守装 / White Lotus Vestments、黒月の刃装 / Black Moon Armamentを追加。各6部位と累積2/3/6段階を承認仕様§3.2〜§3.5の専用profileへ接続しました。旧汎用Power・Guard連携は復活させません。 / Added four six-piece boss sets and their cumulative2/3/6 stages using the approved authored profiles, without restoring legacy generic powers or Guard links.
+- **Glacial Core**：本人のnative Cold回復へ+20%（追加cap0.12H、CD2秒）、原因敵の2秒優先記録、既存bankで払われる最大3実射の1秒加速を接続。native回復のcrit/chain、bank消費・弾数・damage/procは維持します。 / Scoped native Cold healing gains20% capped at0.12H, records a2s preferred enemy, and accelerates up to3 real bank-funded shots for1s; native healing semantics, bank debit and projectile packets remain intact.
+- **Eternal Flame**：自分のnative呪いだけ+1秒と差分復元、本体procが成功してFireを積んだ場合だけ追加1Fire、6部位で実3〜4stackの対象への最初のnative SkillTrigger packetの会心門を5→3へ接続。元の5stack門と実stackによる増幅は変更しません。 / Added bounded own-curse duration, successful-native-proc Fire increments and a six-piece first-packet crit gate for real3–4 stacks; original>=5 behavior and real-stack amplification remain.
+- **共通Beam**：白夜・暗月は部位数とprofileを独立集計し、`St_U_BeamOfBalance`には1つの共通adapterだけを使用。native分岐→暗月固定量加算→native成功→白夜overheal shield→暗月cadenceの順です。Hは親Beam生成時固定、対象枠・消費予算・owner-global CDを保持し、段階変更で補充や新規攻撃を行いません。 / One shared native Beam adapter keeps independent profiles and the approved order, spawn-frozen H, fixed hero slots, spent quotas and owner-global cooldowns.
+- **有界実行・解除**：M1〜M8を拡張して有限32pulse／1token、同owner/set合計4予約、4方向弾の同敵上限、壁で消える終点剣弾、最高量非加算の白夜shieldを実行。actorのpool世代と親寿命を照合し、片profile変更で他方のnative予約・印・shieldを壊しません。遷移開始・死亡・離脱では破棄します。 / Bounded sequences, per-wave target caps, terminal swords and highest-only White shields reuse the common executors; pooled lifetimes and native-parent ownership isolate teardown.
+- **表示・互換**：属性色・形状・固定幻影・対象ID・残数／予算・縮小域を専用通知と生存snapshotへ追加し、通信版を**17**へ更新。協力プレイは全員同じ版が必要です。保存形式4・プロフィールリセットなしは維持します。 / Protocol17 adds elemental geometry, fixed phantoms, target IDs, counters/budgets and shrinking domains; matching co-op builds are required, with profile format4 and no reset.
+- **説明・範囲**：日英名／説明とWikiGenのボス限定一覧を更新。現在はDemonを含む5セット30部位・4種のnative報酬adapter。残り9セット54部位・7adapterはB-1対象外です。ボスモデル／network prefab／Summonを新規生成せず、固定phantomは承認仕様どおりMOD幾何描画を使用します。 / Bilingual descriptions and WikiGen list five implemented boss sets with four distinct adapters; nine sets/seven adapters remain outside B-1, and fixed phantoms are geometric non-Entities.
+- **検証**：指定Releaseビルド成功（警告5・エラー0、配置先`/tmp/sod-deploy-i48`）。WikiGenを`/tmp/sod-wiki-i48-b1`へ実行し、53セット・1364固有品、新4セットの部位／通常段階／任意連携の日英出力を確認。本体資料はリポジトリ外でのみ参照しました。Managed DLLのみのため実機戦闘・表示・協力同期・較正は未確認。テストの設計・追加・変更・実行は行っていません。 / Requested Release build and production WikiGen succeeded; generated bilingual content is verified, but live-game combat/visuals/co-op/balance are not. Native references stayed outside the repository; no test work.
+
+---
+
 ## 未公開 — 宝庫の戦利品と討伐通知（#52）
 
 - **討伐通知**：「封じられた宝庫」のボス撃破で大量の遺物が払い出されても、同じ撃破のドロップ通知に悪夢・変種の討伐通知が押し出されないよう、討伐通知を最後に表示します。撃破統計・経験・覚醒・依頼と、通常敵／悪夢の戦利品をボス撃破時に3倍にする処理は変更していません。 / **Kill notifications**: nightmare/variant kill notices now follow the kill's other notifications, so a bulk Sealed Hoard payout does not evict its own kill notice. Kill statistics, experience, awakening, bounties and the threefold boss payout for ordinary/nightmare loot are unchanged.
