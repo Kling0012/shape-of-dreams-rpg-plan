@@ -17,6 +17,21 @@ internal static class Program
                 return 0;
             }
             var timer = Stopwatch.StartNew();
+            if (options.Forge)
+            {
+                var entries = ForgeReport.Measure();
+                string forgeReport = ForgeReport.Render(entries);
+                if (options.Out != null)
+                {
+                    string forgePath = Path.GetFullPath(options.Out);
+                    string? forgeDirectory = Path.GetDirectoryName(forgePath);
+                    if (forgeDirectory != null) Directory.CreateDirectory(forgeDirectory);
+                    File.WriteAllText(forgePath, forgeReport, new UTF8Encoding(false));
+                }
+                if (options.MetricsJson != null) Metrics.WriteForge(options.MetricsJson, entries);
+                Console.Write(forgeReport);
+                return 0;
+            }
             if (options.Infinity)
             {
                 var infinity = new InfinitySimulation(options);
@@ -69,6 +84,7 @@ internal static class Program
             }
             var simulation = new Simulation(options);
             simulation.Run();
+            if (options.MetricsJson != null) Metrics.WriteExpeditions(options.MetricsJson, options, simulation);
             string report = Report.Render(options, simulation, timer.Elapsed);
             if (options.Out != null)
             {

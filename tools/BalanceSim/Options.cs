@@ -20,6 +20,7 @@ public sealed class Options
     public int ItemLevel { get; private set; } = 1;
     public int ItemLevelPerZone { get; private set; } = 1;
     public string? Out { get; private set; }
+    public string? MetricsJson { get; private set; }
     public bool Help { get; private set; }
     public string Mode { get; internal set; } = "expeditions";
     public int DreamLevel { get; private set; } = Content.MaxDreamLevel;
@@ -27,6 +28,7 @@ public sealed class Options
     public bool Sets => Mode == "sets";
     public bool V132Stars => Mode == "v132stars";
     public bool Infinity => Mode == "infinity";
+    public bool Forge => Mode == "forge";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -67,9 +69,13 @@ public sealed class Options
                     if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("--out のパスが空です。");
                     o.Out = value;
                     break;
+                case "--metrics-json":
+                    if (string.IsNullOrWhiteSpace(value)) throw new ArgumentException("--metrics-json のパスが空です。");
+                    o.MetricsJson = value;
+                    break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity です。");
+                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity" or "forge"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity / forge です。");
                     o.Mode = value;
                     break;
                 case "--dream-level":
@@ -82,6 +88,8 @@ public sealed class Options
         }
         if ((long)o.Zones * o.Rooms > int.MaxValue)
             throw new ArgumentException("ゾーン数×部屋数は32ビット整数の範囲にしてください。");
+        if (o.MetricsJson != null && o.Mode is not ("expeditions" or "forge"))
+            throw new ArgumentException("--metrics-json は expeditions / forge のみ対応しています。");
         return o;
     }
 
@@ -90,7 +98,7 @@ public sealed class Options
     {
         Runs = Runs, Players = Players, Seed = Seed, Zones = Zones, Rooms = Rooms, Lesser = Lesser, Normal = Normal,
         MiniBoss = MiniBoss, Bosses = Bosses, Policy = Policy, Wipe = Wipe, Bounty = Bounty, ItemLevel = ItemLevel,
-        ItemLevelPerZone = ItemLevelPerZone, Out = Out, Mode = Mode, DreamLevel = DreamLevel,
+        ItemLevelPerZone = ItemLevelPerZone, Out = Out, MetricsJson = MetricsJson, Mode = Mode, DreamLevel = DreamLevel,
     };
 
     private static int Integer(string key, string value, int min)
@@ -125,8 +133,9 @@ public sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions / stars / sets / v132stars / infinity（30/60/120分、周期10/15/20）
+          --mode expeditions  expeditions / stars / sets / v132stars / infinity / forge
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
+          --metrics-json <path>  expeditions / forge の生データと未丸め集計をJSONに保存
           --help             この説明を表示
         """;
 }

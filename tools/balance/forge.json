@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "enhanceFailure": {
+    "currentLevelOffset": 2,
+    "percentPerLevel": 3,
+    "maximumPercent": 45
+  }
+}

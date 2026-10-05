@@ -1442,11 +1442,11 @@ namespace SodRpg.Core.Game
                 $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
         }
 
-        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。max(0, (目標強化値 − 3) × 3) を45%で頭打ち。上限では0。</summary>
+        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。係数はForgeBalanceを参照。上限では0。</summary>
         public static int EnhanceFailureChance(Relic relic)
         {
             if (relic.Enhance >= Content.MaxEnhanceFor(relic)) return 0;
-            return Math.Min(45, Math.Max(0, (relic.Enhance - 2) * 3));
+            return Math.Min(ForgeBalance.MaximumPercent, Math.Max(0, (relic.Enhance - ForgeBalance.CurrentLevelOffset) * ForgeBalance.PercentPerLevel));
         }
 
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
