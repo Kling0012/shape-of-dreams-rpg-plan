@@ -11,7 +11,7 @@ namespace SodRpg.Mod
 {
     internal enum HeroSkillLocation { Identity, Movement, Q, W, E, R }
     internal struct GemLocation { public HeroSkillLocation skill; public int index; }
-    internal sealed class Gem : Actor { }
+    internal partial class Gem : Actor { }
     internal partial class Hero : Entity { public HeroSkill Skill = new HeroSkill(); }
     internal sealed partial class HeroSkill
     {
@@ -19,15 +19,18 @@ namespace SodRpg.Mod
         public readonly List<Gem> Dropped = new List<Gem>();
         public readonly List<int> DropIndices = new List<int>();
         public readonly int[] Caps = { 2, 2 };
+        private readonly int[] MemoryCaps = { 2, 2, 2, 2 };
         public int Writes;
         public HeroSkillLocation? FailSetBefore, FailSetAfter;
         public bool FailDrop;
-        public int GetMaxGemCount(HeroSkillLocation location) => Caps[(int)location];
+        public int GetMaxGemCount(HeroSkillLocation location) =>
+            (int)location < Caps.Length ? Caps[(int)location] : MemoryCaps[(int)location - Caps.Length];
         public void SetMaxGemCount(HeroSkillLocation location, int count)
         {
             if (FailSetBefore == location) { FailSetBefore = null; throw new InvalidOperationException("before assignment"); }
             Writes++;
-            Caps[(int)location] = count;
+            if ((int)location < Caps.Length) Caps[(int)location] = count;
+            else MemoryCaps[(int)location - Caps.Length] = count;
             if (FailSetAfter == location) { FailSetAfter = null; throw new InvalidOperationException("after assignment"); }
         }
         public Gem UnequipGem(GemLocation location, UnityEngine.Vector3 position)

@@ -380,7 +380,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory, MemberData(nameof(Heroes))]
-        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_within_protocol_15(string hero)
+        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_within_protocol_17(string hero)
         {
             WithHero(hero, tree =>
             {
@@ -403,7 +403,7 @@ namespace SodRpg.Core.Tests
                         + refused.Count(r => r.StartsWith("keystone ", StringComparison.Ordinal)));
 
                 var build = Build.Compute(profile, hero, 0);
-                Assert.Equal(15, SodRpg.Mod.Protocol.Version);
+                Assert.Equal(17, SodRpg.Mod.Protocol.Version); // v17: elemental boss visuals on top of the v16 boss move/reward sections
                 Assert.Equal(spent, build.SpentStarPoints);
                 string encoded = build.Encode();
                 Assert.InRange(encoded.Length, 1, BuildLimits.MaxEncodedChars);
