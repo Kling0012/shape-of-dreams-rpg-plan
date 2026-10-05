@@ -39,7 +39,7 @@ namespace SodRpg.Core.Tests
         public void Failure_probability_follows_every_target_level_and_stops_at_each_rarity_cap()
         {
             var (_, r) = Legendary();
-            int[] expected = { 0, 0, 0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85 };
+            int[] expected = { 0, 0, 0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 45, 45 };
             for (int target = 1; target <= 20; target++)
             {
                 r.Enhance = target - 1;
@@ -67,7 +67,7 @@ namespace SodRpg.Core.Tests
             var powers = r.Powers.Select(a => (a.Power, a.Value)).ToArray();
             int shards = p.Material(Materials.Shard);
             const int cost = 1760; // Legendary +20 costs twice the base enhancement fee.
-            p.StoreRng(new Rng(3));
+            p.StoreRng(new Rng(7)); // Fails the 45% roll and then the 50% keep roll, so it lowers.
             var result = Rules.Enhance(p, r.Uid);
             Assert.Equal(EventKind.Info, result.Kind);
             Assert.Same(r, p.FindStash(r.Uid));
@@ -80,15 +80,19 @@ namespace SodRpg.Core.Tests
             Assert.True(r.MilestonePowerApplied);
             Assert.Equal(affixes, r.Affixes.Select(a => (a.Stat, a.Value)));
             Assert.Equal(powers, r.Powers.Select(a => (a.Power, a.Value)));
-            var expected = new Rng(3);
+            var expected = new Rng(7); // Failure roll + keep/lower roll both consume the rng.
+            expected.NextDouble();
             expected.NextDouble();
             Assert.Equal(expected.State, p.RngState);
         }
 
         [Theory]
-        [InlineData(19, 18, 3UL)] // 85% failure at +20 target; seed 3 rolls it.
-        [InlineData(4, 3, 10UL)]  // 5% failure at +5 target; seed 10 rolls it.
-        public void Failed_forge_lowers_enhancement_by_one_level_and_keeps_earned_history(int start, int expected, ulong seed)
+        [InlineData(19, 18, 7UL)]  // 45% failure at +20 target; seed 7 fails and then rolls "lower".
+        [InlineData(19, 19, 3UL)]  // 45% failure at +20 target; seed 3 fails and then rolls "keep".
+        [InlineData(4, 3, 120UL)]  // 6% failure at +5 target; seed 120 fails and then rolls "lower".
+        [InlineData(4, 4, 10UL)]   // 6% failure at +5 target; seed 10 fails and then rolls "keep".
+        [InlineData(3, 2, 120UL)]  // +3 is the lowest level that can fail; a dropped +3 lands on +2, never below +0.
+        public void Failed_forge_keeps_or_lowers_enhancement_by_one_level_and_keeps_earned_history(int start, int expected, ulong seed)
         {
             var (p, r) = Legendary();
             r.Enhance = start;
@@ -107,7 +111,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(0UL, 20)]
-        [InlineData(3UL, 18)]
+        [InlineData(3UL, 19)] // Seed 3 fails the 45% roll and then keeps the level.
         public void Saved_rng_replays_forge_outcome_and_persists_the_consumed_state(ulong seed, int expectedLevel)
         {
             var (p, r) = Legendary();
@@ -143,7 +147,7 @@ namespace SodRpg.Core.Tests
             Assert.True(r.MilestonePowerApplied);
             Assert.True(r.Clone().MilestonePowerApplied);
             r.Enhance = 19;
-            p.StoreRng(new Rng(3));
+            p.StoreRng(new Rng(7)); // Fails and lowers to +18; the +20 boost must survive.
             Rules.Enhance(p, r.Uid);
             var saved = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             var loaded = saved.FindStash(r.Uid);
