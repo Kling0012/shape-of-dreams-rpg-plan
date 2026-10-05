@@ -42,11 +42,20 @@ namespace SodRpg.Mod
         private static void MawCommit(HeroRuntime rt, BossAction action, float now)
             => rt.Boss.Ready[action.RuntimeKey] = now + action.CooldownMillis / 1000f;
         private static float MawAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channel)
+            => Math.Max(0f,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
+                * BossCoefficient(entry,profile,channel);
+        private static float MawBoundedAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, BossAction action, float basis)
         {
             for (int i = 0; i < profile.Channels.Count; i++)
-                if (profile.Channels[i].ChannelId == channel)
-                    return Math.Max(0f,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
-                        * Math.Min(BossCoefficient(entry,profile,channel),profile.Channels[i].CapMilli / 100000f);
+            {
+                var channel = profile.Channels[i];
+                if (channel.ChannelId != action.ChannelId) continue;
+                float coefficient = Math.Min(channel.ValueMilli,channel.CapMilli) / 100000f;
+                if (coefficient <= 0) return 0;
+                float multiplier = Math.Min(3f,Math.Max(0f,BossCoefficient(entry,profile,action.ChannelId) / coefficient));
+                float h = Math.Max(0f,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower));
+                return Math.Min(h * coefficient,basis * action.MagnitudeMilli / 100000f) * multiplier;
+            }
             return 0;
         }
         private static Vector3 MawDirection(HeroRuntime rt, BossEvent kind, Vector3 origin, Vector3 point)
@@ -99,16 +108,17 @@ namespace SodRpg.Mod
                 else if (profile.Id == "boss_maw.stage2" || profile.Id == "boss_maw.stage3" || profile.Id == "boss_maw.stage6") continue;
                 else if (action.Event != kind) continue;
                 if (!MawAvailable(rt,action,now)) continue;
-                float amount = MawAmount(rt,entry,profile,action.ChannelId);
+                float amount;
                 bool success;
                 if (profile.Id == "boss_maw.armor" || profile.Id == "boss_maw.charm" || profile.Id == "boss_maw.hands")
                 {
                     float basis = profile.Id == "boss_maw.hands" ? Math.Max(0f,rt.Boss.MainHpDamage) : Math.Max(0f,rt.Hero.Status.missingHealth);
-                    amount = Math.Min(amount,basis * action.MagnitudeMilli / 100000f);
+                    amount = MawBoundedAmount(rt,entry,profile,action,basis);
                     success = amount > 0 && rt.Boss.Defense.Execute(this,rt,profile.Id,action,amount,now);
                 }
                 else
                 {
+                    amount = MawAmount(rt,entry,profile,action.ChannelId);
                     var pulses = rt.Boss.Sequence.Reset();
                     if (profile.Id == "boss_maw.head")
                     {

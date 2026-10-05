@@ -40,16 +40,8 @@ namespace SodRpg.Mod
         private readonly BossObjectPool<PolarisCombat> _polarisPool = new BossObjectPool<PolarisCombat>(64, () => new PolarisCombat());
         private readonly Dictionary<HeroRuntime, PolarisCombat> _polarisCombat = new Dictionary<HeroRuntime, PolarisCombat>(64);
         private static float PolarisAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool maxHp = false)
-        {
-            for (int i = 0; i < profile.Channels.Count; i++)
-            {
-                var channel = profile.Channels[i];
-                if (channel.ChannelId == channelId)
-                    return Math.Max(0f, maxHp ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
-                        * Math.Min(BossCoefficient(entry, profile, channelId), channel.CapMilli / 100000f);
-            }
-            return 0;
-        }
+            => Math.Max(0f, maxHp ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
+                * BossCoefficient(entry, profile, channelId);
         private static Vector3 PolarisForward(HeroRuntime rt, bool memory)
         {
             Vector3 direction = memory && rt.Boss.MemoryDirectionValid ? rt.Boss.MemoryDirection : rt.Hero.transform.forward;

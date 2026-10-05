@@ -40,7 +40,7 @@
 - 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。属性色・扇／線／放射・固定幻影・対象ID・残数／予算・縮小域をMOD幾何描画で表示し、ボスモデル／network prefab／新規Summonは要求しない。
 - live装備変更ではnative親寿命付きの予約・印・shield・予算・CDを保持し、変更したprofileだけを再判定して解除する。通常入力由来の予約／印は装備epochで破棄する。actorはcreation時刻だけでなくpool世代を照合し、死亡・遷移開始・部屋移動・owner離脱で全破棄する。
 - Protocolは段階B-1から**17のまま**、wire／codec schemaの追加なし。保存形式4を維持し、内容指紋へB-3のprofile・native contract・event orderを含める。専用取得登録は全14セット84部位・11種adapter。旧Skollの汎用Power／Guard連携・互換aliasは復活させない。Primus／Polarisには報酬連携を登録しない。
-- B-3の指定Releaseビルド成功（警告5・エラー0、配置先`/tmp/sod-deploy-i48`）。WikiGenを`/tmp/sod-wiki-i48-b3`へ実行して62セット・1418固有品、全14ボスセット84部位・11種adapterと新4セットの日英出力、Polarisの連携欄なしを確認した。本体資料とDLLのILはリポジトリ外でのみ参照。Managed DLLのみのため実機戦闘・表示・協力通信・GC／frame時間計測・較正は未確認。tests/・test csprojを変更せず、テストの設計・計画・追加・実行は行っていない。
+- B-3の指定Releaseビルド成功（警告5・エラー0）。本体資料側に`Mods`がなく自動配置条件が成立しないため、ビルド済みDLLと既存about／iconsを`/tmp/sod-deploy-i48`へ明示配置した。B-3部位の強化／覚醒は§2.1どおり元式内cap適用後に最大3倍、通常／連携段階には掛けない。WikiGenを`/tmp/sod-wiki-i48-b3`へ実行して62セット・1418固有品、全14ボスセット84部位・11種adapterと新4セットの日英出力、Polarisの連携欄なしを確認した。本体資料とDLLのILはリポジトリ外でのみ参照。Managed DLLのみのため実機戦闘・表示・協力通信・GC／frame時間計測・較正は未確認。tests/・test csprojを変更せず、テストの設計・計画・追加・実行は行っていない。
 
 ### 設計原則
 

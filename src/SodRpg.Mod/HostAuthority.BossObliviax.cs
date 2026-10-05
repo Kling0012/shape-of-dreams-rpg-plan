@@ -68,13 +68,8 @@ namespace SodRpg.Mod
         private static void ObliviaxCommit(HeroRuntime rt, BossAction action, float now)
             => BossReady(rt, action.RuntimeKey, now, action.CooldownMillis);
         private static float ObliviaxAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channel)
-        {
-            for (int i = 0; i < profile.Channels.Count; i++)
-                if (profile.Channels[i].ChannelId == channel)
-                    return Math.Max(0f, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
-                        * Math.Min(BossCoefficient(entry, profile, channel), profile.Channels[i].CapMilli / 100000f);
-            return 0f;
-        }
+            => Math.Max(0f, Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
+                * BossCoefficient(entry, profile, channel);
         private Entity ObliviaxNearest(HeroRuntime rt, Vector3 center, float range)
         {
             ListReturnHandle<Entity> handle;

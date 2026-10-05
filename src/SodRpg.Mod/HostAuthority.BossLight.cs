@@ -64,13 +64,8 @@ namespace SodRpg.Mod
                 rt.Boss.Ready[action.RuntimeKey]=now+action.CooldownMillis/1000f;
         }
         private static float LightAmount(HeroRuntime rt,BossMoveEntry entry,BossMoveProfile profile,string channel)
-        {
-            for(int i=0;i<profile.Channels.Count;i++)
-                if(profile.Channels[i].ChannelId==channel)
-                    return Math.Max(0,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
-                        * Math.Min(BossCoefficient(entry,profile,channel),profile.Channels[i].CapMilli/100000f);
-            return 0;
-        }
+            => Math.Max(0,Math.Max(rt.Hero.Status.attackDamage,rt.Hero.Status.abilityPower))
+                * BossCoefficient(entry,profile,channel);
         private LightCombat LightState(HeroRuntime rt)
         {
             if(_lightCombat.TryGetValue(rt,out var state)) return state;
