@@ -42,8 +42,9 @@ namespace SodRpg.Mod
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
             // Lobby entities have no expedition reward identity.
             if (game == null || string.IsNullOrEmpty(game.runId) || zone == null || zone.currentZoneIndex < 0) return;
+            var infinity = InfinityMode.State;
             _pressureDividendSpawns.Add(monster, new PressureDividendEnemy(game.runId, zone.currentZoneIndex,
-                checked(++_nextPressureDividendSpawn)));
+                checked(++_nextPressureDividendSpawn), infinity?.GraphEpoch ?? 0, infinity?.SegmentEpoch ?? 0, infinity?.RoomEpoch ?? 0));
         }
 
         private void InstallPressureHealthProcessor(MonsterRuntime runtime)

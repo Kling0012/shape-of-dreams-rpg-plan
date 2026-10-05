@@ -181,7 +181,8 @@ namespace SodRpg.Mod
         // Version 17 requires each Pure White participant to resolve their own choice before kill settlement.
         // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
-        public const int Version = 18;
+        // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
+        public const int Version = 19;
     }
 
     [Serializable]

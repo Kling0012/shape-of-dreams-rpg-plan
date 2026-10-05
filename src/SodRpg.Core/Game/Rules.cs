@@ -190,7 +190,7 @@ namespace SodRpg.Core.Game
                     r.AwakenPoints = (int)Math.Min(Content.AwakenThreshold, (long)r.AwakenPoints + points);
                     int level = Content.AwakenLevelFor(r.AwakenPoints);
                     if (level <= r.AwakenLevel) continue;
-                    if (r.AwakenLevel == 0) p.Stats.RelicsAwakened++; // 実績は最初の覚醒で数える
+                    if (r.AwakenLevel == 0) p.Stats.RelicsAwakened = SaturatingAdd(p.Stats.RelicsAwakened, 1);
                     r.AwakenLevel = level;
                     ReachBounty(p, BountyKind.Awakener, level, false, ev);
                     string powerMult = (Content.AwakenPowerPctAt(level) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
@@ -215,12 +215,12 @@ namespace SodRpg.Core.Game
             GameEvent killNotice = null;
             if (variant != null)
             {
-                p.Stats.VariantsSlain++;
+                p.Stats.VariantsSlain = SaturatingAdd(p.Stats.VariantsSlain, 1);
                 killNotice = new GameEvent(EventKind.Info, Loc.T($"夢の変種「{variant.Name}」を倒しました！", $"Slew the dream variant \"{variant.Name}\"!"));
             }
             else if (isNightmare)
             {
-                p.Stats.NightmaresSlain++;
+                p.Stats.NightmaresSlain = SaturatingAdd(p.Stats.NightmaresSlain, 1);
                 killNotice = new GameEvent(EventKind.Info, Loc.T($"{Nightmares.Label(nightmare)}を倒しました！", $"Slew a {Nightmares.Label(nightmare)}!"));
                 AddHint(p, Hint.FirstNightmare, ev);
             }
@@ -230,13 +230,13 @@ namespace SodRpg.Core.Game
             run.StarSecureRewarded = false;
             if (run.Kills < int.MaxValue) run.Kills++;
             if (p.Stats.Kills < int.MaxValue) p.Stats.Kills++;
-            run.SatchelShards += reward.Shards;
-            run.SatchelTuning += reward.Tuning;
+            run.SatchelShards = SaturatingAdd(run.SatchelShards, reward.Shards);
+            run.SatchelTuning = SaturatingAdd(run.SatchelTuning, reward.Tuning);
             foreach (var relic in reward.Relics)
             {
-                p.Stats.RelicsFound++;
-                run.RelicsFound++;
-                if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound++;
+                p.Stats.RelicsFound = SaturatingAdd(p.Stats.RelicsFound, 1);
+                run.RelicsFound = SaturatingAdd(run.RelicsFound, 1);
+                if (relic.Rarity == Rarity.Legendary) p.Stats.LegendariesFound = SaturatingAdd(p.Stats.LegendariesFound, 1);
                 p.Codex.Add(relic.CodexId);
                 p.BestItemLevel = Math.Max(p.BestItemLevel, relic.ItemLevel);
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
@@ -278,7 +278,7 @@ namespace SodRpg.Core.Game
             var worst = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).FirstOrDefault();
             if (worst == null) return; // 全品予約中なら、容量より予約対象の保護を優先する。
             run.Satchel.Remove(worst);
-            if (!suppressShards) run.SatchelShards += Content.SalvageShards(worst.Rarity);
+            if (!suppressShards) run.SatchelShards = SaturatingAdd(run.SatchelShards, Content.SalvageShards(worst.Rarity));
             ev.Add(new GameEvent(EventKind.Info, suppressShards ? Loc.T(
                 $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を手放しました。道標の効果で欠片は得られません。",
                 $"Satchel full: \"{worst.DisplayName}\" was discarded. The waypoint prevents shard rewards.") : Loc.T(
@@ -303,7 +303,7 @@ namespace SodRpg.Core.Game
         public static bool ShouldOfferSecurePoint(Profile p, bool traveling = false)
         {
             var run = p.Run;
-            if (run == null || run.AwaitingChoice) return false;
+            if (run == null || run.AwaitingChoice || run.Infinity != null) return false;
             return traveling || run.Kills > 0 || run.HasUnsecured || run.Heat > run.StartDepth;
         }
 
@@ -313,6 +313,9 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            if (run.Infinity != null && run.Infinity.Phase != InfinityPhase.AwaitingChoice) return ev;
+            if (run.Infinity != null && run.WaypointGeneration == int.MaxValue)
+                throw new InvalidOperationException("Infinity waypoint generation exhausted.");
             if (run.AwaitingChoice) return ev;
             NotifyForfeitedHoard(run, ev);
             Waypoints.Expire(run);
@@ -382,9 +385,9 @@ namespace SodRpg.Core.Game
             run.StarSecureRewarded = true;
             int heat = run.Heat;
             int relics = run.Satchel.Count;
-            int bonusShards = run.SatchelShards * heat / 4;
-            if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonusShards *= 2;
-            int shards = run.SatchelShards + bonusShards;
+            int bonusShards = (int)Math.Min(int.MaxValue, (long)run.SatchelShards * heat / 4
+                * (Pacts.Sum(run.Pacts).DoubleDepthBonus ? 2 : 1));
+            int shards = SaturatingAdd(run.SatchelShards, bonusShards);
             int tuning = run.SatchelTuning;
 
             var overflow = new List<Relic>();
@@ -393,13 +396,13 @@ namespace SodRpg.Core.Game
                 if (p.Stash.Count < Workshop.StashCapacity(p)) p.Stash.Add(r);
                 else overflow.Add(r);
             }
-            foreach (var r in overflow) shards += Content.SalvageShards(r.Rarity);
+            foreach (var r in overflow) shards = SaturatingAdd(shards, Content.SalvageShards(r.Rarity));
 
             p.AddMaterial(Materials.Shard, shards);
             p.AddMaterial(Materials.Tuning, tuning);
             int stored = relics - overflow.Count;
-            run.RelicsSecured += stored;
-            run.ShardsSecured += shards;
+            run.RelicsSecured = SaturatingAdd(run.RelicsSecured, stored);
+            run.ShardsSecured = SaturatingAdd(run.ShardsSecured, shards);
             run.Satchel.Clear();
             run.SatchelShards = 0;
             run.SatchelTuning = 0;
@@ -412,7 +415,7 @@ namespace SodRpg.Core.Game
             run.Pacts.Clear();
             run.OfferedPacts.Clear();
             run.OfferedEvent = DreamEvent.None;
-            run.SecuredCount++;
+            run.SecuredCount = SaturatingAdd(run.SecuredCount, 1);
             p.Stats.BestHeatSecured = Math.Max(p.Stats.BestHeatSecured, heat);
 
             string bonus = bonusShards > 0 ? Loc.T($"（うち潜行ボーナス{bonusShards}）", $" (incl. +{bonusShards} delve bonus)") : "";
@@ -465,7 +468,7 @@ namespace SodRpg.Core.Game
         {
             b.Done = true;
             b.Progress = b.Target;
-            p.Stats.BountiesDone++;
+            p.Stats.BountiesDone = SaturatingAdd(p.Stats.BountiesDone, 1);
             double mult = DailyDream.Get(p.Run.DailyId)?.BountyMult ?? 1.0;
             int shards = (int)Math.Round(b.RewardShards * mult);
             int tuning = (int)Math.Round(b.RewardTuning * mult);
@@ -473,12 +476,12 @@ namespace SodRpg.Core.Game
             {
                 p.AddMaterial(Materials.Shard, shards);
                 p.AddMaterial(Materials.Tuning, tuning);
-                p.Run.ShardsSecured += shards;
+                p.Run.ShardsSecured = SaturatingAdd(p.Run.ShardsSecured, shards);
             }
             else
             {
-                p.Run.SatchelShards += shards;
-                p.Run.SatchelTuning += tuning;
+                p.Run.SatchelShards = SaturatingAdd(p.Run.SatchelShards, shards);
+                p.Run.SatchelTuning = SaturatingAdd(p.Run.SatchelTuning, tuning);
             }
             ev.Add(new GameEvent(EventKind.Bounty, Loc.T(
                 $"依頼「{b.Describe()}」を達成しました。{b.RewardText(mult)}" + (secured ? "" : "（欠片と調律石はまだ持ち帰っていません）"),
@@ -494,11 +497,15 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            var infinity = run.Infinity;
+            if (infinity != null && (!run.AwaitingChoice || infinity.Phase != InfinityPhase.AwaitingChoice
+                || infinity.SegmentEpoch == long.MaxValue || infinity.ChoiceRevision == long.MaxValue
+                || infinity.GraphEpoch == long.MaxValue || infinity.RoomEpoch == long.MaxValue)) return ev;
             if (pact != Pact.None)
             {
                 if (!run.OfferedPacts.Contains(pact)) throw new InvalidOperationException(Loc.T("その契約は提示されていません。", "That pact is not on offer."));
                 run.Pacts.Add(pact);
-                p.Stats.PactsSworn++;
+                p.Stats.PactsSworn = SaturatingAdd(p.Stats.PactsSworn, 1);
                 AdvanceBounty(p, BountyKind.PactBearer, 1, false, ev);
                 var d = Pacts.Get(pact);
                 ev.Add(new GameEvent(EventKind.Delved, Loc.T($"悪夢の契約「{d.Name}」を結びました。{d.Description}", $"Swore the nightmare pact \"{d.Name}\". {d.Description}")));
@@ -509,6 +516,16 @@ namespace SodRpg.Core.Game
             run.PeakHeat = Math.Max(run.PeakHeat, run.Heat);
             Waypoints.Activate(run);
             run.AwaitingChoice = false;
+            if (infinity != null)
+            {
+                infinity.SettledSegmentEpoch = infinity.SegmentEpoch;
+                infinity.SegmentEpoch++;
+                infinity.ChoiceRevision++;
+                infinity.ClearsInCycle = 0;
+                infinity.SoulObserved = false;
+                infinity.Phase = InfinityPhase.Transitioning;
+                infinity.TransitionIntent = "delve";
+            }
             AddHint(p, Hint.FirstDelve, ev);
             ev.Add(new GameEvent(EventKind.Delved, Loc.T(
                 $"潜行{run.Heat}に進みました。遺物が{(int)(Loot.HeatDropBonus * 100 * run.Heat)}%出やすくなり、受けるダメージは{Build.DamageTakenPerDelvePct * run.Heat}%増えます（まだ持ち帰っていない遺物{run.Satchel.Count}個）。",
@@ -535,6 +552,51 @@ namespace SodRpg.Core.Game
                 $"遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
             AddToSatchel(p, best, ev, trades);
+            return ev;
+        }
+
+        private static int SaturatingAdd(int value, int amount) => (int)Math.Min(int.MaxValue, (long)value + amount);
+
+        public static List<GameEvent> ReachInfinityChoice(Profile p, TradeLedger trades = null)
+        {
+            if (p?.Run?.Infinity?.Phase != InfinityPhase.AwaitingChoice) return new List<GameEvent>();
+            return ReachSecurePoint(p, trades);
+        }
+
+        /// <summary>Secures once and ends without victory, defeat, or their progression rewards.</summary>
+        public static List<GameEvent> SecuredReturn(Profile p, ISet<string> reservedUids = null)
+        {
+            var run = p.Run;
+            if (run == null) return new List<GameEvent>();
+            var infinity = run.Infinity;
+            if (infinity == null || !run.AwaitingChoice || infinity.Phase != InfinityPhase.AwaitingChoice
+                || infinity.ChoiceRevision == long.MaxValue) return new List<GameEvent>();
+            if (reservedUids != null)
+                for (int i = 0; i < run.Satchel.Count; i++)
+                {
+                    var relic = run.Satchel[i];
+                    if (!reservedUids.Contains(relic.Uid)) continue;
+                    p.PendingSalvage.Add(new PendingSalvage(relic, SalvageReturnTarget.Stash));
+                    run.Satchel.RemoveAt(i--);
+                }
+            var ev = Secure(p, true);
+            infinity.ChoiceRevision++;
+            infinity.SettledSegmentEpoch = infinity.SegmentEpoch;
+            infinity.Phase = InfinityPhase.Returning;
+            infinity.TransitionIntent = "return";
+            p.LastReport = new RunReport
+            {
+                SecuredReturn = true, Kills = run.Kills, RelicsFound = run.RelicsFound,
+                RelicsSecured = run.RelicsSecured, ShardsSecured = run.ShardsSecured,
+                PeakHeat = run.PeakHeat, SecuredCount = run.SecuredCount,
+                LevelBefore = run.LevelAtStart > 0 ? run.LevelAtStart : p.DreamLevel, LevelAfter = p.DreamLevel,
+                BountiesTotal = run.Bounties.Count, BountiesDone = run.Bounties.Count(b => b.Done),
+            };
+            NotifyForfeitedHoard(run, ev);
+            Waypoints.Expire(run);
+            p.CompletedRunId = run.RunId;
+            p.CompletedRunSecuredReturn = true;
+            p.Run = null;
             return ev;
         }
 
@@ -603,6 +665,7 @@ namespace SodRpg.Core.Game
             NotifyForfeitedHoard(run, ev);
             Waypoints.Expire(run);
             p.CompletedRunId = run.RunId;
+            p.CompletedRunSecuredReturn = false;
             p.Run = null;
             ev.AddRange(Feats.Check(p));
             return ev;

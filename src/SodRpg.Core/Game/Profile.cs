@@ -86,6 +86,7 @@ namespace SodRpg.Core.Game
     public sealed class RunState
     {
         public string RunId { get; set; }
+        public InfinityRunState Infinity { get; set; }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -158,6 +159,7 @@ namespace SodRpg.Core.Game
             var c = new RunState
             {
                 RunId = RunId,
+                Infinity = Infinity?.Clone(),
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
@@ -210,6 +212,7 @@ namespace SodRpg.Core.Game
     public sealed class RunReport
     {
         public bool Victory { get; set; }
+        public bool SecuredReturn { get; set; }
         public int Kills { get; set; }
         public int RelicsFound { get; set; }
         public int RelicsSecured { get; set; }
@@ -319,6 +322,8 @@ namespace SodRpg.Core.Game
 
         private int _lastDreamDepth;
         public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
+        public bool LastInfinityEnabled { get; set; }
+        public int LastInfinityInterval { get; set; } = 10;
 
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
@@ -351,6 +356,7 @@ namespace SodRpg.Core.Game
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
         public string CompletedRunId { get; set; }
+        public bool CompletedRunSecuredReturn { get; set; }
         public RunRecoveryState RunRecovery { get; set; }
         public KillClassificationCheckpoint KillClassification { get; set; }
 
@@ -431,9 +437,12 @@ namespace SodRpg.Core.Game
                 Japanese = Japanese,
                 StartDepth = StartDepth,
                 LastDreamDepth = LastDreamDepth,
+                LastInfinityEnabled = LastInfinityEnabled,
+                LastInfinityInterval = LastInfinityInterval,
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 CompletedRunId = CompletedRunId,
+                CompletedRunSecuredReturn = CompletedRunSecuredReturn,
                 RunRecovery = RunRecovery?.Clone(),
                 KillClassification = KillClassification?.Clone(),
                 Focus = Focus,

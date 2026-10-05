@@ -45,7 +45,7 @@ namespace SodRpg.Mod
         private void TickHello()
         {
             // ホスト自身はあいさつ不要（自分の版なので必ず一致する）。
-            if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active || LocalHero == null) return;
+            if (_clientRpcOn == null || !NetworkClient.active || NetworkServer.active) return;
             float now = Time.unscaledTime;
             if (now >= _nextHello)
             {

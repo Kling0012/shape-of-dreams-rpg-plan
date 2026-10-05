@@ -10,6 +10,9 @@ namespace SodRpg.Core.Game
         private readonly HashSet<string> _nonces = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<string> _deaths = new HashSet<string>(StringComparer.Ordinal);
         private string _runId;
+        private long _retiredBeforeGraph;
+        private readonly Dictionary<string, long> _receiptGraphs = new Dictionary<string, long>(StringComparer.Ordinal);
+        private readonly List<string> _retired = new List<string>();
         public int Count => _pending.Count;
 
         public bool AddAuthenticated(PressureDividendReward reward, string authenticatedRunId, string authenticatedOwnerId)
@@ -21,10 +24,30 @@ namespace SodRpg.Core.Game
                 Clear();
                 _runId = authenticatedRunId;
             }
+            if (reward.GraphEpoch < _retiredBeforeGraph) return false;
             if (_nonces.Contains(reward.RewardNonce) || _deaths.Contains(reward.DeathOwnerKey)) return false;
             _nonces.Add(reward.RewardNonce);
             _deaths.Add(reward.DeathOwnerKey);
+            _receiptGraphs["n:" + reward.RewardNonce] = reward.GraphEpoch;
+            _receiptGraphs["d:" + reward.DeathOwnerKey] = reward.GraphEpoch;
             _pending.Enqueue(reward);
+            return true;
+        }
+
+        public bool RetireBeforeGraph(long graphEpoch)
+        {
+            if (graphEpoch <= _retiredBeforeGraph) return true;
+            foreach (var pending in _pending) if (pending.GraphEpoch < graphEpoch) return false;
+            _retiredBeforeGraph = graphEpoch;
+            _retired.Clear();
+            foreach (var entry in _receiptGraphs) if (entry.Value < graphEpoch) _retired.Add(entry.Key);
+            foreach (string key in _retired)
+            {
+                if (key.StartsWith("n:", StringComparison.Ordinal)) _nonces.Remove(key.Substring(2));
+                else _deaths.Remove(key.Substring(2));
+                _receiptGraphs.Remove(key);
+            }
+            _retired.Clear();
             return true;
         }
 
@@ -36,6 +59,7 @@ namespace SodRpg.Core.Game
             while (_pending.Count > 0)
             {
                 var reward = _pending.Peek();
+                if (profile.Run.Infinity != null && reward.GraphEpoch > profile.Run.Infinity.GraphEpoch) break;
                 var result = Rules.ApplyPressureDividend(profile, reward);
                 _pending.Dequeue();
                 count++;
@@ -47,6 +71,7 @@ namespace SodRpg.Core.Game
         public void Clear()
         {
             _pending.Clear(); _nonces.Clear(); _deaths.Clear(); _runId = null;
+            _receiptGraphs.Clear(); _retiredBeforeGraph = 0;
         }
     }
 }

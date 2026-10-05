@@ -200,8 +200,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
-                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save", "kill sync" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
+                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save", "kill sync" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -524,6 +524,7 @@ namespace SodRpg.Mod
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             Emit(Rules.BeginRun(Profile, runId, DailyDream.Today, ReadLimboDepth(), _trades.ReservedSalvageUids(), heroKey: HeroKeyOf(LocalHero),
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
+            InitializeInfinityRun();
             ApplyHostRunChoices();
             if (pacts > 0) SendCurseClear();
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
@@ -621,7 +622,9 @@ namespace SodRpg.Mod
                     fightWaypoint = Profile.Run.ActiveWaypoint;
                 }
                 CaptureNativeKill(m, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
-                    tier, level, NightmareAffix.None, null, heroKey, heat: fightHeat, waypoint: fightWaypoint));
+                    tier, level, NightmareAffix.None, null, heroKey, heat: fightHeat, waypoint: fightWaypoint,
+                    graphEpoch: Profile.Run?.Infinity?.GraphEpoch ?? 0, segmentEpoch: Profile.Run?.Infinity?.SegmentEpoch ?? 0,
+                    roomEpoch: Profile.Run?.Infinity?.RoomEpoch ?? 0));
             }
             catch (Exception ex)
             {
@@ -633,6 +636,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (TryInfinityArrival()) return;
                 if (info.isLoadingFromSave || !info.isTraveling) return;
                 string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
                 if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;
@@ -650,6 +654,7 @@ namespace SodRpg.Mod
         {
             try
             {
+                if (Profile.Run?.Infinity != null) return;
                 if (_zone == null) return;
                 int added = _rooms.Observe(_zone.clearedCombatRooms);
                 if (!RunActive || added <= 0) return;
@@ -666,6 +671,7 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+                if (ObserveInfinityConclusion(result)) return;
                 _pendingRunVictory = IsVictory(result.result);
                 _pendingResultRunId = ActiveRunId ?? NetworkedManagerBase<GameManager>.softInstance?.runId;
                 FlushPendingRunRewards();
@@ -1043,6 +1049,7 @@ namespace SodRpg.Mod
         public string Secure()
         {
             if (Profile.Run == null) return null;
+            if (TryInfinitySecure(out string infinityError)) return infinityError;
             if (!CanResolveSecureChoice) return SecureChoiceUnavailable();
             int pacts = Profile.Run.Pacts.Count;
             Emit(Rules.Secure(Profile, _trades));
@@ -1057,6 +1064,7 @@ namespace SodRpg.Mod
         public string Delve(Pact pact = Pact.None)
         {
             if (Profile.Run == null) return null;
+            if (TryInfinityDelve(pact, out string infinityError)) return infinityError;
             if (!CanResolveSecureChoice) return SecureChoiceUnavailable();
             Emit(Rules.Delve(Profile, pact));
             var def = Pacts.Get(pact);

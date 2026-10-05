@@ -377,6 +377,18 @@ namespace SodRpg.Mod
                     .Append(Loc.T("・攻×", " · ATK×")).Append(_s.PressureDamageMultiplier.ToString("0.00"));
             else sb.Append(Loc.T("ホストの確認待ち", "awaiting host"));
             sb.Append("</size>");
+            if (run?.Infinity != null)
+            {
+                var infinity = run.Infinity;
+                sb.Append("\n<size=13>").Append(Loc.T("インフィニティ · クリア ", "Infinity · cleared "))
+                    .Append(infinity.ClearedCombatTotal).Append(Loc.T("部屋 · 周期 ", " rooms · cycle "))
+                    .Append(infinity.ClearsInCycle).Append('/').Append(infinity.Interval)
+                    .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
+                if (infinity.PressureStage == 100) sb.Append(Loc.T("（上限）", " (cap)"));
+                sb.Append("</size>");
+                if (!InfinityMode.NativeSaveAgreement)
+                    sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required")).Append("</color>");
+            }
             string sectionTags = SectionTagNotice();
             if (sectionTags != null)
                 sb.Append("\n<size=13><color=#ffd27f>").Append(sectionTags).Append("</color></size>");
@@ -566,6 +578,9 @@ namespace SodRpg.Mod
             _scrollSecure = GUILayout.BeginScrollView(_scrollSecure);
             GUILayout.Label(Loc.T("確保地点 ─ ここで持ち帰るか、さらに潜るかを選びます", "Secure Point ─ take your loot home, or delve deeper"), _st.Title);
             DrawWaypointPicker(run);
+            if (run.Infinity != null)
+                GUILayout.Label(Loc.T("インフィニティ：確保は全員帰還して終了、潜行は全員続行。ホストが決定します。",
+                    "Infinity: Secure returns everyone and ends the run; Delve continues for everyone. The host decides."), _st.Warn);
             int bonus = run.SatchelShards * run.Heat / 4;
             if (Pacts.Sum(run.Pacts).DoubleDepthBonus) bonus *= 2;
             int free = Math.Max(0, Workshop.StashCapacity(_s.Profile) - _s.Profile.Stash.Count);
@@ -699,7 +714,9 @@ namespace SodRpg.Mod
                 return;
             }
             GUILayout.Label(Loc.T("ホストが1枚選びます。「選ばない」こともできます。次の確保地点に着くと効果が終わります。", "The host may choose one card or skip. Its effect ends at the next secure point."), _st.Small);
-            GUILayout.Label(Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
+            GUILayout.Label(run.Infinity != null
+                ? Loc.T("ボス後の選択はホストが全員分を確定します。戦闘で自動潜行しません。", "The host confirms the post-boss choice for everyone. Combat does not auto-delve.")
+                : Loc.T("選択を終えずに戦闘を続けると、選択中の道標で潜行します。契約は結びません。", "Continuing combat commits the selected waypoint and delves without a pact."), _st.Small);
             if (_waypointCardsJapanese != Loc.Japanese)
             {
                 _waypointCardsJapanese = Loc.Japanese;
@@ -743,11 +760,40 @@ namespace SodRpg.Mod
             GUI.enabled = true;
             GUILayout.Label(Loc.T("ホストが選択・遠征中は固定", "Chosen by the host; fixed during the expedition"), _st.Small);
             GUILayout.EndHorizontal();
+            DrawInfinityChoice();
             if (!_s.HasHostRunChoices)
                 GUILayout.Label(Loc.T("ホストの選んだ深さは、遠征の開始時に届きます。", "The host's chosen depth will arrive when the expedition starts."), _st.Small);
             else GUILayout.Label(Loc.T(
                 $"敵HP ×{DreamDepth.HealthMultiplier(depth):0.00}・敵ダメージ ×{DreamDepth.DamageMultiplier(depth):0.00}・良い遺物の出やすさ +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}%・覚醒の力 ×{DreamDepth.AwakeningMultiplier(depth):0.00}・星の経験 ×{DreamDepth.StarXpMultiplier(depth):0.00}・部屋 +{DreamDepth.ExtraZoneNodes(depth)}",
                 $"Enemy HP ×{DreamDepth.HealthMultiplier(depth):0.00} · enemy damage ×{DreamDepth.DamageMultiplier(depth):0.00} · better relics +{Loot.LuckPercent(DreamDepth.RarityLuck(depth)):0}% · awakening ×{DreamDepth.AwakeningMultiplier(depth):0.00} · star XP ×{DreamDepth.StarXpMultiplier(depth):0.00} · Rooms +{DreamDepth.ExtraZoneNodes(depth)}"), _st.Small);
+        }
+
+        private static readonly int[] InfinityIntervals = { 10, 15, 20 };
+        private static readonly string[] InfinityIntervalLabels = { "10", "15", "20" };
+
+        private void DrawInfinityChoice()
+        {
+            bool enabled = _s.ChosenInfinityEnabled;
+            int interval = _s.ChosenInfinityInterval;
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("インフィニティ", "Infinity mode"), _st.Label, GUILayout.Width(110));
+            GUI.enabled = _s.CanChooseDepth;
+            if (GUILayout.Button(Loc.T("オフ（通常）", "Off (normal)"), !enabled ? _st.TabSel : _st.Tab, GUILayout.Width(112)))
+                SetStatus(_s.ChooseInfinity(false, interval));
+            if (GUILayout.Button(Loc.T("オン", "On"), enabled ? _st.TabSel : _st.Tab, GUILayout.Width(64)))
+                SetStatus(_s.ChooseInfinity(true, interval));
+            GUILayout.Label(Loc.T("ボス周期", "Boss interval"), _st.Small, GUILayout.Width(85));
+            for (int i = 0; i < InfinityIntervals.Length; i++)
+            {
+                int value = InfinityIntervals[i];
+                if (GUILayout.Button(InfinityIntervalLabels[i], value == interval ? _st.TabSel : _st.Tab, GUILayout.Width(36)))
+                    SetStatus(_s.ChooseInfinity(enabled, value));
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            if (enabled)
+                GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。報酬速度の上限は段階2です。",
+                    "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts. Reward rate limits are deferred to stage 2."), _st.Small);
         }
 
         private Vector2 _scrollSecure;
@@ -867,7 +913,10 @@ namespace SodRpg.Mod
             var rect = new Rect(w / 2 - width / 2, h * 0.16f, width, Mathf.Min(_reportHeight, h * 0.8f));
             if (rect.Contains(Event.current.mousePosition)) MouseOverPanel = true;
             GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.Label(r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered") : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
+            GUILayout.Label(r.SecuredReturn
+                ? Loc.T("インフィニティの結果：確保して帰還しました", "Infinity: Secured and returned")
+                : r.Victory ? Loc.T("遠征の結果：夢を踏破しました", "Expedition: Conquered")
+                : Loc.T("遠征の結果：夢から覚めました", "Expedition: Awakened"), _st.Title);
             GUILayout.Label(text, _st.Label);
             if (note != null) GUILayout.Label(note, _st.Small);
             GUILayout.FlexibleSpace();

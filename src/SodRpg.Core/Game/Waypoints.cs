@@ -159,7 +159,7 @@ namespace SodRpg.Core.Game
                 int keep = Math.Max(0, Math.Min(reward.Relics.Count, t.MaxRelicsPerRoom - run.WaypointRelicsInRoom));
                 if (keep < reward.Relics.Count) reward.Relics.RemoveRange(keep, reward.Relics.Count - keep);
             }
-            run.WaypointRelicsInRoom += reward.Relics.Count;
+            run.WaypointRelicsInRoom = Add(run.WaypointRelicsInRoom, reward.Relics.Count);
             if (t.MaxRelicsPerRoom != int.MaxValue && reward.Relics.Count > 0) run.WaypointLootRooms.Add(roomIndex);
             for (int i = 0; i < reward.Relics.Count; i++)
             {

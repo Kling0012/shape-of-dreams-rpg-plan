@@ -14,6 +14,9 @@ namespace SodRpg.Mod
         public string eventId;
         public uint netId;
         public int zoneIndex;
+        public long graphEpoch;
+        public long segmentEpoch;
+        public long roomEpoch;
         public int affixes;
         public string variantId;
         public string bossTypeName;
@@ -31,12 +34,12 @@ namespace SodRpg.Mod
             eventId = fact.EventId, netId = fact.MonsterNetId, zoneIndex = fact.ZoneIndex,
             affixes = (int)fact.Nightmare, variantId = fact.VariantId, sequence = fact.Sequence, streamId = fact.StreamId,
             bossTypeName = fact.BossTypeName, bossDropNightmare = fact.BossDropNightmare,
-            bossDropDepth = fact.BossDropDepth,
+            bossDropDepth = fact.BossDropDepth, graphEpoch = fact.GraphEpoch, segmentEpoch = fact.SegmentEpoch, roomEpoch = fact.RoomEpoch,
         };
 
         public AuthoritativeRunKill ToFact() => new AuthoritativeRunKill(runId, eventId, netId,
             zoneIndex, (NightmareAffix)affixes, variantId, sequence, streamId,
-            bossTypeName, bossDropNightmare, bossDropDepth);
+            bossTypeName, bossDropNightmare, bossDropDepth, graphEpoch, segmentEpoch, roomEpoch);
     }
 
     [Serializable]

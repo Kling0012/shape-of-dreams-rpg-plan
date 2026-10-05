@@ -1,0 +1,573 @@
+using System;
+using System.Collections.Generic;
+using HarmonyLib;
+using Mirror;
+using Newtonsoft.Json;
+using SodRpg.Core.Game;
+
+namespace SodRpg.Mod
+{
+    /// <summary>Owns the native, finite graph. Profile receipts remain the reward authority.</summary>
+    internal static class InfinityMode
+    {
+        internal const string RuntimeKey = "dreamforge.infinity.runtime";
+        internal const string ChoiceKey = "dreamforge.infinity.choice";
+        private const string HaltKey = "dreamforge.infinity.halted";
+        private static string _runId;
+        private static InfinityRunState _initial;
+        private static bool _restoring;
+        private static bool _newInfinity;
+        private static bool _halted;
+        private static bool _refresh;
+        private static bool _ownsPause;
+        private static readonly HashSet<int> ReferencedModifiers = new HashSet<int>();
+        private static readonly List<int> RetiredModifiers = new List<int>();
+        private static Actor _ackActor;
+        private static readonly Action<DreamforgeInfinityAckMsg, DewPlayer> OnAck = ReceiveAck;
+        private static readonly Dictionary<string, long> Acks = new Dictionary<string, long>(StringComparer.Ordinal);
+        private static readonly List<string> DepartedAcks = new List<string>();
+        private static string _choiceText;
+        private static InfinityChoice _choice;
+        private static readonly HashSet<int> ReachableNodes = new HashSet<int>();
+        private static readonly List<int> ReachableQueue = new List<int>();
+        private static long _reachableRoomEpoch = -1;
+        private static bool _hasReachableCombat;
+
+        internal static InfinityRunState State
+        {
+            get
+            {
+                var run = ClientSession.HostRun;
+                return run != null && run.RunId == NetworkedManagerBase<GameManager>.softInstance?.runId ? run.Infinity : _initial;
+            }
+        }
+        internal static bool Enabled => NetworkServer.active
+            ? State != null || NativeEnvelopePresent || _newInfinity
+                || NetworkedManagerBase<GameManager>.softInstance == null && ClientSession.HostChosenInfinityEnabled
+            : NativeEnvelopePresent || NetworkedManagerBase<GameManager>.softInstance == null
+                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue("dreamforge.infinity.enabled", out var enabled) == true && enabled == "1";
+        internal static bool NativeSaveAgreement => !_halted && !_restoring
+            && (NetworkServer.active || NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
+        internal static bool IsTechnicalRefresh => _refresh;
+        internal static bool CanAdvance => NativeSaveAgreement && ClientSession.HostInfinityCanAdvance;
+        internal static bool Restoring => _restoring;
+        internal static bool NativeEnvelopePresent => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(RuntimeKey) == true;
+
+        internal sealed class Envelope
+        {
+            public string RunId;
+            public int NativeZoneIndex;
+            public uint WorldSeed;
+            public InfinityRunState State;
+        }
+
+        internal sealed class InfinityChoice
+        {
+            public string RunId;
+            public long Revision;
+            public long SegmentEpoch;
+            public long GraphEpoch;
+            public bool Boundary;
+            public bool Secure;
+            public Pact Pact;
+            public string BeforeChoices;
+            [JsonIgnore] public RunChoiceSnapshot Before;
+        }
+
+        internal static InfinityChoice CurrentChoice
+        {
+            get
+            {
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                if (settings == null || !settings.customData.TryGetValue(ChoiceKey, out var text)) return null;
+                if (text == _choiceText) return _choice;
+                _choiceText = text;
+                try { _choice = JsonConvert.DeserializeObject<InfinityChoice>(text); }
+                catch (JsonException) { _choice = null; Halt("Invalid Infinity choice envelope."); }
+                if (_choice != null && RunChoiceSnapshot.TryDecode(_choice.BeforeChoices, out var before)) _choice.Before = before;
+                return _choice;
+            }
+        }
+
+        internal static void StartNewGame()
+        {
+            _restoring = false; _halted = false; _refresh = false;
+            _newInfinity = ClientSession.HostChosenInfinityEnabled;
+            _initial = null; _runId = null;
+            _choice = null; _choiceText = null; Acks.Clear();
+            _reachableRoomEpoch = -1;
+            ReleasePause();
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            if (NetworkServer.active && settings != null)
+            {
+                settings.customData.Remove(RuntimeKey);
+                settings.customData.Remove(ChoiceKey);
+                settings.customData.Remove(HaltKey);
+            }
+        }
+
+        internal static void BeginRestore()
+        {
+            _restoring = true; _halted = false; _initial = null; _newInfinity = false; _refresh = false;
+            _reachableRoomEpoch = -1; Acks.Clear(); _choice = null; _choiceText = null;
+        }
+        internal static void FinishRestore()
+        {
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone == null)
+            {
+                _restoring = false;
+                if (NativeEnvelopePresent || State != null) Halt("Infinity continue has no native graph.");
+                return;
+            }
+            zone.CallOnReadyAfterTransition(() =>
+            {
+                _restoring = false;
+                ClientSession.ValidateHostInfinityContinue();
+            });
+        }
+
+        internal static bool TryReadEnvelope(out Envelope envelope)
+        {
+            envelope = null;
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            if (settings == null || !settings.customData.TryGetValue(RuntimeKey, out var text)) return false;
+            try { envelope = JsonConvert.DeserializeObject<Envelope>(text); }
+            catch (JsonException) { return false; }
+            return envelope?.State != null;
+        }
+
+        internal static bool MatchesProfile(RunState run)
+        {
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (run?.Infinity == null || zone == null || !TryReadEnvelope(out var native)) return false;
+            var a = native.State; var b = run.Infinity;
+            return native.RunId == run.RunId && native.NativeZoneIndex == zone.currentZoneIndex
+                && native.WorldSeed == zone.worldSeed && zone.currentZone != null && zone.currentZone.name == b.FixedZoneId
+                && a.FixedZoneId == b.FixedZoneId && a.Interval == b.Interval
+                && a.GraphEpoch == b.GraphEpoch && a.SegmentEpoch == b.SegmentEpoch && a.RoomEpoch == b.RoomEpoch
+                && a.ClearedCombatTotal == b.ClearedCombatTotal && a.ClearsInCycle == b.ClearsInCycle
+                && a.Phase == b.Phase && a.ChoiceRevision == b.ChoiceRevision
+                && a.TransitionIntent == b.TransitionIntent && a.SoulObserved == b.SoulObserved
+                && a.SettledGraphEpoch == b.SettledGraphEpoch && a.SettledSegmentEpoch == b.SettledSegmentEpoch
+                && a.ClearedNodes.SetEquals(b.ClearedNodes);
+        }
+
+        internal static void Halt(string reason)
+        {
+            if (!_halted) Log.Warn(reason + " Infinity progression and new rewards are paused.");
+            _halted = true;
+            var gm = NetworkedManagerBase<GameManager>.softInstance;
+            if (NetworkServer.active && gm != null && !gm.isGameTimePausedByGame) _ownsPause = true;
+            if (NetworkServer.active && gm != null) gm.isGameTimePausedByGame = true;
+            if (NetworkServer.active)
+            {
+                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                if (settings != null) settings.customData[HaltKey] = "1";
+            }
+        }
+
+        private static void ReleasePause()
+        {
+            var gm = NetworkedManagerBase<GameManager>.softInstance;
+            if (_ownsPause && gm != null) gm.isGameTimePausedByGame = false;
+            _ownsPause = false;
+        }
+
+        internal static void ConfirmAgreement()
+        {
+            _halted = false;
+            ReleasePause();
+            if (NetworkServer.active) NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.Remove(HaltKey);
+        }
+
+        internal static void CompleteReturn(InfinityRunState state)
+        {
+            _initial = state;
+            WriteEnvelope();
+        }
+
+        internal static void WriteEnvelope()
+        {
+            if (!NetworkServer.active || !NativeSaveAgreement || State == null) return;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            var gm = NetworkedManagerBase<GameManager>.softInstance;
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            if (zone == null || gm == null || settings == null) return;
+            settings.customData[RuntimeKey] = JsonConvert.SerializeObject(new Envelope
+            {
+                RunId = gm.runId, NativeZoneIndex = zone.currentZoneIndex, WorldSeed = zone.worldSeed, State = State,
+            });
+        }
+
+        internal static InfinityRunState InitialState => _initial;
+        internal static void OnGenerated(ZoneManager zone)
+        {
+            if (!NetworkServer.active || !Enabled || _restoring) return;
+            var id = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            if (_runId != id)
+            {
+                _runId = id; _initial = null;
+            }
+            var asset = zone.currentZone;
+            if (asset == null || asset.useSpecialGeneration || asset.name == "Zone_Primus"
+                || asset.startRooms == null || asset.startRooms.Count == 0
+                || asset.combatRooms == null || asset.combatRooms.Count == 0
+                || asset.bossRooms == null || asset.bossRooms.Count == 0)
+            {
+                Halt("Infinity requires a normal zone with native start, combat and boss pools."); return;
+            }
+            if (State == null) _initial = new InfinityRunState
+            {
+                FixedZoneId = asset.name, Interval = ClientSession.HostChosenInfinityInterval,
+            };
+            if (State.FixedZoneId != asset.name) { Halt("Infinity fixed-zone identity changed."); return; }
+            if (_refresh)
+            {
+                if (!State.CompleteGraphTransition(State.GraphEpoch + 1))
+                { Halt("Infinity graph generation did not match its transition intent."); return; }
+                _refresh = false;
+            }
+            if (zone.nodes.Count > InfinityRunState.MaximumGraphNodes)
+            { Halt("Infinity generated graph exceeds its bounded node limit."); return; }
+            ReferencedModifiers.Clear(); RetiredModifiers.Clear();
+            foreach (var node in zone.nodes)
+                if (node.modifiers != null)
+                    foreach (var modifier in node.modifiers) ReferencedModifiers.Add(modifier.id);
+            // Generation runs after native SerializeRoomData/StopRoom and destruction of room-local actors.
+            foreach (var pair in zone.modifierServerData)
+                if (!ReferencedModifiers.Contains(pair.Key)) RetiredModifiers.Add(pair.Key);
+            foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
+            ReferencedModifiers.Clear(); RetiredModifiers.Clear();
+            WriteEnvelope();
+        }
+
+        internal static void Tick()
+        {
+            if (!NetworkServer.active || !Enabled) return;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            var state = State;
+            if (zone == null || state == null) return;
+            RegisterAcks();
+            if (!NativeSaveAgreement)
+            {
+                if (_halted) NetworkedManagerBase<GameManager>.softInstance.isGameTimePausedByGame = true;
+                return;
+            }
+            if (zone.isInAnyTransition) return;
+            if (zone.currentZone == null || zone.currentZone.name != state.FixedZoneId)
+            { Halt("Infinity native zone does not match the fixed graph."); return; }
+            var room = SingletonDewNetworkBehaviour<Room>.softInstance;
+            if (room == null || !room.isActive || zone.currentNodeIndex < 0) return;
+            if (state.ClearedCombatTotal == long.MaxValue)
+            { Halt("Infinity combat-clear counter exhausted."); return; }
+            if (zone.currentNode.type == WorldNodeType.ExitBoss)
+            {
+                bool soul = false;
+                var actors = NetworkedManagerBase<ActorManager>.softInstance;
+                if (actors != null && (state.Phase == InfinityPhase.BossFight || state.Phase == InfinityPhase.WaitingSoulFinish))
+                    foreach (var actor in actors.allActors)
+                        if (actor is Shrine_BossSoul && actor.isActive) { soul = true; break; }
+                var before = state.Phase;
+                bool seen = state.SoulObserved;
+                state.ObserveSoul(soul, room.didClearRoom, Rift_RoomExit.instance != null && !Rift_RoomExit.instance.isLocked);
+                if (before != state.Phase || seen != state.SoulObserved) ClientSession.PersistHostInfinityState();
+                if (state.Phase == InfinityPhase.AwaitingChoice) ClientSession.OpenHostInfinityChoice();
+            }
+            else if ((state.Phase == InfinityPhase.Exploring || state.Phase == InfinityPhase.BossDue)
+                && room.didClearRoom && !HasNewCombat(zone))
+            {
+                var choice = CurrentChoice;
+                if (choice == null || choice.RunId != ClientSession.HostRun?.RunId || !choice.Boundary || choice.GraphEpoch != state.GraphEpoch)
+                    PublishChoice(new InfinityChoice
+                    {
+                        RunId = ClientSession.HostRun?.RunId, GraphEpoch = state.GraphEpoch,
+                        SegmentEpoch = state.SegmentEpoch, Revision = state.ChoiceRevision, Boundary = true,
+                    });
+            }
+        }
+
+        private static bool HasNewCombat(ZoneManager zone)
+        {
+            if (_reachableRoomEpoch == State.RoomEpoch) return _hasReachableCombat;
+            _reachableRoomEpoch = State.RoomEpoch;
+            _hasReachableCombat = false;
+            ReachableNodes.Clear(); ReachableQueue.Clear();
+            ReachableNodes.Add(zone.currentNodeIndex); ReachableQueue.Add(zone.currentNodeIndex);
+            for (int head = 0; head < ReachableQueue.Count && !_hasReachableCombat; head++)
+            {
+                int from = ReachableQueue[head];
+                for (int to = 0; to < zone.nodes.Count; to++)
+                {
+                    if (ReachableNodes.Contains(to) || zone.nodes[to].type == WorldNodeType.ExitBoss
+                        || zone.nodes[to].type == WorldNodeType.Special || !zone.IsNodeConnected(from, to)) continue;
+                    if (zone.nodes[to].type == WorldNodeType.Combat && to < zone.visitedNodesSaveData.Count
+                        && zone.visitedNodesSaveData[to] == null)
+                    {
+                        _hasReachableCombat = true;
+                        break;
+                    }
+                    ReachableNodes.Add(to); ReachableQueue.Add(to);
+                }
+            }
+            ReachableNodes.Clear(); ReachableQueue.Clear();
+            return _hasReachableCombat;
+        }
+
+        internal static void OnRoomClear(Room room)
+        {
+            if (!NetworkServer.active || !Enabled || !NativeSaveAgreement) return;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            var state = State;
+            if (zone == null || state == null || room != SingletonDewNetworkBehaviour<Room>.softInstance || zone.currentNodeIndex < 0) return;
+            if (zone.currentNode.type == WorldNodeType.Combat)
+            {
+                if (state.TryCountCombatClear(state.GraphEpoch, zone.currentNodeIndex, room.isActive, zone.isInAnyTransition, room.isRevisit))
+                    ClientSession.CountHostInfinityRoom();
+            }
+            else if (zone.currentNode.type == WorldNodeType.ExitBoss && room.isActive && !zone.isInAnyTransition)
+            {
+                state.ObserveBossClear();
+                ClientSession.PersistHostInfinityState();
+            }
+        }
+
+        internal static bool RouteTravel(ZoneManager zone, ref int to, bool isSidetrackTransition)
+        {
+            if (!Enabled || !NetworkServer.active) return true;
+            var state = State;
+            if (state == null || !CanAdvance || !ClientSession.HostInfinityRewardsSettled
+                || zone.isInAnyTransition || to < 0 || to >= zone.nodes.Count || isSidetrackTransition) return false;
+            if (CurrentChoice != null && CurrentChoice.GraphEpoch == state.GraphEpoch) return false;
+            if (state.Phase != InfinityPhase.Exploring && state.Phase != InfinityPhase.BossDue) return false;
+            var room = SingletonDewNetworkBehaviour<Room>.softInstance;
+            if (room == null || !room.didClearRoom) return false;
+            bool freshCombat = zone.nodes[to].type == WorldNodeType.Combat && zone.visitedNodesSaveData[to] == null;
+            if (state.Phase == InfinityPhase.BossDue && (freshCombat || zone.nodes[to].type == WorldNodeType.ExitBoss))
+            {
+                to = -1;
+                for (int i = 0; i < zone.nodes.Count; i++)
+                    if (zone.nodes[i].type == WorldNodeType.ExitBoss) { to = i; break; }
+                if (to < 0 || !state.TryEnterBoss()) return false;
+                ClientSession.PersistHostInfinityState();
+                return true;
+            }
+            return zone.nodes[to].type != WorldNodeType.ExitBoss;
+        }
+
+        internal static bool Regenerate(string intent)
+        {
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            var state = State;
+            if (zone == null || state == null || zone.isInAnyTransition || !CanAdvance
+                || !ClientSession.HostInfinityBoundarySettled || !ClientSession.HostInfinityRewardsSettled) return false;
+            if (state.GraphEpoch == long.MaxValue) { Halt("Infinity graph epoch exhausted."); return false; }
+            if (state.Phase != InfinityPhase.Transitioning && !state.BeginGraphTransition(intent)) return false;
+            _refresh = true;
+            if (!ClientSession.PersistHostInfinityState()) { _refresh = false; Halt("Infinity transition receipt could not be saved."); return false; }
+            // noAdvance explicitly retains zoneIndex, tier, loop and ambientLevel. Native LoadNode adopts
+            // KO-only revival and resets hunter credit/status/turn; healthy heroes are not fully healed.
+            zone.TravelToZone(zone.currentZone, noAdvance: true);
+            return true;
+        }
+
+        internal static void PublishChoice(InfinityChoice choice)
+        {
+            Acks.Clear();
+            // Freeze terminal participation before the host clears its run profile.
+            // Native lobby clients cannot join a run whose party is awaiting return ACKs.
+            if (choice.Secure)
+                NetworkedManagerBase<GameSettingsManager>.instance.midJoinBanType = MidJoinBanType.GameHasEnded;
+            NetworkedManagerBase<GameSettingsManager>.instance.customData[ChoiceKey] = JsonConvert.SerializeObject(choice);
+        }
+
+        private static void RegisterAcks()
+        {
+            var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
+            if (actor == null || ReferenceEquals(actor, _ackActor)) return;
+            if (_ackActor != null)
+                try { _ackActor.CustomRpc_UnregisterServerMessageHandler<DreamforgeInfinityAckMsg>(OnAck); }
+                catch (Exception) { }
+            _ackActor = actor;
+            actor.CustomRpc_RegisterServerMessageHandler<DreamforgeInfinityAckMsg>(nameof(DreamforgeInfinityAckMsg), OnAck);
+        }
+
+        private static void ReceiveAck(DreamforgeInfinityAckMsg msg, DewPlayer caller)
+        {
+            var choice = CurrentChoice;
+            if (caller == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)
+                || msg == null || msg.protocol != Protocol.Version || choice == null
+                || msg.runId != choice.RunId || msg.revision != choice.Revision
+                || msg.graphEpoch != choice.GraphEpoch || msg.boundary != choice.Boundary) return;
+            Acks[caller.guid] = msg.revision;
+        }
+
+        internal static void AcknowledgeLocal(InfinityChoice choice)
+        {
+            if (DewPlayer.local == null) return;
+            if (NetworkServer.active) Acks[DewPlayer.local.guid] = choice.Revision;
+            else NetworkedManagerBase<ActorManager>.softInstance?.serverActor?.CustomRpc_SendMessageToServer(
+                new DreamforgeInfinityAckMsg
+                {
+                    protocol = Protocol.Version, runId = choice.RunId, revision = choice.Revision,
+                    graphEpoch = choice.GraphEpoch, boundary = choice.Boundary,
+                });
+        }
+
+        internal static bool PartyAcknowledged(InfinityChoice choice)
+        {
+            DepartedAcks.Clear();
+            foreach (var pair in Acks)
+            {
+                bool present = false;
+                foreach (var player in DewPlayer.gamePlayers) if (player.guid == pair.Key) { present = true; break; }
+                if (!present) DepartedAcks.Add(pair.Key);
+            }
+            foreach (var key in DepartedAcks) Acks.Remove(key);
+            foreach (var player in DewPlayer.gamePlayers)
+                if (player.isHumanPlayer && (!Acks.TryGetValue(player.guid, out long revision) || revision != choice.Revision)) return false;
+            return true;
+        }
+    }
+
+    [Serializable]
+    public sealed class DreamforgeInfinityAckMsg
+    {
+        public int protocol;
+        public string runId;
+        public long revision;
+        public long graphEpoch;
+        public bool boundary;
+    }
+
+    [HarmonyPatch(typeof(PlayGameManager), nameof(PlayGameManager.LoadNextZone))]
+    internal static class InfinityNextZone
+    {
+        private static bool Prefix()
+        {
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone == null || zone.currentZone == null)
+            {
+                if (!InfinityMode.Restoring) InfinityMode.StartNewGame();
+                return true;
+            }
+            if (!InfinityMode.Enabled) return true;
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.GenerateWorldAuto))]
+    internal static class InfinityGenerated
+    {
+        private static readonly System.Reflection.FieldInfo NextModifier = AccessTools.Field(typeof(ZoneManager), "_nextModifierId");
+        private static bool Prefix(ZoneManager __instance, out bool __state)
+        {
+            __state = true;
+            if (!InfinityMode.Enabled) return true;
+            if (!InfinityMode.NativeSaveAgreement || NextModifier == null
+                || (int)NextModifier.GetValue(__instance) >= int.MaxValue - InfinityRunState.MaximumGraphNodes * 16)
+            {
+                InfinityMode.Halt("Infinity modifier generation identity is unavailable or exhausted.");
+                __state = false;
+                return false;
+            }
+            return true;
+        }
+
+        private static void Postfix(ZoneManager __instance, bool __state)
+        {
+            if (__state) InfinityMode.OnGenerated(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(Room), nameof(Room.OnStartServer))]
+    internal static class InfinityRoomClear
+    {
+        private static void Postfix(Room __instance)
+        {
+            var room = __instance;
+            room.onRoomClear.AddListener(() => InfinityMode.OnRoomClear(room));
+        }
+    }
+
+    [HarmonyPatch(typeof(Room), nameof(Room.StartRoom))]
+    internal static class InfinityRoomIdentity
+    {
+        private static void Prefix()
+        {
+            if (!NetworkServer.active || !InfinityMode.Enabled || !InfinityMode.NativeSaveAgreement) return;
+            var state = InfinityMode.State;
+            if (state == null) return;
+            if (state.RoomEpoch == long.MaxValue)
+            { InfinityMode.Halt("Infinity room epoch exhausted."); return; }
+            state.RoomEpoch++;
+            InfinityMode.WriteEnvelope();
+            ClientSession.PersistHostInfinityState();
+        }
+    }
+
+    [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.TravelToNode))]
+    internal static class InfinityTravel
+    {
+        private static bool Prefix(ZoneManager __instance, ref int to, bool isSidetrackTransition)
+            => InfinityMode.RouteTravel(__instance, ref to, isSidetrackTransition);
+    }
+
+    [HarmonyPatch(typeof(RoomRifts), nameof(RoomRifts.CreateSidetrackRift))]
+    internal static class InfinityNoSpecialRift
+    {
+        private static bool Prefix() => !InfinityMode.Enabled;
+    }
+
+    [HarmonyPatch(typeof(GameManager), nameof(GameManager.WrapUpAndShowResult))]
+    internal static class InfinityResult
+    {
+        private static bool Prefix(DewGameResult.ResultType type) => !InfinityMode.Enabled
+            || type == DewGameResult.ResultType.GameOver
+            || type == DewGameResult.ResultType.Conceded && ClientSession.HostInfinityReturnCommitted;
+    }
+
+    [HarmonyPatch(typeof(Rift_RoomExit), "UserCode_TpcInteract__NetworkConnectionToClient")]
+    internal static class InfinityExit
+    {
+        private static bool Prefix()
+        {
+            if (!InfinityMode.Enabled) return true;
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone != null && zone.currentNodeIndex >= 0 && zone.currentNode.type == WorldNodeType.ExitBoss) return false;
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(DewPersistence), nameof(DewPersistence.SerializeGameData))]
+    internal static class InfinityNativeSave
+    {
+        private static void Prefix() => InfinityMode.WriteEnvelope();
+    }
+
+    [HarmonyPatch(typeof(DewPersistence), nameof(DewPersistence.ApplyGameData))]
+    internal static class InfinityNativeRestore
+    {
+        private static void Prefix(ref Action onFinish)
+        {
+            InfinityMode.BeginRestore();
+            var original = onFinish;
+            onFinish = () => { InfinityMode.FinishRestore(); original?.Invoke(); };
+        }
+    }
+
+    [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.TravelToZone))]
+    internal static class InfinityZoneTravel
+    {
+        private static bool Prefix(ZoneManager __instance, Zone prefab, bool noAdvance) =>
+            !InfinityMode.Enabled || __instance.currentZone == null
+            || InfinityMode.NativeSaveAgreement && InfinityMode.IsTechnicalRefresh
+                && noAdvance && prefab == __instance.currentZone;
+    }
+
+    [HarmonyPatch(typeof(GameMod_StarlessPath), "ClientEventOnActorAdd")]
+    internal static class InfinityNoSpecialInvitation
+    {
+        private static bool Prefix() => !InfinityMode.Enabled;
+    }
+}

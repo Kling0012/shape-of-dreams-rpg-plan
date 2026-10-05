@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using SodRpg.Core.Internal;
 
 namespace SodRpg.Core.Game
 {
@@ -14,6 +15,11 @@ namespace SodRpg.Core.Game
         public int Generation { get; set; }
         public int Revision { get; set; }
         public ulong AuthorityGeneration { get; set; }
+        public InfinityRunState Infinity { get; set; }
+        public long GraphEpoch => Infinity?.GraphEpoch ?? 0;
+        public long SegmentEpoch => Infinity?.SegmentEpoch ?? 0;
+        public long RoomEpoch => Infinity?.RoomEpoch ?? 0;
+        public long HistoryKey => Infinity == null ? ZoneIndex : SegmentEpoch;
         public Waypoint Active { get; set; }
         public Waypoint Pending { get; set; }
         public bool Chosen { get; set; }
@@ -28,6 +34,7 @@ namespace SodRpg.Core.Game
                 RunId = run?.RunId ?? "", Depth = DreamDepth.Clamp(run?.DreamDepth ?? selectedDepth),
                 ZoneIndex = run == null ? -1 : zoneIndex, Revision = Math.Max(0, revision),
                 AuthorityGeneration = authorityGeneration,
+                Infinity = run?.Infinity?.Clone(),
                 Generation = run?.WaypointGeneration ?? 0, Active = run?.ActiveWaypoint ?? Waypoint.None,
                 Pending = run?.PendingWaypoint ?? Waypoint.None, Chosen = run?.WaypointChosen ?? false,
                 Settled = run != null && run.WaypointGeneration > 0 && !run.AwaitingChoice,
@@ -39,7 +46,7 @@ namespace SodRpg.Core.Game
         public string Encode()
         {
             var text = new StringBuilder(128);
-            text.Append("2|").Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(RunId ?? "")))
+            text.Append(Infinity == null ? "2|" : "3|").Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(RunId ?? "")))
                 .Append('|').Append(DreamDepth.Clamp(Depth).ToString(CultureInfo.InvariantCulture))
                 .Append('|').Append(ZoneIndex.ToString(CultureInfo.InvariantCulture))
                 .Append('|').Append(Generation.ToString(CultureInfo.InvariantCulture))
@@ -52,15 +59,18 @@ namespace SodRpg.Core.Game
                 if (i > 0) text.Append(',');
                 text.Append(((int)Offers[i]).ToString(CultureInfo.InvariantCulture));
             }
-            return text.Append('|').Append(AuthorityGeneration.ToString(CultureInfo.InvariantCulture)).ToString();
+            text.Append('|').Append(AuthorityGeneration.ToString(CultureInfo.InvariantCulture));
+            if (Infinity != null)
+                text.Append('|').Append(Convert.ToBase64String(Encoding.UTF8.GetBytes(Json.Write(ProfileCodec.WriteInfinity(Infinity)))));
+            return text.ToString();
         }
 
         public static bool TryDecode(string encoded, out RunChoiceSnapshot snapshot)
         {
             snapshot = null;
-            if (string.IsNullOrEmpty(encoded) || encoded.Length > 2048) return false;
+            if (string.IsNullOrEmpty(encoded) || encoded.Length > 65536) return false;
             var parts = encoded.Split('|');
-            if (parts.Length != 12 || parts[0] != "2"
+            if (!((parts.Length == 12 && parts[0] == "2") || (parts.Length == 13 && parts[0] == "3"))
                 || !ulong.TryParse(parts[11], NumberStyles.None, CultureInfo.InvariantCulture, out ulong authorityGeneration)) return false;
             var numbers = new int[9];
             for (int i = 2; i < 10; i++)
@@ -79,6 +89,17 @@ namespace SodRpg.Core.Game
                 AuthorityGeneration = authorityGeneration,
                 Chosen = numbers[6] == 1, Settled = numbers[7] == 1,
             };
+            if (parts[0] == "3")
+            {
+                try
+                {
+                    var json = Json.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(parts[12])));
+                    result.Infinity = ProfileCodec.ReadInfinity(new JsonObject().Add("infinity", json));
+                    if (result.Infinity == null) return false;
+                }
+                catch (Exception error) when (error is FormatException || error is LedgerFormatException || error is ArgumentException)
+                { return false; }
+            }
             if (parts[10].Length > 0)
             {
                 var offers = parts[10].Split(',');
@@ -100,7 +121,9 @@ namespace SodRpg.Core.Game
 
         /// <summary>Zone identity prevents a delayed packet from reviving the previous zone's rule.</summary>
         public bool AppliesTo(RunState run, int zoneIndex) =>
-            run != null && !string.IsNullOrEmpty(RunId) && RunId == run.RunId && ZoneIndex == zoneIndex;
+            run != null && !string.IsNullOrEmpty(RunId) && RunId == run.RunId && ZoneIndex == zoneIndex
+            && (Infinity == null ? run.Infinity == null : run.Infinity == null
+                || (SegmentEpoch == run.Infinity.SegmentEpoch && GraphEpoch == run.Infinity.GraphEpoch));
 
         /// <summary>Compare admitted snapshots; use RunChoiceSnapshotStream to reject superseded authorities first.</summary>
         public bool IsNewerThan(RunChoiceSnapshot previous) => previous == null
@@ -109,6 +132,7 @@ namespace SodRpg.Core.Game
         public bool ApplyTo(RunState run, int zoneIndex)
         {
             if (!AppliesTo(run, zoneIndex)) return false;
+            if (run.Infinity == null && Infinity != null) run.Infinity = Infinity.Clone();
             if (Generation > run.WaypointGeneration) Waypoints.Expire(run);
             run.DreamDepth = DreamDepth.Clamp(Depth);
             run.WaypointGeneration = Generation;
