@@ -209,16 +209,11 @@ namespace SodRpg.Mod
             if (ratio > 0) hero.ApplyCooldownReductionByRatio(skill, ratio, false);
         }
 
-        private NightmareAffix RollWaypointNightmare(MonsterTier tier, int depth, double chanceMultiplier)
+        private NightmareAffix RollWaypointNightmare(Monster m, MonsterTier tier, int depth, double chanceMultiplier)
         {
-            var waypoint = ActiveWaypointTotals;
-            if (waypoint.AllNightmares)
-            {
-                // One native nightmare trait keeps the opt-in rule bounded even at zero delve heat.
-                return Nightmares.AllAffixes[_rng.Range(0, Nightmares.AllAffixes.Length - 1)];
-            }
-            int selectionDepth = waypoint.NightmareChanceMultiplier > 1 ? Math.Max(1, depth) : depth;
-            return Nightmares.Roll(_rng, tier, selectionDepth, chanceMultiplier * waypoint.NightmareChanceMultiplier);
+            // ボスは悪夢化しない（#127）。種別・クラスのどちらで見てもボスなら、明けない夜（全敵悪夢化）でも対象外。
+            if (m is BossMonster || tier == MonsterTier.Boss) return NightmareAffix.None;
+            return Nightmares.RollWaypoint(_rng, tier, depth, chanceMultiplier, ActiveWaypointTotals);
         }
     }
 }
