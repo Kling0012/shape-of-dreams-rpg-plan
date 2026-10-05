@@ -21,16 +21,17 @@ namespace SodRpg.Core.Game
 
     public static class Loc
     {
-        // スレッドごとの言語設定（未設定は日本語）。実運用では UI スレッドで一度設定するだけなので
-        // 従来の静的フィールドと同じ挙動だが、保存 JSON を作るのは呼び出し側スレッド（AsyncProfileWriter）
-        // なので、ワーカースレッドが UI の設定を誤って読むこともない。
-        // テストはこの旗を切り替えながら並行実行できる（#151: 並列化の妨げだった全体共有状態を解消）。
+        // プロセス共有の言語設定（既定は日本語）と、スレッドごとの上書きの2層。
+        // 実運用では UI スレッドで一度設定するだけなので、set が共有値にも書けば
+        // AsyncProfileWriter など設定しない他スレッドは共有値を読んで従来どおり。
+        // テストは各スレッドの上書きを読むので、並行実行でも干渉しない（#151: 並列化の妨げだった全体共有状態を解消）。
+        private static bool _sharedJapanese = true;
         [ThreadStatic] private static bool? _japanese;
 
         public static bool Japanese
         {
-            get => _japanese ?? true;
-            set => _japanese = value;
+            get => _japanese ?? _sharedJapanese;
+            set { _sharedJapanese = value; _japanese = value; }
         }
 
         public static string T(string ja, string en) => Japanese ? ja : en;
