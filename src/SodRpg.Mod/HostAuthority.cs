@@ -1443,19 +1443,7 @@ namespace SodRpg.Mod
                     if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
                     string memory = MemorySource(d.actor ?? a);
                     d.ApplyAmplification(captured.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(hero, memory), false));
-                    long memoryAmpMilli = 0;
-                    if (memory != null)
-                        foreach (var link in captured.SatisfiedLinks)
-                            if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
-                            {
-                                memoryAmpMilli += link.ValueMilli;
-                                LogLinkApplied(link);
-                            }
-                    float memoryAmp = captured.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
-                        memoryAmpMilli / (float)BuildPrecision.Scale)
-                        + (FindMemory(captured.Hero, memory) != null
-                            ? FractionalScopedModifiers.NativePercent(captured.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
-                    memoryAmp = TransformAuthoredMemoryDamage(captured.Hero, memory, memoryAmp);
+                    float memoryAmp = MemoryDamagePercent(captured, memory);
                     if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
                     ApplyRelayWindowDamage(captured, ref d, t);
                     ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));

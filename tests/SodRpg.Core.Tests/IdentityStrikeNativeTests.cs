@@ -547,5 +547,104 @@ namespace SodRpg.Core.Tests
             host.BindAuthored(runtime, new Build());
             Assert.Empty(hero.dealtHealProcessor.Entries);
         }
+
+        /// <summary>
+        /// Mirrors the production host damage processor (HostAuthority.cs rt.DamageDealt): the generated-damage gate returns before
+        /// the memory correction — the exact block the critical channels cannot reach (issue #136). Records the generated depth each
+        /// packet saw, so a closed gate (1) is distinguishable from the normal route (0).
+        /// </summary>
+        private static void WireHostMemoryCorrection(HostAuthority host, Hero hero, HostAuthority.HeroRuntime runtime, List<int> depthSeen)
+        {
+            hero.SimDealtDamage.Add((ref DamageData d, Actor a, Entity t) =>
+            {
+                depthSeen.Add(host.GeneratedDamageDepth);
+                if (host.GeneratedDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+                float amp = host.MemoryDamagePercent(runtime, (d.actor ?? a)?.FindFirstOfType<SkillTrigger>()?.GetType().Name);
+                if (amp > 0f) d.ApplyAmplification(amp / 100f);
+            });
+        }
+
+        private static LinkDef MemoryDamageLink(string memory, decimal percent) =>
+            new LinkDef { Kind = LinkKind.MemoryDamage, Requires = new[] { memory }, Value = percent };
+
+        [Fact]
+        public void Displacement_critical_strike_carries_the_identity_memory_damage_correction_exactly_once()
+        {
+            // Both Wind Scar channels on one hero: the non-critical echo (60%, open gate) and the critical strike (120%, generated gate).
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.WindStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var faith = new DivineFaithSim(skill);
+            var depths = new List<int>();
+            WireHostMemoryCorrection(host, hero, runtime, depths);
+            var target = Enemy(0, 2);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f, Actor.SimDamageLog[0].Amount, 3); // no correction acquired yet: the plain echo ...
+            Assert.Equal(120f, Actor.SimDamageLog[1].Amount, 3); // ... and the plain critical strike
+            Assert.Equal(new[] { 0, 1 }, depths.Take(2).ToArray()); // open gate for the echo, closed gate for the critical strike
+
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m)); // 記憶の冴え +40% for Wind Scar only
+            UnityEngine.Time.time = 2f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.4f, Actor.SimDamageLog[2].Amount, 3); // the echo keeps its route through the processor ...
+            Assert.Equal(120f * 1.4f, Actor.SimDamageLog[3].Amount, 3); // ... and the critical strike carries it exactly once — never 1.4 x 1.4
+            Assert.Equal(new[] { 0, 1 }, depths.Skip(2).Take(2).ToArray()); // the gate split did not change
+            Assert.Contains(target, faith.Tracked.Keys); // the native tracker still sees the amplified critical strike
+
+            runtime.SatisfiedLinks.Clear();
+            runtime.SatisfiedLinks.Add(MemoryDamageLink("St_Q_Fleche", 40m)); // a different memory's correction never rides
+            UnityEngine.Time.time = 4f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f, Actor.SimDamageLog[4].Amount, 3);
+            Assert.Equal(120f, Actor.SimDamageLog[5].Amount, 3);
+
+            runtime.SatisfiedLinks.Clear();
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m));
+            UnityEngine.Time.time = 6f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 4, critical: false); // a noncritical hit: only the echo channel fires
+            host.UpdateIdentityStrikes();
+            Assert.Equal(7, depths.Count); // one gate visit per packet (2+2+2+1): nothing chained from the strikes
+            Assert.Equal(60f * 1.4f, Actor.SimDamageLog[6].Amount, 3); // the normal route through the processor is unchanged
+            Assert.Equal(0, depths[6]);
+
+            // Divine Faith's native amplification still composes on top of the memory correction (0.4% per stack).
+            faith.Stack = 1;
+            UnityEngine.Time.time = 8f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 5, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.4f * 1.004f, Actor.SimDamageLog[7].Amount, 3);
+            Assert.Equal(120f * 1.4f * 1.004f, Actor.SimDamageLog[8].Amount, 3);
+            UnityEngine.Time.time = 11f; faith.Dies(target);
+            Assert.Equal(2, faith.Stack); // the kill within 6 s of the tracked hit still grows the stack
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_carries_the_identity_memory_damage_correction_exactly_once()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var depths = new List<int>();
+            WireHostMemoryCorrection(host, hero, runtime, depths);
+            var a = Enemy(0, 2);
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m)); // 記憶の冴え +40% for the Killing Flow
+
+            for (long activation = 1; activation <= 2; activation++) host.OnIdentityStrikeBasicHit(hero, a, activation, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // two crits: not the third yet
+            host.OnIdentityStrikeBasicHit(hero, a, 3, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Equal(180f * 1.4f, strike.Amount, 3); // once, never 1.4 x 1.4
+            Assert.Equal(1, depths.Single()); // the whole strike ran behind the closed generated gate
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // nothing chains from the corrected strike
+        }
     }
 }

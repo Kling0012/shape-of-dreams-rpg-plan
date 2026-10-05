@@ -214,7 +214,11 @@ namespace SodRpg.Mod
             public readonly HashSet<string> PairMemories = new HashSet<string>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();
         }
+        // Production: HostAuthority.cs logs a link's first application; the linked memory-correction helper reuses it.
+        private void LogLinkApplied(LinkDef link) { }
+        internal int GeneratedDamageDepth => _gimmickDamageDepth;
         private void SendBountyReport(HeroRuntime rt, BountyReportKind kind, int count) { }
         private void EnterGenerated(Hero owner) => _gimmickDamageDepth++;
         private void ExitGenerated(Hero owner) => _gimmickDamageDepth--;

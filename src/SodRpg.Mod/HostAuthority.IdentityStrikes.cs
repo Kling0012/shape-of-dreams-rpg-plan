@@ -235,6 +235,11 @@ namespace SodRpg.Mod
                 speed = IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(flow.gainedAd);
             float amount = def.Damage(attack, ability, speed);
             if (amount <= 0f || float.IsNaN(amount) || float.IsInfinity(amount)) return;
+            // The critical channels fire inside EnterGenerated: the host damage processor returns at its generated-damage gate before
+            // the memory correction, so they carry the identity memory's own correction here, once per packet. This is the same
+            // application rt.DamageDealt performs for the non-critical channels; the gate keeps it from applying a second time.
+            float criticalMemoryAmp = def.IsCriticalMechanism && _runtimes.TryGetValue(hero, out var strikeRuntime)
+                ? MemoryDamagePercent(strikeRuntime, def.Identity) : 0f;
             bool magic = def.IsMagic(attack, ability);
             if (toVictim.x * toVictim.x + toVictim.z * toVictim.z < 1e-6f) toVictim = new Vector3(0f, 0f, 1f);
             ListReturnHandle<Entity> handle;
@@ -265,12 +270,35 @@ namespace SodRpg.Mod
                             case IdentityStrikeElement.Light: damage = damage.SetElemental(ElementalType.Light); break;
                             case IdentityStrikeElement.Dark: damage = damage.SetElemental(ElementalType.Dark); break;
                         }
+                        if (criticalMemoryAmp > 0f) damage.ApplyAmplification(criticalMemoryAmp / 100f);
                         damage.Dispatch(enemy);
                     }
                 }
                 finally { _identityStrikeDepth--; }
             }
             finally { _identityStrikeTargets.Clear(); handle.Return(); }
+        }
+
+        /// <summary>
+        /// The memory-targeted damage correction for one memory, in percent: satisfied MemoryDamage links (記憶の冴え), the Crescendo
+        /// gimmick, native fractional star modifiers and authored keystones. The host damage processor (rt.DamageDealt) applies this to
+        /// every non-generated packet; the critical identity strikes apply it themselves because they fire behind the generated gate.
+        /// </summary>
+        internal float MemoryDamagePercent(HeroRuntime rt, string memory)
+        {
+            long memoryAmpMilli = 0;
+            if (memory != null)
+                foreach (var link in rt.SatisfiedLinks)
+                    if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
+                    {
+                        memoryAmpMilli += link.ValueMilli;
+                        LogLinkApplied(link);
+                    }
+            float memoryAmp = rt.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
+                memoryAmpMilli / (float)BuildPrecision.Scale)
+                + (FindMemory(rt.Hero, memory) != null
+                    ? FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
+            return TransformAuthoredMemoryDamage(rt.Hero, memory, memoryAmp);
         }
 
         internal bool IdentityDashBonusEnabled(Hero hero) => hero != null && _identityDashBonus.Contains(hero);
