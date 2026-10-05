@@ -86,18 +86,18 @@ namespace SodRpg.Mod
             private readonly LastStarlightState _state;
             private readonly object _wait;
             private int _waits;
-            private bool _moving,_disposed;
+            private bool _moving,_disposed,_passthrough;
             private object _current;
             internal bool Bound => _native!=null;
             internal LastStarlightSequence(LastStarlightState state)
             { _state=state; _wait=new SI.WaitForCondition(WaitFinished); }
             internal void Bind(HostAuthority host,IEnumerator native)
-            { _host=host; _native=native; _waits=0; _moving=_disposed=false; _current=null; }
+            { _host=host; _native=native; _waits=0; _moving=_disposed=_passthrough=false; _current=null; }
             public object Current => _current;
             public bool MoveNext()
             {
                 if (_native==null) return false;
-                if (!_host.BossNativeSameLife(_state.Instance,_state.Life)) { Complete(); return false; }
+                if (!_passthrough && !_host.BossNativeSameLife(_state.Instance,_state.Life)) { Complete(); return false; }
                 _moving=true;
                 bool result=false;
                 try
@@ -105,8 +105,17 @@ namespace SodRpg.Mod
                     result=_native.MoveNext();
                     if(_disposed || !result) return false;
                     _current=_native.Current;
-                    if (!(_current is SI.WaitForSeconds)) return true;
-                    if (++_waits>2) throw new InvalidOperationException("LastStarlight native sequence unexpectedly added a wait.");
+                    if (_passthrough || !(_current is SI.WaitForSeconds)) return true;
+                    if (++_waits>2)
+                    {
+                        // Detach only our adapter, not the running native iterator. Keep this
+                        // wait and all subsequent yields/completion exactly as the native emits them.
+                        _passthrough=true;
+                        _state.Waiting=false;
+                        _host.ReleaseLastStarlight(_state.Instance);
+                        Log.Warn("LastStarlight wait adaptation disabled: unexpected native wait; passing through the remaining sequence.");
+                        return true;
+                    }
                     _state.Active=_waits==2; _state.WaitStart=Time.time; _state.Waiting=true;
                     _host.ReconcileLastStarlight(_state,Time.time);
                     _current=_wait;
@@ -122,7 +131,7 @@ namespace SodRpg.Mod
             }
             private bool WaitFinished()
             {
-                if (_native==null || _disposed || !_host.BossNativeSameLife(_state.Instance,_state.Life)) return true;
+                if (_passthrough || _native==null || _disposed || !_host.BossNativeSameLife(_state.Instance,_state.Life)) return true;
                 _host.ReconcileLastStarlight(_state,Time.time);
                 float seconds=_state.Active?_state.Duration+_state.DurationDelta:_state.Delay+_state.DelayDelta;
                 return Time.time>=_state.WaitStart+Math.Max(0,seconds);
@@ -149,11 +158,12 @@ namespace SodRpg.Mod
         internal object CaptureLastStarlight(Ai_Gem_U_LastStarlight instance)
         {
             if (!NetworkServer.active || instance==null || AttributionGeneratedOrigin()!=GeneratedOrigin.None
-                || !(instance.gem is Gem_U_LastStarlight gem) || instance.parentActor!=gem || !gem.isValid
+                || !(instance.gem is Gem_U_LastStarlight gem) || instance.parentActor!=gem || !gem.isValid || !gem.isActive
                 || !(gem.owner is Hero hero) || !BossAlive(hero) || instance.info.caster!=hero
                 || gem.skill==null || !gem.skill.isActive || gem.skill.owner!=hero
                 || !_runtimes.TryGetValue(hero,out var rt)
-                || !LastStarlightEquipped(hero,gem,gem.skill)) return null;
+                || !LastStarlightEquipped(hero,gem,gem.skill)
+                || !BossEnsure(rt) || BossRewardStage(rt,BossProfiles.ErebosRewardId)<=0) return null;
             if (_lastStarlights.ContainsKey(instance)) ReleaseLastStarlight(instance);
             if (_lastStarlights.Count>=128) return null;
             var state=_lastStarlightPool.Rent(); if(state==null) return null;
