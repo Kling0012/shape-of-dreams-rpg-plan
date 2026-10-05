@@ -14,6 +14,35 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.3.0 — 星図の作り直しと遊びやすさの改善（2026-10-05）
+
+星図を見やすく作り直し、鞄・鍛冶・遠征の終わり方などの扱いを変えました。見つかった不具合も直しています。 / A clearer star map, changes to the satchel, the forge and how a run ends, plus bug fixes.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.2.0 と同じです）。 / Saves carry over (same format as v2.2.0).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素・変更 / New and changed
+
+- **星図の配置**：星を記憶ごとの区画にまとめ、星団ごとに並べ直しました。どの星がどの集まりに属するかが分かりやすくなり、線が重なって見づらい所も大きく減りました。 / **Star map layout**: stars are grouped into a sector per memory and laid out by cluster, so it is clear which group each star belongs to, with far fewer overlapping lines.
+- **星の説明**：説明の最初に「何が増えるか・減るか」を出し、続けて「いつ・何に・どう働くか」を書くようにしました。連携の相手は「記憶『◯◯』」「エッセンス『◯◯』」と種類と名前で示します。取れない星には、何が足りないか（隣の星が未取得、ポイント不足など）を表示します。 / **Star descriptions**: each starts with what goes up or down, then when, on what and how it works. Links name the Memory or Essence. Locked stars say what is missing.
+- **星図の左の一覧**：星ごとに名前・効果の要約・状態（取得済み／取得可能／条件不足）を表示し、クリックするとその星へ移動します。 / **Star list on the left**: shows each star's name, a short effect summary and its state; click to jump to it.
+- **鞄があふれたとき**：遠征中に鞄の上限を超えたら、レア度の低い遺物から、その遺物の持ち主の夢のダストに換えるようにしました（これまでは一番弱い遺物を欠片に換えていました）。道標の効果で報酬が得られないときは、今までどおり何も得られません。 / **Satchel overflow**: extra relics now turn into the owner's Dream Dust, lowest rarity first (previously the weakest became shards).
+- **鍛冶の強化の失敗**：失敗しても +0 に戻らなくなりました。失敗したときは、半分の確率で強化値はそのまま、半分の確率で1段だけ下がります。 / **Forge failures**: a failed enhancement no longer resets to +0. Half the time nothing changes; otherwise it drops one level.
+- **「ロビーに戻る」**：遠征中にホストが「ロビーに戻る」を選ぶと、その遠征は失敗（敗北）として精算されるようになりました。「メニューに戻る」「デスクトップに戻る」は今までどおり中断で、「続きから」で再開できます。 / **Return to Lobby**: when the host chooses it mid-run, the run now ends as a defeat. Return to Menu and Quit to Desktop still suspend the run for Continue.
+
+### 不具合の修正 / Fixes
+
+- **装備のボタンが見えない**：ロビーの装備画面で、装着・外す・鍵のボタンが画面の外に押し出され、見えなくなっていました。ボタンを詳細の上に移しました。 / **Missing gear buttons**: in the lobby the equip/unequip/lock buttons were pushed off the window. They now sit above the details.
+- **ボスが悪夢化する**：一部の道標を組み合わせると、ボスが悪夢化することがありました。 / **Nightmare bosses**: some waypoint combinations could turn bosses into nightmares.
+- **インフィニティの配当**：保存の照合が合わず報酬を止めているあいだも、夢の圧の配当だけが入ってしまうことがありました。 / **Infinity dividends**: pressure dividends could still pay out while rewards were halted after a save mismatch.
+
+この版の変更は、コードとシミュレーションで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / These changes were verified by code and simulation, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.2.0 — インフィニティモード（2026-10-05）
 
 新しい遊び方「インフィニティモード」を追加しました。ひとつの世界で、終わりなく遠征を続けられます。 / Adds Infinity Mode: an endless run in a single world.
