@@ -25,6 +25,8 @@
   <ItemGroup>
     <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/TickGuard.cs" Link="ModUnderTest/TickGuard.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NameplateTrim.cs" Link="ModUnderTest/NameplateTrim.cs" />
     <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.UnbowedMind.cs" Link="ModUnderTest/HostAuthority.UnbowedMind.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />

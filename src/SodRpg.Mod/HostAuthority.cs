@@ -260,6 +260,14 @@ namespace SodRpg.Mod
 
         public bool IsActive => _registeredOn != null;
 
+        // Each stage runs on its own: one persistently failing stage must not stop monster pruning,
+        // behaviors or the periodic resync for everyone, and must not flood the log (#74).
+        // Same shape as ClientSession.Tick: per-stage try/catch with a 10 s log limit per stage.
+        private Action[] _tickStages;
+        private string[] _tickStageNames;
+        private TickGuard _tickGuard;
+        private float _tickNow;
+
         public void Tick()
         {
             if (!NetworkServer.active)
@@ -270,45 +278,101 @@ namespace SodRpg.Mod
             EnsureRegistered();
             NativeInstance = this;
             if (_registeredOn == null) return;
-            UpdateSacrificeShields();
-            float now = Time.time;
-            ProcessBuildUpdates(Time.unscaledTime);
-            RefreshRunModifiers();
+            if (_tickStages == null) BuildTickStages();
+            _tickNow = Time.time;
+            _tickGuard.Run(Time.unscaledTime);
+        }
+
+        private void BuildTickStages()
+        {
+            _tickStageNames = new[]
+            {
+                "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
+                "gem slots", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
+                "identity strikes", "gimmicks v129", "sap prune", "runtime", "run growth", "currency",
+                "shield pools", "spawns", "monster prune", "monster behaviors", "sunders",
+                "nightmare regen", "classification resync",
+            };
+            _tickStages = new Action[]
+            {
+                UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
+                TickGemSlots, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
+                UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, StageRuntimes, StageRunGrowth, StageCurrency,
+                StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, StageSunders,
+                StageNightmareRegen, StageClassificationResync,
+            };
+            _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
+        }
+
+        private void StageBuildUpdates() => ProcessBuildUpdates(Time.unscaledTime);
+
+        private void StagePressure()
+        {
             if (_pressureDirty) RefreshPressure();
-            PruneAndApplyPending();
-            TickGemSlots();
-            SyncWaypointHeroes();
-            bool scan = now >= _nextAreaScan;
-            if (scan)
-            {
-                _nextAreaScan = now + 0.25f;
-                ScanArea();
-            }
+        }
+
+        private void StageAreaScan()
+        {
+            if (_tickNow < _nextAreaScan) return;
+            _nextAreaScan = _tickNow + 0.25f;
+            ScanArea();
+        }
+
+        private void StageNewPowers()
+        {
             foreach (var rt in _runtimes.Values) FlushNewPowers(rt);
+        }
+
+        private void StageReactions()
+        {
             foreach (var rt in _runtimes.Values) UpdateReactions(rt);
-            foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, now);
-            UpdateIdentityStrikes();
-            foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, now);
-            PruneSapProcessors(now);
-            foreach (var rt in _runtimes.Values) UpdateRuntime(rt, now);
-            foreach (var rt in _runtimes.Values) ApplyRunGrowth(rt, now);
-            SyncCurrency(now);
-            UpdateModShieldPools(now);
-            ProcessSpawns();
-            PruneMonsters(now);
-            TickMonsterBehaviors(now);
-            ExpireSunders(now);
-            if (now >= _nextRegen)
-            {
-                _nextRegen = now + 0.5f;
-                RegenNightmares();
-            }
-            if (now >= _nextNightmareSync)
-            {
-                _nextNightmareSync = now + 5f;
-                ResyncMonsterClassifications();
-                SendPressure();
-            }
+        }
+
+        private void StageGimmickApply()
+        {
+            foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
+        }
+
+        private void StageGimmicksV129()
+        {
+            foreach (var rt in _runtimes.Values) UpdateGimmicksV129(rt, _tickNow);
+        }
+
+        private void StageSapPrune() => PruneSapProcessors(_tickNow);
+
+        private void StageRuntimes()
+        {
+            foreach (var rt in _runtimes.Values) UpdateRuntime(rt, _tickNow);
+        }
+
+        private void StageRunGrowth()
+        {
+            foreach (var rt in _runtimes.Values) ApplyRunGrowth(rt, _tickNow);
+        }
+
+        private void StageCurrency() => SyncCurrency(_tickNow);
+
+        private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
+
+        private void StageMonsterPrune() => PruneMonsters(_tickNow);
+
+        private void StageMonsterBehaviors() => TickMonsterBehaviors(_tickNow);
+
+        private void StageSunders() => ExpireSunders(_tickNow);
+
+        private void StageNightmareRegen()
+        {
+            if (_tickNow < _nextRegen) return;
+            _nextRegen = _tickNow + 0.5f;
+            RegenNightmares();
+        }
+
+        private void StageClassificationResync()
+        {
+            if (_tickNow < _nextNightmareSync) return;
+            _nextNightmareSync = _tickNow + 5f;
+            ResyncMonsterClassifications();
+            SendPressure();
         }
 
         private void RefreshPressure(bool synchronize = false)
