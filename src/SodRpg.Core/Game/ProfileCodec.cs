@@ -21,6 +21,7 @@ namespace SodRpg.Core.Game
 
         private static string WriteProfile(Profile p, bool includeContinue)
         {
+            p.SettleSatchelOverflow();
             var body = WriteBody(p, includeContinue);
             var root = new JsonObject()
                 .Add("format", Format)
@@ -29,19 +30,26 @@ namespace SodRpg.Core.Game
             return Json.Write(root);
         }
 
-        public static Profile Read(string text, List<string> notes) => ReadProfile(text, notes, true);
+        public static Profile Read(string text, List<string> notes) => ReadProfile(text, notes, true, out _);
+
+        internal static Profile ReadForStore(string text, List<string> notes, out bool migrated) =>
+            ReadProfile(text, notes, true, out migrated);
 
         public static Profile ReadCheckpointProfile(string text, List<string> notes = null) =>
-            ReadProfile(text, notes, false);
+            ReadProfile(text, notes, false, out _);
 
-        private static Profile ReadProfile(string text, List<string> notes, bool includeContinue)
+        internal static Profile ReadCheckpointProfile(string text, List<string> notes, Profile migrationNoticeBaseline) =>
+            ReadProfile(text, notes, false, out _, migrationNoticeBaseline);
+
+        private static Profile ReadProfile(string text, List<string> notes, bool includeContinue, out bool migrated,
+            Profile migrationNoticeBaseline = null)
         {
             if (!(Json.Parse(text) is JsonObject root)) throw new LedgerFormatException("最上位がオブジェクトではありません。");
             if (Str(root, "format") != Format) throw new LedgerFormatException("形式が違います。");
             long version = Long(root, "version");
             if (version > Profile.CurrentVersion) throw new LedgerVersionException("新しすぎる版です: " + version);
             if (!root.TryGet("body", out object bodyObj) || !(bodyObj is JsonObject body)) throw new LedgerFormatException("body がありません。");
-            var loaded = ReadBody(body, notes ?? new List<string>(), includeContinue);
+            var loaded = ReadBody(body, notes ?? new List<string>(), includeContinue, out migrated, migrationNoticeBaseline);
             loaded.LoadedVersion = (int)Math.Max(0, Math.Min(int.MaxValue, version));
             return loaded;
         }
@@ -252,8 +260,10 @@ namespace SodRpg.Core.Game
             return id;
         }
 
-        private static Profile ReadBody(JsonObject b, List<string> notes, bool includeContinue)
+        private static Profile ReadBody(JsonObject b, List<string> notes, bool includeContinue, out bool migrated,
+            Profile migrationNoticeBaseline)
         {
+            migrated = false;
             var p = new Profile
             {
                 Revision = Long(b, "revision"),
@@ -365,14 +375,21 @@ namespace SodRpg.Core.Game
                     if (HeroSigils.HasTree(kv.Key))
                     {
                         var tree = HeroSigils.TreeFor(kv.Key);
+                        int previousMigration = h.AuthoredMigrationVersion;
                         var refund = AuthoredStarMigration.Apply(h, tree, StarClusters.MigrationsFor(kv.Key));
-                        if (refund.ChangedStarIds.Count > 0)
+                        bool advanced = h.AuthoredMigrationVersion > previousMigration;
+                        migrated |= advanced || refund.StarIds.Count > 0;
+                        // Continue snapshots still need migration, but the active profile may already have reported this revision.
+                        bool alreadyReported = advanced && migrationNoticeBaseline != null
+                            && migrationNoticeBaseline.Heroes.TryGetValue(kv.Key, out var currentHero)
+                            && currentHero.AuthoredMigrationVersion >= h.AuthoredMigrationVersion;
+                        if (!alreadyReported && refund.ChangedStarIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 効果が変わった星の取得を解除し、使っていたポイントを全額戻しました（{refund.ChangedRefundCost}ポイント）。星の盤で取り直せます: ",
                                 $"{kv.Key}: Stars whose effect changed were cleared and their spent points fully returned ({refund.ChangedRefundCost} points). You can re-spend them on the star map: ")
                                 + string.Join(", ", refund.ChangedStarIds.Select(id => StarLabel(tree, id))));
                         int otherCost = refund.RefundCost - refund.ChangedRefundCost;
                         var otherIds = refund.StarIds.Where(id => !refund.ChangedStarIds.Contains(id)).ToList();
-                        if (otherIds.Count > 0)
+                        if (!alreadyReported && otherIds.Count > 0)
                             notes.Add(Loc.T($"{kv.Key}: 選択や前提が無効になった星も払い戻しました（{otherCost}ポイント）: ",
                                 $"{kv.Key}: Stars left with an invalid choice or prerequisite were also refunded ({otherCost} points): ")
                                 + string.Join(", ", otherIds.Select(id => StarLabel(tree, id))));

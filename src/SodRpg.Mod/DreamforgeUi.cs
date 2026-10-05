@@ -138,11 +138,11 @@ namespace SodRpg.Mod
         public void Notify(GameEvent e)
         {
             if (e == null) return;
-            // Console-generated Core results also pass through the session's currency settlement.
-            if (e.SatchelOverflow != null)
+            if (e.SatchelOverflowCount > 0)
             {
-                _s.Emit(e);
-                return;
+                _satchelTopUntil = 0;
+                _satchelTopCount = -1;
+                _codex.Invalidate();
             }
             InvalidateHud();
             if (e.Kind == EventKind.Hint)
@@ -603,7 +603,8 @@ namespace SodRpg.Mod
             {
                 // 持ち帰れる遺物を、良い物から順にアイコンで並べる（最大14個）。
                 GUILayout.BeginHorizontal();
-                foreach (var r in SatchelTop()) IconSlot(r, 36);
+                var satchel = SortedSatchel();
+                for (int i = 0; i < Math.Min(14, satchel.Count); i++) IconSlot(satchel[i], 36);
                 if (_secureExtraText != null) GUILayout.Label(_secureExtraText, _st.Small);
                 GUILayout.FlexibleSpace();
                 GUILayout.EndHorizontal();
@@ -1050,7 +1051,7 @@ namespace SodRpg.Mod
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
             "<b>1回の遠征の流れ</b>\n" +
             "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
-            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から、持ち主の夢のダストに変わります。付与できないときは欠片になり、道標による報酬停止中は何も得られません。\n" +
+            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から欠片に換え、そのティック内（先に保存・確保する場合はその前）に持ち主のプロフィールへまとめて付与・通知します。協力プレイの参加者も各自のローカルで付与し、通常のまとめて／定期保存に任せます。道標による報酬停止中は何も得られません。\n" +
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
@@ -1066,7 +1067,7 @@ namespace SodRpg.Mod
             "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
             "<b>One expedition</b>\n" +
             "1. Enemies drop relics. In co-op every player gets their own drops, so there is no fighting over loot.\n" +
-            "2. What you pick up goes into your unsecured satchel. Overflow converts the lowest-rarity relic (lowest score within that rarity) into its owner's Dream Dust. If dust cannot be granted, it becomes shards; a reward-suppressing waypoint grants nothing.\n" +
+            "2. What you pick up goes into your unsecured satchel. Overflow converts the lowest-rarity relic (lowest score within that rarity) into shards, credited to its owner's profile with one summary within the tick (or before an earlier save/secure boundary). Co-op participants receive them locally too, using normal batched/periodic saves. A reward-suppressing waypoint grants nothing.\n" +
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +
@@ -1279,6 +1280,7 @@ namespace SodRpg.Mod
         private readonly List<Relic> _satchelTop = new List<Relic>();
         private float _satchelTopUntil;
         private int _satchelTopCount = -1;
+        private RunState _satchelTopRun;
         private readonly int[] _transmuteCounts = new int[5];
         private float _transmuteUntil;
 
@@ -1293,10 +1295,10 @@ namespace SodRpg.Mod
                 var r = stash[i];
                 state = state * 31 + (r.Locked ? 1 : 0) + r.AwakenLevel * 2 + r.Enhance * 4 + (int)r.Rarity * 64 + r.Powers.Count * 1024;
             }
-            return p.Stash.Count + ":" + p.Material(Materials.Shard) + ":" + p.Material(Materials.Tuning) + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
+            return p.Stash.Count + ":" + state + ":" + _slot + ":" + _forgeAllSlots + ":" + HeroKey + ":" + Loc.Japanese;
         }
 
-        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・素材・遺物の状態・枠が変わるか、0.3秒たったら作り直す。</summary>
+        /// <summary>一覧（高さで区別）の並べ替えを使い回す。中身・遺物の状態・枠が変わるか、0.3秒たったら作り直す。素材だけの増減は順序に影響しない。</summary>
         private List<Relic> SortedCached(IEnumerable<Relic> relics, float id)
         {
             float now = Time.unscaledTime;
@@ -1411,18 +1413,23 @@ namespace SodRpg.Mod
             if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("まとめて分解は、遠征に出ていないときに使えます。", "Bulk salvage is available outside expeditions."), _st.Small);
         }
 
-        private List<Relic> SatchelTop()
+        private List<Relic> SortedSatchel()
         {
             var run = _s.Profile.Run;
             float now = Time.unscaledTime;
-            if (run == null) return _satchelTop;
-            if (now < _satchelTopUntil && run.Satchel.Count == _satchelTopCount) return _satchelTop;
+            if (run == null)
+            {
+                _satchelTop.Clear();
+                _satchelTopRun = null;
+                return _satchelTop;
+            }
+            if (now < _satchelTopUntil && run == _satchelTopRun && run.Satchel.Count == _satchelTopCount) return _satchelTop;
+            _satchelTopRun = run;
             _satchelTopUntil = now + 0.3f;
             _satchelTopCount = run.Satchel.Count;
             _satchelTop.Clear();
             _satchelTop.AddRange(run.Satchel);
             _satchelTop.Sort((a, b) => b.Score.CompareTo(a.Score));
-            if (_satchelTop.Count > 14) _satchelTop.RemoveRange(14, _satchelTop.Count - 14);
             return _satchelTop;
         }
 
@@ -2891,7 +2898,7 @@ namespace SodRpg.Mod
                     }
                     GUILayout.EndHorizontal();
                 }
-                foreach (var r in p.Run.Satchel.OrderByDescending(r => r.Score).ToList())
+                foreach (var r in SortedSatchel())
                 {
                     GUILayout.BeginHorizontal();
                     IconSlot(r, 28);

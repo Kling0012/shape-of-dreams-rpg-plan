@@ -612,6 +612,59 @@ namespace SodRpg.Core.Tests
             finally { StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Native_damage_keystone_matches_the_reference_and_still_requires_its_path(bool pathReady)
+        {
+            const string hero = "Hero_Husk", keystone = "husk.key.wind-cut";
+            WithVerification(() => WithGeneratedHero(hero, tree =>
+            {
+                var duo = new Duo(tree, null, HeroTreeLayout.ForHero(hero), hero, () =>
+                {
+                    var profile = FundedProfile(71UL, hero, StarProgression.MaxPoints, relics: 0);
+                    if (pathReady)
+                        foreach (string id in new[]
+                        {
+                            "h.husk.route.wind-scar.4", "husk.mem.wind-scar.c4.e1", "husk.mem.wind-scar.c4.e2", "husk.mem.wind-scar.c4.e3", "husk.mem.wind-scar.c4.n1",
+                            "husk.mem.wind-scar.c4.e4", "husk.mem.wind-scar.c4.e5", "husk.mem.wind-scar.c4.e6", "husk.mem.wind-scar.c4.n2", "husk.mem.wind-scar.c4.choice",
+                        })
+                        {
+                            TreeTestPaths.Connect(profile, hero, id);
+                            Rules.AddTalentRank(profile, hero, id, id.EndsWith("choice", StringComparison.Ordinal) ? 0 : (int?)null);
+                        }
+                    return profile;
+                }) { Label = "native-damage keystone pathReady=" + pathReady };
+                var change = new AllocationChange { Kind = AllocationChangeKind.Keystone, KeystoneId = keystone };
+                string original = ProfileCodec.Write(duo.ProductionProfile);
+                var result = duo.Step(change);
+                if (!pathReady)
+                {
+                    Assert.Null(result.Plan);
+                    Assert.NotNull(result.Error);
+                    Assert.Equal(original, ProfileCodec.Write(duo.ProductionProfile));
+                    return;
+                }
+                Assert.Null(result.Error);
+                Assert.True(result.Plan.CandidateEffective);
+                Assert.True(result.Plan.CanApply);
+                Assert.Empty(result.Plan.SaturatedChannels);
+                Assert.Empty(result.Plan.AffectedRefundIds);
+                // The host applies native damage. Selection must work even though the allocation channels do not change.
+                Assert.Equal(result.Plan.OldEffectiveChannels.Select(Describe), result.Plan.NewEffectiveChannels.Select(Describe));
+                Assert.True(duo.ProductionProfile.Hero(hero).HasKeystone(keystone));
+                string selected = ProfileCodec.Write(duo.ProductionProfile);
+                var duplicate = duo.Step(change);
+                Assert.Null(duplicate.Plan);
+                Assert.NotNull(duplicate.Error);
+                Assert.Equal(selected, ProfileCodec.Write(duo.ProductionProfile));
+                var refund = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Refund, CandidateStarId = keystone }).Plan;
+                Assert.True(refund.CanApply);
+                Assert.False(duo.ProductionProfile.Hero(hero).HasKeystone(keystone));
+                Assert.True(duo.Step(change).Plan.CanApply);
+            }));
+        }
+
         // Route-entry eligibility is a rule change, not an optimization. Exercise it directly in the fast suite:
         // the short random sequences need not reach it (Mist seed 500 first did so at step 52 in the slow suite).
         [Theory]

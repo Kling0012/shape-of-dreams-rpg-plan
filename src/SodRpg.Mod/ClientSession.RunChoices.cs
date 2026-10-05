@@ -164,8 +164,6 @@ namespace SodRpg.Mod
                 if (!InfinityMode.NativeSaveAgreement) return;
                 FlushPendingPressureDividends();
                 _pendingRunRewards.Drain(Profile.Run.RunId, ChoiceZoneIndex, _grantPendingKill, Profile.Run.Infinity.SegmentEpoch);
-                // 撃破のあふれを、確保・決着の判断より先に1回にまとめて確定する（#167）。
-                FlushSatchelOverflow();
                 return;
             }
             // 勝利の確定は潜行しない（#71）。選択待ちだけを解けば、保留中の撃破は戦った深度のまま精算される。
@@ -176,8 +174,6 @@ namespace SodRpg.Mod
             // Pure White keeps the personal choice pending until an explicit choice or the run's conclusion.
             if (InPureWhiteRoute && Profile.Run.AwaitingChoice && !_pendingRunVictory.HasValue) return;
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
-            // 夢の出来事などで外れた分も含めて、確保・決着の判断より先にまとめて確定する（#167）。
-            FlushSatchelOverflow();
         }
 
         private bool CommitCombatChoice(bool publish = true, bool concluding = false)

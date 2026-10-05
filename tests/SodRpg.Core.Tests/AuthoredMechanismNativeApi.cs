@@ -71,6 +71,7 @@ namespace SodRpg.Mod
             return null;
         }
         public float ProcessShieldAmount(float amount, Entity target) => amount * target.Status.ShieldMultiplier;
+        public Action<Se_GenericShield_OneShot> AfterShieldCreated;
         public T CreateStatusEffect<T>(Entity target, CastInfo cast, Action<T> setup) where T : StatusEffect, new()
         {
             var effect = new T { info = cast, parentActor = this, Recipient = target, victim = target };
@@ -82,6 +83,7 @@ namespace SodRpg.Mod
                 object[] args = { shield, processed }; method.Invoke(null, args); processed = (float)args[1];
                 shield.shield = new ShieldEffect { amount = processed };
                 target.Status.Shields.Add(shield.shield);
+                AfterShieldCreated?.Invoke(shield);
             }
             return effect;
         }

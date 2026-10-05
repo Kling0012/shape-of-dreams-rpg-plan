@@ -34,13 +34,22 @@ namespace SodRpg.Core.Game
         /// </summary>
         public bool WritesBlocked { get; private set; }
 
-        public Profile Load()
+        public Profile Load() => Load(null);
+
+        // Slot loading must reject source I/O failures before recovery copies or migration
+        // saves can change the disk. Plain store callers retain their tolerant recovery path.
+        internal Profile Load(Action sourceReadsComplete)
         {
             Notes.Clear();
             WritesBlocked = false;
-            if (ResetIfOld()) return Profile.CreateNew(_seed);
-            Profile main = TryRead(_path, "本体");
-            Profile bak = TryRead(BackupPath, "バックアップ");
+            if (ResetIfOld())
+            {
+                sourceReadsComplete?.Invoke();
+                return Profile.CreateNew(_seed);
+            }
+            Profile main = TryRead(_path, "本体", out var mainNotes, out bool mainMigrated);
+            Profile bak = TryRead(BackupPath, "バックアップ", out var bakNotes, out bool bakMigrated);
+            sourceReadsComplete?.Invoke();
             if (!WritesBlocked)
             {
                 // リセットより前の版は、復旧の候補にしない（issue #16：リセット後の初回保存の直後に旧 .bak が選ばれていた）。
@@ -53,14 +62,14 @@ namespace SodRpg.Core.Game
             }
             if (main != null && (bak == null || main.Revision >= bak.Revision))
             {
-                PreserveBeforeExclusion(_path, _mainExcluded);
-                return main;
+                PreserveBeforeExclusion(_path, mainNotes.Exists(n => n.Contains("除外")));
+                return CompleteLoad(main, "本体", mainNotes, mainMigrated);
             }
             if (bak != null)
             {
                 Notes.Add("本体が読めないため、バックアップから復旧しました（rev " + bak.Revision + "）。");
                 if (_fs.Exists(_path)) Quarantine(_path);
-                return bak;
+                return CompleteLoad(bak, "バックアップ", bakNotes, bakMigrated);
             }
             if (_fs.Exists(_path) || _fs.Exists(BackupPath))
             {
@@ -68,6 +77,23 @@ namespace SodRpg.Core.Game
                 Notes.Add("保存データが読めないため、新しいプロフィールで始めます。壊れたファイルは .corrupt として残しました。");
             }
             return Profile.CreateNew(_seed);
+        }
+
+        private Profile CompleteLoad(Profile profile, string label, List<string> notes, bool migrated)
+        {
+            // Only the selected save changed the active allocation; an older backup is not a second refund.
+            foreach (string note in notes) Notes.Add(label + ": " + note);
+            if (migrated && !WritesBlocked)
+            {
+                try { Save(profile); }
+                catch (IOException ex)
+                {
+                    // Keep the migrated in-memory profile usable; the next load can safely retry from the old disk snapshot.
+                    Notes.Add(Loc.T("星の払い戻し・改訂番号を保存できませんでした。次回の読み込みで再試行します: ",
+                        "Could not save star refunds and their revision; the next load will retry: ") + ex.Message);
+                }
+            }
+            return profile;
         }
 
         /// <summary>保存する。成功すると p.Revision が1増える。失敗時は IOException を投げ、本体は変更しない。</summary>
@@ -112,16 +138,14 @@ namespace SodRpg.Core.Game
             }
         }
 
-        private Profile TryRead(string path, string label)
+        private Profile TryRead(string path, string label, out List<string> notes, out bool migrated)
         {
+            notes = new List<string>();
+            migrated = false;
             if (!_fs.Exists(path)) return null;
             try
             {
-                var notes = new List<string>();
-                var p = ProfileCodec.Read(_fs.ReadAllText(path), notes);
-                foreach (var n in notes) Notes.Add(label + ": " + n);
-                if (path == _path) _mainExcluded = notes.Exists(n => n.Contains("除外"));
-                return p;
+                return ProfileCodec.ReadForStore(_fs.ReadAllText(path), notes, out migrated);
             }
             catch (LedgerVersionException)
             {
@@ -192,8 +216,6 @@ namespace SodRpg.Core.Game
             {
             }
         }
-
-        private bool _mainExcluded;
 
         /// <summary>
         /// 読み込みで知らない星・遺物などを除外したときは、上書きで失われる前に元のファイルを一度だけ写して残す

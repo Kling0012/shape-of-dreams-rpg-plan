@@ -133,8 +133,7 @@ namespace SodRpg.Mod
 
         private void FlushOldProfileWriter()
         {
-            // 外れたままのあふれを先に取引へ出す：切替後の保存に「対価のない取り除き」を残さない（#167）。
-            FlushSatchelOverflow();
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             if (_writer != null && !_writer.Flush())
                 throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish."));
@@ -143,8 +142,7 @@ namespace SodRpg.Mod
 
         private bool ProfileSessionSettled => !HasHeldTrades && _pendingRunRewards.Count == 0
             && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
-            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0
-            && _satchelOverflowQueue.Count == 0;
+            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0;
 
         private void TickProfileSlots()
         {
@@ -214,9 +212,7 @@ namespace SodRpg.Mod
 
         private void UpdateProfileLoadNotes()
         {
-            string storeNotes = _store.Notes.Count > 0 ? string.Join("\n", _store.Notes) : null;
             LoadNotes = _profileSlots.Note;
-            if (storeNotes != null) LoadNotes = LoadNotes == null ? storeNotes : LoadNotes + "\n" + storeNotes;
             if (LoadNotes != null) Log.Warn("Profile load notes:\n" + LoadNotes);
         }
 
@@ -226,9 +222,6 @@ namespace SodRpg.Mod
                 && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
                 && _pendingResultRunId == null, "Profile switch requires settled session queues.");
             _trades.Clear();
-            _satchelOverflowQueue.Clear();
-            _satchelOverflowDrain.Clear();
-            _satchelOverflowBatch.Clear();
             _pendingRunRewards.Clear();
             _pendingRunVictory = null;
             _pendingResultRunId = null;
@@ -326,6 +319,7 @@ namespace SodRpg.Mod
             foreach (var r in _s.Profile.Stash) _seenUids.Add(r.Uid);
             _seenInit = true;
             _satchelTop.Clear();
+            _satchelTopRun = null;
             _satchelTopCount = -1;
             _sortedUntil = _satchelTopUntil = _transmuteUntil = _openFeatsUntil = 0;
             _openFeats.Clear();

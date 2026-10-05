@@ -9,7 +9,8 @@ namespace SodRpg.Core.Tests.Testing
     /// Frozen copy of the pre-optimization EffectiveAllocationValidation (v1.31 before the C15 performance fix).
     /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
     /// Deliberately unoptimized (every RankEffective runs two full Build computations). Its algorithm stays frozen,
-    /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement receivers (#174/#199), and owned replacement retention (#199).
+    /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement receivers (#174/#199),
+    /// owned replacement retention (#199), and native-damage keystone eligibility (#187).
     /// These eligibility rules are evaluated here independently; no production validation/optimization helpers are called.
     /// C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.
     /// </summary>
@@ -132,7 +133,8 @@ namespace SodRpg.Core.Tests.Testing
             {
                 var withoutKey = proposed.Clone();
                 withoutKey.RemoveKeystone(change.KeystoneId);
-                candidateEffective = HasPositiveDifference(channels, Capture(profile, heroKey, withoutKey, proposed));
+                candidateEffective = HasPositiveDifference(channels, Capture(profile, heroKey, withoutKey, proposed))
+                    || HasNativeDamageUpside(Talent(change.KeystoneId));
                 if (!candidateEffective) saturated.Add(change.KeystoneId);
             }
             if (candidateEffective)
@@ -339,6 +341,17 @@ namespace SodRpg.Core.Tests.Testing
                 foreach (string replacement in mechanism.Replaces)
                     if (replacement == replacedId) return true;
             }
+            return false;
+        }
+
+        // Native-memory damage is transformed by the host rather than represented in allocation channels.
+        // Keep this semantic exception independent of the production validator and its optimization helpers.
+        private static bool HasNativeDamageUpside(TalentDef talent)
+        {
+            var definition = talent?.KeystoneDefinition;
+            if (definition == null) return false;
+            foreach (var transform in definition.Upside)
+                if (transform.TargetLayer == KeystoneLayer.NativeDamage) return true;
             return false;
         }
 
