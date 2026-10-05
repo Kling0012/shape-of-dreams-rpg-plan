@@ -266,13 +266,14 @@ namespace SodRpg.Mod
             public void Clear() { }
         }
     }
-    // These existing save/choice scenarios model ordinary runs, not Infinity's native graph.
+    // The harness models an Infinity-unavailable host (Available == false, no save agreement),
+    // so the linked continue code takes its documented no-op paths for Infinity runs too.
     internal static class InfinityMode
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
         internal static bool NativeSaveAgreement => false;
-        internal static void WriteEnvelope() => throw new NotSupportedException("Infinity is outside the harness.");
+        internal static void WriteEnvelope() { }
     }
     internal sealed partial class ClientSession
     {
@@ -315,10 +316,10 @@ namespace SodRpg.Mod
         {
             if (Profile.Run?.Infinity != null) throw new NotSupportedException("Infinity is outside the harness.");
         }
-        private void TickInfinity() => RequireOrdinaryRun();
-        private void ResetInfinityContinueState() => RequireOrdinaryRun();
-        private void SyncInfinityContinueSnapshot() => RequireOrdinaryRun();
-        internal static void ValidateHostInfinityContinue() => _hostSession?.RequireOrdinaryRun();
+        private void TickInfinity() { }
+        private void ResetInfinityContinueState() { }
+        private void SyncInfinityContinueSnapshot() { }
+        internal static void ValidateHostInfinityContinue() { }
         private bool TryInfinitySecure(out string error)
         {
             RequireOrdinaryRun();
