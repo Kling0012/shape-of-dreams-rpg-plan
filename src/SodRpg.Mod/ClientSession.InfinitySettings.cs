@@ -85,7 +85,7 @@ namespace SodRpg.Mod
                 }
                 if (HostAuthority.InfinityRosterCompatible(DewPlayer.lobbyPlayers)) return;
                 __result = false;
-                reason = Loc.T("インフィニティモードには全員の対応MOD（Protocol 20）と有効なインフィニティ機能が必要です。", "Infinity mode requires a compatible mod (Protocol 20) and available Infinity support for every player.");
+                reason = Loc.T("インフィニティモードには全員の対応MOD（Protocol 21）と有効なインフィニティ機能が必要です。", "Infinity mode requires a compatible mod (Protocol 21) and available Infinity support for every player.");
             }
             catch (System.Exception ex)
             {

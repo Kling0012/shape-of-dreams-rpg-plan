@@ -9,7 +9,7 @@ namespace SodRpg.Core.Tests
     /// <summary>
     /// #95 インフィニティモード。Coreの状態・報酬・確保・記録・チェックポイントを
     /// ひとつの遠征の流れとしてシミュレートする（E2E寄り）。
-    /// 通常モードが変わらないこと、協力でのホスト設定の伝播、Protocol 20 の不一致の扱いも扱う。
+    /// 通常モードが変わらないこと、協力でのホスト設定の伝播、Protocol 21 の不一致の扱いも扱う。
     /// </summary>
     public class InfinityModeTests
     {
@@ -288,7 +288,7 @@ namespace SodRpg.Core.Tests
         /// <summary>
         /// 協力プレイ: ホストの共有ルールはRunChoiceSnapshotで参加者へ伝わる（未受領の参加者へはON設定ごと伝わる）。
         /// 通常モード（OFF）のsnapshotはインフィニティ遠征へは適用されず、
-        /// Protocol 20 / 内容指紋が一致しない相手は認められない。
+        /// Protocol 21 / 内容指紋が一致しない相手は認められない。
         /// </summary>
         [Fact]
         public void Host_infinity_settings_propagate_and_protocol_mismatches_are_rejected()
@@ -334,9 +334,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(hostInfinity.Interval, plainGuest.Run.Infinity.Interval);
             Assert.Equal(hostInfinity.ClearedCombatTotal, plainGuest.Run.Infinity.ClearedCombatTotal);
 
-            // Protocol 20（永続するインフィニティ報酬上限を必須とする版）の不一致は認められない
-            Assert.Equal(20, SodRpg.Mod.Protocol.Version);
-            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(19, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
+            // Protocol 21（ロビー復帰の敗北とインフィニティ報酬上限を必須とする版）の不一致は認められない
+            Assert.Equal(21, SodRpg.Mod.Protocol.Version);
+            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(20, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
             Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, null, SodRpg.Mod.Protocol.Version));
             Assert.True(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
         }

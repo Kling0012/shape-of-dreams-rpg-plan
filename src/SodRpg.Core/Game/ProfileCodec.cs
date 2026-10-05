@@ -148,6 +148,8 @@ namespace SodRpg.Core.Game
                 .Add("starterUids", p.StarterUids.Select(u => (object)u).ToList())
                 .Add("stats", stats)
                 .Add("completedRunId", p.CompletedRunId)
+                .Add("lobbyReturnedRunIds", p.LobbyReturnedRunIds.Select(id => (object)id).ToList())
+                .Add("lobbyReturnAuthority", p.LobbyReturnAuthority)
                 .Add("completedRunSecuredReturn", p.CompletedRunSecuredReturn)
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
@@ -269,6 +271,7 @@ namespace SodRpg.Core.Game
             p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
             ReadInfinityRecords(p, b);
             p.CompletedRunId = Str(b, "completedRunId");
+            p.LobbyReturnAuthority = Bool(b, "lobbyReturnAuthority", false);
             if (b.TryGet("completedRunSecuredReturn", out object securedReturn))
             {
                 if (!(securedReturn is bool flag)) throw new LedgerFormatException("Invalid secured return receipt");
@@ -385,6 +388,9 @@ namespace SodRpg.Core.Game
             if (b.TryGet("featsClaimed", out object fc) && fc is List<object> featsClaimed)
                 foreach (var f in featsClaimed)
                     if (f is string id) p.FeatsClaimed.Add(id);
+            if (b.TryGet("lobbyReturnedRunIds", out object lr) && lr is List<object> lobbyReturnedRunIds)
+                foreach (var item in lobbyReturnedRunIds)
+                    if (item is string id && !string.IsNullOrEmpty(id)) p.LobbyReturnedRunIds.Add(id);
             if (b.TryGet("hints", out object ho2) && ho2 is List<object> hints)
                 foreach (var h in hints)
                     if (h is long hv && hv >= 0 && hv < 1000) p.SeenHints.Add((int)hv);

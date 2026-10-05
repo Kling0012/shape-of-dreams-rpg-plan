@@ -58,6 +58,7 @@ namespace SodRpg.Core.Game
             restored.LastInfinityEnabled = current.LastInfinityEnabled;
             restored.LastInfinityInterval = current.LastInfinityInterval;
             restored.SeenHints.UnionWith(current.SeenHints);
+            restored.LobbyReturnedRunIds.UnionWith(current.LobbyReturnedRunIds);
             restored.ContinueCheckpoints.AddRange(current.ContinueCheckpoints);
             restored.ContinueLobbyBaseline = null;
             restored.ContinueResumeSession = current.ContinueResumeSession;

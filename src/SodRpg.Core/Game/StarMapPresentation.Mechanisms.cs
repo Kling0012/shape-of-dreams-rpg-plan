@@ -136,6 +136,25 @@ namespace SodRpg.Core.Game
                     "a forward line " + Number(strike.RangeMetres) + "m long and " + Number(strike.WidthOrArc) + "m wide")
                 : Loc.T("前方" + Number(strike.RangeMetres) + "m・角度" + Number(strike.WidthOrArc) + "度の扇形内",
                     "a forward arc of " + Number(strike.RangeMetres) + "m and " + Number(strike.WidthOrArc) + "°");
+            if (strike.IsCriticalMechanism)
+            {
+                string identity = memory;
+                string timing = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
+                    ? Loc.T("ダッシュ・瞬間移動後" + Number(strike.WindowSeconds) + "秒以内の最初の通常攻撃が会心すると（非会心でも準備を消費）、",
+                        "If the first basic attack hit within " + Number(strike.WindowSeconds) + "s after a dash or teleport is critical (a noncritical hit also consumes readiness), ")
+                    : Loc.T("同じ敵に通常攻撃の会心を3回連続で命中させると（各命中間隔" + Number(strike.WindowSeconds) + "秒以内。非会心・別の敵への命中・時間切れで連続数をリセット）、",
+                        "On three consecutive critical basic attack hits against the same enemy (each gap at most " + Number(strike.WindowSeconds) + "s; a noncritical hit, a different enemy or an expired window resets the sequence), ");
+                string geometry = shape;
+                string damage = Loc.T(identity + "の斬撃が対象と" + geometry + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "に相当する闇ダメージを与えます（計" + strike.MaxTargets + "体まで、発動間隔" + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "秒）。",
+                    identity + " deals dark damage equal to " + Percent(strike.AdUnits) + " of " + basis + " to the target and enemies in " + geometry + " (up to " + strike.MaxTargets + " enemies total; " + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "s interval).");
+                string partners = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
+                    ? Loc.T("斬撃時に装備中の回避記憶の残りクールダウンを" + Number(IdentityStrikeDefinition.CriticalMovementRefundPercent) + "%短縮します。記憶『瞬歩』のダッシュや記憶『死の刻印』『撹乱』の瞬間移動で準備でき、記憶『風の傷』の移動後の確定会心と連携します。",
+                        " The strike reduces the equipped dodge memory's remaining cooldown by " + Number(IdentityStrikeDefinition.CriticalMovementRefundPercent) + "%. Dashes from Memory \"Flash Step\" and teleports from Memory \"Death Mark\" or Memory \"Deception\" prime it, pairing with Memory \"Scar of the Wind\"'s guaranteed post-movement critical hit.")
+                    : Loc.T("記憶『瞬歩』のダッシュや記憶『死の刻印』の瞬間移動と、記憶『一歩一殺』の移動後の確定会心で連続会心をつなげられます。",
+                        " Dashes from Memory \"Flash Step\" and teleports from Memory \"Death Mark\" pair with Memory \"One Step, One Kill\"'s guaranteed post-movement critical hit to maintain the sequence.");
+                return timing + damage + partners + Loc.T(identity + "に装着したエッセンス『神聖なる信仰』のダメージ増幅と、命中後6秒以内の撃破による成長が働きます（エッセンス未装着でも発動）。",
+                    " Essence \"Divine Faith\" socketed to " + identity + " amplifies this damage and gains stacks from kills within 6s of the hit (the strike also works without that Essence).");
+            }
             string when = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit
                 ? Loc.T("ダッシュ・瞬間移動後" + Number(strike.WindowSeconds) + "秒以内に次の自分の通常攻撃が命中すると（移動1回につき1回、重ならない）",
                     "when your next basic attack hits within " + Number(strike.WindowSeconds) + "s after a dash or teleport (once per displacement; does not stack)")
