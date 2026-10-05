@@ -12,6 +12,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.2.0 — インフィニティモード（2026-10-05）
+
+新しい遊び方「インフィニティモード」を追加しました。ひとつの世界で、終わりなく遠征を続けられます。 / Adds Infinity Mode: an endless run in a single world.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**。 / Saves carry over.
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **インフィニティモード**：ロビーの「夢の深さ」の近くで ON にできます（ホストが設定し、参加者にも伝わります）。最初のゾーンの世界から出ずに、部屋を進み続けます。 / **Infinity Mode**: turn it on in the lobby next to Dream Depth (the host decides; everyone sees it). You stay in the first zone's world and keep going.
+  - 戦闘の部屋を決まった数（10・15・20 から選べます）クリアするたびに、そのゾーンのボスが現れます。 / Every 10, 15 or 20 cleared combat rooms (your choice), the zone's boss appears.
+  - ボスを倒して報酬を受け取ると、確保の画面が出ます。「確保して帰還」でその遠征を終え、「深く潜る」でそのまま続けます。 / After the boss and its reward, the secure screen opens: secure and return to end the run, or delve to keep going.
+  - クリアした部屋が増えるほど、敵が少しずつ手ごわくなります（上限あり）。 / Enemies grow tougher as cleared rooms add up (capped).
+  - 「続きから」で再開しても、進み具合が戻ります。 / Progress is restored when you resume with Continue.
+
+### 不具合の修正 / Fixes
+
+- **ゲームの更新や他の MOD と合わない機能**：起動時の確認で合わない所が見つかっても、一部の連携（LastStarlight）がそのまま動き、本体のスキルの処理を途中で打ち切ることがありました。合わない機能だけを使わないようにし、想定外の動きのときは本体の処理をそのまま通すようにしました。 / **Features that no longer match the game or other mods**: one boss gear link (LastStarlight) could stay active after a mismatch and cut a game skill short. Only the mismatched feature is now turned off, and unexpected cases fall back to the game's own behavior.
+
+インフィニティモードはコードとシミュレーションで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / Infinity Mode was verified by code and simulation, not yet in the live game or co-op. Please report anything odd.
+
+---
+
 ## v2.1.2 — 鍛冶の遺物が消える不具合の修正（2026-10-05）
 
 「続きから」で遠征を再開したあとに鍛冶で遺物を作ると、遺物が消えることがある不具合を直しました。 / Fixes relics disappearing when crafting after resuming a run with "Continue".
