@@ -6,6 +6,15 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — #48 表示文言の仕上げ
+
+- **名前**：装備・セット名19件から括弧内の候補案を除去し、元の名前を維持しました。 / Removed proposed alternatives from 19 equipment and set names, retaining the original names.
+- **説明**：英語説明156定義を日本語の確定文と同じ意味・数値のプレイヤー向け表現に統一しました。 / Rewrote 156 English description definitions for players, matching the finalized Japanese meaning and numbers.
+- **Azurak**：潜行の任意連携は段階別の表示に戻し、初段はスタン延長のみ、次段は元ダメージ20%加算・合計上限20%、最終段は25%加算・合計上限45%と硬直0.05秒短縮を表示します。効果の処理や数値は変更していません。 / Restored stage-specific Burrow descriptions without changing mechanics or values.
+- **検証**：指定Releaseビルド成功（警告5・エラー0）。`DOTNET_ROLL_FORWARD=Major` でWikiGen成功（62セット・1418固有品）、生成文でAzurakの段階別の日英表示を確認。指定全体テストは3146件成功・失敗0・既定のslow test 2件skip。テストの追加・変更はありません。ゲーム内表示は未確認です。 / Release build, WikiGen and the full existing suite passed; no tests changed. In-game rendering was not verified.
+
+---
+
 ## 未リリース — #48 合流後のテスト修復
 
 - **nativeスタブ**：`ProcessReceivedShield`／`EquipGem`／型付きRPC、native型名・帰属判定、JSON transportを製品側の新しい呼び出しへ合わせました。製品コードは変更していません。 / Updated native test doubles for the merged boss runtime without changing production code.
