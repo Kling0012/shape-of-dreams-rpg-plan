@@ -22,7 +22,11 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         private readonly Dictionary<Monster, PressureDividendEnemy> _pressureDividendSpawns = new Dictionary<Monster, PressureDividendEnemy>();
-        private readonly PressureDividendRuntime _pressureDividends = new PressureDividendRuntime();
+        private readonly Dictionary<PressureDividendEnemy, PressureDividendRuntime> _pressureDividendRolls =
+            new Dictionary<PressureDividendEnemy, PressureDividendRuntime>();
+        private const float PressureDividendDeathLifetime = 10f;
+        private readonly Dictionary<Monster, float> _pressureDividendDeathExpiry = new Dictionary<Monster, float>();
+        private readonly List<Monster> _pressureDividendDeathScratch = new List<Monster>();
         private long _nextPressureDividendSpawn;
         private readonly HashSet<PressureDividendEnemy> _nativePressureLootSpawns = new HashSet<PressureDividendEnemy>();
         internal void MarkPressureDividendLootSpawn(Monster monster)
@@ -58,12 +62,43 @@ namespace SodRpg.Mod
 
         private void CapturePressureDividendDeath(Monster monster)
         {
-            if (!_pressureDividendSpawns.TryGetValue(monster, out var spawn)) return;
+            if (!_pressureDividendSpawns.TryGetValue(monster, out var spawn) || spawn.Death != null) return;
             bool eligible = !monster.disableLoot && monster.Status != null && monster.owner != null
                 && !monster.owner.isHumanPlayer;
             if (eligible && monster.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter))
                 eligible = hunter.enableGoldAndExpDrops;
             spawn.CaptureDeath(eligible);
+            _pressureDividendDeathExpiry[monster] = Time.unscaledTime + PressureDividendDeathLifetime;
+        }
+
+        private void ForgetPressureDividendSpawn(Monster monster)
+        {
+            if (_pressureDividendSpawns.TryGetValue(monster, out var spawn))
+            {
+                _nativePressureLootSpawns.Remove(spawn);
+                _pressureDividendRolls.Remove(spawn);
+                _pressureDividendSpawns.Remove(monster);
+            }
+            _pressureDividendDeathExpiry.Remove(monster);
+        }
+
+        private void PrunePressureDividendDeaths()
+        {
+            float now = Time.unscaledTime;
+            _pressureDividendDeathScratch.Clear();
+            foreach (var entry in _pressureDividendDeathExpiry)
+                if (entry.Key == null || now >= entry.Value) _pressureDividendDeathScratch.Add(entry.Key);
+            foreach (var monster in _pressureDividendDeathScratch) ForgetPressureDividendSpawn(monster);
+            _pressureDividendDeathScratch.Clear();
+        }
+
+        private void ClearPressureDividendSpawns()
+        {
+            _pressureDividendSpawns.Clear();
+            _pressureDividendDeathExpiry.Clear();
+            _pressureDividendDeathScratch.Clear();
+            _nativePressureLootSpawns.Clear();
+            _pressureDividendRolls.Clear();
         }
 
         /// <summary>
@@ -84,7 +119,12 @@ namespace SodRpg.Mod
                 || victim.GetRelation(hero) != EntityRelation.Enemy) return null;
             if (!_pressureDividendSpawns.TryGetValue(victim, out var spawn) || spawn.Death == null
                 || spawn.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return null;
-            var reward = _pressureDividends.TryAward(spawn.Death, attribution, channels, equippedMemories,
+            if (!_pressureDividendRolls.TryGetValue(spawn, out var rolls))
+            {
+                rolls = new PressureDividendRuntime();
+                _pressureDividendRolls.Add(spawn, rolls);
+            }
+            var reward = rolls.TryAward(spawn.Death, attribution, channels, equippedMemories,
                 () => (decimal)_rng.NextDouble() * 10000m, () => Guid.NewGuid().ToString("N"));
             if (reward != null)
                 _registeredOn.CustomRpc_SendMessageToClient(owner, DreamforgePressureDividendMsg.FromReward(reward, hero.netId));
