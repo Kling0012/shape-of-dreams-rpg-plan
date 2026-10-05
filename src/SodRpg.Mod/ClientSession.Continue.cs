@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using HarmonyLib;
 using Mirror;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SodRpg.Core.Game;
 using UnityEngine;
 
@@ -12,6 +15,7 @@ namespace SodRpg.Mod
     {
         public int protocol;
         public string runId, checkpointId;
+        public bool committed;
     }
 
     internal sealed partial class ClientSession
@@ -38,6 +42,7 @@ namespace SodRpg.Mod
         private const string ContinueTradesKey = "Dreamforge.Continue.Trades";
         private RunCheckpoint _nativeContinueCheckpoint;
         private string _continueCheckpointId, _continueResumeSession;
+        private string _pendingContinueId, _confirmedContinueId;
         private bool _continueHandshakeReady;
         private bool _nativeContinueRestoring;
         private GameManager _continueGame;
@@ -56,6 +61,9 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
             string id = Guid.NewGuid().ToString("N");
             var checkpoint = RunCheckpoint.Capture(session.Profile, id);
             session.RememberContinueCheckpoint(checkpoint);
+            session._pendingContinueId = id;
+            DewSave.onSaveEnded -= ConfirmNativeContinue;
+            DewSave.onSaveEnded += ConfirmNativeContinue;
             data.serverActorData[ContinueIdKey] = id;
             data.serverActorData[ContinueRunKey] = runId;
             data.serverActorData[ContinueProfileKey] = checkpoint.Snapshot;
@@ -65,6 +73,58 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
             NetworkedManagerBase<ActorManager>.softInstance?.serverActor.CustomRpc_SendMessageToAllClients(
                 new DreamforgeContinueCheckpointMsg { protocol = Protocol.Version, runId = runId, checkpointId = id });
             session.SaveNow();
+        }
+
+        // onSaveEnded also fires after caught write exceptions. Only the file's ID is evidence
+        // of commitment; the live DewSave.profileContinue object is merely a pending attempt.
+        private static void ConfirmNativeContinue()
+        {
+            var session = _hostSession;
+            if (!NetworkServer.active || session == null || session._pendingContinueId == null) return;
+            try
+            {
+                JObject file;
+                using (var text = File.OpenText(DewSave.profileContinuePath))
+                using (var json = new JsonTextReader(text))
+                    file = JObject.Load(json);
+                string payload = (string)file["root"]?["continueData"];
+                var actorData = JObject.Parse(payload)["serverActorData"];
+                string id = (string)actorData?[ContinueIdKey];
+                string runId = (string)actorData?[ContinueRunKey];
+                if (!session.ConfirmContinueCheckpoint(runId, id))
+                    throw new InvalidOperationException("The native file has no matching MOD checkpoint.");
+                if (session._confirmedContinueId != id)
+                {
+                    session.SaveNow();
+                    var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
+                    if (actor != null)
+                    {
+                        actor.CustomRpc_SendMessageToAllClients(new DreamforgeContinueCheckpointMsg
+                        {
+                            protocol = Protocol.Version, runId = runId, checkpointId = id, committed = true,
+                        });
+                        session._confirmedContinueId = id;
+                    }
+                }
+                if (session._pendingContinueId == id)
+                {
+                    session._pendingContinueId = null;
+                    session.ContinueWarning = null;
+                }
+                else session.WarnUnconfirmedContinue("The native file still contains an earlier checkpoint.");
+            }
+            catch (Exception ex)
+            {
+                session.WarnUnconfirmedContinue(ex.Message);
+            }
+        }
+
+        private void WarnUnconfirmedContinue(string reason)
+        {
+            string warning = Loc.T("本体の再開保存を確認できません。チェックポイントの整理を停止し、以前の保存を保持しています。",
+                "Native resume save is unconfirmed. Checkpoint cleanup is paused; earlier saves are retained.");
+            if (ContinueWarning != warning) Log.Warn(warning + " " + reason);
+            ContinueWarning = warning;
         }
 
         internal static void LoadNativeContinue(DewPersistence.GameData data)
@@ -113,16 +173,32 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
 
         private void RememberContinueCheckpoint(RunCheckpoint checkpoint)
         {
-            for (int i = Profile.ContinueCheckpoints.Count - 1; i >= 0; i--)
-                if (Profile.ContinueCheckpoints[i].Id == checkpoint.Id) Profile.ContinueCheckpoints.RemoveAt(i);
+            // A repeated barrier must not replace its frozen rewards with later progress.
+            foreach (var existing in Profile.ContinueCheckpoints)
+                if (existing.Id == checkpoint.Id) return;
             Profile.ContinueCheckpoints.Add(checkpoint);
-            while (Profile.ContinueCheckpoints.Count > RunCheckpoint.MaximumHistory) Profile.ContinueCheckpoints.RemoveAt(0);
+        }
+
+        private bool ConfirmContinueCheckpoint(string runId, string id)
+        {
+            if (string.IsNullOrEmpty(id) || runId != Profile.Run?.RunId) return false;
+            int index = Profile.ContinueCheckpoints.FindIndex(c => c.Id == id && c.RunId == runId);
+            if (index < 0) return false;
+            // Keep the committed point, its predecessor and every later unconfirmed barrier.
+            // Pending writes can be coalesced; a notification must never discard a future candidate.
+            if (index > 1) Profile.ContinueCheckpoints.RemoveRange(0, index - 1);
+            return true;
         }
 
         private void OnContinueCheckpoint(DreamforgeContinueCheckpointMsg msg)
         {
             if (NetworkServer.active || !ContinueReady || msg == null || msg.protocol != Protocol.Version
                 || msg.runId != Profile.Run?.RunId || msg.runId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+            if (msg.committed)
+            {
+                if (ConfirmContinueCheckpoint(msg.runId, msg.checkpointId)) SaveNow(true);
+                return;
+            }
             PrepareContinueSnapshot();
             RememberContinueCheckpoint(RunCheckpoint.Capture(Profile, msg.checkpointId));
             SaveNow(true);

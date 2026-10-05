@@ -7,7 +7,6 @@ namespace SodRpg.Core.Game
     /// <summary>An immutable, non-recursive MOD snapshot paired with a native continue point.</summary>
     public sealed class RunCheckpoint
     {
-        public const int MaximumHistory = 2;
         public string Id { get; }
         public string RunId { get; }
         public string Snapshot { get; }

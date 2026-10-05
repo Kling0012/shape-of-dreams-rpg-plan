@@ -56,7 +56,6 @@ namespace Issue73.Native.Tests
 
             var secondSave = new DewPersistence.GameData();
             SaveContinue(secondSave);
-            Assert.Equal(2, profile.ContinueCheckpoints.Count); // 履歴は上限2つ
             // ディスク保存を経由してもチェックポイントは失われない。
             var reloaded = ProfileCodec.Read(ProfileCodec.Write(profile), new List<string>());
             Assert.Equal(profile.ContinueCheckpoints.Select(c => c.Id), reloaded.ContinueCheckpoints.Select(c => c.Id));
@@ -251,6 +250,104 @@ namespace Issue73.Native.Tests
             Call(guest, "ReceiveContinueHandshake", resumeHello);
             Assert.Equal(killsAfterResume, guest.Profile.Run.Kills);
         }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void Uncommitted_native_saves_keep_the_guests_durable_checkpoint_and_its_exact_rewards(bool finishFailedWrites)
+        {
+            string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid() + ".json");
+            DewSave.profileContinuePath = path;
+            try
+            {
+                var host = HostSession(out var actor);
+                Fight(host.Profile, MonsterTier.Boss, 1);
+                var durable = new DewPersistence.GameData();
+                SaveContinue(durable);
+                WriteNativeContinue(path, durable);
+                DewSave.onSaveEnded?.Invoke();
+
+                var guest = GuestInGame("run");
+                Call(guest, "ReceiveContinueHandshake", Hello("run"));
+                foreach (var message in actor.Sent.Select(s => s.Message).OfType<DreamforgeContinueCheckpointMsg>())
+                    Call(guest, "OnContinueCheckpoint", message);
+                actor.Sent.Clear();
+                var atDurable = guest.Profile.Clone();
+
+                for (int attempt = 0; attempt < 3; attempt++)
+                {
+                    Fight(host.Profile, MonsterTier.Boss, 1);
+                    Fight(guest.Profile, MonsterTier.Boss, 1);
+                    NetworkServer.active = true;
+                    SaveContinue(new DewPersistence.GameData());
+                    // A failed write still raises onSaveEnded; the disk remains at C0.
+                    if (finishFailedWrites) DewSave.onSaveEnded?.Invoke();
+                    NetworkServer.active = false;
+                    foreach (var message in actor.Sent.Select(s => s.Message).OfType<DreamforgeContinueCheckpointMsg>())
+                        Call(guest, "OnContinueCheckpoint", message);
+                    actor.Sent.Clear();
+                    guest.Profile = ProfileCodec.Read(ProfileCodec.Write(guest.Profile), new List<string>());
+                }
+
+                string durableId = HostCheckpointId(durable);
+                Assert.Contains(guest.Profile.ContinueCheckpoints, c => c.Id == durableId);
+                ReturnToLobby(guest);
+                var resumed = new GameManager { runId = "run" };
+                NetworkedManagerBase<GameManager>.softInstance = resumed;
+                Call(guest, "ObserveContinueGame", resumed);
+                Call(guest, "ReceiveContinueHandshake", Hello("run", durableId, "resume-durable"));
+                Assert.True(ContinueReady(guest));
+                Assert.Null(guest.ContinueWarning);
+                Assert.Equal(atDurable.Run.Kills, guest.Profile.Run.Kills);
+                Assert.Equal(atDurable.Run.SatchelShards, guest.Profile.Run.SatchelShards);
+                Assert.Equal(atDurable.Run.Satchel.Select(r => r.Uid), guest.Profile.Run.Satchel.Select(r => r.Uid));
+
+                Fight(guest.Profile, MonsterTier.Boss, 1);
+                Fight(atDurable, MonsterTier.Boss, 1);
+                Assert.Equal(atDurable.Run.SatchelShards, guest.Profile.Run.SatchelShards);
+                Assert.Equal(atDurable.Run.Satchel.Select(r => r.Uid), guest.Profile.Run.Satchel.Select(r => r.Uid));
+                Assert.Equal(atDurable.Stats.Kills, guest.Profile.Stats.Kills);
+
+                // A successful later write permits cleanup, but confirmation must not re-capture
+                // the guest's rewards after the original ordered barrier.
+                NetworkServer.active = true;
+                var successful = new DewPersistence.GameData();
+                SaveContinue(successful);
+                NetworkServer.active = false;
+                foreach (var message in actor.Sent.Select(s => s.Message).OfType<DreamforgeContinueCheckpointMsg>())
+                    Call(guest, "OnContinueCheckpoint", message);
+                actor.Sent.Clear();
+                var atSuccessful = guest.Profile.Clone();
+                Fight(guest.Profile, MonsterTier.Boss, 1);
+                NetworkServer.active = true;
+                WriteNativeContinue(path, successful);
+                DewSave.onSaveEnded?.Invoke();
+                NetworkServer.active = false;
+                foreach (var message in actor.Sent.Select(s => s.Message).OfType<DreamforgeContinueCheckpointMsg>())
+                    Call(guest, "OnContinueCheckpoint", message);
+                guest.Profile = ProfileCodec.Read(ProfileCodec.Write(guest.Profile), new List<string>());
+                Assert.DoesNotContain(guest.Profile.ContinueCheckpoints, c => c.Id == durableId);
+                ReturnToLobby(guest);
+                resumed = new GameManager { runId = "run" };
+                NetworkedManagerBase<GameManager>.softInstance = resumed;
+                Call(guest, "ObserveContinueGame", resumed);
+                Call(guest, "ReceiveContinueHandshake", Hello("run", HostCheckpointId(successful), "resume-success"));
+                Assert.True(ContinueReady(guest));
+                Assert.Equal(atSuccessful.Run.Kills, guest.Profile.Run.Kills);
+                Assert.Equal(atSuccessful.Run.SatchelShards, guest.Profile.Run.SatchelShards);
+                Assert.Equal(atSuccessful.Run.Satchel.Select(r => r.Uid), guest.Profile.Run.Satchel.Select(r => r.Uid));
+            }
+            finally
+            {
+                System.IO.File.Delete(path);
+            }
+        }
+
+        private static void WriteNativeContinue(string path, DewPersistence.GameData data) =>
+            System.IO.File.WriteAllText(path, System.Text.Json.JsonSerializer.Serialize(new
+            {
+                root = new { continueData = System.Text.Json.JsonSerializer.Serialize(new { serverActorData = data.serverActorData }) }
+            }));
 
         /// <summary>#179: 別遠征の終了後でも参加者を保存地点へ戻し、報酬の再取得と再挨拶による進行消失を防ぐ。</summary>
         [Fact]
@@ -606,6 +703,8 @@ namespace Issue73.Native.Tests
 
         private static void ResetStatics()
         {
+            DewSave.onSaveEnded = null;
+            DewSave.profileContinuePath = null;
             NetworkServer.active = false;
             _finishNativeContinue = null;
             NetworkClient.active = false;
