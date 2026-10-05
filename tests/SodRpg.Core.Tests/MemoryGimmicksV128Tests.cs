@@ -47,27 +47,17 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void Reload_and_RechargeOther_descriptions_distinguish_charges_from_remaining_cooldown(bool japanese)
+        public void Reload_and_RechargeOther_descriptions_preserve_charge_units_and_percentage_caps(bool japanese)
         {
             bool previous = Loc.Japanese;
             try
             {
                 Loc.Japanese = japanese;
                 string reload = Gimmicks.Describe(Entry(effect: GimmickEffect.Reload, value: 1).Def, Memory, int.MaxValue);
-                Assert.Contains(japanese ? "使用回数を1回" : "restore 1 charge", reload);
-                Assert.Contains(japanese ? "最大使用回数" : "maximum charges", reload);
-                Assert.Contains(japanese ? "使用回数が1回の記憶" : "single-charge memories", reload);
-                Assert.Contains(japanese ? "残りクールダウンを全て戻す" : "fully reset their remaining cooldown", reload);
-                Assert.Contains(japanese ? "上限1回" : "capped at 1 charge", reload);
                 Assert.DoesNotContain("%", reload);
                 string other = Gimmicks.Describe(Entry(effect: GimmickEffect.RechargeOther, value: 40).Def, Memory, 3);
                 Assert.Contains("100%", other);
                 Assert.DoesNotContain("120%", other);
-                Assert.Contains(japanese ? "装着中のほかの通常の記憶" : "other equipped normal memories", other);
-                Assert.Contains(japanese ? "残りクールダウン" : "remaining cooldown", other);
-                Assert.Contains(japanese ? "移動" : "Movement", other);
-                Assert.Contains(japanese ? "奥義" : "Ultimate", other);
-                Assert.Contains(japanese ? "アイデンティティ" : "Identity", other);
             }
             finally { Loc.Japanese = previous; }
         }

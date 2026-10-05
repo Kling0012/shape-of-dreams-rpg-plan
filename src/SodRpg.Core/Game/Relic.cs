@@ -53,7 +53,7 @@ namespace SodRpg.Core.Game
         public bool DeveloperGranted { get; set; }
         /// <summary>New free Infinity cargo; cleared once stored/recovered as an existing asset.</summary>
         public bool InfinityFreeSupply { get; set; }
-        /// <summary>受け取った強化の節目（0〜5）。強化が+0に戻っても履歴は残る。</summary>
+        /// <summary>受け取った強化の節目（0〜5）。強化が下がっても履歴は残る。</summary>
         public int EnhanceMilestones { get; set; }
         /// <summary>+20で1つ目の固有効果に1.2倍を適用済みか。強化の失敗でも失わない。</summary>
         public bool MilestonePowerApplied { get; set; }

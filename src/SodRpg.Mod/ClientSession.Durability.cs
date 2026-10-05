@@ -37,6 +37,7 @@ namespace SodRpg.Mod
             _pendingPressureDividends.Restore(state);
             HostAuthority.RunGrowthLedger.Restore(state);
             RestoreKillClassification();
+            RestoreLobbyReturnSettlement();
         }
     }
 }

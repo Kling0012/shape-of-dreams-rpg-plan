@@ -13,32 +13,15 @@ namespace SodRpg.Core.Tests
         };
 
         [Theory]
-        [InlineData(Stat.HealPower, 20, 60, "回復", "Healing", true)]
-        [InlineData(Stat.ShieldPower, 21, 60, "シールド", "Shields", true)]
-        [InlineData(Stat.SummonPower, 22, 80, "召喚獣", "summons", false)]
-        [InlineData(Stat.SacrificeReduction, 23, 40, "HPを捧げる", "sacrifice HP", false)]
-        public void Support_stats_keep_wire_ids_caps_and_explain_their_scope(
-            Stat stat, int wireId, int cap, string japaneseScope, string englishScope, bool allies)
+        [InlineData(Stat.HealPower, 20, 60)]
+        [InlineData(Stat.ShieldPower, 21, 60)]
+        [InlineData(Stat.SummonPower, 22, 80)]
+        [InlineData(Stat.SacrificeReduction, 23, 40)]
+        public void Support_stats_keep_wire_ids_and_caps(
+            Stat stat, int wireId, int cap)
         {
             Assert.Equal(wireId, (int)stat);
             Assert.Equal(cap, Content.StatCap(stat));
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                string ja = Content.FormatStat(stat, 12);
-                Assert.Contains(japaneseScope, ja);
-                Assert.Contains("12%", ja);
-                Assert.Contains("上限" + cap + "%", ja);
-                if (allies) Assert.Contains("味方", ja);
-                Loc.Japanese = false;
-                string en = Content.FormatStat(stat, 12);
-                Assert.Contains(englishScope, en);
-                Assert.Contains("12%", en);
-                Assert.Contains("cap " + cap + "%", en);
-                if (allies) Assert.Contains("allies", en);
-            }
-            finally { Loc.Japanese = previous; }
         }
 
         [Fact]

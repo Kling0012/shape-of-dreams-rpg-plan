@@ -33,6 +33,9 @@ namespace SodRpg.Core.Game
         public static int SalvageDust(Relic r) => SalvageDust(r.Rarity, r.Enhance);
 
         public static int SalvageDust(Rarity rarity, int enhance) => Content.SalvageShards(rarity) * 5 + enhance * 10;
+
+        /// <summary>Automatic overflow uses the established unenhanced salvage rate, independent of enhancement.</summary>
+        public static int SatchelOverflowDust(Rarity rarity) => SalvageDust(rarity, 0);
     }
 
     public enum TradeKind
@@ -40,6 +43,7 @@ namespace SodRpg.Core.Game
         MerchantGold = 0,
         DustToShards = 1,
         SalvageForDust = 2,
+        SatchelOverflowDust = 3,
     }
 
     /// <summary>ホストの応答待ちの取引。</summary>
@@ -78,6 +82,9 @@ namespace SodRpg.Core.Game
         public int Batches;
         /// <summary>SalvageForDust：分解対象の希少度（(int)Rarity）と強化値。</summary>
         public int Rarity, Enhance;
+        public string RunId;
+        public Relic Relic;
+        public int FallbackShards;
         /// <summary>
         /// 全フィールドを写した写し。Profile.Clone と TradeLedger が使う。フィールドを足すときはここにも必ず並べる
         /// （試験が全 public フィールドの一致を見るので、コピー漏れはすぐ分かる）。
@@ -88,6 +95,7 @@ namespace SodRpg.Core.Game
             StartedAt = StartedAt, Unresolved = Unresolved, Queries = Queries, NextQueryAt = NextQueryAt,
             LedgerId = LedgerId, Lost = Lost, Heat = Heat, MerchantOfferId = MerchantOfferId,
             Batches = Batches, Rarity = Rarity, Enhance = Enhance,
+            RunId = RunId, Relic = Relic?.Clone(), FallbackShards = FallbackShards,
         };
     }
 
@@ -111,7 +119,7 @@ namespace SodRpg.Core.Game
     /// </summary>
     public sealed class TradeLedger
     {
-        /// <summary>新しく始められる取引の上限：保持している取引（応答待ち・結果不明・確認不能の合計）がこれに達したら、どの種別も受け付けない。</summary>
+        /// <summary>Maximum held manual trades. Automatic overflow settlements have a separate restore-size safety ceiling.</summary>
         public const int MaxHeld = 64;
 
         /// <summary>
@@ -143,19 +151,28 @@ namespace SodRpg.Core.Game
             return g == 0 ? 1 : g;
         }
 
-        /// <summary>画面で応答を待っている取引の数（結果不明の取引は含めない）。確保・潜行などの操作を止めるのに使う。</summary>
+        /// <summary>Manual trades currently awaiting responses; automatic overflow does not block secure/delve operations.</summary>
         public int PendingCount
         {
             get
             {
                 int n = 0;
-                foreach (var t in _pending.Values) if (!t.Unresolved) n++;
+                foreach (var t in _pending.Values)
+                    if (!t.Unresolved && t.Kind != TradeKind.SatchelOverflowDust) n++;
                 return n;
             }
         }
 
         /// <summary>期限切れで結果不明のまま残っている取引の数（ホストが確かめられないと答えた取引も含む）。</summary>
-        public int UnresolvedCount => _pending.Count - PendingCount;
+        public int UnresolvedCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (var t in _pending.Values) if (t.Unresolved) n++;
+                return n;
+            }
+        }
 
         /// <summary>ホストが記録の有無を確かめられないと答えた取引の数。</summary>
         public int LostCount
@@ -168,8 +185,17 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>新しい取引を始められるか。上限は全種別で共通で、通信・決済より前に確かめる。</summary>
-        public bool CanBegin => _pending.Count < MaxHeld;
+        /// <summary>Whether another manual trade fits its budget; overflow settlements do not consume that budget.</summary>
+        public bool CanBegin
+        {
+            get
+            {
+                int n = 0;
+                foreach (var t in _pending.Values)
+                    if (t.Kind != TradeKind.SatchelOverflowDust) n++;
+                return n < MaxHeld;
+            }
+        }
 
         /// <summary>応答待ち・結果不明を合わせて、まだ対価や返却が確定していない取引の数。プロフィールの切り替えなどを止めるのに使う。</summary>
         public int HeldCount => _pending.Count;
@@ -292,7 +318,7 @@ namespace SodRpg.Core.Game
         /// <summary>上限に達していたら、取引の登録も通信も通貨の変更も始めさせない（呼び出し側は先に CanBegin で案内する）。</summary>
         private void EnsureRoom()
         {
-            if (_pending.Count >= MaxHeld)
+            if (!CanBegin)
                 throw new InvalidOperationException(Loc.T(
                     $"未確定の取引が{MaxHeld}件に達しています。結果が確認できるまで、新しい取引はできません。",
                     $"There are already {MaxHeld} unresolved trades. New trades are paused until their results are confirmed."));
@@ -339,6 +365,25 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(uid)) throw new ArgumentNullException(nameof(uid));
             EnsureRoom();
             var t = new PendingTrade { Token = _next++, Kind = TradeKind.SalvageForDust, EarnDust = Economy.SalvageDust(rarity, enhance), Uid = uid, Rarity = (int)rarity, Enhance = enhance, StartedAt = now };
+            _pending[t.Token] = t;
+            return t;
+        }
+
+        /// <summary>Capture the removed relic and its already capped fallback independently of manual reservations.</summary>
+        public PendingTrade BeginSatchelOverflow(Relic relic, string runId, int fallbackShards, double now)
+        {
+            if (relic == null) throw new ArgumentNullException(nameof(relic));
+            if (string.IsNullOrEmpty(relic.Uid)) throw new ArgumentException("Overflow relic requires a UID.", nameof(relic));
+            if (string.IsNullOrEmpty(runId)) throw new ArgumentNullException(nameof(runId));
+            if (fallbackShards < 0) throw new ArgumentOutOfRangeException(nameof(fallbackShards));
+            // Leave the entire manual budget available, including space in persisted snapshots.
+            if (_pending.Count >= MaxRestored - MaxHeld) throw new InvalidOperationException("Too many unresolved overflow trades.");
+            var t = new PendingTrade
+            {
+                Token = _next++, Kind = TradeKind.SatchelOverflowDust, Uid = relic.Uid,
+                Rarity = (int)relic.Rarity, EarnDust = Economy.SatchelOverflowDust(relic.Rarity),
+                RunId = runId, Relic = relic.Clone(), FallbackShards = fallbackShards, StartedAt = now,
+            };
             _pending[t.Token] = t;
             return t;
         }

@@ -295,7 +295,7 @@ namespace SodRpg.Core.Game
             switch (trigger)
             {
                 case RunGrowthTrigger.DamageTakenMaxHpPct:
-                    return Loc.T($"受けたダメージが最大HPの{threshold}%に達するたび", $"each time damage taken totals {threshold}% of max health");
+                    return Loc.T($"実際に失ったHP（障壁が吸収した分を除く）が最大HPの{threshold}%に達するたび", $"each time actual health lost (excluding shield absorption) totals {threshold}% of max health");
                 case RunGrowthTrigger.ShieldAbsorbedMaxHpPct:
                     return Loc.T($"障壁が吸収した量が最大HPの{threshold}%に達するたび", $"each time damage absorbed by shields totals {threshold}% of max health");
                 case RunGrowthTrigger.ParrySuccess:
@@ -339,9 +339,9 @@ namespace SodRpg.Core.Game
         /// <summary>星図・一覧に出す説明（1スタックあたりと上限）。</summary>
         public static string Describe(RunGrowthEntry entry)
         {
-            string gain = entry.GainMultiplier > 1 ? Loc.T("（溜まる速さ2倍）", " (stacks twice as fast)") : "";
-            return Loc.T($"【遠征の鍛錬】{TriggerText(entry.Trigger, entry.Threshold)}スタックが1つ溜まる{gain}。1スタックにつき{PerStack(entry)}（最大{entry.Cap}スタック。遠征の間は死亡・ゾーン移動でも失われず、遠征の開始で0に戻る）",
-                $"[Expedition Training] Gain a stack{gain} {TriggerText(entry.Trigger, entry.Threshold)}. Each stack grants {PerStack(entry)} (up to {entry.Cap} stacks; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
+            int gain = Math.Max(1, entry.GainMultiplier);
+            return Loc.T($"{PerStack(entry)}／鍛錬1つ：{TriggerText(entry.Trigger, entry.Threshold)}鍛錬が{gain}つ溜まる（最大{entry.Cap}。遠征の間は死亡・ゾーン移動でも失われず、遠征の開始で0に戻る）",
+                $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} (up to {entry.Cap} stacks; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
         }
 
         public static string Describe(RunGrowthDef def)
@@ -350,13 +350,39 @@ namespace SodRpg.Core.Game
             return Describe(entry);
         }
 
-        public static string Describe(RunGrowthModifierDef mod)
+        public static string Describe(RunGrowthModifierDef mod, string heroKey = null)
         {
             var parts = new List<string>();
-            if (mod.CapBonus > 0) parts.Add(Loc.T($"スタックの上限 +{mod.CapBonus}", $"stack cap +{mod.CapBonus}"));
-            if (mod.EffectPercent > 0) parts.Add(Loc.T($"1スタックの効果 +{mod.EffectPercent}%", $"per-stack effect +{mod.EffectPercent}%"));
-            if (mod.DoubleGain) parts.Add(Loc.T("スタックが溜まる速さ2倍", "stacks accumulate twice as fast"));
-            return Loc.T("【遠征の鍛錬】", "[Expedition Training] ") + string.Join(Loc.T("、", ", "), parts);
+            if (mod.CapBonus > 0) parts.Add(Loc.T($"鍛錬の蓄積上限 +{mod.CapBonus}", $"training stack cap +{mod.CapBonus}"));
+            if (mod.EffectPercent > 0) parts.Add(Loc.T($"鍛錬1つごとの能力値増加量 +{mod.EffectPercent}%", $"stat gain per training stack +{mod.EffectPercent}%"));
+            if (mod.DoubleGain) parts.Add(Loc.T("鍛錬の獲得数 +100%（条件1回につき2つ）", "training stack gain +100% (2 stacks per completed condition)"));
+            var targets = new List<TalentDef>();
+            if (heroKey != null)
+                targets.AddRange(HeroSigils.TreeFor(heroKey).Where(t => t.RunGrowth != null && (mod.TargetStarId == null || t.Id == mod.TargetStarId)));
+            else if (mod.TargetStarId != null && Content.TryGetTalent(mod.TargetStarId, out var target))
+                targets.Add(target);
+            string TargetText(TalentDef talent)
+            {
+                var growth = talent.RunGrowth;
+                string gains = string.Join(Loc.T("、", ", "), growth.Effects.Select(effect =>
+                {
+                    double amount = effect.AmountMilli / 1000d;
+                    string before = StatText(effect.Stat, amount);
+                    return mod.EffectPercent == 0 ? before
+                        : before + " → " + StatText(effect.Stat, amount * (100 + mod.EffectPercent) / 100d);
+                }));
+                string detail = Loc.T("。鍛錬1つごと：", ". Per training stack: ") + gains;
+                if (mod.CapBonus > 0)
+                    detail += Loc.T($"。蓄積上限：{growth.Cap} → {growth.Cap + mod.CapBonus}", $". Stack cap: {growth.Cap} → {growth.Cap + mod.CapBonus}");
+                if (mod.EffectPercent > 0 || mod.CapBonus > 0)
+                    detail += Loc.T("（この星だけを基本値へ適用した場合）", " (with only this star applied to the base values)");
+                return Loc.T("星『", "star “") + talent.Name + Loc.T("』：", "”: ")
+                    + TriggerText(growth.Trigger, growth.Threshold) + detail;
+            }
+            string scope = targets.Count > 0
+                ? string.Join(Loc.T("、", "; "), targets.Select(TargetText))
+                : Loc.T("この旅人のすべての遠征の鍛錬", "all expedition training for this traveler");
+            return string.Join(Loc.T("、", ", "), parts) + Loc.T("。対象：", ". Applies to ") + scope;
         }
 
         /// <summary>HUDの小さな1行。</summary>

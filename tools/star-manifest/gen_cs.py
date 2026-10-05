@@ -509,12 +509,15 @@ class Compiler:
                 return None
             payload = "IdentityStrikeDefinition.DashBonusAsMemory(" + cs(sid) + ")"
         else:
-            if mode == "AfterDisplacement" and source != "St_D_ScarOfTheWind" or mode == "EveryNthBasicAttack" and source != "St_D_TheKillingFlow":
-                self.fail(sid, prefix + ".strike.mode", mode, "AfterDisplacement belongs to Wind Scar and EveryNthBasicAttack to Killing Flow")
+            if mode in ("AfterDisplacement", "AfterDisplacementCritical") and source != "St_D_ScarOfTheWind" or mode in ("EveryNthBasicAttack", "ConsecutiveCritical") and source != "St_D_TheKillingFlow":
+                self.fail(sid, prefix + ".strike.mode", mode, "displacement modes belong to Wind Scar and sequence modes to Killing Flow")
                 return None
-            common = ", IdentityStrikeElement." + st["element"] + ", IdentityStrikeShape." + st["shape"] + ", " + format(number(st["range"]), "f") + "f, "                 + format(number(st["width"]), "f") + "f, " + str(st.get("maxTargets", 8))
+            common = ", IdentityStrikeElement." + st["element"] + ", IdentityStrikeShape." + st["shape"] + ", " + format(number(st["range"]), "f") + "f, "                 + format(number(st["width"]), "f") + "f, " + str(st.get("maxTargets", 6 if mode in ("AfterDisplacementCritical", "ConsecutiveCritical") else 8))
             if mode == "AfterDisplacement":
                 payload = "IdentityStrikeDefinition.AfterDisplacement(" + cs(sid) + ", " + cs(source) + ", " + units(g["value"]) + common                     + ", windowSeconds: " + format(number(st["windowSeconds"]), "f") + "f)"
+            elif mode in ("AfterDisplacementCritical", "ConsecutiveCritical"):
+                factory = "CriticalAfterDisplacement" if mode == "AfterDisplacementCritical" else "ConsecutiveCritical"
+                payload = "IdentityStrikeDefinition." + factory + "(" + cs(sid) + ", " + cs(source) + ", " + units(g["value"]) + common + ", windowSeconds: " + format(number(st["windowSeconds"]), "f") + "f)"
             else:
                 payload = "IdentityStrikeDefinition.EveryNth(" + cs(sid) + ", " + cs(source) + ", " + str(g["everyN"]) + ", " + units(g["value"])                     + ", " + units(st.get("bonusSpeed", 0)) + common + ")"
         return obj("AuthoredMechanismSpec", {"ChannelId": cs(sid), "Kind": "AuthoredMechanismKind.IdentityStrike", "Source": selector(source),

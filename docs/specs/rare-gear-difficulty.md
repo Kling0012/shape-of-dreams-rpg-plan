@@ -82,7 +82,7 @@
 | 影の交換：Epic以上 | 未確保の欠片25 | 50（低レア25維持） |
 
 根拠：`Content.cs:362-384,5484-5521; Rules.cs:1256,1295-1308,1422,1464-1468,1533-1588,635-651,716,730,755-758,808-814`。
-強化の成功率は維持：+1〜3は100%、以後は100−5×(現在強化−2)%、+20は15%。失敗で+0に戻り費用消費。
+強化の成功率：+1〜3は100%、以後は100 − max(0, (目標強化値 − 3) × 3)%（45%で頭打ち）、+20は55%。失敗時は50%で変化なし・50%で1段下がり、費用は消費（2026-10-05の追変更・issue #135。初版は+0に戻していた）。
 限界突破は同枠・同レア以上1個を消費、Rare1回/Epic2回/Legendary3回。再調律/洗い直しはレア度を変えない。
 洗い直しは既存の切り上げ(base×1.5^実施回数)・int.MaxValue飽和を維持。低レアの改善費と分解還元は変更しない。
 泉の遺物1個→+1、焼き入れの祭壇の特性1個→+2、るつぼの固有効果1個消費は維持（新しい代償機構を作らない）。
@@ -145,7 +145,7 @@
 | `AwakeningV117Tests.Boss_kills_climb_three_awakening_levels_and_stop_at_the_last` | 100体撃破後の覚醒段階1→0 |
 | `AwakeningV117Tests.Loading_clamps_awakening_points` (saved=15001/int.MaxValue) | 15000→15001/37500（2件） |
 | `AwakeningV117Tests.Crossing_the_threshold_clamps_and_awaken_all_equipped_legendaries` | 旧しきい値直前からの覚醒数6→0 |
-| `EnhancementRiskV131Tests.Seeded_failure_spends_shards_resets_enhancement_and_preserves_earned_progress` | 支払後欠片99120→98240（+20の費用880→1760） |
+| `EnhancementRiskV131Tests.Seeded_failure_spends_shards_lowers_enhancement_and_preserves_earned_progress` | 支払後欠片99120→98240（+20の費用880→1760） |
 
 ### 既存テスト更新後の検証（2026-10-05）
 

@@ -147,6 +147,8 @@ public sealed class Simulation
         int added = 0;
         foreach (var e in events)
         {
+            if (e.SatchelOverflow != null)
+                Rules.CompleteSatchelOverflowFallback(p, e.SatchelOverflow, p.Run?.RunId, e.SatchelOverflowShards);
             if (e.Kind == EventKind.Recovered) added++;
             if (e.Kind != EventKind.Drop || !e.Rarity.HasValue) continue;
             var rarity = e.Rarity.Value;

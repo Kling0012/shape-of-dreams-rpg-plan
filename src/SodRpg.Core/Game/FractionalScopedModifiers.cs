@@ -176,28 +176,154 @@ namespace SodRpg.Core.Game
             return total / (float)BuildPrecision.Scale;
         }
 
-        public static string Describe(ScopedModifierDef modifier)
+        public static string Describe(ScopedModifierDef modifier, string heroKey = null)
         {
-            string memory = Links.Name(modifier.ScopeMemory).ToString();
-            string targets = string.Join(", ", modifier.TargetEffects.Select(EffectLabel));
-            if (modifier.TargetEffectIds.Length > 0)
-                targets += (targets.Length == 0 ? "" : " / ") + Loc.T("指定の仕掛け", "specified effects");
-            string scope = modifier.ScopeKind == ScopeKind.Memory ? memory : memory + Loc.T("（" + targets + "）", " (" + targets + ")");
+            string memory = Links.ItemName(modifier.ScopeMemory);
+            var labels = new List<string>();
+            var partners = new HashSet<string>(StringComparer.Ordinal) { modifier.ScopeMemory };
+            var combos = new List<string>();
+            void AddSelector(MemorySelector selector)
+            {
+                if (selector == null) return;
+                if (selector.Memory != null) partners.Add(selector.Memory);
+                foreach (string id in selector.AllowedMemories) partners.Add(id);
+                foreach (var alternative in selector.Alternatives) AddSelector(alternative);
+            }
+            void AddPartners(TalentDef node)
+            {
+                if (node.RouteMemory != null) partners.Add(node.RouteMemory);
+                var channel = node.EffectChannel;
+                if (channel != null)
+                {
+                    partners.Add(channel.SourceMemory);
+                    partners.Add(channel.ReceiverMemory);
+                    foreach (string id in channel.EquipmentRequirements) partners.Add(id);
+                }
+                var spec = node.Mechanism;
+                if (spec == null) return;
+                foreach (string id in spec.RequiredMemories) partners.Add(id);
+                AddSelector(spec.Source);
+                if (spec.Recharge != null)
+                {
+                    AddSelector(spec.Recharge.Source);
+                    AddSelector(spec.Recharge.Recipient);
+                }
+                if (spec.Bridge != null)
+                {
+                    var pair = PairCombos.Get(spec.Bridge.PairId);
+                    if (pair?.Name != null) combos.Add(pair.Name.ToString());
+                    AddSelector(spec.Bridge.OpeningSource);
+                    AddSelector(spec.Bridge.PayoffSource);
+                    foreach (var endpoint in spec.Bridge.Endpoints) partners.Add(endpoint.Memory);
+                    foreach (var payload in spec.Bridge.Payloads) AddSelector(payload.Recipient);
+                }
+                if (spec.Relay != null)
+                {
+                    partners.Add(RelayWindowDefinition.SourceMemory);
+                    partners.Add(spec.Relay.TargetMemory);
+                }
+            }
+            if (heroKey != null)
+            {
+                foreach (var node in HeroSigils.TreeFor(heroKey).SelectMany(t => t.IsChoice ? t.Choices : new[] { t }))
+                {
+                    if (node.Gimmick != null && Matches(modifier, new GimmickEntry { StarId = node.Id, Memory = node.RouteMemory, Def = node.Gimmick, Channel = node.EffectChannel }))
+                    {
+                        labels.Add(EffectLabel(node.Gimmick));
+                        AddPartners(node);
+                    }
+                    else if (node.Mechanism != null && AuthoredMechanisms.Matches(modifier, new AuthoredMechanismEntry { StarId = node.Id, ContributorIds = new[] { node.Id }, Spec = node.Mechanism }))
+                    {
+                        labels.Add(MechanismEffectLabel(node.Mechanism));
+                        AddPartners(node);
+                    }
+                }
+            }
+            else
+            {
+                labels.AddRange(modifier.TargetEffects.Select(EffectLabel));
+                foreach (string id in modifier.TargetEffectIds)
+                    if (Content.TryGetTalent(id, out var node))
+                    {
+                        labels.Add(node.Gimmick != null ? EffectLabel(node.Gimmick) : MechanismEffectLabel(node.Mechanism));
+                        AddPartners(node);
+                    }
+            }
+            string effects = string.Join(Loc.T("・", ", "), labels.Distinct());
+            if (effects.Length == 0) throw new InvalidOperationException("Cannot resolve scoped effect description.");
             string value = ((modifier.Param == GimmickParam.Chance ? modifier.Probability.Units : modifier.Amount.Units) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-            string cap = ModifierCapDescription(modifier);
+            string field;
             switch (modifier.Param)
             {
-                case GimmickParam.Duration: return Loc.T(scope + "の指定効果の持続時間 +" + value + "%", scope + " effect duration +" + value + "%") + cap;
-                case GimmickParam.WindowDuration: return Loc.T(scope + "の橋の受付時間 +" + value + "%", scope + " bridge window duration +" + value + "%") + cap;
-                case GimmickParam.MarkDuration: return Loc.T(scope + "の橋の印の持続時間 +" + value + "%", scope + " bridge mark duration +" + value + "%") + cap;
-                case GimmickParam.Radius: return Loc.T(scope + "の指定効果の半径 +" + value + "%", scope + " effect radius +" + value + "%") + cap;
-                case GimmickParam.Chance: return Loc.T(scope + "の指定効果の発動確率 +" + value + "パーセントポイント", scope + " effect chance +" + value + " percentage points") + cap;
-                case GimmickParam.ExtraTargets: return Loc.T(scope + "の指定効果の追加対象 +" + modifier.ExtraTargets + "体", scope + " effect additional targets +" + modifier.ExtraTargets) + cap;
-                default: return Loc.T(scope + "の指定効果量 +" + value + "%", scope + " effect value +" + value + "%") + cap;
+                case GimmickParam.Duration: field = Loc.T("持続時間", "duration"); break;
+                case GimmickParam.WindowDuration: field = Loc.T("次の記憶を使える受付時間", "time allowed for the follow-up memory"); break;
+                case GimmickParam.MarkDuration: field = Loc.T("同じ敵への印の持続時間", "mark duration on the same enemy"); break;
+                case GimmickParam.Radius: field = Loc.T("範囲の半径", "radius"); break;
+                case GimmickParam.Chance: field = Loc.T("発動確率", "activation chance"); break;
+                case GimmickParam.ExtraTargets: field = Loc.T("対象数", "target count"); break;
+                default: field = Loc.T("量", "amount"); break;
             }
+            string amount = modifier.Param == GimmickParam.ExtraTargets ? modifier.ExtraTargets + Loc.T("体", modifier.ExtraTargets == 1 ? " target" : " targets")
+                : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%");
+            string scope = modifier.ScopeKind == ScopeKind.Receiver
+                ? Loc.T(memory + "を装着中、その記憶が受け取る効果を強化", "while " + memory + " is equipped; enhances effects received by it")
+                : Loc.T(memory + "を装着中、その記憶から発動する星の追加効果を強化", "while " + memory + " is equipped; enhances the star-granted extra effects fired through it");
+            string basis = modifier.Param == GimmickParam.ExtraTargets || modifier.Param == GimmickParam.Chance ? ""
+                : Loc.T("（元の" + field + "の" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍）",
+                    " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")");
+            string linked = string.Join(Loc.T("、", ", "), partners.Where(id => id != null).OrderBy(id => id, StringComparer.Ordinal).Select(Links.ItemName));
+            string heading = !modifier.Param.HasValue ? Loc.T("効果量", "Effect amount") : field;
+            if (modifier.Param == GimmickParam.WindowDuration)
+            {
+                string combo = string.Join(Loc.T("、", ", "), combos.Distinct());
+                string factor = (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture);
+                return heading + " +" + amount + Loc.T("：", ": ")
+                    + Loc.T("橋の合わせ技" + (combo.Length > 0 ? "「" + combo + "」" : "") + "が成立するまでの受付時間を、元の" + factor + "倍に延長",
+                        "lengthens the time allowed to complete the bridge combo" + (combo.Length > 0 ? " \"" + combo + "\"" : "") + " to ×" + factor + " of the original")
+                    + ModifierCapDescription(modifier);
+            }
+            return heading + " +" + amount + Loc.T("：", ": ") + scope + basis
+                + Loc.T("。対象の効果：", ". Affected effects: ") + effects + ModifierCapDescription(modifier)
+                + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ") + linked : "");
         }
 
-        private static string EffectLabel(GimmickEffect effect)
+        private static string MechanismEffectLabel(AuthoredMechanismSpec spec)
+        {
+            switch (spec.Kind)
+            {
+                case AuthoredMechanismKind.Gimmick: return EffectLabel(spec.Gimmick);
+                case AuthoredMechanismKind.DirectedRecharge: return EffectLabel(GimmickEffect.Recharge);
+                case AuthoredMechanismKind.BridgeSuccess:
+                    return string.Join(Loc.T("・", ", "), new[] { spec.Bridge.BasePayoff }.Concat(spec.Bridge.Extras).Select(p =>
+                        p.Gimmick != null ? EffectLabel(p.Gimmick) : p.Kind == BridgePayloadKind.Recharge ? EffectLabel(GimmickEffect.Recharge)
+                        : p.Kind == BridgePayloadKind.Damage ? Loc.T("追加ダメージ", "extra damage")
+                        : p.Ward != null ? WardLabel(p.Ward) : EffectLabel(GimmickEffect.Shield)).Distinct());
+                case AuthoredMechanismKind.MemoryPrimed: return EffectLabel(GimmickEffect.Primed);
+                case AuthoredMechanismKind.RelayWindow: return Loc.T("記憶ダメージ", "memory damage");
+                case AuthoredMechanismKind.AlliedWard: return WardLabel(spec.Ward);
+                case AuthoredMechanismKind.SacrificeShield:
+                case AuthoredMechanismKind.StunSourceFilter: return EffectLabel(GimmickEffect.Shield);
+                case AuthoredMechanismKind.PressureDividend: return Loc.T("欠片獲得確率", "fragment reward chance");
+                case AuthoredMechanismKind.IdentityStrike: return Loc.T("追加ダメージ", "extra damage");
+                case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の強化", "memory enhancement");
+                default: throw new ArgumentOutOfRangeException(nameof(spec));
+            }
+        }
+        /// <summary>障壁の受け手が分かるラベル（対数・対象数の修飾星で誰への障壁かを読ませる）。</summary>
+        private static string WardLabel(AlliedWardDefinition ward) =>
+            ward.RecipientKind == WardRecipientKind.OwnedSummons
+                ? Loc.T("召喚獣への障壁", "shields for your summons")
+                : Loc.T("味方旅人への障壁", "shields for allied travelers");
+
+        internal static string EffectLabel(GimmickDef def)
+        {
+            if (def.Effect != GimmickEffect.Element) return EffectLabel(def.Effect);
+            string element = def.Arg == 0 ? Loc.T("火", "Fire") : def.Arg == 1 ? Loc.T("冷気", "Cold")
+                : def.Arg == 2 ? Loc.T("光", "Light") : Loc.T("闇", "Dark");
+            return element + Loc.T("付与", " application");
+        }
+
+        internal static string EffectLabel(GimmickEffect effect)
         {
             switch (effect)
             {
@@ -237,17 +363,17 @@ namespace SodRpg.Core.Game
             string maximum = (modifier.Param == GimmickParam.ExtraTargets ? units : units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string jaUnit = modifier.Param == GimmickParam.ExtraTargets ? "体" : modifier.Param == GimmickParam.Chance ? "パーセントポイント" : "%";
             string enUnit = modifier.Param == GimmickParam.ExtraTargets ? " targets" : modifier.Param == GimmickParam.Chance ? " percentage points" : "%";
-            return Loc.T("（指定範囲の合計上限" + maximum + jaUnit + "）", " (scope total cap " + maximum + enUnit + ")");
+            return Loc.T("（同じ対象の効果の合計上限" + maximum + jaUnit + "）", " (combined cap for matching effects " + maximum + enUnit + ")");
         }
 
         /// <summary>Total of several native stars sharing one effect: no per-star cap note, which would misread as a cap on the total.</summary>
         internal static string DescribeTotal(string memoryId, LinkKind kind, int units)
         {
             string value = (units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-            string memory = Links.Name(memoryId).ToString();
+            string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "の記憶ダメージ +" + value + "%", memory + " memory damage +" + value + "%")
-                : Loc.T(memory + "を使用した際のクールダウン短縮 +" + value + "%", memory + " self cooldown reduction on use +" + value + "%");
+                ? Loc.T("記憶ダメージ +" + value + "%：" + memory + "で与えるダメージに適用", "Memory damage +" + value + "%: applies to damage dealt by " + memory)
+                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使用した際に、その最大クールダウン時間の" + value + "%分だけ残り時間を短縮", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining time");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
@@ -255,10 +381,10 @@ namespace SodRpg.Core.Game
             var cap = Profiles[modifier.CapProfileId];
             string value = (modifier.Value.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string maximum = (cap.Maximum.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
-            string memory = Links.Name(modifier.Memory).ToString();
+            string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
-                ? Loc.T(memory + "の記憶ダメージ +" + value + "%（星の上限" + maximum + "%）", memory + " memory damage +" + value + "% (star cap " + maximum + "%)")
-                : Loc.T(memory + "を使用した際のクールダウン短縮 +" + value + "%（星の上限" + maximum + "%）", memory + " self cooldown reduction on use +" + value + "% (star cap " + maximum + "%)");
+                ? Loc.T("記憶ダメージ +" + value + "%：" + memory + "で与えるダメージに適用（星の上限" + maximum + "%）", "Memory damage +" + value + "%: applies to damage dealt by " + memory + " (star cap " + maximum + "%)")
+                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使用した際に、その最大クールダウン時間の" + value + "%分だけ残り時間を短縮（星の上限" + maximum + "%）", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining time (star cap " + maximum + "%)");
         }
         public static void ValidateTalent(TalentDef talent)
         {

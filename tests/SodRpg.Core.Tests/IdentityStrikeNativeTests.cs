@@ -180,6 +180,200 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, Actor.SimDamageLog.Count);
         }
 
+        [Fact]
+        public void Displacement_critical_strike_needs_a_critical_first_hit_and_refunds_the_dodge_memory()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var movement = new SkillTrigger { owner = hero };
+            movement.currentConfigUnscaledCooldownTime = 4f; // 4 s of the 10 s maximum remaining
+            hero.Skill.Skills[HeroSkillLocation.Movement] = movement;
+            var target = Enemy(0, 2);
+
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // nothing is primed without a displacement
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: false); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // a noncritical first hit consumes the readiness ...
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true); host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // ... and the consumed preparation never fires
+            Assert.Equal(4f, movement.currentConfigUnscaledCooldownTime);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            UnityEngine.Time.time = 1f;
+            host.OnIdentityStrikeBasicHit(hero, target, 4, critical: true);
+            Assert.Empty(Actor.SimDamageLog); // deferred to the host tick
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Same(skill, strike.Dealer);
+            Assert.Equal(120f, strike.Amount, 3); // 120% of the higher of AD/AP, dark
+            Assert.Equal(ElementalType.Dark, strike.Element);
+            Assert.Equal(2.6f, movement.currentConfigUnscaledCooldownTime, 3); // 35% of the remaining 4 s comes off
+
+            host.OnIdentityStrikeDisplacement(hero); // armed until t = 4
+            UnityEngine.Time.time = 5f;
+            host.OnIdentityStrikeBasicHit(hero, target, 5, critical: true); host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // the 3 s window has closed
+            Assert.Equal(2.6f, movement.currentConfigUnscaledCooldownTime, 3); // no strike, no refund
+
+            UnityEngine.Time.time = 10f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 6, critical: true); host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count);
+            Assert.Equal(1.69f, movement.currentConfigUnscaledCooldownTime, 3);
+            UnityEngine.Time.time = 10.5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 7, critical: true); host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // at most one strike per second
+            // a second qualifying hit before the host tick waits instead of queueing twice
+            UnityEngine.Time.time = 11.5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 8, critical: true);
+            UnityEngine.Time.time = 13f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 9, critical: true);
+            host.UpdateIdentityStrikes(); host.UpdateIdentityStrikes();
+            Assert.Equal(3, Actor.SimDamageLog.Count); // one strike ran; the overlapping trigger was dropped
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(120f, entry.Amount, 3); Assert.Same(target, entry.Victim); });
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_needs_three_crits_on_one_enemy_and_resets_on_any_break()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var movement = new SkillTrigger { owner = hero };
+            hero.Skill.Skills[HeroSkillLocation.Movement] = movement;
+            var a = Enemy(0, 2); var b = Enemy(5, 0); // b lies outside the 2 m line towards a
+            int activation = 0;
+            void Hit(Entity victim, float now, bool critical, long lifetime)
+            {
+                UnityEngine.Time.time = now;
+                host.OnIdentityStrikeBasicHit(hero, victim, ++activation, critical, lifetime);
+            }
+
+            Hit(a, 0f, false, 11); Hit(a, 0.2f, true, 11); Hit(a, 0.4f, true, 11); Hit(a, 0.6f, false, 11); // a noncritical hit resets
+            Hit(a, 0.8f, true, 11); Hit(a, 1f, true, 11);
+            host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // two crits since the reset: not three yet
+            Hit(a, 1.2f, true, 11); // the third consecutive crit on the same enemy
+            Assert.Empty(Actor.SimDamageLog); // deferred to the host tick
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Same(skill, strike.Dealer); Assert.Same(a, strike.Victim);
+            Assert.Equal(180f, strike.Amount, 3); // 180% of the higher of AD/AP, dark
+            Assert.Equal(ElementalType.Dark, strike.Element);
+            Assert.Equal(10f, movement.currentConfigUnscaledCooldownTime); // only the displacement mode refunds the dodge
+
+            Hit(a, 2f, true, 11); Hit(a, 2.2f, true, 11); Hit(b, 2.4f, true, 22); // a different enemy resets
+            Hit(b, 7f, true, 22); Hit(b, 7.2f, true, 22); // 7 s after the last crit on b: the 4 s window has closed
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // neither break ever completes a third crit
+            Hit(b, 7.4f, true, 22); // three fresh crits on b inside the window
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count);
+            Hit(b, 8f, true, 22); Hit(b, 8.2f, true, 22); Hit(b, 8.3f, true, 22); // the third lands inside the 1 s interval
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // consumed without a strike
+            Hit(b, 9f, true, 22); Hit(b, 9.2f, true, 22); Hit(b, 9.4f, true, 22);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(3, Actor.SimDamageLog.Count);
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(180f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+        }
+
+        [Fact]
+        public void Critical_strikes_reach_at_most_six_enemies_in_their_shape()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var target = Enemy(0, 2);
+            for (int i = 0; i < 7; i++) Enemy(-1.5f + 0.5f * i, 3); // seven more inside the 120 degree fan
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(6, Actor.SimDamageLog.Count); // the victim plus five: at most six enemies total
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(skill, entry.Dealer); Assert.Equal(120f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+
+            var (flowHost, flowRuntime, flowHero, flowSkill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var flowTarget = Enemy(0, 2);
+            for (int i = 0; i < 7; i++) Enemy(0, 2.5f + 0.4f * i); // seven more along the 6 m line
+            for (int activation = 1; activation <= 3; activation++) flowHost.OnIdentityStrikeBasicHit(flowHero, flowTarget, activation, critical: true, victimLifetime: 77);
+            flowHost.UpdateIdentityStrikes();
+            Assert.Equal(6, Actor.SimDamageLog.Count); // Setup cleared the log: six along the line
+            Assert.All(Actor.SimDamageLog, entry => { Assert.Same(flowSkill, entry.Dealer); Assert.Equal(180f, entry.Amount, 3); Assert.Equal(ElementalType.Dark, entry.Element); });
+        }
+
+        [Fact]
+        public void A_critical_strike_never_rechains_mechanisms_or_itself()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var depth = typeof(HostAuthority).GetField("_gimmickDamageDepth", BindingFlags.NonPublic | BindingFlags.Instance);
+            var target = Enemy(0, 2);
+            var outside = Enemy(5, 0); // outside the fan: only a nested trigger could ever reach it
+            int observed = 0, depthDuringStrike = 0;
+            hero.ActorEvent_OnDealDamage += info =>
+            {
+                observed++;
+                depthDuringStrike = (int)depth.GetValue(host);
+                host.OnIdentityStrikeDisplacement(hero); // primes a fresh preparation ...
+                host.OnIdentityStrikeBasicHit(hero, outside, 999, critical: true, victimLifetime: 55); // ... whose hit must be ignored inside the strike
+            };
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.True(observed > 0); // the hook really saw the strike's own damage packets
+            Assert.Equal(1, depthDuringStrike); // the strike runs as generated origin: no authored mechanism chains from it
+            Assert.Single(Actor.SimDamageLog);
+            Assert.Same(target, Actor.SimDamageLog.Single().Victim);
+            Assert.Equal(1000f, outside.currentHealth); // the nested trigger was dropped, not queued for later
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog);
+
+            // the same guard holds while any other mechanism's damage is running
+            host.SetDepths(1, 0, 0);
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // generated (gimmick) damage never triggers a strike
+            host.SetDepths(0, 0, 0);
+            UnityEngine.Time.time = 5f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // back outside generated damage the channel works again
+            Assert.Equal(1000f, outside.currentHealth);
+        }
+
+        [Fact]
+        public void A_failing_strike_channel_is_disabled_with_one_warning_and_the_mod_keeps_running()
+        {
+            Log.Warnings.Clear();
+            var (host, runtime, hero, wind) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var flowHero = new Hero();
+            var flow = new St_D_TheKillingFlow { owner = flowHero, parentActor = flowHero };
+            flowHero.Skill.Skills[HeroSkillLocation.Identity] = flow;
+            flowHero.owner = new DewPlayer { hero = flowHero, isHumanPlayer = true };
+            var flowBuild = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.FlowStrike("t.flow.other")));
+            host.BindAuthored(new HostAuthority.HeroRuntime { Hero = flowHero, HeroKey = "Hero_Husk", Powers = new PowerRuntime(flowBuild, 0) }, flowBuild);
+            var target = Enemy(0, 2); var flowTarget = Enemy(0, 3);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true); // the critical channel queues its strike ...
+            host.OnIdentityStrikeBasicHit(flowHero, flowTarget, 1); // ... and the flow channel queues its own
+            hero.Status = null; // the strike's own dispatch now fails
+            host.UpdateIdentityStrikes();
+            Assert.Equal(2, Actor.SimDamageLog.Count); // the failing channel did not stop the mod's other channel
+            Assert.All(Actor.SimDamageLog, entry => Assert.Same(flow, entry.Dealer));
+            Assert.Single(Log.Warnings);
+            Assert.Contains("t.windcrit", Log.Warnings.Single());
+            Assert.Contains("disabled", Log.Warnings.Single());
+
+            host.OnIdentityStrikeDisplacement(hero); // the disabled channel stays silent
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.OnIdentityStrikeBasicHit(flowHero, flowTarget, 2);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(4, Actor.SimDamageLog.Count); // the flow channel keeps firing
+            Assert.Single(Log.Warnings); // one warning, never repeated
+            Assert.All(Actor.SimDamageLog, entry => Assert.Same(flow, entry.Dealer));
+        }
+
         // ---- the dash attack bonus portion ----------------------------------------------------------------------------------------------
 
         private static List<CodeInstruction> Disassemble(MethodInfo method)
@@ -352,6 +546,202 @@ namespace SodRpg.Core.Tests
             Assert.Equal(10f, heal.Amount, 3); // identity not equipped
             host.BindAuthored(runtime, new Build());
             Assert.Empty(hero.dealtHealProcessor.Entries);
+        }
+
+        /// <summary>
+        /// Mirrors the production host damage processor (HostAuthority.cs rt.DamageDealt): the generated-damage gate returns before
+        /// the memory correction — the exact block the critical channels cannot reach (issue #136). Records the generated depth each
+        /// packet saw, so a closed gate (1) is distinguishable from the normal route (0).
+        /// </summary>
+        private static void WireHostMemoryCorrection(HostAuthority host, Hero hero, HostAuthority.HeroRuntime runtime, List<int> depthSeen)
+        {
+            hero.SimDealtDamage.Add((ref DamageData d, Actor a, Entity t) =>
+            {
+                depthSeen.Add(host.GeneratedDamageDepth);
+                if (host.GeneratedDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+                float amp = host.MemoryDamagePercent(runtime, (d.actor ?? a)?.FindFirstOfType<SkillTrigger>()?.GetType().Name);
+                if (amp > 0f) d.ApplyAmplification(amp / 100f);
+            });
+        }
+
+        private static LinkDef MemoryDamageLink(string memory, decimal percent) =>
+            new LinkDef { Kind = LinkKind.MemoryDamage, Requires = new[] { memory }, Value = percent };
+
+        [Fact]
+        public void Displacement_critical_strike_carries_the_identity_memory_damage_correction_exactly_once()
+        {
+            // Both Wind Scar channels on one hero: the non-critical echo (60%, open gate) and the critical strike (120%, generated gate).
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.WindStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike())), killingFlow: false);
+            var faith = new DivineFaithSim(skill);
+            var depths = new List<int>();
+            WireHostMemoryCorrection(host, hero, runtime, depths);
+            var target = Enemy(0, 2);
+
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f, Actor.SimDamageLog[0].Amount, 3); // no correction acquired yet: the plain echo ...
+            Assert.Equal(120f, Actor.SimDamageLog[1].Amount, 3); // ... and the plain critical strike
+            Assert.Equal(new[] { 0, 1 }, depths.Take(2).ToArray()); // open gate for the echo, closed gate for the critical strike
+
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m)); // 記憶の冴え +40% for Wind Scar only
+            UnityEngine.Time.time = 2f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.4f, Actor.SimDamageLog[2].Amount, 3); // the echo keeps its route through the processor ...
+            Assert.Equal(120f * 1.4f, Actor.SimDamageLog[3].Amount, 3); // ... and the critical strike carries it exactly once — never 1.4 x 1.4
+            Assert.Equal(new[] { 0, 1 }, depths.Skip(2).Take(2).ToArray()); // the gate split did not change
+            Assert.Contains(target, faith.Tracked.Keys); // the native tracker still sees the amplified critical strike
+
+            runtime.SatisfiedLinks.Clear();
+            runtime.SatisfiedLinks.Add(MemoryDamageLink("St_Q_Fleche", 40m)); // a different memory's correction never rides
+            UnityEngine.Time.time = 4f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 3, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f, Actor.SimDamageLog[4].Amount, 3);
+            Assert.Equal(120f, Actor.SimDamageLog[5].Amount, 3);
+
+            runtime.SatisfiedLinks.Clear();
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m));
+            UnityEngine.Time.time = 6f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 4, critical: false); // a noncritical hit: only the echo channel fires
+            host.UpdateIdentityStrikes();
+            Assert.Equal(7, depths.Count); // one gate visit per packet (2+2+2+1): nothing chained from the strikes
+            Assert.Equal(60f * 1.4f, Actor.SimDamageLog[6].Amount, 3); // the normal route through the processor is unchanged
+            Assert.Equal(0, depths[6]);
+
+            // Divine Faith's native amplification still composes on top of the memory correction (0.4% per stack).
+            faith.Stack = 1;
+            UnityEngine.Time.time = 8f;
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 5, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.4f * 1.004f, Actor.SimDamageLog[7].Amount, 3);
+            Assert.Equal(120f * 1.4f * 1.004f, Actor.SimDamageLog[8].Amount, 3);
+            UnityEngine.Time.time = 11f; faith.Dies(target);
+            Assert.Equal(2, faith.Stack); // the kill within 6 s of the tracked hit still grows the stack
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_carries_the_identity_memory_damage_correction_exactly_once()
+        {
+            var (host, runtime, hero, skill) = Setup(BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike())), killingFlow: true);
+            var depths = new List<int>();
+            WireHostMemoryCorrection(host, hero, runtime, depths);
+            var a = Enemy(0, 2);
+            runtime.SatisfiedLinks.Add(MemoryDamageLink(skill.GetType().Name, 40m)); // 記憶の冴え +40% for the Killing Flow
+
+            for (long activation = 1; activation <= 2; activation++) host.OnIdentityStrikeBasicHit(hero, a, activation, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Empty(Actor.SimDamageLog); // two crits: not the third yet
+            host.OnIdentityStrikeBasicHit(hero, a, 3, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            var strike = Assert.Single(Actor.SimDamageLog);
+            Assert.Equal(180f * 1.4f, strike.Amount, 3); // once, never 1.4 x 1.4
+            Assert.Equal(1, depths.Single()); // the whole strike ran behind the closed generated gate
+            host.UpdateIdentityStrikes();
+            Assert.Single(Actor.SimDamageLog); // nothing chains from the corrected strike
+        }
+
+        /// <summary>
+        /// Mirrors the production host damage processor (HostAuthority.cs rt.DamageDealt) past its generated-damage gate — the exact
+        /// corrections the critical channels reach only through their own application (issue #136): the shared
+        /// ApplyMemoryPacketCorrections (stance amplification, the memory correction, the relay window) and Expose, in the
+        /// processor's order. Records the generated depth each packet saw, so a closed gate (1) is distinguishable from the
+        /// normal route (0).
+        /// </summary>
+        private static void WireHostStrikeCorrections(HostAuthority host, Hero hero, HostAuthority.HeroRuntime runtime, List<int> depthSeen)
+        {
+            hero.SimDealtDamage.Add((ref DamageData d, Actor a, Entity t) =>
+            {
+                depthSeen.Add(host.GeneratedDamageDepth);
+                if (host.GeneratedDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+                host.ApplyMemoryPacketCorrections(runtime, ref d, t, (d.actor ?? a)?.FindFirstOfType<SkillTrigger>()?.GetType().Name);
+                float expose = host.StrongestExposePercent(runtime, t, host.BridgeSuccessExposePercent(hero, t));
+                if (expose > 0f) d.ApplyAmplification(expose / 100f);
+            });
+        }
+
+        private static void ArmExposeMark(HostAuthority.HeroRuntime runtime, SkillTrigger skill, Entity victim)
+        {
+            runtime.Gimmicks.SetBuild(new[] { new GimmickEntry { StarId = "test.expose", Memory = skill.GetType().Name,
+                Def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Expose, Value = 6 } } });
+            runtime.Gimmicks.Fire(GimmickTrigger.OnHit, skill.GetType().Name, UnityEngine.Time.time, victim.GetInstanceID(), 100, false, new List<GimmickRequest>());
+        }
+
+        [Fact]
+        public void Displacement_critical_strike_carries_the_stance_relay_and_expose_corrections_like_the_normal_strike()
+        {
+            // Both Wind Scar channels on one hero: the non-critical echo (60%, open gate) and the critical strike (120%, generated gate).
+            var build = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.WindStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike()));
+            build.Powers[Power.ImmovableStance] = 11; // 不動の構え: +11% outgoing damage while standing still
+            var (host, runtime, hero, skill) = Setup(build, killingFlow: false);
+            var depths = new List<int>();
+            WireHostStrikeCorrections(host, hero, runtime, depths);
+            var target = Enemy(0, 2);
+            runtime.Powers.ObserveMovement(0f, false, 0f); // standing still since t=0: the stance arms at t >= 1
+
+            UnityEngine.Time.time = 5f;
+            ArmExposeMark(runtime, skill, target); // the 4 s Expose mark (+6%) covers the strikes below
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(new[] { 0, 1 }, depths); // open gate for the echo, closed gate for the critical strike
+            Assert.Equal(60f * 1.11f * 1.06f, Actor.SimDamageLog[0].Amount, 3); // the echo rides stance + Expose once ...
+            Assert.Equal(120f * 1.11f * 1.06f, Actor.SimDamageLog[1].Amount, 3); // ... and so does the critical strike — never 1.11 x 1.11 or 1.06 x 1.06
+
+            // A relay window for the equipped Q never rides a strike packet on either route: strike damage belongs to the identity
+            // memory, not to the relay's target, so the same relay query rt.DamageDealt runs returns nothing for both channels.
+            hero.Skill.Skills[HeroSkillLocation.Q] = new St_Q_SuperNova { owner = hero, parentActor = hero };
+            host.ConfigureRelayWindows(hero, new[] { new RelayWindowDefinition("test.relay", "St_Q_SuperNova", 2500) });
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet
+            {
+                Actor = skill, Victim = target, Admitted = true, Serial = host.Packet(), Identity = host.Activation(hero, skill.GetType().Name),
+            };
+            UnityEngine.Time.time = 10f;
+            ArmExposeMark(runtime, skill, target); // refresh the mark for the second volley
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.11f * 1.06f, Actor.SimDamageLog[2].Amount, 3); // the relay amplified neither ...
+            Assert.Equal(120f * 1.11f * 1.06f, Actor.SimDamageLog[3].Amount, 3); // ... the echo nor the critical strike
+            Assert.Equal(new[] { 0, 1, 0, 1 }, depths); // unchanged gate split: nothing chained from the corrected strikes
+            NativeAttributedDamagePacket.Current = null;
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_carries_the_stance_and_expose_corrections_like_the_normal_strike()
+        {
+            // Both Killing Flow channels on one hero: the every-hit echo (25%, open gate) and the third-crit strike (180%, generated gate).
+            var build = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.FlowStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike()));
+            build.Powers[Power.ImmovableStance] = 11;
+            var (host, runtime, hero, skill) = Setup(build, killingFlow: true);
+            var depths = new List<int>();
+            WireHostStrikeCorrections(host, hero, runtime, depths);
+            var a = Enemy(0, 2);
+            runtime.Powers.ObserveMovement(0f, false, 0f);
+
+            UnityEngine.Time.time = 5f;
+            ArmExposeMark(runtime, skill, a); // the 4 s Expose mark (+6%) covers the strikes below
+            host.OnIdentityStrikeBasicHit(hero, a, 1, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[0].Amount, 3); // the every-hit echo rides stance + Expose once through the open gate
+            Assert.Equal(0, depths.Single());
+            host.OnIdentityStrikeBasicHit(hero, a, 2, critical: true, victimLifetime: 11);
+            host.OnIdentityStrikeBasicHit(hero, a, 3, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[1].Amount, 3);
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[2].Amount, 3);
+            Assert.Equal(180f * 1.11f * 1.06f, Actor.SimDamageLog[3].Amount, 3); // the third-crit strike carries both exactly once — never squared
+            Assert.Equal(new[] { 0, 0, 0, 1 }, depths); // only the critical strike ran behind the closed generated gate
+            host.UpdateIdentityStrikes();
+            Assert.Equal(4, Actor.SimDamageLog.Count); // nothing chains from the corrected strikes
         }
     }
 }

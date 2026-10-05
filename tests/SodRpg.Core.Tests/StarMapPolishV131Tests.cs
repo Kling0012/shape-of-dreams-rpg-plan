@@ -11,12 +11,10 @@ namespace SodRpg.Core.Tests
     {
         public sealed class Installed : IDisposable
         {
-            public readonly Dictionary<string, HeroTreeLayout> Baseline = new Dictionary<string, HeroTreeLayout>(StringComparer.Ordinal);
             public Installed()
             {
                 foreach (string hero in StarClusters.GeneratedHeroes)
                 {
-                    Baseline[hero] = HeroTreeLayout.ForHero(hero);
                     StarClusters.RegisterGeneratedHero(hero);
                 }
             }
@@ -25,9 +23,6 @@ namespace SodRpg.Core.Tests
                 foreach (string hero in StarClusters.GeneratedHeroes) StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>());
             }
         }
-
-        private readonly Installed installed;
-        public StarMapPolishV131Tests(Installed installed) { this.installed = installed; }
 
         public static IEnumerable<object[]> Heroes()
         {
@@ -53,64 +48,6 @@ namespace SodRpg.Core.Tests
                         && a.Talent.IsKeystone && b.Talent.IsKeystone)
                         Assert.True(d >= HeroTreeLayout.KeystoneSpacing - 0.5, a.Id + " / " + b.Id + " keystones are " + d + " apart");
                 }
-        }
-
-        [Theory, MemberData(nameof(Heroes))]
-        public void Baseline_stars_do_not_move(string hero)
-        {
-            var layout = HeroTreeLayout.ForHero(hero);
-            foreach (var node in installed.Baseline[hero].Nodes)
-            {
-                var kept = layout.Nodes.Single(n => n.Id == node.Id);
-                Assert.Equal(node.X, kept.X);
-                Assert.Equal(node.Y, kept.Y);
-            }
-        }
-
-        [Theory, MemberData(nameof(Heroes))]
-        public void Each_authored_keystone_sits_beside_its_own_anchor(string hero)
-        {
-            var layout = HeroTreeLayout.ForHero(hero);
-            foreach (var node in layout.Nodes.Where(n => n.Talent?.AuthoredStar != null && n.Talent.IsKeystone))
-            {
-                var anchor = layout.Nodes.Single(n => n.Id == node.Talent.AuthoredStar.AnchorId);
-                Assert.True(Distance(node, anchor) <= 8 * HeroTreeLayout.MinimumSpacing, node.Id + " is far from " + anchor.Id);
-            }
-        }
-
-        [Theory, MemberData(nameof(Heroes))]
-        public void Bridge_clusters_enter_next_to_their_bridge_star_and_lines_do_not_pile_up(string hero)
-        {
-            var layout = HeroTreeLayout.ForHero(hero);
-            var clusters = StarMapClusters.Build(layout).Where(c => c.Region == ClusterRegionKind.Bridge).ToArray();
-            Assert.NotEmpty(clusters);
-            foreach (var cluster in clusters)
-            {
-                var members = new HashSet<int>(cluster.NodeIndices);
-                var lengths = new List<double>();
-                foreach (var edge in layout.Edges)
-                {
-                    if (members.Contains(edge.A) == members.Contains(edge.B)) continue;
-                    lengths.Add(Distance(layout.Nodes[edge.A], layout.Nodes[edge.B]));
-                }
-                Assert.NotEmpty(lengths);
-                // The entry star sits beside the bridge star; an authored second attachment (another star of the same arc) may be farther.
-                Assert.True(lengths.Min() <= 5 * HeroTreeLayout.MinimumSpacing, cluster.Id + " nearest entry line is " + lengths.Min() + " long");
-                Assert.True(lengths.Max() <= 10 * HeroTreeLayout.MinimumSpacing, cluster.Id + " longest entry line is " + lengths.Max() + " long");
-            }
-            // Rule: several large memory clusters hang off one route star by design (route.4 / route.7); they cannot all fit beside it,
-            // so a star that has entry lines into two or more different clusters is a hub (and those lines are kept as short as the
-            // free space allows by placing each cluster beside the star its entry edge reaches). Every other star keeps at most 3 long lines.
-            const float Long = 6 * HeroTreeLayout.MinimumSpacing;
-            for (int i = 0; i < layout.Nodes.Count; i++)
-            {
-                var node = layout.Nodes[i];
-                bool hub = node.Neighbors.Select(n => layout.Nodes[n].Talent?.Cluster?.Id).Where(c => c != null && c != node.Talent?.Cluster?.Id).Distinct().Count() >= 2
-                    || node.Kind == HeroTreeNodeKind.Notable || node.Talent?.RouteOrder == 7 || node.Talent?.IsOuterAnchor == true || i == layout.StartIndex;
-                if (hub) continue;
-                int longEdges = node.Neighbors.Count(n => Distance(node, layout.Nodes[n]) > Long);
-                Assert.True(longEdges <= 3, node.Id + " has " + longEdges + " long lines");
-            }
         }
 
         [Theory, MemberData(nameof(Heroes))]

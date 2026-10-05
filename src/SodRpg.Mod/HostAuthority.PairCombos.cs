@@ -54,15 +54,19 @@ namespace SodRpg.Mod
         {
             if (_gimmickDamageDepth != 0 || _pairDamageDepth != 0 || _reactionEffectDepth != 0
                 || damage.IsAmountModifiedBy(typeof(GimmickRuntime)) || IsPairReactionSource(damage.actor)) return;
+            float expose = StrongestExposePercent(rt, victim, additionalExposePercent);
+            if (expose > 0) damage.ApplyAmplification(expose / 100f);
+        }
+
+        /// <summary>The strongest live vulnerability on the victim from this hero: gimmick, reaction and pair Expose marks, plus a caller-supplied additional expose (the bridge mark). Expose sources share the strongest value; distinct pair IDs do not stack.</summary>
+        internal float StrongestExposePercent(HeroRuntime rt, Entity victim, float additionalExposePercent = 0f)
+        {
             float now = Time.time;
             CollectPairMemories(rt);
             rt.PairCombos.RefreshEquipment(rt.PairMemories);
             int id = victim.GetInstanceID();
-            // Expose sources share the strongest vulnerability; distinct pair IDs do not stack.
-            float expose = Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
-                rt.PairCombos.ExposePercent(id, now));
-            expose = Math.Max(expose, additionalExposePercent);
-            if (expose > 0) damage.ApplyAmplification(expose / 100f);
+            return Math.Max(Math.Max(Math.Max(rt.Gimmicks.ExposePercent(id, now), rt.Reactions.ExposePercent(id, now)),
+                rt.PairCombos.ExposePercent(id, now)), additionalExposePercent);
         }
 
         private void QueueGimmicks(HeroRuntime rt, GimmickTrigger trigger, string memory, Entity victim, float damage, bool pairGenerated = false,

@@ -298,12 +298,21 @@
       "receiver": null,
       "target": null,
       "gimmick": {
-        "trigger": "OnKill",
-        "effect": "Burst",
-        "value": 23,
+        "trigger": "OnHit",
+        "effect": "IdentityStrike",
+        "value": 180,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": null,
+        "strike": {
+          "mode": "ConsecutiveCritical",
+          "element": "Dark",
+          "shape": "ForwardLine",
+          "range": 6,
+          "width": 2,
+          "maxTargets": 6,
+          "windowSeconds": 4
+        }
       },
       "power": null,
       "stat": null,
@@ -315,8 +324,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "撃ち抜いた先",
-      "nameEn": "Beyond the Killing Blow",
+      "nameJa": "三重の処刑",
+      "nameEn": "Threefold Execution",
       "notes": ""
     },
     {
@@ -1827,12 +1836,21 @@
       "receiver": null,
       "target": null,
       "gimmick": {
-        "trigger": "OnKill",
-        "effect": "Burst",
-        "value": 23,
+        "trigger": "OnHit",
+        "effect": "IdentityStrike",
+        "value": 120,
         "arg": 0,
         "cooldown": 0,
-        "target": null
+        "target": null,
+        "strike": {
+          "mode": "AfterDisplacementCritical",
+          "element": "Dark",
+          "shape": "ForwardArc",
+          "range": 4.5,
+          "width": 120,
+          "maxTargets": 6,
+          "windowSeconds": 3
+        }
       },
       "power": null,
       "stat": null,
@@ -1844,8 +1862,8 @@
       ],
       "maxRank": 1,
       "rankCost": 1,
-      "nameJa": "切り抜けた風",
-      "nameEn": "Wind Cut Through",
+      "nameJa": "影返し",
+      "nameEn": "Shadow Reprise",
       "notes": ""
     },
     {

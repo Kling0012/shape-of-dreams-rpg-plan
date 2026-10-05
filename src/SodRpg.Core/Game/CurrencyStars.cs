@@ -29,25 +29,29 @@ namespace SodRpg.Core.Game
             switch (p)
             {
                 case Power.KillGoldPct:
-                    body = Loc.T($"敵を倒して得るゴールドが{v}%増える（本体の星の「富の蓄え」と足し合わせる）",
-                        $"Gold earned from kills increases by {v}% (adds to the base game's kill-gold bonuses)");
+                    body = Loc.T($"撃破獲得ゴールド +{v}%／敵を倒したとき。本体の星『富の蓄え』などの撃破ゴールド倍率に加算",
+                        $"Kill gold +{v}% when enemies are killed; adds to the base game's kill-gold multiplier bonuses");
                     break;
                 case Power.EliteKillGoldPct:
-                    body = Loc.T($"エリート・ボスを倒して得るゴールドがさらに{v}%増える",
-                        $"Gold earned from Elite and Boss kills increases by a further {v}%");
+                    body = Loc.T($"エリート・ボスの撃破獲得ゴールド +{v}%／自分に分配される撃破ゴールドを、撃破ゴールド倍率を適用した後の額からさらに増やす",
+                        $"Elite and Boss kill gold +{v}% of your share after applying your kill-gold multipliers");
                     break;
                 case Power.DreamDustPct:
-                    body = Loc.T($"自分で拾う夢のダストが{v}%増える（仲間からの贈り物には掛からない）",
-                        $"Dream Dust you pick up yourself increases by {v}% (gifts from allies are not boosted)");
+                    body = Loc.T($"夢のダスト拾得量 +{v}%／自分で拾ったとき。仲間からの贈り物は対象外",
+                        $"Dream Dust picked up +{v}% when you collect it yourself; excludes gifts from allies");
                     break;
                 case Power.DreamDustDelvePct:
-                    body = Loc.T($"自分で拾う夢のダストが{v}%増え、潜行中はさらに{v}%増える（仲間からの贈り物には掛からない）",
-                        $"Dream Dust you pick up yourself increases by {v}%, and by a further {v}% while delving (gifts from allies are not boosted)");
+                    body = Loc.T($"夢のダスト拾得量 +{v}%（潜行中は合計+{v * 2}%）／自分で拾ったとき。確保せず開始深度より深く進んでいる間は、同じ増加量をもう1回加算。仲間からの贈り物は対象外",
+                        $"Dream Dust picked up +{v}% (+{v * 2}% total while delving) when you collect it yourself; adds the same bonus again while proceeding beyond your starting depth without securing the run; excludes gifts from allies");
                     break;
                 default: return "-";
             }
-            string cap = Loc.T($"（効果値の合計上限{Content.PowerCap(p)}%）", $" (combined value capped at {Content.PowerCap(p)}%)");
-            return Loc.T($"【{Name(p)}】", $"[{Name(p)}] ") + body + cap;
+            string cap = p == Power.DreamDustDelvePct
+                ? Loc.T($"（同じ効果の星を合算し、通常時の増加量は{Content.PowerCap(p)}%、潜行中は{Content.PowerCap(p) * 2}%まで。夢のダストの他の増加効果とは別枠）",
+                    $" (combined stars of this effect capped at +{Content.PowerCap(p)}% normally and +{Content.PowerCap(p) * 2}% while delving, separate from other Dream Dust bonuses)")
+                : Loc.T($"（同じ効果の星の合計上限{Content.PowerCap(p)}%。他の獲得量増加とは別枠）",
+                    $" (combined stars of this effect capped at {Content.PowerCap(p)}%, separate from other acquisition bonuses)");
+            return body + cap;
         }
 
         /// <summary>撃破ゴールドの倍率へ足す量（1.0 = +100%）。本体の「富の蓄え」（+4% = 0.04）と同じ単位。</summary>

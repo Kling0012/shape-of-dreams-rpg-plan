@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 
 namespace SodRpg.Core.Game
 {
@@ -115,8 +116,8 @@ namespace SodRpg.Core.Game
                 : (ja ? "連携印のある敵に" : "Against that combo-marked enemy, ") + payoff;
             string steps = def.Step == PairComboStep.None ? origin
                 : def.Step == PairComboStep.Mark
-                    ? origin + (ja ? "、その敵にこのペア専用の連携印を4秒付ける（脆さ" + (entry.Ranks + 1) + "%）。" : ", apply this pair's combo mark to that enemy for 4 seconds (" + (entry.Ranks + 1) + "% vulnerability). ") + markedPayoff
-                    : origin + (ja ? "、自分に" + duration + "秒の窓を開く（能力値は上がらない）。窓の間に" : ", open a " + duration + "-second window on yourself (no stat increase). During that window, ") + payoff;
+                    ? origin + (ja ? "、その敵に連携の印を4秒付ける（自分から受けるダメージ +" + (entry.Ranks + 1) + "%）。" : ", mark that enemy for 4 seconds (damage taken from you +" + (entry.Ranks + 1) + "%). ") + markedPayoff
+                    : origin + (ja ? "、その後" + duration + "秒以内に" : ", then within " + duration + " seconds, ") + payoff;
             string n = entry.Value.ToString(CultureInfo.InvariantCulture);
             string effect;
             switch (def.Effect)
@@ -126,8 +127,8 @@ namespace SodRpg.Core.Game
                     effect = ja ? target + "の残りクールダウンを" + n + "%縮める" : "reduce " + target + "'s remaining cooldown by " + n + "%";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "Q・W・Eの通常記憶すべての残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティと、発動した記憶自身は対象外）"
-                        : "reduce the remaining cooldown of all your other normal memories (Q/W/E) by " + n + "% (excluding Movement, Ultimate, Identity and the triggering memory itself)";
+                    effect = ja ? "装備中のほかの通常記憶の残りクールダウンを" + n + "%縮める（移動・奥義・アイデンティティと、発動した記憶自身は対象外）"
+                        : "reduce the remaining cooldown of your other equipped normal memories by " + n + "% (excluding movement, ultimate, identity and the triggering memory itself)";
                     break;
                 case GimmickEffect.Shield:
                     effect = ja ? "自分に最大HPの" + n + "%の障壁を張る（4秒）" : "gain a shield equal to " + n + "% of maximum health for 4 seconds";
@@ -156,7 +157,7 @@ namespace SodRpg.Core.Game
             string interval = def.Cooldown == 0 ? (ja ? "間隔制限なし" : "no cooldown")
                 : (ja ? "このペア全体で" + cd + "秒に1回" : "once every " + cd + (def.Cooldown == 1f ? " second" : " seconds") + " per pair, shared across enemies");
             string limit = def.OncePerActivation
-                ? (ja ? "。1回の発動（技・振り・射撃・爆発・基本攻撃・召喚獣の攻撃）につき1回まで" : "; at most once per activation (skill, swing, shot, explosion, basic attack or summon attack)") : "";
+                ? (ja ? "。1回の使用・通常攻撃・召喚物の攻撃につき1回まで" : "; at most once per memory use, basic attack or summon attack") : "";
             if (def.OncePerVictim) limit += ja
                 ? (def.PayoffTrigger == PairComboTrigger.OnKill ? "。倒した敵1体につき1回まで" : "。連携印のある敵1体につき1回まで（最初の3回の追加ダメージで繰り返さない）")
                 : (def.PayoffTrigger == PairComboTrigger.OnKill ? "; once per killed victim" : "; once per combo-marked victim, not once for each of the first three bonus hits");
@@ -165,10 +166,23 @@ namespace SodRpg.Core.Game
             string summon = def.Trigger == PairComboTrigger.OnBasicAttack || def.PayoffTrigger == PairComboTrigger.OnBasicAttack
                 ? (ja ? "召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する（命中は不要）。" : "Checks whenever you fire your own basic attack while summons are present; no hit is required. ") : "";
             string disabled = def.MovementOrigin ? (ja ? "移動の記憶は起点にならないため、この組は発動しない。" : "Inactive: movement memories cannot start a combo. ") : "";
-            return (ja ? a + "と" + b + "を両方装備し、橋と両隣の4番目の星に1段以上必要。" : "Equip both " + a + " and " + b + "; allocate at least one rank in the bridge and both adjacent fourth stars. ")
-                + disabled + summon + steps + (ja ? "、" : ", ") + effect
-                + (ja ? "（" + interval + limit + "。効果量は橋の1/2/3段で" + string.Join("/", def.TableRankValues) + "。追加ダメージは属性なし・連鎖なし。仕掛けのダメージは起点にも受け手にもならない）" : " (" + interval + limit + "; exact values at bridge ranks 1/2/3: " + string.Join("/", def.TableRankValues) + "; extra damage is elementless and cannot chain; generated damage cannot start or complete a combo).")
-                + (ja ? "" : " ") + Restrictions(def, ja);
+            string headline = def.Effect == GimmickEffect.Recharge || def.Effect == GimmickEffect.RechargeOther
+                ? Loc.T($"残りクールダウン −{n}%", $"Remaining cooldown −{n}%")
+                : def.Effect == GimmickEffect.Heal ? Loc.T($"HP回復 +最大HPの{n}%", $"Healing +{n}% of maximum HP")
+                : def.Effect == GimmickEffect.Shield ? Loc.T($"障壁 +最大HPの{n}%", $"Shield +{n}% of maximum HP")
+                : def.Effect == GimmickEffect.Burst ? Loc.T($"範囲追加ダメージ +攻撃力・魔力の高い方の{n}%", $"Area bonus damage +{n}% of the higher of attack damage or ability power")
+                : def.Effect == GimmickEffect.Echo ? Loc.T($"追撃ダメージ +与ダメージの{n}%", $"Follow-up damage +{n}% of damage dealt")
+                : Loc.T($"属性付与 +{entry.Value / 100}個", $"Element application +{entry.Value / 100} stacks");
+            return headline + Loc.T("：", ": ") + steps + (ja ? "、" : ", ") + effect
+                + (ja ? "（" + interval + limit + "。追加ダメージは属性なし・連鎖なし。星の追加ダメージでは連携を開始・成立させられない）"
+                    : " (" + interval + limit + "; extra damage is elementless and cannot chain; star-generated damage cannot start or complete the combo).")
+                + "\n" + (ja ? a + "と" + b + "を両方装備し、星『" + StarName(def.BridgeId) + "』『" + StarName(def.StarA) + "』『" + StarName(def.StarB) + "』を各1段以上取得すると有効。"
+                    : "Equip both " + a + " and " + b + "; acquire at least one rank in stars “" + StarName(def.BridgeId) + "”, “" + StarName(def.StarA) + "” and “" + StarName(def.StarB) + "”.")
+                + "\n" + (ja ? "橋の1/2/3段での値：" : "Values at bridge ranks 1/2/3: ")
+                + (def.Effect == GimmickEffect.Element
+                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + Loc.T("個（小数部分は追加1個の確率）", " stacks (fractional part is the chance of one extra stack)")
+                    : string.Join("/", def.TableRankValues) + "%")
+                + disabled + summon + Restrictions(def, ja);
         }
         private static string Restrictions(PairComboDef def, bool ja)
         {
@@ -186,11 +200,7 @@ namespace SodRpg.Core.Game
         }
         private static string MemoryName(string memory, bool ja)
         {
-            string name = ja ? Links.Name(memory).Ja : Links.Name(memory).En;
-            // Keep proper names in identifiers, not in player-facing pair descriptions.
-            name = ja ? name.Replace("アストリッドの", "").Replace("エルの", "").Replace("チャージされたアンギリアン", "蓄電")
-                : name.Replace("Astrid's ", "").Replace("El's ", "").Replace("Charged Anguillian", "Stored Charge");
-            return ja ? "『" + name + "』" : name;
+            return Loc.T("記憶『", "Memory “") + (ja ? Links.Name(memory).Ja : Links.Name(memory).En) + Loc.T("』", "”");
         }
         private static string Action(PairComboTrigger trigger, string memory, bool ja)
         {
@@ -203,6 +213,16 @@ namespace SodRpg.Core.Game
                 case PairComboTrigger.OnBasicAttack: return ja ? name + "で自分の基本攻撃を撃つと" : "when you fire your own basic attack with " + name;
                 default: return ja ? name + "が当たると" : "when " + name + " hits";
             }
+        }
+
+        private static string StarName(string id)
+        {
+            var def = ForBridge(id);
+            if (def != null) return def.Name.ToString();
+            foreach (var star in HeroSigils.All) if (star.Id == id) return star.Name.ToString();
+            foreach (var hero in HeroSigils.All.Select(t => t.HeroKey).Where(k => k != null).Distinct())
+                foreach (var star in HeroSigils.TreeFor(hero)) if (star.Id == id) return star.Name.ToString();
+            return Loc.T("前提の星", "prerequisite star");
         }
 
         private static PairComboDef D(string hero, int bridge, string slugA, string memoryA, string slugB, string memoryB,

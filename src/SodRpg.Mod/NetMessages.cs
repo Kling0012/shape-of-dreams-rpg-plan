@@ -84,6 +84,7 @@ namespace SodRpg.Mod
         public string choices;
         public bool terminal;
         public bool victory;
+        public string lobbyReturnRunId;
     }
 
     internal enum BountyReportKind
@@ -162,6 +163,7 @@ namespace SodRpg.Mod
         public int spendDust;
         public int earnDust;
         public int protocol;
+        public string runId;
     }
 
     /// <summary>ホスト → クライアント：取引の結果。</summary>
@@ -185,9 +187,12 @@ namespace SodRpg.Mod
         // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
         // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
+// Version 20 carries run-bound return-to-lobby defeats and blocks their native resumes.
         // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
         // Version 20 requires persistent Infinity reward caps; cap-less participants are incompatible.
-        public const int Version = 20;
+        // Version 21 keeps the return-to-lobby defeat + Infinity reward-cap protocol and adds owner-bound satchel overflow dust trades with their expedition identity.
+        public const int Version = 21;
+        public const string LobbyReturnedResumeSession = "lobby-returned";
     }
 
     [Serializable]

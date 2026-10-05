@@ -110,9 +110,24 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 |---|---|---|
 | `AfterDisplacement` | ダッシュ・テレポートのあとの次の通常攻撃の命中で1回（1回の移動につき1回）。風の傷専用 | `windowSeconds` 必須（0.5〜10）。`everyN`・`bonusSpeed` は不可 |
 | `EveryNthBasicAttack` | 通常攻撃がN回命中するごと（`gimmick.everyN`、1 = 毎回）。一歩一殺専用 | `everyN` 必須（1〜100）。`bonusSpeed` は任意：変換した追加攻撃速度1%ごとの上乗せ%（0.2 = 0.2%）。`windowSeconds` は不可 |
+| `AfterDisplacementCritical` | ダッシュ・テレポート後、窓内の最初の通常攻撃の主命中が会心なら闇の斬撃。非会心でも準備を消費。斬撃時にMovement記憶の残りクールダウンを35%短縮する。風の傷専用 | `windowSeconds` 必須（0.5〜10）、`element: "Dark"`、`maxTargets` 1〜6（既定6）。`everyN`・`bonusSpeed` は不可。内部間隔1秒 |
+| `ConsecutiveCritical` | 同じ敵へ通常攻撃の主命中が3回連続で会心なら闇の斬撃。各命中間隔は窓以内。非会心・敵の変更・窓切れで連続数をリセット。一歩一殺専用 | `windowSeconds` 必須（0.5〜10）、`element: "Dark"`、`maxTargets` 1〜6（既定6）。3回固定で`everyN`・`bonusSpeed` は不可。内部間隔1秒 |
 | `DashBonusAsMemory` | ダッシュ攻撃の追加分（闇75%）を風の傷のダメージとして数える（ダメージは増えない）。風の傷専用 | `value: 0`。他の欄は不可 |
 
 `element` は `None/Fire/Cold/Light/Dark`、`shape` は `ForwardLine`（`width` = 幅m）／`ForwardArc`（`width` = 角度）、`range` は1〜15m、`maxTargets` は1〜16（既定8）。`condition/once/valuesByRank/triggerByIdentity/replaces/basis/pool` は不可。
+
+会心モードも同じ`gimmick`形を使う（星の`value`は`null`）：
+
+```json
+"gimmick": {"trigger": "OnHit", "effect": "IdentityStrike", "value": 120, "arg": 0, "cooldown": 0, "target": null,
+  "strike": {"mode": "AfterDisplacementCritical", "element": "Dark", "shape": "ForwardArc", "range": 4.5, "width": 120, "maxTargets": 6, "windowSeconds": 3}}
+"gimmick": {"trigger": "OnHit", "effect": "IdentityStrike", "value": 180, "arg": 0, "cooldown": 0, "target": null,
+  "strike": {"mode": "ConsecutiveCritical", "element": "Dark", "shape": "ForwardLine", "range": 6, "width": 2, "maxTargets": 6, "windowSeconds": 4}}
+```
+
+会心モードの斬撃は生成ダメージとして実行する（仕掛け・橋・同じ斬撃への連鎖なし）。ホストのダメージ処理器（`rt.DamageDealt`）は生成ダメージでは補正の適用箇所の前で打ち切るため、この2モードだけは `FireIdentityStrike` が処理器がゲートの後に適用するのと同じ補正（構えに応じた与ダメージ増幅・「記憶の冴え」・中継窓・被ダメージ増加）をパケットごとに1回だけ自分で適用する（`ApplyMemoryPacketCorrections` ＋ `StrongestExposePercent`）。通常モードは `rt.DamageDealt` 経由のままなので、二重にはならない。
+
+発生元はそれぞれ装備中の記憶『風の傷』／『一歩一殺』で、Identityに装着したエッセンス『神聖なる信仰』の本体のダメージ増幅・6秒の撃破追跡に入る。このエッセンスは斬撃の発動条件ではない。
 
 #### 5b. MemoryTuning（名前付きの本体記憶の静的な変更）
 
@@ -247,3 +262,38 @@ python tools/star-manifest/validate.py cetus      # 1人
 
 ### 橋の窓/印の持続時間
 `GimmickParam` の `param` には `"WindowDuration"`（橋の窓）と `"MarkDuration"`（橋の印）も使える。橋の星団の行で `target.star` がその橋の ring ID（`target.effect` は null）のときだけ許され、Window ペアには WindowDuration、Mark ペアには MarkDuration だけを使える（`validate.py` が形、`gen_cs.py` が実際のペアの種類を検査し、契約も登録時に拒否する）。意味は他の Duration と同じ%で、その橋のペアの窓／印だけが延びる。
+
+## Read-only star text inventory (Issue #101, stage A)
+
+Run from the repository root; this does not regenerate manifests or change product text:
+
+```sh
+dotnet run --project tools/WikiGen -- --export-stars ~/dev/sod-prompts/stars
+```
+
+If only a newer .NET runtime is installed, build `tools/WikiGen/WikiGen.csproj` and run
+`dotnet --roll-forward Major tools/WikiGen/bin/Debug/net8.0/WikiGen.dll --export-stars ~/dev/sod-prompts/stars`.
+
+- `<hero-slug>.tsv` uses the installed `HeroSigils.TreeFor` trees; `generic.tsv` includes the fallback `Content.Talents` tree.
+- Columns: `star_id`, `kind`, `display_ja`, `display_en`, `typed_effect_json`, `partners_json`, `name_ja`, `name_en`, `template`, `wiki_ja`, `wiki_en`, `display_variants_json`.
+- A choice has one parent row and two candidate rows (`choice-A`, `choice-B`); candidates are effects, not extra purchased stars. Identify rows by file, star ID and kind, not ID alone.
+- Display bodies come from `StarMapPresentation`. Variants preserve choice cards/selected states and rank-dependent legacy combos. Live tooltip allocation/equipment wrappers are inventoried separately, not evaluated against a fabricated save.
+- Wiki bodies follow `StarMapWiki`'s existing formatting before table escaping. `wiki_en` evaluates the same branch in English; the existing Wiki publishes effect bodies in Japanese only.
+- Typed JSON retains model type tags, enum names, selectors, trigger/target/condition/budget data, authored units, rank tables, caps and directly referenced effects. Powers retain their native enum/value contract rather than inferring structured conditions from prose.
+- `partners_json` classifies referenced `St_*`/`Gem_*` tokens and transcribes both official names through `Links.Name`; slot selectors remain selectors in typed data, not invented fixed partners.
+- `template-counts.tsv` lists observed formatter branches with distinct parent-star, direct-use and candidate-use counts. `text-template-counts.tsv` additionally lists bilingual rendered shapes after lexical replacement of names, numbers and colors; these are text shapes, not a semantic equivalence claim.
+- `surface-templates.tsv` reads bilingual literal legend/tooltip/state/action templates from the current UI source and records source lines. Interpolations retain placeholders; these shared templates have no per-star usage denominator.
+- Files are UTF-8 TSV with `\\`, `\t`, `\r`, `\n` escaping inside cells. Decode this escaping before parsing JSON cells. Rich-text tags are preserved; original full bodies are never rewritten by template normalization.
+## 星図のオフスクリーン描画・比較（issue #106）
+
+登録済みのゲーム用レイアウトをSVGで保存し、`rsvg-convert` がPATHにあればPNGも保存する。レポートは既定で出力先の `metrics.md`。リポジトリのルートから実行する。
+
+```sh
+dotnet run --project tools/StarMapRender -c Release -- /home/wang/dev/sod-prompts/starmaps/after --before /home/wang/dev/sod-prompts/starmaps/before/metrics.md
+```
+
+`--before <metrics.md>` は以前のStarMapRenderの生メトリクス表を読み、旅人ごとの線交差、線が星の上に通る組数/線数、線長CV、最近傍が他群である割合を before → after で追加する。交差・組数が各beforeの1/3以下、混在率が10%以下かをPASS/FAILで示す。現在の生メトリクス表と定義は残す。BeforeのCV・混在率は元表の丸め値であり、Afterの混在率の判定は丸め前の実測値を使う。未達の構造的原因は集計だけから推定せず、SVG/PNGなどの根拠とともに別途記録する。
+
+`--before` を省くと現在の生メトリクスのみを記録する。`--max-edge 2000` は画像の最大辺（400以上）、`--no-png` はSVGのみ、`--metrics <file>` はレポート先の変更（`-` は標準出力）。
+
+標準出力とレポートには初回 `RegisterAllGenerated()` の全旅人構築・登録時間を記録する（静的初期化/JIT込み、dotnet build・プロセス起動・描画・集計は除外）。旅人別時間はその後の `RegisterGeneratedHero` 1回による**暖まったプロセスでの再構築・登録**で、Coldではない。Cached `ForHero` は1回ウォームアップ後の10,000回平均µs/callであり、レイアウト構築時間ではない。

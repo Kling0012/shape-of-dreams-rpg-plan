@@ -143,6 +143,12 @@ namespace SodRpg.Mod
         public void Notify(GameEvent e)
         {
             if (e == null) return;
+            // Console-generated Core results also pass through the session's currency settlement.
+            if (e.SatchelOverflow != null)
+            {
+                _s.Emit(e);
+                return;
+            }
             InvalidateHud();
             if (e.Kind == EventKind.Hint)
             {
@@ -1041,10 +1047,12 @@ namespace SodRpg.Mod
             // The star map needs room: it uses most of the screen and hides the expedition-only rows.
             bool starTab = _tab == 2;
             bool codexTab = _tab == 4 && _codexOpen; // 図鑑は一覧が見やすいよう、少し大きく開く
-            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶は左の一覧と右の操作欄が収まる高さまで広げる。
+            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶と装備は、左の一覧と右の操作欄が収まる高さまで広げる
+            // （装備の見出しは遠征の外で行が増え、固定の720では下端の操作・鍵のボタンが枠の外へ出た #128）。
             bool forgeTab = _tab == 1;
+            bool gearTab = _tab == 0;
             float ww = starTab ? w - 16 : Mathf.Min(codexTab ? 1180 : 1060, w - 20);
-            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab ? 900 : 720, h - 20);
+            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab || gearTab ? 900 : 720, h - 20);
             _windowHeight = wh;
             _windowWidth = ww;
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
@@ -1084,7 +1092,7 @@ namespace SodRpg.Mod
             "本体の遠征に「持ち帰れる装備（遺物）」が加わります。遠征のたびに少しずつ装備を集めて鍛え、次の遠征をもっと深く、もっと楽に進めるようにしていきます。\n\n" +
             "<b>1回の遠征の流れ</b>\n" +
             "1. 敵を倒すと遺物が落ちます。協力プレイでも各自に別々に落ちるので、取り合いにはなりません。\n" +
-            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。鞄に入る数には上限があり、あふれると一番弱い物が欠片に変わります。\n" +
+            "2. 拾った物は、まだ持ち帰っていない状態（未確保）で鞄に入ります。あふれるとレア度の低い物（同じレア度ならスコアの低い物）から、持ち主の夢のダストに変わります。付与できないときは欠片になり、道標による報酬停止中は何も得られません。\n" +
             "3. 新しいゾーンに着くと確保地点が開きます。ここで「確保する」か「深く潜る」かを選びます。\n" +
             "4. 確保した物は保管庫に入り、遠征が終わっても残ります。\n\n" +
             "<b>確保と潜行の考え方</b>\n" +
@@ -1100,7 +1108,7 @@ namespace SodRpg.Mod
             "Expeditions now drop gear you can keep (relics). Collect and improve a little every run so the next expedition goes deeper and smoother.\n\n" +
             "<b>One expedition</b>\n" +
             "1. Enemies drop relics. In co-op every player gets their own drops, so there is no fighting over loot.\n" +
-            "2. What you pick up goes into your satchel, not yet secured. The satchel has a limit; when it overflows, the weakest relic turns into shards.\n" +
+            "2. What you pick up goes into your unsecured satchel. Overflow converts the lowest-rarity relic (lowest score within that rarity) into its owner's Dream Dust. If dust cannot be granted, it becomes shards; a reward-suppressing waypoint grants nothing.\n" +
             "3. Each new zone opens a secure point where you choose to Secure or Delve.\n" +
             "4. Secured relics go to your stash and stay after the expedition ends.\n\n" +
             "<b>Securing vs. delving</b>\n" +
@@ -1355,45 +1363,7 @@ namespace SodRpg.Mod
             {
                 GUILayout.Label(Loc.T("一覧から遺物を選ぶと、ここに性能と、いま装着している物との違いが表示されます。", "Select a relic to see its stats and how it compares with what you have equipped."), _st.Small);
             }
-            else
-            {
-                var cur = Rules.EquippedRelic(p, hero, sel.Slot);
-                _scrollRight = GUILayout.BeginScrollView(_scrollRight);
-                RelicDetail(sel);
-                if (cur != null && cur.Uid != sel.Uid) Comparison(sel, cur);
-                GUILayout.EndScrollView();
-                GUI.enabled = _s.CanEditLoadout && !_s.Trades.IsReserved(sel.Uid);
-                GUILayout.BeginHorizontal();
-                bool equipped = cur != null && cur.Uid == sel.Uid;
-                if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
-                {
-                    try
-                    {
-                        foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
-                        _s.MarkDirty(true);
-                    }
-                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-                if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
-                {
-                    try
-                    {
-                        foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
-                        _s.MarkDirty(true);
-                    }
-                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
-                if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
-                {
-                    Rules.ToggleLock(p, sel.Uid, _s.Trades);
-                    _s.MarkDirty(false);
-                }
-                GUILayout.EndHorizontal();
-                GUI.enabled = true;
-            }
+            else DrawGearDetail(p, hero, sel);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
         }
@@ -1772,8 +1742,8 @@ namespace SodRpg.Mod
                 ValidateEnhanceConfirmation();
                 int failureChance = Rules.EnhanceFailureChance(sel);
                 if (failureChance > 0)
-                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると+0に戻ります）",
-                        $"Failure chance: {failureChance}% (failure resets enhancement to +0)"), "#ff8080"), _st.Small);
+                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると、半分の確率で1段下がります）",
+                        $"Failure chance: {failureChance}% (a failure has a 50% chance to lower enhancement by one level)"), "#ff8080"), _st.Small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 int maxEnhance = Content.MaxEnhanceFor(sel);
@@ -2076,7 +2046,7 @@ namespace SodRpg.Mod
         {
             public int Rank, Choice = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
-            public string Description, SearchDescription;
+            public string Description, SearchDescription, EffectSummary, MissingRequirements;
             public PairComboDef PairDefinition;
             public ClusterRegionKind? Region;
             public GUIContent[] ChoiceOptions;
@@ -2186,8 +2156,7 @@ namespace SodRpg.Mod
                 string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
-                    Description = t == null ? null : t.IsKeystone ? StarMapPresentation.KeystoneDescription(t)
-                        : StarMapPresentation.EffectDescription(t),
+                    Description = t == null ? null : StarMapPresentation.EffectDescription(t),
                     ChoiceOptions = t != null && t.IsChoice ? new[] { new GUIContent(), new GUIContent() } : null,
                     Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
@@ -2196,6 +2165,8 @@ namespace SodRpg.Mod
                     Region = t?.Cluster?.Region.Kind,
                 };
                 _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
+                _starNodes[i].EffectSummary = t == null ? "" : t.IsChoice ? StarMapPresentation.EffectSummary(t)
+                    : StarMapPresentation.EffectSummary(_starNodes[i].Description);
                 if (t != null && t.IsKeystone) keystones.Add(i);
                 _starMinX = Mathf.Min(_starMinX, node.X); _starMaxX = Mathf.Max(_starMaxX, node.X);
                 _starMinY = Mathf.Min(_starMinY, node.Y); _starMaxY = Mathf.Max(_starMaxY, node.Y);
@@ -2295,7 +2266,6 @@ namespace SodRpg.Mod
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
             var reachable = _starLayout.ReachabilitySnapshot(hs);
-            RefreshStarClusters(hs);
             int slots = hs.KeystoneSlotCount;
             bool freeSlot = hs.KeystoneCount < slots;
             _starKeystoneSlots.text = StarMapPresentation.KeystoneSlotStatus(hs.KeystoneCount, slots)
@@ -2327,45 +2297,33 @@ namespace SodRpg.Mod
                 }
                 n.Available = unlocked && n.Rank < t.MaxRank && !slotsFull && _starFree >= cost;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
-                // 条件の説明は、まだ満たしていないときだけ出す。状態の1文と同じ内容を重ねない。
-                string condition = "";
-                if (t.IsKeystone && !n.Allocated)
-                    condition = StarMapPresentation.KeystoneRequirement(t.HeroKey != null, Content.KeystoneRouteRequirement,
-                        t.HeroKey != null ? Rules.TreeRanks(hs, t.HeroKey) : Rules.RouteRanks(hs, t.Route),
-                        t.HeroKey != null ? HeroSigils.KeystoneMastery : 0, Mastery.Level(hs.Kills), _starLayout.CanReach(hs, t, reachable),
-                        slots, earned);
-                string state = slotsFull
-                    ? Loc.T("枠がありません。次の枠は星のレベルが上がると開きます。", "No free keystone slot. The next slot unlocks at a higher star level.")
-                    : StarMapPresentation.AllocationStatus(t.IsKeystone, n.Rank >= t.MaxRank, unlocked, _starFree >= cost);
+                n.MissingRequirements = StarMapPresentation.MissingRequirements(_starLayout, i, hs, _starFree, reachable[i]);
+                string condition = n.MissingRequirements;
+                string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
+                    : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
                 var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
-                string description = pair == null || t.Mechanism != null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                string description = pair != null && t.Mechanism == null
+                    ? StarMapPresentation.EffectDescription(t, Math.Max(1, n.Rank)) : n.Description;
                 if (t.IsChoice)
                 {
                     description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
                     for (int optionIndex = 0; optionIndex < 2; optionIndex++)
                         n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex);
+                    n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
                 }
-                n.SearchDescription = StarMapPresentation.MechanismLabel(t) + "\n" + description;
-                // 合わせ技の説明（PairCombos.Describe）には「橋と両隣の星が必要」と既に書かれているので、条件欄で繰り返さない。
-                bool requirementInBody = pair != null && t.Mechanism == null;
+                n.SearchDescription = StarMapPresentation.PresentationLabel(t) + "\n" + description;
                 if (pair != null)
                 {
-                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
+                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.ItemName(pair.RouteA)
                         + Loc.T("を装着", " equipped")
-                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB)
+                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
                         + Loc.T("を装着", " equipped");
-                    if (!requirementInBody)
-                    condition += (condition.Length == 0 ? "" : "\n") + (pair.AuthoredDefinition != null
-                        ? Loc.T("橋と指定された両端の星を取得し、両方の記憶を装着すると有効。",
-                            "Requires this bridge, its specified endpoint stars and both memories equipped.")
-                        : Loc.T("合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
-                            "The combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped."));
                 }
                 // 必要ポイントは、本文に既に書かれていれば繰り返さない（刻印は本文の末尾に入っている）。
                 bool costInBody = description.Contains(Loc.T("ポイント", "point"));
                 string readyColor = !unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
-                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.MechanismLabel(t) + "</color>"
+                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
                     + "\n" + description
                     + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
                     + (condition.Length == 0 ? "" : "\n" + condition)
@@ -2379,6 +2337,7 @@ namespace SodRpg.Mod
                     + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
                         "\nRefunds require all remaining stars to stay connected to the start.");
             }
+            RefreshStarClusters();
             _starSearchDirty = true;
         }
 
@@ -2675,14 +2634,19 @@ namespace SodRpg.Mod
             try
             {
                 var viewport = new Rect(0, 0, canvas.width, canvas.height);
-                if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                float minZoom = StarMinZoom;
+                if (_starNeedsFit || e.type == EventType.ScrollWheel)
                 {
-                    // Fit the whole tree, including the outermost stars, inside the canvas.
-                    _starNeedsFit = false;
+                    // Large layouts must fit below the usual zoom floor; scrolling uses the same lower bound.
                     StarMapMath.FitView(viewport.width, viewport.height, _starMinX, _starMaxX, _starMinY, _starMaxY,
-                        StarFitMargin, StarMinZoom, StarMaxZoom, out float fitZoom, out var fitPan);
-                    _starZoom = fitZoom;
-                    _starPan = new Vector2(fitPan.X, fitPan.Y);
+                        StarFitMargin, 0f, StarMaxZoom, out float fitZoom, out var fitPan);
+                    minZoom = Mathf.Min(StarMinZoom, fitZoom);
+                    if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                    {
+                        _starNeedsFit = false;
+                        _starZoom = fitZoom;
+                        _starPan = new Vector2(fitPan.X, fitPan.Y);
+                    }
                 }
                 Vector2 mouse = e.mousePosition;
                 Vector2 windowMouse = mouse + canvas.position;
@@ -2695,7 +2659,7 @@ namespace SodRpg.Mod
                 if (inside) hover = _starView.Hit(mouse);
                 if (inside && e.type == EventType.ScrollWheel)
                 {
-                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), StarMinZoom, StarMaxZoom);
+                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), minZoom, StarMaxZoom);
                     _starPan = mouse - viewport.center - (mouse - viewport.center - _starPan) * (zoom / _starZoom);
                     _starZoom = zoom;
                     e.Use();

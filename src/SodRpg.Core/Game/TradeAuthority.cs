@@ -55,6 +55,8 @@ namespace SodRpg.Core.Game
 
         /// <summary>結果の照会（種別の番号。取引の種別とは別に、同じ符号の枠に置く）。</summary>
         public const int QueryKind = 3;
+        /// <summary>Separate payload space: QueryKind remains 3 in the original grammar.</summary>
+        public const int OverflowTag = 1 << 20;
 
         /// <summary>
         /// 台帳の識別子だけを尋ねる照会の取引id（実際の取引idは上位に世代が付くので、この値にはならない）。
@@ -114,6 +116,12 @@ namespace SodRpg.Core.Game
                     spendDust = unchecked((int)uid);
                     earnDust = unchecked((int)(uid >> 32));
                     break;
+                case TradeKind.SatchelOverflowDust:
+                    spendGold = -(KindTag + OverflowTag + t.Rarity);
+                    ulong overflowUid = PackUid(t.Uid);
+                    spendDust = unchecked((int)overflowUid);
+                    earnDust = unchecked((int)(overflowUid >> 32));
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(t));
             }
@@ -125,6 +133,17 @@ namespace SodRpg.Core.Game
             req = null;
             if (spendGold >= 0 || spendGold <= int.MinValue + KindTag) return false;
             int payload = -spendGold - KindTag;
+            if (payload >= OverflowTag)
+            {
+                int overflowRarity = payload - OverflowTag;
+                if (overflowRarity < 0 || overflowRarity > (int)Rarity.Legendary) return false;
+                req = new TradeRequest
+                {
+                    Token = token, Kind = TradeKind.SatchelOverflowDust, Rarity = overflowRarity,
+                    SalvageUid = ((ulong)(uint)earnDust << 32) | (uint)spendDust,
+                };
+                return true;
+            }
             int kind = payload % 4;
             int rarity = (payload / 4) % 8;
             int enhance = payload / 32;
@@ -287,6 +306,11 @@ namespace SodRpg.Core.Game
                     d.EarnDust = Economy.SalvageDust((Rarity)req.Rarity, req.Enhance);
                     if (d.EarnDust > Economy.MaxDustEarnPerTrade) { d.Reason = "invalid"; return d; }
                     break;
+                case TradeKind.SatchelOverflowDust:
+                    if (req.Rarity < 0 || req.Rarity > (int)Rarity.Legendary || req.Enhance != 0)
+                    { d.Reason = "invalid"; return d; }
+                    d.EarnDust = Economy.SatchelOverflowDust((Rarity)req.Rarity);
+                    break;
                 default:
                     d.Reason = "invalid";
                     return d;
@@ -299,12 +323,13 @@ namespace SodRpg.Core.Game
                 // 同じ取引idの再送だけを冪等に扱う。idが同じでも要求の中身が違えば、過去の成功を流用せずに断る。
                 if (!ledger.Fingerprints.TryGetValue(req.Token, out var recordedFingerprint) || recordedFingerprint != fingerprint)
                 { d.Reason = "conflict"; return d; }
-                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust, LedgerId = ledger.Id };
+                return Replay(recorded, ledger.Id);
             }
             if (ledger.Cancelled.Contains(req.Token)) { d.Reason = "cancelled"; return d; }
             // 上限で忘れた範囲の取引idは、すでに実行・取り消し済みかもしれない。新しく実行せず、確かめられないと答える（クライアントは取引を保留する）。
-            if (BelowFloor(ledger, req.Token)) { d.Reason = TradeWire.LostReason; return d; }
-            if (req.Kind == TradeKind.SalvageForDust && ledger.SalvagedUids.Contains(req.SalvageUid))
+            if ((req.Kind == TradeKind.SatchelOverflowDust && ledger.FloorOverflow) || BelowFloor(ledger, req.Token))
+            { d.Reason = TradeWire.LostReason; return d; }
+            if ((req.Kind == TradeKind.SalvageForDust || req.Kind == TradeKind.SatchelOverflowDust) && ledger.SalvagedUids.Contains(req.SalvageUid))
             { d.Reason = "dup"; return d; }
             if (d.SpendGold > gold) { d.Reason = "gold"; return d; }
             if (d.SpendDust > dust) { d.Reason = "dust"; return d; }
@@ -319,7 +344,7 @@ namespace SodRpg.Core.Game
                 ledger.Fingerprints.Remove(old);
                 RaiseFloor(ledger, old);
             }
-            if (req.Kind == TradeKind.SalvageForDust)
+            if (req.Kind == TradeKind.SalvageForDust || req.Kind == TradeKind.SatchelOverflowDust)
             {
                 ledger.SalvagedUids.Add(req.SalvageUid);
                 ledger.SalvageOrder.Enqueue(req.SalvageUid);
@@ -341,7 +366,7 @@ namespace SodRpg.Core.Game
             long token = req.Token;
             var ledger = Ledger(playerKey, runId);
             if (ledger.Executed.TryGetValue(token, out var recorded))
-                return new TradeDecision { Ok = true, Replayed = true, SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust, EarnDust = recorded.EarnDust, LedgerId = ledger.Id };
+                return Replay(recorded, ledger.Id);
             if (ledger.Cancelled.Contains(token))
                 return new TradeDecision { Reason = "unknown", LedgerId = ledger.Id };
             if (req.LedgerId != ledger.Id || ledger.FloorOverflow || BelowFloor(ledger, token))
@@ -381,7 +406,49 @@ namespace SodRpg.Core.Game
                 case TradeKind.MerchantGold: return "m:" + req.Heat;
                 case TradeKind.DustToShards: return "d:" + req.Batches;
                 default: return "s:" + req.SalvageUid + ":" + req.Rarity + ":" + req.Enhance;
+                case TradeKind.SatchelOverflowDust: return "o:" + req.SalvageUid + ":" + req.Rarity;
             }
+        }
+
+        private static TradeDecision Replay(TradeDecision recorded, long ledgerId) => new TradeDecision
+        {
+            Ok = recorded.Ok, Replayed = true, Reason = recorded.Reason,
+            SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust,
+            EarnDust = recorded.EarnDust, LedgerId = ledgerId,
+        };
+
+        /// <summary>Terminal overflow rejection. executionFailed is only for a newly accepted request whose native grant failed without changing balance.</summary>
+        public TradeDecision FailSatchelOverflow(string playerKey, string runId, TradeRequest req, bool executionFailed = false)
+        {
+            if (req == null || req.Token <= 0 || req.Query || req.Kind != TradeKind.SatchelOverflowDust)
+                return new TradeDecision { Reason = "invalid" };
+            var ledger = Ledger(playerKey, runId);
+            string fingerprint = Fingerprint(req);
+            if (ledger.Executed.TryGetValue(req.Token, out var recorded))
+            {
+                if (!ledger.Fingerprints.TryGetValue(req.Token, out string previous) || previous != fingerprint)
+                    return new TradeDecision { Reason = "conflict", LedgerId = ledger.Id };
+                if (!executionFailed || !recorded.Ok) return Replay(recorded, ledger.Id);
+                var failed = new TradeDecision { Reason = "native", LedgerId = ledger.Id };
+                ledger.Executed[req.Token] = failed;
+                return failed;
+            }
+            if (ledger.Cancelled.Contains(req.Token))
+                return new TradeDecision { Reason = "cancelled", LedgerId = ledger.Id };
+            if (ledger.FloorOverflow || BelowFloor(ledger, req.Token))
+                return new TradeDecision { Reason = TradeWire.LostReason, LedgerId = ledger.Id };
+            var failure = new TradeDecision { Reason = "native", LedgerId = ledger.Id };
+            ledger.Executed.Add(req.Token, failure);
+            ledger.Fingerprints.Add(req.Token, fingerprint);
+            ledger.Order.Enqueue(req.Token);
+            while (ledger.Order.Count > MaxTokensPerPlayer)
+            {
+                long old = ledger.Order.Dequeue();
+                ledger.Executed.Remove(old);
+                ledger.Fingerprints.Remove(old);
+                RaiseFloor(ledger, old);
+            }
+            return failure;
         }
 
         private PlayerLedger Ledger(string playerKey, string runId)

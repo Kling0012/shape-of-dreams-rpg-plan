@@ -535,7 +535,7 @@ namespace SodRpg.Mod
             if (packet.MainBasic)
             {
                 PublishMemoryActivation(packet.Identity.Event(MemoryEventKind.OwnedBasicAttackHit, packet.Serial, victim), hero, info.victim, info.damage.amount);
-                OnIdentityStrikeBasicHit(hero, info.victim, packet.Identity.ActivationId);
+                OnIdentityStrikeBasicHit(hero, info.victim, packet.Identity.ActivationId, info.damage.HasAttr(DamageAttribute.IsCrit), victim);
             }
             if (packet.Identity.SourceMemory.Length != 0)
             {

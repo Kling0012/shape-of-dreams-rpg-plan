@@ -84,7 +84,7 @@ internal sealed class InfinitySimulation
                     if (interval != 0)
                     {
                         FinishBoss(profile);
-                        Observe(Rules.Delve(profile), row);
+                        Observe(Rules.Delve(profile), row, profile);
                         var infinity = run.Infinity!;
                         infinity.CompleteGraphTransition(infinity.GraphEpoch + 1);
                         run.ActiveWaypoint = scenario.Waypoint;
@@ -94,15 +94,15 @@ internal sealed class InfinitySimulation
                         normalZone++;
                         if (normalZone == 4)
                         {
-                            Observe(Rules.EndRun(profile, victory: true), row);
+                            Observe(Rules.EndRun(profile, victory: true), row, profile);
                             Begin(profile, scenario, interval, ++runNumber);
                             normalZone = 0;
                             normalNode = 0;
                         }
                         else
                         {
-                            Observe(Rules.ReachSecurePoint(profile), row);
-                            Observe(Rules.Secure(profile), row);
+                            Observe(Rules.ReachSecurePoint(profile), row, profile);
+                            Observe(Rules.Secure(profile), row, profile);
                         }
                     }
                     continue;
@@ -128,7 +128,7 @@ internal sealed class InfinitySimulation
                 row.Rooms++;
                 if (run.Infinity != null)
                     run.Infinity.TryCountCombatClear(run.Infinity.GraphEpoch, combatSinceBoss - 1, true, false, false);
-                Observe(Rules.OnRoomsCleared(profile, ++normalNode), row);
+                Observe(Rules.OnRoomsCleared(profile, ++normalNode), row, profile);
                 row.PeakHeat = Math.Max(row.PeakHeat, run.PeakHeat);
                 row.Pressure = Math.Max(row.Pressure, run.Infinity?.PressureStage ?? 0);
             }
@@ -175,7 +175,7 @@ internal sealed class InfinitySimulation
         double legendaryBefore = budget.Legendary;
         double guaranteeBefore = budget.GuaranteedRelics, opportunityBefore = budget.GuaranteeOpportunities;
         Observe(Rules.OnKill(profile, tier, options.ItemLevel, nightmare, Hero,
-            bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth), row);
+            bossTypeName: tier == MonsterTier.Boss && bossSetEligible ? BossTypeName : null, bossDropDepth: profile.Run.DreamDepth), row, profile);
         row.HighRareSpent += Math.Max(0, rareBefore - budget.HighRare);
         row.LegendarySpent += Math.Max(0, legendaryBefore - budget.Legendary);
         row.OutputReserved += Math.Max(0, relicsBefore - budget.Relics);
@@ -193,11 +193,13 @@ internal sealed class InfinitySimulation
         Rules.PickWaypoint(profile, Waypoint.None);
     }
 
-    private static void Observe(List<GameEvent> events, InfinityRow row)
+    private static void Observe(List<GameEvent> events, InfinityRow? row, Profile profile)
     {
         foreach (var e in events)
         {
-            if (e.Kind != EventKind.Drop || !e.Rarity.HasValue) continue;
+            if (e.SatchelOverflow != null)
+                Rules.CompleteSatchelOverflowFallback(profile, e.SatchelOverflow, profile.Run?.RunId, e.SatchelOverflowShards);
+            if (row == null || e.Kind != EventKind.Drop || !e.Rarity.HasValue) continue;
             row.Relics++;
             if (e.Rarity == Rarity.Epic) row.Epic++;
             if (e.Rarity == Rarity.Legendary) row.Legendary++;
@@ -266,13 +268,13 @@ internal sealed class InfinitySimulation
             infinity.RoomEpoch++;
             InfinityRewards.EnterRoom(profile, infinity.GraphEpoch, infinity.RoomEpoch);
             InfinityRewards.AdvanceCombat(profile, 20);
-            Rules.OnKill(profile, MonsterTier.Normal, options.ItemLevel, heroKey: Hero);
+            Observe(Rules.OnKill(profile, MonsterTier.Normal, options.ItemLevel, heroKey: Hero), null, profile);
             infinity.TryCountCombatClear(infinity.GraphEpoch, room, true, false, false);
-            Rules.OnRoomsCleared(profile, room + 1);
+            Observe(Rules.OnRoomsCleared(profile, room + 1), null, profile);
         }
         profile.Run.Infinity.TryEnterBoss();
         InfinityRewards.AdvanceCombat(profile, 20);
-        Rules.OnKill(profile, MonsterTier.Boss, options.ItemLevel, heroKey: Hero, bossTypeName: BossTypeName);
+        Observe(Rules.OnKill(profile, MonsterTier.Boss, options.ItemLevel, heroKey: Hero, bossTypeName: BossTypeName), null, profile);
         FinishBoss(profile);
         int pressure = profile.Run.Infinity.PressureStage;
         Rules.SecuredReturn(profile);
