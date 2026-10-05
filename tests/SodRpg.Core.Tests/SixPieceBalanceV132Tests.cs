@@ -18,13 +18,15 @@ namespace SodRpg.Core.Tests
     public class SixPieceBalanceV132Tests
     {
         [Fact]
-        public void All_48_sets_are_measured_against_the_shared_baseline()
+        public void All_48_generic_sets_are_measured_against_the_shared_baseline()
         {
             var results = SetBalance.MeasureAll();
+            // #48: boss sets are excluded from the comparison population by design (spec §2.3).
+            Assert.Equal(Content.Sets.Count(s => s.BossTypeName == null), results.Count);
             Assert.Equal(48, results.Count);
-            Assert.Equal(Content.Sets.Count, results.Count);
-            foreach (var set in Content.Sets)
+            foreach (var set in Content.Sets.Where(s => s.BossTypeName == null))
                 Assert.Contains(results, r => r.Id == set.Id);
+            Assert.All(results, r => Assert.Null(Content.GetSet(r.Id)?.BossTypeName));
             // 基準は全組で同一（最良代替品6枠の代理値）。
             Assert.All(results, r => Assert.Equal(results[0].Baseline, r.Baseline));
         }

@@ -72,7 +72,10 @@ namespace SodRpg.Core.Game
         }
 
         // Every list item includes its separator, including the final item, giving a conservative bound.
-        public const int MaxEncodedChars = 195820;
+        public const int MaxBossEncodedChars = 6 + BossProfiles.MaxEntries * (2 * (MaxTokenLength + 1)
+            + 8 * (MaxTokenLength + IntegerChars + 2) + 1)
+            + BossProfiles.MaxEntries * (2 * (MaxTokenLength + 1) + IntegerChars + 2);
+        public const int MaxEncodedChars = 195820 + MaxBossEncodedChars;
 
         /// <summary>Build identifiers and separators are ASCII; UTF-8 bytes equal characters.</summary>
         public static int MaxEncodedBytes => MaxEncodedChars;
@@ -80,7 +83,7 @@ namespace SodRpg.Core.Game
         public static void ValidateAuthoredProducer(IReadOnlyList<TalentDef> tree)
         {
             var capacity = Analyze(tree);
-            int fixedFields = checked(64 + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (IntegerChars * 2 + 2)
+            int fixedFields = checked(64 + MaxBossEncodedChars + (MaxStatEntries + MaxPowerEntries + MaxConditionalPowerEntries) * (IntegerChars * 2 + 2)
                 + Content.SlotCount * (IntegerChars * 2 + MaxLinkRequirements * (MaxTokenLength + 1) + 4));
             if (capacity.GimmickEntries > EffectiveChannelSecurityLimit || capacity.MaximumEncodedTalentChars + fixedFields > MaxEncodedChars)
                 throw new InvalidOperationException("The authored registry can exceed the fixed maximum-spendable-point (MaxSpendablePoints) channel or wire envelope: "

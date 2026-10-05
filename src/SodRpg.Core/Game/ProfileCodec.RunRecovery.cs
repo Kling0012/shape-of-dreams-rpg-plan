@@ -72,6 +72,9 @@ namespace SodRpg.Core.Game
             // #71: 戦ったときの深度と道標。記録のない旧保存データは読み込み時に null へ戻る。
             if (kill.Heat.HasValue) j.Add("heat", (long)kill.Heat.Value);
             if (kill.Waypoint.HasValue) j.Add("waypoint", (long)kill.Waypoint.Value);
+            if (!string.IsNullOrEmpty(kill.BossTypeName))
+                j.Add("bossTypeName", kill.BossTypeName).Add("bossDropNightmare", kill.BossDropNightmare)
+                    .Add("bossDropDepth", (long)kill.BossDropDepth);
             return j;
         }
 
@@ -86,7 +89,9 @@ namespace SodRpg.Core.Game
                 Str(j, "runId"), Clamp(Long(j, "zone"), -1, int.MaxValue), Clamp(Long(j, "room"), 0, int.MaxValue),
                 (MonsterTier)Clamp(Long(j, "tier"), 0, (int)MonsterTier.Boss), Clamp(Long(j, "level"), 1, int.MaxValue),
                 (NightmareAffix)Long(j, "nightmare"), Str(j, "variant"), Str(j, "hero"), Str(j, "eventId"),
-                (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))), heat, waypoint);
+                (uint)System.Math.Max(0, System.Math.Min(uint.MaxValue, Long(j, "monster"))), heat, waypoint,
+                Str(j, "bossTypeName"), NullableBool(j, "bossDropNightmare") ?? false,
+                Clamp(Long(j, "bossDropDepth"), 0, 5));
         }
 
         private static JsonObject WriteKillClassification(KillClassificationCheckpoint state)
@@ -116,15 +121,24 @@ namespace SodRpg.Core.Game
                         .Add("after", r.After).Add("through", r.Through)).ToList())).ToList());
         }
 
-        private static JsonObject WriteKillFact(AuthoritativeRunKill fact) => new JsonObject()
-            .Add("runId", fact.RunId).Add("eventId", fact.EventId).Add("monster", (long)fact.MonsterNetId)
-            .Add("zone", (long)fact.ZoneIndex).Add("nightmare", (long)fact.Nightmare)
-            .Add("variant", fact.VariantId).Add("sequence", fact.Sequence).Add("stream", fact.StreamId);
+        private static JsonObject WriteKillFact(AuthoritativeRunKill fact)
+        {
+            var j = new JsonObject()
+                .Add("runId", fact.RunId).Add("eventId", fact.EventId).Add("monster", (long)fact.MonsterNetId)
+                .Add("zone", (long)fact.ZoneIndex).Add("nightmare", (long)fact.Nightmare)
+                .Add("variant", fact.VariantId).Add("sequence", fact.Sequence).Add("stream", fact.StreamId);
+            if (!string.IsNullOrEmpty(fact.BossTypeName))
+                j.Add("bossTypeName", fact.BossTypeName).Add("bossDropNightmare", fact.BossDropNightmare)
+                    .Add("bossDropDepth", (long)fact.BossDropDepth);
+            return j;
+        }
 
         private static AuthoritativeRunKill ReadKillFact(JsonObject fact) => new AuthoritativeRunKill(
             Str(fact, "runId"), Str(fact, "eventId"), (uint)Long(fact, "monster"),
             Clamp(Long(fact, "zone"), -1, int.MaxValue), (NightmareAffix)Long(fact, "nightmare"),
-            Str(fact, "variant"), Long(fact, "sequence"), Str(fact, "stream"));
+            Str(fact, "variant"), Long(fact, "sequence"), Str(fact, "stream"),
+            Str(fact, "bossTypeName"), NullableBool(fact, "bossDropNightmare") ?? false,
+            Clamp(Long(fact, "bossDropDepth"), 0, 5));
 
         private static KillClassificationCheckpoint ReadKillClassification(JsonObject parent)
         {

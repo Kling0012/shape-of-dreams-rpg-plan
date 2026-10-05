@@ -373,11 +373,12 @@ namespace SodRpg.Core.Game
             RetainGimmickPrimedForBuild(replacement);
             Build = replacement;
             RetainEquippedNewPowerState();
-            // 連携の状態は装備に紐付くので、Build が変わったらやり直す（判定は次の走査で）。
+            // Recheck passive conditions on the next scan; retain only unchanged surge sources.
             LinkAttunePct = 0;
             LinkGuardHealthPct = 0;
             LinkGuardArmor = 0;
-            _linkSurges.Clear();
+            // SetBuild has no clock. The next timed scan still expires retained windows normally.
+            RetainLinkSurges(Build.Links, float.NegativeInfinity);
             _expiredLinkSurges.Clear();
         }
 

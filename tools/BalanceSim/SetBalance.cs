@@ -77,7 +77,7 @@ public static class SetBalance
 
     /// <summary>48組すべてを Content.Sets の並びのまま測る。</summary>
     public static IReadOnlyList<SetBalanceResult> MeasureAll()
-        => MeasureSets(Content.Sets, null);
+        => MeasureSets(Content.Sets.Where(s => s.BossTypeName == null).ToArray(), null);
 
     /// <summary>
     /// 1組だけ測る。sixOverride を渡すと Content を書き換えずにその値での結果を得る
@@ -87,6 +87,7 @@ public static class SetBalance
     {
         var set = Content.GetSet(setId);
         if (set == null) throw new ArgumentException("未知のセットID: " + setId);
+        if (set.BossTypeName != null) throw new ArgumentException("Boss profiles are outside the original 48-set comparison.", nameof(setId));
         Dictionary<string, IReadOnlyList<PowerLine>>? overrides = null;
         if (sixOverride != null) overrides = new Dictionary<string, IReadOnlyList<PowerLine>> { [set.Id] = sixOverride };
         return MeasureSets(new[] { set }, overrides)[0];
@@ -144,6 +145,7 @@ public static class SetBalance
         var results = new List<SetBalanceResult>(sets.Count);
         foreach (var set in sets)
         {
+            if (set.BossTypeName != null) continue;
             IReadOnlyList<PowerLine>? overrideLines = null;
             if (sixOverrides != null && set.Id != null) sixOverrides.TryGetValue(set.Id, out overrideLines);
             results.Add(MeasureSet(set, context, overrideLines));

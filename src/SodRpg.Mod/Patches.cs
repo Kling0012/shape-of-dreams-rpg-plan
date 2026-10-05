@@ -49,7 +49,7 @@ namespace SodRpg.Mod
         private static MethodInfo _moveNext;
         private static FieldInfo _caster;
 
-        // 本体の更新で型やメソッドが変わっていたら、このパッチだけを飛ばす（ほかのパッチを止めない）。
+        // Startup preflight treats a missing contract as a whole-MOD failure; no partial patch fallback.
         private static bool Prepare()
         {
             try
@@ -63,7 +63,7 @@ namespace SodRpg.Mod
                 _moveNext = null;
                 _caster = null;
             }
-            if (_moveNext == null || _caster == null) Log.Info("WinterDive teleport hook skipped (target not found)");
+            if (_moveNext == null || _caster == null) Log.Error("WinterDive native contract unavailable (target not found)");
             return _moveNext != null && _caster != null;
         }
 
@@ -89,7 +89,8 @@ namespace SodRpg.Mod
         {
             HostAuthority.NativeInstance?.ApplyFinalGimmickDamageV129(__instance, actor, ref data);
             if (!data.IsAmountModifiedBy(typeof(SodRpg.Core.Game.GimmickRuntime))) return;
-            data = data.SetElemental(null).DoAttackEffect(AttackEffectType.Others, 0f);
+            if (!HostAuthority.IsBossGeneratedDamage(data)) data = data.SetElemental(null);
+            data = data.DoAttackEffect(AttackEffectType.Others, 0f);
         }
     }
 }

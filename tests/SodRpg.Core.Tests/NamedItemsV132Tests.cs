@@ -70,6 +70,7 @@ namespace SodRpg.Core.Tests
                 foreach (var u in Content.Uniques)
                 {
                     if (slot != null && Content.GetBase(u.BaseId).Slot != slot.Value) continue;
+                    if (BossSets.IsExclusive(u)) continue; // #48 stage A: boss pieces left the generic pool in both paths
                     int weight = focus != null && Content.GetBase(u.BaseId).Line == focus.Value ? 2 : 1;
                     if (u.SetId != null) weight *= 4;
                     if (OldIsMissingSetPiece(u, ownedRelics, unsecuredRelics)) weight *= 60;

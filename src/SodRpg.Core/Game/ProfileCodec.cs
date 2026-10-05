@@ -233,6 +233,7 @@ namespace SodRpg.Core.Game
                 .Add("awaken", (long)r.AwakenPoints).Add("awakened", r.Awakened).Add("awakenLevel", (long)r.AwakenLevel)
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
                 .Add("milestonePowerApplied", r.MilestonePowerApplied)
+                .Add("developerGranted", r.DeveloperGranted)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -612,6 +613,7 @@ namespace SodRpg.Core.Game
                 Retunes = Clamp(Long(j, "retunes"), 0, Content.MaxRetunes),
                 AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
+                DeveloperGranted = Bool(j, "developerGranted", false),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)
                     ? Clamp(Long(j, "awakenLevel"), 0, Content.MaxAwakenLevel)
@@ -646,7 +648,8 @@ namespace SodRpg.Core.Game
                     }
                 }
             }
-            if (j.TryGet("powers", out object po) && po is List<object> pws)
+            // Boss effects now come only from the saved UniqueId, never the obsolete generic power payload.
+            if (r.BossMove == null && j.TryGet("powers", out object po) && po is List<object> pws)
             {
                 foreach (var x in pws)
                 {

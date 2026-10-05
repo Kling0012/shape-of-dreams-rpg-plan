@@ -50,12 +50,19 @@ namespace SodRpg.Mod
     internal class EntityStatus
     {
         public float currentShield;
+        public float currentHealth { get; set; }
         public int fireStack, lightStack, darkStack;
         public bool hasCold;
         public bool HasElemental(ElementalType type) => false;
         public bool TryGetStatusEffect<T>(out T effect) where T : class { effect = null; return false; }
     }
-    internal sealed class Monster : Entity { public bool disableLoot; }
+    internal class Monster : Entity
+    {
+        public enum MonsterType { Lesser, Normal, MiniBoss, Boss }
+        public MonsterType type;
+        public bool disableLoot;
+    }
+    internal sealed class BossMonster : Monster { }
     internal sealed class Hero : Entity
     {
         public readonly HeroSkill Skill = new HeroSkill();
@@ -90,6 +97,7 @@ namespace SodRpg.Mod
     }
     internal sealed class St_D_CircleOfLife : SkillTrigger { }
     internal sealed class St_D_TheKillingFlow : SkillTrigger { }
+    internal sealed class St_U_Hysteria : SkillTrigger { }
     internal sealed class TestQ : SkillTrigger { }
     internal sealed class TestW : SkillTrigger { }
     internal sealed class AttackTrigger : AbilityTrigger
@@ -131,7 +139,7 @@ namespace SodRpg.Mod
         public void EarnDreamDust(int amount) => dreamDust += amount;
     }
     internal static class NetworkedManagerBase<T> { public static T softInstance; }
-    internal sealed class GameManager { public string runId; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
+    internal sealed class GameManager { public string runId; public Zone difficulty; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
     internal sealed class ActorManager { public Actor serverActor; }
     internal sealed class ZoneManager
     {
@@ -198,6 +206,12 @@ namespace SodRpg.Mod
         internal static bool AllNormalMemoriesReady(Entity entity) => true;
         internal void OnNativeMemoryUsed(SkillTrigger skill, bool ready) => throw new NotSupportedException();
         internal void OnNativeElementApplied(EventInfoApplyElemental info) => throw new NotSupportedException();
+        private static bool BossNativeEquippedSkill(Hero hero, SkillTrigger skill) => hero.Skill.Slots.ContainsValue(skill);
+        private long ModShieldEquipmentEpoch(HeroRuntime rt) => throw new NotSupportedException();
+        private bool BossEnsure(HeroRuntime rt) => throw new NotSupportedException();
+        internal void ObserveBossGeneratedDispatch(NativeAttributedDamagePacket.Packet packet, DamageData damage) { }
+        private void ObserveBossGeneratedDamage(EventInfoDamage info) { }
+        private void PublishBossNativeDamage(EventInfoDamage info) { }
         private void RegisterExactNativeMemoryAdapters() { }
         private bool BindExactNativePayload(EventInfoAbilityInstance info) => false;
         private static bool RequiresExactNativeProjectileScope(Actor actor) => false;
@@ -238,6 +252,7 @@ namespace SodRpg.Mod
         internal sealed class Prunable
         {
             public void PruneAttribution(MemoryActivationAttribution attribution) => throw new NotSupportedException();
+            public void ForgetActivation(object activation) { }
             public void PruneAttributedActivations(MemoryActivationAttribution attribution) => throw new NotSupportedException();
         }
         internal sealed class AuthoredState { public readonly Dictionary<string, Channel> Channels = new Dictionary<string, Channel>(); }
@@ -285,6 +300,7 @@ namespace SodRpg.Mod
         private void PublishRunChoiceHistory() { }
         private void ClearVariants() { }
         private void ClearMonsterCues() { }
+        private void ClearBossDisplay() { }
         private bool MechanismHandshakeAccepted => true;
     }
 }

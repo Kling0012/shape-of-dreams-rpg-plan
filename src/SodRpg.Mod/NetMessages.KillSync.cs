@@ -8,6 +8,7 @@ namespace SodRpg.Mod
     public sealed class DreamforgeMonsterKillMsg
     {
         public int protocol;
+        public string content;
         public ulong authorityGeneration;
         public string runId;
         public string eventId;
@@ -15,6 +16,9 @@ namespace SodRpg.Mod
         public int zoneIndex;
         public int affixes;
         public string variantId;
+        public string bossTypeName;
+        public bool bossDropNightmare;
+        public int bossDropDepth;
         public long sequence;
         public string streamId;
         public bool recoveredUnknown;
@@ -22,13 +26,17 @@ namespace SodRpg.Mod
 
         public static DreamforgeMonsterKillMsg FromFact(AuthoritativeRunKill fact, ulong authority) => new DreamforgeMonsterKillMsg
         {
-            protocol = Protocol.Version, authorityGeneration = authority, runId = fact.RunId,
+            protocol = Protocol.Version, content = ContentFingerprint.Value,
+            authorityGeneration = authority, runId = fact.RunId,
             eventId = fact.EventId, netId = fact.MonsterNetId, zoneIndex = fact.ZoneIndex,
             affixes = (int)fact.Nightmare, variantId = fact.VariantId, sequence = fact.Sequence, streamId = fact.StreamId,
+            bossTypeName = fact.BossTypeName, bossDropNightmare = fact.BossDropNightmare,
+            bossDropDepth = fact.BossDropDepth,
         };
 
         public AuthoritativeRunKill ToFact() => new AuthoritativeRunKill(runId, eventId, netId,
-            zoneIndex, (NightmareAffix)affixes, variantId, sequence, streamId);
+            zoneIndex, (NightmareAffix)affixes, variantId, sequence, streamId,
+            bossTypeName, bossDropNightmare, bossDropDepth);
     }
 
     [Serializable]

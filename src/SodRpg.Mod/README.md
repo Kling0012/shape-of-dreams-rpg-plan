@@ -1,8 +1,8 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-現在の配布版は **v1.30.3（プレリリース）**。星のポイント上限300・通信はProtocol 12（協力は全員同じ版へ）。更新内容と保存形式3への切替は [更新履歴](../../CHANGELOG.md) を確認してください。旧プロフィールのアーカイブと再開始を伴うため、更新前に保存フォルダをバックアップし、ゲームを終了して差し替えてください。
+この#97統合ブランチは **Protocol 19・保存形式5（プロフィールリセットなし）**。最新mainのv2.0.5と#48・#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
-開発中の v1.31 では再接続・途中参加・再読み込みの修正により **Protocol 13** を使います。協力する全員を同じ版へ更新してください。保存形式3は変わりません。 / Development builds of v1.31 use **protocol 13** for reconnect, late-join and reload fixes. Update every co-op participant together; profile format 3 is unchanged. [修正・検証記録](../../docs/specs/v1.31-mpfix-sol2.md)
+全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
 計画書 Ver1.0 を目安に、最初に遊べる形へまとめたMOD。計画書の全要素ではなく、「持ち帰る装備」「帰還（確保）の決断」「自分の戦い方」「協力」の4本を、本作の既存ループ（ゾーン→ボス）の上に載せた。
 
@@ -51,7 +51,8 @@
 - 再開時は、その後の遠征で得た経験・確保済み報酬と保留取引も保存地点に合わせ、本体の通貨と取引台帳を一緒に戻す。ロビーの装備変更は残し、鍛冶・工房などの変更も保存地点の遺物・素材で成立する場合は残す。巻き戻りで必要な遺物・素材がなくなる場合は、ロビーの財産変更をまとめて戻し、画面に理由を表示する。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 17と中断対応の相互確認を使う。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 19と中断対応の相互確認を使う。
+- #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
@@ -112,6 +113,9 @@
 | `DreamforgeMod.cs` | ModBehaviour の入口。キー入力、ライブリロード時の後片付け、確認用コマンド |
 | `ClientSession.cs` | 各PCの処理。プロフィールの読み書き、撃破・ゾーン移動・勝敗をルールへ流す、Build をホストへ送る |
 | `HostAuthority.cs` | ホストの処理。Build を StatBonus として付け、固有効果（PowerRuntime）の結果をゲームへ作用させる |
+| `HostAuthority.BossRuntime.cs` / `HostAuthority.BossMechanisms.cs` / `HostAuthority.BossDemon.cs` | 装備profileのホストdispatch、8共通executor、荒ぶる樹界の予約／回収／列／左右爪循環。記憶・エッセンス変更でも独自状態を破棄 |
+| `HostAuthority.BossNativeAdapters.cs` | native主撃・記憶・移動完了・damage・ヒステリーの親／instance寿命と固有速度補正 |
+| `HostAuthority.BossVisuals.cs` / `ClientSession.BossVisuals.cs` | owner/run/room/equipment epoch付き生存snapshotとMODの幾何表示（1秒同期、pause対応） |
 | `DreamforgeUi.cs` / `UiStyles.cs` | IMGUI のメニュー・HUD・確保地点パネル・通知。日本語はOSのフォントを動的に読み込む |
 | `Patches.cs` | メニュー表示中のキャラ操作の停止 |
 | `NetMessages.cs` | ゲームの CustomRpc で送る型 |

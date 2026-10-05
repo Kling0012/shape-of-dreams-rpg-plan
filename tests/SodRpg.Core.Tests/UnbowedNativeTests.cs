@@ -11,10 +11,30 @@ namespace HarmonyLib
     internal sealed class HarmonyPatch : Attribute
     {
         public HarmonyPatch() { }
+        public HarmonyPatch(Type type) { }
         public HarmonyPatch(Type type, string method) { }
+        public HarmonyPatch(Type type, string method, Type[] argumentTypes) { }
     }
+    internal enum Priority { First = 400, Last = 800 }
+    internal sealed class HarmonyPriority : Attribute { public HarmonyPriority(Priority priority) { } }
 }
-namespace Mirror { internal static class NetworkServer { public static bool active = true; } }
+namespace Mirror
+{
+    internal static class NetworkServer
+    {
+        private static bool _active = true;
+        // BossEnsure reads this once per entry, so tests use it as a recursion depth
+        // guard for the boss cleanup cycle (see BossSoulPrisonCleanupTests, #99).
+        // Armed only by the arming thread; other threads read the plain backing value.
+        internal static Action<int> ActiveRead;
+        internal static bool active
+        {
+            get { ActiveRead?.Invoke(Environment.CurrentManagedThreadId); return _active; }
+            set { _active = value; }
+        }
+    }
+    internal static class NetworkTime { public static double time; }
+}
 namespace UnityEngine { internal static class Time { public static float time, unscaledTime; } }
 namespace SodRpg.Mod
 {
@@ -27,12 +47,25 @@ namespace SodRpg.Mod
         public EntityStatus Status = new EntityStatus();
         public EntityRelation GetRelation(Entity other) => Relation;
         public Se_GenericEffectContainer CreateBasicEffect(Entity victim, BasicEffect effect, float duration, string id)
-            => new Se_GenericEffectContainer { victim = victim, duration = duration, id = id, effect = effect };
+        {
+            var container = new Se_GenericEffectContainer { victim = victim, duration = duration, id = id, effect = effect };
+            ((StatusEffect)container).victim = victim;
+            effect.victim = victim;
+            effect.parent = container;
+            effect.isAlive = true;
+            return container;
+        }
     }
     internal sealed partial class EntityStatus { public bool hasCrowdControlImmunity; }
-    internal class BasicEffect { public Entity victim; public StatusEffect parent; public bool isAlive = true; }
+    internal class BasicEffect
+    {
+        public Entity victim { get; set; }
+        public StatusEffect parent { get; set; }
+        private bool enabled = true;
+        public bool isAlive { get => enabled && victim != null && parent != null && parent.isActive; set => enabled = value; }
+    }
     internal sealed class StunEffect : BasicEffect { }
-    internal sealed class SlowEffect : BasicEffect { }
+    internal sealed class SlowEffect : BasicEffect { public float strength; public bool decay; }
     internal sealed class UnstoppableEffect : BasicEffect { }
     internal sealed partial class CastInfo { public Entity caster; }
     internal partial class StatusEffect : Actor { public CastInfo info = new CastInfo(); }

@@ -542,7 +542,7 @@ namespace SodRpg.Core.Tests
             native.PureDamage(2000, 1).Dispatch(enemy);
             Assert.True(enemy.currentHealth <= 0);
             Assert.True(host.TryIssue62Activation(native, out var identity));
-            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = native, Victim = enemy,
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet { Actor = native, Victim = enemy,
                 Identity = identity, Admitted = admitted, Serial = host.Packet(), DamageAmount = 2000 };
             var kill = new EventInfoKill { actor = native, victim = enemy };
             enemy.RaiseDeath(kill);

@@ -149,7 +149,8 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>撃破報酬。heat/waypoint は戦ったときの値（保留していた撃破の精算用、#71）。省略時は現在の状態。</summary>
-        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null)
+        public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null,
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -168,6 +169,11 @@ namespace SodRpg.Core.Game
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
             Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening);
+            if (tier == MonsterTier.Boss)
+            {
+                var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
+                if (bossPiece != null) reward.Relics.Add(bossPiece);
+            }
             if (!string.IsNullOrEmpty(heroKey))
             {
                 var hs = p.Hero(heroKey);
@@ -1371,7 +1377,7 @@ namespace SodRpg.Core.Game
             if (r.Enhance >= Content.EnhanceMilestoneSecond && r.EnhanceMilestones < 2)
             {
                 r.EnhanceMilestones = 2;
-                if (r.Powers.Count == 0)
+                if (r.AuthoredEffectCount == 0)
                 {
                     var pool = Content.PowerPool(r.Slot).Where(x => Content.PowerAllowedForRarity(x.Power, r.Rarity)).ToList();
                     var pr = pool[rng.Range(0, pool.Count - 1)];
@@ -1398,8 +1404,18 @@ namespace SodRpg.Core.Game
             }
             if (r.Enhance >= Content.EnhanceMilestoneFifth && !r.MilestonePowerApplied && r.Rarity == Rarity.Legendary)
             {
-                var boosted = BoostMilestonePower(r);
-                if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
+                if (r.BossMove != null)
+                {
+                    r.MilestonePowerApplied = true;
+                    r.EnhanceMilestones = 5;
+                    notes.Add(Loc.T("固有技のdamage/heal/shield係数に1.2倍の節目を適用しました（時間・距離・CDは固定）。",
+                        "Applied the authored move's 1.2x damage/heal/shield milestone (time, range and cooldown stay fixed)."));
+                }
+                else
+                {
+                    var boosted = BoostMilestonePower(r);
+                    if (boosted != null) notes.Add(Loc.T($"固有効果「{Content.PowerName(boosted.Power)}」の値が1.2倍になりました。", $"\"{Content.PowerName(boosted.Power)}\" grew 1.2x stronger."));
+                }
             }
             return notes.Count == 0 ? null : string.Join(Loc.T("", " "), notes);
         }

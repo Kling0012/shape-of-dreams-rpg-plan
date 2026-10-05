@@ -182,7 +182,8 @@ namespace SodRpg.Mod
         {
             if (fact.RunId != _killRunId || !_killHistoryEvents.Add(fact.EventId)) return;
             if (fact.Sequence == 0) fact = new AuthoritativeRunKill(fact.RunId, fact.EventId,
-                fact.MonsterNetId, fact.ZoneIndex, fact.Nightmare, fact.VariantId, ++_killSequence, _killLegacyStreamId);
+                fact.MonsterNetId, fact.ZoneIndex, fact.Nightmare, fact.VariantId, ++_killSequence, _killLegacyStreamId,
+                fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth);
             _killHistoryByVictim.Add(new KillVictimKey(fact.StreamId, fact.MonsterNetId), fact);
             if (fact.StreamId.EndsWith(".legacy", StringComparison.Ordinal))
                 _legacyKillHistoryByVictim[fact.MonsterNetId] = fact;
@@ -520,8 +521,24 @@ namespace SodRpg.Mod
             runtime.KillEventNetId = monster.netId;
             runtime.SyncNetId = monster.netId;
             _nightmares.TryGetValue(monster, out var nightmare);
+            string bossTypeName = null;
+            bool bossDropNightmare = false;
+            int bossDropDepth = 0;
+            if (monster is BossMonster && monster.type == Monster.MonsterType.Boss)
+            {
+                string typeName = monster.GetType().Name;
+                if (BossSets.TryGetSet(typeName, out _))
+                {
+                    bossTypeName = typeName;
+                    // Native difficulty names are also used by GameResultManager and DewSave.
+                    string difficulty = NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name;
+                    bossDropNightmare = difficulty == "diffNightmare" || difficulty == "diffLimbo";
+                    bossDropDepth = DreamDepth.Clamp(ClientSession.HostRun?.DreamDepth ?? 0);
+                }
+            }
             var fact = new AuthoritativeRunKill(_killRunId, runtime.KillEventId, monster.netId,
-                _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id, ++_killSequence, _killStreamId);
+                _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id, ++_killSequence, _killStreamId,
+                bossTypeName, bossDropNightmare, bossDropDepth);
             RestoreHostFact(fact);
             foreach (var pair in _killReplayPlayers)
                 if (MechanismHandshakeAccepted(pair.Key) || !pair.Value.ControlSent) pair.Value.Participation.Through = fact.Sequence;
@@ -773,5 +790,6 @@ namespace SodRpg.Mod
             if (needed) _registeredOn.CustomRpc_SendMessageToClient(player, DreamforgeMonsterKillMsg.FromFact(fact, authority));
             return 1;
         }
+
     }
 }

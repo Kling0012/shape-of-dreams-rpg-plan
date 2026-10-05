@@ -37,7 +37,6 @@ namespace SodRpg.Mod
         private Action<EventInfoKill> _onPairEnemyDeath = _ => { }, _onDeath = _ => { }, _onMonsterDeath;
         private string _killRunId, _killStreamId = "issue62-stream";
         private long _killSequence;
-        private ZoneManager _zone = new ZoneManager();
         private sealed class KillPeer
         {
             internal bool ControlSent = true;
@@ -76,8 +75,9 @@ namespace SodRpg.Mod
             (_monsters.Count, _spawnQueue.Count, _pressureDividendSpawns.Count, _pressureDividendDeathExpiry.Count,
              _nativePressureLootSpawns.Count, _pressureDividendRolls.Count);
     }
-    internal static partial class ClientSession
+    internal sealed partial class ClientSession
     {
+        internal static RunState HostRun;
         internal static void PublishHostKillFact(AuthoritativeRunKill fact) { }
     }
 }

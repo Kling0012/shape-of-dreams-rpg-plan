@@ -18,6 +18,8 @@ namespace SodRpg.Core.Game
         Guard = 4,
         /// <summary>記憶の冴え（v1.28）：条件の記憶（アイデンティティの受け身を含む）で与えるダメージが Value% 上がる。</summary>
         MemoryDamage = 5,
+        /// <summary>Boss-native reward stage, selected independently per set/profile; never an ordinary link bonus.</summary>
+        BossReward = 6,
     }
 
     /// <summary>
@@ -214,6 +216,7 @@ namespace SodRpg.Core.Game
         /// <summary>値の上限。単体は同調・守り25・記憶加速50・記憶の余韻40。2つで1.6倍、3つで2.2倍（四捨五入）。</summary>
         public static int Cap(LinkKind kind, int requireCount)
         {
+            if (kind == LinkKind.BossReward) return requireCount == 1 ? 3 : 0;
             int single;
             switch (kind)
             {
@@ -247,6 +250,8 @@ namespace SodRpg.Core.Game
             if (link == null || link.Requires == null) return false;
             int n = link.Requires.Length;
             if (n < 1 || n > 3) return false;
+            if (link.Kind == LinkKind.BossReward && (n != 1 || IsTraveler(link.Requires[0])
+                || link.ValueMilli < 1000 || link.ValueMilli > 3000 || link.ValueMilli % 1000 != 0)) return false;
             if (link.Kind == LinkKind.None || !Enum.IsDefined(typeof(LinkKind), link.Kind)) return false;
             bool hasMemory = false;
             for (int i = 0; i < n; i++)
@@ -305,6 +310,9 @@ namespace SodRpg.Core.Game
         public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null)
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
+            if (link.Kind == LinkKind.BossReward)
+                return Loc.T($"固有報酬連携：本人の『{Name(link.Requires[0])}』装着＋対応セットの段階{link.Value}。各セットの最高段階だけ有効。",
+                    $"Boss reward link: your equipped {Name(link.Requires[0])} plus matching set stage {link.Value}. Highest stage per set only.");
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
             string limitJa, limitEn;
             switch (link.Kind)

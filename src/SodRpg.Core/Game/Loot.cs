@@ -91,6 +91,7 @@ namespace SodRpg.Core.Game
                 int total = 0;
                 foreach (var u in Content.Uniques)
                 {
+                    if (BossSets.IsExclusive(u)) continue;
                     if (slot != null && Content.GetBase(u.BaseId).Slot != slot.Value) continue;
                     int weight = focus != null && Content.GetBase(u.BaseId).Line == focus.Value ? FocusWeight : 1;
                     if (u.SetId != null) weight *= SetPieceWeight;
@@ -329,7 +330,7 @@ namespace SodRpg.Core.Game
                 ItemLevel = ClampLevel(itemLevel),
             };
             RollAffixes(rng, r, Content.AffixCount(Rarity.Legendary));
-            r.Powers.AddRange(u.Powers);
+            if (u.BossMove == null) r.Powers.AddRange(u.Powers);
             return r;
         }
 

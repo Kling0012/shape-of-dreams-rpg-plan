@@ -1229,14 +1229,17 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
             var build = _s.CurrentBuild(hero);
             _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(160));
-            if (build.Stats.Count == 0 && build.Powers.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
+            if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
+            foreach (var move in build.BossMoves)
+                GUILayout.Label(UiStyles.Colored(BossBuildCodec.Describe(move), "#e0b0ff"), _st.Small);
             foreach (var kv in build.Sets)
             {
                 var set = Content.GetSet(kv.Key);
                 if (set == null) continue;
                 GUILayout.Label(UiStyles.Colored($"《{set.Name}》 {kv.Value}/{(set.HasSixPiece ? 6 : 3)}", "#ff8a3d") + "  <color=#ddd>" + set.Progress(kv.Value) + "</color>\n<color=#ccd>" + set.Describe() + "</color>", _st.Small);
+                DrawSetLinkProgress(set, kv.Value);
             }
             foreach (var kv in build.Lines)
             {
@@ -1573,6 +1576,8 @@ namespace SodRpg.Mod
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+            if (r.DeveloperGranted)
+                GUILayout.Label(Loc.T("出所：開発付与", "Source: developer grant"), _st.Small);
             if (Content.MaxLimitBreaks(r.Rarity) > 0 && (r.LimitBreaks > 0 || r.Enhance >= Content.MaxEnhance))
                 GUILayout.Label(UiStyles.Colored(Loc.T($"限界突破 {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)}（上限 +{Content.MaxEnhanceFor(r)}）",
                     $"Limit breaks {r.LimitBreaks}/{Content.MaxLimitBreaks(r.Rarity)} (cap +{Content.MaxEnhanceFor(r)})"), "#ffd36e"), _st.Small);
@@ -1580,6 +1585,8 @@ namespace SodRpg.Mod
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この種類が必ず持つ性能）</color>", "  <color=#aaa>(always on this type)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
             foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            if (r.BossMove != null)
+                GUILayout.Label(UiStyles.Colored(r.DescribeBossMove(), "#e0b0ff"), _st.Label);
             // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
             var link = r.Link;
             if (link != null) GUILayout.Label(UiStyles.Colored(Links.Describe(link, LinkMarks()), "#7fd8ff"), _st.Small);
@@ -1588,10 +1595,24 @@ namespace SodRpg.Mod
             if (r.UniqueId != null && Content.TryGetUnique(r.UniqueId, out var u))
             {
                 if (u.SetId != null && Content.GetSet(u.SetId) is SetDef set)
+                {
                     GUILayout.Label(UiStyles.Colored($"《{set.Name}》", "#ff8a3d") + " <color=#ccd>" + set.Describe() + "</color>", _st.Small);
+                    var build = _s.CurrentBuild(HeroKey);
+                    build.Sets.TryGetValue(set.Id, out int count);
+                    DrawSetLinkProgress(set, count);
+                }
                 else
                     GUILayout.Label("<i>" + UiStyles.Colored(u.Lore.ToString(), "#c9a86a") + "</i>", _st.Small);
             }
+        }
+
+        private void DrawSetLinkProgress(SetDef set, int count)
+        {
+            if (set.LinkStages.Length == 0) return;
+            var marks = LinkMarks();
+            var stage = set.SelectLinkStage(count) ?? set.LinkStages[0];
+            bool satisfied = marks != null && Links.Satisfied(stage.Link, _linkHeroKey, _linkMemories, _linkEssences);
+            GUILayout.Label(UiStyles.Colored(set.DescribeLinkProgress(count, satisfied), "#7fd8ff"), _st.Small);
         }
 
         /// <summary>固有品の覚醒の進み具合、または覚醒済みの印。</summary>
@@ -1634,6 +1655,11 @@ namespace SodRpg.Mod
             var lost = cur.Powers.Select(x => x.Power).Except(sel.Powers.Select(x => x.Power));
             foreach (var g in gained) GUILayout.Label(UiStyles.Colored("+ " + Content.PowerName(g), "#7cf07c"), _st.Small);
             foreach (var l in lost) GUILayout.Label(UiStyles.Colored("- " + Content.PowerName(l), "#ff7a7a"), _st.Small);
+            if (sel.BossMove != cur.BossMove)
+            {
+                if (sel.BossMove != null) GUILayout.Label(UiStyles.Colored("+ " + sel.DescribeBossMove(), "#7cf07c"), _st.Small);
+                if (cur.BossMove != null) GUILayout.Label(UiStyles.Colored("- " + cur.DescribeBossMove(), "#ff7a7a"), _st.Small);
+            }
         }
 
         private void DrawForgeTab()
@@ -1864,7 +1890,7 @@ namespace SodRpg.Mod
             if (r.EnhanceMilestones < 1)
                 return Loc.T($"+{Content.EnhanceMilestoneFirst}で特性が1行増えます。", $"+{Content.EnhanceMilestoneFirst}: one more affix.");
             if (r.EnhanceMilestones < 2)
-                return r.Powers.Count == 0
+                return r.AuthoredEffectCount == 0
                     ? Loc.T($"+{Content.EnhanceMilestoneSecond}でこの枠の固有効果が1つ宿ります。", $"+{Content.EnhanceMilestoneSecond}: gains a power for this slot.")
                     : Loc.T($"+{Content.EnhanceMilestoneSecond}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneSecond}: one more affix.");
             if (r.EnhanceMilestones < 3 && Content.EnhanceMilestoneThird <= ceiling)

@@ -332,11 +332,12 @@ namespace SodRpg.Core.Tests
             // Fixed seed; a bounded sample that scales with the weighted catalogue.
             for (int i = 0; i < Content.Bases.Count * 30 && seen.Count < Content.Bases.Count; i++)
                 seen.Add(Loot.RollRelic(rng, Rarity.Common, 10).BaseId);
-            int target = Content.Bases.Count + Content.Uniques.Count;
+            int target = Content.Bases.Count + Content.Uniques.Count(u => !BossSets.IsExclusive(u));
             for (int i = 0; i < Content.Uniques.Count * 40 && seen.Count < target; i++)
                 seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
             foreach (var b in Content.Bases) Assert.Contains(b.Id, seen);
-            foreach (var u in Content.Uniques) Assert.Contains(u.Id, seen);
+            // Boss-limited pieces only drop from their boss kill (#48); the generic pool never yields them.
+            foreach (var u in Content.Uniques.Where(x => !BossSets.IsExclusive(x))) Assert.Contains(u.Id, seen);
         }
 
         [Fact]

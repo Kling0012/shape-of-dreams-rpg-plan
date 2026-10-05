@@ -16,6 +16,9 @@ namespace SodRpg.Core.Game
         public string HeroKey { get; }
         public string EventId { get; }
         public uint MonsterNetId { get; }
+        public string BossTypeName { get; }
+        public bool BossDropNightmare { get; }
+        public int BossDropDepth { get; }
         /// <summary>戦ったときの潜行深度。null は記録前の保存データで、精算時の現在深度を使う。</summary>
         public int? Heat { get; }
         /// <summary>戦ったときの道標。null は記録前の保存データで、精算時の道標を使う。</summary>
@@ -23,12 +26,15 @@ namespace SodRpg.Core.Game
 
         public PendingRunKill(string runId, int zoneIndex, int roomIndex, MonsterTier tier, int level,
             NightmareAffix nightmare, string variantId, string heroKey, string eventId = null, uint monsterNetId = 0,
-            int? heat = null, Waypoint? waypoint = null)
+            int? heat = null, Waypoint? waypoint = null, string bossTypeName = null,
+            bool bossDropNightmare = false, int bossDropDepth = 0)
         {
             RunId = runId; ZoneIndex = zoneIndex; RoomIndex = roomIndex; Tier = tier; Level = level;
             Nightmare = nightmare; VariantId = variantId; HeroKey = heroKey;
             EventId = eventId; MonsterNetId = monsterNetId;
             Heat = heat; Waypoint = waypoint;
+            BossTypeName = bossTypeName; BossDropNightmare = bossDropNightmare;
+            BossDropDepth = Math.Max(0, Math.Min(5, bossDropDepth));
         }
     }
 

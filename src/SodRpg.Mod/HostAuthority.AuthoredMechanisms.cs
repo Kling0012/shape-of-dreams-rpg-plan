@@ -31,7 +31,7 @@ namespace SodRpg.Mod
             internal readonly Dictionary<string, string> GimmickIds = new Dictionary<string, string>(StringComparer.Ordinal);
             internal AuthoredChannelState[] DispatchChannels = Array.Empty<AuthoredChannelState>();
         }
-        private struct AuthoredPendingGimmick
+        internal struct AuthoredPendingGimmick
         {
             internal bool Enabled;
             internal MemoryActivationEvent Notification;

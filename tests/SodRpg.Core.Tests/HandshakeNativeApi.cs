@@ -47,10 +47,9 @@ namespace SodRpg.Mod
         internal void DetachNegotiation() => UnregisterHello(_registeredOn);
     }
 
-    // Product ClientSession (not linked) exposes a host-authority generation used by the hello reply.
-    internal static partial class ClientSession
+    // Product ClientSession exposes the native continue point in its hello reply.
+    internal sealed partial class ClientSession
     {
-        internal static ulong HostAuthorityGeneration;
         internal static string ContinueRunId, ContinueCheckpointId, ContinueResumeSession;
     }
 }

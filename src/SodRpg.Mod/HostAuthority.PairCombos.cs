@@ -310,7 +310,7 @@ namespace SodRpg.Mod
             foreach (var slot in LinkSkills)
             {
                 var skill = hero.Skill.GetSkill(slot);
-                if (skill != null && skill.GetType().Name == memory) return skill;
+                if (skill != null && NativeActorTypeName(skill) == memory) return skill;
             }
             return null;
         }

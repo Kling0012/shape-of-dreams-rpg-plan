@@ -34,7 +34,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
-    <Compile Include="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
     <Compile Include="$(IntermediateOutputPath)Issue62.Native.cs" Link="ModUnderTest/Issue62.Native.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeMemoryCasts.cs" Link="ModUnderTest/HostAuthority.NativeMemoryCasts.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystones.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystones.cs" />
@@ -53,17 +53,37 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryTunings.cs" Link="ModUnderTest/HostAuthority.MemoryTunings.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.SpawnInit.cs" Link="ModUnderTest/HostAuthority.SpawnInit.cs" />
     <Compile Include="../../src/SodRpg.Mod/CodexPresenter.cs" Link="ModUnderTest/CodexPresenter.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossRuntime.cs" Link="ModUnderTest/HostAuthority.BossRuntime.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossNativeAdapters.cs" Link="ModUnderTest/HostAuthority.BossNativeAdapters.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossMechanisms.cs" Link="ModUnderTest/HostAuthority.BossMechanisms.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossDemon.cs" Link="ModUnderTest/HostAuthority.BossDemon.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSkoll.cs" Link="ModUnderTest/HostAuthority.BossSkoll.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossInfernus.cs" Link="ModUnderTest/HostAuthority.BossInfernus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossInk.cs" Link="ModUnderTest/HostAuthority.BossInk.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossNyx.cs" Link="ModUnderTest/HostAuthority.BossNyx.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossErebos.cs" Link="ModUnderTest/HostAuthority.BossErebos.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSeeker.cs" Link="ModUnderTest/HostAuthority.BossSeeker.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossAzurak.cs" Link="ModUnderTest/HostAuthority.BossAzurak.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPrimus.cs" Link="ModUnderTest/HostAuthority.BossPrimus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossGlacialCore.cs" Link="ModUnderTest/HostAuthority.BossGlacialCore.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossEternalFlame.cs" Link="ModUnderTest/HostAuthority.BossEternalFlame.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBeam.cs" Link="ModUnderTest/HostAuthority.BossBeam.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossHerWorld.cs" Link="ModUnderTest/HostAuthority.BossHerWorld.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossLastStarlight.cs" Link="ModUnderTest/HostAuthority.BossLastStarlight.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSoulPrison.cs" Link="ModUnderTest/HostAuthority.BossSoulPrison.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBurrow.cs" Link="ModUnderTest/HostAuthority.BossBurrow.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPools.cs" Link="ModUnderTest/HostAuthority.BossPools.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossLight.cs" Link="ModUnderTest/HostAuthority.BossLight.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossMaw.cs" Link="ModUnderTest/HostAuthority.BossMaw.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossObliviax.cs" Link="ModUnderTest/HostAuthority.BossObliviax.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPolaris.cs" Link="ModUnderTest/HostAuthority.BossPolaris.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossWorldCracker.cs" Link="ModUnderTest/HostAuthority.BossWorldCracker.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBigChomp.cs" Link="ModUnderTest/HostAuthority.BossBigChomp.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossShoutOfOblivion.cs" Link="ModUnderTest/HostAuthority.BossShoutOfOblivion.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
   </ItemGroup>
 
-  <!-- The test-visible PendingGimmick needs the product's value metadata at the same accessibility.
-       Only visibility changes in this generated test compilation unit; src remains untouched. -->
-  <Target Name="ExposeAuthoredPendingMetadata" BeforeTargets="CoreCompile">
-    <PropertyGroup>
-      <AuthoredMechanismsSource>$([MSBuild]::Escape($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs').Replace('private struct AuthoredPendingGimmick', 'internal struct AuthoredPendingGimmick'))))</AuthoredMechanismsSource>
-    </PropertyGroup>
-    <WriteLinesToFile File="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs"
-                      Lines="$(AuthoredMechanismsSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
-  </Target>
 
   <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile">
     <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />

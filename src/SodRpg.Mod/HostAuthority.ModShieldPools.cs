@@ -9,11 +9,6 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        private sealed class ShieldOwnerEquipment
-        {
-            public long Epoch;
-            public readonly List<SkillTrigger> Skills = new List<SkillTrigger>();
-        }
         private sealed class PoolRecipient
         {
             public HeroRuntime Owner;
@@ -21,34 +16,19 @@ namespace SodRpg.Mod
         }
         private readonly ModShieldPools<Se_GenericShield_OneShot> _modShieldPools = new ModShieldPools<Se_GenericShield_OneShot>();
         private readonly Dictionary<ModShieldPoolKey, PoolRecipient> _modShieldRecipients = new Dictionary<ModShieldPoolKey, PoolRecipient>();
-        private readonly Dictionary<HeroRuntime, ShieldOwnerEquipment> _shieldEquipment = new Dictionary<HeroRuntime, ShieldOwnerEquipment>();
         private readonly List<ModShieldPoolKey> _modShieldDeadScratch = new List<ModShieldPoolKey>();
-        private readonly List<SkillTrigger> _shieldSkillScratch = new List<SkillTrigger>();
-        private long _shieldEpoch;
 
         private long ModShieldEquipmentEpoch(HeroRuntime rt)
         {
-            var skills = _shieldSkillScratch;
-            skills.Clear();
-            foreach (var slot in LinkSkills) skills.Add(rt.Hero.Skill != null ? rt.Hero.Skill.GetSkill(slot) : null);
-            if (!_shieldEquipment.TryGetValue(rt, out var state))
-                _shieldEquipment.Add(rt, state = new ShieldOwnerEquipment());
-            bool changed = state.Skills.Count != skills.Count;
-            for (int i = 0; !changed && i < skills.Count; i++) changed = !ReferenceEquals(state.Skills[i], skills[i]);
-            if (changed)
+            long epoch = EnsureMemoryAttributionEquipment(rt.Hero);
+            if (rt.ShieldEquipmentEpoch != epoch)
             {
                 _modShieldPools.RemoveOwner(rt.Hero.GetInstanceID());
-                state.Skills.Clear(); state.Skills.AddRange(skills); state.Epoch = ++_shieldEpoch;
+                rt.ShieldEquipmentEpoch = epoch;
             }
-            rt.ShieldEquipmentEpoch = state.Epoch;
-            return state.Epoch;
+            return epoch;
         }
 
-        internal void RefreshModShieldEquipment(HeroSkill skill)
-        {
-            if (skill != null && skill.hero != null && _runtimes.TryGetValue(skill.hero, out var rt))
-                ModShieldEquipmentEpoch(rt);
-        }
 
         private bool AwardModShield(HeroRuntime owner, Entity recipient, ModShieldPoolKind kind,
             float rawAmount, float duration, string sourceMemory, long equipmentEpoch, float newAwardCapRatio = 0f)
@@ -92,32 +72,14 @@ namespace SodRpg.Mod
         private void ClearModShieldPools(HeroRuntime owner = null)
         {
             if (owner == null)
-            { _modShieldPools.Clear(); _modShieldRecipients.Clear(); _shieldEquipment.Clear(); return; }
+            { _modShieldPools.Clear(); _modShieldRecipients.Clear(); return; }
             if (owner.Hero != null) _modShieldPools.RemoveOwner(owner.Hero.GetInstanceID());
             var keys = new List<ModShieldPoolKey>();
             foreach (var pair in _modShieldRecipients) if (pair.Value.Owner == owner) keys.Add(pair.Key);
             foreach (var key in keys) _modShieldRecipients.Remove(key);
-            _shieldEquipment.Remove(owner);
         }
     }
 
-    // Observe the authoritative mutation immediately, including unequip/re-equip of the same pooled skill before the next Tick.
-    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.UnequipSkill))]
-    internal static class NativeModShieldUnequip
-    {
-        private static void Postfix(HeroSkill __instance, SkillTrigger __result)
-        {
-            if (NetworkServer.active && __result != null) HostAuthority.NativeInstance?.RefreshModShieldEquipment(__instance);
-        }
-    }
-    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.EquipSkill))]
-    internal static class NativeModShieldEquip
-    {
-        private static void Postfix(HeroSkill __instance)
-        {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshModShieldEquipment(__instance);
-        }
-    }
 
     internal sealed class NativeModShieldAdapter : IModShieldAdapter<Se_GenericShield_OneShot>
     {
@@ -155,9 +117,11 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Actor), nameof(Actor.ProcessShieldAmount))]
     internal static class NativeModShieldCreationCap
     {
-        private static readonly Dictionary<Actor, float> Caps = new Dictionary<Actor, float>();
+        private static readonly Dictionary<Actor, float> Caps = new Dictionary<Actor, float>(128);
+        internal static void Prewarm() => _ = Caps.Count;
         internal static void Register(Actor actor, float cap) => Caps.Add(actor, cap);
         internal static void Remove(Actor actor) => Caps.Remove(actor);
+        [HarmonyPriority(Priority.Last)]
         private static void Postfix(Actor __instance, ref float __result)
         {
             if (NetworkServer.active && Caps.TryGetValue(__instance, out float cap))

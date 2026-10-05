@@ -403,6 +403,7 @@ namespace SodRpg.Core.Tests
                         + refused.Count(r => r.StartsWith("keystone ", StringComparison.Ordinal)));
 
                 var build = Build.Compute(profile, hero, 0);
+
                 Assert.Equal(spent, build.SpentStarPoints);
                 string encoded = build.Encode();
                 Assert.InRange(encoded.Length, 1, BuildLimits.MaxEncodedChars);

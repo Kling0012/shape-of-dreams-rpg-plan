@@ -95,6 +95,11 @@ namespace SodRpg.Core.Game
                     state.FiredActivations = new ConditionalWeakTable<object, State>();
             }
         }
+        public void ForgetActivation(object activation)
+        {
+            if (activation == null) return;
+            for (int i = 0; i < _states.Count; i++) _states[i].FiredActivations?.Remove(activation);
+        }
 
         public void ForgetActivation(long activationSerial)
         {

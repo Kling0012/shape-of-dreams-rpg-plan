@@ -105,7 +105,7 @@ namespace SodRpg.Core.Tests
         {
             foreach (LinkKind kind in Enum.GetValues(typeof(LinkKind)))
             {
-                if (kind == LinkKind.None) continue;
+                if (kind == LinkKind.None || kind == LinkKind.BossReward) continue; // #48: boss rewards are staged entries, not aggregate links
                 for (int requirements = 1; requirements <= BuildLimits.MaxLinkRequirements; requirements++)
                 {
                     decimal fromEquipment = Content.SlotCount * Links.EquippedCap(kind, requirements);

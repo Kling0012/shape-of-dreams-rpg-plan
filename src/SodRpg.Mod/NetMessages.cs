@@ -181,8 +181,10 @@ namespace SodRpg.Mod
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
         // Version 16 adds sequenced kill facts and persisted receipt ACKs for compact, recoverable checkpoints.
         // Version 17 requires each Pure White participant to resolve their own choice before kill settlement.
-        // Version 17 also binds MOD checkpoint barriers and resume handshakes to native continue saves.
-        public const int Version = 17;
+        // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
+        // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
+        // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
+        public const int Version = 19;
     }
 
     [Serializable]
