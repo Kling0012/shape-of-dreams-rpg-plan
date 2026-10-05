@@ -33,6 +33,8 @@ namespace SodRpg.Core.Tests
             }
             var host = new HostAuthority();
             host.Track(rt);
+            // 本体では Build 適用時に装備エポックが登録される。#161 のキャッシュはそれ以降の状態を使う。
+            host.EquipmentChangedForTest(rt.Hero);
             return (host, rt);
         }
         private static EventInfoAttackFired Shot(HostAuthority.HeroRuntime rt) => new EventInfoAttackFired
@@ -122,6 +124,7 @@ namespace SodRpg.Core.Tests
             }
             rt.Hero.summons.Add(new Summon { Owner = rt.Hero });
             rt.Hero.Skill.Skills.Remove(HeroSkillLocation.Identity);
+            host.EquipmentChangedForTest(rt.Hero); // 本体の SetAbility/RemoveAbility フックに相当
             OpenWolfWindow(host, rt); host.Shot(rt, Shot(rt)); host.Flush(rt);
             Assert.Equal(10, Cooldown(rt)); Assert.Equal(500, rt.Hero.currentHealth);
         }
@@ -131,7 +134,9 @@ namespace SodRpg.Core.Tests
         {
             var (host, rt) = Setup("Nachia", 1, 4, 5); rt.Hero.currentHealth = 500;
             OpenWolfWindow(host, rt); host.Shot(rt, Shot(rt));
-            rt.Hero.Skill.Skills.Remove(HeroSkillLocation.Identity); host.Flush(rt);
+            rt.Hero.Skill.Skills.Remove(HeroSkillLocation.Identity);
+            host.EquipmentChangedForTest(rt.Hero); // 本体の SetAbility/RemoveAbility フックに相当
+            host.Flush(rt);
             Assert.Equal(10, Cooldown(rt)); Assert.Equal(500, rt.Hero.currentHealth);
         }
 
@@ -192,8 +197,12 @@ namespace SodRpg.Core.Tests
             Assert.Equal(100, host.ExposedDamage(rt, victim, generated: true));
             Assert.Equal(100, host.ExposedDamage(rt, victim, new Actor { parentActor = new ElementalStatusEffect() }));
             Assert.Equal(104, host.ExposedDamage(rt, victim), 4);
-            rt.Hero.Skill.Skills.Remove(HeroSkillLocation.Q); Assert.Equal(100, host.ExposedDamage(rt, victim));
-            rt.Hero.Skill.Skills[HeroSkillLocation.Q] = new St_Q_CruelSun(); Assert.Equal(100, host.ExposedDamage(rt, victim));
+            rt.Hero.Skill.Skills.Remove(HeroSkillLocation.Q);
+            host.EquipmentChangedForTest(rt.Hero); // 本体の SetAbility/RemoveAbility フックに相当
+            Assert.Equal(100, host.ExposedDamage(rt, victim));
+            rt.Hero.Skill.Skills[HeroSkillLocation.Q] = new St_Q_CruelSun();
+            host.EquipmentChangedForTest(rt.Hero); // 本体の SetAbility/RemoveAbility フックに相当
+            Assert.Equal(100, host.ExposedDamage(rt, victim));
             host.MemoryEvent(rt, PairComboTrigger.OnHit, "St_Q_CruelSun", victim);
             rt.PairCombos.ClearTransient(); Assert.Equal(100, host.ExposedDamage(rt, victim));
         }

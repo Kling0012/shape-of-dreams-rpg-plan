@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using SodRpg.Core.Game;
+using SodRpg.Core.Tests.Testing;
 using Xunit;
 
 namespace SodRpg.Core.Tests
@@ -25,6 +26,10 @@ namespace SodRpg.Core.Tests
             if (StarClusters.GeneratedHeroes.Count == 0) { yield return new object[] { "(no generated hero)" }; yield break; }
             foreach (string hero in StarClusters.GeneratedHeroes) yield return new object[] { hero };
         }
+
+        /// <summary>Representative subset for the expensive Play-based theories; the SlowFact variants cover every hero.</summary>
+        public static IEnumerable<object[]> FastHeroes() =>
+            Installed.FastPlayedHeroes.Where(StarClusters.GeneratedHeroes.Contains).Select(h => new object[] { h });
 
         private sealed class Manifest
         {
@@ -93,23 +98,32 @@ namespace SodRpg.Core.Tests
                     System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
             }
 
-            internal Played Play(string hero)
+        // The expensive maximum-point purchase runs for a representative subset in the fast suite
+        // (Cetus: documented reference tree, Mist: largest slowest tree, Vesper: authored mechanisms);
+        // the exhaustive all-hero variants are SlowFacts and start the remaining heroes on demand.
+        internal static readonly string[] FastPlayedHeroes = { "Hero_Cetus", "Hero_Mist", "Hero_Vesper" };
+
+        internal Played Play(string hero)
+        {
+            Ensure(hero);
+            foreach (string fast in FastPlayedHeroes)
+                Start(fast);
+            return Start(hero).GetAwaiter().GetResult();
+        }
+
+        private Task<Played> Start(string hero)
+        {
+            if (registrationFailures.ContainsKey(hero)) return null;
+            if (games.TryGetValue(hero, out var running)) return running;
+            string key = hero;
+            games[key] = Task.Factory.StartNew(() =>
             {
-                Ensure(hero);
-                if (games.Count == 0)
-                    foreach (string generated in StarClusters.GeneratedHeroes)
-                    {
-                        if (registrationFailures.ContainsKey(generated)) continue;
-                        string key = generated;
-                        games[key] = Task.Factory.StartNew(() =>
-                        {
-                            var game = new Played();
-                            game.Profile = MaxPointProfile(key, out game.Keystones, out game.Refused);
-                            return game;
-                        }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-                    }
-                return games[hero].GetAwaiter().GetResult();
-            }
+                var game = new Played();
+                game.Profile = MaxPointProfile(key, out game.Keystones, out game.Refused);
+                return game;
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            return games[key];
+        }
 
             private void WaitForPurchases()
             {
@@ -282,6 +296,7 @@ namespace SodRpg.Core.Tests
             var skipped = new HashSet<string>(StringComparer.Ordinal);
             bool progress = true;
             var snapshot = layout.ReachabilitySnapshot(state);
+            int free = Rules.FreePoints(profile, hero) - reserve;
             while (progress)
             {
                 progress = false;
@@ -290,7 +305,7 @@ namespace SodRpg.Core.Tests
                     var talent = node.Talent;
                     if (talent == null || talent.IsKeystone) continue;
                     state.Talents.TryGetValue(talent.Id, out int rank);
-                    if (rank >= talent.MaxRank || talent.RankCost > Rules.FreePoints(profile, hero) - reserve) continue;
+                    if (rank >= talent.MaxRank || talent.RankCost > free) continue;
                     if (skipped.Contains(talent.Id + "#" + rank) || !layout.CanReach(state, talent, snapshot)) continue;
                     var change = new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = talent.Id,
                         SelectedOption = !talent.IsChoice ? (int?)null : rank == 0 ? 0 : state.TalentChoices[talent.Id] }; // a ranked Choice keeps its option
@@ -302,6 +317,7 @@ namespace SodRpg.Core.Tests
                         continue;
                     }
                     Rules.AllocationValidationForHero(hero).Commit(profile, plan, null);
+                    free = Rules.FreePoints(profile, hero) - reserve; // FreePoints walks the whole allocation; recompute only after a purchase
                     snapshot = layout.ReachabilitySnapshot(state);
                     progress = true;
                 }
@@ -374,7 +390,7 @@ namespace SodRpg.Core.Tests
                     + " analysisTalentChars=" + capacity.MaximumEncodedTalentChars + Environment.NewLine);
         }
 
-        [Theory, MemberData(nameof(Heroes))]
+        [Theory, MemberData(nameof(FastHeroes))]
         public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips(string hero)
         {
             WithHero(hero, tree =>
@@ -417,7 +433,15 @@ namespace SodRpg.Core.Tests
             });
         }
 
-        [Theory, MemberData(nameof(Heroes))]
+        /// <summary>Every generated hero, including the ones the fast subset skips (release gate; runs with SODRPG_SLOW=1).</summary>
+        [SlowFact, Trait("Speed", "Slow")]
+        public void Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips_on_every_hero()
+        {
+            foreach (string hero in StarClusters.GeneratedHeroes)
+                Greedy_maximum_point_purchase_succeeds_and_the_build_round_trips(hero);
+        }
+
+        [Theory, MemberData(nameof(FastHeroes))]
         public void Star_summary_lists_every_allocated_effectful_star(string hero)
         {
             WithHero(hero, tree =>
@@ -443,6 +467,14 @@ namespace SodRpg.Core.Tests
                 Assert.True(missing.Count == 0, "Allocated effectful stars missing from StarSummary: " + string.Join(", ", missing.Take(20)));
                 foreach (string keystone in keystones) Assert.Contains(keystone, listed);
             });
+        }
+
+        /// <summary>Every generated hero, including the ones the fast subset skips (release gate; runs with SODRPG_SLOW=1).</summary>
+        [SlowFact, Trait("Speed", "Slow")]
+        public void Star_summary_lists_every_allocated_effectful_star_on_every_hero()
+        {
+            foreach (string hero in StarClusters.GeneratedHeroes)
+                Star_summary_lists_every_allocated_effectful_star(hero);
         }
     }
 }

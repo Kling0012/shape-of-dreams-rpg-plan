@@ -37,6 +37,11 @@ namespace SodRpg.Mod
             public readonly Dictionary<int, Entity> ReactionVictims = new Dictionary<int, Entity>();
             public readonly PairComboRuntime PairCombos = new PairComboRuntime();
             public readonly HashSet<string> PairMemories = new HashSet<string>();
+            // #161: 命中ごとに6枠をGetSkillで舐めず、装備エポックが変わるまで使い回すキャッシュ。
+            public long MemoryEquipmentEpoch = -1;
+            public readonly Dictionary<string, SkillTrigger> MemoryByName = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
+            // #161: 仕掛け発動の報告はティックごとにまとめて送る（合計は不変）。
+            public int PendingGimmickReports;
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
@@ -289,6 +294,8 @@ namespace SodRpg.Mod
         private string[] _tickStageNames;
         private TickGuard _tickGuard;
         private float _tickNow;
+        // #161: null = 未判定（ティックの最初）。判定はティックごとに1回。
+        private bool? _tickBossProfiles;
 
         public void Tick()
         {
@@ -301,6 +308,8 @@ namespace SodRpg.Mod
             NativeInstance = this;
             if (_registeredOn == null) return;
             if (_tickStages == null) BuildTickStages();
+            // #161: ダメージイベントごとの全走査をやめ、ティックごとに1回だけ判定する。
+            _tickBossProfiles = null;
             _tickNow = Time.time;
             _tickGuard.Run(Time.unscaledTime);
         }
@@ -359,6 +368,16 @@ namespace SodRpg.Mod
         private void StageGimmickApply()
         {
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
+            // #161: 仕掛け発動の報告はティックごとに1通にまとめる（合計は不変）。
+            foreach (var rt in _runtimes.Values) FlushGimmickReports(rt);
+        }
+
+        private void FlushGimmickReports(HeroRuntime rt)
+        {
+            if (rt.PendingGimmickReports <= 0) return;
+            int count = rt.PendingGimmickReports;
+            rt.PendingGimmickReports = 0;
+            SendBountyReport(rt, BountyReportKind.GimmicksTriggered, count);
         }
 
         private void StageBossEffects()
@@ -1509,6 +1528,8 @@ namespace SodRpg.Mod
                 foreach (var entity in _am.allEntities)
                     if (entity is Summon summon) HookSummon(rt, summon);
             BossEnsure(rt);
+            // #161: Build の適用でボス枠が増えたら、ティック内の判定を作り直す。
+            _tickBossProfiles = null;
         }
 
         private static bool IsHealthSacrifice(Actor source, Hero hero)
@@ -1541,6 +1562,8 @@ namespace SodRpg.Mod
 
         private void Unhook(HeroRuntime rt)
         {
+            // #161: 外す直前までに貯まった報告を落とさない。
+            FlushGimmickReports(rt);
             ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
             RestoreGemSlots(rt);

@@ -31,27 +31,32 @@ namespace SodRpg.Core.Tests
             Assert.NotEmpty(StarClusters.GeneratedHeroes);
             int checkedStars = 0;
             var problems = new System.Collections.Generic.SortedDictionary<string, string>();
-            foreach (string hero in StarClusters.GeneratedHeroes)
-                foreach (var star in HeroSigils.TreeFor(hero))
-                    foreach (var shown in new[] { star }.Concat(star.Choices))
-                        foreach (bool japanese in new[] { true, false })
-                        {
-                            bool previous = Loc.Japanese;
-                            Loc.Japanese = japanese;
-                            string text;
-                            try { text = shown.Describe(); } finally { Loc.Japanese = previous; }
-                            foreach (string line in text.Split('\n'))
+            bool previous = Loc.Japanese;
+            try
+            {
+                foreach (bool japanese in new[] { true, false })
+                {
+                    Loc.Japanese = japanese; // per language pass, not per star: same stars × choices × both languages
+                    foreach (string hero in StarClusters.GeneratedHeroes)
+                        foreach (var star in HeroSigils.TreeFor(hero))
+                            foreach (var shown in new[] { star }.Concat(star.Choices))
                             {
-                                var match = RawId.Match(line);
-                                if (!match.Success) match = (japanese ? TechToken : EnglishTech).Match(line);
-                                if (match.Success)
+                                string text = shown.Describe();
+                                foreach (string line in text.Split('\n'))
                                 {
-                                    string key = (japanese ? "ja " : "en ") + match.Value;
-                                    if (!problems.ContainsKey(key)) problems[key] = hero + " " + shown.Id + ": " + line;
+                                    var match = RawId.Match(line);
+                                    if (!match.Success) match = (japanese ? TechToken : EnglishTech).Match(line);
+                                    if (match.Success)
+                                    {
+                                        string key = (japanese ? "ja " : "en ") + match.Value;
+                                        if (!problems.ContainsKey(key)) problems[key] = hero + " " + shown.Id + ": " + line;
+                                    }
                                 }
+                                checkedStars++;
                             }
-                            checkedStars++;
-                        }
+                }
+            }
+            finally { Loc.Japanese = previous; }
             Assert.True(checkedStars > 5000);
             Assert.True(problems.Count == 0, string.Join("\n", problems.Select(p => p.Key + " <- " + p.Value)));
         }

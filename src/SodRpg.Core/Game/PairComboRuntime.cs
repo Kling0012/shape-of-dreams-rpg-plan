@@ -59,7 +59,13 @@ namespace SodRpg.Core.Game
                 }
             }
             _states = next;
+            _canExpose = false;
+            foreach (var state in _states)
+                if (state.Entry.Def.Step == PairComboStep.Mark) { _canExpose = true; break; }
         }
+        // Mark 段を持つ連携しか印（Expose）を作らない。命中ごとの参照を、ないビルドでは全走査なしで返す（#161）。
+        private bool _canExpose;
+
         private static State Create(PairComboEntry entry, bool fired, float last)
         {
             var def = entry.Def;
@@ -150,7 +156,7 @@ namespace SodRpg.Core.Game
         /// <summary>Maximum live pair-mark vulnerability owned by this hero, in percentage points.</summary>
         public int ExposePercent(int victimId, float now)
         {
-            if (victimId == 0 || !Gimmicks.Finite(now)) return 0;
+            if (!_canExpose || victimId == 0 || !Gimmicks.Finite(now)) return 0;
             PruneExpired(now);
             int max = 0;
             foreach (var state in _states)

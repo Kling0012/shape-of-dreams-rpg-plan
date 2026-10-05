@@ -212,6 +212,9 @@ namespace SodRpg.Mod
             public readonly ElementReactionRuntime Reactions = new ElementReactionRuntime();
             public readonly PairComboRuntime PairCombos = new PairComboRuntime();
             public readonly HashSet<string> PairMemories = new HashSet<string>();
+            public long MemoryEquipmentEpoch = -1;
+            public readonly Dictionary<string, SkillTrigger> MemoryByName = new Dictionary<string, SkillTrigger>(StringComparer.Ordinal);
+            public int PendingGimmickReports;
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
             public readonly List<LinkDef> SatisfiedLinks = new List<LinkDef>();

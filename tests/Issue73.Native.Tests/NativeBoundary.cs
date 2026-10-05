@@ -170,7 +170,11 @@ namespace SodRpg.Mod
     }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
-    internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
+    internal static class Log
+    {
+        public static void Error(string message) => throw new InvalidOperationException(message);
+        public static void Warn(string message) { }
+    }
     internal static class NativeAttributedMemoryCast
     {
         internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }

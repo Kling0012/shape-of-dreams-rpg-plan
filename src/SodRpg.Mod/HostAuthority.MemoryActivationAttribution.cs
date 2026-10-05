@@ -224,6 +224,8 @@ namespace SodRpg.Mod
         private readonly MemoryActivationAttribution _memoryAttribution = new MemoryActivationAttribution();
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment =
             new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
+        // #161: 公開イベントごとの所有者解決を線形走査ではなく辞書引きにする。
+        private readonly Dictionary<long, Hero> _attributionOwnersById = new Dictionary<long, Hero>(16);
         private readonly Dictionary<Entity, long> _attributionVictimLifetimes = new Dictionary<Entity, long>();
         private readonly Dictionary<Hero, MechanismEquipment> _mechanismEquipment = new Dictionary<Hero, MechanismEquipment>();
         private readonly Dictionary<Hero, HashSet<string>> _attributionMemoryIds = new Dictionary<Hero, HashSet<string>>();
@@ -286,7 +288,7 @@ namespace SodRpg.Mod
             if (equipment == null) equipment = new Dictionary<HeroSkillLocation, SkillTrigger>(LinkSkills.Length);
             else equipment.Clear();
             var memories = new List<string>(count);
-            var mechanisms = new List<EquippedMechanismMemory>(count);
+            var slotOrdered = new List<KeyValuePair<string, EquippedMechanismMemory>>(count);
             for (int i = 0; i < LinkSkills.Length; i++)
             {
                 var skill = _nativeEquipmentScratch[i];
@@ -294,13 +296,24 @@ namespace SodRpg.Mod
                 equipment.Add(LinkSkills[i], skill);
                 string memory = NativeActorTypeName(skill);
                 memories.Add(memory);
-                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(LinkSkills[i]),
-                    skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
+                slotOrdered.Add(new KeyValuePair<string, EquippedMechanismMemory>(memory,
+                    new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(LinkSkills[i]),
+                        skill.type == SkillType.Normal, skill.type == SkillType.Ultimate)));
             }
+            // #163: 同じ記憶名の別実体が2枠にあれば最初の枠で縮退する（#160 のリレー、#161 の MemoryByName と同じ方針）。
+            // MechanismEquipment は名前一意を前提に発動元 (Find) を解き、受け手走査の重複発動を防ぐ。
+            var mechanisms = new Dictionary<string, EquippedMechanismMemory>(slotOrdered.Count, StringComparer.Ordinal);
+            RelayMemorySelection.SelectFirstSlotPerMemory(slotOrdered, mechanisms, out bool hadDuplicates);
+            if (hadDuplicates) Log.Warn("Host: " + hero.GetType().Name
+                + " equips the same memory in more than one slot; star and relay mechanisms follow the first slot.");
+            // 縮退後の枠一覧は一意なので MechanismEquipment の構築は失敗しない。帰属の世代確定
+            // （InvalidateOwner/SetEquipment）からスナップショット・枠一覧の確定までの間に例外で
+            // 片側だけ新世代になり、星・連携が世代不一致で止まり続けることはない。
             _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
             long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
             _attributionEquipment[hero] = equipment;
-            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
+            _attributionOwnersById[hero.GetInstanceID()] = hero;
+            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms.Values);
             _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
             if (_runtimes.TryGetValue(hero, out var rt))
             {
@@ -562,11 +575,8 @@ namespace SodRpg.Mod
                 PublishMemoryActivation(packet.Identity.Event(MemoryEventKind.Kill, packet.Serial, AttributedVictimLifetime(info.victim)), hero, info.victim, packet.DamageAmount);
         }
 
-        private Hero AttributedOwner(long ownerId)
-        {
-            foreach (var hero in _attributionEquipment.Keys) if (hero != null && hero.GetInstanceID() == ownerId && Alive(hero)) return hero;
-            return null;
-        }
+        private Hero AttributedOwner(long ownerId) =>
+            _attributionOwnersById.TryGetValue(ownerId, out var hero) && Alive(hero) ? hero : null;
 
         private long AttributedVictimLifetime(Entity victim)
         {
@@ -590,6 +600,7 @@ namespace SodRpg.Mod
             {
                 _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
                 _attributionEquipment.Remove(hero);
+                _attributionOwnersById.Remove(hero.GetInstanceID());
                 _mechanismEquipment.Remove(hero);
                 _attributionMemoryIds.Remove(hero);
             }
@@ -597,7 +608,7 @@ namespace SodRpg.Mod
 
         private void ResetMemoryAttribution()
         {
-            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _mechanismEquipment.Clear();
+            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _attributionOwnersById.Clear(); _mechanismEquipment.Clear();
             _attributionMemoryIds.Clear();
             _attributionVictimLifetimes.Clear(); _attributedNativeChains.Clear(); _deferredAttribution.Clear();
             ResetNativeEndingAdapters();

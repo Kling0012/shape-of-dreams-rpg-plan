@@ -2,21 +2,26 @@
 """Run only the tests affected by the current changes.
 
 Usage:
-    python tools/test_changed.py [--base <git ref>] [--list] [--all]
+    python tools/test_changed.py [--base <git ref>] [--list] [--all] [--slow]
 
 Changed files are collected from ``git diff --name-only <base>...HEAD`` plus
 staged/unstaged working-tree changes and untracked .cs files.  They are mapped
-to test classes (see ``select_tests``), and the selected classes are run with
-``dotnet test <project> --filter FullyQualifiedName~...``.
+to test classes (see ``select_tests``); for production files the unified diff
+narrows the mapping to the tokens (members, string constants) the change
+touches.  The selected classes run with ``dotnet test <project> --filter ...``.
+
+The three test projects serialize their own tests (shared game state), so the
+projects are built serially and then run in parallel for wall-clock time.
+``--slow`` additionally enables the Speed=Slow exhaustive tests (SODRPG_SLOW=1).
 
 If nothing test-relevant changed, a message is printed and the exit code is 0.
-Otherwise the exit code is the exit code of the last ``dotnet test`` run
-(first non-zero exit code if the filter had to be split into several runs).
+Otherwise the exit code is the first non-zero ``dotnet test`` exit code.
 """
 
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import fnmatch
 import os
 import re
@@ -43,7 +48,12 @@ TYPE_DECL_RE = re.compile(
 CLASS_DECL_RE = re.compile(r"\bclass\s+([A-Za-z_]\w*)")
 SUMMARY_RE = re.compile(r"Failed:\s*(\d+)[,，]?\s*Passed:\s*(\d+)")
 NAMESPACE_RE = re.compile(r"\bnamespace\s+([A-Za-z_][\w.]*)")
+# Identifiers worth mapping to tests when a diff narrows a production change:
+# PascalCase tokens (types, methods, properties) and string constants (content IDs, names).
+CANDIDATE_RE = re.compile(r"\b[A-Z][A-Za-z0-9_]{2,}\b")
+LITERAL_RE = re.compile(r'"([^"\\]{4,})"')
 COMMENT_RE = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
+
 
 # Identifiers that can follow a type keyword position but are never type names.
 NON_TYPE_NAMES = {"class", "struct", "enum", "interface", "record", "namespace"}
@@ -125,6 +135,38 @@ def references_path(content: str, path: str) -> bool:
     return directory in content and base in content
 
 
+def unified_diff_plus_minus(diff_text: str) -> tuple[list[str], list[str]]:
+    """(+lines, -lines) from a unified diff; file headers are skipped."""
+    plus, minus = [], []
+    for line in diff_text.splitlines():
+        if line.startswith(("+++", "---")):
+            continue
+        if line.startswith("+"):
+            plus.append(line[1:])
+        elif line.startswith("-"):
+            minus.append(line[1:])
+    return plus, minus
+
+
+def diff_candidates(plus: list[str], minus: list[str]) -> set[str] | None:
+    """Tokens (types, members, string constants) touched by a change.
+
+    None when the change is comments/whitespace only, i.e. it cannot alter
+    behavior and no test needs to run.
+    """
+    def code(lines):
+        return [line for line in map(strip_comments, lines) if line.strip()]
+
+    new, old = code(plus), code(minus)
+    if not new and not old:
+        return None
+    candidates: set[str] = set()
+    for line in new + old:
+        candidates.update(CANDIDATE_RE.findall(line))
+        candidates.update(LITERAL_RE.findall(line))
+    return candidates
+
+
 class Selection:
     """Result of mapping changed files to test classes."""
 
@@ -134,16 +176,21 @@ class Selection:
         self.classes: set[str] = set()
 
 
-def select_tests(changed, files) -> Selection:
+def select_tests(changed, files, diffs=None) -> Selection:
     """Map changed repo-relative paths to test classes.
 
     ``files`` maps repo-relative posix paths to file contents; it must include
     every .cs file under tests/ (the corpus) and the changed .cs files.
+    ``diffs`` optionally maps changed src/ paths to unified-diff text; when
+    present it narrows rule 2 to the tokens the change actually touches.
 
     Rules:
       1. a changed test .cs under tests/ selects the classes it declares;
       2. a changed production .cs under src/ selects, for each declared type,
          every test file mentioning the type as a whole word -> its classes;
+         with a diff, the tokens (members, string constants) touched by the
+         change replace the whole-file type list, except that a widely used
+         declared type still selects everything;
       3. changed data files (tools/star-manifest/*.json, tools/lowrarity/*.json,
          generated .cs) select test files that reference their path or types;
       4. build files (*.csproj, Directory.Build.*) or types used by more than
@@ -164,6 +211,35 @@ def select_tests(changed, files) -> Selection:
         if path.startswith("src/") and path.endswith(".cs") and content:
             # Rule 2 (+ the wide-type part of rule 4).
             types = declared_types(content)
+            diff = (diffs or {}).get(path)
+            if diff is not None:
+                candidates = diff_candidates(*unified_diff_plus_minus(diff))
+                if candidates is None:
+                    selection.reasons.append(f"{path}: comment/whitespace-only change")
+                    continue
+                if types and candidates.isdisjoint(types):
+                    # Fallback safety: nothing recognizable in the hunks (e.g. a
+                    # reformatted body) -> keep the whole-file type mapping.
+                    candidates.update(types)
+                mentions = {tf: {c for c in candidates
+                                 if re.search(rf"\b{re.escape(c)}\b", files[tf])}
+                            for tf in test_files}
+                wide = {c for c, count in
+                        ((c, sum(1 for tf in test_files if c in mentions[tf])) for c in candidates)
+                        if test_files and count > WIDE_TYPE_THRESHOLD * len(test_files)}
+                if types and wide & set(types):
+                    # The change touches a declaration of a type most tests use.
+                    selection.run_all = True
+                    selection.reasons.append(
+                        f"{path}: types {', '.join(sorted(wide & set(types))[:3])} used in "
+                        f"most test files"
+                    )
+                    continue
+                usable = candidates - wide
+                for tf in test_files:
+                    if mentions[tf] & usable:
+                        selection.classes.update(declared_test_classes(files[tf]))
+                continue
             if types:
                 hits = [tf for tf in test_files if mentions_any(files[tf], types)]
                 if test_files and len(hits) > WIDE_TYPE_THRESHOLD * len(test_files):
@@ -246,6 +322,28 @@ def collect_changed(root: Path, base: str) -> list[str]:
     return sorted(p for p in changed if p and not p.startswith(".ref/"))
 
 
+def collect_diffs(root: Path, base: str, changed) -> dict[str, str]:
+    """Unified-diff text per changed src/ .cs path ("" when the diff is empty).
+
+    Committed and working-tree changes are concatenated; an untracked file is
+    treated as fully added so its tokens can be mapped like any other change.
+    """
+    diffs = {}
+    untracked = {line.strip().replace("\\", "/")
+                 for line in run_git(root, "ls-files", "--others", "--exclude-standard").splitlines()}
+    for path in changed:
+        if not path.startswith("src/") or not path.endswith(".cs"):
+            continue
+        text = run_git(root, "diff", "--no-color", "--unified=0", f"{base}...HEAD", "--", path)
+        text += run_git(root, "diff", "--no-color", "--unified=0", "HEAD", "--", path)
+        if not text.strip() and path in untracked:
+            content = read_file(root, path)
+            if content is not None:
+                text = "\n".join("+" + line for line in content.splitlines())
+        diffs[path] = text
+    return diffs
+
+
 def read_file(root: Path, relpath: str) -> str | None:
     try:
         return (root / relpath).read_text(encoding="utf-8-sig", errors="replace")
@@ -306,41 +404,79 @@ def parse_summary(output: str) -> tuple[int, int]:
     return int(failed), int(passed)
 
 
-def run_dotnet_test(root: Path, project: str, filter_expr: str | None) -> tuple[int, str]:
+def run_dotnet_test(root: Path, project: str, filter_expr: str | None,
+                    no_build: bool = False, slow: bool = False) -> tuple[int, str]:
     dotnet, dotnet_root = resolve_dotnet()
     if not Path(dotnet).exists():
         print(f"dotnet not found at {dotnet} (set DOTNET to override)", file=sys.stderr)
         return 1, ""
-    cmd = [dotnet, "test", project]
+    cmd = [dotnet, "test", project, "-c", "Release"]
     if filter_expr:
         cmd += ["--filter", filter_expr]
+    if no_build:
+        cmd.append("--no-build")
     env = dict(os.environ)
     env["DOTNET_ROOT"] = dotnet_root
     # Keep the console summary machine-parseable regardless of the OS locale.
     env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
+    if slow:
+        env["SODRPG_SLOW"] = "1"
     result = subprocess.run(
         cmd, cwd=str(root), env=env, stdin=subprocess.DEVNULL,
         capture_output=True, text=True, encoding="utf-8", errors="replace",
     )
-    output = (result.stdout or "") + (result.stderr or "")
-    print(output, end="" if output.endswith("\n") else "\n")
-    return result.returncode, output
+    return result.returncode, (result.stdout or "") + (result.stderr or "")
 
 
-def run_selection(root: Path, classes, run_all: bool) -> int:
-    """Run the selected classes (or everything); returns the exit code."""
+def build_projects(root: Path, projects: list[str]) -> int:
+    """Build every test project serially (shared obj/ dirs must not race)."""
+    dotnet, dotnet_root = resolve_dotnet()
+    if not Path(dotnet).exists():
+        print(f"dotnet not found at {dotnet} (set DOTNET to override)", file=sys.stderr)
+        return 1
+    env = dict(os.environ)
+    env["DOTNET_ROOT"] = dotnet_root
+    env.setdefault("DOTNET_CLI_UI_LANGUAGE", "en")
+    for project in projects:
+        print(f"building {project}", file=sys.stderr)
+        result = subprocess.run(
+            [dotnet, "build", project, "-c", "Release"], cwd=str(root), env=env,
+            stdin=subprocess.DEVNULL, capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+        if result.returncode != 0:
+            print((result.stdout or "") + (result.stderr or ""))
+            return result.returncode
+    return 0
+
+
+def run_selection(root: Path, classes, run_all: bool, slow: bool = False) -> int:
+    """Run the selected classes (or everything); returns the exit code.
+
+    Projects are built serially, then their tests run in parallel: the three
+    test projects serialize their own tests (shared registry state), so the
+    wall-clock win comes from overlapping the projects.
+    """
     projects = find_test_projects(root)
     if not projects:
         print("no test projects found under tests/", file=sys.stderr)
         return 1
+    code = build_projects(root, projects)
+    if code != 0:
+        return code
     filters = [None] if run_all else build_filters(classes)
+    pairs = [(project, index, expr)
+             for project in projects for index, expr in enumerate(filters, start=1)]
     exit_code = 0
     total_failed = total_passed = 0
-    for project in projects:
-        for index, filter_expr in enumerate(filters, start=1):
-            if len(filters) > 1:
-                print(f"running {project} ({index}/{len(filters)})", file=sys.stderr)
-            code, output = run_dotnet_test(root, project, filter_expr)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(projects)) as pool:
+        futures = {pool.submit(run_dotnet_test, root, project, expr, True, slow):
+                   (project, index) for project, index, expr in pairs}
+        for future, (project, index) in sorted(futures.items(), key=lambda item: item[1][1]):
+            code, output = future.result()
+            header = project if len(filters) == 1 else f"{project} ({index}/{len(filters)})"
+            print(f"===== {header} =====")
+            print(output, end="" if output.endswith("\n") else "\n")
             if code != 0:
                 exit_code = exit_code or code
             failed, passed = parse_summary(output)
@@ -349,6 +485,8 @@ def run_selection(root: Path, classes, run_all: bool) -> int:
     print(f"selected classes: {'all' if run_all else len(classes)}")
     print(f"passed: {total_passed}  failed: {total_failed}")
     return exit_code
+
+
 
 
 # ---------------------------------------------------------------------- main
@@ -364,6 +502,8 @@ def main(argv=None) -> int:
                         help="only print the selected test classes")
     parser.add_argument("--all", action="store_true",
                         help="run the full test suite")
+    parser.add_argument("--slow", action="store_true",
+                        help="also run Speed=Slow exhaustive tests (SODRPG_SLOW=1)")
     args = parser.parse_args(argv)
 
     root = REPO_ROOT
@@ -389,10 +529,15 @@ def main(argv=None) -> int:
                 print(name)
             print(f"selected: {len(classes)} classes (full run)")
             return 0
-        return run_selection(root, None, run_all=True)
+        return run_selection(root, None, run_all=True, slow=args.slow)
 
     files = collect_files(root, changed)
-    selection = select_tests(changed, files)
+    try:
+        diffs = collect_diffs(root, base, changed)
+    except RuntimeError as error:
+        print(f"warning: diff collection failed ({error}); using file-level mapping", file=sys.stderr)
+        diffs = None
+    selection = select_tests(changed, files, diffs)
     for reason in selection.reasons:
         print(f"full run: {reason}", file=sys.stderr)
 
@@ -402,7 +547,7 @@ def main(argv=None) -> int:
             for name in sorted(selection.classes):
                 print(name)
             return 0
-        return run_selection(root, None, run_all=True)
+        return run_selection(root, None, run_all=True, slow=args.slow)
 
     if not selection.classes:
         print("nothing relevant changed; no tests to run")
@@ -415,7 +560,7 @@ def main(argv=None) -> int:
         return 0
 
     print(f"selected classes: {len(selection.classes)}")
-    return run_selection(root, selection.classes, run_all=False)
+    return run_selection(root, selection.classes, run_all=False, slow=args.slow)
 
 
 if __name__ == "__main__":

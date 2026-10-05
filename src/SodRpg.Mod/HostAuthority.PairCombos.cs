@@ -96,7 +96,7 @@ namespace SodRpg.Mod
         private void QueueGimmickRequests(HeroRuntime rt, Entity victim, float now)
         {
             var requests = rt.GimmickRequests;
-            if (requests.Count > 0) SendBountyReport(rt, BountyReportKind.GimmicksTriggered, requests.Count);
+            if (requests.Count > 0) rt.PendingGimmickReports += requests.Count;
             foreach (var request in requests)
             {
                 var effect = request.Entry.Def.Effect;
@@ -155,14 +155,23 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private static void CollectPairMemories(HeroRuntime rt)
+        /// <summary>装備エポックが変わらない限り、前回集めた記憶名とスロット辞書をそのまま使う（#161）。中身は旧実装と同一。</summary>
+        private void CollectPairMemories(HeroRuntime rt)
         {
+            long epoch = EnsureMemoryAttributionEquipment(rt.Hero);
+            if (rt.MemoryEquipmentEpoch == epoch) return;
+            rt.MemoryEquipmentEpoch = epoch;
             rt.PairMemories.Clear();
+            rt.MemoryByName.Clear();
             if (rt.Hero.Skill == null) return;
             foreach (var slot in LinkSkills)
             {
                 var skill = rt.Hero.Skill.GetSkill(slot);
-                if (skill != null) rt.PairMemories.Add(skill.GetType().Name);
+                if (skill == null) continue;
+                string name = skill.GetType().Name;
+                rt.PairMemories.Add(name);
+                // 同じ記憶を複数枠に装備した場合は最初の枠が勝つ（旧実装の最初一致と同じ）。
+                if (!rt.MemoryByName.ContainsKey(name)) rt.MemoryByName.Add(name, skill);
             }
         }
 
@@ -308,9 +317,15 @@ namespace SodRpg.Mod
                     || actor is AbilityInstance instance && instance.gem != null) return true;
             return false;
         }
-        private static SkillTrigger FindMemory(Hero hero, string memory)
+        private SkillTrigger FindMemory(Hero hero, string memory)
         {
-            if (hero.Skill == null) return null;
+            if (hero == null || memory == null || hero.Skill == null) return null;
+            if (_runtimes.TryGetValue(hero, out var rt))
+            {
+                CollectPairMemories(rt);
+                return rt.MemoryByName.TryGetValue(memory, out var skill) ? skill : null;
+            }
+            // Build のない旅人（本体アダプターの確認など）は従来どおり枠を走査する。
             foreach (var slot in LinkSkills)
             {
                 var skill = hero.Skill.GetSkill(slot);
