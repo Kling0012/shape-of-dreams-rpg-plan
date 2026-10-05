@@ -68,6 +68,16 @@ namespace SodRpg.Mod
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
+    // Startup fixtures contain no Infinity native patch classes; installation stays unavailable.
+    internal static class InfinityMode
+    {
+        internal static bool IsNativePatch(Type patch) => false;
+        internal static void CompletePatchInstallation(int installedCount)
+        {
+            if (installedCount != 0) throw new NotSupportedException("Infinity is outside the startup harness.");
+        }
+        internal static void DisableFeature(string reason) { }
+    }
     internal sealed class PerfMeter
     {
         public void Frame(float delta) { }

@@ -42,6 +42,7 @@ namespace SodRpg.Mod
         public ulong authorityGeneration;
         public string continueRunId, continueCheckpointId, continueResumeSession;
         public bool continueCheckpoints;
+        public bool infinityAvailable;
     }
 
     public class DreamforgeAppliedMsg

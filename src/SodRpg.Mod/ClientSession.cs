@@ -512,11 +512,13 @@ namespace SodRpg.Mod
                 return;
             }
             string runId = gm.runId;
+            if (_nativeContinueRestoring || InfinityMode.Restoring) return;
             if (_nativeContinueCheckpoint != null)
             {
                 if (runId != _nativeContinueCheckpoint.RunId) return;
                 RestoreContinueCheckpoint(_nativeContinueCheckpoint, _continueResumeSession);
                 _nativeContinueCheckpoint = null;
+                ValidateHostInfinityContinue();
             }
             if (!ContinueReady) return;
             if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;

@@ -15,6 +15,8 @@ namespace SodRpg.Mod
         private float _helloFirstSent = -1f, _nextHello;
         private bool _helloAnswered;
         private string _acceptedHostContent;
+        private bool _hostInfinityAvailable;
+        internal static bool RemoteHostInfinityAvailable => _hostSession?._hostInfinityAvailable == true;
         private bool MechanismHandshakeAccepted => NetworkServer.active
             || _helloAnswered && string.Equals(_acceptedHostContent, ContentFingerprint.Value, StringComparison.Ordinal);
 
@@ -40,6 +42,7 @@ namespace SodRpg.Mod
             _helloAnswered = false;
             _continueHandshakeReady = false;
             _acceptedHostContent = null;
+            _hostInfinityAvailable = false;
             HostVersionWarning = null;
         }
 
@@ -55,6 +58,7 @@ namespace SodRpg.Mod
                     protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
                     killObservationSessionId = KillObservationSessionId(_clientRpcOn),
                     continueCheckpoints = true,
+                    infinityAvailable = InfinityMode.Available,
                 });
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
@@ -71,6 +75,7 @@ namespace SodRpg.Mod
             _helloAnswered = true;
             bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
             _acceptedHostContent = same ? msg.content : null;
+            _hostInfinityAvailable = same && msg.infinityAvailable;
             if (same) ReceiveContinueHandshake(msg);
             if (same && msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
             string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;

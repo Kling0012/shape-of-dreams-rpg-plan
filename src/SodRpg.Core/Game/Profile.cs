@@ -447,6 +447,11 @@ namespace SodRpg.Core.Game
             Japanese = source.Japanese;
             StartDepth = source.StartDepth;
             LastDreamDepth = source.LastDreamDepth;
+            LastInfinityEnabled = source.LastInfinityEnabled;
+            LastInfinityInterval = source.LastInfinityInterval;
+            InfinityRewardBudget = source.InfinityRewardBudget;
+            InfinityRecords.Clear();
+            Game.InfinityRecords.CloneInto(source, this);
             Focus = source.Focus;
             HintsOff = source.HintsOff;
             StarterGranted = source.StarterGranted;
@@ -454,6 +459,7 @@ namespace SodRpg.Core.Game
             Stats = source.Stats;
             Run = source.Run;
             CompletedRunId = source.CompletedRunId;
+            CompletedRunSecuredReturn = source.CompletedRunSecuredReturn;
             RunRecovery = source.RunRecovery;
             KillClassification = source.KillClassification;
             LastReport = source.LastReport;

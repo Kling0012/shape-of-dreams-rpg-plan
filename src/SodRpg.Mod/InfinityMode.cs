@@ -17,9 +17,53 @@ namespace SodRpg.Mod
         private static InfinityRunState _initial;
         private static bool _restoring;
         private static bool _newInfinity;
-        private static bool _halted;
         private static bool _refresh;
-        private static bool _ownsPause;
+        private static bool _unavailable;
+        private static readonly Type[] NativePatchClasses =
+        {
+            typeof(InfinityNextZone), typeof(InfinityGenerated), typeof(InfinityRoomClear),
+            typeof(InfinityRoomIdentity), typeof(InfinityTravel), typeof(InfinityNoSpecialRift),
+            typeof(InfinityResult), typeof(InfinityExit), typeof(InfinityNativeSave),
+            typeof(InfinityNativeRestore), typeof(InfinityZoneTravel), typeof(InfinityNoSpecialInvitation),
+            typeof(InfinityLobbyStartCondition),
+        };
+
+        internal static bool Available { get; private set; }
+        internal static string UnavailableReason { get; private set; }
+        internal static string UnavailableNotice => Loc.T(
+            "インフィニティは無効です。通常モードは利用できます。", "Infinity is disabled. Normal mode remains available.")
+            + (string.IsNullOrEmpty(UnavailableReason) ? "" : " " + UnavailableReason);
+
+        internal static bool IsNativePatch(Type type) => Array.IndexOf(NativePatchClasses, type) >= 0;
+
+        internal static void CompletePatchInstallation(int installedCount)
+        {
+            if (installedCount != NativePatchClasses.Length)
+                DisableFeature("Infinity native interception is incomplete.");
+            if (!_unavailable) Available = true;
+        }
+
+        internal static void DisableFeature(string reason)
+        {
+            Available = false;
+            _restoring = false;
+            _refresh = false;
+            _newInfinity = false;
+            if (_unavailable) return;
+            _unavailable = true;
+            UnavailableReason = reason;
+            if (NetworkServer.active)
+                try
+                {
+                    var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+                    if (settings != null) settings.customData[HaltKey] = "1";
+                }
+                catch (Exception ex) { Log.Warn("Infinity disabled-state announcement unavailable: " + ex.Message); }
+            Log.Warn("Infinity disabled; normal mode remains available. " + reason);
+        }
+
+        internal static void InterceptionFailed(string hook, Exception error)
+            => DisableFeature(hook + ": " + error.Message);
         private static readonly HashSet<int> ReferencedModifiers = new HashSet<int>();
         private static readonly List<int> RetiredModifiers = new List<int>();
         private static Actor _ackActor;
@@ -41,13 +85,16 @@ namespace SodRpg.Mod
                 return run != null && run.RunId == NetworkedManagerBase<GameManager>.softInstance?.runId ? run.Infinity : _initial;
             }
         }
-        internal static bool Enabled => NetworkServer.active
+        internal static bool Enabled => Available && (NetworkServer.active
             ? State != null || NativeEnvelopePresent || _newInfinity
                 || NetworkedManagerBase<GameManager>.softInstance == null && ClientSession.HostChosenInfinityEnabled
             : NativeEnvelopePresent || NetworkedManagerBase<GameManager>.softInstance == null
-                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue("dreamforge.infinity.enabled", out var enabled) == true && enabled == "1";
-        internal static bool NativeSaveAgreement => !_halted && !_restoring
-            && (NetworkServer.active || NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
+                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue("dreamforge.infinity.enabled", out var enabled) == true && enabled == "1")
+            && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
+                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
+        internal static bool NativeSaveAgreement => Available && !_restoring
+            && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
+                && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
         internal static bool IsTechnicalRefresh => _refresh;
         internal static bool CanAdvance => NativeSaveAgreement && ClientSession.HostInfinityCanAdvance;
         internal static bool Restoring => _restoring;
@@ -83,7 +130,7 @@ namespace SodRpg.Mod
                 if (text == _choiceText) return _choice;
                 _choiceText = text;
                 try { _choice = JsonConvert.DeserializeObject<InfinityChoice>(text); }
-                catch (JsonException) { _choice = null; Halt("Invalid Infinity choice envelope."); }
+                catch (JsonException) { _choice = null; DisableFeature("Invalid Infinity choice envelope."); }
                 if (_choice != null && RunChoiceSnapshot.TryDecode(_choice.BeforeChoices, out var before)) _choice.Before = before;
                 return _choice;
             }
@@ -91,12 +138,12 @@ namespace SodRpg.Mod
 
         internal static void StartNewGame()
         {
-            _restoring = false; _halted = false; _refresh = false;
+            if (!Available) return;
+            _restoring = false; _refresh = false;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _choice = null; _choiceText = null; Acks.Clear();
             _reachableRoomEpoch = -1;
-            ReleasePause();
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (NetworkServer.active && settings != null)
             {
@@ -108,22 +155,27 @@ namespace SodRpg.Mod
 
         internal static void BeginRestore()
         {
-            _restoring = true; _halted = false; _initial = null; _newInfinity = false; _refresh = false;
+            _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
             _reachableRoomEpoch = -1; Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()
         {
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (!Available) return;
             if (zone == null)
             {
                 _restoring = false;
-                if (NativeEnvelopePresent || State != null) Halt("Infinity continue has no native graph.");
+                if (NativeEnvelopePresent || State != null) DisableFeature("Infinity continue has no native graph.");
                 return;
             }
             zone.CallOnReadyAfterTransition(() =>
             {
-                _restoring = false;
-                ClientSession.ValidateHostInfinityContinue();
+                try
+                {
+                    _restoring = false;
+                    if (Available) ClientSession.FinishNativeContinueRestore();
+                }
+                catch (Exception ex) { InterceptionFailed(nameof(FinishRestore), ex); }
             });
         }
 
@@ -155,31 +207,8 @@ namespace SodRpg.Mod
                 && a.ClearedNodes.SetEquals(b.ClearedNodes);
         }
 
-        internal static void Halt(string reason)
-        {
-            if (!_halted) Log.Warn(reason + " Infinity progression and new rewards are paused.");
-            _halted = true;
-            var gm = NetworkedManagerBase<GameManager>.softInstance;
-            if (NetworkServer.active && gm != null && !gm.isGameTimePausedByGame) _ownsPause = true;
-            if (NetworkServer.active && gm != null) gm.isGameTimePausedByGame = true;
-            if (NetworkServer.active)
-            {
-                var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
-                if (settings != null) settings.customData[HaltKey] = "1";
-            }
-        }
-
-        private static void ReleasePause()
-        {
-            var gm = NetworkedManagerBase<GameManager>.softInstance;
-            if (_ownsPause && gm != null) gm.isGameTimePausedByGame = false;
-            _ownsPause = false;
-        }
-
         internal static void ConfirmAgreement()
         {
-            _halted = false;
-            ReleasePause();
             if (NetworkServer.active) NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.Remove(HaltKey);
         }
 
@@ -217,22 +246,22 @@ namespace SodRpg.Mod
                 || asset.combatRooms == null || asset.combatRooms.Count == 0
                 || asset.bossRooms == null || asset.bossRooms.Count == 0)
             {
-                Halt("Infinity requires a normal zone with native start, combat and boss pools."); return;
+                DisableFeature("Infinity requires a normal zone with native start, combat and boss pools."); return;
             }
             if (State == null) _initial = new InfinityRunState
             {
                 FixedZoneId = asset.name, Interval = ClientSession.HostChosenInfinityInterval,
                 DifficultyId = NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name,
             };
-            if (State.FixedZoneId != asset.name) { Halt("Infinity fixed-zone identity changed."); return; }
+            if (State.FixedZoneId != asset.name) { DisableFeature("Infinity fixed-zone identity changed."); return; }
             if (_refresh)
             {
                 if (!State.CompleteGraphTransition(State.GraphEpoch + 1))
-                { Halt("Infinity graph generation did not match its transition intent."); return; }
+                { DisableFeature("Infinity graph generation did not match its transition intent."); return; }
                 _refresh = false;
             }
             if (zone.nodes.Count > InfinityRunState.MaximumGraphNodes)
-            { Halt("Infinity generated graph exceeds its bounded node limit."); return; }
+            { DisableFeature("Infinity generated graph exceeds its bounded node limit."); return; }
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             foreach (var node in zone.nodes)
                 if (node.modifiers != null)
@@ -247,23 +276,26 @@ namespace SodRpg.Mod
 
         internal static void Tick()
         {
+            if (!Available) return;
+            try { TickNative(); }
+            catch (Exception ex) { InterceptionFailed(nameof(Tick), ex); }
+        }
+
+        private static void TickNative()
+        {
             if (!NetworkServer.active || !Enabled) return;
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
             var state = State;
             if (zone == null || state == null) return;
             RegisterAcks();
-            if (!NativeSaveAgreement)
-            {
-                if (_halted) NetworkedManagerBase<GameManager>.softInstance.isGameTimePausedByGame = true;
-                return;
-            }
+            if (!NativeSaveAgreement) return;
             if (zone.isInAnyTransition) return;
             if (zone.currentZone == null || zone.currentZone.name != state.FixedZoneId)
-            { Halt("Infinity native zone does not match the fixed graph."); return; }
+            { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
             var room = SingletonDewNetworkBehaviour<Room>.softInstance;
             if (room == null || !room.isActive || zone.currentNodeIndex < 0) return;
             if (state.ClearedCombatTotal == long.MaxValue)
-            { Halt("Infinity combat-clear counter exhausted."); return; }
+            { DisableFeature("Infinity combat-clear counter exhausted."); return; }
             if (zone.currentNode.type == WorldNodeType.ExitBoss)
             {
                 bool soul = false;
@@ -364,14 +396,14 @@ namespace SodRpg.Mod
             var state = State;
             if (zone == null || state == null || zone.isInAnyTransition || !CanAdvance
                 || !ClientSession.HostInfinityBoundarySettled || !ClientSession.HostInfinityRewardsSettled) return false;
-            if (state.GraphEpoch == long.MaxValue) { Halt("Infinity graph epoch exhausted."); return false; }
+            if (state.GraphEpoch == long.MaxValue) { DisableFeature("Infinity graph epoch exhausted."); return false; }
             if (state.Phase != InfinityPhase.Transitioning && !state.BeginGraphTransition(intent)) return false;
             _refresh = true;
-            if (!ClientSession.PersistHostInfinityState()) { _refresh = false; Halt("Infinity transition receipt could not be saved."); return false; }
+            if (!ClientSession.PersistHostInfinityState()) { _refresh = false; DisableFeature("Infinity transition receipt could not be saved."); return false; }
             // noAdvance explicitly retains zoneIndex, tier, loop and ambientLevel. Native LoadNode adopts
             // KO-only revival and resets hunter credit/status/turn; healthy heroes are not fully healed.
-            zone.TravelToZone(zone.currentZone, noAdvance: true);
-            return true;
+            try { zone.TravelToZone(zone.currentZone, noAdvance: true); return true; }
+            catch (Exception ex) { InterceptionFailed(nameof(Regenerate), ex); return false; }
         }
 
         internal static void PublishChoice(InfinityChoice choice)
@@ -397,12 +429,17 @@ namespace SodRpg.Mod
 
         private static void ReceiveAck(DreamforgeInfinityAckMsg msg, DewPlayer caller)
         {
-            var choice = CurrentChoice;
-            if (caller == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)
-                || msg == null || msg.protocol != Protocol.Version || choice == null
-                || msg.runId != choice.RunId || msg.revision != choice.Revision
-                || msg.graphEpoch != choice.GraphEpoch || msg.boundary != choice.Boundary) return;
-            Acks[caller.guid] = msg.revision;
+            if (!Available) return;
+            try
+            {
+                var choice = CurrentChoice;
+                if (caller == null || !caller.isHumanPlayer || !DewPlayer.gamePlayers.Contains(caller)
+                    || msg == null || msg.protocol != Protocol.Version || choice == null
+                    || msg.runId != choice.RunId || msg.revision != choice.Revision
+                    || msg.graphEpoch != choice.GraphEpoch || msg.boundary != choice.Boundary) return;
+                Acks[caller.guid] = msg.revision;
+            }
+            catch (Exception ex) { InterceptionFailed(nameof(ReceiveAck), ex); }
         }
 
         internal static void AcknowledgeLocal(InfinityChoice choice)
@@ -448,38 +485,59 @@ namespace SodRpg.Mod
     {
         private static bool Prefix()
         {
-            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
-            if (zone == null || zone.currentZone == null)
+            if (!InfinityMode.Available) return true;
+            try
             {
-                if (!InfinityMode.Restoring) InfinityMode.StartNewGame();
-                return true;
+                var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+                if (zone == null || zone.currentZone == null)
+                {
+                    if (!InfinityMode.Restoring) InfinityMode.StartNewGame();
+                    return true;
+                }
+                return !InfinityMode.Enabled;
             }
-            if (!InfinityMode.Enabled) return true;
-            return false;
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNextZone), ex); return true; }
         }
     }
 
     [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.GenerateWorldAuto))]
     internal static class InfinityGenerated
     {
-        private static readonly System.Reflection.FieldInfo NextModifier = AccessTools.Field(typeof(ZoneManager), "_nextModifierId");
+        private static readonly AccessTools.FieldRef<ZoneManager, int> NextModifier = SafeReflection.FieldRef<ZoneManager, int>("_nextModifierId");
+
+        private static bool Prepare()
+        {
+            if (NextModifier != null) return true;
+            InfinityMode.DisableFeature("Infinity native modifier identity field is unavailable.");
+            return false;
+        }
+
         private static bool Prefix(ZoneManager __instance, out bool __state)
         {
-            __state = true;
-            if (!InfinityMode.Enabled) return true;
-            if (!InfinityMode.NativeSaveAgreement || NextModifier == null
-                || (int)NextModifier.GetValue(__instance) >= int.MaxValue - InfinityRunState.MaximumGraphNodes * 16)
+            __state = false;
+            if (!InfinityMode.Available) return true;
+            try
             {
-                InfinityMode.Halt("Infinity modifier generation identity is unavailable or exhausted.");
+                __state = true;
+                if (!InfinityMode.Enabled) return true;
+                if (NextModifier == null
+                    || NextModifier(__instance) >= int.MaxValue - InfinityRunState.MaximumGraphNodes * 16)
+                {
+                    InfinityMode.DisableFeature("Infinity modifier generation identity is unavailable or exhausted.");
+                    return true;
+                }
+                if (InfinityMode.NativeSaveAgreement) return true;
                 __state = false;
                 return false;
             }
-            return true;
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex); return true; }
         }
 
         private static void Postfix(ZoneManager __instance, bool __state)
         {
-            if (__state) InfinityMode.OnGenerated(__instance);
+            if (!InfinityMode.Available || !__state) return;
+            try { InfinityMode.OnGenerated(__instance); }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityGenerated), ex); }
         }
     }
 
@@ -488,8 +546,18 @@ namespace SodRpg.Mod
     {
         private static void Postfix(Room __instance)
         {
-            var room = __instance;
-            room.onRoomClear.AddListener(() => InfinityMode.OnRoomClear(room));
+            if (!InfinityMode.Available) return;
+            try
+            {
+                var room = __instance;
+                room.onRoomClear.AddListener(() =>
+                {
+                    if (!InfinityMode.Available) return;
+                    try { InfinityMode.OnRoomClear(room); }
+                    catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomClear), ex); }
+                });
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomClear), ex); }
         }
     }
 
@@ -498,14 +566,19 @@ namespace SodRpg.Mod
     {
         private static void Prefix()
         {
-            if (!NetworkServer.active || !InfinityMode.Enabled || !InfinityMode.NativeSaveAgreement) return;
-            var state = InfinityMode.State;
-            if (state == null) return;
-            if (state.RoomEpoch == long.MaxValue)
-            { InfinityMode.Halt("Infinity room epoch exhausted."); return; }
-            state.RoomEpoch++;
-            InfinityMode.WriteEnvelope();
-            ClientSession.PersistHostInfinityState();
+            if (!InfinityMode.Available) return;
+            try
+            {
+                if (!NetworkServer.active || !InfinityMode.Enabled || !InfinityMode.NativeSaveAgreement) return;
+                var state = InfinityMode.State;
+                if (state == null) return;
+                if (state.RoomEpoch == long.MaxValue)
+                { InfinityMode.DisableFeature("Infinity room epoch exhausted."); return; }
+                state.RoomEpoch++;
+                InfinityMode.WriteEnvelope();
+                ClientSession.PersistHostInfinityState();
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityRoomIdentity), ex); }
         }
     }
 
@@ -513,21 +586,43 @@ namespace SodRpg.Mod
     internal static class InfinityTravel
     {
         private static bool Prefix(ZoneManager __instance, ref int to, bool isSidetrackTransition)
-            => InfinityMode.RouteTravel(__instance, ref to, isSidetrackTransition);
+        {
+            if (!InfinityMode.Available) return true;
+            int original = to;
+            try { return InfinityMode.RouteTravel(__instance, ref to, isSidetrackTransition); }
+            catch (Exception ex)
+            {
+                to = original;
+                InfinityMode.InterceptionFailed(nameof(InfinityTravel), ex);
+                return true;
+            }
+        }
     }
 
     [HarmonyPatch(typeof(RoomRifts), nameof(RoomRifts.CreateSidetrackRift))]
     internal static class InfinityNoSpecialRift
     {
-        private static bool Prefix() => !InfinityMode.Enabled;
+        private static bool Prefix()
+        {
+            if (!InfinityMode.Available) return true;
+            try { return !InfinityMode.Enabled; }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNoSpecialRift), ex); return true; }
+        }
     }
 
     [HarmonyPatch(typeof(GameManager), nameof(GameManager.WrapUpAndShowResult))]
     internal static class InfinityResult
     {
-        private static bool Prefix(DewGameResult.ResultType type) => !InfinityMode.Enabled
-            || type == DewGameResult.ResultType.GameOver
-            || type == DewGameResult.ResultType.Conceded && ClientSession.HostInfinityReturnCommitted;
+        private static bool Prefix(DewGameResult.ResultType type)
+        {
+            if (!InfinityMode.Available) return true;
+            try
+            {
+                return !InfinityMode.Enabled || type == DewGameResult.ResultType.GameOver
+                    || type == DewGameResult.ResultType.Conceded && ClientSession.HostInfinityReturnCommitted;
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityResult), ex); return true; }
+        }
     }
 
     [HarmonyPatch(typeof(Rift_RoomExit), "UserCode_TpcInteract__NetworkConnectionToClient")]
@@ -535,17 +630,26 @@ namespace SodRpg.Mod
     {
         private static bool Prefix()
         {
-            if (!InfinityMode.Enabled) return true;
-            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
-            if (zone != null && zone.currentNodeIndex >= 0 && zone.currentNode.type == WorldNodeType.ExitBoss) return false;
-            return true;
+            if (!InfinityMode.Available) return true;
+            try
+            {
+                if (!InfinityMode.Enabled) return true;
+                var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+                return zone == null || zone.currentNodeIndex < 0 || zone.currentNode.type != WorldNodeType.ExitBoss;
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityExit), ex); return true; }
         }
     }
 
     [HarmonyPatch(typeof(DewPersistence), nameof(DewPersistence.SerializeGameData))]
     internal static class InfinityNativeSave
     {
-        private static void Prefix() => InfinityMode.WriteEnvelope();
+        private static void Prefix()
+        {
+            if (!InfinityMode.Available) return;
+            try { ClientSession.PrepareNativeInfinityContinue(); }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNativeSave), ex); }
+        }
     }
 
     [HarmonyPatch(typeof(DewPersistence), nameof(DewPersistence.ApplyGameData))]
@@ -553,24 +657,50 @@ namespace SodRpg.Mod
     {
         private static void Prefix(ref Action onFinish)
         {
-            InfinityMode.BeginRestore();
-            var original = onFinish;
-            onFinish = () => { InfinityMode.FinishRestore(); original?.Invoke(); };
+            if (!InfinityMode.Available) return;
+            try
+            {
+                InfinityMode.BeginRestore();
+                var original = onFinish;
+                onFinish = () =>
+                {
+                    try { original?.Invoke(); }
+                    finally
+                    {
+                        if (InfinityMode.Available)
+                            try { InfinityMode.FinishRestore(); }
+                            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNativeRestore), ex); }
+                    }
+                };
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNativeRestore), ex); }
         }
     }
 
     [HarmonyPatch(typeof(ZoneManager), nameof(ZoneManager.TravelToZone))]
     internal static class InfinityZoneTravel
     {
-        private static bool Prefix(ZoneManager __instance, Zone prefab, bool noAdvance) =>
-            !InfinityMode.Enabled || __instance.currentZone == null
-            || InfinityMode.NativeSaveAgreement && InfinityMode.IsTechnicalRefresh
-                && noAdvance && prefab == __instance.currentZone;
+        private static bool Prefix(ZoneManager __instance, Zone prefab, bool noAdvance)
+        {
+            if (!InfinityMode.Available) return true;
+            try
+            {
+                return !InfinityMode.Enabled || __instance.currentZone == null
+                    || InfinityMode.NativeSaveAgreement && InfinityMode.IsTechnicalRefresh
+                        && noAdvance && prefab == __instance.currentZone;
+            }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityZoneTravel), ex); return true; }
+        }
     }
 
     [HarmonyPatch(typeof(GameMod_StarlessPath), "ClientEventOnActorAdd")]
     internal static class InfinityNoSpecialInvitation
     {
-        private static bool Prefix() => !InfinityMode.Enabled;
+        private static bool Prefix()
+        {
+            if (!InfinityMode.Available) return true;
+            try { return !InfinityMode.Enabled; }
+            catch (Exception ex) { InfinityMode.InterceptionFailed(nameof(InfinityNoSpecialInvitation), ex); return true; }
+        }
     }
 }

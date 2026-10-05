@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-この#97統合ブランチは **Protocol 19・保存形式5（プロフィールリセットなし）**。最新mainのv2.0.5と#48・#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このInfinity統合ブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.1、#48・#97・#99、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -51,9 +51,17 @@
 - 再開時は、その後の遠征で得た経験・確保済み報酬と保留取引も保存地点に合わせ、本体の通貨と取引台帳を一緒に戻す。ロビーの装備変更は残し、鍛冶・工房などの変更も保存地点の遺物・素材で成立する場合は残す。巻き戻りで必要な遺物・素材がなくなる場合は、ロビーの財産変更をまとめて戻し、画面に理由を表示する。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 19と中断対応の相互確認を使う。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 20と中断対応の相互確認を使う。
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
+- Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
+
+### Infinity割り込みの互換性
+
+- native対象の不足、パッチ適用・実行の失敗では、警告を出して **Infinityだけを無効化**する。MOD全体を停止せず、ゲーム全体をpauseしない。preflightは警告のみで、Harmonyの非公開内部APIや厳密なIL検査を起動の必須条件にしない。
+- 必要なInfinityパッチがすべて適用できた場合だけ、ロビーからONにできる。無効時もOFFへ切り替えて通常遠征を開始できる。参加者のInfinity可否はProtocol・内容照合とは別に交換するため、Infinityが使えない参加者の通常モードの装備・報酬まで拒否しない。
+- 無効化されたInfinityの保存内容は通常遠征へ書き換えずに保持し、新しいInfinity進行・報酬だけを止める。
+
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
 

@@ -390,7 +390,9 @@ namespace SodRpg.Mod
                     .Append(Loc.T(" · 圧段階 ", " · pressure stage ")).Append(infinity.PressureStage);
                 if (infinity.PressureStage == 100) sb.Append(Loc.T("（上限）", " (cap)"));
                 sb.Append("</size>");
-                if (!InfinityMode.NativeSaveAgreement)
+                if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
+                    sb.Append("\n<color=#ffb070>").Append(InfinityMode.UnavailableNotice).Append("</color>");
+                else if (!InfinityMode.NativeSaveAgreement)
                     sb.Append("\n<color=#ffb070>").Append(Loc.T("保存不一致：進行停止・回復待ち", "Save mismatch: progression paused; recovery required")).Append("</color>");
             }
             string sectionTags = SectionTagNotice();
@@ -792,9 +794,11 @@ namespace SodRpg.Mod
             GUI.enabled = _s.CanChooseDepth;
             if (GUILayout.Button(Loc.T("オフ（通常）", "Off (normal)"), !enabled ? _st.TabSel : _st.Tab, GUILayout.Width(112)))
                 SetStatus(_s.ChooseInfinity(false, interval));
+            GUI.enabled = _s.CanChooseDepth && InfinityMode.Available;
             if (GUILayout.Button(Loc.T("オン", "On"), enabled ? _st.TabSel : _st.Tab, GUILayout.Width(64)))
                 SetStatus(_s.ChooseInfinity(true, interval));
             GUILayout.Label(Loc.T("ボス周期", "Boss interval"), _st.Small, GUILayout.Width(85));
+            GUI.enabled = _s.CanChooseDepth && (!enabled || InfinityMode.Available);
             for (int i = 0; i < InfinityIntervals.Length; i++)
             {
                 int value = InfinityIntervals[i];
@@ -803,6 +807,8 @@ namespace SodRpg.Mod
             }
             GUI.enabled = true;
             GUILayout.EndHorizontal();
+            if (!InfinityMode.Available || !Mirror.NetworkServer.active && !ClientSession.RemoteHostInfinityAvailable)
+                GUILayout.Label(InfinityMode.UnavailableNotice, _st.Warn);
             if (enabled)
                 GUILayout.Label(Loc.T("同じゾーンを再生成。周期ボスの魂報酬後に、ホストが全員の帰還／続行を選びます。再生成時はKO復活・狩りの局所リセット。報酬速度の上限は段階2です。",
                     "Regenerates the same zone. After each boss's soul reward, the host chooses return or continue for everyone. Regeneration revives KO players and resets local hunts. Reward rate limits are deferred to stage 2."), _st.Small);

@@ -178,3 +178,12 @@
 - BalanceSimの実Core経路を2000人・seed95で実行し、通常の深さ0／5とInfinityの全10／15／20周期×30／60／120分、通常速度・4倍速・悪夢昇格・宝庫を比較した。全比較の抽選Epic以上／Legendaryの予約期待値は上記補充値以下。300分の保証認可ケースでは初回4時間後に各人1回の予約、実際の遺物生成は別集計。帰還→clone→codec往復で帰還部屋10・圧1・帰還回数1・終了済み・Runなし・codec注記なしを観測した。結果は [`tools/BalanceSim/result-infinity.md`](../../tools/BalanceSim/result-infinity.md)。
 - 135分の戦闘creditを実APIで蓄積した認可済み実ボスの分離観測では、2000人の2000機会が認可され、限定セット200個（10%）を観測した。このケースもEpic以上予約0.074913／時・Legendary予約0.047579／時で基準以下。通常速度の30／60／120分ケースで限定セット0だったのは初期0と期待値予算の認可不足によるもので、抽選経路を削除・確率を0にした結果ではない。
 - この環境の.NET runtimeは10.0.11のみのため、net8.0シミュレーターは `DOTNET_ROLL_FORWARD=Major` で実行した。通常20部屋／35分は実測ではない。上限は蓄積した戦闘時間に対する累積期待値／出力のrateと保有burstであり、持越しを含む任意の短時間窓の厳密上限ではない。実測の通常供給が低ければ基準の引下げが必要。本体起動プログラムがないため実画面・実coop・実continue・長時間負荷は未確認。
+
+## 16. 最新main・#97の統合
+- v2.1.1の警告のみのpreflight、クラス単位のパッチ適用・巻き戻し、`SafeReflection`を維持する。#48の14ボスセット、Polaris強化、装備アイコン、#97/#99の変更はmain側の意図を残したmergeで取り込んだ。通信はProtocol20、保存形式5の省略可能項目を維持する。
+- #97の非再帰チェックポイントは、Infinityの固定ゾーン・難易度・周期・累計／区間クリア数・世代・phase・選択receiptと、プロフィールの報酬予算・入場重複排除・帰還記録を保存する。復元は同じProfile参照へ所有済み状態を移し、帰還receiptと記録表示のrevisionも戻す。次回ロビー設定は現在の選択を残し、再開するrunの周期を変えない。
+- native保存前にクリア状態と未反映の戦闘creditを同期する。native完了callbackと地図ready後に対応チェックポイントを適用・照合し、同RunIdでもInfinity初期化・ミラー・クリア観測・ACK・予算時刻の一時状態を捨てる。ロード前の最新Profileとの誤照合や、ロード中の時刻差による補充を避ける。
+- Infinityの13パッチ（ロビー開始条件を含む）の対象・実適用を公開Harmony APIで確認し、欠落・適用失敗・実行例外ではInfinityだけをプロセス中無効にする。既に入ったフックも無効時は本体処理へ戻す。MOD全体の停止やゲーム全体のpauseは行わず、保存済みInfinityデータは保持する。
+- 無効時はロビーONを拒否し、OFFへの切替と通常モードは残す。HelloのInfinity可否は通常のProtocol／内容照合と分離し、対応が欠ける参加者とのInfinity開始だけを拒否する。ホストの無効化は参加者のInfinity割り込み・新規報酬にも反映する。
+- 最終Releaseビルドは成功（エラー0・警告5）、配備先 `/tmp/sod-deploy-i95`。指定 `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` は完走・終了コード0：Core 3237成功／既存2skip、Native 23成功、Startup 5成功、計3265成功・失敗0。部分クラス代役・反射呼出し・旧保存fixture補助関数だけを追従し、テストケース本体・期待値の変更やテスト追加は行っていない。残存コンパイル不備なし。
+- 既存BalanceSimを `--mode infinity --players 1 --seed 95` で実行し、通常／Infinity経済経路と合法帰還・clone・codec往復が完走した。帰還部屋10・圧1・帰還回数1・終了済み・Runなし・codec注記なしを観測し、既存2000人の結果ファイルは上書きしていない。本体起動プログラムがないため、実画面・実coop・実本体continueとInfinity native割り込み失敗時の実ゲーム挙動は未確認。

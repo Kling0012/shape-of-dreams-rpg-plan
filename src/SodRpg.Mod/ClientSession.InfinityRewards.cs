@@ -18,6 +18,18 @@ namespace SodRpg.Mod
         // Samples are never restored: joining/loading starts a fresh observation, not a refill.
         private void TickInfinityRewards() => SampleInfinityRewards(false);
 
+        private void ResetInfinityRewardSamples()
+        {
+            _infinityBudgetSampleRun = null;
+            _infinityBudgetSampleRoom = null;
+            _infinityBudgetSampleTime = 0;
+            _infinityCombatCredit = 0;
+            _infinityBudgetRoomRun = null;
+            _infinityBudgetRoomGraph = -1;
+            _infinityBudgetRoomEpoch = -1;
+            _infinityBudgetWasActive = false;
+        }
+
         private void SampleInfinityRewards(bool flush)
         {
             var run = Profile.Run;

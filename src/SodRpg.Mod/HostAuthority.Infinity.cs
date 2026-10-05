@@ -8,12 +8,12 @@ namespace SodRpg.Mod
         internal static bool InfinityRosterCompatible(IReadOnlyList<DewPlayer> players)
         {
             var host = NativeInstance;
-            if (!NetworkServer.active || host == null) return false;
+            if (!NetworkServer.active || host == null || !InfinityMode.Available) return false;
             if (players == null) return false;
             for (int i = 0; i < players.Count; i++)
             {
                 var player = players[i];
-                if (player != null && player.isHumanPlayer && !host.MechanismHandshakeAccepted(player)) return false;
+                if (player != null && player.isHumanPlayer && !host.InfinityHandshakeAccepted(player)) return false;
             }
             return true;
         }

@@ -23,9 +23,34 @@ namespace SodRpg.Mod
             && _hostSession.Profile.CompletedRunSecuredReturn
             && _hostSession.Profile.CompletedRunId == NetworkedManagerBase<GameManager>.softInstance?.runId;
 
+
+        private void ResetInfinityContinueState()
+        {
+            _infinityInitializedRun = null;
+            _infinityMirroredSnapshot = null;
+            _infinityObservedClears = Profile.Run?.Infinity?.ClearedCombatTotal ?? 0;
+            _infinityAcknowledgedRevision = -1;
+            _infinityAcknowledgedGraph = -1;
+            _infinityAcknowledgedBoundary = false;
+            _infinityResultStarted = false;
+            _nextInfinityAck = 0;
+            ResetInfinityRewardSamples();
+        }
+
+        private void SyncInfinityContinueSnapshot()
+        {
+            if (!ContinueReady || InfinityMode.Restoring || !InfinityMode.NativeSaveAgreement
+                || Profile.Run?.Infinity == null
+                || Profile.Run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+            if (CanChooseRunRules) ObserveInfinityRoomTotal(Profile.Run.Infinity.ClearedCombatTotal);
+            else TickInfinity();
+            SampleInfinityRewards(true);
+        }
         private void InitializeInfinityRun()
         {
-            if (Profile.Run == null || _infinityInitializedRun == Profile.Run.RunId) return;
+            if (!InfinityMode.Available || !ContinueReady || InfinityMode.Restoring
+                || _nativeContinueCheckpoint != null || Profile.Run == null
+                || _infinityInitializedRun == Profile.Run.RunId) return;
             _infinityInitializedRun = Profile.Run.RunId;
             _infinityResultStarted = false;
             _infinityAcknowledgedRevision = -1; _infinityAcknowledgedGraph = -1;
@@ -35,7 +60,7 @@ namespace SodRpg.Mod
                 else if (!CanChooseRunRules && _receivedRunChoices?.Infinity != null) Profile.Run.Infinity = _receivedRunChoices.Infinity.Clone();
                 else if (CanChooseRunRules && InfinityMode.NativeEnvelopePresent)
                 {
-                    InfinityMode.Halt("Infinity native continue is missing its profile run receipt.");
+                    InfinityMode.DisableFeature("Infinity native continue is missing its profile run receipt.");
                     return;
                 }
             }
@@ -47,7 +72,8 @@ namespace SodRpg.Mod
 
         internal static void ValidateHostInfinityContinue()
         {
-            if (!NetworkServer.active || _hostSession == null || InfinityMode.Restoring) return;
+            if (!NetworkServer.active || _hostSession == null || !InfinityMode.Available || InfinityMode.Restoring
+                || !_hostSession.ContinueReady || _hostSession._nativeContinueCheckpoint != null) return;
             bool hasNative = InfinityMode.NativeEnvelopePresent;
             if (_hostSession.Profile.Run?.Infinity == null)
             {
@@ -61,11 +87,11 @@ namespace SodRpg.Mod
                     InfinityMode.ConfirmAgreement();
                     InfinityMode.CompleteReturn(completed.State);
                 }
-                else if (hasNative) InfinityMode.Halt("Infinity native continue has no matching profile receipt.");
+                else if (hasNative) InfinityMode.DisableFeature("Infinity native continue has no matching profile receipt.");
                 return;
             }
             if (!InfinityMode.MatchesProfile(_hostSession.Profile.Run))
-                InfinityMode.Halt("Infinity native/profile continue receipts disagree.");
+                InfinityMode.DisableFeature("Infinity native/profile continue receipts disagree.");
             else InfinityMode.ConfirmAgreement();
         }
 
@@ -209,13 +235,13 @@ namespace SodRpg.Mod
                     && (choice == null || choice.Boundary || choice.RunId != Profile.Run.RunId
                         || choice.SegmentEpoch != state.SegmentEpoch || choice.Revision != state.ChoiceRevision + 1))
                 {
-                    InfinityMode.Halt("Infinity shared segment advanced without a durable local choice receipt; reload the matching profile/continue.");
+                    InfinityMode.DisableFeature("Infinity shared segment advanced without a durable local choice receipt; reload the matching profile/continue.");
                     return;
                 }
                 if (shared != null && shared.GraphEpoch > state.GraphEpoch
                     && (shared.GraphEpoch != state.GraphEpoch + 1 || state.SettledGraphEpoch < state.GraphEpoch))
                 {
-                    InfinityMode.Halt("Infinity shared graph advanced without a durable local boundary receipt; reload the matching profile/continue.");
+                    InfinityMode.DisableFeature("Infinity shared graph advanced without a durable local boundary receipt; reload the matching profile/continue.");
                     return;
                 }
                 if (shared != null && !ReferenceEquals(_receivedRunChoices, _infinityMirroredSnapshot)
