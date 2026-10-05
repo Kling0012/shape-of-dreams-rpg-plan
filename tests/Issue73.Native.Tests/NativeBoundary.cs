@@ -136,8 +136,8 @@ namespace SodRpg.Mod
     internal struct EventInfoAttackEffect { public Actor actor; public Entity victim; public ReactionChain chain; }
     internal sealed class DewPlayer
     {
-        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public static DewPlayer local;
+        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
@@ -293,11 +293,13 @@ namespace SodRpg.Mod
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
+        internal static bool ExpeditionHalted => false;
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
     }
     internal sealed partial class ClientSession
     {
+        internal static void StopInfinityRun(string notice = null) { }
         public Profile Profile;
         public Hero LocalHero;
         // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。
@@ -318,18 +320,17 @@ namespace SodRpg.Mod
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
-        private readonly Action<GameEvent> _notify = null;
+        private readonly Action<GameEvent> _notify;
         private float _nextDreamEventNotice;
+        private long _hostLedgerId;
+        private double _nextLedgerProbeAt;
         private string _curseSyncedKey = "";
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
-        private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
+        public ClientSession() { _notify = Events.Add; }
         public event Action ProfileChanged;
         // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
-        private long _hostLedgerId;
-        private double _nextLedgerProbeAt;
         private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
-        public void Emit(GameEvent e) => Events.Add(e);
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();
         private string CurseKey() => "";

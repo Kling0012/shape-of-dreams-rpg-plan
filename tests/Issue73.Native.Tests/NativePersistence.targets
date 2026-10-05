@@ -45,7 +45,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;ReadLimboDepth;HeroKeyOf;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>

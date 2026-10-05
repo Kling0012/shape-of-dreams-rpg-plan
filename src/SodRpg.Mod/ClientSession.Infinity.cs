@@ -48,7 +48,7 @@ namespace SodRpg.Mod
         }
         private void InitializeInfinityRun()
         {
-            if (!InfinityMode.Available || !ContinueReady || InfinityMode.Restoring
+            if (!InfinityMode.Available || InfinityMode.ExpeditionHalted || !ContinueReady || InfinityMode.Restoring
                 || _nativeContinueCheckpoint != null || Profile.Run == null
                 || _infinityInitializedRun == Profile.Run.RunId) return;
             _infinityInitializedRun = Profile.Run.RunId;
@@ -223,6 +223,11 @@ namespace SodRpg.Mod
 
         private void TickInfinity()
         {
+            if (InfinityMode.ExpeditionHalted)
+            {
+                StopInfinityRun();
+                return;
+            }
             InfinityMode.Tick();
             if (!InfinityMode.NativeSaveAgreement) return;
             var choice = InfinityMode.CurrentChoice;
@@ -254,6 +259,7 @@ namespace SodRpg.Mod
                     state.ClearedCombatTotal = shared.ClearedCombatTotal; state.ClearsInCycle = shared.ClearsInCycle;
                     state.Phase = shared.Phase; state.SoulObserved = shared.SoulObserved;
                     state.TransitionIntent = shared.TransitionIntent;
+                    state.LastCountedNode = shared.LastCountedNode;
                     state.ClearedNodes.Clear(); foreach (int node in shared.ClearedNodes) state.ClearedNodes.Add(node);
                     ObserveInfinityRoomTotal(state.ClearedCombatTotal);
                     _infinityMirroredSnapshot = _receivedRunChoices;

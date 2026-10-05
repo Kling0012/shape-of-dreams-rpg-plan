@@ -21,10 +21,10 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Trades.cs" Link="ModUnderTest/HostAuthority.Trades.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.RunChoices.cs" Link="ModUnderTest/ClientSession.RunChoices.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.SatchelDust.cs" Link="ModUnderTest/ClientSession.SatchelDust.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Continue.cs" Link="ModUnderTest/ClientSession.Continue.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Durability.cs" Link="ModUnderTest/ClientSession.Durability.cs" />
-    <Compile Include="../../src/SodRpg.Mod/ClientSession.SatchelDust.cs" Link="ModUnderTest/ClientSession.SatchelDust.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.LobbyReturn.cs" Link="ModUnderTest/ClientSession.LobbyReturn.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
