@@ -224,6 +224,8 @@ namespace SodRpg.Mod
         private readonly MemoryActivationAttribution _memoryAttribution = new MemoryActivationAttribution();
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment =
             new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
+        // #161: 公開イベントごとの所有者解決を線形走査ではなく辞書引きにする。
+        private readonly Dictionary<long, Hero> _attributionOwnersById = new Dictionary<long, Hero>(16);
         private readonly Dictionary<Entity, long> _attributionVictimLifetimes = new Dictionary<Entity, long>();
         private readonly Dictionary<Hero, MechanismEquipment> _mechanismEquipment = new Dictionary<Hero, MechanismEquipment>();
         private readonly Dictionary<Hero, HashSet<string>> _attributionMemoryIds = new Dictionary<Hero, HashSet<string>>();
@@ -300,6 +302,7 @@ namespace SodRpg.Mod
             _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
             long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
             _attributionEquipment[hero] = equipment;
+            _attributionOwnersById[hero.GetInstanceID()] = hero;
             _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
             _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
             if (_runtimes.TryGetValue(hero, out var rt))
@@ -562,11 +565,8 @@ namespace SodRpg.Mod
                 PublishMemoryActivation(packet.Identity.Event(MemoryEventKind.Kill, packet.Serial, AttributedVictimLifetime(info.victim)), hero, info.victim, packet.DamageAmount);
         }
 
-        private Hero AttributedOwner(long ownerId)
-        {
-            foreach (var hero in _attributionEquipment.Keys) if (hero != null && hero.GetInstanceID() == ownerId && Alive(hero)) return hero;
-            return null;
-        }
+        private Hero AttributedOwner(long ownerId) =>
+            _attributionOwnersById.TryGetValue(ownerId, out var hero) && Alive(hero) ? hero : null;
 
         private long AttributedVictimLifetime(Entity victim)
         {
@@ -590,6 +590,7 @@ namespace SodRpg.Mod
             {
                 _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
                 _attributionEquipment.Remove(hero);
+                _attributionOwnersById.Remove(hero.GetInstanceID());
                 _mechanismEquipment.Remove(hero);
                 _attributionMemoryIds.Remove(hero);
             }
@@ -597,7 +598,7 @@ namespace SodRpg.Mod
 
         private void ResetMemoryAttribution()
         {
-            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _mechanismEquipment.Clear();
+            _memoryAttribution.Reset(); _attributionEquipment.Clear(); _attributionOwnersById.Clear(); _mechanismEquipment.Clear();
             _attributionMemoryIds.Clear();
             _attributionVictimLifetimes.Clear(); _attributedNativeChains.Clear(); _deferredAttribution.Clear();
             ResetNativeEndingAdapters();
