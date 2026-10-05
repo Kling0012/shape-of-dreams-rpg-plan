@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **読み込み失敗時の移行保存で進行が巻き戻る問題**：本体・バックアップの読み取り確認が済むまで星の移行結果を保存しないようにしました。一時的な読み取り失敗中は元のデータを保持し、再試行で新しい進行を選びます。移行結果の保存だけが失敗した場合は、引き続き警告してプレイを続けられます。 / **Progress rollback after a failed migration load**: validate source reads before persisting star migrations so a transient read failure cannot promote an older backup over newer progress. Migration-save failures still warn without blocking play.
+
 - **空殻の払い戻し通知の重複（#169・改訂2）**：移行結果を読み込み時に保存し、採用した本体またはバックアップだけを通知します。通知の二重連結と続きからでの再通知を修正し、保存失敗時は警告して続行します。保存形式・ポイント総数は変更ありません。 / **Duplicate Husk refund notices (#169, revision 2)**: persist migration on load, report only the selected main or backup, and avoid duplicate concatenation and repeated Continue notices. Save failures warn without stopping play; save format and total points are unchanged.
 
 - **ホストの記憶障壁で例外**：生成・更新中に無効化された障壁の生存確認を先に行い、null・破棄済みのハンドルを保持せず次の付与で作り直します。障壁量・上限は変えず、既存障壁の更新時にはアダプターと受け手情報を再利用します。 / **Host memory-shield exception**: validate shields before reading their amount, discard null/destroyed activations and recreate them on the next award; amounts and caps are unchanged, and live refreshes reuse the adapter and recipient entry.

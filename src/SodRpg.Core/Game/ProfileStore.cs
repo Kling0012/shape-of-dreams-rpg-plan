@@ -34,13 +34,22 @@ namespace SodRpg.Core.Game
         /// </summary>
         public bool WritesBlocked { get; private set; }
 
-        public Profile Load()
+        public Profile Load() => Load(null);
+
+        // Slot loading must reject source I/O failures before recovery copies or migration
+        // saves can change the disk. Plain store callers retain their tolerant recovery path.
+        internal Profile Load(Action sourceReadsComplete)
         {
             Notes.Clear();
             WritesBlocked = false;
-            if (ResetIfOld()) return Profile.CreateNew(_seed);
+            if (ResetIfOld())
+            {
+                sourceReadsComplete?.Invoke();
+                return Profile.CreateNew(_seed);
+            }
             Profile main = TryRead(_path, "本体", out var mainNotes, out bool mainMigrated);
             Profile bak = TryRead(BackupPath, "バックアップ", out var bakNotes, out bool bakMigrated);
+            sourceReadsComplete?.Invoke();
             if (!WritesBlocked)
             {
                 // リセットより前の版は、復旧の候補にしない（issue #16：リセット後の初回保存の直後に旧 .bak が選ばれていた）。
