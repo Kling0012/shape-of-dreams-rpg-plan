@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -28,6 +29,10 @@ namespace SodRpg.Mod.Startup.Tests
             PerformanceTuner.FailStart = false;
             Log.Errors.Clear();
             Log.Warnings.Clear();
+            NativeFeatherDelayedContract.Restore();
+            Ai_Gem_U_LastStarlight.Completions = 0;
+            ErebosLastStarlightSequence.Captures = 0;
+            ErebosLastStarlightSequence.WaitAdaptations = 0;
             BlockInputWhileMenuOpen.MenuOpen = false;
         }
 
@@ -72,7 +77,8 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(777, NativeContractTarget.First());
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
-            Assert.Empty(owner.GetPatchedMethods());
+            // The other feature classes of this mod still install; only the failing class is gone.
+            Assert.DoesNotContain(First, owner.GetPatchedMethods());
             // v2.1.1: a native mismatch skips only the failing patch class; the mod keeps running.
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
@@ -97,7 +103,8 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(314159, NativeContractTarget.Second());
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
-            Assert.Empty(owner.GetPatchedMethods());
+            // The other feature classes of this mod still install; only the failing class is rolled back.
+            Assert.DoesNotContain(First, owner.GetPatchedMethods());
             // v2.1.1: the failing class is rolled back and skipped; the rest of the mod starts.
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
@@ -105,6 +112,97 @@ namespace SodRpg.Mod.Startup.Tests
 
             Invoke(mod, "OnDestroy");
             Assert.Equal(314166, NativeContractTarget.First());
+        }
+
+        // #109: a native LastStarlight sequence that waits three times (changed by another mod or a
+        // game update) must disable only the LastStarlight feature. The native three waits and its
+        // completion run as-is, the other owner's patches survive, and the rest of the mod starts.
+        [Fact]
+        public void ThreeWaitNativeSequenceDisablesOnlyTheLastStarlightFeatureAndRunsNativeAsIs()
+        {
+            var factory = AccessTools.DeclaredMethod(typeof(Ai_Gem_U_LastStarlight), "OnCreateSequenced");
+            var moveNext = AccessTools.EnumeratorMoveNext(factory);
+            // The other owner makes the native sequence wait a third time: visible both in the
+            // iterator IL (the preflight counts newobj WaitForSeconds) and at runtime.
+            other.Patch(moveNext, transpiler: new HarmonyMethod(typeof(NativeStartupTests), nameof(AddThirdNativeWait)));
+            other.Patch(factory, postfix: new HarmonyMethod(typeof(NativeStartupTests), nameof(ExtraWaitPostfix)));
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            // The mod itself keeps running and its unrelated features are installed.
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Equal(271828, NativeContractTarget.First());
+            // The LastStarlight wrapper is not applied, and the disablement is logged by feature name.
+            Assert.Equal(0, ErebosLastStarlightSequence.Captures);
+            Assert.DoesNotContain(factory, owner.GetPatchedMethods());
+            Assert.Contains(Log.Warnings, m => m.Contains("Native feature disabled: LastStarlight"));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.ErebosLastStarlightSequence: native feature LastStarlight is unavailable or unconfirmed."));
+            // The native sequence still waits three times and completes exactly as the other owner changed it.
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            int waits = 0, steps = 0;
+            while (sequence.MoveNext()) { steps++; if (sequence.Current is SI.WaitForSeconds) waits++; }
+            Assert.Equal(3, waits);
+            Assert.Equal(3, steps);
+            Assert.Equal(1, Ai_Gem_U_LastStarlight.Completions);
+            // The other owner keeps its patches on both the factory and the native iterator.
+            Assert.Contains(other.Id, Harmony.GetPatchInfo(factory).Owners);
+            Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(factory).Owners);
+            Assert.Contains(other.Id, Harmony.GetPatchInfo(moveNext).Owners);
+            Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(moveNext).Owners);
+        }
+
+        // #109: the shipped two-wait sequence keeps the integration active with its wait adaptation.
+        [Fact]
+        public void TwoWaitNativeSequenceKeepsTheLastStarlightIntegrationEnabled()
+        {
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("LastStarlight"));
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.False(sequence.MoveNext());
+            Assert.Equal(1, Ai_Gem_U_LastStarlight.Completions);
+            Assert.Equal(1, ErebosLastStarlightSequence.Captures);
+            Assert.Equal(2, ErebosLastStarlightSequence.WaitAdaptations);
+            Assert.Equal(271828, NativeContractTarget.First());
+        }
+
+        // #109: a single feature check failing mid-preflight disables that feature only. Features
+        // checked before and after it stay enabled, and the mod as a whole still starts.
+        [Fact]
+        public void OneFeatureCheckFailureDisablesOnlyThatFeatureAndTheModStillStarts()
+        {
+            NativeFeatherDelayedContract.Source = null;
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            // The whole Feather feature group is unavailable, not just the class that failed.
+            Assert.Equal(11, NativeFeatureTarget.Feather());
+            Assert.Contains(Log.Warnings, m => m.Contains("Native feature disabled: Feather"));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.NativeFeatherLifetime: native feature Feather is unavailable or unconfirmed."));
+            Assert.Contains(Log.Warnings, m => m.Contains(
+                "Patch class skipped: SodRpg.Mod.NativeFeatherDispatch: native feature Feather is unavailable or unconfirmed."));
+            // Independently checked features before and after Feather stay enabled: the preflight
+            // itself never failed wholesale.
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("Native preflight failed"));
+            Assert.Equal(26, NativeFeatureTarget.Baptism());
+            var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
+            Assert.True(sequence.MoveNext());
+            Assert.IsType<SI.WaitForCondition>(sequence.Current);
+            Assert.Equal(271828, NativeContractTarget.First());
         }
 
         [Fact]
@@ -141,6 +239,38 @@ namespace SodRpg.Mod.Startup.Tests
             }
         }
 
+        // Appends one unreachable WaitForSeconds construction after the iterator's final return;
+        // only the static newobj count is observed by the preflight.
+        private static IEnumerable<CodeInstruction> AddThirdNativeWait(IEnumerable<CodeInstruction> instructions)
+        {
+            var list = new List<CodeInstruction>(instructions);
+            int lastRet = list.FindLastIndex(i => i.opcode == OpCodes.Ret);
+            var constructor = AccessTools.DeclaredConstructor(typeof(SI.WaitForSeconds), new[] { typeof(float) });
+            list.Insert(lastRet + 1, new CodeInstruction(OpCodes.Ldc_R4, 3f));
+            list.Insert(lastRet + 2, new CodeInstruction(OpCodes.Newobj, constructor));
+            list.Insert(lastRet + 3, new CodeInstruction(OpCodes.Pop));
+            return list;
+        }
+
+        // The other owner's runtime change: after the native sequence completes, one extra wait.
+        private static IEnumerator ExtraWaitPostfix(IEnumerator result) => new ExtraWait(result);
+
+        private sealed class ExtraWait : IEnumerator
+        {
+            private readonly IEnumerator _native;
+            private SI.WaitForSeconds _extra;
+            internal ExtraWait(IEnumerator native) { _native = native; }
+            public object Current => _extra ?? _native.Current;
+            public bool MoveNext()
+            {
+                if (_extra != null) { _extra = null; return false; }
+                if (_native.MoveNext()) return true;
+                _extra = new SI.WaitForSeconds(3);
+                return true;
+            }
+            public void Reset() => throw new NotSupportedException();
+        }
+
         public void Dispose()
         {
             NativeContractPatch.FailInstallationCleanup = false;
@@ -148,8 +278,7 @@ namespace SodRpg.Mod.Startup.Tests
                 foreach (var target in harmony.GetPatchedMethods().ToArray())
                     harmony.Unpatch(target, HarmonyPatchType.All, harmony.Id);
             NativeContractPatch.Reset();
-            PerformanceTuner.FailStart = false;
-            BlockInputWhileMenuOpen.MenuOpen = false;
+            NativeFeatherDelayedContract.Restore();
         }
     }
 
