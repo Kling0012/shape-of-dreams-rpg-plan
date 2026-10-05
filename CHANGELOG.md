@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **刻印「風傷の芯」などが選べない**：空殻の風傷の芯・一閃（single-edge）、セトゥス・ミスト・ユバールの記憶の元々のダメージを増やす刻印を選ぼうとすると「効果が上限に達している・無効になる、または前提の星が足りません」と出て選べませんでした。この刻印の効果はゲーム本体側で働き、星の割り当てには現れないため、効果なしと判定されていました。選べるようにしました。 / Fixed keystones that scale a memory's original damage (Husk's Core of the Wind Scar and similar) being refused as having no effect; their effect applies in the host and never shows in the star allocation.
+
 - **鞄あふれの一括換金からの復旧**：ホスト台帳IDを送信前の準備保存に含め、同じ台帳への再接続後に未送信分を確認・欠片へ回復できるよう修正しました（#176）。 / **Recovery from batched satchel overflow**: the host ledger ID is now included in the pre-send prepared save, allowing unsent trades to be resolved and recovered as shards after reconnecting to the same ledger (#176).
 
 - **別の遠征を挟んだ参加者の「続きから」（#179）**：現在の遠征が別ID／未開始でも、ホストの再開セッションに対応する保存地点へ報酬・プロフィールを既存方針で巻き戻します（保存後の別遠征の進行も対象）。同じ再開の再挨拶では進行を戻し直さず、対応するMOD保存がない場合は警告し、その遠征の報酬だけを停止します。報酬量・通信形式は変更しません。 / **Guest Continue after another expedition (#179)**: restore rewards and profile using the existing checkpoint policy even when the current run differs or is absent, including progress from intervening expeditions. Repeated greetings for the same resumed run do not rewind again; a missing local checkpoint warns and pauses only that expedition's rewards. Reward amounts and wire format are unchanged.
