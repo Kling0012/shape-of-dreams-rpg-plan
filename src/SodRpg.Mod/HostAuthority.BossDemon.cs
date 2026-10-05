@@ -6,7 +6,7 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        private sealed class BossClawPair
+        internal sealed class BossClawPair
         {
             public long First, Second; public bool FirstRight, FirstHit, SecondHit, FirstDone, SecondDone;
             public bool FirstCanCollect, SecondCanCollect;
@@ -75,6 +75,15 @@ namespace SodRpg.Mod
                 DispatchSkollBoss(rt, kind, activation, victim, point, now);
                 DispatchInfernusBoss(rt, kind, activation, victim, point, now);
                 DispatchInkBoss(rt, kind, activation, victim, point, now);
+                if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                DispatchNyxBoss(rt, kind, activation, victim, point, now);
+                if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                DispatchErebosBoss(rt, kind, activation, victim, point, now);
+                if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
+                DispatchSeekerBoss(rt, kind, activation, victim, point, now);
+                DispatchAzurakBoss(rt, kind, activation, victim, point, now);
+                DispatchPrimusBoss(rt, kind, activation, victim, point, now);
+                if (rt.Boss.Build == null || !BossAlive(rt.Hero)) return;
             }
             long before = rt.Boss.NextId;
             // Collection always precedes this event's new attacks/planting, regardless of equip slot order.
@@ -101,7 +110,9 @@ namespace SodRpg.Mod
             {
                 if (!BossProfiles.TryGetMove(entry.ProfileId, out var profile) || entry.SetId != profile.SetId) continue;
                 if (profile.SetId == BossProfiles.SkollSetId || profile.SetId == BossProfiles.InfernusSetId
-                    || profile.SetId == BossProfiles.WhiteNightSetId || profile.SetId == BossProfiles.DarkMoonSetId) continue;
+                    || profile.SetId == BossProfiles.WhiteNightSetId || profile.SetId == BossProfiles.DarkMoonSetId
+                    || profile.SetId == BossProfiles.NyxSetId || profile.SetId == BossProfiles.ErebosSetId
+                    || profile.SetId == BossProfiles.SeekerSetId || profile.SetId == BossProfiles.AzurakSetId || profile.SetId == BossProfiles.PrimusSetId) continue;
                 for (int index = 0; index < profile.Actions.Count; index++)
                 {
                     var a = profile.Actions[index];

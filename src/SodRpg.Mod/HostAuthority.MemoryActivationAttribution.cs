@@ -86,7 +86,7 @@ namespace SodRpg.Mod
             internal float DamageAmount;
         }
         internal static Packet Current;
-        private static void Prefix(Actor __instance, Entity target, ReactionChain chain, out Packet __state)
+        private static void Prefix(Actor __instance, DamageData damage, Entity target, ReactionChain chain, out Packet __state)
         {
             __state = Current;
             bool main = false;
@@ -100,6 +100,7 @@ namespace SodRpg.Mod
             }
             Current = NetworkServer.active
                 ? HostAuthority.NativeInstance?.BeginAttributedDamagePacket(__instance, target, chain, main, basicOwner) : null;
+            if (Current != null) HostAuthority.NativeInstance?.ObserveBossGeneratedDispatch(Current, damage);
         }
         private static void Finalizer(Packet __state) { Current = __state; }
     }
@@ -347,6 +348,7 @@ namespace SodRpg.Mod
 
         internal void PublishAttributedFinalDamage(EventInfoDamage info)
         {
+            ObserveBossGeneratedDamage(info);
             PublishBossNativeDamage(info);
             var packet = NativeAttributedDamagePacket.Current;
             if (packet == null || !packet.Admitted || packet.Actor != info.actor || packet.Victim != info.victim

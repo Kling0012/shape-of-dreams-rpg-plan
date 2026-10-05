@@ -16,12 +16,14 @@ namespace SodRpg.Core.Game
         public const int NativeHysteriaSpeedMilli = -50000;
         public const string DemonEventOrder = "collect-existing;march;replant-start;replant-end;part;stomp;grove";
         public const string NativeContract = "native-only;admission-rings64;own-scoped-speed-cache64;one-activation;one-claw-instance;one-state-life;left-right-pair;post-success-exact-claw-packet;no-generated-proc;own-speed-minus50-to-minus25-then-restore-minus50;preserve-lock-heal-interval-dash;movement-installed-own-skilltrigger-actual-completion;exclude-hysteria-generated-enemy-movement";
-        public const string CombatContract = "freeze-max-ad-ap;physical-tie;profile-element-preserved;one-defense;no-crit;no-attackeffect;no-self-generation;legal-ground-los;clear-on-epoch-death-room-memory-transition-start;finite-sequence32-one-token-owner-set4;radial-per-shot-hit-per-target-wave-count-cap;terminal-projectile-no-flight-damage-no-wall-explosion;actor-life-not-creation-time-alone;native-parent-scoped-reservations-and-mark-contributions;live-config-preserve-unchanged-native-profile-sources-and-cooldowns;stop-generated-combat-on-owner-death";
-        public const string VisualContract = "owner-run-zone-room-equipment-epoch-revision;max-live64;effect-id-update-only;snapshot1000ms-unscaled;game-time-deadlines;offset-synced-mirror-networktime-sentAt-times-timescale;remaining-time-only;invalidate-epoch;profile-element-shape-range-width-angle-count-budget-shrinking-radius;frozen-adopted-target-persistent-net-id;shield-only-live-target-follow;host-only-native-life-scope-preserved-across-live-equipment-epoch";
+        public const string CombatContract = "freeze-max-ad-ap;physical-tie;profile-element-preserved;one-defense;no-crit;no-attackeffect;no-self-generation;legal-ground-los;clear-on-epoch-death-room-memory-transition-start;finite-sequence32-one-token-owner-set4;nyx-erebos-owner-set2-oldest-replace-token-linked-shot-cancel;radial-per-shot-hit-per-target-wave-count-cap;terminal-projectile-no-flight-damage-no-wall-explosion;homing-orb-travel8-terminal-once;chain3-distinct-targets-radius3-delay150-whole-life1500;positive-final-generated-damage-only-nonboss-nonimmune-stun250;shield-linear-decay-from-actual-remaining-no-refill;confirmed-movement-departure-and-cast-forward-scopes;actor-life-not-creation-time-alone;native-parent-scoped-reservations-and-mark-contributions;live-config-preserve-unchanged-native-profile-sources-and-cooldowns;stop-generated-combat-on-owner-death";
+        public const string VisualContract = "owner-run-zone-room-equipment-epoch-revision;max-live64;effect-id-update-only;snapshot1000ms-unscaled;game-time-deadlines;offset-synced-mirror-networktime-sentAt-times-timescale;remaining-time-only;invalidate-epoch;profile-element-shape-range-width-angle-count-budget-shrinking-radius;radial-kind4-arrowheads-angle180-inward-else-outward;frozen-adopted-target-persistent-net-id;shield-only-live-target-follow;host-only-native-life-scope-preserved-across-live-equipment-epoch";
         public static IReadOnlyList<BossMoveProfile> Moves { get; } = Array.AsReadOnly(CreateMoves()
-            .Concat(CreateSkollMoves()).Concat(CreateInfernusMoves()).Concat(CreateInkMoves()).ToArray());
+            .Concat(CreateSkollMoves()).Concat(CreateInfernusMoves()).Concat(CreateInkMoves())
+            .Concat(CreateNyxMoves()).Concat(CreateErebosMoves()).Concat(CreateSeekerMoves()).Concat(CreateAzurakMoves()).Concat(CreatePrimusMoves()).ToArray());
         public static IReadOnlyList<BossRewardProfile> Rewards { get; } = Array.AsReadOnly(CreateRewards()
-            .Concat(CreateSkollRewards()).Concat(CreateInfernusRewards()).Concat(CreateInkRewards()).ToArray());
+            .Concat(CreateSkollRewards()).Concat(CreateInfernusRewards()).Concat(CreateInkRewards())
+            .Concat(CreateNyxRewards()).Concat(CreateErebosRewards()).Concat(CreateSeekerRewards()).Concat(CreateAzurakRewards()).ToArray());
         private static readonly Dictionary<string, BossMoveProfile> moves = Moves.ToDictionary(x => x.Id, StringComparer.Ordinal);
         private static readonly Dictionary<string, BossRewardProfile> rewards = Rewards.ToDictionary(x => x.Id, StringComparer.Ordinal);
         public static bool TryGetMove(string id, out BossMoveProfile profile)
@@ -90,6 +92,16 @@ namespace SodRpg.Core.Game
             yield return "boss-native:infernus:" + InfernusNativeContract;
             yield return "boss-order:ink:" + InkEventOrder;
             yield return "boss-native:ink:" + InkNativeContract;
+            yield return "boss-order:nyx:" + NyxEventOrder;
+            yield return "boss-native:nyx:" + NyxNativeContract;
+            yield return "boss-order:erebos:" + ErebosEventOrder;
+            yield return "boss-native:erebos:" + ErebosNativeContract;
+            yield return "boss-order:seeker:" + SeekerEventOrder;
+            yield return "boss-native:seeker:" + SeekerNativeContract;
+            yield return "boss-order:azurak:" + AzurakEventOrder;
+            yield return "boss-native:azurak:" + AzurakNativeContract;
+            yield return "boss-order:primus:" + PrimusEventOrder;
+            yield return "boss-native:primus:" + PrimusNativeContract;
             yield return "boss-combat:" + CombatContract;
             yield return "boss-visual:" + VisualContract;
             yield return "boss-profile-order:" + string.Join(",", Moves.Select(p => p.Id));

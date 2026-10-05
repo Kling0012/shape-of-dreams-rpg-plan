@@ -174,7 +174,20 @@ namespace SodRpg.Mod
                     {
                         var direction = BossVisualDirection(effect);
                         for (int i = 0; i < effect.count; i++)
-                            DrawBossWorldLine(camera, effect.center, effect.center + Quaternion.Euler(0, 360f * i / effect.count, 0) * direction * effect.range, 2f);
+                        {
+                            var spoke = Quaternion.Euler(0, 360f * i / effect.count, 0) * direction;
+                            var tip = effect.center + spoke * effect.range;
+                            DrawBossWorldLine(camera, effect.center, tip, 2f);
+                            if (effect.kind == 4)
+                            {
+                                bool inward = effect.angle == 180f;
+                                var head = inward ? effect.center + spoke * .4f : tip;
+                                var arrow = inward ? -spoke : spoke;
+                                DrawBossWorldLine(camera, head, head - Quaternion.Euler(0, 35f, 0) * arrow * .35f, 2f);
+                                DrawBossWorldLine(camera, head, head - Quaternion.Euler(0, -35f, 0) * arrow * .35f, 2f);
+                            }
+                        }
+                        if (effect.kind == 4) DrawBossWorldRing(camera, effect.center, effect.radius, 2f);
                     }
                     if (effect.kind != 5 && effect.shape == (int)BossShape.Circle)
                     {

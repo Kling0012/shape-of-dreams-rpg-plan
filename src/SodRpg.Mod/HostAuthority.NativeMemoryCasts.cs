@@ -12,12 +12,14 @@ namespace SodRpg.Mod
         {
             internal SkillTrigger Skill;
             internal MemoryActivationIdentity Identity;
+            internal CastInfo Info;
         }
         internal static Cast Current;
-        private static void Prefix(SkillTrigger __instance, out Cast __state)
+        private static void Prefix(SkillTrigger __instance, CastInfo info, out Cast __state)
         {
             __state = Current;
             Current = NetworkServer.active ? HostAuthority.NativeInstance?.BeginAttributedMemoryCast(__instance) : null;
+            if (Current != null) Current.Info = info;
         }
         private static void Postfix()
         {

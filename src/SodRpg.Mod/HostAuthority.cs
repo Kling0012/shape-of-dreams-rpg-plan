@@ -17,7 +17,7 @@ namespace SodRpg.Mod
     /// </summary>
     internal sealed partial class HostAuthority
     {
-        private sealed class ReceivedBuild
+        internal sealed class ReceivedBuild
         {
             public Build Build;
             public string Encoded;
@@ -26,7 +26,7 @@ namespace SodRpg.Mod
             public bool ApplyFailed;
         }
 
-        private sealed class HeroRuntime
+        internal sealed class HeroRuntime
         {
             public Hero Hero;
             public PowerRuntime Powers;
@@ -86,7 +86,7 @@ namespace SodRpg.Mod
             public int GrowthSentVersion = -1;
         }
 
-        private struct PendingGimmick
+        internal struct PendingGimmick
         {
             public long ShieldEquipmentEpoch;
             public GimmickRequest Request;

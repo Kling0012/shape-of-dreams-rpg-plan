@@ -8,7 +8,7 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        private sealed class BossCombatState
+        internal sealed class BossCombatState
         {
             public Build Build;
             public long Epoch, NextId;
@@ -31,10 +31,12 @@ namespace SodRpg.Mod
             public bool PreviousClawLeft;
             public int Mode;
             public float ModeUntil;
+            public Vector3 MovementOrigin, MemoryDirection;
+            public bool MovementOriginValid, MemoryDirectionValid;
             public readonly List<BossClawPair> ClawPairs = new List<BossClawPair>(8);
         }
 
-        private sealed class BossProgressLedger
+        internal sealed class BossProgressLedger
         {
             private sealed class Progress { public int Count; public float Updated; public long Activation; }
             private struct Mark
@@ -219,11 +221,18 @@ namespace SodRpg.Mod
 
         private void TickBossEffects(HeroRuntime rt, float now)
         {
-            if (!BossEnsure(rt)) { TickInkBoss(rt, now); RefreshBossVisualEquipment(rt); return; }
+            if (!BossEnsure(rt))
+            {
+                TickInkBoss(rt, now); TickNyxBoss(rt, now); TickErebosBoss(rt, now);
+                TickSeekerBoss(rt, now); TickAzurakBoss(rt, now); TickPrimusBoss(rt, now);
+                RefreshBossVisualEquipment(rt); return;
+            }
             TickBossNativeAdapters(rt);
             TickSkollBoss(rt, now);
             TickInfernusBoss(rt, now);
             TickInkBoss(rt, now);
+            TickNyxBoss(rt, now); TickErebosBoss(rt, now); TickSeekerBoss(rt, now);
+            TickAzurakBoss(rt, now); TickPrimusBoss(rt, now);
             RefreshBossVisualEquipment(rt);
             rt.Boss.Fields.Tick(this, rt, now);
             if (rt.Boss.Build != null && BossAlive(rt.Hero)) InkWhiteAfterFields(rt, now);
@@ -244,6 +253,8 @@ namespace SodRpg.Mod
             ClearSkollBoss(rt);
             ClearInfernusBoss(rt);
             ClearInkBoss(rt, preserveRewards);
+            ClearNyxBoss(rt, preserveRewards); ClearErebosBoss(rt, preserveRewards);
+            ClearSeekerBoss(rt, preserveRewards); ClearAzurakBoss(rt, preserveRewards); ClearPrimusBoss(rt, preserveRewards);
             var s = rt.Boss;
             s.Fields.Clear(preserveRewards); s.Projectiles.Clear(preserveRewards); s.Deployables.Clear();
             s.Defense.Clear(this, rt); s.EnemyMovement.Clear(); s.Ledger.Clear(preserveRewards);
@@ -305,9 +316,27 @@ namespace SodRpg.Mod
         }
         private static bool BossMagic(HeroRuntime rt) => rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage;
         internal static bool IsBossGeneratedDamage(DamageData damage) => damage.IsAmountModifiedBy(typeof(BossCombatState));
-        private void BossDamage(HeroRuntime rt, Entity victim, float amount, bool magic, BossElement element = BossElement.Neutral)
+        private Entity _bossDamageVictim;
+        private Hero _bossDamageOwner;
+        private bool _bossDamageAccepted;
+        private long _bossDamageSerial;
+        internal void ObserveBossGeneratedDispatch(NativeAttributedDamagePacket.Packet packet, DamageData damage)
         {
-            if (amount <= 0 || !BossAlive(rt.Hero) || !BossAlive(victim) || victim == rt.Hero || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
+            if (_bossDamageSerial == 0 && packet != null && packet.Actor == _bossDamageOwner && packet.Victim == _bossDamageVictim
+                && IsBossGeneratedDamage(damage)) _bossDamageSerial = packet.Serial;
+        }
+        private void ObserveBossGeneratedDamage(EventInfoDamage info)
+        {
+            var packet = NativeAttributedDamagePacket.Current;
+            if (info.actor == _bossDamageOwner && info.victim == _bossDamageVictim && info.damage.amount > 0
+                && packet != null && packet.Serial == _bossDamageSerial) _bossDamageAccepted = true;
+        }
+        private bool BossDamage(HeroRuntime rt, Entity victim, float amount, bool magic, BossElement element = BossElement.Neutral)
+        {
+            if (amount <= 0 || !BossAlive(rt.Hero) || !BossAlive(victim) || victim == rt.Hero || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return false;
+            var previousVictim = _bossDamageVictim; var previousOwner = _bossDamageOwner;
+            bool previousAccepted = _bossDamageAccepted; long previousSerial = _bossDamageSerial;
+            _bossDamageVictim = victim; _bossDamageOwner = rt.Hero; _bossDamageAccepted = false; _bossDamageSerial = 0;
             EnterGenerated(rt.Hero);
             try
             {
@@ -315,8 +344,14 @@ namespace SodRpg.Mod
                 ElementalType? native = element == BossElement.Fire ? ElementalType.Fire : element == BossElement.Cold ? ElementalType.Cold
                     : element == BossElement.Light ? ElementalType.Light : element == BossElement.Dark ? ElementalType.Dark : (ElementalType?)null;
                 damage.SetElemental(native).SetAmountModifiedBy(typeof(BossCombatState)).SetAmountModifiedBy(typeof(GimmickRuntime)).Dispatch(victim);
+                return _bossDamageAccepted;
             }
-            finally { ExitGenerated(rt.Hero); }
+            finally
+            {
+                _bossDamageVictim = previousVictim; _bossDamageOwner = previousOwner; _bossDamageAccepted = previousAccepted;
+                _bossDamageSerial = previousSerial;
+                ExitGenerated(rt.Hero);
+            }
         }
     }
 }

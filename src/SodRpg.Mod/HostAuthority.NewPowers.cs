@@ -34,7 +34,7 @@ namespace SodRpg.Mod
         private static readonly HeroSkillLocation[] NormalMemorySlots =
             { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R };
 
-        private sealed class NewPowerHostState
+        internal sealed class NewPowerHostState
         {
             internal Se_GenericEffectContainer UnbowedGuard;
             internal Vector3 Position;

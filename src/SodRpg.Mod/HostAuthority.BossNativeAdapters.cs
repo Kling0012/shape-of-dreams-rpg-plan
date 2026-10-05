@@ -442,7 +442,7 @@ namespace SodRpg.Mod
             if (!BossNativeCastCurrent(binding.Cast) || binding.Source != null && !BossNativeSourceCurrent(binding.Source, false)
                 || !BossNativeRuntime(binding.Runtime.Hero, out var rt) || rt != binding.Runtime
                 || (rt.Hero.position - binding.Start).sqrMagnitude < .0001f) return;
-            PublishBossMovement(rt, binding.Cast.Activation, rt.Hero.position);
+            PublishBossMovement(rt, binding.Cast.Activation, rt.Hero.position, binding.Start);
         }
         internal void PublishBossNativeTeleport(Entity entity, Vector3 from)
         {
@@ -451,18 +451,22 @@ namespace SodRpg.Mod
             // DispByTarget's finish/cancel correction is not an independent teleport activation.
             if (hero.Control.ongoingDisplacement != null) return;
             var source = BossNativeMovementBinding(hero);
-            if (source != null) PublishBossMovement(rt, source.Cast.Activation, hero.position);
+            if (source != null) PublishBossMovement(rt, source.Cast.Activation, hero.position, from);
             else
             {
                 var cast = BossNativeCastScope.Current;
                 var actor = TeleportInitiator.Current ?? BossNativeMovementSource.Current;
                 if (cast != null && cast.Movement && cast.Owner == hero && actor == cast.Trigger && BossNativeCastCurrent(cast))
-                    PublishBossMovement(rt, cast.Activation, hero.position);
+                    PublishBossMovement(rt, cast.Activation, hero.position, from);
             }
         }
-        private void PublishBossMovement(HeroRuntime rt, long activation, Vector3 destination)
+        private void PublishBossMovement(HeroRuntime rt, long activation, Vector3 destination, Vector3 origin)
         {
-            if (BossNativeOwnerState(rt).Movement.Add(activation)) BossMovementCompleted(rt, activation, destination);
+            if (!BossNativeOwnerState(rt).Movement.Add(activation)) return;
+            var previous = rt.Boss.MovementOrigin; bool previousValid = rt.Boss.MovementOriginValid;
+            rt.Boss.MovementOrigin = origin; rt.Boss.MovementOriginValid = BossFinite(origin);
+            try { BossMovementCompleted(rt, activation, destination); }
+            finally { rt.Boss.MovementOrigin = previous; rt.Boss.MovementOriginValid = previousValid; }
         }
 
         // Called from the existing NativeMemoryCasts confirmation, not from ability/claw generation.
@@ -470,8 +474,12 @@ namespace SodRpg.Mod
         {
             if (cast == null || !(cast.Skill.owner is Hero hero) || !_memoryAttribution.IsCurrent(cast.Identity)
                 || !BossNativeRuntime(hero, out var rt) || AttributionGeneratedOrigin() != GeneratedOrigin.None || !BossEnsure(rt)) return;
-            if (BossNativeOwnerState(rt).MemoryUses.Add(cast.Identity.ActivationId))
-                BossConfirmedMemoryUse(rt, cast.Identity.ActivationId, cast.Skill);
+            if (!BossNativeOwnerState(rt).MemoryUses.Add(cast.Identity.ActivationId)) return;
+            var previous = rt.Boss.MemoryDirection; bool previousValid = rt.Boss.MemoryDirectionValid;
+            rt.Boss.MemoryDirection = cast.Info.forward;
+            rt.Boss.MemoryDirectionValid = cast.Info.caster == hero && BossFinite(rt.Boss.MemoryDirection);
+            try { BossConfirmedMemoryUse(rt, cast.Identity.ActivationId, cast.Skill); }
+            finally { rt.Boss.MemoryDirection = previous; rt.Boss.MemoryDirectionValid = previousValid; }
         }
 
         // Called before PublishAttributedFinalDamage's hero-only admission return; incoming enemy
