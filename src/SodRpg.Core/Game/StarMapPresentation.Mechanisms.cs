@@ -61,7 +61,7 @@ namespace SodRpg.Core.Game
         {
             switch (pool)
             {
-                case ModShieldPoolKind.Ordinary: return Loc.T("通常の星の障壁とは重ならず、大きい残量を維持して持続時間を更新（受け手の最大HPの15%まで）。", "Does not stack with ordinary star shields; keeps the larger remaining amount and refreshes duration (up to 15% of the recipient's maximum HP).");
+                case ModShieldPoolKind.Ordinary: return Loc.T("同じ付与者から同じ受け手への通常の星の障壁とは重ならず、大きい残量を維持して持続時間を更新（付与者と受け手の組み合わせごとに、受け手の最大HPの15%まで）。", "Does not stack with ordinary star shields from the same caster to the same recipient; keeps the larger remaining amount and refreshes duration (up to 15% of the recipient's maximum HP per caster and recipient).");
                 case ModShieldPoolKind.Rampart: return Loc.T("通常の星の障壁とは別に保持（最大HPの10%まで）。", "Separate from ordinary star shields (up to 10% maximum HP).");
                 case ModShieldPoolKind.Allied: return Loc.T("同じ付与者からの障壁は重ならず、受け手の最大HPの3%まで。", "Shields from the same caster do not stack; up to 3% of the recipient's maximum HP.");
                 default: throw new InvalidOperationException("Unknown shield pool: " + pool);
