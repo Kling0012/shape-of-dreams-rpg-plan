@@ -5,7 +5,7 @@ namespace StarMapRender;
 /// <summary>
 /// Readability metrics for one hero's star map, measured in layout units (the same coordinates the
 /// game renders). Thresholds come from the layout itself: HeroTreeLayout.MinimumSpacing (80) and the
-/// in-game star diameters (36/46/58). Everything is O(n^2) over nodes/edges, which is fine for ~150 stars.
+/// in-game star diameters (36/46/58). Pairwise calculations run only in this offline tool, not in the UI.
 /// </summary>
 internal sealed class StarMapMetrics
 {

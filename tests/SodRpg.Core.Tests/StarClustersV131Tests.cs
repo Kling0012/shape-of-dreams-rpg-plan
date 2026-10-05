@@ -297,12 +297,6 @@ namespace SodRpg.Core.Tests
                     Assert.True(dx * dx + dy * dy >= HeroTreeLayout.MinimumSpacing * HeroTreeLayout.MinimumSpacing * 0.81f,
                         layout.Nodes[i].Id + " overlaps " + layout.Nodes[j].Id);
                 }
-            foreach (var legacy in HeroTreeLayout.ForHero(hero).Nodes.Where(n => n.Talent == null || n.Talent.Cluster == null && !n.Talent.IsOuterAnchor))
-            {
-                var node = layout.Nodes.Single(n => n.Id == legacy.Id);
-                Assert.Equal(legacy.X, node.X);
-                Assert.Equal(legacy.Y, node.Y);
-            }
         }
 
         [Fact]

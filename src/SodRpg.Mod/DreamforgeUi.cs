@@ -2675,14 +2675,19 @@ namespace SodRpg.Mod
             try
             {
                 var viewport = new Rect(0, 0, canvas.width, canvas.height);
-                if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                float minZoom = StarMinZoom;
+                if (_starNeedsFit || e.type == EventType.ScrollWheel)
                 {
-                    // Fit the whole tree, including the outermost stars, inside the canvas.
-                    _starNeedsFit = false;
+                    // Large layouts must fit below the usual zoom floor; scrolling uses the same lower bound.
                     StarMapMath.FitView(viewport.width, viewport.height, _starMinX, _starMaxX, _starMinY, _starMaxY,
-                        StarFitMargin, StarMinZoom, StarMaxZoom, out float fitZoom, out var fitPan);
-                    _starZoom = fitZoom;
-                    _starPan = new Vector2(fitPan.X, fitPan.Y);
+                        StarFitMargin, 0f, StarMaxZoom, out float fitZoom, out var fitPan);
+                    minZoom = Mathf.Min(StarMinZoom, fitZoom);
+                    if (_starNeedsFit && viewport.width > 50f && viewport.height > 50f)
+                    {
+                        _starNeedsFit = false;
+                        _starZoom = fitZoom;
+                        _starPan = new Vector2(fitPan.X, fitPan.Y);
+                    }
                 }
                 Vector2 mouse = e.mousePosition;
                 Vector2 windowMouse = mouse + canvas.position;
@@ -2695,7 +2700,7 @@ namespace SodRpg.Mod
                 if (inside) hover = _starView.Hit(mouse);
                 if (inside && e.type == EventType.ScrollWheel)
                 {
-                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), StarMinZoom, StarMaxZoom);
+                    float zoom = Mathf.Clamp(_starZoom * Mathf.Pow(1.12f, -e.delta.y), minZoom, StarMaxZoom);
                     _starPan = mouse - viewport.center - (mouse - viewport.center - _starPan) * (zoom / _starZoom);
                     _starZoom = zoom;
                     e.Use();

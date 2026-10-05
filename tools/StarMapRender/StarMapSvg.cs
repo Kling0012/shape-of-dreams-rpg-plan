@@ -98,10 +98,11 @@ internal static class StarMapSvg
           .Append(width).Append("\" height=\"").Append(height).Append("\" viewBox=\"0 0 ").Append(width).Append(' ').Append(height).Append("\">\n");
         sb.Append("<rect width=\"100%\" height=\"100%\" fill=\"").Append(Background).Append("\"/>\n");
 
-        // Soft cluster halos make each authored cluster's extent visible at a glance.
+        // Keystone groups are a catalog of independently anchored big stars, not one spatial unit.
+        // Their individual purple rings below show extent; a shared halo would cover unrelated memories.
         foreach (var cluster in clusters)
         {
-            if (cluster.NodeCount < 2 || !clusterColor.TryGetValue(cluster.Id, out string? color)) continue;
+            if (cluster.Region == ClusterRegionKind.Keystone || cluster.NodeCount < 2 || !clusterColor.TryGetValue(cluster.Id, out string? color)) continue;
             float radius = 0;
             foreach (int node in cluster.NodeIndices)
             {
@@ -196,7 +197,7 @@ internal static class StarMapSvg
         {
             sb.Append("<circle cx=\"").Append(F(x)).Append("\" cy=\"").Append(F(y - 4)).Append("\" r=\"5\" fill=\"").Append(fill).Append("\"/>\n");
         }
-        Line($"{heroName} — star map (issue #106, before)", "#F2F5FA", 32, 16, true);
+        Line($"{heroName} — star map (issue #106, current layout)", "#F2F5FA", 32, 16, true);
         y += 22;
         Line($"stars {metrics.Stars} / edges {metrics.Edges} / clusters {metrics.Clusters}", LegendText, 32);
         y += 17;
