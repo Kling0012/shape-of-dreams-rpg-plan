@@ -1,15 +1,17 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using SodRpg.Core.Game;
 
 /// <summary>
 /// 星図（v1.31）のウィキページ生成。旅人ごとに、ゲームが実際に使う星図（HeroSigils.TreeFor）を読んで書く。
-/// 文面はゲーム内表示と同じ TalentDef.Describe()。手書きの転記はしない。
+/// 文面はゲーム内表示と同じ StarMapPresentation.EffectDescription()。手書きの転記はしない。
 /// </summary>
 internal static class StarMapWiki
 {
     // 1ページの上限。確認用に環境変数 WIKIGEN_STARMAP_MAX で小さくできる。
     public static readonly int MaxPageBytes = int.TryParse(Environment.GetEnvironmentVariable("WIKIGEN_STARMAP_MAX"), out int m) && m >= 20_000 ? m : 200_000;
     private const string NL = " \\\\ ";
+    private static readonly Regex RichText = new("<[^>]*>");
 
     public sealed record HeroSummary(string Key, string Slug, string Name, int Stars, int Keystones, int Pages, string Home);
 
@@ -57,14 +59,13 @@ internal static class StarMapWiki
     }
 
     // DokuWiki の表のセル用。縦棒・強制改行・斜体/太字記号を無害化する（バックスラッシュ2連は強制改行になるため）。
-    public static string Cell(string? s) => (s ?? "").Replace("\r", "").Trim()
+    public static string Cell(string? s) => RichText.Replace(s ?? "", "").Replace("\r", "").Trim()
         .Replace("\\\\", "\\ \\").Replace("|", "%%|%%").Replace("//", "%%//%%").Replace("**", "%%**%%").Replace("''", "%%''%%")
         .Replace("\n", NL);
 
     private static string NameCell(Txt t) => Cell(t.Ja) + (t.En == "" || t.En == t.Ja ? "" : " (" + Cell(t.En) + ")");
 
-    private static bool IsKeystone(TalentDef t) => t.IsKeystone || t.KeystoneDefinition != null
-        || t.AuthoredStar?.Region?.Kind == ClusterRegionKind.Keystone || t.Cluster?.Region?.Kind == ClusterRegionKind.Keystone;
+    private static bool IsKeystone(TalentDef t) => t.IsKeystone || t.KeystoneDefinition != null;
 
     private static string ShortCluster(string id)
     {
@@ -130,19 +131,15 @@ internal static class StarMapWiki
     private static string StarRow(Row r)
     {
         var t = r.T;
-        string effect = Ja(() => t.Describe());
-        // 「（最大N段・1段につきMポイント）」は別の列に出すので、本文（選択肢の中も）から外す。
-        effect = System.Text.RegularExpressions.Regex.Replace(effect, @"（最大\d+段・1段につき\d+ポイント）", "");
+        string effect = Ja(() => StarMapPresentation.EffectDescription(t)) + "\n"
+            + En(() => StarMapPresentation.EffectDescription(t));
         return $"| {NameCell(t.Name)} | {(r.Cluster == "" ? "-" : Cell(r.Cluster))} | {t.MaxRank} | {t.RankCost} | {Cell(effect)} |";
     }
 
     private static string KeystoneRow(TalentDef t)
     {
-        string up;
-        if (t.KeystoneDefinition != null)
-            up = Ja(() => AuthoredMechanisms.DescribeKeystone(t.KeystoneDefinition));
-        else
-            up = Ja(() => Content.FormatPower(t.Power, t.PowerValue)) + "\n" + t.Description?.Ja;
+        string up = Ja(() => StarMapPresentation.EffectDescription(t)) + "\n"
+            + En(() => StarMapPresentation.EffectDescription(t));
         int cost = t.KeystoneDefinition?.Cost ?? Content.KeystoneCost;
         return $"| {NameCell(t.Name)} | {Cell(up)} | {cost} |";
     }
@@ -219,7 +216,7 @@ internal static class StarMapWiki
             if (keystones.Count > 0)
             {
                 ksb.Append("===== 到達刻印 =====\n\n");
-                ksb.Append("到達刻印は、利点と欠点を併せ持つ強力な星です。選べる数には上限があります。\n\n").Append(KeyHeader).Append('\n');
+                ksb.Append("到達刻印は、対象・発動条件のある特別な星です。デバフはありません。星のレベルに応じて最大3つまで選べます。\n\n").Append(KeyHeader).Append('\n');
                 foreach (var k in keystones) ksb.Append(KeystoneRow(k)).Append('\n');
                 ksb.Append('\n');
             }
@@ -279,7 +276,7 @@ internal static class StarMapWiki
 
         var isb = new StringBuilder();
         isb.Append("====== 星図（旅人別）======\n\n");
-        isb.Append("旅人ごとの星図の一覧です。星の名前・段数・費用・効果と、到達刻印の利点と欠点を載せています。内容はゲームのデータから自動生成しています。\n\n");
+        isb.Append("旅人ごとの星図の一覧です。星の名前・段数・費用・日英の効果本文を載せています。内容はゲームの表示と共通の説明生成から自動出力しています。\n\n");
         isb.Append("[[dreamforge:start|ホームへ戻る]]\n\n");
         isb.Append("^ 旅人 ^ 星（刻印を含む） ^ 到達刻印 ^ ページ数 ^\n");
         foreach (var h in result)

@@ -304,15 +304,20 @@ namespace SodRpg.Core.Game
             return travelers < 2 || includesSelf;
         }
 
-        /// <summary>
-        /// 連携の説明文。isSatisfied を渡すと各条件に ✓（満たしている）か ・（まだ）を付ける。
-        /// </summary>
+        public static string ItemName(string target)
+        {
+            var name = Name(target);
+            return IsMemory(Canon(target)) ? Loc.T("記憶『" + name.Ja + "』", "Memory “" + name.En + "”")
+                : IsEssence(Canon(target)) ? Loc.T("エッセンス『" + name.Ja + "』", "Essence “" + name.En + "”")
+                : name.ToString();
+        }
+        /// <summary>Describe effects and their equipped-item or nearby-traveler requirements.</summary>
         public static string Describe(LinkDef link, Func<string, bool> isSatisfied = null)
         {
             if (link == null || link.Requires == null || link.Requires.Length == 0) return "";
             if (link.Kind == LinkKind.BossReward)
-                return Loc.T($"固有報酬連携：本人の『{Name(link.Requires[0])}』装着＋対応セットの段階{link.Value}。各セットの最高段階だけ有効。",
-                    $"Boss reward link: your equipped {Name(link.Requires[0])} plus matching set stage {link.Value}. Highest stage per set only.");
+                return Loc.T($"固有報酬の段階{link.Value}が有効：本人が{ItemName(link.Requires[0])}を装着中。対応する各セットの最高段階だけ有効。",
+                    $"Boss reward stage {link.Value} enabled: while you equip {ItemName(link.Requires[0])}. Highest stage per matching set only.");
             string value = link.Value.ToString(CultureInfo.InvariantCulture);
             string limitJa, limitEn;
             switch (link.Kind)
@@ -349,7 +354,7 @@ namespace SodRpg.Core.Game
                 {
                     travelers.Add(Name(t).Ja + Mark(t, isSatisfied));
                 }
-                else items.Add("『" + Name(t).Ja + "』" + Mark(t, isSatisfied));
+                else items.Add(ItemName(t) + Mark(t, isSatisfied));
             }
             var conditions = new List<string>();
             if (travelers.Count == 1)
@@ -366,33 +371,21 @@ namespace SodRpg.Core.Game
 
         private static string DescribeJa(LinkDef link, Func<string, bool> isSatisfied, string value)
         {
-            bool memoryKind = link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge;
-            if (link.Kind == LinkKind.MemoryDamage)
-            {
-                string cond2 = ConditionJa(link, isSatisfied, false);
-                return "連携：" + cond2 + "、" + MemorySubjectJa(link) + "で与えるダメージが" + value + "%上がる";
-            }
-            // 条件が記憶1つだけなら「『吹雪』✓ を使うと…」と短く言う。
-            if (memoryKind && link.Requires.Length == 1)
-            {
-                string m = "『" + Name(link.Requires[0]).Ja + "』" + Mark(link.Requires[0], isSatisfied);
-                return link.Kind == LinkKind.MemoryHaste
-                    ? "連携：" + m + " を使うと、そのクールダウンが" + value + "%早く戻る"
-                    : "連携：" + m + " を使うと、その後5秒間、攻撃力・魔力が" + value + "%上がる";
-            }
-            string cond = ConditionJa(link, isSatisfied, memoryKind);
+            string cond = ConditionJa(link, isSatisfied, false);
             switch (link.Kind)
             {
+                case LinkKind.MemoryDamage:
+                    return "記憶ダメージ +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "で与えるダメージに適用";
                 case LinkKind.Attune:
-                    return "連携：" + cond + "、攻撃力・魔力が" + value + "%上がる";
+                    return "攻撃力・魔力 +" + value + "%：" + cond;
                 case LinkKind.Guard:
-                    return "連携：" + cond + "、最大HPが" + value + "%上がり、防御が" + value + "増える";
+                    return "最大HP +" + value + "%・防御 +" + value + "：" + cond;
                 case LinkKind.MemoryHaste:
-                    return "連携：" + cond + "、" + MemorySubjectJa(link) + "を使うと、そのクールダウンが" + value + "%早く戻る";
+                    return "クールダウン短縮 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使うと、その記憶の最大クールダウン時間の" + value + "%分だけ残り時間を短縮";
                 case LinkKind.MemorySurge:
-                    return "連携：" + cond + "、" + MemorySubjectJa(link) + "を使うと、その後5秒間、攻撃力・魔力が" + value + "%上がる";
+                    return "攻撃力・魔力 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使った後5秒間";
                 default:
-                    return "連携：" + cond;
+                    return "連携条件：" + cond;
             }
         }
 
@@ -405,7 +398,7 @@ namespace SodRpg.Core.Game
             {
                 if (!IsMemory(Canon(t))) continue;
                 count++;
-                if (first == null) first = "『" + Name(t).Ja + "』";
+                if (first == null) first = ItemName(t);
             }
             if (count == 1) return first;
             return "その記憶のどれか";
@@ -421,7 +414,7 @@ namespace SodRpg.Core.Game
                 {
                     travelers.Add(Name(t).En + Mark(t, isSatisfied));
                 }
-                else items.Add(Name(t).En + (Mark(t, isSatisfied).Length == 0 ? "" : " " + Mark(t, isSatisfied)));
+                else items.Add(ItemName(t) + (Mark(t, isSatisfied).Length == 0 ? "" : " " + Mark(t, isSatisfied)));
             }
             var conditions = new List<string>();
             if (travelers.Count == 1)
@@ -430,35 +423,26 @@ namespace SodRpg.Core.Game
                 conditions.Add("while playing one of " + string.Join(" and ", travelers) + ", with the other required travelers alive and allied within 10 m");
             if (items.Count > 0)
                 conditions.Add("with " + string.Join(" and ", items) + (items.Count > 1 ? " all" : "") + " equipped");
-            return string.Join(", and ", conditions) + ", ";
+            return string.Join(", and ", conditions);
         }
 
         private static string DescribeEn(LinkDef link, Func<string, bool> isSatisfied, string value)
         {
-            bool memoryKind = link.Kind == LinkKind.MemoryHaste || link.Kind == LinkKind.MemorySurge;
-            if (memoryKind && link.Requires.Length == 1)
-            {
-                string mark = Mark(link.Requires[0], isSatisfied);
-                string m = Name(link.Requires[0]).En + (mark.Length == 0 ? "" : " " + mark);
-                return link.Kind == LinkKind.MemoryHaste
-                    ? "Link: using " + m + " recovers its cooldown " + value + "% faster."
-                    : "Link: using " + m + " grants +" + value + "% attack damage and ability power for 5 seconds.";
-            }
-            string cond = ConditionEn(link, isSatisfied, memoryKind);
+            string cond = ConditionEn(link, isSatisfied, false);
             switch (link.Kind)
             {
                 case LinkKind.MemoryDamage:
-                    return "Link: " + cond + "damage dealt by " + MemorySubjectEn(link) + " is increased by " + value + "%.";
+                    return "Memory damage +" + value + "%: " + cond + "; applies to damage dealt by " + MemorySubjectEn(link) + ".";
                 case LinkKind.Attune:
-                    return "Link: " + cond + "attack damage and ability power are increased by " + value + "%.";
+                    return "Attack damage and ability power +" + value + "%: " + cond + ".";
                 case LinkKind.Guard:
-                    return "Link: " + cond + "maximum health is increased by " + value + "% and armor by " + value + ".";
+                    return "Maximum health +" + value + "% and armor +" + value + ": " + cond + ".";
                 case LinkKind.MemoryHaste:
-                    return "Link: " + cond + "using " + MemorySubjectEn(link) + " recovers its cooldown " + value + "% faster.";
+                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value + "% of that memory's maximum cooldown from its remaining time.";
                 case LinkKind.MemorySurge:
-                    return "Link: " + cond + "using " + MemorySubjectEn(link) + " grants +" + value + "% attack damage and ability power for 5 seconds.";
+                    return "Attack damage and ability power +" + value + "% for 5 seconds: " + cond + "; triggered by using " + MemorySubjectEn(link) + ".";
                 default:
-                    return "Link: " + cond;
+                    return "Link requirements: " + cond + ".";
             }
         }
 
@@ -470,7 +454,7 @@ namespace SodRpg.Core.Game
             {
                 if (!IsMemory(Canon(t))) continue;
                 count++;
-                if (first == null) first = Name(t).En;
+                if (first == null) first = ItemName(t);
             }
             if (count == 1) return first;
             return "one of those memories";

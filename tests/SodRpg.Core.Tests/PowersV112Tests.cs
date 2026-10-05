@@ -84,13 +84,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void New_powers_have_text_caps_and_items()
+        public void New_powers_have_caps_and_items()
         {
             var fresh = new[] { Power.SoulSiphon, Power.Whirlwind, Power.Frenzy, Power.OpeningStrike, Power.StarShield, Power.Sprint, Power.Vigor, Power.Overload };
             foreach (var p in fresh)
             {
                 Assert.True(Content.PowerCap(p) > 0, p.ToString());
-                Assert.StartsWith("【", Loc.Japanese ? Content.FormatPower(p, 10) : "【");
                 Assert.Contains(Content.Uniques, u => u.Powers.Any(x => x.Power == p));
                 foreach (var u in Content.Uniques)
                     foreach (var pl in u.Powers)

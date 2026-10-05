@@ -13,6 +13,12 @@ namespace SodRpg.Core.Game
             ValidateChoice(star, chosen);
             if (rank < 0 || rank > star.MaxRank || rank > 0 && chosen < 0)
                 throw new InvalidOperationException("Invalid allocated choice state: " + star.Id);
+            try { return ChoiceDescriptionCore(star, chosen, rank); }
+            catch (Exception error) { return DescriptionFallback(star, error); }
+        }
+
+        private static string ChoiceDescriptionCore(TalentDef star, int chosen, int rank)
+        {
             // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
             // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
             return (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
@@ -37,12 +43,17 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>Build on content/language changes, not inside the per-frame drawing loop.</summary>
-        public static string EffectDescription(TalentDef star)
+        public static string EffectDescription(TalentDef star, int rank = 1)
         {
-            RequireStar(star);
-            if (star.IsChoice) return ChoiceDescription(star, -1, 0);
-            if (star.KeystoneDefinition != null || star.IsKeystone) return KeystoneDescription(star);
-            return star.Mechanism == null ? star.Describe() : DescribeMechanism(star.Mechanism);
+            try
+            {
+                RequireStar(star);
+                if (star.IsChoice) return ChoiceDescription(star, -1, 0);
+                if (star.KeystoneDefinition != null || star.IsKeystone) return KeystoneDescription(star);
+                if (star.Mechanism == null && star.PairCombo != null) return PairCombos.Describe(star.PairCombo, rank);
+                return star.Mechanism == null ? star.Describe() : DescribeMechanism(star.Mechanism);
+            }
+            catch (Exception error) { return DescriptionFallback(star, error); }
         }
 
         private const string NL = "\n";
@@ -53,6 +64,12 @@ namespace SodRpg.Core.Game
         /// 必要ポイントは最後の1行だけで、ツリー側の説明では繰り返さない。
         /// </summary>
         public static string KeystoneDescription(TalentDef star)
+        {
+            try { return KeystoneDescriptionCore(star); }
+            catch (Exception error) { return DescriptionFallback(star, error); }
+        }
+
+        private static string KeystoneDescriptionCore(TalentDef star)
         {
             RequireStar(star);
             if (star.KeystoneDefinition != null)
@@ -72,7 +89,7 @@ namespace SodRpg.Core.Game
         public static string KeystoneSections(string benefit, int cost)
         {
             return Loc.T(BenefitHeading, "<color=#9fe0b0><b>Effect</b></color>") + NL + benefit
-                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} points");
+                + NL + Loc.T($"必要ポイント：{cost}", $"Cost: {cost} {(cost == 1 ? "point" : "points")}");
         }
 
         /// <summary>
@@ -124,8 +141,24 @@ namespace SodRpg.Core.Game
         {
             ValidateChoice(star, -1);
             if (option < 0 || option > 1) throw new ArgumentOutOfRangeException(nameof(option));
+            try { return ChoiceOptionBodyCore(star, option); }
+            catch (Exception error) { return DescriptionFallback(star, error); }
+        }
+
+        private static string ChoiceOptionBodyCore(TalentDef star, int option)
+        {
             TalentDef selected = star.Choices[option];
             return "<b>" + selected.Name + "</b>" + NL + EffectDescription(selected);
+        }
+
+        public static string PresentationLabel(TalentDef star)
+        {
+            try { return MechanismLabel(star); }
+            catch (Exception error)
+            {
+                DescriptionFallback(star, error);
+                return Loc.T("星の効果", "Star effect");
+            }
         }
 
         public static string MechanismLabel(TalentDef star)
@@ -138,15 +171,15 @@ namespace SodRpg.Core.Game
                 AuthoredMechanisms.Validate(star.Mechanism);
                 switch (star.Mechanism.Kind)
                 {
-                    case AuthoredMechanismKind.Gimmick: return Loc.T("記憶の仕掛け", "Memory gimmick");
-                    case AuthoredMechanismKind.DirectedRecharge: return Loc.T("指定記憶のクールダウン短縮", "Directed cooldown reduction");
-                    case AuthoredMechanismKind.BridgeSuccess: return Loc.T("橋の成功効果", "Bridge success payoff");
+                    case AuthoredMechanismKind.Gimmick: return Loc.T("記憶の追加効果", "Additional memory effect");
+                    case AuthoredMechanismKind.DirectedRecharge: return Loc.T("記憶間のクールダウン短縮", "Cooldown reduction between memories");
+                    case AuthoredMechanismKind.BridgeSuccess: return Loc.T("記憶を組み合わせた追加効果", "Combined memory effect");
                     case AuthoredMechanismKind.MemoryPrimed: return Loc.T("次の通常攻撃の強化", "Next basic attack enhancement");
-                    case AuthoredMechanismKind.RelayWindow: return Loc.T("記憶への引継ぎ", "Memory relay window");
+                    case AuthoredMechanismKind.RelayWindow: return Loc.T("次に使う記憶の強化", "Enhancement for the next memory used");
                     case AuthoredMechanismKind.SacrificeShield: return Loc.T("HP支払いから障壁へ", "HP payment converted to shield");
-                    case AuthoredMechanismKind.AlliedWard: return Loc.T("味方への障壁付与", "Allied shield ward");
-                    case AuthoredMechanismKind.PressureDividend: return Loc.T("敵の強化に応じた追加報酬", "Pressure dividend");
-                    case AuthoredMechanismKind.StunSourceFilter: return Loc.T("記憶のスタンによる障壁", "Native memory stun shield");
+                    case AuthoredMechanismKind.AlliedWard: return Loc.T("味方への障壁付与", "Shield for allies");
+                    case AuthoredMechanismKind.PressureDividend: return Loc.T("強化された敵からの追加報酬", "Extra rewards from strengthened enemies");
+                    case AuthoredMechanismKind.StunSourceFilter: return Loc.T("記憶のスタンによる障壁", "Shield when a memory stuns an enemy");
                     case AuthoredMechanismKind.MemoryTuning: return Loc.T("記憶の挙動の変更", "Memory behavior change");
                     case AuthoredMechanismKind.IdentityStrike: return Loc.T("アイデンティティ記憶の追加攻撃", "Identity memory strike");
                     default: throw new InvalidOperationException("Unknown mechanism: " + star.Id);
@@ -160,35 +193,35 @@ namespace SodRpg.Core.Game
             {
                 FractionalScopedModifiers.ValidateTalent(star);
                 return star.NativeModifier != null
-                    ? star.NativeModifier.Kind == LinkKind.MemoryHaste ? Loc.T("指定記憶のクールダウン短縮", "Native memory cooldown reduction")
-                        : Loc.T("指定記憶のダメージ強化", "Native memory damage enhancement")
-                    : Loc.T("対象限定の効果強化", "Scoped effect enhancement");
+                    ? star.NativeModifier.Kind == LinkKind.MemoryHaste ? Loc.T("記憶のクールダウン短縮", "Memory cooldown reduction")
+                        : Loc.T("記憶の与ダメージ強化", "Memory damage increase")
+                    : Loc.T("星の追加効果の強化", "Star effect enhancement");
             }
             if (star.LinkPerRank != null)
             {
                 if (!Links.Validate(star.LinkPerRank)) throw new InvalidOperationException("Invalid link: " + star.Id);
-                return star.LinkPerRank.Kind == LinkKind.MemoryHaste ? Loc.T("指定記憶のクールダウン短縮", "Native memory cooldown reduction")
-                    : star.LinkPerRank.Kind == LinkKind.MemoryDamage ? Loc.T("指定記憶のダメージ強化", "Native memory damage enhancement")
+                return star.LinkPerRank.Kind == LinkKind.MemoryHaste ? Loc.T("記憶のクールダウン短縮", "Memory cooldown reduction")
+                    : star.LinkPerRank.Kind == LinkKind.MemoryDamage ? Loc.T("記憶の与ダメージ強化", "Memory damage increase")
                     : Loc.T("記憶の連携", "Memory link");
             }
             if (star.GimmickParameter.HasValue)
             {
                 switch (star.GimmickParameter.Value)
                 {
-                    case GimmickParam.Duration: return Loc.T("仕掛けの持続時間", "Gimmick duration");
-                    case GimmickParam.WindowDuration: return Loc.T("橋の受付時間", "Bridge window duration");
-                    case GimmickParam.MarkDuration: return Loc.T("橋の印の持続時間", "Bridge mark duration");
-                    case GimmickParam.Radius: return Loc.T("仕掛けの効果半径", "Gimmick radius");
-                    case GimmickParam.ExtraTargets: return Loc.T("仕掛けの追加対象", "Gimmick additional targets");
-                    case GimmickParam.Chance: return Loc.T("仕掛けの属性追加確率", "Gimmick extra-element chance");
+                    case GimmickParam.Duration: return Loc.T("追加効果の持続時間", "Additional effect duration");
+                    case GimmickParam.WindowDuration: return Loc.T("連携が成立するまでの猶予", "Time allowed to complete a combo");
+                    case GimmickParam.MarkDuration: return Loc.T("連携の印の持続時間", "Combo mark duration");
+                    case GimmickParam.Radius: return Loc.T("追加効果の半径", "Additional effect radius");
+                    case GimmickParam.ExtraTargets: return Loc.T("追加効果の対象数", "Additional effect targets");
+                    case GimmickParam.Chance: return Loc.T("追加効果の発動確率", "Additional effect probability");
                     default: throw new InvalidOperationException("Unknown gimmick parameter: " + star.Id);
                 }
             }
-            if (star.GimmickBoost > 0) return Loc.T("仕掛けの効果量強化", "Gimmick effect enhancement");
+            if (star.GimmickBoost > 0) return Loc.T("追加効果の効果量強化", "Additional effect amount increase");
             if (star.Gimmick != null)
             {
                 if (!Gimmicks.ValidDef(star.Gimmick)) throw new InvalidOperationException("Invalid gimmick: " + star.Id);
-                return Loc.T("記憶の仕掛け", "Memory gimmick");
+                return Loc.T("記憶の追加効果", "Additional memory effect");
             }
             if (star.IsPowerNode)
             {
@@ -211,46 +244,140 @@ namespace SodRpg.Core.Game
         {
             var lines = new List<string>();
             if (key.RetainedPower != Power.None)
-                lines.Add(Loc.T("既存の刻印効果を維持：", "Keeps its existing effect: ") + Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
+                lines.Add(Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
             foreach (var transform in key.Upside)
             {
-                string layer = EnumText(transform.TargetLayer, Loc.Japanese, new[] { "記憶固有のダメージ", "星による記憶ダメージ", "追加生成ダメージ", "仕掛けの効果" }, new[] { "native memory damage", "star memory damage", "generated damage", "gimmick effect" });
-                string field = EnumText(transform.Field, Loc.Japanese, new[] { "効果量", "持続時間", "効果半径", "発生までの時間", "対象数", "発火間隔", "確率", "効果の種類" }, new[] { "effect value", "duration", "radius", "delay", "target count", "interval", "chance", "effect type" });
-                string operation = EnumText(transform.Operation, Loc.Japanese, new[] { "増減率", "秒数", "追加数", "発動に必要な回数", "設定値", "加算量" }, new[] { "scale", "seconds", "extra count", "required count", "set value", "additive amount" });
+                string effect = KeystoneEffectText(transform);
+                lines.Add(effect + Loc.T("：", ": ") + KeystoneChangeText(transform));
                 var scope = transform.Scope;
                 var targets = new List<string>();
-                targets.AddRange(scope.TargetMemorySet.Select(m => Links.Name(m).ToString()));
-                targets.AddRange(scope.TargetEffectSet.Select(EffectText));
-                targets.AddRange(scope.TargetEffectIds.Select(id => Loc.T("対象の星：", "target star: ") + StarName(id)));
+                targets.AddRange(scope.TargetMemorySet.Select(Links.ItemName));
                 targets.AddRange(scope.SourceSelectors.Select(SelectorText));
-                targets.AddRange(scope.ReceiverMemorySet.Select(m => Loc.T("受け手：", "receiver: ") + Links.Name(m)));
-                targets.AddRange(scope.ReceiverSelectors.Select(s => Loc.T("受け手：", "receiver: ") + SelectorText(s)));
-                if (scope.PayloadKind != KeystonePayloadKind.None)
-                    targets.Add(EnumText(scope.PayloadKind, Loc.Japanese, new[] { "すべての効果", "記憶の仕掛け", "対象指定のクールダウン短縮", "次の通常攻撃強化",
-                        "記憶への引継ぎ", "HP支払いから障壁へ", "味方への障壁", "合わせ技の成功効果", "敵の強化に応じた追加報酬" },
-                        new[] { "all effects", "memory gimmick", "directed cooldown reduction", "next basic attack enhancement", "memory relay", "HP payment to shield", "allied shield", "bridge success payoff", "pressure dividend" }));
+                targets.AddRange(scope.TargetEffectIds.Select(StarName));
+                lines.Add(Loc.T("対象：", "Applies to: ") + (targets.Count == 0
+                    ? Loc.T("自分が取得した星による該当効果すべて。", "all matching effects from stars you own.")
+                    : string.Join(Loc.T("、", ", "), targets) + Loc.T("による該当効果。", "."))
+                    + (transform.TargetLayer == KeystoneLayer.NativeDamage
+                        ? Loc.T("記憶が元々与えるダメージだけを変更し、星による追加ダメージは変更しない。", " Changes only the memory's original damage, not star-generated extra damage.")
+                        : transform.TargetLayer == KeystoneLayer.GeneratedDamage
+                            ? Loc.T("星による追加ダメージだけを変更し、記憶の元々のダメージは変更しない。", " Changes only star-generated extra damage, not the memory's original damage.")
+                            : ""));
+                if (scope.ReceiverMemorySet.Count > 0 || scope.ReceiverSelectors.Count > 0)
+                    lines.Add(Loc.T("効果の受け手：", "Effect recipient: ")
+                        + string.Join(Loc.T("、", ", "), scope.ReceiverMemorySet.Select(Links.ItemName).Concat(scope.ReceiverSelectors.Select(SelectorText))) + Loc.T("。", "."));
                 if (scope.Recipient != KeystoneRecipientKind.Any)
-                    targets.Add(EnumText(scope.Recipient, Loc.Japanese, new[] { "すべての受け手", "自分", "味方", "自分の召喚物" }, new[] { "any recipient", "self", "allies", "own summons" }));
+                    lines.Add(Loc.T("変更する対象：", "Changes the effect on: ") + EnumText(scope.Recipient, Loc.Japanese,
+                        new[] { "すべて", "自分", "味方の旅人だけ（自分への効果は変わらない）", "自分の召喚獣" },
+                        new[] { "everyone", "yourself", "allied travelers only (your own effect is unchanged)", "your summons" }) + Loc.T("。", "."));
                 if (scope.SourceKind.HasValue)
-                    targets.Add(EnumText(scope.SourceKind.Value, Loc.Japanese, new[] { "記憶固有の発火", "自分の通常攻撃", "自分の召喚物", "追加生成効果", "移動による発火" }, new[] { "native memory trigger", "own basic attack", "own summon", "generated effect", "movement trigger" }));
-                if (scope.Argument.HasValue) targets.Add(Loc.T("効果の種類：", "effect type: ") + scope.Argument.Value);
-                string Number(decimal value) => value.ToString(CultureInfo.InvariantCulture);
-                string valueText;
-                switch (transform.Operation)
-                {
-                    case KeystoneOperation.Scale: valueText = Number(transform.MagnitudeUnits.Percent) + "%"; break;
-                    case KeystoneOperation.SetSeconds: valueText = Number(transform.Seconds) + Loc.T("秒", "s"); break;
-                    case KeystoneOperation.Set:
-                    case KeystoneOperation.Add: valueText = Number(transform.Seconds); break;
-                    default: valueText = transform.Count.ToString(CultureInfo.InvariantCulture); break;
-                }
-                lines.Add(layer + Loc.T("（", " (") + (targets.Count == 0 ? Loc.T("すべての対象", "all targets") : string.Join(Loc.T("、", ", "), targets)) + Loc.T("）", ")") + "\n  " + field + Loc.T("：", ": ") + operation + " " + valueText
-                    + (transform.ExpectedFrom.HasValue ? Loc.T("（変更前 ", " (from ") + Number(transform.ExpectedFrom.Value) + Loc.T("）", ")") : "")
-                    + (transform.Maximum.HasValue ? Loc.T("（上限 ", " (max ") + Number(transform.Maximum.Value) + Loc.T("）", ")") : ""));
+                    lines.Add(Loc.T("発動元：", "Source: ") + EnumText(scope.SourceKind.Value, Loc.Japanese,
+                        new[] { "記憶が元々持つ効果", "自分の通常攻撃", "自分の召喚獣", "星による追加効果", "自分の移動" },
+                        new[] { "the memory's original effect", "your basic attacks", "your summons", "star-generated extra effects", "your displacement" }) + Loc.T("。", "."));
+                if (scope.Argument.HasValue)
+                    lines.Add(scope.TargetEffectSet.Contains(GimmickEffect.Heal)
+                        ? (scope.Argument.Value == 1
+                            ? Loc.T("対象は、自分だけでなく近くの味方旅人も回復する効果に限る。", "Applies only to effects that already heal nearby allied travelers as well as yourself.")
+                            : scope.Argument.Value == 0 ? Loc.T("対象は自分だけを回復する効果に限る。", "Applies only to effects that heal yourself alone.")
+                                : throw new InvalidOperationException("Unmapped healing condition."))
+                        : KeystoneArgumentText(scope.TargetEffectSet, scope.Argument.Value));
+                if (scope.TargetEffectSet.Contains(GimmickEffect.Wound) && transform.Field == KeystoneField.Duration)
+                    lines.Add(Loc.T("毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。",
+                        "Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap."));
+                if (transform.Operation == KeystoneOperation.Scale)
+                    lines.Add(Loc.T("対象の現在の値に掛ける倍率で、パーセントポイントの加算ではない。各効果の上限は変わらない。",
+                        "Multiplies the current value, rather than adding percentage points. Existing effect caps remain unchanged."));
             }
             foreach (var grant in key.Grants)
-                lines.Add(Loc.T("付与：", "Grant: ") + DescribeMechanism(grant));
+                lines.Add(DescribeMechanism(grant));
+            if (key.RequiredMemories.Count > 0)
+                lines.Add(Loc.T("すべて装備が必要：", "All must be equipped: ") + string.Join(Loc.T("、", ", "), key.RequiredMemories.Select(Links.ItemName)));
+            if (key.Prerequisites.Count > 0)
+                lines.Add(Loc.T("取得の前提（すべて必要）：", "Acquisition prerequisites (all required): ") + string.Join(Loc.T("、", ", "), key.Prerequisites.Select(StarName)));
             return string.Join("\n", lines);
+        }
+
+        private static string KeystoneEffectText(KeystoneTransform transform)
+        {
+            var scope = transform.Scope;
+            if (transform.TargetLayer == KeystoneLayer.NativeDamage) return Loc.T("記憶の元々のダメージ", "Memory original damage");
+            if (transform.TargetLayer == KeystoneLayer.StarMemoryDamage) return Loc.T("星による記憶のダメージ増加量", "Memory damage bonus from stars");
+            if (scope.TargetEffectSet.Count > 0)
+                return string.Join(Loc.T("・", " / "), scope.TargetEffectSet.Select(EffectText));
+            switch (scope.PayloadKind)
+            {
+                case KeystonePayloadKind.DirectedRecharge: return Loc.T("受け手の残りクールダウン短縮量", "Recipient remaining cooldown reduction");
+                case KeystonePayloadKind.MemoryPrimed: return Loc.T("次の通常攻撃の追加ダメージ", "Next basic attack extra damage");
+                case KeystonePayloadKind.RelayWindow: return Loc.T("記憶の直接ダメージ増加量", "Memory direct damage bonus");
+                case KeystonePayloadKind.SacrificeShield: return Loc.T("HP支払いによる障壁量", "Shield amount from HP payment");
+                case KeystonePayloadKind.AlliedWard: return scope.Recipient == KeystoneRecipientKind.OwnedSummon
+                    ? Loc.T("自分の召喚獣の障壁量", "Shield amount for your summons") : Loc.T("自分・味方の障壁量", "Shield amount for yourself and allies");
+                case KeystonePayloadKind.PressureDividend: return Loc.T("未確保の欠片の獲得確率", "Chance to gain an unsecured shard");
+                default: throw new InvalidOperationException("Unmapped keystone effect.");
+            }
+        }
+
+        private static string KeystoneChangeText(KeystoneTransform transform)
+        {
+            string field = EnumText(transform.Field, Loc.Japanese,
+                new[] { "量", "持続時間", "半径", "追加効果が発生するまでの時間", "対象数", "発動に必要な回数", "発動確率", "対象" },
+                new[] { "amount", "duration", "radius", "delay before the extra effect", "target count", "qualifying events needed", "trigger chance", "targets" });
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Heal))
+                return KeystoneArgumentText(transform.Scope.TargetEffectSet, checked((int)transform.Seconds));
+            if (transform.Field == KeystoneField.Argument && transform.Scope.TargetEffectSet.Contains(GimmickEffect.Ricochet))
+                field = Loc.T("追加ダメージを受ける別の敵の数", "number of other enemies receiving extra damage");
+            string result;
+            switch (transform.Operation)
+            {
+                case KeystoneOperation.Scale:
+                    result = field + " " + (transform.MagnitudeUnits.Units > 0 ? "+" : "") + Number(transform.MagnitudeUnits.Percent) + "%"
+                        + Loc.T("（", " (×") + (Loc.Japanese ? "元の" : "") + Number(transform.MagnitudeUnits.Multiplier) + Loc.T("倍）。", ").");
+                    break;
+                case KeystoneOperation.SetSeconds:
+                    result = field + Loc.T("を", " → ") + Number(transform.Seconds) + Loc.T("秒に変更。", "s."); break;
+                case KeystoneOperation.AddTargets:
+                    result = field + " " + (transform.Count > 0 ? "+" : "") + transform.Count + Loc.T("体。", " targets."); break;
+                case KeystoneOperation.SetEveryN:
+                    result = Loc.T("条件を満たす", "Every ") + transform.Count + Loc.T("回ごとに発動。", " qualifying events."); break;
+                case KeystoneOperation.Set:
+                    result = field + (transform.ExpectedFrom.HasValue ? " " + KeystoneNumericText(transform, transform.ExpectedFrom.Value) : "")
+                        + " → " + KeystoneNumericText(transform, transform.Seconds) + Loc.T("に変更。", "."); break;
+                case KeystoneOperation.Add:
+                    result = field + " " + (transform.Seconds > 0 ? "+" : "") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("。", "."); break;
+                default: throw new InvalidOperationException("Unmapped keystone change.");
+            }
+            if (transform.Maximum.HasValue)
+                result += Loc.T(" 上限：", " Cap: ") + KeystoneNumericText(transform, transform.Maximum.Value) + Loc.T("。", ".");
+            return result;
+        }
+
+        private static string KeystoneNumericText(KeystoneTransform transform, decimal value)
+        {
+            switch (transform.Field)
+            {
+                case KeystoneField.Duration: case KeystoneField.Delay: return Number(value) + Loc.T("秒", "s");
+                case KeystoneField.Radius: return Number(value) + "m";
+                case KeystoneField.TargetCount: case KeystoneField.Argument: return Number(value) + Loc.T("体", " targets");
+                case KeystoneField.EveryN: return Number(value) + Loc.T("回", " events");
+                case KeystoneField.Probability: return Number(value) + "%";
+                case KeystoneField.Value:
+                    if (transform.Scope.TargetEffectSet.Contains(GimmickEffect.Rampart) || transform.Scope.TargetEffectSet.Contains(GimmickEffect.Shield))
+                        return Loc.T("最大HPの", "") + Number(value) + Loc.T("%", "% maximum HP");
+                    return Number(value) + "%";
+                default: throw new InvalidOperationException("Unmapped keystone number.");
+            }
+        }
+
+        private static string KeystoneArgumentText(IReadOnlyList<GimmickEffect> effects, int argument)
+        {
+            if (effects.Contains(GimmickEffect.Heal))
+                return argument == 1 ? Loc.T("回復対象に近くの味方旅人を含める。", "Healing also includes nearby allied travelers.")
+                    : argument == 0 ? Loc.T("回復対象は自分だけ。", "Healing affects only yourself.") : throw new InvalidOperationException("Unmapped healing target.");
+            if (effects.Contains(GimmickEffect.Ricochet))
+                return Loc.T("追加ダメージの対象：近くの別の敵", "Extra damage targets: up to ") + argument + Loc.T("体まで。", " other nearby enemies.");
+            if (effects.Contains(GimmickEffect.Element))
+                return Loc.T("付与する属性：", "Element applied: ") + EnumText((IdentityStrikeElement)(argument + 1), Loc.Japanese,
+                    new[] { "", "火", "冷気", "光", "闇" }, new[] { "", "Fire", "Cold", "Light", "Dark" }) + Loc.T("。", ".");
+            throw new InvalidOperationException("Unmapped keystone target.");
         }
 
         private static string EnumText<T>(T value, bool japanese, string[] ja, string[] en) where T : struct
@@ -272,17 +399,17 @@ namespace SodRpg.Core.Game
             string text;
             switch (selector.Kind)
             {
-                case MemorySelectorKind.Memory: return Links.Name(selector.Memory).ToString();
+                case MemorySelectorKind.Memory: return Links.ItemName(selector.Memory);
                 case MemorySelectorKind.EquippedQ: text = Loc.T("装備中のQの記憶", "equipped Q memory"); break;
                 case MemorySelectorKind.EquippedR: text = Loc.T("装備中のRの記憶", "equipped R memory"); break;
                 case MemorySelectorKind.EquippedIdentity: text = Loc.T("装備中の固有記憶", "equipped identity memory"); break;
                 case MemorySelectorKind.EquippedQOrR: text = Loc.T("装備中のQまたはRの記憶", "equipped Q or R memory"); break;
                 case MemorySelectorKind.EquippedMovement: text = Loc.T("装備中の移動記憶", "equipped movement memory"); break;
-                case MemorySelectorKind.OtherNormal: text = Loc.T("ほかの通常記憶", "other equipped normal memories"); break;
+                case MemorySelectorKind.OtherNormal: text = Loc.T("ほかの装備中の通常記憶（移動・奥義・固有記憶を除く）", "other equipped normal memories (excluding Movement, Ultimate and Identity)"); break;
                 default: throw new InvalidOperationException("Unknown memory selector: " + selector.Kind);
             }
-            return text + (selector.AllowedMemories.Count == 0 ? "" : "（"
-                + string.Join(Loc.T("、", ", "), selector.AllowedMemories.Select(m => Links.Name(m).ToString())) + "）");
+            return text + (selector.AllowedMemories.Count == 0 ? "" : Loc.T("（対象は", " (limited to ")
+                + string.Join(Loc.T("、", ", "), selector.AllowedMemories.Select(Links.ItemName)) + Loc.T("のみ）", ")"));
         }
 
         private static void RequireStar(TalentDef star)

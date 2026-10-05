@@ -2009,7 +2009,7 @@ namespace SodRpg.Mod
         {
             public int Rank, Choice = -1;
             public bool Allocated, Available, Unlocked, PairEquippedA, PairEquippedB, SearchMatch, SummaryHover;
-            public string Description, SearchDescription;
+            public string Description, SearchDescription, EffectSummary, MissingRequirements;
             public PairComboDef PairDefinition;
             public ClusterRegionKind? Region;
             public GUIContent[] ChoiceOptions;
@@ -2119,8 +2119,7 @@ namespace SodRpg.Mod
                 string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
-                    Description = t == null ? null : t.IsKeystone ? StarMapPresentation.KeystoneDescription(t)
-                        : StarMapPresentation.EffectDescription(t),
+                    Description = t == null ? null : StarMapPresentation.EffectDescription(t),
                     ChoiceOptions = t != null && t.IsChoice ? new[] { new GUIContent(), new GUIContent() } : null,
                     Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
@@ -2129,6 +2128,8 @@ namespace SodRpg.Mod
                     Region = t?.Cluster?.Region.Kind,
                 };
                 _starNodes[i].Name.text = t == null ? Loc.T("始まり", "Start") : pair != null ? pair.Name.ToString() : t.Name.ToString();
+                _starNodes[i].EffectSummary = t == null ? "" : t.IsChoice ? StarMapPresentation.EffectSummary(t)
+                    : StarMapPresentation.EffectSummary(_starNodes[i].Description);
                 if (t != null && t.IsKeystone) keystones.Add(i);
                 _starMinX = Mathf.Min(_starMinX, node.X); _starMaxX = Mathf.Max(_starMaxX, node.X);
                 _starMinY = Mathf.Min(_starMinY, node.Y); _starMaxY = Mathf.Max(_starMaxY, node.Y);
@@ -2228,7 +2229,6 @@ namespace SodRpg.Mod
                 : Loc.T($"次まで {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP",
                     $"Next: {hs.StarXp - StarProgression.TotalXpForPoints(earned)}/{StarProgression.CostForPoint(earned + 1)} XP"));
             var reachable = _starLayout.ReachabilitySnapshot(hs);
-            RefreshStarClusters(hs);
             int slots = hs.KeystoneSlotCount;
             bool freeSlot = hs.KeystoneCount < slots;
             _starKeystoneSlots.text = StarMapPresentation.KeystoneSlotStatus(hs.KeystoneCount, slots)
@@ -2260,45 +2260,33 @@ namespace SodRpg.Mod
                 }
                 n.Available = unlocked && n.Rank < t.MaxRank && !slotsFull && _starFree >= cost;
                 n.RankLabel.text = n.Rank + "/" + t.MaxRank;
-                // 条件の説明は、まだ満たしていないときだけ出す。状態の1文と同じ内容を重ねない。
-                string condition = "";
-                if (t.IsKeystone && !n.Allocated)
-                    condition = StarMapPresentation.KeystoneRequirement(t.HeroKey != null, Content.KeystoneRouteRequirement,
-                        t.HeroKey != null ? Rules.TreeRanks(hs, t.HeroKey) : Rules.RouteRanks(hs, t.Route),
-                        t.HeroKey != null ? HeroSigils.KeystoneMastery : 0, Mastery.Level(hs.Kills), _starLayout.CanReach(hs, t, reachable),
-                        slots, earned);
-                string state = slotsFull
-                    ? Loc.T("枠がありません。次の枠は星のレベルが上がると開きます。", "No free keystone slot. The next slot unlocks at a higher star level.")
-                    : StarMapPresentation.AllocationStatus(t.IsKeystone, n.Rank >= t.MaxRank, unlocked, _starFree >= cost);
+                n.MissingRequirements = StarMapPresentation.MissingRequirements(_starLayout, i, hs, _starFree, reachable[i]);
+                string condition = n.MissingRequirements;
+                string state = n.Rank >= t.MaxRank ? Loc.T("取得済み（最大段）", "Acquired (maximum rank)")
+                    : n.Available ? Loc.T("取得可能", "Available") : Loc.T("条件不足", "Requirements missing");
                 var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
-                string description = pair == null || t.Mechanism != null ? n.Description : PairCombos.Describe(pair, Math.Max(1, n.Rank));
+                string description = pair != null && t.Mechanism == null
+                    ? StarMapPresentation.EffectDescription(t, Math.Max(1, n.Rank)) : n.Description;
                 if (t.IsChoice)
                 {
                     description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
                     for (int optionIndex = 0; optionIndex < 2; optionIndex++)
                         n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex);
+                    n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
                 }
-                n.SearchDescription = StarMapPresentation.MechanismLabel(t) + "\n" + description;
-                // 合わせ技の説明（PairCombos.Describe）には「橋と両隣の星が必要」と既に書かれているので、条件欄で繰り返さない。
-                bool requirementInBody = pair != null && t.Mechanism == null;
+                n.SearchDescription = StarMapPresentation.PresentationLabel(t) + "\n" + description;
                 if (pair != null)
                 {
-                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.Name(pair.RouteA)
+                    description += "\n" + (n.PairEquippedA ? "✓ " : "・ ") + Links.ItemName(pair.RouteA)
                         + Loc.T("を装着", " equipped")
-                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.Name(pair.RouteB)
+                        + "\n" + (n.PairEquippedB ? "✓ " : "・ ") + Links.ItemName(pair.RouteB)
                         + Loc.T("を装着", " equipped");
-                    if (!requirementInBody)
-                    condition += (condition.Length == 0 ? "" : "\n") + (pair.AuthoredDefinition != null
-                        ? Loc.T("橋と指定された両端の星を取得し、両方の記憶を装着すると有効。",
-                            "Requires this bridge, its specified endpoint stars and both memories equipped.")
-                        : Loc.T("合わせ技は橋と両隣の4番目の星に各1段以上、両方の記憶を装着すると有効。",
-                            "The combo requires at least one rank in this bridge and both adjacent fourth stars, with both memories equipped."));
                 }
                 // 必要ポイントは、本文に既に書かれていれば繰り返さない（刻印は本文の末尾に入っている）。
                 bool costInBody = description.Contains(Loc.T("ポイント", "point"));
                 string readyColor = !unlocked || slotsFull ? "#ffb090" : n.Rank >= t.MaxRank ? "#ffc952" : _starFree < cost ? "#ffb090" : "#9fe0ff";
-                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.MechanismLabel(t) + "</color>"
+                n.Tooltip.text = "<b>" + title + "</b>  " + n.RankLabel.text + "\n<color=#d2d2e6>" + StarMapPresentation.PresentationLabel(t) + "</color>"
                     + "\n" + description
                     + (costInBody ? "" : Loc.T($"\n必要ポイント：{(t.IsKeystone ? keyCost : t.RankCost)}", $"\nPoint cost: {(t.IsKeystone ? keyCost : t.RankCost)}"))
                     + (condition.Length == 0 ? "" : "\n" + condition)
@@ -2312,6 +2300,7 @@ namespace SodRpg.Mod
                     + Loc.T("\n残りの星が始まりにつながる場合だけ外せます。",
                         "\nRefunds require all remaining stars to stay connected to the start.");
             }
+            RefreshStarClusters();
             _starSearchDirty = true;
         }
 

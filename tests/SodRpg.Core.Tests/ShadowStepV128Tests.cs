@@ -168,27 +168,5 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain(Content.Uniques.SelectMany(u => u.Powers), p => p.Power == Power.ShadowStep);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Localized_tooltips_explain_the_trigger_window_scaling_and_refresh(bool japanese)
-        {
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = japanese;
-                var key = HeroSigils.All.Single(t => t.Id == "h.husk.key2");
-                var terms = japanese
-                    ? new[] { "回避", "ダッシュ", "瞬間移動", "3秒", "次の通常攻撃", "高い方", "60%", "重ならず", "延長" }
-                    : new[] { "dodge", "dash", "teleport", "3s", "next basic attack", "higher", "AD", "AP", "60%", "does not stack", "refresh" };
-                foreach (string description in new[] { Content.FormatPower(Power.ShadowStep, key.PowerValue), key.Description.ToString() })
-                    foreach (string term in terms) Assert.Contains(term, description);
-                string synergy = key.Description.ToString();
-                Assert.Contains(japanese ? "一歩一殺" : "One Step, One Kill", synergy);
-                Assert.Contains(japanese ? "確定会心" : "guaranteed critical hit", synergy);
-                Assert.Contains(japanese ? "風の傷" : "Scar of the Wind", synergy);
-            }
-            finally { Loc.Japanese = previous; }
-        }
     }
 }

@@ -73,9 +73,9 @@ internal static class StarTextExport
                     for (int rank = 1; rank <= effect.MaxRank; rank++)
                     {
                         int r = rank;
-                        variants["PairCombos.Describe.rank" + r] = Both(() => PairCombos.Describe(effect.PairCombo, r));
+                        variants["PairCombos.Describe.rank" + r] = Both(() => StarMapPresentation.EffectDescription(effect, r));
                     }
-                variants["MechanismLabel"] = Both(() => StarMapPresentation.MechanismLabel(effect));
+                variants["MechanismLabel"] = Both(() => StarMapPresentation.PresentationLabel(effect));
                 var display = Both(() => StarMapPresentation.EffectDescription(effect));
                 var wiki = Both(() => WikiEffect(effect));
                 string[] partnerNames = partners.SelectMany(p => new[] { p.name_ja, p.name_en }).ToArray();
@@ -166,14 +166,7 @@ internal static class StarTextExport
         WriteTable(Path.Combine(directory, "surface-templates.tsv"), new[] { "id", "source", "template_ja", "template_en", "scope" }, rows);
     }
 
-    private static string WikiEffect(TalentDef t)
-    {
-        if (t.KeystoneDefinition != null) return AuthoredMechanisms.DescribeKeystone(t.KeystoneDefinition);
-        if (t.IsKeystone) return Content.FormatPower(t.Power, t.PowerValue) + "\n" + t.Description;
-        string text = t.Describe();
-        // Preserve WikiGen's existing Japanese-only suffix removal, even in the English inventory.
-        return Regex.Replace(text, @"（最大\d+段・1段につき\d+ポイント）", "");
-    }
+    private static string WikiEffect(TalentDef t) => StarMapPresentation.EffectDescription(t);
 
     private static Dictionary<string, object?> Payload(TalentDef t)
     {

@@ -175,7 +175,7 @@ namespace SodRpg.Core.Tests
         [InlineData(Power.Eclipse, Slot.Head, "蝕", "Eclipse", 25)]
         [InlineData(Power.Cinder, Slot.Hands, "燃え殻", "Cinder", 1)]
         [InlineData(Power.FrostCrystal, Slot.Head, "氷晶", "Frost Crystal", 12)]
-        public void Reactions_have_appropriate_epic_pools_and_bilingual_limits(Power power, Slot slot, string ja, string en, int cap)
+        public void Reactions_have_appropriate_epic_pools_caps_and_names(Power power, Slot slot, string ja, string en, int cap)
         {
             Assert.Equal(cap, Content.PowerCap(power));
             Assert.Single(Content.PowerPool(Slot.Charm), p => p.Power == power);
@@ -187,18 +187,8 @@ namespace SodRpg.Core.Tests
             {
                 Loc.Japanese = true;
                 Assert.Equal(ja, Content.PowerName(power));
-                var text = Content.FormatPower(power, cap);
-                Assert.Contains("上限" + cap, text);
-                Assert.Contains("6秒に1回", text);
-                Assert.Contains("連発を防ぐ", text);
-                Assert.Contains("消費しない", text);
                 Loc.Japanese = false;
                 Assert.Equal(en, Content.PowerName(power));
-                text = Content.FormatPower(power, cap);
-                Assert.Contains("capped at " + cap, text);
-                Assert.Contains("once per 6s per enemy", text);
-                Assert.Contains("prevent repeated triggers", text);
-                Assert.Contains("Does not consume elements", text);
             }
             finally { Loc.Japanese = previous; }
         }

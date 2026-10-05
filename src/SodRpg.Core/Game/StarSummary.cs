@@ -88,7 +88,7 @@ namespace SodRpg.Core.Game
                     var chosen = new StarSummaryLine
                     {
                         Text = star.Name + Loc.T("：", ": ") + t.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
-                            + "\n" + Trim(t.Describe()),
+                            + "\n" + Trim(StarMapPresentation.EffectDescription(t, rank)),
                     };
                     chosen.StarIds.Add(star.Id);
                     summary.Choices.Add(chosen);
@@ -110,9 +110,9 @@ namespace SodRpg.Core.Game
                         Text = mark + pair.Name + Loc.T($"（{rank}段）", $" ({rank} {(rank == 1 ? "rank" : "ranks")})")
                             + (entry == null
                                 ? Loc.T("　<color=#888>両隣の4番目の星が未取得</color>", "  <color=#888>adjacent fourth stars not acquired</color>")
-                                : "\n" + PairCombos.Describe(pair, rank))
-                            + (isEquipped == null ? "" : "\n" + (a ? "✓ " : "・ ") + Links.Name(pair.RouteA) + Loc.T("を装着", " equipped")
-                                + "\n" + (b ? "✓ " : "・ ") + Links.Name(pair.RouteB) + Loc.T("を装着", " equipped")),
+                                : "\n" + StarMapPresentation.EffectDescription(t, rank))
+                            + (isEquipped == null ? "" : "\n" + (a ? "✓ " : "・ ") + Links.ItemName(pair.RouteA) + Loc.T("を装着", " equipped")
+                                + "\n" + (b ? "✓ " : "・ ") + Links.ItemName(pair.RouteB) + Loc.T("を装着", " equipped")),
                     };
                     line.StarIds.Add(star.Id);
                     pairLines.Add(new KeyValuePair<string, StarSummaryLine>(pair.RouteA, line));
@@ -180,7 +180,7 @@ namespace SodRpg.Core.Game
                 {
                     var line = new StarSummaryLine
                     {
-                        Text = Compact(Trim(t.Describe())) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks") : ""),
+                        Text = Compact(Trim(StarMapPresentation.EffectDescription(t, rank))) + (rank > 1 ? Loc.T($"　×{rank}段", $"  x{rank} ranks") : ""),
                     };
                     line.StarIds.Add(star.Id);
                     Group(memory).Lines.Add(line);
@@ -223,7 +223,7 @@ namespace SodRpg.Core.Game
             {
                 if (selected == null || !definitions.TryGetValue(selected, out var keystone) || !keystone.IsKeystone
                     || !Rules.BelongsTo(keystone, heroKey)) continue;
-                var line = new StarSummaryLine { Text = keystone.Name + "\n" + keystone.Describe() };
+                var line = new StarSummaryLine { Text = keystone.Name + "\n" + StarMapPresentation.EffectDescription(keystone) };
                 line.StarIds.Add(keystone.Id);
                 summary.Keystone.Add(line);
             }
@@ -266,6 +266,16 @@ namespace SodRpg.Core.Game
 
             public string Describe()
             {
+                try { return DescribeCore(); }
+                catch (Exception error)
+                {
+                    System.Diagnostics.Trace.TraceWarning("Star summary description unavailable ({0}): {1}", Template.Id, error);
+                    return StarMapPresentation.EffectDescription(Template);
+                }
+            }
+
+            private string DescribeCore()
+            {
                 var t = Template;
                 string text;
                 if (t.ScopedModifier != null)
@@ -276,15 +286,15 @@ namespace SodRpg.Core.Game
                         ScopeKind = m.ScopeKind, ScopeMemory = m.ScopeMemory, TargetEffectIds = m.TargetEffectIds, TargetEffects = m.TargetEffects,
                         Param = m.Param, CapProfileId = m.CapProfileId, Amount = new ModifierUnits(amount),
                         Probability = new ProbabilityUnits(Math.Min(probability, 10000)), ExtraTargets = targets,
-                    });
+                    }, t.HeroKey);
                 }
                 else if (t.NativeModifier != null)
                     text = stars == 1
                         ? FractionalScopedModifiers.Describe(new NativeMemoryModifierDef { Memory = t.NativeModifier.Memory, Kind = t.NativeModifier.Kind,
                             CapProfileId = t.NativeModifier.CapProfileId, Value = new ValueUnits(amount) })
                         : FractionalScopedModifiers.DescribeTotal(t.NativeModifier.Memory, t.NativeModifier.Kind, amount);
-                else if (t.GimmickBoost > 0) text = TalentDef.DescribeGimmickBoost(t.RouteMemory, amount);
-                else text = TalentDef.DescribeGimmickParameter(t.RouteMemory, t.GimmickParameter.Value, amount, t.Id);
+                else if (t.GimmickBoost > 0) text = TalentDef.DescribeGimmickBoost(t.RouteMemory, amount, t.HeroKey);
+                else text = TalentDef.DescribeGimmickParameter(t.RouteMemory, t.GimmickParameter.Value, amount, t.Id, t.HeroKey);
                 return text;
             }
         }
@@ -301,7 +311,7 @@ namespace SodRpg.Core.Game
         private static string Trim(string text)
         {
             if (text == null) return "";
-            foreach (string marker in new[] { "（最大", " (maximum " })
+            foreach (string marker in new[] { "（数値は1段あたり", " (values per rank;", "（最大", " (maximum " })
             {
                 int i = text.LastIndexOf(marker, StringComparison.Ordinal);
                 if (i > 0) text = text.Substring(0, i);
