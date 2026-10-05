@@ -258,8 +258,7 @@ namespace SodRpg.Core.Game
             Profile loaded;
             try
             {
-                loaded = store.Load();
-                files.ThrowReadError();
+                loaded = store.Load(files.CompleteSourceReads);
             }
             finally
             {
@@ -365,9 +364,12 @@ namespace SodRpg.Core.Game
             public LoadFileSystem(IFileSystem inner) { _inner = inner; }
             public void BeginLoad() { _readError = null; _loading = true; }
             public void EndLoad() { _loading = false; _readError = null; }
-            public void ThrowReadError()
+            public void CompleteSourceReads()
             {
                 if (_readError != null) throw _readError;
+                // Migration persistence happens after this boundary. Its temporary-file
+                // read-back failure is a save warning, not a failed source load.
+                _loading = false;
             }
 
             public bool Exists(string path) => _inner.Exists(path);
