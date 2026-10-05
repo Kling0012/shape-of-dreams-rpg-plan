@@ -29,6 +29,10 @@ namespace SodRpg.Mod
         private void FlushPendingPressureDividends()
         {
             if (!RunActive) return;
+            // #124: this entry is shared by the direct receipt RPC and the normal reward tick.
+            // While Infinity rewards are halted, authenticated receipts stay queued (AddAuthenticated
+            // already deduplicated them); budget and satchel change only once agreement recovers.
+            if (Profile.Run.Infinity != null && !InfinityMode.NativeSaveAgreement) return;
             int awarded = _pendingPressureDividends.Drain(Profile, e => Emit(new[] { e }));
             if (awarded > 0) DeferKillSave();
         }

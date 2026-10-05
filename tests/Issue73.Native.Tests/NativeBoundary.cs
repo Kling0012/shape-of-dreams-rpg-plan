@@ -275,11 +275,12 @@ namespace SodRpg.Mod
     }
     // The harness models an Infinity-unavailable host (Available == false, no save agreement),
     // so the linked continue code takes its documented no-op paths for Infinity runs too.
+    // #124: tests may re-enable the agreement to model a recovered save; they reset it afterwards.
     internal static class InfinityMode
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
-        internal static bool NativeSaveAgreement => false;
+        internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
     }
     internal sealed partial class ClientSession
