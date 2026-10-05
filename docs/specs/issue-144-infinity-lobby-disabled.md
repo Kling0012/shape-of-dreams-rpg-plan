@@ -38,3 +38,15 @@
 ## 6. 未確認点
 - プレイヤー環境のログ・本体の版は入手できていない。上記 (a)/(b) のどちらで発生したかは、修正後のログ（すべての理由が出る）で判別できる。
 - 実機（Unity/Mono・Harmony 2.3.6）での起動は実行していない。実 DLL 診断は CoreCLR 上の Harmony 2.3.3-thin で行っており、本体実行環境と完全には一致しない（スキップ2クラスはその差の見本）。
+
+## 7. v2.4.0 の「開始しても通常マップ」調査・修正
+
+- **再現した原因**：永続する `HostAuthority` が、シーンごとに作り直される `serverActor` の Hello 判定を引き継いでいた。前の通信先で内容不一致になった同じ `DewPlayer` が次の遠征にいると、新しい Hello が届く前に拒否記録で通常モードへ戻る。修正前の開始フロー回帰は4件中この1件だけ失敗した。利用者の Player.log は未提供なので、今回の報告がこの経路だったかは未確定。
+- **設定保持**：選択値は `ClientSession.InfinitySettings.cs:73-83` でプロフィールへ保存し、`:11-13` のホスト判定が同じ値を読む。本体 `PlayLobbyManager.cs:319-336` は `customData` を preferred settings にコピーして PlayGame を読み込む。MODのセッションは `DreamforgeMod.cs:59` で作られ、シーン遷移では作り直さない。
+- **本体の初回経路**：`~/dev/sod-gamedata/decompiled/sod-decomp/Dew.Core/PlayGameManager.cs:67-100,174-186` → `ZoneManager.cs:981-998,1312-1332,2048-2062`。クライアントready・Hero生成後、初回 `LoadNextZone` で Infinity を開始し、`currentZone` 設定後に本体の有限グラフを生成する。Infinity専用の異なる地図形状ではなく、早期ボス入場・通常の次ゾーンを抑止して同一ゾーンを再生成する設計（[仕様](issue-95-infinity-mode.md)）。
+- **生成条件**：`InfinityMode.cs:627-661` の Prefix は Available/Enabled がfalseなら本体生成を通す。Enabledでmodifier識別子が使えなければ理由付きでInfinityだけ無効化して本体生成を通す。NativeSaveAgreementがfalseなら生成を保留し、Postfixを実行しない。Postfixの `OnGenerated`（`:340-382`）はホスト・有効・復元中でない場合だけ状態を作成／接続し、プール・固定ゾーン・ノード上限の不一致や例外は理由付きでInfinityだけ無効化する。`State` の `run.Infinity ?? _initial` と初回状態接続は維持した。
+- **#188／#195**：v2.4.0の#188は「受信した不一致Hello」だけで通常モードへ戻り、最初のHello未着だけでは戻らない。現在の#195は通信準備後の参加者ごとの30秒未着で戻す。現在の発動箇所は `HostAuthority.Infinity.cs:91-108`。ホスト自身・非人間は`:90`で除外する。内容照合は `HostAuthority.Hello.cs:68-74` のProtocol・内容・中断保存対応・Infinity可否で、同版の通常Helloと異なる比較方式はない。
+- **修正**：`HostAuthority.Hello.cs:38-61` で通信先変更時に旧ハンドラと受信済みの承認／拒否を解除し、`HostAuthority.cs:1101-1102` から通信先がnullになる場合も同期する。シーン切替直後のSession Tick／生成がHost Tickに先行しても、`HostAuthority.Infinity.cs:55-65` で旧通信先の判定／期限を使わない。新しい参加者を未確認のまま承認せず、既存の30秒待機・報酬条件は維持する。
+- **ログ**：`InfinityMode.cs:206-227` は遠征ごとの初回生成で `Infinity initial map active; run=... zone=... selected=... interval=... nodes=...`、または `Infinity initial map uses normal mode; ... reason=...` を1回出す。遠征だけの降格は既存の `Infinity stopped for this expedition; normal mode continues.`、機能の無効化は `Infinity disabled; normal mode remains available.` に理由が残る。
+- **回帰の範囲**：`InfinityLobbyStartTests.cs:57-125` はロビー選択→新しいscene manager／actor→初回 `OnLateStartServer`→`LoadNextZone`→`TravelToZone`→生成→実製品の `InitializeInfinityRun`→早期ボス拒否・通常次ゾーン拒否まで通す。ソロ、対応参加者、前の拒否記録がある対応参加者、通常モードを確認する。旧テストの空生成／状態確認だけを越えたが、本体境界は `StartupGameApi.cs:120-135,321-345` のモデルであり、Unityの描画・実アセット生成・実ネットワークは未確認。製品の初回接続処理はコピーせず `ClientSession.InfinitySettings.cs:86-108` に集約してリンクする。
+- **実行結果**：Releaseの本体DLL参照ビルドは成功（警告5・エラー0）。`DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py` は2,800件成功・失敗0（slow対象4件は既定でskip）。別コンソールの開始フロースモークではソロ／対応参加者ありで周期15・早期ボス拒否・通常次ゾーン拒否、通常モードでボス入場・次ゾーン生成の継続と初回理由ログを確認した。スモーク用の一時プロジェクトは削除済み。

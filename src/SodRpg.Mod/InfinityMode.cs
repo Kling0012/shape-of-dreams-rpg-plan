@@ -40,6 +40,7 @@ namespace SodRpg.Mod
         private static bool _refresh;
         private static bool _unavailable;
         private static string _lastDisableLog;
+        private static string _generationReportedRun;
         private static readonly Type[] NativePatchClasses =
         {
             typeof(InfinityNextZone), typeof(InfinityGenerated), typeof(InfinityRoomClear),
@@ -202,12 +203,36 @@ namespace SodRpg.Mod
             }
         }
 
+        internal static void ReportGenerationMode(ZoneManager zone, bool active)
+        {
+            if (!NetworkServer.active) return;
+            string runId = NetworkedManagerBase<GameManager>.softInstance?.runId;
+            if (string.IsNullOrEmpty(runId) || _generationReportedRun == runId) return;
+            _generationReportedRun = runId;
+            string context = "run=" + runId + " zone=" + zone.currentZone?.name
+                + " selected=" + ClientSession.HostChosenInfinityEnabled
+                + " interval=" + ClientSession.HostChosenInfinityInterval;
+            if (active)
+                Log.Info("Infinity initial map active; " + context + " nodes=" + zone.nodes.Count);
+            else
+            {
+                string reason = !Available ? UnavailableReason
+                    : ExpeditionHalted ? ExpeditionHaltNotice
+                    : !ClientSession.HostChosenInfinityEnabled ? "lobby selection is OFF"
+                    : "Infinity was not armed before initial generation";
+                string message = "Infinity initial map uses normal mode; " + context + " reason=" + reason;
+                if (ClientSession.HostChosenInfinityEnabled) Log.Warn(message);
+                else Log.Info(message);
+            }
+        }
+
         internal static void StartNewGame()
         {
             if (!Available) return;
             _restoring = false; _refresh = false;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
+            _generationReportedRun = null;
             _choice = null; _choiceText = null; Acks.Clear();
             _reachableRoomEpoch = -1;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
@@ -354,6 +379,7 @@ namespace SodRpg.Mod
             foreach (int idToRemove in RetiredModifiers) zone.modifierServerData.Remove(idToRemove);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             WriteEnvelope();
+            ReportGenerationMode(zone, true);
         }
 
         internal static void Tick()
@@ -601,11 +627,19 @@ namespace SodRpg.Mod
         private static bool Prefix(ZoneManager __instance, out bool __state)
         {
             __state = false;
-            if (!InfinityMode.Available) return true;
             try
             {
+                if (!InfinityMode.Available)
+                {
+                    InfinityMode.ReportGenerationMode(__instance, false);
+                    return true;
+                }
                 __state = true;
-                if (!InfinityMode.Enabled) return true;
+                if (!InfinityMode.Enabled)
+                {
+                    InfinityMode.ReportGenerationMode(__instance, false);
+                    return true;
+                }
                 if (NextModifier == null
                     || NextModifier(__instance) >= int.MaxValue - InfinityRunState.MaximumGraphNodes * 16)
                 {

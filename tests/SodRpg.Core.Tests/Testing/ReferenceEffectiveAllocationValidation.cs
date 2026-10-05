@@ -9,8 +9,8 @@ namespace SodRpg.Core.Tests.Testing
     /// Frozen copy of the pre-optimization EffectiveAllocationValidation (v1.31 before the C15 performance fix).
     /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
     /// Deliberately unoptimized (every RankEffective runs two full Build computations). Its algorithm stays frozen,
-    /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement-route receiver boosts (#174),
-    /// and native-damage keystone eligibility (#187).
+    /// except for deliberate rule changes: keystone slots (v2.0.2), pending movement receivers (#174/#199),
+    /// owned replacement retention (#199), and native-damage keystone eligibility (#187).
     /// These eligibility rules are evaluated here independently; no production validation/optimization helpers are called.
     /// C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.
     /// </summary>
@@ -168,9 +168,9 @@ namespace SodRpg.Core.Tests.Testing
                         int retained = rank;
                         for (int r = 1; r <= rank; r++)
                         {
-                            if (RankEffective(profile, heroKey, proposed, node, r, fullSnapshot: refunds.Count == 0 ? channels : null) ||
-                                !RankEffective(profile, heroKey, original, node, r, fullSnapshot: oldChannels)) continue;
-                            RankEffective(profile, heroKey, proposed, node, r, details, refunds.Count == 0 ? channels : null);
+                            if (CanRetainOwnedRank(profile, heroKey, proposed, node, r, fullSnapshot: refunds.Count == 0 ? channels : null) ||
+                                !CanRetainOwnedRank(profile, heroKey, original, node, r, fullSnapshot: oldChannels)) continue;
+                            CanRetainOwnedRank(profile, heroKey, proposed, node, r, details, refunds.Count == 0 ? channels : null);
                             retained = r - 1;
                             break;
                         }
@@ -319,6 +319,31 @@ namespace SodRpg.Core.Tests.Testing
             if (change.Kind == AllocationChangeKind.Purchase) hero.Talents[talent.Id] = rank + 1;
         }
 
+        // The reference keeps the unoptimized refund loop: an owned replacement protects existing ranks,
+        // but this exemption must never participate in a candidate purchase or headroom calculation.
+        private bool CanRetainOwnedRank(Profile profile, string heroKey, HeroState hero, TalentDef talent, int rank,
+            List<AllocationSaturation> details = null, IReadOnlyList<EffectiveAllocationChannel> fullSnapshot = null) =>
+            HasOwnedReplacement(hero, talent.Id) || RankEffective(profile, heroKey, hero, talent, rank, details, fullSnapshot);
+
+        private bool HasOwnedReplacement(HeroState hero, string replacedId)
+        {
+            foreach (var definition in tree)
+            {
+                if (definition.Id == replacedId || !hero.Talents.TryGetValue(definition.Id, out int owned) || owned <= 0) continue;
+                var mechanism = definition.Mechanism;
+                if (definition.IsChoice)
+                {
+                    if (!hero.TalentChoices.TryGetValue(definition.Id, out int selected)
+                        || selected < 0 || selected >= definition.Choices.Count) continue;
+                    mechanism = definition.Choices[selected].Mechanism;
+                }
+                if (mechanism?.Replaces == null) continue;
+                foreach (string replacement in mechanism.Replaces)
+                    if (replacement == replacedId) return true;
+            }
+            return false;
+        }
+
         // Native-memory damage is transformed by the host rather than represented in allocation channels.
         // Keep this semantic exception independent of the production validator and its optimization helpers.
         private static bool HasNativeDamageUpside(TalentDef talent)
@@ -339,19 +364,20 @@ namespace SodRpg.Core.Tests.Testing
                 ? fullSnapshot : Capture(profile, heroKey, marginal, hero);
             SetRank(marginal, talent.Id, rank - 1);
             var without = Capture(profile, heroKey, marginal, hero);
-            bool effective = HasPositiveDifference(with, without) || CanWaitForMovementRouteRecipient(hero, talent, with);
+            bool effective = HasPositiveDifference(with, without) || (!HasOwnedReplacement(hero, talent.Id) && CanWaitForMovementRouteRecipient(hero, talent, with));
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
         }
 
-        // The route's recharge source may be behind its receiver boost. The boost can be bought while pending,
+        // A movement recharge source may be beyond a route, deep, or ring receiver boost. The boost can be bought while pending,
         // but a disabled star or one with an existing (saturated/dominated) recipient still needs a positive delta.
         private bool CanWaitForMovementRouteRecipient(HeroState hero, TalentDef talent, IReadOnlyList<EffectiveAllocationChannel> channels)
         {
             var modifier = talent.ScopedModifier;
-            if (talent.IsChoice || talent.RouteId == null || modifier == null || modifier.ScopeKind != ScopeKind.Receiver) return false;
+            if (talent.IsChoice || talent.Cluster != null || talent.IsOuterAnchor || modifier == null || modifier.ScopeKind != ScopeKind.Receiver) return false;
             string memory = modifier.ScopeMemory;
-            if (memory == null || memory != talent.RouteMemory || !memory.StartsWith("St_M_", StringComparison.Ordinal)) return false;
+            if (memory == null || !memory.StartsWith("St_M_", StringComparison.Ordinal)
+                || (talent.RouteMemory != null && memory != talent.RouteMemory)) return false;
             if (DisabledIds(hero).Contains(talent.Id)) return false;
             foreach (var channel in channels)
                 if (Targets(talent, channel)) return false;
