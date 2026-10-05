@@ -30,7 +30,12 @@ namespace SodRpg.Mod
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
         public void CustomRpc_SendMessageToClient(DewPlayer target, object message) => Sent.Add((target, message));
         public void CustomRpc_SendMessageToAllClients(object message) => Sent.Add((null, message));
-        public void CustomRpc_SendMessageToServer(object message) => Sent.Add((null, message));
+        public Action<object> BeforeSendToServer;
+        public void CustomRpc_SendMessageToServer(object message)
+        {
+            BeforeSendToServer?.Invoke(message);
+            Sent.Add((null, message));
+        }
         public Action<DamageData, Entity, ReactionChain> DamageSink;
         public void DealDamage(DamageData damage, Entity target, ReactionChain chain) => DamageSink?.Invoke(damage, target, chain);
         public void DoBasicAttackHit() { }
@@ -132,6 +137,7 @@ namespace SodRpg.Mod
     internal sealed class DewPlayer
     {
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
+        public static DewPlayer local;
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
@@ -319,6 +325,10 @@ namespace SodRpg.Mod
         public readonly List<GameEvent> Events = new List<GameEvent>();
         private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
         public event Action ProfileChanged;
+        // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
+        private long _hostLedgerId;
+        private double _nextLedgerProbeAt;
+        private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         public void Emit(GameEvent e) => Events.Add(e);
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();

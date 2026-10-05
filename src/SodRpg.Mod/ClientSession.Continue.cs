@@ -172,8 +172,10 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
             }
             if (BlockLobbyReturnedContinue(runId)) return;
             if (!string.IsNullOrEmpty(msg.continueCheckpointId)
-                && Profile.Run?.RunId == runId && Profile.ContinueResumeSession != msg.continueResumeSession)
+                && (Profile.Run?.RunId != runId || Profile.ContinueResumeSession != msg.continueResumeSession))
             {
+                // A different expedition must not bypass rewind, even in an already seen resume session.
+                _continueHandshakeReady = false;
                 RunCheckpoint checkpoint = null;
                 foreach (var candidate in Profile.ContinueCheckpoints)
                     if (candidate.Id == msg.continueCheckpointId && candidate.RunId == runId) { checkpoint = candidate; break; }
