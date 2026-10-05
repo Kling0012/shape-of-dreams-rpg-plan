@@ -1441,11 +1441,7 @@ namespace SodRpg.Mod
                         LogPowerTrigger(Power.Fetters);
                     }
                     if (_gimmickDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
-                    string memory = MemorySource(d.actor ?? a);
-                    d.ApplyAmplification(captured.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(hero, memory), false));
-                    float memoryAmp = MemoryDamagePercent(captured, memory);
-                    if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
-                    ApplyRelayWindowDamage(captured, ref d, t);
+                    ApplyMemoryPacketCorrections(captured, ref d, t, MemorySource(d.actor ?? a));
                     ApplyExposeDamage(captured, ref d, t, BridgeSuccessExposePercent(captured.Hero, t));
                 };
                 hero.dealtDamageProcessor.Add(rt.DamageDealt);

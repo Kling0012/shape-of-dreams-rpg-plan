@@ -235,11 +235,13 @@ namespace SodRpg.Mod
                 speed = IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(flow.gainedAd);
             float amount = def.Damage(attack, ability, speed);
             if (amount <= 0f || float.IsNaN(amount) || float.IsInfinity(amount)) return;
-            // The critical channels fire inside EnterGenerated: the host damage processor returns at its generated-damage gate before
-            // the memory correction, so they carry the identity memory's own correction here, once per packet. This is the same
-            // application rt.DamageDealt performs for the non-critical channels; the gate keeps it from applying a second time.
-            float criticalMemoryAmp = def.IsCriticalMechanism && _runtimes.TryGetValue(hero, out var strikeRuntime)
-                ? MemoryDamagePercent(strikeRuntime, def.Identity) : 0f;
+            // The critical channels fire inside EnterGenerated: the host damage processor returns at its generated-damage gate, so
+            // they route their packets through the same corrections that processor applies past the gate, once per packet:
+            // ApplyMemoryPacketCorrections (the stance-based outgoing amplification, the identity memory's own damage correction,
+            // the relay window) and the strongest live Expose. The gate keeps rt.DamageDealt from applying anything a second time,
+            // and the strike still triggers no mechanisms of its own.
+            HeroRuntime strikeRuntime = null;
+            bool criticalCorrections = def.IsCriticalMechanism && _runtimes.TryGetValue(hero, out strikeRuntime);
             bool magic = def.IsMagic(attack, ability);
             if (toVictim.x * toVictim.x + toVictim.z * toVictim.z < 1e-6f) toVictim = new Vector3(0f, 0f, 1f);
             ListReturnHandle<Entity> handle;
@@ -270,13 +272,33 @@ namespace SodRpg.Mod
                             case IdentityStrikeElement.Light: damage = damage.SetElemental(ElementalType.Light); break;
                             case IdentityStrikeElement.Dark: damage = damage.SetElemental(ElementalType.Dark); break;
                         }
-                        if (criticalMemoryAmp > 0f) damage.ApplyAmplification(criticalMemoryAmp / 100f);
+                        if (criticalCorrections)
+                        {
+                            ApplyMemoryPacketCorrections(strikeRuntime, ref damage, enemy, def.Identity);
+                            // Expose reads the strongest live mark exactly like ApplyExposeDamage; the generated gate itself stays closed.
+                            float expose = StrongestExposePercent(strikeRuntime, enemy, BridgeSuccessExposePercent(hero, enemy));
+                            if (expose > 0f) damage.ApplyAmplification(expose / 100f);
+                        }
                         damage.Dispatch(enemy);
                     }
                 }
                 finally { _identityStrikeDepth--; }
             }
             finally { _identityStrikeTargets.Clear(); handle.Return(); }
+        }
+
+        /// <summary>
+        /// The packet corrections the host damage processor (rt.DamageDealt) applies past its generated-damage gate, minus Expose:
+        /// the stance-based outgoing amplification (不動の構え), the memory damage correction (記憶の冴え) and the relay window. The
+        /// critical identity strikes fire behind that gate, so FireIdentityStrike routes their packets through this same application;
+        /// the gate keeps the processor from applying anything a second time.
+        /// </summary>
+        internal void ApplyMemoryPacketCorrections(HeroRuntime rt, ref DamageData d, Entity t, string memory)
+        {
+            d.ApplyAmplification(rt.Powers.OutgoingDamageAmplification(Time.time, IsNormalMemory(rt.Hero, memory), false));
+            float memoryAmp = MemoryDamagePercent(rt, memory);
+            if (memoryAmp > 0) d.ApplyAmplification(memoryAmp / 100f);
+            ApplyRelayWindowDamage(rt, ref d, t);
         }
 
         /// <summary>

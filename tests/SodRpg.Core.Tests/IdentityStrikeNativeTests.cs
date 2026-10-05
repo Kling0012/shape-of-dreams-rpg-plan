@@ -646,5 +646,102 @@ namespace SodRpg.Core.Tests
             host.UpdateIdentityStrikes();
             Assert.Single(Actor.SimDamageLog); // nothing chains from the corrected strike
         }
+
+        /// <summary>
+        /// Mirrors the production host damage processor (HostAuthority.cs rt.DamageDealt) past its generated-damage gate — the exact
+        /// corrections the critical channels reach only through their own application (issue #136): the shared
+        /// ApplyMemoryPacketCorrections (stance amplification, the memory correction, the relay window) and Expose, in the
+        /// processor's order. Records the generated depth each packet saw, so a closed gate (1) is distinguishable from the
+        /// normal route (0).
+        /// </summary>
+        private static void WireHostStrikeCorrections(HostAuthority host, Hero hero, HostAuthority.HeroRuntime runtime, List<int> depthSeen)
+        {
+            hero.SimDealtDamage.Add((ref DamageData d, Actor a, Entity t) =>
+            {
+                depthSeen.Add(host.GeneratedDamageDepth);
+                if (host.GeneratedDamageDepth != 0 || d.IsAmountModifiedBy(typeof(GimmickRuntime))) return;
+                host.ApplyMemoryPacketCorrections(runtime, ref d, t, (d.actor ?? a)?.FindFirstOfType<SkillTrigger>()?.GetType().Name);
+                float expose = host.StrongestExposePercent(runtime, t, host.BridgeSuccessExposePercent(hero, t));
+                if (expose > 0f) d.ApplyAmplification(expose / 100f);
+            });
+        }
+
+        private static void ArmExposeMark(HostAuthority.HeroRuntime runtime, SkillTrigger skill, Entity victim)
+        {
+            runtime.Gimmicks.SetBuild(new[] { new GimmickEntry { StarId = "test.expose", Memory = skill.GetType().Name,
+                Def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Expose, Value = 6 } } });
+            runtime.Gimmicks.Fire(GimmickTrigger.OnHit, skill.GetType().Name, UnityEngine.Time.time, victim.GetInstanceID(), 100, false, new List<GimmickRequest>());
+        }
+
+        [Fact]
+        public void Displacement_critical_strike_carries_the_stance_relay_and_expose_corrections_like_the_normal_strike()
+        {
+            // Both Wind Scar channels on one hero: the non-critical echo (60%, open gate) and the critical strike (120%, generated gate).
+            var build = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.WindStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritWindStrike()));
+            build.Powers[Power.ImmovableStance] = 11; // 不動の構え: +11% outgoing damage while standing still
+            var (host, runtime, hero, skill) = Setup(build, killingFlow: false);
+            var depths = new List<int>();
+            WireHostStrikeCorrections(host, hero, runtime, depths);
+            var target = Enemy(0, 2);
+            runtime.Powers.ObserveMovement(0f, false, 0f); // standing still since t=0: the stance arms at t >= 1
+
+            UnityEngine.Time.time = 5f;
+            ArmExposeMark(runtime, skill, target); // the 4 s Expose mark (+6%) covers the strikes below
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 1, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(new[] { 0, 1 }, depths); // open gate for the echo, closed gate for the critical strike
+            Assert.Equal(60f * 1.11f * 1.06f, Actor.SimDamageLog[0].Amount, 3); // the echo rides stance + Expose once ...
+            Assert.Equal(120f * 1.11f * 1.06f, Actor.SimDamageLog[1].Amount, 3); // ... and so does the critical strike — never 1.11 x 1.11 or 1.06 x 1.06
+
+            // A relay window for the equipped Q never rides a strike packet on either route: strike damage belongs to the identity
+            // memory, not to the relay's target, so the same relay query rt.DamageDealt runs returns nothing for both channels.
+            hero.Skill.Skills[HeroSkillLocation.Q] = new St_Q_SuperNova { owner = hero, parentActor = hero };
+            host.ConfigureRelayWindows(hero, new[] { new RelayWindowDefinition("test.relay", "St_Q_SuperNova", 2500) });
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet
+            {
+                Actor = skill, Victim = target, Admitted = true, Serial = host.Packet(), Identity = host.Activation(hero, skill.GetType().Name),
+            };
+            UnityEngine.Time.time = 10f;
+            ArmExposeMark(runtime, skill, target); // refresh the mark for the second volley
+            host.OnIdentityStrikeDisplacement(hero);
+            host.OnIdentityStrikeBasicHit(hero, target, 2, critical: true);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(60f * 1.11f * 1.06f, Actor.SimDamageLog[2].Amount, 3); // the relay amplified neither ...
+            Assert.Equal(120f * 1.11f * 1.06f, Actor.SimDamageLog[3].Amount, 3); // ... the echo nor the critical strike
+            Assert.Equal(new[] { 0, 1, 0, 1 }, depths); // unchanged gate split: nothing chained from the corrected strikes
+            NativeAttributedDamagePacket.Current = null;
+        }
+
+        [Fact]
+        public void Consecutive_critical_strike_carries_the_stance_and_expose_corrections_like_the_normal_strike()
+        {
+            // Both Killing Flow channels on one hero: the every-hit echo (25%, open gate) and the third-crit strike (180%, generated gate).
+            var build = BuildOf(IdentityStrikeTests.Spec(IdentityStrikeTests.FlowStrike()),
+                IdentityStrikeTests.Spec(IdentityStrikeTests.CritFlowStrike()));
+            build.Powers[Power.ImmovableStance] = 11;
+            var (host, runtime, hero, skill) = Setup(build, killingFlow: true);
+            var depths = new List<int>();
+            WireHostStrikeCorrections(host, hero, runtime, depths);
+            var a = Enemy(0, 2);
+            runtime.Powers.ObserveMovement(0f, false, 0f);
+
+            UnityEngine.Time.time = 5f;
+            ArmExposeMark(runtime, skill, a); // the 4 s Expose mark (+6%) covers the strikes below
+            host.OnIdentityStrikeBasicHit(hero, a, 1, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[0].Amount, 3); // the every-hit echo rides stance + Expose once through the open gate
+            Assert.Equal(0, depths.Single());
+            host.OnIdentityStrikeBasicHit(hero, a, 2, critical: true, victimLifetime: 11);
+            host.OnIdentityStrikeBasicHit(hero, a, 3, critical: true, victimLifetime: 11);
+            host.UpdateIdentityStrikes();
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[1].Amount, 3);
+            Assert.Equal(25f * 1.11f * 1.06f, Actor.SimDamageLog[2].Amount, 3);
+            Assert.Equal(180f * 1.11f * 1.06f, Actor.SimDamageLog[3].Amount, 3); // the third-crit strike carries both exactly once — never squared
+            Assert.Equal(new[] { 0, 0, 0, 1 }, depths); // only the critical strike ran behind the closed generated gate
+            host.UpdateIdentityStrikes();
+            Assert.Equal(4, Actor.SimDamageLog.Count); // nothing chains from the corrected strikes
+        }
     }
 }
