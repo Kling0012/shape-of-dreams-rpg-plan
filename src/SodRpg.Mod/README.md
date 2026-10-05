@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このブランチは **Protocol 22・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2（#48・#95・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正）、#112 のロビー復帰時の敗北精算、#200 の鞄あふれ時のローカル欠片化、#180 の本体保存確定に連動したチェックポイント整理に対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 23・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2（#48・#95・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正）、#112 のロビー復帰時の敗北精算、#200 の鞄あふれ時のローカル欠片化、#180 の本体保存確定に連動したチェックポイント整理、#208 のInfinity地図の1部屋ずつ開示に対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -67,9 +67,9 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 容量を超えると、レア度の低い遺物から外し、同レア度ではスコアの低いものを先に外す。取引予約中の遺物は対象外。保管庫・遺失物のあふれも従来どおり欠片。
 - 1個あたりコモン3／アンコモン6／レア12／エピック30／伝説60欠片（`Content.SalvageShards`）。強化値は加算しない。Infinityの無料供給上限と道標による素材化の抑止は従来どおりで、抑止された分は別素材へ振り替えない。
 - 外した遺物の欠片量・個数をローカルで集計し、そのtick内で持ち主の `Profile` の `Materials.Shard` へまとめて加算する。先に保存・確保の境界へ達した場合は、その前に加算する。未確保の鞄素材には入れず、確保やホストの返事を待たない。通知もまとめて「鞄あふれ：欠片 +N（遺物 M 個）」と表示し、道標で素材化を抑止された個数も示す。夢のダスト・取引・RPC、遺物ごとのあふれ通知は新規に発生しない。
-- 保存は通常のまとめ保存と既存のチェックポイントに従い、あふれごとの準備保存は行わない。通信はProtocol 22、保存形式5のまま。鍛冶・記録タブで利用者が選ぶ手動分解の報酬・取引処理は変更しない。
+- 保存は通常のまとめ保存と既存のチェックポイントに従い、あふれごとの準備保存は行わない。通信はProtocol 23、保存形式5のまま。鍛冶・記録タブで利用者が選ぶ手動分解の報酬・取引処理は変更しない。
 - **旧保存の互換復旧（v2.3.1〜v2.4.0・旧 #123）**：保存に残るあふれの `PendingTrades` は削除せず、既存の受領記録を繰り返し照会して解決する。旧ダスト取引そのものは再送しない。同じ台帳で未払い・未送信と確認された旧義務は、既存の欠片回復処理に従う。支払い済みならダストも欠片も重複付与しない。支払い済みか不明な間は保留を残して欠片を追加せず照会を続け、確認不能な取引を利用者が明示放棄した場合も、支払われた可能性のあるダストに欠片を重ねない。本体中断保存と台帳の復元も維持する。この経路は旧義務専用で、新しいあふれには使わない。
-- **EN:** Overflow removes the lowest-rarity, then lowest-score relic, excluding reserved relics, and locally totals 3/6/12/30/60 shards for Common/Uncommon/Rare/Epic/Legendary. The total is credited to the owner's profile within the tick, or before an earlier save/secure boundary, not to unsecured satchel materials. Enhancement adds nothing. Infinity free-supply limits and waypoint suppression are unchanged. New overflow creates no Dream Dust, trade, RPC, per-relic overflow notification, or per-overflow save. A single summary reports "Satchel overflow: shards +N (M relics)" and any waypoint-suppressed count; the usual batched saves/checkpoints persist the credit. Manual forge/record-tab salvage, Protocol 22, and save format 5 are unchanged.
+- **EN:** Overflow removes the lowest-rarity, then lowest-score relic, excluding reserved relics, and locally totals 3/6/12/30/60 shards for Common/Uncommon/Rare/Epic/Legendary. The total is credited to the owner's profile within the tick, or before an earlier save/secure boundary, not to unsecured satchel materials. Enhancement adds nothing. Infinity free-supply limits and waypoint suppression are unchanged. New overflow creates no Dream Dust, trade, RPC, per-relic overflow notification, or per-overflow save. A single summary reports "Satchel overflow: shards +N (M relics)" and any waypoint-suppressed count; the usual batched saves/checkpoints persist the credit. Manual forge/record-tab salvage and save format 5 are unchanged; the current co-op protocol is 23.
 - **EN — legacy saves:** v2.3.1–v2.4.0 overflow `PendingTrades` remain recoverable through repeated receipt queries, not retransmission of Dust trades. Obligations confirmed unpaid/unsent in the same ledger use the existing shard fallback; recorded payment grants neither Dust nor shards again. Unknown payment status preserves the hold without extra shards, including when explicitly abandoning an unverifiable transaction that may already have paid Dust. Native checkpoint/ledger recovery remains in place for these old obligations only.
 
 ### 中断と「続きから」（Issue #97）
@@ -80,13 +80,13 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - #104：製作・上等製作・合成など、乱数を使うロビー変更を残す場合は、その結果とロビー変更後の乱数状態を一緒に引き継ぐ。保存後の遠征で消費した乱数も含む現在の状態を採用し、消費回数の加算では再構成しない。ロビー変更を戻す場合や乱数を使う変更がない場合は、乱数も保存地点へ戻す。プロフィールから生成する遺物Uidは、保管庫・遺失物・分解待ち・鞄・保留報酬の既存Uidとの重複を避ける。確認はUid生成時だけ行い、毎フレームの処理や保存項目は増やさない。ホスト・参加者ともに同じCore処理を使う。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 22と中断対応の相互確認を使う。
-- #180：保存障壁では各参加者の報酬を固定し、本体の `onSaveEnded` 後に保存ファイルのIDを読み戻して確定通知を送る（終了通知は書き込み失敗後にも来るため、成功の証拠にはしない）。確定したIDより前だけを整理し、直前1件と以後の未確定候補は保持する。確認できないときは警告して履歴整理だけを停止し、MOD全体や進行中の報酬は止めない。失敗が続く間はMOD保存が大きくなるが、確認成功後に整理する。既に削除された候補の復元はできない。確定通知で報酬を再採取する旧参加者を防ぐため、協力参加者全員がProtocol 22へ更新する。
-- **EN (#180):** Freeze each guest's rewards at the ordered save barrier. After `onSaveEnded`, read the native file's ID before sending a commit notice; the event also fires after failed writes. Cleanup retains the committed ID, its predecessor and all later unconfirmed candidates. Verification failures warn and pause cleanup only, not the MOD or current rewards. MOD saves grow while failures persist, then shrink after confirmation; previously deleted checkpoints cannot be reconstructed. Protocol 22 prevents old guests from re-capturing rewards on commit notices; everyone in co-op must update.
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 23と中断対応の相互確認を使う。
+- #180：保存障壁では各参加者の報酬を固定し、本体の `onSaveEnded` 後に保存ファイルのIDを読み戻して確定通知を送る（終了通知は書き込み失敗後にも来るため、成功の証拠にはしない）。確定したIDより前だけを整理し、直前1件と以後の未確定候補は保持する。確認できないときは警告して履歴整理だけを停止し、MOD全体や進行中の報酬は止めない。失敗が続く間はMOD保存が大きくなるが、確認成功後に整理する。既に削除された候補の復元はできない。確定通知で報酬を再採取する旧参加者を防ぐため、Protocol 22で導入した保護を現在のProtocol 23でも維持する。
+- **EN (#180):** Freeze each guest's rewards at the ordered save barrier. After `onSaveEnded`, read the native file's ID before sending a commit notice; the event also fires after failed writes. Cleanup retains the committed ID, its predecessor and all later unconfirmed candidates. Verification failures warn and pause cleanup only, not the MOD or current rewards. MOD saves grow while failures persist, then shrink after confirmation; previously deleted checkpoints cannot be reconstructed. Current Protocol 23 retains the Protocol 22 protection against old guests re-capturing rewards on commit notices; everyone in co-op must update.
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
-- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 remains unchanged (current co-op protocol: 22).
+- **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 remains unchanged (current co-op protocol: 23).
 
 ### Infinity割り込みの互換性
 
@@ -94,13 +94,20 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 - 必要なInfinityパッチがすべて適用できた場合だけ、ロビーからONにできる。無効時もOFFへ切り替えて通常遠征を開始できる。参加者のInfinity可否はProtocol・内容照合とは別に交換するため、Infinityが使えない参加者の通常モードの装備・報酬まで拒否しない。
 - 無効化されたInfinityの保存内容は通常遠征へ書き換えずに保持し、新しいInfinity進行・報酬だけを止める。
 
+### Infinityの地図（Issue #208）
+
+- 開始部屋・現地図の訪問済み部屋と次の1部屋だけを表示する。新しい部屋に入るごとに次室を1つ開示し、ボスは実Combatクリア10／15／20部屋の周期に達したときだけ次室として現れる。商人・イベントは周期に数えない。
+- 本体の有限グラフ・部屋寿命・読み込みを維持し、現地図を使い切ったら精算と全員の保存ACK後に同ゾーンを更新して続ける。全世代の地図を蓄積しない。全体／ミニ地図・ゲームパッド・tooltipの候補はホストが既存Mirrorで同期する。続きからもnative node statusから同じ次室を復元する。
+- 旧版では未知nodeが見え、非隣接次室を選べないため、協力プレイは全員Protocol 23へ更新する。保存形式5・既存envelopeは変更なし。通常モードは変更しない。[設計と検証結果](../../docs/specs/issue-95-infinity-mode.md)。
+- **EN:** Infinity shows the start, visited rooms in the current graph, and just one next room. Each arrival reveals one next room; the native boss becomes that next room only after 10/15/20 actual combat clears. Native finite graphs and room lifetime/loading remain intact, with same-zone regeneration after settlement and durable party ACKs. Host-synced native statuses also preserve the chosen room on Continue. All co-op players need Protocol 23 because old clients display hidden nodes and reject nonadjacent next rooms; save format 5 and normal mode are unchanged.
+
 
 ### 「ロビーに戻る」の敗北精算（Issue #112）
 
 - 確認後の `DewNetworkManager.RestartSession()` を対象に、ホスト・本体の未決着・MOD の未決着・本体と MOD の runId 一致を確認する。結果画面からの通常復帰、決着待ち／精算済みの遠征、`EndSession()` のメニュー・デスクトップ復帰やキック経路は対象外。IL の厳密一致や MOD 全体の起動条件は追加しない。
 - ホストは既存の `DreamforgeRunChoicesMsg` に `lobbyReturnRunId` と敗北・道標の状態を載せ、信頼性のある本体 Actor RPC でロビー遷移前に通知する。各 PC は対応する遠征だけを既存の `TryConcludeRun()` → `Rules.EndRun(..., false)` で一度だけ精算する。未確定の撃破や道標は既存の順序で処理し、保留分があればロビー遷移後も同じ敗北の精算を継続する。遷移中に参加者をホストと誤認しないよう、精算開始時の権限も保持する。
 - 本体の中断保存は変更・削除しない。終了した runId を MOD 保存の省略可能な `lobbyReturnedRunIds` に記録し、チェックポイント復元でも履歴を消さない。後からその本体保存を再開しても MOD の遠征や報酬は作らず、「この遠征は『ロビーに戻る』で終了済みのため、MOD の報酬は出ません」と案内する。ホストの再開通知でも終了状態を伝える（`continueResumeSession` の予約値 `lobby-returned`）。
-- 判別できない（本体と MOD の runId が食い違うなど）場合はその回は何もせず中断のまま（警告1回）で、次の正しい「ロビーに戻る」では精算される。判別中の例外では警告を出し、ロビー復帰時の敗北判定だけを無効にする。通常の中断・MOD の他機能は停止しない。保存形式は5のまま。現在の協力プレイにはProtocol 22が必要。
+- 判別できない（本体と MOD の runId が食い違うなど）場合はその回は何もせず中断のまま（警告1回）で、次の正しい「ロビーに戻る」では精算される。判別中の例外では警告を出し、ロビー復帰時の敗北判定だけを無効にする。通常の中断・MOD の他機能は停止しない。保存形式は5のまま。現在の協力プレイにはProtocol 23が必要。
 - 報酬停止中の Infinity 遠征（#131）は敗北待ちに入れない。その回は中断のまま（警告1回）で、Infinity の回復後に正しい帰還があれば精算される。精算待ちの保存・読込を経てから Infinity が停止しても、別 runId の遠征開始で待ちを放棄する（帰還済み runId は保持し、旧ランは通常の未解決ランと同じ扱い）。参加者の遠征未開始・観戦・ロード中・ゾーン番号未着の通知は見送るだけ（#132）で、機能は無効化しない。無効化は通知の内容の破損・不一致（terminal/victory/choices の runId 不一致）や判別中の例外だけに限る。
 - 実機のメニュー表示・ロビー遷移・協力通信は未確認。リンクした本体境界テスト（`LobbyReturnTests`）で、ホスト・参加者の敗北精算・結果画面の非精算・判別できない場合のスキップ・判別失敗の無効化・「続きから」の案内と runId 保存・停止中の Infinity 帰還のスキップと再開・精算待ちの放棄・未開始参加者への通知の見送りを確認している。
 

@@ -7,6 +7,11 @@ using UnityEngine.InputSystem;
 namespace Mirror
 {
     internal static class NetworkServer { public static bool active; }
+    public sealed class NetworkConnectionToClient
+    {
+        public SodRpg.Mod.DewPlayer Player;
+        public SodRpg.Mod.DewPlayer GetPlayer() => Player;
+    }
 }
 namespace UnityEngine
 {
@@ -14,7 +19,13 @@ namespace UnityEngine
     public static class Debug { public static void Log(object value) { } }
     public static class Time { public static float unscaledDeltaTime, unscaledTime; }
     public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
-    public struct Vector3 { }
+    public struct Vector3
+    {
+        public float x, y, z;
+        public Vector3(float x, float y, float z = 0) { this.x = x; this.y = y; this.z = z; }
+        public static implicit operator Vector2(Vector3 value) => new Vector2(value.x, value.y);
+        public static implicit operator Vector3(Vector2 value) => new Vector3(value.x, value.y);
+    }
 }
 namespace UnityEngine.EventSystems
 {
@@ -109,7 +120,7 @@ namespace SodRpg.Mod
     // The real protocol constant lives in NetMessages.cs (not compiled here).
     internal static class Protocol
     {
-        public const int Version = 22;
+        public const int Version = 23;
         public const string LobbyReturnedResumeSession = "lobby-returned";
     }
     public enum GameState { InLobby, Playing }
@@ -157,7 +168,12 @@ namespace SodRpg.Mod
         public static void ApplyGameData(object data, Action onFinish = null) => onFinish?.Invoke();
     }
     public static class SingletonDewNetworkBehaviour<T> where T : class { public static T softInstance; }
-    public sealed class RoomEvent { public void AddListener(Action action) { } }
+    public sealed class RoomEvent
+    {
+        private event Action listeners;
+        public void AddListener(Action action) => listeners += action;
+        public void Invoke() => listeners?.Invoke();
+    }
     public sealed class Room
     {
         public bool isActive, didClearRoom, isRevisit;
@@ -247,7 +263,7 @@ namespace SodRpg.Mod
         internal static void PrepareNativeInfinityContinue() { }
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
-        internal static bool PersistHostInfinityState() => false;
+        internal static bool PersistHostInfinityState() => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
@@ -302,58 +318,124 @@ namespace SodRpg.Mod
         public int currentNodeIndex;
         public int _nextModifierId;
         public int currentZoneIndex;
-        public WorldNode currentNode;
+        public WorldNodeData currentNode => nodes[currentNodeIndex];
         public uint worldSeed;
-        public bool isInAnyTransition;
+        public bool isInAnyTransition, isInRoomTransition, isVoting;
         public Zone currentZone;
-        public List<WorldNode> nodes = new List<WorldNode>();
+        public List<WorldNodeData> nodes = new List<WorldNodeData>();
         public readonly List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
         public readonly Dictionary<int, object> modifierServerData = new Dictionary<int, object>();
         public readonly List<object> visitedNodesSaveData = new List<object>();
-        public bool IsNodeConnected(int from, int to) => false;
-        public void CmdTravelToNode(int node) { }
-        // The harness records the native calls so patched routing and suppression are observable.
+        public List<int> nodeDistanceMatrix = new List<int>();
+        public int GetNodeDistance(int a, int b) => nodeDistanceMatrix[nodes.Count * a + b];
+        public bool IsNodeConnected(int from, int to)
+            => GetNodeDistance(from, to) == 1 || GetNodeDistance(to, from) == 1;
+        public void CmdTravelToNode(int index, Mirror.NetworkConnectionToClient sender = null)
+            => UserCode_CmdTravelToNode__Int32__NetworkConnectionToClient(index, sender);
+        private void UserCode_CmdTravelToNode__Int32__NetworkConnectionToClient(
+            int index, Mirror.NetworkConnectionToClient sender)
+        {
+            if (isInRoomTransition || index < 0 || index >= nodes.Count
+                || !IsNodeConnected(currentNodeIndex, index) || isVoting) return;
+            var player = sender.GetPlayer();
+            if (player == null) return;
+            if (ShouldVoteOnTravel()) StartVoteNextNode(player, index);
+            else TravelToNode(index);
+        }
+        public bool VoteRequired;
+        public int voteData = -1;
+        public DewPlayer VoteInitiator;
+        public bool ShouldVoteOnTravel() => VoteRequired;
+        public void StartVoteNextNode(DewPlayer player, int nextNodeIndex)
+        { isVoting = true; voteData = nextNodeIndex; VoteInitiator = player; }
+        public void CompleteVote()
+        {
+            isVoting = false;
+            TravelToNode(voteData);
+        }
         public int? LastTravelTo;
         public int TravelToNodeCalls, GenerateWorldAutoCalls, TravelToZoneCalls;
-        public Zone LastTravelToZone; public bool LastTravelNoAdvance;
-        // Opt-in scene boundary for start-flow regressions. The finite native graph is
-        // deliberately retained; Infinity is proved through its routing, not its appearance.
+        public Zone LastTravelToZone;
+        public bool LastTravelNoAdvance;
         public Zone SceneZone;
+        public WorldNodeData[] GeneratedNodes;
+        public int[] GeneratedDistances;
         public void GenerateWorldAuto()
         {
             GenerateWorldAutoCalls++;
-            if (SceneZone == null) return;
+            if (currentZone == null && SceneZone == null && GeneratedNodes == null) return;
             nodes.Clear();
-            nodes.AddRange(new[] {
-                new WorldNode { type = WorldNodeType.Combat },
-                new WorldNode { type = WorldNodeType.Combat },
-                new WorldNode { type = WorldNodeType.ExitBoss },
+            nodes.AddRange(GeneratedNodes ?? new[] {
+                new WorldNodeData { type = WorldNodeType.Start },
+                new WorldNodeData { type = WorldNodeType.Combat },
+                new WorldNodeData { type = WorldNodeType.ExitBoss },
             });
+            nodeDistanceMatrix.Clear();
+            if (GeneratedDistances != null) nodeDistanceMatrix.AddRange(GeneratedDistances);
+            else
+                for (int a = 0; a < nodes.Count; a++)
+                    for (int b = 0; b < nodes.Count; b++) nodeDistanceMatrix.Add(Math.Abs(a - b));
             visitedNodesSaveData.Clear();
-            visitedNodesSaveData.AddRange(new object[] { new object(), null, null });
-            currentNodeIndex = 0;
-            currentNode = nodes[0];
+            for (int i = 0; i < nodes.Count; i++) visitedNodesSaveData.Add(null);
+            SetCurrentNodeIndexAndRevealAdjacent(0);
         }
-        public void TravelToNode(int to, bool advanceTurn, bool isSidetrackTransition, bool ignoreInterrupts)
+        public void SetCurrentNodeIndexAndRevealAdjacent(int index)
+        {
+            if (index < 0 || index >= nodes.Count) throw new ArgumentOutOfRangeException(nameof(index));
+            currentNodeIndex = index;
+            var current = nodes[index];
+            current.status = WorldNodeStatus.HasVisited;
+            nodes[index] = current;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var value = nodes[i];
+                if (IsNodeConnected(index, i) && value.status == WorldNodeStatus.Unexplored)
+                { value.status = WorldNodeStatus.Revealed; nodes[i] = value; }
+            }
+        }
+        public void RevealWorld(bool fully = false)
+        {
+            var status = fully ? WorldNodeStatus.RevealedFull : WorldNodeStatus.Revealed;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                if (node.status < status) { node.status = status; nodes[i] = node; }
+            }
+        }
+        public void RevealNodesAndAnnounce(DewPlayer revealer, int nodeCount)
+        {
+            for (int i = 0; i < nodes.Count && nodeCount > 0; i++)
+            {
+                var node = nodes[i];
+                if (node.type == WorldNodeType.ExitBoss || node.status != WorldNodeStatus.Unexplored) continue;
+                node.status = WorldNodeStatus.RevealedFull;
+                nodes[i] = node;
+                nodeCount--;
+            }
+        }
+        public void TravelToNode(int to, bool advanceTurn = true,
+            bool isSidetrackTransition = false, bool ignoreInterrupts = false)
         { LastTravelTo = to; TravelToNodeCalls++; }
         public void TravelToZone(Zone prefab, bool noAdvance)
         {
             LastTravelToZone = prefab; LastTravelNoAdvance = noAdvance; TravelToZoneCalls++;
-            if (SceneZone == null) return;
+            if (SceneZone == null && GeneratedNodes == null) return;
             currentZone = prefab;
             if (!noAdvance) currentZoneIndex++;
             GenerateWorldAuto();
         }
         public void CallOnReadyAfterTransition(Action action) => action();
     }
-    public sealed class WorldNode
+    public struct WorldNodeData
     {
         public WorldNodeType type;
         public WorldNodeStatus status;
-        public List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
+        public List<WorldNodeModifier> modifiers;
+        public UnityEngine.Vector2 position;
+        public bool IsSidetrackNode() => position.x < 0;
     }
-    public enum WorldNodeType { ExitBoss, Combat, Special }
-    public enum WorldNodeStatus { HasVisited }
+    public enum WorldNodeType { Start = 0, Combat = 1, Event = 2, Merchant = 100, Quest = 101, Special = 200, ExitBoss = 1000 }
+    public enum WorldNodeStatus { Unexplored, Revealed, RevealedFull, HasVisited }
     public class GameManager
     {
         public string runId;

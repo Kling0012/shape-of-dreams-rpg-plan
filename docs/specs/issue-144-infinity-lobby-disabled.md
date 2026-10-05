@@ -50,3 +50,9 @@
 - **ログ**：`InfinityMode.cs:206-227` は遠征ごとの初回生成で `Infinity initial map active; run=... zone=... selected=... interval=... nodes=...`、または `Infinity initial map uses normal mode; ... reason=...` を1回出す。遠征だけの降格は既存の `Infinity stopped for this expedition; normal mode continues.`、機能の無効化は `Infinity disabled; normal mode remains available.` に理由が残る。
 - **回帰の範囲**：`InfinityLobbyStartTests.cs:57-125` はロビー選択→新しいscene manager／actor→初回 `OnLateStartServer`→`LoadNextZone`→`TravelToZone`→生成→実製品の `InitializeInfinityRun`→早期ボス拒否・通常次ゾーン拒否まで通す。ソロ、対応参加者、前の拒否記録がある対応参加者、通常モードを確認する。旧テストの空生成／状態確認だけを越えたが、本体境界は `StartupGameApi.cs:120-135,321-345` のモデルであり、Unityの描画・実アセット生成・実ネットワークは未確認。製品の初回接続処理はコピーせず `ClientSession.InfinitySettings.cs:86-108` に集約してリンクする。
 - **実行結果**：Releaseの本体DLL参照ビルドは成功（警告5・エラー0）。`DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=LatestMajor python tools/test_changed.py` は2,800件成功・失敗0（slow対象4件は既定でskip）。別コンソールの開始フロースモークではソロ／対応参加者ありで周期15・早期ボス拒否・通常次ゾーン拒否、通常モードでボス入場・次ゾーン生成の継続と初回理由ログを確認した。スモーク用の一時プロジェクトは削除済み。
+
+## 8. #208：通常地図が見える問題は表示契約の更新
+
+- §7の「Infinityが通常モードへ降格する」修正とは別に、#208でInfinity中の地図を開始部屋・訪問済み・次の1部屋に限定した。開始時の全node／ボスの表示は設計Aの本体表示をそのまま使っていたためで、ノードを追加する設計Bへ変更する必要はない。[更新設計・保存と通信の互換・検証（§17）](issue-95-infinity-mode.md)。
+- 現在のInfinity native/UI割り込みは31クラス。実DLL＋Harmony 2.3.6-thinのCoreCLR診断で全クラスに自ownerのフックが入り、`Available == true`。対象不足・適用／実行失敗では従来どおりInfinityだけを無効化する。§2／§5の13クラスは#144当時の診断・テスト結果であり、現在の必要数ではない。
+- Protocolは23へ更新。旧版は未知nodeを表示し、非隣接次室／周期ボスの選択も異なるため同一表示・選択を保証できない。保存形式5・既存envelope項目・native node保存形式は変更しない。Unity実機の表示・協力通信は未確認。

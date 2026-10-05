@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <GameRef Include="mscorlib;netstandard;System;System.Core;0Harmony;Assembly-CSharp;Dew.Core;Dew.Contents;Dew.UI;Mirror;Newtonsoft.Json;UniTask;inc8877.GraphicsConfigurator;Unity.RenderPipelines.Universal.Runtime;Unity.RenderPipelines.Core.Runtime;Unity.InputSystem;Unity.TextMeshPro;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.InputLegacyModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.ImageConversionModule;UnityEngine.Physics2DModule;UnityEngine.PhysicsModule" />
+    <GameRef Include="mscorlib;netstandard;System;System.Core;0Harmony;Assembly-CSharp;Dew.Core;Dew.Contents;Dew.UI;Mirror;Newtonsoft.Json;UniTask;inc8877.GraphicsConfigurator;Unity.RenderPipelines.Universal.Runtime;Unity.RenderPipelines.Core.Runtime;Unity.InputSystem;Unity.TextMeshPro;UnityUIExtensions;UnityEngine.CoreModule;UnityEngine.IMGUIModule;UnityEngine.TextRenderingModule;UnityEngine.InputLegacyModule;UnityEngine.UI;UnityEngine.UIModule;UnityEngine.ImageConversionModule;UnityEngine.Physics2DModule;UnityEngine.PhysicsModule" />
     <Reference Include="@(GameRef)">
       <HintPath>$(GameManagedDir)\%(Identity).dll</HintPath>
       <Private>False</Private>

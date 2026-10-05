@@ -230,8 +230,9 @@ namespace SodRpg.Mod
                 }
 
                 int cur = zm.currentNodeIndex;
-                int target = -1;
-                for (int i = 0; i < zm.nodes.Count; i++)
+                bool infinity = InfinityMode.Enabled;
+                int target = infinity ? InfinityMode.RevealedNext(zm) : -1;
+                for (int i = 0; !infinity && i < zm.nodes.Count; i++)
                 {
                     if (i == cur || zm.nodes[i].type == WorldNodeType.ExitBoss || !zm.IsNodeConnected(cur, i))
                         continue;

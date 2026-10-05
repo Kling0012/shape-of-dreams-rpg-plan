@@ -240,15 +240,6 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Null(InfinityMode.UnavailableReason);
             Assert.DoesNotContain(Log.Warnings, m => m.Contains("Infinity disabled"));
             Assert.DoesNotContain(Log.Warnings, m => m.Contains("Patch class skipped: SodRpg.Mod.Infinity"));
-            // CompletePatchInstallation only turns Available on for all 13 native classes; the
-            // hooks themselves are verified per declaring class below.
-            int hookedClasses = 0;
-            foreach (var type in typeof(DreamforgeMod).Assembly.GetTypes())
-            {
-                if (!InfinityMode.IsNativePatch(type)) continue;
-                if (owner.GetPatchedMethods().Any(target => OwnsHook(target, type))) hookedClasses++;
-            }
-            Assert.Equal(13, hookedClasses);
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
 
