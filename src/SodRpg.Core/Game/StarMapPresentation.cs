@@ -21,11 +21,21 @@ namespace SodRpg.Core.Game
         {
             // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
             // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
-            return (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
+            string text = (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
                 : Loc.T("選択中の効果：", "Chosen effect:"))
                 + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen)
                 + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen);
+            // 段数で強さが変わる二択（#101）：候補本文が段数を書かない型（Mechanism）のときだけ、親星の段数・費用を添える。
+            return ChoiceNeedsRankNote(star) ? text + "\n\n" + RanksNote(star) : text;
         }
+
+        private static bool ChoiceNeedsRankNote(TalentDef star) =>
+            star.MaxRank > 1 && star.Choices.Any(c => c.Mechanism != null);
+
+        /// <summary>星図の本文の末尾に付ける段数と費用の注記（通常星と二択で同じ言葉を使う）。</summary>
+        internal static string RanksNote(TalentDef star) => Loc.T(
+            $"（数値は1段あたり・最大{star.MaxRank}段・1段につき{star.RankCost}ポイント）",
+            $" (values per rank; maximum {star.MaxRank} {(star.MaxRank == 1 ? "rank" : "ranks")}; {star.RankCost} {(star.RankCost == 1 ? "point" : "points")} per rank)");
 
         private static string ChoiceOptionHeading(int option)
         {
@@ -148,7 +158,8 @@ namespace SodRpg.Core.Game
         private static string ChoiceOptionBodyCore(TalentDef star, int option)
         {
             TalentDef selected = star.Choices[option];
-            return "<b>" + selected.Name + "</b>" + NL + EffectDescription(selected);
+            string body = "<b>" + selected.Name + "</b>" + NL + EffectDescription(selected);
+            return ChoiceNeedsRankNote(star) && selected.Mechanism != null ? body + NL + RanksNote(star) : body;
         }
 
         public static string PresentationLabel(TalentDef star)

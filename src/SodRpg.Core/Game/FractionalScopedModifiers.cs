@@ -181,6 +181,7 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(modifier.ScopeMemory);
             var labels = new List<string>();
             var partners = new HashSet<string>(StringComparer.Ordinal) { modifier.ScopeMemory };
+            var combos = new List<string>();
             void AddSelector(MemorySelector selector)
             {
                 if (selector == null) return;
@@ -209,6 +210,8 @@ namespace SodRpg.Core.Game
                 }
                 if (spec.Bridge != null)
                 {
+                    var pair = PairCombos.Get(spec.Bridge.PairId);
+                    if (pair?.Name != null) combos.Add(pair.Name.ToString());
                     AddSelector(spec.Bridge.OpeningSource);
                     AddSelector(spec.Bridge.PayoffSource);
                     foreach (var endpoint in spec.Bridge.Endpoints) partners.Add(endpoint.Memory);
@@ -264,12 +267,21 @@ namespace SodRpg.Core.Game
                 : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%");
             string scope = modifier.ScopeKind == ScopeKind.Receiver
                 ? Loc.T(memory + "を装着中、その記憶が受け取る効果を強化", "while " + memory + " is equipped; enhances effects received by it")
-                : Loc.T(memory + "を装着中、その記憶で発動する効果を強化", "while " + memory + " is equipped; enhances effects triggered by it");
+                : Loc.T(memory + "を装着中、その記憶から発動する星の追加効果を強化", "while " + memory + " is equipped; enhances the star-granted extra effects fired through it");
             string basis = modifier.Param == GimmickParam.ExtraTargets || modifier.Param == GimmickParam.Chance ? ""
                 : Loc.T("（元の" + field + "の" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍）",
                     " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")");
             string linked = string.Join(Loc.T("、", ", "), partners.Where(id => id != null).OrderBy(id => id, StringComparer.Ordinal).Select(Links.ItemName));
             string heading = !modifier.Param.HasValue ? Loc.T("効果量", "Effect amount") : field;
+            if (modifier.Param == GimmickParam.WindowDuration)
+            {
+                string combo = string.Join(Loc.T("、", ", "), combos.Distinct());
+                string factor = (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture);
+                return heading + " +" + amount + Loc.T("：", ": ")
+                    + Loc.T("橋の合わせ技" + (combo.Length > 0 ? "「" + combo + "」" : "") + "が成立するまでの受付時間を、元の" + factor + "倍に延長",
+                        "lengthens the time allowed to complete the bridge combo" + (combo.Length > 0 ? " \"" + combo + "\"" : "") + " to ×" + factor + " of the original")
+                    + ModifierCapDescription(modifier);
+            }
             return heading + " +" + amount + Loc.T("：", ": ") + scope + basis
                 + Loc.T("。対象の効果：", ". Affected effects: ") + effects + ModifierCapDescription(modifier)
                 + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ") + linked : "");
@@ -284,10 +296,11 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.BridgeSuccess:
                     return string.Join(Loc.T("・", ", "), new[] { spec.Bridge.BasePayoff }.Concat(spec.Bridge.Extras).Select(p =>
                         p.Gimmick != null ? EffectLabel(p.Gimmick) : p.Kind == BridgePayloadKind.Recharge ? EffectLabel(GimmickEffect.Recharge)
-                        : p.Kind == BridgePayloadKind.Damage ? Loc.T("追加ダメージ", "extra damage") : EffectLabel(GimmickEffect.Shield)).Distinct());
+                        : p.Kind == BridgePayloadKind.Damage ? Loc.T("追加ダメージ", "extra damage")
+                        : p.Ward != null ? WardLabel(p.Ward) : EffectLabel(GimmickEffect.Shield)).Distinct());
                 case AuthoredMechanismKind.MemoryPrimed: return EffectLabel(GimmickEffect.Primed);
                 case AuthoredMechanismKind.RelayWindow: return Loc.T("記憶ダメージ", "memory damage");
-                case AuthoredMechanismKind.AlliedWard:
+                case AuthoredMechanismKind.AlliedWard: return WardLabel(spec.Ward);
                 case AuthoredMechanismKind.SacrificeShield:
                 case AuthoredMechanismKind.StunSourceFilter: return EffectLabel(GimmickEffect.Shield);
                 case AuthoredMechanismKind.PressureDividend: return Loc.T("欠片獲得確率", "fragment reward chance");
@@ -296,6 +309,11 @@ namespace SodRpg.Core.Game
                 default: throw new ArgumentOutOfRangeException(nameof(spec));
             }
         }
+        /// <summary>障壁の受け手が分かるラベル（対数・対象数の修飾星で誰への障壁かを読ませる）。</summary>
+        private static string WardLabel(AlliedWardDefinition ward) =>
+            ward.RecipientKind == WardRecipientKind.OwnedSummons
+                ? Loc.T("召喚獣への障壁", "shields for your summons")
+                : Loc.T("味方旅人への障壁", "shields for allied travelers");
 
         internal static string EffectLabel(GimmickDef def)
         {

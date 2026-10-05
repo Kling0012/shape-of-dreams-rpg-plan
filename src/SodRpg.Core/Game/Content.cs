@@ -368,8 +368,7 @@ namespace SodRpg.Core.Game
         {
             if (Mechanism != null || KeystoneDefinition != null || IsKeystone || IsChoice)
                 return StarMapPresentation.EffectDescription(this);
-            string ranks = Loc.T($"（数値は1段あたり・最大{MaxRank}段・1段につき{RankCost}ポイント）",
-                $" (values per rank; maximum {MaxRank} {(MaxRank == 1 ? "rank" : "ranks")}; {RankCost} {(RankCost == 1 ? "point" : "points")} per rank)");
+            string ranks = StarMapPresentation.RanksNote(this);
             if (RunGrowth != null) return DescribeRunGrowth(RunGrowth) + ranks;
             if (RunGrowthModifier != null) return global::SodRpg.Core.Game.RunGrowth.Describe(RunGrowthModifier, HeroKey) + ranks;
             if (PairCombo != null) return PairCombos.Describe(PairCombo);
@@ -5873,7 +5872,7 @@ namespace SodRpg.Core.Game
                 case Power.CriticalEcho: return Loc.T("会心の余韻", "Critical Echo");
                 case Power.Fetters: return Loc.T("足枷", "Fetters");
                 case Power.CrystalResonance: return Loc.T("結晶共鳴", "Crystal Resonance");
-                case Power.PreyPride: return Loc.T("獲物の誇り", "Prey's Pride");
+                case Power.PreyPride: return Loc.T("狩人の誇り", "Hunter's Pride");
                 case Power.OverflowingLife: return Loc.T("溢れる命", "Overflowing Life");
                 case Power.Devotion: return Loc.T("祈願", "Devotion");
                 case Power.Wildfire: return Loc.T("飛び火", "Wildfire");

@@ -148,7 +148,7 @@ namespace SodRpg.Core.Game
         Fetters = 33,
         /// <summary>装着エッセンスの品質合計100%ごとに攻撃力・魔力+X%（8段まで）。「結晶共鳴」</summary>
         CrystalResonance = 34,
-        /// <summary>ハンターの追跡度1ごとに攻撃力・魔力+X%（3まで）。「獲物の誇り」</summary>
+        /// <summary>ハンターの追跡度1ごとに攻撃力・魔力+X%（3まで）。「狩人の誇り」</summary>
         PreyPride = 35,
         /// <summary>超過回復のX%を3秒の障壁にする（1回につき最大HPの10%まで）。「溢れる命」</summary>
         OverflowingLife = 36,
