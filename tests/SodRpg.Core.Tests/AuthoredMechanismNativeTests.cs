@@ -151,6 +151,39 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void Duplicate_memory_name_in_second_slot_keeps_other_memory_events_admitted()
+        {
+            // #163: equip a second instance of an already-equipped memory name; the equipment
+            // snapshot must not throw and later events of the other (and duplicated) memories
+            // must stay admitted at the new equipment generation.
+            var identitySpec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.DirectedRecharge, ChannelId = "native.dup.identity",
+                Source = Source(Identity), Trigger = MemoryEventKind.ConfirmedUse,
+                Recharge = new DirectedRechargeChannel("native.dup.identity", Source(Identity), MemoryEventKind.ConfirmedUse,
+                    new MemorySelector(MemorySelectorKind.EquippedMovement), new[] { 2000 }) };
+            var duplicateSpec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.DirectedRecharge, ChannelId = "native.dup.memory",
+                Source = Source(Q), Trigger = MemoryEventKind.ConfirmedUse,
+                Recharge = new DirectedRechargeChannel("native.dup.memory", Source(Q), MemoryEventKind.ConfirmedUse,
+                    new MemorySelector(MemorySelectorKind.EquippedMovement), new[] { 2000 }) };
+            var (host, runtime) = Setup(Allocated("Hero_Vesper", new[] { identitySpec, duplicateSpec }, out _));
+            var hero = runtime.Hero;
+            var movement = hero.Skill.GetSkill(HeroSkillLocation.Movement);
+            void Use(string memory) =>
+                host.NotifyAuthored(runtime, Event(host, host.Activation(hero, memory), MemoryEventKind.ConfirmedUse));
+            void ResetCooldown() => movement.currentConfigUnscaledCooldownTime = 10;
+
+            Use(Identity); Assert.Equal(8, movement.currentConfigUnscaledCooldownTime, 5); // normal equipment fires
+            ResetCooldown();
+            hero.Skill.EquipSkill(HeroSkillLocation.R, new St_R_BaptismOfSun { owner = hero }); // normal update, distinct memory
+            Use(Identity); Assert.Equal(8, movement.currentConfigUnscaledCooldownTime, 5);
+            ResetCooldown();
+            // Replace R with another instance of the memory already in Q: duplicate name across slots (#163).
+            hero.Skill.EquipSkill(HeroSkillLocation.R, new St_Q_CruelSun { owner = hero });
+            Use(Identity); Assert.Equal(8, movement.currentConfigUnscaledCooldownTime, 5); // other memory stays admitted
+            ResetCooldown();
+            Use(Q); Assert.Equal(8, movement.currentConfigUnscaledCooldownTime, 5); // duplicated memory resolves to its first slot
+        }
+
+        [Fact]
         public void Circle_identity_uses_published_empty_source_owned_basic_firing_and_live_summon_every_four()
         {
             const string circle = "St_D_CircleOfLife";
