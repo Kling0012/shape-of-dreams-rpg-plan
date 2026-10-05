@@ -6,6 +6,22 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.0.4 — 夢の圧の追加報酬の修正（2026-10-05）
+
+v2.0.3 で見つかった、報酬の不具合を1つ直しました。 / This release fixes one reward bug found after v2.0.3.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（v2.0.3 と同じ形式です）。 / Saves carry over (same format as v2.0.3).
+- **協力プレイでは、全員このバージョンに更新**してください。 / Everyone in co-op should use this version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Fixes
+
+- **夢の圧の追加報酬**：コインバーストや忘却の咆哮でとどめを刺したときに、夢の圧の効果で未確保の欠片が1個追加されることがあります。v2.0.2 以降、この抽選が行われていなかった不具合を直しました。 / **Dream-pressure bonus**: finishing enemies with Coin Burst or Shout of Oblivion can grant one extra unsecured shard through dream pressure. Since v2.0.2 this roll never happened; it works again.
+
+---
+
 ## v2.0.3 — 不具合の修正と軽量化（2026-10-05）
 
 v2.0.2 のあとにまとめて見直しを行い、見つかった不具合を直しました。長いプレイで重くなる問題も、さらに軽くしています。 / After a full review following v2.0.2, this release fixes the bugs it found and further reduces slowdowns on long runs.
