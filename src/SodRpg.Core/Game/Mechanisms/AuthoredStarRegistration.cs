@@ -33,7 +33,8 @@ namespace SodRpg.Core.Game
             if (Migrations.Count == 0) return RegistryHash(trees);
             // Migration rules change what a loaded profile looks like, so peers must agree on them.
             string rules = string.Join("|", Migrations.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => x.Key + "=" + string.Join(",",
-                x.Value.OrderBy(r => r.LocalStarId, StringComparer.Ordinal).Select(r => r.LocalStarId + "/" + r.MaxRank + "/" + r.RankCost + "/" + (r.ChangedEffect ? "1" : "0")))));
+                x.Value.OrderBy(r => r.LocalStarId, StringComparer.Ordinal).Select(r => r.LocalStarId + "/" + r.MaxRank + "/" + r.RankCost + "/" + (r.ChangedEffect ? "1" : "0")
+                    + (r.Revision > 1 ? "/r" + r.Revision + (r.LegacyWasChoice ? "c" : "") : "")))));
             return RegistryHash(trees + "#migrations:" + rules);
         }
         /// <summary>
@@ -47,7 +48,7 @@ namespace SodRpg.Core.Game
             var input = rules.ToArray();
             var baseline = HeroSigils.BaselineTreeFor(heroKey);
             foreach (var rule in input)
-                if (rule != null) rule.LegacyWasChoice = baseline.Any(x => x.Id == rule.LocalStarId && x.IsChoice);
+                if (rule != null && rule.Revision <= 1) rule.LegacyWasChoice = baseline.Any(x => x.Id == rule.LocalStarId && x.IsChoice);
             lock (AuthoredLock)
             {
                 if (!Installed.TryGetValue(heroKey, out var installed))
@@ -57,6 +58,16 @@ namespace SodRpg.Core.Game
                 if (input.Length == 0) Migrations.Remove(heroKey); else Migrations[heroKey] = Array.AsReadOnly(input);
                 registryFingerprint = ComputeRegistryFingerprint();
             }
+        }
+        /// <summary>
+        /// The star-map revision a hero is stamped with after its rules are applied: 1 for the v1.31 rewrite, or the highest later revision
+        /// among its registered rules (a redesign of an already authored hero such as the Husk trio). 0 when the hero has no rules.
+        /// </summary>
+        public static int MigrationVersionFor(string heroKey)
+        {
+            int version = 0;
+            foreach (var rule in MigrationsFor(heroKey)) version = Math.Max(version, Math.Max(rule.Revision, AuthoredStarMigration.CurrentVersion));
+            return version;
         }
         /// <summary>The migration rules registered for a hero; empty when none.</summary>
         public static IReadOnlyList<LegacyStarMigration> MigrationsFor(string heroKey)

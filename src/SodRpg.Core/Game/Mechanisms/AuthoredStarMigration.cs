@@ -5,15 +5,26 @@ namespace SodRpg.Core.Game
 {
     public sealed class LegacyStarMigration
     {
-        public LegacyStarMigration(string localStarId, int maxRank, int rankCost, bool changedEffect = false)
-        { LocalStarId = localStarId; MaxRank = maxRank; RankCost = rankCost; ChangedEffect = changedEffect; }
+        public LegacyStarMigration(string localStarId, int maxRank, int rankCost, bool changedEffect = false, int revision = 1, bool wasChoice = false)
+        {
+            if (revision < 1) throw new ArgumentOutOfRangeException(nameof(revision));
+            LocalStarId = localStarId; MaxRank = maxRank; RankCost = rankCost; ChangedEffect = changedEffect;
+            Revision = revision; LegacyWasChoice = wasChoice;
+        }
         public string LocalStarId { get; }
+        /// <summary>
+        /// The star-map revision that redefined this star. 1 is the v1.31 rewrite of the pre-v1.31 tree; a later redesign of an
+        /// already authored star or ring center (for example the Husk trio in revision 2) uses the next number. A hero is refunded
+        /// for a redefined star only while its stamped AuthoredMigrationVersion is below the rule's revision.
+        /// </summary>
+        public int Revision { get; }
         public int MaxRank { get; }
         public int RankCost { get; }
         public bool ChangedEffect { get; }
         /// <summary>
         /// The original star was itself a Choice, so a stored option index belongs to the old effect and cannot be kept.
-        /// Set by StarClusters.RegisterMigrations from the baseline tree; a star that was not a choice but now is keeps an explicit pick.
+        /// Set by StarClusters.RegisterMigrations from the baseline tree for revision-1 rules (a star that was not a choice but now is keeps an explicit pick);
+        /// a later revision states it itself, because the star it redefines is already an authored star rather than a baseline one.
         /// </summary>
         public bool LegacyWasChoice { get; internal set; }
     }
@@ -36,7 +47,7 @@ namespace SodRpg.Core.Game
 
     public static class AuthoredStarMigration
     {
-        /// <summary>The revision stamped on a hero once the registered migration rules have been applied.</summary>
+        /// <summary>The revision stamped on a hero once the v1.31 migration rules have been applied. A hero whose registered rules carry a later revision is stamped with that one (see StarClusters.MigrationVersionFor).</summary>
         public const int CurrentVersion = 1;
         /// <summary>The installed 6+3+4+1 IDs, in original order. No designed replacements are registered here.</summary>
         public static readonly IReadOnlyList<LegacyStarMigration> CetusRetained = Array.AsReadOnly(new[]
@@ -75,8 +86,10 @@ namespace SodRpg.Core.Game
                     throw new InvalidOperationException("Migration must retain original ID, rank and cost: " + rule?.LocalStarId);
                 costs.Add(rule.LocalStarId, rule);
             }
-            bool Redefined(string id) => hero.AuthoredMigrationVersion < migrationVersion
-                && costs.TryGetValue(id, out var rule) && rule.ChangedEffect;
+            int stamp = migrationVersion;
+            foreach (var rule in migrations) if (rule != null) stamp = Math.Max(stamp, rule.Revision);
+            bool Redefined(string id) => costs.TryGetValue(id, out var rule) && rule.ChangedEffect
+                && hero.AuthoredMigrationVersion < Math.Max(rule.Revision, migrationVersion);
             var candidate = new HeroState { Kills = hero.Kills, StarXp = hero.StarXp };
             foreach (var allocation in hero.Talents)
             {
@@ -164,7 +177,7 @@ namespace SodRpg.Core.Game
             hero.TalentChoices.Clear();
             foreach (var choice in candidate.TalentChoices) if (hero.Talents.ContainsKey(choice.Key)) hero.TalentChoices.Add(choice.Key, choice.Value);
             hero.CopyKeystonesFrom(candidate);
-            if (migrations.Count > 0) hero.AuthoredMigrationVersion = Math.Max(hero.AuthoredMigrationVersion, migrationVersion);
+            if (migrations.Count > 0) hero.AuthoredMigrationVersion = Math.Max(hero.AuthoredMigrationVersion, stamp);
             return new StarMigrationRefund(refunded, points, redefinedIds, redefinedPoints);
         }
     }
