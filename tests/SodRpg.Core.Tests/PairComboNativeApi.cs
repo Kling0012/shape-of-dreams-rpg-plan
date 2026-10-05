@@ -163,7 +163,7 @@ namespace SodRpg.Mod
         private static readonly HeroSkillLocation[] LinkSkills = { HeroSkillLocation.Identity, HeroSkillLocation.Movement,
             HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R };
         private static readonly object EnemyFilter = new object();
-        private readonly System.Random _rng = new System.Random(1);
+        private System.Random _rng = new System.Random(1);
         private int _gimmickDamageDepth, _pairDamageDepth, _reactionEffectDepth;
         internal struct PendingGimmick
         {

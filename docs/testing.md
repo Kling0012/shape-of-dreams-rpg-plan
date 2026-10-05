@@ -91,6 +91,26 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## #62 圧の追加報酬の死亡順序
+
+`AuthoredMechanismNativeTests` の `Pressure_dividend_*`（3メソッド、17ケース）は、
+実装の `OnEntityAdd → OnMonsterDeath → RemoveMonster → NativeAttributedKill.Postfix
+→ PublishAttributedKill → OnEntityRemove` を通す。死亡記録を直接作る旧ヘルパーは使わない。
+`extract_issue62_native.py` が製品ソースの該当メソッドと通常撃破の
+`CaptureAuthoritativeRunKill` をビルド時に抽出し、APIダブルとコンパイルする。
+抽出結果は `obj/` のみで、製品ソースは変更しない。ビルドには `python` が必要。
+
+- CoinExplosion／Shout × ローカル／協力プレイ所有者の4ケースで、乱数を0に固定し、
+  抽選1回・所有者宛の未確保欠片+1・同一通知／別packet／親Actor通知の重複防止を確認。
+  通常撃破の分類記録をledgerで解決し、通常報酬を先に比較してから追加欠片を適用する。
+- 圧不足・報酬無効・召喚敵・生成ダメージ・未確認spawn・帰属packetなしを両記憶で確認。
+- entity削除なしでも、非スケール時間の9.99秒では保持、10秒で回収。
+  32死亡を繰り返し、当選済み／未受付のspawn・期限・出所・抽選記録が残らないことを確認。
+
+検証境界: Unity／Harmony実機ではなくAPIダブルを使用する。ダメージpacketの帰属と
+生成ダメージの不許可フラグは入力として与え、ネットワークは宛先とreceiptを記録する。
+実機2台の配送、nativeダメージpacketの生成処理、通常敵以外のDeathBurst／elite goldは対象外。
+
 ## #47 刻印の代償撤廃の回帰確認
 
 - `GeneratedHeroAcceptanceTests` は全82刻印の型付き効果、ダメージ・傷の非弱体化、

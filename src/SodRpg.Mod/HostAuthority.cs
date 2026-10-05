@@ -366,7 +366,11 @@ namespace SodRpg.Mod
 
         private void StageModShieldPools() => UpdateModShieldPools(_tickNow);
 
-        private void StageMonsterPrune() => PruneMonsters(_tickNow);
+        private void StageMonsterPrune()
+        {
+            PruneMonsters(_tickNow);
+            PrunePressureDividendDeaths();
+        }
 
         private void StageMonsterBehaviors() => TickMonsterBehaviors(_tickNow);
 
@@ -508,7 +512,7 @@ namespace SodRpg.Mod
                 foreach (var heroRuntime in _runtimes.Values) heroRuntime.Powers.ForgetNewPowerTarget(e.GetInstanceID());
             if (!ReferenceEquals(e, null) && _nativeDeathEntities.Remove(e)) e.EntityEvent_OnDeath -= _onDeath;
             if (e is Monster m) RemoveMonster(m);
-            if (e is Monster removedMonster) _pressureDividendSpawns.Remove(removedMonster);
+            if (e is Monster removedMonster) ForgetPressureDividendSpawn(removedMonster);
         }
 
         private void OnMonsterDeath(EventInfoKill info)
@@ -568,9 +572,10 @@ namespace SodRpg.Mod
             }
             _nightmares.Remove(m);
             _regen.Remove(m);
-            // PruneMonsters also reaches monsters whose ActorManager removal event has not fired (or never will
-            // for destroyed objects); drop every spawn-scoped side table here so they cannot accumulate over a run (#55).
-            _pressureDividendSpawns.Remove(m);
+            // Combat hooks are released on death, before Actor.InvokeOnKill attributes the memory.
+            // Keep the immutable reward snapshot until entity removal or its bounded expiry.
+            if (!_pressureDividendSpawns.TryGetValue(m, out var spawn) || spawn.Death == null)
+                ForgetPressureDividendSpawn(m);
             _generatedPairDeaths.Remove(m.GetInstanceID());
             if (_pairEntities.Remove(m))
             {
@@ -586,7 +591,7 @@ namespace SodRpg.Mod
         {
             foreach (var rt in _monsters.Values) { SendMonsterRemoval(rt); Unhook(rt); }
             _monsters.Clear();
-            _pressureDividendSpawns.Clear();
+            ClearPressureDividendSpawns();
             foreach (var entity in _pairEntities)
             {
                 if (entity == null) continue;

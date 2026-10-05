@@ -511,40 +511,156 @@ namespace SodRpg.Core.Tests
             finally { HostAuthority.InstallNativeSacrificeHook(); }
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void Verified_pressured_common_memory_kill_sends_one_authenticated_unsecured_receipt_and_unknown_spawn_is_rejected(bool ultimate)
+        private static (HostAuthority Host, HostAuthority.HeroRuntime Runtime, Actor Transport,
+            AbilityInstance Native, HostAuthority.WinningRandom Random) DividendLifecycle(bool ultimate, bool remote = false)
         {
             string memory = ultimate ? "St_U_ShoutOfOblivion" : "St_L_CoinExplosion";
             var channel = new PressureDividendChannel(new[] { new PressureDividendContribution("native.dividend", memory, 4000) });
             var spec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.PressureDividend, ChannelId = "native.dividend", Source = Source(memory),
                 Trigger = MemoryEventKind.Kill, Budget = AttributionBudget.PerKill, Dividend = channel };
-            var (host, runtime) = Setup(Allocated(spec, out _)); var transport = host.RegisterNegotiation();
+            var (host, runtime) = Setup(Allocated(spec, out _));
+            UnityEngine.Time.unscaledTime = 100;
+            runtime.Hero.netId = remote ? 2u : 1u;
+            DewPlayer.local = remote ? new DewPlayer { hero = new Hero() } : runtime.Hero.owner;
+            DewPlayer.gamePlayers.Add(DewPlayer.local);
+            if (remote) DewPlayer.gamePlayers.Add(runtime.Hero.owner);
+            var transport = host.RegisterNegotiation();
             SkillTrigger installed = ultimate ? (SkillTrigger)new St_U_ShoutOfOblivion { type = SkillType.Ultimate }
                 : new St_L_CoinExplosion { type = SkillType.Normal };
             installed.owner = runtime.Hero;
             runtime.Hero.Skill.Skills[ultimate ? HeroSkillLocation.R : HeroSkillLocation.W] = installed;
             var cast = host.BeginAttributedMemoryCast(installed);
-            Assert.NotNull(cast); Assert.Equal(memory, cast.Identity.SourceMemory);
             AbilityInstance native = ultimate ? (AbilityInstance)new Ai_U_ShoutOfOblivion { parentActor = installed, info = new CastInfo(runtime.Hero) }
                 : new Ai_L_CoinExplosion_Explosion { parentActor = installed, info = new CastInfo(runtime.Hero) };
             host.AdmitNativeScope(native, cast.Identity);
-            var enemy = new Monster { Relation = EntityRelation.Enemy, owner = new DewPlayer { isHumanPlayer = false } };
+            return (host, runtime, transport, native, host.StartIssue62Lifecycle());
+        }
+
+        private static EventInfoKill DividendDeath(HostAuthority host, AbilityInstance native, Monster enemy, bool admitted = true)
+        {
+            Assert.True(native.PureDamage(2000, 1).currentAmount > enemy.currentHealth);
             native.PureDamage(2000, 1).Dispatch(enemy);
-            host.PressureEnemy(enemy, 1.25, true);
-            host.NativeKill(runtime, native, enemy); host.NativeKill(runtime, native, enemy);
+            Assert.True(enemy.currentHealth <= 0);
+            Assert.True(host.TryIssue62Activation(native, out var identity));
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = native, Victim = enemy,
+                Identity = identity, Admitted = admitted, Serial = host.Packet(), DamageAmount = 2000 };
+            var kill = new EventInfoKill { actor = native, victim = enemy };
+            enemy.RaiseDeath(kill);
+            Assert.Equal(0, host.Issue62Records.Combat);
+            Assert.Equal(0, host.Issue62Records.Queue);
+            return kill;
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public void Pressure_dividend_survives_death_then_native_kill_then_entity_removal(bool ultimate, bool remote)
+        {
+            var (host, runtime, transport, native, random) = DividendLifecycle(ultimate, remote);
+            var enemy = new Monster { Relation = EntityRelation.Enemy, owner = new DewPlayer { isHumanPlayer = false } };
+            host.SpawnIssue62Enemy(enemy, 1.25);
+            var kill = DividendDeath(host, native, enemy);
+            Assert.Equal(0, random.Rolls);
+            Assert.Empty(transport.ClientMessages);
+            var fact = Assert.Single(host.OrdinaryKillFacts);
+            var profile = Profile.CreateNew(15); Rules.BeginRun(profile, fact.RunId);
+            var expected = Profile.CreateNew(15); Rules.BeginRun(expected, fact.RunId);
+            profile.Run.Bounties.Clear(); expected.Run.Bounties.Clear();
+            var ledger = new KillClassificationLedger();
+            Assert.True(ledger.ObserveDeath(new PendingMonsterDeath(enemy.netId,
+                new PendingRunKill(fact.RunId, 0, 0, MonsterTier.Normal, 1, NightmareAffix.None, null, runtime.HeroKey),
+                fact.StreamId), now: 100));
+            Assert.True(ledger.ReceiveFact(fact, now: 100));
+            Assert.True(ledger.TryResolve(out var ordinary, now: 100));
+            Rules.OnKill(profile, ordinary.Tier, ordinary.Level, ordinary.Nightmare, ordinary.HeroKey,
+                variantId: ordinary.VariantId, roomIndex: ordinary.RoomIndex);
+            Rules.OnKill(expected, MonsterTier.Normal, 1, heroKey: runtime.HeroKey, roomIndex: 0);
+            Assert.Equal(1, profile.Run.Kills);
+            Assert.Equal(expected.Run.SatchelShards, profile.Run.SatchelShards);
+            Assert.Equal(expected.Hero(runtime.HeroKey).StarXp, profile.Hero(runtime.HeroKey).StarXp);
+
+            native.InvokeOnKill(kill);
+            native.InvokeOnKill(kill); // Repeated native packet.
+            NativeAttributedDamagePacket.Current.Serial = host.Packet();
+            native.InvokeOnKill(kill); // A second packet for the same death still cannot roll again.
+            native.parentActor.InvokeOnKill(kill); // Parent propagation retains the original damage actor.
+            Assert.Equal(1, random.Rolls);
             var receipt = Assert.IsType<DreamforgePressureDividendMsg>(Assert.Single(transport.ClientMessages));
-            Assert.Equal(1, receipt.ToReward().ShardCount); Assert.Equal(runtime.Hero.netId, receipt.heroNetId);
-            var profile = Profile.CreateNew(15); Rules.BeginRun(profile, receipt.runId);
+            Assert.Same(runtime.Hero.owner, Assert.Single(transport.ClientRecipients));
+            Assert.Equal(runtime.Hero.netId, receipt.heroNetId);
+            Assert.Equal(runtime.Hero.netId.ToString(), receipt.ownerId);
+            Assert.Equal(1, receipt.ToReward().ShardCount);
             var pending = new PendingPressureDividends();
             Assert.True(pending.AddAuthenticated(receipt.ToReward(), receipt.runId, receipt.ownerId));
-            Assert.Equal(1, pending.Drain(profile)); Assert.Equal(1, profile.Run.SatchelShards);
-            Assert.Equal(0, profile.Run.Kills);
+            Assert.Equal(1, pending.Drain(profile));
+            Assert.Equal(expected.Run.SatchelShards + 1, profile.Run.SatchelShards);
+            Assert.Equal(1, profile.Run.Kills);
+            Assert.Equal(expected.Hero(runtime.HeroKey).StarXp, profile.Hero(runtime.HeroKey).StarXp);
             Assert.False(pending.AddAuthenticated(receipt.ToReward(), receipt.runId, receipt.ownerId));
-            var unknown = new Monster { Relation = EntityRelation.Enemy, owner = enemy.owner }; host.PressureEnemy(unknown, 2, false);
-            host.NativeKill(runtime, native, unknown);
+            host.RemoveIssue62Entity(enemy);
+            Assert.Equal((0, 0, 0, 0, 0, 0), host.Issue62Records);
+            native.InvokeOnKill(kill);
             Assert.Single(transport.ClientMessages);
+            Assert.Equal(1, random.Rolls);
+        }
+
+        [Theory]
+        [InlineData(false, "pressure")]
+        [InlineData(true, "pressure")]
+        [InlineData(false, "loot")]
+        [InlineData(true, "loot")]
+        [InlineData(false, "summon")]
+        [InlineData(true, "summon")]
+        [InlineData(false, "generated")]
+        [InlineData(true, "generated")]
+        [InlineData(false, "unknown")]
+        [InlineData(true, "unknown")]
+        [InlineData(false, "unattributed")]
+        [InlineData(true, "unattributed")]
+        public void Pressure_dividend_exclusions_do_not_roll_after_real_death(bool ultimate, string exclusion)
+        {
+            var (host, runtime, transport, native, random) = DividendLifecycle(ultimate);
+            var enemy = new Monster { Relation = EntityRelation.Enemy,
+                owner = new DewPlayer { isHumanPlayer = exclusion == "summon" }, disableLoot = exclusion == "loot" };
+            host.SpawnIssue62Enemy(enemy, exclusion == "pressure" ? 1.249 : 1.25,
+                roomSpawn: exclusion != "summon" && exclusion != "unknown");
+            var kill = DividendDeath(host, native, enemy, admitted: exclusion != "generated");
+            if (exclusion == "unattributed") NativeAttributedDamagePacket.Current = null;
+            native.InvokeOnKill(kill);
+            native.InvokeOnKill(kill);
+            Assert.Empty(transport.ClientMessages);
+            Assert.Equal(0, random.Rolls);
+            host.RemoveIssue62Entity(enemy);
+            Assert.Equal((0, 0, 0, 0, 0, 0), host.Issue62Records);
+        }
+
+        [Fact]
+        public void Pressure_dividend_deaths_expire_at_ten_unscaled_seconds_without_entity_removal()
+        {
+            var (host, runtime, transport, native, random) = DividendLifecycle(false);
+            for (int expedition = 0; expedition < 32; expedition++)
+            {
+                float start = 100 + expedition * 10;
+                UnityEngine.Time.unscaledTime = start;
+                var enemy = new Monster { Relation = EntityRelation.Enemy, owner = new DewPlayer { isHumanPlayer = false } };
+                host.SpawnIssue62Enemy(enemy, 1.25);
+                var kill = DividendDeath(host, native, enemy);
+                UnityEngine.Time.unscaledTime = start + 9.99f;
+                host.PruneIssue62Deaths();
+                Assert.Equal(1, host.Issue62Records.Spawns);
+                Assert.Equal(1, host.Issue62Records.Expiry);
+                if (expedition % 2 == 0) native.InvokeOnKill(kill); // Clean both paid and unclaimed deaths.
+                UnityEngine.Time.unscaledTime = start + 10;
+                host.PruneIssue62Deaths();
+                Assert.Equal((0, 0, 0, 0, 0, 0), host.Issue62Records);
+                int receipts = transport.ClientMessages.Count;
+                native.InvokeOnKill(kill);
+                Assert.Equal(receipts, transport.ClientMessages.Count);
+            }
+            Assert.Equal(16, random.Rolls);
+            Assert.Equal(0, UnityEngine.Time.time); // Paused/scaled time does not extend retention.
         }
 
         [Fact]

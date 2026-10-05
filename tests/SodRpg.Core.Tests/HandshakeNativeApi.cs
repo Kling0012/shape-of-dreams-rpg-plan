@@ -13,6 +13,7 @@ namespace SodRpg.Mod
     {
         internal readonly Dictionary<Type, object> ServerHandlers = new Dictionary<Type, object>();
         internal readonly List<object> ClientMessages = new List<object>();
+        internal readonly List<DewPlayer> ClientRecipients = new List<DewPlayer>();
         public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler)
             => ServerHandlers.Add(typeof(T), handler);
         public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler)
@@ -24,6 +25,7 @@ namespace SodRpg.Mod
         {
             if (recipient == null) throw new ArgumentNullException(nameof(recipient));
             ClientMessages.Add(message);
+            ClientRecipients.Add(recipient);
         }
     }
 
@@ -46,7 +48,7 @@ namespace SodRpg.Mod
     }
 
     // Product ClientSession (not linked) exposes a host-authority generation used by the hello reply.
-    internal static class ClientSession
+    internal static partial class ClientSession
     {
         internal static ulong HostAuthorityGeneration;
     }
