@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **手動取引の通貨処理例外（#181）**：残高が予定どおり変化済みなら成功を保持し、未変更ならホストの成功記録を失敗へ置換、それ以外は結果不明として保留します。異常後は手動取引だけを停止し、照会・再送と中断保存でも同じ結果を維持します。報酬量・通信形式は変更しません。 / **Native currency exceptions in manual trades (#181)**: retain success after the expected balance change, replace the success receipt with failure if unchanged, and hold ambiguous changes as unresolved. Disable only manual execution after a fault; queries, replays and Continue saves retain the same outcome. Reward amounts and wire format are unchanged.
+
 - **空殻の外周4の選択星（第2案）が選べない**：空殻の「畳みかける一撃」「備わる次の楔」「満ちる次撃」「次の爆発の用意」を選ぼうとすると、前提を取っていても「効果が上限に達している・無効になる、または前提の星が足りません」と出て選べませんでした。撃破時に次撃を備える効果が、前提の星（同じ効果で弱い）を無効にしてしまい、それを前提にする自分自身が選べなくなっていたためです。第2案を、命中時に次撃を備える別の効果（4.6）にして選べるようにしました。 / Fixed the second option of Husk's outer ring 4 choices being unselectable: it overrode its own prerequisite star. It is now an on-hit Primed channel (4.6).
 
 - **刻印「風傷の芯」などが選べない**：空殻の風傷の芯・一閃（single-edge）、セトゥス・ミスト・ユバールの記憶の元々のダメージを増やす刻印を選ぼうとすると「効果が上限に達している・無効になる、または前提の星が足りません」と出て選べませんでした。この刻印の効果はゲーム本体側で働き、星の割り当てには現れないため、効果なしと判定されていました。選べるようにしました。 / Fixed keystones that scale a memory's original damage (Husk's Core of the Wind Scar and similar) being refused as having no effect; their effect applies in the host and never shows in the star allocation.

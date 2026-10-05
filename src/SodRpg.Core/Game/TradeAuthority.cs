@@ -64,7 +64,7 @@ namespace SodRpg.Core.Game
         /// </summary>
         public const long ProbeToken = long.MaxValue;
 
-        /// <summary>結果の reason：ホストが記録の有無を確かめられない（台帳が替わった・記録が上限で消えた可能性がある）。</summary>
+        /// <summary>結果の reason：ホストが実行結果を確かめられない（本体通貨の変化が不明・台帳の変更・記録の上限）。</summary>
         public const string LostReason = "lost";
 
         /// <summary>結果不明の取引idの照会を通信値へ落とす。ledgerId はその取引を送ったときに知っていたホストの台帳の識別子（不明なら 0）。</summary>
@@ -274,7 +274,7 @@ namespace SodRpg.Core.Game
             _players.TryGetValue(playerKey, out var l) && l.RunId == runId ? l.SalvagedUids.Count : 0;
 
         /// <summary>
-        /// 取引を裁定する。金額・可否はこの場で決まり、呼び出し側は Ok &amp;&amp; !Replayed のときだけ本体の通貨を動かす。
+        /// 取引を裁定する。Ok &amp;&amp; !Replayed のときだけ本体の通貨を動かし、手動取引が成立しなかったら FailExecution で記録を訂正する。
         /// </summary>
         /// <param name="playerKey">再接続しても同じプレイヤーを区切る、本体の guid などの安定した鍵。</param>
         /// <param name="runId">現在のランの識別子。分解の重複排除はラン単位。</param>
@@ -355,7 +355,7 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>
-        /// 取引idの結果の照会。実行済みなら記録済みの結果（Replayed=true の成功）を返す。
+        /// 取引idの結果の照会。記録済みなら同じ成功・失敗・保留の結果（Replayed=true）を返す。
         /// 記録がなく、しかも「送ったときの台帳」が今の台帳と同じで記録も上限で消えていないと言えるときだけ、「unknown」（未実行）で答えると同時に
         /// その取引idを取り消す（あとから届く元の要求は実行せず、クライアントは「ホストは何も支払っていない」として返却できる）。
         /// 台帳が替わっている（権威の作り直し・接続の変更）か、記録が上限で消えた範囲なら、記録がないことは未実行の証拠にならないので
@@ -416,6 +416,38 @@ namespace SodRpg.Core.Game
             SpendGold = recorded.SpendGold, SpendDust = recorded.SpendDust,
             EarnDust = recorded.EarnDust, LedgerId = ledgerId,
         };
+
+        /// <summary>
+        /// Replace a newly accepted manual trade's success receipt when native currency did not settle.
+        /// An unchanged balance is a terminal failure; a partial/unknown change stays lost and must never execute again.
+        /// </summary>
+        public TradeDecision FailExecution(string playerKey, string runId, TradeRequest req, bool outcomeUnknown)
+        {
+            if (req == null || req.Query || (req.Kind != TradeKind.MerchantGold
+                && req.Kind != TradeKind.DustToShards && req.Kind != TradeKind.SalvageForDust))
+                return new TradeDecision { Reason = "invalid" };
+            var ledger = Ledger(playerKey, runId);
+            if (!ledger.Executed.TryGetValue(req.Token, out var recorded))
+                return new TradeDecision { Reason = TradeWire.LostReason, LedgerId = ledger.Id };
+            if (!ledger.Fingerprints.TryGetValue(req.Token, out string previous) || previous != Fingerprint(req))
+                return new TradeDecision { Reason = "conflict", LedgerId = ledger.Id };
+            if (!recorded.Ok) return Replay(recorded, ledger.Id);
+
+            var failed = new TradeDecision { Reason = outcomeUnknown ? TradeWire.LostReason : "error", LedgerId = ledger.Id };
+            ledger.Executed[req.Token] = failed;
+            if (!outcomeUnknown && req.Kind == TradeKind.SalvageForDust)
+            {
+                // The relic is returned on definite failure and may be salvaged under a new token.
+                ledger.SalvagedUids.Remove(req.SalvageUid);
+                int count = ledger.SalvageOrder.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    ulong uid = ledger.SalvageOrder.Dequeue();
+                    if (uid != req.SalvageUid) ledger.SalvageOrder.Enqueue(uid);
+                }
+            }
+            return failed;
+        }
 
         /// <summary>Terminal overflow rejection. executionFailed is only for a newly accepted request whose native grant failed without changing balance.</summary>
         public TradeDecision FailSatchelOverflow(string playerKey, string runId, TradeRequest req, bool executionFailed = false)

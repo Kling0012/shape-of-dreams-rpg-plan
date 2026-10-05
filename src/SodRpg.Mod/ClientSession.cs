@@ -881,8 +881,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 {
                     // ホストは記録の有無を確かめられない：支払い済みかもしれないので、返却も対価も確定せず保留する（遺物は預かったまま）。
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
-                        "取引の結果をホストが確認できません（ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
-                        "The host cannot confirm the result of a trade (it may have reloaded or the connection changed). The reward and the return are both on hold.")));
+                        "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
+                        "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
                     SaveNow();
                     return;
                 }
