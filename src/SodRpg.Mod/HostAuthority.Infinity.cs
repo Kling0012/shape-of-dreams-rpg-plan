@@ -53,7 +53,10 @@ namespace SodRpg.Mod
             var game = NetworkedManagerBase<GameManager>.softInstance;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (!NetworkServer.active || !InfinityMode.Enabled || game == null || settings == null
-                || settings.state == GameState.InLobby || host._registeredOn == null)
+                || settings.state == GameState.InLobby || host._registeredOn == null
+                // Session/generation callbacks can run before EnsureRegistered after a scene load.
+                // Do not consume the old actor's Hello decisions or deadline in that window.
+                || !ReferenceEquals(host._registeredOn, NetworkedManagerBase<ActorManager>.softInstance?.serverActor))
             {
                 host._infinityHelloWaiting.Clear();
                 host._infinityHelloGame = null;

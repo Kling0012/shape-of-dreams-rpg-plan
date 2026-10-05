@@ -33,17 +33,25 @@ namespace SodRpg.Mod
         internal static IReadOnlyList<string> VersionWarnings => MismatchScratch;
 
         private Action<DreamforgeHelloMsg, DewPlayer> _onHello;
+        private Actor _helloActor;
 
         private void RegisterHello(Actor actor)
         {
+            if (ReferenceEquals(actor, _helloActor)) return;
+            // Hello decisions belong to one scene's RPC transport, not to the persistent
+            // authority. A previous rejection must not downgrade a newly selected run.
+            UnregisterHello(_helloActor);
+            _helloActor = actor;
+            if (actor == null) return;
             if (_onHello == null) _onHello = OnHello;
             actor.CustomRpc_RegisterServerMessageHandler<DreamforgeHelloMsg>(nameof(DreamforgeHelloMsg), _onHello);
         }
 
         private void UnregisterHello(Actor actor)
         {
-            if (_onHello != null)
+            if (actor != null && _onHello != null)
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
+            _helloActor = null;
             _versionMismatches.Clear();
             _acceptedMechanismContent.Clear();
             _infinityAvailablePeers.Clear();

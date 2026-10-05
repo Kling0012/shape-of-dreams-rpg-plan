@@ -1099,6 +1099,7 @@ namespace SodRpg.Mod
                 _pressureDirty = true;
                 ResetKillReplayConnections();
                 _registeredOn = actor;
+                RegisterHello(actor);
                 if (actor != null)
                 {
                     DewPlayer.onGamePlayerAdded += _onPressurePlayerAdded;
@@ -1109,7 +1110,6 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeTradeMsg>(nameof(DreamforgeTradeMsg), _onTrade);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeDreamEventStartedMsg>(nameof(DreamforgeDreamEventStartedMsg), _onPersonalDreamEvent);
                     actor.CustomRpc_RegisterServerMessageHandler<DreamforgeKillReceiptMsg>(nameof(DreamforgeKillReceiptMsg), OnKillReceipt);
-                    RegisterHello(actor);
                     Log.Info("Host: registered build handler.");
                 }
             }
