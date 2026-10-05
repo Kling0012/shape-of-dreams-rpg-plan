@@ -211,6 +211,11 @@ namespace SodRpg.Mod
         public static GameData SerializeGameData() => new GameData();
         public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
     }
+    internal static class DewSave
+    {
+        public static string profileContinuePath;
+        public static Action onSaveEnded;
+    }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
     internal static class Log
