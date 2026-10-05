@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **インフィニティ開始後に移動できなくなる**：未確認の参加者から Hello が届かないと遠征全体の移動が止まり続ける問題を修正しました。ゲーム内の通信準備後に参加者ごとに30秒待ち、返事がなければ理由を1回通知してその遠征だけ通常モードへ戻します。ロビー待機時間は含めず、参加者・通信先・遠征の変更時は待機時間をリセットします。互換性確認と報酬の安全条件は維持します。 / **Infinity travel blocked by a silent guest**: after the game-scene transport is ready, each unconfirmed guest gets 30 seconds to send Hello. A missing reply falls back to normal mode for that expedition with one notice. Lobby time does not count; peer, transport and expedition changes reset the wait. Compatibility and reward-safety checks remain enforced.
+
 ---
 
 ## v2.4.0 — 空殻の星図の作り直しと、協力プレイ・保存の修正（2026-10-06）
@@ -19,6 +21,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 - **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました（Protocol 22）。 / Everyone in co-op must update; the network protocol changed (Protocol 22).
 - セーブデータはそのまま引き継げます。**空殻は、作り直した星の分のポイントが一度だけ払い戻されます**。星図を開いて取り直してください。 / Saves carry over. **Husk gets a one-time refund for the redesigned stars**; open the star map and pick them again.
 - 更新後はゲームを再起動してください。 / Restart the game after updating.
+- **インフィニティ途中参加後の保存失敗（#182）**：地図更新時に最終クリア番号とクリア済み集合を同じホスト状態から同期し、古い番号による保存検証失敗を修正しました。報酬量・保存形式・通信形式は変更ありません。 / **Save failure after joining an Infinity run in progress (#182)**: synchronize the last cleared node and cleared-node set from the same host snapshot when the map updates, preventing stale-node save validation failures. Reward amounts, save and wire formats are unchanged.
 
 ### 新しい要素・変更 / New and changed
 

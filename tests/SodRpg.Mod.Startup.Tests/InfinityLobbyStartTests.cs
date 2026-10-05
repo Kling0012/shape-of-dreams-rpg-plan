@@ -23,6 +23,7 @@ namespace SodRpg.Mod.Startup.Tests
 
         public InfinityLobbyStartTests()
         {
+            UnityEngine.Time.unscaledTime = 0;
             Log.Errors.Clear();
             Log.Warnings.Clear();
             ResetInfinity();
@@ -310,6 +311,222 @@ namespace SodRpg.Mod.Startup.Tests
             zone.GenerateWorldAuto();
             Assert.True(InfinityMode.Enabled);
             Assert.NotNull(session.Profile.Run.Infinity);
+        }
+
+        // The client retries Hello every five seconds. A silent peer must not keep the
+        // actual Harmony travel prefix blocked forever after lobby admission.
+        [Fact]
+        public void SilentGuestFallsBackAfterInGameGraceWithoutApprovingThePeerOrGrantingRewards()
+        {
+            var notices = new List<GameEvent>();
+            var (session, guest, authority, zone) = StartPendingInfinity(notices.Add);
+            session.Profile.Run.SatchelShards = 7;
+            var pendingKills = (SortedDictionary<long, AuthoritativeRunKill>)AccessTools.Field(
+                typeof(HostAuthority), "_killUnacknowledged").GetValue(authority);
+            var fact = new AuthoritativeRunKill("no-hello-run", "pending-kill", 1, 0,
+                NightmareAffix.None, null, sequence: 1, streamId: "unsettled-stream");
+            pendingKills.Add(1, fact);
+            Assert.False(HostAuthority.InfinityCanAdvance);
+            zone.TravelToNode(1, true, false, false);
+            Assert.Equal(0, zone.TravelToNodeCalls);
+
+            CheckCompatibilityAt(29.9f);
+            Assert.True(InfinityMode.Enabled);
+            UnityEngine.Time.unscaledTime = 30f;
+            InfinityMode.Tick(); // The production periodic path must release the travel prefix.
+            Assert.True(InfinityMode.Available);
+            Assert.False(InfinityMode.Enabled);
+            Assert.True(InfinityMode.ExpeditionHalted);
+            Assert.Null(session.Profile.Run.Infinity);
+            Assert.Equal(7, session.Profile.Run.SatchelShards);
+            Assert.Single(pendingKills);
+            Assert.Equal(fact, pendingKills[1]);
+            Assert.True(session.Profile.LastInfinityEnabled);
+            Assert.False(EnvelopeWritten());
+            // Fallback does not manufacture a Hello or bypass either gameplay gate.
+            Assert.False(HostAuthority.InfinityRosterCompatible(DewPlayer.gamePlayers));
+            Assert.False(HostAuthority.InfinityCanAdvance);
+            Assert.False(HostAuthority.InfinityBoundarySettled);
+            Assert.Contains(guest.playerName, ClientSession.InfinitySupportNotice(true));
+            zone.TravelToNode(1, true, false, false);
+            Assert.Equal(1, zone.TravelToNodeCalls);
+            CheckCompatibilityAt(120f);
+            Assert.Single(notices);
+            Assert.Single(Log.Warnings, w => w.StartsWith("Infinity stopped for this expedition;"));
+        }
+
+        [Fact]
+        public void CompatibleHelloDuringGraceAllowsInfinityTravel()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(29f);
+            Assert.False(HostAuthority.InfinityCanAdvance);
+            FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, infinityAvailable: true);
+            CheckCompatibilityAt(120f);
+            Assert.True(InfinityMode.Enabled);
+            Assert.NotNull(session.Profile.Run.Infinity);
+            Assert.True(HostAuthority.InfinityCanAdvance);
+            Assert.Null(ClientSession.InfinitySupportNotice(true));
+            zone.TravelToNode(1, true, false, false);
+            Assert.Equal(1, zone.TravelToNodeCalls);
+        }
+
+        [Fact]
+        public void HelloAfterTimeoutCannotRestartInfinityUntilNextExpedition()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(30f);
+            FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, infinityAvailable: true);
+            CheckCompatibilityAt(31f);
+            Assert.False(InfinityMode.Enabled);
+            Assert.Null(session.Profile.Run.Infinity);
+            Assert.True(InfinityMode.ExpeditionHalted);
+
+            StartNextInfinityExpedition(session, zone);
+            Assert.True(InfinityMode.Enabled);
+            Assert.False(InfinityMode.ExpeditionHalted);
+            Assert.NotNull(session.Profile.Run.Infinity);
+            Assert.True(HostAuthority.InfinityCanAdvance);
+        }
+
+        [Fact]
+        public void LobbyWaitDoesNotConsumeInGameHelloGrace()
+        {
+            var session = StartSoloLobby(infinityEnabled: true);
+            var guest = JoinLobbyParticipant("slow-loading-guest");
+            RegisterHostAuthority();
+            CheckCompatibilityAt(0);
+            CheckCompatibilityAt(120f);
+            Assert.True(new PlayLobbyManager().CheckStartGameCondition(out _, showMessage: false));
+            var zone = BeginGameWithRunAlreadyTracked(session, "after-lobby-wait");
+            DewPlayer.gamePlayers.Add(guest);
+            zone.GenerateWorldAuto();
+            CheckCompatibilityAt(120f);
+            CheckCompatibilityAt(149.9f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(150f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+        }
+
+        [Fact]
+        public void DepartedGuestIsForgottenAndNewGuestGetsItsOwnGrace()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(29f);
+            DewPlayer.gamePlayers.Remove(guest);
+            CheckCompatibilityAt(100f);
+            Assert.True(InfinityMode.Enabled);
+            Assert.True(HostAuthority.InfinityCanAdvance);
+            // The same object also gets a fresh wait after a witnessed departure.
+            DewPlayer.gamePlayers.Add(guest);
+            CheckCompatibilityAt(100f);
+            CheckCompatibilityAt(129.9f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(130f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(2)]
+        public void NewExpeditionAuthorityOrActorDoesNotInheritPendingHelloDeadline(int replacement)
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(29f);
+            if (replacement == 0) StartNextInfinityExpedition(session, zone);
+            else if (replacement == 1) RegisterHostAuthority();
+            else authority._registeredOn = new Actor { isActive = true };
+            CheckCompatibilityAt(29f);
+            CheckCompatibilityAt(30f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(58.9f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(59f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+        }
+
+        [Fact]
+        public void ReturningToLobbyClearsWaitEvenWhileOldGameManagerRemains()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(29f);
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            settings.state = GameState.InLobby;
+            CheckCompatibilityAt(120f);
+            Assert.False(InfinityMode.ExpeditionHalted);
+            settings.state = GameState.Playing;
+            CheckCompatibilityAt(120f);
+            CheckCompatibilityAt(149.9f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(150f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+        }
+
+        [Fact]
+        public void MissingServerActorDoesNotConsumeHelloGrace()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            authority._registeredOn = null;
+            CheckCompatibilityAt(120f);
+            Assert.False(InfinityMode.ExpeditionHalted);
+            authority._registeredOn = new Actor { isActive = true };
+            CheckCompatibilityAt(120f);
+            CheckCompatibilityAt(149.9f);
+            Assert.True(InfinityMode.Enabled);
+            CheckCompatibilityAt(150f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+        }
+
+        [Fact]
+        public void ASecondUnconfirmedGuestDoesNotExtendTheFirstGuestsDeadline()
+        {
+            var (session, guest, authority, zone) = StartPendingInfinity();
+            CheckCompatibilityAt(29f);
+            DewPlayer.gamePlayers.Add(new DewPlayer { guid = "later", playerName = "later", isHumanPlayer = true });
+            CheckCompatibilityAt(29f);
+            CheckCompatibilityAt(30f);
+            Assert.True(InfinityMode.ExpeditionHalted);
+            Assert.Contains(guest.playerName, InfinityMode.ExpeditionHaltNotice);
+        }
+
+        private (ClientSession session, DewPlayer guest, HostAuthority authority, ZoneManager zone)
+            StartPendingInfinity(Action<GameEvent> notify = null)
+        {
+            var session = StartSoloLobby(infinityEnabled: true, notify: notify);
+            var guest = JoinLobbyParticipant("guest-without-Hello");
+            Assert.True(new PlayLobbyManager().CheckStartGameCondition(out _, showMessage: false));
+            var zone = BeginGameWithRunAlreadyTracked(session, "no-hello-run");
+            DewPlayer.gamePlayers.Add(guest);
+            var authority = RegisterHostAuthority();
+            zone.GenerateWorldAuto();
+            ClientSession.HostInfinityRewardsSettled = true;
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            zone.nodes.AddRange(new[] {
+                new WorldNode { type = WorldNodeType.Combat },
+                new WorldNode { type = WorldNodeType.Combat },
+                new WorldNode { type = WorldNodeType.ExitBoss },
+            });
+            zone.currentNodeIndex = 0;
+            zone.currentNode = zone.nodes[0];
+            zone.visitedNodesSaveData.AddRange(new object[] { new object(), null, null });
+            CheckCompatibilityAt(0);
+            return (session, guest, authority, zone);
+        }
+
+        private static void CheckCompatibilityAt(float seconds)
+        {
+            UnityEngine.Time.unscaledTime = seconds;
+            HostAuthority.CheckInfinityRunCompatibility();
+        }
+
+        private static void StartNextInfinityExpedition(ClientSession session, ZoneManager zone)
+        {
+            NetworkedManagerBase<GameManager>.softInstance.runId = "next-run";
+            session.Profile.Run = new RunState { RunId = "next-run" };
+            ClientSession.HostRun = session.Profile.Run;
+            InfinityMode.StartNewGame();
+            zone.GenerateWorldAuto();
         }
 
         #region harness
