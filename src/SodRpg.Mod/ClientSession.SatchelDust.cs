@@ -47,6 +47,7 @@ namespace SodRpg.Mod
                     for (int i = 0; i < count; i++) FallbackOverflow(drained[i], runId);
                     return;
                 }
+                long ledgerId = _hostLedgerId; // TradeUnavailable で確認済みの非0の台帳を、準備保存より前に全件へ設定する。
                 _satchelOverflowBatch.Clear();
                 int next = 0;
                 try
@@ -55,10 +56,10 @@ namespace SodRpg.Mod
                     {
                         try
                         {
-                            var trade = _trades.BeginSatchelOverflow(
+                            var t = _trades.BeginSatchelOverflow(
                                 drained[next].SatchelOverflow, runId, drained[next].SatchelOverflowShards, Time.unscaledTime);
-                            trade.LedgerId = _hostLedgerId;
-                            _satchelOverflowBatch.Add(trade);
+                            t.LedgerId = ledgerId;
+                            _satchelOverflowBatch.Add(t);
                         }
                         catch (Exception ex)
                         {

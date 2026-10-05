@@ -250,6 +250,67 @@ namespace Issue73.Native.Tests
             Assert.Equal(killsAfterResume, guest.Profile.Run.Kills);
         }
 
+        /// <summary>#179: 別遠征の終了後でも参加者を保存地点へ戻し、報酬の再取得と再挨拶による進行消失を防ぐ。</summary>
+        [Fact]
+        public void Guest_resume_after_another_expedition_rewinds_rewards_once()
+        {
+            Actor actor;
+            HostSession(out actor);
+            var save = new DewPersistence.GameData();
+            SaveContinue(save);
+            var barrier = actor.Sent.Select(s => s.Message).OfType<DreamforgeContinueCheckpointMsg>().Single();
+
+            var guest = GuestInGame("run");
+            var profile = guest.Profile;
+            Call(guest, "ReceiveContinueHandshake", Hello("run"));
+            Fight(profile, MonsterTier.Boss, 1);
+            Call(guest, "OnContinueCheckpoint", barrier);
+            var atSave = profile.Clone();
+
+            Fight(profile, MonsterTier.Boss, 2); // 保存後のAの報酬を得てから切断する
+            ReturnToLobby(guest);
+            var other = new GameManager { runId = "other-run" };
+            NetworkedManagerBase<GameManager>.softInstance = other;
+            Call(guest, "ObserveContinueGame", other);
+            Call(guest, "ReceiveContinueHandshake", Hello("other-run"));
+            Rules.BeginRun(profile, "other-run", heroKey: "hero", dreamDepth: 3);
+            profile.ContinueLobbyBaseline = null; // TrackRun と同じ別遠征開始時の境界
+            Fight(profile, MonsterTier.Boss, 1);
+            Rules.EndRun(profile, victory: true);
+            ReturnToLobby(guest);
+            Assert.Null(profile.Run);
+            Assert.Equal("other-run", profile.CompletedRunId);
+
+            var resumed = new GameManager { runId = "run" };
+            NetworkedManagerBase<GameManager>.softInstance = resumed;
+            Call(guest, "ObserveContinueGame", resumed);
+            var resumeHello = Hello("run", checkpointId: barrier.checkpointId, resumeSession: "resume-179");
+            Call(guest, "ReceiveContinueHandshake", resumeHello);
+
+            Assert.NotNull(profile.Run);
+            Assert.Equal("run", profile.Run.RunId);
+            Assert.Equal(atSave.Run.Kills, profile.Run.Kills);
+            Assert.Equal(atSave.Run.SatchelShards, profile.Run.SatchelShards);
+            Assert.Equal(atSave.Run.Satchel.Select(r => r.Uid), profile.Run.Satchel.Select(r => r.Uid));
+            Assert.Equal(atSave.DreamLevel, profile.DreamLevel);
+            Assert.Equal(atSave.DreamXp, profile.DreamXp);
+            Assert.True(ContinueReady(guest));
+            Assert.Null(guest.ContinueWarning);
+
+            // 巻き戻った区間を再び戦い、同じ再開へ再挨拶する。一度だけ進んだ参照と一致する。
+            Fight(profile, MonsterTier.Boss, 2);
+            Fight(atSave, MonsterTier.Boss, 2);
+            Call(guest, "ReceiveContinueHandshake", resumeHello);
+            Assert.Equal(atSave.Run.Kills, profile.Run.Kills);
+            Assert.Equal(atSave.Run.SatchelShards, profile.Run.SatchelShards);
+            Assert.Equal(atSave.Run.Satchel.Select(r => r.Uid), profile.Run.Satchel.Select(r => r.Uid));
+            Assert.Equal(atSave.Stats.Kills, profile.Stats.Kills);
+            Assert.Equal(atSave.Stats.RelicsFound, profile.Stats.RelicsFound);
+            Assert.Equal(atSave.DreamLevel, profile.DreamLevel);
+            Assert.Equal(atSave.DreamXp, profile.DreamXp);
+            Assert.Equal(atSave.Material(Materials.Shard), profile.Material(Materials.Shard));
+        }
+
         /// <summary>ロビーに未精算の遠征があるとき、その旨とプロフィール切替・星図変更ができないことが表示される。</summary>
         [Fact]
         public void Lobby_shows_the_suspended_expedition_notice_with_what_it_locks()

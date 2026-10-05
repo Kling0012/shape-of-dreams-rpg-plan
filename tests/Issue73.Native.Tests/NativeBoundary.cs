@@ -30,7 +30,12 @@ namespace SodRpg.Mod
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
         public void CustomRpc_SendMessageToClient(DewPlayer target, object message) => Sent.Add((target, message));
         public void CustomRpc_SendMessageToAllClients(object message) => Sent.Add((null, message));
-        public void CustomRpc_SendMessageToServer(object message) => Sent.Add((null, message));
+        public Action<object> BeforeSendToServer;
+        public void CustomRpc_SendMessageToServer(object message)
+        {
+            BeforeSendToServer?.Invoke(message);
+            Sent.Add((null, message));
+        }
         public Action<DamageData, Entity, ReactionChain> DamageSink;
         public void DealDamage(DamageData damage, Entity target, ReactionChain chain) => DamageSink?.Invoke(damage, target, chain);
         public void DoBasicAttackHit() { }
@@ -322,6 +327,8 @@ namespace SodRpg.Mod
         public readonly List<GameEvent> Events = new List<GameEvent>();
         public ClientSession() { _notify = Events.Add; }
         public event Action ProfileChanged;
+        // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
+        private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();
         private string CurseKey() => "";
