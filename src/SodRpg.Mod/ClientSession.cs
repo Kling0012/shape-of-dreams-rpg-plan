@@ -506,11 +506,19 @@ namespace SodRpg.Mod
 
         private void TrackRun()
         {
-            if (LobbyReturnPending) return; // Finish the old defeat before observing a new native run.
             var gm = NetworkedManagerBase<GameManager>.softInstance;
+            if (LobbyReturnPending)
+            {
+                // Finish the old defeat before observing a new native run. A pending Infinity defeat
+                // whose rewards are paused can never settle; once the native run has moved on, release
+                // the wait instead of blocking every later start (#131).
+                if (gm == null || gm.runId == Profile.Run.RunId
+                    || Profile.Run.Infinity == null || InfinityMode.NativeSaveAgreement) return;
+                AbandonLobbyReturnSettlement();
+            }
             if (gm == null)
             {
-                if (!LobbyReturnPending) ActiveRunId = null;
+                ActiveRunId = null;
                 return;
             }
             string runId = gm.runId;

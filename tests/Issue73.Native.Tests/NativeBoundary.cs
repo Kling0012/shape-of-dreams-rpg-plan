@@ -13,10 +13,12 @@ namespace Mirror
     internal static class NetworkServer { public static bool active; }
     internal static class NetworkClient { public static bool active; }
 }
-namespace UnityEngine
-{
-    internal static class Time { public static int frameCount; public static float unscaledTime; }
-}
+ namespace UnityEngine
+ {
+     internal static class Time { public static int frameCount; public static float unscaledTime; }
+    // TrackRun の Limbo 深度の読み出しに必要な本体 API。ハーネスでは Limbo なし(0)を返す。
+    internal static class Object { public static T FindObjectOfType<T>() where T : class => null; }
+ }
 namespace SodRpg.Mod
 {
     internal class Actor
@@ -155,6 +157,7 @@ namespace SodRpg.Mod
         public int clearedCombatRooms, currentHuntLevel;
         public Zone currentZone;
     }
+    internal class GameMod_Limbo { public int depth; }
     internal sealed class Zone { public string name; }
     internal static class DewPersistence
     {
@@ -343,5 +346,8 @@ namespace SodRpg.Mod
             error = null;
             return false;
         }
+        private void InitializeInfinityRun() { }
+        public float PressureHealthMultiplier { get; internal set; } = 1f;
+        public float PressureDamageMultiplier { get; internal set; } = 1f;
     }
 }

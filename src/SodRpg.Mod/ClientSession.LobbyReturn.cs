@@ -26,6 +26,13 @@ namespace SodRpg.Mod
                     session.SkipLobbyReturn(runId, "active expedition does not match the native run");
                     return;
                 }
+                // A pending defeat whose rewards are paused (Infinity halted) can never settle from
+                // this state: keep the native suspension untouched like any unidentifiable return (#131).
+                if (session.Profile.Run.Infinity != null && !InfinityMode.NativeSaveAgreement)
+                {
+                    session.SkipLobbyReturn(runId, "Infinity rewards are paused");
+                    return;
+                }
                 var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
                 if (actor == null)
                 {
