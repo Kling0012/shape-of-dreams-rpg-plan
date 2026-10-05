@@ -302,14 +302,8 @@ internal static class V132Report
         _ => heroKey,
     };
 
-    private static string DescribeTrigger(string heroKey) => heroKey switch
-    {
-        "Hero_Vesper" => "被ダメージ10%ごとに防御+1・最大HP+4、上限60",
-        "Hero_Cetus" => "障壁の吸収10%ごとにシールドの強さ+0.5%、上限60",
-        "Hero_Mist" => "パリィ1回ごとに攻撃力+1・会心ダメージ+0.3%、上限80",
-        "Hero_Husk" => "会心の基本攻撃でのとどめ1回ごとに攻撃力+0.5、上限80",
-        _ => "",
-    };
+    private static string DescribeTrigger(string heroKey) =>
+        RunGrowth.Describe(HeroSigils.TreeFor(heroKey).First(t => t.RunGrowth != null).RunGrowth);
 
     private static string Gold(double v) => v.ToString("0.0", CultureInfo.InvariantCulture);
 
