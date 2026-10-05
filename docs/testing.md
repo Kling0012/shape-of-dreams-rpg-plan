@@ -167,8 +167,12 @@ python tools/test_changed.py --all
   Harmony経由の直接 `RemoveAbility` と装備epochを確認する。
 - ネイティブの通信・時計・エンティティだけをスタブ化する。配当の保存は実際の
   `ProfileStore` / `AsyncProfileWriter` で一時ディレクトリへ書き、試験後に除去する。
-  `NativePersistence.targets` は SDK の Roslyn AST で `ClientSession.cs` の保存メソッドを
-  選び、そのままテストへコンパイルする。製品側の保存処理は複製・変更しない。
+  `NativePersistence.targets` は SDK の Roslyn AST で保存・Emit・取引／照会と
+  `ClientSession.Infinity.cs` のチェックポイント準備同期を選び、そのままコンパイルする。
+  製品側の処理は複製・変更しない。
+  `ContinueSaveTests.Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once`
+  は通常の既存キュー／Infinity準備中の回収 × 未実行／支払い済みの4ケースで、
+  台帳ID付き義務の保存、別セッションへの復元、欠片の一度だけの回復とダストの二重払い防止を確認する。
 - Core既存ハーネスの `ExposeAuthoredPendingMetadata` は、テスト公開の `PendingGimmick` と
   アクセス範囲を揃えるため、生成したコンパイル単位だけで `AuthoredPendingGimmick` を
   `internal` にする。製品ソースと値型メタデータの処理内容は変更しない。

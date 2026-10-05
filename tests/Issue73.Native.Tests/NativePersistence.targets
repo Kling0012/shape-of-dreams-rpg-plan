@@ -1,8 +1,7 @@
 <Project>
-  <!-- ClientSession.cs mixes persistence and the entire Unity UI/runtime API. Compile its
-       exact persistence methods and the Secure/Delve choice entry points, selected by syntax
-       rather than copying their implementation. Whole standalone Mod partials remain normal
-       linked Compile inputs in the project. -->
+  <!-- Compile exact session methods selected by syntax, not copies of their implementation.
+       The native boundary supplies transport, clocks and entity storage; checkpoint preparation,
+       overflow, receipt queries and reward settlement execute the production code. -->
   <UsingTask TaskName="ExtractNativePersistence" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <SourcePath ParameterType="System.String" Required="true" />
@@ -48,6 +47,13 @@
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileInfinityContinue" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)InfinityContinue.g.cs" />
     </ItemGroup>
   </Target>
 

@@ -19468,9 +19468,9 @@
           "receiver": null,
           "target": null,
           "gimmick": {
-            "trigger": "OnKill",
+            "trigger": "OnHit",
             "effect": "Primed",
-            "value": 9.2,
+            "value": 4.6,
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -19491,7 +19491,7 @@
       "rankCost": 1,
       "nameJa": "追撃の仕方",
       "nameEn": "Ways to Pursue",
-      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。"
+      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。 選択肢2（Primed）は、撃破時のままだとn2（撃破時のPrimed）より強くなってn2を無効にし、n2を前提にする自分自身が選べなかったため、命中時に次撃を備える別チャンネル（OnHit・4.6）にした。"
     },
     {
       "id": "husk.outer.o4.death-mark.e1",
@@ -19851,9 +19851,9 @@
           "receiver": null,
           "target": null,
           "gimmick": {
-            "trigger": "OnKill",
+            "trigger": "OnHit",
             "effect": "Primed",
-            "value": 9.2,
+            "value": 4.6,
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -19874,7 +19874,7 @@
       "rankCost": 1,
       "nameJa": "楔の追い打ち",
       "nameEn": "Wedge Follow-Through",
-      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。"
+      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。 選択肢2（Primed）は、撃破時のままだとn2（撃破時のPrimed）より強くなってn2を無効にし、n2を前提にする自分自身が選べなかったため、命中時に次撃を備える別チャンネル（OnHit・4.6）にした。"
     },
     {
       "id": "husk.outer.o4.annihilation.e1",
@@ -20234,9 +20234,9 @@
           "receiver": null,
           "target": null,
           "gimmick": {
-            "trigger": "OnKill",
+            "trigger": "OnHit",
             "effect": "Primed",
-            "value": 9.2,
+            "value": 4.6,
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -20257,7 +20257,7 @@
       "rankCost": 1,
       "nameJa": "間を置かぬ剣気",
       "nameEn": "Aura Without Pause",
-      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。"
+      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。 選択肢2（Primed）は、撃破時のままだとn2（撃破時のPrimed）より強くなってn2を無効にし、n2を前提にする自分自身が選べなかったため、命中時に次撃を備える別チャンネル（OnHit・4.6）にした。"
     },
     {
       "id": "husk.outer.o4.deception.e1",
@@ -20617,9 +20617,9 @@
           "receiver": null,
           "target": null,
           "gimmick": {
-            "trigger": "OnKill",
+            "trigger": "OnHit",
             "effect": "Primed",
-            "value": 9.2,
+            "value": 4.6,
             "arg": 0,
             "cooldown": 0,
             "target": null
@@ -20640,7 +20640,7 @@
       "rankCost": 1,
       "nameJa": "決着の追撃",
       "nameEn": "Finishing Pursuit",
-      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。"
+      "notes": "選択肢1 G(m,hit,Echo,3) はn1と同一チャンネルで加算される（合計6%）と読む。 選択肢2（Primed）は、撃破時のままだとn2（撃破時のPrimed）より強くなってn2を無効にし、n2を前提にする自分自身が選べなかったため、命中時に次撃を備える別チャンネル（OnHit・4.6）にした。"
     },
     {
       "id": "husk.outer.o5.laceration.e1",

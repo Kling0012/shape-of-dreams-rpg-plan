@@ -73,6 +73,7 @@ namespace SodRpg.Mod
     internal sealed class Hero : Entity
     {
         public readonly HeroSkill Skill = new HeroSkill();
+        public bool isInCombat, isKnockedOut;
         public readonly EntityAbility Ability;
         public Hero() { Ability = new EntityAbility(this); }
         public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignore) => throw new NotSupportedException();
@@ -146,8 +147,26 @@ namespace SodRpg.Mod
         public void SpendDreamDust(int amount) => dreamDust -= amount;
         public void EarnDreamDust(int amount) => dreamDust += amount;
     }
-    internal static class NetworkedManagerBase<T> { public static T softInstance; }
-    internal sealed class GameManager { public string runId; public bool isGameConcluded; public Zone difficulty; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
+    internal static class NetworkedManagerBase<T>
+    {
+        public static T softInstance;
+        public static T instance => softInstance;
+    }
+    internal static class SingletonDewNetworkBehaviour<T> { public static T softInstance; }
+    internal sealed class Room { public bool isActive, didClearRoom; }
+    internal enum WorldNodeType { Combat, ExitBoss }
+    internal sealed class WorldNode { public WorldNodeType type; }
+    internal sealed class GameManager
+    {
+        public string runId;
+        public bool isGameConcluded, isGameTimePaused;
+        public double elapsedGameTime;
+        public Zone difficulty;
+        public float GetAdjustedGoldAmount_Cost(float amount) => 1f;
+        public void WrapUpAndShowResult(DewGameResult.ResultType type) => throw new NotSupportedException();
+    }
+    internal sealed class DewGameResult { public enum ResultType { Conceded } }
+    internal sealed class GameSettingsManager { public readonly Dictionary<string, string> customData = new Dictionary<string, string>(); }
     internal sealed class ActorManager { public Actor serverActor; }
     // #112: 「ロビーに戻る」の確認で呼ばれる本体の入口。isEndingSession がtrue のEndSession 系
     // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
@@ -162,6 +181,8 @@ namespace SodRpg.Mod
         public bool isInAnyTransition;
         public int clearedCombatRooms, currentHuntLevel;
         public Zone currentZone;
+        public int currentNodeIndex = -1;
+        public WorldNode currentNode;
     }
     internal class GameMod_Limbo { public int depth; }
     internal sealed class Zone { public string name; }
@@ -286,9 +307,8 @@ namespace SodRpg.Mod
             public void Clear() { }
         }
     }
-    // The harness models an Infinity-unavailable host (Available == false, no save agreement),
-    // so the linked continue code takes its documented no-op paths for Infinity runs too.
-    // #124: tests may re-enable the agreement to model a recovered save; they reset it afterwards.
+    // Native Infinity is unavailable by default. Tests may enable save agreement and supply
+    // shared snapshots for an exploring participant; native graph/choice operations are out of scope.
     internal static class InfinityMode
     {
         internal static bool Available => false;
@@ -296,6 +316,24 @@ namespace SodRpg.Mod
         internal static bool ExpeditionHalted => false;
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
+        internal static bool IsTechnicalRefresh => false;
+        internal static InfinityChoice CurrentChoice => null;
+        internal const string ChoiceKey = "dreamforge.infinity.choice";
+        internal static bool CanAdvance => throw new NotSupportedException();
+        internal static void Tick() { }
+        internal static void DisableFeature(string reason) => throw new NotSupportedException(reason);
+        internal static void CompleteReturn(InfinityRunState state) => throw new NotSupportedException();
+        internal static void AcknowledgeLocal(InfinityChoice choice) => throw new NotSupportedException();
+        internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
+        internal static bool Regenerate(string intent) => throw new NotSupportedException();
+        internal sealed class InfinityChoice
+        {
+            public string RunId;
+            public long Revision, SegmentEpoch, GraphEpoch;
+            public bool Boundary, Secure;
+            public Pact Pact;
+            public RunChoiceSnapshot Before;
+        }
     }
     internal sealed partial class ClientSession
     {
@@ -316,21 +354,28 @@ namespace SodRpg.Mod
         private AsyncProfileWriter _writer;
         private ProfileStore _store;
         private readonly TradeLedger _trades = new TradeLedger();
+        private long _hostLedgerId;
+        private double _nextLedgerProbeAt;
+        // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
+        private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
+        public bool HostConfirmed;
+        private long _infinityObservedClears;
+        private long _infinityAcknowledgedRevision = -1, _infinityAcknowledgedGraph = -1;
+        private bool _infinityAcknowledgedBoundary, _infinityResultStarted;
+        private float _nextInfinityAck;
+        private string _infinityInitializedRun;
+        private RunChoiceSnapshot _infinityMirroredSnapshot;
         private bool _dirty, _saveErrorFromWriteFailure;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
         private readonly Action<GameEvent> _notify;
         private float _nextDreamEventNotice;
-        private long _hostLedgerId;
-        private double _nextLedgerProbeAt;
         private string _curseSyncedKey = "";
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
         public ClientSession() { _notify = Events.Add; }
         public event Action ProfileChanged;
-        // 取引の輸送・照会・結果反映は NativePersistence.targets が本物のメソッドを抽出する。
-        private readonly List<PendingTrade> _dueTradeQueries = new List<PendingTrade>();
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();
         private string CurseKey() => "";
@@ -345,10 +390,10 @@ namespace SodRpg.Mod
         {
             if (Profile.Run?.Infinity != null) throw new NotSupportedException("Infinity is outside the harness.");
         }
-        private void TickInfinity() { }
-        private void ResetInfinityContinueState() { }
-        private void SyncInfinityContinueSnapshot() { }
         internal static void ValidateHostInfinityContinue() { }
+        internal static bool HostInfinityBoundarySettled => throw new NotSupportedException();
+        internal static long HostInfinityRetireBeforeSegment(long current) => throw new NotSupportedException();
+        internal static bool PersistHostInfinityState() => throw new NotSupportedException();
         private bool TryInfinitySecure(out string error)
         {
             RequireOrdinaryRun();

@@ -290,7 +290,7 @@ namespace SodRpg.Core.Game
             {
                 var withoutKey = proposed.Clone();
                 withoutKey.RemoveKeystone(change.KeystoneId);
-                candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed));
+                candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed)) || ScalesNativeDamage(Talent(change.KeystoneId));
                 if (!candidateEffective) saturated.Add(change.KeystoneId);
             }
             if (candidateEffective)
@@ -799,6 +799,18 @@ namespace SodRpg.Core.Game
             private IReadOnlyList<EffectiveAllocationChannel> Compute(HeroState allocation, HeroState reach, string reachKey,
                 StarDependencies record = null) =>
                 owner.Capture(profile, heroKey, allocation, reach, Snapshot(reach, reachKey), record);
+        }
+
+        /// <summary>
+        /// A keystone that scales a memory's original (native) damage acts inside the host, so no allocation channel changes with it.
+        /// Judging it by channels alone would call it inert and make it impossible to select.
+        /// </summary>
+        private static bool ScalesNativeDamage(TalentDef keystone)
+        {
+            var upside = keystone?.KeystoneDefinition?.Upside;
+            if (upside == null) return false;
+            foreach (var transform in upside) if (transform.TargetLayer == KeystoneLayer.NativeDamage) return true;
+            return false;
         }
 
         private static bool HasPositiveDifference(IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
