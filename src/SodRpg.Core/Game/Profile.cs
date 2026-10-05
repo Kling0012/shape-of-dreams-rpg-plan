@@ -444,12 +444,7 @@ namespace SodRpg.Core.Game
             foreach (var r in Stash) c.Stash.Add(r.Clone());
             foreach (var r in LostAndFound) c.LostAndFound.Add(r.Clone());
             foreach (var pending in PendingSalvage) c.PendingSalvage.Add(pending.Clone());
-            foreach (var trade in PendingTrades) c.PendingTrades.Add(new PendingTrade
-            {
-                Token = trade.Token, Kind = trade.Kind, SpendGold = trade.SpendGold, SpendDust = trade.SpendDust, EarnDust = trade.EarnDust,
-                Uid = trade.Uid, Heat = trade.Heat, Batches = trade.Batches, Rarity = trade.Rarity, Enhance = trade.Enhance,
-                LedgerId = trade.LedgerId, Lost = trade.Lost,
-            });
+            foreach (var trade in PendingTrades) c.PendingTrades.Add(trade.Clone());
             foreach (var kv in Heroes) c.Heroes[kv.Key] = kv.Value.Clone();
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);
