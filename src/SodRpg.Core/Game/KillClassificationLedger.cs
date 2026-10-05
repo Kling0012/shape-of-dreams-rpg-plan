@@ -9,11 +9,13 @@ namespace SodRpg.Core.Game
         public string StreamId { get; }
         public uint MonsterNetId { get; }
         public string ObservationSessionId { get; }
-        public KillVictimKey(string streamId, uint monsterNetId, string observationSessionId = null)
+        public long GraphEpoch { get; }
+        public KillVictimKey(string streamId, uint monsterNetId, string observationSessionId = null, long graphEpoch = 0)
         {
             StreamId = streamId ?? "";
             MonsterNetId = monsterNetId;
             ObservationSessionId = observationSessionId;
+            GraphEpoch = graphEpoch;
         }
         public bool Equals(KillVictimKey other) => MonsterNetId == other.MonsterNetId && StreamId == other.StreamId
             && ObservationSessionId == other.ObservationSessionId;
@@ -29,6 +31,9 @@ namespace SodRpg.Core.Game
         public string EventId { get; }
         public uint MonsterNetId { get; }
         public int ZoneIndex { get; }
+        public long GraphEpoch { get; }
+        public long SegmentEpoch { get; }
+        public long RoomEpoch { get; }
         public NightmareAffix Nightmare { get; }
         public string VariantId { get; }
         public long Sequence { get; }
@@ -39,9 +44,11 @@ namespace SodRpg.Core.Game
 
         public AuthoritativeRunKill(string runId, string eventId, uint monsterNetId, int zoneIndex,
             NightmareAffix nightmare, string variantId, long sequence = 0, string streamId = null,
-            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0,
+            long graphEpoch = 0, long segmentEpoch = 0, long roomEpoch = 0)
         {
             RunId = runId; EventId = eventId; MonsterNetId = monsterNetId; ZoneIndex = zoneIndex;
+            GraphEpoch = graphEpoch; SegmentEpoch = segmentEpoch; RoomEpoch = roomEpoch;
             VariantId = Variants.Get(variantId)?.Id;
             Nightmare = VariantId == null ? Nightmares.Sanitize((int)nightmare) : NightmareAffix.None;
             Sequence = Math.Max(0, sequence);
@@ -149,6 +156,7 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; set; }
         public string ClientId { get; set; }
+        public long RetiredBeforeGraph { get; set; }
         public List<KillReceiptState> Receipts { get; } = new List<KillReceiptState>();
         public List<PendingMonsterDeath> Deaths { get; } = new List<PendingMonsterDeath>();
         public List<AuthoritativeRunKill> Facts { get; } = new List<AuthoritativeRunKill>();
@@ -164,7 +172,8 @@ namespace SodRpg.Core.Game
 
         public KillClassificationCheckpoint Clone()
         {
-            var copy = new KillClassificationCheckpoint { RunId = RunId, ClientId = ClientId, HostSequence = HostSequence };
+            var copy = new KillClassificationCheckpoint { RunId = RunId, ClientId = ClientId, HostSequence = HostSequence,
+                RetiredBeforeGraph = RetiredBeforeGraph };
             foreach (var receipt in Receipts) copy.Receipts.Add(receipt.Clone());
             copy.Deaths.AddRange(Deaths);
             copy.Facts.AddRange(Facts);
@@ -215,6 +224,8 @@ namespace SodRpg.Core.Game
         private readonly List<long> _sequenceScratch = new List<long>();
         private readonly List<KillVictimKey> _factPrune = new List<KillVictimKey>();
         private int _retiredBeforeZone = -1;
+        private long _retiredBeforeGraph;
+        private readonly HashSet<KillVictimKey> _retainedOldVictims = new HashSet<KillVictimKey>();
         private string _observationStreamId;
         private int _unidentifiedDeathCount;
         private readonly Dictionary<uint, int> _unboundVictimCounts = new Dictionary<uint, int>();
@@ -280,9 +291,9 @@ namespace SodRpg.Core.Game
                 // Keep the observer identity, but bind its concrete native stream only once.
                 _expiredVictims.Remove(victim);
                 MarkExpired(new KillVictimKey(PendingMonsterDeath.UnidentifiedRecoveryStreamId,
-                    victim.MonsterNetId, victim.ObservationSessionId));
+                    victim.MonsterNetId, victim.ObservationSessionId, victim.GraphEpoch));
                 if (victim.ObservationSessionId == null || victim.ObservationSessionId == observationSessionId)
-                    MarkExpired(new KillVictimKey(streamId, victim.MonsterNetId));
+                    MarkExpired(new KillVictimKey(streamId, victim.MonsterNetId, graphEpoch: victim.GraphEpoch));
             }
             if (_observationStreamId == streamId && _unidentifiedDeathCount == 0) return;
             int count = _deaths.Count;
@@ -351,7 +362,7 @@ namespace SodRpg.Core.Game
 
         private static KillVictimKey Victim(PendingMonsterDeath death) => new KillVictimKey(death.StreamId, death.MonsterNetId,
             death.StreamId == PendingMonsterDeath.UnidentifiedStreamId || death.StreamId == PendingMonsterDeath.UnidentifiedRecoveryStreamId
-                ? death.ObservationSessionId : null);
+                ? death.ObservationSessionId : null, death.Kill.GraphEpoch);
 
         public bool HasPendingUnidentifiedDeath(uint monsterNetId, string observationSessionId) =>
             _observedVictims.Contains(new KillVictimKey(PendingMonsterDeath.UnidentifiedStreamId, monsterNetId, observationSessionId));
@@ -361,10 +372,10 @@ namespace SodRpg.Core.Game
             if (_expiredVictims.Contains(victim)) return true;
             if (victim.StreamId == PendingMonsterDeath.UnidentifiedStreamId)
                 return _expiredVictims.Contains(new KillVictimKey(PendingMonsterDeath.UnidentifiedRecoveryStreamId,
-                    victim.MonsterNetId, victim.ObservationSessionId));
+                    victim.MonsterNetId, victim.ObservationSessionId, victim.GraphEpoch));
             if (victim.StreamId == PendingMonsterDeath.UnidentifiedRecoveryStreamId)
                 return _expiredVictims.Contains(new KillVictimKey(PendingMonsterDeath.UnidentifiedStreamId,
-                    victim.MonsterNetId, victim.ObservationSessionId));
+                    victim.MonsterNetId, victim.ObservationSessionId, victim.GraphEpoch));
             return _legacyExpiredVictims.Contains(victim.MonsterNetId)
                 && (victim.StreamId == "" || victim.StreamId == PendingMonsterDeath.LegacyStreamId
                     || victim.StreamId.EndsWith(".legacy", StringComparison.Ordinal));
@@ -388,6 +399,13 @@ namespace SodRpg.Core.Game
         private void ForgetPendingDeath(PendingMonsterDeath death)
         {
             _observedVictims.Remove(Victim(death));
+            _factPrune.Clear();
+            foreach (var victim in _retainedOldVictims)
+                if (victim.MonsterNetId == death.MonsterNetId && (victim.Equals(Victim(death))
+                    || victim.StreamId == PendingMonsterDeath.UnidentifiedStreamId
+                    || victim.StreamId == PendingMonsterDeath.UnidentifiedRecoveryStreamId)) _factPrune.Add(victim);
+            foreach (var victim in _factPrune) _retainedOldVictims.Remove(victim);
+            _factPrune.Clear();
             if (death.StreamId == PendingMonsterDeath.UnidentifiedStreamId) _unidentifiedDeathCount--;
             if (death.StreamId == PendingMonsterDeath.UnidentifiedStreamId || death.StreamId == PendingMonsterDeath.UnidentifiedRecoveryStreamId)
                 RemoveUnboundVictim(death.MonsterNetId);
@@ -465,9 +483,10 @@ namespace SodRpg.Core.Game
             return false;
         }
 
+
         private void AddFact(AuthoritativeRunKill fact)
         {
-            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId, graphEpoch: fact.GraphEpoch);
             _facts.Add(key, fact);
             if (fact.Sequence > 0) UnmatchedSequences(fact.StreamId).Add(fact.Sequence);
             if (!IsLegacyFact(fact)) return;
@@ -481,7 +500,7 @@ namespace SodRpg.Core.Game
 
         private void RemoveFact(AuthoritativeRunKill fact)
         {
-            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId, graphEpoch: fact.GraphEpoch);
             _facts.Remove(key);
             _eventIds.Remove(fact.EventId);
             if (fact.Sequence > 0) UnmatchedSequences(fact.StreamId).Remove(fact.Sequence);
@@ -534,6 +553,32 @@ namespace SodRpg.Core.Game
             foreach (var victim in _factPrune) RemoveFact(_facts[victim]);
         }
 
+        public void RetireUnobservedFactsBeforeGraph(long graphEpoch)
+        {
+            if (graphEpoch <= _retiredBeforeGraph) return;
+            _retiredBeforeGraph = graphEpoch;
+            foreach (var waiting in _deaths) _retainedOldVictims.Add(Victim(waiting.Death));
+            _factPrune.Clear();
+            foreach (var pair in _facts)
+                if (pair.Value.GraphEpoch < graphEpoch && !IsObserved(pair.Value)) _factPrune.Add(pair.Key);
+            foreach (var victim in _factPrune) RemoveFact(_facts[victim]);
+            _factPrune.Clear();
+            foreach (var victim in _expiredVictims)
+                if (victim.GraphEpoch < graphEpoch) _factPrune.Add(victim);
+            foreach (var victim in _factPrune) _expiredVictims.Remove(victim);
+            ReleaseResolvedNativeLifetimes();
+        }
+
+        private bool IsRetainedOldVictim(AuthoritativeRunKill fact)
+        {
+            if (!IsObserved(fact)) return false;
+            foreach (var victim in _retainedOldVictims)
+                if (victim.MonsterNetId == fact.MonsterNetId && (victim.StreamId == fact.StreamId
+                    || victim.StreamId == PendingMonsterDeath.UnidentifiedStreamId
+                    || victim.StreamId == PendingMonsterDeath.UnidentifiedRecoveryStreamId)) return true;
+            return false;
+        }
+
         /// <summary>The caller now gates duplicates by native object lifetime; pending deaths keep their markers.</summary>
         public void ReleaseResolvedNativeLifetimes()
         {
@@ -557,7 +602,7 @@ namespace SodRpg.Core.Game
             BeginRun(fact.RunId);
             ExpireMissingDeaths(now);
             var receipt = fact.Sequence > 0 ? Receipt(fact.StreamId) : null;
-            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId);
+            var key = new KillVictimKey(fact.StreamId, fact.MonsterNetId, graphEpoch: fact.GraphEpoch);
             if (IsExpired(key) || (IsLegacyFact(fact) && _legacyExpiredVictims.Contains(fact.MonsterNetId)))
             {
                 if (receipt != null)
@@ -603,8 +648,9 @@ namespace SodRpg.Core.Game
                 return false;
             }
             if (!_eventIds.Add(fact.EventId)) return false;
-            if (((_observationStreamId != null && fact.StreamId != _observationStreamId)
-                || (fact.ZoneIndex >= 0 && fact.ZoneIndex < _retiredBeforeZone)) && !IsObserved(fact))
+            if ((fact.GraphEpoch < _retiredBeforeGraph && !IsRetainedOldVictim(fact))
+                || (((_observationStreamId != null && fact.StreamId != _observationStreamId)
+                    || (fact.ZoneIndex >= 0 && fact.ZoneIndex < _retiredBeforeZone)) && !IsObserved(fact)))
             {
                 _eventIds.Remove(fact.EventId);
                 if (receipt != null) TrackReceipt(receipt, fact.Sequence);
@@ -647,7 +693,8 @@ namespace SodRpg.Core.Game
                 var native = death.Kill;
                 kill = new PendingRunKill(native.RunId, native.ZoneIndex, native.RoomIndex, native.Tier,
                     native.Level, fact.Nightmare, fact.VariantId, native.HeroKey, fact.EventId, death.MonsterNetId,
-                    native.Heat, native.Waypoint, fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth);
+                    native.Heat, native.Waypoint, fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth,
+                    fact.GraphEpoch, fact.SegmentEpoch, fact.RoomEpoch);
                 return true;
             }
             return false;
@@ -656,7 +703,8 @@ namespace SodRpg.Core.Game
         public KillClassificationCheckpoint Capture(double now)
         {
             ExpireMissingDeaths(now);
-            var saved = new KillClassificationCheckpoint { RunId = RunId, ClientId = ClientId };
+            var saved = new KillClassificationCheckpoint { RunId = RunId, ClientId = ClientId,
+                RetiredBeforeGraph = _retiredBeforeGraph };
             foreach (var state in _receipts.Values)
             {
                 var receipt = state.Clone();
@@ -717,6 +765,9 @@ namespace SodRpg.Core.Game
                     ObserveDeath(death.StreamId == PendingMonsterDeath.UnidentifiedStreamId
                         ? new PendingMonsterDeath(death.MonsterNetId, death.Kill, PendingMonsterDeath.UnidentifiedRecoveryStreamId, death.ObservationSessionId)
                         : death, now);
+            _retiredBeforeGraph = saved.RetiredBeforeGraph;
+            foreach (var waiting in _deaths)
+                if (waiting.Death.Kill.GraphEpoch < _retiredBeforeGraph) _retainedOldVictims.Add(Victim(waiting.Death));
         }
 
         public void Clear()
@@ -725,6 +776,8 @@ namespace SodRpg.Core.Game
             _receipts.Clear();
             _unmatchedSequences.Clear();
             _retiredBeforeZone = -1;
+            _retiredBeforeGraph = 0;
+            _retainedOldVictims.Clear();
             _observationStreamId = null;
             _unidentifiedDeathCount = 0;
             _unboundVictimCounts.Clear();

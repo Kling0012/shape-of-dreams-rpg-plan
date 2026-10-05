@@ -329,7 +329,9 @@ namespace SodRpg.Core.Tests
         {
             var root = (JsonObject)Json.Parse(ProfileCodec.Write(p));
             Assert.True(root.TryGet("body", out object body));
-            var legacy = WithoutStarXp(body);
+            var legacy = new JsonObject();
+            foreach (var kv in ((JsonObject)body).Properties)
+                legacy.Add(kv.Key, kv.Key == "heroes" ? WithoutStarXp(kv.Value) : kv.Value);
             string checksum;
             using (var sha = SHA256.Create())
                 checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(legacy))))

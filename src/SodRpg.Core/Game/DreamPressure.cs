@@ -10,27 +10,32 @@ namespace SodRpg.Core.Game
         public double AverageDreamLevel => 1 + _averageLevelAboveOne;
         public double AverageSpentStarPoints { get; }
         public int Depth { get; }
+        public int InfinityStage { get; }
         private readonly double _waypointPressureAboveOne;
         public double WaypointMultiplier => 1 + _waypointPressureAboveOne;
         /// <summary>夢のレベルはこの値を超えた分だけ数える（序盤は夢のレベルがすぐ上がるため。v1.27 のバランス調整）。</summary>
         public const int FreeDreamLevels = 5;
         private double LevelsOverFree => Math.Max(0, AverageDreamLevel - FreeDreamLevels);
         public double HealthMultiplier => (1 + 0.025 * LevelsOverFree + 0.005 * AverageSpentStarPoints)
-            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier;
+            * DreamDepth.HealthMultiplier(Depth) * WaypointMultiplier * (1 + 0.10 * InfinityStage);
         public double DamageMultiplier => (1 + 0.012 * LevelsOverFree + 0.0025 * AverageSpentStarPoints)
-            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier;
+            * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + 0.04 * InfinityStage);
 
-        private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1)
+        private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1, int infinityStage = 0)
         {
             _averageLevelAboveOne = dreamLevel - 1;
             AverageSpentStarPoints = spentStarPoints;
             Depth = DreamDepth.Clamp(depth);
+            InfinityStage = Math.Max(0, Math.Min(100, infinityStage));
             _waypointPressureAboveOne = (double.IsNaN(waypointMultiplier) || double.IsInfinity(waypointMultiplier)
                 ? 1 : Math.Max(1, waypointMultiplier)) - 1;
         }
 
         public DreamPressure WithRunModifiers(int depth, double waypointMultiplier = 1) =>
-            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, depth, waypointMultiplier);
+            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, depth, waypointMultiplier, InfinityStage);
+
+        public DreamPressure WithInfinityPressure(int stage) =>
+            new DreamPressure(AverageDreamLevel, AverageSpentStarPoints, Depth, WaypointMultiplier, stage);
 
         public static DreamPressure Neutral => new DreamPressure(1, 0);
 

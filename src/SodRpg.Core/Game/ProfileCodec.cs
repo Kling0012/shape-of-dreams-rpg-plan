@@ -90,6 +90,7 @@ namespace SodRpg.Core.Game
                     .Add("runId", r.RunId).Add("heat", (long)r.Heat).Add("satchel", WriteRelics(r.Satchel))
                     .Add("heroKey", r.HeroKey).Add("starSecureRewarded", r.StarSecureRewarded)
                     .Add("dreamDepth", (long)r.DreamDepth)
+                    .Add("infinity", WriteInfinity(r.Infinity))
                     .Add("pureWhiteChoiceReached", r.PureWhiteChoiceReached)
                     .Add("activeWaypoint", (long)r.ActiveWaypoint).Add("pendingWaypoint", (long)r.PendingWaypoint)
                     .Add("offeredWaypoints", r.OfferedWaypoints.Select(w => (object)(long)w).ToList())
@@ -125,6 +126,10 @@ namespace SodRpg.Core.Game
                 .Add("focus", p.Focus.HasValue ? (long)p.Focus.Value : -1L)
                 .Add("startDepth", (long)p.StartDepth)
                 .Add("lastDreamDepth", (long)p.LastDreamDepth)
+                .Add("lastInfinityEnabled", p.LastInfinityEnabled)
+                .Add("lastInfinityInterval", (long)p.LastInfinityInterval)
+                .Add("infinityRewardBudget", WriteInfinityRewardBudget(p.InfinityRewardBudget))
+                .Add("infinityRecords", WriteInfinityRecords(p))
                 .Add("materials", mats)
                 .Add("stash", WriteRelics(p.Stash))
                 .Add("lostAndFound", WriteRelics(p.LostAndFound))
@@ -145,6 +150,7 @@ namespace SodRpg.Core.Game
                 .Add("completedRunId", p.CompletedRunId)
                 .Add("lobbyReturnedRunIds", p.LobbyReturnedRunIds.Select(id => (object)id).ToList())
                 .Add("lobbyReturnAuthority", p.LobbyReturnAuthority)
+                .Add("completedRunSecuredReturn", p.CompletedRunSecuredReturn)
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
@@ -236,6 +242,7 @@ namespace SodRpg.Core.Game
                 .Add("milestones", (long)r.EnhanceMilestones).Add("limitBreaks", (long)r.LimitBreaks)
                 .Add("milestonePowerApplied", r.MilestonePowerApplied)
                 .Add("developerGranted", r.DeveloperGranted)
+                .Add("infinityFreeSupply", r.InfinityFreeSupply)
                 .Add("affixes", aff).Add("powers", pw);
         }
 
@@ -260,8 +267,16 @@ namespace SodRpg.Core.Game
             };
             p.StartDepth = Clamp(Long(b, "startDepth"), 0, Content.MaxHeat);
             p.LastDreamDepth = Clamp(Long(b, "lastDreamDepth"), 0, DreamDepth.Maximum);
+            ReadInfinitySettings(p, b);
+            p.InfinityRewardBudget = ReadInfinityRewardBudget(b);
+            ReadInfinityRecords(p, b);
             p.CompletedRunId = Str(b, "completedRunId");
             p.LobbyReturnAuthority = Bool(b, "lobbyReturnAuthority", false);
+            if (b.TryGet("completedRunSecuredReturn", out object securedReturn))
+            {
+                if (!(securedReturn is bool flag)) throw new LedgerFormatException("Invalid secured return receipt");
+                p.CompletedRunSecuredReturn = flag;
+            }
             p.RunRecovery = ReadRunRecovery(b);
             p.KillClassification = ReadKillClassification(b);
             if (includeContinue) ReadContinueState(b, p, notes);
@@ -424,6 +439,7 @@ namespace SodRpg.Core.Game
                 var run = new RunState
                 {
                     RunId = Str(rj, "runId"),
+                    Infinity = ReadInfinity(rj),
                     HeroKey = Str(rj, "heroKey"),
                     StarSecureRewarded = Bool(rj, "starSecureRewarded", false),
                     Heat = Loot.ClampHeat(Clamp(Long(rj, "heat"), 0, Content.MaxHeat)),
@@ -620,6 +636,7 @@ namespace SodRpg.Core.Game
                 AffixRerolls = Clamp(Long(j, "affixRerolls"), 0, int.MaxValue), // v1.31：古い保存にはないので0
                 Locked = Bool(j, "locked", false),
                 DeveloperGranted = Bool(j, "developerGranted", false),
+                InfinityFreeSupply = j.TryGet("infinityFreeSupply", out _) && RequiredInfinityBool(j, "infinityFreeSupply"),
                 AwakenPoints = Clamp(Long(j, "awaken"), 0, Content.AwakenThreshold),
                 AwakenLevel = j.TryGet("awakenLevel", out _)
                     ? Clamp(Long(j, "awakenLevel"), 0, Content.MaxAwakenLevel)

@@ -183,7 +183,7 @@ namespace SodRpg.Mod
             if (fact.RunId != _killRunId || !_killHistoryEvents.Add(fact.EventId)) return;
             if (fact.Sequence == 0) fact = new AuthoritativeRunKill(fact.RunId, fact.EventId,
                 fact.MonsterNetId, fact.ZoneIndex, fact.Nightmare, fact.VariantId, ++_killSequence, _killLegacyStreamId,
-                fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth);
+                fact.BossTypeName, fact.BossDropNightmare, fact.BossDropDepth, fact.GraphEpoch, fact.SegmentEpoch, fact.RoomEpoch);
             _killHistoryByVictim.Add(new KillVictimKey(fact.StreamId, fact.MonsterNetId), fact);
             if (fact.StreamId.EndsWith(".legacy", StringComparison.Ordinal))
                 _legacyKillHistoryByVictim[fact.MonsterNetId] = fact;
@@ -538,7 +538,7 @@ namespace SodRpg.Mod
             }
             var fact = new AuthoritativeRunKill(_killRunId, runtime.KillEventId, monster.netId,
                 _zone?.currentZoneIndex ?? -1, nightmare, runtime.Variant?.Id, ++_killSequence, _killStreamId,
-                bossTypeName, bossDropNightmare, bossDropDepth);
+                bossTypeName, bossDropNightmare, bossDropDepth, runtime.GraphEpoch, runtime.SegmentEpoch, runtime.RoomEpoch);
             RestoreHostFact(fact);
             foreach (var pair in _killReplayPlayers)
                 if (MechanismHandshakeAccepted(pair.Key) || !pair.Value.ControlSent) pair.Value.Participation.Through = fact.Sequence;

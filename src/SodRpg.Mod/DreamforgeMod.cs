@@ -367,23 +367,59 @@ namespace SodRpg.Mod
         private void PatchEachClass()
         {
             int installed = 0;
+            int installedInfinity = 0;
             var skipped = new List<string>();
             foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
             {
-                if (HarmonyMethodExtensions.GetFromType(type).Count == 0) continue;
+                bool infinity = InfinityMode.IsNativePatch(type);
                 try
                 {
-                    harmony.CreateClassProcessor(type).Patch();
+                    if (HarmonyMethodExtensions.GetFromType(type).Count == 0)
+                    {
+                        if (infinity) InfinityMode.DisableFeature("Infinity patch has no native target: " + type.FullName);
+                        continue;
+                    }
+                    var targets = harmony.CreateClassProcessor(type).Patch();
+                    if (infinity)
+                    {
+                        if (targets == null || targets.Count == 0 || !HasInstalledClass(type))
+                        {
+                            InfinityMode.DisableFeature("Infinity patch was not installed: " + type.FullName);
+                            skipped.Add(type.FullName);
+                            continue;
+                        }
+                        installedInfinity++;
+                    }
                     installed++;
                 }
                 catch (Exception ex)
                 {
                     skipped.Add(type.FullName);
                     Log.Warn("Patch class skipped: " + type.FullName + ": " + ex);
-                    RollBackClass(type);
+                    if (infinity)
+                    {
+                        InfinityMode.DisableFeature("Infinity patch installation failed: " + type.FullName + ": " + ex.Message);
+                        try { RollBackClass(type); }
+                        catch (Exception rollback) { Log.Warn("Infinity patch rollback failed; its hooks remain disabled: " + rollback); }
+                    }
+                    else RollBackClass(type);
                 }
             }
+            InfinityMode.CompletePatchInstallation(installedInfinity);
             Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+        }
+
+        private bool HasInstalledClass(Type type)
+        {
+            foreach (var target in harmony.GetPatchedMethods())
+            {
+                var info = Harmony.GetPatchInfo(target);
+                if (info == null) continue;
+                foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
+                    foreach (var patch in list)
+                        if (patch.owner == harmony.Id && IsSameOrNested(patch.PatchMethod.DeclaringType, type)) return true;
+            }
+            return false;
         }
 
         /// <summary>Remove only the patch methods declared by this class (and its nested types), leaving every other patch in place.</summary>

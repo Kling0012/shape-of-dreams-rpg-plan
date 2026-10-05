@@ -14,6 +14,7 @@ namespace SodRpg.Mod
             state.PendingResultRunId = _pendingResultRunId;
             state.PendingVictory = _pendingRunVictory;
             state.PublisherHistory.AddRange(_choicePublisher.ExportFinalized());
+            state.PublisherRetiredBeforeSegment = _choicePublisher.RetiredBeforeSegment;
             state.PublisherTerminalChoices = _choicePublisher.TerminalChoices;
             state.PublisherVictory = _choicePublisher.TerminalVictory;
             _pendingPressureDividends.Capture(state);
@@ -32,6 +33,7 @@ namespace SodRpg.Mod
             _pendingResultRunId = state?.PendingResultRunId;
             _pendingRunVictory = state?.PendingVictory;
             _choicePublisher.RestoreFinalized(state?.PublisherHistory, state?.PublisherTerminalChoices, state?.PublisherVictory);
+            _choicePublisher.RetireBeforeSegment(state?.PublisherRetiredBeforeSegment ?? 0);
             _pendingPressureDividends.Restore(state);
             HostAuthority.RunGrowthLedger.Restore(state);
             RestoreKillClassification();

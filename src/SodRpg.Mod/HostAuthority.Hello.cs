@@ -15,11 +15,16 @@ namespace SodRpg.Mod
 
         private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
         private readonly Dictionary<DewPlayer, string> _acceptedMechanismContent = new Dictionary<DewPlayer, string>();
+        private readonly HashSet<DewPlayer> _infinityAvailablePeers = new HashSet<DewPlayer>();
 
         private bool MechanismHandshakeAccepted(DewPlayer caller) => caller != null
             && (caller == DewPlayer.local
                 || _acceptedMechanismContent.TryGetValue(caller, out string content)
                     && string.Equals(content, ContentFingerprint.Value, StringComparison.Ordinal));
+
+        private bool InfinityHandshakeAccepted(DewPlayer caller) => InfinityMode.Available
+            && MechanismHandshakeAccepted(caller)
+            && (caller == DewPlayer.local || _infinityAvailablePeers.Contains(caller));
         private static readonly List<string> MismatchScratch = new List<string>();
 
         /// <summary>版が違う参加者の説明（ホストの画面に出す）。無ければ空。</summary>
@@ -39,6 +44,7 @@ namespace SodRpg.Mod
                 try { actor.CustomRpc_UnregisterServerMessageHandler<DreamforgeHelloMsg>(_onHello); } catch (Exception) { }
             _versionMismatches.Clear();
             _acceptedMechanismContent.Clear();
+            _infinityAvailablePeers.Clear();
             RebuildMismatchList();
         }
 
@@ -48,6 +54,8 @@ namespace SodRpg.Mod
             {
                 if (msg == null || caller == null || !caller.isHumanPlayer) return;
                 bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+                if (same && msg.infinityAvailable) _infinityAvailablePeers.Add(caller);
+                else _infinityAvailablePeers.Remove(caller);
                 if (same)
                 {
                     _versionMismatches.Remove(caller);
@@ -73,6 +81,7 @@ namespace SodRpg.Mod
                     continueCheckpointId = ClientSession.ContinueCheckpointId,
                     continueResumeSession = ClientSession.ContinueResumeSession,
                     continueCheckpoints = true,
+                    infinityAvailable = InfinityMode.Available,
                 });
             }
             catch (Exception ex) { Log.Error("Host: hello " + ex); }

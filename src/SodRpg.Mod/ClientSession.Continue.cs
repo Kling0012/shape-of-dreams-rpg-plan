@@ -39,9 +39,10 @@ namespace SodRpg.Mod
         private RunCheckpoint _nativeContinueCheckpoint;
         private string _continueCheckpointId, _continueResumeSession;
         private bool _continueHandshakeReady;
+        private bool _nativeContinueRestoring;
         private GameManager _continueGame;
-        private bool ContinueReady => LobbyReturnPending || (_blockedContinueRunId == null
-            && (CanChooseRunRules || _continueHandshakeReady));
+private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending || (_blockedContinueRunId == null
+            && (CanChooseRunRules || _continueHandshakeReady)));
         public string ContinueWarning { get; private set; }
 
         // The ID travels in the native save itself: same runId alone cannot identify a save point.
@@ -70,6 +71,7 @@ namespace SodRpg.Mod
         {
             var session = _hostSession;
             if (!NetworkServer.active || session == null || data?.serverActorData == null) return;
+            session._nativeContinueRestoring = true;
             session._nativeContinueCheckpoint = null;
             session._continueCheckpointId = session._continueResumeSession = null;
             if (!data.serverActorData.TryGetValue(ContinueIdKey, out string id)
@@ -85,6 +87,28 @@ namespace SodRpg.Mod
             session._continueResumeSession = Guid.NewGuid().ToString("N");
             data.serverActorData.TryGetValue(ContinueTradesKey, out string trades);
             HostAuthority.RestoreContinueTrades(trades);
+        }
+
+        internal static void FinishNativeContinueRestore()
+        {
+            var session = _hostSession;
+            if (!NetworkServer.active || session == null) return;
+            session._nativeContinueRestoring = false;
+            var checkpoint = session._nativeContinueCheckpoint;
+            if (checkpoint != null)
+            {
+                if (checkpoint.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+                session.RestoreContinueCheckpoint(checkpoint, session._continueResumeSession);
+                session._nativeContinueCheckpoint = null;
+            }
+            ValidateHostInfinityContinue();
+        }
+
+        internal static void PrepareNativeInfinityContinue()
+        {
+            if (!NetworkServer.active || _hostSession == null || !InfinityMode.NativeSaveAgreement) return;
+            _hostSession.SyncInfinityContinueSnapshot();
+            InfinityMode.WriteEnvelope();
         }
 
         private void RememberContinueCheckpoint(RunCheckpoint checkpoint)
@@ -106,6 +130,7 @@ namespace SodRpg.Mod
 
         private void PrepareContinueSnapshot()
         {
+            SyncInfinityContinueSnapshot();
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());
@@ -168,6 +193,7 @@ namespace SodRpg.Mod
             FlushSaves();
             var notes = new List<string>();
             checkpoint.Restore(Profile, notes: notes);
+            ResetInfinityContinueState();
             Profile.ContinueResumeSession = resumeSession;
             Profile.ContinueLobbyBaseline = null;
             _trades.Clear();
@@ -271,6 +297,15 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(DewPersistence), nameof(DewPersistence.ApplyGameData))]
     internal static class LoadDreamforgeContinue
     {
-        private static void Prefix(DewPersistence.GameData data) => ClientSession.LoadNativeContinue(data);
+        private static void Prefix(DewPersistence.GameData data, ref Action onFinish)
+        {
+            ClientSession.LoadNativeContinue(data);
+            var original = onFinish;
+            onFinish = () =>
+            {
+                try { original?.Invoke(); }
+                finally { ClientSession.FinishNativeContinueRestore(); }
+            };
+        }
     }
 }

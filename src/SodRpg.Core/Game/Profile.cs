@@ -86,6 +86,7 @@ namespace SodRpg.Core.Game
     public sealed class RunState
     {
         public string RunId { get; set; }
+        public InfinityRunState Infinity { get; set; }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -158,6 +159,7 @@ namespace SodRpg.Core.Game
             var c = new RunState
             {
                 RunId = RunId,
+                Infinity = Infinity?.Clone(),
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
@@ -210,6 +212,7 @@ namespace SodRpg.Core.Game
     public sealed class RunReport
     {
         public bool Victory { get; set; }
+        public bool SecuredReturn { get; set; }
         public int Kills { get; set; }
         public int RelicsFound { get; set; }
         public int RelicsSecured { get; set; }
@@ -319,6 +322,11 @@ namespace SodRpg.Core.Game
 
         private int _lastDreamDepth;
         public int LastDreamDepth { get => _lastDreamDepth; set => _lastDreamDepth = DreamDepth.Clamp(value); }
+        public bool LastInfinityEnabled { get; set; }
+        public int LastInfinityInterval { get; set; } = 10;
+        public InfinityRewardBudget InfinityRewardBudget { get; set; } = new InfinityRewardBudget();
+        public SortedDictionary<string, InfinityRecord> InfinityRecords { get; } = new SortedDictionary<string, InfinityRecord>(StringComparer.Ordinal);
+        public long InfinityRecordsRevision { get; internal set; }
 
         public SortedDictionary<string, int> Materials { get; } = new SortedDictionary<string, int>(StringComparer.Ordinal);
         public List<Relic> Stash { get; } = new List<Relic>();
@@ -355,6 +363,7 @@ namespace SodRpg.Core.Game
         public SortedSet<string> LobbyReturnedRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
         /// <summary>Whether this slot had host authority when its lobby return began.</summary>
         public bool LobbyReturnAuthority { get; set; }
+        public bool CompletedRunSecuredReturn { get; set; }
         public RunRecoveryState RunRecovery { get; set; }
         public KillClassificationCheckpoint KillClassification { get; set; }
 
@@ -460,6 +469,11 @@ namespace SodRpg.Core.Game
             Japanese = source.Japanese;
             StartDepth = source.StartDepth;
             LastDreamDepth = source.LastDreamDepth;
+            LastInfinityEnabled = source.LastInfinityEnabled;
+            LastInfinityInterval = source.LastInfinityInterval;
+            InfinityRewardBudget = source.InfinityRewardBudget;
+            InfinityRecords.Clear();
+            Game.InfinityRecords.CloneInto(source, this);
             Focus = source.Focus;
             HintsOff = source.HintsOff;
             StarterGranted = source.StarterGranted;
@@ -468,6 +482,7 @@ namespace SodRpg.Core.Game
             Run = source.Run;
             CompletedRunId = source.CompletedRunId;
             LobbyReturnAuthority = source.LobbyReturnAuthority;
+            CompletedRunSecuredReturn = source.CompletedRunSecuredReturn;
             RunRecovery = source.RunRecovery;
             KillClassification = source.KillClassification;
             LastReport = source.LastReport;
@@ -518,10 +533,14 @@ namespace SodRpg.Core.Game
                 Japanese = Japanese,
                 StartDepth = StartDepth,
                 LastDreamDepth = LastDreamDepth,
+                LastInfinityEnabled = LastInfinityEnabled,
+                LastInfinityInterval = LastInfinityInterval,
+                InfinityRewardBudget = InfinityRewardBudget.Clone(),
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 CompletedRunId = CompletedRunId,
                 LobbyReturnAuthority = LobbyReturnAuthority,
+                CompletedRunSecuredReturn = CompletedRunSecuredReturn,
                 RunRecovery = RunRecovery?.Clone(),
                 KillClassification = KillClassification?.Clone(),
                 ContinueLobbyBaseline = ContinueLobbyBaseline,
@@ -530,6 +549,7 @@ namespace SodRpg.Core.Game
                 LastReport = LastReport,
                 RetuneOffer = RetuneOffer?.Clone(),
             };
+            Game.InfinityRecords.CloneInto(this, c);
             foreach (var kv in Materials) c.Materials[kv.Key] = kv.Value;
             c.ContinueCheckpoints.AddRange(ContinueCheckpoints);
             foreach (var r in Stash) c.Stash.Add(r.Clone());

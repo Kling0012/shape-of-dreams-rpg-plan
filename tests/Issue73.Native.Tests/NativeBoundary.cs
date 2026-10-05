@@ -163,7 +163,7 @@ namespace SodRpg.Mod
             public readonly Dictionary<string, string> serverActorData = new Dictionary<string, string>();
         }
         public static GameData SerializeGameData() => new GameData();
-        public static void ApplyGameData(GameData data) { }
+        public static void ApplyGameData(GameData data, Action onFinish = null) => onFinish?.Invoke();
     }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
@@ -194,6 +194,7 @@ namespace SodRpg.Mod
             public Variant Variant;
             public Behavior Behavior;
             public string KillEventId, KillEventStreamId, ClassificationVariant;
+            public long GraphEpoch, SegmentEpoch, RoomEpoch;
             public uint KillEventNetId, SyncNetId;
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
@@ -272,6 +273,15 @@ namespace SodRpg.Mod
             public void Clear() { }
         }
     }
+    // The harness models an Infinity-unavailable host (Available == false, no save agreement),
+    // so the linked continue code takes its documented no-op paths for Infinity runs too.
+    internal static class InfinityMode
+    {
+        internal static bool Available => false;
+        internal static bool Restoring => false;
+        internal static bool NativeSaveAgreement => false;
+        internal static void WriteEnvelope() { }
+    }
     internal sealed partial class ClientSession
     {
         public Profile Profile;
@@ -312,5 +322,25 @@ namespace SodRpg.Mod
         private void ClearMonsterCues() { }
         private void ClearBossDisplay() { }
         private bool MechanismHandshakeAccepted => true;
+        private void RequireOrdinaryRun()
+        {
+            if (Profile.Run?.Infinity != null) throw new NotSupportedException("Infinity is outside the harness.");
+        }
+        private void TickInfinity() { }
+        private void ResetInfinityContinueState() { }
+        private void SyncInfinityContinueSnapshot() { }
+        internal static void ValidateHostInfinityContinue() { }
+        private bool TryInfinitySecure(out string error)
+        {
+            RequireOrdinaryRun();
+            error = null;
+            return false;
+        }
+        private bool TryInfinityDelve(Pact pact, out string error)
+        {
+            RequireOrdinaryRun();
+            error = null;
+            return false;
+        }
     }
 }

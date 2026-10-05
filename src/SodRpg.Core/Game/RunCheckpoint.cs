@@ -55,6 +55,8 @@ namespace SodRpg.Core.Game
             restored.Focus = current.Focus;
             restored.StartDepth = current.StartDepth;
             restored.LastDreamDepth = current.LastDreamDepth;
+            restored.LastInfinityEnabled = current.LastInfinityEnabled;
+            restored.LastInfinityInterval = current.LastInfinityInterval;
             restored.SeenHints.UnionWith(current.SeenHints);
             restored.LobbyReturnedRunIds.UnionWith(current.LobbyReturnedRunIds);
             restored.ContinueCheckpoints.AddRange(current.ContinueCheckpoints);
