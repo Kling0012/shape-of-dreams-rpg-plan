@@ -29,22 +29,22 @@ namespace SodRpg.Core.Tests
         public void Helper_reads_the_power_from_the_baseline_node_and_the_power_is_added_exactly_once()
         {
             var baseline = Select("h.husk.key");
-            Assert.Equal(100, baseline.Get(Power.Umbra));
+            Assert.Equal(115, baseline.Get(Power.Umbra));
             Assert.Null(baseline.SelectedKeystone);
             try
             {
                 var key = StarClusters.ManifestKeystone(Hero, "h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(), Array.Empty<string>(), Content.KeystoneCost);
                 Assert.Equal(Power.Umbra, key.RetainedPower);
-                Assert.Equal(100, key.RetainedPowerValue);
+                Assert.Equal(115, key.RetainedPowerValue);
                 Assert.Empty(key.Upside);
                 StarClusters.RegisterAuthored(Hero, new[] { Retained("h.husk.key", key) });
                 var build = Select("h.husk.key");
-                Assert.Equal(100, build.Get(Power.Umbra));              // once, not 200
+                Assert.Equal(115, build.Get(Power.Umbra));              // once, not 230
                 Assert.Equal(Power.Umbra, build.SelectedKeystone.RetainedPower);
                 var decoded = Build.Decode(build.Encode());
-                Assert.Equal(100, decoded.Get(Power.Umbra));
+                Assert.Equal(115, decoded.Get(Power.Umbra));
                 Assert.Equal(Power.Umbra, decoded.SelectedKeystone.RetainedPower);
-                Assert.Equal(100, decoded.SelectedKeystone.RetainedPowerValue);
+                Assert.Equal(115, decoded.SelectedKeystone.RetainedPowerValue);
                 var native = new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000));
                 var applied = AuthoredKeystoneComposer.TransformAllocationPayload(build, native, "St_Q_Test", sourceSlot: MechanismMemorySlot.Q);
                 Assert.Equal(100m, applied.Value);
@@ -58,7 +58,7 @@ namespace SodRpg.Core.Tests
             var key = StarClusters.ManifestKeystone(Hero, "h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(), Array.Empty<string>(), Content.KeystoneCost);
             var decoded = AuthoredKeystoneCodec.Decode(AuthoredKeystoneCodec.Encode(key));
             Assert.Equal(Power.Umbra, decoded.RetainedPower);
-            Assert.Equal(100, decoded.RetainedPowerValue);
+            Assert.Equal(115, decoded.RetainedPowerValue);
             Assert.Equal(AuthoredKeystoneCodec.Encode(key), AuthoredKeystoneCodec.Encode(decoded));
             var other = AuthoredKeystoneCompiler.Compile("h.husk.key", Array.Empty<string>(), Array.Empty<AuthoredKeystoneSpec>(),
                 retainedPower: Power.ShadowStep, retainedPowerValue: 60);

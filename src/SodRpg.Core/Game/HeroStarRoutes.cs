@@ -335,22 +335,22 @@ namespace SodRpg.Core.Game
             // Husk: attack-speed conversion belongs to the identity; Death Mark and the
             // annihilation shockwave explicitly carry AP markers in the shipped data.
             r = new Route(nodes, "Husk", "killing-flow", "St_D_TheKillingFlow");
-            r.L("一撃の冴え", "Keen Single Strike", LinkKind.MemoryDamage, 4);
-            r.G("殺意の染み", "Taint of Intent", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
+            r.L("一撃の冴え", "Keen Single Strike", LinkKind.MemoryDamage, 5);
+            r.G("殺意の染み", "Taint of Intent", GimmickTrigger.OnHit, GimmickEffect.Element, 35, 3);
             r.L("加速の刃の冴え", "Keen Swiftsteel", LinkKind.MemoryDamage, 4);
-            r.G("一歩一殺の残像", "Afterimage of the Flow", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
+            r.G("一歩一殺の残像", "Afterimage of the Flow", GimmickTrigger.OnHit, GimmickEffect.Echo, 12);
             r.L("歩みの一閃の冴え", "Keen Striding Flash", LinkKind.MemoryDamage, 4);
             r.S("一歩の剛力", "One-Step Strength", Stat.AttackPct, 2);
-            r.CapG("殺気の飛び火", "Spark of Killing Intent", 20, GimmickTrigger.OnKill, GimmickEffect.Element, 100, 3);
+            r.CapG("殺気の飛び火", "Spark of Killing Intent", 20, GimmickTrigger.OnKill, GimmickEffect.Element, 115, 3);
 
             r = new Route(nodes, "Husk", "wind-scar", "St_D_ScarOfTheWind");
-            r.L("風刃の冴え", "Keen Wind Blade", LinkKind.MemoryDamage, 4);
-            r.G("風傷の闇", "Dark of the Windscar", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
+            r.L("風刃の冴え", "Keen Wind Blade", LinkKind.MemoryDamage, 5);
+            r.G("風傷の闇", "Dark of the Windscar", GimmickTrigger.OnHit, GimmickEffect.Element, 35, 3);
             r.L("切り裂く風の冴え", "Keen Slashing Wind", LinkKind.MemoryDamage, 4);
-            r.G("風傷の癒やし", "Windscar Mending", GimmickTrigger.OnHit, GimmickEffect.Heal, 1);
+            r.G("風傷の癒やし", "Windscar Mending", GimmickTrigger.OnHit, GimmickEffect.Heal, 2);
             r.L("追い風の一閃の冴え", "Keen Tailwind Flash", LinkKind.MemoryDamage, 4);
             r.S("深い風傷", "Deep Wind Scar", Stat.DarkAmp, 2);
-            r.CapG("風の傷痕", "Wind's Wound", 20, GimmickTrigger.OnHit, GimmickEffect.Expose, 15);
+            r.CapG("風の傷痕", "Wind's Wound", 20, GimmickTrigger.OnHit, GimmickEffect.Expose, 18);
 
             r = new Route(nodes, "Husk", "flash-step", "St_M_FlashStep");
             r.L("瞬歩の備え", "Flash Step Readiness", LinkKind.Guard, 1);
@@ -362,40 +362,40 @@ namespace SodRpg.Core.Game
             r.L("影走りの極み", "Pinnacle of Shadow Running", LinkKind.Guard, 6);
 
             r = new Route(nodes, "Husk", "laceration", "St_Q_Laceration");
-            r.L("二色の巡り", "Two-Color Cycle", LinkKind.MemoryHaste, 3);
+            r.L("二色の巡り", "Two-Color Cycle", LinkKind.MemoryHaste, 4);
             r.G("裂傷の闇", "Shadow of the Slash", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
-            r.L("赤刃の余勢", "Red Blade Momentum", LinkKind.MemorySurge, 2);
-            r.G("傷の巡り", "Wound Cycle", GimmickTrigger.OnHit, GimmickEffect.Recharge, 4);
-            r.L("赤青の斬撃の冴え", "Keen Red-Blue Slashes", LinkKind.MemoryDamage, 4);
+            r.L("赤刃の余勢", "Red Blade Momentum", LinkKind.MemorySurge, 3);
+            r.G("傷の巡り", "Wound Cycle", GimmickTrigger.OnHit, GimmickEffect.Recharge, 5);
+            r.L("赤青の斬撃の冴え", "Keen Red-Blue Slashes", LinkKind.MemoryDamage, 5);
             r.S("裂け目の闇", "Darkness in the Rift", Stat.DarkAmp, 2);
-            r.G("二度裂く", "Cut Twice", GimmickTrigger.OnHit, GimmickEffect.Echo, 30);
+            r.G("二度裂く", "Cut Twice", GimmickTrigger.OnHit, GimmickEffect.Echo, 35);
 
             r = new Route(nodes, "Husk", "death-mark", "St_Q_DeathMark");
-            r.L("楔の再来", "Returning Wedge", LinkKind.MemoryHaste, 2);
+            r.L("楔の再来", "Returning Wedge", LinkKind.MemoryHaste, 3);
             r.G("刻印の闇", "Shadow of the Mark", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
-            r.L("刻印の余波", "Mark Aftershock", LinkKind.MemorySurge, 2);
-            r.G("刻印の疼き", "Aching Mark", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("呪楔の弾道の冴え", "Keen Cursed Wedge", LinkKind.MemoryDamage, 4);
+            r.L("刻印の余波", "Mark Aftershock", LinkKind.MemorySurge, 3);
+            r.G("刻印の疼き", "Aching Mark", GimmickTrigger.OnHit, GimmickEffect.Expose, 5);
+            r.L("呪楔の弾道の冴え", "Keen Cursed Wedge", LinkKind.MemoryDamage, 5);
             r.S("刻み込む闇", "Engraved Darkness", Stat.DarkAmp, 2);
-            r.G("刻印の回収", "Mark Reclaimed", GimmickTrigger.OnKill, GimmickEffect.Recharge, 30);
+            r.G("刻印の回収", "Mark Reclaimed", GimmickTrigger.OnKill, GimmickEffect.Recharge, 35);
 
             r = new Route(nodes, "Husk", "annihilation", "St_R_AnnihilationStance");
-            r.L("剣気の冴え", "Keen Sword Wave", LinkKind.MemoryDamage, 4);
-            r.G("滅殺の備え", "Annihilation Readiness", GimmickTrigger.OnUse, GimmickEffect.Shield, 2);
+            r.L("剣気の冴え", "Keen Sword Wave", LinkKind.MemoryDamage, 5);
+            r.G("滅殺の備え", "Annihilation Readiness", GimmickTrigger.OnUse, GimmickEffect.Shield, 3);
             r.L("覚醒の余勢", "Awakening Momentum", LinkKind.MemorySurge, 2);
-            r.G("剣気の余波", "Sword Aura Aftermath", GimmickTrigger.OnHit, GimmickEffect.Burst, 20, 0, 1f);
-            r.L("滅びの波動の冴え", "Keen Ruinous Wave", LinkKind.MemoryDamage, 4);
+            r.G("剣気の余波", "Sword Aura Aftermath", GimmickTrigger.OnHit, GimmickEffect.Burst, 23, 0, 0.85f);
+            r.L("滅びの波動の冴え", "Keen Ruinous Wave", LinkKind.MemoryDamage, 5);
             r.S("剣気を放つ腕", "Wave-Releasing Arm", Stat.AttackPct, 2);
-            r.G("剣気の吸命", "Aura Lifesteal", GimmickTrigger.OnKill, GimmickEffect.Heal, 5);
+            r.G("剣気の吸命", "Aura Lifesteal", GimmickTrigger.OnKill, GimmickEffect.Heal, 6);
 
             r = new Route(nodes, "Husk", "deception", "St_R_Deception");
-            r.L("隠れ身の巡り", "Concealment Cycle", LinkKind.MemoryHaste, 2);
+            r.L("隠れ身の巡り", "Concealment Cycle", LinkKind.MemoryHaste, 3);
             r.G("隠れ身の闇", "Shadow of Stealth", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
-            r.L("奇襲の余波", "Ambush Aftershock", LinkKind.MemorySurge, 2);
-            r.G("解除の波紋", "Reveal Ripple", GimmickTrigger.OnHit, GimmickEffect.Burst, 25);
+            r.L("奇襲の余波", "Ambush Aftershock", LinkKind.MemorySurge, 3);
+            r.G("解除の波紋", "Reveal Ripple", GimmickTrigger.OnHit, GimmickEffect.Burst, 29);
             r.L("影裂きの炸裂の冴え", "Keen Shadow-Rending Blast", LinkKind.MemoryDamage, 5);
             r.S("潜む闇の濃さ", "Lurking Dark Intensity", Stat.DarkAmp, 2);
-            r.G("影の侵食", "Creeping Shadow", GimmickTrigger.OnHit, GimmickEffect.Element, 200, 3);
+            r.G("影の侵食", "Creeping Shadow", GimmickTrigger.OnHit, GimmickEffect.Element, 230, 3);
 
             // Mist: AP opening shields/parries versus AD marked-target and thrust damage.
             r = new Route(nodes, "Mist", "en-garde", "St_D_AstridsMasterpieceEnGarde");
