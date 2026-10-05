@@ -10,6 +10,7 @@
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
     <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
@@ -25,6 +26,7 @@
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Continue.cs" Link="ModUnderTest/ClientSession.Continue.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.Durability.cs" Link="ModUnderTest/ClientSession.Durability.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.InfinityRewards.cs" Link="ModUnderTest/ClientSession.InfinityRewards.cs" />
     <Compile Include="../../src/SodRpg.Mod/ClientSession.LobbyReturn.cs" Link="ModUnderTest/ClientSession.LobbyReturn.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />

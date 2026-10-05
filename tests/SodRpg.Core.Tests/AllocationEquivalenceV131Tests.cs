@@ -612,6 +612,64 @@ namespace SodRpg.Core.Tests
             finally { StarClusters.RegisterAuthored(hero, Array.Empty<AuthoredStarDef>()); }
         }
 
+        // Route-entry eligibility is a rule change, not an optimization. Exercise it directly in the fast suite:
+        // the short random sequences need not reach it (Mist seed 500 first did so at step 52 in the slow suite).
+        [Theory]
+        [InlineData("Hero_Husk", "h.husk.route.flash-step.1", false)]
+        [InlineData("Hero_Mist", "h.mist.route.fast-feet.1", false)]
+        [InlineData("Hero_Husk", "h.husk.route.flash-step.1", true)]
+        [InlineData("Hero_Mist", "h.mist.route.fast-feet.1", true)]
+        public void Movement_route_entry_matches_the_reference_without_a_recipient_and_respects_disables(
+            string hero, string starId, bool disabled)
+        {
+            WithVerification(() => WithGeneratedHero(hero, tree =>
+            {
+                var talent = tree.Single(t => t.Id == starId);
+                Assert.Equal(ScopeKind.Receiver, talent.ScopedModifier.ScopeKind);
+                var policy = new EffectiveAllocationPolicy
+                {
+                    PermanentDisables = disabled
+                        ? new[] { new AllocationDisableRule { StarIds = new[] { starId } } }
+                        : Array.Empty<AllocationDisableRule>(),
+                };
+                var duo = new Duo(tree, policy, HeroTreeLayout.ForHero(hero), hero, () =>
+                {
+                    var profile = FundedProfile(61UL, hero, 150, relics: 0);
+                    TreeTestPaths.Connect(profile, hero, starId);
+                    return profile;
+                }) { Label = hero + " movement route entry disabled=" + disabled };
+                string original = ProfileCodec.Write(duo.ProductionProfile);
+                for (int rank = 1; rank <= talent.MaxRank; rank++)
+                {
+                    var result = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = starId });
+                    Assert.Null(result.Error);
+                    var plan = result.Plan;
+                    Assert.NotNull(plan);
+                    Assert.Equal(!disabled, plan.CandidateEffective);
+                    Assert.Equal(!disabled, plan.CanApply);
+                    Assert.Empty(plan.AffectedRefundIds);
+                    // No recharge source is owned: the paid rank is pending and must not invent an effective output.
+                    Assert.DoesNotContain(plan.NewEffectiveChannels, c => c.Memory == talent.RouteMemory);
+                    Assert.Equal(plan.OldEffectiveChannels.Select(Describe), plan.NewEffectiveChannels.Select(Describe));
+                    if (disabled)
+                    {
+                        Assert.Contains(plan.SaturationDetails, d => d.StarId == starId && d.Reason == AllocationInertReason.PermanentlyDisabled);
+                        Assert.Equal(original, ProfileCodec.Write(duo.ProductionProfile));
+                        break;
+                    }
+                    Assert.Empty(plan.SaturationDetails);
+                    Assert.Equal(rank, duo.ProductionProfile.Hero(hero).Talents[starId]);
+                }
+                if (!disabled)
+                {
+                    var refund = duo.Step(new AllocationChange { Kind = AllocationChangeKind.Refund, CandidateStarId = starId }).Plan;
+                    Assert.True(refund.CanApply);
+                    Assert.Equal(talent.MaxRank - 1, duo.ProductionProfile.Hero(hero).Talents[starId]);
+                    duo.Buy(starId);
+                }
+            }));
+        }
+
         /// <summary>The real generated v1.31 trees (700-860 stars): dependency groups, region evaluation and keystone changes against the original algorithm.</summary>
         [Theory, MemberData(nameof(GeneratedHeroes))]
         public void Production_engine_matches_the_original_algorithm_on_generated_v131_hero_trees(string hero, int seed)

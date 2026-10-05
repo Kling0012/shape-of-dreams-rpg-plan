@@ -108,7 +108,7 @@ namespace SodRpg.Mod
     // The real protocol constant lives in NetMessages.cs (not compiled here).
     internal static class Protocol
     {
-        public const int Version = 21;
+        public const int Version = 22;
         public const string LobbyReturnedResumeSession = "lobby-returned";
     }
     public enum GameState { InLobby, Playing }

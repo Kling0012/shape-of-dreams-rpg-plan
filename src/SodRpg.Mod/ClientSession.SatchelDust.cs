@@ -13,6 +13,7 @@ namespace SodRpg.Mod
         // 敵を大量に倒してあふれが続く場面で固まる。外した分はキューへ溜め、ティックか保存の直前に1回にまとめる。
         private readonly List<GameEvent> _satchelOverflowQueue = new List<GameEvent>();
         private readonly List<GameEvent> _satchelOverflowDrain = new List<GameEvent>();
+        // 未送信の取引。チェックポイント準備では保持し、後続の確認保存が成功してから送る。
         private readonly List<PendingTrade> _satchelOverflowBatch = new List<PendingTrade>();
         private bool _flushingSatchelOverflow;
 
@@ -20,13 +21,18 @@ namespace SodRpg.Mod
         private void TickSatchelOverflow() => FlushSatchelOverflow();
 
         /// <summary>
-        /// キューに溜まったあふれを1回のトランザクションで確定する。利用可否の確認と準備保存はバッチ全体で1回、
-        /// 送信は1個につき1回（Protocol・結果は従来どおり）。失敗はその遺物だけが欠片へ戻り、ほかは続行する。
-        /// Emit（キューへの追加）・保存の直前・ティックの最後から呼ばれる。再入は無視する。
+        /// キューに溜まったあふれを取引へ移し、準備保存をバッチ全体で1回確定してから送信する。
+        /// チェックポイント準備では送信せず、同じ取引を次の保存・ティックで送る。
+        /// Protocol・報酬レートは従来どおり。再入は無視する。
         /// </summary>
-        internal void FlushSatchelOverflow()
+        internal void FlushSatchelOverflow() => FlushSatchelOverflow(send: true);
+
+        private void PrepareSatchelOverflow() => FlushSatchelOverflow(send: false);
+
+        private void FlushSatchelOverflow(bool send)
         {
-            if (_flushingSatchelOverflow || _satchelOverflowQueue.Count == 0) return;
+            if (_flushingSatchelOverflow || (_satchelOverflowQueue.Count == 0
+                && (!send || _satchelOverflowBatch.Count == 0))) return;
             _flushingSatchelOverflow = true;
             try
             {
@@ -36,19 +42,21 @@ namespace SodRpg.Mod
                 _satchelOverflowQueue.Clear();
                 int count = drained.Count;
                 string runId = Profile.Run?.RunId;
-                string unavailable = !RunActive || DewPlayer.local == null
-                    || string.IsNullOrEmpty(runId)
-                    || NetworkedManagerBase<GameManager>.softInstance?.runId != runId
-                    ? Loc.T("夢のダストを付与する遠征中の持ち主が見つかりません。", "No expedition owner is available for Dream Dust.")
-                    : TradeUnavailable();
-                if (unavailable != null)
+                if (count != 0)
                 {
-                    Log.Warn("Satchel overflow uses shards: " + unavailable);
-                    for (int i = 0; i < count; i++) FallbackOverflow(drained[i], runId);
-                    return;
+                    string unavailable = !RunActive || DewPlayer.local == null
+                        || string.IsNullOrEmpty(runId)
+                        || NetworkedManagerBase<GameManager>.softInstance?.runId != runId
+                        ? Loc.T("夢のダストを付与する遠征中の持ち主が見つかりません。", "No expedition owner is available for Dream Dust.")
+                        : TradeUnavailable();
+                    if (unavailable != null)
+                    {
+                        Log.Warn("Satchel overflow uses shards: " + unavailable);
+                        for (int i = 0; i < count; i++) FallbackOverflow(drained[i], runId);
+                        count = 0;
+                    }
                 }
                 long ledgerId = _hostLedgerId; // TradeUnavailable で確認済みの非0の台帳を、準備保存より前に全件へ設定する。
-                _satchelOverflowBatch.Clear();
                 int next = 0;
                 try
                 {
@@ -68,7 +76,7 @@ namespace SodRpg.Mod
                             FallbackOverflow(drained[next], runId);
                         }
                     }
-                    if (_satchelOverflowBatch.Count == 0) return;
+                    if (!send || _satchelOverflowBatch.Count == 0) return;
                     // バッチ全体の準備状態（token・内容・台帳の識別子）を1回の確認保存でディスクへ確定させる。
                     if (!SaveNow(true))
                     {
@@ -89,6 +97,7 @@ namespace SodRpg.Mod
             finally
             {
                 _satchelOverflowDrain.Clear();
+                if (send) _satchelOverflowBatch.Clear();
                 _flushingSatchelOverflow = false;
             }
         }
