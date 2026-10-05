@@ -16,13 +16,17 @@ namespace UnityEngine
         internal static void EndHorizontal() => LayoutDepth--;
         internal static void Label(string text, object style) => Labels.Add(text);
         internal static Vector2 BeginScrollView(Vector2 position, params GUILayoutOption[] options)
-        { LayoutDepth++; return position; }
+        { Ops.Add("scroll"); LayoutDepth++; return position; }
         internal static void EndScrollView() => LayoutDepth--;
         internal static GUILayoutOption MaxHeight(float height) => new GUILayoutOption { Height = height };
-        internal static bool Button(string text, object style)
-        { int index = ButtonIndex++; return GUI.enabled && index == PressButton; }
+        internal static GUILayoutOption Height(float height) => new GUILayoutOption { Height = height };
+        internal static bool Button(string text, object style) => Button(text, style, null);
+        internal static bool Button(string text, object style, params GUILayoutOption[] options)
+        { Ops.Add("button:" + text); int index = ButtonIndex++; return GUI.enabled && index == PressButton; }
         internal static void Input(int button)
-        { PressButton = button; ButtonIndex = 0; Labels.Clear(); GUI.enabled = true; }
+        { PressButton = button; ButtonIndex = 0; Labels.Clear(); Ops.Clear(); GUI.enabled = true; }
+        /// <summary>描画した順の記録（ボタンとスクロールの前後関係の試験に使う）。</summary>
+        internal static readonly List<string> Ops = new List<string>();
     }
 }
 namespace SodRpg.Mod
@@ -56,5 +60,11 @@ namespace SodRpg.Mod
             => OfferAllocationRefund(error, _s.Profile, _hero, equipment, relic);
         internal void DrawRefund(int pressedButton)
         { UnityEngine.GUILayout.Input(pressedButton); DrawAllocationRefund(); }
+        // 装備タブの右の欄（DreamforgeUi.GearDetail.cs）を試験で動かすための足りない部品。
+        private UnityEngine.Vector2 _scrollRight;
+        internal void DrawGear(int pressedButton)
+        { UnityEngine.GUILayout.Input(pressedButton); DrawGearDetail(_s.Profile, _hero, _s.Profile.Stash[0]); }
+        private void RelicDetail(Relic r) { }
+        private void Comparison(Relic next, Relic cur) { }
     }
 }

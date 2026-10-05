@@ -1041,10 +1041,12 @@ namespace SodRpg.Mod
             // The star map needs room: it uses most of the screen and hides the expedition-only rows.
             bool starTab = _tab == 2;
             bool codexTab = _tab == 4 && _codexOpen; // 図鑑は一覧が見やすいよう、少し大きく開く
-            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶は左の一覧と右の操作欄が収まる高さまで広げる。
+            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶と装備は、左の一覧と右の操作欄が収まる高さまで広げる
+            // （装備の見出しは遠征の外で行が増え、固定の720では下端の操作・鍵のボタンが枠の外へ出た #128）。
             bool forgeTab = _tab == 1;
+            bool gearTab = _tab == 0;
             float ww = starTab ? w - 16 : Mathf.Min(codexTab ? 1180 : 1060, w - 20);
-            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab ? 900 : 720, h - 20);
+            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab || gearTab ? 900 : 720, h - 20);
             _windowHeight = wh;
             _windowWidth = ww;
             var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
@@ -1355,45 +1357,7 @@ namespace SodRpg.Mod
             {
                 GUILayout.Label(Loc.T("一覧から遺物を選ぶと、ここに性能と、いま装着している物との違いが表示されます。", "Select a relic to see its stats and how it compares with what you have equipped."), _st.Small);
             }
-            else
-            {
-                var cur = Rules.EquippedRelic(p, hero, sel.Slot);
-                _scrollRight = GUILayout.BeginScrollView(_scrollRight);
-                RelicDetail(sel);
-                if (cur != null && cur.Uid != sel.Uid) Comparison(sel, cur);
-                GUILayout.EndScrollView();
-                GUI.enabled = _s.CanEditLoadout && !_s.Trades.IsReserved(sel.Uid);
-                GUILayout.BeginHorizontal();
-                bool equipped = cur != null && cur.Uid == sel.Uid;
-                if (!equipped && GUILayout.Button(Loc.T("装着する", "Equip"), _st.Button, GUILayout.Height(32)))
-                {
-                    try
-                    {
-                        foreach (var e in Rules.Equip(p, hero, sel.Uid, _s.Trades)) _s.Emit(e);
-                        _s.MarkDirty(true);
-                    }
-                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-                if (equipped && GUILayout.Button(Loc.T("外す", "Unequip"), _st.Button, GUILayout.Height(32)))
-                {
-                    try
-                    {
-                        foreach (var e in Rules.Unequip(p, hero, sel.Slot)) _s.Emit(e);
-                        _s.MarkDirty(true);
-                    }
-                    catch (AllocationValidationException ex) { OfferAllocationRefund(ex, p, hero, true, sel.Uid); }
-                    catch (InvalidOperationException ex) { SetStatus(ex.Message); }
-                }
-                GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
-                if (GUILayout.Button(sel.Locked ? Loc.T("鍵を外す", "Unlock") : Loc.T("鍵をかける", "Lock"), _st.Button, GUILayout.Height(32)))
-                {
-                    Rules.ToggleLock(p, sel.Uid, _s.Trades);
-                    _s.MarkDirty(false);
-                }
-                GUILayout.EndHorizontal();
-                GUI.enabled = true;
-            }
+            else DrawGearDetail(p, hero, sel);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
         }
