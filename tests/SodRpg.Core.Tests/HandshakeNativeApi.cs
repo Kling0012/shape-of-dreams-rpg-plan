@@ -51,5 +51,6 @@ namespace SodRpg.Mod
     internal static partial class ClientSession
     {
         internal static ulong HostAuthorityGeneration;
+        internal static string ContinueRunId, ContinueCheckpointId, ContinueResumeSession;
     }
 }
