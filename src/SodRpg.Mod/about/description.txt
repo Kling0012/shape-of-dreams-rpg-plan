@@ -1,5 +1,5 @@
-[b]v2.2.0: new Infinity Mode — an endless run in a single world, with a boss every 10/15/20 cleared rooms and a secure-or-delve choice after it. Saves carry over. Update all co-op players and restart the game.[/b]
-[b]v2.2.0：新しい遊び方「インフィニティモード」を追加しました。ひとつの世界で終わりなく遠征が続き、決まった数の部屋をクリアするとボスが現れ、倒したあとに「確保して帰還」か「深く潜る」かを選べます。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
+[b]v2.3.0: a clearer star map (layout, descriptions, per-star list), satchel overflow turns into Dream Dust, failed forge enhancements no longer reset to +0, Return to Lobby ends the run as a defeat, and bug fixes (hidden gear buttons, nightmare bosses). Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.3.0：星図を見やすく作り直しました（並び・説明・左の一覧）。鞄があふれると夢のダストに換わり、鍛冶の強化に失敗しても+0に戻らなくなりました。遠征中の「ロビーに戻る」は失敗扱いになります。装備のボタンが見えない不具合、ボスが悪夢化する不具合なども直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
