@@ -11,10 +11,14 @@ namespace HarmonyLib
     internal sealed class HarmonyPatch : Attribute
     {
         public HarmonyPatch() { }
+        public HarmonyPatch(Type type) { }
         public HarmonyPatch(Type type, string method) { }
+        public HarmonyPatch(Type type, string method, Type[] argumentTypes) { }
     }
+    internal enum Priority { First = 400, Last = 800 }
+    internal sealed class HarmonyPriority : Attribute { public HarmonyPriority(Priority priority) { } }
 }
-namespace Mirror { internal static class NetworkServer { public static bool active = true; } }
+namespace Mirror { internal static class NetworkServer { public static bool active = true; } internal static class NetworkTime { public static double time; } }
 namespace UnityEngine { internal static class Time { public static float time, unscaledTime; } }
 namespace SodRpg.Mod
 {

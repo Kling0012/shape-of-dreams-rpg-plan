@@ -47,6 +47,27 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.IdentityStrikes.cs" Link="ModUnderTest/HostAuthority.IdentityStrikes.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryTunings.cs" Link="ModUnderTest/HostAuthority.MemoryTunings.cs" />
     <Compile Include="../../src/SodRpg.Mod/CodexPresenter.cs" Link="ModUnderTest/CodexPresenter.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossRuntime.cs" Link="ModUnderTest/HostAuthority.BossRuntime.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossNativeAdapters.cs" Link="ModUnderTest/HostAuthority.BossNativeAdapters.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossMechanisms.cs" Link="ModUnderTest/HostAuthority.BossMechanisms.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossDemon.cs" Link="ModUnderTest/HostAuthority.BossDemon.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSkoll.cs" Link="ModUnderTest/HostAuthority.BossSkoll.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossInfernus.cs" Link="ModUnderTest/HostAuthority.BossInfernus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossInk.cs" Link="ModUnderTest/HostAuthority.BossInk.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossNyx.cs" Link="ModUnderTest/HostAuthority.BossNyx.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossErebos.cs" Link="ModUnderTest/HostAuthority.BossErebos.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSeeker.cs" Link="ModUnderTest/HostAuthority.BossSeeker.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossAzurak.cs" Link="ModUnderTest/HostAuthority.BossAzurak.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPrimus.cs" Link="ModUnderTest/HostAuthority.BossPrimus.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossGlacialCore.cs" Link="ModUnderTest/HostAuthority.BossGlacialCore.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossEternalFlame.cs" Link="ModUnderTest/HostAuthority.BossEternalFlame.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBeam.cs" Link="ModUnderTest/HostAuthority.BossBeam.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossHerWorld.cs" Link="ModUnderTest/HostAuthority.BossHerWorld.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossLastStarlight.cs" Link="ModUnderTest/HostAuthority.BossLastStarlight.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSoulPrison.cs" Link="ModUnderTest/HostAuthority.BossSoulPrison.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBurrow.cs" Link="ModUnderTest/HostAuthority.BossBurrow.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
   </ItemGroup>
 
 </Project>

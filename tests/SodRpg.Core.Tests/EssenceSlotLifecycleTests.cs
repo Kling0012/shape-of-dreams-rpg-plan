@@ -11,7 +11,7 @@ namespace SodRpg.Mod
 {
     internal enum HeroSkillLocation { Identity, Movement, Q, W, E, R }
     internal struct GemLocation { public HeroSkillLocation skill; public int index; }
-    internal sealed class Gem : Actor { }
+    internal partial class Gem : Actor { }
     internal partial class Hero : Entity { public HeroSkill Skill = new HeroSkill(); }
     internal sealed partial class HeroSkill
     {

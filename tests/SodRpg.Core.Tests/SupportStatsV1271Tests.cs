@@ -145,7 +145,7 @@ namespace SodRpg.Core.Tests
         {
             var added = Content.Uniques.Where(u => u.Id.StartsWith("unique.support_", StringComparison.Ordinal)).ToArray();
             Assert.Equal(12, added.Length);
-            Assert.Equal(1340, Content.Uniques.Count); // Reviewed P37 + 6 boss-demon pieces (#48 stage A).
+            Assert.Equal(1394, Content.Uniques.Count); // Reviewed P37 + 10 boss sets × 6 pieces (#48 stages A–B2).
             foreach (var unique in added)
             {
                 Assert.Single(Content.Uniques, u => u.Id == unique.Id);

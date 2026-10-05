@@ -23,21 +23,25 @@ namespace SodRpg.Mod
         public DamageData PureDamage(float amount, float coefficient) => new DamageData(amount) { actor = this };
         public DamageData PhysicalDamage(float amount, float coefficient) => new DamageData(amount) { actor = this };
         public DamageData MagicDamage(float amount, float coefficient) => new DamageData(amount) { actor = this };
-        public void GiveShield(Entity target, float amount, float duration) => target.Status.currentShield += amount;
-        public void ApplyElemental(ElementalType element, Entity target, int stacks) => target.Status.AddElement(element, stacks);
+        public Se_GenericShield_OneShot GiveShield(Entity target, float amount, float duration)
+        {
+            var container = new Se_GenericShield_OneShot { initAmount = amount };
+            container.shield = new ShieldEffect { amount = amount };
+            target.Status.Shields.Add(container.shield);
+            return container;
+        }
+        public ElementalStatusEffect ApplyElemental(ElementalType element, Entity target, int stacks)
+        { target.Status.AddElement(element, stacks); return new ElementalStatusEffect { info = new CastInfo(target) }; }
     }
     internal partial class Entity
     {
-        private static int _nextId;
-        private readonly int _id = ++_nextId;
         public float currentHealth = 1000;
         public Vector3 position;
         public Vector3 agentPosition => position;
-        public int GetInstanceID() => _id;
     }
     internal sealed partial class EntityStatus { public float attackDamage = 100, abilityPower = 100; }
+    internal partial class AbilityInstance : Entity { public Gem gem; }
     internal sealed partial class ElementalStatusEffect : StatusEffect { }
-    internal partial class AbilityInstance : Actor { public Gem gem; }
     internal sealed class AttackTrigger : Actor { public Entity owner; }
     internal sealed partial class Summon : Entity
     {
@@ -58,7 +62,7 @@ namespace SodRpg.Mod
     }
     internal enum ElementalType { Fire, Cold, Light, Dark }
     internal enum SkillType { Normal, Ultimate }
-    internal partial class SkillTrigger : Actor
+    internal partial class SkillTrigger : AbilityTrigger
     {
         public float currentConfigUnscaledCooldownTime = 10, currentConfigUnscaledMaxCooldownTime = 10;
         public int currentConfigCurrentCharge, currentConfigIndex;
@@ -125,7 +129,7 @@ namespace SodRpg.Mod
         public readonly List<Entity> allEntities = new List<Entity>();
     }
     internal sealed class ListReturnHandle<T> { public void Return() { } }
-    internal static class DewPhysics
+    internal static partial class DewPhysics
     {
         public static List<Entity> OverlapCircleAllEntities(out ListReturnHandle<Entity> handle, Vector3 center,
             float radius, object filter, Hero hero)

@@ -11,8 +11,8 @@ namespace SodRpg.Core.Tests
     /// #48 段階A：ボス限定セット（森の悪魔「荒ぶる樹界」）の Core 側。
     /// 装備数による 2/3/6 段階の切り替え、ヒステリー連携の段階値、汎用プール除外と
     /// 該当ボス撃破のみの入手、b:/z: 節の Protocol 16 往復と上限64・未知ID・重複の拒否。
-    /// Mod 側の戦闘runtime（速度補正の置換・解除、状態破棄）は段階Aのテストリンクでは
-    /// 参照できないため、ここには含めない（BossCombatState は HostAuthority の private 入れ子）。
+    /// Mod 側の戦闘runtime（速度補正の置換・解除、状態破棄）は BossRuntimeNativeTests が
+    /// 担う（BossCombatState は段階B以降 internal なのでリンク可能）。
     /// </summary>
     public class BossSetsStageATests
     {
@@ -57,8 +57,10 @@ namespace SodRpg.Core.Tests
         {
             Assert.True(BossSets.TryGetSet("Mon_Forest_BossDemon", out var set));
             Assert.Equal(SetId, set.Id);
-            // 旧Skollの定義は撤去済み。未知の型名では何も引けない。
-            Assert.False(BossSets.TryGetSet("Mon_SnowMountain_BossSkoll", out _));
+            // B-1以降はSkollも登録済み。未実装のまま残るCrawler型では何も引けない。
+            Assert.True(BossSets.TryGetSet("Mon_SnowMountain_BossSkoll", out var skoll));
+            Assert.Equal(BossProfiles.SkollSetId, skoll.Id);
+            Assert.False(BossSets.TryGetSet("Mon_Despair_BossCrawler", out _));
             Assert.False(BossSets.TryGetSet(null, out _));
             var pieces = Content.Uniques.Where(u => u.SetId == SetId).ToList();
             Assert.Equal(6, pieces.Count);
@@ -161,10 +163,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0.15, BossSets.DropChance(false, 5), 6);
             Assert.Equal(0.15, BossSets.DropChance(false, 9), 6); // 深さは0〜5に固定
             Assert.Equal(0.20, BossSets.DropChance(true, 5), 6);
-            // 未登録のボス型名は抽選前に弾かれ、乱数を消費しない。
+            // 未登録のボス型名（Crawler）は抽選前に弾かれ、乱数を消費しない。
             var rng = new Rng(9);
             ulong before = rng.State;
-            Assert.Null(BossSets.RollDrop(rng, "Mon_SnowMountain_BossSkoll", true, 5, 10));
+            Assert.Null(BossSets.RollDrop(rng, "Mon_Despair_BossCrawler", true, 5, 10));
             Assert.Null(BossSets.RollDrop(rng, null, true, 5, 10));
             Assert.Equal(before, rng.State);
         }
