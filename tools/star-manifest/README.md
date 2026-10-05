@@ -245,3 +245,17 @@ python tools/star-manifest/validate.py cetus      # 1人
 
 ### 橋の窓/印の持続時間
 `GimmickParam` の `param` には `"WindowDuration"`（橋の窓）と `"MarkDuration"`（橋の印）も使える。橋の星団の行で `target.star` がその橋の ring ID（`target.effect` は null）のときだけ許され、Window ペアには WindowDuration、Mark ペアには MarkDuration だけを使える（`validate.py` が形、`gen_cs.py` が実際のペアの種類を検査し、契約も登録時に拒否する）。意味は他の Duration と同じ%で、その橋のペアの窓／印だけが延びる。
+
+## 星図のオフスクリーン描画・比較（issue #106）
+
+登録済みのゲーム用レイアウトをSVGで保存し、`rsvg-convert` がPATHにあればPNGも保存する。レポートは既定で出力先の `metrics.md`。リポジトリのルートから実行する。
+
+```sh
+dotnet run --project tools/StarMapRender -c Release -- /home/wang/dev/sod-prompts/starmaps/after --before /home/wang/dev/sod-prompts/starmaps/before/metrics.md
+```
+
+`--before <metrics.md>` は以前のStarMapRenderの生メトリクス表を読み、旅人ごとの線交差、線が星の上に通る組数/線数、線長CV、最近傍が他群である割合を before → after で追加する。交差・組数が各beforeの1/3以下、混在率が10%以下かをPASS/FAILで示す。現在の生メトリクス表と定義は残す。BeforeのCV・混在率は元表の丸め値であり、Afterの混在率の判定は丸め前の実測値を使う。未達の構造的原因は集計だけから推定せず、SVG/PNGなどの根拠とともに別途記録する。
+
+`--before` を省くと現在の生メトリクスのみを記録する。`--max-edge 2000` は画像の最大辺（400以上）、`--no-png` はSVGのみ、`--metrics <file>` はレポート先の変更（`-` は標準出力）。
+
+標準出力とレポートには初回 `RegisterAllGenerated()` の全旅人構築・登録時間を記録する（静的初期化/JIT込み、dotnet build・プロセス起動・描画・集計は除外）。旅人別時間はその後の `RegisterGeneratedHero` 1回による**暖まったプロセスでの再構築・登録**で、Coldではない。Cached `ForHero` は1回ウォームアップ後の10,000回平均µs/callであり、レイアウト構築時間ではない。
