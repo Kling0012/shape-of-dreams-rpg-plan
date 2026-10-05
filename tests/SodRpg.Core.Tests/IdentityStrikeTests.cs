@@ -14,6 +14,10 @@ namespace SodRpg.Core.Tests
             IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f);
         internal static IdentityStrikeDefinition FlowStrike(string id = "t.flow", int everyN = 1) => IdentityStrikeDefinition.EveryNth(id, Flow, everyN, 2500, 20,
             IdentityStrikeElement.None, IdentityStrikeShape.ForwardArc, 5f, 100f);
+        internal static IdentityStrikeDefinition CritWindStrike(string id = "t.windcrit") => IdentityStrikeDefinition.CriticalAfterDisplacement(id, Wind, 12000,
+            IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f);
+        internal static IdentityStrikeDefinition CritFlowStrike(string id = "t.flowcrit") => IdentityStrikeDefinition.ConsecutiveCritical(id, Flow, 18000,
+            IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f);
 
         internal static AuthoredMechanismSpec Spec(IdentityStrikeDefinition strike) => new AuthoredMechanismSpec
         {
@@ -107,6 +111,95 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
+        public void After_displacement_critical_consumes_the_preparation_on_any_first_hit()
+        {
+            var state = new IdentityStrikeState(CritWindStrike());
+            Assert.False(state.OnBasicHit(1, 0f, critical: true)); // not primed yet
+            state.OnDisplacement(1f);
+            Assert.True(state.OnBasicHit(2, 2f, critical: true)); // critical first hit inside the 3 s window
+            Assert.False(state.OnBasicHit(3, 2.1f, critical: true)); // once per displacement
+            state.OnDisplacement(10f);
+            Assert.False(state.OnBasicHit(4, 11f, critical: false)); // a noncritical first hit consumes the preparation ...
+            Assert.False(state.OnBasicHit(5, 11.5f, critical: true)); // ... so a later critical hit of the same preparation is too late
+            state.OnDisplacement(20f);
+            Assert.False(state.OnBasicHit(6, 23.5f, critical: true)); // the 3 s window has closed
+            state.OnDisplacement(30f);
+            Assert.True(state.OnBasicHit(7, 30f, critical: true));
+            state.OnDisplacement(30.2f);
+            Assert.False(state.OnBasicHit(8, 30.5f, critical: true)); // at most one strike per second
+            state.OnDisplacement(33f);
+            Assert.True(state.OnBasicHit(9, 33f, critical: true));
+            Assert.False(state.OnBasicHit(9, 33f, critical: true)); // same activation never twice
+        }
+
+        [Fact]
+        public void Consecutive_critical_needs_three_crits_on_one_victim_and_resets_on_any_break()
+        {
+            var state = new IdentityStrikeState(CritFlowStrike());
+            Assert.False(state.OnBasicHit(1, 0f, true, 11));
+            Assert.False(state.OnBasicHit(2, 0.5f, true, 11));
+            Assert.True(state.OnBasicHit(3, 1f, true, 11)); // three in a row on the same enemy
+            Assert.False(state.OnBasicHit(4, 3f, true, 11));
+            Assert.False(state.OnBasicHit(5, 3.5f, true, 11));
+            Assert.False(state.OnBasicHit(6, 4f, false, 11)); // a noncritical hit resets
+            Assert.False(state.OnBasicHit(7, 4.5f, true, 0)); // an unattributed hit resets
+            Assert.False(state.OnBasicHit(8, 5f, true, 11));
+            Assert.False(state.OnBasicHit(9, 5.5f, true, 11));
+            Assert.False(state.OnBasicHit(10, 6f, true, 22)); // a different enemy resets the sequence
+            Assert.False(state.OnBasicHit(11, 6.5f, true, 11)); // and back again: still nothing complete
+            Assert.False(state.OnBasicHit(12, 12f, true, 11)); // 5.5 s later: the 4 s window has closed
+            Assert.False(state.OnBasicHit(13, 12.5f, true, 11));
+            Assert.True(state.OnBasicHit(14, 13f, true, 11)); // three fresh crits inside the window
+            Assert.False(state.OnBasicHit(15, 13.5f, true, 11));
+            Assert.False(state.OnBasicHit(16, 13.7f, true, 11));
+            Assert.False(state.OnBasicHit(17, 13.9f, true, 11)); // inside the 1 s interval: consumed without a strike
+            Assert.False(state.OnBasicHit(18, 14.5f, true, 11));
+            Assert.False(state.OnBasicHit(19, 15f, true, 11));
+            Assert.True(state.OnBasicHit(20, 15.5f, true, 11));
+        }
+
+        [Fact]
+        public void Critical_strike_definitions_pin_their_window_element_targets_and_the_percent_cap()
+        {
+            var wind = CritWindStrike(); var flow = CritFlowStrike();
+            Assert.True(wind.IsCriticalMechanism); Assert.True(flow.IsCriticalMechanism);
+            Assert.False(WindStrike().IsCriticalMechanism);
+            Assert.Equal(IdentityStrikeTrigger.AfterDisplacementCritical, wind.Trigger);
+            Assert.Equal(IdentityStrikeTrigger.ConsecutiveCritical, flow.Trigger);
+            Assert.Equal(3f, wind.WindowSeconds); Assert.Equal(1, wind.EveryN);
+            Assert.Equal(4f, flow.WindowSeconds); Assert.Equal(3, flow.EveryN);
+            Assert.Equal(6, wind.MaxTargets); Assert.Equal(6, flow.MaxTargets);
+            Assert.Equal(IdentityStrikeElement.Dark, wind.Element); Assert.Equal(IdentityStrikeElement.Dark, flow.Element);
+            Assert.Equal(0, wind.BonusSpeedUnitsPerPercent); Assert.Equal(0, flow.BonusSpeedUnitsPerPercent);
+            // 200% of the basis is the ceiling for the critical modes too.
+            Assert.Equal(20000, IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 20000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f).AdUnits);
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 20001,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
+            // Dark only, at most 6 enemies, a bounded window, no converted speed term, and each mode keeps its own memory.
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
+                IdentityStrikeElement.Fire, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, maxTargets: 7));
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, windowSeconds: 0.4f));
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, windowSeconds: 10.5f));
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Flow, 12000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
+            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Wind, IdentityStrikeTrigger.AfterDisplacementCritical,
+                2, 3f, 12000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, 6)); // one hit per displacement
+            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Wind, IdentityStrikeTrigger.AfterDisplacementCritical,
+                1, 3f, 12000, 20, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, 6)); // no bonus speed term
+            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.ConsecutiveCritical("t.x", Wind, 18000,
+                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f));
+            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Flow, IdentityStrikeTrigger.ConsecutiveCritical,
+                2, 4f, 18000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f, 6)); // exactly three crits
+            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Flow, IdentityStrikeTrigger.ConsecutiveCritical,
+                3, 11f, 18000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f, 6)); // window 0.5..10 s
+        }
+
+        [Fact]
         public void Every_nth_counts_each_basic_attack_activation_once_and_every_one_fires_at_n_equals_one()
         {
             var third = new IdentityStrikeState(FlowStrike(everyN: 3));
@@ -140,7 +233,8 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Every_payload_round_trips_the_wire_codec_and_the_spec_contract_rejects_misuse()
         {
-            var specs = new[] { Spec(WindStrike()), Spec(FlowStrike()), Spec(IdentityStrikeDefinition.DashBonusAsMemory("t.dash")),
+            var specs = new[] { Spec(WindStrike()), Spec(FlowStrike()), Spec(CritWindStrike()), Spec(CritFlowStrike()),
+                Spec(IdentityStrikeDefinition.DashBonusAsMemory("t.dash")),
                 Spec(MemoryTuningDefinition.KeepSpeed("t.keep", 4000)), Spec(MemoryTuningDefinition.HealScale("t.heal", 20000)),
                 Spec(MemoryTuningDefinition.SwordQiAttackBasis("t.qi")) };
             foreach (var spec in specs)
@@ -264,7 +358,8 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Descriptions_are_natural_text_without_raw_ids()
         {
-            foreach (var spec in new[] { Spec(WindStrike()), Spec(FlowStrike()), Spec(FlowStrike("t.n", 3)), Spec(IdentityStrikeDefinition.DashBonusAsMemory("t.d")),
+            foreach (var spec in new[] { Spec(WindStrike()), Spec(FlowStrike()), Spec(FlowStrike("t.n", 3)), Spec(CritWindStrike()), Spec(CritFlowStrike()),
+                Spec(IdentityStrikeDefinition.DashBonusAsMemory("t.d")),
                 Spec(MemoryTuningDefinition.KeepSpeed("t.k", 4000)), Spec(MemoryTuningDefinition.HealScale("t.h", 20000)), Spec(MemoryTuningDefinition.SwordQiAttackBasis("t.q")) })
             {
                 string text = AuthoredMechanisms.Describe(spec);
@@ -272,6 +367,59 @@ namespace SodRpg.Core.Tests
                 Assert.False(string.IsNullOrWhiteSpace(text));
             }
             Assert.Contains("風の傷", AuthoredMechanisms.Describe(Spec(WindStrike())));
+        }
+
+        [Fact]
+        public void Generated_husk_critical_stars_register_the_documented_channels_and_describe_both_languages()
+        {
+            bool previous = Loc.Japanese;
+            StarClusters.RegisterGeneratedHero("Hero_Husk"); // not RegisterAllGenerated: its one-shot flag may already be spent
+            try
+            {
+                var tree = HeroSigils.TreeFor("Hero_Husk");
+                var wind = tree.Single(t => t.Id == "husk.mem.wind-scar.c1.n2");
+                var flow = tree.Single(t => t.Id == "husk.mem.killing-flow.c1.n2");
+                Assert.Equal("影返し", wind.Name.Ja); Assert.Equal("Shadow Reprise", wind.Name.En);
+                Assert.Equal("三重の処刑", flow.Name.Ja); Assert.Equal("Threefold Execution", flow.Name.En);
+                var windStrike = wind.Mechanism.IdentityStrike;
+                Assert.Equal(IdentityStrikeTrigger.AfterDisplacementCritical, windStrike.Trigger);
+                Assert.Equal(IdentityStrikeDefinition.WindScar, windStrike.Identity);
+                Assert.Equal(12000, windStrike.AdUnits); Assert.Equal(3f, windStrike.WindowSeconds);
+                Assert.Equal(IdentityStrikeElement.Dark, windStrike.Element);
+                Assert.Equal(IdentityStrikeShape.ForwardArc, windStrike.Shape);
+                Assert.Equal(4.5f, windStrike.RangeMetres); Assert.Equal(120f, windStrike.WidthOrArc); Assert.Equal(6, windStrike.MaxTargets);
+                var flowStrike = flow.Mechanism.IdentityStrike;
+                Assert.Equal(IdentityStrikeTrigger.ConsecutiveCritical, flowStrike.Trigger);
+                Assert.Equal(IdentityStrikeDefinition.KillingFlow, flowStrike.Identity);
+                Assert.Equal(18000, flowStrike.AdUnits); Assert.Equal(4f, flowStrike.WindowSeconds); Assert.Equal(3, flowStrike.EveryN);
+                Assert.Equal(IdentityStrikeElement.Dark, flowStrike.Element);
+                Assert.Equal(IdentityStrikeShape.ForwardLine, flowStrike.Shape);
+                Assert.Equal(6f, flowStrike.RangeMetres); Assert.Equal(2f, flowStrike.WidthOrArc); Assert.Equal(6, flowStrike.MaxTargets);
+                foreach (bool japanese in new[] { true, false })
+                {
+                    Loc.Japanese = japanese;
+                    string windText = wind.Describe(); string flowText = flow.Describe();
+                    if (japanese)
+                    {
+                        Assert.Contains("会心すると", windText); Assert.Contains("準備を消費", windText); Assert.Contains("3秒以内", windText);
+                        Assert.Contains("35%短縮", windText); Assert.Contains("計6体まで", windText); Assert.Contains("発動間隔1秒", windText);
+                        Assert.Contains("3回連続", flowText); Assert.Contains("4秒以内", flowText); Assert.Contains("連続数をリセット", flowText);
+                        Assert.Contains("計6体まで", flowText);
+                    }
+                    else
+                    {
+                        Assert.Contains("is critical", windText); Assert.Contains("consumes readiness", windText); Assert.Contains("within 3s", windText);
+                        Assert.Contains("35%", windText); Assert.Contains("up to 6 enemies", windText); Assert.Contains("1s interval", windText);
+                        Assert.Contains("three consecutive critical", flowText); Assert.Contains("at most 4s", flowText);
+                        Assert.Contains("resets the sequence", flowText); Assert.Contains("up to 6 enemies", flowText);
+                    }
+                }
+            }
+            finally
+            {
+                Loc.Japanese = previous;
+                StarClusters.RegisterAuthored("Hero_Husk", Array.Empty<AuthoredStarDef>());
+            }
         }
     }
 }

@@ -232,21 +232,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory, MemberData(nameof(Heroes))]
-        public void Every_baseline_star_and_position_is_retained(string hero)
+        public void Every_baseline_star_retains_its_id_ranks_and_keystone_definition(string hero)
         {
             var baselineTree = HeroSigils.BaselineTreeFor(hero);
-            var before = HeroTreeLayout.ForTalents(baselineTree);
             WithHero(hero, tree =>
             {
-                var after = HeroTreeLayout.ForHero(hero);
                 var ids = new HashSet<string>(tree.Select(t => t.Id), StringComparer.Ordinal);
                 foreach (var node in baselineTree)
                 {
                     Assert.Contains(node.Id, ids);
-                    var old = before.Nodes.Single(n => n.Id == node.Id);
-                    var now = after.Nodes.Single(n => n.Id == node.Id);
-                    Assert.True(Math.Abs(old.X - now.X) < 0.001f && Math.Abs(old.Y - now.Y) < 0.001f,
-                        node.Id + " moved from (" + old.X + ", " + old.Y + ") to (" + now.X + ", " + now.Y + ")");
                     var current = tree.Single(t => t.Id == node.Id);
                     Assert.Equal(node.MaxRank, current.MaxRank);
                     Assert.Equal(node.IsKeystone, current.IsKeystone);

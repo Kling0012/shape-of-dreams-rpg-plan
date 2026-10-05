@@ -1416,11 +1416,11 @@ namespace SodRpg.Core.Game
                 $"Salvaged {done} relics for {shards} shards" + (tuning > 0 ? $", +{tuning} tuning" : "") + "."));
         }
 
-        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。上限では0。</summary>
+        /// <summary>鍛冶で次の強化値を目指すときの失敗率（%）。max(0, (目標強化値 − 3) × 3) を45%で頭打ち。上限では0。</summary>
         public static int EnhanceFailureChance(Relic relic)
         {
             if (relic.Enhance >= Content.MaxEnhanceFor(relic)) return 0;
-            return Math.Max(0, (relic.Enhance - 2) * 5);
+            return Math.Min(45, Math.Max(0, (relic.Enhance - 2) * 3));
         }
 
         public static GameEvent Enhance(Profile p, string uid, TradeLedger trades = null)
@@ -1435,11 +1435,17 @@ namespace SodRpg.Core.Game
             var rng = p.TakeRng();
             if (rng.Chance(EnhanceFailureChance(r) / 100.0))
             {
-                r.Enhance = 0;
+                // 失敗しても半分は強化値そのまま。下がるかどうかも失敗判定と同じ rng から続けて引く。
+                bool lowered = rng.Chance(0.5);
+                if (lowered) r.Enhance = Math.Max(0, r.Enhance - 1);
                 p.StoreRng(rng);
-                return new GameEvent(EventKind.Info, Loc.T(
-                    $"「{r.PlainName}」の強化に失敗し、強化値が+0に戻りました。欠片{cost}は消費されました。",
-                    $"Enhancement failed for \"{r.PlainName}\" and reset it to +0. The {cost} shards were spent."), r.Rarity);
+                return new GameEvent(EventKind.Info, lowered
+                    ? Loc.T(
+                        $"「{r.PlainName}」の強化に失敗し、強化値が1段下がりました（+{r.Enhance}）。欠片{cost}は消費されました。",
+                        $"Enhancement failed for \"{r.PlainName}\" and lowered it by one level to +{r.Enhance}. The {cost} shards were spent.")
+                    : Loc.T(
+                        $"「{r.PlainName}」の強化に失敗しましたが、強化値は変わりませんでした（+{r.Enhance}）。欠片{cost}は消費されました。",
+                        $"Enhancement failed for \"{r.PlainName}\" but its enhancement level is unchanged (+{r.Enhance}). The {cost} shards were spent."), r.Rarity);
             }
             r.Enhance++;
             string milestone = GrantEnhanceMilestones(rng, r);

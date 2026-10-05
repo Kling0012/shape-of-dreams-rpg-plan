@@ -108,7 +108,7 @@ def check_growth(o, ctx, kind, hero, refs, errors, S):
 G_REQUIRED = ['trigger', 'effect', 'value', 'arg', 'cooldown', 'target']
 G_OPTIONAL = ['condition', 'once', 'everyN', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool', 'strike', 'tuning']
 # IdentityStrike（アイデンティティ記憶そのものが与える追加ダメージ）。gimmick.strike の正準形。
-STRIKE_MODES = {'AfterDisplacement', 'EveryNthBasicAttack', 'DashBonusAsMemory'}
+STRIKE_MODES = {'AfterDisplacement', 'EveryNthBasicAttack', 'DashBonusAsMemory', 'AfterDisplacementCritical', 'ConsecutiveCritical'}
 STRIKE_ELEMENTS = {'None', 'Fire', 'Cold', 'Light', 'Dark'}
 STRIKE_SHAPES = {'ForwardLine', 'ForwardArc'}
 # MemoryTuning（名前付きの本体記憶の挙動の静的な変更）。gimmick.tuning の正準形。value は百分率（40 = 40%）。
@@ -220,7 +220,7 @@ def check_gimmick(g, ctx, legacy, hero, refs, errors, memory=None):
     for k in ('basis', 'pool'):
         if k in g and not (isinstance(g[k], str) and g[k]):
             errors.append(f'{ctx}: {k} must be string')
-    check_strike(g, ctx, errors)
+    check_strike(g, ctx, errors, memory)
     check_tuning(g, ctx, errors, memory)
 
 
@@ -274,7 +274,8 @@ def check_strike(g, ctx, errors, memory=None):
         if set(st) != {'mode'} or g.get('value') != 0 or 'everyN' in g:
             errors.append(f'{ctx}: DashBonusAsMemory carries only mode, value 0 and no everyN (it adds no damage)')
         return
-    need = {'mode', 'element', 'shape', 'range', 'width'} | ({'windowSeconds'} if mode == 'AfterDisplacement' else set())
+    critical = mode in ('AfterDisplacementCritical', 'ConsecutiveCritical')
+    need = {'mode', 'element', 'shape', 'range', 'width'} | ({'windowSeconds'} if mode == 'AfterDisplacement' or critical else set())
     if not need <= set(st):
         errors.append(f'{ctx}: strike {mode} needs {sorted(need - set(st))}')
         return
@@ -286,13 +287,18 @@ def check_strike(g, ctx, errors, memory=None):
         errors.append(f'{ctx}: strike range must be 1..15 m and width > 0 (line width in m / arc angle in degrees)')
     elif st['shape'] == 'ForwardArc' and st['width'] > 360 or st['shape'] == 'ForwardLine' and st['width'] > 15:
         errors.append(f'{ctx}: strike width exceeds its shape limit (arc <= 360 degrees, line <= 15 m)')
-    if 'maxTargets' in st and not (isinstance(st['maxTargets'], int) and 1 <= st['maxTargets'] <= 16):
-        errors.append(f'{ctx}: strike maxTargets must be an int 1..16')
-    if mode == 'AfterDisplacement':
+    target_limit = 6 if critical else 16
+    if 'maxTargets' in st and not (isinstance(st['maxTargets'], int) and (not critical or not isinstance(st['maxTargets'], bool)) and 1 <= st['maxTargets'] <= target_limit):
+        errors.append(f'{ctx}: strike maxTargets must be an int 1..{target_limit}')
+    if mode == 'AfterDisplacement' or critical:
         if 'everyN' in g or 'bonusSpeed' in st:
-            errors.append(f'{ctx}: AfterDisplacement takes neither everyN nor bonusSpeed')
+            errors.append(f'{ctx}: {mode} takes neither everyN nor bonusSpeed')
         if not (num(st['windowSeconds']) and 0.5 <= st['windowSeconds'] <= 10):
             errors.append(f'{ctx}: strike windowSeconds must be 0.5..10')
+        if critical:
+            expected = 'St_D_ScarOfTheWind' if mode == 'AfterDisplacementCritical' else 'St_D_TheKillingFlow'
+            if memory != expected or st['element'] != 'Dark':
+                errors.append(f'{ctx}: {mode} needs memory {expected} and element Dark')
     else:
         if not (isinstance(g.get('everyN'), int) and 1 <= g['everyN'] <= 100) or 'windowSeconds' in st:
             errors.append(f'{ctx}: EveryNthBasicAttack needs gimmick.everyN 1..100 (1 = every basic attack) and no windowSeconds')

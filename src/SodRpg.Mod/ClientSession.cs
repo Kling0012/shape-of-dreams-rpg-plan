@@ -98,6 +98,7 @@ namespace SodRpg.Mod
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
             _notify = notify;
+            _lobbyReturnWarning = Log.Warn;
             InitializeProfiles(saveDir);
             RestoreRunDurability();
             _onDeath = OnDeath;
@@ -408,7 +409,7 @@ namespace SodRpg.Mod
                 ResetRunGrowthDisplay();
                 _appliedTransfer.Reset();
                 PressureHealthMultiplier = PressureDamageMultiplier = 1f;
-                ResetRunChoiceConnection();
+                if (!LobbyReturnPending) ResetRunChoiceConnection();
                 ResetMonsterAuthorityConnection();
                 _sentDreamLevel = -1;
                 _buildDirty = true;
@@ -505,14 +506,16 @@ namespace SodRpg.Mod
 
         private void TrackRun()
         {
+            if (LobbyReturnPending) return; // Finish the old defeat before observing a new native run.
             var gm = NetworkedManagerBase<GameManager>.softInstance;
             if (gm == null)
             {
-                ActiveRunId = null;
+                if (!LobbyReturnPending) ActiveRunId = null;
                 return;
             }
             string runId = gm.runId;
-            if (_nativeContinueRestoring || InfinityMode.Restoring) return;
+if (_nativeContinueRestoring || InfinityMode.Restoring) return;
+            if (BlockLobbyReturnedContinue(runId)) return;
             if (_nativeContinueCheckpoint != null)
             {
                 if (runId != _nativeContinueCheckpoint.RunId) return;
@@ -606,7 +609,8 @@ namespace SodRpg.Mod
         }
 
         private bool RunActive => ContinueReady && _nativeContinueCheckpoint == null
-            && Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId;
+            && Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId
+            && (!Profile.LobbyReturnedRunIds.Contains(ActiveRunId) || LobbyReturnPending);
 
         private void OnDeath(EventInfoKill info)
         {
@@ -692,6 +696,8 @@ namespace SodRpg.Mod
             try
             {
                 if (result == null) return;
+if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
+                    NetworkedManagerBase<GameManager>.softInstance?.runId ?? "")) return;
                 if (ObserveInfinityConclusion(result)) return;
                 _pendingRunVictory = IsVictory(result.result);
                 _pendingResultRunId = ActiveRunId ?? NetworkedManagerBase<GameManager>.softInstance?.runId;

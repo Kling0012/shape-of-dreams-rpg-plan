@@ -178,15 +178,25 @@ namespace SodRpg.Core.Tests
             {
                 Loc.Japanese = japanese;
                 var key = HeroSigils.All.Single(t => t.Id == "h.husk.key2");
-                var terms = japanese
+                // 両方の面（Power の説明と刻印の相性文）で、起点・期限・基準値・重複なし・延長を読めるようにする。
+                string[] shared = japanese
                     ? new[] { "回避", "ダッシュ", "瞬間移動", "3秒", "次の通常攻撃", "高い方", "69%", "重ならず", "延長" }
-                    : new[] { "dodge", "dash", "teleport", "3s", "next basic attack", "higher", "AD", "AP", "69%", "does not stack", "refresh" };
-                foreach (string description in new[] { Content.FormatPower(Power.ShadowStep, key.PowerValue), key.Description.ToString() })
-                    foreach (string term in terms) Assert.Contains(term, description);
-                string synergy = key.Description.ToString();
-                Assert.Contains(japanese ? "一歩一殺" : "One Step, One Kill", synergy);
-                Assert.Contains(japanese ? "確定会心" : "guaranteed critical hit", synergy);
-                Assert.Contains(japanese ? "風の傷" : "Scar of the Wind", synergy);
+                    : new[] { "dodge", "dash", "teleport", "3s", "higher", "69%", "refresh" };
+                string[] formatted = japanese
+                    ? new[] { "攻撃力か魔力の高い方" }
+                    : new[] { "Next basic attack", "attack damage", "ability power", "without stacking" };
+                string[] synergy = japanese
+                    ? new[] { "一歩一殺", "確定会心", "風の傷" }
+                    : new[] { "next basic attack", "AD", "AP", "does not stack", "One Step, One Kill", "guaranteed critical hit", "Scar of the Wind" };
+                string formattedBody = Content.FormatPower(Power.ShadowStep, key.PowerValue);
+                string synergyBody = key.Description.ToString();
+                foreach (string term in shared)
+                {
+                    Assert.Contains(term, formattedBody);
+                    Assert.Contains(term, synergyBody);
+                }
+                foreach (string term in formatted) Assert.Contains(term, formattedBody);
+                foreach (string term in synergy) Assert.Contains(term, synergyBody);
             }
             finally { Loc.Japanese = previous; }
         }

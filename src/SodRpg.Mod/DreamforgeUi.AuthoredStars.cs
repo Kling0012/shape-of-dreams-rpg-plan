@@ -1,5 +1,6 @@
 using System;
 using SodRpg.Core.Game;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SodRpg.Mod
@@ -15,6 +16,8 @@ namespace SodRpg.Mod
         // Rebuild metadata/text only on layout, allocation or language changes. The list is virtualized.
         private StarMapCluster[] _starClusters = Array.Empty<StarMapCluster>();
         private GUIContent[] _starClusterLabels = Array.Empty<GUIContent>();
+        private int[] _starNavigationNodes = Array.Empty<int>();
+        private string[] _starNavigationContext = Array.Empty<string>();
         private float[] _starClusterTops = Array.Empty<float>(), _starClusterHeights = Array.Empty<float>();
         private float _starClusterWidth = -1f, _starClusterHeight;
         private Vector2 _starClusterScroll;
@@ -91,24 +94,47 @@ namespace SodRpg.Mod
         private void RebuildStarClusters()
         {
             _starClusters = StarMapClusters.Build(_starLayout);
-            _starClusterLabels = new GUIContent[_starClusters.Length];
-            for (int i = 0; i < _starClusters.Length; i++) _starClusterLabels[i] = new GUIContent();
-            _starClusterTops = new float[_starClusters.Length];
-            _starClusterHeights = new float[_starClusters.Length];
+            var indices = new List<int>(_starNodes.Length);
+            var listed = new HashSet<int>();
+            var contexts = new List<string>(_starNodes.Length);
+            foreach (var cluster in _starClusters)
+                for (int i = 0; i < cluster.NodeCount; i++)
+                {
+                    int index = cluster.NodeIndex(i);
+                    if (listed.Add(index))
+                    {
+                        indices.Add(index);
+                        contexts.Add(cluster.DisplayName + Loc.T($"・{i + 1}番目", $" · star {i + 1}"));
+                    }
+                }
+            for (int i = 0; i < _starNodes.Length; i++)
+                if (_starLayout.Nodes[i].Talent != null && listed.Add(i))
+                {
+                    var star = _starLayout.Nodes[i].Talent;
+                    indices.Add(i);
+                    contexts.Add(star.RouteMemory == null ? Loc.T("核の星", "Core star") : Links.ItemName(star.RouteMemory));
+                }
+            _starNavigationNodes = indices.ToArray();
+            _starNavigationContext = contexts.ToArray();
+            _starClusterLabels = new GUIContent[indices.Count];
+            for (int i = 0; i < indices.Count; i++) _starClusterLabels[i] = new GUIContent();
+            _starClusterTops = new float[indices.Count];
+            _starClusterHeights = new float[indices.Count];
             _starClusterWidth = -1f;
             _starClusterScroll = Vector2.zero;
             BuildStarLegend();
         }
 
-        private void RefreshStarClusters(HeroState state)
+        private void RefreshStarClusters()
         {
-            for (int i = 0; i < _starClusters.Length; i++)
+            for (int i = 0; i < _starNavigationNodes.Length; i++)
             {
-                var cluster = _starClusters[i];
-                _starClusterLabels[i].text = "<b>" + cluster.DisplayName + "</b>"
-                    + "\n" + Loc.T("代表の星：", "Representative star: ") + cluster.Name
-                    + "\n" + StarMapClusters.AllocatedCount(state, _starLayout, cluster) + "/" + cluster.NodeCount
-                    + Loc.T(" 星取得", " stars acquired");
+                int index = _starNavigationNodes[i];
+                var node = _starNodes[index];
+                _starClusterLabels[i].text = "<color=#aabccc>" + _starNavigationContext[i] + "</color>\n"
+                    + StarMapPresentation.NavigationLabel(_starLayout.Nodes[index].Talent,
+                        node.Rank, node.Available, node.EffectSummary);
+                _starClusterLabels[i].tooltip = node.Tooltip.text;
             }
             _starClusterWidth = -1f;
         }
@@ -148,7 +174,7 @@ namespace SodRpg.Mod
             GUILayout.BeginHorizontal();
             for (int i = 0; i < StarLegendRegionItems; i++) DrawStarLegendItem(i, repaint);
             GUILayout.FlexibleSpace();
-            _starClustersOpen = GUILayout.Toggle(_starClustersOpen, Loc.T("星群一覧", "Clusters"), _st.Button);
+            _starClustersOpen = GUILayout.Toggle(_starClustersOpen, Loc.T("星一覧", "Stars"), _st.Button);
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             GUILayout.Label(_starHelpText, _starHelpStyle);
@@ -186,7 +212,7 @@ namespace SodRpg.Mod
         {
             if (!_starClustersOpen) return;
             EnsureStarTextStyles();
-            if (_starClusters.Length == 0)
+            if (_starNavigationNodes.Length == 0)
             {
                 GUILayout.Label(Loc.T("この旅人にはまだ星団がありません。", "This traveler has no clusters yet."), _starHelpStyle);
                 return;
@@ -198,7 +224,7 @@ namespace SodRpg.Mod
             {
                 _starClusterWidth = width;
                 _starClusterHeight = 0;
-                for (int i = 0; i < _starClusters.Length; i++)
+                for (int i = 0; i < _starNavigationNodes.Length; i++)
                 {
                     _starClusterTops[i] = _starClusterHeight;
                     _starClusterHeights[i] = _starClusterRow.CalcHeight(_starClusterLabels[i], width - 6) + 4;
@@ -209,25 +235,23 @@ namespace SodRpg.Mod
             _starClusterScroll = GUI.BeginScrollView(area, _starClusterScroll, content);
             try
             {
-                int first = 0, end = _starClusters.Length;
+                int first = 0, end = _starNavigationNodes.Length;
                 while (first < end)
                 {
                     int mid = first + (end - first) / 2;
                     if (_starClusterTops[mid] + _starClusterHeights[mid] < _starClusterScroll.y) first = mid + 1;
                     else end = mid;
                 }
-                for (int i = first; i < _starClusters.Length; i++)
+                for (int i = first; i < _starNavigationNodes.Length; i++)
                 {
-                    var cluster = _starClusters[i];
+                    int index = _starNavigationNodes[i];
                     if (_starClusterTops[i] > _starClusterScroll.y + area.height) break;
                     Rect row = new Rect(0, _starClusterTops[i], content.width, _starClusterHeights[i] - 2);
-                    StarFillRect(new Rect(row.x, row.y, 4, row.height), StarRegionColor(cluster.Region));
+                    StarFillRect(new Rect(row.x, row.y, 4, row.height), _starNodes[index].Region.HasValue
+                        ? StarRegionColor(_starNodes[index].Region.Value) : StarBright);
                     if (GUI.Button(new Rect(row.x + 6, row.y, row.width - 6, row.height), _starClusterLabels[i], _starClusterRow))
                     {
-                        var pan = StarMapMath.PanToNode(cluster.X, cluster.Y, _starZoom);
-                        _starPan = new Vector2(pan.X, pan.Y);
-                        _starNeedsFit = false;
-                        CancelStarDrag();
+                        StarJumpTo(index);
                     }
                 }
             }
@@ -383,6 +407,9 @@ namespace SodRpg.Mod
             _starChoiceHelp.text = !canEdit
                 ? Loc.T("遠征中は変更できません。帰還後は無料で切り替えられます。", "Cannot change during an expedition. Switching is free after returning.")
                 : Loc.T("どちらか1つを選択。選んだ効果は全段に適用され、切り替えは無料です。", "Choose one effect. It applies to every rank; switching is free.");
+            if (state.Allocated && state.Choice >= 0)
+                _starChoiceHelp.text += "\n" + Loc.T($"『{t.Choices[state.Choice].Name}』を取得済みです。両方は同時に取得できません。",
+                    $"“{t.Choices[state.Choice].Name}” is acquired. Both effects cannot be acquired together.");
             for (int option = 0; option < 2; option++)
             {
                 bool chosen = state.Allocated && state.Choice == option;
@@ -394,9 +421,9 @@ namespace SodRpg.Mod
                     : "<color=#9fe0ff>" + heading + Loc.T("（未選択）", " (unselected)") + "</color>";
                 string blocked = !canEdit ? Loc.T("遠征中は変更できません", "Cannot change during an expedition")
                     : switching ? null
-                    : !state.Unlocked ? Loc.T("取得済みの星と線でつながると選べます", "Connect it to an acquired star to choose")
+                    : !state.Unlocked ? state.MissingRequirements
                     : state.Rank >= t.MaxRank ? null
-                    : !state.Available ? Loc.T("ポイントが足りません", "Not enough points") : null;
+                    : !state.Available ? state.MissingRequirements : null;
                 int count = 0;
                 if (chosen && (!more || blocked != null))
                     StarChoiceSetAction(option, count++, !more

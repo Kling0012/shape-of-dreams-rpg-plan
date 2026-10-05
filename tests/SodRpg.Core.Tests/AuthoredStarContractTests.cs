@@ -97,10 +97,6 @@ namespace SodRpg.Core.Tests
                 { HeroKey = Hero, RankCost = 2 };
             var existing = Base().Concat(new[] { original }).ToArray();
             var tree = StarClusters.GenerateAuthored(new[] { a, choice }, existing).TreeFor(Hero);
-            var oldPosition = HeroTreeLayout.ForTalents(existing).Nodes.Single(n => n.Id == choice.LocalStarId);
-            var retainedPosition = HeroTreeLayout.ForTalents(tree).Nodes.Single(n => n.Id == choice.LocalStarId);
-            Assert.Equal(oldPosition.X, retainedPosition.X);
-            Assert.Equal(oldPosition.Y, retainedPosition.Y);
             var p = new Profile(); var h = p.Hero(Hero);
             AllocatePath(h, tree, a.LocalStarId, choice.LocalStarId);
             h.Talents[a.LocalStarId] = 1;

@@ -139,8 +139,15 @@ namespace SodRpg.Mod
         public void EarnDreamDust(int amount) => dreamDust += amount;
     }
     internal static class NetworkedManagerBase<T> { public static T softInstance; }
-    internal sealed class GameManager { public string runId; public Zone difficulty; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
+    internal sealed class GameManager { public string runId; public bool isGameConcluded; public Zone difficulty; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
     internal sealed class ActorManager { public Actor serverActor; }
+    // #112: 「ロビーに戻る」の確認で呼ばれる本体の入口。isEndingSession がtrue のEndSession 系
+    // (メニュー・デスクトップ復帰など)は精算対象外。仮想プロパティで判別時の例外も注入できる。
+    internal class DewNetworkManager
+    {
+        public virtual bool isEndingSession { get; set; }
+        public void RestartSession() { }
+    }
     internal sealed class ZoneManager
     {
         public int currentZoneIndex;
@@ -222,7 +229,7 @@ namespace SodRpg.Mod
         private bool TryGetExactNativeDirectPayload(Actor actor, Entity target, ReactionChain chain, out MemoryActivationIdentity identity) { identity = default; return false; }
         private bool ExactNativeChainMatches(Actor actor, ReactionChain chain) => true;
         private bool IsPairReactionSource(Actor actor) => false;
-        private void OnIdentityStrikeBasicHit(Hero hero, Entity target, long activation) => throw new NotSupportedException();
+        private void OnIdentityStrikeBasicHit(Hero hero, Entity target, long activation, bool critical = false, long victimLifetime = 0) => throw new NotSupportedException();
         private void PublishMemoryActivation(MemoryActivationEvent notification, Hero hero, Entity victim, float damage) => MemoryActivationPublished?.Invoke(notification, hero, victim, damage);
         private readonly Dictionary<Actor, ReactionChain> _attributedNativeChains = new Dictionary<Actor, ReactionChain>();
         private void ClearNativeEndingActor(Actor actor) { }
@@ -268,18 +275,22 @@ namespace SodRpg.Mod
     }
     // The harness models an Infinity-unavailable host (Available == false, no save agreement),
     // so the linked continue code takes its documented no-op paths for Infinity runs too.
+    // #124: tests may re-enable the agreement to model a recovered save; they reset it afterwards.
     internal static class InfinityMode
     {
         internal static bool Available => false;
         internal static bool Restoring => false;
-        internal static bool NativeSaveAgreement => false;
+        internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
     }
     internal sealed partial class ClientSession
     {
         public Profile Profile;
         public Hero LocalHero;
-        public bool RunActive => Profile.Run != null;
+        // ClientSession.cs(リンク外)の実装と同じ意味: ロビー復帰済みの遠征は精算が保留の間だけ活性。
+        public bool RunActive => ContinueReady && _nativeContinueCheckpoint == null
+            && Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId
+            && (!Profile.LobbyReturnedRunIds.Contains(ActiveRunId) || LobbyReturnPending);
         public string ActiveRunId { get; internal set; }
         public bool HasPendingTrades => _trades.PendingCount > 0;
         public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;

@@ -150,6 +150,23 @@ namespace SodRpg.Core.Game
             return result;
         }
 
+        /// <summary>
+        /// 道標を踏まえた悪夢化の抽選（ホストの出現処理と同じ規則）。ボスは対象外（#127）。
+        /// 明けない夜（全敵悪夢化）でもボスは悪夢化せず、抽選前に返すため乱数も消費しない。
+        /// </summary>
+        public static NightmareAffix RollWaypoint(Rng rng, MonsterTier tier, int depth, double chanceMult, Waypoints.Totals waypoint)
+        {
+            if (tier >= MonsterTier.Boss) return NightmareAffix.None;
+            if (waypoint != null && waypoint.AllNightmares)
+            {
+                // One native nightmare trait keeps the opt-in rule bounded even at zero delve heat.
+                return AllAffixes[rng.Range(0, AllAffixes.Length - 1)];
+            }
+            double waypointMult = waypoint != null ? waypoint.NightmareChanceMultiplier : 1.0;
+            int selectionDepth = waypointMult > 1 ? Math.Max(1, depth) : depth;
+            return Roll(rng, tier, selectionDepth, chanceMult * waypointMult);
+        }
+
         public static int Count(NightmareAffix a)
         {
             int n = 0;

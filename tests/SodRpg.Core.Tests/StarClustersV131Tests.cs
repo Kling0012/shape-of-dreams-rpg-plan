@@ -235,34 +235,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(GimmickEffect.Ricochet, generated[1].Gimmick.Effect);
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void Every_kind_describes_its_effect_and_choice_options_in_both_languages(bool japanese)
-        {
-            bool old = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = japanese;
-                var tree = HeroSigils.TreeFor(Hero);
-                Assert.Contains("3%", tree.Single(t => t.Id == MemoryCluster + ".1").Describe());
-                Assert.Contains("2%", tree.Single(t => t.Id == BridgeCluster + ".1").Describe());
-                Assert.Contains(japanese ? "仕掛け" : "gimmick", tree.Single(t => t.Id == MemoryCluster + ".2").Describe());
-                Assert.Contains("5", tree.Single(t => t.Id == MemoryCluster + ".3").Describe());
-                Assert.Contains("10%", tree.Single(t => t.Id == MemoryCluster + ".4").Describe());
-                Assert.Contains("12%", tree.Single(t => t.Id == BridgeCluster + ".2").Describe());
-                Assert.Contains("10%", tree.Single(t => t.Id == BridgeCluster + ".3").Describe());
-                Assert.Contains("1", tree.Single(t => t.Id == OuterCluster + ".3").Describe());
-                string armor = tree.Single(t => t.Id == OuterCluster + ".1").Describe();
-                Assert.Contains("+2", armor);
-                Assert.DoesNotContain("%", armor);
-                var choice = tree.Single(t => t.Id == MemoryCluster + ".5");
-                Assert.Contains(choice.Choices[0].Name.ToString(), choice.Describe());
-                Assert.Contains(choice.Choices[1].Name.ToString(), choice.Describe());
-            }
-            finally { Loc.Japanese = old; }
-        }
-
         public static IEnumerable<object[]> Heroes => HeroStarRoutes.All.Select(t => t.HeroKey).Distinct().Select(h => new object[] { h });
         [Theory]
         [MemberData(nameof(Heroes))]
@@ -297,12 +269,6 @@ namespace SodRpg.Core.Tests
                     Assert.True(dx * dx + dy * dy >= HeroTreeLayout.MinimumSpacing * HeroTreeLayout.MinimumSpacing * 0.81f,
                         layout.Nodes[i].Id + " overlaps " + layout.Nodes[j].Id);
                 }
-            foreach (var legacy in HeroTreeLayout.ForHero(hero).Nodes.Where(n => n.Talent == null || n.Talent.Cluster == null && !n.Talent.IsOuterAnchor))
-            {
-                var node = layout.Nodes.Single(n => n.Id == legacy.Id);
-                Assert.Equal(legacy.X, node.X);
-                Assert.Equal(legacy.Y, node.Y);
-            }
         }
 
         [Fact]

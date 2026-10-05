@@ -8,7 +8,35 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **星図の配置（#106・段階B）**：記憶ごとの扇形区画、前提から外側へ進む半径階層、群の halo を分ける配置に変更しました。形状を保った決定的な局所調整を行い、取得済みの星ID・接続・登録順は変えていません。配置はキャッシュされ、広い星図も「全体を表示」とホイール操作で同じ範囲まで縮小できます。書き出し道具に before/after の指標比較と計算時間を追加しました。交差・星の上を通る線の目標未達と、群を分離したことで線長のばらつきが増えた旅人は比較レポートに記録します。 / **Star-map layout (#106, phase B)**: assign memory sectors and outward prerequisite layers, separate cluster halos, and apply deterministic shape-preserving refinement. Saved star IDs, edges and registration order are unchanged. Layouts are cached; full-map fit and wheel zoom share a bounds-derived minimum. The exporter now reports before/after metrics and timings, including unmet targets and the edge-length variation tradeoff.
+
 - **墜聖の双装（Polaris）**：利用者の判断により、部位と2・6部位効果のダメージ・障壁・回復の係数と上限を2倍にしました。3部位効果で移される踏みつけも2倍です。同時数・再使用時間・範囲、部位の強化／覚醒倍率（元式内上限の適用後に最大3倍）は変更していません。日英の説明数値も更新しました。 / **Fallen Sanctity Regalia (Polaris)**: doubled damage, shield and healing coefficients and caps for its parts and 2-/6-piece effects by user decision. The stomp relocated by the 3-piece effect is also doubled. Instance limits, cooldowns, ranges and part enhancement/awakening scaling (up to 3 times after the base formula cap) are unchanged. Japanese and English description values are updated.
+
+---
+
+## v2.2.0 — インフィニティモード（2026-10-05）
+
+新しい遊び方「インフィニティモード」を追加しました。ひとつの世界で、終わりなく遠征を続けられます。 / Adds Infinity Mode: an endless run in a single world.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**。 / Saves carry over.
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素 / New
+
+- **インフィニティモード**：ロビーの「夢の深さ」の近くで ON にできます（ホストが設定し、参加者にも伝わります）。最初のゾーンの世界から出ずに、部屋を進み続けます。 / **Infinity Mode**: turn it on in the lobby next to Dream Depth (the host decides; everyone sees it). You stay in the first zone's world and keep going.
+  - 戦闘の部屋を決まった数（10・15・20 から選べます）クリアするたびに、そのゾーンのボスが現れます。 / Every 10, 15 or 20 cleared combat rooms (your choice), the zone's boss appears.
+  - ボスを倒して報酬を受け取ると、確保の画面が出ます。「確保して帰還」でその遠征を終え、「深く潜る」でそのまま続けます。 / After the boss and its reward, the secure screen opens: secure and return to end the run, or delve to keep going.
+  - クリアした部屋が増えるほど、敵が少しずつ手ごわくなります（上限あり）。 / Enemies grow tougher as cleared rooms add up (capped).
+  - 「続きから」で再開しても、進み具合が戻ります。 / Progress is restored when you resume with Continue.
+
+### 不具合の修正 / Fixes
+
+- **ゲームの更新や他の MOD と合わない機能**：起動時の確認で合わない所が見つかっても、一部の連携（LastStarlight）がそのまま動き、本体のスキルの処理を途中で打ち切ることがありました。合わない機能だけを使わないようにし、想定外の動きのときは本体の処理をそのまま通すようにしました。 / **Features that no longer match the game or other mods**: one boss gear link (LastStarlight) could stay active after a mismatch and cut a game skill short. Only the mismatched feature is now turned off, and unexpected cases fall back to the game's own behavior.
+
+インフィニティモードはコードとシミュレーションで確認したもので、実際のゲームと協力プレイでの確認はまだです。おかしな点があれば教えてください。 / Infinity Mode was verified by code and simulation, not yet in the live game or co-op. Please report anything odd.
 
 ---
 

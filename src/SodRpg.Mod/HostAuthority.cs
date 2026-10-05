@@ -895,7 +895,7 @@ namespace SodRpg.Mod
                         MakeVariant(rt, variant);
                         continue;
                     }
-                    var affix = RollWaypointNightmare(tier, depth, mult);
+                    var affix = RollWaypointNightmare(m, tier, depth, mult);
                     if (affix != NightmareAffix.None) MakeNightmare(m, affix);
                 }
                 catch (Exception ex)

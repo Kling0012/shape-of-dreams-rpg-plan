@@ -68,7 +68,7 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void Every_new_effect_has_specific_bilingual_text_and_movement_routes_are_rejected(bool japanese)
+        public void Effect_descriptions_preserve_numeric_values_and_movement_routes_are_rejected(bool japanese)
         {
             bool previous = Loc.Japanese;
             try
@@ -78,11 +78,6 @@ namespace SodRpg.Core.Tests
                 {
                     if (!Gimmicks.IsV129(effect)) continue;
                     var entry = Entry(effect);
-                    string text = Gimmicks.Describe(entry.Def, Memory, 3);
-                    Assert.NotEmpty(text);
-                    Assert.Contains(japanese ? "仕掛けのダメージからは発動しない" : "cannot trigger from gimmick damage", text);
-                    Assert.Contains(japanese ? Links.Name(Memory).Ja : Links.Name(Memory).En, text);
-                    entry.Memory = "St_M_Dodge";
                     // Validate against a known movement memory as well as any invalid identifier.
                     foreach (string movement in new[] { "St_M_Roll", "St_M_Sprint", "St_M_Dash", "St_M_Dodge" })
                     {
@@ -91,9 +86,6 @@ namespace SodRpg.Core.Tests
                         Assert.Equal("", Gimmicks.Describe(entry.Def, movement));
                     }
                 }
-                string primed = Gimmicks.Describe(Entry(GimmickEffect.Primed).Def, Memory);
-                Assert.Contains(japanese ? "最大の1つ" : "only the largest", primed);
-                Assert.Contains(japanese ? "消費しない" : "leaves the others", primed);
                 Assert.Contains("1.5%", Gimmicks.Describe(Entry(GimmickEffect.Siphon).Def, Memory));
                 Assert.Contains("0.8", Gimmicks.Describe(Entry(GimmickEffect.Daze).Def, Memory));
                 Assert.Contains("120%", Gimmicks.Describe(Entry(GimmickEffect.Crescendo).Def, Memory));

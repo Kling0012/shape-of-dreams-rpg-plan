@@ -32,19 +32,27 @@ namespace SodRpg.Mod
             internal IdentityStrikeDefinition Definition;
             internal IdentityStrikeState State;
             internal SkillTrigger BoundSkill;
+            internal bool Disabled;
+            internal bool Pending;
         }
 
         private readonly Dictionary<Hero, List<IdentityStrikeChannel>> _identityStrikes = new Dictionary<Hero, List<IdentityStrikeChannel>>();
         private readonly HashSet<Hero> _identityDashBonus = new HashSet<Hero>();
         private int _identityStrikeDepth;
-        private sealed class PendingIdentityStrike
+        private const int PendingIdentityStrikeCapacity = 256;
+        private struct PendingIdentityStrike
         {
-            internal Hero Hero; internal IdentityStrikeChannel Channel; internal SkillTrigger Skill; internal Entity Victim; internal Vector3 Origin, Direction;
+            internal Hero Hero;
+            internal IdentityStrikeChannel Channel;
+            internal SkillTrigger Skill, MovementSkill;
+            internal Entity Victim;
+            internal Vector3 Origin, Direction;
         }
         // The strike is deferred to the host tick: the basic attack's own DealDamage is still running (it kills the target after its events),
         // so the strike must not damage or kill from inside that call.
-        private readonly List<PendingIdentityStrike> _pendingIdentityStrikes = new List<PendingIdentityStrike>();
-        private readonly List<Entity> _identityStrikeTargets = new List<Entity>();
+        private readonly PendingIdentityStrike[] _pendingIdentityStrikes = new PendingIdentityStrike[PendingIdentityStrikeCapacity];
+        private int _pendingIdentityStrikeHead, _pendingIdentityStrikeCount;
+        private readonly List<Entity> _identityStrikeTargets = new List<Entity>(16);
 
         /// <summary>Install the build's identity strike channels. A channel that did not change keeps its counters (a Build retransmission must not reset EveryN).</summary>
         private void ConfigureIdentityStrikes(Hero hero, List<KeyValuePair<string, IdentityStrikeDefinition>> channels)
@@ -56,22 +64,64 @@ namespace SodRpg.Mod
             {
                 if (!pair.Value.DealsDamage) { _identityDashBonus.Add(hero); continue; }
                 IdentityStrikeChannel kept = null;
-                if (previous != null) foreach (var old in previous) if (old.Key == pair.Key) kept = old;
+                if (previous != null)
+                    foreach (var old in previous)
+                        if (old.Key == pair.Key && SameIdentityStrikeDefinition(old.Definition, pair.Value)) { kept = old; break; }
                 next.Add(kept ?? new IdentityStrikeChannel { Key = pair.Key, Definition = pair.Value, State = new IdentityStrikeState(pair.Value) });
             }
             if (next.Count == 0) _identityStrikes.Remove(hero); else _identityStrikes[hero] = next;
+        }
+
+        private static bool SameIdentityStrikeDefinition(IdentityStrikeDefinition a, IdentityStrikeDefinition b) =>
+            a.ChannelId == b.ChannelId && a.Identity == b.Identity && a.Trigger == b.Trigger && a.EveryN == b.EveryN
+            && a.WindowSeconds == b.WindowSeconds && a.AdUnits == b.AdUnits && a.BonusSpeedUnitsPerPercent == b.BonusSpeedUnitsPerPercent
+            && a.Element == b.Element && a.Shape == b.Shape && a.Basis == b.Basis && a.RangeMetres == b.RangeMetres
+            && a.WidthOrArc == b.WidthOrArc && a.MaxTargets == b.MaxTargets;
+
+        private static void DisableIdentityStrike(IdentityStrikeChannel channel, Exception error)
+        {
+            if (channel.Disabled) return;
+            channel.Disabled = true;
+            Log.Warn("Host: identity strike " + channel.Definition.ChannelId + " disabled: " + error);
+        }
+
+        private void EnqueueIdentityStrike(PendingIdentityStrike pending)
+        {
+            int index = (_pendingIdentityStrikeHead + _pendingIdentityStrikeCount) % PendingIdentityStrikeCapacity;
+            _pendingIdentityStrikes[index] = pending;
+            _pendingIdentityStrikeCount++;
+        }
+
+        private PendingIdentityStrike DequeueIdentityStrike()
+        {
+            var pending = _pendingIdentityStrikes[_pendingIdentityStrikeHead];
+            _pendingIdentityStrikes[_pendingIdentityStrikeHead] = default;
+            _pendingIdentityStrikeHead = (_pendingIdentityStrikeHead + 1) % PendingIdentityStrikeCapacity;
+            _pendingIdentityStrikeCount--;
+            return pending;
+        }
+
+        private void RemovePendingIdentityStrikes(Hero hero)
+        {
+            int count = _pendingIdentityStrikeCount;
+            for (int i = 0; i < count; i++)
+            {
+                var pending = DequeueIdentityStrike();
+                if (hero == null || pending.Hero == hero) pending.Channel.Pending = false;
+                else EnqueueIdentityStrike(pending);
+            }
         }
 
         internal void ForgetIdentityStrikes(Hero hero)
         {
             _identityStrikes.Remove(hero);
             _identityDashBonus.Remove(hero);
-            _pendingIdentityStrikes.RemoveAll(p => p.Hero == hero);
+            RemovePendingIdentityStrikes(hero);
         }
 
         private void ResetIdentityStrikes(Hero hero = null)
         {
-            _pendingIdentityStrikes.RemoveAll(p => hero == null || p.Hero == hero);
+            RemovePendingIdentityStrikes(hero);
             foreach (var pair in _identityStrikes)
                 if (hero == null || pair.Key == hero) foreach (var channel in pair.Value) { channel.State.Reset(); channel.BoundSkill = null; }
         }
@@ -97,47 +147,84 @@ namespace SodRpg.Mod
             if (!NetworkServer.active || hero == null || !_identityStrikes.TryGetValue(hero, out var channels)) return;
             foreach (var channel in channels)
             {
-                var skill = EquippedIdentity(hero, channel.Definition.Identity);
-                if (skill == null) { channel.State.Reset(); channel.BoundSkill = null; continue; }
-                BindStrikeSkill(channel, skill);
-                channel.State.OnDisplacement(Time.time);
+                if (channel.Disabled) continue;
+                try
+                {
+                    var skill = EquippedIdentity(hero, channel.Definition.Identity);
+                    if (skill == null) { channel.State.Reset(); channel.BoundSkill = null; continue; }
+                    BindStrikeSkill(channel, skill);
+                    channel.State.OnDisplacement(Time.time);
+                }
+                catch (Exception ex) { DisableIdentityStrike(channel, ex); }
             }
         }
 
         /// <summary>First hit of one own main basic attack activation. Strike damage itself never re-enters (depth guard and not a main packet).</summary>
-        internal void OnIdentityStrikeBasicHit(Hero hero, Entity victim, long activationId)
+        internal void OnIdentityStrikeBasicHit(Hero hero, Entity victim, long activationId, bool critical = false, long victimLifetime = 0)
         {
             if (!NetworkServer.active || _identityStrikeDepth != 0 || victim == null || !Alive(hero)
                 || AttributionGeneratedOrigin() != GeneratedOrigin.None || !_identityStrikes.TryGetValue(hero, out var channels)) return;
             foreach (var channel in channels)
             {
-                var skill = EquippedIdentity(hero, channel.Definition.Identity);
-                if (skill == null) { channel.State.Reset(); channel.BoundSkill = null; continue; }
-                BindStrikeSkill(channel, skill);
-                if (!channel.State.OnBasicHit(activationId, Time.time)) continue;
-                var direction = victim.agentPosition - hero.agentPosition;
-                _pendingIdentityStrikes.Add(new PendingIdentityStrike { Hero = hero, Channel = channel, Skill = skill, Victim = victim,
-                    Origin = hero.agentPosition, Direction = direction });
+                if (channel.Disabled) continue;
+                try
+                {
+                    var skill = EquippedIdentity(hero, channel.Definition.Identity);
+                    if (skill == null) { channel.State.Reset(); channel.BoundSkill = null; continue; }
+                    BindStrikeSkill(channel, skill);
+                    if (!channel.State.OnBasicHit(activationId, Time.time, critical, victimLifetime)) continue;
+                    if (channel.Definition.IsCriticalMechanism && channel.Pending
+                        || _pendingIdentityStrikeCount >= PendingIdentityStrikeCapacity) continue;
+                    var movement = channel.Definition.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
+                        ? hero.Skill.GetSkill(HeroSkillLocation.Movement) : null;
+                    if (movement != null && movement.owner != hero) movement = null;
+                    var origin = hero.agentPosition;
+                    EnqueueIdentityStrike(new PendingIdentityStrike { Hero = hero, Channel = channel, Skill = skill,
+                        MovementSkill = movement, Victim = victim, Origin = origin, Direction = victim.agentPosition - origin });
+                    if (channel.Definition.IsCriticalMechanism) channel.Pending = true;
+                }
+                catch (Exception ex) { DisableIdentityStrike(channel, ex); }
             }
         }
 
         /// <summary>Run the queued strikes (host tick). A strike whose hero died, whose identity changed or whose channel was replaced is dropped.</summary>
         internal void UpdateIdentityStrikes()
         {
-            if (_pendingIdentityStrikes.Count == 0) return;
-            var batch = _pendingIdentityStrikes.ToArray();
-            _pendingIdentityStrikes.Clear();
-            foreach (var pending in batch)
+            int count = _pendingIdentityStrikeCount;
+            for (int i = 0; i < count && _pendingIdentityStrikeCount > 0; i++)
             {
+                var pending = DequeueIdentityStrike();
+                var channel = pending.Channel;
                 try
                 {
                     var hero = pending.Hero;
-                    if (!Alive(hero) || !_identityStrikes.TryGetValue(hero, out var channels) || !channels.Contains(pending.Channel)
-                        || EquippedIdentity(hero, pending.Channel.Definition.Identity) != pending.Skill) continue;
-                    FireIdentityStrike(hero, pending.Channel.Definition, pending.Skill, pending.Victim, pending.Origin, pending.Direction);
+                    if (channel.Disabled || !Alive(hero) || !_identityStrikes.TryGetValue(hero, out var channels)
+                        || !channels.Contains(channel) || EquippedIdentity(hero, channel.Definition.Identity) != pending.Skill) continue;
+                    if (channel.Definition.IsCriticalMechanism)
+                    {
+                        EnterGenerated(hero);
+                        try
+                        {
+                            FireIdentityStrike(hero, channel.Definition, pending.Skill, pending.Victim, pending.Origin, pending.Direction);
+                            RefundIdentityStrikeMovement(hero, pending);
+                        }
+                        finally { ExitGenerated(hero); }
+                    }
+                    else FireIdentityStrike(hero, channel.Definition, pending.Skill, pending.Victim, pending.Origin, pending.Direction);
                 }
-                catch (Exception ex) { Log.Error("Host: identity strike " + pending.Channel.Definition.ChannelId + ": " + ex); }
+                catch (Exception ex) { DisableIdentityStrike(channel, ex); }
+                finally { channel.Pending = false; }
             }
+        }
+
+        private static void RefundIdentityStrikeMovement(Hero hero, PendingIdentityStrike pending)
+        {
+            var movement = pending.MovementSkill;
+            if (pending.Channel.Definition.Trigger != IdentityStrikeTrigger.AfterDisplacementCritical || movement == null
+                || movement.owner != hero || hero.Skill.GetSkill(HeroSkillLocation.Movement) != movement) return;
+            float ratio = Gimmicks.RemainingCooldownReductionRatio(movement.currentConfigUnscaledCooldownTime,
+                movement.currentConfigUnscaledMaxCooldownTime, IdentityStrikeDefinition.CriticalMovementRefundPercent);
+            if (ratio > 0f) hero.ApplyCooldownReductionByRatio(movement, ratio, false);
         }
 
         private void FireIdentityStrike(Hero hero, IdentityStrikeDefinition def, SkillTrigger skill, Entity victim, Vector3 origin, Vector3 toVictim)

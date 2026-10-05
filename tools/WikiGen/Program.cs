@@ -7,6 +7,9 @@ using SodRpg.Core.Game;
 // 出力: <out>/pages/dreamforge/*.txt, <out>/pages/portal_extra.txt, <out>/pages/sidebar_extra.txt
 // アイコンは {{dreamforge:icons:<baseId>.png?40}} で参照する（PNG は src/SodRpg.Mod/icons を同名で配置）。
 
+if (args.Length == 2 && args[0] == "--export-stars")
+    return StarTextExport.Run(args[1]);
+
 if (args.Length < 1)
 {
     Console.Error.WriteLine("usage: WikiGen <output-dir>");
