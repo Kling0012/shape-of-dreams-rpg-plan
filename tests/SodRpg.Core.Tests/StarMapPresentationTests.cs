@@ -189,11 +189,11 @@ namespace SodRpg.Core.Tests
                 Assert.Equal(ModShieldPoolKind.Ordinary, star.Mechanism.Ward.PoolKind);
                 string description = StarMapPresentation.EffectDescription(star);
                 Assert.Contains(japanese
-                    ? "同じ付与者から同じ受け手への通常の星の障壁とは重ならず"
-                    : "Does not stack with ordinary star shields from the same caster to the same recipient", description);
+                    ? "付与者と受け手の組ごとに、通常の星の障壁と1つを共有する"
+                    : "Shares one shield with ordinary star shields for each caster and recipient pair", description);
                 Assert.Contains(japanese
-                    ? "付与者と受け手の組み合わせごとに、受け手の最大HPの15%まで"
-                    : "up to 15% of the recipient's maximum HP per caster and recipient", description);
+                    ? "受け手の最大HPの15%まで"
+                    : "up to 15% of the recipient's maximum HP", description);
             }
             finally
             {

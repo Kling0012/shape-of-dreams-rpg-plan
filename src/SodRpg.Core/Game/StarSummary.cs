@@ -300,9 +300,9 @@ namespace SodRpg.Core.Game
         }
 
         private static readonly Regex JaBoilerplate = new Regex(
-            "（[^（）]*(?:（[^（）]*）[^（）]*)*。仕掛けのダメージからは発動しない）|(?:。効果量上限[0-9.]+%)?。仕掛けのダメージからは発動しない", RegexOptions.Compiled);
+            "（[^（）]*(?:（[^（）]*）[^（）]*)*。星の追加ダメージでは発動しない）|(?:。効果量は最大[0-9.]+%)?。星の追加ダメージでは発動しない", RegexOptions.Compiled);
         private static readonly Regex EnBoilerplate = new Regex(
-            @" \([^()]*(?:\([^()]*\)[^()]*)*; cannot trigger from gimmick damage\)\.?|(?:; effect value capped at [0-9.]+%)?; cannot trigger from gimmick damage\.?", RegexOptions.Compiled);
+            @" \([^()]*(?:\([^()]*\)[^()]*)*; not triggered by extra damage from stars\)\.?|(?:; effect capped at [0-9.]+%)?; not triggered by extra damage from stars\.?", RegexOptions.Compiled);
 
         /// <summary>The summary lists what a star does; the cap and interval boilerplate stays in the star's own description.</summary>
         internal static string Compact(string text) => text == null ? "" : EnBoilerplate.Replace(JaBoilerplate.Replace(text, ""), "");

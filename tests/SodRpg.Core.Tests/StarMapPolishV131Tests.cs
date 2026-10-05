@@ -114,11 +114,11 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Gimmick_boilerplate_is_dropped_from_summary_lines()
         {
-            const string ja = "『エルの聖域』が当たると、当てた敵が4秒間、自分から受けるダメージ+9%（間隔制限なし・効果量上限100%・同時には最大値1つ、重ならず発動した星の時間を延長。仕掛けのダメージからは発動しない）";
-            const string ja129 = "『エルの聖域』を使うと、自分から10m以内の味方を最大HPの6%回復。効果量上限100%。仕掛けのダメージからは発動しない";
-            const string en = "Hit: the enemy takes 9% more damage (no cooldown; capped at 100%; cannot trigger from gimmick damage).";
+            const string ja = "『エルの聖域』が当たると、当てた敵が4秒間、自分から受けるダメージ+9%（間隔制限なし・効果量は最大100%・同時に有効なのは最大の1つだけで、重ならず時間を延長。星の追加ダメージでは発動しない）";
+            const string ja129 = "『エルの聖域』を使うと、自分から10m以内の味方を最大HPの6%回復。発動条件：『エルの聖域』を使用したとき（間隔制限なし・効果量は最大100%。星の追加ダメージでは発動しない）";
+            const string en = "Hit: the enemy takes 9% more damage (no cooldown; effect capped at 100%; not triggered by extra damage from stars).";
             Assert.Equal("『エルの聖域』が当たると、当てた敵が4秒間、自分から受けるダメージ+9%", StarSummary.Compact(ja));
-            Assert.Equal("『エルの聖域』を使うと、自分から10m以内の味方を最大HPの6%回復", StarSummary.Compact(ja129));
+            Assert.Equal("『エルの聖域』を使うと、自分から10m以内の味方を最大HPの6%回復。発動条件：『エルの聖域』を使用したとき", StarSummary.Compact(ja129));
             Assert.Equal("Hit: the enemy takes 9% more damage", StarSummary.Compact(en));
         }
     }

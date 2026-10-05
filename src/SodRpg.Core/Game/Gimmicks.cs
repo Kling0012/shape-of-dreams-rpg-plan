@@ -335,23 +335,23 @@ namespace SodRpg.Core.Game
                             + center + " (magic damage if ability power is higher)";
                     break;
                 case GimmickEffect.Shield:
-                    effect = ja ? "障壁 +最大HPの" + n + "%：自分に張る（" + duration + "秒。同じ付与者の通常の星の障壁は1つまで、残量と新しい量の大きい方を維持して時間を更新。受け手の最大HPの15%が上限）"
-                        : "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one ordinary star shield per owner and recipient; keeps the larger of the remaining and new amounts, refreshes duration, and caps at 15% of the recipient's maximum health)";
+                    effect = ja ? "障壁 +最大HPの" + n + "%：自分に張る（" + duration + "秒。星の障壁は付与者と受け手の組ごとに1つだけで、残量と新しい量の大きい方を保って時間を更新。受け手の最大HPの15%まで）"
+                        : "Shield +" + n + "% of maximum health: shield yourself for " + duration + " seconds (one star shield per giver and recipient; keeps the larger of the remaining and new amounts, refreshes the duration, and is capped at 15% of the recipient's maximum health)";
                     break;
                 case GimmickEffect.Heal:
                     effect = ja ? "HP回復 +各自の最大HPの" + n + "%：自分" + (def.Arg == 1 ? "と" + healRadius + "m以内の味方" : "") + "を回復"
                         : "Healing +" + n + "% of each recipient's maximum health: heal yourself" + (def.Arg == 1 ? " and allies within " + healRadius + "m" : "");
                     break;
                 case GimmickEffect.Recharge:
-                    effect = ja ? "残りクールダウン −" + n + "%：その記憶の残り時間を短縮" : "Remaining cooldown −" + n + "%: shorten that memory's remaining cooldown";
+                    effect = ja ? "残りクールダウン -" + n + "%：その記憶の残り時間を短縮" : "Remaining cooldown -" + n + "%: shorten that memory's remaining cooldown";
                     break;
                 case GimmickEffect.Reload:
                     effect = ja ? "使用回数 +1回：その記憶に戻す（最大使用回数を超えない。使用回数が1回の記憶は、代わりに残りクールダウンを全て戻す）"
                         : "Charges +1: restore to that memory, up to its maximum charges (single-charge memories fully reset their remaining cooldown instead)";
                     break;
                 case GimmickEffect.RechargeOther:
-                    effect = ja ? "ほかの通常記憶の残りクールダウン −" + n + "%：装着中の記憶が対象（移動・奥義・アイデンティティは対象外）"
-                        : "Other normal memories' remaining cooldown −" + n + "%: affects equipped memories (excluding Movement, Ultimate, and Identity memories)";
+                    effect = ja ? "ほかの通常記憶の残りクールダウン -" + n + "%：装着中の記憶が対象（移動・奥義・アイデンティティは対象外）"
+                        : "Other normal memories' remaining cooldown -" + n + "%: affects equipped memories (excluding Movement, Ultimate, and Identity memories)";
                     break;
                 case GimmickEffect.Quicken:
                     effect = ja ? "攻撃速度 +" + n + "%：" + duration + "秒間" : "Attack speed +" + n + "% for " + duration + " seconds";
@@ -370,18 +370,18 @@ namespace SodRpg.Core.Game
             string cooldown = Math.Min(def.Cooldown, MaxCooldown).ToString("R", CultureInfo.InvariantCulture);
             string interval = def.Cooldown == 0
                 ? (ja ? "間隔制限なし" : "no cooldown")
-                : (ja ? "この星全体で" + cooldown + "秒に1回" : "once every " + cooldown + (def.Cooldown == 1f ? " second" : " seconds") + " per star, shared across enemies and triggers");
+                : (ja ? "この星ごとに" + cooldown + "秒に1回" : "once every " + cooldown + (def.Cooldown == 1f ? " second" : " seconds") + " per star, shared across enemies and triggers");
             string cap = def.Effect == GimmickEffect.Element
-                ? (ja ? "基本効果量上限" + Cap(def.Effect) / 100 + "つ（確率補正は追加1つだけ）"
-                    : "base effect capped at " + Cap(def.Effect) / 100 + " stacks (chance modifiers add at most 1 extra stack)")
+                ? (ja ? "基本の上限は" + Cap(def.Effect) / 100 + "つ（確率補正で増やせるのは1つまで）"
+                    : "base amount capped at " + Cap(def.Effect) / 100 + " stacks (chance modifiers can add at most 1 more)")
                 : def.Effect == GimmickEffect.Reload
-                    ? (ja ? "効果量上限1回" : "capped at 1 charge")
-                    : (ja ? "効果量上限" + Cap(def.Effect) + "%" : "capped at " + Cap(def.Effect) + "%");
+                    ? (ja ? "効果は最大1回分" : "capped at 1 charge")
+                    : (ja ? "効果量は最大" + Cap(def.Effect) + "%" : "effect capped at " + Cap(def.Effect) + "%");
             string stacking = def.Effect == GimmickEffect.Quicken || def.Effect == GimmickEffect.Empower || def.Effect == GimmickEffect.Expose
-                ? (ja ? "・同時には最大値1つ、重ならず発動した星の時間を延長" : "; only the strongest active value applies, refreshing each star without stacking") : "";
+                ? (ja ? "・同時に有効なのは最大の1つだけで、重ならず時間を延長" : "; only the strongest active value applies; it refreshes the duration without stacking") : "";
             return effect + (ja ? "。" : ". ") + trigger
-                + (ja ? "（" + interval + "・" + cap + stacking + "。星による追加ダメージからは発動しない）"
-                : " (" + interval + "; " + cap + stacking + "; cannot trigger from extra damage generated by stars).");
+                + (ja ? "（" + interval + "・" + cap + stacking + "。星の追加ダメージでは発動しない）"
+                : " (" + interval + "; " + cap + stacking + "; not triggered by extra damage from stars).");
         }
     }
 

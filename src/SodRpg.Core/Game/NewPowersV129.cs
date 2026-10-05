@@ -117,10 +117,10 @@ namespace SodRpg.Core.Game
                 default: return "-";
             }
             string cap = p == Power.BareHandedPride
-                ? Loc.T($"（装備・星の同じ効果による1回の短縮量は合計{Content.PowerCap(p) / 10f:0.#}秒まで）", $" (reduction per trigger from this effect across equipment and stars capped at {Content.PowerCap(p) / 10f:0.#}s)")
+                ? Loc.T($"（装備・星の同じ効果による1回の短縮量は合計で最大{Content.PowerCap(p) / 10f:0.#}秒）", $" (reduction per trigger from this effect across equipment and stars capped at {Content.PowerCap(p) / 10f:0.#}s)")
                 : p == Power.ShardBoon
                     ? Loc.T($"（装備・星の同じ効果による1回の回復量は合計で最大HPの{Content.PowerCap(p) / 10f:0.#}%まで）", $" (healing per trigger from this effect across equipment and stars capped at {Content.PowerCap(p) / 10f:0.#}% of your maximum health)")
-                    : Loc.T($"（装備・星の同じ効果の数値を合算：上限{Content.PowerCap(p)}%。敵の数や発動回数の合計ではない）", $" (combined value of this effect across equipment and stars capped at {Content.PowerCap(p)}%; not a total across targets or triggers)");
+                    : Loc.T($"（装備・星の同じ効果は合計で最大{Content.PowerCap(p)}%。1回の効果量に対する上限で、敵の数や発動回数は合算しない）", $" (combined across equipment and stars, this effect is capped at {Content.PowerCap(p)}% per activation; targets and triggers are not summed)");
             if (p == Power.ElementalHarvest || p == Power.PilingLuck || p == Power.Medley)
                 cap += p == Power.ElementalHarvest
                     ? Loc.T("。この上限は属性1種類あたりの割合に適用", ". This cap applies to the percentage per element type")
@@ -132,7 +132,7 @@ namespace SodRpg.Core.Game
             if (p == Power.DreamOmen)
                 cap += Loc.T("（障壁の割合上限はその半分）", " (the shield percentage cap is half of this)");
             if (p == Power.GleamingWard || p == Power.Medley)
-                cap += Loc.T("。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果合計120%まで",
+                cap += Loc.T("。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120%",
                     ". Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening");
             return body + cap;
         }

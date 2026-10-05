@@ -323,16 +323,16 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryHaste:
-                    limitJa = "（同じ発動での合計100%まで）";
-                    limitEn = " (Up to 100% total per cast.)";
+                    limitJa = "（1回の発動での短縮は合計100%まで）";
+                    limitEn = " (Total reduction per cast is capped at 100%.)";
                     break;
                 case LinkKind.MemorySurge:
-                    limitJa = "（同時には最大値1つ。重ならず時間を延長し、装着条件を外すと解除）";
-                    limitEn = " (Only the strongest active link applies; refreshes without stacking and ends when unequipped.)";
+                    limitJa = "（同時に有効なのは最も大きい1つだけ。重ならず時間を延長し、装備条件を外すと解除）";
+                    limitEn = " (Only the strongest active link applies. It refreshes the duration without stacking, and ends when its equip requirements are removed.)";
                     break;
                 default:
-                    limitJa = "（同種の連携は加算・効果量の合計上限なし）";
-                    limitEn = " (Matching link bonuses add together, with no aggregate cap.)";
+                    limitJa = "（同種の連携は加算。合計の上限なし）";
+                    limitEn = " (Links of the same kind add together, with no total cap.)";
                     break;
             }
             return Loc.Japanese ? DescribeJa(link, isSatisfied, value) + limitJa : DescribeEn(link, isSatisfied, value) + limitEn;
@@ -358,16 +358,16 @@ namespace SodRpg.Core.Game
             }
             var conditions = new List<string>();
             if (travelers.Count == 1)
-                conditions.Add("自分が " + travelers[0] + " であるか、近くに " + travelers[0] + " がいるとき（生きている味方・10m以内）");
+                conditions.Add("自分が" + travelers[0] + "であるか、10m以内に生存中の味方の" + travelers[0] + "がいるとき");
             else if (travelers.Count > 1)
-                conditions.Add(string.Join(" と ", travelers) + " のうち1人で、ほかの旅人が近くにいるとき（生きている味方・10m以内）");
+                conditions.Add(string.Join("・", travelers) + "のうち1人が自分で、残りの旅人が10m以内に生存している味方であるとき");
             if (items.Count > 0)
-                conditions.Add(JoinJa(items) + " を" + (items.Count > 1 ? "すべて" : "") + "装着しているとき");
+                conditions.Add(JoinJa(items) + "を" + (items.Count > 1 ? "すべて" : "") + "装着しているとき");
             return string.Join("、かつ", conditions);
         }
 
         private static string JoinJa(List<string> items) =>
-            items.Count == 1 ? items[0] : string.Join(" と", items);
+            items.Count == 1 ? items[0] : string.Join("と", items);
 
         private static string DescribeJa(LinkDef link, Func<string, bool> isSatisfied, string value)
         {
@@ -375,15 +375,15 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryDamage:
-                    return "記憶ダメージ +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "で与えるダメージに適用";
+                    return MemorySubjectJa(link) + "のダメージ +" + value + "%：" + cond;
                 case LinkKind.Attune:
                     return "攻撃力・魔力 +" + value + "%：" + cond;
                 case LinkKind.Guard:
                     return "最大HP +" + value + "%・防御 +" + value + "：" + cond;
                 case LinkKind.MemoryHaste:
-                    return "クールダウン短縮 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使うと、その記憶の最大クールダウン時間の" + value + "%分だけ残り時間を短縮";
+                    return "クールダウン短縮 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する";
                 case LinkKind.MemorySurge:
-                    return "攻撃力・魔力 +" + value + "%：" + cond + "、" + MemorySubjectJa(link) + "を使った後5秒間";
+                    return MemorySubjectJa(link) + "を使った後5秒間、攻撃力・魔力 +" + value + "%：" + cond;
                 default:
                     return "連携条件：" + cond;
             }
@@ -401,7 +401,7 @@ namespace SodRpg.Core.Game
                 if (first == null) first = ItemName(t);
             }
             if (count == 1) return first;
-            return "その記憶のどれか";
+            return "条件の記憶のどれか";
         }
 
         private static string ConditionEn(LinkDef link, Func<string, bool> isSatisfied, bool memoryKind)
@@ -432,15 +432,15 @@ namespace SodRpg.Core.Game
             switch (link.Kind)
             {
                 case LinkKind.MemoryDamage:
-                    return "Memory damage +" + value + "%: " + cond + "; applies to damage dealt by " + MemorySubjectEn(link) + ".";
+                    return "Damage dealt by " + MemorySubjectEn(link) + " +" + value + "%: " + cond + ".";
                 case LinkKind.Attune:
                     return "Attack damage and ability power +" + value + "%: " + cond + ".";
                 case LinkKind.Guard:
                     return "Maximum health +" + value + "% and armor +" + value + ": " + cond + ".";
                 case LinkKind.MemoryHaste:
-                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value + "% of that memory's maximum cooldown from its remaining time.";
+                    return "Cooldown reduction +" + value + "%: " + cond + "; using " + MemorySubjectEn(link) + " removes " + value + "% of that memory's maximum cooldown from its remaining cooldown.";
                 case LinkKind.MemorySurge:
-                    return "Attack damage and ability power +" + value + "% for 5 seconds: " + cond + "; triggered by using " + MemorySubjectEn(link) + ".";
+                    return "After using " + MemorySubjectEn(link) + ", Attack damage and ability power +" + value + "% for 5 seconds: " + cond + ".";
                 default:
                     return "Link requirements: " + cond + ".";
             }
@@ -457,7 +457,7 @@ namespace SodRpg.Core.Game
                 if (first == null) first = ItemName(t);
             }
             if (count == 1) return first;
-            return "one of those memories";
+            return "any of the required memories";
         }
     }
 }
