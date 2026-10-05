@@ -33,6 +33,9 @@ namespace SodRpg.Core.Game
         public string Text { get; }
         public Rarity? Rarity { get; }
         public Relic Relic { get; internal set; }
+        /// <summary>Removed overflow relic awaiting host dust settlement; null for ordinary notifications.</summary>
+        public Relic SatchelOverflow { get; internal set; }
+        public int SatchelOverflowShards { get; internal set; }
         /// <summary>Kind が Hint のときのヒント。</summary>
         public Hint? HintId { get; set; }
         /// <summary>単独の結果に付随する依頼報酬・レベルアップの通知。</summary>
@@ -284,17 +287,57 @@ namespace SodRpg.Core.Game
         {
             var run = p.Run;
             run.Satchel.Add(relic);
-            if (run.Satchel.Count <= Workshop.SatchelCapacity(p)) return;
-            var worst = run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).FirstOrDefault();
-            if (worst == null) return; // 全品予約中なら、容量より予約対象の保護を優先する。
-            run.Satchel.Remove(worst);
-            if (!suppressShards) run.SatchelShards = SaturatingAdd(run.SatchelShards, worst.InfinityFreeSupply
-                ? InfinityRewards.LimitShards(p, Content.SalvageShards(worst.Rarity)) : Content.SalvageShards(worst.Rarity));
-            ev.Add(new GameEvent(EventKind.Info, suppressShards ? Loc.T(
-                $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を手放しました。道標の効果で欠片は得られません。",
-                $"Satchel full: \"{worst.DisplayName}\" was discarded. The waypoint prevents shard rewards.") : Loc.T(
-                $"持ち歩ける数を超えたため、一番弱い「{worst.DisplayName}」を欠片に換えました。",
-                $"Satchel full: \"{worst.DisplayName}\" was turned into shards.")));
+            int capacity = Workshop.SatchelCapacity(p);
+            while (run.Satchel.Count > capacity)
+            {
+                Relic worst = null;
+                foreach (var candidate in run.Satchel)
+                {
+                    if (trades != null && trades.IsReserved(candidate.Uid)) continue;
+                    if (worst == null || candidate.Rarity < worst.Rarity ||
+                        (candidate.Rarity == worst.Rarity && candidate.Score < worst.Score)) worst = candidate;
+                }
+                if (worst == null) break; // Reservations take precedence over capacity.
+                run.Satchel.Remove(worst);
+                if (suppressShards)
+                {
+                    ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                        $"持ち歩ける数を超えたため、「{worst.DisplayName}」を手放しました。道標の効果で報酬は得られません。",
+                        $"Satchel full: \"{worst.DisplayName}\" was discarded. The waypoint prevents rewards.")));
+                    continue;
+                }
+                int shards = Content.SalvageShards(worst.Rarity);
+                if (worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
+                ev.Add(new GameEvent(EventKind.Info, Loc.T(
+                    $"持ち歩ける数を超えたため、「{worst.DisplayName}」を自動分解しています。",
+                    $"Satchel full: automatically salvaging \"{worst.DisplayName}\"."), worst.Rarity)
+                { SatchelOverflow = worst, SatchelOverflowShards = shards });
+            }
+        }
+
+        /// <summary>Call only after TradeLedger has consumed a definitive successful overflow result.</summary>
+        public static GameEvent CompleteSatchelOverflowDust(PendingTrade trade)
+        {
+            if (trade == null || trade.Kind != TradeKind.SatchelOverflowDust) return null;
+            string name = trade.Relic?.DisplayName ?? trade.Uid;
+            string rarity = Content.RarityName((Rarity)trade.Rarity).ToString();
+            return new GameEvent(EventKind.Info, Loc.T(
+                $"鞄があふれたため、『{name}』（{rarity}）を夢のダスト {trade.EarnDust} に換えました",
+                $"Satchel overflow: \"{name}\" ({rarity}) was converted into {trade.EarnDust} Dream Dust."), (Rarity)trade.Rarity);
+        }
+
+        /// <summary>Fallback shards are capped at removal time, not again at settlement. Call once before send or after consuming a failed result.</summary>
+        public static GameEvent CompleteSatchelOverflowFallback(Profile p, Relic relic, string runId, int shards)
+        {
+            if (p == null) throw new ArgumentNullException(nameof(p));
+            if (relic == null) throw new ArgumentNullException(nameof(relic));
+            if (shards < 0) throw new ArgumentOutOfRangeException(nameof(shards));
+            if (p.Run != null && p.Run.RunId == runId)
+                p.Run.SatchelShards = SaturatingAdd(p.Run.SatchelShards, shards);
+            else p.AddMaterial(Materials.Shard, shards);
+            return new GameEvent(EventKind.Warning, Loc.T(
+                $"鞄からあふれた「{relic.DisplayName}」のドリームダストを付与できなかったため、欠片+{shards}に換えました。",
+                $"Could not grant Dream Dust for overflowing \"{relic.DisplayName}\"; granted {shards} shards instead."), relic.Rarity);
         }
 
         /// <summary>新しく見つけた遺物を依頼へ反映する。鞄が満杯で欠片になった場合も数える。</summary>

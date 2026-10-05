@@ -73,18 +73,25 @@ namespace SodRpg.Core.Game
                 {
                     var executed = CheckpointObject(entry);
                     long token = CheckpointLong(executed, "token", 1, long.MaxValue);
-                    if (ledger.Executed.ContainsKey(token) || !CheckpointBool(executed, "ok")
-                        || CheckpointLong(executed, "ledger", 1, long.MaxValue) != id)
+                    bool ok = CheckpointBool(executed, "ok");
+                    string fingerprint = CheckpointString(executed, "fingerprint");
+                    string receiptReason = executed.TryGet("reason", out object reason) ? reason as string : null;
+                    if (ledger.Executed.ContainsKey(token)
+                        || CheckpointLong(executed, "ledger", 1, long.MaxValue) != id
+                        || (!ok && (!fingerprint.StartsWith("o:", StringComparison.Ordinal) || receiptReason != "native"
+                            || CheckpointLong(executed, "gold", 0, int.MaxValue) != 0
+                            || CheckpointLong(executed, "dust", 0, int.MaxValue) != 0
+                            || CheckpointLong(executed, "earn", 0, int.MaxValue) != 0)))
                         throw new LedgerFormatException("Invalid executed trade receipt.");
                     ledger.Executed.Add(token, new TradeDecision
                     {
-                        Ok = true, Replayed = CheckpointBool(executed, "replayed"),
-                        Reason = executed.TryGet("reason", out object reason) ? reason as string : null,
+                        Ok = ok, Replayed = CheckpointBool(executed, "replayed"),
+                        Reason = receiptReason,
                         SpendGold = (int)CheckpointLong(executed, "gold", 0, int.MaxValue),
                         SpendDust = (int)CheckpointLong(executed, "dust", 0, int.MaxValue),
                         EarnDust = (int)CheckpointLong(executed, "earn", 0, int.MaxValue), LedgerId = id,
                     });
-                    ledger.Fingerprints.Add(token, CheckpointString(executed, "fingerprint"));
+                    ledger.Fingerprints.Add(token, fingerprint);
                     ledger.Order.Enqueue(token);
                 }
                 foreach (var entry in CheckpointArray(player, "cancelled", MaxTokensPerPlayer))

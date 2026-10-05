@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using SodRpg.Core.Game;
+using Mirror;
 
 namespace SodRpg.Mod
 {
@@ -8,6 +9,47 @@ namespace SodRpg.Mod
     {
         // 取引の裁定は Core の TradeAuthority（純粋な C#）が行う。ここは本体の値の受け渡しだけ。
         private readonly TradeAuthority _tradeAuthority = new TradeAuthority();
+        private bool _satchelDustDisabled;
+
+        private TradeDecision GrantSatchelOverflow(DreamforgeTradeMsg message, DewPlayer owner, TradeRequest request)
+        {
+            string playerKey = TradePlayerKey(owner);
+            string runId = TradeRunId();
+            if (_satchelDustDisabled || !NetworkServer.active || !owner.isHumanPlayer || !DewPlayer.gamePlayers.Contains(owner)
+                || string.IsNullOrEmpty(playerKey) || string.IsNullOrEmpty(runId)
+                || message.runId != runId || !MechanismHandshakeAccepted(owner))
+            {
+                Log.Error("Host: satchel overflow owner/expedition unavailable; using shards.");
+                return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request);
+            }
+
+            var decision = _tradeAuthority.Evaluate(playerKey, runId, request, owner.gold, owner.dreamDust, TradeGoldCostScale());
+            if (!decision.Ok || decision.Replayed) return decision;
+            int before = owner.dreamDust;
+            try
+            {
+                if (decision.EarnDust > int.MaxValue - (long)before)
+                    throw new InvalidOperationException("Dream Dust balance would overflow.");
+                owner.EarnDreamDust(decision.EarnDust);
+                if (owner.dreamDust - (long)before != decision.EarnDust)
+                    throw new InvalidOperationException("Dream Dust grant did not produce the expected balance.");
+                return decision;
+            }
+            catch (Exception ex)
+            {
+                // EarnDreamDust can mutate the SyncVar before a later callback fails. Never pay again.
+                // Restore a partial/native mismatch to the prior balance before selecting shard fallback.
+                Log.Error("Host: satchel overflow Dream Dust grant failed: " + ex.Message);
+                _satchelDustDisabled = true;
+                if (owner.dreamDust - (long)before == decision.EarnDust) return decision;
+                try { owner.dreamDust = before; }
+                catch (Exception restoreError)
+                {
+                    Log.Error("Host: satchel overflow balance restore failed: " + restoreError.Message);
+                }
+                return _tradeAuthority.FailSatchelOverflow(playerKey, runId, request, executionFailed: true);
+            }
+        }
 
         /// <summary>
         /// 本体の通貨での取引（v1.31）。金額はホストが Economy の固定レート・残高・本体の価格補正から計算し、
@@ -28,7 +70,9 @@ namespace SodRpg.Mod
                     reason = "protocol"; // 旧形式（金額の申告）は版違いとして断る
                 else
                 {
-                    var d = _tradeAuthority.Evaluate(TradePlayerKey(caller), TradeRunId(), req, caller.gold, caller.dreamDust, TradeGoldCostScale());
+                    var d = req.Kind == TradeKind.SatchelOverflowDust && !req.Query
+                        ? GrantSatchelOverflow(msg, caller, req)
+                        : _tradeAuthority.Evaluate(TradePlayerKey(caller), TradeRunId(), req, caller.gold, caller.dreamDust, TradeGoldCostScale());
                     ok = d.Ok;
                     reason = d.Reason;
                     ledgerId = d.LedgerId;
@@ -36,7 +80,7 @@ namespace SodRpg.Mod
                     {
                         if (d.SpendGold > 0) caller.SpendGold(d.SpendGold);
                         if (d.SpendDust > 0) caller.SpendDreamDust(d.SpendDust);
-                        if (d.EarnDust > 0) caller.EarnDreamDust(d.EarnDust);
+                        if (d.EarnDust > 0 && req.Kind != TradeKind.SatchelOverflowDust) caller.EarnDreamDust(d.EarnDust);
                     }
                 }
             }

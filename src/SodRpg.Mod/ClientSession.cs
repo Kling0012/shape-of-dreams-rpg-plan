@@ -597,6 +597,11 @@ if (_nativeContinueRestoring || InfinityMode.Restoring) return;
         public void Emit(GameEvent e)
         {
             _dirty = true;
+            if (e.SatchelOverflow != null)
+            {
+                ConvertSatchelOverflow(e);
+                return;
+            }
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
             if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
             _notify?.Invoke(e);
@@ -794,14 +799,24 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 TradeWire.Encode(t, out int spendGold, out int spendDust, out int earnDust);
                 _clientRpcOn.CustomRpc_SendMessageToServer(new DreamforgeTradeMsg
                 {
-                    token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust, protocol = Protocol.Version,
+                    token = t.Token, spendGold = spendGold, spendDust = spendDust, earnDust = earnDust,
+                    protocol = Protocol.Version, runId = t.RunId,
                 });
             }
             catch (Exception ex)
             {
-                RestoreSalvageTrade(_trades.Complete(t.Token, false));
-                SaveNow(); // 準備状態は保存済み：送れなかった取り消しも保存して、再起動後に幽霊の取引が残らないようにする
-                Log.Error("Client SendTrade: " + ex.Message);
+                if (t.Kind == TradeKind.SatchelOverflowDust)
+                {
+                    // Sending may have delivered before throwing; only a host receipt can prove non-payment.
+                    _trades.MarkAllUnresolved(Time.unscaledTime);
+                    Log.Warn("Satchel overflow send uncertain; querying the existing receipt: " + ex.Message);
+                }
+                else
+                {
+                    RestoreSalvageTrade(_trades.Complete(t.Token, false));
+                    Log.Error("Client SendTrade: " + ex.Message);
+                }
+                SaveNow();
                 return Loc.T("取引を送れませんでした。", "Could not send the trade.");
             }
             return null;
@@ -815,7 +830,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         {
             var taken = _trades.TakeLost();
             if (taken.Count == 0) return 0;
-            foreach (var t in taken) RestoreSalvageTrade(t);
+            foreach (var t in taken)
+                if (t.Kind != TradeKind.SatchelOverflowDust) RestoreSalvageTrade(t);
             Emit(new GameEvent(EventKind.Warning, Loc.T(
                 $"結果を確認できない取引{taken.Count}件を手放しました（対価は付いていません）。",
                 $"Gave up {taken.Count} trade(s) whose result could not be confirmed (no reward was granted).")));
@@ -825,8 +841,11 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
 
         private void RestoreSalvageTrade(PendingTrade trade)
         {
-            if (trade == null || trade.Kind != TradeKind.SalvageForDust) return;
-            Emit(Rules.RestorePendingSalvage(Profile, trade.Uid));
+            if (trade == null) return;
+            if (trade.Kind == TradeKind.SatchelOverflowDust)
+                Emit(Rules.CompleteSatchelOverflowFallback(Profile, trade.Relic, trade.RunId, trade.FallbackShards));
+            else if (trade.Kind == TradeKind.SalvageForDust)
+                Emit(Rules.RestorePendingSalvage(Profile, trade.Uid));
         }
 
         private void OnTradeResult(DreamforgeTradeResultMsg msg)
@@ -867,6 +886,9 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                     case TradeKind.SalvageForDust:
                         if (Rules.SalvageUnsecured(Profile, t.Uid) != null)
                             Emit(new GameEvent(EventKind.Info, Loc.T($"分解してドリームダスト+{t.EarnDust}", $"Salvaged for {t.EarnDust} Dream Dust")));
+                        break;
+                    case TradeKind.SatchelOverflowDust:
+                        Emit(Rules.CompleteSatchelOverflowDust(t));
                         break;
                 }
                 SaveNow();

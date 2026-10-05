@@ -334,7 +334,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(hostInfinity.Interval, plainGuest.Run.Infinity.Interval);
             Assert.Equal(hostInfinity.ClearedCombatTotal, plainGuest.Run.Infinity.ClearedCombatTotal);
 
-            // Protocol 21（ロビー復帰の敗北とインフィニティ報酬上限を必須とする版）の不一致は認められない
+            // Protocol 21（ロビー復帰の敗北・インフィニティ報酬上限・鞄の自動ダスト換金を含む版）の不一致は認められない
             Assert.Equal(21, SodRpg.Mod.Protocol.Version);
             Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(20, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
             Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, null, SodRpg.Mod.Protocol.Version));

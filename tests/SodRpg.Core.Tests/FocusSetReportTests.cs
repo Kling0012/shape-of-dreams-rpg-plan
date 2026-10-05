@@ -214,7 +214,7 @@ namespace SodRpg.Core.Tests
             Rules.OnRoomsCleared(p, Content.RoomsToRecoverLost);
             Assert.Equal(Content.SatchelCapacity, p.Run.Satchel.Count);
             Assert.Contains(p.Run.Satchel, r => r.Rarity == Rarity.Legendary);
-            Assert.True(p.Run.SatchelShards > shards);
+            Assert.Equal(shards, p.Run.SatchelShards);
         }
 
         [Fact]
