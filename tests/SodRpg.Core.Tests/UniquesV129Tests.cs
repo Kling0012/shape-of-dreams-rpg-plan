@@ -80,10 +80,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(14, bySlot(Slot.Hands));
             Assert.Equal(9, bySlot(Slot.Feet));
             Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(1394, Content.Uniques.Count); // Reviewed P37 + 10 boss sets × 6 pieces (#48 stages A–B2).
+            Assert.Equal(1418, Content.Uniques.Count); // Reviewed P37 + all 14 boss sets × 6 pieces.
             Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
             Assert.Equal(357, Content.Uniques.Count(u => u.Link != null)); // Includes all reviewed P37 content.
-            Assert.Equal(58, Content.Sets.Count); // 48 generic + 10 boss sets (#48 stages A–B2).
+            Assert.Equal(62, Content.Sets.Count); // 48 generic + all 14 boss sets.
         }
 
         [Fact]

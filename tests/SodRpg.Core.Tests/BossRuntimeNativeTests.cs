@@ -210,13 +210,13 @@ namespace SodRpg.Core.Tests
             Assert.Equal(-25f, LiveSpeeds(rig.State).Single().strength);
             Invoke(rig.Host, "BossEnsure", rig.Rt);
             Assert.NotNull(rig.Rt.Boss.Build);
-            Assert.NotEmpty(rig.Rt.Boss.ActionKeys);
+            Assert.NotEqual(0u, rig.Rt.Boss.SetMask); // B-3: per-set action mask replaces the action-key list.
 
             rig.Hero.isActive = false;
             Invoke(rig.Host, "TickBossEffects", rig.Rt, 11f);
 
             Assert.Null(rig.Rt.Boss.Build);
-            Assert.Empty(rig.Rt.Boss.ActionKeys);
+            Assert.Equal(0u, rig.Rt.Boss.SetMask);
             Assert.Equal(0, rig.Rt.Boss.HysteriaState);
             var live = LiveSpeeds(rig.State);
             Assert.Single(live);

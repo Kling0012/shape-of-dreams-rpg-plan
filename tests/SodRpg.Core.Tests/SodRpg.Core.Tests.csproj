@@ -66,6 +66,14 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossLastStarlight.cs" Link="ModUnderTest/HostAuthority.BossLastStarlight.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossSoulPrison.cs" Link="ModUnderTest/HostAuthority.BossSoulPrison.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBurrow.cs" Link="ModUnderTest/HostAuthority.BossBurrow.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPools.cs" Link="ModUnderTest/HostAuthority.BossPools.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossLight.cs" Link="ModUnderTest/HostAuthority.BossLight.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossMaw.cs" Link="ModUnderTest/HostAuthority.BossMaw.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossObliviax.cs" Link="ModUnderTest/HostAuthority.BossObliviax.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossPolaris.cs" Link="ModUnderTest/HostAuthority.BossPolaris.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossWorldCracker.cs" Link="ModUnderTest/HostAuthority.BossWorldCracker.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossBigChomp.cs" Link="ModUnderTest/HostAuthority.BossBigChomp.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossShoutOfOblivion.cs" Link="ModUnderTest/HostAuthority.BossShoutOfOblivion.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.BossVisuals.cs" Link="ModUnderTest/HostAuthority.BossVisuals.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.BossEffects.cs" Link="ModUnderTest/NetMessages.BossEffects.cs" />
   </ItemGroup>

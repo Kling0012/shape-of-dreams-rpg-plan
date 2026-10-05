@@ -8,9 +8,9 @@ using Xunit;
 namespace SodRpg.Core.Tests
 {
     /// <summary>
-    /// #48 段階B-1・B-2：Skoll／Infernus／白夜／暗月／Nyx／Erebos／Seeker／Azurak／PrimusAeron。
+    /// #48 段階B：全13セット（Demonは段階Aのテストで扱う）。
     /// 各セットで装備数による 2/3/6 段階と報酬連携 2/4/6 段階の切替（白夜と暗月は同じ記憶で
-    /// 部位数を別集計、Primusは連携なし）、対応ボス撃破だけの専用ドロップ、保存往復を確認する。
+    /// 部位数を別集計、Primus／Polarisは連携なし）、対応ボス撃破だけの専用ドロップ、保存往復を確認する。
     /// </summary>
     public class BossSetsStageB12Tests
     {
@@ -33,6 +33,10 @@ namespace SodRpg.Core.Tests
             new SetSpec { SetId = BossProfiles.SeekerSetId, BossType = "Mon_DarkCave_BossSeeker", RewardId = BossProfiles.SeekerRewardId, Requires = "Gem_U_SoulPrison" },
             new SetSpec { SetId = BossProfiles.AzurakSetId, BossType = "Mon_Despair_BossAzurak", RewardId = BossProfiles.AzurakRewardId, Requires = "St_U_Burrow" },
             new SetSpec { SetId = BossProfiles.PrimusSetId, BossType = "Mon_Primus_BossPrimusAeron", RewardId = null, Requires = null },
+            new SetSpec { SetId = BossProfiles.LightSetId, BossType = "Mon_Special_BossLightElemental", RewardId = BossProfiles.LightRewardId, Requires = "St_U_WorldCracker" },
+            new SetSpec { SetId = BossProfiles.MawSetId, BossType = "Mon_Special_BossMaw", RewardId = BossProfiles.MawRewardId, Requires = "St_U_BigChomp" },
+            new SetSpec { SetId = BossProfiles.ObliviaxSetId, BossType = "Mon_Special_BossObliviax", RewardId = BossProfiles.ObliviaxRewardId, Requires = "St_U_ShoutOfOblivion" },
+            new SetSpec { SetId = BossProfiles.PolarisSetId, BossType = "Mon_Special_BossPolaris", RewardId = null, Requires = null },
         };
 
         public static IEnumerable<object[]> SetIds() => Specs.Select(s => new object[] { s.SetId });
@@ -114,7 +118,7 @@ namespace SodRpg.Core.Tests
             }
             else
             {
-                // Primusは本体報酬との連携なし。LinkStagesも報酬profileも登録しない。
+                // Primus／Polarisは本体報酬との連携なし。
                 Assert.Null(set.BossReward);
                 Assert.Empty(set.LinkStages);
                 Assert.Null(set.SelectLinkStage(6));
@@ -151,6 +155,41 @@ namespace SodRpg.Core.Tests
                 if (expectedStage != null)
                     Assert.Equal(spec.RewardId, b.BossRewards.Single(r => r.SetId == setId).ProfileId);
             }
+        }
+
+        [Theory]
+        [InlineData(BossProfiles.LightSetId)]
+        [InlineData(BossProfiles.MawSetId)]
+        [InlineData(BossProfiles.ObliviaxSetId)]
+        [InlineData(BossProfiles.PolarisSetId)]
+        public void B3_enhancement_and_awakening_stop_at_three_times_without_scaling_stages(string setId)
+        {
+            var profile = Equipped(setId, 6);
+            var baseline = Build.Compute(profile, Hero, 0);
+            foreach (var relic in profile.Stash)
+            {
+                relic.Enhance = 20;
+                relic.EnhanceMilestones = 5;
+                relic.AwakenLevel = 3;
+                var move = relic.EffectiveBossMove();
+                Assert.True(BossProfiles.TryGetMove(move.ProfileId, out var definition));
+                for (int i = 0; i < definition.Channels.Count; i++)
+                {
+                    var channel = definition.Channels[i];
+                    bool scales = channel.Kind == BossCoefficientKind.Damage ||
+                        channel.Kind == BossCoefficientKind.Heal || channel.Kind == BossCoefficientKind.Shield;
+                    Assert.Equal(channel.ValueMilli * (scales ? 3 : 1), move.Channels[i].ValueMilli);
+                }
+                Assert.Empty(relic.Powers);
+            }
+            var enhanced = Build.Compute(profile, Hero, 0);
+            foreach (var stage in Content.GetSet(setId).BossStages)
+            {
+                var before = baseline.BossMoves.Single(m => m.ProfileId == stage.ProfileId);
+                var after = enhanced.BossMoves.Single(m => m.ProfileId == stage.ProfileId);
+                Assert.Equal(before.Channels.Select(c => c.ValueMilli), after.Channels.Select(c => c.ValueMilli));
+            }
+            Assert.Equal(baseline.BossRewards.Select(r => r.Stage), enhanced.BossRewards.Select(r => r.Stage));
         }
 
         [Fact]

@@ -25,7 +25,7 @@ namespace SodRpg.Mod
         public DamageData MagicDamage(float amount, float coefficient) => new DamageData(amount) { actor = this };
         public Se_GenericShield_OneShot GiveShield(Entity target, float amount, float duration)
         {
-            var container = new Se_GenericShield_OneShot { initAmount = amount };
+            var container = new Se_GenericShield_OneShot { initAmount = amount, victim = target };
             container.shield = new ShieldEffect { amount = amount };
             target.Status.Shields.Add(container.shield);
             return container;
@@ -93,7 +93,12 @@ namespace SodRpg.Mod
     internal partial struct HealData
     {
         public float Amount;
-        public void Dispatch(Entity target) => target.currentHealth = Math.Min(target.maxHealth, target.currentHealth + Amount);
+        public void Dispatch(Entity target)
+        {
+            if (actor is Entity source)
+                foreach (var processor in source.dealtHealProcessor.Entries) processor(ref this, actor, target);
+            target.currentHealth = Math.Min(target.maxHealth, target.currentHealth + Amount);
+        }
     }
     internal partial struct DamageData
     {
@@ -106,9 +111,28 @@ namespace SodRpg.Mod
         public void ApplyAmplification(float value) => _amplification *= 1f + value;
         public bool IsAmountModifiedBy(Type type) => _markers != null && _markers.Contains(type);
         public DamageData SetAmountModifiedBy(Type type) { if (_markers == null) _markers = new HashSet<Type>(); _markers.Add(type); return this; }
+        private static long BossPacketSerial;
         public void Dispatch(Entity target)
         {
-            // Mirrors Actor.DealDamage: dealt processors then ActorEvent_OnDealDamage, both walking the dealing Actor's parent chain.
+            // Generated boss packets retain the HP-only result through their native notification scope.
+            if (HostAuthority.IsBossGeneratedDamage(this) && HostAuthority.NativeInstance != null)
+            {
+                var previous = NativeAttributedDamagePacket.Current;
+                var packet = new NativeAttributedDamagePacket.Packet { Actor = actor, Victim = target, Serial = ++BossPacketSerial };
+                NativeAttributedDamagePacket.Current = packet;
+                try
+                {
+                    HostAuthority.NativeInstance.ObserveBossGeneratedDispatch(packet, this);
+                    float hp = target.Status.hasDamageImmunity ? 0f : Math.Min(target.currentHealth, currentAmount);
+                    target.currentHealth -= hp;
+                    packet.HpDamage = hp;
+                    HostAuthority.NativeInstance.SimulateBossDamageNotification(new EventInfoDamage
+                        { actor = actor, victim = target, amount = hp, damage = this });
+                }
+                finally { NativeAttributedDamagePacket.Current = previous; }
+                return;
+            }
+            // Other tests retain the dealt-processor and ancestor-event path.
             actor?.SimulateDealDamage(ref this, target);
             target.currentHealth -= currentAmount;
         }

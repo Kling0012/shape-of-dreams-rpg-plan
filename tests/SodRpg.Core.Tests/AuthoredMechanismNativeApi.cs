@@ -17,7 +17,8 @@ namespace HarmonyLib
             return parameters == null ? type.GetMethod(name, Flags) : type.GetMethod(name, Flags, null, parameters, null);
         }
         public static MethodInfo DeclaredMethod(Type type, string name) => type.GetMethod(name, Flags | BindingFlags.DeclaredOnly);
-        public static FieldInfo DeclaredField(Type type, string name) => type.GetField(name, Flags);
+        public static MethodInfo PropertySetter(Type type, string name) => type.GetProperty(name, Flags)?.GetSetMethod(true);
+        public static FieldInfo DeclaredField(Type type, string name) => type.GetField(name, Flags | BindingFlags.DeclaredOnly);
     }
     internal sealed partial class CodeInstruction
     {
@@ -181,8 +182,8 @@ namespace SodRpg.Mod
     }
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops = true; }
     internal sealed class GameManager { public string runId = "native-run"; }
-    internal sealed partial class ZoneManager { public int currentZoneIndex; }
-    internal static class NetworkedManagerBase<T> where T : new() { public static T softInstance = new T(); }
+    internal sealed partial class ZoneManager { public int currentZoneIndex; public int currentHuntLevel; }
+    internal static class NetworkedManagerBase<T> where T : new() { public static T softInstance = new T(); public static T instance = new T(); }
     internal struct EventInfoCast { public Actor instance, trigger; }
     internal sealed class GimmickSiphonLimit { }
     internal static class NativeAttributedDamagePacket
@@ -192,6 +193,7 @@ namespace SodRpg.Mod
             internal Actor Actor; internal Entity Victim; internal long Serial;
             internal MemoryActivationIdentity Identity; internal ReactionChain Chain;
             internal bool Admitted, MainBasic; internal float DamageAmount;
+            internal float HpDamage; internal long NotificationVictim; internal int Notifications;
         }
         internal static Packet Current;
     }

@@ -31,12 +31,25 @@ namespace SodRpg.Mod
         public EntityStatus Status = new EntityStatus();
         public EntityRelation GetRelation(Entity other) => Relation;
         public Se_GenericEffectContainer CreateBasicEffect(Entity victim, BasicEffect effect, float duration, string id)
-            => new Se_GenericEffectContainer { victim = victim, duration = duration, id = id, effect = effect };
+        {
+            var container = new Se_GenericEffectContainer { victim = victim, duration = duration, id = id, effect = effect };
+            ((StatusEffect)container).victim = victim;
+            effect.victim = victim;
+            effect.parent = container;
+            effect.isAlive = true;
+            return container;
+        }
     }
     internal sealed partial class EntityStatus { public bool hasCrowdControlImmunity; }
-    internal class BasicEffect { public Entity victim; public StatusEffect parent; public bool isAlive = true; }
+    internal class BasicEffect
+    {
+        public Entity victim { get; set; }
+        public StatusEffect parent { get; set; }
+        private bool enabled = true;
+        public bool isAlive { get => enabled && victim != null && parent != null && parent.isActive; set => enabled = value; }
+    }
     internal sealed class StunEffect : BasicEffect { }
-    internal sealed class SlowEffect : BasicEffect { }
+    internal sealed class SlowEffect : BasicEffect { public float strength; public bool decay; }
     internal sealed class UnstoppableEffect : BasicEffect { }
     internal sealed partial class CastInfo { public Entity caster; }
     internal partial class StatusEffect : Actor { public CastInfo info = new CastInfo(); }

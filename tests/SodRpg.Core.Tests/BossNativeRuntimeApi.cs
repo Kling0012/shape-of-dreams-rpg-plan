@@ -44,7 +44,18 @@ namespace HarmonyLib
 }
 namespace UnityEngine
 {
-    internal static class Mathf { public static float Abs(float value) => value < 0 ? -value : value; }
+    internal static class Mathf
+    {
+        public static float Abs(float value) => value < 0 ? -value : value;
+        public static float Min(float a, float b) => a < b ? a : b;
+        public static float Max(float a, float b) => a > b ? a : b;
+        public static float Clamp(float value, float min, float max) => value < min ? min : value > max ? max : value;
+        public static float Clamp01(float value) => Clamp(value, 0f, 1f);
+        public static float Lerp(float a, float b, float t) => a + (b - a) * t;
+        public static float Cos(float radians) => (float)Math.Cos(radians);
+        public static float Sin(float radians) => (float)Math.Sin(radians);
+        public const float Deg2Rad = (float)(Math.PI / 180.0);
+    }
     internal static class Physics
     {
         public static bool Linecast(Vector3 start, Vector3 end, int layerMask) => false;
@@ -57,18 +68,26 @@ namespace UnityEngine
     internal static class Physics2D
     {
         // No walls in the test world: the cast never narrows a sweep.
-        public static void CircleCast(Vector2 origin, float radius, Vector2 direction, ContactFilter2D filter,
-            List<RaycastHit2D> results, float distance) { }
+        public static int CircleCast(Vector2 origin, float radius, Vector2 direction, ContactFilter2D filter,
+            RaycastHit2D[] results, float distance) => 0;
     }
-    internal static class LayerMasks { public static int Ground = 1, Entity = 2, CollidableWithProjectile = 4; }
+    internal static class LayerMasks { public static int Ground = 1, Entity = 2, CollidableWithProjectile = 4, IncludeInNavigation = 8; }
     internal struct Quaternion
     {
-        public static Quaternion AngleAxis(float angle, Vector3 axis) => new Quaternion();
-        public static Vector3 operator *(Quaternion rotation, Vector3 point) => point;
-        public static Quaternion Euler(float x, float y, float z) => new Quaternion();
-        internal static Quaternion identity => new Quaternion();
+        private Vector3 axis;
+        private float radians;
+        public static Quaternion AngleAxis(float angle, Vector3 axis)
+            => new Quaternion { axis = axis.normalized, radians = angle * Mathf.Deg2Rad };
+        public static Vector3 operator *(Quaternion rotation, Vector3 point)
+        {
+            float c = Mathf.Cos(rotation.radians), s = Mathf.Sin(rotation.radians);
+            return point * c + Vector3.Cross(rotation.axis, point) * s +
+                rotation.axis * (Vector3.Dot(rotation.axis, point) * (1f - c));
+        }
+        public static Quaternion Euler(float x, float y, float z) => AngleAxis(y, Vector3.up);
+        internal static Quaternion identity => AngleAxis(0f, Vector3.up);
     }
-    internal sealed class Transform { public Vector3 forward => Vector3.forward; }
+    internal sealed class Transform { public Vector3 position; public Vector3 forward => Vector3.forward; }
     internal sealed class AnimationCurve { public float Evaluate(float time) => time; }
     internal static partial class Dew
     {
@@ -98,7 +117,14 @@ namespace UnityEngine
             a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
         public static Vector3 operator /(Vector3 a, float d) => new Vector3(a.x / d, a.y / d, a.z / d);
         public static float Distance(Vector3 a, Vector3 b) => (a - b).magnitude;
-        public static float Angle(Vector3 from, Vector3 to) => 0f;
+        public static float Angle(Vector3 from, Vector3 to)
+        {
+            float denominator = from.magnitude * to.magnitude;
+            return denominator == 0f ? 0f : (float)(Math.Acos(Mathf.Clamp(Dot(from, to) / denominator, -1f, 1f)) / Mathf.Deg2Rad);
+        }
+        public static float Dot(Vector3 a, Vector3 b) => a.x * b.x + a.y * b.y + a.z * b.z;
+        public static float SignedAngle(Vector3 from, Vector3 to, Vector3 axis)
+            => Angle(from, to) * (Dot(axis, Cross(from, to)) < 0f ? -1f : 1f);
         public static bool operator ==(Vector3 a, Vector3 b) => a.x == b.x && a.y == b.y && a.z == b.z;
         public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
         public Vector3 Flattened() => new Vector3(x, 0, z);
@@ -125,7 +151,9 @@ namespace SodRpg.Mod
     }
     internal class Displacement
     {
-        public bool hasStarted, isFriendly = true, isAlive = true;
+        public bool hasStarted { get; set; }
+        public bool isFriendly = true, isAlive = true;
+        public float elapsedTime { get; set; }
         public event Action onFinish, onCancel;
         internal void Finish() => onFinish?.Invoke();
         internal void Cancel() => onCancel?.Invoke();
@@ -151,8 +179,11 @@ namespace SodRpg.Mod
     {
         public Vector3 destination;
         public float duration;
-        public bool isDodging, canGoOverTerrain, isCanceledByCC;
+        public bool isDodging, canGoOverTerrain, isCanceledByCC, rotateForward;
+        public DewEase ease = DewEase.EaseOutQuad;
     }
+    // Native easing enum referenced by displacement double above (production: game assembly).
+    internal enum DewEase { Linear, EaseOutQuad }
     internal static class TeleportInitiator { public static Actor Current; }
     internal sealed class SI
     {
@@ -196,7 +227,7 @@ namespace SodRpg.Mod
         private EntityControl _control;
         public EntityControl Control { get { if (_control == null) _control = new EntityControl { entity = this }; return _control; } }
         public Transform transform = new Transform();
-        public bool CheckEnemyOrNeutral(Entity other) => GetRelation(other) == EntityRelation.Enemy;
+        public bool CheckEnemyOrNeutral(Entity other) => other != null && other.GetRelation(this) == EntityRelation.Enemy;
         public bool IsAnyBoss() => false;
     }
     internal partial class CastInfo { public Entity target; public Vector3 point; public Vector3 forward => Vector3.forward; }
@@ -251,9 +282,9 @@ namespace SodRpg.Mod
         public void SetTimer(float maxDuration, float duration) { }
         public void ResetTimer() { }
         public void StopTimer() { }
-        public void Destroy() => isActive = false;
+        public void Destroy() => DestroyIfActive();
     }
-    internal partial class EntityStatus { public bool hasUncollidable; public bool hasRoot; public void CalculateStatsIfDirty() { } }
+    internal partial class EntityStatus { public bool hasUncollidable, hasRoot, hasDamageImmunity; public float missingHealth; public void CalculateStatsIfDirty() { } }
     internal sealed partial class ShieldEffect { public event Action<float, float> onAmountModified; }
     internal static partial class DewPhysics
     {
@@ -281,13 +312,14 @@ namespace SodRpg.Mod
         public void AddStatBonus(StatBonus bonus) { }
         public void RemoveStatBonus(StatBonus bonus) { }
     }
-    internal partial class Gem { public AbilityTargetValidatorWrapper tvDefaultHarmfulEffectTargets; }
+    internal partial class Gem { public AbilityTargetValidatorWrapper tvDefaultHarmfulEffectTargets; public GemLocation location; }
     internal partial struct HealData
     {
         public Actor actor;
         public float amplificationMultiplier, reductionMultiplier;
         public float currentAmount => Amount;
         public HealData AddAmount(float value) { Amount += value; return this; }
+        public void Dispatch(Entity target, ReactionChain chain) => Dispatch(target);
     }
     internal partial struct DamageData
     {
@@ -338,15 +370,35 @@ namespace SodRpg.Mod
     {
         public static List<Entity> SphereCastAllEntities(out ListReturnHandle<Entity> handle, Vector3 center,
             float radius, Vector3 direction, float distance, object filter, Hero hero)
-            => OverlapCircleAllEntities(out handle, center, radius, filter, hero);
+        {
+            handle = new ListReturnHandle<Entity>();
+            var result = new List<Entity>();
+            Vector3 forward = direction.normalized;
+            foreach (var entity in Entities)
+            {
+                if (entity == null || entity.Relation != EntityRelation.Enemy) continue;
+                Vector3 offset = entity.agentPosition - center;
+                float along = Mathf.Clamp(Vector3.Dot(offset, forward), 0f, distance);
+                if ((offset - forward * along).sqrMagnitude <= radius * radius) result.Add(entity);
+            }
+            return result;
+        }
         public static bool TryGetEntity(object collider, out Entity entity) { entity = null; return false; }
         public static bool TryGetCollidableWithProjectile(object collider, out object hit) { hit = null; return false; }
     }
 
-    internal sealed partial class HeroSkill { public bool TryGetGemLocation(Gem gem, out GemLocation location) { location = default(GemLocation); return false; } }
+    internal sealed partial class HeroSkill
+    {
+        public bool TryGetGemLocation(Gem gem, out GemLocation location) { location = default(GemLocation); return false; }
+        public bool TryGetGem(GemLocation location, out Gem gem) => gems.TryGetValue(location, out gem);
+    }
     internal sealed partial class HostAuthority
     {
         private ZoneManager _zone;
+        // Production builds this from Actor-assignable game types (MemoryActivationAttribution);
+        // the double mirrors the name-only mapping the boss runtime consumes.
+        private static string NativeActorTypeName(Actor actor) => actor != null ? actor.GetType().Name : string.Empty;
+        internal void SimulateBossDamageNotification(EventInfoDamage info) => ObserveBossGeneratedDamage(info);
         internal static void AddNativeStat(StatBonus bonus, Stat stat, float value)
         {
             switch (stat)
@@ -365,6 +417,86 @@ namespace SodRpg.Mod
         internal sealed partial class HeroRuntime
         {
             public HostAuthority.BossCombatState Boss = new HostAuthority.BossCombatState();
+            // Production: HostAuthority.cs field; per-hero native sweep polls (adapters' 100ms gates).
+            internal readonly BossNativeOwner BossNative = new BossNativeOwner();
         }
     }
+
+    // --- #48 stage B-3 native doubles: WorldCracker beam, Big Chomp instance, cooldown payload ---
+    internal sealed class St_U_WorldCracker : SkillTrigger { }
+    internal sealed class Ai_U_WorldCracker : AbilityInstance
+    {
+        // Public native fields the adapter saves and restores on unbind (stage A/B contract).
+        public float angleSpeed = 40f, radius = 0.2f;
+        public void OnCreate() { }
+        public void OnDestroyActor() { }
+        public void OnDisable() { }
+        // IL contract double for LightWorldCrackerNativeTick: 9 locals (slot 1 = float), exactly
+        // two stores into slot 1, one DewPhysics.SphereCastAllEntities call, and a single
+        // DamageData.Dispatch(target, chain) whose stack admits the beam + clipped-distance prefix.
+        public void ActiveLogicUpdate()
+        {
+            DamageData damage = default(DamageData);
+            float clipped = 8f;
+            Entity target = info.target;
+            Vector3 center = transform.position;
+            Vector3 direction = transform.forward;
+            ListReturnHandle<Entity> handle = default(ListReturnHandle<Entity>);
+            ReactionChain chain = default(ReactionChain);
+            float spare = clipped;
+            List<Entity> hits = DewPhysics.SphereCastAllEntities(out handle, center, radius, direction, clipped, null, null);
+            clipped = Mathf.Min(clipped, spare);
+            if (hits != null) target = info.target;
+            damage.Dispatch(target, chain);
+        }
+    }
+
+    internal sealed class St_U_BigChomp : SkillTrigger { }
+    internal sealed class Ai_U_BigChomp : AbilityInstance
+    {
+        // Loaded native serialized values the adapter reads via GetValue; never guessed defaults.
+        public float anyBossMultiplier = 1f, healPerHitAmount = 0.04f, shieldPerHitAmount = 0.05f, reduceCooldown = 0.5f;
+        public float GetValue(float amount) => amount;
+        public void OnHit(Entity entity) { }
+        // IL contract double for MawBigChompNativeDelay: exactly one HealData.Dispatch,
+        // one Actor.GiveShield five-arg and one Actor.ApplyCooldownReduction call.
+        public void OnAfterDelay()
+        {
+            HealData heal = new HealData { Amount = healPerHitAmount };
+            heal.Dispatch(info.caster, default(ReactionChain));
+            GiveShield(info.caster, shieldPerHitAmount, 2f, true, default(ReactionChain));
+            if (firstTrigger is AbilityTrigger trigger)
+                ApplyCooldownReduction(trigger, reduceCooldown, true, false);
+        }
+    }
+
+    // Native cooldown-reduction payload flowing through Actor.dealtCooldownReductionProcessor.
+    internal struct CooldownReductionSettings { public float amount; }
+
+    internal partial class Actor
+    {
+        // Shield and cooldown pipelines the Big Chomp adapter hooks (Actor.GiveShield /
+        // ApplyCooldownReduction run their processor lists before applying the payload).
+        public readonly ProcessorList<DataProcessor<HealData, Actor, Entity>> dealtShieldProcessor
+            = new ProcessorList<DataProcessor<HealData, Actor, Entity>>();
+        public readonly ProcessorList<DataProcessor<CooldownReductionSettings, Actor, AbilityTrigger>> dealtCooldownReductionProcessor
+            = new ProcessorList<DataProcessor<CooldownReductionSettings, Actor, AbilityTrigger>>();
+        public Se_GenericShield_OneShot GiveShield(Entity target, float amount, float duration, bool decay, ReactionChain chain)
+        {
+            var data = new HealData { Amount = amount, actor = this };
+            foreach (var processor in dealtShieldProcessor.Entries) processor(ref data, this, target);
+            return GiveShield(target, data.Amount, duration, decay);
+        }
+        public void ApplyCooldownReduction(AbilityTrigger target, float amount, bool scaled, bool ignoreCanReceiveCooldown)
+        {
+            var data = new CooldownReductionSettings { amount = amount };
+            foreach (var processor in dealtCooldownReductionProcessor.Entries) processor(ref data, this, target);
+        }
+    }
+    internal partial class Actor
+    {
+        public Se_GenericEffectContainer CreateBasicEffect(Entity target, BasicEffect effect, float duration, string id, DuplicateEffectBehavior behavior)
+        { if (effect is StunEffect) target.Status.hasStun = true; return new Se_GenericEffectContainer(); }
+    }
+    internal partial struct HealData { public float originalAmount => Amount; }
 }
