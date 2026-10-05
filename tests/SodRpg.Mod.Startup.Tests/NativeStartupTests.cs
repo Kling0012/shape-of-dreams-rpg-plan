@@ -293,6 +293,11 @@ namespace SodRpg.Mod.Startup.Tests
         [Fact]
         public void LobbyNoticeAppendsTheFirstDisableReasonShortened()
         {
+            // InfinityMode keeps its disabled state in statics and Loc keeps the language; other tests may have changed both.
+            SodRpg.Core.Game.Loc.Japanese = true;
+            typeof(InfinityMode).GetField("_unavailable", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, false);
+            typeof(InfinityMode).GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)!
+                .GetSetMethod(true)!.Invoke(null, new object?[] { null });
             var reason = "PlayGameManager.LoadNextZone: native body changed, transpiler marker not found " + new string('x', 80);
             InfinityMode.DisableFeature(reason);
             InfinityMode.DisableFeature("check B failed");
