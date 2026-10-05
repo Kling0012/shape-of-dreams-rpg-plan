@@ -238,7 +238,7 @@ namespace SodRpg.Mod
             if (!changed) return _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
             equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
             var memories = new List<string>();
-            var mechanisms = new List<EquippedMechanismMemory>();
+            var slotOrdered = new List<KeyValuePair<string, EquippedMechanismMemory>>();
             foreach (var location in LinkSkills)
             {
                 var skill = hero.Skill.GetSkill(location);
@@ -246,13 +246,17 @@ namespace SodRpg.Mod
                 equipment.Add(location, skill);
                 string memory = skill.GetType().Name;
                 memories.Add(memory);
-                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
-                    skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
+                slotOrdered.Add(new KeyValuePair<string, EquippedMechanismMemory>(memory,
+                    new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
+                        skill.type == SkillType.Normal, skill.type == SkillType.Ultimate)));
             }
+            // #163: 同じ記憶名の別実体が2枠にあれば最初の枠で縮退する（本体の Refresh と同じ方針）。
+            var mechanisms = new Dictionary<string, EquippedMechanismMemory>(slotOrdered.Count, StringComparer.Ordinal);
+            RelayMemorySelection.SelectFirstSlotPerMemory(slotOrdered, mechanisms, out _);
             _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
             long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
             _attributionEquipment[hero] = equipment;
-            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
+            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms.Values);
             _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
             if (_runtimes.TryGetValue(hero, out var rt))
             {

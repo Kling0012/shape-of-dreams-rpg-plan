@@ -15,6 +15,21 @@ namespace SodRpg.Mod
         internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
         internal static long HostInfinityRetireBeforeSegment(long current) => HostAuthority.InfinityRetireBeforeSegment(current);
 
+        /// <summary>
+        /// ロビー／HUDのインフィニティ注意行（#144）。自分がホストまたはソロ（canChooseRunRules）のときは
+        /// 自分の InfinityMode.Available だけを見る。参加者のときだけホストの返事を使い、返事がまだ無ければ
+        /// 「無効」ではなく「ホストの設定を待っています」を出す。問題がなければ null。
+        /// </summary>
+        internal static string InfinitySupportNotice(bool canChooseRunRules)
+        {
+            if (!InfinityMode.Available) return InfinityMode.UnavailableNotice;
+            if (canChooseRunRules) return null;
+            if (!RemoteHostHelloAnswered)
+                return Loc.T("ホストの設定を待っています…", "Waiting for the host's Infinity setting…");
+            return RemoteHostInfinityAvailable ? null : Loc.T(
+                "ホスト側でインフィニティは無効です。通常モードは利用できます。",
+                "Infinity is disabled on the host's side. Normal mode remains available.");
+        }
         public bool ChosenInfinityEnabled => RunActive ? Profile.Run.Infinity != null
             : CanChooseRunRules ? Profile.LastInfinityEnabled
             : NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue(InfinityEnabledKey, out var value) == true && value == "1";

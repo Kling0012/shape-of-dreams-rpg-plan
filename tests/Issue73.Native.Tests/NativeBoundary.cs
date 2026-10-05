@@ -174,7 +174,6 @@ namespace SodRpg.Mod
     internal static class Log
     {
         public static void Error(string message) => throw new InvalidOperationException(message);
-        // #167: あふれの確定が欠片へ落ちるときの警告。ハーネスでは記録しない。
         public static void Warn(string message) { }
     }
     internal static class NativeAttributedMemoryCast

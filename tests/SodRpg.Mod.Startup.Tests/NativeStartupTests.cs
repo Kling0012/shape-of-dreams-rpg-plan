@@ -287,6 +287,26 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         /// <summary>
+        /// #157: 割り込みでの例外は、無効ログに最初の数スタックフレームを1行で添える（同じ理由は1回だけ）。
+        /// ロビー表示は理由だけのまま。実ログ（Player.log）で落ちた行を特定できるようにするため。
+        /// </summary>
+        [Fact]
+        public void InterceptionFailureLogsFirstStackFramesOnce()
+        {
+            Exception caught;
+            try { throw new InvalidOperationException("boom"); }
+            catch (Exception ex) { caught = ex; }
+
+            InfinityMode.InterceptionFailed(nameof(InfinityGenerated), caught);
+            InfinityMode.InterceptionFailed(nameof(InfinityGenerated), caught);
+
+            Assert.Single(Log.Warnings, m => m.Contains("InfinityGenerated: boom | stack: at SodRpg.Mod.Startup.Tests.NativeStartupTests.InterceptionFailureLogsFirstStackFramesOnce()"));
+            // The one-line report carries the throwing frames; the lobby notice stays reason-only.
+            Assert.Contains(" at ", Log.Warnings.First(m => m.Contains("InfinityGenerated: boom")));
+            Assert.DoesNotContain("stack", InfinityMode.UnavailableNotice);
+        }
+
+        /// <summary>
         /// #144: ロビーの無効表示には、最初に機能を止めた理由が「（理由: …）」として添えられる。
         /// プレイヤーがこの1行を報告するだけで原因を特定できるようにするため。長い理由は120文字で切る。
         /// </summary>
@@ -333,8 +353,11 @@ namespace SodRpg.Mod.Startup.Tests
         {
             var type = typeof(InfinityMode);
             foreach (var name in new[] { "_unavailable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
-                "UnavailableReason", "_initial", "_runId", "_choice", "_choiceText" })
+                "_initial", "_runId", "_choice", "_choiceText" })
                 type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
+            // UnavailableReason is an auto-property; its backing field name differs, so reset via the setter.
+            type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.GetSetMethod(true)!.Invoke(null, new object[] { null });
             type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }
 
