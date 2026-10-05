@@ -42,6 +42,18 @@ namespace HarmonyLib
     }
     internal sealed partial class CodeInstruction { public List<object> labels = new List<object>(); public List<object> blocks = new List<object>(); }
 }
+namespace Mirror
+{
+    internal sealed class NetworkConnectionToClient { }
+}
+namespace SodRpg.Mod
+{
+    internal static class DewPersistence
+    {
+        public static string ToJson(object value) => System.Text.Json.JsonSerializer.Serialize(value,
+            new System.Text.Json.JsonSerializerOptions { IncludeFields = true, IgnoreReadOnlyProperties = true });
+    }
+}
 namespace UnityEngine
 {
     internal static class Mathf
@@ -303,7 +315,12 @@ namespace SodRpg.Mod
     }
 
     internal sealed partial class ZoneManager { public Room currentRoom = new Room(); public bool isInAnyTransition; public int currentRoomIndex; }
-    internal sealed partial class DewPlayer { public Vector3 cursorWorldPos; }
+    internal sealed partial class DewPlayer
+    {
+        public Vector3 cursorWorldPos;
+        private readonly Mirror.NetworkConnectionToClient _connection = new Mirror.NetworkConnectionToClient();
+        public static implicit operator Mirror.NetworkConnectionToClient(DewPlayer player) => player?._connection;
+    }
     internal sealed partial class EntityStatus
     {
         public readonly List<StatusEffect> statusEffects = new List<StatusEffect>();
@@ -338,6 +355,9 @@ namespace SodRpg.Mod
             return instance;
         }
         public float creationTime;
+        public readonly List<(string Method, string Payload)> RpcMessages = new List<(string, string)>();
+        public void TpcHandleRpc_Imp(Mirror.NetworkConnectionToClient connection, string method, string payload)
+            => RpcMessages.Add((method, payload));
         public event Action<EventInfoHeal> ActorEvent_OnDoHeal;
         public void LogicUpdate() { }
         public void FrameUpdate() { }
@@ -364,6 +384,7 @@ namespace SodRpg.Mod
     internal partial class Entity
     {
         public void ProcessReceivedHeal(ref HealData data, Actor actor) { }
+        public void ProcessReceivedShield(ref HealData data, Actor actor) { }
         public event Action<HealData, Actor> ActorEvent_OnReceiveHeal;
     }
     internal static partial class DewPhysics
@@ -391,6 +412,7 @@ namespace SodRpg.Mod
     {
         public bool TryGetGemLocation(Gem gem, out GemLocation location) { location = default(GemLocation); return false; }
         public bool TryGetGem(GemLocation location, out Gem gem) => gems.TryGetValue(location, out gem);
+        public void EquipGem(GemLocation location, Gem gem) => gems[location] = gem;
     }
     internal sealed partial class HostAuthority
     {
@@ -398,6 +420,21 @@ namespace SodRpg.Mod
         // Production builds this from Actor-assignable game types (MemoryActivationAttribution);
         // the double mirrors the name-only mapping the boss runtime consumes.
         private static string NativeActorTypeName(Actor actor) => actor != null ? actor.GetType().Name : string.Empty;
+        private static readonly Dictionary<Type, string> NativeActorNames = typeof(Actor).Assembly.GetTypes()
+            .Where(type => typeof(Actor).IsAssignableFrom(type)).ToDictionary(type => type, type => type.Name);
+        private static bool RequiresExactNativeInstanceScope(Actor actor)
+        {
+            switch (NativeActorTypeName(actor))
+            {
+                case "Ai_D_ChargedAnguillian_Lightning":
+                case "Ai_D_IcyVeins_Damage":
+                case "Ai_D_BeautifulThreat_Feather":
+                case "Ai_R_AnnihilationStance_Projectile":
+                case "Ai_R_UnbreakableDetermination_SubExplosion":
+                case "Ai_Q_IncendiaryRounds_Attack": return true;
+                default: return false;
+            }
+        }
         internal void SimulateBossDamageNotification(EventInfoDamage info) => ObserveBossGeneratedDamage(info);
         internal static void AddNativeStat(StatBonus bonus, Stat stat, float value)
         {

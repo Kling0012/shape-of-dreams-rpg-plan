@@ -23,8 +23,12 @@ namespace SodRpg.Mod
         public int Writes;
         public HeroSkillLocation? FailSetBefore, FailSetAfter;
         public bool FailDrop;
-        public int GetMaxGemCount(HeroSkillLocation location) =>
-            (int)location < Caps.Length ? Caps[(int)location] : MemoryCaps[(int)location - Caps.Length];
+        public int GetMaxGemCountCalls;
+        public int GetMaxGemCount(HeroSkillLocation location)
+        {
+            GetMaxGemCountCalls++;
+            return (int)location < Caps.Length ? Caps[(int)location] : MemoryCaps[(int)location - Caps.Length];
+        }
         public void SetMaxGemCount(HeroSkillLocation location, int count)
         {
             if (FailSetBefore == location) { FailSetBefore = null; throw new InvalidOperationException("before assignment"); }

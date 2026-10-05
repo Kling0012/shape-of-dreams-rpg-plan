@@ -15,6 +15,17 @@ namespace SodRpg.Core.Tests
             internal HostAuthority Host;
             internal HostAuthority.HeroRuntime Rt;
             internal Hero Hero;
+            internal void EquipSkill(SkillTrigger skill)
+            {
+                Hero.Skill.EquipSkill(HeroSkillLocation.Identity, skill);
+                // The unpatched doubles do not notify the host about equipment changes.
+                Host.RefreshBossGemEquipment(Hero.Skill);
+            }
+            internal void EquipGem(GemLocation location, Gem gem)
+            {
+                Hero.Skill.EquipGem(location, gem);
+                Host.RefreshBossGemEquipment(Hero.Skill);
+            }
             internal void Tick(float now)
             {
                 Time.time = now;
@@ -59,6 +70,7 @@ namespace SodRpg.Core.Tests
             }
             var build = Build.Compute(profile, "Hero_A", 0);
             var hero = new Hero { creationTime = 1f };
+            hero.Skill.hero = hero;
             var host = new HostAuthority();
             var rt = new HostAuthority.HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, 0f),
                 AppliedBuild = new HostAuthority.GemBuildForTest { Build = build } };
@@ -74,6 +86,44 @@ namespace SodRpg.Core.Tests
             var enemy = new Entity { Relation = EntityRelation.Enemy, position = new Vector3(x, 0, z) };
             DewPhysics.Entities.Add(enemy);
             return enemy;
+        }
+
+        [Theory]
+        [InlineData("weapon", 1000, 1, 18f)]
+        [InlineData("weapon", 2000, 2, 36f)]
+        [InlineData("armor", 1000, 1, 80f)]
+        [InlineData("armor", 2000, 2, 160f)]
+        public void Primus_uses_channel_scaling_once_and_shield_uses_max_health(string slot, int stat, int scale, float expected)
+        {
+            var rig = Create("primus_aeron", 1, slot);
+            rig.Hero.Status.attackDamage = stat;
+            rig.Hero.Status.abilityPower = stat / 2f;
+            rig.Hero.maxHealth = 1000f;
+            var moves = rig.Rt.Powers.Build.BossMoves;
+            var entry = Assert.Single(moves);
+            var channel = Assert.Single(entry.Channels);
+            moves[0] = new BossMoveEntry(entry.SetId, entry.ProfileId,
+                new[] { new BossChannelValue(channel.ChannelId, channel.ValueMilli * scale) });
+            var enemy = Enemy(0, 1);
+            enemy.currentHealth = 10000f;
+            rig.Input("Primus", slot == "armor" ? BossEvent.NativeDamageTaken : BossEvent.MainHit,
+                1, enemy, enemy.position, 10f);
+            rig.Tick(10f);
+            if (slot == "armor") Assert.Equal(expected, rig.Hero.Status.currentShield, 3);
+            else Assert.Equal(10000f - expected * (stat / 100f), enemy.currentHealth, 3);
+        }
+
+        [Fact]
+        public void Azurak_armor_requires_actual_hp_loss_without_spending_cooldown_on_absorption()
+        {
+            var rig = Create("azurak", 1, "armor");
+            var enemy = Enemy(0, 1);
+            rig.Rt.Boss.MainHpDamage = 0f;
+            rig.Input("Azurak", BossEvent.NativeDamageTaken, 1, enemy, Vector3.zero, 10f);
+            Assert.Equal(0f, rig.Hero.Status.currentShield);
+            rig.Rt.Boss.MainHpDamage = 1f;
+            rig.Input("Azurak", BossEvent.NativeDamageTaken, 2, enemy, Vector3.zero, 10.01f);
+            Assert.Equal(10f, rig.Hero.Status.currentShield, 3);
         }
 
         [Theory]
@@ -228,7 +278,7 @@ namespace SodRpg.Core.Tests
         {
             var rig = Create("light_elemental", pieces);
             var skill = new St_U_WorldCracker { owner = rig.Hero };
-            rig.Hero.Skill.EquipSkill(HeroSkillLocation.Identity, skill);
+            rig.EquipSkill(skill);
             var beam = new Ai_U_WorldCracker { parentActor = skill, info = new CastInfo(rig.Hero), angleSpeed = 40f, radius = .2f };
             rig.Host.BeginWorldCracker(beam);
             Assert.Equal(turn, beam.angleSpeed, 3);
@@ -260,7 +310,7 @@ namespace SodRpg.Core.Tests
         {
             var rig = Create("light_elemental", 6);
             var skill = new St_U_WorldCracker { owner = rig.Hero };
-            rig.Hero.Skill.EquipSkill(HeroSkillLocation.Identity, skill);
+            rig.EquipSkill(skill);
             var beam = new Ai_U_WorldCracker { parentActor = skill, info = new CastInfo(rig.Hero) };
             var tickTarget = Enemy(0, 2);
             var endpointTarget = Enemy(0, 7);
@@ -290,7 +340,7 @@ namespace SodRpg.Core.Tests
 
         private static T Bind<T>(Rig rig, SkillTrigger skill) where T : AbilityInstance, new()
         {
-            rig.Hero.Skill.EquipSkill(HeroSkillLocation.Identity, skill);
+            rig.EquipSkill(skill);
             var cast = rig.Host.BeginBossNativeCast(skill, new CastInfo(rig.Hero));
             Assert.NotNull(cast);
             BossNativeCastScope.Current = cast;
@@ -308,9 +358,12 @@ namespace SodRpg.Core.Tests
         [InlineData(4, 10f, 26f, 26f, 1f)]
         [InlineData(6, 10f, 26f, 26f, 1.5f)]
         [InlineData(6, 100f, 28f, 30f, 1.5f)]
-        public void BigChomp_native_payloads_share_a_capped_weight_slot_and_are_not_repeatable(int pieces, float nativePerHit, float heal, float shield, float cooldown)
+        [InlineData(6, 100f, 28f, 30f, 1.5f, 4f)]
+        [InlineData(6, 100f, 28f, 30f, 1.5f, .25f)]
+        public void BigChomp_native_payloads_share_a_capped_weight_slot_and_are_not_repeatable(int pieces, float nativePerHit, float heal, float shield, float cooldown, float multiplier = 1f)
         {
             var rig = Create("maw", pieces);
+            rig.Hero.currentHealth = 500f;
             var skill = new St_U_BigChomp { owner = rig.Hero };
             var chomp = Bind<Ai_U_BigChomp>(rig, skill);
             chomp.healPerHitAmount = nativePerHit;
@@ -319,18 +372,26 @@ namespace SodRpg.Core.Tests
             for (int i = 0; i < 8; i++) rig.Host.RecordBossBigChompHit(chomp, Enemy(i, 1));
             try
             {
-                MawBigChompNativeDelay.Current = new MawBigChompNativeDelay.Scope { Instance = chomp, Kind = 1 };
-                var healing = new HealData { Amount = 20f, actor = chomp };
+                MawBigChompNativeDelay.Current = new MawBigChompNativeDelay.Scope { Instance = chomp, Kind = 1, Depth = 1 };
+                var healing = new HealData { Amount = 20f, actor = chomp, amplificationMultiplier = 2f * multiplier, reductionMultiplier = .5f };
                 foreach (var processor in chomp.dealtHealProcessor.Entries) processor(ref healing, chomp, rig.Hero);
-                Assert.Equal(heal, healing.Amount, 3);
+                rig.Host.CompleteBossBigChompAmount(chomp, rig.Hero, ref healing, false);
+                var processedHeal = new HealData { Amount = healing.Amount * multiplier, actor = chomp };
+                processedHeal.Dispatch(rig.Hero);
+                Assert.Equal(500f + 20f * multiplier + heal - 20f, rig.Hero.currentHealth, 3);
+                Assert.Equal(20f + (heal - 20f) / multiplier, healing.Amount, 3);
                 var repeated = new HealData { Amount = 20f, actor = chomp };
                 foreach (var processor in chomp.dealtHealProcessor.Entries) processor(ref repeated, chomp, rig.Hero);
+                rig.Host.CompleteBossBigChompAmount(chomp, rig.Hero, ref repeated, false);
                 Assert.Equal(20f, repeated.Amount);
                 MawBigChompNativeDelay.Current.Kind = 2;
                 var nativeShield = new Se_GenericShield_OneShot { parentActor = chomp };
-                var shielding = new HealData { Amount = 20f, actor = nativeShield };
+                var shielding = new HealData { Amount = 20f, actor = nativeShield, amplificationMultiplier = 2f * multiplier, reductionMultiplier = .5f };
                 foreach (var processor in chomp.dealtShieldProcessor.Entries) processor(ref shielding, nativeShield, rig.Hero);
-                Assert.Equal(shield, shielding.Amount, 3);
+                rig.Host.CompleteBossBigChompAmount(nativeShield, rig.Hero, ref shielding, true);
+                nativeShield.GiveShield(rig.Hero, shielding.Amount * multiplier, 2f);
+                Assert.Equal(20f * multiplier + shield - 20f, rig.Hero.Status.currentShield, 3);
+                Assert.Equal(20f + (shield - 20f) / multiplier, shielding.Amount, 3);
                 MawBigChompNativeDelay.Current.Kind = 3;
                 var reduction = new CooldownReductionSettings { amount = 1f };
                 foreach (var processor in chomp.dealtCooldownReductionProcessor.Entries) processor(ref reduction, chomp, skill);
@@ -339,16 +400,63 @@ namespace SodRpg.Core.Tests
                 var late = new HealData { Amount = 20f, actor = chomp };
                 MawBigChompNativeDelay.Current.Kind = 1;
                 foreach (var processor in chomp.dealtHealProcessor.Entries) processor(ref late, chomp, rig.Hero);
+                rig.Host.CompleteBossBigChompAmount(chomp, rig.Hero, ref late, false);
                 Assert.Equal(20f, late.Amount);
                 var next = Bind<Ai_U_BigChomp>(rig, skill);
                 next.healPerHitAmount = nativePerHit;
                 rig.Host.RecordBossBigChompHit(next, Enemy(0, 2));
-                MawBigChompNativeDelay.Current = new MawBigChompNativeDelay.Scope { Instance = next, Kind = 1 };
+                MawBigChompNativeDelay.Current = new MawBigChompNativeDelay.Scope { Instance = next, Kind = 1, Depth = 1 };
                 var busy = new HealData { Amount = 20f, actor = next };
                 foreach (var processor in next.dealtHealProcessor.Entries) processor(ref busy, next, rig.Hero);
+                rig.Host.CompleteBossBigChompAmount(next, rig.Hero, ref busy, false);
                 Assert.Equal(20f, busy.Amount);
             }
             finally { MawBigChompNativeDelay.Current = default; }
+        }
+
+        [Theory]
+        [InlineData(2, 100f, 40f, 110f, 0f, 0f)]
+        [InlineData(4, 100f, 40f, 110f, 10f, 0f)]
+        [InlineData(6, 100f, 40f, 110f, 10f, 10f)]
+        [InlineData(6, 1000f, 1000f, 1020f, 30f, 40f)]
+        public void SoulPrison_heal_and_processed_shields_obey_reward_caps(
+            int pieces, float nativeHeal, float discarded, float healing, float ownShield, float allyShield)
+        {
+            var rig = Create("seeker", pieces);
+            rig.Hero.maxHealth = 5000f;
+            rig.Hero.currentHealth = 100f;
+            rig.Hero.Status.ShieldMultiplier = 10f;
+            var nearest = new Hero { position = Vector3.forward, creationTime = 2f };
+            nearest.Status.ShieldMultiplier = 10f;
+            var farther = new Hero { position = Vector3.forward * 2f, creationTime = 3f };
+            DewPhysics.Entities.Add(farther);
+            DewPhysics.Entities.Add(nearest);
+            var location = new GemLocation { skill = HeroSkillLocation.Identity, index = 0 };
+            var gem = new Gem_U_SoulPrison { owner = rig.Hero, location = location, creationTime = 4f };
+            rig.EquipGem(location, gem);
+            var status = new Se_Gem_U_SoulPrison_DeathInterrupt
+            {
+                gem = gem, victim = rig.Hero, parentActor = gem, creationTime = 5f,
+                info = new CastInfo(rig.Hero),
+            };
+            var scope = rig.Host.BeginSeekerSoulRescue(status);
+            var data = new HealData
+            {
+                actor = status, Amount = nativeHeal,
+                amplificationMultiplier = 2f, reductionMultiplier = .5f,
+            };
+
+            rig.Host.AmplifySeekerSoulHeal(scope, ref data);
+            data.Dispatch(rig.Hero);
+            rig.Host.CompleteSeekerSoulHeal(scope, new EventInfoHeal
+            {
+                actor = status, target = rig.Hero, victim = rig.Hero, discardedAmount = discarded,
+            });
+
+            Assert.Equal(100f + healing, rig.Hero.currentHealth, 3);
+            Assert.Equal(ownShield, rig.Hero.Status.currentShield, 3);
+            Assert.Equal(allyShield, nearest.Status.currentShield, 3);
+            Assert.Equal(0f, farther.Status.currentShield);
         }
 
         [Theory]

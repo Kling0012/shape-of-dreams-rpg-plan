@@ -161,7 +161,7 @@ namespace SodRpg.Mod
             handle = new ListReturnHandle<Entity>();
             var result = new List<Entity>();
             foreach (var entity in Entities)
-                if (entity != null && entity.Relation == EntityRelation.Enemy
+                if (entity != null && (filter == null || entity.Relation == EntityRelation.Enemy)
                     && (entity.agentPosition - center).sqrMagnitude <= radius * radius) result.Add(entity);
             return result;
         }

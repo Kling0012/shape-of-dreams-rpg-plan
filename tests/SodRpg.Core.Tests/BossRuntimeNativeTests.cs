@@ -178,26 +178,29 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Equipment_epoch_bump_restores_minus_50_then_reapplies_minus_25()
+        public void Unrelated_equipment_and_equivalent_build_preserve_reward_without_stacking()
         {
             var rig = Create(6);
             BeginHysteria(rig);
             rig.Host.RefreshBossHysteria(rig.State);
-            Assert.Equal(-25f, LiveSpeeds(rig.State).Single().strength);
-            var entry = ((System.Collections.IDictionary)HysteriaStates(rig.Host))[rig.State];
-            var lifeBefore = (long)Field(entry, "Life");
+            Invoke(rig.Host, "BossEnsure", rig.Rt);
+            var original = LiveSpeeds(rig.State).Single();
+            Assert.Equal(-25f, original.strength);
 
             rig.Rt.ShieldEquipmentEpoch++;
-            Invoke(rig.Host, "TickBossNativeAdapters", rig.Rt);
+            Invoke(rig.Host, "TickBossEffects", rig.Rt, 10f);
+            Assert.Same(original, LiveSpeeds(rig.State).Single());
+            Assert.Equal(-25f, original.strength);
 
-            // The same tick invalidates the old state life (claws die with it) and re-admits stage 3.
-            var entryAfter = ((System.Collections.IDictionary)HysteriaStates(rig.Host))[rig.State];
-            var lifeAfter = (long)Field(entryAfter, "Life");
-            Assert.NotEqual(lifeBefore, lifeAfter);
-            Assert.Equal(rig.Rt.ShieldEquipmentEpoch, (long)Field(entryAfter, "EquipmentEpoch"));
-            var live = LiveSpeeds(rig.State);
-            Assert.Single(live);
-            Assert.Equal(-25f, live[0].strength);
+            rig.Rt.Powers.SetBuild(DemonBuild(6));
+            Invoke(rig.Host, "TickBossEffects", rig.Rt, 10f);
+            Assert.Same(original, LiveSpeeds(rig.State).Single());
+            Assert.Equal(-25f, original.strength);
+
+            rig.Rt.Powers.SetBuild(DemonBuild(2));
+            UnityEngine.Time.time = 10.2f;
+            Invoke(rig.Host, "TickBossEffects", rig.Rt, 10.2f);
+            Assert.Equal(-50f, LiveSpeeds(rig.State).Single().strength);
         }
 
         [Fact]

@@ -6,6 +6,16 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — #48 合流後のテスト修復
+
+- **nativeスタブ**：`ProcessReceivedShield`／`EquipGem`／型付きRPC、native型名・帰属判定、JSON transportを製品側の新しい呼び出しへ合わせました。製品コードは変更していません。 / Updated native test doubles for the merged boss runtime without changing production code.
+- **回帰確認**：不変報酬の差分再適用と段階変更時の解除、Primusの部位倍率と最大HP盾、Azurakの実HP限定、Big Chomp／Soul Prisonの追加量上限、Lightの10Hz表示集約、非利用時の装備走査省略を追加・更新しました。 / Added focused boss reward, scaling, cap and transport regressions.
+- **起動契約**：独立したテストprojectで実Harmonyを使用し、遅延IL契約の事前検証、他MODと合成したILの拒否、部分適用／初期化失敗時の自MODだけの取り消しを確認します。 / Added real-Harmony preflight and owner-scoped startup rollback coverage.
+- **実行結果**：指定の `test_changed.py --all` が成功（3146 passed、0 failed、既定で無効のslow test 2件skip）。一時CLIでも空のボスbuildの装備走査0回、`EquipGem`と型付きRPC呼び出しを確認しました。 / Full requested suite passed; native-double smoke also succeeded.
+- **検証範囲**：ゲームAPIはスタブであり、実機戦闘・Unity表示・協力同期・GC／frame時間の確認を代替しません。 / Test doubles do not replace live-game combat, rendering, co-op or performance verification.
+
+---
+
 ## 未リリース — #48 レビュー8件の修正
 
 - **差分再適用**：native報酬のprofile／段階・装着実体・親／owner寿命・部屋を比較し、不変のbinding・予約・消費済みactivation・CDを保持。変更した報酬だけ解除します。 / Preserve unchanged native reward lifetimes, reservations and cooldowns across build reapplication; invalidate only changed rewards.

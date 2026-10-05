@@ -101,6 +101,20 @@ python tools/test_changed.py --all
 - C11のHP支払い→障壁変換、C15の装備・選択変更の明示承認は既存テストを維持する。
 - テストクラス間の並列実行は `AssemblyInfo.cs` の設定で無効。
 
+## #48 ボスセットのnative回帰確認
+
+- `SodRpg.Core.Tests` は製品の `HostAuthority.Boss*.cs` を直接リンクし、
+  Unity／Mirror／ゲームAPIのみをスタブで置き換える。報酬の差分再適用、
+  Primusの強化係数、Azurakの実HP被ダメージ条件、Big Chomp／Soul Prisonの
+  追加量上限、Light表示の100ms集約、ボス装備なしの早期終了を確認する。
+- `SodRpg.Mod.Startup.Tests` は実際のHarmonyで製品のIL事前検証と起動処理を実行し、
+  契約不一致による適用拒否と、自MODのpatchだけを取り消す失敗時処理を確認する。
+  ゲームと同じHarmony 2.3.3 APIを保つ `Lib.Harmony.Thin` と、
+  .NET 10へのroll-forwardに対応する `MonoMod.Core` 1.3.6を固定している。
+- Linuxでの全体実行：
+  `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all`
+- このハーネスは実ゲームの戦闘、Unity描画、Mirror協力同期、GC／frame時間を検証しない。
+
 ## マッピングロジックの単体テスト
 
 `tools/tests/test_test_changed.py`（unittest）がマッピングロジックの単体テストを
