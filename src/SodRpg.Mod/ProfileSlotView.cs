@@ -133,6 +133,8 @@ namespace SodRpg.Mod
 
         private void FlushOldProfileWriter()
         {
+            // 外れたままのあふれを先に取引へ出す：切替後の保存に「対価のない取り除き」を残さない（#167）。
+            FlushSatchelOverflow();
             PersistRunDurability();
             if (_writer != null && !_writer.Flush())
                 throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish."));
@@ -141,7 +143,8 @@ namespace SodRpg.Mod
 
         private bool ProfileSessionSettled => !HasHeldTrades && _pendingRunRewards.Count == 0
             && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
-            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0;
+            && _pendingResultRunId == null && Profile.PendingSalvage.Count == 0
+            && _satchelOverflowQueue.Count == 0;
 
         private void TickProfileSlots()
         {
@@ -223,6 +226,8 @@ namespace SodRpg.Mod
                 && !_runChoiceProgress.HasPendingArrival && !_pendingRunVictory.HasValue
                 && _pendingResultRunId == null, "Profile switch requires settled session queues.");
             _trades.Clear();
+            _satchelOverflowQueue.Clear();
+            _satchelOverflowDrain.Clear();
             _pendingRunRewards.Clear();
             _pendingRunVictory = null;
             _pendingResultRunId = null;
