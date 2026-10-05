@@ -68,12 +68,19 @@
 
   <Target Name="CompileSatchelOverflowUi" BeforeTargets="CoreCompile">
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SatchelOverflowUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="Notify;InvalidateHud;Decorate;SortedSatchel" />
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/UiStyles.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)OverflowUiStyles.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="UiStyles" Methods="RarityHex;Colored" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/UiStyles.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)OverflowUiStyles.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="UiStyles" Methods="RarityHex;Colored;RelicHex;RelicTitle" />
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CodexView.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)OverflowCodexInvalidation.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="CodexView" Methods="Invalidate" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)SatchelOverflowUi.g.cs" />
       <Compile Include="$(IntermediateOutputPath)OverflowUiStyles.g.cs" />
       <Compile Include="$(IntermediateOutputPath)OverflowCodexInvalidation.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileRelicRowCacheUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)RelicRowCacheUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="CacheStamp;SortedCached;RowTexts" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)RelicRowCacheUi.g.cs" />
     </ItemGroup>
   </Target>
 </Project>
