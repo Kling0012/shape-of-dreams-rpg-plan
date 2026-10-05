@@ -10,14 +10,17 @@ namespace SodRpg.Mod
     internal sealed partial class ClientSession
     {
         private ProfileSlots _profileSlots;
+        private ProfileSlotLoader _profileLoader;
+        private string _profileLoadErrorLogged;
         private bool _copySoloRequested;
         private bool _profileExpeditionLocked;
         private long _profileCopyRevision = -1;
         private bool _profileCopyAllowed;
         public event Action ProfileChanged;
-        public ProfileSlot ActiveProfileSlot => _profileSlots.ActiveSlot;
-        public ProfileSlotMode ProfileMode => _profileSlots.Mode;
-        public bool ProfileSwitchDeferred => ProfileSlots.Select(ProfileMode, DetectProfileSession()) != ActiveProfileSlot
+        public ProfileSlot ActiveProfileSlot => _profileSlots?.ActiveSlot ?? ProfileSlot.Solo;
+        public ProfileSlotMode ProfileMode => _profileSlots?.Mode ?? ProfileSlotMode.Auto;
+        public bool ProfileSwitchDeferred => _profileSlots != null
+            && ProfileSlots.Select(ProfileMode, DetectProfileSession()) != ActiveProfileSlot
             && (Profile.Run != null || _profileExpeditionLocked || !ProfileSessionSettled);
         public bool CanCopySoloProfile
         {
@@ -26,7 +29,7 @@ namespace SodRpg.Mod
                 if (InGame || _profileExpeditionLocked || Profile.Run != null || ActiveProfileSlot != ProfileSlot.Multi) return false;
                 if (_profileCopyRevision != Profile.Revision || _dirty)
                 {
-                    _profileCopyAllowed = _profileSlots.CanCopySolo;
+                    _profileCopyAllowed = _profileSlots != null && _profileSlots.CanCopySolo;
                     _profileCopyRevision = Profile.Revision;
                 }
                 return _profileCopyAllowed;
@@ -37,23 +40,55 @@ namespace SodRpg.Mod
         {
             ulong seed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|" + DateTime.UtcNow.Ticks);
             ulong multiSeed = Rng.SeedFrom(SystemInfo.deviceUniqueIdentifier + "|multi|" + Guid.NewGuid().ToString("N"));
-            _profileSlots = new ProfileSlots(new RealFileSystem(), saveDir, seed, multiSeed);
-            try
+            _profileLoader = new ProfileSlotLoader(new RealFileSystem(), saveDir, seed, multiSeed);
+            ApplyProfileLoadResult(_profileLoader.TryLoad(Time.unscaledTime, DetectProfileSession(), FlushOldProfileWriter));
+        }
+
+        private void ApplyProfileLoadResult(bool loaded)
+        {
+            if (loaded)
             {
-                _profileSlots.TrySwitch(DetectProfileSession(), FlushOldProfileWriter);
+                _profileSlots = _profileLoader.Slots;
                 Profile = _profileSlots.Profile;
                 _store = _profileSlots.Store;
                 UpdateProfileLoadNotes();
+                return;
             }
-            catch (Exception ex)
+            // 初回の読み込みに失敗しても MOD 全体（ホスト処理を含む）は止めない（#89、mp-ui-save #9）。
+            // 保存は止め、元のファイルには触らない。一時的なロックなら、少し待ってからもう一度試す。
+            _profileSlots = null;
+            Profile = _profileLoader.FallbackProfile;
+            _store = null;
+            SaveError = Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）。少し待って自動で読み込み直します：",
+                "Could not load your save. Saving is disabled for this session (your save files were not changed); loading retries automatically: ")
+                + _profileLoader.Error;
+            if (_profileLoadErrorLogged != _profileLoader.Error)
             {
-                // 読み込めなくても MOD 全体（ホスト処理を含む）は止めない（mp-ui-save #9）。保存は止め、元のファイルには触らない。
-                Profile = Profile.CreateNew(seed);
-                _store = null;
-                SaveError = Loc.T("保存データを読み込めませんでした。今回は保存を止めて続けます（保存データは変更していません）：",
-                    "Could not load your save. Saving is disabled for this session (your save files were not changed): ") + ex.Message;
-                Log.Error("Profile load failed: " + ex);
+                _profileLoadErrorLogged = _profileLoader.Error;
+                Log.Error("Profile load failed: " + _profileLoader.Error);
             }
+        }
+
+        private void RetryProfileLoad()
+        {
+            // 初回の読み込みに失敗している（#89）。一時的なロックなら解けることがあるので、少し待って、
+            // 遠征中でない安全なときに、初回と同じ読み込み（生成・切り替え）をもう一度試す。
+            if (Time.unscaledTime < _profileLoader.NextRetryAt) return;
+            if (InGame || _profileExpeditionLocked || Profile.Run != null || !ProfileSessionSettled) return;
+            if (!_profileLoader.TryLoad(Time.unscaledTime, DetectProfileSession(), FlushOldProfileWriter))
+            {
+                ApplyProfileLoadResult(false);
+                return;
+            }
+            ApplyProfileLoadResult(true);
+            _dirty = false;
+            SaveError = null;
+            _profileCopyRevision = -1;
+            ResetProfileSession();
+            RestoreRunDurability();
+            ProfileChanged?.Invoke();
+            FirstLaunch();
+            SendBuildIfNeeded();
         }
 
         private static ProfileSessionKind DetectProfileSession()
@@ -82,6 +117,8 @@ namespace SodRpg.Mod
 
         public string ChooseProfileMode(ProfileSlotMode mode)
         {
+            if (_profileSlots == null)
+                return Loc.T("保存データを読み込めている間は、プロフィールを選べません。", "Profiles cannot be chosen until your save loads.");
             try
             {
                 // Apply in Update, never halfway through an IMGUI layout/repaint pair.
@@ -116,6 +153,11 @@ namespace SodRpg.Mod
                 _profileExpeditionLocked = false;
             try
             {
+                if (_profileSlots == null)
+                {
+                    RetryProfileLoad();
+                    return;
+                }
                 bool changed = false;
                 if (_copySoloRequested)
                 {

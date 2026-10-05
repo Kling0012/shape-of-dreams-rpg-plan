@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <Compile Include="../ProfileSlotsTests.cs" Link="ProfileSlotsTests.cs" />
+    <Compile Include="../ProfileSlotLoaderTests.cs" Link="ProfileSlotLoaderTests.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
     <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
     <Compile Include="../../src/SodRpg.Mod/TickGuard.cs" Link="ModUnderTest/TickGuard.cs" />
