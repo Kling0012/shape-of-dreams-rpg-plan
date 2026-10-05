@@ -144,14 +144,14 @@ namespace SodRpg.Core.Tests
                 for (int rank = 0; rank < node.MaxRank; rank++) Rules.AddTalentRank(profile, hero, node.Id);
             Rules.SetKeystone(profile, hero, "h.husk.key2");
             var build = Build.Compute(profile, hero, 0);
-            Assert.Equal(60, build.Get(Power.ShadowStep));
+            Assert.Equal(69, build.Get(Power.ShadowStep));
             Assert.Equal(0, build.Get(Power.Executioner));
             Assert.True(Rules.FreePoints(profile, hero) >= 0);
             Rules.RemoveKeystone(profile, hero, "h.husk.key2");
             Rules.SetKeystone(profile, hero, "h.husk.key");
             var alternate = Build.Compute(profile, hero, 0);
             Assert.Equal(0, alternate.Get(Power.ShadowStep));
-            Assert.Equal(100, alternate.Get(Power.Umbra));
+            Assert.Equal(115, alternate.Get(Power.Umbra));
         }
 
         [Fact]
@@ -161,7 +161,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal("Hero_Husk", source.HeroKey);
             Assert.Equal("h.husk.key2", source.Id);
             Assert.True(source.IsKeystone);
-            Assert.Equal(60, source.PowerValue);
+            Assert.Equal(69, source.PowerValue);
             Assert.Equal(150, Content.PowerCap(Power.ShadowStep));
             Assert.DoesNotContain(Content.Talents, t => t.Power == Power.ShadowStep || t.RankPower == Power.ShadowStep);
             Assert.DoesNotContain(Content.SlotOrder.SelectMany(Content.PowerPool), p => p.Power == Power.ShadowStep);
@@ -179,8 +179,8 @@ namespace SodRpg.Core.Tests
                 Loc.Japanese = japanese;
                 var key = HeroSigils.All.Single(t => t.Id == "h.husk.key2");
                 var terms = japanese
-                    ? new[] { "回避", "ダッシュ", "瞬間移動", "3秒", "次の通常攻撃", "高い方", "60%", "重ならず", "延長" }
-                    : new[] { "dodge", "dash", "teleport", "3s", "next basic attack", "higher", "AD", "AP", "60%", "does not stack", "refresh" };
+                    ? new[] { "回避", "ダッシュ", "瞬間移動", "3秒", "次の通常攻撃", "高い方", "69%", "重ならず", "延長" }
+                    : new[] { "dodge", "dash", "teleport", "3s", "next basic attack", "higher", "AD", "AP", "69%", "does not stack", "refresh" };
                 foreach (string description in new[] { Content.FormatPower(Power.ShadowStep, key.PowerValue), key.Description.ToString() })
                     foreach (string term in terms) Assert.Contains(term, description);
                 string synergy = key.Description.ToString();
