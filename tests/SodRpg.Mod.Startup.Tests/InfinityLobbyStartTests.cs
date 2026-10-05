@@ -54,6 +54,76 @@ namespace SodRpg.Mod.Startup.Tests
             Invoke(mod, "Awake");
         }
 
+        [Theory]
+        [InlineData(false, false, true)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, true)]
+        [InlineData(true, true, false)]
+        public void LobbySceneFirstMapUsesCurrentTransportCompatibility(
+            bool withGuest, bool staleRejection, bool infinityEnabled)
+        {
+            var session = StartSoloLobby(infinityEnabled);
+            Assert.Null(session.ChooseInfinity(infinityEnabled, 15));
+            var authority = RegisterHostAuthority();
+            var guest = withGuest ? JoinLobbyParticipant("scene-guest") : null;
+            if (staleRejection)
+                FeedHello(authority, guest, Protocol.Version, "previous-transport-content", true);
+            else if (withGuest)
+                FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, true);
+            Assert.True(new PlayLobbyManager().CheckStartGameCondition(out string reason, false), reason);
+
+            // The session and published lobby values survive; scene-local managers/actor do not.
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            Assert.Equal(infinityEnabled ? "1" : "0", settings.customData[ClientSession.InfinityEnabledKey]);
+            Assert.Equal("15", settings.customData[ClientSession.InfinityIntervalKey]);
+            settings.state = GameState.Playing;
+            var actor = new Actor { isActive = true };
+            NetworkedManagerBase<ActorManager>.softInstance = new ActorManager { serverActor = actor };
+            var game = new PlayGameManager { runId = "scene-run", difficulty = new Difficulty { name = "diffNormal" } };
+            NetworkedManagerBase<GameManager>.softInstance = game;
+            ClientSession.InGame = true;
+            var asset = new Zone { name = "Zone_First" };
+            asset.startRooms.Add(new object());
+            asset.combatRooms.Add(new object());
+            asset.bossRooms.Add(new object());
+            var zone = new ZoneManager { SceneZone = asset, currentZoneIndex = -1 };
+            NetworkedManagerBase<ZoneManager>.softInstance = zone;
+
+            // Session Tick can reach compatibility before host Tick registers the new actor.
+            game.OnLateStartServer();
+            Assert.Equal(1, zone.GenerateWorldAutoCalls);
+            Assert.Equal(infinityEnabled, InfinityMode.Enabled);
+            Assert.False(InfinityMode.ExpeditionHalted, string.Join(" | ", Log.Warnings));
+            authority._registeredOn = actor;
+            AccessTools.Method(typeof(HostAuthority), "RegisterHello").Invoke(authority, new object[] { actor });
+            if (withGuest)
+                Assert.False(HostAuthority.InfinityRosterCompatible(DewPlayer.gamePlayers));
+            if (withGuest) FeedHello(authority, guest, Protocol.Version, ContentFingerprint.Value, true);
+
+            // TrackRun occurs after native generation/readiness in this path.
+            Rules.BeginRun(session.Profile, game.runId, DailyDream.Today);
+            ClientSession.RunActive = true;
+            ClientSession.HostRun = session.Profile.Run;
+            AccessTools.Method(typeof(ClientSession), "InitializeInfinityRun").Invoke(session, null);
+            Assert.Equal(infinityEnabled, session.Profile.Run.Infinity != null);
+            if (infinityEnabled)
+            {
+                Assert.Equal(15, session.Profile.Run.Infinity.Interval);
+                Assert.Equal("Zone_First", session.Profile.Run.Infinity.FixedZoneId);
+                Assert.True(EnvelopeWritten());
+                Assert.True(HostAuthority.InfinityRosterCompatible(DewPlayer.gamePlayers));
+            }
+            ClientSession.HostInfinityRewardsSettled = true;
+            SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
+            zone.TravelToNode(1, true, false, false);
+            Assert.Equal(1, zone.LastTravelTo);
+            zone.TravelToNode(2, true, false, false);
+            Assert.Equal(infinityEnabled ? 1 : 2, zone.LastTravelTo);
+            game.LoadNextZone();
+            Assert.Equal(infinityEnabled ? 1 : 2, zone.GenerateWorldAutoCalls);
+            Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
+        }
+
         /// <summary>ソロ（ホスト登録前・ハンドシェイク無し）でもインフィニティ開始が止まらない。修正前は
         /// NativeInstance==null だけで InfinityRosterCompatible が false になり開始できなかった。</summary>
         [Fact]
@@ -93,7 +163,7 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.NotNull(session.Profile.Run.Infinity);
         }
 
-        /// <summary>ホスト＋同版の参加者（Hello で Protocol 21・内容一致・インフィニティ有効を確認済み）は開始できる。
+        /// <summary>ホスト＋同版の参加者（Hello で Protocol・内容一致・インフィニティ有効を確認済み）は開始できる。
         /// ホストは参加者へ自分のインフィニティ可否を返している。</summary>
         [Fact]
         public void HostLobbyInfinityStartAllowsHandshakenParticipants()
@@ -126,7 +196,6 @@ namespace SodRpg.Mod.Startup.Tests
             bool allowed = new PlayLobbyManager().CheckStartGameCondition(out string reason, showMessage: false);
 
             Assert.False(allowed);
-            Assert.Contains("Protocol 21", reason);
             Assert.False(HostAuthority.InfinityRosterCompatible(DewPlayer.lobbyPlayers));
         }
 
@@ -196,7 +265,7 @@ namespace SodRpg.Mod.Startup.Tests
             // TrackRun fires afterwards and attaches the template through InitializeInfinityRun's path.
             ClientSession.RunActive = true;
             ClientSession.HostRun = session.Profile.Run;
-            zone.GenerateWorldAuto();
+            AccessTools.Method(typeof(ClientSession), "InitializeInfinityRun").Invoke(session, null);
             Assert.NotNull(session.Profile.Run.Infinity);
         }
 
@@ -268,11 +337,12 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Theory]
-        [InlineData(20, true, true)]
-        [InlineData(21, false, true)]
-        [InlineData(21, true, false)]
-        public void LateIncompatibleHelloFallsBackOnlyForThisExpedition(int protocol, bool infinityAvailable, bool sameContent)
+        [InlineData(false, true, true)]
+        [InlineData(true, false, true)]
+        [InlineData(true, true, false)]
+        public void LateIncompatibleHelloFallsBackOnlyForThisExpedition(bool sameProtocol, bool infinityAvailable, bool sameContent)
         {
+            int protocol = sameProtocol ? Protocol.Version : Protocol.Version - 1;
             var notices = new List<GameEvent>();
             var session = StartSoloLobby(infinityEnabled: true, notify: notices.Add);
             var participant = JoinLobbyParticipant("late-guest");
@@ -436,7 +506,12 @@ namespace SodRpg.Mod.Startup.Tests
             CheckCompatibilityAt(29f);
             if (replacement == 0) StartNextInfinityExpedition(session, zone);
             else if (replacement == 1) RegisterHostAuthority();
-            else authority._registeredOn = new Actor { isActive = true };
+            else
+            {
+                authority._registeredOn = new Actor { isActive = true };
+                NetworkedManagerBase<ActorManager>.softInstance.serverActor = authority._registeredOn;
+                AccessTools.Method(typeof(HostAuthority), "RegisterHello").Invoke(authority, new object[] { authority._registeredOn });
+            }
             CheckCompatibilityAt(29f);
             CheckCompatibilityAt(30f);
             Assert.True(InfinityMode.Enabled);
@@ -471,6 +546,8 @@ namespace SodRpg.Mod.Startup.Tests
             CheckCompatibilityAt(120f);
             Assert.False(InfinityMode.ExpeditionHalted);
             authority._registeredOn = new Actor { isActive = true };
+            NetworkedManagerBase<ActorManager>.softInstance.serverActor = authority._registeredOn;
+            AccessTools.Method(typeof(HostAuthority), "RegisterHello").Invoke(authority, new object[] { authority._registeredOn });
             CheckCompatibilityAt(120f);
             CheckCompatibilityAt(149.9f);
             Assert.True(InfinityMode.Enabled);
@@ -567,6 +644,8 @@ namespace SodRpg.Mod.Startup.Tests
             var actor = new Actor { isActive = true };
             typeof(HostAuthority).GetField("_registeredOn", BindingFlags.NonPublic | BindingFlags.Instance)
                 !.SetValue(authority, actor);
+            NetworkedManagerBase<ActorManager>.softInstance = new ActorManager { serverActor = actor };
+            AccessTools.Method(typeof(HostAuthority), "RegisterHello").Invoke(authority, new object[] { actor });
             return authority;
         }
 
@@ -636,7 +715,7 @@ namespace SodRpg.Mod.Startup.Tests
         {
             var type = typeof(InfinityMode);
             foreach (var name in new[] { "_unavailable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
-                "_initial", "_runId", "_choice", "_choiceText" })
+                "_initial", "_runId", "_choice", "_choiceText", "_generationReportedRun" })
                 type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
             // UnavailableReason is an auto-property: its backing field name differs, so reset via the setter.
             type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)

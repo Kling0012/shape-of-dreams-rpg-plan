@@ -68,7 +68,8 @@ namespace SodRpg.Mod
     {
         public static readonly List<string> Errors = new List<string>();
         public static readonly List<string> Warnings = new List<string>();
-        public static void Info(string message) { }
+        public static readonly List<string> Infos = new List<string>();
+        public static void Info(string message) => Infos.Add(message);
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
@@ -117,7 +118,22 @@ namespace SodRpg.Mod
     {
         public enum ResultType { Victory, GameOver, Conceded }
     }
-    public sealed class PlayGameManager { public void LoadNextZone() { } }
+    public sealed class PlayGameManager : GameManager
+    {
+        // Native OnLateStartServer waits for clients, then moves lobby players into the game
+        // before the initial virtual LoadNextZone call (PlayGameManager.cs:73-100).
+        public void OnLateStartServer()
+        {
+            DewPlayer.gamePlayers.AddRange(DewPlayer.lobbyPlayers);
+            DewPlayer.lobbyPlayers.Clear();
+            LoadNextZone();
+        }
+        public override void LoadNextZone()
+        {
+            var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            if (zone?.SceneZone != null) zone.TravelToZone(zone.SceneZone, false);
+        }
+    }
     public sealed class PlayLobbyManager
     {
         public bool CheckStartGameCondition(out string reason, bool showMessage)
@@ -204,6 +220,13 @@ namespace SodRpg.Mod
         private RunChoicePublisher _choicePublisher = new RunChoicePublisher();
         private string _encodedRunChoices;
         private float _nextChoicesSync;
+        private string _infinityInitializedRun;
+        private bool _infinityResultStarted;
+        private long _infinityAcknowledgedRevision, _infinityAcknowledgedGraph, _infinityObservedClears;
+        private object _nativeContinueCheckpoint;
+        private bool ContinueReady => true;
+        private RunChoiceSnapshot _receivedRunChoices => null;
+        internal static void ValidateHostInfinityContinue() { }
         private void PublishRunChoices() { }
         public ClientSession(string dir, Action<GameEvent> notify) { SavePath = dir; _notify = notify; }
         public void FirstLaunch() { }
@@ -293,11 +316,34 @@ namespace SodRpg.Mod
         public int? LastTravelTo;
         public int TravelToNodeCalls, GenerateWorldAutoCalls, TravelToZoneCalls;
         public Zone LastTravelToZone; public bool LastTravelNoAdvance;
-        public void GenerateWorldAuto() { GenerateWorldAutoCalls++; }
+        // Opt-in scene boundary for start-flow regressions. The finite native graph is
+        // deliberately retained; Infinity is proved through its routing, not its appearance.
+        public Zone SceneZone;
+        public void GenerateWorldAuto()
+        {
+            GenerateWorldAutoCalls++;
+            if (SceneZone == null) return;
+            nodes.Clear();
+            nodes.AddRange(new[] {
+                new WorldNode { type = WorldNodeType.Combat },
+                new WorldNode { type = WorldNodeType.Combat },
+                new WorldNode { type = WorldNodeType.ExitBoss },
+            });
+            visitedNodesSaveData.Clear();
+            visitedNodesSaveData.AddRange(new object[] { new object(), null, null });
+            currentNodeIndex = 0;
+            currentNode = nodes[0];
+        }
         public void TravelToNode(int to, bool advanceTurn, bool isSidetrackTransition, bool ignoreInterrupts)
         { LastTravelTo = to; TravelToNodeCalls++; }
         public void TravelToZone(Zone prefab, bool noAdvance)
-        { LastTravelToZone = prefab; LastTravelNoAdvance = noAdvance; TravelToZoneCalls++; }
+        {
+            LastTravelToZone = prefab; LastTravelNoAdvance = noAdvance; TravelToZoneCalls++;
+            if (SceneZone == null) return;
+            currentZone = prefab;
+            if (!noAdvance) currentZoneIndex++;
+            GenerateWorldAuto();
+        }
         public void CallOnReadyAfterTransition(Action action) => action();
     }
     public sealed class WorldNode
@@ -308,11 +354,12 @@ namespace SodRpg.Mod
     }
     public enum WorldNodeType { ExitBoss, Combat, Special }
     public enum WorldNodeStatus { HasVisited }
-    public sealed class GameManager
+    public class GameManager
     {
         public string runId;
         public Difficulty difficulty;
         public int ambientLevel;
+        public virtual void LoadNextZone() { }
         public void WrapUpAndShowResult(DewGameResult.ResultType type) { }
     }
     public sealed class Difficulty { public string name; }

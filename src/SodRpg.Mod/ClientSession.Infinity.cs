@@ -46,29 +46,6 @@ namespace SodRpg.Mod
             else TickInfinity();
             SampleInfinityRewards(true);
         }
-        private void InitializeInfinityRun()
-        {
-            if (!InfinityMode.Available || InfinityMode.ExpeditionHalted || !ContinueReady || InfinityMode.Restoring
-                || _nativeContinueCheckpoint != null || Profile.Run == null
-                || _infinityInitializedRun == Profile.Run.RunId) return;
-            _infinityInitializedRun = Profile.Run.RunId;
-            _infinityResultStarted = false;
-            _infinityAcknowledgedRevision = -1; _infinityAcknowledgedGraph = -1;
-            if (Profile.Run.Infinity == null)
-            {
-                if (CanChooseRunRules && InfinityMode.InitialState != null) Profile.Run.Infinity = InfinityMode.InitialState.Clone();
-                else if (!CanChooseRunRules && _receivedRunChoices?.Infinity != null) Profile.Run.Infinity = _receivedRunChoices.Infinity.Clone();
-                else if (CanChooseRunRules && InfinityMode.NativeEnvelopePresent)
-                {
-                    InfinityMode.DisableFeature("Infinity native continue is missing its profile run receipt.");
-                    return;
-                }
-            }
-            _infinityObservedClears = Profile.Run.Infinity?.ClearedCombatTotal ?? 0;
-            if (Profile.Run.Infinity == null) return;
-            if (CanChooseRunRules && InfinityMode.InitialState == null) ValidateHostInfinityContinue();
-            else if (CanChooseRunRules) PersistHostInfinityState();
-        }
 
         internal static void ValidateHostInfinityContinue()
         {
