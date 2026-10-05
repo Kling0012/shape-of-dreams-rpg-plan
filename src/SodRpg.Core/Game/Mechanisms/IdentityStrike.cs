@@ -9,7 +9,9 @@ namespace SodRpg.Core.Game
         /// <summary>Every Nth own basic attack that hits fires one strike.</summary>
         EveryNthBasicAttack,
         /// <summary>No extra damage: the native dash attack's own bonus portion is re-attributed to the identity memory (see DashBonusAsMemory).</summary>
-        DashAttackBonusAsMemory
+        DashAttackBonusAsMemory,
+        AfterDisplacementCritical,
+        ConsecutiveCritical
     }
     public enum IdentityStrikeElement { None, Fire, Cold, Light, Dark }
     public enum IdentityStrikeShape { None, ForwardLine, ForwardArc }
@@ -28,6 +30,8 @@ namespace SodRpg.Core.Game
         /// <summary>St_D_TheKillingFlow's default conversion: attack damage gained per 1% of bonus attack speed (its description says 0.5).</summary>
         public const float KillingFlowAdPerBonusSpeedPercent = 0.5f;
         public const string WindScar = "St_D_ScarOfTheWind", KillingFlow = "St_D_TheKillingFlow";
+        public const float CriticalCooldownSeconds = 1f;
+        public const float CriticalMovementRefundPercent = 35f;
 
         public string ChannelId { get; }
         public string Identity { get; }
@@ -45,6 +49,7 @@ namespace SodRpg.Core.Game
         public float WidthOrArc { get; }
         public int MaxTargets { get; }
 
+        public bool IsCriticalMechanism => Trigger == IdentityStrikeTrigger.AfterDisplacementCritical || Trigger == IdentityStrikeTrigger.ConsecutiveCritical;
         public IdentityStrikeDefinition(string channelId, string identity, IdentityStrikeTrigger trigger, int everyN, float windowSeconds,
             int adUnits, int bonusSpeedUnitsPerPercent, IdentityStrikeElement element, IdentityStrikeShape shape, float rangeMetres,
             float widthOrArc, int maxTargets, IdentityStrikeBasis basis = IdentityStrikeBasis.HigherOfAttackAndAbility)
@@ -75,6 +80,16 @@ namespace SodRpg.Core.Game
             new IdentityStrikeDefinition(channelId, WindScar, IdentityStrikeTrigger.DashAttackBonusAsMemory, 1, 0f, 0, 0,
                 IdentityStrikeElement.None, IdentityStrikeShape.None, 0f, 0f, 0);
 
+        public static IdentityStrikeDefinition CriticalAfterDisplacement(string channelId, string identity, int adUnits, IdentityStrikeElement element,
+            IdentityStrikeShape shape, float rangeMetres, float widthOrArc, int maxTargets = 6, float windowSeconds = 3f) =>
+            new IdentityStrikeDefinition(channelId, identity, IdentityStrikeTrigger.AfterDisplacementCritical, 1, windowSeconds, adUnits, 0,
+                element, shape, rangeMetres, widthOrArc, maxTargets);
+
+        public static IdentityStrikeDefinition ConsecutiveCritical(string channelId, string identity, int adUnits, IdentityStrikeElement element,
+            IdentityStrikeShape shape, float rangeMetres, float widthOrArc, int maxTargets = 6, float windowSeconds = 4f) =>
+            new IdentityStrikeDefinition(channelId, identity, IdentityStrikeTrigger.ConsecutiveCritical, 3, windowSeconds, adUnits, 0,
+                element, shape, rangeMetres, widthOrArc, maxTargets);
+
         public bool DealsDamage => Trigger != IdentityStrikeTrigger.DashAttackBonusAsMemory;
 
         private void Validate()
@@ -99,9 +114,14 @@ namespace SodRpg.Core.Game
                 throw new InvalidOperationException("Only the Killing Flow identity supplies a bonus attack speed term.");
             if (Trigger == IdentityStrikeTrigger.EveryNthBasicAttack && (EveryN < 1 || EveryN > 100 || WindowSeconds != 0f))
                 throw new InvalidOperationException("Invalid every-Nth cadence.");
-            if (Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit
-                && (EveryN != 1 || float.IsNaN(WindowSeconds) || WindowSeconds < 0.5f || WindowSeconds > MaxWindowSeconds))
-                throw new InvalidOperationException("Invalid displacement window.");
+            if (Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit || Trigger == IdentityStrikeTrigger.AfterDisplacementCritical)
+                if (EveryN != 1 || float.IsNaN(WindowSeconds) || WindowSeconds < 0.5f || WindowSeconds > MaxWindowSeconds)
+                    throw new InvalidOperationException("Invalid displacement window.");
+            if (IsCriticalMechanism && (BonusSpeedUnitsPerPercent != 0 || MaxTargets > 6 || Element != IdentityStrikeElement.Dark
+                || Trigger == IdentityStrikeTrigger.AfterDisplacementCritical && Identity != WindScar
+                || Trigger == IdentityStrikeTrigger.ConsecutiveCritical && (Identity != KillingFlow || EveryN != 3
+                    || float.IsNaN(WindowSeconds) || WindowSeconds < 0.5f || WindowSeconds > MaxWindowSeconds)))
+                throw new InvalidOperationException("Invalid critical strike channel.");
         }
 
         /// <summary>Rescales the damage terms (rank / boost); both terms scale together. The dash-bonus form has no damage and is returned as is.</summary>
@@ -161,6 +181,9 @@ namespace SodRpg.Core.Game
         private float _armedUntil;
         private int _count;
         private long _lastActivation = -1;
+        private long _victimLifetime;
+        private float _lastCriticalTime;
+        private float _nextCriticalStrike = float.NegativeInfinity;
         public IdentityStrikeState(IdentityStrikeDefinition definition)
         {
             _def = definition ?? throw new ArgumentNullException(nameof(definition));
@@ -171,24 +194,40 @@ namespace SodRpg.Core.Game
         /// <summary>A self displacement (dash/teleport) arms the next basic hit (re-arming while armed only extends the window, never stacks).</summary>
         public void OnDisplacement(float now)
         {
-            if (_def.Trigger != IdentityStrikeTrigger.AfterDisplacementNextBasicHit) return;
+            if (_def.Trigger != IdentityStrikeTrigger.AfterDisplacementNextBasicHit && _def.Trigger != IdentityStrikeTrigger.AfterDisplacementCritical) return;
             _armed = true; _armedUntil = now + _def.WindowSeconds;
         }
         /// <summary>The first hit of an own basic attack activation; later hits of the same activation never count twice. True = fire one strike.</summary>
-        public bool OnBasicHit(long activationId, float now)
+        public bool OnBasicHit(long activationId, float now, bool critical = false, long victimLifetime = 0)
         {
             if (activationId == _lastActivation) return false;
             _lastActivation = activationId;
-            if (_def.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit)
+            if (_def.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit || _def.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical)
             {
                 if (!_armed) return false;
                 _armed = false;
-                return now <= _armedUntil;
+                if (now > _armedUntil) return false;
+                if (_def.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit) return true;
+                if (!critical || now < _nextCriticalStrike) return false;
+                _nextCriticalStrike = now + IdentityStrikeDefinition.CriticalCooldownSeconds;
+                return true;
+            }
+            if (_def.Trigger == IdentityStrikeTrigger.ConsecutiveCritical)
+            {
+                if (!critical || victimLifetime == 0) { _count = 0; _victimLifetime = 0; return false; }
+                if (_victimLifetime != victimLifetime || now > _lastCriticalTime + _def.WindowSeconds) _count = 0;
+                _victimLifetime = victimLifetime;
+                _lastCriticalTime = now;
+                if (++_count < _def.EveryN) return false;
+                _count = 0;
+                if (now < _nextCriticalStrike) return false;
+                _nextCriticalStrike = now + IdentityStrikeDefinition.CriticalCooldownSeconds;
+                return true;
             }
             if (++_count < _def.EveryN) return false;
             _count = 0;
             return true;
         }
-        public void Reset() { _armed = false; _count = 0; _lastActivation = -1; }
+        public void Reset() { _armed = false; _count = 0; _lastActivation = -1; _victimLifetime = 0; }
     }
 }
