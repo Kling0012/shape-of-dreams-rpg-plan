@@ -786,15 +786,18 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return null;
         }
 
-        private string SendTrade(PendingTrade t) => SendPreparedTrade(t, confirm: true);
+        private string SendTrade(PendingTrade t)
+        {
+            t.LedgerId = _hostLedgerId; // 準備時の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる。
+            return SendPreparedTrade(t, confirm: true);
+        }
 
         /// <summary>
-        /// 取引を送る。単独の取引（confirm=true）はここで準備保存を確定させる。あふれのまとめて確定（#167）は
-        /// バッチ全体で1回確定済みなので confirm=false で送るだけにする。
+        /// 準備済みの識別情報を変えずに取引を送る。単独の取引（confirm=true）はここで準備保存を確定させる。
+        /// あふれのまとめて確定（#167）はバッチ全体で1回確定済みなので confirm=false で送るだけにする。
         /// </summary>
         private string SendPreparedTrade(PendingTrade t, bool confirm)
         {
-            t.LedgerId = _hostLedgerId; // 送った時点の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる
             if (_clientRpcOn == null || !NetworkClient.active)
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));

@@ -322,6 +322,7 @@ namespace SodRpg.Mod
         public event Action ProfileChanged;
         // #167: あふれのまとめて確定（ClientSession.SatchelDust.cs）が使う取引の輸送。
         // ハーネスの Emit はあふれをキューへ入れないので、実際に送られることはない。
+        private long _hostLedgerId;
         private string TradeUnavailable() => null;
         private string SendPreparedTrade(SodRpg.Core.Game.PendingTrade t, bool confirm) => null;
         private void RestoreSalvageTrade(SodRpg.Core.Game.PendingTrade trade) { }
