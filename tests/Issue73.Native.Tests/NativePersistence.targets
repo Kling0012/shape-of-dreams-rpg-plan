@@ -44,7 +44,7 @@
     </Task>
   </UsingTask>
   <Target Name="CompileNativePersistence" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)NativePersistence.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="MarkDirty;DeferSave;TickSatchelOverflow;TickPeriodicSave;SaveNow;FlushSaves;Secure;Delve;TrackRun;ReadLimboDepth;HeroKeyOf;Emit;SendTrade;TradeUnavailable;SendLedgerProbe;SendPreparedTrade;SendDueTradeQueries;RestoreSalvageTrade;OnTradeResult;TradeFailText" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)NativePersistence.g.cs" />
     </ItemGroup>
@@ -63,6 +63,17 @@
     <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ProfileSlotView.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)ProfileSlotUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="DrawProfileSlots;DrawProfileMode" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)ProfileSlotUi.g.cs" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileSatchelOverflowUi" BeforeTargets="CoreCompile">
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/DreamforgeUi.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)SatchelOverflowUi.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="DreamforgeUi" Methods="Notify;InvalidateHud;Decorate;SortedSatchel" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/UiStyles.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)OverflowUiStyles.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="UiStyles" Methods="RarityHex;Colored" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/CodexView.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)OverflowCodexInvalidation.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="CodexView" Methods="Invalidate" />
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)SatchelOverflowUi.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)OverflowUiStyles.g.cs" />
+      <Compile Include="$(IntermediateOutputPath)OverflowCodexInvalidation.g.cs" />
     </ItemGroup>
   </Target>
 </Project>

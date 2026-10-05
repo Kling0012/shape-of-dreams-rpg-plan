@@ -144,11 +144,10 @@ public sealed class Simulation
 
     private void Observe(List<GameEvent> events, int before, Profile p, double[] row, int player, int run)
     {
+        Rules.SettleSatchelOverflow(p);
         int added = 0;
         foreach (var e in events)
         {
-            if (e.SatchelOverflow != null)
-                Rules.CompleteSatchelOverflowFallback(p, e.SatchelOverflow, p.Run?.RunId, e.SatchelOverflowShards);
             if (e.Kind == EventKind.Recovered) added++;
             if (e.Kind != EventKind.Drop || !e.Rarity.HasValue) continue;
             var rarity = e.Rarity.Value;

@@ -6,34 +6,25 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>
-    /// #123: 鞄があふれたら、レア度の低い遺物（同じレア度内ではスコアの低い物）から夢のダストに換える。
-    /// 付与は取引（TradeAuthority/TradeLedger）を通って一度だけ行われ、付与できないときは欠片に戻る。
-    /// </summary>
+    /// <summary>Local overflow shard rewards and compatibility with persisted legacy dust obligations.</summary>
     public class SatchelOverflowDustTests
     {
-        private static readonly Rarity[] Rarities = { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic, Rarity.Legendary };
-
         private static Relic Rolled(Rarity rarity, int itemLevel, ulong seed) =>
             Loot.RollRelic(new Rng(seed), rarity, itemLevel);
 
         /// <summary>鞄に指定の遺物を1つ拾わせる（OnKill と同じ AddToSatchel 経路。追加は AddToSatchel 自身が行う）。</summary>
-        private static List<GameEvent> OverflowByPickup(Profile p, Relic dropped, TradeLedger trades = null, Waypoint? waypoint = null)
+        private static void OverflowByPickup(Profile p, Relic dropped, TradeLedger trades = null, Waypoint? waypoint = null)
         {
-            var ev = new List<GameEvent>();
             typeof(Rules).GetMethod("AddToSatchel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-                .Invoke(null, new object[] { p, dropped, ev, trades, waypoint == Waypoint.EpicMirage });
-            return ev;
+                .Invoke(null, new object[] { p, dropped, trades, waypoint == Waypoint.EpicMirage });
         }
 
-        private static GameEvent OverflowEvent(List<GameEvent> ev) =>
-            Assert.Single(ev, e => e.SatchelOverflow != null);
 
         // ─────────────── あふれの選び方 ───────────────
 
         // 受け入れ条件：上限超過ではレア度の低い物から外れ、同じレア度の中ではスコアの低い物が先に外れる。
         [Fact]
-        public void Overflow_removes_lowest_rarity_then_lowest_score_and_reports_dust_amount()
+        public void Overflow_removes_lowest_rarity_then_lowest_score_and_banks_shards_on_flush()
         {
             var p = Profile.CreateNew(123);
             Rules.BeginRun(p, "overflow-order");
@@ -49,26 +40,19 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 26).Select(i => Rolled(Rarity.Legendary, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Epic, 10, 99UL);
-            var ev = OverflowByPickup(p, dropped);
+            OverflowByPickup(p, dropped);
 
-            var overflow = OverflowEvent(ev);
-            // 外れたのはアンコモン（コモン2個より上だが、26個の伝説より下）ではなく、最も低レア度のスコア最小。
-            Assert.Equal(Rarity.Common, overflow.SatchelOverflow.Rarity);
-            Assert.Equal(Math.Min(commonLow.Score, commonHigh.Score) == commonLow.Score ? commonLow.Uid : commonHigh.Uid,
-                overflow.SatchelOverflow.Uid);
-            // 外された遺物のフォールバック欠片は取り外し時点の分解欠片（上限化済み）。ダスト額はホストの決済が決める。
+            Assert.Equal(0, p.Material(Materials.Shard));
+            var removed = commonLow.Score <= commonHigh.Score ? commonLow : commonHigh;
+            Assert.DoesNotContain(removed, p.Run.Satchel);
+            var overflow = Rules.FlushSatchelOverflow(p);
+            Assert.NotNull(overflow);
+            Assert.Equal(1, overflow.SatchelOverflowCount);
             Assert.Equal(Content.SalvageShards(Rarity.Common), overflow.SatchelOverflowShards);
-            // 本体相場（SalvageDust(rarity, 0) = SalvageShards × 5）：コモン15/アンコモン30/レア60/エピック150/伝説300。
-            Assert.Equal(15, Economy.SatchelOverflowDust(Rarity.Common));
-            Assert.Equal(30, Economy.SatchelOverflowDust(Rarity.Uncommon));
-            Assert.Equal(60, Economy.SatchelOverflowDust(Rarity.Rare));
-            Assert.Equal(150, Economy.SatchelOverflowDust(Rarity.Epic));
-            Assert.Equal(300, Economy.SatchelOverflowDust(Rarity.Legendary));
-            // 欠片は増えない（ダスト換金を待つ間の対価はまだ付かない）。
+            Assert.Equal(Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
             Assert.Equal(0, p.Run.SatchelShards);
-            // 鞄は上限内に戻り、外された物はもう入っていない。
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
-            Assert.DoesNotContain(overflow.SatchelOverflow, p.Run.Satchel);
+            Assert.Null(Rules.FlushSatchelOverflow(p));
             Assert.Contains(dropped, p.Run.Satchel);
         }
 
@@ -86,10 +70,9 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 29).Select(i => Rolled(Rarity.Uncommon, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Uncommon, 50, 98UL);
-            var ev = OverflowByPickup(p, dropped, trades);
+            OverflowByPickup(p, dropped, trades);
 
-            var overflow = OverflowEvent(ev);
-            Assert.NotEqual(reserved.Uid, overflow.SatchelOverflow.Uid);
+            Assert.Equal(1, Rules.FlushSatchelOverflow(p).SatchelOverflowCount);
             Assert.Contains(reserved, p.Run.Satchel);
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
         }
@@ -111,9 +94,9 @@ namespace SodRpg.Core.Tests
             var dropped = Rolled(Rarity.Common, 1, 999UL);
             trades.BeginSalvage(dropped, now: 0.0); // 新しく拾う物も予約しておけば、容量より予約の保護が優先される
             Assert.True(trades.IsReserved(dropped.Uid));
-            var ev = OverflowByPickup(p, dropped, trades);
+            OverflowByPickup(p, dropped, trades);
 
-            Assert.DoesNotContain(ev, e => e.SatchelOverflow != null);
+            Assert.Null(Rules.FlushSatchelOverflow(p));
             Assert.Equal(Workshop.SatchelCapacity(p) + 1, p.Run.Satchel.Count);
             Assert.Contains(dropped, p.Run.Satchel);
         }
@@ -129,10 +112,14 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 30).Select(i => Rolled(Rarity.Uncommon, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Common, 1, 777UL);
-            var ev = OverflowByPickup(p, dropped, waypoint: Waypoint.EpicMirage);
+            OverflowByPickup(p, dropped, waypoint: Waypoint.EpicMirage);
 
-            Assert.DoesNotContain(ev, e => e.SatchelOverflow != null);
+            var summary = Rules.FlushSatchelOverflow(p);
+            Assert.Equal(1, summary.SatchelOverflowDiscarded);
+            Assert.Equal(0, summary.SatchelOverflowShards);
             Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Equal(0, p.Material(Materials.Shard));
+            Assert.Empty(p.PendingTrades);
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
             Assert.DoesNotContain(dropped, p.Run.Satchel);
         }
@@ -156,30 +143,8 @@ namespace SodRpg.Core.Tests
 
             var warning = Assert.Single(ev);
             Assert.Equal(EventKind.Warning, warning.Kind);
-            Assert.Contains(relic.DisplayName, warning.Text);
             if (sameRun) Assert.Equal(shardsBefore + fallbackShards, p.Run.SatchelShards);
             else Assert.Equal(materialBefore + fallbackShards, p.Material(Materials.Shard));
-        }
-
-        // 通知文の形：「鞄があふれたため、『◯◯』（レア度）を夢のダスト ◯ に換えました」
-        [Fact]
-        public void Settlement_notice_names_the_relic_rarity_and_dust_amount()
-        {
-            var relic = Rolled(Rarity.Epic, 10, 31UL);
-            var trade = new PendingTrade
-            {
-                Token = 1, Kind = TradeKind.SatchelOverflowDust, Uid = relic.Uid,
-                Rarity = (int)Rarity.Epic, EarnDust = Economy.SatchelOverflowDust(Rarity.Epic),
-                Relic = relic, RunId = "run",
-            };
-            var ev = Rules.CompleteSatchelOverflowDust(trade);
-
-            Assert.Equal(EventKind.Info, ev.Kind);
-            Assert.Contains(relic.DisplayName, ev.Text);
-            Assert.Contains(Content.RarityName(Rarity.Epic).ToString(), ev.Text);
-            Assert.Contains(Economy.SatchelOverflowDust(Rarity.Epic).ToString(), ev.Text);
-            Assert.Equal(Rarity.Epic, ev.Rarity);
-            Assert.Null(Rules.CompleteSatchelOverflowDust(null));
         }
 
         // ─────────────── 一度だけの付与（冪等） ───────────────
@@ -205,7 +170,7 @@ namespace SodRpg.Core.Tests
             var client = new TradeLedger(generation: 1);
             var host = new TradeAuthority();
             var relic = Rolled(Rarity.Legendary, 30, 41UL);
-            var trade = client.BeginSatchelOverflow(relic, "run-123", 5, now: 0.0);
+            var trade = RestoreLegacy(client, relic, "run-123", 5);
             trade.LedgerId = host.LedgerIdOf("owner", "run-123");
 
             long paid = 0;
@@ -278,7 +243,7 @@ namespace SodRpg.Core.Tests
             var client = new TradeLedger(generation: 4);
             var oldHost = new TradeAuthority(generation: 50);
             var relic = Rolled(Rarity.Rare, 10, 42UL);
-            var trade = client.BeginSatchelOverflow(relic, "run-123", 12, now: 0.0);
+            var trade = RestoreLegacy(client, relic, "run-123", 12);
             trade.LedgerId = oldHost.LedgerIdOf("owner", "run-123");
             var executed = oldHost.Evaluate("owner", "run-123", RequestOf(trade), 0, 0);
             Assert.True(executed.Ok); // ホストは付与済み。応答だけが届かない
@@ -293,7 +258,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(TradeOutcome.Lost, client.OnResult(trade.Token, answer.Ok, code, out var pending));
 
             Assert.True(answer.Reason == TradeWire.LostReason);
-            Assert.Same(trade, pending);
+            Assert.Equal(trade.Token, pending.Token);
             Assert.True(pending.Unresolved);
             // TakeLost ではフォールバック用の遺物・欠片が渡る（ダスト付与の可否は未確定のまま）。
             var taken = client.TakeLost();
@@ -361,7 +326,7 @@ namespace SodRpg.Core.Tests
             var p = Profile.CreateNew(128);
             var client = new TradeLedger(generation: 15);
             var relic = Rolled(Rarity.Uncommon, 10, 45UL);
-            var trade = client.BeginSatchelOverflow(relic, "run-128", 6, now: 0.0);
+            var trade = RestoreLegacy(client, relic, "run-128", 6);
             p.PendingTrades.AddRange(client.Snapshot());
 
             var notes = new List<string>();
@@ -382,47 +347,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, fresh.HeldCount);
         }
 
-        // ─────────────── E2E：ラン全体の流れ ───────────────
-
-        // 乱数ランでも、あふれの取引は必ず「決着するか、欠片に戻るか」のどちらかで、欠片とダストの二重払いが起きない。
-        [Theory]
-        [InlineData(1UL)]
-        [InlineData(2UL)]
-        public void Random_runs_never_leave_both_shards_and_a_pending_overflow_for_the_same_relic(ulong seed)
-        {
-            var p = Profile.CreateNew(seed);
-            var client = new TradeLedger(generation: 2);
-            var host = new TradeAuthority();
-            var rng = new Rng(seed * 31);
-            int settledDust = 0;
-            for (int run = 0; run < 20; run++)
-            {
-                Rules.BeginRun(p, "run-" + run, heroKey: "Hero_Lacerta");
-                var trades = client;
-                for (int k = 0; k < 400 && p.Run != null; k++)
-                {
-                    var ev = Rules.OnKill(p, k % 37 == 0 ? MonsterTier.Boss : MonsterTier.Normal, 10, trades: trades);
-                    foreach (var e in ev)
-                    {
-                        if (e.SatchelOverflow == null) continue;
-                        var trade = client.BeginSatchelOverflow(e.SatchelOverflow, p.Run.RunId, e.SatchelOverflowShards, now: 0.0);
-                        trade.LedgerId = host.LedgerIdOf("owner", p.Run.RunId);
-                        var d = host.Evaluate("owner", p.Run.RunId, RequestOf(trade), 0, 0);
-                        if (d.Ok && !d.Replayed) settledDust += d.EarnDust;
-                        else if (!d.Ok && d.Reason != TradeWire.LostReason)
-                            Rules.CompleteSatchelOverflowFallback(p, e.SatchelOverflow, p.Run.RunId, e.SatchelOverflowShards);
-                    }
-                }
-                if (p.Run == null) continue;
-                Rules.EndRun(p, victory: true);
-                Assert.True(p.Run == null);
-            }
-            Assert.True(settledDust > 0);
-            // 台帳に残った未決着のあふれ取引と、獲得済みダストの総和が無矛盾（重複払いがない）。
-            Assert.True(client.HeldCount >= 0);
-            Assert.True(settledDust % 15 == 0); // すべてのあふれダストはレート（15の倍数）どおり。
-        }
-
         // ラン間（EndRun）で未解決のあふれ取引が残っても、保存→復元→照会の流れで一度だけ決着する。
         [Fact]
         public void An_overflow_trade_from_a_finished_run_still_settles_exactly_once_after_a_roundtrip()
@@ -431,7 +355,7 @@ namespace SodRpg.Core.Tests
             var client = new TradeLedger(generation: 3);
             Rules.BeginRun(p, "old-run");
             var relic = Rolled(Rarity.Rare, 10, 46UL);
-            var trade = client.BeginSatchelOverflow(relic, "old-run", 12, now: 0.0);
+            var trade = RestoreLegacy(client, relic, "old-run", 12);
             p.PendingTrades.AddRange(client.Snapshot());
             Rules.EndRun(p, victory: false); // 遠征終了後も取引は保存される
 
@@ -454,63 +378,80 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, fresh.HeldCount);
         }
 
-        // ─────────────── まとめて確定（#167） ───────────────
-
-        // 1度に大量にあふれても、ティック末の1回のフラッシュ（取引開始は全ぶん・保存は1回分）で、
-        // 1個ずつ確定した場合と同じ遺物・同じダストが一度だけ支払われる。
         [Fact]
-        public void A_large_overflow_batch_settles_identically_when_flushed_once()
+        public void Serialization_settles_pending_overflow_without_consuming_or_double_granting_the_summary()
         {
             var p = Profile.CreateNew(130);
             Rules.BeginRun(p, "run-batch", heroKey: "Hero_Lacerta");
             var client = new TradeLedger(generation: 9);
-            var host = new TradeAuthority();
-
-            // 鞄を満杯にしたあと100個拾う：1個ずつあふれて100個分の出来事が溜まる。
             int capacity = Workshop.SatchelCapacity(p);
             for (int i = 0; i < capacity; i++)
-                Assert.Empty(OverflowByPickup(p, Rolled(Rarity.Rare, 10, (ulong)(1000 + i)), client));
-            var overflow = new List<GameEvent>();
-            for (int i = 0; i < 100; i++)
-                overflow.Add(OverflowEvent(OverflowByPickup(p, Rolled((Rarity)(i % 5), 10, (ulong)(2000 + i)), client)));
-            Assert.Equal(100, overflow.Count);
-            Assert.Equal(capacity, p.Run.Satchel.Count);
-
-            // 1回のフラッシュ：キューの全ぶんの取引を開始し、準備保存はこの1回分（snapshot）に載る。
-            var trades = new List<PendingTrade>();
-            foreach (var e in overflow)
-                trades.Add(client.BeginSatchelOverflow(e.SatchelOverflow, p.Run.RunId, e.SatchelOverflowShards, now: 0.0));
-            Assert.Equal(100, trades.Count);
-            Assert.Equal(100, trades.Select(t => t.Token).Distinct().Count());
-            var snapshot = client.Snapshot();
-            Assert.Equal(100, snapshot.Count);
-
-            // 個別確定と同じ結果：どの遺物もレートどおりのダストが一度だけ（再送・再照会で増えない）。
-            long paid = 0;
+                OverflowByPickup(p, Rolled(Rarity.Rare, 10, (ulong)(1000 + i)), client);
+            int before = p.Material(Materials.Shard);
             int expected = 0;
-            foreach (var e in overflow) expected += Economy.SatchelOverflowDust(e.SatchelOverflow.Rarity);
-            for (int i = 0; i < trades.Count; i++)
+            for (int i = 0; i < 100; i++)
             {
-                var t = trades[i];
-                Assert.Equal(overflow[i].SatchelOverflow.Uid, t.Uid);
-                Assert.Equal(overflow[i].SatchelOverflowShards, t.FallbackShards);
-                t.LedgerId = host.LedgerIdOf("owner", p.Run.RunId);
-                var d = host.Evaluate("owner", p.Run.RunId, RequestOf(t), 0, 0);
-                Assert.True(d.Ok, d.Reason);
-                Assert.False(d.Replayed);
-                Assert.Equal(Economy.SatchelOverflowDust((Rarity)t.Rarity), d.EarnDust);
-                if (!d.Replayed) paid += d.EarnDust;
-                var replay = host.Evaluate("owner", p.Run.RunId, RequestOf(t), 0, 0);
-                Assert.True(replay.Ok && replay.Replayed);
-                if (!replay.Replayed) paid += replay.EarnDust;
+                var dropped = Rolled((Rarity)(i % 5), 10, (ulong)(2000 + i));
+                var removed = p.Run.Satchel.Concat(new[] { dropped })
+                    .OrderBy(r => r.Rarity).ThenBy(r => r.Score).First();
+                expected += Content.SalvageShards(removed.Rarity);
+                OverflowByPickup(p, dropped, client);
+                Assert.Equal(before, p.Material(Materials.Shard));
             }
-            Assert.Equal(expected, paid);
+            Assert.Equal(capacity, p.Run.Satchel.Count);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Empty(client.Snapshot());
+            var clone = p.Clone();
+            Assert.Equal(expected, Rules.FlushSatchelOverflow(clone).SatchelOverflowShards);
+            Assert.Equal(before + expected, clone.Material(Materials.Shard));
+            Assert.Equal(before, p.Material(Materials.Shard));
+            var restored = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
+            Assert.Equal(before + expected, restored.Material(Materials.Shard));
+            Assert.Empty(restored.PendingTrades);
+            var summary = Rules.FlushSatchelOverflow(p);
+            Assert.Equal(100, summary.SatchelOverflowCount);
+            Assert.Equal(expected, summary.SatchelOverflowShards);
+            Assert.Equal(before + expected, p.Material(Materials.Shard));
+            Assert.Null(Rules.FlushSatchelOverflow(p));
+        }
 
-            // 1回の保存に100件が載ったまま読み直せる（フラッシュ前の準備保存・結果反映の遅延に耐える）。
-            p.PendingTrades.AddRange(snapshot);
-            var notes = new List<string>();
-            var reloaded = ProfileCodec.Read(ProfileCodec.Write(p.Clone()), notes);
-            Assert.Equal(100, reloaded.PendingTrades.Count);
+        [Theory]
+        [InlineData(0, 0)]
+        [InlineData(2, 2)]
+        [InlineData(10, 3)]
+        public void Infinity_free_supply_overflow_banks_only_available_shard_credit(int credit, int expected)
+        {
+            var p = Profile.CreateNew(131);
+            Rules.BeginRun(p, "infinity-overflow");
+            p.Run.Infinity = new InfinityRunState();
+            p.InfinityRewardBudget.Shards = credit;
+            for (int i = 0; i < Workshop.SatchelCapacity(p); i++)
+                p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(3000 + i)));
+            var dropped = Rolled(Rarity.Common, 1, 4000);
+            dropped.InfinityFreeSupply = true;
+            OverflowByPickup(p, dropped);
+            Assert.Equal(0, p.Material(Materials.Shard));
+            var overflow = Rules.FlushSatchelOverflow(p);
+            Assert.Equal(expected, overflow.SatchelOverflowShards);
+            Assert.Equal(expected, p.Material(Materials.Shard));
+            Assert.Equal((double)(credit - expected), p.InfinityRewardBudget.Shards);
+            Assert.Equal(0, p.Run.SatchelShards);
+            Assert.Empty(p.PendingTrades);
+        }
+
+        private static PendingTrade RestoreLegacy(TradeLedger ledger, Relic relic, string runId, int shards)
+        {
+            var trade = new PendingTrade
+            {
+                Token = 1L << 32 | 1, Kind = TradeKind.SatchelOverflowDust,
+                Uid = relic.Uid, Rarity = (int)relic.Rarity,
+                EarnDust = Economy.SatchelOverflowDust(relic.Rarity),
+                Relic = relic, RunId = runId, FallbackShards = shards,
+            };
+            Assert.Equal(0, ledger.Restore(new[] { trade }, now: 0));
+            var restored = new List<PendingTrade>();
+            ledger.CollectDueQueries(0, restored);
+            return Assert.Single(restored);
         }
     }
 }

@@ -201,8 +201,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync, TickSatchelOverflow };
-                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "send build", "hello", "periodic save", "kill sync", "satchel overflow" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
+                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -605,12 +605,6 @@ if (_nativeContinueRestoring || InfinityMode.Restoring) return;
         public void Emit(GameEvent e)
         {
             _dirty = true;
-            if (e.SatchelOverflow != null)
-            {
-                // あふれの確定はここで1個ずつ行わず、キューへ溜めてまとめて1回にする（#167）。
-                _satchelOverflowQueue.Add(e);
-                return;
-            }
             // 潜行・覚醒・装備への出来事で変わった能力を次の送信へ反映する。
             if (e.Kind == EventKind.Delved || e.Kind == EventKind.LevelUp) MarkDirty(true);
             _notify?.Invoke(e);
@@ -789,14 +783,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         private string SendTrade(PendingTrade t)
         {
             t.LedgerId = _hostLedgerId; // 準備時の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる。
-            return SendPreparedTrade(t, confirm: true);
+            return SendPreparedTrade(t);
         }
 
         /// <summary>
-        /// 準備済みの識別情報を変えずに取引を送る。単独の取引（confirm=true）はここで準備保存を確定させる。
-        /// あふれのまとめて確定（#167）はバッチ全体で1回確定済みなので confirm=false で送るだけにする。
+        /// 識別情報を変えず、準備保存を確定してから手動の取引を送る。
         /// </summary>
-        private string SendPreparedTrade(PendingTrade t, bool confirm)
+        private string SendPreparedTrade(PendingTrade t)
         {
             if (_clientRpcOn == null || !NetworkClient.active)
             {
@@ -805,7 +798,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             }
             // ホストが決済を始める前に、token・内容・台帳の識別子・分解の予約を含む準備状態をディスクへ確定させる。
             // 確定できなければ送らない（ホストの通貨は動かない）。送ったあとの異常終了でも、保存済みの token から結果を照会できる。
-            if (confirm && !SaveNow(true))
+            if (!SaveNow(true))
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
                 SaveNow();
@@ -1235,6 +1228,21 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
 
+        /// <summary>One local grant and one notice/log per tick; save barriers settle credit without consuming this notice.</summary>
+        internal void TickSatchelOverflow()
+        {
+            var summary = Rules.FlushSatchelOverflow(Profile);
+            if (summary != null) Emit(summary);
+        }
+
+        /// <summary>旧あふれ取引の回復結果などを定期保存へまとめる。</summary>
+        private void DeferSave(float seconds = 5f)
+        {
+            _dirty = true;
+            float deadline = Time.unscaledTime + seconds;
+            if (_nextSave > deadline) _nextSave = deadline;
+        }
+
         private AsyncProfileWriter _writer;
         private double _saveMsTotal;
         private int _saveCount;
@@ -1251,8 +1259,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// </summary>
         private bool SaveNow(bool confirm)
         {
-            // 先にキューのあふれを取引に出す：どの保存にも「対価のない取り除き」を書かない（#167）。
-            FlushSatchelOverflow();
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());
