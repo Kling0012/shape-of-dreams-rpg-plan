@@ -12397,7 +12397,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "value": 3,
           "param": null,
           "receiver": null,
           "target": null,
@@ -12989,7 +12989,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "value": 3,
           "param": null,
           "receiver": null,
           "target": null,

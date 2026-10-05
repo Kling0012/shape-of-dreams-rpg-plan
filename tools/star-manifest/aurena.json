@@ -21072,7 +21072,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_GoldenBurst",
-          "value": 2,
+          "value": 4,
           "param": null,
           "receiver": null,
           "target": null,
@@ -21085,7 +21085,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_Reduction",
-          "value": 2,
+          "value": 5,
           "param": null,
           "receiver": null,
           "target": null,
@@ -21228,7 +21228,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_DangerousTheory",
-          "value": 2,
+          "value": 4,
           "param": null,
           "receiver": null,
           "target": null,
@@ -21241,7 +21241,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_ChainReaction",
-          "value": 2,
+          "value": 3,
           "param": null,
           "receiver": null,
           "target": null,

@@ -2,6 +2,8 @@
 
 設計表 `docs/specs/v1.31-clusters-*.md` の**新しい星**（旅人固有の新規ID・刻印、共有外縁160）と、設計表が効果を**変える既存星**（移行行）を、1星1オブジェクトの JSON に書き起こしたもの。C01（AuthoredStarContract）の登録APIができたら、このJSONから C# のデータを生成する。設計の正は設計表と [正式仕様](../../docs/specs/v1.31-new-mechanisms.md)・[レビュー](../../docs/specs/v1.31-design-review.md)。食い違いはJSON側で勝手に直さず `notes` に書く。
 
+後続の数値調整はこのマニフェストを更新して再生成する。#120 の記憶の冴え・遠征の鍛錬の現行値は JSON を正とし、変更前後の集計と計測の限界は [BalanceSim の報告](../BalanceSim/README.md#120記憶ダメージのポイント効率) を参照。v1.31 の設計表は当時の設計値を記録したままにする。費用・段数・説明文の書式・保存形式は変えない。
+
 ファイル：`tools/star-manifest/<hero>.json`（vesper, lacerta, cetus, yubar, husk, mist, nachia, aurena, bismuth）と `outer.json`（共有外縁、hero は "shared"）。10ファイルは**すべて下記の正準形に統一**されている（書式は UTF-8・LF・インデント2）。
 
 ## ファイルの形

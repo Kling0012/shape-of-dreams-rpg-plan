@@ -85,6 +85,7 @@ internal sealed class StarSimulation
 
     public void Run()
     {
+        StarClusters.RegisterAllGenerated();
         var watch = Stopwatch.StartNew();
         foreach (string hero in Heroes)
             foreach (var strategy in StarStrategyNames.All)
