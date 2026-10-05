@@ -9,10 +9,16 @@ namespace SodRpg.Core.Game
     public sealed class Rng
     {
         private ulong _state;
+        private readonly Profile _profile;
 
         public Rng(ulong seed)
         {
             _state = seed;
+        }
+
+        internal Rng(ulong seed, Profile profile) : this(seed)
+        {
+            _profile = profile;
         }
 
         public ulong State => _state;
@@ -38,7 +44,15 @@ namespace SodRpg.Core.Game
 
         public bool Chance(double p) => p >= 1.0 || (p > 0 && NextDouble() < p);
 
-        public string NextUid() => "r" + NextULong().ToString("x16");
+        public string NextUid()
+        {
+            string uid;
+            // A restored cursor must never recreate an ID still owned by this profile.
+            // Check only when generating an ID; no per-frame index or extra collection is needed.
+            do { uid = "r" + NextULong().ToString("x16"); }
+            while (_profile != null && _profile.ContainsRelicUid(uid));
+            return uid;
+        }
 
         public static ulong SeedFrom(string text)
         {
