@@ -143,9 +143,25 @@ namespace SodRpg.Mod
         public string guid;
         public bool isHumanPlayer = true;
         public int gold, dreamDust;
-        public void SpendGold(int amount) => gold -= amount;
-        public void SpendDreamDust(int amount) => dreamDust -= amount;
-        public void EarnDreamDust(int amount) => dreamDust += amount;
+        public Action BeforeCurrencyChange, AfterCurrencyChange;
+        public void SpendGold(int amount)
+        {
+            BeforeCurrencyChange?.Invoke();
+            gold -= amount;
+            AfterCurrencyChange?.Invoke();
+        }
+        public void SpendDreamDust(int amount)
+        {
+            BeforeCurrencyChange?.Invoke();
+            dreamDust -= amount;
+            AfterCurrencyChange?.Invoke();
+        }
+        public void EarnDreamDust(int amount)
+        {
+            BeforeCurrencyChange?.Invoke();
+            dreamDust += amount;
+            AfterCurrencyChange?.Invoke();
+        }
     }
     internal static class NetworkedManagerBase<T>
     {
@@ -199,7 +215,12 @@ namespace SodRpg.Mod
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
     internal static class Log
     {
-        public static void Error(string message) => throw new InvalidOperationException(message);
+        public static Action<string> ErrorSink;
+        public static void Error(string message)
+        {
+            if (ErrorSink != null) ErrorSink(message);
+            else throw new InvalidOperationException(message);
+        }
         public static void Warn(string message) { }
     }
     internal static class NativeAttributedMemoryCast
