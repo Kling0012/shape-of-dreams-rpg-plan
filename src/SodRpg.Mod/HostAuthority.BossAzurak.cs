@@ -106,6 +106,7 @@ namespace SodRpg.Mod
                     || profile.Id == "boss_azurak.stage2" || profile.Id == "boss_azurak.stage3" || profile.Id == "boss_azurak.stage6") continue;
                 var action = profile.Actions[0];
                 if (action.Event != kind || !AzurakAvailable(rt, action, now)) continue;
+                if (profile.Id == "boss_azurak.armor" && rt.Boss.MainHpDamage <= 0) continue;
                 // Native event admission is shared; this action gate also excludes duplicate callbacks per activation.
                 string key = action.RuntimeKey;
                 if (!rt.Boss.Ledger.Advance(key, activation, 1, 0, now)) continue;

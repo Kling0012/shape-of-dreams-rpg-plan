@@ -97,13 +97,11 @@ namespace SodRpg.Mod
             if (state.Initialized && state.WhiteSignature != white)
             {
                 InkClearNormal(rt,state,true);
-                InkClearShields(rt,state,false);
-                InkReapplyBeamProfile(rt,true);
+                InkClearShields(rt,state,true);
             }
             if (state.Initialized && state.DarkSignature != dark)
             {
-                InkClearNormal(rt,state,false);
-                InkReapplyBeamProfile(rt,false);
+                InkClearNormal(rt,state,false,preserveNative:true);
             }
             state.WhiteSignature=white; state.DarkSignature=dark; state.Initialized=true;
             InkReconcileBeamSkills(rt);
@@ -420,10 +418,15 @@ namespace SodRpg.Mod
         }
         private void ClearInkBoss(HeroRuntime rt,bool preserveRewards=false)
         {
+            bool keepWhite = preserveRewards && BossRewardUnchanged(rt,BossProfiles.WhiteNightRewardId);
+            bool keepDark = preserveRewards && BossRewardUnchanged(rt,BossProfiles.DarkMoonRewardId);
             if(_inkStates.TryGetValue(rt,out var state))
             {
-                InkClearNormal(rt,state,true);
                 if(preserveRewards)
+                    for(int i=state.Beams.Count-1;i>=0;i--)
+                        if(!InkBeamParentCurrent(state.Beams[i])) EndInkBeam(state.Beams[i].Parent);
+                InkClearNormal(rt,state,true);
+                if(keepDark)
                 {
                     if(state.FormSource==0)
                     {
@@ -436,8 +439,13 @@ namespace SodRpg.Mod
                     if(state.MarkVisual!=0) SetBossVisualNativeSource(rt,state.MarkVisual,rt.Boss.Ledger.MarkNativeSource(state.Mark,Time.time,"boss_dark_moon.stage3"));
                 }
                 else InkClearNormal(rt,state,false);
-                InkClearShields(rt,state,preserveRewards);
-                if(preserveRewards) state.ShieldVisualsDirty=true;
+                InkClearShields(rt,state,keepWhite);
+                if(keepWhite) state.ShieldVisualsDirty=true;
+                if(preserveRewards)
+                {
+                    if(!keepWhite) InkReapplyBeamProfile(rt,true);
+                    if(!keepDark) InkReapplyBeamProfile(rt,false);
+                }
                 if(!preserveRewards)
                 {
                     ClearInkBeams(rt);
@@ -451,12 +459,24 @@ namespace SodRpg.Mod
             }
             if(!preserveRewards) ClearInkBeams(rt);
         }
-        private void InkClearNormal(HeroRuntime rt,InkState state,bool white)
+        private void InkClearNormal(HeroRuntime rt,InkState state,bool white,bool preserveNative=false)
         {
             if(white)
             {
                 foreach(var d in state.Domains) { BossCancelProfileReservations(rt,BossProfiles.WhiteNightSetId,d.Profile); PublishBossVisual(rt,d.Visual,4,d.Point,d.Point,0,Time.time,Time.time,true); _inkDomainPool.Return(d); }
                 state.Domains.Clear(); state.WhiteArrivalUntil=0;
+            }
+            else if(preserveNative)
+            {
+                rt.Boss.Ledger.CancelOrdinaryMarks("boss_dark_moon.stage3");
+                if(state.FormSource==0)
+                {
+                    state.Form=0; state.LastForm=0;
+                    if(state.FormVisual!=0) PublishBossVisual(rt,state.FormVisual,9,rt.Hero.position,rt.Hero.position,0,Time.time,Time.time,true);
+                    state.FormVisual=0;
+                }
+                if(state.ChainSource==0) { state.Chain=0; state.ChainUntil=0; }
+                state.DarkArrivalUntil=0; state.MarkVisualDirty=true;
             }
             else
             {

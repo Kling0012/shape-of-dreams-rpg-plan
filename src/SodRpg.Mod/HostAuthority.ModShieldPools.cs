@@ -47,7 +47,10 @@ namespace SodRpg.Mod
         internal void RefreshModShieldEquipment(HeroSkill skill)
         {
             if (skill != null && skill.hero != null && _runtimes.TryGetValue(skill.hero, out var rt))
+            {
                 ModShieldEquipmentEpoch(rt);
+                BossEnsure(rt);
+            }
         }
 
         private bool AwardModShield(HeroRuntime owner, Entity recipient, ModShieldPoolKind kind,
@@ -155,9 +158,11 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Actor), nameof(Actor.ProcessShieldAmount))]
     internal static class NativeModShieldCreationCap
     {
-        private static readonly Dictionary<Actor, float> Caps = new Dictionary<Actor, float>();
+        private static readonly Dictionary<Actor, float> Caps = new Dictionary<Actor, float>(128);
+        internal static void Prewarm() => _ = Caps.Count;
         internal static void Register(Actor actor, float cap) => Caps.Add(actor, cap);
         internal static void Remove(Actor actor) => Caps.Remove(actor);
+        [HarmonyPriority(Priority.Last)]
         private static void Postfix(Actor __instance, ref float __result)
         {
             if (NetworkServer.active && Caps.TryGetValue(__instance, out float cap))

@@ -38,8 +38,9 @@
 - 段階B-3のnative報酬は`BossWorldCracker.cs`／`BossBigChomp.cs`／`BossShoutOfOblivion.cs`。WorldCrackerの元tickで実際に使われた地形clip距離、BigChompの敵別weightと元Heal／GiveShield／firstTrigger CD処理、Shout自身のhunt増幅・backstep・hit-stun引数だけへ接続する。HP-only吸収は`Actor.DealDamage`の実HP減算箇所を同一packet scopeで捕捉し、shield／免疫／反射／generated packetを主撃回復へ混ぜない。`Shrine_CallOfTheRavenous`の報酬取得経路は変更しない。Polarisは報酬profile／Linkなし。
 - M3の有限列は最大32pulseで1token、同owner/setの全予約合計4まで。Nyx／Erebosではmarker／seed／遅延列／channelを合計2・最古置換とし、置換したtokenの弾も解除する。同じE2は2点配置→部位→6点場の順で、新しい6点場を優先する。M2は波内の同敵hit数を制限し、従来の終点弾は飛行damage／壁爆発なし。Polaris6の槍だけは直撃を保ち、実際の最初の敵／壁／射程終端で1回の中立爆発を予約する。Seekerの追尾orbは8m／2秒以内の着弾・終端で1回だけ爆発、Primusの光弾は寿命1.5秒を延長せず異なる最大3敵へ連鎖する。M1の線／柱とM5は地形を越えず、短stun／slowは正の最終generated damageが成立した通常敵だけ。最大HP盾は吸収後の実残量から線形減衰し、補充しない。白夜の同target shieldは最高量だけを使い、古いshieldを復活させない。
 - 表示は`DreamforgeBossEffectsMsg`、`HostAuthority.BossVisuals.cs`、`ClientSession.BossVisuals.cs`。1秒の生存snapshot、終了通知とepoch/revisionで再接続・順序・失効を処理する。native game時刻とMirror同期時刻の送信対から残り時間を算出し、pause／slow motionは本体のtimescaleに従う。属性色・扇／線／放射・固定幻影・対象ID・残数／予算・縮小域をMOD幾何描画で表示し、ボスモデル／network prefab／新規Summonは要求しない。
-- live装備変更ではnative親寿命付きの予約・印・shield・予算・CDを保持し、変更したprofileだけを再判定して解除する。通常入力由来の予約／印は装備epochで破棄する。actorはcreation時刻だけでなくpool世代を照合し、死亡・遷移開始・部屋移動・owner離脱で全破棄する。
+- live装備変更ではnative親寿命付きの予約・印・shield・予算・CD・消費済みactivationを保持する。旧／新buildの報酬profile／段階・実装着objectとpool世代・owner／部屋を差分照合し、不変の報酬は再bindせず、変更した報酬だけ予約ごと解除する。build objectや無関係な装備epoch変更をnative寿命と同一視しない。通常入力由来の予約／印は装備epochで破棄する。死亡・遷移開始・部屋移動・owner離脱で全破棄する。
 - Protocolは段階B-1から**17のまま**、wire／codec schemaの追加なし。保存形式4を維持し、内容指紋へB-3のprofile・native contract・event orderを含める。専用取得登録は全14セット84部位・11種adapter。旧Skollの汎用Power／Guard連携・互換aliasは復活させない。Primus／Polarisには報酬連携を登録しない。
+- native契約は`NativePatchPreflight`でPatchAll前に検証する。実対象の解決・Prepare・field／delegate・他MODとの合成transpilerをHarmony自身のcopierで最後までdry変換し、契約不成立なら稼働しない。適用途中／初期化の失敗も自MODのHarmony ownerだけrollbackし、session／host／UI・性能設定・入力状態を停止／解放する。BigChompの追加量はsource／ancestor／target処理後の実倍率で補正し、SoulPrison追加盾は所有する正確なcontainerの最終処理量だけcapする。元native量・無期限盾・消費は変更しない。
 - B-3の指定Releaseビルド成功（警告5・エラー0）。本体資料側に`Mods`がなく自動配置条件が成立しないため、ビルド済みDLLと既存about／iconsを`/tmp/sod-deploy-i48`へ明示配置した。B-3部位の強化／覚醒は§2.1どおり元式内cap適用後に最大3倍、通常／連携段階には掛けない。WikiGenを`/tmp/sod-wiki-i48-b3`へ実行して62セット・1418固有品、全14ボスセット84部位・11種adapterと新4セットの日英出力、Polarisの連携欄なしを確認した。本体資料とDLLのILはリポジトリ外でのみ参照。Managed DLLのみのため実機戦闘・表示・協力通信・GC／frame時間計測・較正は未確認。tests/・test csprojを変更せず、テストの設計・計画・追加・実行は行っていない。
 
 ### 設計原則
@@ -614,7 +615,7 @@ M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、ho
 ## 6. 性能
 
 - 対象は段階A〜B-3の全14runtime／11種adapter／M1〜M8／Dispatch／Tick／専用表示。初回入力分もpool・固定配列・delegateを初期化時に確保し、ボス経路の一時配列・closure・動的key・interface列挙を撤去した。
-- action keyをCore定義時に固定、set maskを装備時に計算。記憶6枠・gem最大192slotの有界照合と型名cacheで、不変装備の再構築・reflection boxing・入力ごとの文字列生成を避ける。
+- action keyをCore定義時に固定、set maskを装備時に計算。空ボスbuildは記憶／gem走査前に終了。利用時の記憶6枠・gem最大192slot照合は100msでframe／入力共有、実装着変更通知は即時。型名cacheでreflection boxing・入力ごとの文字列生成を避ける。
 - M1：reentrant scratch8、対象ID64・wall hit128／scratch。候補走査128、profile対象数以下（B-3は8）、wall配列飽和時は地形越えの線を発射しない。
 - M2：本人128弾・set64弾・wave64、弾／waveの既知対象64。1弾1tickの衝突候補128・処理64、連鎖3敵。終端場を先に確保してから発射する。
 - M3：本人64場、set合計4（Nyx／Erebosは2）。1token32pulse／visual／point、1場1tickのdue処理32まで。予約全体のfirst-hit heal／HP-only吸収capをscalarで保持する。
@@ -626,6 +627,6 @@ M1/3/6/7/8＋E1/2/3/4/5/6；M6は非Entity光晶（native Summon procなし、ho
 - 既存adapter：Core128・heal記録64／Core、Flame128・敵CD3、Ink domain192（本人3）／shield128、Beam64・味方2／敵3、HerWorld128・移動64、LastStarlight128、Burrow64。候補処理は最大256。
 - B-3：光beam12／本人・対象8／beam・結晶2、WorldCracker128／記録敵3／native寿命pulse2／pending1、BigChomp128／weight3、Shout128／activation128／敵寿命64。各owner状態pool64。
 - adapter全体の保守走査は100ms間隔、native event／cancel／pool-clearは即時。Flame／Beamはowner-local列、重複する同時刻のnative再調整とNyx表示更新を間引く。
-- 表示：host／client各owner16・owner64effect、snapshot配列0〜64長を事前確保。1秒snapshot、同一metadata通知を省略し、非重要counter更新は100ms間隔、captionは固定glyphを使う。
+- 表示：host／client各owner16・owner64effect、snapshot配列0〜64長を事前確保。1秒snapshot、同一metadataは省略。Light due／期限は固定、連続geometry／counterは100msでowner別最新差分を集約、JSONはbatch1回のみで受信者へ文字列を共用。captionは固定glyph。
 - 描画：10Hzで距離64m／frustum選別、1repaint64effect・segment試行2048・caption512glyph、円24／扇16／放射16segment。終了・mode／残数変更の通知は間引かない。
 - 上記はMOD所有の固定資源・処理上限であり、native physics／Damage・Heal・Shield・Status／DewPersistence JSON／Mirror／Unity内部の確保を含むzero-GC実測ではない。実機frame時間・協力通信・表示の観測は未実施。

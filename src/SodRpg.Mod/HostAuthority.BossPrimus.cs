@@ -57,16 +57,8 @@ namespace SodRpg.Mod
             return BossFinite(direction) && direction.sqrMagnitude > .0001f ? direction.normalized : Vector3.forward;
         }
         private static float PrimusAmount(HeroRuntime rt, BossMoveEntry entry, BossMoveProfile profile, string channelId, bool shield = false)
-        {
-            for(int i=0;i<profile.Channels.Count;i++)
-            {
-                var channel=profile.Channels[i];
-                if (channel.ChannelId == channelId)
-                    return Math.Max(0f, shield ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
-                        * Math.Min(BossCoefficient(entry, profile, channel.ChannelId), channel.CapMilli / 100000f);
-            }
-            return 0;
-        }
+            => Math.Max(0f, shield ? rt.Hero.maxHealth : Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower))
+                * BossCoefficient(entry, profile, channelId);
         private void DispatchPrimusBoss(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now)
         {
             if (!NetworkServer.active || rt.Boss.Build == null || !BossAlive(rt.Hero) || activation <= 0) return;

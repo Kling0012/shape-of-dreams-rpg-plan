@@ -1379,7 +1379,6 @@ namespace SodRpg.Mod
                 _runtimes[hero] = rt;
             }
             RemoveBonuses(rt);
-            ClearBossEffects(rt, preserveRewards: true);
             // 連携の判定結果は Build と装着に紐付くので、付け直すときに一旦空にする。
             rt.HeroKey = hero.GetType().Name;
             rt.SatisfiedLinks.Clear();
@@ -1403,6 +1402,7 @@ namespace SodRpg.Mod
             if (_am != null)
                 foreach (var entity in _am.allEntities)
                     if (entity is Summon summon) HookSummon(rt, summon);
+            BossEnsure(rt);
         }
 
         private static bool IsHealthSacrifice(Actor source, Hero hero)

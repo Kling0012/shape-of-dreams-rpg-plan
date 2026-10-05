@@ -227,7 +227,7 @@ namespace SodRpg.Mod
         {
             internal AbilityTrigger Trigger;
             internal Entity Owner;
-            internal long Activation, TriggerLife, EquipmentEpoch;
+            internal long Activation, TriggerLife, OwnerLife;
             internal Actor NativeRoot;
             internal long NativeRootLife;
             internal Room Room;
@@ -265,7 +265,12 @@ namespace SodRpg.Mod
             internal readonly BossNativeSeen DamageIn = new BossNativeSeen();
             internal readonly BossNativeSeen Movement = new BossNativeSeen();
             internal float NextSweep, StarlightPoll, WorldPoll, ShoutPoll, ChompPoll;
-            internal void Clear() { MainHits.Clear(); MemoryUses.Clear(); DamageOut.Clear(); DamageIn.Clear(); Movement.Clear(); NextSweep = StarlightPoll = WorldPoll = ShoutPoll = ChompPoll = 0f; }
+            internal void Clear(bool preserveNative = false)
+            {
+                MainHits.Clear(); MemoryUses.Clear(); Movement.Clear();
+                if (!preserveNative) { DamageOut.Clear(); DamageIn.Clear(); }
+                NextSweep = StarlightPoll = WorldPoll = ShoutPoll = ChompPoll = 0f;
+            }
         }
         private sealed class BossNativeDisplacement
         {
@@ -287,7 +292,7 @@ namespace SodRpg.Mod
             internal HeroRuntime Runtime;
             internal St_U_Hysteria Skill;
             internal Actor Parent;
-            internal long StateActorLife, HeroLife, ParentLife, SkillLife, Life, EquipmentEpoch;
+            internal long StateActorLife, HeroLife, ParentLife, SkillLife, Life;
             internal Room Room;
             internal string Run;
             internal SpeedEffect Speed;
@@ -332,7 +337,7 @@ namespace SodRpg.Mod
         {
             if (cast == null || --cast.References > 0) return;
             cast.Trigger = null; cast.Owner = null; cast.NativeRoot = null; cast.Room = null; cast.Run = null;
-            cast.Activation = cast.TriggerLife = cast.EquipmentEpoch = cast.NativeRootLife = 0; cast.Movement = false;
+            cast.Activation = cast.TriggerLife = cast.OwnerLife = cast.NativeRootLife = 0; cast.Movement = false;
             _bossNativeCastPool.Return(cast);
         }
         private void ReleaseBossNativeSource(BossNativeSource source)
@@ -375,15 +380,14 @@ namespace SodRpg.Mod
         private bool BossNativeCastCurrent(BossNativeCast cast)
         {
             if (cast == null || cast.Owner.IsNullInactiveDeadOrKnockedOut()
-                || !BossNativeContextCurrent(cast.Room, cast.Run)) return false;
+                || !BossNativeSameLife(cast.Owner, cast.OwnerLife) || !BossNativeContextCurrent(cast.Room, cast.Run)) return false;
             if (cast.Trigger == null)
                 return !(cast.Owner is Hero) && cast.NativeRoot != null && cast.NativeRoot.isActive
                     && BossNativeSameLife(cast.NativeRoot, cast.NativeRootLife);
             if (!cast.Trigger.isActive || cast.Trigger.owner != cast.Owner
                 || !BossNativeSameLife(cast.Trigger, cast.TriggerLife)) return false;
             if (!(cast.Owner is Hero hero)) return true;
-            return BossNativeRuntime(hero, out var rt) && rt.ShieldEquipmentEpoch == cast.EquipmentEpoch
-                && cast.Trigger is SkillTrigger skill && BossNativeEquippedSkill(hero, skill);
+            return BossNativeRuntime(hero, out _) && cast.Trigger is SkillTrigger skill && BossNativeEquippedSkill(hero, skill);
         }
         private static bool BossNativeContextCurrent(Room room, string run) =>
             NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom == room
@@ -400,12 +404,10 @@ namespace SodRpg.Mod
             if (trigger == null || info.caster != trigger.owner || trigger.owner.IsNullInactiveDeadOrKnockedOut()
                 || AttributionGeneratedOrigin() != GeneratedOrigin.None) return null;
             bool movement = trigger is SkillTrigger skill && skill.owner != null && BossNativeEquippedSkill(skill.owner, skill);
-            long epoch = 0;
             if (trigger.owner is Hero hero)
             {
                 if (!movement || !BossNativeRuntime(hero, out var rt)) return null;
                 if (!BossEnsure(rt)) return null;
-                epoch = rt.ShieldEquipmentEpoch;
             }
             else if (!BossNativeAnyProfiles()) return null;
             var memoryCast = NativeAttributedMemoryCast.Current;
@@ -414,7 +416,7 @@ namespace SodRpg.Mod
             var cast = _bossNativeCastPool.Rent();
             if (cast == null) return null;
             cast.Trigger = trigger; cast.Owner = trigger.owner; cast.Movement = movement; cast.References = 1;
-            cast.EquipmentEpoch = epoch; cast.TriggerLife = BossNativeActorLife(trigger); cast.Activation = activation;
+            cast.OwnerLife = BossNativeActorLife(cast.Owner); cast.TriggerLife = BossNativeActorLife(trigger); cast.Activation = activation;
             cast.Room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
             cast.Run = NetworkedManagerBase<GameManager>.softInstance?.runId;
             return cast;
@@ -440,6 +442,7 @@ namespace SodRpg.Mod
                 cast = _bossNativeCastPool.Rent();
                 if (cast == null) return;
                 temporary = true; cast.References = 1; cast.Owner = info.instance.info.caster; cast.NativeRoot = info.actor;
+                cast.OwnerLife = BossNativeActorLife(cast.Owner);
                 cast.NativeRootLife = BossNativeActorLife(info.actor); cast.Activation = _memoryAttribution.NewPacketId();
                 cast.Room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
                 cast.Run = NetworkedManagerBase<GameManager>.softInstance?.runId;
@@ -638,7 +641,7 @@ namespace SodRpg.Mod
             entry.State = state; entry.Runtime = rt; entry.Skill = skill; entry.Parent = state.parentActor;
             entry.ParentLife = BossNativeActorLife(state.parentActor); entry.StateActorLife = BossNativeActorLife(state);
             entry.HeroLife = BossNativeActorLife(hero); entry.SkillLife = BossNativeActorLife(skill);
-            entry.Life = _memoryAttribution.NewPacketId(); entry.EquipmentEpoch = rt.ShieldEquipmentEpoch;
+            entry.Life = _memoryAttribution.NewPacketId();
             entry.Room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
             entry.Run = NetworkedManagerBase<GameManager>.softInstance?.runId;
             _bossHysteriaStates.Add(state, entry);
@@ -709,13 +712,14 @@ namespace SodRpg.Mod
             return state.State != null && state.State.isActive && state.State.parentActor == state.Parent
                 && state.State.info.caster == state.Runtime.Hero && state.State.victim == state.Runtime.Hero
                 && BossNativeSameLife(state.State, state.StateActorLife) && BossNativeSameLife(state.Skill, state.SkillLife)
+                && BossNativeSameLife(state.Runtime.Hero, state.HeroLife)
                 && BossNativeSameLife(state.Parent, state.ParentLife)
                 && state.Skill.owner == state.Runtime.Hero && state.State.FindFirstAncestorOfType<SkillTrigger>() == state.Skill;
         }
         private bool BossHysteriaEligible(BossHysteriaState state)
         {
             return BossHysteriaNativeCurrent(state) && BossNativeRuntime(state.Runtime.Hero, out var rt) && rt == state.Runtime
-                && rt.ShieldEquipmentEpoch == state.EquipmentEpoch && FindMemory(rt.Hero, nameof(St_U_Hysteria)) == state.Skill
+                && FindMemory(rt.Hero, nameof(St_U_Hysteria)) == state.Skill
                 && BossNativeContextCurrent(state.Room, state.Run)
                 && BossRewardStage(rt, BossProfiles.DemonRewardId) > 0;
         }
@@ -828,7 +832,7 @@ namespace SodRpg.Mod
             foreach (var pair in _bossHysteriaClaws) if (pair.Value.State == entry) _bossNativeActorScratch.Add(pair.Key);
             for (int i = 0; i < _bossNativeActorScratch.Count; i++) ClearBossNativeClaw((Ai_U_Hysteria_Claw)_bossNativeActorScratch[i]);
             entry.State = null; entry.Runtime = null; entry.Skill = null; entry.Parent = null; entry.Room = null; entry.Run = null; entry.Speed = null;
-            entry.StateActorLife = entry.HeroLife = entry.ParentLife = entry.SkillLife = entry.Life = entry.EquipmentEpoch = 0; entry.SpeedStrength = -50f;
+            entry.StateActorLife = entry.HeroLife = entry.ParentLife = entry.SkillLife = entry.Life = 0; entry.SpeedStrength = -50f;
             _bossHysteriaStatePool.Return(entry);
         }
         private void TickBossNativeAdapters(HeroRuntime rt)
@@ -849,13 +853,6 @@ namespace SodRpg.Mod
                     RemoveBossHysteriaState(key, state);
                     continue;
                 }
-                if (state.EquipmentEpoch != rt.ShieldEquipmentEpoch)
-                {
-                    SetBossHysteriaSpeed(state, -50f);
-                    BossHysteriaStateEnded(state.Runtime, state.Life);
-                    state.Life = _memoryAttribution.NewPacketId();
-                    state.EquipmentEpoch = rt.ShieldEquipmentEpoch;
-                }
                 RefreshBossHysteria(key);
             }
             _bossNativeDisplacementScratch.Clear();
@@ -864,26 +861,29 @@ namespace SodRpg.Mod
                     _bossNativeDisplacementScratch.Add(pair.Key);
             foreach (var key in _bossNativeDisplacementScratch) RemoveBossNativeDisplacement(key, _bossNativeDisplacements[key]);
         }
-        private void ClearBossNativeAdapters(HeroRuntime rt)
+        private void ClearBossNativeAdapters(HeroRuntime rt, bool preserveRewards = false, bool preserveHysteria = false)
         {
-            rt.BossNative.Clear();
+            rt.BossNative.Clear(preserveRewards);
             _bossNativeDisplacementScratch.Clear();
-            foreach (var pair in _bossNativeDisplacements) if (pair.Value.Runtime == rt) _bossNativeDisplacementScratch.Add(pair.Key);
+            foreach (var pair in _bossNativeDisplacements)
+                if (pair.Value.Runtime == rt && (!preserveRewards || !BossNativeCastCurrent(pair.Value.Cast)
+                    || pair.Value.Source != null && !BossNativeSourceCurrent(pair.Value.Source, false))) _bossNativeDisplacementScratch.Add(pair.Key);
             foreach (var key in _bossNativeDisplacementScratch) RemoveBossNativeDisplacement(key, _bossNativeDisplacements[key]);
             _bossNativeActorScratch.Clear();
-            foreach (var pair in _bossNativeSources) if (pair.Value.Cast.Owner == rt.Hero) _bossNativeActorScratch.Add(pair.Key);
+            foreach (var pair in _bossNativeSources)
+                if (pair.Value.Cast.Owner == rt.Hero && (!preserveRewards || !BossNativeSourceCurrent(pair.Value, false))) _bossNativeActorScratch.Add(pair.Key);
             foreach (var key in _bossNativeActorScratch) RemoveBossNativeSource(key);
             foreach (var state in _bossHysteriaStates.Values)
-                if (state.Runtime == rt)
+                if (state.Runtime == rt && (!preserveHysteria || !BossHysteriaEligible(state)))
                 {
                     SetBossHysteriaSpeed(state, -50f);
                     BossHysteriaStateEnded(state.Runtime, state.Life);
                     // Invalidate already-created claws without ending or restarting the native state.
                     state.Life = _memoryAttribution.NewPacketId();
-                    state.EquipmentEpoch = rt.ShieldEquipmentEpoch;
                 }
             _bossNativeActorScratch.Clear();
-            foreach (var pair in _bossHysteriaClaws) if (pair.Value.State.Runtime == rt) _bossNativeActorScratch.Add(pair.Key);
+            foreach (var pair in _bossHysteriaClaws)
+                if (pair.Value.State.Runtime == rt && (!preserveHysteria || !BossHysteriaClawCurrent(pair.Value))) _bossNativeActorScratch.Add(pair.Key);
             foreach (var key in _bossNativeActorScratch) ClearBossNativeClaw((Ai_U_Hysteria_Claw)key);
         }
     }

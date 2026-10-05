@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
 using System.IO;
 using SodRpg.Core.Game;
 using UnityEngine;
@@ -27,12 +30,24 @@ namespace SodRpg.Mod
         private PerformanceTuner _performance;
         private bool _hasFocus = true;
         private EventSystem _pausedEventSystem;
+        private bool _running;
+        private bool _stopped;
+        private bool _iconsStarted;
+        private bool _gameplayFlagChanged;
+        private bool _originalGameplayFlag;
 
         private void Awake()
         {
+            string stage = "native preflight";
+            useGUILayout = false;
             try
             {
-                instance.isAlteringGameplay = true;
+                if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
+                    throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
+                NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly);
+                stage = "patch installation";
+                harmony.PatchAll(typeof(DreamforgeMod).Assembly);
+                stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
                 StarClusters.RegisterAllGenerated();
@@ -41,6 +56,7 @@ namespace SodRpg.Mod
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
+                _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
                 _ui = new DreamforgeUi(_session, () => config);
@@ -49,18 +65,23 @@ namespace SodRpg.Mod
                 _perfLogEnabled = File.Exists(Path.Combine(dir, "perf.flag"));
                 _devCommands = File.Exists(Path.Combine(dir, "dev.flag"));
                 if (_perfLogEnabled) Log.Info("perf logging enabled (perf.flag)");
-                harmony.PatchAll(typeof(DreamforgeMod).Assembly);
                 Log.Info($"Loaded {mod.metadata.id} {mod.metadata.modVer}. Profile: {_session.SavePath}");
                 HostAuthority.ModVersion = mod.metadata.modVer ?? "?";
+                _originalGameplayFlag = instance.isAlteringGameplay;
+                _gameplayFlagChanged = true;
+                instance.isAlteringGameplay = true;
+                _running = true;
             }
             catch (Exception ex)
             {
-                Log.Error("Awake failed: " + ex);
+                Log.Error("Startup stopped during " + stage + ": " + ex);
+                Stop();
             }
         }
 
         public override void OnConfigChanged()
         {
+            if (!_running) return;
             Loc.Japanese = config.japanese;
             _performance?.Configure(config);
         }
@@ -68,6 +89,7 @@ namespace SodRpg.Mod
         private void OnApplicationFocus(bool hasFocus)
         {
             _hasFocus = hasFocus;
+            if (!_running) return;
             _performance?.SetFocus(hasFocus);
         }
 
@@ -75,7 +97,7 @@ namespace SodRpg.Mod
 
         private void Update()
         {
-            if (_session == null) return;
+            if (!_running) return;
             _perf.Frame(Time.unscaledDeltaTime);
             _perf.Begin();
             HandleKeys();
@@ -162,7 +184,7 @@ namespace SodRpg.Mod
 
         private void OnGUI()
         {
-            if (_ui == null) return;
+            if (!_running) return;
             _perf.Begin();
             _session?.DrawBossEffects();
             _ui.Draw();
@@ -174,6 +196,7 @@ namespace SodRpg.Mod
         /// <summary>確認用コマンドが使えるか。使えないときは、黙らずにコンソールへ一言出す（何も起きない理由が分かるように）。</summary>
         private bool DevAllowed()
         {
+            if (!CommandAllowed()) return false;
             if (_devCommands) return true;
             Debug.Log("[DreamforgeRPG] This command is not available.");
             return false;
@@ -182,6 +205,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: show time spent by this mod per frame (Update / OnGUI / save)", "dreamforge_perf")]
         private void PerfCommand()
         {
+            if (!CommandAllowed()) return;
             Debug.Log("[DreamforgeRPG] " + _perf.Report() + " | save avg " + _session.SaveMsAverage.ToString("0.00") +
                 $"ms (main thread) | lightweight={_performance?.Mode ?? config.lightweight} background={!_hasFocus}");
         }
@@ -189,6 +213,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: give up trades whose result the host could not confirm (no reward is granted; reserved relics return)", "dreamforge_trades_giveup")]
         private void TradesGiveUpCommand()
         {
+            if (!CommandAllowed()) return;
             int n = _session.GiveUpLostTrades();
             Debug.Log("[DreamforgeRPG] gave up " + n + " unconfirmed trade(s)");
         }
@@ -196,6 +221,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): switch lightweight rendering 0=Off 1=Light 2=Strong 3=Max", "dreamforge_lightweight")]
         private void LightweightCommand(int mode)
         {
+            if (!CommandAllowed()) return;
             config.lightweight = (LightweightMode)Math.Max(0, Math.Min(3, mode));
             _performance?.Configure(config);
             Debug.Log("[DreamforgeRPG] lightweight=" + config.lightweight);
@@ -247,6 +273,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge (test): set URP render scale (0.25-2.0) to emulate a weaker GPU", "dreamforge_renderscale")]
         private void RenderScaleCommand(float scale)
         {
+            if (!CommandAllowed()) return;
             try
             {
                 var asset = URPUnlocker.API.URPUnlockerAPI.CurrentUnlockedURPAsset;
@@ -266,21 +293,62 @@ namespace SodRpg.Mod
 
         private void OnApplicationQuit()
         {
+            if (!_running) return;
             _session?.SaveNow();
             _session?.FlushSaves();
         }
 
         private void OnDestroy()
         {
-            // 未精算の報酬と遠征の結果を保存してから、登録・補正・パッチを外す。
-            try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Icons dispose: " + ex); }
-            try { _performance?.Dispose(); } catch (Exception ex) { Log.Error("Performance dispose: " + ex); }
-            try { _session?.Unwire(); } catch (Exception ex) { Log.Error("Unwire: " + ex); }
-            try { _host?.Detach(); } catch (Exception ex) { Log.Error("Detach: " + ex); }
+            Stop();
+        }
+
+        private bool CommandAllowed()
+        {
+            if (_running) return true;
+            Debug.Log("[DreamforgeRPG] Startup is not active; command unavailable. See the startup error log.");
+            return false;
+        }
+
+        private void Stop()
+        {
+            _running = false;
+            if (_stopped) return;
+            _stopped = true;
+            _devCommands = false;
+            _perfLogEnabled = false;
+            useGUILayout = false;
+            // Clear references first so callbacks cannot observe a partially stopped entry point.
+            var session = _session; _session = null;
+            var host = _host; _host = null;
+            var ui = _ui; _ui = null;
+            var performance = _performance; _performance = null;
+            try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
+            try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
+            try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }
+            try { performance?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: performance restore: " + ex); }
+            if (_iconsStarted)
+            {
+                _iconsStarted = false;
+                try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: icons dispose: " + ex); }
+            }
             BlockInputWhileMenuOpen.MenuOpen = false;
-            BlockGameUi(false);
-            try { _ui?.Dispose(); } catch (Exception ex) { Log.Error("UI dispose: " + ex); }
-            try { harmony.UnpatchAll(harmony.Id); } catch (Exception ex) { Log.Error("Unpatch: " + ex); }
+            try { BlockGameUi(false); } catch (Exception ex) { Log.Error("Startup cleanup: input restore: " + ex); }
+            if (_gameplayFlagChanged)
+            {
+                _gameplayFlagChanged = false;
+                try { instance.isAlteringGameplay = _originalGameplayFlag; }
+                catch (Exception ex) { Log.Error("Startup cleanup: gameplay flag restore: " + ex); }
+            }
+            // Continue after an individual rollback error; never remove another owner's patches.
+            try
+            {
+                if (harmony != null && !string.IsNullOrEmpty(harmony.Id) && harmony.Id != "*")
+                    foreach (var target in new List<MethodBase>(harmony.GetPatchedMethods()))
+                        try { harmony.Unpatch(target, HarmonyPatchType.All, harmony.Id); }
+                        catch (Exception ex) { Log.Error("Startup cleanup: unpatch " + target.FullDescription() + ": " + ex); }
+            }
+            catch (Exception ex) { Log.Error("Startup cleanup: patch enumeration: " + ex); }
         }
 
         [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-500, 0 = off)", "dreamforge_testpoints")]
@@ -410,6 +478,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: log your hero's final stats and the bonus applied by this mod", "dreamforge_stats")]
         private void StatsCommand()
         {
+            if (!CommandAllowed()) return;
             var hero = _session.LocalHero;
             if (hero == null)
             {
@@ -486,6 +555,7 @@ namespace SodRpg.Mod
         [ConsoleCommand("Dreamforge: show profile summary", "dreamforge_status")]
         private void StatusCommand()
         {
+            if (!CommandAllowed()) return;
             var p = _session.Profile;
             Debug.Log($"[DreamforgeRPG] Lv{p.DreamLevel} xp{p.DreamXp} stash{p.Stash.Count} shards{p.Material(Materials.Shard)} run={(p.Run != null ? p.Run.RunId + " heat" + p.Run.Heat + " satchel" + p.Run.Satchel.Count : "none")} active={_session.ActiveRunId} hostOk={_session.HostConfirmed} hostActive={_host.IsActive}");
         }

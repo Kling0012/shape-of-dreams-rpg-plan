@@ -274,8 +274,8 @@ namespace SodRpg.Mod
             }
             finally { handle.Return(); }
             beam.LastAngle=angle;
-            PublishBossVisual(rt,beam.Visual,2,beam.Origin,actualEnd,beam.Action.WidthMilli/2000f,now,Math.Max(now+.05f,beam.Until),
-                element:BossElement.Light,shape:BossShape.Line,range:range,width:beam.Action.WidthMilli/1000f,angle:beam.EndAngle-beam.StartAngle,budget:8-beam.HitCount);
+            PublishBossVisual(rt,beam.Visual,2,beam.Origin,actualEnd,beam.Action.WidthMilli/2000f,beam.Due,Math.Max(beam.Due+.05f,beam.Until),
+                element:BossElement.Light,shape:BossShape.Line,range:range,width:beam.Action.WidthMilli/1000f,angle:beam.EndAngle-beam.StartAngle,budget:8-beam.HitCount,coalesce:true);
             if(now>=beam.Until) LightStopBeam(rt,beam,now);
         }
         private void LightStopBeam(HeroRuntime rt,LightBeamState beam,float now)

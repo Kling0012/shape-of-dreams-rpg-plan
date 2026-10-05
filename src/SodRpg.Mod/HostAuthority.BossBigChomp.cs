@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         {
             internal Ai_U_BigChomp Instance;
             internal int Kind;
+            internal int Depth;
         }
         internal static Scope Current;
         private static void Prefix(Ai_U_BigChomp __instance, out Scope __state)
@@ -81,6 +82,56 @@ namespace SodRpg.Mod
         }
     }
 
+    // Receiver postfixes see the complete source/ancestor/target multiplier.
+    [HarmonyPatch(typeof(Actor),nameof(Actor.DoHeal))]
+    internal static class MawBigChompHealDepth
+    {
+        private static void Prefix(out int __state)
+        {
+            ref var scope = ref MawBigChompNativeDelay.Current;
+            __state = scope.Instance != null && scope.Kind == 1 ? scope.Depth : -1;
+            if (__state >= 0) scope.Depth++;
+        }
+        private static void Finalizer(int __state)
+        {
+            if (__state >= 0) MawBigChompNativeDelay.Current.Depth = __state;
+        }
+    }
+    [HarmonyPatch(typeof(Actor),nameof(Actor.ProcessShieldAmount))]
+    internal static class MawBigChompShieldDepth
+    {
+        private static void Prefix(out int __state)
+        {
+            ref var scope = ref MawBigChompNativeDelay.Current;
+            __state = scope.Instance != null && scope.Kind == 2 ? scope.Depth : -1;
+            if (__state >= 0) scope.Depth++;
+        }
+        private static void Finalizer(int __state)
+        {
+            if (__state >= 0) MawBigChompNativeDelay.Current.Depth = __state;
+        }
+    }
+    [HarmonyPatch(typeof(Entity),nameof(Entity.ProcessReceivedHeal))]
+    internal static class MawBigChompFinalHeal
+    {
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(Entity __instance,ref HealData data,Actor actor)
+        {
+            if (NetworkServer.active && MawBigChompNativeDelay.Current.Kind == 1)
+                HostAuthority.NativeInstance?.CompleteBossBigChompAmount(actor,__instance,ref data,false);
+        }
+    }
+    [HarmonyPatch(typeof(Entity),nameof(Entity.ProcessReceivedShield))]
+    internal static class MawBigChompFinalShield
+    {
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(Entity __instance,ref HealData data,Actor actor)
+        {
+            if (NetworkServer.active && MawBigChompNativeDelay.Current.Kind == 2)
+                HostAuthority.NativeInstance?.CompleteBossBigChompAmount(actor,__instance,ref data,true);
+        }
+    }
+
     internal sealed partial class HostAuthority
     {
         private sealed class MawChompBinding
@@ -90,10 +141,10 @@ namespace SodRpg.Mod
             internal Ai_U_BigChomp Instance;
             internal St_U_BigChomp Skill;
             internal Actor Parent;
-            internal long Life, ParentLife, HeroLife, SkillLife, Epoch, Activation;
+            internal long Life, ParentLife, HeroLife, SkillLife, Activation;
             internal float Weight, HealExtra, ShieldExtra, CooldownExtra;
             internal int Stage;
-            internal bool Claimed, Rejected, Completed, Healed, Shielded, Reduced;
+            internal bool Claimed, Rejected, Completed, Healed, Shielded, Reduced, HealApplied, ShieldApplied;
             internal readonly DataProcessor<HealData,Actor,Entity> HealProcessor, ShieldProcessor;
             internal readonly DataProcessor<CooldownReductionSettings,Actor,AbilityTrigger> CooldownProcessor;
             internal MawChompBinding()
@@ -102,18 +153,16 @@ namespace SodRpg.Mod
             }
             private void ProcessHeal(ref HealData data, Actor actor, Entity target)
             {
-                if (Host == null || Runtime == null || Healed || MawBigChompNativeDelay.Current.Kind != 1 || actor != Instance || data.actor != Instance
+                if (Host == null || Runtime == null || Healed || MawBigChompNativeDelay.Current.Kind != 1 || MawBigChompNativeDelay.Current.Depth != 1 || actor != Instance || data.actor != Instance
                     || target != Runtime.Hero || data.originalAmount <= 0 || !Host.MawChompClaim(this)) return;
                 Healed = true;
-                if (HealExtra > 0) data.AddAmount(HealExtra);
             }
             private void ProcessShield(ref HealData data, Actor actor, Entity target)
             {
-                if (Host == null || Runtime == null || Shielded || MawBigChompNativeDelay.Current.Kind != 2 || !(actor is Se_GenericShield_OneShot)
+                if (Host == null || Runtime == null || Shielded || MawBigChompNativeDelay.Current.Kind != 2 || MawBigChompNativeDelay.Current.Depth != 1 || !(actor is Se_GenericShield_OneShot)
                     || actor.parentActor != Instance || target != Runtime.Hero || data.originalAmount <= 0
                     || !Host.MawChompClaim(this)) return;
                 Shielded = true;
-                if (Stage >= 2 && ShieldExtra > 0) data.AddAmount(ShieldExtra);
             }
             private void ProcessCooldown(ref CooldownReductionSettings data, Actor actor, AbilityTrigger target)
             {
@@ -125,9 +174,9 @@ namespace SodRpg.Mod
             internal void Reset()
             {
                 Host = null; Runtime = null; Instance = null; Skill = null; Parent = null;
-                Life = ParentLife = HeroLife = SkillLife = Epoch = Activation = 0;
+                Life = ParentLife = HeroLife = SkillLife = Activation = 0;
                 Weight = HealExtra = ShieldExtra = CooldownExtra = 0; Stage = 0;
-                Claimed = Rejected = Completed = Healed = Shielded = Reduced = false;
+                Claimed = Rejected = Completed = Healed = Shielded = Reduced = HealApplied = ShieldApplied = false;
             }
         }
         private const string MawChompSlot = "boss_maw.big_chomp.slot";
@@ -144,13 +193,13 @@ namespace SodRpg.Mod
                 || !_bossNativeSources.TryGetValue(instance,out var source) || !BossNativeSourceCurrent(source,false)
                 || !(instance.firstTrigger is St_U_BigChomp skill) || source.Cast.Trigger != skill
                 || source.Cast.Owner != hero || FindMemory(hero,nameof(St_U_BigChomp)) != skill
-                || source.Cast.EquipmentEpoch != rt.ShieldEquipmentEpoch || _mawChomps.Count >= 128) return;
+                || _mawChomps.Count >= 128) return;
             var binding = _mawChompPool.Rent();
             if (binding == null) return;
             binding.Reset(); binding.Host = this; binding.Runtime = rt; binding.Instance = instance;
             binding.Skill = skill; binding.Parent = instance.parentActor; binding.Life = source.Life;
             binding.ParentLife = source.ParentLife; binding.HeroLife = BossNativeActorLife(hero);
-            binding.SkillLife = source.Cast.TriggerLife; binding.Epoch = rt.ShieldEquipmentEpoch; binding.Activation = source.Cast.Activation;
+            binding.SkillLife = source.Cast.TriggerLife; binding.Activation = source.Cast.Activation;
             _mawChomps.Add(instance,binding);
             instance.dealtHealProcessor.Add(binding.HealProcessor);
             instance.dealtShieldProcessor.Add(binding.ShieldProcessor);
@@ -161,7 +210,7 @@ namespace SodRpg.Mod
             var instance = binding.Instance;
             var rt = binding.Runtime;
             return NetworkServer.active && instance != null && rt != null && rt.Boss.Build != null && BossAlive(rt.Hero)
-                && binding.Epoch == rt.ShieldEquipmentEpoch && instance.info.caster == rt.Hero && instance.gem == null
+                && instance.info.caster == rt.Hero && instance.gem == null
                 && instance.firstTrigger == binding.Skill && instance.parentActor == binding.Parent
                 && BossNativeSameLife(instance,binding.Life) && BossNativeSameLife(binding.Parent,binding.ParentLife)
                 && BossNativeSameLife(rt.Hero,binding.HeroLife) && BossNativeSameLife(binding.Skill,binding.SkillLife)
@@ -200,6 +249,32 @@ namespace SodRpg.Mod
             if (!BossReady(rt,MawChompSlot,Time.time,8000)) { binding.Rejected = true; return false; }
             binding.Stage = stage; binding.Claimed = true; return true;
         }
+        internal void CompleteBossBigChompAmount(Actor actor,Entity target,ref HealData data,bool shield)
+        {
+            var scope = MawBigChompNativeDelay.Current;
+            if (scope.Instance == null || scope.Depth != 1 || !_mawChomps.TryGetValue(scope.Instance,out var binding)
+                || target != binding.Runtime.Hero || !MawChompCurrent(binding) || !binding.Claimed) return;
+            float extra;
+            if (shield)
+            {
+                if (!binding.Shielded || binding.ShieldApplied || !(actor is Se_GenericShield_OneShot)
+                    || actor.parentActor != binding.Instance) return;
+                binding.ShieldApplied = true; extra = binding.Stage >= 2 ? binding.ShieldExtra : 0;
+            }
+            else
+            {
+                if (!binding.Healed || binding.HealApplied || actor != binding.Instance || data.actor != actor) return;
+                binding.HealApplied = true; extra = binding.HealExtra;
+            }
+            // Do not change the original native amount or either native multiplier.
+            // A fully reduced packet stays zero; never divide by zero/non-finite values.
+            float multiplier = data.amplificationMultiplier * data.reductionMultiplier;
+            if (extra <= 0 || float.IsNaN(extra) || float.IsInfinity(extra) || multiplier <= 0
+                || float.IsNaN(multiplier) || float.IsInfinity(multiplier)) return;
+            float rawExtra = extra / multiplier;
+            if (rawExtra > 0 && !float.IsNaN(rawExtra) && !float.IsInfinity(rawExtra))
+                data = data.AddAmount(rawExtra);
+        }
         internal void CompleteBossBigChompDelay(Ai_U_BigChomp instance)
         {
             if (_mawChomps.TryGetValue(instance,out var binding)) binding.Completed = true;
@@ -227,10 +302,11 @@ namespace SodRpg.Mod
             for (int i = 0; i < _mawChompScratch.Count; i++) ClearBossBigChompActor(_mawChompScratch[i]);
             _mawChompScratch.Clear();
         }
-        private void ClearBossBigChomp(HeroRuntime rt)
+        private void ClearBossBigChomp(HeroRuntime rt,bool preserveRewards=false)
         {
             _mawChompScratch.Clear();
-            foreach (var pair in _mawChomps) if (pair.Value.Runtime == rt) _mawChompScratch.Add(pair.Key);
+            foreach (var pair in _mawChomps)
+                if (pair.Value.Runtime == rt && (!preserveRewards || !MawChompCurrent(pair.Value))) _mawChompScratch.Add(pair.Key);
             for (int i = 0; i < _mawChompScratch.Count; i++) ClearBossBigChompActor(_mawChompScratch[i]);
             _mawChompScratch.Clear();
         }

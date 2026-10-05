@@ -234,7 +234,7 @@ namespace SodRpg.Mod
         {
             internal NyxWorldState State;
             internal Ai_U_HerWorld_Explosion Child;
-            internal long ChildLife,Epoch;
+            internal long ChildLife;
             internal float Until,H;
             internal bool Magic;
         }
@@ -254,7 +254,7 @@ namespace SodRpg.Mod
                 && state.Status.firstTrigger==state.Skill && state.Status.gem==null && state.Status.parentActor==state.Parent
                 && state.Parent!=null && BossNativeSameLife(state.Parent,state.ParentLife);
         private bool NyxWorldEligible(NyxWorldState state)
-            => NyxWorldNativeCurrent(state) && BossEnsure(state.Runtime) && state.Stage>0 && state.Epoch==state.Runtime.ShieldEquipmentEpoch
+            => NyxWorldNativeCurrent(state) && BossEnsure(state.Runtime) && state.Stage>0
                 && BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)==state.Stage && AttributionGeneratedOrigin()==GeneratedOrigin.None;
         internal void PrepareNyxWorld(EventInfoAbilityInstance info)
         {
@@ -278,12 +278,12 @@ namespace SodRpg.Mod
             if(!(info.instance is Ai_U_HerWorld_Explosion child) || !(info.actor is Se_U_HerWorld_Blackhole parent)
                 || NyxWorldNativeEnd.Current!=parent || !_nyxWorlds.TryGetValue(parent,out var state) || !state.Ending || state.ChildBound
                 || !state.Natural || state.Interrupted || state.Stage!=3 || child.parentActor!=parent || child.info.caster!=state.Runtime.Hero
-                || child.gem!=null || !NyxWorldOwnerCurrent(state) || state.Epoch!=state.Runtime.ShieldEquipmentEpoch
+                || child.gem!=null || !NyxWorldOwnerCurrent(state)
                 || BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)!=3 || !BossNativeSameLife(parent,state.StatusLife) || _nyxWorldEnds.Count>=64) return;
             NyxWorldRemoveEnd(child);
             var token=_nyxWorldEndPool.Rent(); if(token==null) return;
             state.ChildBound=true;
-            token.State=state; token.Child=child; token.ChildLife=BossNativeActorLife(child); token.Epoch=state.Epoch;
+            token.State=state; token.Child=child; token.ChildLife=BossNativeActorLife(child);
             token.Until=Time.time+1; token.H=Math.Max(state.Runtime.Hero.Status.attackDamage,state.Runtime.Hero.Status.abilityPower);
             token.Magic=BossMagic(state.Runtime); _nyxWorldEnds.Add(child,token);
             NyxWorldPublishTargets(state,Time.time,Time.time+1);
@@ -367,7 +367,7 @@ namespace SodRpg.Mod
         internal void BeginNyxWorldEnd(Se_U_HerWorld_Blackhole status)
         {
             if(!_nyxWorlds.TryGetValue(status,out var state)) return;
-            if(!NyxWorldNativeCurrent(state,false) || !BossEnsure(state.Runtime) || state.Epoch!=state.Runtime.ShieldEquipmentEpoch
+            if(!NyxWorldNativeCurrent(state,false) || !BossEnsure(state.Runtime)
                 || BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)!=3) state.Natural=false;
             state.Ending=true; NyxWorldRestoreRadius(state);
             PublishBossVisual(state.Runtime,state.Visual,4,state.Runtime.Hero.position,state.Runtime.Hero.position,0,Time.time,Time.time,true);
@@ -393,7 +393,7 @@ namespace SodRpg.Mod
         {
             var state=token.State;
             if(!NetworkServer.active || Time.time>token.Until || !NyxWorldOwnerCurrent(state) || state.Runtime.Boss.Build==null
-                || token.Epoch!=state.Runtime.ShieldEquipmentEpoch || BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)!=3
+                || BossRewardStage(state.Runtime,BossProfiles.NyxRewardId)!=3
                 || !state.Natural || state.Interrupted || token.Child==null || !token.Child.isActive || !BossNativeSameLife(token.Child,token.ChildLife)
                 || token.Child.parentActor!=state.Status || token.Child.info.caster!=state.Runtime.Hero || token.Child.gem!=null) return false;
             // The parent may be disabled in the pool already. Absence is legal; a new
@@ -453,7 +453,7 @@ namespace SodRpg.Mod
             if(ReferenceEquals(child,null) || !_nyxWorldEnds.TryGetValue(child,out var token)) return;
             var state=token.State;
             NyxWorldClearTargets(state,Time.time); _nyxWorldEnds.Remove(child); state.ChildBound=false;
-            token.State=null; token.Child=null; token.ChildLife=token.Epoch=0; token.Until=token.H=0; token.Magic=false;
+            token.State=null; token.Child=null; token.ChildLife=0; token.Until=token.H=0; token.Magic=false;
             _nyxWorldEndPool.Return(token);
             if(state.Detached) { state.Reset(); _nyxWorldPool.Return(state); }
         }
@@ -484,22 +484,16 @@ namespace SodRpg.Mod
             foreach(var status in _nyxWorldScratch)
             {
                 if(!_nyxWorlds.TryGetValue(status,out var state)) continue;
-                bool keep=preserveRewards && NyxWorldOwnerCurrent(state);
+                bool keep=preserveRewards && NyxWorldOwnerCurrent(state) && BossNativeSameLife(status,state.StatusLife)
+                    && (state.Ending || status.isActive) && status.parentActor==state.Parent && BossNativeSameLife(state.Parent,state.ParentLife);
                 if(!keep) { DisableNyxWorld(status); continue; }
-                // Gear changes do not restart a live native status or refund its2m cap.
-                // Profile-specific loss removes only owned radius/marks; child tokens
-                // are epoch-sensitive even when the current native parent survives.
-                int stage=BossRewardStage(rt,BossProfiles.NyxRewardId);
-                if(stage!=state.Stage)
-                {
-                    NyxWorldRestoreRadius(state);
-                    if(stage<3) NyxWorldClearTargets(state,Time.time);
-                    state.Stage=stage;
-                }
-                state.Epoch=rt.ShieldEquipmentEpoch; state.Natural=false; state.NextVisual=0; state.LastRefresh=float.NegativeInfinity;
+                // Unchanged reward/native parent retains recorded hits, its lifetime
+                // budget and any already-bound natural-end child.
+                state.Epoch=rt.ShieldEquipmentEpoch; state.LastRefresh=float.NegativeInfinity;
             }
             _nyxWorldEndScratch.Clear();
-            foreach(var pair in _nyxWorldEnds) if(pair.Value.State.Runtime==rt) _nyxWorldEndScratch.Add(pair.Key);
+            foreach(var pair in _nyxWorldEnds)
+                if(pair.Value.State.Runtime==rt && (!preserveRewards || !NyxWorldEndCurrent(pair.Value))) _nyxWorldEndScratch.Add(pair.Key);
             foreach(var child in _nyxWorldEndScratch) NyxWorldRemoveEnd(child);
         }
     }

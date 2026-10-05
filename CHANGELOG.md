@@ -6,6 +6,20 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## 未リリース — #48 レビュー8件の修正
+
+- **差分再適用**：native報酬のprofile／段階・装着実体・親／owner寿命・部屋を比較し、不変のbinding・予約・消費済みactivation・CDを保持。変更した報酬だけ解除します。 / Preserve unchanged native reward lifetimes, reservations and cooldowns across build reapplication; invalidate only changed rewards.
+- **Primus**：部位係数を元capへ再制限せず、強化／覚醒済み共通係数を使用。通常／連携段階の倍率規則は不変。 / Removed the second unenhanced cap from Primus part amounts.
+- **Azurak**：armorは`MainHpDamage > 0`のみ。盾で全吸収された被弾では追加盾もCD消費も発生しません。 / Armor now requires actual HP damage, not shield absorption.
+- **Big Chomp**：本人の元native回復／盾を保持し、source・ancestor・target処理後の実倍率で追加分だけ補正。0／非有限倍率では加算しません。 / Bound only added healing/shielding after complete native processing.
+- **Soul Prison**：追加有限盾の正確なcontainerだけを最終処理量でcap。元native無期限盾・消費は不変、生成scope／delegate／cap registryは事前確保。 / Cap only owned overflow-shield creation after native modifiers.
+- **表示**：Light beamのdue／期限を固定し、連続geometryをowner単位100msで集約。初回・終了・段階／残数変更は即時。JSONはbatchごと1回、handshake済み各受信者へ同じ文字列を送信。 / Coalesce continuous beam updates at10Hz and serialize each batch once.
+- **非利用時CPU**：空のボスbuildは記憶／gem走査前に終了。利用時は100ms照合をframe／入力で共有し、実装着変更通知では即時照合。 / Skip slot scans for empty Boss builds; refresh active equipment periodically or on mutation.
+- **native契約**：適用前に対象・field／delegate・他MODと合成した全transpilerのILを検証。失敗時は自MODのpatchだけ取り消し、session／host／UI／性能設定／入力を停止・解放。 / Preflight native contracts and roll back owner-scoped patches on startup failure.
+- **検証**：指定Releaseビルド成功（警告5・エラー0）。既存WikiGen実行成功（62セット・1418固有品）。tests/・test csprojは未変更、テスト作業なし。Unity実行環境がなく、実機startup／Harmony適用／戦闘／協力同期／GC・frame時間は未観測。 / Build and production catalog run succeeded; live native behavior/performance remains unverified.
+
+---
+
 ## 未リリース — ボス限定セット（#48 段階B-3・全14組の性能見直し）
 
 - **新4セット**：光裂の法装 / Radiant Fracture Raiment、飢影の狩装 / Ravenous Shadow Gear、忘針の襲装 / Oblivion Needle Gear、墜聖の双装 / Fallen Sanctity Regaliaを§3.11〜§3.14へ接続。各6部位・累積2/3/6段階を登録し、全14ボスセット84部位が揃いました。 / Added the final four six-piece sets and cumulative2/3/6 stages; all14 boss sets and84 parts are registered.

@@ -195,7 +195,7 @@ namespace SodRpg.Mod
     {
         private struct SkollCorePending
         {
-            internal long Epoch, CoreLife, ActorLife, VictimLife, ParentLife;
+            internal long CoreLife, ActorLife, VictimLife, ParentLife;
             internal float CoreCreation, VictimCreation;
             internal Entity Victim;
             internal Actor Actor;
@@ -207,8 +207,11 @@ namespace SodRpg.Mod
             internal float Creation, BurstUntil, PriorityUntil, PriorityCreation;
             internal Entity Priority;
             internal Gem_U_GlacialCore Core;
+            internal SkillTrigger Skill;
+            internal Room Room;
+            internal string Run;
             internal Hero Owner;
-            internal long CoreLife, OwnerLife, PriorityLife;
+            internal long CoreLife, OwnerLife, SkillLife, PriorityLife;
             internal int Remaining;
             internal long BurstVisual;
             internal bool ApprovedThisUpdate;
@@ -239,7 +242,9 @@ namespace SodRpg.Mod
                 if(owner==null) return false;
             }
             if (owner.Cores.TryGetValue(core,out state) && (!ReferenceEquals(state.Core,core) || !ReferenceEquals(state.Owner,rt.Hero)
-                || state.Creation != core.creationTime || !BossNativeSameLife(core,state.CoreLife) || !BossNativeSameLife(rt.Hero,state.OwnerLife)))
+                || state.Creation != core.creationTime || !BossNativeSameLife(core,state.CoreLife) || !BossNativeSameLife(rt.Hero,state.OwnerLife)
+                || !ReferenceEquals(state.Skill,core.skill) || !BossNativeSameLife(core.skill,state.SkillLife)
+                || !BossNativeContextCurrent(state.Room,state.Run)))
             {
                 if (!create) return false;
                 state.Pending.Clear();
@@ -254,6 +259,9 @@ namespace SodRpg.Mod
                 state=_skollCorePool.Rent(); if(state==null) return false;
                 state.Core=core; state.Owner=rt.Hero; state.Creation=core.creationTime;
                 state.CoreLife=BossNativeActorLife(core); state.OwnerLife=BossNativeActorLife(rt.Hero);
+                state.Skill=core.skill; state.SkillLife=core.skill != null ? BossNativeActorLife(core.skill) : 0;
+                state.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
+                state.Run=NetworkedManagerBase<GameManager>.softInstance?.runId;
                 owner.Cores.Add(core,state);
             }
             return state != null;
@@ -269,7 +277,7 @@ namespace SodRpg.Mod
                 || info.actor.FindFirstOfType<Hero>() != rt.Hero || info.victim == null || info.victim.GetRelation(rt.Hero) != EntityRelation.Enemy
                 || state.Pending.Count >= BossProfiles.MaxEntries) return;
             var parent=info.actor.parentActor;
-            state.Pending[routine] = new SkollCorePending { Epoch=rt.ShieldEquipmentEpoch,CoreCreation=core.creationTime,CoreLife=state.CoreLife,
+            state.Pending[routine] = new SkollCorePending { CoreCreation=core.creationTime,CoreLife=state.CoreLife,
                 ActorLife=BossNativeActorLife(info.actor),VictimLife=BossNativeActorLife(info.victim),ParentActor=parent,
                 ParentLife=parent != null ? BossNativeActorLife(parent) : 0,
                 VictimCreation=info.victim.creationTime,Victim=info.victim,Actor=info.actor,Chain=info.chain };
@@ -277,7 +285,7 @@ namespace SodRpg.Mod
         private bool SkollPendingHeal(object routine, Gem_U_GlacialCore core, EventInfoDamage info, out HeroRuntime rt, out SkollCoreState state)
         {
             if (!SkollCoreRuntime(core,out rt,out state) || !state.Pending.TryGetValue(routine,out var pending)) return false;
-            return pending.Epoch == rt.ShieldEquipmentEpoch && pending.CoreCreation == core.creationTime
+            return pending.CoreCreation == core.creationTime
                 && BossNativeSameLife(core,pending.CoreLife) && ReferenceEquals(info.actor,pending.Actor) && BossNativeSameLife(info.actor,pending.ActorLife)
                 && ReferenceEquals(info.actor.FindFirstOfType<Hero>(),rt.Hero) && ReferenceEquals(info.actor.parentActor,pending.ParentActor)
                 && (ReferenceEquals(pending.ParentActor,null) || BossNativeSameLife(pending.ParentActor,pending.ParentLife))
@@ -392,9 +400,9 @@ namespace SodRpg.Mod
         }
         private void SkollReleaseCore(SkollCoreState state)
         {
-            state.Pending.Clear(); state.Core=null; state.Owner=null; state.Priority=null;
+            state.Pending.Clear(); state.Core=null; state.Owner=null; state.Skill=null; state.Room=null; state.Run=null; state.Priority=null;
             state.Creation=state.BurstUntil=state.PriorityUntil=state.PriorityCreation=0;
-            state.CoreLife=state.OwnerLife=state.PriorityLife=state.BurstVisual=0;
+            state.CoreLife=state.OwnerLife=state.SkillLife=state.PriorityLife=state.BurstVisual=0;
             state.Remaining=0; state.ApprovedThisUpdate=false;
             _skollCorePool.Return(state);
         }

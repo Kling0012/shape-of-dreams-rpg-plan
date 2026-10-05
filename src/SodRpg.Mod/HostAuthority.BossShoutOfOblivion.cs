@@ -101,12 +101,12 @@ namespace SodRpg.Mod
             internal Room Room;
             internal string Run;
             internal BossShoutActivation Activation;
-            internal long InstanceLife, SkillLife, ParentLife, OwnerLife, Epoch;
+            internal long InstanceLife, SkillLife, ParentLife, OwnerLife;
             internal bool BackstepApplied;
             internal void Reset()
             {
                 Instance = null; Skill = null; Runtime = null; Parent = null; Owner = null; Room = null; Run = null; Activation = null;
-                InstanceLife = SkillLife = ParentLife = OwnerLife = Epoch = 0; BackstepApplied = false;
+                InstanceLife = SkillLife = ParentLife = OwnerLife = 0; BackstepApplied = false;
             }
         }
         private readonly BossObjectPool<BossShoutBinding> _bossShoutBindingPool = new BossObjectPool<BossShoutBinding>(128, () => new BossShoutBinding());
@@ -132,7 +132,7 @@ namespace SodRpg.Mod
             }
             activation.References++;
             binding.Instance = instance; binding.Skill = skill; binding.Runtime = rt; binding.Owner = hero; binding.Parent = parent;
-            binding.Room = cast.Room; binding.Run = cast.Run; binding.Epoch = rt.ShieldEquipmentEpoch; binding.Activation = activation;
+            binding.Room = cast.Room; binding.Run = cast.Run; binding.Activation = activation;
             binding.InstanceLife = BossNativeActorLife(instance); binding.SkillLife = BossNativeActorLife(skill);
             binding.ParentLife = BossNativeActorLife(parent); binding.OwnerLife = BossNativeActorLife(hero); binding.BackstepApplied = false;
             _bossShoutBindings.Add(instance, binding);
@@ -147,9 +147,10 @@ namespace SodRpg.Mod
                 || !BossAlive(binding.Owner) || !BossNativeEquippedSkill(binding.Owner, binding.Skill)
                 || !BossNativeSameLife(instance, binding.InstanceLife) || !BossNativeSameLife(binding.Skill, binding.SkillLife)
                 || !BossNativeSameLife(binding.Parent, binding.ParentLife) || !BossNativeSameLife(binding.Owner, binding.OwnerLife)
-                || !BossNativeContextCurrent(binding.Room, binding.Run) || binding.Runtime.ShieldEquipmentEpoch != binding.Epoch
+                || !BossNativeContextCurrent(binding.Room, binding.Run)
                 || !_runtimes.TryGetValue(binding.Owner, out var rt) || rt != binding.Runtime
-                || rt.Boss.Build == null || rt.Boss.Epoch != binding.Epoch) return false;
+                || !BossEnsure(rt)) return false;
+            if (!_bossShoutBindings.TryGetValue(instance, out var current) || current != binding) return false;
             stage = BossRewardStage(binding.Runtime, BossProfiles.ObliviaxRewardId); return stage > 0;
         }
         internal void AmplifyBossShoutHunt(Ai_U_ShoutOfOblivion instance, ref float amount)

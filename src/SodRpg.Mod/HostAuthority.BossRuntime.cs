@@ -1,21 +1,53 @@
 using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using Mirror;
 using SodRpg.Core.Game;
 using UnityEngine;
 
 namespace SodRpg.Mod
 {
+    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.EquipGem))]
+    internal static class BossNativeGemEquipped
+    {
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(HeroSkill __instance)
+        {
+            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshBossGemEquipment(__instance);
+        }
+    }
+
+    [HarmonyPatch(typeof(HeroSkill), nameof(HeroSkill.UnequipGem))]
+    internal static class BossNativeGemUnequipped
+    {
+        // Soul Prison's native-consumption observation must precede reconciliation.
+        [HarmonyPriority(Priority.Last)]
+        private static void Postfix(HeroSkill __instance, Gem __result)
+        {
+            if (NetworkServer.active && __result != null) HostAuthority.NativeInstance?.RefreshBossGemEquipment(__instance);
+        }
+    }
+
     internal sealed partial class HostAuthority
     {
         internal sealed class BossCombatState
         {
             public Build Build;
-            public long Epoch, NextId, Revision;
+            public long Epoch, NextId, Revision, OwnerLife;
             public string Run;
             public Room Room;
             public readonly SkillTrigger[] Memories = new SkillTrigger[LinkSkills.Length];
+            public readonly long[] MemoryLives = new long[LinkSkills.Length];
+            public readonly SkillTrigger[] ObservedMemories = new SkillTrigger[LinkSkills.Length];
+            public readonly long[] ObservedMemoryLives = new long[LinkSkills.Length];
             public readonly List<Gem> Essences = new List<Gem>(32);
+            public readonly long[] EssenceLives = new long[32], EssenceSkillLives = new long[32];
+            public readonly SkillTrigger[] EssenceSkills = new SkillTrigger[32];
+            public readonly Gem[] ObservedEssences = new Gem[32];
+            public readonly long[] ObservedEssenceLives = new long[32], ObservedEssenceSkillLives = new long[32];
+            public readonly SkillTrigger[] ObservedEssenceSkills = new SkillTrigger[32];
+            public int ObservedEssenceCount;
+            public float NextEquipmentRefresh;
             public readonly BossShapeAttack Shapes = new BossShapeAttack();
             public readonly BossProjectileExecutor Projectiles = new BossProjectileExecutor();
             public readonly BossFieldExecutor Fields = new BossFieldExecutor();
@@ -153,6 +185,23 @@ namespace SodRpg.Mod
                     _marks[i] = mark;
                 }
             }
+            public void CancelOrdinaryMarks(string ledger)
+            {
+                for (int i = 0; i < _marks.Length; i++)
+                {
+                    var mark = _marks[i];
+                    if (mark.Ledger != ledger) continue;
+                    int count = mark.Count;
+                    long source0 = mark.Source0, source1 = mark.Source1, source2 = mark.Source2;
+                    mark.Count = 0; mark.Source0 = mark.Source1 = mark.Source2 = 0;
+                    for (int j = 0; j < count; j++)
+                    {
+                        long source = j == 0 ? source0 : j == 1 ? source1 : source2;
+                        if (source > 0) AppendMark(ref mark, source);
+                    }
+                    _marks[i] = mark;
+                }
+            }
             public Entity NearestMark(Vector3 point, float now, string ledger = null)
             {
                 Entity result = null; float best = float.MaxValue;
@@ -194,31 +243,50 @@ namespace SodRpg.Mod
                 return false;
             }
             var build = rt.Powers.Build;
+            // Native creation hooks still capture their parents without Boss gear. Only
+            // active Boss builds need the bounded equipment reconciliation below.
+            if (build == null || build.BossMoves.Count == 0 && build.BossRewards.Count == 0)
+            {
+                if (state.Build != null) ClearBossEffects(rt);
+                return false;
+            }
             var room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
             string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
-            bool changed = state.Build != build || state.Epoch != rt.ShieldEquipmentEpoch || state.Room != room || state.Run != run;
-            for (int i = 0; i < LinkSkills.Length; i++)
-                if (state.Memories[i] != rt.Hero.Skill?.GetSkill(LinkSkills[i])) changed = true;
-            if (!BossEssenceSnapshot(rt, state, false, ref changed)) { ClearBossEffects(rt); return false; }
+            long ownerLife = BossNativeActorLife(rt.Hero);
+            bool changed = state.Build != build || state.Epoch != rt.ShieldEquipmentEpoch
+                || state.Room != room || state.Run != run || state.OwnerLife != ownerLife;
+            float now = Time.time;
+            if (!changed && now < state.NextEquipmentRefresh) return true;
+            state.NextEquipmentRefresh = now + .1f;
+            if (!BossEquipmentSnapshot(rt, state, ref changed)) { ClearBossEffects(rt); return false; }
             if (changed)
             {
-                if (state.Build != null) ClearBossEffects(rt, state.Room == room && state.Run == run && BossAlive(rt.Hero));
-                state.Build = build; state.Epoch = rt.ShieldEquipmentEpoch; state.Room = room; state.Run = run;
-                for (int i = 0; i < LinkSkills.Length; i++) state.Memories[i] = rt.Hero.Skill?.GetSkill(LinkSkills[i]);
-                BossEssenceSnapshot(rt, state, true, ref changed);
+                if (state.Build != null) ClearBossEffects(rt, state.Room == room && state.Run == run
+                    && state.OwnerLife == ownerLife && ownerLife != 0, keepEquipmentSnapshot: true);
+                state.Build = build; state.Epoch = rt.ShieldEquipmentEpoch; state.Room = room; state.Run = run; state.OwnerLife = ownerLife;
+                Array.Copy(state.ObservedMemories, state.Memories, state.Memories.Length);
+                Array.Copy(state.ObservedMemoryLives, state.MemoryLives, state.MemoryLives.Length);
+                state.Essences.Clear();
+                for (int i = 0; i < state.ObservedEssenceCount; i++) state.Essences.Add(state.ObservedEssences[i]);
+                Array.Copy(state.ObservedEssenceLives, state.EssenceLives, state.EssenceLives.Length);
+                Array.Copy(state.ObservedEssenceSkills, state.EssenceSkills, state.EssenceSkills.Length);
+                Array.Copy(state.ObservedEssenceSkillLives, state.EssenceSkillLives, state.EssenceSkillLives.Length);
                 state.SetMask = 0;
-                if (build != null)
-                {
-                    for (int i = 0; i < build.BossMoves.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossMoves[i].SetId);
-                    for (int i = 0; i < build.BossRewards.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossRewards[i].SetId);
-                }
+                for (int i = 0; i < build.BossMoves.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossMoves[i].SetId);
+                for (int i = 0; i < build.BossRewards.Count; i++) state.SetMask |= BossProfiles.SetMask(build.BossRewards[i].SetId);
             }
-            return build != null && (build.BossMoves.Count != 0 || build.BossRewards.Count != 0);
+            return true;
         }
 
-        private static bool BossEssenceSnapshot(HeroRuntime rt, BossCombatState state, bool copy, ref bool changed)
+        private bool BossEquipmentSnapshot(HeroRuntime rt, BossCombatState state, ref bool changed)
         {
-            if (copy) state.Essences.Clear();
+            for (int i = 0; i < LinkSkills.Length; i++)
+            {
+                var memory = rt.Hero.Skill?.GetSkill(LinkSkills[i]);
+                long life = memory != null ? BossNativeActorLife(memory) : 0;
+                state.ObservedMemories[i] = memory; state.ObservedMemoryLives[i] = life;
+                if (!ReferenceEquals(state.Memories[i], memory) || state.MemoryLives[i] != life) changed = true;
+            }
             int count = 0;
             if (rt.Hero.Skill != null)
             {
@@ -229,16 +297,89 @@ namespace SodRpg.Mod
                     for (int i = 0; i < slots; i++)
                     {
                         if (!rt.Hero.Skill.TryGetGem(new GemLocation { skill = skill, index = i }, out var gem)) continue;
-                        if (count >= 32) return false;
-                        if (copy) state.Essences.Add(gem);
-                        else if (count >= state.Essences.Count || !ReferenceEquals(state.Essences[count], gem)) changed = true;
+                        if (count >= 32 || gem == null) return false;
+                        long life = BossNativeActorLife(gem), skillLife = gem.skill != null ? BossNativeActorLife(gem.skill) : 0;
+                        state.ObservedEssences[count] = gem; state.ObservedEssenceLives[count] = life;
+                        state.ObservedEssenceSkills[count] = gem.skill; state.ObservedEssenceSkillLives[count] = skillLife;
+                        if (count >= state.Essences.Count || !ReferenceEquals(state.Essences[count], gem)
+                            || state.EssenceLives[count] != life || !ReferenceEquals(state.EssenceSkills[count], gem.skill)
+                            || state.EssenceSkillLives[count] != skillLife) changed = true;
                         count++;
                     }
                 }
                 if (count != rt.Hero.Skill.gems.Count) return false;
             }
-            if (!copy && count != state.Essences.Count) changed = true;
+            if (count != state.Essences.Count) changed = true;
+            state.ObservedEssenceCount = count;
+            Array.Clear(state.ObservedEssences, count, state.ObservedEssences.Length - count);
+            Array.Clear(state.ObservedEssenceLives, count, state.ObservedEssenceLives.Length - count);
+            Array.Clear(state.ObservedEssenceSkills, count, state.ObservedEssenceSkills.Length - count);
+            Array.Clear(state.ObservedEssenceSkillLives, count, state.ObservedEssenceSkillLives.Length - count);
             return true;
+        }
+
+        private static int BossRewardBuildStage(Build build, BossRewardProfile profile)
+        {
+            if (build != null)
+                for (int i = 0; i < build.BossRewards.Count; i++)
+                {
+                    var entry = build.BossRewards[i];
+                    if (entry.ProfileId == profile.Id && entry.SetId == profile.SetId) return entry.Stage;
+                }
+            return 0;
+        }
+
+        private static bool BossRewardRequires(Actor actor, string requires) => !ReferenceEquals(actor, null)
+            && NativeActorNames.TryGetValue(actor.GetType(), out var name) && name == requires;
+
+        // Called while the old snapshot and the one newly observed by BossEnsure
+        // coexist. New Build objects or unrelated equipment epochs are not lifetimes.
+        private bool BossRewardUnchanged(HeroRuntime rt, string profileId, bool includeEquipment = true)
+        {
+            var state = rt.Boss;
+            if (!BossProfiles.TryGetReward(profileId, out var profile) || !BossAlive(rt.Hero)
+                || !BossNativeSameLife(rt.Hero, state.OwnerLife) || !BossNativeContextCurrent(state.Room, state.Run)) return false;
+            int stage = BossRewardBuildStage(state.Build, profile);
+            if (stage == 0 || stage != BossRewardBuildStage(rt.Powers.Build, profile)) return false;
+            if (!includeEquipment) return true;
+            int oldCount = 0, newCount = 0;
+            for (int i = 0; i < state.Memories.Length; i++)
+            {
+                var memory = state.Memories[i];
+                if (!BossRewardRequires(memory, profile.Requires)) continue;
+                oldCount++;
+                bool found = false;
+                for (int j = 0; j < state.ObservedMemories.Length; j++)
+                    if (ReferenceEquals(memory, state.ObservedMemories[j]) && state.MemoryLives[i] != 0
+                        && state.MemoryLives[i] == state.ObservedMemoryLives[j]) { found = true; break; }
+                if (!found) return false;
+            }
+            for (int i = 0; i < state.ObservedMemories.Length; i++)
+                if (BossRewardRequires(state.ObservedMemories[i], profile.Requires)) newCount++;
+            if (oldCount != newCount) return false;
+            oldCount = newCount = 0;
+            for (int i = 0; i < state.Essences.Count; i++)
+            {
+                var gem = state.Essences[i];
+                if (!BossRewardRequires(gem, profile.Requires)) continue;
+                oldCount++;
+                bool found = false;
+                for (int j = 0; j < state.ObservedEssenceCount; j++)
+                    if (ReferenceEquals(gem, state.ObservedEssences[j]) && state.EssenceLives[i] != 0 && state.EssenceLives[i] == state.ObservedEssenceLives[j]
+                        && ReferenceEquals(state.EssenceSkills[i], state.ObservedEssenceSkills[j])
+                        && state.EssenceSkillLives[i] == state.ObservedEssenceSkillLives[j]) { found = true; break; }
+                if (!found) return false;
+            }
+            for (int i = 0; i < state.ObservedEssenceCount; i++)
+                if (BossRewardRequires(state.ObservedEssences[i], profile.Requires)) newCount++;
+            return oldCount == newCount;
+        }
+
+        internal void RefreshBossGemEquipment(HeroSkill skill)
+        {
+            if (skill == null || skill.hero == null || !_runtimes.TryGetValue(skill.hero, out var rt)) return;
+            rt.Boss.NextEquipmentRefresh = 0;
+            BossEnsure(rt);
         }
 
         private void TickBossEffects(HeroRuntime rt, float now)
@@ -281,27 +422,51 @@ namespace SodRpg.Mod
             if ((mask & (1u << 13)) != 0) TickPolarisBoss(rt, now);
         }
 
-        private void ClearBossEffects(HeroRuntime rt, bool preserveRewards = false)
+        private void ClearBossEffects(HeroRuntime rt, bool preserveRewards = false, bool keepEquipmentSnapshot = false)
         {
             rt.Boss.Revision++;
-            ClearBossNativeAdapters(rt);
-            ClearSkollBoss(rt);
-            ClearInfernusBoss(rt);
+            bool keepHysteria = preserveRewards && BossRewardUnchanged(rt, BossProfiles.DemonRewardId);
+            ClearBossNativeAdapters(rt, preserveRewards, keepHysteria);
+            ClearSkollBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.SkollRewardId));
+            ClearInfernusBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.InfernusRewardId));
             ClearInkBoss(rt, preserveRewards);
-            ClearNyxBoss(rt, preserveRewards); ClearErebosBoss(rt, preserveRewards);
-            ClearSeekerBoss(rt, preserveRewards); ClearAzurakBoss(rt, preserveRewards); ClearPrimusBoss(rt, preserveRewards);
-            ClearLightBoss(rt, preserveRewards); ClearMawBoss(rt, preserveRewards);
-            ClearObliviaxBoss(rt, preserveRewards); ClearPolarisBoss(rt, preserveRewards);
+            ClearNyxBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.NyxRewardId));
+            ClearErebosBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ErebosRewardId));
+            ClearSeekerBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.SeekerRewardId, includeEquipment: false));
+            ClearAzurakBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.AzurakRewardId)); ClearPrimusBoss(rt, preserveRewards);
+            ClearLightBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.LightRewardId));
+            ClearMawBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.MawRewardId));
+            ClearObliviaxBoss(rt, preserveRewards && BossRewardUnchanged(rt, BossProfiles.ObliviaxRewardId)); ClearPolarisBoss(rt, preserveRewards);
             var s = rt.Boss;
+            if (preserveRewards && s.Build != null)
+                for (int i = 0; i < s.Build.BossRewards.Count; i++)
+                {
+                    var reward = s.Build.BossRewards[i];
+                    if (!BossRewardUnchanged(rt, reward.ProfileId, includeEquipment: reward.ProfileId != BossProfiles.SeekerRewardId))
+                        BossCancelProfileReservations(rt, reward.SetId, reward.ProfileId);
+                }
             s.Fields.Clear(preserveRewards); s.Projectiles.Clear(preserveRewards); s.Deployables.Clear();
             s.Defense.Clear(this, rt); s.EnemyMovement.Clear(); s.Ledger.Clear(preserveRewards);
             if (!preserveRewards) { s.Ready.Clear(); s.SetMask = 0; }
             s.Sequence.Reset(); s.MainHpDamage = 0;
-            s.Build = null; s.ArrivalUntil = 0; s.HysteriaState = 0; s.Mode = 0; s.ModeUntil = 0;
-            s.PreviousClawLeft = false;
-            s.ClawPairs.Clear();
+            s.Build = null; s.ArrivalUntil = 0; s.Mode = 0; s.ModeUntil = 0;
+            if (!keepHysteria) { s.HysteriaState = 0; s.PreviousClawLeft = false; s.ClawPairs.Clear(); }
             s.Essences.Clear();
             Array.Clear(s.Memories, 0, s.Memories.Length);
+            Array.Clear(s.MemoryLives, 0, s.MemoryLives.Length);
+            Array.Clear(s.EssenceLives, 0, s.EssenceLives.Length);
+            Array.Clear(s.EssenceSkills, 0, s.EssenceSkills.Length);
+            Array.Clear(s.EssenceSkillLives, 0, s.EssenceSkillLives.Length);
+            if (!keepEquipmentSnapshot)
+            {
+                s.OwnerLife = 0; s.NextEquipmentRefresh = 0; s.ObservedEssenceCount = 0;
+                Array.Clear(s.ObservedMemories, 0, s.ObservedMemories.Length);
+                Array.Clear(s.ObservedMemoryLives, 0, s.ObservedMemoryLives.Length);
+                Array.Clear(s.ObservedEssences, 0, s.ObservedEssences.Length);
+                Array.Clear(s.ObservedEssenceLives, 0, s.ObservedEssenceLives.Length);
+                Array.Clear(s.ObservedEssenceSkills, 0, s.ObservedEssenceSkills.Length);
+                Array.Clear(s.ObservedEssenceSkillLives, 0, s.ObservedEssenceSkillLives.Length);
+            }
             ClearBossVisuals(rt, preserveRewards);
         }
 
@@ -311,12 +476,12 @@ namespace SodRpg.Mod
             bool equipped = FindMemory(rt.Hero, profile.Requires) != null;
             if (!equipped)
                 for (int i = 0; i < rt.Boss.Essences.Count; i++)
-                    if (rt.Boss.Essences[i] != null && NativeActorTypeName(rt.Boss.Essences[i]) == profile.Requires) { equipped = true; break; }
+                    if (rt.Boss.Essences[i] != null && rt.Boss.Essences[i].isValid && rt.Boss.Essences[i].owner == rt.Hero
+                        && BossNativeSameLife(rt.Boss.Essences[i], rt.Boss.EssenceLives[i])
+                        && rt.Hero.Skill != null && rt.Hero.Skill.gems.TryGetValue(rt.Boss.Essences[i].location, out var current)
+                        && ReferenceEquals(current, rt.Boss.Essences[i]) && NativeActorTypeName(current) == profile.Requires) { equipped = true; break; }
             if (!equipped) return 0;
-            var rewards = rt.Powers.Build.BossRewards;
-            for (int i = 0; i < rewards.Count; i++)
-                if (rewards[i].ProfileId == profile.Id && rewards[i].SetId == profile.SetId) return rewards[i].Stage;
-            return 0;
+            return BossRewardBuildStage(rt.Powers.Build, profile);
         }
 
         private static bool BossReady(HeroRuntime rt, string key, float now, int cooldown)

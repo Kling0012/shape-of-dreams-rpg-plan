@@ -156,11 +156,11 @@ namespace SodRpg.Mod
             { state.Heat = 0; InfernusHeatVisual(rt, state, now); }
             TickEternalFlame(rt, now);
         }
-        private void ClearInfernusBoss(HeroRuntime rt)
+        private void ClearInfernusBoss(HeroRuntime rt, bool preserveRewards = false)
         {
             if (_infernusCombat.TryGetValue(rt, out var state))
             { state.Heat = 0; InfernusHeatVisual(rt, state, Time.time); _infernusCombat.Remove(rt); state.Inputs.Clear(); state.HeatUntil = 0; state.HeatVisual = 0; _infernusPool.Return(state); }
-            ClearEternalFlame(rt);
+            if (!preserveRewards) ClearEternalFlame(rt);
         }
     }
 }

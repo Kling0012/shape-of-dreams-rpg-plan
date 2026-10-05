@@ -178,12 +178,18 @@ namespace SodRpg.Mod
             }
             TickSkollCores(rt,state,now);
         }
-        private void ClearSkollBoss(HeroRuntime rt)
+        private void ClearSkollBoss(HeroRuntime rt, bool preserveRewards = false)
         {
+            if (!preserveRewards)
+            {
+                rt.Boss.Ready.Remove("boss_skoll.glacial_core.heal");
+                rt.Boss.Ready.Remove("boss_skoll.glacial_core.burst");
+            }
             if (!_skollStates.TryGetValue(rt,out var state)) return;
+            state.Marks = 0; state.MarksUntil = 0; state.MarkVisual = 0;
+            if (preserveRewards) return;
             ClearSkollCores(rt,state);
             _skollStates.Remove(rt);
-            state.Marks = 0; state.MarksUntil = 0; state.MarkVisual = 0;
             _skollStatePool.Return(state);
         }
     }

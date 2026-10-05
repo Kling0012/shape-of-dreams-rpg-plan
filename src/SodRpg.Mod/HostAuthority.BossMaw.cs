@@ -202,7 +202,7 @@ namespace SodRpg.Mod
         {
             if (_mawCombat.TryGetValue(rt,out var state))
             { _mawCombat.Remove(rt); state.Reset(); _mawCombatPool.Return(state); }
-            ClearBossBigChomp(rt);
+            ClearBossBigChomp(rt, preserveRewards);
         }
     }
 }

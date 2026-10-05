@@ -101,7 +101,6 @@ namespace SodRpg.Mod
 
         public ClientSession(string saveDir, Action<GameEvent> notify)
         {
-            _hostSession = this;
             _notify = notify;
             InitializeProfiles(saveDir);
             RestoreRunDurability();
@@ -124,6 +123,7 @@ namespace SodRpg.Mod
             _onDismantled = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Recycler); };
             _onMerged = (h, _) => { if (IsLocal(h)) GameAction(BountyKind.Alchemist); };
             _onHuntChanged = OnHuntChanged;
+            _hostSession = this;
         }
 
         private bool IsLocal(Hero h) => h != null && h == LocalHero;
@@ -423,9 +423,10 @@ namespace SodRpg.Mod
 
         public void Unwire()
         {
-            SaveNow();
-            FlushSaves();
+            if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _runDurabilityDetached = true;
+            try { SaveNow(); } catch (Exception ex) { Log.Error("Session save during shutdown: " + ex); }
+            try { FlushSaves(); } catch (Exception ex) { Log.Error("Session flush during shutdown: " + ex); }
             try
             {
                 if (_zone != null)
@@ -466,7 +467,6 @@ namespace SodRpg.Mod
             PressureHealthMultiplier = PressureDamageMultiplier = 1f;
             ResetRunChoiceConnection(resetHistory: true);
             ResetMonsterAuthorityConnection();
-            if (ReferenceEquals(_hostSession, this)) _hostSession = null;
             _pendingRunRewards.Clear();
             _pendingPressureDividends.Clear();
             _sentDreamLevel = -1;

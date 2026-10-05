@@ -115,9 +115,12 @@ namespace SodRpg.Mod
         {
             internal Se_U_EternalFlame_Curse Curse;
             internal Gem_U_EternalFlame Gem;
+            internal SkillTrigger Skill;
+            internal Room Room;
+            internal string Run;
             internal HeroRuntime Runtime;
             internal float NativeMaximum, AddedMaximum, AddedRemaining;
-            internal long Life, GemLife, HeroLife, VictimLife;
+            internal long Life, GemLife, SkillLife, HeroLife, VictimLife;
         }
         private sealed class EternalFlameOwner
         {
@@ -173,6 +176,7 @@ namespace SodRpg.Mod
                 || curse == null || !curse.isActive || !(curse.parentActor is Gem_U_EternalFlame gem)
                 || curse.info.caster != gem.owner || curse.victim == null || !EternalFlameEquipped(gem, out var rt)
                 || !curse.maxDuration.HasValue || !curse.remainingDuration.HasValue) return;
+            BossEnsure(rt);
             if (!_eternalFlameCurses.TryGetValue(curse, out var capture) || !EternalFlameCurseCurrent(capture) || capture.Gem != gem)
             {
                 if(capture!=null) ReleaseEternalFlameCurse(curse);
@@ -181,6 +185,8 @@ namespace SodRpg.Mod
                 capture=_eternalFlameCursePool.Rent(); if(capture==null) return;
                 capture.Curse=curse; capture.Gem=gem; capture.Runtime=rt; capture.NativeMaximum=curse.maxDuration.Value;
                 capture.Life=BossNativeActorLife(curse); capture.GemLife=BossNativeActorLife(gem); capture.HeroLife=BossNativeActorLife(rt.Hero); capture.VictimLife=BossNativeActorLife(curse.victim);
+                capture.Skill=gem.skill; capture.SkillLife=BossNativeActorLife(gem.skill);
+                capture.Room=NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom; capture.Run=NetworkedManagerBase<GameManager>.softInstance?.runId;
                 _eternalFlameCurses[curse] = capture; owner.Curses.Add(curse);
             }
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
@@ -235,21 +241,40 @@ namespace SodRpg.Mod
         private bool EternalFlameCurseCurrent(EternalFlameCurse capture)
             => capture.Curse != null && capture.Curse.isActive && BossNativeSameLife(capture.Curse, capture.Life)
                 && BossNativeSameLife(capture.Gem, capture.GemLife) && BossNativeSameLife(capture.Runtime.Hero, capture.HeroLife)
-                && BossNativeSameLife(capture.Curse.victim, capture.VictimLife);
+                && BossNativeSameLife(capture.Curse.victim, capture.VictimLife)
+                && capture.Curse.parentActor==capture.Gem && capture.Curse.info.caster==capture.Runtime.Hero
+                && ReferenceEquals(capture.Gem.skill,capture.Skill) && BossNativeSameLife(capture.Skill,capture.SkillLife)
+                && BossNativeContextCurrent(capture.Room,capture.Run) && EternalFlameEquipped(capture.Gem,out var rt) && rt==capture.Runtime;
         private bool EternalFlameNativePacket(Gem_U_EternalFlame gem, Actor actor, Entity target, out HeroRuntime rt,
-            out NativeAttributedDamagePacket.Packet packet)
+            out NativeAttributedDamagePacket.Packet packet, out long activation)
         {
+            activation = 0;
             packet = NativeAttributedDamagePacket.Current;
-            if (!EternalFlameEquipped(gem, out rt) || packet == null || !packet.Admitted || packet.Actor != actor || packet.Victim != target
-                || target == null || target.GetRelation(rt.Hero) != EntityRelation.Enemy || AttributionGeneratedOrigin() != GeneratedOrigin.None
-                || packet.Identity.GeneratedOrigin != GeneratedOrigin.None || packet.Identity.OwnerId != rt.Hero.GetInstanceID()
-                || packet.Identity.NativePayloadKind == NativePayloadKind.SummonAttack || !_memoryAttribution.IsCurrent(packet.Identity)) return false;
-            return true;
+            if (!EternalFlameEquipped(gem, out rt) || !BossEnsure(rt) || packet == null || packet.Actor != actor || packet.Victim != target
+                || target == null || target.GetRelation(rt.Hero) != EntityRelation.Enemy || AttributionGeneratedOrigin() != GeneratedOrigin.None) return false;
+            if (packet.Admitted && packet.Identity.GeneratedOrigin == GeneratedOrigin.None
+                && packet.Identity.OwnerId == rt.Hero.GetInstanceID() && packet.Identity.NativePayloadKind != NativePayloadKind.SummonAttack
+                && _memoryAttribution.IsCurrent(packet.Identity))
+            {
+                activation = packet.Identity.ActivationId;
+                return true;
+            }
+            // Input equipment epochs expire normally. A separately captured native
+            // cast still owns its original activation while its actual parents live.
+            if (!packet.Chain.Equals(default(ReactionChain)) || !_bossNativeSources.TryGetValue(actor,out var source)
+                || source.Cast.Owner != rt.Hero || !BossNativeSourceCurrent(source,true)
+                || !(source.Cast.Trigger is SkillTrigger) || IsPairReactionSource(actor)) return false;
+            int depth = 0;
+            for (var parent = actor; parent != null; parent = parent.parentActor)
+                if (++depth > 64 || parent is Gem || parent is ElementalStatusEffect || parent is Summon
+                    || parent is AbilityInstance ability && ability.gem != null || RequiresExactNativeInstanceScope(parent)) return false;
+            activation = source.Cast.Activation;
+            return activation > 0;
         }
         internal void EternalFlameNativeProcSucceeded(Se_U_EternalFlame_Curse curse, EventInfoDamage damage)
         {
             if (!(curse.parentActor is Gem_U_EternalFlame gem) || curse.info.caster != gem.owner
-                || !EternalFlameNativePacket(gem, damage.actor, damage.victim, out var rt, out var packet)
+                || !EternalFlameNativePacket(gem, damage.actor, damage.victim, out var rt, out var packet, out _)
                 || !packet.Chain.Equals(damage.chain) || damage.damage.amount <= 0 || curse.victim != damage.victim) return;
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
             if (stage < 2) return;
@@ -279,17 +304,17 @@ namespace SodRpg.Mod
         }
         internal bool ClaimEternalFlameMainPacket(Gem_U_EternalFlame gem, Actor actor, Entity target)
         {
-            if (!EternalFlameNativePacket(gem, actor, target, out var rt, out var packet)
-                || packet.Identity.NativePayloadKind != NativePayloadKind.Skill || packet.Identity.SourceMemory != NativeActorTypeName(gem.skill)
+            if (!EternalFlameNativePacket(gem, actor, target, out var rt, out var packet, out long activation)
+                || packet.Admitted && (packet.Identity.NativePayloadKind != NativePayloadKind.Skill || packet.Identity.SourceMemory != NativeActorTypeName(gem.skill))
                 || (actor != gem.skill && actor.FindFirstAncestorOfType<SkillTrigger>() != gem.skill)) return false;
             int stage = BossRewardStage(rt, BossProfiles.InfernusRewardId);
             var state=stage==3?EternalFlameState(rt,stage):null;
-            return state!=null && state.MainPackets.Add(packet.Identity.ActivationId);
+            return state!=null && state.MainPackets.Add(activation);
         }
         internal int EternalFlameCritThreshold(int original, Gem_U_EternalFlame gem, Actor actor, Entity target, BossEternalFlameCritGate.Scope scope)
         {
             if (!scope.First || scope.Gem != gem || scope.Actor != actor || scope.Target != target
-                || !EternalFlameNativePacket(gem, actor, target, out var rt, out _) || BossRewardStage(rt, BossProfiles.InfernusRewardId) != 3) return original;
+                || !EternalFlameNativePacket(gem, actor, target, out var rt, out _, out _) || BossRewardStage(rt, BossProfiles.InfernusRewardId) != 3) return original;
             var action = EternalFlameAction(3, 2);
             int threshold = action.ValueMilli / 1000;
             var state = EternalFlameState(rt, 3);
@@ -371,8 +396,9 @@ namespace SodRpg.Mod
             if(!_eternalFlameCurses.TryGetValue(curse,out var capture)) return;
             _eternalFlameCurses.Remove(curse);
             if(_eternalFlameOwners.TryGetValue(capture.Runtime,out var owner)) owner.Curses.Remove(curse);
-            capture.Curse=null; capture.Gem=null; capture.Runtime=null; capture.NativeMaximum=capture.AddedMaximum=capture.AddedRemaining=0;
-            capture.Life=capture.GemLife=capture.HeroLife=capture.VictimLife=0;
+            capture.Curse=null; capture.Gem=null; capture.Skill=null; capture.Runtime=null; capture.Room=null; capture.Run=null;
+            capture.NativeMaximum=capture.AddedMaximum=capture.AddedRemaining=0;
+            capture.Life=capture.GemLife=capture.SkillLife=capture.HeroLife=capture.VictimLife=0;
             _eternalFlameCursePool.Return(capture);
         }
     }

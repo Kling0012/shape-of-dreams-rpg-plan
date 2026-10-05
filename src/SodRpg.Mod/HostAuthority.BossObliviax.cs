@@ -286,7 +286,7 @@ namespace SodRpg.Mod
         }
         private void ClearObliviaxBoss(HeroRuntime rt, bool preserveRewards = false)
         {
-            ClearBossShout(rt);
+            if (!preserveRewards) ClearBossShout(rt);
             if (!_obliviaxCombat.TryGetValue(rt, out var state)) return;
             ObliviaxRemoveAmbush(rt, state, Time.time); ObliviaxRemoveTurret(rt, state, Time.time);
             for (int i = 0; i < ObliviaxProfiles.Length; i++)
