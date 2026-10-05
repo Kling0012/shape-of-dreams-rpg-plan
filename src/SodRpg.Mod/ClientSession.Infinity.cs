@@ -254,6 +254,7 @@ namespace SodRpg.Mod
                     state.ClearedCombatTotal = shared.ClearedCombatTotal; state.ClearsInCycle = shared.ClearsInCycle;
                     state.Phase = shared.Phase; state.SoulObserved = shared.SoulObserved;
                     state.TransitionIntent = shared.TransitionIntent;
+                    state.LastCountedNode = shared.LastCountedNode;
                     state.ClearedNodes.Clear(); foreach (int node in shared.ClearedNodes) state.ClearedNodes.Add(node);
                     ObserveInfinityRoomTotal(state.ClearedCombatTotal);
                     _infinityMirroredSnapshot = _receivedRunChoices;
