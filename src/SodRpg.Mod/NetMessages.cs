@@ -83,6 +83,7 @@ namespace SodRpg.Mod
         public string choices;
         public bool terminal;
         public bool victory;
+        public string lobbyReturnRunId;
     }
 
     internal enum BountyReportKind
@@ -184,7 +185,9 @@ namespace SodRpg.Mod
         // Version 18 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
         // Version 18 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
         // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
-        public const int Version = 19;
+        // Version 20 carries run-bound return-to-lobby defeats and blocks their native resumes.
+        public const int Version = 20;
+        public const string LobbyReturnedResumeSession = "lobby-returned";
     }
 
     [Serializable]

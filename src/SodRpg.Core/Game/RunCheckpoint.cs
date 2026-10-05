@@ -56,6 +56,7 @@ namespace SodRpg.Core.Game
             restored.StartDepth = current.StartDepth;
             restored.LastDreamDepth = current.LastDreamDepth;
             restored.SeenHints.UnionWith(current.SeenHints);
+            restored.LobbyReturnedRunIds.UnionWith(current.LobbyReturnedRunIds);
             restored.ContinueCheckpoints.AddRange(current.ContinueCheckpoints);
             restored.ContinueLobbyBaseline = null;
             restored.ContinueResumeSession = current.ContinueResumeSession;

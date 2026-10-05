@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-この#97統合ブランチは **Protocol 19・保存形式5（プロフィールリセットなし）**。最新mainのv2.0.5と#48・#62・#73・#87・#88・#89/#90の修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。#97 の中断再開と #112 のロビー復帰時の敗北精算に対応しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -46,16 +46,24 @@
 
 ### 中断と「続きから」（Issue #97）
 
-- ロビー・タイトルへ戻っても未完了の遠征は残る。メニューの全タブに中断中の案内を表示し、遠征が終わるまでプロフィールの切替と星図の変更はできない。装備・鍛冶の操作条件は従来どおり。
+- 「メニューに戻る」「デスクトップに戻る」では未完了の遠征は中断のまま残る。メニューの全タブに中断中の案内を表示し、遠征が終わるまでプロフィールの切替と星図の変更はできない。装備・鍛冶の操作条件は従来どおり。「ロビーに戻る」の確認後は下記 #112 の敗北精算を行う。
 - 本体の保存があるときは「続きから」で再開する。本体の保存に結び付いたMODチェックポイントへ、同じ遠征IDの鞄・未確保の欠片・撃破と報酬の状態を戻す。MODの最新プロフィールだけをそのまま重ねるのではなく、本体が再開する地点にそろえる。
 - 再開時は、その後の遠征で得た経験・確保済み報酬と保留取引も保存地点に合わせ、本体の通貨と取引台帳を一緒に戻す。ロビーの装備変更は残し、鍛冶・工房などの変更も保存地点の遺物・素材で成立する場合は残す。巻き戻りで必要な遺物・素材がなくなる場合は、ロビーの財産変更をまとめて戻し、画面に理由を表示する。
 - #104：製作・上等製作・合成など、乱数を使うロビー変更を残す場合は、その結果とロビー変更後の乱数状態を一緒に引き継ぐ。保存後の遠征で消費した乱数も含む現在の状態を採用し、消費回数の加算では再構成しない。ロビー変更を戻す場合や乱数を使う変更がない場合は、乱数も保存地点へ戻す。プロフィールから生成する遺物Uidは、保管庫・遺失物・分解待ち・鞄・保留報酬の既存Uidとの重複を避ける。確認はUid生成時だけ行い、毎フレームの処理や保存項目は増やさない。ホスト・参加者ともに同じCore処理を使う。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 19と中断対応の相互確認を使う。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 20と中断対応の相互確認を使う。
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.
 - **EN (#104):** Retained random lobby edits keep both their results and the live RNG state, including post-checkpoint expedition draws. Rejected edits or edits without RNG consumption keep the checkpoint RNG state. Profile-generated relic IDs skip IDs already held in stash, lost-and-found, pending salvage, satchel or deferred rewards; save format 5 and Protocol 19 remain unchanged.
+
+### 「ロビーに戻る」の敗北精算（Issue #112）
+
+- 確認後の `DewNetworkManager.RestartSession()` を対象に、ホスト・本体の未決着・MOD の未決着・本体と MOD の runId 一致を確認する。結果画面からの通常復帰、決着待ち／精算済みの遠征、`EndSession()` のメニュー・デスクトップ復帰やキック経路は対象外。IL の厳密一致や MOD 全体の起動条件は追加しない。
+- ホストは既存の `DreamforgeRunChoicesMsg` に `lobbyReturnRunId` と敗北・道標の状態を載せ、信頼性のある本体 Actor RPC でロビー遷移前に通知する。各 PC は対応する遠征だけを既存の `TryConcludeRun()` → `Rules.EndRun(..., false)` で一度だけ精算する。未確定の撃破や道標は既存の順序で処理し、保留分があればロビー遷移後も同じ敗北の精算を継続する。遷移中に参加者をホストと誤認しないよう、精算開始時の権限も保持する。
+- 本体の中断保存は変更・削除しない。終了した runId を MOD 保存の省略可能な `lobbyReturnedRunIds` に記録し、チェックポイント復元でも履歴を消さない。後からその本体保存を再開しても MOD の遠征や報酬は作らず、「この遠征は『ロビーに戻る』で終了済みのため、MOD の報酬は出ません」と案内する。ホストの再開通知でも終了状態を伝える（`continueResumeSession` の予約値 `lobby-returned`）。
+- 判別の例外・不一致では警告を出し、ロビー復帰時の敗北判定だけを無効にする。通常の中断・MOD の他機能は停止しない。保存形式は5のまま。Protocol 20が必要。
+- 実機のメニュー表示・ロビー遷移・協力通信は未確認。テストの追加・変更は行っていない。
 
 ### 純白の保留中の撃破の精算（Issue #71・#88）
 

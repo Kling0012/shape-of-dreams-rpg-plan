@@ -36,18 +36,22 @@ namespace SodRpg.Mod
         internal static bool HostCombatChoiceSuspended => NetworkServer.active && _hostSession != null
             && _hostSession.RunActive && _hostSession.InPureWhiteRoute;
 
-        public bool CanChooseRunRules => NetworkServer.active || !NetworkClient.active;
+        public bool CanChooseRunRules => LobbyReturnPending ? Profile.LobbyReturnAuthority
+            : NetworkServer.active || !NetworkClient.active;
         public bool CanChooseDepth => !InGame && CanChooseRunRules;
         public int ChosenDreamDepth => RunActive ? Profile.Run.DreamDepth
             : CanChooseRunRules ? DreamDepth.Clamp(Profile.LastDreamDepth) : _receivedRunChoices?.Depth ?? 0;
         public bool HasHostRunChoices => CanChooseRunRules || _receivedRunChoices != null;
         public bool WaypointChoicesReady => CanChooseRunRules || _runChoiceProgress.ChoicesReady(Profile.Run, ChoiceZoneIndex);
-        private int ChoiceZoneIndex => _zone != null ? _zone.currentZoneIndex : -1;
+        private int ChoiceZoneIndex => LobbyReturnPending
+            && NetworkedManagerBase<GameManager>.softInstance?.runId != _pendingResultRunId
+                ? _runChoiceProgress.ZoneIndex : _zone != null ? _zone.currentZoneIndex : -1;
         private bool InPureWhiteRoute => _zone != null && _zone.currentZone != null && _zone.currentZone.name == "Zone_Primus";
 
         internal static void OnPureWhiteBossDefeated()
         {
             if (!NetworkServer.active || _hostSession == null || !_hostSession.RunActive) return;
+            if (_hostSession.LobbyReturnPending) return;
             if (_hostSession._pendingRunVictory == true && _hostSession._pendingResultRunId == _hostSession.ActiveRunId) return;
             _hostSession._pendingRunVictory = true;
             _hostSession._pendingResultRunId = _hostSession.ActiveRunId;
@@ -228,6 +232,19 @@ namespace SodRpg.Mod
         private void OnRunChoices(DreamforgeRunChoicesMsg msg)
         {
             if (msg == null || msg.protocol != Protocol.Version) return;
+            if (!string.IsNullOrEmpty(msg.lobbyReturnRunId))
+            {
+                try
+                {
+                    if (!ReceiveLobbyReturn(msg)) return;
+                    ReceiveRunChoices(msg.choices, false);
+                    FlushPendingRunRewards();
+                    TryConcludeRun();
+                    SaveNow();
+                }
+                catch (Exception ex) { DisableLobbyReturn(ex.ToString()); }
+                return;
+            }
             ReceiveRunChoices(msg.choices, msg.terminal ? (bool?)msg.victory : null);
         }
 
@@ -243,7 +260,7 @@ namespace SodRpg.Mod
             bool received = _runChoiceProgress.Receive(snapshot);
             if (victory.HasValue && _runChoiceProgress.AcceptsResult(snapshot))
             {
-                _pendingRunVictory = victory;
+                _pendingRunVictory = LobbyReturnPending ? false : victory;
                 _pendingResultRunId = snapshot.RunId;
             }
             if (!received) return;

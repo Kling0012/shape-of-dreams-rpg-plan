@@ -351,6 +351,10 @@ namespace SodRpg.Core.Game
         public ProfileStats Stats { get; private set; } = new ProfileStats();
         public RunState Run { get; set; }
         public string CompletedRunId { get; set; }
+        /// <summary>Expeditions already settled by returning to the lobby; native continue must not grant them another MOD run.</summary>
+        public SortedSet<string> LobbyReturnedRunIds { get; } = new SortedSet<string>(StringComparer.Ordinal);
+        /// <summary>Whether this slot had host authority when its lobby return began.</summary>
+        public bool LobbyReturnAuthority { get; set; }
         public RunRecoveryState RunRecovery { get; set; }
         public KillClassificationCheckpoint KillClassification { get; set; }
 
@@ -463,6 +467,7 @@ namespace SodRpg.Core.Game
             Stats = source.Stats;
             Run = source.Run;
             CompletedRunId = source.CompletedRunId;
+            LobbyReturnAuthority = source.LobbyReturnAuthority;
             RunRecovery = source.RunRecovery;
             KillClassification = source.KillClassification;
             LastReport = source.LastReport;
@@ -487,6 +492,8 @@ namespace SodRpg.Core.Game
             Feats.UnionWith(source.Feats);
             FeatsClaimed.Clear();
             FeatsClaimed.UnionWith(source.FeatsClaimed);
+            LobbyReturnedRunIds.Clear();
+            LobbyReturnedRunIds.UnionWith(source.LobbyReturnedRunIds);
             Upgrades.Clear();
             foreach (var kv in source.Upgrades) Upgrades.Add(kv.Key, kv.Value);
             SeenHints.Clear();
@@ -514,6 +521,7 @@ namespace SodRpg.Core.Game
                 Stats = Stats.Clone(),
                 Run = Run?.Clone(),
                 CompletedRunId = CompletedRunId,
+                LobbyReturnAuthority = LobbyReturnAuthority,
                 RunRecovery = RunRecovery?.Clone(),
                 KillClassification = KillClassification?.Clone(),
                 ContinueLobbyBaseline = ContinueLobbyBaseline,
@@ -532,6 +540,7 @@ namespace SodRpg.Core.Game
             foreach (var s in Codex) c.Codex.Add(s);
             foreach (var f in Feats) c.Feats.Add(f);
             foreach (var f in FeatsClaimed) c.FeatsClaimed.Add(f);
+            c.LobbyReturnedRunIds.UnionWith(LobbyReturnedRunIds);
             foreach (var kv in Upgrades) c.Upgrades[kv.Key] = kv.Value;
             foreach (var h in SeenHints) c.SeenHints.Add(h);
             c.StarterUids.AddRange(StarterUids);
