@@ -76,9 +76,9 @@ namespace SodRpg.Core.Tests
 
         private static string Encode(Profile p, int version, bool keepChoices = false)
         {
-            string v4 = ProfileCodec.Write(p);
-            if (version == 4) return v4;
-            var root = (JsonObject)Json.Parse(v4);
+            string current = ProfileCodec.Write(p);
+            if (version == 4) return current.Replace("\"version\":" + Profile.CurrentVersion, "\"version\":4");
+            var root = (JsonObject)Json.Parse(current);
             root.TryGet("body", out object body);
             var legacy = Strip(body, keepChoices);
             string checksum;
@@ -225,7 +225,7 @@ namespace SodRpg.Core.Tests
             Assert.Empty(notes);
             Assert.Equal(version, q.LoadedVersion);
             foreach (var hero in new[] { Cetus, Vesper, Husk }) AssertSame(Snapshot.Of(p, hero), Snapshot.Of(q, hero));
-            Assert.Equal(ProfileCodec.Write(p), ProfileCodec.Write(q)); // decode -> encode (v4) is identical
+            Assert.Equal(ProfileCodec.Write(p), ProfileCodec.Write(q)); // Legacy decode -> current encode is identical.
             Assert.Equal(ProfileCodec.Write(q), ProfileCodec.Write(ProfileCodec.Read(ProfileCodec.Write(q), null)));
         }
 

@@ -36,9 +36,18 @@ namespace SodRpg.Mod
             RegisterHello(_registeredOn);
             return _registeredOn;
         }
+        // Kill-sync peers live in HostAuthority.KillSync.cs, which is not linked here.
+        private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
+        private void RemoveKillPeer(DewPlayer player) { }
         internal void ReceiveNegotiation(DreamforgeHelloMsg message, DewPlayer player)
             => ((Action<DreamforgeHelloMsg, DewPlayer>)_registeredOn.ServerHandlers[typeof(DreamforgeHelloMsg)])(message, player);
         internal bool AcceptsNegotiatedBuild(DewPlayer player) => MechanismHandshakeAccepted(player);
         internal void DetachNegotiation() => UnregisterHello(_registeredOn);
+    }
+
+    // Product ClientSession (not linked) exposes a host-authority generation used by the hello reply.
+    internal static class ClientSession
+    {
+        internal static ulong HostAuthorityGeneration;
     }
 }

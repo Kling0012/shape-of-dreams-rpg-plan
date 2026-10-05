@@ -21,14 +21,14 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, profile.Run.Kills);
             Assert.Equal(0, profile.Hero("hero").StarXp);
 
-            profile.KillClassification = ledger.Capture();
+            profile.KillClassification = ledger.Capture(now: 0.0);
             profile = RoundTrip(profile);
             ledger = new KillClassificationLedger();
             ledger.Restore(profile.KillClassification, now: 0.0);
             Assert.False(ledger.TryResolve(out _, now: 0.0));
             string variantId = variant ? Variants.All.First(v => v.ShardBonusPct != 100).Id : null;
             var fact = new AuthoritativeRunKill("run", "kill-7", 7, 0, NightmareAffix.Ironclad, variantId);
-            Assert.True(ledger.ReceiveFact(fact));
+            Assert.True(ledger.ReceiveFact(fact, now: 0.0));
             Assert.True(ledger.TryResolve(out var kill, now: 0.0));
             Award(profile, kill);
             Rules.OnKill(expected, MonsterTier.Normal, 4, fact.Nightmare, "hero", variantId: fact.VariantId, roomIndex: 2);
@@ -45,10 +45,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expected.RngState, profile.RngState);
             Assert.Equal("kill-7", kill.EventId);
 
-            profile.KillClassification = ledger.Capture();
+            profile.KillClassification = ledger.Capture(now: 0.0);
             profile = RoundTrip(profile);
             ledger.Restore(profile.KillClassification, now: 0.0);
-            Assert.False(ledger.ReceiveFact(fact));
+            Assert.False(ledger.ReceiveFact(fact, now: 0.0));
             ledger.ObserveDeath(native, now: 0.0);
             Assert.False(ledger.TryResolve(out _, now: 0.0));
             Assert.Equal(1, profile.Run.Kills);
@@ -61,12 +61,12 @@ namespace SodRpg.Core.Tests
         {
             var ledger = new KillClassificationLedger();
             var fact = new AuthoritativeRunKill("run", "kill-7", 7, 0, NightmareAffix.Ironclad, null);
-            Assert.True(ledger.ReceiveFact(fact));
+            Assert.True(ledger.ReceiveFact(fact, now: 0.0));
             Assert.False(ledger.TryResolve(out _, now: 0.0));
             // A different eligible monster death cannot consume an excluded monster's fact.
             Assert.True(ledger.ObserveDeath(NativeDeath(8, 0, 2), now: 0.0));
             Assert.False(ledger.TryResolve(out _, now: 0.0));
-            Assert.True(ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-8", 8, 0, NightmareAffix.None, null)));
+            Assert.True(ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-8", 8, 0, NightmareAffix.None, null), now: 0.0));
             Assert.True(ledger.TryResolve(out var kill, now: 0.0));
             Assert.Equal(8u, kill.MonsterNetId);
             Assert.Equal(NightmareAffix.None, kill.Nightmare);
@@ -98,9 +98,9 @@ namespace SodRpg.Core.Tests
             ledger.ObserveDeath(NativeDeath(7, 0, 2), now: 0.0);
             progress.Arrive("run", 1);
             ledger.ObserveDeath(NativeDeath(8, 1, 3), now: 0.0);
-            ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-8", 8, 1, NightmareAffix.None, null));
+            ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-8", 8, 1, NightmareAffix.None, null), now: 0.0);
             Assert.False(ledger.TryResolve(out _, now: 0.0));
-            ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-7", 7, 0, NightmareAffix.Ironclad, null));
+            ledger.ReceiveFact(new AuthoritativeRunKill("run", "kill-7", 7, 0, NightmareAffix.Ironclad, null), now: 0.0);
             while (ledger.TryResolve(out var kill, now: 0.0)) progress.Rewards.Add(kill);
             Assert.True(progress.Receive(current));
             Assert.True(progress.Receive(prior));
@@ -130,8 +130,8 @@ namespace SodRpg.Core.Tests
             var hostLedger = new KillClassificationLedger();
             var original = new AuthoritativeRunKill("run", "kill-7", 7, 0, NightmareAffix.None,
                 Variants.All.First(v => v.ShardBonusPct != 100).Id);
-            hostLedger.ReceiveFact(original);
-            host.KillClassification = hostLedger.Capture();
+            hostLedger.ReceiveFact(original, now: 0.0);
+            host.KillClassification = hostLedger.Capture(now: 0.0);
             host = RoundTrip(host);
             hostLedger.Restore(host.KillClassification, now: 0.0);
 
@@ -142,7 +142,7 @@ namespace SodRpg.Core.Tests
             Assert.True(authority.Observe(22, out bool changed));
             Assert.True(changed);
             Assert.False(authority.TryGet(7, out _));
-            foreach (var fact in hostLedger.Facts) client.ReceiveFact(fact);
+            foreach (var fact in hostLedger.Facts) client.ReceiveFact(fact, now: 0.0);
             Assert.True(client.TryResolve(out var kill, now: 0.0));
             Assert.Equal(original.EventId, kill.EventId);
             Assert.Equal(original.VariantId, kill.VariantId);

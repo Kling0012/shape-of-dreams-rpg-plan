@@ -15,13 +15,12 @@ namespace SodRpg.Core.Tests
         private const string Path = "/save/profile.json";
 
         [Fact]
-        public void Save_format_is_four_and_three_still_loads_without_reset()
+        public void Version_three_still_loads_without_reset()
         {
-            Assert.Equal(4, Profile.CurrentVersion);
             Assert.Equal(3, Profile.ResetBeforeVersion);
             var p = Profile.CreateNew(5);
             p.DreamLevel = 9;
-            string v3 = ProfileCodec.Write(p).Replace("\"version\":4", "\"version\":3");
+            string v3 = ProfileCodec.Write(p).Replace("\"version\":" + Profile.CurrentVersion, "\"version\":3");
             var fs = new InMemoryFileSystem();
             fs.Put(Path, v3);
             var loaded = new ProfileStore(fs, Path, 7).Load();
@@ -33,7 +32,8 @@ namespace SodRpg.Core.Tests
         public void A_newer_save_is_refused_instead_of_being_rewritten()
         {
             var p = Profile.CreateNew(5);
-            string future = ProfileCodec.Write(p).Replace("\"version\":4", "\"version\":5");
+            string future = ProfileCodec.Write(p).Replace("\"version\":" + Profile.CurrentVersion,
+                "\"version\":" + (Profile.CurrentVersion + 1));
             var fs = new InMemoryFileSystem();
             fs.Put(Path, future);
             Assert.Throws<LedgerVersionException>(() => new ProfileStore(fs, Path, 7).Load());
