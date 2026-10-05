@@ -453,5 +453,64 @@ namespace SodRpg.Core.Tests
             Assert.Equal("old-run", done.RunId);
             Assert.Equal(0, fresh.HeldCount);
         }
+
+        // ─────────────── まとめて確定（#167） ───────────────
+
+        // 1度に大量にあふれても、ティック末の1回のフラッシュ（取引開始は全ぶん・保存は1回分）で、
+        // 1個ずつ確定した場合と同じ遺物・同じダストが一度だけ支払われる。
+        [Fact]
+        public void A_large_overflow_batch_settles_identically_when_flushed_once()
+        {
+            var p = Profile.CreateNew(130);
+            Rules.BeginRun(p, "run-batch", heroKey: "Hero_Lacerta");
+            var client = new TradeLedger(generation: 9);
+            var host = new TradeAuthority();
+
+            // 鞄を満杯にしたあと100個拾う：1個ずつあふれて100個分の出来事が溜まる。
+            int capacity = Workshop.SatchelCapacity(p);
+            for (int i = 0; i < capacity; i++)
+                Assert.Empty(OverflowByPickup(p, Rolled(Rarity.Rare, 10, (ulong)(1000 + i)), client));
+            var overflow = new List<GameEvent>();
+            for (int i = 0; i < 100; i++)
+                overflow.Add(OverflowEvent(OverflowByPickup(p, Rolled((Rarity)(i % 5), 10, (ulong)(2000 + i)), client)));
+            Assert.Equal(100, overflow.Count);
+            Assert.Equal(capacity, p.Run.Satchel.Count);
+
+            // 1回のフラッシュ：キューの全ぶんの取引を開始し、準備保存はこの1回分（snapshot）に載る。
+            var trades = new List<PendingTrade>();
+            foreach (var e in overflow)
+                trades.Add(client.BeginSatchelOverflow(e.SatchelOverflow, p.Run.RunId, e.SatchelOverflowShards, now: 0.0));
+            Assert.Equal(100, trades.Count);
+            Assert.Equal(100, trades.Select(t => t.Token).Distinct().Count());
+            var snapshot = client.Snapshot();
+            Assert.Equal(100, snapshot.Count);
+
+            // 個別確定と同じ結果：どの遺物もレートどおりのダストが一度だけ（再送・再照会で増えない）。
+            long paid = 0;
+            int expected = 0;
+            foreach (var e in overflow) expected += Economy.SatchelOverflowDust(e.SatchelOverflow.Rarity);
+            for (int i = 0; i < trades.Count; i++)
+            {
+                var t = trades[i];
+                Assert.Equal(overflow[i].SatchelOverflow.Uid, t.Uid);
+                Assert.Equal(overflow[i].SatchelOverflowShards, t.FallbackShards);
+                t.LedgerId = host.LedgerIdOf("owner", p.Run.RunId);
+                var d = host.Evaluate("owner", p.Run.RunId, RequestOf(t), 0, 0);
+                Assert.True(d.Ok, d.Reason);
+                Assert.False(d.Replayed);
+                Assert.Equal(Economy.SatchelOverflowDust((Rarity)t.Rarity), d.EarnDust);
+                if (!d.Replayed) paid += d.EarnDust;
+                var replay = host.Evaluate("owner", p.Run.RunId, RequestOf(t), 0, 0);
+                Assert.True(replay.Ok && replay.Replayed);
+                if (!replay.Replayed) paid += replay.EarnDust;
+            }
+            Assert.Equal(expected, paid);
+
+            // 1回の保存に100件が載ったまま読み直せる（フラッシュ前の準備保存・結果反映の遅延に耐える）。
+            p.PendingTrades.AddRange(snapshot);
+            var notes = new List<string>();
+            var reloaded = ProfileCodec.Read(ProfileCodec.Write(p.Clone()), notes);
+            Assert.Equal(100, reloaded.PendingTrades.Count);
+        }
     }
 }
