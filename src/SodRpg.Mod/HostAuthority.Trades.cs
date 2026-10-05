@@ -10,6 +10,7 @@ namespace SodRpg.Mod
         // 取引の裁定は Core の TradeAuthority（純粋な C#）が行う。ここは本体の値の受け渡しだけ。
         private readonly TradeAuthority _tradeAuthority = new TradeAuthority();
         private bool _satchelDustDisabled;
+        private bool _manualTradesDisabled;
 
         private TradeDecision GrantSatchelOverflow(DreamforgeTradeMsg message, DewPlayer owner, TradeRequest request)
         {
@@ -51,6 +52,39 @@ namespace SodRpg.Mod
             }
         }
 
+        private TradeDecision ExecuteManualTrade(DewPlayer owner, string playerKey, string runId,
+            TradeRequest request, TradeDecision decision, int goldBefore, int dustBefore)
+        {
+            if (_manualTradesDisabled)
+                return _tradeAuthority.FailExecution(playerKey, runId, request, outcomeUnknown: false);
+
+            try
+            {
+                if (decision.EarnDust > int.MaxValue - (long)dustBefore)
+                    throw new InvalidOperationException("Dream Dust balance would overflow.");
+                if (decision.SpendGold > 0) owner.SpendGold(decision.SpendGold);
+                if (decision.SpendDust > 0) owner.SpendDreamDust(decision.SpendDust);
+                if (decision.EarnDust > 0) owner.EarnDreamDust(decision.EarnDust);
+                if (owner.gold - (long)goldBefore != -decision.SpendGold
+                    || owner.dreamDust - (long)dustBefore != decision.EarnDust - (long)decision.SpendDust)
+                    throw new InvalidOperationException("Native trade did not produce the expected balances.");
+                return decision;
+            }
+            catch (Exception ex)
+            {
+                _manualTradesDisabled = true;
+                Log.Error("Host: manual trades disabled after native currency failure: " + ex.Message);
+                // Native currency changes precede RPC/callbacks. A later exception must not undo a paid trade.
+                long goldDelta = owner.gold - (long)goldBefore;
+                long dustDelta = owner.dreamDust - (long)dustBefore;
+                if (goldDelta == -decision.SpendGold && dustDelta == decision.EarnDust - (long)decision.SpendDust)
+                    return decision;
+                // Never restore an ambiguous balance: another MOD may have changed it. Keep the trade on hold.
+                return _tradeAuthority.FailExecution(playerKey, runId, request,
+                    outcomeUnknown: goldDelta != 0 || dustDelta != 0);
+            }
+        }
+
         /// <summary>
         /// 本体の通貨での取引（v1.31）。金額はホストが Economy の固定レート・残高・本体の価格補正から計算し、
         /// クライアント申告の金額は使わない。取引idは1プレイヤーにつき1回だけ実行し、再送には結果だけを返す。
@@ -70,18 +104,17 @@ namespace SodRpg.Mod
                     reason = "protocol"; // 旧形式（金額の申告）は版違いとして断る
                 else
                 {
+                    string playerKey = TradePlayerKey(caller);
+                    string runId = TradeRunId();
+                    int goldBefore = caller.gold, dustBefore = caller.dreamDust;
                     var d = req.Kind == TradeKind.SatchelOverflowDust && !req.Query
                         ? GrantSatchelOverflow(msg, caller, req)
-                        : _tradeAuthority.Evaluate(TradePlayerKey(caller), TradeRunId(), req, caller.gold, caller.dreamDust, TradeGoldCostScale());
+                        : _tradeAuthority.Evaluate(playerKey, runId, req, goldBefore, dustBefore, TradeGoldCostScale());
+                    if (d.Ok && !d.Replayed && req.Kind != TradeKind.SatchelOverflowDust)
+                        d = ExecuteManualTrade(caller, playerKey, runId, req, d, goldBefore, dustBefore);
                     ok = d.Ok;
                     reason = d.Reason;
                     ledgerId = d.LedgerId;
-                    if (d.Ok && !d.Replayed)
-                    {
-                        if (d.SpendGold > 0) caller.SpendGold(d.SpendGold);
-                        if (d.SpendDust > 0) caller.SpendDreamDust(d.SpendDust);
-                        if (d.EarnDust > 0 && req.Kind != TradeKind.SatchelOverflowDust) caller.EarnDreamDust(d.EarnDust);
-                    }
                 }
             }
             catch (Exception ex)

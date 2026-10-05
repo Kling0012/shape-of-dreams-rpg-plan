@@ -9,7 +9,8 @@ namespace SodRpg.Core.Tests.Testing
     /// Frozen copy of the pre-optimization EffectiveAllocationValidation (v1.31 before the C15 performance fix).
     /// Only used by the equivalence tests as the oracle: the production class must make the same decisions.
     /// Deliberately unoptimized (every RankEffective runs two full Build computations). Its algorithm stays frozen,
-    /// except for keystone slots (v2.0.2): the selection semantics changed for every traveler, so the oracle tracks them.
+    /// except for deliberate rule changes: keystone slots (v2.0.2) and pending movement-route receiver boosts (#174).
+    /// These eligibility rules are evaluated here independently; no production validation/optimization helpers are called.
     /// C15 production build evaluation, reusable with generated or synthetic trees and explicit disable policies.
     /// </summary>
     public sealed class ReferenceEffectiveAllocationValidation
@@ -325,9 +326,23 @@ namespace SodRpg.Core.Tests.Testing
                 ? fullSnapshot : Capture(profile, heroKey, marginal, hero);
             SetRank(marginal, talent.Id, rank - 1);
             var without = Capture(profile, heroKey, marginal, hero);
-            bool effective = HasPositiveDifference(with, without);
+            bool effective = HasPositiveDifference(with, without) || CanWaitForMovementRouteRecipient(hero, talent, with);
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
+        }
+
+        // The route's recharge source may be behind its receiver boost. The boost can be bought while pending,
+        // but a disabled star or one with an existing (saturated/dominated) recipient still needs a positive delta.
+        private bool CanWaitForMovementRouteRecipient(HeroState hero, TalentDef talent, IReadOnlyList<EffectiveAllocationChannel> channels)
+        {
+            var modifier = talent.ScopedModifier;
+            if (talent.IsChoice || talent.RouteId == null || modifier == null || modifier.ScopeKind != ScopeKind.Receiver) return false;
+            string memory = modifier.ScopeMemory;
+            if (memory == null || memory != talent.RouteMemory || !memory.StartsWith("St_M_", StringComparison.Ordinal)) return false;
+            if (DisabledIds(hero).Contains(talent.Id)) return false;
+            foreach (var channel in channels)
+                if (Targets(talent, channel)) return false;
+            return true;
         }
 
         private static bool HasPositiveDifference(IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)

@@ -290,7 +290,7 @@ namespace SodRpg.Core.Game
             {
                 var withoutKey = proposed.Clone();
                 withoutKey.RemoveKeystone(change.KeystoneId);
-                candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed));
+                candidateEffective = HasPositiveDifference(channels, scope.Capture(withoutKey, proposed)) || ScalesNativeDamage(Talent(change.KeystoneId));
                 if (!candidateEffective) saturated.Add(change.KeystoneId);
             }
             if (candidateEffective)
@@ -527,8 +527,25 @@ namespace SodRpg.Core.Game
                 return marginal;
             }, hero);
             bool effective = HasPositiveDifference(with, without);
+            if (!effective && IsPendingRouteReceiver(hero, talent, rank, with, without)) return true;
             if (!effective && details != null) DescribeInert(hero, talent, rank, with, without, details);
             return effective;
+        }
+
+        /// <summary>
+        /// A movement route's receiver boosts (for example Husk's Flash Step Readiness) only act once a star recharges that movement memory,
+        /// and the route's own recharge source sits deeper in the same route behind these boosts. Refusing them as "no owned recipient" would
+        /// make the route impossible to enter, so a star with no recipient yet is pending, not inert. Saturated or dominated ranks stay refused.
+        /// </summary>
+        private bool IsPendingRouteReceiver(HeroState hero, TalentDef talent, int rank,
+            IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)
+        {
+            var modifier = talent.ScopedModifier;
+            if (talent.RouteId == null || modifier == null || modifier.ScopeKind != ScopeKind.Receiver || talent.IsChoice) return false;
+            if (modifier.ScopeMemory == null || modifier.ScopeMemory != talent.RouteMemory || !talent.RouteMemory.StartsWith("St_M_", StringComparison.Ordinal)) return false;
+            if (DisabledIds(hero).Contains(talent.Id)) return false;
+            foreach (var channel in with) if (Targets(talent, channel)) return false;
+            return true;
         }
 
         private bool RankEffectiveRegion(PreviewScope scope, HeroState hero, TalentDef talent, int rank, PreviewScope.RegionInfo region) =>
@@ -782,6 +799,18 @@ namespace SodRpg.Core.Game
             private IReadOnlyList<EffectiveAllocationChannel> Compute(HeroState allocation, HeroState reach, string reachKey,
                 StarDependencies record = null) =>
                 owner.Capture(profile, heroKey, allocation, reach, Snapshot(reach, reachKey), record);
+        }
+
+        /// <summary>
+        /// A keystone that scales a memory's original (native) damage acts inside the host, so no allocation channel changes with it.
+        /// Judging it by channels alone would call it inert and make it impossible to select.
+        /// </summary>
+        private static bool ScalesNativeDamage(TalentDef keystone)
+        {
+            var upside = keystone?.KeystoneDefinition?.Upside;
+            if (upside == null) return false;
+            foreach (var transform in upside) if (transform.TargetLayer == KeystoneLayer.NativeDamage) return true;
+            return false;
         }
 
         private static bool HasPositiveDifference(IReadOnlyList<EffectiveAllocationChannel> with, IReadOnlyList<EffectiveAllocationChannel> without)

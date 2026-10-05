@@ -49,7 +49,7 @@ namespace SodRpg.Core.Game
             ["Hero_Lacerta"] = new[] { "powder", "hand-cannon", "quick-trigger", "nimble-dodge", "double-tap", "incendiary", "precision" },
             ["Hero_Cetus"] = new[] { "icy-veins", "embrace-chill", "back-off", "frost-charge", "charged", "boreal-chunk", "frozen-fists" },
             ["Hero_Yubar"] = new[] { "exotic-matter", "ethereal", "cataclysm", "flicker", "converging-stars", "supernova", "tranquility" },
-            ["Hero_Husk"] = new[] { "killing-flow", "laceration", "annihilation", "flash-step", "wind-scar", "death-mark", "deception" },
+            ["Hero_Husk"] = new[] { "killing-flow", "laceration", "annihilation", "wind-scar", "flash-step", "death-mark", "deception" },
             ["Hero_Mist"] = new[] { "en-garde", "lunge", "determination", "fast-feet", "priorite", "fleche", "parry" },
             ["Hero_Nachia"] = new[] { "pack-heart", "sylvan-call", "natures-whisper", "dreamy-waltz", "circle-life", "moonlight-pact", "serpent-blessing" },
             ["Hero_Aurena"] = new[] { "claw", "golden-burst", "dangerous-theory", "feathery-dash", "beautiful-threat", "reduction", "chain-reaction" },

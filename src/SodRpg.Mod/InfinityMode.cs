@@ -13,6 +13,26 @@ namespace SodRpg.Mod
         internal const string RuntimeKey = "dreamforge.infinity.runtime";
         internal const string ChoiceKey = "dreamforge.infinity.choice";
         private const string HaltKey = "dreamforge.infinity.halted";
+        private const string RosterHaltKey = "dreamforge.infinity.rosterHalted";
+        internal static bool ExpeditionHalted
+            => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(RosterHaltKey) == true;
+        internal static string ExpeditionHaltNotice
+            => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue(RosterHaltKey, out var reason) == true
+                ? reason : null;
+
+        internal static void StopExpedition(string reason)
+        {
+            if (!NetworkServer.active || ExpeditionHalted) return;
+            var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
+            if (settings == null) return;
+            settings.customData[RosterHaltKey] = reason;
+            settings.customData.Remove(RuntimeKey);
+            settings.customData.Remove(ChoiceKey);
+            _initial = null; _newInfinity = false; _refresh = false; _restoring = false;
+            _choice = null; _choiceText = null; Acks.Clear();
+            Log.Warn("Infinity stopped for this expedition; normal mode continues. " + reason);
+            ClientSession.StopInfinityRun(reason);
+        }
         private static string _runId;
         private static InfinityRunState _initial;
         private static bool _restoring;
@@ -118,6 +138,7 @@ namespace SodRpg.Mod
         {
             get
             {
+                if (ExpeditionHalted) return null;
                 var run = ClientSession.HostRun;
                 // The first zone can generate after BeginRun already created the run but before
                 // InitializeInfinityRun could attach the state (#144: that ordering made this
@@ -129,14 +150,14 @@ namespace SodRpg.Mod
                 return _initial;
             }
         }
-        internal static bool Enabled => Available && (NetworkServer.active
+        internal static bool Enabled => Available && !ExpeditionHalted && (NetworkServer.active
             ? State != null || NativeEnvelopePresent || _newInfinity
                 || NetworkedManagerBase<GameManager>.softInstance == null && ClientSession.HostChosenInfinityEnabled
             : NativeEnvelopePresent || NetworkedManagerBase<GameManager>.softInstance == null
                 && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.TryGetValue("dreamforge.infinity.enabled", out var enabled) == true && enabled == "1")
             && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
                 && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
-        internal static bool NativeSaveAgreement => Available && !_restoring
+        internal static bool NativeSaveAgreement => Available && !ExpeditionHalted && !_restoring
             && (NetworkServer.active || ClientSession.RemoteHostInfinityAvailable
                 && NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
         internal static bool IsTechnicalRefresh => _refresh;
@@ -169,6 +190,7 @@ namespace SodRpg.Mod
         {
             get
             {
+                if (ExpeditionHalted) return null;
                 var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
                 if (settings == null || !settings.customData.TryGetValue(ChoiceKey, out var text)) return null;
                 if (text == _choiceText) return _choice;
@@ -194,7 +216,9 @@ namespace SodRpg.Mod
                 settings.customData.Remove(RuntimeKey);
                 settings.customData.Remove(ChoiceKey);
                 settings.customData.Remove(HaltKey);
+                settings.customData.Remove(RosterHaltKey);
             }
+            HostAuthority.CheckInfinityRunCompatibility();
         }
 
         internal static void BeginRestore()
@@ -290,6 +314,7 @@ namespace SodRpg.Mod
 
         internal static void OnGenerated(ZoneManager zone)
         {
+            HostAuthority.CheckInfinityRunCompatibility();
             if (!NetworkServer.active || !Enabled || _restoring) return;
             var id = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (_runId != id)
@@ -334,7 +359,11 @@ namespace SodRpg.Mod
         internal static void Tick()
         {
             if (!Available) return;
-            try { TickNative(); }
+            try
+            {
+                HostAuthority.CheckInfinityRunCompatibility();
+                TickNative();
+            }
             catch (Exception ex) { InterceptionFailed(nameof(Tick), ex); }
         }
 

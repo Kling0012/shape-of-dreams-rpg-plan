@@ -199,7 +199,13 @@ namespace SodRpg.Mod
         public double SaveMsAverage;
         public Hero LocalHero;
         public TradeLedger Trades;
-        public ClientSession(string dir, Action<GameEvent> notify) { SavePath = dir; }
+        private readonly Action<GameEvent> _notify;
+        private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
+        private RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private string _encodedRunChoices;
+        private float _nextChoicesSync;
+        private void PublishRunChoices() { }
+        public ClientSession(string dir, Action<GameEvent> notify) { SavePath = dir; _notify = notify; }
         public void FirstLaunch() { }
         public void Tick() { }
         public void DrawBossEffects() { }

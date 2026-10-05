@@ -100,6 +100,17 @@ python tools/test_changed.py --base origin/release/v2.0.1
 python tools/test_changed.py --all
 ```
 
+## #146 鞄あふれ準備保存後の再参加
+
+`Issue73.Native.Tests.SatchelOverflowSaveTests` の1件は、参加者の満杯の鞄から
+`GrantPendingKill → Emit → 換金準備保存` を実行し、実ディスクの保存を読み直して
+同じ遠征・ゾーンへ再参加する。精算済みの撃破が保存の `PendingKills` に残らず、
+熟練度・経験値・乱数・戦利品が再付与されないことを確認する。
+複数のあふれの取引が台帳ID付きで保存されることも同じケースで確認する。
+一括化前の `5ea38b5` の Mod 精算・換金・保存経路へ差し替えた一時環境では、
+再参加後の撃破数が期待値1に対して2となり、同じテストが失敗することを確認した。
+本体API・通信はダブルであり、ゲーム実機の異常終了・実通信は対象外。
+
 ## #62 圧の追加報酬の死亡順序
 
 `AuthoredMechanismNativeTests` の `Pressure_dividend_*`（3メソッド、17ケース）は、
@@ -156,8 +167,12 @@ python tools/test_changed.py --all
   Harmony経由の直接 `RemoveAbility` と装備epochを確認する。
 - ネイティブの通信・時計・エンティティだけをスタブ化する。配当の保存は実際の
   `ProfileStore` / `AsyncProfileWriter` で一時ディレクトリへ書き、試験後に除去する。
-  `NativePersistence.targets` は SDK の Roslyn AST で `ClientSession.cs` の保存メソッドを
-  選び、そのままテストへコンパイルする。製品側の保存処理は複製・変更しない。
+  `NativePersistence.targets` は SDK の Roslyn AST で保存・Emit・取引／照会と
+  `ClientSession.Infinity.cs` のチェックポイント準備同期を選び、そのままコンパイルする。
+  製品側の処理は複製・変更しない。
+  `ContinueSaveTests.Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once`
+  は通常の既存キュー／Infinity準備中の回収 × 未実行／支払い済みの4ケースで、
+  台帳ID付き義務の保存、別セッションへの復元、欠片の一度だけの回復とダストの二重払い防止を確認する。
 - Core既存ハーネスの `ExposeAuthoredPendingMetadata` は、テスト公開の `PendingGimmick` と
   アクセス範囲を揃えるため、生成したコンパイル単位だけで `AuthoredPendingGimmick` を
   `internal` にする。製品ソースと値型メタデータの処理内容は変更しない。

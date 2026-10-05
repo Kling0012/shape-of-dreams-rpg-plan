@@ -191,7 +191,11 @@ namespace SodRpg.Core.Game
             if (def.HeroKey == "Hero_Cetus" && def.BridgeIndex == 2)
                 return ja ? "領域の持続終了時の爆発だけが受け手。継続ダメージでは発動せず、爆発しない選択では働かない。" : "Only the domain's terminal explosion completes the combo, not ongoing damage; non-exploding variants cannot trigger it.";
             if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 3)
-                return ja ? "滅殺態勢の剣気による撃破だけ。基本攻撃・ほかの記憶の撃破は数えない。" : "Only kills by Annihilation Stance's aura count, not basic attacks or other memories.";
+                return ja ? "印を付けるのは風の傷の固有斬りだけ（一歩一殺では付かない）。成立は滅殺態勢の剣気の命中だけで、基本攻撃や星の追加ダメージでは働かない。"
+                    : "Only the Scar of the Wind's own slash places the mark (Killing Flow places none), and only Annihilation Stance's aura hits complete it, not basic attacks or star-generated damage.";
+            if (def.HeroKey == "Hero_Husk" && def.BridgeIndex == 5)
+                return ja ? "死の刻印の楔が当たった敵を、死の刻印の楔で倒したときだけ。再入力の瞬間移動では印も成立も起きない。"
+                    : "Only a Death Mark wedge's hit places the mark and only a wedge kill completes it; the re-cast teleport does neither.";
             if (def.HeroKey == "Hero_Mist" && def.BridgeIndex == 3)
                 return ja ? "覚醒中の電撃爆発による撃破だけ。基本攻撃・ほかの記憶の撃破は数えない。" : "Only kills by the awakened lightning explosion count, not basic attacks or other memories.";
             if (def.HeroKey == "Hero_Mist" && (def.BridgeIndex == 4 || def.BridgeIndex == 5))
@@ -285,9 +289,11 @@ namespace SodRpg.Core.Game
                 D("Yubar", 7, "tranquility", "St_R_Tranquility", "exotic-matter", "St_D_ExoticMatter", "静かな爆ぜ", "Quiet Blast", "St_R_Tranquility", PairComboTrigger.OnUse, PairComboStep.Window, "St_D_ExoticMatter", PairComboTrigger.OnHit, GimmickEffect.Burst, 30, 50, 70, 0, 0f, null, oncePerActivation: true),
                 D("Husk", 1, "killing-flow", "St_D_TheKillingFlow", "laceration", "St_Q_Laceration", "裂傷の確定会心", "Laceration Sure Crit", "St_Q_Laceration", PairComboTrigger.OnHit, PairComboStep.Mark, "St_D_TheKillingFlow", PairComboTrigger.OnCrit, GimmickEffect.Echo, 15, 25, 35, 0, 0f, null),
                 D("Husk", 2, "laceration", "St_Q_Laceration", "annihilation", "St_R_AnnihilationStance", "剣気の追い裂き", "Aura Follow-Slash", "St_R_AnnihilationStance", PairComboTrigger.OnHit, PairComboStep.Mark, "St_Q_Laceration", PairComboTrigger.OnHit, GimmickEffect.Burst, 40, 70, 100, 0, 0f, null, oncePerActivation: true),
-                D("Husk", 3, "annihilation", "St_R_AnnihilationStance", "flash-step", "St_M_FlashStep", "剣気の足取り", "Aura Footwork", "St_R_AnnihilationStance", PairComboTrigger.OnKill, PairComboStep.None, null, PairComboTrigger.None, GimmickEffect.Recharge, 30, 40, 50, 0, 0f, "St_M_FlashStep"),
-                D("Husk", 4, "flash-step", "St_M_FlashStep", "wind-scar", "St_D_ScarOfTheWind", "風傷の足跡", "Windscar Footprints", "St_D_ScarOfTheWind", PairComboTrigger.OnHit, PairComboStep.Mark, "St_D_ScarOfTheWind", PairComboTrigger.OnKill, GimmickEffect.Recharge, 30, 40, 50, 0, 0f, "St_M_FlashStep", killByPayoffMemory: true),
-                D("Husk", 5, "wind-scar", "St_D_ScarOfTheWind", "death-mark", "St_Q_DeathMark", "刻印に刻む闇", "Darkness Etched on the Mark", "St_Q_DeathMark", PairComboTrigger.OnHit, PairComboStep.Mark, "St_D_ScarOfTheWind", PairComboTrigger.OnCrit, GimmickEffect.Element, 100, 150, 200, 3, 0f, null),
+                // v2.4: the Husk ring runs L-A-W-S-M so the three trio memories sit side by side (docs/specs/v2.4-husk-trio-starmap.md).
+                // Bridge i joins BranchOrder[i-1] and BranchOrder[i], so 3 is now Annihilation-Wind, 4 Wind-FlashStep, 5 FlashStep-DeathMark.
+                D("Husk", 3, "annihilation", "St_R_AnnihilationStance", "wind-scar", "St_D_ScarOfTheWind", "風に導かれる剣気", "Wind-Guided Aura", "St_D_ScarOfTheWind", PairComboTrigger.OnHit, PairComboStep.Mark, "St_R_AnnihilationStance", PairComboTrigger.OnHit, GimmickEffect.Element, 100, 150, 200, 3, 0f, null, oncePerActivation: true),
+                D("Husk", 4, "wind-scar", "St_D_ScarOfTheWind", "flash-step", "St_M_FlashStep", "風傷の足跡", "Windscar Footprints", "St_D_ScarOfTheWind", PairComboTrigger.OnHit, PairComboStep.Mark, "St_D_ScarOfTheWind", PairComboTrigger.OnKill, GimmickEffect.Recharge, 30, 40, 50, 0, 0f, "St_M_FlashStep", killByPayoffMemory: true),
+                D("Husk", 5, "flash-step", "St_M_FlashStep", "death-mark", "St_Q_DeathMark", "楔の足跡", "Wedge Footprints", "St_Q_DeathMark", PairComboTrigger.OnHit, PairComboStep.Mark, "St_Q_DeathMark", PairComboTrigger.OnKill, GimmickEffect.Recharge, 30, 40, 50, 0, 0f, "St_M_FlashStep", killByPayoffMemory: true),
                 D("Husk", 6, "death-mark", "St_Q_DeathMark", "deception", "St_R_Deception", "刻印の解除", "Mark Release", "St_Q_DeathMark", PairComboTrigger.OnHit, PairComboStep.Mark, "St_R_Deception", PairComboTrigger.OnHit, GimmickEffect.Shield, 3, 5, 7, 0, 0f, null),
                 D("Husk", 7, "deception", "St_R_Deception", "killing-flow", "St_D_TheKillingFlow", "暗殺の仕上げ", "Assassin's Finish", "St_D_TheKillingFlow", PairComboTrigger.OnCrit, PairComboStep.Mark, "St_R_Deception", PairComboTrigger.OnKill, GimmickEffect.Recharge, 10, 20, 30, 0, 0f, "St_R_Deception"),
                 D("Mist", 1, "en-garde", "St_D_AstridsMasterpieceEnGarde", "lunge", "St_Q_Lunge", "初撃の見切り", "First-Strike Insight", "St_Q_Lunge", PairComboTrigger.OnHit, PairComboStep.Mark, "St_D_AstridsMasterpieceEnGarde", PairComboTrigger.OnHit, GimmickEffect.Heal, 3, 5, 7, 0, 0f, null, oncePerActivation: true, oncePerVictim: true),

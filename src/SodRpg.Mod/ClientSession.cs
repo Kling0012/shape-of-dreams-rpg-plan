@@ -786,15 +786,18 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             return null;
         }
 
-        private string SendTrade(PendingTrade t) => SendPreparedTrade(t, confirm: true);
+        private string SendTrade(PendingTrade t)
+        {
+            t.LedgerId = _hostLedgerId; // 準備時の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる。
+            return SendPreparedTrade(t, confirm: true);
+        }
 
         /// <summary>
-        /// 取引を送る。単独の取引（confirm=true）はここで準備保存を確定させる。あふれのまとめて確定（#167）は
-        /// バッチ全体で1回確定済みなので confirm=false で送るだけにする。
+        /// 準備済みの識別情報を変えずに取引を送る。単独の取引（confirm=true）はここで準備保存を確定させる。
+        /// あふれのまとめて確定（#167）はバッチ全体で1回確定済みなので confirm=false で送るだけにする。
         /// </summary>
         private string SendPreparedTrade(PendingTrade t, bool confirm)
         {
-            t.LedgerId = _hostLedgerId; // 送った時点の台帳。あとの照会で「記録がない＝未実行」と言えるかの根拠になる
             if (_clientRpcOn == null || !NetworkClient.active)
             {
                 RestoreSalvageTrade(_trades.Complete(t.Token, false));
@@ -878,8 +881,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 {
                     // ホストは記録の有無を確かめられない：支払い済みかもしれないので、返却も対価も確定せず保留する（遺物は預かったまま）。
                     Emit(new GameEvent(EventKind.Warning, Loc.T(
-                        "取引の結果をホストが確認できません（ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
-                        "The host cannot confirm the result of a trade (it may have reloaded or the connection changed). The reward and the return are both on hold.")));
+                        "取引の結果をホストが確認できません（本体の通貨処理で異常が起きたか、ホストが再読み込みされたか、接続が替わった可能性があります）。対価も返却も確定せず保留しています。",
+                        "The host cannot confirm the result of a trade (native currency processing may have failed, the host may have reloaded, or the connection may have changed). The reward and the return are both on hold.")));
                     SaveNow();
                     return;
                 }
