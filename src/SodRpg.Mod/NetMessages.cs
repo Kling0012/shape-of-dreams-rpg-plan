@@ -172,7 +172,8 @@ namespace SodRpg.Mod
         // Version 14 carries every selected keystone (up to the traveler's slots) in the build envelope.
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
         // Version 16 adds boss move/reward build sections, epoch-scoped visual snapshots and frozen boss kill facts.
-        public const int Version = 16;
+        // Version 17 adds elemental geometry, shrinking domains and bounded reward counters to boss visuals.
+        public const int Version = 17;
     }
 
     [Serializable]

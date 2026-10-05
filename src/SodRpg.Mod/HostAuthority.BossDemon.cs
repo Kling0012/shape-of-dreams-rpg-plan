@@ -70,6 +70,12 @@ namespace SodRpg.Mod
         }
         private void BossDispatch(HeroRuntime rt, BossEvent kind, long activation, Entity victim, Vector3 point, float now, bool forest)
         {
+            if (!forest)
+            {
+                DispatchSkollBoss(rt, kind, activation, victim, point, now);
+                DispatchInfernusBoss(rt, kind, activation, victim, point, now);
+                DispatchInkBoss(rt, kind, activation, victim, point, now);
+            }
             long before = rt.Boss.NextId;
             // Collection always precedes this event's new attacks/planting, regardless of equip slot order.
             if (!forest)
@@ -94,6 +100,8 @@ namespace SodRpg.Mod
             foreach (var entry in rt.Powers.Build.BossMoves)
             {
                 if (!BossProfiles.TryGetMove(entry.ProfileId, out var profile) || entry.SetId != profile.SetId) continue;
+                if (profile.SetId == BossProfiles.SkollSetId || profile.SetId == BossProfiles.InfernusSetId
+                    || profile.SetId == BossProfiles.WhiteNightSetId || profile.SetId == BossProfiles.DarkMoonSetId) continue;
                 for (int index = 0; index < profile.Actions.Count; index++)
                 {
                     var a = profile.Actions[index];
@@ -142,7 +150,7 @@ namespace SodRpg.Mod
                     rt.Boss.Shapes.Execute(this, rt, a, center, end, amount, magic);
                     PublishBossVisual(rt, ++rt.Boss.NextId, 1, center, end, a.RadiusMilli / 1000f, now, now + 0.25f);
                     return true;
-                case BossMechanism.Projectile: return rt.Boss.Projectiles.Execute(this, rt, set, a, center, end, amount, magic, now);
+                case BossMechanism.Projectile: return rt.Boss.Projectiles.Execute(this, rt, set, a, center, end, amount, magic, now, profile: profile);
                 case BossMechanism.Field: return rt.Boss.Fields.Reserve(this, rt, set, profile, a, center, end, amount, magic, now);
                 case BossMechanism.Movement: return rt.Boss.Movement.Execute(this, rt, a, center, now);
                 case BossMechanism.EnemyMovement:

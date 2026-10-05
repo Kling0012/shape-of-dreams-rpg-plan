@@ -4566,7 +4566,7 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.boss_demon.head", "head.moss_crown", new Txt("放射の枝冠", "Radial Branch Crown"), "set.boss_demon", "boss_demon.head"),
             new UniqueDef("set.boss_demon.hands", "hands.rootgrip_gloves", new Txt("溜め裂きの手甲", "Delayed Rending Grips"), "set.boss_demon", "boss_demon.hands"),
             new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("瞬駆の根履", "Blinkstride Treads"), "set.boss_demon", "boss_demon.feet"),
-        };
+        }.Concat(BossProfiles.CreateSkollPieces()).Concat(BossProfiles.CreateInfernusPieces()).Concat(BossProfiles.CreateInkPieces()).ToArray();
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
         {
@@ -4864,7 +4864,7 @@ namespace SodRpg.Core.Game
                     new SetLinkStage(6, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.BossReward, Value = 3 }),
                 },
             },
-        };
+        }.Concat(BossProfiles.CreateSkollSets()).Concat(BossProfiles.CreateInfernusSets()).Concat(BossProfiles.CreateInkSets()).ToArray();
 
         /// <summary>
         /// 48組すべてに SixPiece を入れ終えたら true にする（v1.31）。false の間は未入力のセットを許容し、

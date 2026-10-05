@@ -8,8 +8,12 @@ namespace SodRpg.Mod
     {
         public long id;
         public int kind;
+        public uint targetNetId;
         public Vector3 center, end;
         public float radius;
+        public int element, shape, count;
+        public float range, width, angle, budget;
+        public float finalRadius = -1f;
         public double due, expires;
         public bool removed;
     }

@@ -164,6 +164,17 @@ foreach (var slot in slots)
     var sb = new StringBuilder();
     sb.Append(H1("セット装備 (Sets)"));
     sb.Append("2・3・6部位の通常ボーナスは累積します。ボス限定セットの任意連携は、自分の対象記憶／エッセンス装着と2・4・6部位で最高の1段階だけ有効です。部位の組合せは任意です。数値は強化・覚醒前の基本値です。\n\nNormal 2/3/6-piece bonuses stack. Optional boss-set links require your own target memory/essence equipped; only the highest eligible 2/4/6-piece stage applies, with any combination of parts. Values are before enhancement/awakening.\n\n[[dreamforge:start|ホームへ戻る / Home]]\n\n");
+    var bossSets = Content.Sets.Where(s => s.BossTypeName != null).ToArray();
+    sb.Append(H2("ボス限定セット / Boss-exclusive sets"));
+    sb.Append($"登録済み {bossSets.Length} セット・{bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} 部位。対応ボスからのみ入手します。白夜と暗月は部位数・通常段階・報酬profileを別々に集計し、同じ均衡の光線でも合算しません。\n\n");
+    sb.Append($"Registered: {bossSets.Length} sets and {bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} parts, obtained only from their matching boss. White Night and Dark Moon count parts, normal stages and reward profiles independently even when sharing Beam of Balance.\n\n");
+    sb.Append("^ セット (Set) ^ 出所 (Source type) ^ 任意報酬 (Optional reward) ^ Adapter ^\n");
+    foreach (var s in bossSets)
+    {
+        bool hasReward = BossProfiles.TryGetReward(s.BossReward, out var reward);
+        sb.Append($"| {TxtBi(s.Name)} | {Esc(s.BossTypeName)} | {(hasReward ? TxtBi(Links.Name(reward.Requires)) : "-")} | {(hasReward ? Esc(reward.Adapter.ToString()) : "-")} |\n");
+    }
+    sb.Append('\n');
     foreach (var s in Content.Sets)
     {
         sb.Append(H2(TxtBi(s.Name)));

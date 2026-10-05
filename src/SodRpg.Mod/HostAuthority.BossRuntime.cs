@@ -37,7 +37,11 @@ namespace SodRpg.Mod
         private sealed class BossProgressLedger
         {
             private sealed class Progress { public int Count; public float Updated; public long Activation; }
-            private struct Mark { public Entity Victim; public string Ledger; public float Until, Creation; public int Count; }
+            private struct Mark
+            {
+                public Entity Victim; public string Ledger; public float Until, Creation; public int Count;
+                public long Life, Source0, Source1, Source2;
+            }
             private readonly Dictionary<string, Progress> _progress = new Dictionary<string, Progress>(StringComparer.Ordinal);
             private readonly Mark[] _marks = new Mark[8];
             private readonly long[,] _seen = new long[8, 64];
@@ -66,56 +70,123 @@ namespace SodRpg.Mod
                 return p.Count >= required;
             }
             public void Consume(string key) { if (_progress.TryGetValue(key, out var p)) p.Count = 0; }
-            public void MarkTarget(Entity victim, int count, float lifetime, float now, string ledger)
+            public void MarkTarget(Entity victim, int count, float lifetime, float now, string ledger, long nativeSource = 0)
             {
                 if (victim == null || count <= 0 || lifetime <= 0) return;
+                long life = NativeInstance.BossNativeActorLife(victim);
                 int slot = -1;
                 for (int i = 0; i < _marks.Length; i++)
                 {
-                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Creation == victim.creationTime && _marks[i].Until > now) { slot = i; break; }
-                    if (slot < 0 && (_marks[i].Until <= now || !BossAlive(_marks[i].Victim) || _marks[i].Creation != _marks[i].Victim.creationTime)) slot = i;
+                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Creation == victim.creationTime && _marks[i].Life == life && _marks[i].Until > now) { slot = i; break; }
+                    if (slot < 0 && (_marks[i].Until <= now || !BossAlive(_marks[i].Victim) || _marks[i].Creation != _marks[i].Victim.creationTime
+                        || !NativeInstance.BossNativeSameLife(_marks[i].Victim, _marks[i].Life))) slot = i;
                 }
                 if (slot < 0) return;
                 var mark = _marks[slot];
-                if (mark.Victim != victim || mark.Ledger != ledger || mark.Creation != victim.creationTime || mark.Until <= now) mark.Count = 0;
-                mark.Victim = victim; mark.Ledger = ledger; mark.Creation = victim.creationTime; mark.Until = now + lifetime; mark.Count = Math.Min(3, mark.Count + count);
+                if (mark.Victim != victim || mark.Ledger != ledger || mark.Creation != victim.creationTime || mark.Life != life || mark.Until <= now)
+                { mark.Count = 0; mark.Source0 = mark.Source1 = mark.Source2 = 0; }
+                mark.Victim = victim; mark.Ledger = ledger; mark.Creation = victim.creationTime; mark.Life = life; mark.Until = now + lifetime;
+                for (int i = 0; i < count && mark.Count < 3; i++) AppendMark(ref mark, nativeSource);
                 _marks[slot] = mark;
             }
             public int MarkCount(Entity victim, float now, string ledger)
             {
                 if (victim == null) return 0;
                 for (int i = 0; i < _marks.Length; i++)
-                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Until > now && _marks[i].Creation == victim.creationTime) return _marks[i].Count;
+                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Until > now && _marks[i].Creation == victim.creationTime
+                        && NativeInstance.BossNativeSameLife(victim, _marks[i].Life)) return _marks[i].Count;
+                return 0;
+            }
+            public long MarkNativeSource(Entity victim, float now, string ledger)
+            {
+                if (victim == null) return 0;
+                for (int i = 0; i < _marks.Length; i++)
+                {
+                    var mark = _marks[i];
+                    if (mark.Count == 0 || mark.Victim != victim || mark.Ledger != ledger || mark.Until <= now
+                        || mark.Creation != victim.creationTime || !NativeInstance.BossNativeSameLife(victim, mark.Life)) continue;
+                    return mark.Source0 > 0 ? mark.Source0 : mark.Source1 > 0 ? mark.Source1 : mark.Source2;
+                }
                 return 0;
             }
             public bool ConsumeMarks(Entity victim, int required, float now, string ledger)
             {
                 if (required <= 0 || MarkCount(victim, now, ledger) < required) return false;
                 for (int i = 0; i < _marks.Length; i++)
-                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Until > now && _marks[i].Creation == victim.creationTime)
+                    if (_marks[i].Victim == victim && _marks[i].Ledger == ledger && _marks[i].Until > now && _marks[i].Creation == victim.creationTime
+                        && NativeInstance.BossNativeSameLife(victim, _marks[i].Life))
                     {
-                        var mark = _marks[i]; mark.Count -= required; _marks[i] = mark; return true;
+                        var mark = _marks[i];
+                        for (int j = 0; j < required; j++) { mark.Source0 = mark.Source1; mark.Source1 = mark.Source2; mark.Source2 = 0; mark.Count--; }
+                        _marks[i] = mark; return true;
                     }
                 return false;
+            }
+            private static void AppendMark(ref Mark mark, long source)
+            {
+                if (mark.Count == 0) mark.Source0 = source;
+                else if (mark.Count == 1) mark.Source1 = source;
+                else mark.Source2 = source;
+                mark.Count++;
+            }
+            public void CancelNativeMarks(string ledger, long nativeSource)
+            {
+                if (nativeSource <= 0) return;
+                for (int i = 0; i < _marks.Length; i++)
+                {
+                    var mark = _marks[i];
+                    if (mark.Ledger != ledger || mark.Count == 0) continue;
+                    int count = mark.Count;
+                    long source0 = mark.Source0, source1 = mark.Source1, source2 = mark.Source2;
+                    mark.Count = 0; mark.Source0 = mark.Source1 = mark.Source2 = 0;
+                    for (int j = 0; j < count; j++)
+                    {
+                        long source = j == 0 ? source0 : j == 1 ? source1 : source2;
+                        if (source != nativeSource) AppendMark(ref mark, source);
+                    }
+                    _marks[i] = mark;
+                }
             }
             public Entity NearestMark(Vector3 point, float now, string ledger = null)
             {
                 Entity result = null; float best = float.MaxValue;
                 for (int i = 0; i < _marks.Length; i++)
-                    if (_marks[i].Count > 0 && (ledger == null || _marks[i].Ledger == ledger) && _marks[i].Until > now && BossAlive(_marks[i].Victim) && _marks[i].Creation == _marks[i].Victim.creationTime)
+                    if (_marks[i].Count > 0 && (ledger == null || _marks[i].Ledger == ledger) && _marks[i].Until > now && BossAlive(_marks[i].Victim)
+                        && _marks[i].Creation == _marks[i].Victim.creationTime && NativeInstance.BossNativeSameLife(_marks[i].Victim, _marks[i].Life))
                     {
                         float distance = (_marks[i].Victim.position - point).sqrMagnitude;
                         if (distance < best) { best = distance; result = _marks[i].Victim; }
                     }
                 return result;
             }
-            public void Clear() { _progress.Clear(); Array.Clear(_marks, 0, _marks.Length); Array.Clear(_seen, 0, _seen.Length); Array.Clear(_next, 0, _next.Length); }
+            public void Clear(bool preserveNative = false)
+            {
+                _progress.Clear(); Array.Clear(_seen, 0, _seen.Length); Array.Clear(_next, 0, _next.Length);
+                if (!preserveNative) { Array.Clear(_marks, 0, _marks.Length); return; }
+                for (int i = 0; i < _marks.Length; i++)
+                {
+                    var mark = _marks[i]; int count = mark.Count;
+                    long source0 = mark.Source0, source1 = mark.Source1, source2 = mark.Source2;
+                    mark.Count = 0; mark.Source0 = mark.Source1 = mark.Source2 = 0;
+                    for (int j = 0; j < count; j++)
+                    {
+                        long source = j == 0 ? source0 : j == 1 ? source1 : source2;
+                        if (source > 0) AppendMark(ref mark, source);
+                    }
+                    _marks[i] = mark;
+                }
+            }
         }
 
         private bool BossEnsure(HeroRuntime rt)
         {
             if (!NetworkServer.active || rt == null || !BossAlive(rt.Hero)) { if (rt != null && rt.Boss.Build != null) ClearBossEffects(rt); return false; }
             var state = rt.Boss;
+            if (NetworkedManagerBase<ZoneManager>.softInstance?.isInAnyTransition == true)
+            {
+                if (state.Build != null) ClearBossEffects(rt);
+                return false;
+            }
             var build = rt.Powers.Build;
             var room = NetworkedManagerBase<ZoneManager>.softInstance?.currentRoom;
             string run = NetworkedManagerBase<GameManager>.softInstance?.runId;
@@ -132,7 +203,7 @@ namespace SodRpg.Mod
             if (essenceIndex != state.Essences.Count) changed = true;
             if (changed)
             {
-                if (state.Build != null) ClearBossEffects(rt);
+                if (state.Build != null) ClearBossEffects(rt, state.Room == room && state.Run == run && BossAlive(rt.Hero));
                 state.Build = build; state.Epoch = rt.ShieldEquipmentEpoch; state.Room = room; state.Run = run;
                 for (int i = 0; i < LinkSkills.Length; i++) state.Memories[i] = rt.Hero.Skill?.GetSkill(LinkSkills[i]);
                 state.Essences.Clear();
@@ -148,9 +219,14 @@ namespace SodRpg.Mod
 
         private void TickBossEffects(HeroRuntime rt, float now)
         {
-            if (!BossEnsure(rt)) return;
+            if (!BossEnsure(rt)) { TickInkBoss(rt, now); RefreshBossVisualEquipment(rt); return; }
             TickBossNativeAdapters(rt);
+            TickSkollBoss(rt, now);
+            TickInfernusBoss(rt, now);
+            TickInkBoss(rt, now);
+            RefreshBossVisualEquipment(rt);
             rt.Boss.Fields.Tick(this, rt, now);
+            if (rt.Boss.Build != null && BossAlive(rt.Hero)) InkWhiteAfterFields(rt, now);
             rt.Boss.Projectiles.Tick(this, rt, now);
             rt.Boss.Deployables.Tick(this, rt, now);
             rt.Boss.Defense.Tick(this, rt, now);
@@ -162,18 +238,23 @@ namespace SodRpg.Mod
             BossDispatch(rt, BossEvent.Clock, 0, null, rt.Hero.agentPosition, now, false);
         }
 
-        private void ClearBossEffects(HeroRuntime rt)
+        private void ClearBossEffects(HeroRuntime rt, bool preserveRewards = false)
         {
             ClearBossNativeAdapters(rt);
+            ClearSkollBoss(rt);
+            ClearInfernusBoss(rt);
+            ClearInkBoss(rt, preserveRewards);
             var s = rt.Boss;
-            s.Fields.Clear(); s.Projectiles.Clear(); s.Deployables.Clear(); s.Defense.Clear(rt); s.EnemyMovement.Clear(); s.Ledger.Clear(); s.Ready.Clear();
+            s.Fields.Clear(preserveRewards); s.Projectiles.Clear(preserveRewards); s.Deployables.Clear();
+            s.Defense.Clear(this, rt); s.EnemyMovement.Clear(); s.Ledger.Clear(preserveRewards);
+            if (!preserveRewards) s.Ready.Clear();
             s.Build = null; s.ArrivalUntil = 0; s.HysteriaState = 0; s.Mode = 0; s.ModeUntil = 0;
             s.PreviousClawLeft = false;
             s.ClawPairs.Clear();
             s.ActionKeys.Clear();
             s.Essences.Clear();
             Array.Clear(s.Memories, 0, s.Memories.Length);
-            ClearBossVisuals(rt);
+            ClearBossVisuals(rt, preserveRewards);
         }
 
         private int BossRewardStage(HeroRuntime rt, string profileId)
@@ -198,6 +279,7 @@ namespace SodRpg.Mod
         }
         private static Vector3 BossCursor(HeroRuntime rt) => rt.Hero.owner != null ? rt.Hero.owner.cursorWorldPos : rt.Hero.agentPosition;
         private static Vector3 BossDirection(Vector3 from, Vector3 to) { var d = to - from; d.y = 0; return d.sqrMagnitude > 0.0001f ? d.normalized : Vector3.zero; }
+        private static float BossDirectionDistance(Vector3 from, Vector3 to) { var d = to - from; d.y = 0; return d.magnitude; }
         private static bool BossGround(Vector3 origin, Vector3 desired, float range, out Vector3 point)
         {
             var delta = desired - origin; delta.y = 0;
@@ -222,9 +304,10 @@ namespace SodRpg.Mod
             return Math.Max(rt.Hero.Status.attackDamage, rt.Hero.Status.abilityPower) * BossCoefficient(entry, profile, channel);
         }
         private static bool BossMagic(HeroRuntime rt) => rt.Hero.Status.abilityPower > rt.Hero.Status.attackDamage;
+        internal static bool IsBossGeneratedDamage(DamageData damage) => damage.IsAmountModifiedBy(typeof(BossCombatState));
         private void BossDamage(HeroRuntime rt, Entity victim, float amount, bool magic, BossElement element = BossElement.Neutral)
         {
-            if (amount <= 0 || !BossAlive(victim) || victim == rt.Hero || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
+            if (amount <= 0 || !BossAlive(rt.Hero) || !BossAlive(victim) || victim == rt.Hero || victim.GetRelation(rt.Hero) != EntityRelation.Enemy) return;
             EnterGenerated(rt.Hero);
             try
             {

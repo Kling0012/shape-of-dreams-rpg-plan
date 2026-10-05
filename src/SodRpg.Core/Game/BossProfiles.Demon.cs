@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace SodRpg.Core.Game
 {
-    public static class BossProfiles
+    public static partial class BossProfiles
     {
         public const string DemonSetId = "set.boss_demon";
         public const string DemonRewardId = "boss_demon.hysteria";
@@ -16,10 +16,12 @@ namespace SodRpg.Core.Game
         public const int NativeHysteriaSpeedMilli = -50000;
         public const string DemonEventOrder = "collect-existing;march;replant-start;replant-end;part;stomp;grove";
         public const string NativeContract = "native-only;admission-rings64;own-scoped-speed-cache64;one-activation;one-claw-instance;one-state-life;left-right-pair;post-success-exact-claw-packet;no-generated-proc;own-speed-minus50-to-minus25-then-restore-minus50;preserve-lock-heal-interval-dash;movement-installed-own-skilltrigger-actual-completion;exclude-hysteria-generated-enemy-movement";
-        public const string CombatContract = "freeze-max-ad-ap;physical-tie;neutral;one-defense;no-crit;no-attackeffect;no-self-generation;legal-ground-los;clear-on-epoch-death-room-memory";
-        public const string VisualContract = "owner-run-zone-room-equipment-epoch-revision;max-live64;effect-id-update-only;snapshot1000ms-unscaled;game-time-deadlines;offset-synced-mirror-networktime-sentAt-times-timescale;remaining-time-only;invalidate-epoch";
-        public static IReadOnlyList<BossMoveProfile> Moves { get; } = Array.AsReadOnly(CreateMoves());
-        public static IReadOnlyList<BossRewardProfile> Rewards { get; } = Array.AsReadOnly(CreateRewards());
+        public const string CombatContract = "freeze-max-ad-ap;physical-tie;profile-element-preserved;one-defense;no-crit;no-attackeffect;no-self-generation;legal-ground-los;clear-on-epoch-death-room-memory-transition-start;finite-sequence32-one-token-owner-set4;radial-per-shot-hit-per-target-wave-count-cap;terminal-projectile-no-flight-damage-no-wall-explosion;actor-life-not-creation-time-alone;native-parent-scoped-reservations-and-mark-contributions;live-config-preserve-unchanged-native-profile-sources-and-cooldowns;stop-generated-combat-on-owner-death";
+        public const string VisualContract = "owner-run-zone-room-equipment-epoch-revision;max-live64;effect-id-update-only;snapshot1000ms-unscaled;game-time-deadlines;offset-synced-mirror-networktime-sentAt-times-timescale;remaining-time-only;invalidate-epoch;profile-element-shape-range-width-angle-count-budget-shrinking-radius;frozen-adopted-target-persistent-net-id;shield-only-live-target-follow;host-only-native-life-scope-preserved-across-live-equipment-epoch";
+        public static IReadOnlyList<BossMoveProfile> Moves { get; } = Array.AsReadOnly(CreateMoves()
+            .Concat(CreateSkollMoves()).Concat(CreateInfernusMoves()).Concat(CreateInkMoves()).ToArray());
+        public static IReadOnlyList<BossRewardProfile> Rewards { get; } = Array.AsReadOnly(CreateRewards()
+            .Concat(CreateSkollRewards()).Concat(CreateInfernusRewards()).Concat(CreateInkRewards()).ToArray());
         private static readonly Dictionary<string, BossMoveProfile> moves = Moves.ToDictionary(x => x.Id, StringComparer.Ordinal);
         private static readonly Dictionary<string, BossRewardProfile> rewards = Rewards.ToDictionary(x => x.Id, StringComparer.Ordinal);
         public static bool TryGetMove(string id, out BossMoveProfile profile)
@@ -79,9 +81,15 @@ namespace SodRpg.Core.Game
         }
         internal static IEnumerable<string> FingerprintRecords()
         {
-            yield return "boss-schema:v1:" + MaxEntries + ":" + BudDelayMillis + ":" + BudCollectibleDelayMillis + ":" + BudRadiusMilli + ":" + MaxBuds + ":" + NativeHysteriaSpeedMilli;
+            yield return "boss-schema:v2:" + MaxEntries + ":" + BudDelayMillis + ":" + BudCollectibleDelayMillis + ":" + BudRadiusMilli + ":" + MaxBuds + ":" + NativeHysteriaSpeedMilli;
             yield return "boss-order:" + DemonEventOrder;
             yield return "boss-native:" + NativeContract;
+            yield return "boss-order:skoll:" + SkollEventOrder;
+            yield return "boss-native:skoll:" + SkollNativeContract;
+            yield return "boss-order:infernus:" + InfernusEventOrder;
+            yield return "boss-native:infernus:" + InfernusNativeContract;
+            yield return "boss-order:ink:" + InkEventOrder;
+            yield return "boss-native:ink:" + InkNativeContract;
             yield return "boss-combat:" + CombatContract;
             yield return "boss-visual:" + VisualContract;
             yield return "boss-profile-order:" + string.Join(",", Moves.Select(p => p.Id));

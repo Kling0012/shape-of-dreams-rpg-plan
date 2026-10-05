@@ -13,8 +13,9 @@ namespace SodRpg.Mod
             internal HeroRuntime Owner;
             internal string RunId;
             internal int Zone, Room;
-            internal long Epoch, Revision;
+            internal long Epoch, Revision, EquipmentEpoch;
             internal readonly Dictionary<long, DreamforgeBossEffect> Effects = new Dictionary<long, DreamforgeBossEffect>();
+            internal readonly Dictionary<long, long> NativeSources = new Dictionary<long, long>();
             internal readonly List<long> Expired = new List<long>();
         }
 
@@ -41,13 +42,41 @@ namespace SodRpg.Mod
                 state.Room = room;
                 state.Epoch = ++_bossVisualEpoch;
                 state.Revision = 0;
+                state.EquipmentEpoch = rt.ShieldEquipmentEpoch;
                 state.Effects.Clear();
+                state.NativeSources.Clear();
+            }
+            else if (state.EquipmentEpoch != rt.ShieldEquipmentEpoch)
+            {
+                state.EquipmentEpoch = rt.ShieldEquipmentEpoch;
+                state.Epoch = ++_bossVisualEpoch;
+                state.Revision = 0;
+                PruneBossVisualState(state);
+                SendBossVisualSnapshot(state);
             }
             return state;
         }
+        private void RefreshBossVisualEquipment(HeroRuntime rt)
+        {
+            if (rt.Hero != null && rt.Hero.netId != 0 && _bossVisuals.ContainsKey(rt.Hero.netId)) GetBossVisualState(rt);
+        }
+        private void SetBossVisualNativeSource(HeroRuntime rt, long id, long nativeLife)
+        {
+            if (rt.Hero == null || !_bossVisuals.TryGetValue(rt.Hero.netId, out var state) || state.Owner != rt || !state.Effects.ContainsKey(id)) return;
+            if (nativeLife > 0) state.NativeSources[id] = nativeLife;
+            else state.NativeSources.Remove(id);
+        }
+        private void SendBossVisualSnapshot(BossVisualState state)
+        {
+            var effects = new DreamforgeBossEffect[state.Effects.Count];
+            state.Effects.Values.CopyTo(effects, 0);
+            SendBossVisualMessage(state, effects, true);
+        }
 
         private void PublishBossVisual(HeroRuntime rt, long id, int kind, Vector3 center, Vector3 end,
-            float radius, float due, float expires, bool removed = false)
+            float radius, float due, float expires, bool removed = false, BossElement element = BossElement.Neutral, int count = 0,
+            float budget = 0, BossShape shape = BossShape.Circle, float range = 0, float width = 0, float angle = 0, float finalRadius = -1f,
+            uint targetNetId = 0, long nativeLife = 0)
         {
             if (!NetworkServer.active || rt.Hero == null || rt.Hero.netId == 0) return;
             var state = GetBossVisualState(rt);
@@ -55,26 +84,37 @@ namespace SodRpg.Mod
             {
                 id = id, kind = kind, center = center, end = end, radius = radius,
                 due = due, expires = expires, removed = removed,
+                element = (int)element, count = count, budget = budget, shape = (int)shape, range = range, width = width,
+                angle = angle, finalRadius = finalRadius,
+                targetNetId = targetNetId,
             };
-            if (removed) state.Effects.Remove(id);
+            if (removed) { state.Effects.Remove(id); state.NativeSources.Remove(id); }
             else
             {
                 PruneBossVisualState(state);
                 if (!state.Effects.ContainsKey(id) && state.Effects.Count >= 64) return;
                 state.Effects[id] = effect;
+                SetBossVisualNativeSource(rt, id, nativeLife);
             }
             state.Revision++;
             SendBossVisualMessage(state, new[] { effect }, false);
         }
 
-        private void ClearBossVisuals(HeroRuntime rt)
+        private void ClearBossVisuals(HeroRuntime rt, bool preserveNative = false)
         {
             if (rt.Hero == null || rt.Hero.netId == 0) return;
             var state = GetBossVisualState(rt);
             state.Epoch = ++_bossVisualEpoch;
             state.Revision = 0;
-            state.Effects.Clear();
-            SendBossVisualMessage(state, Array.Empty<DreamforgeBossEffect>(), true);
+            PruneBossVisualState(state);
+            if (!preserveNative) { state.Effects.Clear(); state.NativeSources.Clear(); }
+            else
+            {
+                state.Expired.Clear();
+                foreach (var pair in state.Effects) if (!state.NativeSources.ContainsKey(pair.Key)) state.Expired.Add(pair.Key);
+                foreach (long id in state.Expired) state.Effects.Remove(id);
+            }
+            SendBossVisualSnapshot(state);
         }
 
         private static void PruneBossVisualState(BossVisualState state)
@@ -83,7 +123,7 @@ namespace SodRpg.Mod
             double now = Time.time;
             foreach (var pair in state.Effects)
                 if (pair.Value.expires <= now) state.Expired.Add(pair.Key);
-            foreach (long id in state.Expired) state.Effects.Remove(id);
+            foreach (long id in state.Expired) { state.Effects.Remove(id); state.NativeSources.Remove(id); }
         }
 
         private void SendBossVisualMessage(BossVisualState state, DreamforgeBossEffect[] effects, bool snapshot)
@@ -121,9 +161,7 @@ namespace SodRpg.Mod
                     continue;
                 }
                 PruneBossVisualState(state);
-                var effects = new DreamforgeBossEffect[state.Effects.Count];
-                state.Effects.Values.CopyTo(effects, 0);
-                SendBossVisualMessage(state, effects, true);
+                SendBossVisualSnapshot(state);
             }
             foreach (uint owner in _bossVisualDeparted) _bossVisuals.Remove(owner);
         }

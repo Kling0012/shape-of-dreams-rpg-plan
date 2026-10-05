@@ -13,6 +13,8 @@ namespace SodRpg.Mod
             internal long Epoch, EquipmentEpoch, Revision = -1;
             internal readonly Dictionary<long, DreamforgeBossEffect> Effects = new Dictionary<long, DreamforgeBossEffect>();
             internal readonly List<long> Expired = new List<long>();
+            internal readonly Dictionary<long, string> Captions = new Dictionary<long, string>();
+            internal void Clear() { Effects.Clear(); Captions.Clear(); }
         }
         private readonly Dictionary<uint, BossOwnerVisual> _bossOwnerVisuals = new Dictionary<uint, BossOwnerVisual>();
         private Action<DreamforgeBossEffectsMsg> _onBossEffects;
@@ -68,7 +70,13 @@ namespace SodRpg.Mod
                 if (effect == null || effect.id <= 0 || effect.kind < 1 || effect.kind > 9
                     || !BossFinite(effect.center) || !BossFinite(effect.end) || !BossFinite(effect.radius)
                     || effect.radius < 0f || effect.radius > 32f || !BossFinite(effect.due)
-                    || !BossFinite(effect.expires) || effect.expires - msg.hostTime > 60d) return;
+                    || !BossFinite(effect.expires) || effect.expires - msg.hostTime > 60d
+                    || effect.element < 0 || effect.element > (int)BossElement.Dark || effect.shape < 0 || effect.shape > (int)BossShape.Radial
+                    || effect.count < 0 || effect.count > 64 || !BossFinite(effect.budget) || effect.budget < 0
+                    || !BossFinite(effect.range) || effect.range < 0 || effect.range > 32
+                    || !BossFinite(effect.width) || effect.width < 0 || effect.width > 32
+                    || !BossFinite(effect.angle) || effect.angle < 0 || effect.angle > 360
+                    || !BossFinite(effect.finalRadius) || effect.finalRadius < -1 || effect.finalRadius > 32) return;
                 for (int j = 0; j < i; j++) if (msg.effects[j].id == effect.id) return;
             }
             if (!_bossOwnerVisuals.TryGetValue(msg.ownerNetId, out var state))
@@ -79,7 +87,7 @@ namespace SodRpg.Mod
             }
             if (msg.epoch < state.Epoch || msg.epoch == state.Epoch && msg.revision < state.Revision) return;
             if (msg.epoch == state.Epoch && msg.equipmentEpoch != state.EquipmentEpoch) return;
-            if (msg.epoch > state.Epoch || msg.snapshot) state.Effects.Clear();
+            if (msg.epoch > state.Epoch || msg.snapshot) state.Clear();
             else if (msg.revision == state.Revision) return;
             state.Epoch = msg.epoch;
             state.EquipmentEpoch = msg.equipmentEpoch;
@@ -90,13 +98,21 @@ namespace SodRpg.Mod
             foreach (var effect in msg.effects)
             {
                 double expires = effect.expires + clockOffset;
-                if (effect.removed || expires <= now) state.Effects.Remove(effect.id);
+                if (effect.removed || expires <= now) { state.Effects.Remove(effect.id); state.Captions.Remove(effect.id); }
                 else if (state.Effects.ContainsKey(effect.id) || state.Effects.Count < 64)
+                {
                     state.Effects[effect.id] = new DreamforgeBossEffect
                     {
                         id = effect.id, kind = effect.kind, center = effect.center, end = effect.end,
                         radius = effect.radius, due = effect.due + clockOffset, expires = expires,
+                        element = effect.element, shape = effect.shape, count = effect.count, budget = effect.budget,
+                        range = effect.range, width = effect.width, angle = effect.angle, finalRadius = effect.finalRadius,
+                        targetNetId = effect.targetNetId,
                     };
+                    state.Captions[effect.id] = effect.count > 0 && effect.budget > 0
+                        ? effect.count + " / " + effect.budget.ToString("0.##")
+                        : effect.budget > 0 ? effect.budget.ToString("0.##") : effect.count > 0 ? effect.count.ToString() : "";
+                }
             }
         }
 
@@ -110,12 +126,12 @@ namespace SodRpg.Mod
                 if (NetworkClient.spawned.TryGetValue(pair.Key, out var identity) && identity != null)
                 {
                     var hero = identity.GetComponent<Hero>();
-                    if (hero == null || !hero.isActive || !hero.isAlive || hero.isKnockedOut) state.Effects.Clear();
+                    if (hero == null || !hero.isActive || !hero.isAlive || hero.isKnockedOut) state.Clear();
                 }
                 state.Expired.Clear();
                 foreach (var effect in state.Effects)
                     if (effect.Value.expires <= now) state.Expired.Add(effect.Key);
-                foreach (long id in state.Expired) state.Effects.Remove(id);
+                foreach (long id in state.Expired) { state.Effects.Remove(id); state.Captions.Remove(id); }
             }
         }
 
@@ -133,19 +149,39 @@ namespace SodRpg.Mod
                 foreach (var effect in owner.Effects.Values)
                 {
                     if (effect.expires <= now) continue;
+                    var center = effect.center;
+                    if (effect.kind == 7 && effect.targetNetId != 0 && NetworkClient.spawned.TryGetValue(effect.targetNetId, out var shieldTarget)
+                        && shieldTarget != null) center = shieldTarget.transform.position;
                     bool pending = effect.due > now;
-                    GUI.color = BossEffectColor(effect.kind, pending);
+                    GUI.color = BossEffectColor(effect.kind, effect.element, pending);
                     if (effect.kind == 5)
                     {
-                        float progress = Mathf.Clamp01((float)((now - effect.due) / Math.Max(.001d, effect.expires - effect.due)));
-                        var tip = Vector3.Lerp(effect.center, effect.end, progress);
-                        var direction = (effect.end - effect.center).normalized;
-                        DrawBossWorldLine(camera, tip - direction * .5f, tip, 4f);
+                        if (pending) DrawBossWorldLine(camera, effect.center, effect.end, 2f);
+                        else
+                        {
+                            float progress = Mathf.Clamp01((float)((now - effect.due) / Math.Max(.001d, effect.expires - effect.due)));
+                            var tip = Vector3.Lerp(effect.center, effect.end, progress);
+                            var direction = (effect.end - effect.center).normalized;
+                            DrawBossWorldLine(camera, tip - direction * .5f, tip, 4f);
+                        }
                     }
-                    else if (effect.kind == 6)
-                        DrawBossWorldLine(camera, effect.center, effect.end, pending ? 2f : 4f);
-                    if (effect.kind != 5)
-                        DrawBossWorldRing(camera, effect.center, effect.radius, pending ? 2f : 3f);
+                    else if (effect.shape == (int)BossShape.Fan)
+                        DrawBossWorldFan(camera, effect, pending ? 2f : 4f);
+                    else if (effect.shape == (int)BossShape.Line || effect.shape == (int)BossShape.Column
+                        || effect.kind == 6 && effect.shape == (int)BossShape.Circle)
+                        DrawBossWorldStrip(camera, effect, pending ? 2f : 4f);
+                    else if (effect.shape == (int)BossShape.Radial)
+                    {
+                        var direction = BossVisualDirection(effect);
+                        for (int i = 0; i < effect.count; i++)
+                            DrawBossWorldLine(camera, effect.center, effect.center + Quaternion.Euler(0, 360f * i / effect.count, 0) * direction * effect.range, 2f);
+                    }
+                    if (effect.kind != 5 && effect.shape == (int)BossShape.Circle)
+                    {
+                        float progress = Mathf.Clamp01((float)((now - effect.due) / Math.Max(.001d, effect.expires - effect.due)));
+                        float radius = effect.finalRadius < 0 ? effect.radius : Mathf.Lerp(effect.radius, effect.finalRadius, progress);
+                        DrawBossWorldRing(camera, center, radius, pending ? 2f : 3f);
+                    }
                     if (effect.kind == 2 || effect.kind == 3)
                     {
                         // A stem distinguishes timber from a missile and from the stomp's plain ring.
@@ -154,6 +190,12 @@ namespace SodRpg.Mod
                         DrawBossWorldLine(camera, effect.center + Vector3.up * height * .65f,
                             effect.center + Vector3.up * height + Vector3.right * .45f, 3f);
                     }
+                    if (effect.kind == 8)
+                    {
+                        var shoulder = effect.center + Vector3.up;
+                        DrawBossWorldLine(camera, effect.center, effect.center + Vector3.up * 1.5f, 3f);
+                        DrawBossWorldLine(camera, shoulder - Vector3.right * .4f, shoulder + Vector3.right * .4f, 3f);
+                    }
                     if (effect.kind == 4)
                     {
                         DrawBossWorldLine(camera, effect.center - Vector3.right * .45f,
@@ -161,12 +203,26 @@ namespace SodRpg.Mod
                         DrawBossWorldLine(camera, effect.center - Vector3.forward * .45f,
                             effect.center + Vector3.forward * .45f, 2f);
                     }
+                    if (owner.Captions.TryGetValue(effect.id, out var caption) && caption.Length > 0)
+                    {
+                        var at = camera.WorldToScreenPoint(center + Vector3.up * .7f);
+                        if (at.z > 0) GUI.Label(new Rect(at.x - 40f, Screen.height - at.y - 10f, 100f, 22f), caption);
+                    }
                 }
             GUI.color = oldColor;
             GUI.matrix = oldMatrix;
         }
-        private static Color BossEffectColor(int kind, bool pending)
+        private static Color BossEffectColor(int kind, int element, bool pending)
         {
+            float alpha = pending ? .65f : .95f;
+            if (kind == 8) alpha *= .5f;
+            switch ((BossElement)element)
+            {
+                case BossElement.Cold: return new Color(.5f, .85f, 1f, alpha);
+                case BossElement.Fire: return new Color(1f, .3f, .1f, alpha);
+                case BossElement.Light: return new Color(1f, .95f, .65f, alpha);
+                case BossElement.Dark: return new Color(.7f, .4f, 1f, alpha);
+            }
             switch (kind)
             {
                 case 2: return new Color(.2f, 1f, .35f, pending ? .65f : 1f);
@@ -176,6 +232,34 @@ namespace SodRpg.Mod
                 case 7: return new Color(.35f, .75f, 1f, .8f);
                 default: return new Color(.75f, .95f, .35f, pending ? .65f : 1f);
             }
+        }
+        private static Vector3 BossVisualDirection(DreamforgeBossEffect effect)
+        {
+            var direction = effect.end - effect.center; direction.y = 0;
+            return direction.sqrMagnitude > .0001f ? direction.normalized : Vector3.forward;
+        }
+        private static void DrawBossWorldStrip(Camera camera, DreamforgeBossEffect effect, float width)
+        {
+            var direction = BossVisualDirection(effect);
+            var end = effect.range > 0 ? effect.center + direction * effect.range : effect.end;
+            var half = Vector3.Cross(Vector3.up, direction) * (effect.width * .5f);
+            DrawBossWorldLine(camera, effect.center - half, end - half, width);
+            DrawBossWorldLine(camera, effect.center + half, end + half, width);
+            DrawBossWorldLine(camera, effect.center - half, effect.center + half, width);
+            DrawBossWorldLine(camera, end - half, end + half, width);
+        }
+        private static void DrawBossWorldFan(Camera camera, DreamforgeBossEffect effect, float width)
+        {
+            var direction = BossVisualDirection(effect);
+            const int segments = 24;
+            var previous = effect.center + Quaternion.Euler(0, -effect.angle * .5f, 0) * direction * effect.range;
+            DrawBossWorldLine(camera, effect.center, previous, width);
+            for (int i = 1; i <= segments; i++)
+            {
+                var next = effect.center + Quaternion.Euler(0, -effect.angle * .5f + effect.angle * i / segments, 0) * direction * effect.range;
+                DrawBossWorldLine(camera, previous, next, width); previous = next;
+            }
+            DrawBossWorldLine(camera, previous, effect.center, width);
         }
         private static void DrawBossWorldRing(Camera camera, Vector3 center, float radius, float width)
         {

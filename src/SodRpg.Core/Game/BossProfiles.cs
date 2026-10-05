@@ -132,15 +132,30 @@ namespace SodRpg.Core.Game
         public int Count { get; }
         public int RangeMilli { get; }
         public int Order { get; }
+        public int MagnitudeMilli { get; }
+        public int IntervalMillis { get; }
+        public int TargetCapMilli { get; }
+        public int BudgetMilli { get; }
+        public int DwellMillis { get; }
+        public int GapToleranceMillis { get; }
+        public int SpeedMilli { get; }
+        public int WidthMilli { get; }
         public BossRewardAction(BossRewardActionKind kind, int valueMilli = 0, int capMilli = 0, int cooldownMillis = 0,
-            int durationMillis = 0, int count = 1, int rangeMilli = 0, int order = 0)
+            int durationMillis = 0, int count = 1, int rangeMilli = 0, int order = 0, int magnitudeMilli = 0, int intervalMillis = 0,
+            int targetCapMilli = 0, int budgetMilli = 0, int dwellMillis = 0, int gapToleranceMillis = 0, int speedMilli = 0, int widthMilli = 0)
         {
             if (!Enum.IsDefined(typeof(BossRewardActionKind), kind) || capMilli < Math.Abs((long)valueMilli) || cooldownMillis < 0
-                || durationMillis < 0 || count < 1 || count > 64 || rangeMilli < 0 || order < 0) throw new ArgumentException("Invalid boss reward action.");
+                || durationMillis < 0 || count < 1 || count > 64 || rangeMilli < 0 || order < 0 || magnitudeMilli < 0 || intervalMillis < 0
+                || targetCapMilli < 0 || budgetMilli < 0 || dwellMillis < 0 || gapToleranceMillis < 0 || speedMilli < 0 || widthMilli < 0)
+                throw new ArgumentException("Invalid boss reward action.");
             Kind = kind; ValueMilli = valueMilli; CapMilli = capMilli; CooldownMillis = cooldownMillis; DurationMillis = durationMillis;
             Count = count; RangeMilli = rangeMilli; Order = order;
+            MagnitudeMilli = magnitudeMilli; IntervalMillis = intervalMillis;
+            TargetCapMilli = targetCapMilli; BudgetMilli = budgetMilli; DwellMillis = dwellMillis; GapToleranceMillis = gapToleranceMillis;
+            SpeedMilli = speedMilli; WidthMilli = widthMilli;
         }
-        internal string Fingerprint => string.Join(":", (int)Kind, ValueMilli, CapMilli, CooldownMillis, DurationMillis, Count, RangeMilli, Order);
+        internal string Fingerprint => string.Join(":", (int)Kind, ValueMilli, CapMilli, CooldownMillis, DurationMillis, Count, RangeMilli, Order,
+            MagnitudeMilli, IntervalMillis, TargetCapMilli, BudgetMilli, DwellMillis, GapToleranceMillis, SpeedMilli, WidthMilli);
     }
     public sealed class BossRewardStage
     {

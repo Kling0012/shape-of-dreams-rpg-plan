@@ -668,6 +668,7 @@ namespace SodRpg.Mod
         internal void CompleteBossNativeActor(Actor actor)
         {
             if (actor is Se_U_Hysteria) ClearBossHysteriaCapture(actor);
+            ClearEternalFlameActor(actor);
             if (actor is Ai_U_Hysteria_Claw claw && _bossHysteriaClaws.TryGetValue(claw, out var entry))
             {
                 _bossHysteriaClaws.Remove(claw);
@@ -683,6 +684,7 @@ namespace SodRpg.Mod
         internal void ClearBossNativeActor(Actor actor)
         {
             if (ReferenceEquals(actor, null)) return;
+            ClearEternalFlameActor(actor);
             ClearBossHysteriaCapture(actor);
             _bossNativeSources.Remove(actor);
             _bossNativeActorLives.Remove(actor);
