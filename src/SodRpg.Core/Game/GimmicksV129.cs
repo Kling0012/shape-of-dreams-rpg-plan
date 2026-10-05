@@ -56,7 +56,7 @@ namespace SodRpg.Core.Game
             switch (def.Effect)
             {
                 case GimmickEffect.Wound:
-                    text = ja ? "継続ダメージ +3秒あたり攻撃力か魔力の高い方の" + n + "%：当てた敵に" + woundDuration + "秒間与える（重ならず、大きい方で時間を延長）"
+                    text = ja ? "継続ダメージ +攻撃力か魔力の高い方の" + n + "%（3秒ごと）：当てた敵に" + woundDuration + "秒間与える（重ならず、強い方で時間を延長）"
                         : "Damage over time +" + n + "% of the higher of attack damage or ability power per 3 seconds: damage the hit enemy for " + woundDuration + " seconds (does not stack; refreshes the stronger wound)"; break;
                 case GimmickEffect.Daze:
                     string seconds = Duration(def, (float)value / 10f).ToString("0.#######", CultureInfo.InvariantCulture);
@@ -71,10 +71,10 @@ namespace SodRpg.Core.Game
                         : "Healing +" + n + "% of that memory's direct damage: heal yourself (excluding damage over time; at most 1.5% of your maximum health per heal)"
                         + (def.Arg == 1 ? "; allied travelers within " + allyRadius + "m receive half as much, capped at 1.5% of their own maximum health" : ""); break;
                 case GimmickEffect.Rampart:
-                    text = ja ? "障壁 +命中した敵1体につき最大HPの" + n + "%：同じ発動で当たった別々の敵を数え、" + duration + "秒間張る（" + targets + "体まで、1体につき最大2%。通常の星の障壁とは別に1つまで、残量と新しい量の大きい方を維持して時間を更新。増幅後も最大HPの10%が上限）"
+                    text = ja ? "障壁 +命中した敵1体につき最大HPの" + n + "%：同じ発動で当たった別々の敵を数え、" + duration + "秒間張る（" + targets + "体まで、1体につき最大2%。この障壁は通常の星の障壁とは別に1つまで。残量と新しい量の大きい方を保って時間を更新。増幅後も最大HPの10%が上限）"
                         : "Shield +" + n + "% of maximum health per distinct enemy hit by this cast: lasts " + duration + " seconds (up to " + targets + " enemies and 2% per enemy; one pool separate from ordinary star shields, keeping the larger remaining or new amount and refreshing duration; capped at 10% of maximum health after amplification)"; break;
                 case GimmickEffect.Primed:
-                    text = ja ? "次の通常攻撃の追加ダメージ +攻撃力か魔力の高い方の" + n + "%（重ならず" + primedDuration + "秒で消える。ほかの次の通常攻撃への上乗せとは最大の1つだけを使い、残りは消費しない）"
+                    text = ja ? "次の通常攻撃の追加ダメージ +攻撃力か魔力の高い方の" + n + "%（重ならず" + primedDuration + "秒で消える。次の通常攻撃への上乗せが複数あっても最大の1つだけ使い、残りは消費しない）"
                         : "Next basic attack extra damage +" + n + "% of the higher of attack damage or ability power (does not stack; expires after " + primedDuration + " seconds; consumes only the largest next-basic-attack bonus and leaves the others ready)"; break;
                 case GimmickEffect.Crescendo:
                     string minimum = Duration(def, 8f).ToString("0.#######", CultureInfo.InvariantCulture);
@@ -88,10 +88,10 @@ namespace SodRpg.Core.Game
                     text = ja ? "召喚獣のHP回復 +各自の最大HPの" + n + "%：自分の生存する召喚獣すべてが対象（旅人は対象外）"
                         : "Summon healing +" + n + "% of each summon’s maximum health: affects all your living summons (does not heal travelers)"; break;
                 case GimmickEffect.Sap:
-                    text = ja ? "敵の与ダメージ −" + n + "%：当てた敵に" + duration + "秒間適用（ミニボス・ボスは半分。重ならず大きい方で時間を延長）"
-                        : "Enemy damage dealt −" + n + "%: applies to the hit enemy for " + duration + " seconds (halved for minibosses and bosses; does not stack; refreshes the stronger effect)"; break;
+                    text = ja ? "敵の与ダメージ -" + n + "%：当てた敵に" + duration + "秒間適用（ミニボス・ボスは半分。重ならず、強い方で時間を延長）"
+                        : "Enemy damage dealt -" + n + "%: applies to the hit enemy for " + duration + " seconds (halved for minibosses and bosses; does not stack; refreshes the stronger effect)"; break;
                 default:
-                    text = ja ? "会心率 +" + n + "パーセントポイント：当てた敵に対する自分の通常攻撃・記憶に適用（" + duration + "秒。重ならず大きい方で時間を延長。確定会心は変えない）"
+                    text = ja ? "会心率 +" + n + "パーセントポイント：当てた敵に対する自分の通常攻撃・記憶に適用（" + duration + "秒。重ならず、強い方で時間を延長。確定会心は変えない）"
                         : "Critical chance +" + n + " percentage points: applies to your basic attacks and memories against the hit enemy for " + duration + " seconds (does not stack; refreshes the stronger effect; guaranteed critical hits remain unchanged)"; break;
             }
             string trigger = def.Trigger == GimmickTrigger.OnUse ? (ja ? "を使うと発動" : " is used")
@@ -99,14 +99,15 @@ namespace SodRpg.Core.Game
                 : def.Trigger == GimmickTrigger.OnCrit ? (ja ? "が会心すると発動" : " critically hits")
                 : (ja ? "が当たると発動" : " hits");
             float cd = Math.Max(MinimumCooldown(def.Effect), Math.Min(def.Cooldown, MaxCooldown));
-            string interval = cd > 0 ? (ja ? "。この星全体で" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒に1回"
-                : "; once every " + cd.ToString("0.#######", CultureInfo.InvariantCulture) + " seconds per star")
-                : (ja ? "。間隔制限なし" : "; no cooldown");
+            string interval = cd > 0 ? (ja ? "この星ごとに" + cd.ToString("0.#######", CultureInfo.InvariantCulture) + "秒に1回"
+                : "once every " + cd.ToString("0.#######", CultureInfo.InvariantCulture) + " seconds per star")
+                : (ja ? "間隔制限なし" : "no cooldown");
             string maximumStun = Duration(def, 0.8f).ToString("0.#######", CultureInfo.InvariantCulture);
-            string cap = def.Effect == GimmickEffect.Daze ? (ja ? "。スタンは最大" + maximumStun + "秒" : "; stun capped at " + maximumStun + " seconds")
-                : (ja ? "。効果量上限" + Cap(def.Effect) + "%" : "; effect value capped at " + Cap(def.Effect) + "%");
-            return text + (ja ? "。" : ". ") + (triggerText ?? ((ja ? "" : "Triggered when ") + memory + trigger)) + interval + cap
-                + (ja ? "。星による追加ダメージからは発動しない" : "; cannot trigger from extra damage generated by stars.");
+            string cap = def.Effect == GimmickEffect.Daze ? (ja ? "スタンは最大" + maximumStun + "秒" : "stun capped at " + maximumStun + " seconds")
+                : (ja ? "効果量は最大" + Cap(def.Effect) + "%" : "effect capped at " + Cap(def.Effect) + "%");
+            return text + (ja ? "。" : ". ") + (triggerText ?? ((ja ? "" : "Triggered when ") + memory + trigger))
+                + (ja ? "（" + interval + "・" + cap + "。星の追加ダメージでは発動しない）"
+                    : " (" + interval + "; " + cap + "; not triggered by extra damage from stars).");
         }
 
         public static float SiphonHeal(float damage, float maximumHealth, float percent)

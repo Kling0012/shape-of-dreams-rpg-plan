@@ -254,6 +254,7 @@ namespace SodRpg.Core.Game
         internal static string DescribeKeySide(KeystoneDefinition key)
         {
             var lines = new List<string>();
+            bool hasScale = false;
             if (key.RetainedPower != Power.None)
                 lines.Add(Content.FormatPower(key.RetainedPower, key.RetainedPowerValue));
             foreach (var transform in key.Upside)
@@ -294,10 +295,11 @@ namespace SodRpg.Core.Game
                 if (scope.TargetEffectSet.Contains(GimmickEffect.Wound) && transform.Field == KeystoneField.Duration)
                     lines.Add(Loc.T("毎秒のダメージは変わらず、持続が長くなる分だけ総ダメージが増える（総量上限は維持）。",
                         "Damage per second is unchanged; longer duration increases total damage, subject to the existing total cap."));
-                if (transform.Operation == KeystoneOperation.Scale)
-                    lines.Add(Loc.T("対象の現在の値に掛ける倍率で、パーセントポイントの加算ではない。各効果の上限は変わらない。",
-                        "Multiplies the current value, rather than adding percentage points. Existing effect caps remain unchanged."));
+                if (transform.Operation == KeystoneOperation.Scale) hasScale = true;
             }
+            if (hasScale)
+                lines.Add(Loc.T("倍率は対象の現在の値に掛ける（パーセントポイントの加算ではない）。各効果の上限は変わらない。",
+                    "Multipliers apply to the current value, not as added percentage points. Existing effect caps remain unchanged."));
             foreach (var grant in key.Grants)
                 lines.Add(DescribeMechanism(grant));
             if (key.RequiredMemories.Count > 0)
@@ -340,26 +342,30 @@ namespace SodRpg.Core.Game
             switch (transform.Operation)
             {
                 case KeystoneOperation.Scale:
-                    result = field + " " + (transform.MagnitudeUnits.Units > 0 ? "+" : "") + Number(transform.MagnitudeUnits.Percent) + "%"
+                    result = FieldLead(transform, field) + (transform.MagnitudeUnits.Units > 0 ? "+" : "") + Number(transform.MagnitudeUnits.Percent) + "%"
                         + Loc.T("（", " (×") + (Loc.Japanese ? "元の" : "") + Number(transform.MagnitudeUnits.Multiplier) + Loc.T("倍）。", ").");
                     break;
                 case KeystoneOperation.SetSeconds:
                     result = field + Loc.T("を", " → ") + Number(transform.Seconds) + Loc.T("秒に変更。", "s."); break;
                 case KeystoneOperation.AddTargets:
-                    result = field + " " + (transform.Count > 0 ? "+" : "") + transform.Count + Loc.T("体。", " targets."); break;
+                    result = FieldLead(transform, field) + (transform.Count > 0 ? "+" : "") + transform.Count + Loc.T("体。", " targets."); break;
                 case KeystoneOperation.SetEveryN:
                     result = Loc.T("条件を満たす", "Every ") + transform.Count + Loc.T("回ごとに発動。", " qualifying events."); break;
                 case KeystoneOperation.Set:
-                    result = field + (transform.ExpectedFrom.HasValue ? " " + KeystoneNumericText(transform, transform.ExpectedFrom.Value) : "")
-                        + " → " + KeystoneNumericText(transform, transform.Seconds) + Loc.T("に変更。", "."); break;
+                    result = FieldLead(transform, field) + (transform.ExpectedFrom.HasValue ? KeystoneNumericText(transform, transform.ExpectedFrom.Value) + " → "
+                            : transform.Field == KeystoneField.Value ? Loc.T("", "Set to ") : "→ ") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("に変更。", "."); break;
                 case KeystoneOperation.Add:
-                    result = field + " " + (transform.Seconds > 0 ? "+" : "") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("。", "."); break;
+                    result = FieldLead(transform, field) + (transform.Seconds > 0 ? "+" : "") + KeystoneNumericText(transform, transform.Seconds) + Loc.T("。", "."); break;
                 default: throw new InvalidOperationException("Unmapped keystone change.");
             }
             if (transform.Maximum.HasValue)
-                result += Loc.T(" 上限：", " Cap: ") + KeystoneNumericText(transform, transform.Maximum.Value) + Loc.T("。", ".");
+                result += Loc.T("上限：", " Cap: ") + KeystoneNumericText(transform, transform.Maximum.Value) + Loc.T("。", ".");
             return result;
         }
+
+        /// <summary>変更する項目名。効果名がすでに「量」を指すとき（値そのものの変更）は項目名を省く。</summary>
+        private static string FieldLead(KeystoneTransform transform, string field) =>
+            transform.Field == KeystoneField.Value ? "" : field + " ";
 
         private static string KeystoneNumericText(KeystoneTransform transform, decimal value)
         {
@@ -406,7 +412,7 @@ namespace SodRpg.Core.Game
         {
             if (selector == null) throw new ArgumentNullException(nameof(selector));
             if (selector.Alternatives.Count > 0)
-                return string.Join(Loc.T(" または ", " or "), selector.Alternatives.Select(SelectorText));
+                return string.Join(Loc.T("または", " or "), selector.Alternatives.Select(SelectorText));
             string text;
             switch (selector.Kind)
             {

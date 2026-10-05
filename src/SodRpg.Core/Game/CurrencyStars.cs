@@ -47,9 +47,9 @@ namespace SodRpg.Core.Game
                 default: return "-";
             }
             string cap = p == Power.DreamDustDelvePct
-                ? Loc.T($"（同じ効果の星を合算し、通常時の増加量は{Content.PowerCap(p)}%、潜行中は{Content.PowerCap(p) * 2}%まで。夢のダストの他の増加効果とは別枠）",
+                ? Loc.T($"（同じ効果の星は合計で、通常時は最大+{Content.PowerCap(p)}%、潜行中は最大+{Content.PowerCap(p) * 2}%。夢のダストの他の増加効果とは別枠）",
                     $" (combined stars of this effect capped at +{Content.PowerCap(p)}% normally and +{Content.PowerCap(p) * 2}% while delving, separate from other Dream Dust bonuses)")
-                : Loc.T($"（同じ効果の星の合計上限{Content.PowerCap(p)}%。他の獲得量増加とは別枠）",
+                : Loc.T($"（同じ効果の星は合計で最大{Content.PowerCap(p)}%。他の獲得量増加とは別枠）",
                     $" (combined stars of this effect capped at {Content.PowerCap(p)}%, separate from other acquisition bonuses)");
             return body + cap;
         }

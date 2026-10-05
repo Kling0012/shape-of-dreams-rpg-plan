@@ -340,7 +340,7 @@ namespace SodRpg.Core.Game
         public static string Describe(RunGrowthEntry entry)
         {
             int gain = Math.Max(1, entry.GainMultiplier);
-            return Loc.T($"{PerStack(entry)}／鍛錬1つ：{TriggerText(entry.Trigger, entry.Threshold)}鍛錬が{gain}つ溜まる（最大{entry.Cap}。遠征の間は死亡・ゾーン移動でも失われず、遠征の開始で0に戻る）",
+            return Loc.T($"{PerStack(entry)}／鍛錬1つ：{TriggerText(entry.Trigger, entry.Threshold)}、鍛錬が{gain}つ溜まる（最大{entry.Cap}つ。遠征の間は死亡・ゾーン移動でも失われず、遠征の開始で0に戻る）",
                 $"{PerStack(entry)} per training stack: gain {gain} stack{(gain == 1 ? "" : "s")} {TriggerText(entry.Trigger, entry.Threshold)} (up to {entry.Cap} stacks; kept through death and zone changes for the whole expedition, reset when a new expedition begins)");
         }
 
@@ -397,7 +397,7 @@ namespace SodRpg.Core.Game
         public static string SummaryLine(RunGrowthEntry entry, int stacks)
         {
             int shown = Math.Max(0, Math.Min(stacks, entry.Cap));
-            return Describe(entry) + "\n" + Loc.T($"現在 {shown}/{entry.Cap}スタック", $"Now {shown}/{entry.Cap} stacks")
+            return Describe(entry) + "\n" + Loc.T($"現在 {shown}/{entry.Cap}つ", $"Now {shown}/{entry.Cap} stacks")
                 + (shown > 0 ? "（" + string.Join(Loc.T("、", ", "), entry.Effects.Select(x => StatText(x.Stat, StatTotal(entry, x, shown)))) + "）" : "");
         }
     }

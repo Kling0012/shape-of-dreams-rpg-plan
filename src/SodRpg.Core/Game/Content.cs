@@ -238,7 +238,7 @@ namespace SodRpg.Core.Game
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
             if (BossTypeName != null)
-                text += Loc.T($"\n出所：{Name}のボス限定（{BossTypeName}）", $"\nSource: {Name} boss only ({BossTypeName})");
+                text += Loc.T("\n入手先：対応するボスからのみ", "\nSource: only from the matching boss");
             foreach (var stage in LinkStages)
                 text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：", $"\nOptional {stage.RequiredPieces}-piece link: ")
                     + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
@@ -282,7 +282,8 @@ namespace SodRpg.Core.Game
             }
             else if (count >= 3) return Loc.T("3つそろっています。すべての効果が有効です。", "All 3 pieces equipped: every bonus is active.");
             if (count == 2) return Loc.T("あと1つで、3つ装着の効果が加わります。", "One more piece adds the 3-piece bonus.");
-            return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.");
+            if (count == 1) return Loc.T("あと1つで、2つ装着の効果が有効になります。", "One more piece activates the 2-piece bonus.");
+            return Loc.T("あと2つで、2つ装着の効果が有効になります。", "Two more pieces activate the 2-piece bonus.");
         }
     }
 
@@ -5835,10 +5836,10 @@ namespace SodRpg.Core.Game
                 case Stat.FourthAttackShift: return Loc.T($"強化通常攻撃までの必要回数 -{v}発（4発目の強化攻撃を早める）", $"Attacks needed for an empowered basic attack -{v} (brings the empowered fourth attack forward)");
                 case Stat.EssenceSlotIdentity: return Loc.T($"エッセンス枠 {sign}{v}（装備中のアイデンティティ記憶が対象）", $"Essence slots {sign}{v} (for your equipped Identity memory)");
                 case Stat.EssenceSlotMovement: return Loc.T($"エッセンス枠 {sign}{v}（装備中の移動の記憶が対象）", $"Essence slots {sign}{v} (for your equipped Movement memory)");
-                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%（自分・味方への回復が対象。同じ能力値の装備・星の合計上限{StatCap(s)}%）", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%（自分・味方への障壁が対象。同じ能力値の装備・星の合計上限{StatCap(s)}%）", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%（同じ能力値の装備・星の合計上限{StatCap(s)}%）", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
-                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%（同じ能力値の装備・星による軽減の合計上限{StatCap(s)}%）", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
+                case Stat.HealPower: return Loc.T($"与えるHP回復量 {sign}{v}%（自分・味方への回復が対象。装備・星の同じ能力値は合計で最大{StatCap(s)}%）", $"Healing granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.ShieldPower: return Loc.T($"与える障壁量 {sign}{v}%（自分・味方への障壁が対象。装備・星の同じ能力値は合計で最大{StatCap(s)}%）", $"Shield amount granted {sign}{v}% (to yourself and allies; combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.SummonPower: return Loc.T($"自分の召喚獣の与ダメージ {sign}{v}%（装備・星の同じ能力値は合計で最大{StatCap(s)}%）", $"Your summons' damage {sign}{v}% (combined equipment and star bonuses to this stat capped at {StatCap(s)}%)");
+                case Stat.SacrificeReduction: return Loc.T($"HPを捧げる技のHP消費 {-v:+0;-0;0}%（装備・星の同じ能力値による軽減は合計で最大{StatCap(s)}%）", $"HP cost of health-sacrificing skills {-v:+0;-0;0}% (combined equipment and star reductions capped at {StatCap(s)}%)");
                 default: return Loc.T($"闇属性効果 {sign}{v}%", $"Dark effect strength {sign}{v}%");
             }
         }
@@ -5908,8 +5909,8 @@ namespace SodRpg.Core.Game
             string body;
             string ElementHeading(string ja, string en) => v < 100
                 ? Loc.T($"{ja}付与確率 +{v}パーセントポイント／", $"{en} application chance +{v} percentage points / ")
-                : Loc.T($"{ja}付与 +{v / 100}個（さらに{v % 100}%の確率で1個追加）／",
-                    $"{en} application +{v / 100} stacks (plus a {v % 100}% chance for 1 more) / ");
+                : Loc.T($"{ja}付与 +{v / 100}つ" + (v % 100 > 0 ? $"（さらに{v % 100}%の確率でもう1つ）" : "") + "／",
+                    $"{en} application +{v / 100} " + (v / 100 == 1 ? "stack" : "stacks") + (v % 100 > 0 ? $" (plus a {v % 100}% chance for 1 more)" : "") + " / ");
             switch (p)
             {
                 case Power.Momentum: body = Loc.T($"攻撃速度 +{v}%／敵を倒すたびに4秒間。5回まで重なり、撃破で全体の持続時間を延長", $"Attack speed +{v}% per kill for 4s; stacks up to 5 times, with kills refreshing the whole duration"); break;
@@ -5922,7 +5923,7 @@ namespace SodRpg.Core.Game
                 case Power.Tailwind: body = Loc.T($"移動速度 +{v}%／敵を倒した後2秒間。重ならず、撃破で時間を延長", $"Movement speed +{v}% for 2s after a kill; kills refresh it without stacking"); break;
                 case Power.Barrier: body = Loc.T($"障壁 +自分の最大HPの{v}%／自分へ4秒間付与。最初は3秒後、以後12秒ごと", $"Shield +{v}% of your maximum health for 4s; first granted after 3s, then every 12s"); break;
                 case Power.SecondWind: body = Loc.T($"HP回復 +自分の最大HPの{v}%／自分のHPが30%未満のとき（60秒に1回）", $"Health restored +{v}% of your maximum health while below 30% health (once per 60s)"); break;
-                case Power.Blaze: body = Loc.T($"通常攻撃の追加魔法ダメージ +攻撃力か魔力の高い方の{v}%／4発目の強化通常攻撃が命中したとき。命中4回の数え直しではなく、強化攻撃の周期に従う", $"Basic attack bonus magic damage +{v}% of the higher of your attack damage or ability power when your empowered fourth attack hits; follows the empowered-attack cycle, not a count of four successful hits"); break;
+                case Power.Blaze: body = Loc.T($"通常攻撃の追加魔法ダメージ +攻撃力か魔力の高い方の{v}%／4発目の強化通常攻撃が命中したとき（命中回数ではなく、強化攻撃の周期で判定）", $"Basic attack bonus magic damage +{v}% of the higher of your attack damage or ability power when your empowered fourth attack hits (judged by the empowered-attack cycle, not by counting hits)"); break;
                 case Power.ChainLightning: body = Loc.T($"追加魔法ダメージ +攻撃力か魔力の高い方の{v}%／通常攻撃命中時に25%の確率。当てた敵の周囲6m以内の別の敵、最大2体にそれぞれ与える", $"Bonus magic damage +{v}% of the higher of your attack damage or ability power per target; a basic attack hit has a 25% chance to hit up to 2 other enemies within 6m of the struck enemy"); break;
                 case Power.Shatter: body = Loc.T($"範囲ダメージ +攻撃力か魔力の高い方の{v}%／敵を倒したとき、倒した敵の周囲4m以内の敵それぞれに与える（この効果による撃破からは連鎖しない）", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within 4m of an enemy you kill (kills from this effect do not chain)"); break;
                 case Power.Aegis: body = Loc.T($"障壁 +自分の最大HPの{v}%／自分の最大HPの10%以上の一撃を受けたとき、自分へ6秒間付与（12秒に1回）", $"Shield +{v}% of your maximum health for 6s when a single hit deals at least 10% of your maximum health (once per 12s)"); break;
@@ -5934,7 +5935,7 @@ namespace SodRpg.Core.Game
                 case Power.Convergence: body = Loc.T($"追加ダメージ +攻撃力か魔力の高い方の{v}%／自分が属性を付けた敵に火・冷気・光・闇がそろっているとき、その敵に与える（同じ敵に6秒に1回）", $"Bonus damage +{v}% of the higher of your attack damage or ability power to an enemy when your elemental application leaves it with Fire, Cold, Light and Dark (once per 6s per enemy)"); break;
                 case Power.EchoingDodge: body = Loc.T($"次の通常攻撃の追加ダメージ +攻撃力か魔力の高い方の{v}%／移動の記憶を使った後3秒以内の次の命中時。重ならず、再使用で時間を延長。次の通常攻撃への追加効果は最大の1つだけを消費し、残りは期限まで保持", $"Next basic attack bonus damage +{v}% of the higher of your attack damage or ability power on the next hit within 3s of using a Movement memory; refreshes without stacking. Only the largest next-basic bonus is consumed; others remain until their expiry"); break;
                 case Power.UltimateSurge: body = Loc.T($"攻撃力・魔力 +{v}%／奥義の記憶を使った後5秒間。重ならず、再使用で時間を延長", $"Attack damage and ability power +{v}% for 5s after using an Ultimate memory; refreshes without stacking"); break;
-                case Power.SoulSiphon: body = Loc.T($"HP回復 +自分の最大HPの{v / 10f:0.0}%／敵を倒したとき（0.5秒に1回）", $"Health restored +{v / 10f:0.0}% of your maximum health on kill (once per 0.5s)"); break;
+                case Power.SoulSiphon: body = Loc.T($"HP回復 +自分の最大HPの{v / 10f:0.#}%／敵を倒したとき（0.5秒に1回）", $"Health restored +{v / 10f:0.#}% of your maximum health on kill (once per 0.5s)"); break;
                 case Power.Whirlwind: body = Loc.T($"範囲ダメージ +攻撃力か魔力の高い方の{v}%／移動の記憶を使ったとき、自分の周囲4m以内の敵それぞれに与える（2秒に1回）", $"Area damage +{v}% of the higher of your attack damage or ability power per enemy within 4m of you when using a Movement memory (once per 2s)"); break;
                 case Power.Frenzy: body = Loc.T($"攻撃速度 +{v}%／自分の周囲6m以内の敵1体につき。最大8体分まで", $"Attack speed +{v}% per enemy within 6m of you, counting up to 8 enemies"); break;
                 case Power.OpeningStrike: body = Loc.T($"通常攻撃の追加ダメージ +攻撃力の{v}%／HPが90%以上の敵に命中したとき", $"Basic attack bonus damage +{v}% of your attack damage when hitting an enemy at or above 90% health"); break;
@@ -5958,10 +5959,10 @@ namespace SodRpg.Core.Game
                 default: return "-";
             }
             string cap = p == Power.StillWater || p == Power.SpendersWard || p == Power.PerfectRead
-                ? Loc.T($"（同じ効果の装備・星の合計上限{PowerCap(p)}%）", $" (combined equipment and star value of this effect capped at {PowerCap(p)}%)")
+                ? Loc.T($"（装備・星の同じ効果は合計で最大{PowerCap(p)}%）", $" (combined across equipment and stars, this effect is capped at {PowerCap(p)}%)")
                 : "";
             if (NewPowersV129.IsConditionalAttribute(p))
-                cap += Loc.T("。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果合計120%まで",
+                cap += Loc.T("。条件つき攻撃力・魔力の増加は、覚醒前の数値で全効果の合計が最大120%",
                     ". Conditional attack damage and ability power bonuses together are capped at +120%, counted before awakening");
             return body + cap;
         }
@@ -5973,24 +5974,24 @@ namespace SodRpg.Core.Game
             switch (p)
             {
                 case Power.Steam:
-                    effect = Loc.T($"範囲無属性ダメージ +攻撃力か魔力の高い方の{v}%、敵の移動速度 -30%／自分が属性を付けた敵に火と冷気がそろっているとき、その敵と周囲3m以内の敵それぞれが対象。スロウは2秒間（同じ効果の装備・星の割合合計上限120%。全対象へのダメージ合計ではなく、道標倍率を掛ける前の割合）",
+                    effect = Loc.T($"範囲無属性ダメージ +攻撃力か魔力の高い方の{v}%、敵の移動速度 -30%／自分が属性を付けた敵に火と冷気がそろっているとき、その敵と周囲3m以内の敵それぞれが対象。スロウは2秒間（装備・星の同じ効果は合計で最大120%。道標倍率を掛ける前の1回分の割合で、全対象へのダメージ合計ではない）",
                         $"Area non-elemental damage +{v}% of the higher of your attack damage or ability power and enemy movement speed -30% for 2s when your elemental application leaves an enemy with Fire and Cold; affects it and each enemy within 3m (combined equipment and star damage percentage of this effect capped at 120% before Waypoint multipliers, not a damage total across targets)");
                     break;
                 case Power.Eclipse:
-                    effect = Loc.T($"敵が自分から受けるダメージ +{v}%／自分が属性を付けた敵に光と闇がそろっているとき、その敵へ4秒間適用（同じ効果の装備・星の割合合計上限25%、道標倍率前。被ダメージ増加は重ならず最高値だけを適用）",
+                    effect = Loc.T($"敵が自分から受けるダメージ +{v}%／自分が属性を付けた敵に光と闇がそろっているとき、その敵へ4秒間適用（装備・星の同じ効果は合計で最大25%。道標倍率を掛ける前の割合。被ダメージ増加は重ならず、最も高い値だけを適用）",
                         $"Damage an enemy takes from you +{v}% for 4s when your elemental application leaves it with Light and Dark (combined equipment and star value of this effect capped at 25% before Waypoint multipliers; damage-vulnerability effects use only the highest value without stacking)");
                     break;
                 case Power.Cinder:
-                    effect = Loc.T($"撃破時の火付与 +1個／自分が属性を付けた敵に火と闇がそろっているとき、その敵に印を付ける。印の敵が倒れると、倒れた敵の周囲4m以内の別の敵それぞれへ火を付与（同じ効果の装備・星を合算して1個まで、道標倍率前。印は重ならず、味方の撃破でも発動）",
-                        $"Fire applied on death +1 stack per other enemy within 4m of the marked enemy; your elemental application marks an enemy with Fire and Dark, and its death triggers the spread (combined equipment and star value of this effect capped at 1 stack before Waypoint multipliers; marks do not stack; ally kills also trigger it)");
+                    effect = Loc.T($"撃破時の火付与 +1つ／自分が属性を付けた敵に火と闇がそろっているとき、その敵に印を付ける。印の敵が倒れると、倒れた敵の周囲4m以内の別の敵それぞれへ火を付与（装備・星の同じ効果は合計で最大1つ。道標倍率を掛ける前の数。印は重ならず、味方の撃破でも発動）",
+                        $"Fire applied on death +1 stack / when your elemental application leaves an enemy with Fire and Dark, mark it; when the marked enemy dies, apply Fire to each other enemy within 4m of it (combined across equipment and stars, capped at 1 stack before Waypoint multipliers; marks do not stack; ally kills also trigger it)");
                     break;
                 default:
-                    effect = Loc.T($"障壁 +自分の最大HPの{v}%／自分が属性を付けた敵に光と冷気がそろっているとき、自分へ4秒間付与（同じ効果の装備・星の割合合計上限12%、道標倍率前。1回の障壁量の基準となる割合）",
+                    effect = Loc.T($"障壁 +自分の最大HPの{v}%／自分が属性を付けた敵に光と冷気がそろっているとき、自分へ4秒間付与（装備・星の同じ効果は合計で最大12%。道標倍率を掛ける前の、1回の障壁量の基準となる割合）",
                         $"Shield +{v}% of your maximum health for 4s when your elemental application leaves an enemy with Light and Cold (combined equipment and star value of this effect capped at 12% before Waypoint multipliers; this is the percentage used for one shield grant)");
                     break;
             }
-            return effect + Loc.T("。属性は消費しない。継続・多段の属性付与による連発を防ぐため、同じ敵への同じ反応は6秒に1回。反応の追加効果は連鎖しない。道標の倍率は効果量に適用する。",
-                ". Does not consume elements. Each reaction is limited to once per 6s per enemy to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoints multiply the effect amount.");
+            return effect + Loc.T("。属性は消費しない。同じ敵への同じ反応は6秒に1回まで（継続・多段の属性付与による連発を防ぐ）。反応の追加効果は連鎖しない。道標の倍率は効果量に掛かる。",
+                ". Does not consume elements. Each reaction triggers at most once per 6s per enemy, to prevent repeated triggers from persistent or multi-hit elemental effects. Reaction effects do not chain. Waypoint multipliers apply to the effect amount.");
         }
     }
 }

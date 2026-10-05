@@ -96,12 +96,12 @@ namespace SodRpg.Core.Tests
             {
                 Loc.Japanese = true;
                 string single = Links.Describe(Bond("Hero_Vesper"));
-                Assert.Contains("近くに Vesper がいると", single);
-                Assert.Contains("自分が Vesper", single);
+                Assert.Contains("10m以内に生存中の味方のVesperがいるとき", single);
+                Assert.Contains("自分がVesper", single);
                 Assert.Contains("10m", single);
                 string pair = Links.Describe(Bond("Hero_Husk", "Hero_Mist"));
-                Assert.Contains("Husk と Mist", pair);
-                Assert.Contains("のうち1人", pair);
+                Assert.Contains("Husk・Mist", pair);
+                Assert.Contains("のうち1人が自分で", pair);
                 Loc.Japanese = false;
                 Assert.Contains("living allied Vesper within 10 m", Links.Describe(Bond("Hero_Vesper")));
                 Assert.Contains("one of Husk and Mist", Links.Describe(Bond("Hero_Husk", "Hero_Mist")));

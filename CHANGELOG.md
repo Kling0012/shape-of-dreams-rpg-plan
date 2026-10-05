@@ -8,6 +8,10 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+### 変更 / Changed
+
+- **装備と星図の説明文の見直し**：数値や効果は変えず、読み間違えやすかった書き方だけを直しました。上限の数値に単位（%）を付け、ボス装備の「段階」を「固有報酬の段階」と明記し、星の連携・追加効果・刻印の説明を条件と対象がたどりやすい順に整えました。「+」「-」は半角にそろえ、「です・ます」を常体にそろえています。 / **Reviewed equipment and star-map descriptions**: wording only, no numbers or effects changed. Caps now carry units, boss-set stages are called boss reward stages, and link, extra-effect and keystone texts now read condition first, then target. Symbols and tone are unified.
+
 ---
 
 ## v2.5.0 — インフィニティの地図と、鞄あふれの軽量化（2026-10-06）

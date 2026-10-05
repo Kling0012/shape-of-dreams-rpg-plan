@@ -249,7 +249,7 @@ namespace SodRpg.Core.Game
                         AddPartners(node);
                     }
             }
-            string effects = string.Join(Loc.T("・", ", "), labels.Distinct());
+            string effects = string.Join(Loc.T("・", ", "), SortLabels(labels.Distinct()));
             if (effects.Length == 0) throw new InvalidOperationException("Cannot resolve scoped effect description.");
             string value = ((modifier.Param == GimmickParam.Chance ? modifier.Probability.Units : modifier.Amount.Units) / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string field;
@@ -267,7 +267,7 @@ namespace SodRpg.Core.Game
                 : value + (modifier.Param == GimmickParam.Chance ? Loc.T("パーセントポイント", " percentage points") : "%");
             string scope = modifier.ScopeKind == ScopeKind.Receiver
                 ? Loc.T(memory + "を装着中、その記憶が受け取る効果を強化", "while " + memory + " is equipped; enhances effects received by it")
-                : Loc.T(memory + "を装着中、その記憶から発動する星の追加効果を強化", "while " + memory + " is equipped; enhances the star-granted extra effects fired through it");
+                : Loc.T(memory + "を装着中、その記憶から発動する星の効果を強化", "while " + memory + " is equipped; enhances the star effects triggered by it");
             string basis = modifier.Param == GimmickParam.ExtraTargets || modifier.Param == GimmickParam.Chance ? ""
                 : Loc.T("（元の" + field + "の" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + "倍）",
                     " (×" + (1m + modifier.Amount.Units / 10000m).ToString("0.####", CultureInfo.InvariantCulture) + " the original " + field + ")");
@@ -283,8 +283,28 @@ namespace SodRpg.Core.Game
                     + ModifierCapDescription(modifier);
             }
             return heading + " +" + amount + Loc.T("：", ": ") + scope + basis
-                + Loc.T("。対象の効果：", ". Affected effects: ") + effects + ModifierCapDescription(modifier)
+                + Loc.T("。強化される効果：", ". Enhanced effects: ") + effects + ModifierCapDescription(modifier)
                 + (partners.Count > 1 ? Loc.T("。連携する記憶：", ". Linked memories: ") + linked : "");
+        }
+
+        /// <summary>効果ラベルを属性付与→ダメージ→防御・回復→クールダウン→弱体→強化の順に並べる（未知のラベルは最後）。</summary>
+        private static IEnumerable<string> SortLabels(IEnumerable<string> labels)
+        {
+            var order = new List<string>();
+            foreach (var effect in new[] { GimmickEffect.Element, GimmickEffect.Burst, GimmickEffect.Echo, GimmickEffect.Wound, GimmickEffect.Ricochet,
+                GimmickEffect.ElementEdge, GimmickEffect.Primed, GimmickEffect.Crescendo, GimmickEffect.Shield, GimmickEffect.Rampart, GimmickEffect.Heal,
+                GimmickEffect.Siphon, GimmickEffect.PackMend, GimmickEffect.Recharge, GimmickEffect.RechargeOther, GimmickEffect.Reload,
+                GimmickEffect.Expose, GimmickEffect.Sap, GimmickEffect.Daze, GimmickEffect.Weakspot, GimmickEffect.Quicken, GimmickEffect.Empower })
+            {
+                if (effect == GimmickEffect.Element)
+                    for (int arg = 0; arg < 4; arg++) order.Add(EffectLabel(new GimmickDef { Effect = GimmickEffect.Element, Arg = arg }));
+                order.Add(EffectLabel(effect));
+            }
+            order.Add(Loc.T("追加ダメージ", "extra damage"));
+            order.Add(WardLabel(null, true));
+            order.Add(WardLabel(null, false));
+            return labels.Select((label, i) => (label, i, rank: order.IndexOf(label) < 0 ? int.MaxValue : order.IndexOf(label)))
+                .OrderBy(x => x.rank).ThenBy(x => x.i).Select(x => x.label);
         }
 
         private static string MechanismEffectLabel(AuthoredMechanismSpec spec)
@@ -310,8 +330,9 @@ namespace SodRpg.Core.Game
             }
         }
         /// <summary>障壁の受け手が分かるラベル（対数・対象数の修飾星で誰への障壁かを読ませる）。</summary>
-        private static string WardLabel(AlliedWardDefinition ward) =>
-            ward.RecipientKind == WardRecipientKind.OwnedSummons
+        private static string WardLabel(AlliedWardDefinition ward) => WardLabel(ward, ward.RecipientKind == WardRecipientKind.OwnedSummons);
+        private static string WardLabel(AlliedWardDefinition ward, bool summons) =>
+            summons
                 ? Loc.T("召喚獣への障壁", "shields for your summons")
                 : Loc.T("味方旅人への障壁", "shields for allied travelers");
 
@@ -356,14 +377,14 @@ namespace SodRpg.Core.Game
         private static string ModifierCapDescription(ScopedModifierDef modifier)
         {
             if (modifier.CapProfileId == null && !modifier.Param.HasValue)
-                return Loc.T("（対象効果の最終上限に従う）", " (subject to final effect caps)");
+                return Loc.T("（各効果の最終上限は超えない）", " (never exceeds each effect's final cap)");
             int units = modifier.CapProfileId != null ? ScopedCapMaximumUnits(modifier.CapProfileId)
                 : modifier.Param == GimmickParam.ExtraTargets ? Gimmicks.MaxExtraTargets
                 : modifier.Param == GimmickParam.Chance ? 10000 : Gimmicks.MaxParameterPercent * 100;
             string maximum = (modifier.Param == GimmickParam.ExtraTargets ? units : units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string jaUnit = modifier.Param == GimmickParam.ExtraTargets ? "体" : modifier.Param == GimmickParam.Chance ? "パーセントポイント" : "%";
             string enUnit = modifier.Param == GimmickParam.ExtraTargets ? " targets" : modifier.Param == GimmickParam.Chance ? " percentage points" : "%";
-            return Loc.T("（同じ対象の効果の合計上限" + maximum + jaUnit + "）", " (combined cap for matching effects " + maximum + enUnit + ")");
+            return Loc.T("（同じ効果への強化は合計で最大" + maximum + jaUnit + "）", " (enhancements to the same effect total at most " + maximum + enUnit + ")");
         }
 
         /// <summary>Total of several native stars sharing one effect: no per-star cap note, which would misread as a cap on the total.</summary>
@@ -372,8 +393,8 @@ namespace SodRpg.Core.Game
             string value = (units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(memoryId);
             return kind == LinkKind.MemoryDamage
-                ? Loc.T("記憶ダメージ +" + value + "%：" + memory + "で与えるダメージに適用", "Memory damage +" + value + "%: applies to damage dealt by " + memory)
-                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使用した際に、その最大クールダウン時間の" + value + "%分だけ残り時間を短縮", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining time");
+                ? Loc.T(memory + "のダメージ +" + value + "%", "Damage dealt by " + memory + " +" + value + "%")
+                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown");
         }
 
         public static string Describe(NativeMemoryModifierDef modifier)
@@ -383,8 +404,8 @@ namespace SodRpg.Core.Game
             string maximum = (cap.Maximum.Units / 100m).ToString("0.##", CultureInfo.InvariantCulture);
             string memory = Links.ItemName(modifier.Memory);
             return modifier.Kind == LinkKind.MemoryDamage
-                ? Loc.T("記憶ダメージ +" + value + "%：" + memory + "で与えるダメージに適用（星の上限" + maximum + "%）", "Memory damage +" + value + "%: applies to damage dealt by " + memory + " (star cap " + maximum + "%)")
-                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使用した際に、その最大クールダウン時間の" + value + "%分だけ残り時間を短縮（星の上限" + maximum + "%）", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining time (star cap " + maximum + "%)");
+                ? Loc.T(memory + "のダメージ +" + value + "%（星による上限" + maximum + "%）", "Damage dealt by " + memory + " +" + value + "% (star cap " + maximum + "%)")
+                : Loc.T("クールダウン短縮 +" + value + "%：" + memory + "を使うと、その記憶の残りクールダウンを最大クールダウンの" + value + "%分短縮する（星による上限" + maximum + "%）", "Cooldown reduction +" + value + "%: using " + memory + " removes " + value + "% of its maximum cooldown from its remaining cooldown (star cap " + maximum + "%)");
         }
         public static void ValidateTalent(TalentDef talent)
         {

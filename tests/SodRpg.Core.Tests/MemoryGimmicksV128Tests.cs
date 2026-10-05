@@ -33,7 +33,7 @@ namespace SodRpg.Core.Tests
                 Assert.Contains("0.75", description);
                 Assert.Contains(japanese ? "1つ" : "1 stack", description);
                 Assert.Contains(japanese ? "確率" : "chance", description);
-                Assert.Contains(japanese ? "星全体" : "per star", description);
+                Assert.Contains(japanese ? "この星ごと" : "per star", description);
                 Assert.Contains(japanese ? Links.Name(Memory).Ja : Links.Name(Memory).En, description);
                 var fractional = Entry(effect: GimmickEffect.Element, value: 60).Def;
                 Assert.Contains(japanese ? "60%の確率で1つ" : "1 stack with a 60% chance", Gimmicks.Describe(fractional, Memory));

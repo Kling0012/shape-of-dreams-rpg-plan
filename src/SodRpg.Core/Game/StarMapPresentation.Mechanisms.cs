@@ -61,7 +61,7 @@ namespace SodRpg.Core.Game
         {
             switch (pool)
             {
-                case ModShieldPoolKind.Ordinary: return Loc.T("同じ付与者から同じ受け手への通常の星の障壁とは重ならず、大きい残量を維持して持続時間を更新（付与者と受け手の組み合わせごとに、受け手の最大HPの15%まで）。", "Does not stack with ordinary star shields from the same caster to the same recipient; keeps the larger remaining amount and refreshes duration (up to 15% of the recipient's maximum HP per caster and recipient).");
+                case ModShieldPoolKind.Ordinary: return Loc.T("付与者と受け手の組ごとに、通常の星の障壁と1つを共有する（重ならず、残量の大きい方を保って時間を延長。受け手の最大HPの15%まで）。", "Shares one shield with ordinary star shields for each caster and recipient pair (does not stack; keeps the larger remaining amount and refreshes the duration; up to 15% of the recipient's maximum HP).");
                 case ModShieldPoolKind.Rampart: return Loc.T("通常の星の障壁とは別に保持（最大HPの10%まで）。", "Separate from ordinary star shields (up to 10% maximum HP).");
                 case ModShieldPoolKind.Allied: return Loc.T("同じ付与者からの障壁は重ならず、受け手の最大HPの3%まで。", "Shields from the same caster do not stack; up to 3% of the recipient's maximum HP.");
                 default: throw new InvalidOperationException("Unknown shield pool: " + pool);
@@ -100,7 +100,7 @@ namespace SodRpg.Core.Game
 
         private static string DescribeMemoryTuning(MemoryTuningDefinition tuning)
         {
-            string equipped = Loc.T(" " + Links.ItemName(tuning.Memory) + "を装備中、", " While " + Links.ItemName(tuning.Memory) + " is equipped, ");
+            string equipped = Loc.T("" + Links.ItemName(tuning.Memory) + "を装備中、", " While " + Links.ItemName(tuning.Memory) + " is equipped, ");
             switch (tuning.Kind)
             {
                 case MemoryTuningKind.KillingFlowKeepSpeed:
@@ -125,12 +125,12 @@ namespace SodRpg.Core.Game
             string memory = Links.ItemName(strike.Identity);
             if (!strike.DealsDamage)
                 return Loc.T("追加ダメージ量は変化なし。", "Extra damage amount unchanged.")
-                    + Loc.T(" " + memory + "を装備中、突進攻撃の元々の追加ダメージ部分だけを、この記憶のダメージとして扱う（通常攻撃としては扱わない）。",
+                    + Loc.T("" + memory + "を装備中、突進攻撃の元々の追加ダメージ部分だけを、この記憶のダメージとして扱う（通常攻撃としては扱わない）。",
                         " While " + memory + " is equipped, only the dash attack's existing bonus damage counts as this memory's damage, rather than basic attack damage.");
             string element = strike.Element == IdentityStrikeElement.None ? Loc.T("無属性", "non-elemental") : ElementName(strike.Element);
             string basis = strike.Basis == IdentityStrikeBasis.AttackDamage ? Loc.T("攻撃力", "attack damage") : Loc.T("攻撃力・魔力の高い方", "the higher of attack damage and ability power");
             string amount = Percent(strike.AdUnits)
-                + (strike.BonusSpeedUnitsPerPercent > 0 ? Loc.T("＋変換済みの追加攻撃速度1%につき", " + per 1% converted bonus attack speed ") + Percent(strike.BonusSpeedUnitsPerPercent) : "");
+                + (strike.BonusSpeedUnitsPerPercent > 0 ? Loc.T("+変換済みの追加攻撃速度1%につき", " + per 1% converted bonus attack speed ") + Percent(strike.BonusSpeedUnitsPerPercent) : "");
             string shape = strike.Shape == IdentityStrikeShape.ForwardLine
                 ? Loc.T("前方" + Number(strike.RangeMetres) + "m・幅" + Number(strike.WidthOrArc) + "mの直線内",
                     "a forward line " + Number(strike.RangeMetres) + "m long and " + Number(strike.WidthOrArc) + "m wide")
@@ -145,14 +145,14 @@ namespace SodRpg.Core.Game
                     : Loc.T("同じ敵に通常攻撃の会心を3回連続で命中させると（各命中間隔" + Number(strike.WindowSeconds) + "秒以内。非会心・別の敵への命中・時間切れで連続数をリセット）、",
                         "On three consecutive critical basic attack hits against the same enemy (each gap at most " + Number(strike.WindowSeconds) + "s; a noncritical hit, a different enemy or an expired window resets the sequence), ");
                 string geometry = shape;
-                string damage = Loc.T(identity + "の斬撃が対象と" + geometry + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "に相当する闇ダメージを与えます（計" + strike.MaxTargets + "体まで、発動間隔" + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "秒）。",
+                string damage = Loc.T(identity + "の斬撃が対象と" + geometry + "の敵に" + basis + "の" + Percent(strike.AdUnits) + "に相当する闇ダメージを与える（計" + strike.MaxTargets + "体まで、発動間隔" + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "秒）。",
                     identity + " deals dark damage equal to " + Percent(strike.AdUnits) + " of " + basis + " to the target and enemies in " + geometry + " (up to " + strike.MaxTargets + " enemies total; " + Number(IdentityStrikeDefinition.CriticalCooldownSeconds) + "s interval).");
                 string partners = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementCritical
-                    ? Loc.T("斬撃時に装備中の回避記憶の残りクールダウンを" + Number(IdentityStrikeDefinition.CriticalMovementRefundPercent) + "%短縮します。記憶『瞬歩』のダッシュや記憶『死の刻印』『撹乱』の瞬間移動で準備でき、記憶『風の傷』の移動後の確定会心と連携します。",
+                    ? Loc.T("斬撃時に装備中の回避記憶の残りクールダウンを" + Number(IdentityStrikeDefinition.CriticalMovementRefundPercent) + "%短縮する。記憶『瞬歩』のダッシュや記憶『死の刻印』『撹乱』の瞬間移動で準備でき、記憶『風の傷』の移動後の確定会心と連携する。",
                         " The strike reduces the equipped dodge memory's remaining cooldown by " + Number(IdentityStrikeDefinition.CriticalMovementRefundPercent) + "%. Dashes from Memory \"Flash Step\" and teleports from Memory \"Death Mark\" or Memory \"Deception\" prime it, pairing with Memory \"Scar of the Wind\"'s guaranteed post-movement critical hit.")
-                    : Loc.T("記憶『瞬歩』のダッシュや記憶『死の刻印』の瞬間移動と、記憶『一歩一殺』の移動後の確定会心で連続会心をつなげられます。",
+                    : Loc.T("記憶『瞬歩』のダッシュや記憶『死の刻印』の瞬間移動と、記憶『一歩一殺』の移動後の確定会心で連続会心をつなげられる。",
                         " Dashes from Memory \"Flash Step\" and teleports from Memory \"Death Mark\" pair with Memory \"One Step, One Kill\"'s guaranteed post-movement critical hit to maintain the sequence.");
-                return timing + damage + partners + Loc.T(identity + "に装着したエッセンス『神聖なる信仰』のダメージ増幅と、命中後6秒以内の撃破による成長が働きます（エッセンス未装着でも発動）。",
+                return timing + damage + partners + Loc.T(identity + "に装着したエッセンス『神聖なる信仰』のダメージ増幅と、命中後6秒以内の撃破による成長が働く（エッセンス未装着でも発動する）。",
                     " Essence \"Divine Faith\" socketed to " + identity + " amplifies this damage and gains stacks from kills within 6s of the hit (the strike also works without that Essence).");
             }
             string when = strike.Trigger == IdentityStrikeTrigger.AfterDisplacementNextBasicHit
@@ -160,8 +160,8 @@ namespace SodRpg.Core.Game
                     "when your next basic attack hits within " + Number(strike.WindowSeconds) + "s after a dash or teleport (once per displacement; does not stack)")
                 : Loc.T("自分の通常攻撃が" + strike.EveryN + "回命中するごとに（同じ通常攻撃の複数命中は1回と数える）",
                     "every " + strike.EveryN + " basic attacks you make that hit (multiple hits from one attack count once)");
-            return Loc.T("追加ダメージ ＋" + basis + "の（" + amount + "）。", "Extra damage +" + amount + " of " + basis + ".")
-                + Loc.T(" " + memory + "を装備中、" + when + "、" + shape + "の敵最大" + strike.MaxTargets + "体へ" + element + "の斬撃。この記憶のダメージとして扱う。時間による再発動制限なし。",
+            return Loc.T("追加ダメージ +" + basis + "の" + amount + "。", "Extra damage +" + amount + " of " + basis + ".")
+                + Loc.T("" + memory + "を装備中、" + when + "、" + shape + "の敵最大" + strike.MaxTargets + "体へ" + element + "の斬撃。この記憶のダメージとして扱う。時間による再発動制限なし。",
                     " While " + memory + " is equipped, " + when + ", strike up to " + strike.MaxTargets + " enemies in " + shape + " for " + element + " damage attributed to this memory. No time-based cooldown.");
         }
         private static string ElementName(IdentityStrikeElement element)
@@ -198,7 +198,7 @@ namespace SodRpg.Core.Game
                     break;
                 case AuthoredMechanismKind.DirectedRecharge:
                     var recharge = spec.Recharge;
-                    lines.Add(Loc.T("残りクールダウン −", "Remaining cooldown −") + Percent(recharge.EffectiveValueUnits)
+                    lines.Add(Loc.T("残りクールダウン -", "Remaining cooldown -") + Percent(recharge.EffectiveValueUnits)
                         + Loc.T("。対象：", ". Recipient: ") + SelectorText(recharge.Recipient) + Loc.T("。", "."));
                     lines.Add(source + EventText(recharge.SourceTrigger) + Loc.T("、発動確率", "; chance ") + Percent(recharge.ProbabilityUnits)
                         + (recharge.EveryN > 1 ? Loc.T($"。条件を満たす{recharge.EveryN}回ごとに抽選。", $"; rolled every {recharge.EveryN} qualifying events.") : Loc.T("。", "."))
@@ -213,14 +213,14 @@ namespace SodRpg.Core.Game
                     }
                     break;
                 case AuthoredMechanismKind.MemoryPrimed:
-                    lines.Add(Loc.T("次の通常攻撃の追加ダメージ ＋攻撃力・魔力の高い方の", "Next basic attack extra damage +")
+                    lines.Add(Loc.T("次の通常攻撃の追加ダメージ +攻撃力・魔力の高い方の", "Next basic attack extra damage +")
                         + Percent(spec.Primed.ValueUnits) + Loc.T("。", " of the higher of attack damage and ability power."));
                     lines.Add(source + EventText(spec.Primed.Trigger) + Loc.T("、", ": ")
-                        + Number(spec.Primed.DurationSeconds) + Loc.T("秒以内の次の自分の通常攻撃に上乗せ（重ならない）。ほかの次の通常攻撃への上乗せと比べ、最大の1つだけを消費し、残りは保持。",
+                        + Number(spec.Primed.DurationSeconds) + Loc.T("秒以内の次の自分の通常攻撃に上乗せ（重ならない）。次の通常攻撃への上乗せが複数あっても最大の1つだけを消費し、残りは保持。",
                             "s to use on your next basic attack (does not stack). Only the largest of all next-basic-attack bonuses is consumed; the others remain ready."));
                     break;
                 case AuthoredMechanismKind.RelayWindow:
-                    lines.Add(Loc.T("記憶の直接ダメージ ＋", "Memory direct damage +") + Percent(spec.Relay.ValueUnits)
+                    lines.Add(Loc.T("記憶の直接ダメージ +", "Memory direct damage +") + Percent(spec.Relay.ValueUnits)
                         + Loc.T("。対象：", ". Target: ") + Links.ItemName(spec.Relay.TargetMemory) + Loc.T("。", "."));
                     lines.Add(source + EventText(MemoryEventKind.ConfirmedUse) + Loc.T("から", ": ")
                         + Number(spec.Relay.DurationSeconds) + Loc.T("秒間、この記憶の元々のダメージを強化（星による追加ダメージは対象外）。両方の記憶を装備する必要がある。",
@@ -232,7 +232,7 @@ namespace SodRpg.Core.Game
                         lines.Add(Loc.T("発動条件：", "Trigger: ") + source + EventText(spec.Trigger) + Loc.T("。", "."));
                     break;
                 case AuthoredMechanismKind.PressureDividend:
-                    lines.Add(Loc.T("未確保の欠片 ＋1個（確率", "Unsecured shards +1 (chance ") + Percent(spec.Dividend.ProbabilityUnits) + Loc.T("、上限40%）。", ", capped at 40%)."));
+                    lines.Add(Loc.T("未確保の欠片 +1個（確率", "Unsecured shards +1 (chance ") + Percent(spec.Dividend.ProbabilityUnits) + Loc.T("、上限40%）。", ", capped at 40%)."));
                     lines.Add(source + Loc.T("で、夢の圧により最大HPが25%以上増えた敵を倒したときに抽選。同じ敵からは1人につき最大1個。",
                         " must kill an enemy whose maximum HP was increased by at least 25% by dream pressure. You can receive at most 1 shard from the same enemy."));
                     if (spec.Dividend.RequiredMemories.Count > 0)
@@ -241,14 +241,14 @@ namespace SodRpg.Core.Game
                 case AuthoredMechanismKind.MemoryTuning: lines.Add(DescribeMemoryTuning(spec.Tuning)); break;
                 case AuthoredMechanismKind.IdentityStrike: lines.Add(DescribeIdentityStrike(spec.IdentityStrike)); break;
                 case AuthoredMechanismKind.SacrificeShield:
-                    lines.Add(Loc.T("障壁 ＋実際に支払ったHPの50%（4秒間・1回の付与は最大HPの10%まで）。",
+                    lines.Add(Loc.T("障壁 +実際に支払ったHPの50%（4秒間・1回の付与は最大HPの10%まで）。",
                         "Shield +50% of HP actually paid (4s; each award capped at 10% maximum HP)."));
                     lines.Add(Loc.T(Links.ItemName("St_Q_GoldenBurst") + "または" + Links.ItemName("St_Q_Reduction") + "の元々のHP支払いが対象。通常の被ダメージは対象外。HP支払い自体は減らさない。間隔制限なし。",
                         "Applies only to the original HP payment of " + Links.ItemName("St_Q_GoldenBurst") + " or " + Links.ItemName("St_Q_Reduction") + ", not ordinary damage taken. Does not reduce the HP cost. No cooldown."));
                     lines.Add(PoolText(ModShieldPoolKind.Ordinary));
                     break;
                 case AuthoredMechanismKind.StunSourceFilter:
-                    lines.Add(Loc.T("障壁 ＋最大HPの6%（3秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで2秒。",
+                    lines.Add(Loc.T("障壁 +最大HPの6%（3秒間）。装備中のQまたはRの記憶が元々持つ効果で敵をスタンさせたとき、自分に付与。星による追加スタンは対象外。再発動まで2秒。",
                         "Shield +6% maximum HP for 3s. Gain it when the original effect of your equipped Q or R memory stuns an enemy, excluding star-generated stuns. Cooldown: 2s."));
                     lines.Add(PoolText(ModShieldPoolKind.Ordinary));
                     break;
@@ -318,16 +318,16 @@ namespace SodRpg.Core.Game
             switch (payload.Kind)
             {
                 case BridgePayloadKind.Damage:
-                    return Loc.T("追加ダメージ ＋", "Extra damage +") + Percent(payload.ValueUnits)
+                    return Loc.T("追加ダメージ +", "Extra damage +") + Percent(payload.ValueUnits)
                         + Loc.T("（基準：", " of ") + (payload.DamageBasis == BridgeDamageBasis.NativeHit
                             ? Loc.T("発動した命中の元々のダメージ", "the payoff hit's original damage")
                             : Loc.T("攻撃力・魔力の高い方", "the higher of attack damage and ability power"))
                         + Loc.T("）。成立時に命中した敵が対象。", ". Targets the enemy hit when the combo succeeds.");
                 case BridgePayloadKind.Recharge:
-                    return Loc.T("残りクールダウン −", "Remaining cooldown −") + Percent(payload.ValueUnits)
+                    return Loc.T("残りクールダウン -", "Remaining cooldown -") + Percent(payload.ValueUnits)
                         + Loc.T("。対象：", ". Recipient: ") + SelectorText(payload.Recipient) + Loc.T("。", ".");
                 case BridgePayloadKind.OrdinaryShield:
-                    return Loc.T("自分の障壁 ＋最大HPの", "Self shield +") + Percent(payload.ValueUnits)
+                    return Loc.T("自分の障壁 +最大HPの", "Self shield +") + Percent(payload.ValueUnits)
                         + Loc.T("（", " maximum HP (") + Number(payload.DurationSeconds) + Loc.T("秒間）。", "s). ") + PoolText(ModShieldPoolKind.Ordinary);
                 case BridgePayloadKind.Gimmick:
                     return Gimmicks.DescribeForSource(payload.Gimmick, source,
@@ -346,8 +346,8 @@ namespace SodRpg.Core.Game
                 decimal value = units / 100m;
                 int stacks = (int)(value / 100m);
                 decimal chance = value % 100m;
-                return (stacks > 0 ? stacks + Loc.T("個", " stacks") : "")
-                    + (chance > 0 ? (stacks > 0 ? Loc.T("＋追加1個の確率", " + chance of one more: ") : Loc.T("1個付与の確率", "chance of one stack: ")) + Number(chance) + "%" : "");
+                return (stacks > 0 ? stacks + Loc.T("つ", " stacks") : "")
+                    + (chance > 0 ? (stacks > 0 ? Loc.T("+追加1つの確率", " + chance of one more: ") : Loc.T("1つ付与の確率", "chance of one stack: ")) + Number(chance) + "%" : "");
             }
             if (gimmick?.Effect == GimmickEffect.Daze)
                 return Number(units / 1000m) + Loc.T("秒のスタン", "s stun");
@@ -359,7 +359,7 @@ namespace SodRpg.Core.Game
             string basis = ward.AmountBasis == WardAmountBasis.RecipientMaxHP
                 ? Loc.T("受け手の最大HP", "the recipient's maximum HP")
                 : Loc.T("付与者の攻撃力・魔力の高い方", "the caster's higher of attack damage and ability power");
-            return Loc.T("障壁 ＋", "Shield +") + Percent(ward.ValueUnits) + Loc.T("（基準：" + basis + "）。", " of " + basis + ".")
+            return Loc.T("障壁 +", "Shield +") + Percent(ward.ValueUnits) + Loc.T("（基準：" + basis + "）。", " of " + basis + ".")
                 + Loc.T("対象：", " Targets: ") + (ward.RecipientKind == WardRecipientKind.AlliedTravelers
                     ? Loc.T("味方の旅人", "allied travelers") : Loc.T("自分の召喚獣", "your summons"))
                 + (ward.IncludeOwner ? Loc.T("と自分", " and yourself") : Loc.T("（自分を除く）", " (excluding yourself)"))

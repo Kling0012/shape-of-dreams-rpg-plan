@@ -155,7 +155,7 @@ namespace SodRpg.Core.Game
             }
             string cd = def.Cooldown.ToString("R", CultureInfo.InvariantCulture);
             string interval = def.Cooldown == 0 ? (ja ? "間隔制限なし" : "no cooldown")
-                : (ja ? "このペア全体で" + cd + "秒に1回" : "once every " + cd + (def.Cooldown == 1f ? " second" : " seconds") + " per pair, shared across enemies");
+                : (ja ? "このペアごとに" + cd + "秒に1回" : "once every " + cd + (def.Cooldown == 1f ? " second" : " seconds") + " per pair, shared across enemies");
             string limit = def.OncePerActivation
                 ? (ja ? "。1回の使用・通常攻撃・召喚物の攻撃につき1回まで" : "; at most once per memory use, basic attack or summon attack") : "";
             if (def.OncePerVictim) limit += ja
@@ -167,12 +167,12 @@ namespace SodRpg.Core.Game
                 ? (ja ? "召喚獣がいるとき、自分が基本攻撃を撃つたびに判定する（命中は不要）。" : "Checks whenever you fire your own basic attack while summons are present; no hit is required. ") : "";
             string disabled = def.MovementOrigin ? (ja ? "移動の記憶は起点にならないため、この組は発動しない。" : "Inactive: movement memories cannot start a combo. ") : "";
             string headline = def.Effect == GimmickEffect.Recharge || def.Effect == GimmickEffect.RechargeOther
-                ? Loc.T($"残りクールダウン −{n}%", $"Remaining cooldown −{n}%")
+                ? Loc.T($"残りクールダウン -{n}%", $"Remaining cooldown -{n}%")
                 : def.Effect == GimmickEffect.Heal ? Loc.T($"HP回復 +最大HPの{n}%", $"Healing +{n}% of maximum HP")
                 : def.Effect == GimmickEffect.Shield ? Loc.T($"障壁 +最大HPの{n}%", $"Shield +{n}% of maximum HP")
                 : def.Effect == GimmickEffect.Burst ? Loc.T($"範囲追加ダメージ +攻撃力・魔力の高い方の{n}%", $"Area bonus damage +{n}% of the higher of attack damage or ability power")
                 : def.Effect == GimmickEffect.Echo ? Loc.T($"追撃ダメージ +与ダメージの{n}%", $"Follow-up damage +{n}% of damage dealt")
-                : Loc.T($"属性付与 +{entry.Value / 100}個", $"Element application +{entry.Value / 100} stacks");
+                : Loc.T($"属性付与 +{entry.Value / 100}つ", $"Element application +{entry.Value / 100} stacks");
             return headline + Loc.T("：", ": ") + steps + (ja ? "、" : ", ") + effect
                 + (ja ? "（" + interval + limit + "。追加ダメージは属性なし・連鎖なし。星の追加ダメージでは連携を開始・成立させられない）"
                     : " (" + interval + limit + "; extra damage is elementless and cannot chain; star-generated damage cannot start or complete the combo).")
@@ -180,7 +180,7 @@ namespace SodRpg.Core.Game
                     : "Equip both " + a + " and " + b + "; acquire at least one rank in stars “" + StarName(def.BridgeId) + "”, “" + StarName(def.StarA) + "” and “" + StarName(def.StarB) + "”.")
                 + "\n" + (ja ? "橋の1/2/3段での値：" : "Values at bridge ranks 1/2/3: ")
                 + (def.Effect == GimmickEffect.Element
-                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + Loc.T("個（小数部分は追加1個の確率）", " stacks (fractional part is the chance of one extra stack)")
+                    ? string.Join("/", def.TableRankValues.Select(v => (v / 100m).ToString(CultureInfo.InvariantCulture))) + Loc.T("つ（小数部分は追加1つの確率）", " stacks (fractional part is the chance of one extra stack)")
                     : string.Join("/", def.TableRankValues) + "%")
                 + disabled + summon + Restrictions(def, ja);
         }
@@ -199,7 +199,7 @@ namespace SodRpg.Core.Game
             if (def.HeroKey == "Hero_Mist" && def.BridgeIndex == 3)
                 return ja ? "覚醒中の電撃爆発による撃破だけ。基本攻撃・ほかの記憶の撃破は数えない。" : "Only kills by the awakened lightning explosion count, not basic attacks or other memories.";
             if (def.HeroKey == "Hero_Mist" && (def.BridgeIndex == 4 || def.BridgeIndex == 5))
-                return ja ? "連携印はプリオリテ本体の印とは別IDで、選択・成長・爆発を変えない。" : "The combo mark has a separate ID from Priorité's own mark and does not change its selection, growth or explosion.";
+                return ja ? "連携印はプリオリテ本体の印とは別物で、選択・成長・爆発を変えない。" : "The combo mark is separate from Priorité's own mark and does not change its selection, growth or explosion.";
             return "";
         }
         private static string MemoryName(string memory, bool ja)
