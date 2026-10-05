@@ -133,17 +133,31 @@ namespace SodRpg.Mod
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
+        public int gold, dreamDust;
+        public void SpendGold(int amount) => gold -= amount;
+        public void SpendDreamDust(int amount) => dreamDust -= amount;
+        public void EarnDreamDust(int amount) => dreamDust += amount;
     }
     internal static class NetworkedManagerBase<T> { public static T softInstance; }
-    internal sealed class GameManager { public string runId; public Zone difficulty; }
+    internal sealed class GameManager { public string runId; public Zone difficulty; public float GetAdjustedGoldAmount_Cost(float amount) => 1f; }
     internal sealed class ActorManager { public Actor serverActor; }
     internal sealed class ZoneManager
     {
         public int currentZoneIndex;
         public bool isInAnyTransition;
+        public int clearedCombatRooms, currentHuntLevel;
         public Zone currentZone;
     }
     internal sealed class Zone { public string name; }
+    internal static class DewPersistence
+    {
+        internal sealed class GameData
+        {
+            public readonly Dictionary<string, string> serverActorData = new Dictionary<string, string>();
+        }
+        public static GameData SerializeGameData() => new GameData();
+        public static void ApplyGameData(GameData data) { }
+    }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
     internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
@@ -276,6 +290,10 @@ namespace SodRpg.Mod
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
         private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
+        public event Action ProfileChanged;
+        public void Emit(GameEvent e) => Events.Add(e);
+        private int _lastHuntLevel = -1;
+        private readonly RoomCounter _rooms = new RoomCounter();
         private string CurseKey() => "";
         private void SendCurseClear() { }
         private void NotifyPersonalDreamEvent() { }

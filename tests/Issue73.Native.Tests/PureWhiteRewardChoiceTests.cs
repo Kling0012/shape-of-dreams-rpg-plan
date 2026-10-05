@@ -36,6 +36,7 @@ namespace Issue73.Native.Tests
         public void PureWhite_participant_keeps_pending_rewards_until_the_personal_choice(string choice)
         {
             var session = ParticipantAtPureWhiteEntrance();
+            CompleteHostHandshake(session);
             var progress = Progress(session);
             progress.Rewards.Add(FoughtKill());
             Assert.False(session.CanResolveSecureChoice); // ホストの確定前は本人も選べない
@@ -126,6 +127,7 @@ namespace Issue73.Native.Tests
             NetworkClient.active = true;
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" };
             var progress = Progress(session);
+            CompleteHostHandshake(session);
             progress.BeginRun("run", 1);
             GrantThrough(session);
             // 通常ルートは戦ったときの記録を持たない（精算時の状態＝戦ったときの状態）。
@@ -155,6 +157,7 @@ namespace Issue73.Native.Tests
             var session = AtPureWhiteEntrance("Zone_Primus");
             session.ActiveRunId = "run";
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" };
+            if (!host) CompleteHostHandshake(session);
             var progress = Progress(session);
             progress.Rewards.Add(FoughtKill());
 
@@ -232,6 +235,10 @@ namespace Issue73.Native.Tests
             session.ActiveRunId = "run";
             return session;
         }
+
+        /// <summary>参加者がホストの hello を受信し、中断チェックポイントの同期を済ませた状態にする。</summary>
+        private static void CompleteHostHandshake(ClientSession session) =>
+            Call(session, "ReceiveContinueHandshake", new DreamforgeHelloMsg { protocol = Protocol.Version, continueRunId = "run" });
 
         private static ClientSession AtPureWhiteEntrance(string zoneName)
         {

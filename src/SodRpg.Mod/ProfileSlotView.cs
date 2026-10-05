@@ -276,8 +276,13 @@ namespace SodRpg.Mod
                     ? Loc.T("自動：2人以上のロビー・遠征、または他のホストに参加するとマルチを使います。", "Auto: Multi for two or more players, or when joining another host; otherwise Solo.")
                     : Loc.T("手動で選択中。ソロとマルチの進捗は別々に保存されます。", "Manual selection. Solo and Multi progress are saved separately.");
             GUILayout.Label(explanation, _st.Small);
+            if (!_s.InGame && _s.Profile.Run != null)
+                GUILayout.Label(Loc.T(
+                    "中断中の遠征あり：終了までプロフィール切替・星図変更はできません。\n保存があれば「続きから」。参加者はホストに従ってください。",
+                    "Suspended expedition: profile switching and Star Map edits stay locked until it ends.\nContinue if a save is available; guests follow the host."), _st.Warn);
             if (_confirmProfileCopy) GUILayout.Label(Loc.T("ソロの進捗を一度だけコピーします。コピー後は別々に進みます。", "Copy Solo progress once. The profiles progress independently afterward."), _st.Warn);
             if (_s.SaveError != null) GUILayout.Label(_s.SaveError, _st.Warn);
+            if (_s.ContinueWarning != null) GUILayout.Label(_s.ContinueWarning, _st.Warn);
         }
 
         private void DrawProfileMode(ProfileSlotMode mode, string label)

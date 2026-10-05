@@ -47,4 +47,9 @@ namespace SodRpg.Mod
         internal void DetachNegotiation() => UnregisterHello(_registeredOn);
     }
 
+    // Product ClientSession exposes the native continue point in its hello reply.
+    internal sealed partial class ClientSession
+    {
+        internal static string ContinueRunId, ContinueCheckpointId, ContinueResumeSession;
+    }
 }

@@ -307,6 +307,7 @@ namespace SodRpg.Mod
         private void Wire()
         {
             var zone = NetworkedManagerBase<ZoneManager>.softInstance;
+            ObserveContinueGame(NetworkedManagerBase<GameManager>.softInstance);
             if (zone != _zone)
             {
                 if (_zone != null)
@@ -375,6 +376,7 @@ namespace SodRpg.Mod
                     UnregisterBossVisuals(_clientRpcOn);
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeContinueCheckpointMsg>(OnContinueCheckpoint); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
@@ -415,6 +417,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeAppliedMsg>(_onApplied);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeContinueCheckpointMsg>(OnContinueCheckpoint);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
@@ -466,6 +469,7 @@ namespace SodRpg.Mod
                     UnregisterBossVisuals(_clientRpcOn);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureMsg>(_onPressure);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeRunChoicesMsg>(_onRunChoices);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeContinueCheckpointMsg>(OnContinueCheckpoint);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeNightmareMsg>(_onNightmare);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
@@ -508,6 +512,13 @@ namespace SodRpg.Mod
                 return;
             }
             string runId = gm.runId;
+            if (_nativeContinueCheckpoint != null)
+            {
+                if (runId != _nativeContinueCheckpoint.RunId) return;
+                RestoreContinueCheckpoint(_nativeContinueCheckpoint, _continueResumeSession);
+                _nativeContinueCheckpoint = null;
+            }
+            if (!ContinueReady) return;
             if (string.IsNullOrEmpty(runId) || runId == _completedRunId) return;
             if (LocalHero == null) return; // 観戦・ロード中は開始しない
             if (_zone != null && _zone.isInAnyTransition) return;
@@ -526,6 +537,7 @@ namespace SodRpg.Mod
                 dreamDepth: CanChooseRunRules ? Profile.LastDreamDepth : _receivedRunChoices.Depth));
             ApplyHostRunChoices();
             if (pacts > 0) SendCurseClear();
+            Profile.ContinueLobbyBaseline = null;
             if (Onboarding.AutoEquipStarter(Profile, HeroKeyOf(LocalHero))) Emit(Rules.HintOnce(Profile, Hint.StarterGear));
             _buildDirty = true;
             SaveNow();
@@ -585,7 +597,8 @@ namespace SodRpg.Mod
             if (e.AdditionalEvents != null) Emit(e.AdditionalEvents);
         }
 
-        private bool RunActive => Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId;
+        private bool RunActive => ContinueReady && _nativeContinueCheckpoint == null
+            && Profile.Run != null && ActiveRunId != null && Profile.Run.RunId == ActiveRunId;
 
         private void OnDeath(EventInfoKill info)
         {

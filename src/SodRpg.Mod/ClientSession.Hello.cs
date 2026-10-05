@@ -38,6 +38,7 @@ namespace SodRpg.Mod
             _helloFirstSent = -1f;
             _nextHello = 0f;
             _helloAnswered = false;
+            _continueHandshakeReady = false;
             _acceptedHostContent = null;
             HostVersionWarning = null;
         }
@@ -53,6 +54,7 @@ namespace SodRpg.Mod
                 {
                     protocol = Protocol.Version, modVer = HostAuthority.ModVersion, content = ContentFingerprint.Value,
                     killObservationSessionId = KillObservationSessionId(_clientRpcOn),
+                    continueCheckpoints = true,
                 });
                 if (_helloFirstSent < 0) _helloFirstSent = now;
                 _nextHello = now + 5f;
@@ -67,8 +69,9 @@ namespace SodRpg.Mod
         {
             if (msg == null) return;
             _helloAnswered = true;
-            bool same = ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
+            bool same = msg.continueCheckpoints && ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version);
             _acceptedHostContent = same ? msg.content : null;
+            if (same) ReceiveContinueHandshake(msg);
             if (same && msg.authorityGeneration != 0) ObserveMonsterAuthority(msg.authorityGeneration);
             string theirs = string.IsNullOrEmpty(msg.modVer) ? "?" : msg.modVer;
             HostVersionWarning = same ? null : Loc.T(

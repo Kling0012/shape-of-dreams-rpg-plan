@@ -14,9 +14,14 @@ namespace SodRpg.Core.Game
     {
         public const string Format = "sodrpg.profile";
 
-        public static string Write(Profile p)
+        public static string Write(Profile p) => WriteProfile(p, true);
+
+        /// <summary>Encodes a snapshot without recursively retaining continue snapshots or lobby baselines.</summary>
+        public static string WriteCheckpointProfile(Profile p) => WriteProfile(p, false);
+
+        private static string WriteProfile(Profile p, bool includeContinue)
         {
-            var body = WriteBody(p);
+            var body = WriteBody(p, includeContinue);
             var root = new JsonObject()
                 .Add("format", Format)
                 .Add("version", (long)Profile.CurrentVersion)
@@ -24,19 +29,24 @@ namespace SodRpg.Core.Game
             return Json.Write(root);
         }
 
-        public static Profile Read(string text, List<string> notes)
+        public static Profile Read(string text, List<string> notes) => ReadProfile(text, notes, true);
+
+        public static Profile ReadCheckpointProfile(string text, List<string> notes = null) =>
+            ReadProfile(text, notes, false);
+
+        private static Profile ReadProfile(string text, List<string> notes, bool includeContinue)
         {
             if (!(Json.Parse(text) is JsonObject root)) throw new LedgerFormatException("最上位がオブジェクトではありません。");
             if (Str(root, "format") != Format) throw new LedgerFormatException("形式が違います。");
             long version = Long(root, "version");
             if (version > Profile.CurrentVersion) throw new LedgerVersionException("新しすぎる版です: " + version);
             if (!root.TryGet("body", out object bodyObj) || !(bodyObj is JsonObject body)) throw new LedgerFormatException("body がありません。");
-            var loaded = ReadBody(body, notes ?? new List<string>());
+            var loaded = ReadBody(body, notes ?? new List<string>(), includeContinue);
             loaded.LoadedVersion = (int)Math.Max(0, Math.Min(int.MaxValue, version));
             return loaded;
         }
 
-        private static JsonObject WriteBody(Profile p)
+        private static JsonObject WriteBody(Profile p, bool includeContinue)
         {
             var mats = new JsonObject();
             foreach (var kv in p.Materials)
@@ -103,7 +113,7 @@ namespace SodRpg.Core.Game
                     .Add("pacts", WritePacts(r.Pacts)).Add("offeredPacts", WritePacts(r.OfferedPacts)).Add("awaitingChoice", r.AwaitingChoice).Add("gearWindow", r.GearWindow);
             }
 
-            return new JsonObject()
+            var body = new JsonObject()
                 .Add("revision", p.Revision)
                 .Add("rng", p.RngState.ToString("x16", CultureInfo.InvariantCulture))
                 .Add("dreamLevel", (long)p.DreamLevel)
@@ -136,6 +146,8 @@ namespace SodRpg.Core.Game
                 .Add("runRecovery", WriteRunRecovery(p.RunRecovery))
                 .Add("killClassification", WriteKillClassification(p.KillClassification))
                 .Add("run", run);
+            if (includeContinue) WriteContinueState(body, p);
+            return body;
         }
 
         private static JsonObject WriteUpgrades(Profile p)
@@ -231,7 +243,7 @@ namespace SodRpg.Core.Game
             return id;
         }
 
-        private static Profile ReadBody(JsonObject b, List<string> notes)
+        private static Profile ReadBody(JsonObject b, List<string> notes, bool includeContinue)
         {
             var p = new Profile
             {
@@ -249,6 +261,7 @@ namespace SodRpg.Core.Game
             p.CompletedRunId = Str(b, "completedRunId");
             p.RunRecovery = ReadRunRecovery(b);
             p.KillClassification = ReadKillClassification(b);
+            if (includeContinue) ReadContinueState(b, p, notes);
             long focus = b.TryGet("focus", out object fo) && fo is long fl ? fl : -1;
             if (focus >= 0 && Enum.IsDefined(typeof(Line), (int)focus)) p.Focus = (Line)(int)focus;
             if (b.TryGet("materials", out object m) && m is JsonObject mats)

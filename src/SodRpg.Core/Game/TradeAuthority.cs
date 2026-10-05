@@ -184,7 +184,7 @@ namespace SodRpg.Core.Game
     /// 取引id（トークン）は1プレイヤーにつき1回だけ実行し、再送には記録済みの結果を返す（台帳は上限付き）。
     /// 分解は同じ遺物（Uid）を1ランにつき1回だけ受け付ける。すべて純粋な C# で、判定はこのクラスに集める。
     /// </summary>
-    public sealed class TradeAuthority
+    public sealed partial class TradeAuthority
     {
         /// <summary>1プレイヤーが台帳に残す実行済みトークンの上限（ランをまたいで保持。上限を超えた古い物から忘れる）。</summary>
         public const int MaxTokensPerPlayer = 256;
@@ -199,7 +199,7 @@ namespace SodRpg.Core.Game
         private sealed class PlayerLedger
         {
             /// <summary>
-            /// この台帳の識別子（権威の世代＋作成順）。権威の作り直し・接続（netId）の変更・追跡プレイヤー数の超過で台帳が新しくなると変わる。
+            /// この台帳の識別子（権威の世代＋作成順）。本体の続きから戻るときは保存時の識別子を復元する。それ以外で権威や追跡プレイヤーが替わると変わる。
             /// 「記録がない」ことを「未実行」の証拠にできるのは、取引を送ったときの識別子と今の識別子が同じときだけ。
             /// </summary>
             public long Id;
@@ -224,8 +224,8 @@ namespace SodRpg.Core.Game
         private readonly Dictionary<string, PlayerLedger> _players = new Dictionary<string, PlayerLedger>();
         private int _ledgerSerial;
 
-        /// <summary>この権威の世代。MOD の読み込みごと（権威を作るたび）に変わる。</summary>
-        public int Generation { get; }
+        /// <summary>この権威の世代。新しい権威では作り直し、本体の続きから戻るときは保存時の世代を復元する。</summary>
+        public int Generation { get; private set; }
 
         public TradeAuthority() : this(NewGeneration())
         {
@@ -257,7 +257,7 @@ namespace SodRpg.Core.Game
         /// <summary>
         /// 取引を裁定する。金額・可否はこの場で決まり、呼び出し側は Ok &amp;&amp; !Replayed のときだけ本体の通貨を動かす。
         /// </summary>
-        /// <param name="playerKey">プレイヤー（接続）を区切る鍵。ホストは本体の netId を使う。</param>
+        /// <param name="playerKey">再接続しても同じプレイヤーを区切る、本体の guid などの安定した鍵。</param>
         /// <param name="runId">現在のランの識別子。分解の重複排除はラン単位。</param>
         /// <param name="req">要求。</param>
         /// <param name="gold">そのプレイヤーの現在のゴールド（本体の権威ある値）。</param>
