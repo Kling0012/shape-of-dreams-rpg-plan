@@ -245,3 +245,25 @@ python tools/star-manifest/validate.py cetus      # 1人
 
 ### 橋の窓/印の持続時間
 `GimmickParam` の `param` には `"WindowDuration"`（橋の窓）と `"MarkDuration"`（橋の印）も使える。橋の星団の行で `target.star` がその橋の ring ID（`target.effect` は null）のときだけ許され、Window ペアには WindowDuration、Mark ペアには MarkDuration だけを使える（`validate.py` が形、`gen_cs.py` が実際のペアの種類を検査し、契約も登録時に拒否する）。意味は他の Duration と同じ%で、その橋のペアの窓／印だけが延びる。
+
+## Read-only star text inventory (Issue #101, stage A)
+
+Run from the repository root; this does not regenerate manifests or change product text:
+
+```sh
+dotnet run --project tools/WikiGen -- --export-stars ~/dev/sod-prompts/stars
+```
+
+If only a newer .NET runtime is installed, build `tools/WikiGen/WikiGen.csproj` and run
+`dotnet --roll-forward Major tools/WikiGen/bin/Debug/net8.0/WikiGen.dll --export-stars ~/dev/sod-prompts/stars`.
+
+- `<hero-slug>.tsv` uses the installed `HeroSigils.TreeFor` trees; `generic.tsv` includes the fallback `Content.Talents` tree.
+- Columns: `star_id`, `kind`, `display_ja`, `display_en`, `typed_effect_json`, `partners_json`, `name_ja`, `name_en`, `template`, `wiki_ja`, `wiki_en`, `display_variants_json`.
+- A choice has one parent row and two candidate rows (`choice-A`, `choice-B`); candidates are effects, not extra purchased stars. Identify rows by file, star ID and kind, not ID alone.
+- Display bodies come from `StarMapPresentation`. Variants preserve choice cards/selected states and rank-dependent legacy combos. Live tooltip allocation/equipment wrappers are inventoried separately, not evaluated against a fabricated save.
+- Wiki bodies follow `StarMapWiki`'s existing formatting before table escaping. `wiki_en` evaluates the same branch in English; the existing Wiki publishes effect bodies in Japanese only.
+- Typed JSON retains model type tags, enum names, selectors, trigger/target/condition/budget data, authored units, rank tables, caps and directly referenced effects. Powers retain their native enum/value contract rather than inferring structured conditions from prose.
+- `partners_json` classifies referenced `St_*`/`Gem_*` tokens and transcribes both official names through `Links.Name`; slot selectors remain selectors in typed data, not invented fixed partners.
+- `template-counts.tsv` lists observed formatter branches with distinct parent-star, direct-use and candidate-use counts. `text-template-counts.tsv` additionally lists bilingual rendered shapes after lexical replacement of names, numbers and colors; these are text shapes, not a semantic equivalence claim.
+- `surface-templates.tsv` reads bilingual literal legend/tooltip/state/action templates from the current UI source and records source lines. Interpolations retain placeholders; these shared templates have no per-star usage denominator.
+- Files are UTF-8 TSV with `\\`, `\t`, `\r`, `\n` escaping inside cells. Decode this escaping before parsing JSON cells. Rich-text tags are preserved; original full bodies are never rewritten by template normalization.
