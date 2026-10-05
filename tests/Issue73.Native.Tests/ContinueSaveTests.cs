@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using Mirror;
+using SodRpg.Core;
 using SodRpg.Core.Game;
 using SodRpg.Mod;
 using UnityEngine;
@@ -280,6 +282,161 @@ namespace Issue73.Native.Tests
             Assert.Contains(UnityEngine.GUILayout.Labels, l => l.Contains("ロビーでの鍛冶・取引の変更を戻しました"));
         }
 
+        /// <summary>
+        /// #178: 通常の既存キューと、共有クリア数の受信後・次の Tick より前の Infinity 保存障壁。
+        /// 後者は実際の OnContinueCheckpoint → Sync → TickInfinity → 回収 → Emit であふれる。
+        /// 保存後の支払いをホストも巻き戻す場合と、支払い済みホストへ参加者だけが戻る場合を区別する。
+        /// </summary>
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, false)]
+        [InlineData(true, true)]
+        public void Overflow_at_continue_checkpoint_survives_restore_and_settles_exactly_once(bool infinity, bool retainPayment)
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "issue178-native-" + Guid.NewGuid().ToString("N"));
+            var session = GuestInGame("run");
+            Call(session, "ReceiveContinueHandshake", Hello("run"));
+            ClientSession resumed = null;
+            var store = new ProfileStore(new RealFileSystem(), Path.Combine(directory, "profile.json"), 178);
+            Set(session, "_store", store);
+            var transport = new Actor();
+            Set(session, "_clientRpcOn", transport);
+            Set(session, "_zone", new ZoneManager { currentZoneIndex = 0 });
+            ((RunChoiceProgress)Get(session, "_runChoiceProgress")).BeginRun("run", 0);
+            session.HostConfirmed = true;
+            var owner = new DewPlayer { guid = "guest-178", netId = 8 };
+            DewPlayer.local = owner;
+            DewPlayer.gamePlayers.Add(owner);
+            var host = new HostAuthority();
+            Set(host, "_registeredOn", new Actor());
+            HostAuthority.NativeInstance = host;
+            long ledgerId = ((TradeAuthority)Get(host, "_tradeAuthority")).LedgerIdOf(owner.guid, "run");
+            Set(session, "_hostLedgerId", ledgerId);
+            InfinityMode.NativeSaveAgreement = infinity;
+            try
+            {
+                var profile = session.Profile;
+                var overflow = Loot.RollRelic(new Rng(178), Rarity.Common, 1);
+                var recovered = Loot.RollRelic(new Rng(179), Rarity.Rare, 10);
+                profile.Run.Satchel.Add(overflow);
+                for (int i = 1; i < Workshop.SatchelCapacity(profile); i++)
+                    profile.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)(300 + i)), Rarity.Legendary, 10));
+                profile.LostAndFound.Add(recovered);
+                int roomsToRecover = Workshop.RoomsToRecover(profile);
+                profile.Run.RoomsCleared = roomsToRecover - 1;
+                profile.Run.SatchelShards = 7;
+                int bankedShards = profile.Material(Materials.Shard);
+                if (infinity)
+                {
+                    profile.Run.Infinity = new InfinityRunState
+                    {
+                        FixedZoneId = "Zone_Mist", DifficultyId = "diffNormal", Interval = 10,
+                        ClearedCombatTotal = roomsToRecover - 1, ClearsInCycle = roomsToRecover - 1,
+                    };
+                    Call(session, "ResetInfinityContinueState");
+                    var shared = RunChoiceSnapshot.Capture(profile.Run, profile.Run.DreamDepth, 0, revision: 1, authorityGeneration: 178);
+                    shared.Infinity.ClearedCombatTotal = roomsToRecover;
+                    shared.Infinity.ClearsInCycle = roomsToRecover;
+                    Call(session, "OnRunChoices", new DreamforgeRunChoicesMsg { protocol = Protocol.Version, choices = shared.Encode() });
+                    // 共有状態の受信・通常保存だけでは、既存 Infinity のクリア数や遺失物はまだ変わらない。
+                    Assert.Equal(roomsToRecover - 1, profile.Run.Infinity.ClearedCombatTotal);
+                    Assert.False(profile.Run.LostRecovered);
+                    Assert.Contains(recovered, profile.LostAndFound);
+                }
+                else
+                {
+                    foreach (var e in Rules.OnRoomsCleared(profile, roomsToRecover))
+                        session.Emit(e);
+                }
+                Assert.Empty(transport.Sent);
+                string nativeTradesAtCheckpoint = host.CaptureContinueTrades();
+                RunCheckpoint checkpointAtSend = null;
+                transport.BeforeSendToServer = message => checkpointAtSend = profile.ContinueCheckpoints.SingleOrDefault();
+                Call(session, "OnContinueCheckpoint", new DreamforgeContinueCheckpointMsg
+                {
+                    protocol = Protocol.Version, runId = "run", checkpointId = "checkpoint-178",
+                });
+                session.FlushSaves();
+                Assert.Null(session.SaveError);
+                var saved = store.Load();
+                var checkpoint = Assert.Single(saved.ContinueCheckpoints);
+                var atCheckpoint = ProfileCodec.ReadCheckpointProfile(checkpoint.Snapshot);
+                // 修正前は取り除きだけが保存され、この取引がない。ID の早期設定だけでも直らない。
+                var pending = Assert.Single(atCheckpoint.PendingTrades);
+                Assert.Equal(ledgerId, pending.LedgerId);
+                Assert.Equal(TradeKind.SatchelOverflowDust, pending.Kind);
+                Assert.Equal(overflow.Uid, pending.Uid);
+                Assert.Equal(Content.SalvageShards(overflow.Rarity), pending.FallbackShards);
+                Assert.True(atCheckpoint.Run.LostRecovered);
+                Assert.Empty(atCheckpoint.LostAndFound);
+                Assert.DoesNotContain(atCheckpoint.Run.Satchel, r => r.Uid == overflow.Uid);
+                Assert.Contains(atCheckpoint.Run.Satchel, r => r.Uid == recovered.Uid);
+                Assert.Equal(7, atCheckpoint.Run.SatchelShards);
+                Assert.Equal(roomsToRecover, atCheckpoint.Run.RoomsCleared);
+                // 支払い要求が出る時点で、既に対価の義務を含むチェックポイントがある。
+                Assert.NotNull(checkpointAtSend);
+                Assert.Equal(pending.Token, Assert.Single(ProfileCodec.ReadCheckpointProfile(checkpointAtSend.Snapshot).PendingTrades).Token);
+                Assert.Equal(0, owner.dreamDust);
+                var request = Assert.IsType<DreamforgeTradeMsg>(Assert.Single(transport.Sent).Message);
+                Assert.Equal(pending.Token, request.token);
+                var paid = SendHostTrade(host, owner, request);
+                Assert.True(paid.ok);
+                Assert.Equal(pending.EarnDust, owner.dreamDust);
+                if (!retainPayment)
+                {
+                    // 保存後の成功応答・通常保存でも、既存チェックポイントの義務は消えない。
+                    Call(session, "OnTradeResult", paid);
+                    session.SaveNow();
+                    session.FlushSaves();
+                    // 本体の同じ保存境界へ、通貨と受領台帳を両方戻す。
+                    owner.dreamDust = 0;
+                    HostAuthority.RestoreContinueTrades(nativeTradesAtCheckpoint);
+                }
+                // 別の参加者セッションがディスクから読み、保存障壁の地点へ戻る。
+                resumed = GuestInGame("run");
+                resumed.Profile = store.Load();
+                Set(resumed, "_store", store);
+                var queryTransport = new Actor();
+                Set(resumed, "_clientRpcOn", queryTransport);
+                Call(resumed, "ReceiveContinueHandshake", Hello("run", "checkpoint-178", "resume-178"));
+                var restoredTrade = Assert.Single(((TradeLedger)Get(resumed, "_trades")).Snapshot());
+                Assert.Equal(pending.Token, restoredTrade.Token);
+                Assert.Equal(ledgerId, restoredTrade.LedgerId);
+                Call(resumed, "SendDueTradeQueries");
+                var query = Assert.IsType<DreamforgeTradeMsg>(Assert.Single(queryTransport.Sent).Message);
+                var answer = SendHostTrade(host, owner, query);
+                Assert.Equal(retainPayment, answer.ok);
+                Call(resumed, "OnTradeResult", answer);
+                // 応答の重複、照会の再送、遅れて届く元要求で欠片もダストも二重に付けない。
+                Call(resumed, "OnTradeResult", answer);
+                Call(resumed, "OnTradeResult", SendHostTrade(host, owner, query));
+                Call(resumed, "OnTradeResult", SendHostTrade(host, owner, request));
+                Assert.Equal(retainPayment ? pending.EarnDust : 0, owner.dreamDust);
+                Assert.Equal(7 + (retainPayment ? 0 : pending.FallbackShards), resumed.Profile.Run.SatchelShards);
+                Assert.Equal(bankedShards, resumed.Profile.Material(Materials.Shard));
+                Assert.Equal(0, ((TradeLedger)Get(resumed, "_trades")).HeldCount);
+                Assert.DoesNotContain(resumed.Profile.Run.Satchel, r => r.Uid == overflow.Uid);
+                Assert.Empty(resumed.Profile.LostAndFound);
+            }
+            finally
+            {
+                resumed?.FlushSaves();
+                session.FlushSaves();
+                if (Directory.Exists(directory)) Directory.Delete(directory, true);
+            }
+        }
+
+        private static DreamforgeTradeResultMsg SendHostTrade(HostAuthority host, DewPlayer owner, DreamforgeTradeMsg message)
+        {
+            var transport = (Actor)Get(host, "_registeredOn");
+            transport.Sent.Clear();
+            NetworkServer.active = true;
+            try { Call(host, "OnTrade", message, owner); }
+            finally { NetworkServer.active = false; }
+            return Assert.IsType<DreamforgeTradeResultMsg>(Assert.Single(transport.Sent).Message);
+        }
+
         private static ClientSession HostSession()
         {
             return HostSession(out _);
@@ -394,7 +551,11 @@ namespace Issue73.Native.Tests
             Time.frameCount = 1;
             Time.unscaledTime = 100;
             DewPlayer.gamePlayers.Clear();
+            DewPlayer.local = null;
+            InfinityMode.NativeSaveAgreement = false;
+            SingletonDewNetworkBehaviour<Room>.softInstance = null;
             HostAuthority.NativeInstance = null;
+            Set(typeof(HostAuthority), "_pendingContinueTrades", null);
             NetworkedManagerBase<GameManager>.softInstance = null;
             NetworkedManagerBase<ActorManager>.softInstance = null;
             typeof(ClientSession).GetField("_hostSession", Hidden).SetValue(null, null);
