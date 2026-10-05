@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using SodRpg.Core.Game;
 
 namespace HarmonyLib
 {
-    internal static class AccessTools
+    internal static partial class AccessTools
     {
         private const BindingFlags Flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
         public static MethodInfo Method(Type type, string name, Type[] parameters = null)
@@ -16,8 +17,10 @@ namespace HarmonyLib
             return parameters == null ? type.GetMethod(name, Flags) : type.GetMethod(name, Flags, null, parameters, null);
         }
         public static MethodInfo DeclaredMethod(Type type, string name) => type.GetMethod(name, Flags | BindingFlags.DeclaredOnly);
+        public static MethodInfo PropertySetter(Type type, string name) => type.GetProperty(name, Flags)?.GetSetMethod(true);
+        public static FieldInfo DeclaredField(Type type, string name) => type.GetField(name, Flags | BindingFlags.DeclaredOnly);
     }
-    internal sealed class CodeInstruction
+    internal sealed partial class CodeInstruction
     {
         public OpCode opcode;
         public object operand;
@@ -86,7 +89,6 @@ namespace SodRpg.Mod
     }
     internal partial class Entity
     {
-        public readonly ProcessorList<DataProcessor<DamageData, Actor, Entity>> dealtDamageProcessor = new ProcessorList<DataProcessor<DamageData, Actor, Entity>>();
         public DewPlayer owner;
         public void ProcessReceivedDamage(ref DamageData data, Actor actor) { }
         public Se_GenericEffectContainer CreateBasicEffect(Entity target, BasicEffect effect, float duration, string id, DuplicateEffectBehavior behavior)
@@ -108,11 +110,11 @@ namespace SodRpg.Mod
         public bool HasElemental(ElementalType type) => type == ElementalType.Fire ? fireStack > 0 : type == ElementalType.Cold ? hasCold : type == ElementalType.Light ? lightStack > 0 : darkStack > 0;
         public void AddElement(ElementalType type, int count)
         { if (type == ElementalType.Fire) fireStack += count; else if (type == ElementalType.Cold) hasCold = true; else if (type == ElementalType.Light) lightStack += count; else darkStack += count; }
-        public bool TryGetStatusEffect<T>(out T value) where T : class { value = null; return false; }
+        public bool TryGetStatusEffect<T>(out T value) where T : class
+        { value = LiveStatusEffects.FirstOrDefault(effect => effect is T && effect.isActive) as T; return value != null; }
     }
     internal partial class SkillTrigger
     {
-        public Entity owner;
         public virtual AbilityInstance OnCastComplete(int index, CastInfo cast) => new AbilityInstance { parentActor = this, info = cast };
         public float currentConfigMaxCooldownTime => currentConfigUnscaledMaxCooldownTime;
     }
@@ -143,7 +145,7 @@ namespace SodRpg.Mod
         public void SetTimer(float seconds) => Expiry = UnityEngine.Time.time + seconds;
         public void DestroyIfActive() { isActive = false; if (this is Se_GenericShield_OneShot shield && shield.shield != null) shield.shield.amount = 0; }
     }
-    internal sealed class ShieldEffect { public float amount; }
+    internal sealed partial class ShieldEffect { public float amount; }
     internal sealed class Se_GenericShield_OneShot : StatusEffect { public float initAmount; public bool isDecay; public ShieldEffect shield; }
     internal partial class AbilityInstance { public CastInfo info = new CastInfo(); }
     internal sealed class Ai_Q_GoldenBurst : AbilityInstance
@@ -172,28 +174,31 @@ namespace SodRpg.Mod
     internal sealed class Ai_L_CoinExplosion_Explosion : AbilityInstance { }
     internal sealed class Ai_U_ShoutOfOblivion : AbilityInstance { }
     internal sealed class RoomMonsters { }
-    internal sealed class Monster : Entity
+    internal class Monster : Entity
     {
         public enum MonsterType { Lesser, Normal, MiniBoss, Boss }
         public uint netId = 62;
         public MonsterType type;
         public bool disableLoot;
     }
+    internal sealed class BossMonster : Monster { }
     internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops = true; }
-    internal sealed class GameManager { public string runId = "native-run"; }
-    internal sealed class ZoneManager { public int currentZoneIndex; }
-    internal static class NetworkedManagerBase<T> where T : new() { public static T softInstance = new T(); }
+    internal sealed class GameManager { public string runId = "native-run"; public NativeDifficulty difficulty; }
+    internal sealed class NativeDifficulty { public string name; }
+    internal sealed partial class ZoneManager { public int currentZoneIndex; public int currentHuntLevel; }
+    internal static class NetworkedManagerBase<T> where T : new() { public static T softInstance = new T(); public static T instance = new T(); }
     internal struct EventInfoCast { public Actor instance, trigger; }
     internal sealed class GimmickSiphonLimit { }
-    internal sealed class NativeAttributedDamagePacket
+    internal static class NativeAttributedDamagePacket
     {
-        public static NativeAttributedDamagePacket Current;
-        public bool Admitted;
-        public Actor Actor;
-        public Entity Victim;
-        public MemoryActivationIdentity Identity;
-        public long Serial;
-        public float DamageAmount;
+        internal sealed class Packet
+        {
+            internal Actor Actor; internal Entity Victim; internal long Serial;
+            internal MemoryActivationIdentity Identity; internal ReactionChain Chain;
+            internal bool Admitted, MainBasic; internal float DamageAmount;
+            internal float HpDamage; internal long NotificationVictim; internal int Notifications;
+        }
+        internal static Packet Current;
     }
     internal partial struct DamageData
     {
@@ -249,6 +254,11 @@ namespace SodRpg.Mod
             _attributionEquipment[hero] = equipment;
             _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
             _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
+            if (_runtimes.TryGetValue(hero, out var rt))
+            {
+                ModShieldEquipmentEpoch(rt);
+                BossEnsure(rt);
+            }
             MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
             return epoch;
         }
@@ -328,7 +338,7 @@ namespace SodRpg.Mod
         }
         internal float RelayDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, float amount)
         {
-            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = runtime.Hero, Victim = victim,
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet { Actor = runtime.Hero, Victim = victim,
                 Identity = identity, Admitted = true, Serial = _memoryAttribution.NewPacketId() };
             var data = new DamageData(amount); ApplyRelayWindowDamage(runtime, ref data, victim); return data.currentAmount;
         }
@@ -343,7 +353,7 @@ namespace SodRpg.Mod
             QueueGimmicks(runtime, GimmickTrigger.OnUse, memory, null, 0);
         internal void NativeKeyDamage(HeroRuntime runtime, Entity victim, MemoryActivationIdentity identity, ref DamageData data)
         {
-            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket { Actor = runtime.Hero, Victim = victim, Identity = identity, Admitted = true };
+            NativeAttributedDamagePacket.Current = new NativeAttributedDamagePacket.Packet { Actor = runtime.Hero, Victim = victim, Identity = identity, Admitted = true };
             ApplyAuthoredFinalNativeDamage(ref data, runtime.Hero, victim);
         }
         internal long Packet() => _memoryAttribution.NewPacketId();

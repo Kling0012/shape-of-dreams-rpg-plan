@@ -137,10 +137,18 @@ foreach (var slot in slots)
             string desc = BiBr(() => Content.FormatPower(p.Power, p.Value));
             lines.Add($"**{Bi(() => Content.PowerName(p.Power))}** {desc}");
         }
-        string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照）" : string.Join(NL, lines);
+        if (u.BossMove != null) lines.Add(BiBr(() => BossProfiles.DescribeMove(u.BossMove)));
+        string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照 / No part powers; see set bonuses）" : string.Join(NL, lines);
         string set = "-";
-        if (u.SetId != null && sets.TryGetValue(u.SetId, out var sd)) set = $"{TxtBi(sd.Name)} → {Link("sets", "セット装備")}";
         string link = u.Link == null ? "-" : BiBr(() => Links.Describe(u.Link));
+        if (u.SetId != null && sets.TryGetValue(u.SetId, out var sd))
+        {
+            set = $"{TxtBi(sd.Name)} → {Link("sets", "セット装備 / Sets")}";
+            if (sd.LinkStages.Length > 0)
+                link = string.Join(NL, sd.LinkStages.Select(stage =>
+                    $"**{stage.RequiredPieces}部位 / pieces**: " + BiBr(() => stage.Link.Kind == LinkKind.BossReward
+                        ? BossProfiles.DescribeReward(sd.BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link))));
+        }
         string lore = string.IsNullOrEmpty(u.Lore.Ja) ? "" : $"{NL}<sub>{Esc(u.Lore.Ja)} / {Esc(u.Lore.En)}</sub>";
         rows.Add($"| {TxtBi(u.Name)}{lore} | {BaseCell(u.BaseId)} | {powers} | {set} | {link} |");
     }
@@ -155,26 +163,30 @@ foreach (var slot in slots)
 {
     var sb = new StringBuilder();
     sb.Append(H1("セット装備 (Sets)"));
-    sb.Append("2つ装着・3つ装着（6部位のセットは6つ装着も）でボーナスが付く名前付きの組です。ボーナスの数値は基本値です。\n\n[[dreamforge:start|ホームへ戻る]]\n\n");
+    sb.Append("2・3・6部位の通常ボーナスは累積します。ボス限定セットの任意連携は、自分の対象記憶／エッセンス装着と2・4・6部位で最高の1段階だけ有効です。部位の組合せは任意です。数値は強化・覚醒前の基本値です。\n\nNormal 2/3/6-piece bonuses stack. Optional boss-set links require your own target memory/essence equipped; only the highest eligible 2/4/6-piece stage applies, with any combination of parts. Values are before enhancement/awakening.\n\n[[dreamforge:start|ホームへ戻る / Home]]\n\n");
+    var bossSets = Content.Sets.Where(s => s.BossTypeName != null).ToArray();
+    int bossAdapters = BossProfiles.Rewards.Select(r => r.Adapter).Distinct().Count();
+    sb.Append(H2("ボス限定セット / Boss-exclusive sets"));
+    sb.Append($"登録済み {bossSets.Length} セット・{bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} 部位・{bossAdapters} 種のnative報酬adapter。対応ボスからのみ入手します。白夜と暗月は部位数・通常段階・報酬profileを別々に集計し、同じ均衡の光線でも合算しません。三相の武装（Primus Aeron）と墜聖の双装（Polaris）には報酬連携がありません。両セットのshieldとPolarisのhealはHでなく最大HPを基準にします。大顎の本体祠報酬は変更しません。\n\n");
+    sb.Append($"Registered: {bossSets.Length} sets, {bossSets.Sum(s => Content.Uniques.Count(u => u.SetId == s.Id))} parts and {bossAdapters} distinct native reward adapters, obtained only from their matching boss. White Night and Dark Moon count parts, normal stages and reward profiles independently even when sharing Beam of Balance. Threefold Armament (Primus Aeron) and Fallen Sanctity Regalia (Polaris) have no reward link. Both sets' shields and Polaris healing scale with maximum HP rather than H. Maw's native shrine reward route remains unchanged.\n\n");
+    sb.Append("^ セット (Set) ^ 出所 (Source type) ^ 任意報酬 (Optional reward) ^ Adapter ^\n");
+    foreach (var s in bossSets)
+    {
+        bool hasReward = BossProfiles.TryGetReward(s.BossReward, out var reward);
+        sb.Append($"| {TxtBi(s.Name)} | {Esc(s.BossTypeName)} | {(hasReward ? TxtBi(Links.Name(reward.Requires)) : "-")} | {(hasReward ? Esc(reward.Adapter.ToString()) : "-")} |\n");
+    }
+    sb.Append('\n');
     foreach (var s in Content.Sets)
     {
         sb.Append(H2(TxtBi(s.Name)));
-        sb.Append("^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^\n");
+        sb.Append(BiBr(() => s.Describe())).Append("\n\n");
+        sb.Append("^ 部位 (Slot) ^ 名前 (Name) ^ 土台 (Base) ^ 固有効果 (Part powers) ^\n");
         foreach (var u in Content.Uniques.Where(u => u.SetId == s.Id))
         {
             string bs = Content.TryGetBase(u.BaseId, out var bd) ? SlotTitle(bd.Slot) : "-";
-            sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} |\n");
-        }
-        sb.Append('\n');
-        sb.Append("  * **2つ装着 (2 pieces)**: ").Append(string.Join(" / ", s.TwoPiece.Select(t => Bi(() => Content.FormatStat(t.Stat, t.Value))))).Append('\n');
-        sb.Append("  * **3つ装着 (3 pieces)**\n");
-        foreach (var p in s.ThreePiece)
-            sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
-        if (s.HasSixPiece)
-        {
-            sb.Append("  * **6つ装着 (6 pieces)**\n");
-            foreach (var p in s.SixPiece)
-                sb.Append("    * **").Append(Bi(() => Content.PowerName(p.Power))).Append("** ").Append(Bi(() => Content.FormatPower(p.Power, p.Value))).Append('\n');
+            string powers = u.BossMove != null ? BiBr(() => BossProfiles.DescribeMove(u.BossMove))
+                : u.Powers.Count == 0 ? "-" : string.Join(NL, u.Powers.Select(p => BiBr(() => Content.FormatPower(p.Power, p.Value))));
+            sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} | {powers} |\n");
         }
         sb.Append('\n');
     }

@@ -17,7 +17,7 @@ namespace SodRpg.Mod
     /// </summary>
     internal sealed partial class HostAuthority
     {
-        private sealed class ReceivedBuild
+        internal sealed class ReceivedBuild
         {
             public Build Build;
             public string Encoded;
@@ -26,7 +26,7 @@ namespace SodRpg.Mod
             public bool ApplyFailed;
         }
 
-        private sealed class HeroRuntime
+        internal sealed class HeroRuntime
         {
             public Hero Hero;
             public PowerRuntime Powers;
@@ -40,6 +40,8 @@ namespace SodRpg.Mod
             public readonly HashSet<int> GeneratedKillVictims = new HashSet<int>();
             public readonly List<GimmickRequest> GimmickRequests = new List<GimmickRequest>();
             public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly BossCombatState Boss = new BossCombatState();
+            internal readonly BossNativeOwner BossNative = new BossNativeOwner();
             public long ShieldEquipmentEpoch;
             public Action<EventInfoDamage> OnMemoryDamage;
             public Action<EventInfoKill> OnMemoryKill;
@@ -87,7 +89,7 @@ namespace SodRpg.Mod
             public string GrowthOwnerKey;
         }
 
-        private struct PendingGimmick
+        internal struct PendingGimmick
         {
             public long ShieldEquipmentEpoch;
             public GimmickRequest Request;
@@ -227,6 +229,12 @@ namespace SodRpg.Mod
         public HostAuthority(Func<int> dailyIdOfHost)
         {
             InitializeAssignedMechanisms();
+            InitializeMemoryAttribution();
+            BasicAttackContext.Prewarm(); NativeDamageContext.Prewarm(); ElementApplicationContext.Prewarm();
+            BossDisplacementReuse.Prewarm(); BossBasicEffectReuse.Prewarm();
+            NativeAttributedHpDamage.Prewarm(); PrewarmNativeShieldSnapshot();
+            _ = _runtimes.Values; _ = _attributionEquipment.Keys; _ = _attributionEquipment.Values;
+            _ = _bossHysteriaStates.Values; _ = _lastStarlights.Values;
             _dailyIdOfHost = dailyIdOfHost;
             _pressureDamage = (ref DamageData damage, Actor actor, Entity target) =>
                 damage.ApplyAmplification((float)_pressure.DamageMultiplier - 1f);
@@ -301,7 +309,7 @@ namespace SodRpg.Mod
             {
                 "sacrifice shields", "build updates", "run modifiers", "pressure", "pending builds",
                 "gem slots", "waypoint heroes", "area scan", "new powers", "reactions", "gimmick apply",
-                "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
+                "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
             };
@@ -309,7 +317,7 @@ namespace SodRpg.Mod
             {
                 UpdateSacrificeShields, StageBuildUpdates, RefreshRunModifiers, StagePressure, PruneAndApplyPending,
                 TickGemSlots, SyncWaypointHeroes, StageAreaScan, StageNewPowers, StageReactions, StageGimmickApply,
-                UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
+                StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
             };
@@ -343,6 +351,11 @@ namespace SodRpg.Mod
         private void StageGimmickApply()
         {
             foreach (var rt in _runtimes.Values) ApplyPendingGimmicks(rt, _tickNow);
+        }
+
+        private void StageBossEffects()
+        {
+            foreach (var rt in _runtimes.Values) TickBossEffects(rt, _tickNow);
         }
 
         private void StageGimmicksV129()
@@ -1362,6 +1375,7 @@ namespace SodRpg.Mod
             if (!_runtimes.TryGetValue(hero, out var rt))
             {
                 rt = new HeroRuntime { Hero = hero, Powers = new PowerRuntime(build, Time.time, hero.netId + 1UL) };
+                RefreshMemoryAttributionEquipment(hero);
                 var captured = rt;
                 rt.OnFired = info => OnAttackFired(captured, info);
                 rt.OnSkill = info => OnSkillUse(captured, info);
@@ -1498,6 +1512,7 @@ namespace SodRpg.Mod
             if (_am != null)
                 foreach (var entity in _am.allEntities)
                     if (entity is Summon summon) HookSummon(rt, summon);
+            BossEnsure(rt);
         }
 
         private static bool IsHealthSacrifice(Actor source, Hero hero)
@@ -1530,6 +1545,7 @@ namespace SodRpg.Mod
 
         private void Unhook(HeroRuntime rt)
         {
+            ClearBossEffects(rt);
             ForgetAssignedMechanismOwner(rt.Hero);
             RestoreGemSlots(rt);
             UnhookNewPowers(rt);

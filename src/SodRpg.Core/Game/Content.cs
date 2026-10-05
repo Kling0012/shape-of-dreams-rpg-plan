@@ -112,6 +112,15 @@ namespace SodRpg.Core.Game
             Powers = Array.Empty<PowerLine>();
         }
 
+        /// <summary>A boss-exclusive authored move occupies one effect slot, never a generic Power.</summary>
+        public UniqueDef(string id, string baseId, Txt name, string setId, string bossMove)
+            : this(id, baseId, name, setId)
+        {
+            if (!BossProfiles.TryGetMove(bossMove, out var profile) || profile.SetId != setId)
+                throw new ArgumentException("Unknown or mismatched boss move.", nameof(bossMove));
+            BossMove = bossMove;
+        }
+
         public string Id { get; }
         public string BaseId { get; }
         public Txt Name { get; }
@@ -119,8 +128,21 @@ namespace SodRpg.Core.Game
         public IReadOnlyList<PowerLine> Powers { get; }
         /// <summary>セット遺物ならセットID、それ以外は null。</summary>
         public string SetId { get; }
+        public string BossMove { get; }
         /// <summary>連携（v1.26）を持つならその定義、それ以外は null。</summary>
         public LinkDef Link { get; set; }
+    }
+
+    public sealed class SetLinkStage
+    {
+        public SetLinkStage(int requiredPieces, LinkDef link)
+        {
+            RequiredPieces = requiredPieces;
+            Link = link;
+        }
+
+        public int RequiredPieces { get; }
+        public LinkDef Link { get; }
     }
 
     /// <summary>名前付きのセット装備。2点・3点でボーナス、6部位のセットは6点で追加効果（v1.31）。</summary>
@@ -132,21 +154,107 @@ namespace SodRpg.Core.Game
         public PowerLine[] ThreePiece;
         /// <summary>6つ装着の効果（v1.31）。6部位化が済むまでは null / 空。4つ・5つ装着には効果を付けない。</summary>
         public PowerLine[] SixPiece;
+        /// <summary>このセットだけを落とすボスの完全一致型名。通常セットは null。</summary>
+        public string BossTypeName;
+        public string BossReward;
+        private IReadOnlyList<BossSetStage> bossStages = Array.Empty<BossSetStage>();
+        public IReadOnlyList<BossSetStage> BossStages
+        {
+            get => bossStages;
+            set
+            {
+                var stages = value?.ToArray() ?? Array.Empty<BossSetStage>();
+                if (stages.Length != 0 && stages.Length != 3)
+                    throw new ArgumentException("Boss stages require exactly 2/3/6 pieces.", nameof(value));
+                int[] thresholds = { 2, 3, 6 };
+                for (int i = 0; i < stages.Length; i++)
+                    if (stages[i] == null || stages[i].RequiredPieces != thresholds[i]
+                        || !BossProfiles.TryGetMove(stages[i].ProfileId, out var profile) || profile.SetId != Id)
+                        throw new ArgumentException("Invalid boss set stage.", nameof(value));
+                bossStages = Array.AsReadOnly(stages);
+            }
+        }
+        private SetLinkStage[] linkStages = Array.Empty<SetLinkStage>();
+        public SetLinkStage[] LinkStages
+        {
+            get => linkStages;
+            set
+            {
+                var stages = value ?? Array.Empty<SetLinkStage>();
+                if (stages.Length != 0 && stages.Length != 3)
+                    throw new ArgumentException("Set links require exactly the 2/4/6-piece stages.", nameof(value));
+                LinkDef first = null;
+                decimal previous = 0;
+                for (int i = 0; i < stages.Length; i++)
+                {
+                    var stage = stages[i];
+                    var link = stage?.Link;
+                    if (stage == null || stage.RequiredPieces != (i + 1) * 2 || !Links.Validate(link)
+                        || link.Requires.Length != 1 || link.Value <= 0 || link.Value < previous
+                        || link.Value > Links.Cap(link.Kind, 1)
+                        || (first != null && (link.Kind != first.Kind || link.Requires[0] != first.Requires[0])))
+                        throw new ArgumentException("Invalid set link stage.", nameof(value));
+                    first = first ?? link;
+                    previous = link.Value;
+                    if (BossTypeName != null && (link.Kind != LinkKind.BossReward || link.Value != i + 1
+                        || !BossProfiles.TryGetReward(BossReward, out var profile) || profile.SetId != Id || profile.Requires != link.Requires[0]))
+                        throw new ArgumentException("Boss links must select their native reward profile.", nameof(value));
+                }
+                linkStages = stages;
+            }
+        }
+
+        public SetLinkStage SelectLinkStage(int count)
+        {
+            for (int i = LinkStages.Length - 1; i >= 0; i--)
+                if (count >= LinkStages[i].RequiredPieces) return LinkStages[i];
+            return null;
+        }
 
         /// <summary>6つ装着の効果を持つか（= 6部位のセットか）。</summary>
-        public bool HasSixPiece => SixPiece != null && SixPiece.Length > 0;
+        public bool HasSixPiece => BossStages.Count == 3 || SixPiece != null && SixPiece.Length > 0;
 
         public string Describe()
         {
             string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
             string three = string.Join("\n", ThreePiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
             string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
-            if (HasSixPiece)
+            if (BossStages.Count > 0)
+                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：", $"{s.RequiredPieces} pieces: ") + BossProfiles.DescribeMove(s.ProfileId)));
+            if (SixPiece != null && SixPiece.Length > 0)
             {
                 string six = string.Join("\n", SixPiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
+            if (BossTypeName != null)
+                text += Loc.T($"\n出所：{Name}のボス限定（{BossTypeName}）", $"\nSource: {Name} boss only ({BossTypeName})");
+            foreach (var stage in LinkStages)
+                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：", $"\nOptional {stage.RequiredPieces}-piece link: ")
+                    + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
             return text;
+        }
+
+        public string DescribeLinkProgress(int count, bool satisfied)
+        {
+            if (LinkStages.Length == 0) return "";
+            var stage = SelectLinkStage(count);
+            string target = Links.Name(LinkStages[0].Link.Requires[0]).ToString();
+            string status = Loc.T(
+                $"現在{count}つ装着。対象『{target}』：{(satisfied ? "装着済み" : "未装着")}。",
+                $"{count} pieces equipped. Target {target}: {(satisfied ? "equipped" : "not equipped")}.");
+            status += stage != null && satisfied
+                ? Loc.T($"有効な連携：{stage.RequiredPieces}つ装着段階。", $"Active link: {stage.RequiredPieces}-piece stage.")
+                : Loc.T("有効な連携：なし。", "Active link: none.");
+            if (stage != null)
+                status += Loc.T($"\n選択段階（{stage.RequiredPieces}つ装着）：", $"\nSelected {stage.RequiredPieces}-piece stage: ")
+                    + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
+            foreach (var next in LinkStages)
+            {
+                if (next.RequiredPieces <= count) continue;
+                int missing = next.RequiredPieces - count;
+                return status + Loc.T($"\nあと{missing}つで{next.RequiredPieces}つ装着段階。", $"\n{missing} more piece(s) to the {next.RequiredPieces}-piece stage.");
+            }
+            return status + Loc.T("\n最終段階です。", "\nFinal stage reached.");
         }
 
         /// <summary>いま何点そろっているかと、次に何が起きるか（装着画面用）。</summary>
@@ -4452,7 +4560,16 @@ namespace SodRpg.Core.Game
             new UniqueDef("set.breakoutcorps.weapon", "weapon.gatehouse_maul", new Txt("突破隊の破城槌", "Breakout Ram"), "set.breakoutcorps"),
             new UniqueDef("set.breakoutcorps.hands", "hands.ironvein_gauntlets", new Txt("突破隊の鉄手", "Breakout Ironhands"), "set.breakoutcorps"),
             new UniqueDef("set.breakoutcorps.charm", "charm.iron_feather", new Txt("突破隊の鉄羽根", "Breakout Ironfeather"), "set.breakoutcorps"),
-        };
+            new UniqueDef("set.boss_demon.weapon", "weapon.shield_maul", new Txt("震根の槌", "Quakeroot Maul"), "set.boss_demon", "boss_demon.weapon"),
+            new UniqueDef("set.boss_demon.armor", "armor.root_mail", new Txt("不退の樹皮", "Unyielding Bark"), "set.boss_demon", "boss_demon.armor"),
+            new UniqueDef("set.boss_demon.charm", "charm.pulsing_core", new Txt("萌発の核", "Sprouting Core"), "set.boss_demon", "boss_demon.charm"),
+            new UniqueDef("set.boss_demon.head", "head.moss_crown", new Txt("放射の枝冠", "Radial Branch Crown"), "set.boss_demon", "boss_demon.head"),
+            new UniqueDef("set.boss_demon.hands", "hands.rootgrip_gloves", new Txt("溜め裂きの手甲", "Delayed Rending Grips"), "set.boss_demon", "boss_demon.hands"),
+            new UniqueDef("set.boss_demon.feet", "feet.rooted_boots", new Txt("瞬駆の根履", "Blinkstride Treads"), "set.boss_demon", "boss_demon.feet"),
+        }.Concat(BossProfiles.CreateSkollPieces()).Concat(BossProfiles.CreateInfernusPieces()).Concat(BossProfiles.CreateInkPieces())
+            .Concat(BossProfiles.CreateNyxPieces()).Concat(BossProfiles.CreateErebosPieces()).Concat(BossProfiles.CreateSeekerPieces())
+            .Concat(BossProfiles.CreateAzurakPieces()).Concat(BossProfiles.CreatePrimusPieces())
+            .Concat(BossProfiles.CreateLightPieces()).Concat(BossProfiles.CreateMawPieces()).Concat(BossProfiles.CreateObliviaxPieces()).Concat(BossProfiles.CreatePolarisPieces()).ToArray();
 
         public static readonly IReadOnlyList<SetDef> Sets = new[]
         {
@@ -4734,7 +4851,26 @@ namespace SodRpg.Core.Game
                 TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.MoveSpeedPct, 4) },
                 ThreePiece = new[] { new PowerLine(Power.Breakout, 10), new PowerLine(Power.UnbowedMind, 7), new PowerLine(Power.ImmovableStance, 9) },
                 SixPiece = new[] { new PowerLine(Power.Frenzy, 3), new PowerLine(Power.Shatter, 45) } },
-        };
+            new SetDef
+            {
+                Id = "set.boss_demon", Name = new Txt("荒ぶる樹界", "Rampaging Grove"),
+                BossTypeName = "Mon_Forest_BossDemon",
+                TwoPiece = Array.Empty<StatLine>(),
+                ThreePiece = Array.Empty<PowerLine>(),
+                SixPiece = Array.Empty<PowerLine>(),
+                BossStages = new[] { new BossSetStage(2, "boss_demon.stage2"), new BossSetStage(3, "boss_demon.stage3"), new BossSetStage(6, "boss_demon.stage6") },
+                BossReward = BossProfiles.DemonRewardId,
+                LinkStages = new[]
+                {
+                    new SetLinkStage(2, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.BossReward, Value = 1 }),
+                    new SetLinkStage(4, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.BossReward, Value = 2 }),
+                    new SetLinkStage(6, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.BossReward, Value = 3 }),
+                },
+            },
+        }.Concat(BossProfiles.CreateSkollSets()).Concat(BossProfiles.CreateInfernusSets()).Concat(BossProfiles.CreateInkSets())
+            .Concat(BossProfiles.CreateNyxSets()).Concat(BossProfiles.CreateErebosSets()).Concat(BossProfiles.CreateSeekerSets())
+            .Concat(BossProfiles.CreateAzurakSets()).Concat(BossProfiles.CreatePrimusSets())
+            .Concat(BossProfiles.CreateLightSets()).Concat(BossProfiles.CreateMawSets()).Concat(BossProfiles.CreateObliviaxSets()).Concat(BossProfiles.CreatePolarisSets()).ToArray();
 
         /// <summary>
         /// 48組すべてに SixPiece を入れ終えたら true にする（v1.31）。false の間は未入力のセットを許容し、

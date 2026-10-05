@@ -1,0 +1,89 @@
+using System;
+
+namespace SodRpg.Core.Game
+{
+    public static partial class BossProfiles
+    {
+        public const string NyxSetId = "set.boss_nyx";
+        public const string NyxRewardId = "boss_nyx.her_world";
+        public const string NyxNativeContract = "own-equipped-HerWorld-firstTrigger-caster-victim-parent-and-pooled-ActorLife;native-tick-circle-only-additional-attract-1mps-total2m-per-target-per-status;preserve-native-curve-and-outer-attract;radius-owned-delta-r+min(1,max(0,8-r));exact-native-tick-dispatch-positive-success-first3-unique-lives;natural-StatusEffect-FrameUpdate-expiry-only-not-death-interrupt-or-forced-end;exact-end-created-child-once-token1s;recorded-actual-child-hit-only-0.45H-Light-once;stun-owned-delta-d+min(.25,max(0,3-d));restore-fields-at-end-disable-pool-and-gear-reconciliation;preserve-native-death-interrupt-speed-armor-timer-lock-cost-and-packets;exclude-generated-wrong-owner-stale-room-run-epoch";
+        public const string NyxEventOrder = "expire-and-reconcile-total2-oldest-replaced-M3-tokens;E1-consume-existing-starpoint-pull-before-two-pillar-hits-add-one-mark;E3-relocate-existing-marker-once;E2-snapshot-existing-three-marks-before-new-marker;parts-after-marker;reserve-six-channel-last-for-total2-oldest-order;seed-M3-to-three-M2-single-wave-target-hit;generated-dash-actual-path-no-E3";
+
+        private static BossChannelDef NyxChannel(string id, int value, int cap, BossCoefficientKind kind = BossCoefficientKind.Damage)
+            => new BossChannelDef(id, value * 1000, cap * 1000, kind);
+        private static BossMoveProfile NyxProfile(string suffix, string ja, string en, BossChannelDef[] channels, params BossAction[] actions)
+            => new BossMoveProfile("boss_nyx." + suffix, NyxSetId, new Txt(ja, en), channels, actions);
+        private static BossAction NyxCircle(BossEvent kind, string channel, int radius, int delay, int cooldown = 0)
+            => new BossAction(kind, BossMechanism.Field, BossPayload.Damage, channel, cooldownMillis: cooldown,
+                delayMillis: delay, maxInstances: 1, radiusMilli: radius, element: BossElement.Light, replaceOldest: true);
+
+        internal static BossMoveProfile[] CreateNyxMoves() => new[]
+        {
+            NyxProfile("weapon", "通常攻撃が命中した地点（自身から8m以内）に0.35秒の予告後、半径1.5mに攻撃力・魔力の高い方の12%の光属性ダメージ（上限36）を与え、その0.4秒後に攻撃力・魔力の高い方の6%の光属性ダメージ（上限18）を与える（再使用まで5秒。自身が展開する領域は全種合計で最大2個までで、古いものから消滅する）。", "When your basic attack hits, after a 0.35-second warning, deal Light damage equal to 12% of whichever is higher: your Attack or Ability Power (capped at 36), within a 1.5m radius of the hit location, up to 8m from you. After another 0.4 seconds, deal Light damage equal to 6% of the higher of your Attack and Ability Power (capped at 18). Cooldown: 5 seconds. You can have at most 2 fields of any type combined; the oldest disappears first.",
+                new[] { NyxChannel("NyxPillar",12,36), NyxChannel("NyxPillarEcho",6,18) },
+                NyxCircle(BossEvent.MainHit,"NyxPillar",1500,350,5000), NyxCircle(BossEvent.Clock,"NyxPillarEcho",1500,750)),
+            NyxProfile("armor", "ダメージを受けた後、自身に攻撃力・魔力の高い方の16%（上限48）の障壁を2秒間付与し（重複不可）、足元に0.4秒の予告後、半径2mに攻撃力・魔力の高い方の8%（上限24）の光属性ダメージを与える（再使用まで8秒。自身が展開する領域は合計2個までで、古いものから消滅する）。", "After taking damage, gain a non-stacking shield equal to 16% of whichever is higher: your Attack or Ability Power (capped at 48), for 2 seconds. After a 0.4-second warning at your feet, deal Light damage equal to 8% of the higher of your Attack and Ability Power (capped at 24) within a 2m radius. Cooldown: 8 seconds. You can have at most 2 fields in total; the oldest disappears first.",
+                new[] { NyxChannel("NyxMantle",16,48,BossCoefficientKind.Shield), NyxChannel("NyxMantleBurst",8,24) },
+                new BossAction(BossEvent.NativeDamageTaken,BossMechanism.Defense,BossPayload.Shield,"NyxMantle",cooldownMillis:8000,lifetimeMillis:2000,maxInstances:1,element:BossElement.Light),
+                NyxCircle(BossEvent.Clock,"NyxMantleBurst",2000,400)),
+            NyxProfile("charm", "通常記憶または奥義記憶を使ったとき、照準位置の地面（自身から8m以内）に種を1個設置する。0.6秒後に120度間隔で3方向に弾を発射する（射程4m、弾速8m/秒、半径0.25m、持続0.5秒）。同じ敵には3弾合計で1回のみ、攻撃力・魔力の高い方の10%の光属性ダメージを与える（上限30）。再使用まで6秒（召喚時効果は発動しない。自身が展開する領域は合計2個までで、古いものから消滅する）。", "When you use a normal or ultimate memory, plant 1 seed on the ground at your aim point within 8m of you. After 0.6 seconds, it fires 3 projectiles in directions 120° apart. Each has a 4m range, a speed of 8m per second, a 0.25m radius, and a 0.5-second lifetime. Across all 3 projectiles, each enemy can be hit only once for Light damage equal to 10% of the higher of your Attack and Ability Power (capped at 30). Cooldown: 6 seconds. Does not trigger on-summon effects. You can have at most 2 fields in total; the oldest disappears first.",
+                new[] { NyxChannel("NyxSeed",10,30) },
+                new BossAction(BossEvent.MemoryUse,BossMechanism.Projectile,BossPayload.Damage,"NyxSeed",BossShape.Radial,BossAnchor.Cursor,cooldownMillis:6000,delayMillis:600,lifetimeMillis:500,count:3,maxInstances:1,rangeMilli:4000,widthMilli:500,speedMilli:8000,firstHitOnly:true,replaceOldest:true,element:BossElement.Light)),
+            NyxProfile("head", "移動完了時、着地点の前方2mの地点に0.3秒の予告後、半径1mの爆発で攻撃力・魔力の高い方の14%の光属性ダメージを与える（上限42）。再使用まで5秒（自身が展開する領域は合計2個までで、古いものから消滅する）。", "When you finish moving, after a 0.3-second warning, create an explosion with a 1m radius at a point 2m ahead of your landing position. It deals Light damage equal to 14% of whichever is higher: your Attack or Ability Power (capped at 42). Cooldown: 5 seconds. You can have at most 2 fields in total; the oldest disappears first.",
+                new[] { NyxChannel("NyxOrbit",14,42) }, NyxCircle(BossEvent.MovementCompleted,"NyxOrbit",1000,300,5000)),
+            NyxProfile("hands", "通常攻撃が命中した対象の周囲半径2mにいる通常敵を最大3体まで、0.3秒かけて自身側へ最大0.6m引き寄せ、0.4秒後にその円形範囲へ攻撃力・魔力の高い方の12%の光属性ダメージを与える（上限36。ボスと行動妨害が効かない敵は移動しない）。再使用まで6秒（自身が展開する領域は合計2個までで、古いものから消滅する）。", "When your basic attack hits, pull up to 3 normal enemies within a 2m radius of the target toward you by up to 0.6m over 0.3 seconds. After 0.4 seconds, deal Light damage equal to 12% of whichever is higher: your Attack or Ability Power (capped at 36), in that circle. Bosses and enemies immune to crowd control are not moved. Cooldown: 6 seconds. You can have at most 2 fields in total; the oldest disappears first.",
+                new[] { NyxChannel("NyxBinding",12,36) }, NyxCircle(BossEvent.MainHit,"NyxBinding",2000,400,6000),
+                new BossAction(BossEvent.MainHit,BossMechanism.EnemyMovement,BossPayload.Pull,lifetimeMillis:300,maxTargets:3,radiusMilli:2000,magnitudeMilli:600,element:BossElement.Light)),
+            NyxProfile("feet", "通常記憶または奥義記憶を使ったとき、照準方向へ0.2秒かけて最大3mダッシュする。移動経路（幅0.6m）上の敵にそれぞれ1回、攻撃力・魔力の高い方の10%の光属性ダメージを与える（上限30）。再使用まで7秒（無敵時間はなく、この自動移動では移動完了時効果は誘発しない）。", "When you use a normal or ultimate memory, dash up to 3m in your aim direction over 0.2 seconds. Deal Light damage equal to 10% of whichever is higher: your Attack or Ability Power (capped at 30), once to each enemy along the 0.6m-wide path. Cooldown: 7 seconds. Does not grant invulnerability, and this automatic movement does not trigger effects that activate when you finish moving.",
+                new[] { NyxChannel("NyxCrossing",10,30) },
+                new BossAction(BossEvent.MemoryUse,BossMechanism.Movement,BossPayload.Dash,"NyxCrossing",BossShape.Line,BossAnchor.Cursor,cooldownMillis:7000,lifetimeMillis:200,maxInstances:1,rangeMilli:3000,widthMilli:600,element:BossElement.Light)),
+            NyxProfile("stage2", "通常記憶または奥義記憶を使ったとき、照準位置の地面（自身から8m以内）に星点を1個設置する（持続6秒）。次の通常攻撃が命中したときにこれを消費し、半径2mの光の柱を発生させて0.35秒後と0.75秒後にそれぞれ攻撃力・魔力の高い方の10%の光属性ダメージを与える（柱の起動は再使用まで6秒、任意の2部位で発動。自身の星点・種・柱・吸引領域は合計2個までで、古いものから消滅する）。", "When you use a normal or ultimate memory, place 1 starpoint on the ground at your aim point within 8m of you, lasting 6 seconds. Your next basic attack hit consumes it to create a pillar of light with a 2m radius. After 0.35 seconds and 0.75 seconds, the pillar deals Light damage equal to 10% of whichever is higher: your Attack or Ability Power, each time. Pillar activation Cooldown: 6 seconds. Any 2 pieces activate this effect. You can have at most 2 starpoints, seeds, pillars, and attraction fields combined; the oldest disappears first.",
+                new[] { NyxChannel("NyxStarpoint",1,1,BossCoefficientKind.Stat), NyxChannel("NyxStarColumn",10,10) },
+                new BossAction(BossEvent.MemoryUse,BossMechanism.Field,BossPayload.Mark,"NyxStarpoint",BossShape.Circle,BossAnchor.Cursor,lifetimeMillis:6000,maxInstances:1,radiusMilli:2000,rangeMilli:8000,replaceOldest:true,element:BossElement.Light),
+                NyxCircle(BossEvent.MainHit,"NyxStarColumn",2000,350,6000), NyxCircle(BossEvent.Clock,"NyxStarColumn",2000,750)),
+            NyxProfile("stage3", "待機中の星点は、自身の移動完了時に1回だけ着地点の前方2mへ再配置される（元の6秒の持続時間は維持）。光の柱の起動時、事前に半径2m以内の通常敵を0.3秒かけて最大0.6m引き寄せる効果が追加される。星点を消費すると「星印」を1獲得する（最大3スタック、最後の獲得から12秒持続。ボスと行動妨害が効かない敵は移動せず、移動を行わなくても星点の消費だけで印を獲得できる）。", "When you finish moving, a waiting starpoint relocates once to a point 2m ahead of your landing position, keeping its original 6-second duration. Activating a pillar of light now first pulls normal enemies within a 2m radius by up to 0.6m over 0.3 seconds. Consuming a starpoint grants 1 Star Mark, up to 3 stacks, lasting 12 seconds after the last mark gained. Bosses and enemies immune to crowd control are not moved. Consuming a starpoint grants a mark even if you have not moved.",
+                new[] { NyxChannel("NyxStarMark",1,1,BossCoefficientKind.Stat) },
+                new BossAction(BossEvent.MovementCompleted,BossMechanism.Ledger,BossPayload.Mark,"NyxStarMark",lifetimeMillis:12000,count:3,rangeMilli:2000,ledgerId:"NyxOwnerStars",element:BossElement.Light),
+                new BossAction(BossEvent.MainHit,BossMechanism.EnemyMovement,BossPayload.Pull,lifetimeMillis:300,radiusMilli:2000,magnitudeMilli:600,element:BossElement.Light)),
+            NyxProfile("stage6", "柱を3回起動して星印が3つ溜まった状態で次の通常記憶または奥義記憶を使うと全て消費し、照準位置の地面（自身から8m以内）に半径3mの領域を0.5秒予告する。その後1秒間、通常敵を最大3体まで毎秒2mの速度で引き寄せ（敵1体ごとの合計移動距離は最大2m）、攻撃力・魔力の高い方の90%の光属性爆発ダメージを与え（上限100）、自身に攻撃力・魔力の高い方の38%分の障壁を3秒間付与する（上限40、重複不可。事前の移動は不要）。再使用まで10秒（自身が展開する領域は合計2個までで、古いものから消滅する）。", "After activating 3 pillars and collecting 3 Star Marks, your next normal or ultimate memory consumes all marks. After a 0.5-second warning, create a field with a 3m radius on the ground at your aim point within 8m of you. For 1 second, it pulls up to 3 normal enemies at 2m per second, moving each enemy no more than 2m in total. It then explodes for Light damage equal to 90% of the higher of your Attack and Ability Power (capped at 100), and grants you a non-stacking shield equal to 38% of the higher of your Attack and Ability Power (capped at 40) for 3 seconds. You do not need to move beforehand. Cooldown: 10 seconds. You can have at most 2 fields in total; the oldest disappears first.",
+                new[] { NyxChannel("NyxStarsea",90,100), NyxChannel("NyxStarseaShield",38,40,BossCoefficientKind.Shield) },
+                new BossAction(BossEvent.MemoryUse,BossMechanism.Field,BossPayload.Pull,cooldownMillis:10000,delayMillis:500,lifetimeMillis:1000,maxTargets:3,maxInstances:1,radiusMilli:3000,rangeMilli:8000,speedMilli:2000,magnitudeMilli:2000,replaceOldest:true,requiredMarks:3,consumeMarks:true,element:BossElement.Light),
+                NyxCircle(BossEvent.Clock,"NyxStarsea",3000,1500),
+                new BossAction(BossEvent.Clock,BossMechanism.Defense,BossPayload.Shield,"NyxStarseaShield",delayMillis:1500,lifetimeMillis:3000,maxInstances:1,element:BossElement.Light)),
+        };
+
+        internal static BossRewardProfile[] CreateNyxRewards()
+        {
+            BossRewardAction Pull() => new BossRewardAction(BossRewardActionKind.NativeSpeed,count:64,magnitudeMilli:2000,speedMilli:1000);
+            BossRewardAction Radius() => new BossRewardAction(BossRewardActionKind.NativeState,rangeMilli:8000,order:1,magnitudeMilli:1000);
+            BossRewardAction End() => new BossRewardAction(BossRewardActionKind.NativeDamage,450,450,durationMillis:1000,count:3,order:2,magnitudeMilli:250,rangeMilli:3000);
+            return new[] { new BossRewardProfile(NyxRewardId,NyxSetId,"St_U_HerWorld",BossRewardAdapter.HerWorld,new[]
+            {
+                new BossRewardStage(1,new Txt("自身が装着している「彼女の世界（Her World）」の継続ダメージ領域内の通常敵に対し、毎秒1mの追加引き寄せ効果を付与する（1回の効果につき敵1体あたり追加移動2mまで。ボスと行動妨害が効かない敵は除外。元の挙動や持続時間は維持される）。", "Your equipped Her World pulls normal enemies inside its damage-over-time area an additional 1m per second, up to 2m of additional movement per enemy for each use. Does not affect bosses and enemies immune to crowd control. The skill's original behavior and duration are unchanged."),new[] { Pull() }),
+                new BossRewardStage(2,new Txt("2部位効果に加えて、「彼女の世界」の継続ダメージ半径を上限8mまで最大1m拡張する。持続終了時または装備解除時に増加分のみ解除される（元の光属性継続ダメージやダメージ量は変化しない）。", "In addition to the 2-piece effect, increase Her World's damage-over-time radius by up to 1m, to a maximum of 8m. Only this increase is removed when the effect ends or you unequip it. Its original Light damage over time and damage amount are unchanged."),new[] { Pull(),Radius() }),
+                new BossRewardStage(3,new Txt("4部位効果に加えて、継続ダメージが命中した敵を最大3体まで記録する。その効果が自然終了した際、記録された敵への追撃が命中すると、それぞれ1回のみ攻撃力・魔力の高い方の45%の光属性ダメージを追加で与える。また、元のスタン時間を上限3秒まで最大0.25秒延長する（死亡による中断や強制解除、部屋移動時は追加ダメージなし）。", "In addition to the 4-piece effects, remember up to 3 enemies hit by Her World's damage over time. When the effect ends naturally, its follow-up hit deals additional Light damage equal to 45% of whichever is higher: your Attack or Ability Power, once to each remembered enemy it hits. Also extend the original stun by up to 0.25 seconds, to a maximum of 3 seconds. No additional damage is dealt if the effect is interrupted by death, forcibly removed, or ended by changing rooms."),new[] { Pull(),Radius(),End() }),
+            }) };
+        }
+        public static UniqueDef[] CreateNyxPieces() => new[]
+        {
+            new UniqueDef("unique.boss_nyx.weapon","weapon.astral_staff",new Txt("星柱の杖","Starpillar Staff"),NyxSetId,"boss_nyx.weapon"),
+            new UniqueDef("unique.boss_nyx.armor","armor.star_mantle",new Txt("星海の外套","Starsea Mantle"),NyxSetId,"boss_nyx.armor"),
+            new UniqueDef("unique.boss_nyx.charm","charm.pulsing_core",new Txt("夜空の種","Nightseed"),NyxSetId,"boss_nyx.charm"),
+            new UniqueDef("unique.boss_nyx.head","head.star_diadem",new Txt("星軌の冠","Starorbit Crown"),NyxSetId,"boss_nyx.head"),
+            new UniqueDef("unique.boss_nyx.hands","hands.star_rings",new Txt("星を結ぶ指","Starbinding Fingers"),NyxSetId,"boss_nyx.hands"),
+            new UniqueDef("unique.boss_nyx.feet","feet.star_steps",new Txt("星渡りの靴","Starcrossing Shoes"),NyxSetId,"boss_nyx.feet"),
+        };
+        public static SetDef[] CreateNyxSets() => new[] { new SetDef
+        {
+            Id=NyxSetId,Name=new Txt("星海の主衣","Starsea Sovereign Raiment"),BossTypeName="Mon_Sky_BossNyx",
+            TwoPiece=Array.Empty<StatLine>(),ThreePiece=Array.Empty<PowerLine>(),SixPiece=Array.Empty<PowerLine>(),
+            BossStages=new[] { new BossSetStage(2,"boss_nyx.stage2"),new BossSetStage(3,"boss_nyx.stage3"),new BossSetStage(6,"boss_nyx.stage6") },
+            BossReward=NyxRewardId,LinkStages=new[]
+            {
+                new SetLinkStage(2,new LinkDef { Kind=LinkKind.BossReward,Value=1,Requires=new[] { "St_U_HerWorld" } }),
+                new SetLinkStage(4,new LinkDef { Kind=LinkKind.BossReward,Value=2,Requires=new[] { "St_U_HerWorld" } }),
+                new SetLinkStage(6,new LinkDef { Kind=LinkKind.BossReward,Value=3,Requires=new[] { "St_U_HerWorld" } }),
+            },
+        } };
+    }
+}

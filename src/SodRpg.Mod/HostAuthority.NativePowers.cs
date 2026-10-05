@@ -21,6 +21,7 @@ namespace SodRpg.Mod
         private static readonly List<Hit> Pool = new List<Hit>();
         private static int _depth;
         private static long _serial;
+        internal static void Prewarm() { if (Pool.Count == 0) Pool.Add(new Hit()); }
         private static void Prefix(Actor __instance, Entity from, Entity to, bool isMain,
             ref bool isCriticalHit, out Scope __state)
         {
@@ -42,6 +43,7 @@ namespace SodRpg.Mod
             if (!__state.Started) return;
             if (__state.Rented)
             {
+                HostAuthority.NativeInstance?.ForgetScopedBasicHit(Current);
                 Current.Actor = null; Current.From = null; Current.Target = null;
                 _depth--;
             }
@@ -64,6 +66,7 @@ namespace SodRpg.Mod
         private static readonly List<Hit> Pool = new List<Hit>();
         private static int _depth;
         private static long _serial;
+        internal static void Prewarm() { if (Pool.Count == 0) Pool.Add(new Hit()); }
         private static void Prefix(Actor __instance, Entity target, out Scope __state)
         {
             __state = new Scope { Previous = Current, Started = true };
@@ -121,6 +124,7 @@ namespace SodRpg.Mod
         internal static Application Current;
         private static readonly List<Application> Pool = new List<Application>();
         private static int _depth;
+        internal static void Prewarm() { if (Pool.Count == 0) Pool.Add(new Application()); }
 
         private static void Prefix(Actor __instance, ElementalType type, Entity to, out Scope __state)
         {
@@ -168,6 +172,16 @@ namespace SodRpg.Mod
             if (ElementApplicationContext.Current != null && ElementApplicationContext.Current.Matches(info))
                 ElementApplicationContext.Current.Notified = true;
             if (NetworkServer.active) HostAuthority.NativeInstance?.OnNativeElementApplied(info);
+        }
+    }
+
+    internal sealed partial class HostAuthority
+    {
+        internal void ForgetScopedBasicHit(BasicAttackContext.Hit hit)
+        {
+            var owner = hit.From as Hero;
+            if (owner == null && hit.From is Summon summon) owner = summon.info.caster as Hero;
+            if (owner != null && _runtimes.TryGetValue(owner, out var rt)) rt.PairCombos.ForgetActivation(hit);
         }
     }
 }

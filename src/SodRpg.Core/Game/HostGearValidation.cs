@@ -55,13 +55,14 @@ namespace SodRpg.Core.Game
             // Loot starts Rare/Epic with 1/2 powers, ordinary uniques and named items with their
             // authored powers, and Common/Uncommon/set pieces with none. +5 adds a power only to
             // the latter sources; otherwise it adds an affix. +3/+10/+15 each add an affix; +20 adds none.
+            bool bossMove = unique?.BossMove != null;
             int initialPowers = unique != null ? unique.Powers.Count
                 : named != null ? named.Powers.Count
                 : source.Rarity == Rarity.Epic ? 2 : source.Rarity == Rarity.Rare ? 1 : 0;
-            int maxPowers = initialPowers > 0 ? initialPowers : source.EnhanceMilestones >= 2 ? 1 : 0;
+            int maxPowers = bossMove ? 0 : initialPowers > 0 ? initialPowers : source.EnhanceMilestones >= 2 ? 1 : 0;
             int maxAffixes = Content.AffixCount(source.Rarity);
             if (source.EnhanceMilestones >= 1) maxAffixes++;
-            if (source.EnhanceMilestones >= 2 && initialPowers > 0) maxAffixes++;
+            if (source.EnhanceMilestones >= 2 && (initialPowers > 0 || bossMove)) maxAffixes++;
             if (source.EnhanceMilestones >= 3) maxAffixes++;
             if (source.EnhanceMilestones >= 4) maxAffixes++;
             if (source.Affixes.Count > maxAffixes || source.Powers.Count > maxPowers
@@ -80,6 +81,7 @@ namespace SodRpg.Core.Game
                 LimitBreaks = source.LimitBreaks,
                 Retunes = source.Retunes,
                 Locked = source.Locked,
+                DeveloperGranted = source.DeveloperGranted,
                 EnhanceMilestones = source.EnhanceMilestones,
                 MilestonePowerApplied = source.MilestonePowerApplied || source.EnhanceMilestones >= 5,
                 AwakenPoints = source.AwakenPoints,

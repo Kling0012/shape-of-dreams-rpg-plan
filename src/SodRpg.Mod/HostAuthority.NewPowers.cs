@@ -23,17 +23,15 @@ namespace SodRpg.Mod
         {
             if (entity == null || entity.Status == null) return 0f;
             float amount = 0f;
-            var statuses = entity.Status.statusEffects;
-            for (int i = 0; i < statuses.Count; i++)
-            {
-                var status = statuses[i];
-                if (status == null || !status.isActive) continue;
-                var effects = status.basicEffects;
-                for (int j = 0; j < effects.Count; j++)
-                    if (effects[j] is ShieldEffect shield && shield.isAlive) amount += Math.Max(0f, shield.amount);
-            }
+            var effects = NativeShieldEffects(entity.Status);
+            for (int i = 0; i < effects.Count && i < 256; i++)
+                if (effects[i] is ShieldEffect shield && shield.isAlive && shield.parent != null && shield.parent.isActive)
+                    amount += Math.Max(0f, shield.amount);
             return amount;
         }
+        private static readonly HarmonyLib.AccessTools.FieldRef<EntityStatus, List<BasicEffect>> NativeShieldEffects =
+            HarmonyLib.AccessTools.FieldRefAccess<EntityStatus, List<BasicEffect>>("_basicEffects");
+        private static void PrewarmNativeShieldSnapshot() { _ = NativeShieldEffects; }
         private readonly HashSet<Entity> _nativeDeathEntities = new HashSet<Entity>();
         internal void OnNativeElementApplied(EventInfoApplyElemental info) => OnApplyElemental(info);
 
@@ -46,7 +44,7 @@ namespace SodRpg.Mod
         private static readonly HeroSkillLocation[] NormalMemorySlots =
             { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R };
 
-        private sealed class NewPowerHostState
+        internal sealed class NewPowerHostState
         {
             internal Se_GenericEffectContainer UnbowedGuard;
             internal Vector3 Position;
@@ -88,7 +86,6 @@ namespace SodRpg.Mod
                 }
             }
         }
-
         private static NormalMemoryEnumerable NormalMemories(Hero hero) => new NormalMemoryEnumerable(hero);
 
         internal static bool AllNormalMemoriesReady(Entity entity)

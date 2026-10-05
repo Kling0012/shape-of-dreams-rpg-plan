@@ -45,7 +45,7 @@ namespace SodRpg.Mod
     [HarmonyPatch(typeof(Actor), nameof(Actor.DoBasicAttackHit))]
     internal static class NativeAttributedBasicPacket
     {
-        internal sealed class Dispatch { internal bool Claimed; internal bool Main; internal Entity Owner; }
+        internal struct Dispatch { internal bool Claimed; internal bool Main; internal Entity Owner; }
         internal static Dispatch Current;
         private static readonly List<Dispatch> Scopes = new List<Dispatch>();
         private static int _depth;
@@ -90,6 +90,9 @@ namespace SodRpg.Mod
             internal ReactionChain Chain;
             internal bool Admitted, MainBasic;
             internal float DamageAmount;
+            internal float HpDamage;
+            internal long NotificationVictim;
+            internal int Notifications;
         }
         internal static Packet Current;
         private static readonly List<Packet> Packets = new List<Packet>();
@@ -99,15 +102,15 @@ namespace SodRpg.Mod
             internal Packet Previous, Rented;
             internal bool Started;
         }
-        private static void Prefix(Actor __instance, Entity target, ReactionChain chain, out Scope __state)
+        private static void Prefix(Actor __instance, DamageData damage, Entity target, ReactionChain chain, out Scope __state)
         {
             __state = new Scope { Previous = Current, Started = true };
             Current = null;
             if (!NetworkServer.active || HostAuthority.NativeInstance == null) return;
             bool main = false;
             long basicOwner = 0;
-            var basic = NativeAttributedBasicPacket.Current;
-            if (basic != null && !basic.Claimed)
+            ref var basic = ref NativeAttributedBasicPacket.Current;
+            if (basic.Owner != null && !basic.Claimed)
             {
                 basic.Claimed = true;
                 main = basic.Main && basic.Owner is Hero;
@@ -117,10 +120,11 @@ namespace SodRpg.Mod
             var packet = Packets[_depth++];
             __state.Rented = packet;
             packet.Actor = null; packet.Victim = null; packet.Identity = default;
-            packet.Chain = default; packet.Serial = 0; packet.Admitted = false; packet.MainBasic = false; packet.DamageAmount = 0;
-            Current = null;
+            packet.Chain = default; packet.Serial = 0; packet.Admitted = false; packet.MainBasic = false;
+            packet.DamageAmount = packet.HpDamage = 0; packet.NotificationVictim = 0; packet.Notifications = 0;
             HostAuthority.NativeInstance.BeginAttributedDamagePacket(packet, __instance, target, chain, main, basicOwner);
             Current = packet;
+            HostAuthority.NativeInstance.ObserveBossGeneratedDispatch(packet, damage);
         }
         private static void Finalizer(Scope __state)
         {
@@ -128,10 +132,38 @@ namespace SodRpg.Mod
             var packet = __state.Rented;
             if (packet != null)
             {
-                packet.Actor = null; packet.Victim = null; packet.Chain = default; packet.Identity = default;
+                HostAuthority.NativeInstance?.EndAttributedDamagePacket(packet);
                 _depth--;
             }
             Current = __state.Previous;
+        }
+    }
+
+    [HarmonyPatch(typeof(Actor), nameof(Actor.DealDamage))]
+    internal static class NativeAttributedHpDamage
+    {
+        private static readonly Action<EntityStatus, float> NativeSetHealth =
+            (Action<EntityStatus, float>)Delegate.CreateDelegate(typeof(Action<EntityStatus, float>),
+                AccessTools.PropertySetter(typeof(EntityStatus), nameof(EntityStatus.currentHealth)));
+        internal static void Prewarm() { _ = NativeSetHealth; }
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            var setter = AccessTools.PropertySetter(typeof(EntityStatus), nameof(EntityStatus.currentHealth));
+            var replacement = AccessTools.Method(typeof(NativeAttributedHpDamage), nameof(SetHealth));
+            int count = 0;
+            foreach (var instruction in instructions)
+            {
+                if (instruction.Calls(setter)) { instruction.opcode = OpCodes.Call; instruction.operand = replacement; count++; }
+                yield return instruction;
+            }
+            if (count != 1) throw new InvalidOperationException("Native HP attribution requires exactly one DealDamage health setter.");
+        }
+        private static void SetHealth(EntityStatus status, float health)
+        {
+            var packet = NativeAttributedDamagePacket.Current;
+            if (packet != null && packet.Victim != null && packet.Victim.Status == status)
+                packet.HpDamage = Math.Max(0f, status.currentHealth - Math.Max(0f, health));
+            NativeSetHealth(status, health);
         }
     }
 
@@ -194,6 +226,19 @@ namespace SodRpg.Mod
         private readonly List<long> _attributionSerialScratch = new List<long>();
         private long _lastAttributionPrune;
         private bool _attributionAdaptersRegistered;
+        private static readonly Dictionary<Type, string> NativeActorNames = CreateNativeActorNames();
+        private readonly SkillTrigger[] _nativeEquipmentScratch = new SkillTrigger[LinkSkills.Length];
+
+        private static Dictionary<Type, string> CreateNativeActorNames()
+        {
+            var names = new Dictionary<Type, string>(4096);
+            var types = typeof(St_U_Hysteria).Assembly.GetTypes();
+            for (int i = 0; i < types.Length; i++)
+                if (typeof(Actor).IsAssignableFrom(types[i])) names.Add(types[i], types[i].Name);
+            return names;
+        }
+        private static string NativeActorTypeName(Actor actor) =>
+            actor != null && NativeActorNames.TryGetValue(actor.GetType(), out var name) ? name : string.Empty;
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
 
@@ -205,38 +250,43 @@ namespace SodRpg.Mod
             RefreshMemoryAttributionEquipment(hero);
         }
 
+        private void InitializeMemoryAttribution()
+        {
+            if (_attributionAdaptersRegistered) return;
+            _memoryAttribution.RegisterAdapter(new NativeMemoryAdapter("native.circle-life.owned-fired",
+                nameof(St_D_CircleOfLife), NativePayloadKind.MainBasicAttack));
+            RegisterExactNativeMemoryAdapters();
+            _attributionAdaptersRegistered = true;
+        }
+
         internal long RefreshMemoryAttributionEquipment(Hero hero)
         {
-            if (hero == null) return 0;
-            if (!_attributionAdaptersRegistered)
-            {
-                _memoryAttribution.RegisterAdapter(new NativeMemoryAdapter("native.circle-life.owned-fired",
-                    nameof(St_D_CircleOfLife), NativePayloadKind.MainBasicAttack));
-                RegisterExactNativeMemoryAdapters();
-                _attributionAdaptersRegistered = true;
-            }
+            if (hero == null || hero.Skill == null) return 0;
+            InitializeMemoryAttribution();
             bool changed = !_attributionEquipment.TryGetValue(hero, out var equipment);
             int count = 0;
-            foreach (var location in LinkSkills)
+            for (int i = 0; i < LinkSkills.Length; i++)
             {
-                var skill = hero.Skill.GetSkill(location);
+                var skill = hero.Skill.GetSkill(LinkSkills[i]);
+                _nativeEquipmentScratch[i] = skill;
                 if (skill == null) continue;
                 count++;
-                if (!changed && (!equipment.TryGetValue(location, out var previous) || previous != skill)) changed = true;
+                if (!changed && (!equipment.TryGetValue(LinkSkills[i], out var previous) || previous != skill)) changed = true;
             }
             changed |= equipment != null && equipment.Count != count;
             if (!changed) return _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
-            equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
-            var memories = new List<string>();
-            var mechanisms = new List<EquippedMechanismMemory>();
-            foreach (var location in LinkSkills)
+            if (equipment == null) equipment = new Dictionary<HeroSkillLocation, SkillTrigger>(LinkSkills.Length);
+            else equipment.Clear();
+            var memories = new List<string>(count);
+            var mechanisms = new List<EquippedMechanismMemory>(count);
+            for (int i = 0; i < LinkSkills.Length; i++)
             {
-                var skill = hero.Skill.GetSkill(location);
+                var skill = _nativeEquipmentScratch[i];
                 if (skill == null) continue;
-                equipment.Add(location, skill);
-                string memory = skill.GetType().Name;
+                equipment.Add(LinkSkills[i], skill);
+                string memory = NativeActorTypeName(skill);
                 memories.Add(memory);
-                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
+                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(LinkSkills[i]),
                     skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
             }
             _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
@@ -244,6 +294,11 @@ namespace SodRpg.Mod
             _attributionEquipment[hero] = equipment;
             _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
             _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
+            if (_runtimes.TryGetValue(hero, out var rt))
+            {
+                ModShieldEquipmentEpoch(rt);
+                BossEnsure(rt);
+            }
             MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
             return epoch;
         }
@@ -332,14 +387,15 @@ namespace SodRpg.Mod
             if (instance == null || instance.gem != null || info.caster != summon || !summon.isActive || summon.currentHealth <= 0f
                 || AttributionGeneratedOrigin() != GeneratedOrigin.None || !(summon.info.caster is Hero hero) || !Alive(hero)) return;
             var trigger = summon.FindFirstAncestorOfType<SkillTrigger>();
-            if (trigger == null || trigger.owner != hero || FindMemory(hero, trigger.GetType().Name) != trigger) return;
+            if (trigger == null || trigger.owner != hero || !BossNativeEquippedSkill(hero, trigger)) return;
             foreach (var location in LinkSkills)
                 if (hero.Skill.GetSkill(location) == trigger && location == HeroSkillLocation.Movement) return;
+            int depth = 0;
             for (var current = (Actor)summon; current != null; current = current.parentActor)
-                if (current is Gem || current is ElementalStatusEffect || current is AbilityInstance ability && ability.gem != null) return;
+                if (++depth > 64 || current is Gem || current is ElementalStatusEffect || current is AbilityInstance ability && ability.gem != null) return;
             EnsureMemoryAttributionEquipment(hero);
             _memoryAttribution.BindInstance(instance.GetInstanceID(),
-                _memoryAttribution.BeginActivation(hero.GetInstanceID(), trigger.GetType().Name, NativePayloadKind.SummonAttack));
+                _memoryAttribution.BeginActivation(hero.GetInstanceID(), NativeActorTypeName(trigger), NativePayloadKind.SummonAttack));
         }
 
         internal bool TryGetMemoryActivation(Actor actor, out MemoryActivationIdentity identity)
@@ -363,7 +419,7 @@ namespace SodRpg.Mod
                 if (current is Summon && (!found || identity.NativePayloadKind != NativePayloadKind.SummonAttack)) return false;
                 if (current is SkillTrigger skill && authoritativeMemory == null)
                 {
-                    authoritativeMemory = skill.GetType().Name;
+                    authoritativeMemory = NativeActorTypeName(skill);
                     owner = skill.owner as Hero;
                 }
                 if (current is Hero hero && owner == null) owner = hero;
@@ -438,6 +494,16 @@ namespace SodRpg.Mod
                 && source.owner == owner)
                 packet.Identity = _memoryAttribution.ProjectOwnedBasicSource(packet.Identity, "native.killing-flow.main");
         }
+        internal void EndAttributedDamagePacket(NativeAttributedDamagePacket.Packet packet)
+        {
+            if (packet == null) return;
+            for (int i = 0; i <= (int)MemoryEventKind.OwnedBasicAttackHit; i++)
+                if ((packet.Notifications & (1 << i)) != 0)
+                    _memoryAttribution.ForgetNotification("native.publish", packet.Identity.Event((MemoryEventKind)i, packet.Serial, packet.NotificationVictim));
+            packet.Actor = null; packet.Victim = null; packet.Serial = packet.NotificationVictim = 0;
+            packet.Identity = default; packet.Chain = default; packet.Admitted = packet.MainBasic = false;
+            packet.DamageAmount = packet.HpDamage = 0f; packet.Notifications = 0;
+        }
 
         private bool TryGetNativeTriggerActivation(EventInfoAttackEffect input, out MemoryActivationIdentity identity)
         {
@@ -457,6 +523,8 @@ namespace SodRpg.Mod
 
         internal void PublishAttributedFinalDamage(EventInfoDamage info)
         {
+            ObserveBossGeneratedDamage(info);
+            PublishBossNativeDamage(info);
             var packet = NativeAttributedDamagePacket.Current;
             if (packet == null || !packet.Admitted || packet.Actor != info.actor || packet.Victim != info.victim
                 || info.victim == null || info.damage.amount <= 0f) return;
@@ -494,7 +562,11 @@ namespace SodRpg.Mod
 
         private long AttributedVictimLifetime(Entity victim)
         {
-            if (!_attributionVictimLifetimes.TryGetValue(victim, out long id)) _attributionVictimLifetimes[victim] = id = _memoryAttribution.NewPacketId();
+            if (!_attributionVictimLifetimes.TryGetValue(victim, out long id))
+            {
+                if (_attributionVictimLifetimes.Count >= 4096) return 0;
+                _attributionVictimLifetimes[victim] = id = _memoryAttribution.NewPacketId();
+            }
             return id;
         }
 

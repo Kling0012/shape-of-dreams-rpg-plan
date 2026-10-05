@@ -77,6 +77,7 @@ namespace SodRpg.Mod
             Nightmare.Clear();
             ClearVariants();
             ClearMonsterCues();
+            ClearBossDisplay();
             _nextKillReceipt = 0f;
             _buildDirty = true;
             return true;
@@ -136,6 +137,7 @@ namespace SodRpg.Mod
                 Nightmare.Clear();
                 ClearVariants();
                 ClearMonsterCues();
+                ClearBossDisplay();
                 return;
             }
             _currentKillStreamId = msg.streamId;
@@ -149,7 +151,9 @@ namespace SodRpg.Mod
         private void OnMonsterKill(DreamforgeMonsterKillMsg msg)
         {
             if (msg == null || msg.protocol != Protocol.Version || msg.netId == 0 || msg.sequence <= 0
-                || string.IsNullOrEmpty(msg.streamId) || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)) return;
+                || string.IsNullOrEmpty(msg.streamId) || string.IsNullOrEmpty(msg.runId) || string.IsNullOrEmpty(msg.eventId)
+                || !string.IsNullOrEmpty(msg.bossTypeName) && (!MechanismHandshakeAccepted
+                    || !ContentFingerprint.Matches(msg.protocol, msg.content, Protocol.Version))) return;
             string gameRunId = NetworkedManagerBase<GameManager>.softInstance?.runId;
             if (string.IsNullOrEmpty(gameRunId) || msg.runId != gameRunId || msg.runId == _completedRunId) return;
             if (!ObserveMonsterAuthority(msg.authorityGeneration)) return;

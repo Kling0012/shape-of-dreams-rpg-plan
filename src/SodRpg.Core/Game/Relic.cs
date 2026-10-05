@@ -49,6 +49,8 @@ namespace SodRpg.Core.Game
         /// <summary>特性の洗い直しを使った回数（v1.31）。回数の上限はない。費用はこれで増える。</summary>
         public int AffixRerolls { get; set; }
         public bool Locked { get; set; }
+        /// <summary>専用の開発コマンドで付与した個体。戦闘性能や通常の抽選には影響しない。</summary>
+        public bool DeveloperGranted { get; set; }
         /// <summary>受け取った強化の節目（0〜5）。強化が+0に戻っても履歴は残る。</summary>
         public int EnhanceMilestones { get; set; }
         /// <summary>+20で1つ目の固有効果に1.2倍を適用済みか。強化の失敗でも失わない。</summary>
@@ -73,6 +75,25 @@ namespace SodRpg.Core.Game
         public Slot Slot => Base.Slot;
         /// <summary>固有品の連携（v1.26）。連携を持たない遺物・個体は null。</summary>
         public LinkDef Link => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.Link : null;
+        public string BossMove => UniqueId != null && Content.TryGetUnique(UniqueId, out var u) ? u.BossMove : null;
+        public int AuthoredEffectCount => BossMove != null ? 1 : Powers.Count;
+        public BossMoveEntry EffectiveBossMove()
+        {
+            if (!BossProfiles.TryGetMove(BossMove, out var profile)) return null;
+            var channels = new List<BossChannelValue>(profile.Channels.Count);
+            foreach (var c in profile.Channels)
+            {
+                bool scales = c.Kind == BossCoefficientKind.Damage || c.Kind == BossCoefficientKind.Heal || c.Kind == BossCoefficientKind.Shield;
+                decimal multiplier = scales ? Content.EnhancePowerScalePct(Enhance) / 100m * Content.AwakenPowerPctAt(AwakenLevel) / 100m : 1m;
+                if (scales && (MilestonePowerApplied || EnhanceMilestones >= 5)) multiplier *= Content.LimitBreakPowerPct / 100m;
+                if (profile.SetId != BossProfiles.DemonSetId) multiplier = Math.Min(3m, multiplier);
+                int value = scales ? checked((int)decimal.Round(c.ValueMilli * multiplier, 0, MidpointRounding.AwayFromZero)) : c.ValueMilli;
+                if (profile.SetId == BossProfiles.DemonSetId) value = Math.Min(c.CapMilli, value);
+                channels.Add(new BossChannelValue(c.ChannelId, value));
+            }
+            return new BossMoveEntry(profile.SetId, profile.Id, channels);
+        }
+        public string DescribeBossMove() => BossBuildCodec.Describe(EffectiveBossMove());
 
         /// <summary>強化値を付けない名前。</summary>
         public string PlainName
@@ -124,6 +145,7 @@ namespace SodRpg.Core.Game
         /// <summary>強化を反映した固有効果（+5までは+1ごとに+5%、そこから先は+1ごとに+3%）。覚醒の倍率は切り捨てる。</summary>
         public IEnumerable<PowerLine> EffectivePowers()
         {
+            if (BossMove != null) yield break;
             int pct = Content.EnhancePowerScalePct(Enhance);
             foreach (var p in Powers)
             {
@@ -158,6 +180,7 @@ namespace SodRpg.Core.Game
                 Retunes = Retunes,
                 AffixRerolls = AffixRerolls,
                 Locked = Locked,
+                DeveloperGranted = DeveloperGranted,
                 EnhanceMilestones = EnhanceMilestones,
                 MilestonePowerApplied = MilestonePowerApplied,
                 AwakenPoints = AwakenPoints,

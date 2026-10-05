@@ -3,7 +3,7 @@ using SodRpg.Core.Game;
 
 namespace UnityEngine
 {
-    internal struct Vector2 { public static Vector2 zero => default; }
+    internal partial struct Vector2 { public static Vector2 zero => default; }
     internal static class GUI { public static bool enabled = true; }
     internal sealed class GUILayoutOption { internal float Height; }
     internal static class GUILayout

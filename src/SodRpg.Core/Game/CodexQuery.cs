@@ -364,6 +364,8 @@ namespace SodRpg.Core.Game
                 case CodexCategory.Uniques:
                     if (e.Base != null) sb.Append(e.Base.Name.Ja).Append(' ').Append(e.Base.Name.En).Append(' ');
                     foreach (var pw in e.Unique.Powers) sb.Append(Content.FormatPower(pw.Power, pw.Value)).Append(' ');
+                    if (BossProfiles.TryGetMove(e.Unique.BossMove, out var bossMove))
+                        sb.Append(bossMove.Description.Ja).Append(' ').Append(bossMove.Description.En).Append(' ');
                     if (e.Unique.Link != null) sb.Append(Links.Describe(e.Unique.Link)).Append(' ');
                     sb.Append(e.Unique.Lore.Ja).Append(' ').Append(e.Unique.Lore.En);
                     break;

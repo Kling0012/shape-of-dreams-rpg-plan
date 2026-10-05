@@ -9,7 +9,7 @@ namespace SodRpg.Mod
 
     internal sealed partial class HostAuthority
     {
-        private struct PendingReaction
+        internal struct PendingReaction
         {
             public Entity Victim;
             public Vector3 Center;

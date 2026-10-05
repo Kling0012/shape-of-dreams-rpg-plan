@@ -8,7 +8,7 @@ using SodRpg.Core.Game;
 //   InvokeOnDealDamage: ActorEvent_OnDealDamage of the dealing Actor and EVERY ancestor (Actor.cs InvokeOnDealDamage).
 namespace SodRpg.Mod
 {
-    internal struct EventInfoDamage { public Actor actor; public Entity victim; public float amount; }
+    internal partial struct EventInfoDamage { public Actor actor; public Entity victim; public float amount; }
     internal partial class Actor
     {
         public event Action<EventInfoDamage> ActorEvent_OnDealDamage;
