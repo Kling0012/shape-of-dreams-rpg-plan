@@ -132,6 +132,7 @@ namespace SodRpg.Mod
     internal sealed class DewPlayer
     {
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
+        public static DewPlayer local;
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
@@ -170,7 +171,12 @@ namespace SodRpg.Mod
     }
     internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
     internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
-    internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
+    internal static class Log
+    {
+        public static void Error(string message) => throw new InvalidOperationException(message);
+        // #167: あふれの確定が欠片へ落ちるときの警告。ハーネスでは記録しない。
+        public static void Warn(string message) { }
+    }
     internal static class NativeAttributedMemoryCast
     {
         internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }
@@ -315,6 +321,11 @@ namespace SodRpg.Mod
         public readonly List<GameEvent> Events = new List<GameEvent>();
         private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
         public event Action ProfileChanged;
+        // #167: あふれのまとめて確定（ClientSession.SatchelDust.cs）が使う取引の輸送。
+        // ハーネスの Emit はあふれをキューへ入れないので、実際に送られることはない。
+        private string TradeUnavailable() => null;
+        private string SendPreparedTrade(SodRpg.Core.Game.PendingTrade t, bool confirm) => null;
+        private void RestoreSalvageTrade(SodRpg.Core.Game.PendingTrade trade) { }
         public void Emit(GameEvent e) => Events.Add(e);
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();
