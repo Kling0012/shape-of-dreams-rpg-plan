@@ -6,6 +6,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.0.5 — 分解・純白ルート・起動時の読み込みの修正（2026-10-05）
+
+v2.0.4 のあとに見つかった不具合を3つ直しました。 / This release fixes three bugs found after v2.0.4.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.0.3・v2.0.4 と同じです）。 / Saves carry over (same format as v2.0.3 and v2.0.4).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Fixes
+
+- **分解と確保**：遺物の分解を待っているあいだに確保すると、遺物が保管庫に残ったまま、分解の対価も受け取れてしまうことがありました。分解を待っている遺物は、結果が出るまで別枠で保管するようにしました。 / **Salvage and secure**: securing while a salvage was still pending could keep the relic in your stash and also pay out the salvage. Relics waiting on a salvage are now set aside until the result arrives.
+- **純白ルートの協力プレイ**：ホストが選択を確定すると、参加者の保留中の報酬が、参加者本人が確保か潜行かを選ぶ前に、潜行として精算されていました。本人が選ぶまで精算を待つようにしました。 / **Pure-white route in co-op**: when the host decided, participants' pending rewards were settled as a delve before they chose to secure or delve. They now wait for each player's own choice.
+- **起動時の読み込み**：セーブデータの初回の読み込みでエラーが起きると、MOD がまったく動かなくなっていました。修正後は、読み取り専用で起動して画面で知らせ、セーブデータを上書きせずに、自動で読み込み直します。 / **Loading at startup**: a read error on the first save load stopped the mod entirely. It now starts read-only, tells you on screen and retries automatically, without overwriting your save.
+
+---
+
 ## v2.0.4 — 夢の圧の追加報酬の修正（2026-10-05）
 
 v2.0.3 で見つかった、報酬の不具合を1つ直しました。 / This release fixes one reward bug found after v2.0.3.
