@@ -4,6 +4,10 @@ using HarmonyLib;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
 
+namespace Mirror
+{
+    internal static class NetworkServer { public static bool active; }
+}
 namespace UnityEngine
 {
     public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
@@ -68,30 +72,82 @@ namespace SodRpg.Mod
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
-    // Fixture Infinity patch classes (name prefix "FixtureInfinity") let the production
-    // PatchEachClass infinity branches run under real Harmony. The stub mirrors the real
-    // CompletePatchInstallation contract: fewer native patches than classes disables only
-    // Infinity; the rest of the mod keeps running.
-    internal static class InfinityMode
+    // Game-boundary doubles for the real InfinityMode.cs (compiled into this project).
+    // Only the members InfinityMode and its native patch classes touch are modeled; the
+    // patch classes install onto these methods with real Harmony detours.
+    public sealed class DewPlayer
     {
-        internal const int NativePatchClassCount = 2;
-        internal static readonly List<string> DisabledReasons = new List<string>();
-        internal static int? CompletedInstallCount;
-        internal static bool Available { get; private set; }
-        internal static void Reset() { DisabledReasons.Clear(); CompletedInstallCount = null; Available = false; }
-        internal static bool IsNativePatch(Type patch) =>
-            patch != null && patch.Name.StartsWith("FixtureInfinity", StringComparison.Ordinal);
-        internal static void CompletePatchInstallation(int installedCount)
+        public string guid;
+        public bool isHumanPlayer;
+        public static DewPlayer local;
+        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
+        public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+    }
+    public class Actor
+    {
+        public bool isActive;
+        public void CustomRpc_SendMessageToServer<T>(T message) { }
+        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler) { }
+        public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
+    }
+    public sealed class Shrine_BossSoul : Actor { }
+    public sealed class GameSettingsManager
+    {
+        public readonly Dictionary<string, string> customData = new Dictionary<string, string>();
+        public GameState state;
+        public string difficulty;
+        public MidJoinBanType midJoinBanType;
+    }
+    // The real protocol constant lives in NetMessages.cs (not compiled here).
+    internal static class Protocol
+    {
+        public const int Version = 21;
+        public const string LobbyReturnedResumeSession = "lobby-returned";
+    }
+    public enum GameState { InLobby, Playing }
+    public enum MidJoinBanType { None, GameHasEnded }
+    public static class DewGameResult
+    {
+        public enum ResultType { Victory, GameOver, Conceded }
+    }
+    public sealed class PlayGameManager { public void LoadNextZone() { } }
+    public sealed class PlayLobbyManager
+    {
+        public bool CheckStartGameCondition(out string reason, bool showMessage)
         {
-            CompletedInstallCount = installedCount;
-            if (installedCount != NativePatchClassCount)
-            {
-                Available = false;
-                DisabledReasons.Add("Infinity native interception is incomplete.");
-            }
-            else Available = true;
+            reason = null;
+            return true;
         }
-        internal static void DisableFeature(string reason) => DisabledReasons.Add(reason);
+    }
+    public sealed class RoomRifts { public void CreateSidetrackRift(Rift_Sidetrack source) { } }
+    public sealed class Rift_Sidetrack { }
+    public sealed class GameMod_StarlessPath { internal void ClientEventOnActorAdd(Actor actor) { } }
+    public sealed class Rift_RoomExit
+    {
+        public static Rift_RoomExit instance;
+        public bool isLocked;
+        private void UserCode_TpcInteract__NetworkConnectionToClient() { }
+    }
+    public static class DewPersistence
+    {
+        public static object SerializeGameData(object settings) => null;
+        public static void ApplyGameData(object data, Action onFinish = null) => onFinish?.Invoke();
+    }
+    public static class SingletonDewNetworkBehaviour<T> where T : class { public static T softInstance; }
+    public sealed class RoomEvent { public void AddListener(Action action) { } }
+    public sealed class Room
+    {
+        public bool isActive, didClearRoom, isRevisit;
+        public RoomEvent onRoomClear = new RoomEvent();
+        public void OnStartServer() { }
+        public void StartRoom() { }
+    }
+    public sealed class WorldNodeModifier { public int id; }
+    public sealed class Zone
+    {
+        public string name;
+        public bool useSpecialGeneration;
+        public List<object> startRooms = new List<object>(), combatRooms = new List<object>(), bossRooms = new List<object>();
     }
     internal sealed class PerfMeter
     {
@@ -127,7 +183,7 @@ namespace SodRpg.Mod
         public void Draw() { }
         public void Dispose() { }
     }
-    internal sealed class ClientSession
+    internal sealed partial class ClientSession
     {
         public Profile Profile = new Profile();
         public static RunState HostRun;
@@ -149,11 +205,24 @@ namespace SodRpg.Mod
         public object Delve() => null;
         public EncodableBuild CurrentBuild(string key) => new EncodableBuild();
         public static string HeroKeyOf(Hero hero) => null;
+        // InfinityMode surface (the real partial classes compiled here use these).
+        internal static ClientSession _hostSession;
+        internal static bool HostInfinityRewardsSettled, HostInfinityReturnCommitted;
+        internal static void PrepareNativeInfinityContinue() { }
+        internal static bool RemoteHostInfinityAvailable;
+        internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
+        internal static bool PersistHostInfinityState() => false;
+        internal static void CountHostInfinityRoom() { }
+        internal static void OpenHostInfinityChoice() { }
+        internal static void FinishNativeContinueRestore() { }
     }
     internal sealed class EncodableBuild { public string Encode() => ""; }
     internal sealed class HostAuthority
     {
         public static string ModVersion;
+        public static bool InfinityCanAdvance, InfinityBoundarySettled;
+        public static long InfinityRetireBeforeSegment(long current) => current;
+        public static bool InfinityRosterCompatible(IReadOnlyList<DewPlayer> players) => true;
         public bool IsActive;
         public HostAuthority(Func<int> daily) { }
         public static void PrewarmBossVisualTransport() { }
@@ -192,18 +261,43 @@ namespace SodRpg.Mod
         public float attackDamagePercentage, attackSpeedPercentage, maxHealthFlat, maxHealthPercentage,
             armorFlat, abilityHasteFlat, movementSpeedPercentage;
     }
-    public static class NetworkedManagerBase<T> { public static T softInstance; }
+    public static class NetworkedManagerBase<T> { public static T softInstance; public static T instance; }
+    public sealed class ActorManager { public Actor serverActor; public readonly List<Actor> allActors = new List<Actor>(); }
     public sealed class ZoneManager
     {
         public int currentNodeIndex;
+        public int _nextModifierId;
+        public int currentZoneIndex;
+        public WorldNode currentNode;
+        public uint worldSeed;
+        public bool isInAnyTransition;
+        public Zone currentZone;
         public List<WorldNode> nodes = new List<WorldNode>();
+        public readonly List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
+        public readonly Dictionary<int, object> modifierServerData = new Dictionary<int, object>();
+        public readonly List<object> visitedNodesSaveData = new List<object>();
         public bool IsNodeConnected(int from, int to) => false;
         public void CmdTravelToNode(int node) { }
+        public void GenerateWorldAuto() { }
+        public void TravelToNode(int to, bool advanceTurn, bool isSidetrackTransition, bool ignoreInterrupts) { }
+        public void TravelToZone(Zone prefab, bool noAdvance) { }
+        public void CallOnReadyAfterTransition(Action action) => action();
     }
-    public sealed class WorldNode { public WorldNodeType type; public WorldNodeStatus status; }
-    public enum WorldNodeType { ExitBoss, Combat }
+    public sealed class WorldNode
+    {
+        public WorldNodeType type;
+        public WorldNodeStatus status;
+        public List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
+    }
+    public enum WorldNodeType { ExitBoss, Combat, Special }
     public enum WorldNodeStatus { HasVisited }
-    public sealed class GameManager { public Difficulty difficulty; public int ambientLevel; }
+    public sealed class GameManager
+    {
+        public string runId;
+        public Difficulty difficulty;
+        public int ambientLevel;
+        public void WrapUpAndShowResult(DewGameResult.ResultType type) { }
+    }
     public sealed class Difficulty { public string name; }
     public struct ListReturnHandle<T> { public void Return() { } }
     public static class DewPhysics

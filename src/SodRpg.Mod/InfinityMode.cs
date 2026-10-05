@@ -19,6 +19,7 @@ namespace SodRpg.Mod
         private static bool _newInfinity;
         private static bool _refresh;
         private static bool _unavailable;
+        private static string _lastDisableLog;
         private static readonly Type[] NativePatchClasses =
         {
             typeof(InfinityNextZone), typeof(InfinityGenerated), typeof(InfinityRoomClear),
@@ -49,6 +50,14 @@ namespace SodRpg.Mod
             _restoring = false;
             _refresh = false;
             _newInfinity = false;
+            // #144: every distinct check that stops Infinity is logged by name; the first reason
+            // stays in the lobby notice. Later checks used to be swallowed silently, hiding which
+            // patch or interception actually disabled the feature on a player's machine.
+            if (reason != _lastDisableLog)
+            {
+                _lastDisableLog = reason;
+                Log.Warn("Infinity disabled; normal mode remains available. " + reason);
+            }
             if (_unavailable) return;
             _unavailable = true;
             UnavailableReason = reason;
@@ -59,7 +68,6 @@ namespace SodRpg.Mod
                     if (settings != null) settings.customData[HaltKey] = "1";
                 }
                 catch (Exception ex) { Log.Warn("Infinity disabled-state announcement unavailable: " + ex.Message); }
-            Log.Warn("Infinity disabled; normal mode remains available. " + reason);
         }
 
         internal static void InterceptionFailed(string hook, Exception error)

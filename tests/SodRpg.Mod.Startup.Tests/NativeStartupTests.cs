@@ -34,8 +34,7 @@ namespace SodRpg.Mod.Startup.Tests
             ErebosLastStarlightSequence.Captures = 0;
             ErebosLastStarlightSequence.WaitAdaptations = 0;
             BlockInputWhileMenuOpen.MenuOpen = false;
-            InfinityStartupFixtures.Reset();
-            InfinityMode.Reset();
+            ResetInfinity();
         }
 
         [Fact]
@@ -227,33 +226,84 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         /// <summary>
-        /// #95: インフィニティの本体割り込みパッチの一部が入らない場合、インフィニティ機能だけが無効になる。
-        /// 通常パッチはインストールされたままMOD全体は起動し、無効化の理由と適用数が記録される。
+        /// #144: 本体の境界（スタブ）に対して全部のインフィニティ割り込みパッチが入り、機能は無効にならない。
+        /// 実DLLでの同じ確認は docs/specs/issue-144-infinity-lobby-disabled.md の診断結果を参照。
         /// </summary>
         [Fact]
-        public void FailingInfinityPatchDisablesOnlyInfinityAndKeepsTheModRunning()
+        public void AllNativeInfinityPatchesInstallAndTheFeatureStaysAvailable()
         {
-            InfinityStartupFixtures.Enabled = true;
-            InfinityStartupFixtures.FailBossSoul = true;
             var mod = new DreamforgeMod { harmony = owner };
 
             Invoke(mod, "Awake");
 
-            Assert.Equal(271828, NativeContractTarget.First());  // 通常パッチは機能したまま
-            Assert.Equal(333333, FixtureNativeGraph.ZoneTravel()); // 入ったインフィニティパッチも機能する
-            Assert.Equal(222222, FixtureNativeGraph.BossSoul());   // 失敗したクラスは巻き戻される
-            Assert.False(InfinityMode.Available);                  // インフィニティだけ無効
-            Assert.Equal(1, InfinityMode.CompletedInstallCount);
-            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("FixtureInfinityBossSoul"));
-            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("incomplete"));
-            // MOD全体は止まらない: 通常モードと残りの初期化は続いている
+            Assert.True(InfinityMode.Available, string.Join(" | ", Log.Warnings));
+            Assert.Null(InfinityMode.UnavailableReason);
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("Infinity disabled"));
+            Assert.DoesNotContain(Log.Warnings, m => m.Contains("Patch class skipped: SodRpg.Mod.Infinity"));
+            // CompletePatchInstallation only turns Available on for all 13 native classes; the
+            // hooks themselves are verified per declaring class below.
+            int hookedClasses = 0;
+            foreach (var type in typeof(DreamforgeMod).Assembly.GetTypes())
+            {
+                if (!InfinityMode.IsNativePatch(type)) continue;
+                if (owner.GetPatchedMethods().Any(target => OwnsHook(target, type))) hookedClasses++;
+            }
+            Assert.Equal(13, hookedClasses);
             Assert.Equal(1, PerformanceTuner.Starts);
             Assert.True(mod.instance.isAlteringGameplay);
-            Assert.Empty(Log.Errors);
+
+            Invoke(mod, "OnDestroy");
+        }
+
+        /// <summary>
+        /// #144: 複数の検査でインフィニティが止まるとき、最初の理由だけが表示に残り、別の理由はすべて名前でログに出る。
+        /// 修正前は2番目以降の理由がどこにも記録されず、どの割り込みが原因か分からなくなっていた。
+        /// 止まるのはインフィニティだけで、MOD全体・通常パッチは起動したまま。
+        /// </summary>
+        [Fact]
+        public void EveryDistinctDisableReasonIsLoggedByNameAndOnlyInfinityStops()
+        {
+            InfinityMode.DisableFeature("check A failed");
+            InfinityMode.DisableFeature("check A failed"); // 同じ理由の繰り返しは1回だけ
+            InfinityMode.DisableFeature("check B failed");
+
+            Assert.False(InfinityMode.Available);
+            Assert.Equal("check A failed", InfinityMode.UnavailableReason);
+            Assert.Single(Log.Warnings, m => m.EndsWith("check A failed"));
+            Assert.Contains(Log.Warnings, m => m.EndsWith("check B failed"));
+
+            var mod = new DreamforgeMod { harmony = owner };
+            Invoke(mod, "Awake");
+
+            // MOD全体は止まらない: 通常パッチは機能し、初期化は完了する。無効のままなのはインフィニティだけ。
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.False(InfinityMode.Available);
+            Assert.Equal("check A failed", InfinityMode.UnavailableReason);
+            Assert.Equal(271828, NativeContractTarget.First());
 
             Invoke(mod, "OnDestroy");
             Assert.Equal(314159, NativeContractTarget.First());
-            Assert.Equal(111111, FixtureNativeGraph.ZoneTravel());
+        }
+
+        private static bool OwnsHook(MethodBase target, Type patchClass)
+        {
+            var info = Harmony.GetPatchInfo(target);
+            if (info == null) return false;
+            foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
+                foreach (var patch in list)
+                    if (patch.owner != null && patch.PatchMethod.DeclaringType == patchClass) return true;
+            return false;
+        }
+
+        // The real InfinityMode keeps its state in private statics; each test starts from a clean one.
+        private static void ResetInfinity()
+        {
+            var type = typeof(InfinityMode);
+            foreach (var name in new[] { "_unavailable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
+                "UnavailableReason", "_initial", "_runId", "_choice", "_choiceText" })
+                type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
+            type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }
 
         private static void Invoke(DreamforgeMod mod, string name)
@@ -306,8 +356,7 @@ namespace SodRpg.Mod.Startup.Tests
         public void Dispose()
         {
             NativeContractPatch.FailInstallationCleanup = false;
-            InfinityStartupFixtures.Reset();
-            InfinityMode.Reset();
+            ResetInfinity();
             foreach (var harmony in new[] { owner, other })
                 foreach (var target in harmony.GetPatchedMethods().ToArray())
                     harmony.Unpatch(target, HarmonyPatchType.All, harmony.Id);
@@ -378,59 +427,4 @@ namespace SodRpg.Mod.Startup.Tests
         }
     }
 
-    /// <summary>
-    /// #95: インフィニティの本体割り込みパッチの一部が入らないとき、インフィニティ機能だけが無効になり、
-    /// 通常モード（通常パッチ・MOD全体）は止まらない。本物の PatchEachClass と巻き戻しを動かす。
-    /// </summary>
-    internal static class InfinityStartupFixtures
-    {
-        internal static bool Enabled, FailBossSoul;
-        internal static void Reset() { Enabled = false; FailBossSoul = false; }
-    }
-
-    internal static class FixtureNativeGraph
-    {
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int ZoneTravel() => 111111;
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        internal static int BossSoul() => 222222;
-    }
-
-    [HarmonyPatch]
-    internal static class FixtureInfinityZoneTravel
-    {
-        [HarmonyTargetMethods]
-        private static IEnumerable<MethodBase> TargetMethods()
-        {
-            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.ZoneTravel));
-        }
-
-        [HarmonyPostfix]
-        private static void Postfix(ref int __result) => __result = 333333;
-
-        [HarmonyCleanup]
-        private static Exception Cleanup(MethodBase original, Exception exception) =>
-            exception ?? (!InfinityStartupFixtures.Enabled && original != null
-                ? new InvalidOperationException("Fixture Infinity patch inactive in this test")
-                : null);
-    }
-
-    [HarmonyPatch]
-    internal static class FixtureInfinityBossSoul
-    {
-        [HarmonyTargetMethods]
-        private static IEnumerable<MethodBase> TargetMethods()
-        {
-            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.BossSoul));
-        }
-
-        [HarmonyPostfix]
-        private static void Postfix(ref int __result) => __result = 444444;
-
-        [HarmonyCleanup]
-        private static Exception Cleanup(MethodBase original, Exception exception) =>
-            exception ?? ((!InfinityStartupFixtures.Enabled || InfinityStartupFixtures.FailBossSoul) && original != null
-                ? new InvalidOperationException("Injected failure after the first native detour was installed")
-                : null);
-    }
 }
