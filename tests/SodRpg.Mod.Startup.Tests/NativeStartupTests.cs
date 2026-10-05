@@ -333,8 +333,11 @@ namespace SodRpg.Mod.Startup.Tests
         {
             var type = typeof(InfinityMode);
             foreach (var name in new[] { "_unavailable", "_restoring", "_newInfinity", "_refresh", "_lastDisableLog",
-                "UnavailableReason", "_initial", "_runId", "_choice", "_choiceText" })
+                "_initial", "_runId", "_choice", "_choiceText" })
                 type.GetField(name, BindingFlags.NonPublic | BindingFlags.Static)?.SetValue(null, null);
+            // UnavailableReason is an auto-property; its backing field name differs, so reset via the setter.
+            type.GetProperty("UnavailableReason", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static)
+                !.GetSetMethod(true)!.Invoke(null, new object[] { null });
             type.GetProperty("Available", BindingFlags.NonPublic | BindingFlags.Static).SetValue(null, false);
         }
 

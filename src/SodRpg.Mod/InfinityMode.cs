@@ -97,7 +97,14 @@ namespace SodRpg.Mod
             get
             {
                 var run = ClientSession.HostRun;
-                return run != null && run.RunId == NetworkedManagerBase<GameManager>.softInstance?.runId ? run.Infinity : _initial;
+                // The first zone can generate after BeginRun already created the run but before
+                // InitializeInfinityRun could attach the state (#144: that ordering made this
+                // getter return null and OnGenerated's identity check crashed, disabling the
+                // feature and leaving a fully normal map). Fall back to the generation template
+                // until the run carries its own Infinity state.
+                if (run != null && run.RunId == NetworkedManagerBase<GameManager>.softInstance?.runId)
+                    return run.Infinity ?? _initial;
+                return _initial;
             }
         }
         internal static bool Enabled => Available && (NetworkServer.active
@@ -246,7 +253,19 @@ namespace SodRpg.Mod
             });
         }
 
+        // #144: BeginRun can fire (TrackRun) before the first zone generates, so
+        // InitializeInfinityRun found no InitialState to clone and Profile.Run.Infinity stayed
+        // null forever. Attach the template as soon as generation produces it.
+        private static void AttachInitialToHostRun()
+        {
+            var run = ClientSession.HostRun;
+            if (run == null || run.Infinity != null || _initial == null || _restoring) return;
+            if (run.RunId != NetworkedManagerBase<GameManager>.softInstance?.runId) return;
+            run.Infinity = _initial.Clone();
+            ClientSession.PersistHostInfinityState();
+        }
         internal static InfinityRunState InitialState => _initial;
+
         internal static void OnGenerated(ZoneManager zone)
         {
             if (!NetworkServer.active || !Enabled || _restoring) return;
@@ -269,6 +288,7 @@ namespace SodRpg.Mod
                 DifficultyId = NetworkedManagerBase<GameManager>.softInstance?.difficulty?.name,
             };
             if (State.FixedZoneId != asset.name) { DisableFeature("Infinity fixed-zone identity changed."); return; }
+            AttachInitialToHostRun();
             if (_refresh)
             {
                 if (!State.CompleteGraphTransition(State.GraphEpoch + 1))
