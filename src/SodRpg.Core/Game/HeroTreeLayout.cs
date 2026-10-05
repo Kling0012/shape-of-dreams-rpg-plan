@@ -177,10 +177,29 @@ namespace SodRpg.Core.Game
                 Join(0, innerIndices[i]);
             }
             var deepIndices = new int[deep.Count];
+            var deepParents = new int[deep.Count];
             for (int i = 0; i < deep.Count; i++)
             {
                 deepIndices[i] = Add(deep[i], DeepRadius, Angle(i, deep.Count));
-                Join(innerIndices[i * inner.Count / deep.Count], deepIndices[i]);
+                int parent = innerIndices[i * inner.Count / deep.Count];
+                deepParents[i] = parent;
+                Join(parent, deepIndices[i]);
+                // The inner ring also holds the hero's keystones, which only count once chosen. A deep star whose only
+                // parent is a keystone (and the route behind it) would then need that keystone, so it also hangs off
+                // the nearest ordinary inner star. The keystone edge stays: saved builds keep their links.
+                if (nodes[parent].Talent.IsKeystone)
+                {
+                    int nearest = -1;
+                    float best = float.MaxValue;
+                    foreach (int candidate in innerIndices)
+                    {
+                        if (nodes[candidate].Talent.IsKeystone) continue;
+                        float dx = nodes[candidate].X - nodes[deepIndices[i]].X, dy = nodes[candidate].Y - nodes[deepIndices[i]].Y;
+                        float distance = dx * dx + dy * dy;
+                        if (distance < best) { best = distance; nearest = candidate; }
+                    }
+                    if (nearest >= 0) { Join(nearest, deepIndices[i]); deepParents[i] = nearest; }
+                }
             }
             var branchNodes = new List<int[]>(branches.Count);
             for (int i = 0; i < branches.Count; i++)
@@ -193,7 +212,35 @@ namespace SodRpg.Core.Game
                     ordered[j] = Add(branch[j], BranchRadius + BranchStep * j, Angle(i, branches.Count));
                     Join(j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1], ordered[j]);
                 }
+                // A route star that requires a star further along its own route could never be reached: that star is only
+                // adjacent to the route chain. Give the required star (for a list of alternatives, the nearest one) a second
+                // link to the same chain neighbour.
+                for (int j = 0; j < branch.Count; j++)
+                {
+                    var authored = branch[j].AuthoredStar;
+                    if (authored == null) continue;
+                    int entry = j == 0 ? deepIndices[i * deep.Count / branches.Count] : ordered[j - 1];
+                    for (int k = j + 1; k < branch.Count; k++)
+                        if (System.Linq.Enumerable.Contains(authored.RequiredStarIds, branch[k].Id) && !neighbors[ordered[k]].Contains(entry)) Join(entry, ordered[k]);
+                    for (int k = j + 1; k < branch.Count; k++)
+                        if (System.Linq.Enumerable.Contains(authored.RequiredAnyStarIds, branch[k].Id))
+                        {
+                            if (!neighbors[ordered[k]].Contains(entry)) Join(entry, ordered[k]);
+                            break;
+                        }
+                }
                 branchNodes.Add(ordered);
+            }
+            // A deep star that lists stars of a route as prerequisites cannot also be the only way into that route: the route's
+            // first star would wait for the deep star, and the deep star for the route. Link the route entry to the deep star's parent.
+            for (int d = 0; d < deep.Count; d++)
+            {
+                var authored = deep[d].AuthoredStar;
+                if (authored == null) continue;
+                foreach (string id in System.Linq.Enumerable.Concat(authored.RequiredStarIds, authored.RequiredAnyStarIds))
+                    for (int b = 0; b < branches.Count; b++)
+                        if (branches[b].Exists(t => t.Id == id) && !neighbors[branchNodes[b][0]].Contains(deepParents[d]))
+                            Join(deepParents[d], branchNodes[b][0]);
             }
             // Preserve the shipped cyclic bridge endpoints (the eighth uses the later route stars).
             for (int i = 0; i < ring.Count; i++)
