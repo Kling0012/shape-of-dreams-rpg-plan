@@ -49,6 +49,8 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GimmicksV129.cs" Link="ModUnderTest/HostAuthority.GimmicksV129.cs" />
     <Compile Include="../../src/SodRpg.Mod/DreamforgeUi.AllocationRefund.cs" Link="ModUnderTest/DreamforgeUi.AllocationRefund.cs" />
     <Compile Include="../../src/SodRpg.Mod/DreamforgeUi.GearDetail.cs" Link="ModUnderTest/DreamforgeUi.GearDetail.cs" />
+    <Compile Include="../../src/SodRpg.Mod/DreamforgeUi.Window.cs" Link="ModUnderTest/DreamforgeUi.Window.cs" />
+    <Compile Include="../../src/SodRpg.Mod/DreamforgeUi.Workshop.cs" Link="ModUnderTest/DreamforgeUi.Workshop.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystonePackets.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystonePackets.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.IdentityStrikes.cs" Link="ModUnderTest/HostAuthority.IdentityStrikes.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryTunings.cs" Link="ModUnderTest/HostAuthority.MemoryTunings.cs" />

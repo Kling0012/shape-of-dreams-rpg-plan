@@ -1042,50 +1042,7 @@ namespace SodRpg.Mod
         private static readonly GUILayoutOption[] ShrinkMin32 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(32) };
         private static readonly GUILayoutOption[] ShrinkMin44 = { GUILayout.MinWidth(0), GUILayout.ExpandWidth(true), GUILayout.MinHeight(44) };
 
-        private void DrawWindow(float w, float h, DreamforgeConfig cfg)
-        {
-            // The star map needs room: it uses most of the screen and hides the expedition-only rows.
-            bool starTab = _tab == 2;
-            bool codexTab = _tab == 4 && _codexOpen; // 図鑑は一覧が見やすいよう、少し大きく開く
-            // 星図は画面いっぱいに使う（余白は左右上下8だけ）。鍛冶と装備は、左の一覧と右の操作欄が収まる高さまで広げる
-            // （装備の見出しは遠征の外で行が増え、固定の720では下端の操作・鍵のボタンが枠の外へ出た #128）。
-            bool forgeTab = _tab == 1;
-            bool gearTab = _tab == 0;
-            float ww = starTab ? w - 16 : Mathf.Min(codexTab ? 1180 : 1060, w - 20);
-            float wh = starTab ? h - 16 : Mathf.Min(codexTab ? 900 : forgeTab || gearTab ? 900 : 720, h - 20);
-            _windowHeight = wh;
-            _windowWidth = ww;
-            var rect = new Rect((w - ww) / 2, (h - wh) / 2, ww, wh);
-            GUILayout.BeginArea(rect, _st.Window);
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.Width(330));
-            string[] tabs = { Loc.T("装備", "Gear"), Loc.T("鍛冶", "Forge"), Loc.T("星図", "Star Map"), Loc.T("工房", "Workshop"), Loc.T("記録", "Records") };
-            for (int i = 0; i < tabs.Length; i++)
-                if (GUILayout.Button(tabs[i], i == _tab ? _st.TabSel : _st.Tab)) { CancelStarDrag(); _tab = i; _confirmSalvage = null; _confirmEnhance = null; _confirmBulk = false; _retuneIndex = -1; _confirmAffixReroll = null; }
-            if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button)) Close();
-            GUILayout.EndHorizontal();
-            DrawProfileSlots();
-
-            var p = _s.Profile;
-            bool compact = forgeTab && wh < 640f;
-            if (!starTab && !compact && !forgeTab) DrawDreamDepthChoice(); // 鍛冶では一覧の高さを優先する
-            if (!starTab && !compact) GUILayout.Label(Loc.T(
-                $"欠片 {p.Material(Materials.Shard)}　調律石 {p.Material(Materials.Tuning)}　保管庫 {p.Stash.Count}/{Workshop.StashCapacity(p)}　旅人：{HeroName(HeroKey)}",
-                $"Shards {p.Material(Materials.Shard)}   Tuning {p.Material(Materials.Tuning)}   Stash {p.Stash.Count}/{Workshop.StashCapacity(p)}   Traveler: {HeroName(HeroKey)}"), _st.Small);
-            GUILayout.Label(UiStyles.Colored(TabIntro(_tab), "#c8d0ff"), _st.Small);
-
-            switch (_tab)
-            {
-                case 0: DrawGearTab(); break;
-                case 1: DrawForgeTab(); break;
-                case 2: DrawTalentTab(); break;
-                case 3: DrawWorkshopTab(); break;
-                default: DrawRecordsTab(cfg); break;
-            }
-            DrawAllocationRefund();
-            GUILayout.Label(_status != null && Time.unscaledTime < _statusUntil ? _status : " ", _st.Warn);
-            GUILayout.EndArea();
-        }
+        // DrawWindow は DreamforgeUi.Window.cs へ移した（#147 の順序の試験と一緒に管理する）。
 
         private static readonly Txt HowToPlay = new Txt(
             "<b>このMODの目的</b>\n" +
@@ -1271,10 +1228,11 @@ namespace SodRpg.Mod
         {
             var p = _s.Profile;
             string hero = HeroKey;
-            GUILayout.BeginHorizontal();
+            // 鍛冶と同じく欄をウィンドウの残り高さまで広げ、左欄のビルドのスクロールが余りを吸収できるようにする（#147）。
+            GUILayout.BeginHorizontal(ForgePaneSize);
 
             // 左：装着中とビルド
-            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(320));
+            GUILayout.BeginVertical(_st.Panel, GUILayout.Width(320), GUILayout.ExpandHeight(true));
             HeroPicker();
             {
                 int kills = p.Hero(hero).Kills;
@@ -1303,7 +1261,9 @@ namespace SodRpg.Mod
             GUILayout.Space(6);
             GUILayout.Label(Loc.T("現在の強さ", "Current build"), _st.Header);
             var build = _s.CurrentBuild(hero);
-            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.Height(160));
+            // 高さは固定にしない（#147）：余りがあれば広がり、見出しや払い戻しパネルで足りないときは
+            // 120 まで縮む。固定 160 は縮まず、左欄の下端（狙い系統など）が枠の外へ出ていた。
+            _scrollDetail = GUILayout.BeginScrollView(_scrollDetail, GUILayout.MinHeight(120), GUILayout.ExpandHeight(true));
             if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
             foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
@@ -1357,7 +1317,7 @@ namespace SodRpg.Mod
             GUILayout.EndVertical();
 
             // 右：詳細と比較
-            GUILayout.BeginVertical(_st.Panel);
+            GUILayout.BeginVertical(_st.Panel, ForgePaneSize);
             var sel = p.FindStash(_selected);
             if (sel == null)
             {
@@ -1723,8 +1683,10 @@ namespace SodRpg.Mod
                 }
             }
             GUILayout.EndHorizontal();
-            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 0f);
+            // まとめて分解は一覧の上（#147）：一覧は下限まで縮んで余りを吸収するが、
+            // 下に置くと高さが足りないときに選択肢と確定ボタンが下端から切れる。
             BulkSalvageRow();
+            RelicList(_forgeAllSlots ? p.Stash : p.Stash.Where(r => r.Slot == _slot), HeroKey, 0f);
             GUILayout.EndVertical();
 
             GUILayout.BeginVertical(_st.Panel, ForgePaneSize);
@@ -2973,49 +2935,7 @@ namespace SodRpg.Mod
         }
 
 
-        private void DrawWorkshopTab()
-        {
-            var p = _s.Profile;
-            GUILayout.BeginVertical(_st.Panel);
-            foreach (var def in Workshop.All)
-            {
-                int lv = Workshop.Level(p, def.Id);
-                GUILayout.BeginHorizontal();
-                string pips = new string('●', lv) + new string('○', def.MaxLevel - lv);
-                GUILayout.Label($"<b>{def.Name}</b>  <color=#ffd36e>{pips}</color>  {WorkshopValue(p, def.Id, lv < def.MaxLevel)}\n<color=#ccd>{def.Description}</color>", _st.Small, GUILayout.Width(560));
-                if (lv < def.MaxLevel)
-                {
-                    var cost = def.Costs[lv];
-                    bool afford = p.Material(Materials.Shard) >= cost.Shards && p.Material(Materials.Tuning) >= cost.Tuning;
-                    GUI.enabled = afford && (p.Run == null || !_s.InGame);
-                    string label = Loc.T($"解放（欠片{cost.Shards}" + (cost.Tuning > 0 ? $"・調律石{cost.Tuning}" : "") + "）",
-                        $"Unlock ({cost.Shards} shards" + (cost.Tuning > 0 ? $", {cost.Tuning} tuning" : "") + ")");
-                    if (GUILayout.Button(label, _st.Button, GUILayout.Width(300), GUILayout.Height(40))) Act(() => Rules.BuyUpgrade(p, def.Id, _s.InGame && p.Run != null), false);
-                    GUI.enabled = true;
-                }
-                else GUILayout.Label(Loc.T("すべて解放済み", "Maxed"), _st.Header, GUILayout.Width(300));
-                GUILayout.EndHorizontal();
-                GUILayout.Space(4);
-            }
-            GUILayout.EndVertical();
-            if (p.Run != null && _s.InGame) GUILayout.Label(Loc.T("遠征中は工房を使えません。遠征から戻ってから利用してください。", "The workshop is closed during expeditions."), _st.Warn);
-        }
-
-        /// <summary>工房の強化の「いまの値 → 解放後の値」。</summary>
-        private static string WorkshopValue(Profile p, Upgrade u, bool canRaise)
-        {
-            int now, next;
-            string ja, en;
-            switch (u)
-            {
-                case Upgrade.BigSatchel: now = Workshop.SatchelCapacity(p); next = now + 5; ja = "鞄の上限"; en = "Satchel"; break;
-                case Upgrade.WideStash: now = Workshop.StashCapacity(p); next = now + 20; ja = "保管庫の上限"; en = "Stash"; break;
-                case Upgrade.BountyReroll: now = Workshop.RerollsPerRun(p); next = now + 1; ja = "引き直し"; en = "Rerolls"; break;
-                default: return "";
-            }
-            string arrow = canRaise ? $" → <color=#7cf07c>{next}</color>" : "";
-            return $"<color=#cfd3ee>{Loc.T(ja, en)} {now}{arrow}</color>";
-        }
+        // DrawWorkshopTab・WorkshopValue は DreamforgeUi.Workshop.cs へ移した（#147 でスクロールに入れた）。
 
         private string _confirmDust;
 
