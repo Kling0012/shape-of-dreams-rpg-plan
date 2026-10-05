@@ -8,8 +8,8 @@ namespace SodRpg.Core.Game
         private static void WriteContinueState(JsonObject body, Profile profile)
         {
             var checkpoints = new List<object>();
-            int first = System.Math.Max(0, profile.ContinueCheckpoints.Count - RunCheckpoint.MaximumHistory);
-            for (int i = first; i < profile.ContinueCheckpoints.Count; i++)
+            // Pending native writes are not history: retain them until disk commitment is known.
+            for (int i = 0; i < profile.ContinueCheckpoints.Count; i++)
             {
                 var checkpoint = profile.ContinueCheckpoints[i];
                 checkpoints.Add(new JsonObject().Add("id", checkpoint.Id).Add("runId", checkpoint.RunId)
@@ -34,8 +34,6 @@ namespace SodRpg.Core.Game
                 string id = Str(entry, "id");
                 profile.ContinueCheckpoints.RemoveAll(checkpoint => checkpoint.Id == id);
                 profile.ContinueCheckpoints.Add(new RunCheckpoint(id, Str(entry, "runId"), Str(entry, "snapshot")));
-                if (profile.ContinueCheckpoints.Count > RunCheckpoint.MaximumHistory)
-                    profile.ContinueCheckpoints.RemoveAt(0);
             }
         }
 
