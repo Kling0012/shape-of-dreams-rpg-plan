@@ -198,11 +198,12 @@ namespace Issue73.Native.Tests
         }
 
         /// <summary>
-        /// 判別できない（遠征と本体のrunIdが食い違う）場合: 機能だけを無効化し、遠征は
-        /// 従来どおり中断のまま残る。MOD は止まらない（精算・選択の共有はその後も動く）。
+        /// 判別できない（遠征と本体のrunIdが食い違う）場合: その回は何もせず遠征は
+        /// 従来どおり中断のまま残る（警告は1回・機能は無効化しない）。次の正しい
+        /// 「ロビーに戻る」では同じ遠征が敗北として精算される。MOD は止まらない。
         /// </summary>
         [Fact]
-        public void An_unmatched_expedition_disables_only_this_feature_and_keeps_the_run_suspended()
+        public void An_unmatched_expedition_skips_only_that_return_and_the_next_correct_one_settles()
         {
             // 遠征と本体の runId が一致しない（観戦・ロード中など）。
             Actor actor;
@@ -216,17 +217,25 @@ namespace Issue73.Native.Tests
             Assert.Empty(session.Profile.LobbyReturnedRunIds);
             Assert.DoesNotContain(actor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>(),
                 m => m.lobbyReturnRunId != null);
+            Assert.False(LobbyReturnDisabled());           // 機能は無効化しない
             Assert.Single(_warnings, w => w.Contains("does not match"));
 
-            // 無効化はこの機能だけ: 一致する状態でやり直しても精算せず、MOD は動き続ける。
+            // 同じ判別できない状態が続いても警告は1回だけ。
+            Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
+            Assert.Single(_warnings, w => w.Contains("does not match"));
+            Assert.Equal(0, session.Profile.Stats.Defeats);
+            Assert.NotNull(session.Profile.Run);
+
+            // 次の正しい「ロビーに戻る」では同じ遠征が敗北として精算される。
             session.ActiveRunId = "run";
             Call(typeof(ConcludeLobbyReturn), "Prefix", new DewNetworkManager());
-            Assert.NotNull(session.Profile.Run);
-            Assert.Equal(0, session.Profile.Stats.Defeats);
-            Assert.NotNull((string)Call(session, "EncodeRunChoices")); // 選択の共有は継続
-            PendingKill(session, MonsterTier.Normal, 8);
-            Call(session, "FlushPendingRunRewards");
-            Assert.Equal(2, session.Profile.Stats.Kills);  // 保留中の撃破も従来どおり精算される
+            Assert.Null(session.Profile.Run);
+            Assert.Equal(1, session.Profile.Stats.Defeats);
+            Assert.Contains("run", session.Profile.LobbyReturnedRunIds);
+            Assert.Equal("run", session.Profile.CompletedRunId);
+            Assert.NotNull(actor.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>()
+                .Single(m => m.lobbyReturnRunId != null)); // 参加者への通知も出る
+            Assert.Single(_warnings);                      // 追加の警告はない
         }
 
         /// <summary>判別の途中で例外が出ても伝播せず、この機能だけが無効化される。</summary>

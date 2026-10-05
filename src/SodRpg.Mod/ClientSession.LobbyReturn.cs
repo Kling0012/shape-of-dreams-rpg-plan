@@ -6,6 +6,7 @@ namespace SodRpg.Mod
 {
     internal sealed partial class ClientSession
     {
+        private string _lobbyReturnSkippedRunId;
         internal static void OnRestartSession(DewNetworkManager manager)
         {
             if (_lobbyReturnDisabled) return;
@@ -22,13 +23,13 @@ namespace SodRpg.Mod
                 if (string.IsNullOrEmpty(runId) || !session.RunActive || session.ActiveRunId != runId
                     || session.Profile.Run.RunId != runId || session.ChoiceZoneIndex < 0)
                 {
-                    DisableLobbyReturn("active expedition does not match the native run");
+                    session.SkipLobbyReturn(runId, "active expedition does not match the native run");
                     return;
                 }
                 var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
                 if (actor == null)
                 {
-                    DisableLobbyReturn("server actor unavailable");
+                    session.SkipLobbyReturn(runId, "server actor unavailable");
                     return;
                 }
                 session.TryFinishSecureArrival();
@@ -45,6 +46,15 @@ namespace SodRpg.Mod
                 session.SaveNow();
             }
             catch (Exception ex) { DisableLobbyReturn(ex.ToString()); }
+        }
+
+        // An unidentifiable restart settles nothing: that native run stays suspended as before
+        // and a later correct lobby return can still settle it. Warn once per native run.
+        private void SkipLobbyReturn(string runId, string reason)
+        {
+            if (_lobbyReturnSkippedRunId == runId) return;
+            _lobbyReturnSkippedRunId = runId;
+            _lobbyReturnWarning?.Invoke("Return-to-lobby defeat skipped; native suspension remains unchanged: " + reason);
         }
 
     }
