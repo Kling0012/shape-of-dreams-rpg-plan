@@ -33,6 +33,16 @@ namespace SodRpg.Core.Tests
             return text;
         }
 
+        private static string PutOldSolo(InMemoryFileSystem disk)
+        {
+            var saved = Profile.CreateNew(41);
+            saved.DreamLevel = 12;
+            string text = ProfileCodec.Write(saved).Replace("\"version\":" + Profile.CurrentVersion, "\"version\":2");
+            disk.Put(SoloPath, text);
+            disk.Put(SoloPath + ".bak", text);
+            return text;
+        }
+
         [Fact]
         public void Locked_first_read_does_not_throw_and_keeps_existing_data_intact()
         {
@@ -72,6 +82,32 @@ namespace SodRpg.Core.Tests
             loader.Slots.Store.Save(loader.Slots.Profile);    // 保存も通常どおり動く
             Assert.True(disk.Exists(SoloPath + ".bak"));
             Assert.Equal(7, ProfileCodec.Read(disk.ReadAllText(SoloPath), null).DreamLevel);
+        }
+
+        [Fact]
+        public void Old_save_with_locked_backup_retries_without_piling_up_archives()
+        {
+            // issue #91：旧版本体＋読み取り不能な .bak で自動再試行を繰り返しても、退避ファイルは増やさない
+            var disk = new InMemoryFileSystem();
+            string old = PutOldSolo(disk);
+            var fs = new LockedFileSystem(disk) { FailPath = SoloPath + ".bak" };
+            var loader = Create(fs);
+
+            for (int i = 0; i < 100; i++)
+                Assert.False(loader.TryLoad(i * 5.0, ProfileSessionKind.Solo, NoWriter));
+
+            Assert.Equal(old, disk.ReadAllText(SoloPath));    // 元の本体とバックアップはバイト単位で保持される
+            Assert.Equal(old, disk.ReadAllText(SoloPath + ".bak"));
+            Assert.Empty(disk.Files.Keys.Where(p => p.Contains("-archive-"))); // 退避は再試行回数に比例して増えない
+
+            fs.FailPath = null; // ロックが解けた
+            Assert.True(loader.TryLoad(500, ProfileSessionKind.Solo, NoWriter));
+            Assert.Equal(1, loader.Slots.Profile.DreamLevel); // リセット後の新しいプロフィール
+            string archive = disk.Files.Keys.Single(p => p.EndsWith(".json") && p.Contains(".v2-archive-"));
+            Assert.Equal(old, disk.Files[archive]);           // 必要な退避（本体と .bak）がそろう
+            Assert.Contains(disk.Files.Keys, p => p == archive + ".bak");
+            loader.Slots.Store.Save(loader.Slots.Profile);    // 通常どおり読み込み・保存できる
+            Assert.Equal(Profile.CurrentVersion, ProfileCodec.Read(disk.ReadAllText(SoloPath), null).LoadedVersion);
         }
 
         [Fact]

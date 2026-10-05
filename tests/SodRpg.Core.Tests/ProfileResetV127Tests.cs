@@ -90,6 +90,7 @@ namespace SodRpg.Core.Tests
             Assert.Throws<IOException>(() => store.Save(p));
             Assert.Equal(old, fs.ReadAllText(Path)); // 元のファイルは変わらない
             Assert.Equal(old, fs.ReadAllText(Path + ".bak"));
+            Assert.DoesNotContain(fs.Inner.Files.Keys, k => k.Contains("-archive-")); // 中途の写しは残さない（#91）
 
             // I/O が戻った次の起動では、写しを作って正しくリセットする
             fs.FailCopyAt = -1;

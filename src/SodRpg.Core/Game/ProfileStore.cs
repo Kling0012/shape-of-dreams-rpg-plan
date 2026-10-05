@@ -143,6 +143,34 @@ namespace SodRpg.Core.Game
             long version = ReadVersion(_path);
             if (version < 0) version = ReadVersion(BackupPath);
             if (version < 0 || version >= Profile.ResetBeforeVersion) return false;
+            string archive = NewArchivePath(version);
+            try
+            {
+                // 読めないファイルへの写しは始めない（#91）。中途の写しを残すと、初回読み込みの自動再試行（#89）のたびに
+                // 写しが増え続けるため、まず読み取れることを確かめる。
+                if (_fs.Exists(_path)) _fs.ReadAllText(_path);
+                if (_fs.Exists(BackupPath)) _fs.ReadAllText(BackupPath);
+                if (_fs.Exists(_path)) _fs.Copy(_path, archive, overwrite: false);
+                if (_fs.Exists(BackupPath)) _fs.Copy(BackupPath, archive + ".bak", overwrite: false);
+            }
+            catch (IOException ex)
+            {
+                // 写しが作れなければリセットせず、保存も止める（前のデータを失わないため。issue #17）。次の起動でもう一度試す。
+                // この試行で作りかけた写しだけは片付ける（#91）。名前は存在しないものから選んだので、
+                // 消せるのは今回作ったファイルだけで、元のファイルや前の写しには触れない。
+                TryDelete(archive);
+                TryDelete(archive + ".bak");
+                WritesBlocked = true;
+                Notes.Add("前のデータの写しを作れなかったため、今回はリセットせず、保存も止めています。次に起動したときにもう一度試します: " + ex.Message);
+                return false;
+            }
+            Notes.Add("大きな更新のため、プロフィールを新しく始めました。前のデータは " + System.IO.Path.GetFileName(archive) + " に残しています。");
+            return true;
+        }
+
+        /// <summary>重ならない写し先の名前を選ぶ。返した名前とその .bak は呼び出し時点で存在しない（#91）。</summary>
+        private string NewArchivePath(long version)
+        {
             string stamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture);
             string dir = System.IO.Path.GetDirectoryName(_path) ?? "";
             string name = System.IO.Path.GetFileNameWithoutExtension(_path);
@@ -150,20 +178,19 @@ namespace SodRpg.Core.Game
             // 同じ秒に再試行しても前の写しを上書きしないよう、名前が重なれば番号を足す
             for (int i = 2; _fs.Exists(archive) || _fs.Exists(archive + ".bak"); i++)
                 archive = System.IO.Path.Combine(dir, name + ".v" + version + "-archive-" + stamp + "-" + i + ".json");
+            return archive;
+        }
+
+        /// <summary>存在しなければ何もしない。消せなくても呼び出し側の失敗処理を優先する。</summary>
+        private void TryDelete(string path)
+        {
             try
             {
-                if (_fs.Exists(_path)) _fs.Copy(_path, archive, overwrite: false);
-                if (_fs.Exists(BackupPath)) _fs.Copy(BackupPath, archive + ".bak", overwrite: false);
+                if (_fs.Exists(path)) _fs.Delete(path);
             }
-            catch (IOException ex)
+            catch (IOException)
             {
-                // 写しが作れなければリセットせず、保存も止める（前のデータを失わないため。issue #17）。次の起動でもう一度試す。
-                WritesBlocked = true;
-                Notes.Add("前のデータの写しを作れなかったため、今回はリセットせず、保存も止めています。次に起動したときにもう一度試します: " + ex.Message);
-                return false;
             }
-            Notes.Add("大きな更新のため、プロフィールを新しく始めました。前のデータは " + System.IO.Path.GetFileName(archive) + " に残しています。");
-            return true;
         }
 
         private bool _mainExcluded;
