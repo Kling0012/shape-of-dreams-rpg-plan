@@ -1,7 +1,8 @@
 <Project>
-  <!-- ClientSession.cs mixes persistence with the entire Unity UI/runtime API. Compile its
-       exact persistence methods, selected by syntax rather than copying their implementation.
-       Whole standalone Mod partials remain normal linked Compile inputs in the project. -->
+  <!-- ClientSession.cs mixes persistence and the entire Unity UI/runtime API. Compile its
+       exact persistence methods and the Secure/Delve choice entry points, selected by syntax
+       rather than copying their implementation. Whole standalone Mod partials remain normal
+       linked Compile inputs in the project. -->
   <UsingTask TaskName="ExtractNativePersistence" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
     <ParameterGroup>
       <SourcePath ParameterType="System.String" Required="true" />
@@ -31,8 +32,8 @@
         var session = nodes.Single(n => n.GetType().Name == "ClassDeclarationSyntax" && identifier(n) == "ClientSession");
         var members = ((System.Collections.IEnumerable)session.GetType().GetProperty("Members").GetValue(session)).Cast<object>();
         var methods = members.Where(m => m.GetType().Name == "MethodDeclarationSyntax"
-            && new[] { "MarkDirty", "TickPeriodicSave", "SaveNow", "FlushSaves" }.Contains(identifier(m))).ToArray();
-        if (methods.Length != 5) throw new System.InvalidOperationException("Native persistence method contract changed; review the harness extraction.");
+            && new[] { "MarkDirty", "TickPeriodicSave", "SaveNow", "FlushSaves", "Secure", "Delve" }.Contains(identifier(m))).ToArray();
+        if (methods.Length != 7) throw new System.InvalidOperationException("Native persistence method contract changed; review the harness extraction.");
         var imports = ((System.Collections.IEnumerable)root.GetType().GetProperty("Usings").GetValue(root)).Cast<object>();
         var source = string.Concat(imports.Select(sourceText)) + "\nnamespace SodRpg.Mod { internal sealed partial class ClientSession {\n"
             + string.Join("\n", methods.Select(sourceText)) + "\n} }\n";

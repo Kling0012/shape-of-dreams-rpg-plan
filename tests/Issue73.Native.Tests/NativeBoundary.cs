@@ -129,7 +129,15 @@ namespace SodRpg.Mod
     internal static class NetworkedManagerBase<T> { public static T softInstance; }
     internal sealed class GameManager { public string runId; }
     internal sealed class ActorManager { public Actor serverActor; }
-    internal sealed class ZoneManager { public int currentZoneIndex; public bool isInAnyTransition; }
+    internal sealed class ZoneManager
+    {
+        public int currentZoneIndex;
+        public bool isInAnyTransition;
+        public Zone currentZone;
+    }
+    internal sealed class Zone { public string name; }
+    internal sealed class InGameUIManager { public static InGameUIManager instance; public bool isDoingEnding; }
+    internal sealed class Primus_Ending { public static void StartPrimusDeath() { } }
     internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
     internal static class NativeAttributedMemoryCast
     {
@@ -230,12 +238,12 @@ namespace SodRpg.Mod
     }
     internal sealed partial class ClientSession
     {
-        private static ClientSession _hostSession;
-        internal static ulong HostAuthorityGeneration = 73;
         public Profile Profile;
         public Hero LocalHero;
         public bool RunActive => Profile.Run != null;
-        private string _completedRunId;
+        public string ActiveRunId { get; internal set; }
+        public bool HasPendingTrades => _trades.PendingCount > 0;
+        public bool InGame => NetworkedManagerBase<GameManager>.softInstance != null;
         private float _nextSave = float.MaxValue;
         private bool _buildDirty;
         private Actor _clientRpcOn;
@@ -247,19 +255,18 @@ namespace SodRpg.Mod
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
         public string SaveError { get; private set; }
-        private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
-        private readonly RunChoicePublisher _choicePublisher = new RunChoicePublisher();
-        private string _pendingResultRunId;
-        private bool? _pendingRunVictory;
-        private bool MechanismHandshakeAccepted => true;
-        private readonly List<PendingRunKill> _pendingRunRewards = new List<PendingRunKill>();
+        private readonly Action<GameEvent> _notify = null;
+        private float _nextDreamEventNotice;
+        private string _curseSyncedKey = "";
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
         private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
+        private string CurseKey() => "";
+        private void SendCurseClear() { }
+        private void NotifyPersonalDreamEvent() { }
+        private void PublishRunChoiceHistory() { }
         private void ClearVariants() { }
         private void ClearMonsterCues() { }
-        private void FlushPendingRunRewards() { }
-        private void TryFinishSecureArrival() { }
-        private void TryConcludeRun() { }
+        private bool MechanismHandshakeAccepted => true;
     }
 }
