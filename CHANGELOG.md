@@ -6,79 +6,21 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
-## 未リリース — #48 と main の統合
+## v2.0.5 — 分解・純白ルート・起動時の読み込みの修正（2026-10-05）
 
-- **統合**：mainのリリース内容と#48ボスセットを統合し、装備帰属・ボス装備・報酬照合は#73の共通装備cache／epochを共有します。通信版は**18**、保存形式はmainと同じ**5**です。 / Merged main releases with #48 boss sets; equipment attribution, boss membership and reward reconciliation share the #73 equipment cache/epoch. Protocol is **18**; save format remains **5**, as on main.
-- **衝突解消**：mainの撃破台帳／再送・保留撃破の深度／道標・純白の個人選択・起動読込・分解予約の隔離とリリース内容を維持し、ボスの型名と抽選条件は同じ撃破factへ追加しました。独立したボス再送、シールド装備cache、ボス装備の定期再走査は撤去しました。 / Preserved main's ledger/replay, deferred reward context, personal choices, startup loading, salvage isolation and release changes; boss death metadata uses the same fact stream. Removed separate boss replay, shield equipment cache and periodic boss equipment scans.
-- **検証**：指定Releaseビルド成功（警告5・エラー0）。WikiGen成功（62セット・1418固有品）、指定`test_changed.py --all`は**3248件成功・失敗0・既定のslow test 2件skip**。既存のnative代役とリンク設定を追従し、新規テストは作成していません。BalanceSimでボス2体の撃破・踏破精算も実行。実機戦闘・協力同期・GC／frame時間は未確認です。 / Requested Release build, WikiGen and full existing suite passed (3248 passed, 0 failed, 2 default skips). Updated existing native doubles/link settings without creating new tests; also ran boss-kill settlement through BalanceSim. Live-game combat, co-op and performance remain unverified.
+v2.0.4 のあとに見つかった不具合を3つ直しました。 / This release fixes three bugs found after v2.0.4.
 
----
+### 更新前に確認 / Before updating
 
-## 未リリース — #48 表示文言の仕上げ
+- **セーブデータはそのまま引き継げます**（形式は v2.0.3・v2.0.4 と同じです）。 / Saves carry over (same format as v2.0.3 and v2.0.4).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました。 / Everyone in co-op must update; the network protocol changed.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
 
-- **名前**：装備・セット名19件から括弧内の候補案を除去し、元の名前を維持しました。 / Removed proposed alternatives from 19 equipment and set names, retaining the original names.
-- **説明**：英語説明156定義を日本語の確定文と同じ意味・数値のプレイヤー向け表現に統一しました。 / Rewrote 156 English description definitions for players, matching the finalized Japanese meaning and numbers.
-- **Azurak**：潜行の任意連携は段階別の表示に戻し、初段はスタン延長のみ、次段は元ダメージ20%加算・合計上限20%、最終段は25%加算・合計上限45%と硬直0.05秒短縮を表示します。効果の処理や数値は変更していません。 / Restored stage-specific Burrow descriptions without changing mechanics or values.
-- **検証**：指定Releaseビルド成功（警告5・エラー0）。`DOTNET_ROLL_FORWARD=Major` でWikiGen成功（62セット・1418固有品）、生成文でAzurakの段階別の日英表示を確認。指定全体テストは3146件成功・失敗0・既定のslow test 2件skip。テストの追加・変更はありません。ゲーム内表示は未確認です。 / Release build, WikiGen and the full existing suite passed; no tests changed. In-game rendering was not verified.
+### 不具合の修正 / Fixes
 
----
-
-## 未リリース — #48 合流後のテスト修復
-
-- **nativeスタブ**：`ProcessReceivedShield`／`EquipGem`／型付きRPC、native型名・帰属判定、JSON transportを製品側の新しい呼び出しへ合わせました。製品コードは変更していません。 / Updated native test doubles for the merged boss runtime without changing production code.
-- **回帰確認**：不変報酬の差分再適用と段階変更時の解除、Primusの部位倍率と最大HP盾、Azurakの実HP限定、Big Chomp／Soul Prisonの追加量上限、Lightの10Hz表示集約、非利用時の装備走査省略を追加・更新しました。 / Added focused boss reward, scaling, cap and transport regressions.
-- **起動契約**：独立したテストprojectで実Harmonyを使用し、遅延IL契約の事前検証、他MODと合成したILの拒否、部分適用／初期化失敗時の自MODだけの取り消しを確認します。 / Added real-Harmony preflight and owner-scoped startup rollback coverage.
-- **実行結果**：指定の `test_changed.py --all` が成功（3146 passed、0 failed、既定で無効のslow test 2件skip）。一時CLIでも空のボスbuildの装備走査0回、`EquipGem`と型付きRPC呼び出しを確認しました。 / Full requested suite passed; native-double smoke also succeeded.
-- **検証範囲**：ゲームAPIはスタブであり、実機戦闘・Unity表示・協力同期・GC／frame時間の確認を代替しません。 / Test doubles do not replace live-game combat, rendering, co-op or performance verification.
-
----
-
-## 未リリース — #48 レビュー8件の修正
-
-- **差分再適用**：native報酬のprofile／段階・装着実体・親／owner寿命・部屋を比較し、不変のbinding・予約・消費済みactivation・CDを保持。変更した報酬だけ解除します。 / Preserve unchanged native reward lifetimes, reservations and cooldowns across build reapplication; invalidate only changed rewards.
-- **Primus**：部位係数を元capへ再制限せず、強化／覚醒済み共通係数を使用。通常／連携段階の倍率規則は不変。 / Removed the second unenhanced cap from Primus part amounts.
-- **Azurak**：armorは`MainHpDamage > 0`のみ。盾で全吸収された被弾では追加盾もCD消費も発生しません。 / Armor now requires actual HP damage, not shield absorption.
-- **Big Chomp**：本人の元native回復／盾を保持し、source・ancestor・target処理後の実倍率で追加分だけ補正。0／非有限倍率では加算しません。 / Bound only added healing/shielding after complete native processing.
-- **Soul Prison**：追加有限盾の正確なcontainerだけを最終処理量でcap。元native無期限盾・消費は不変、生成scope／delegate／cap registryは事前確保。 / Cap only owned overflow-shield creation after native modifiers.
-- **表示**：Light beamのdue／期限を固定し、連続geometryをowner単位100msで集約。初回・終了・段階／残数変更は即時。JSONはbatchごと1回、handshake済み各受信者へ同じ文字列を送信。 / Coalesce continuous beam updates at10Hz and serialize each batch once.
-- **非利用時CPU**：空のボスbuildは記憶／gem走査前に終了。利用時は100ms照合をframe／入力で共有し、実装着変更通知では即時照合。 / Skip slot scans for empty Boss builds; refresh active equipment periodically or on mutation.
-- **native契約**：適用前に対象・field／delegate・他MODと合成した全transpilerのILを検証。失敗時は自MODのpatchだけ取り消し、session／host／UI／性能設定／入力を停止・解放。 / Preflight native contracts and roll back owner-scoped patches on startup failure.
-- **検証**：指定Releaseビルド成功（警告5・エラー0）。既存WikiGen実行成功（62セット・1418固有品）。tests/・test csprojは未変更、テスト作業なし。Unity実行環境がなく、実機startup／Harmony適用／戦闘／協力同期／GC・frame時間は未観測。 / Build and production catalog run succeeded; live native behavior/performance remains unverified.
-
----
-
-## 未リリース — ボス限定セット（#48 段階B-3・全14組の性能見直し）
-
-- **新4セット**：光裂の法装 / Radiant Fracture Raiment、飢影の狩装 / Ravenous Shadow Gear、忘針の襲装 / Oblivion Needle Gear、墜聖の双装 / Fallen Sanctity Regaliaを§3.11〜§3.14へ接続。各6部位・累積2/3/6段階を登録し、全14ボスセット84部位が揃いました。 / Added the final four six-piece sets and cumulative2/3/6 stages; all14 boss sets and84 parts are registered.
-- **native報酬3種**：WorldCrackerの loaded旋回／半径と元tickの実clip終端、BigChompの実敵weightと元Heal／GiveShield／firstTrigger CD、Shout自身のhunt増幅／backstep／hit-stunへ有界追加。channel・cost・元damage／proc・祠報酬取得は維持します。 / Added scoped WorldCracker, Big Chomp and Shout adapters while preserving native channel/cost/damage/procs and Maw's shrine reward route.
-- **独立段階とHP-only処理**：光相の次入力消費と地形clip済み落雷、大顎の実HP減少だけを使う回復／吸収、別activationで射つ残影砲座、Polarisの段階盾終了によるBeast移行・出発印への踏撃移動・8秒往還を接続。B-3部位の強化／覚醒は元式内cap後に適用し、通常／連携段階へは掛けません。Polarisに報酬／Linkはなく、盾／回復だけ最大HP基準です。 / Added independent phase, actual-HP absorption, separate-input turret and Polaris guard/seal/return-cycle mechanics; part enhancement applies after formula caps, never to normal/reward stages. Polaris has no reward link and uses MAXHP for shields/healing.
-- **全14組の性能**：runtime／adapter／M1〜M8／帰属scope／専用表示を事前確保poolと固定bufferへ移行。入力時の一時配列・closure・動的key・interface列挙を撤去し、対象処理128〜256・本人128弾／64場／32射手／64防護・予約32pulseへ有界化。set maskで不要dispatch／tickを省略し、adapter保守100ms・表示同値抑制／counter100ms・描画64effect／2048segmentの上限を設定しました。 / Prewarmed bounded storage replaces boss-path temporary allocations; cached set masks, bounded candidates/effects, throttled maintenance/notifications and fixed rendering budgets limit MOD-owned work.
-- **説明・互換**：日英名／説明・WikiGenと仕様書末尾18行の「性能」を更新。62セット・1418固有品、12報酬profile・11種adapter。Protocolは**17のまま**、wire／schema・保存形式4・既存IDは変更せず、旧aliasを追加しません。 / Updated bilingual content, WikiGen and the18-line performance section; protocol17, wire/save schemas and existing IDs remain unchanged.
-- **検証**：指定Releaseビルド成功（警告5・エラー0）。資料側に`Mods`がないため自動配置は行われず、DLLと既存about／iconsを`/tmp/sod-deploy-i48`へ明示配置。production WikiGenを`/tmp/sod-wiki-i48-b3`へ実行し、新4セット・84ボス部位・11種adapter・Polarisの報酬欄なしを確認。本体資料は外部参照のみ。tests/・test csprojの変更とテスト作業なし。Managed DLLのみのため実機戦闘／表示／協力同期／GC・frame時間／較正は未確認で、native physics・status・JSON・Mirror・Unity内部までzero-GCを保証する変更ではありません。 / Release build and production WikiGen succeeded; staged the built DLL and existing mod assets explicitly because reference-only game data lacks the Mods deployment gate. Native-game behavior, visuals, co-op, allocation/frame-time measurements and balance remain unverified. No test work or native-source copies.
-
----
-
-## 未リリース — ボス限定セット（#48 段階B-2）
-
-- **新5セット**：星海の主衣 / Starsea Sovereign Raiment、終星の流衣 / Laststar Vesture、幻彩の追装 / Mirage Spectrum Gear、轟召の重装 / Roarcall Heavy Gear、三相の武装 / Threefold Armamentを承認仕様§3.6〜§3.10へ接続。各6部位と累積2/3/6段階を専用profileで実行します。PrimusAeronには報酬・任意Linkを追加しません。 / Added five six-piece boss sets and their cumulative2/3/6 stages from the approved profiles; Primus Aeron has no reward or optional link.
-- **Her World / Last Starlight**：本人native状態の実tick・自然終了child／元iteratorだけを使い、有界吸引・半径・記録対象爆発と、準備／稼働wait期限・1回再配置を接続。元の吸引軌道・ロック・死亡割込・native packetを維持し、解除時には自前差分だけを復元します。 / Scoped native ticks and natural-end children power Her World; Last Starlight retains its original iterator while adapting bounded wait deadlines and one preparatory relocation. Native movement, locks, death interruption and packets remain intact.
-- **Soul Prison / Burrow**：同じnative救命healへ10%加算（追加cap0.20H）、overflow由来の本人／最近味方shieldを有界追加。本体消費を確認したshieldは元の残存時間まで維持し、手動解除・装備変更・死亡・部屋移動では解除します。Burrowは実Emergeのstun／daze引数と1packetを変更し、本人CD8秒・全対象共有の追加予算を保持します。 / Added bounded native rescue-heal and overflow-shield bonuses, preserving committed shields through confirmed native gem consumption only. Burrow modifies actual Emerge arguments and packets with one owner cooldown and activation-wide budget.
-- **有限実行**：Nyx／Erebosはmarker・seed・遅延場を本人合計2・最古置換、tokenに結合した弾も解除。Seekerの終端／追尾orbは1回爆発し、短stunは正の最終damage成功時だけ。Primusは最大3異敵の光連鎖、検証済み出発点の相紋、異なる3入力の合流、吸収後残量からの最大HP盾の線形減衰を共有M1〜M8で実行します。 / Common bounded executors cover total-two replacement fields, once-only terminal/homing orbs, successful-hit stuns, distinct-target chains, departure glyphs, distinct-input finishers and non-refilling decaying MAXHP shields.
-- **互換・説明**：`BossCombatState`をinternalへ変更。Protocolは**17のまま**、保存形式4・既存ID・プロフィールリセットなしを維持。日英名／説明とWikiGenを更新し、現在10ボスセット60部位・8種adapter、残り4セット24部位・3adapterは未登録です。 / BossCombatState is internal. Protocol stays17 with profile format4, existing IDs and no reset. Bilingual WikiGen now lists10 boss sets,60 parts and8 distinct adapters; four sets and three adapters remain unregistered.
-- **検証**：指定Releaseビルド成功（警告5・エラー0、配置先`/tmp/sod-deploy-i48`）。WikiGenを`/tmp/sod-wiki-i48-b2`へ実行し、58セット・1394固有品と新5セットの日英部位／通常段階／連携出力、Primusの連携なしを確認。本体資料・ILはリポジトリ外だけで参照しました。Managed DLLのみのため実機戦闘・表示・協力同期・較正は未確認。tests/・test csprojを変更せず、テストの設計・追加・実行は行っていません。 / Release build and production WikiGen succeeded; live-game combat, visuals, co-op and balance remain unverified. Native sources and IL stayed outside the repository; no test work.
-
----
-
-## 未リリース — ボス限定セット（#48 段階B-1）
-
-- **新4セット**：氷刃の王装 / Iceblade Regalia、噴火炉の軍装 / Eruptionforge Warplate、白蓮の守装 / White Lotus Vestments、黒月の刃装 / Black Moon Armamentを追加。各6部位と累積2/3/6段階を承認仕様§3.2〜§3.5の専用profileへ接続しました。旧汎用Power・Guard連携は復活させません。 / Added four six-piece boss sets and their cumulative2/3/6 stages using the approved authored profiles, without restoring legacy generic powers or Guard links.
-- **Glacial Core**：本人のnative Cold回復へ+20%（追加cap0.12H、CD2秒）、原因敵の2秒優先記録、既存bankで払われる最大3実射の1秒加速を接続。native回復のcrit/chain、bank消費・弾数・damage/procは維持します。 / Scoped native Cold healing gains20% capped at0.12H, records a2s preferred enemy, and accelerates up to3 real bank-funded shots for1s; native healing semantics, bank debit and projectile packets remain intact.
-- **Eternal Flame**：自分のnative呪いだけ+1秒と差分復元、本体procが成功してFireを積んだ場合だけ追加1Fire、6部位で実3〜4stackの対象への最初のnative SkillTrigger packetの会心門を5→3へ接続。元の5stack門と実stackによる増幅は変更しません。 / Added bounded own-curse duration, successful-native-proc Fire increments and a six-piece first-packet crit gate for real3–4 stacks; original>=5 behavior and real-stack amplification remain.
-- **共通Beam**：白夜・暗月は部位数とprofileを独立集計し、`St_U_BeamOfBalance`には1つの共通adapterだけを使用。native分岐→暗月固定量加算→native成功→白夜overheal shield→暗月cadenceの順です。Hは親Beam生成時固定、対象枠・消費予算・owner-global CDを保持し、段階変更で補充や新規攻撃を行いません。 / One shared native Beam adapter keeps independent profiles and the approved order, spawn-frozen H, fixed hero slots, spent quotas and owner-global cooldowns.
-- **有界実行・解除**：M1〜M8を拡張して有限32pulse／1token、同owner/set合計4予約、4方向弾の同敵上限、壁で消える終点剣弾、最高量非加算の白夜shieldを実行。actorのpool世代と親寿命を照合し、片profile変更で他方のnative予約・印・shieldを壊しません。遷移開始・死亡・離脱では破棄します。 / Bounded sequences, per-wave target caps, terminal swords and highest-only White shields reuse the common executors; pooled lifetimes and native-parent ownership isolate teardown.
-- **表示・互換**：属性色・形状・固定幻影・対象ID・残数／予算・縮小域を専用通知と生存snapshotへ追加し、通信版を**17**へ更新。協力プレイは全員同じ版が必要です。保存形式4・プロフィールリセットなしは維持します。 / Protocol17 adds elemental geometry, fixed phantoms, target IDs, counters/budgets and shrinking domains; matching co-op builds are required, with profile format4 and no reset.
-- **説明・範囲**：日英名／説明とWikiGenのボス限定一覧を更新。現在はDemonを含む5セット30部位・4種のnative報酬adapter。残り9セット54部位・7adapterはB-1対象外です。ボスモデル／network prefab／Summonを新規生成せず、固定phantomは承認仕様どおりMOD幾何描画を使用します。 / Bilingual descriptions and WikiGen list five implemented boss sets with four distinct adapters; nine sets/seven adapters remain outside B-1, and fixed phantoms are geometric non-Entities.
-- **検証**：指定Releaseビルド成功（警告5・エラー0、配置先`/tmp/sod-deploy-i48`）。WikiGenを`/tmp/sod-wiki-i48-b1`へ実行し、53セット・1364固有品、新4セットの部位／通常段階／任意連携の日英出力を確認。本体資料はリポジトリ外でのみ参照しました。Managed DLLのみのため実機戦闘・表示・協力同期・較正は未確認。テストの設計・追加・変更・実行は行っていません。 / Requested Release build and production WikiGen succeeded; generated bilingual content is verified, but live-game combat/visuals/co-op/balance are not. Native references stayed outside the repository; no test work.
+- **分解と確保**：遺物の分解を待っているあいだに確保すると、遺物が保管庫に残ったまま、分解の対価も受け取れてしまうことがありました。分解を待っている遺物は、結果が出るまで別枠で保管するようにしました。 / **Salvage and secure**: securing while a salvage was still pending could keep the relic in your stash and also pay out the salvage. Relics waiting on a salvage are now set aside until the result arrives.
+- **純白ルートの協力プレイ**：ホストが選択を確定すると、参加者の保留中の報酬が、参加者本人が確保か潜行かを選ぶ前に、潜行として精算されていました。本人が選ぶまで精算を待つようにしました。 / **Pure-white route in co-op**: when the host decided, participants' pending rewards were settled as a delve before they chose to secure or delve. They now wait for each player's own choice.
+- **起動時の読み込み**：セーブデータの初回の読み込みでエラーが起きると、MOD がまったく動かなくなっていました。修正後は、読み取り専用で起動して画面で知らせ、セーブデータを上書きせずに、自動で読み込み直します。 / **Loading at startup**: a read error on the first save load stopped the mod entirely. It now starts read-only, tells you on screen and retries automatically, without overwriting your save.
 
 ---
 
@@ -150,19 +92,6 @@ v2.0.2 のあとにまとめて見直しを行い、見つかった不具合を�
 - **二択の星**：両方の候補を左右に並べて、比べられるようにしました。マウスを乗せた星と、つながっている星を色付きの輪で示します。 / **Choice stars**: both options are shown side by side, and rings highlight the hovered star and its connected stars.
 
 不具合の多くはコードから原因を突き止めて直したもので、実際のゲームと協力プレイでの確認は一部まだです。おかしな点があれば教えてください。 / Many fixes were found by reading the code and are not yet fully checked in the live game and co-op. Please report anything odd.
-
-## 未リリース — ボス限定セット（#48 段階A）
-
-- **main追従**：#47・#52・#53/#54・#55・#56の変更を維持し、通信版を16へ更新。保存形式4は維持し、プロフィールはリセットしません。 / Rebased onto main, preserving #47/#52/#53–54/#55/#56; protocol16, profile format4 with no reset.
-- **荒ぶる樹界 / Rampaging Grove**：旧Demonの汎用Power・余韻連携を置換。6部位の踏みつけ、短時間Unstoppable、樹芽、放射弾、遅延打撃、移動後の一撃と、累積2/3/6段階を追加しました。 / Replaced old Demon powers/surge with six authored boss moves and cumulative2/3/6 stages.
-- **ヒステリー連携**：共通`BossReward`の最高2/4/6部位段階を選択。native左右爪組から専用カウンタ・踏みつけを進め、左で植樹・右で回収、6部位で列／再植樹と固有速度補正-50→-25を適用します。本体のdash・周期・ロック・回復・持続は変更しません。 / Highest native Hysteria stage drives forest counters, left planting/right collection and six-piece march/replant; only its own speed penalty changes -50→-25.
-- **共通機構**：有限形状攻撃・弾道・予約場・本人移動・敵位置操作・短命射手・独立防護・印／段階ledgerを固定profileで実行。新Power/Stat enumなし。Buildの`b:`/`z:`節、装備からのホスト再構築、内容照合、装備／記憶／死亡／部屋の失効を接続しました。 / Eight bounded executors use fixed profiles, independent build sections, host gear reconstruction and lifecycle invalidation.
-- **表示同期**：専用通知と1秒間隔の生存snapshotを追加。owner・run・zone/room・装備epoch・effect ID・revision・同期時計で古い表示を破棄します。見た目はMODの幾何描画で、ボスのnetwork prefabやモデルは流用しません。 / Dedicated geometric visuals and live snapshots support late join/reconnect without boss network prefabs.
-- **専用入手**：通常10%、Nightmare/Limbo15%、共有深度ごと+1ポイント、最大20%、均等6部位・重複ありを維持。汎用入手から除外し、通常報酬・mainの113体目pityを変更しません。`dreamforge_givebossset boss_demon`／`dreamforge_simbosskill Mon_Forest_BossDemon`と保存される開発付与印を維持します（`dev.flag`必須）。 / Exclusive drop and dev-grant routes remain separate from ordinary drops and main's113-boss pity.
-- **範囲**：旧Skollの汎用効果／Guard連携を撤去。新Skollを含む残り13セット・78部位と残り10報酬adapterは未実装です。旧Skoll品は既存の未知Unique処理で除外されます。M6の新規生成は非Entity射手；native召喚は所有権検証済み個体の登録／破棄までで、新たなSpawnSummon生成はありません。 / Other13 sets and10 reward adapters are outside stageA; legacy Skoll content is removed. M6 generates non-Entity shooters, not new native summons.
-- **検証範囲**：WikiGenの実行で49セット・1340固有品の生成と、新Demon部位／段階／連携の日英出力を確認しました。提供されたゲーム内容はManaged DLLのみのため、実機の戦闘・表示・協力同期・バランスは未確認です。テストの追加・変更は行っていません。 / Generated bilingual content via WikiGen; no live-game/co-op/balance verification and no test changes.
-- **ビルド**：指定Releaseビルド成功（警告5・エラー0）。 / Requested Release build succeeded,5 warnings and0 errors.
-- **既存テスト**：指定`tools/test_changed.py --all`は終了コード1。既存テストプロジェクトが新しいpartialを含まないため、`HostAuthority.Hello.cs:72`の`ReplayAuthoritativeBossKills`と`HostAuthority.NativeMemoryCasts.cs:46`の`PublishBossConfirmedMemoryUse`がCS0103となり、ケース実行前に中断（成功0・失敗0）。テストは修正していません。 / Existing full-suite command stopped at compilation with two CS0103 missing-partial-method errors; no cases ran and tests were not changed.
 
 ---
 
