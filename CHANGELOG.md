@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **Epic保証道標のLegendary予算漏れ（#183）**：インフィニティのEpic以上保証でも通常抽選のLegendary期待値を予約し、実ボス限定セット分は一度だけ計上します。抽選量・保存形式・通信形式は変更しません。 / **Missing Legendary budget under Epic-guarantee waypoints (#183)**: Infinity now reserves ordinary Legendary-roll expectation even with an Epic-or-better guarantee, counting the actual boss-exclusive set chance only once. Loot quantities, save format and wire format are unchanged.
+
 - **参加者がいるロビーでインフィニティを開始できない（#144 続き）**：ゲームシーンの Hello をロビーの必須条件にしていたため、対応済み参加者も開始を止められていました。未確認では開始を止めず、確認済みの Protocol 不一致だけをロビーで拒否します。開始後に MOD 内容・Protocol・インフィニティ対応の不一致が分かった場合は、その遠征のインフィニティだけを解除して通常モードで続行し、理由をログとホスト画面へ1回通知します。 / **Infinity blocked in a lobby with guests (#144 follow-up)**: requiring the game-scene Hello in the lobby blocked even compatible guests. Unconfirmed guests no longer block startup; only known protocol mismatches are rejected in the lobby. Incompatible mod content, protocol or Infinity support discovered after startup disables Infinity only for that expedition, continues in normal mode, and reports the reason once in the log and on the host's screen.
 
 - **インフィニティ途中参加後の保存失敗（#182）**：地図更新時に最終クリア番号とクリア済み集合を同じホスト状態から同期し、古い番号による保存検証失敗を修正しました。報酬量・保存形式・通信形式は変更ありません。 / **Save failure after joining an Infinity run in progress (#182)**: synchronize the last cleared node and cleared-node set from the same host snapshot when the map updates, preventing stale-node save validation failures. Reward amounts, save and wire formats are unchanged.
