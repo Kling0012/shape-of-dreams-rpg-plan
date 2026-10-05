@@ -5,7 +5,9 @@ namespace SodRpg.Core.Game
         /// <summary>Capture value facts without settling rewards under missing host rules.</summary>
         public RunRecoveryState Capture()
         {
-            var state = new RunRecoveryState { RunId = _runId, ZoneIndex = ZoneIndex, LastArrival = _lastArrival };
+            var state = new RunRecoveryState { RunId = _runId, ZoneIndex = ZoneIndex, LastArrival = _lastArrival,
+                GraphEpoch = GraphEpoch, SegmentEpoch = SegmentEpoch, RetiredBeforeSegment = RetiredBeforeSegment,
+                ArrivalGraph = _arrivalGraph, ArrivalSegment = _arrivalSegment };
             state.Arrivals.AddRange(_arrivals);
             state.PendingKills.AddRange(Rewards.Facts);
             foreach (var entry in _committed) state.CommittedChoices.Add(entry.Value.Encode());
@@ -22,13 +24,20 @@ namespace SodRpg.Core.Game
             _runId = state.RunId;
             ZoneIndex = state.ZoneIndex;
             _lastArrival = state.LastArrival;
+            GraphEpoch = state.GraphEpoch;
+            SegmentEpoch = state.SegmentEpoch;
+            RetiredBeforeSegment = state.RetiredBeforeSegment;
+            _arrivalGraph = state.ArrivalGraph;
+            _arrivalSegment = state.ArrivalSegment;
+            Snapshots.RetireBeforeSegment(RetiredBeforeSegment);
             foreach (int arrival in state.Arrivals) _arrivals.Enqueue(arrival);
             foreach (var kill in state.PendingKills) Rewards.Add(kill);
             foreach (string encoded in state.CommittedChoices)
             {
                 if (!RunChoiceSnapshot.TryDecode(encoded, out var snapshot) || snapshot.RunId != _runId
                     || (snapshot.Generation != 0 && !snapshot.Settled)) continue;
-                _committed[snapshot.ZoneIndex] = snapshot;
+                if (snapshot.Infinity != null && snapshot.SegmentEpoch < RetiredBeforeSegment) continue;
+                _committed[snapshot.HistoryKey] = snapshot;
             }
         }
     }

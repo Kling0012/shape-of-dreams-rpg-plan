@@ -32,6 +32,7 @@ namespace HarmonyLib
         public static FieldRef<T, F> FieldRefAccess<T, F>(string name)
         {
             var field = typeof(T).GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field == null) throw new MissingFieldException(typeof(T).FullName, name);
             return instance => ref FieldRefBox<T, F>.Get(field, instance);
         }
         private static class FieldRefBox<T, F>

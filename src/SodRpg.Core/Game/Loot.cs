@@ -55,6 +55,24 @@ namespace SodRpg.Core.Game
         /// </summary>
         public static double LuckPercent(double luck) => 60.0 * Math.Max(0, luck);
 
+        internal const double BossExtraRelicChance = 0.6;
+
+        /// <summary>The RollRarity distribution, without allocating weights or consuming RNG.</summary>
+        internal static double HighRarityProbability(double luck, bool allowLegendary, Rarity floor, out double legendary)
+        {
+            double f = 1.0 + 0.6 * Math.Max(0, luck), total = 0, high = 0, legendaryWeight = 0;
+            for (int i = 0; i < BaseRarityWeights.Length; i++)
+            {
+                if (i < (int)floor || (!allowLegendary && i == (int)Rarity.Legendary)) continue;
+                double weight = BaseRarityWeights[i] * Math.Pow(f, i);
+                total += weight;
+                if (i >= (int)Rarity.Epic) high += weight;
+                if (i == (int)Rarity.Legendary) legendaryWeight = weight;
+            }
+            legendary = total == 0 ? 0 : legendaryWeight / total;
+            return total == 0 ? 0 : high / total;
+        }
+
         public static Rarity RollRarity(Rng rng, double luck, bool allowLegendary, Rarity floor = Rarity.Common)
         {
             double f = 1.0 + 0.6 * Math.Max(0, luck);
@@ -396,7 +414,7 @@ namespace SodRpg.Core.Game
                 Rarity floor = tier == MonsterTier.Boss ? Rarity.Uncommon : Rarity.Common;
                 var rarity = RollRarity(rng, luck, allowLegendary, floor);
                 reward.Relics.Add(RollRelic(rng, rarity, itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
-                if (tier == MonsterTier.Boss && rng.Chance(0.6))
+                if (tier == MonsterTier.Boss && rng.Chance(BossExtraRelicChance))
                     reward.Relics.Add(RollRelic(rng, RollRarity(rng, luck, true, Rarity.Uncommon), itemLevel, null, focus, ownedRelics, unsecuredRelics, codex));
             }
 

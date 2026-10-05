@@ -290,6 +290,7 @@ namespace SodRpg.Mod
             public bool DeathBurstTriggered;
             public string KillEventId, KillEventStreamId;
             public uint KillEventNetId, SyncNetId;
+            public long GraphEpoch, SegmentEpoch, RoomEpoch;
         }
         private DreamPressure _pressure = DreamPressure.Neutral;
         internal void BindAuthored(HeroRuntime runtime, Build build)

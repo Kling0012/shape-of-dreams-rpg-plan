@@ -8,7 +8,9 @@ namespace SodRpg.Core.Game
         {
             if (profile?.Run == null || reward == null || profile.Run.RunId != reward.RunId)
                 throw new InvalidOperationException("A pressure dividend belongs to its active expedition.");
-            profile.Run.SatchelShards = checked(profile.Run.SatchelShards + reward.ShardCount);
+            int shards = InfinityRewards.LimitShards(profile, reward.ShardCount);
+            if (shards == 0) return null;
+            profile.Run.SatchelShards = (int)Math.Min(int.MaxValue, (long)profile.Run.SatchelShards + shards);
             return new GameEvent(EventKind.Info, Loc.T(
                 "夢の圧の報酬として、未確保の欠片を1個獲得しました（敵1体につき最大1個）。",
                 "Pressure dividend: gained 1 unsecured shard (maximum 1 per enemy)."));

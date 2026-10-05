@@ -118,6 +118,7 @@ namespace SodRpg.Mod
             public string KillEventId;
             public string KillEventStreamId;
             public uint KillEventNetId;
+            public long GraphEpoch, SegmentEpoch, RoomEpoch;
             public uint SyncNetId;
             public bool ClassificationQueued;
             public NightmareAffix ClassificationNightmare;
@@ -168,6 +169,7 @@ namespace SodRpg.Mod
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
         private readonly Action<DewPlayer> _onPressurePlayerRemoved;
         private bool _pressureDirty = true;
+        private int _infinityPressureStage;
 
         private Actor _registeredOn;
         private ClientEventManager _cem;
@@ -328,6 +330,12 @@ namespace SodRpg.Mod
 
         private void StagePressure()
         {
+            int stage = ClientSession.HostRun?.Infinity?.PressureStage ?? 0;
+            if (_infinityPressureStage != stage)
+            {
+                _infinityPressureStage = stage;
+                _pressureDirty = true;
+            }
             if (_pressureDirty) RefreshPressure();
         }
 
@@ -427,7 +435,8 @@ namespace SodRpg.Mod
                 RemoveBuildValidationPeer(player);
             }
             var pressure = DreamPressure.Average(_pressureBuilds)
-                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier);
+                .WithRunModifiers(ClientSession.HostRun?.DreamDepth ?? 0, ActiveWaypointTotals.PressureMultiplier)
+                .WithInfinityPressure(_infinityPressureStage);
             bool changed = pressure.HealthMultiplier != _pressure.HealthMultiplier
                 || pressure.DamageMultiplier != _pressure.DamageMultiplier;
             synchronize |= changed || _pressurePlayerCount != _pressureBuilds.Count;
@@ -504,7 +513,10 @@ namespace SodRpg.Mod
             if (!(e is Monster m) || _monsters.ContainsKey(m)) return;
             try
             {
-                var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time };
+                var infinity = InfinityMode.State;
+                var rt = new MonsterRuntime { Monster = m, QueuedAt = Time.time,
+                    GraphEpoch = infinity?.GraphEpoch ?? 0, SegmentEpoch = infinity?.SegmentEpoch ?? 0,
+                    RoomEpoch = infinity?.RoomEpoch ?? 0 };
                 _monsters[m] = rt;
                 TrackPressureDividendSpawn(m);
                 m.EntityEvent_OnDeath += _onMonsterDeath;

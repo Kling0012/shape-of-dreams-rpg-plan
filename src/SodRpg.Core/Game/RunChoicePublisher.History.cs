@@ -4,7 +4,10 @@ namespace SodRpg.Core.Game
 {
     public sealed partial class RunChoicePublisher
     {
-        private readonly SortedDictionary<int, string> _finalized = new SortedDictionary<int, string>();
+        private readonly SortedDictionary<long, string> _finalized = new SortedDictionary<long, string>();
+        private readonly List<long> _retired = new List<long>();
+        private bool _infinityHistory;
+        public long RetiredBeforeSegment { get; private set; }
         private string _historyRunId;
         public string TerminalChoices { get; private set; }
         public bool? TerminalVictory { get; private set; }
@@ -15,18 +18,33 @@ namespace SodRpg.Core.Game
             if (string.IsNullOrEmpty(runId) || runId == _historyRunId) return;
             _historyRunId = runId;
             _finalized.Clear();
+            RetiredBeforeSegment = 0;
             TerminalChoices = null;
             TerminalVictory = null;
         }
 
-        private void RememberFinalized(string runId, int zoneIndex, string encoded)
+        private void RememberFinalized(RunChoiceSnapshot snapshot, string encoded)
         {
-            if (string.IsNullOrEmpty(runId)) return;
-            TrackHistoryRun(runId);
-            _finalized[zoneIndex] = encoded;
+            if (string.IsNullOrEmpty(snapshot.RunId)) return;
+            TrackHistoryRun(snapshot.RunId);
+            _infinityHistory = snapshot.Infinity != null;
+            if (_infinityHistory && snapshot.SegmentEpoch < RetiredBeforeSegment) return;
+            _finalized[snapshot.HistoryKey] = encoded;
         }
 
         public IEnumerable<string> ExportFinalized() => _finalized.Values;
+
+        public void RetireBeforeSegment(long segment)
+        {
+            if (segment <= RetiredBeforeSegment) return;
+            RetiredBeforeSegment = segment;
+            if (!_infinityHistory) return;
+            _retired.Clear();
+            foreach (var entry in _finalized)
+                if (entry.Key < segment) _retired.Add(entry.Key);
+            foreach (long key in _retired) _finalized.Remove(key);
+            _retired.Clear();
+        }
 
         public void CaptureTerminal(RunState run, int selectedDepth, int zoneIndex, bool victory)
         {
@@ -48,7 +66,7 @@ namespace SodRpg.Core.Game
                     if (!RunChoiceSnapshot.TryDecode(encoded, out var snapshot) || string.IsNullOrEmpty(snapshot.RunId)) continue;
                     snapshot.AuthorityGeneration = AuthorityGeneration;
                     snapshot.Revision = checked(++_revision);
-                    RememberFinalized(snapshot.RunId, snapshot.ZoneIndex, snapshot.Encode());
+                    RememberFinalized(snapshot, snapshot.Encode());
                 }
             if (victory.HasValue && RunChoiceSnapshot.TryDecode(terminalChoices, out var terminal)
                 && terminal.RunId == _historyRunId)
@@ -57,7 +75,7 @@ namespace SodRpg.Core.Game
                 terminal.Revision = checked(++_revision);
                 TerminalChoices = terminal.Encode();
                 TerminalVictory = victory;
-                _finalized[terminal.ZoneIndex] = TerminalChoices;
+                _finalized[terminal.HistoryKey] = TerminalChoices;
             }
             Invalidate();
         }

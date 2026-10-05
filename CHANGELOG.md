@@ -12,6 +12,24 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.1.2 — 鍛冶の遺物が消える不具合の修正（2026-10-05）
+
+「続きから」で遠征を再開したあとに鍛冶で遺物を作ると、遺物が消えることがある不具合を直しました。 / Fixes relics disappearing when crafting after resuming a run with "Continue".
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.1.1 と同じです）。 / Saves carry over (same format as v2.1.1).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update to this version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Fixes
+
+- **鍛冶で作った遺物が消える**：ロビーで遺物を作ってから「続きから」で遠征を再開し、もう一度遺物を作ると、前に作った遺物とまったく同じ遺物（内部の識別番号が同じもの）ができることがありました。その場合、セーブを読み込み直すと片方が消え、支払った欠片も戻りませんでした。再開しても前の製作の続きから抽選するようにし、同じ識別番号の遺物ができないようにしました。 / **Crafted relics vanishing**: crafting in the lobby, resuming with "Continue" and crafting again could produce an exact copy of the earlier relic (same internal ID). On reload one copy was dropped and the shards were not refunded. Rolls now continue from the earlier craft after resuming, and duplicate IDs are no longer created.
+
+この修正はコードとテストで確認したもので、実際のゲームでの確認はまだです。おかしな点があれば教えてください。 / This fix was verified by code and tests, not yet in the live game. Please report anything odd.
+
+---
+
 ## v2.1.1 — 起動しない不具合の緊急修正（2026-10-05）
 
 v2.1.0 で、MOD が起動しない（入れても動かない）ことがある不具合を直した緊急の修正版です。 / Urgent fix for v2.1.0: the mod could fail to start at all.

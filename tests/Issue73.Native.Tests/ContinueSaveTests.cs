@@ -331,9 +331,21 @@ namespace Issue73.Native.Tests
         private static void SaveContinue(DewPersistence.GameData data) =>
             Call(typeof(SaveDreamforgeContinue), "Postfix", data);
 
+        private static Action _finishNativeContinue;
+
         /// <summary>本体の読み込みフック（LoadDreamforgeContinue の Harmony Prefix）を直接動かす。</summary>
-        private static void LoadContinue(DewPersistence.GameData data) =>
-            Call(typeof(LoadDreamforgeContinue), "Prefix", data);
+        private static void LoadContinue(DewPersistence.GameData data)
+        {
+            var args = new object[] { data, null };
+            Call(typeof(LoadDreamforgeContinue), "Prefix", args);
+            _finishNativeContinue = (Action)args[1];
+            var session = Get(typeof(ClientSession), "_hostSession");
+            if (session == null || Get(session, "_nativeContinueCheckpoint") == null)
+            {
+                _finishNativeContinue?.Invoke();
+                _finishNativeContinue = null;
+            }
+        }
 
         private static void Fight(Profile profile, MonsterTier tier, int kills)
         {
@@ -355,14 +367,13 @@ namespace Issue73.Native.Tests
             Call(session, "ObserveContinueGame", (object)null);
         }
 
-        /// <summary>TrackRun の中断再開分岐（リンク外）と同じ呼び出しで保存地点へ戻す。</summary>
+        /// <summary>本体の復元完了コールバックを動かし、MOD のチェックポイントを復元する。</summary>
         private static void ResumeFromNativeCheckpoint(ClientSession session)
         {
             var checkpoint = Get(session, "_nativeContinueCheckpoint");
             Assert.NotNull(checkpoint);
-            var resumeSession = Get(session, "_continueResumeSession");
-            Call(session, "RestoreContinueCheckpoint", checkpoint, resumeSession);
-            Set(session, "_nativeContinueCheckpoint", null); // TrackRun は戻した直後に消す
+            _finishNativeContinue();
+            _finishNativeContinue = null;
         }
 
         private static string HostCheckpointId(DewPersistence.GameData save)
@@ -378,6 +389,7 @@ namespace Issue73.Native.Tests
         private static void ResetStatics()
         {
             NetworkServer.active = false;
+            _finishNativeContinue = null;
             NetworkClient.active = false;
             Time.frameCount = 1;
             Time.unscaledTime = 100;

@@ -140,26 +140,26 @@ namespace SodRpg.Core.Game
 
         /// <summary>Transform only newly rolled enemy rewards; existing inventory and event rewards are untouched.
         /// waypoint is the one active when the kill happened (#71); pass run.ActiveWaypoint for immediate kills.</summary>
-        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening)
+        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening, bool admitted = true)
         {
             starXp = 0;
             awakening = 0;
             var run = p.Run;
-            if (waypoint == Waypoint.None) return;
+            if (waypoint == Waypoint.None) { InfinityRewards.LimitReward(p, reward); return; }
             var t = Sum(waypoint);
             if (run.WaypointRoom != roomIndex)
             {
                 run.WaypointRoom = roomIndex;
                 run.WaypointRelicsInRoom = run.WaypointLootRooms.Contains(roomIndex) ? 1 : 0;
             }
-            if (t.FirstKillRelic && run.WaypointRelicsInRoom == 0 && reward.Relics.Count == 0)
+            if (admitted && t.FirstKillRelic && run.WaypointRelicsInRoom == 0 && reward.Relics.Count == 0)
                 reward.Relics.Add(Loot.RollRelic(rng, Rarity.Rare, itemLevel, null, focus, p.Stash, run.Satchel));
             if (t.MaxRelicsPerRoom != int.MaxValue)
             {
                 int keep = Math.Max(0, Math.Min(reward.Relics.Count, t.MaxRelicsPerRoom - run.WaypointRelicsInRoom));
                 if (keep < reward.Relics.Count) reward.Relics.RemoveRange(keep, reward.Relics.Count - keep);
             }
-            run.WaypointRelicsInRoom += reward.Relics.Count;
+            run.WaypointRelicsInRoom = Add(run.WaypointRelicsInRoom, reward.Relics.Count);
             if (t.MaxRelicsPerRoom != int.MaxValue && reward.Relics.Count > 0) run.WaypointLootRooms.Add(roomIndex);
             for (int i = 0; i < reward.Relics.Count; i++)
             {
@@ -202,6 +202,7 @@ namespace SodRpg.Core.Game
                 starXp = DreamDepth.ScaleReward(reward.Shards, 4);
                 reward.Shards = 0;
             }
+            InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? 3 : 1);
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)
             {
@@ -210,7 +211,7 @@ namespace SodRpg.Core.Game
                 foreach (var r in reward.Relics)
                 {
                     if (run.DeferredWaypointRelics.Count < MaximumDeferredRelics) run.DeferredWaypointRelics.Add(r);
-                    else run.DeferredWaypointShards = Add(run.DeferredWaypointShards, Content.SalvageShards(r.Rarity));
+                    else run.DeferredWaypointShards = Add(run.DeferredWaypointShards, InfinityRewards.LimitHoardOverflow(p, Content.SalvageShards(r.Rarity)));
                 }
                 reward.Relics.Clear();
                 reward.Shards = 0;

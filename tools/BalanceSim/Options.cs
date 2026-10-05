@@ -26,6 +26,7 @@ public sealed class Options
     public bool Stars => Mode == "stars";
     public bool Sets => Mode == "sets";
     public bool V132Stars => Mode == "v132stars";
+    public bool Infinity => Mode == "infinity";
 
     public int SecureHeat => Policy switch { "delve1" => 1, "greedy" => 3, _ => 0 };
 
@@ -67,8 +68,8 @@ public sealed class Options
                     o.Out = value;
                     break;
                 case "--mode":
-                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars"))
-                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars です。");
+                    if (value is not ("expeditions" or "stars" or "sets" or "v132stars" or "infinity"))
+                        throw new ArgumentException("--mode は expeditions / stars / sets / v132stars / infinity です。");
                     o.Mode = value;
                     break;
                 case "--dream-level":
@@ -124,7 +125,7 @@ public sealed class Options
           --bounty 0.6       本体行動に依存する依頼の達成確率
           --item-level 1     最初のゾーンのアイテムレベル
           --item-level-per-zone 1  次のゾーンで増えるアイテムレベル
-          --mode expeditions  expeditions（遠征）/ stars（v1.31 星振り）/ sets（v1.32 セット6部位）/ v132stars（v1.32 星図の追加効果）
+          --mode expeditions  expeditions / stars / sets / v132stars / infinity（30/60/120分、周期10/15/20）
           --out <path>       標準出力に加えてUTF-8のMarkdownファイルに保存
           --help             この説明を表示
         """;

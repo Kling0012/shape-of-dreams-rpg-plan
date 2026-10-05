@@ -34,6 +34,8 @@ namespace SodRpg.Mod.Startup.Tests
             ErebosLastStarlightSequence.Captures = 0;
             ErebosLastStarlightSequence.WaitAdaptations = 0;
             BlockInputWhileMenuOpen.MenuOpen = false;
+            InfinityStartupFixtures.Reset();
+            InfinityMode.Reset();
         }
 
         [Fact]
@@ -224,6 +226,36 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(314159, NativeContractTarget.First());
         }
 
+        /// <summary>
+        /// #95: インフィニティの本体割り込みパッチの一部が入らない場合、インフィニティ機能だけが無効になる。
+        /// 通常パッチはインストールされたままMOD全体は起動し、無効化の理由と適用数が記録される。
+        /// </summary>
+        [Fact]
+        public void FailingInfinityPatchDisablesOnlyInfinityAndKeepsTheModRunning()
+        {
+            InfinityStartupFixtures.Enabled = true;
+            InfinityStartupFixtures.FailBossSoul = true;
+            var mod = new DreamforgeMod { harmony = owner };
+
+            Invoke(mod, "Awake");
+
+            Assert.Equal(271828, NativeContractTarget.First());  // 通常パッチは機能したまま
+            Assert.Equal(333333, FixtureNativeGraph.ZoneTravel()); // 入ったインフィニティパッチも機能する
+            Assert.Equal(222222, FixtureNativeGraph.BossSoul());   // 失敗したクラスは巻き戻される
+            Assert.False(InfinityMode.Available);                  // インフィニティだけ無効
+            Assert.Equal(1, InfinityMode.CompletedInstallCount);
+            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("FixtureInfinityBossSoul"));
+            Assert.Contains(InfinityMode.DisabledReasons, reason => reason.Contains("incomplete"));
+            // MOD全体は止まらない: 通常モードと残りの初期化は続いている
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Empty(Log.Errors);
+
+            Invoke(mod, "OnDestroy");
+            Assert.Equal(314159, NativeContractTarget.First());
+            Assert.Equal(111111, FixtureNativeGraph.ZoneTravel());
+        }
+
         private static void Invoke(DreamforgeMod mod, string name)
             => AccessTools.Method(typeof(DreamforgeMod), name).Invoke(mod, null);
 
@@ -274,6 +306,8 @@ namespace SodRpg.Mod.Startup.Tests
         public void Dispose()
         {
             NativeContractPatch.FailInstallationCleanup = false;
+            InfinityStartupFixtures.Reset();
+            InfinityMode.Reset();
             foreach (var harmony in new[] { owner, other })
                 foreach (var target in harmony.GetPatchedMethods().ToArray())
                     harmony.Unpatch(target, HarmonyPatchType.All, harmony.Id);
@@ -342,5 +376,61 @@ namespace SodRpg.Mod.Startup.Tests
             CompletedContracts = 0;
             ValueObservedBeforeFailure = 0;
         }
+    }
+
+    /// <summary>
+    /// #95: インフィニティの本体割り込みパッチの一部が入らないとき、インフィニティ機能だけが無効になり、
+    /// 通常モード（通常パッチ・MOD全体）は止まらない。本物の PatchEachClass と巻き戻しを動かす。
+    /// </summary>
+    internal static class InfinityStartupFixtures
+    {
+        internal static bool Enabled, FailBossSoul;
+        internal static void Reset() { Enabled = false; FailBossSoul = false; }
+    }
+
+    internal static class FixtureNativeGraph
+    {
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int ZoneTravel() => 111111;
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        internal static int BossSoul() => 222222;
+    }
+
+    [HarmonyPatch]
+    internal static class FixtureInfinityZoneTravel
+    {
+        [HarmonyTargetMethods]
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.ZoneTravel));
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(ref int __result) => __result = 333333;
+
+        [HarmonyCleanup]
+        private static Exception Cleanup(MethodBase original, Exception exception) =>
+            exception ?? (!InfinityStartupFixtures.Enabled && original != null
+                ? new InvalidOperationException("Fixture Infinity patch inactive in this test")
+                : null);
+    }
+
+    [HarmonyPatch]
+    internal static class FixtureInfinityBossSoul
+    {
+        [HarmonyTargetMethods]
+        private static IEnumerable<MethodBase> TargetMethods()
+        {
+            yield return AccessTools.Method(typeof(FixtureNativeGraph), nameof(FixtureNativeGraph.BossSoul));
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(ref int __result) => __result = 444444;
+
+        [HarmonyCleanup]
+        private static Exception Cleanup(MethodBase original, Exception exception) =>
+            exception ?? ((!InfinityStartupFixtures.Enabled || InfinityStartupFixtures.FailBossSoul) && original != null
+                ? new InvalidOperationException("Injected failure after the first native detour was installed")
+                : null);
     }
 }
