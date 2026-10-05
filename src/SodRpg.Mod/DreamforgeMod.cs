@@ -44,9 +44,13 @@ namespace SodRpg.Mod
             {
                 if (harmony == null || string.IsNullOrEmpty(harmony.Id) || harmony.Id == "*")
                     throw new InvalidOperationException("Startup requires a non-wildcard Harmony owner.");
-                NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly);
+                // The preflight only warns. Stopping the whole mod on a native mismatch (another mod's
+                // Harmony, a game update) left players with no mod at all (v2.1.0). Each patch class is
+                // installed on its own instead, and a failing class is rolled back and skipped.
+                try { NativePatchPreflight.Validate(harmony, typeof(DreamforgeMod).Assembly); }
+                catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
                 stage = "patch installation";
-                harmony.PatchAll(typeof(DreamforgeMod).Assembly);
+                PatchEachClass();
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
@@ -357,6 +361,53 @@ namespace SodRpg.Mod
                         catch (Exception ex) { Log.Error("Startup cleanup: unpatch " + target.FullDescription() + ": " + ex); }
             }
             catch (Exception ex) { Log.Error("Startup cleanup: patch enumeration: " + ex); }
+        }
+
+        /// <summary>Patch classes one at a time. A class that fails is rolled back (only the targets it added) and skipped.</summary>
+        private void PatchEachClass()
+        {
+            int installed = 0;
+            var skipped = new List<string>();
+            foreach (var type in AccessTools.GetTypesFromAssembly(typeof(DreamforgeMod).Assembly))
+            {
+                if (HarmonyMethodExtensions.GetFromType(type).Count == 0) continue;
+                try
+                {
+                    harmony.CreateClassProcessor(type).Patch();
+                    installed++;
+                }
+                catch (Exception ex)
+                {
+                    skipped.Add(type.FullName);
+                    Log.Warn("Patch class skipped: " + type.FullName + ": " + ex);
+                    RollBackClass(type);
+                }
+            }
+            Log.Info($"Patches installed: {installed} classes" + (skipped.Count > 0 ? $", skipped {skipped.Count}: {string.Join(", ", skipped)}" : ""));
+        }
+
+        /// <summary>Remove only the patch methods declared by this class (and its nested types), leaving every other patch in place.</summary>
+        private void RollBackClass(Type type)
+        {
+            foreach (var target in new List<MethodBase>(harmony.GetPatchedMethods()))
+            {
+                var info = Harmony.GetPatchInfo(target);
+                if (info == null) continue;
+                var mine = new List<MethodInfo>();
+                foreach (var list in new[] { info.Prefixes, info.Postfixes, info.Transpilers, info.Finalizers })
+                    foreach (var patch in list)
+                        if (patch.owner == harmony.Id && IsSameOrNested(patch.PatchMethod.DeclaringType, type)) mine.Add(patch.PatchMethod);
+                foreach (var method in mine)
+                    try { harmony.Unpatch(target, method); }
+                    catch (Exception ex) { Log.Error("Rollback unpatch " + target.FullDescription() + ": " + ex); }
+            }
+        }
+
+        private static bool IsSameOrNested(Type candidate, Type root)
+        {
+            for (var t = candidate; t != null; t = t.DeclaringType)
+                if (t == root) return true;
+            return false;
         }
 
         [ConsoleCommand("Dreamforge (test): add star map points for this session only (0-500, 0 = off)", "dreamforge_testpoints")]

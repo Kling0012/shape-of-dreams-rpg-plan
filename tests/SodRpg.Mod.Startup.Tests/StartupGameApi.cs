@@ -63,7 +63,9 @@ namespace SodRpg.Mod
     internal static class Log
     {
         public static readonly List<string> Errors = new List<string>();
+        public static readonly List<string> Warnings = new List<string>();
         public static void Info(string message) { }
+        public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
     internal sealed class PerfMeter

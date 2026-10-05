@@ -27,6 +27,7 @@ namespace SodRpg.Mod.Startup.Tests
             PerformanceTuner.Starts = 0;
             PerformanceTuner.FailStart = false;
             Log.Errors.Clear();
+            Log.Warnings.Clear();
             BlockInputWhileMenuOpen.MenuOpen = false;
         }
 
@@ -60,7 +61,7 @@ namespace SodRpg.Mod.Startup.Tests
         }
 
         [Fact]
-        public void ChangedComposedIlStopsStartupWithoutRemovingOtherOwnersPatch()
+        public void ChangedComposedIlSkipsOnlyThatPatchClassAndKeepsOtherOwnersPatch()
         {
             other.Patch(First, transpiler: new HarmonyMethod(typeof(NativeStartupTests), nameof(ChangeNativeMarker)));
             Assert.Equal(777, NativeContractTarget.First());
@@ -72,13 +73,15 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.Empty(owner.GetPatchedMethods());
-            Assert.Equal(0, PerformanceTuner.Starts);
-            Assert.False(mod.instance.isAlteringGameplay);
-            Assert.Contains(Log.Errors, message => message.Contains("Native instruction contract changed"));
+            // v2.1.1: a native mismatch skips only the failing patch class; the mod keeps running.
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Contains(Log.Warnings, message => message.Contains("Native preflight failed"));
+            Assert.Contains(Log.Warnings, message => message.Contains("Patch class skipped"));
         }
 
         [Fact]
-        public void InstallationFailureRollsBackAlreadyInstalledPatchAndPreservesOtherOwner()
+        public void InstallationFailureRollsBackThatClassAndKeepsTheModRunning()
         {
             other.Patch(First, postfix: new HarmonyMethod(typeof(NativeStartupTests), nameof(OtherOwnerPostfix)));
             Assert.Equal(314166, NativeContractTarget.First());
@@ -95,9 +98,10 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Contains(other.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.DoesNotContain(owner.Id, Harmony.GetPatchInfo(First).Owners);
             Assert.Empty(owner.GetPatchedMethods());
-            Assert.Equal(0, PerformanceTuner.Starts);
-            Assert.False(mod.instance.isAlteringGameplay);
-            Assert.False(BlockInputWhileMenuOpen.MenuOpen);
+            // v2.1.1: the failing class is rolled back and skipped; the rest of the mod starts.
+            Assert.Equal(1, PerformanceTuner.Starts);
+            Assert.True(mod.instance.isAlteringGameplay);
+            Assert.Contains(Log.Warnings, message => message.Contains("Patch class skipped"));
 
             Invoke(mod, "OnDestroy");
             Assert.Equal(314166, NativeContractTarget.First());

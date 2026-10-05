@@ -23,14 +23,16 @@ namespace SodRpg.Mod
         {
             if (entity == null || entity.Status == null) return 0f;
             float amount = 0f;
-            var effects = NativeShieldEffects(entity.Status);
+            var effects = NativeShieldEffects == null ? null : NativeShieldEffects(entity.Status);
+            if (effects == null) return 0f;
             for (int i = 0; i < effects.Count && i < 256; i++)
                 if (effects[i] is ShieldEffect shield && shield.isAlive && shield.parent != null && shield.parent.isActive)
                     amount += Math.Max(0f, shield.amount);
             return amount;
         }
+        // Resolved defensively: a game update that renames the field must disable this read, not the whole host (v2.1.1).
         private static readonly HarmonyLib.AccessTools.FieldRef<EntityStatus, List<BasicEffect>> NativeShieldEffects =
-            HarmonyLib.AccessTools.FieldRefAccess<EntityStatus, List<BasicEffect>>("_basicEffects");
+            SafeReflection.FieldRef<EntityStatus, List<BasicEffect>>("_basicEffects");
         private static void PrewarmNativeShieldSnapshot() { _ = NativeShieldEffects; }
         private readonly HashSet<Entity> _nativeDeathEntities = new HashSet<Entity>();
         internal void OnNativeElementApplied(EventInfoApplyElemental info) => OnApplyElemental(info);

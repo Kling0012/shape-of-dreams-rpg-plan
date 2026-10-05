@@ -12,6 +12,23 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ---
 
+## v2.1.1 — 起動しない不具合の緊急修正（2026-10-05）
+
+v2.1.0 で、MOD が起動しない（入れても動かない）ことがある不具合を直した緊急の修正版です。 / Urgent fix for v2.1.0: the mod could fail to start at all.
+
+### 更新前に確認 / Before updating
+
+- **セーブデータはそのまま引き継げます**（形式は v2.1.0 と同じです）。 / Saves carry over (same format as v2.1.0).
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。 / Everyone in co-op should update to this version.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 不具合の修正 / Fixes
+
+- **MOD が起動しない**：v2.1.0 では、起動時の確認でゲーム本体や他の MOD との違いが1つでも見つかると、MOD 全体が止まり、入れても何も表示されないことがありました。確認で問題が見つかっても MOD 全体は止めず、合わない部分だけを使わないようにしました。 / **Mod not starting**: in v2.1.0, a single mismatch with the game or another mod found at startup stopped the whole mod. Now only the affected part is turned off and the rest keeps working.
+- **ボス装備のアイコン**：v2.1.0 の配布ファイルで、ボス装備の専用アイコンが正しい場所に入っておらず、表示されていませんでした。 / **Boss gear icons**: the v2.1.0 package put the boss gear icons in the wrong folder, so they did not show.
+
+---
+
 ## v2.1.0 — ボス限定の装備セット（2026-10-05）
 
 14体のボスに、それぞれのボスだけが落とす装備セットを追加しました。 / Fourteen bosses now each drop their own exclusive gear set.
