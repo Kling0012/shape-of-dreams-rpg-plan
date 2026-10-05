@@ -5,7 +5,6 @@ using HarmonyLib;
 using System.IO;
 using SodRpg.Core.Game;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 
 namespace SodRpg.Mod
@@ -29,7 +28,6 @@ namespace SodRpg.Mod
         private DreamforgeUi _ui;
         private PerformanceTuner _performance;
         private bool _hasFocus = true;
-        private EventSystem _pausedEventSystem;
         private bool _running;
         private bool _stopped;
         private bool _iconsStarted;
@@ -106,7 +104,6 @@ namespace SodRpg.Mod
             HandleKeys();
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
-            BlockGameUi(block);
             _session.Tick();
             try
             {
@@ -143,25 +140,6 @@ namespace SodRpg.Mod
         // 計測用：保存先に perf.flag があるときだけ、10秒ごとに処理時間をログへ書く（通常は何もしない）。
         private bool _perfLogEnabled;
         private float _nextPerfLog;
-
-        /// <summary>メニュー操作中はゲーム側のUI（uGUI）にクリックを渡さない。</summary>
-        private void BlockGameUi(bool block)
-        {
-            if (block)
-            {
-                var es = EventSystem.current;
-                if (es != null && es.enabled && _pausedEventSystem == null)
-                {
-                    es.enabled = false;
-                    _pausedEventSystem = es;
-                }
-            }
-            else if (_pausedEventSystem != null)
-            {
-                _pausedEventSystem.enabled = true;
-                _pausedEventSystem = null;
-            }
-        }
 
         private void HandleKeys()
         {
@@ -344,7 +322,6 @@ namespace SodRpg.Mod
                 try { RelicIcons.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: icons dispose: " + ex); }
             }
             BlockInputWhileMenuOpen.MenuOpen = false;
-            try { BlockGameUi(false); } catch (Exception ex) { Log.Error("Startup cleanup: input restore: " + ex); }
             if (_gameplayFlagChanged)
             {
                 _gameplayFlagChanged = false;
