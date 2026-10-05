@@ -13,6 +13,8 @@ namespace SodRpg.Mod
         {
             public HeroRuntime Owner;
             public Entity Recipient;
+            public Actor Root;
+            public NativeModShieldAdapter Adapter;
         }
         private readonly ModShieldPools<Se_GenericShield_OneShot> _modShieldPools = new ModShieldPools<Se_GenericShield_OneShot>();
         private readonly Dictionary<ModShieldPoolKey, PoolRecipient> _modShieldRecipients = new Dictionary<ModShieldPoolKey, PoolRecipient>();
@@ -40,12 +42,19 @@ namespace SodRpg.Mod
             if (equipmentEpoch != currentEpoch) return false;
             if (_am == null || _am.serverActor == null) throw new InvalidOperationException("Root server actor is unavailable for MOD shielding.");
             var key = new ModShieldPoolKey(owner.Hero.GetInstanceID(), recipient.GetInstanceID(), kind);
+            if (!_modShieldRecipients.TryGetValue(key, out var registration))
+                registration = new PoolRecipient { Owner = owner, Recipient = recipient };
+            if (!ReferenceEquals(registration.Root, _am.serverActor))
+            {
+                registration.Root = _am.serverActor;
+                registration.Adapter = new NativeModShieldAdapter(registration.Root, recipient);
+            }
             _gimmickDamageDepth++;
             try
             {
-                bool awarded = _modShieldPools.Apply(key, new NativeModShieldAdapter(_am.serverActor, recipient), rawAmount,
+                bool awarded = _modShieldPools.Apply(key, registration.Adapter, rawAmount,
                     recipient.maxHealth, Time.time, duration, currentEpoch, newAwardCapRatio);
-                if (awarded) _modShieldRecipients[key] = new PoolRecipient { Owner = owner, Recipient = recipient };
+                if (awarded) _modShieldRecipients[key] = registration;
                 if (awarded) CreditShieldGranted(owner, recipient, rawAmount);
                 return awarded;
             }
@@ -88,12 +97,12 @@ namespace SodRpg.Mod
         private ShieldEffect _effect;
         internal NativeModShieldAdapter(Actor root, Entity recipient) { _root = root; _recipient = recipient; }
         public bool IsAlive(Se_GenericShield_OneShot handle) => handle != null && handle.isActive && _effect != null
-            && ReferenceEquals(handle.shield, _effect) && handle.shield.amount > 0f;
-        public float Remaining(Se_GenericShield_OneShot handle) => handle.shield.amount;
+            && ReferenceEquals(handle.shield, _effect) && _effect.amount > 0f;
+        public float Remaining(Se_GenericShield_OneShot handle) => IsAlive(handle) ? _effect.amount : 0f;
         public float ProcessRaw(Se_GenericShield_OneShot handle, float rawAmount) => handle.ProcessShieldAmount(rawAmount, _recipient);
-        public void SetProcessed(Se_GenericShield_OneShot handle, float amount) => handle.shield.amount = amount;
-        public void Refresh(Se_GenericShield_OneShot handle, float seconds) => handle.SetTimer(seconds);
-        public void Destroy(Se_GenericShield_OneShot handle) => handle.DestroyIfActive();
+        public void SetProcessed(Se_GenericShield_OneShot handle, float amount) { if (IsAlive(handle)) _effect.amount = amount; }
+        public void Refresh(Se_GenericShield_OneShot handle, float seconds) { if (IsAlive(handle)) handle.SetTimer(seconds); }
+        public void Destroy(Se_GenericShield_OneShot handle) { if (IsAlive(handle)) handle.DestroyIfActive(); }
         public Se_GenericShield_OneShot CreateRaw(float rawAmount, float seconds, float processedCap)
         {
             Se_GenericShield_OneShot created = null;
