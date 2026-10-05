@@ -7,8 +7,9 @@ using UnityEngine;
 namespace SodRpg.Mod
 {
     /// <summary>
-    /// 遺物のアイコン（MODフォルダの icons/&lt;土台id&gt;.png）。必要になったときに一度だけ読み込み、使い回す。
-    /// 見つからない・読めない土台は null を覚えておき、二度と探さない（毎フレームのファイルアクセスを避ける）。
+    /// 遺物のアイコン（MODフォルダの icons/&lt;土台id&gt;.png、固有品は icons/uniques/&lt;固有品id&gt;.png を優先）。
+    /// 必要になったときに一度だけ読み込み、使い回す。見つからない・読めないキーは null を覚えておき、
+    /// 二度と探さない（毎フレームのファイルアクセスを避ける）。
     /// </summary>
     internal static class RelicIcons
     {
@@ -28,7 +29,7 @@ namespace SodRpg.Mod
             try
             {
                 foreach (var f in Directory.GetFiles(_dir, "*.png")) For(Path.GetFileNameWithoutExtension(f));
-                foreach (string sub in new[] { "events", "stars" })
+                foreach (string sub in new[] { "events", "stars", "uniques" })
                 {
                     string dir = Path.Combine(_dir, sub);
                     if (Directory.Exists(dir))
@@ -47,7 +48,18 @@ namespace SodRpg.Mod
             _white = null;
         }
 
-        public static Texture2D For(Relic r) => r == null ? null : For(r.BaseId);
+        public static Texture2D For(Relic r) => r == null ? null : For(r.UniqueId, r.BaseId);
+
+        /// <summary>固有品専用のアイコン（uniques/&lt;固有品id&gt;）があればそれを、無ければ土台のアイコンを返す。</summary>
+        public static Texture2D For(string uniqueId, string baseId)
+        {
+            foreach (string key in RelicIconKeys.Preference(uniqueId, baseId))
+            {
+                var tex = For(key);
+                if (tex != null) return tex;
+            }
+            return null;
+        }
 
         public static Texture2D For(string baseId)
         {

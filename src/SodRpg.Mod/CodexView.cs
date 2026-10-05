@@ -183,7 +183,7 @@ namespace SodRpg.Mod
             GUI.color = new Color(0.06f, 0.06f, 0.1f, 0.95f);
             GUI.DrawTexture(r, Texture2D.whiteTexture);
             bool secret = !found && e.Category != CodexCategory.Bases;
-            Texture2D tex = !secret && e.IconBaseId != null ? RelicIcons.For(e.IconBaseId) : null;
+            Texture2D tex = !secret && e.IconBaseId != null ? RelicIcons.For(e.Unique != null ? e.Unique.Id : null, e.IconBaseId) : null;
             if (tex != null)
             {
                 GUI.color = found ? Color.white : new Color(1f, 1f, 1f, 0.35f);
