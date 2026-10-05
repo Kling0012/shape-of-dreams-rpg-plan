@@ -31,6 +31,7 @@ namespace SodRpg.Core.Game
         /// Restores rewards and reservations together, retaining the slot's Profile reference.
         /// Only a stable lobby baseline can distinguish lobby edits from later expedition rewards.
         /// Economic edits replay as one transaction; missing checkpoint inputs revert that transaction.
+        /// Retained random lobby edits keep the live RNG cursor, including any post-save expedition draws.
         /// </summary>
         public Profile Restore(Profile current, Profile lobbyBaseline = null, List<string> notes = null)
         {
@@ -136,6 +137,10 @@ namespace SodRpg.Core.Game
             restored.Stats.LegendariesFound = AddDelta(restored.Stats.LegendariesFound, baseline.Stats.LegendariesFound, current.Stats.LegendariesFound);
             if (ProfileCodec.CheckpointRetuneKey(baseline.RetuneOffer) != ProfileCodec.CheckpointRetuneKey(current.RetuneOffer))
                 restored.RetuneOffer = current.RetuneOffer?.Clone();
+            // Results and their RNG consumption must survive together. Do not add draw counts:
+            // the live cursor can also include expedition draws after this checkpoint.
+            // Non-random lobby edits and rejected transactions keep the checkpoint cursor.
+            if (current.RngState != baseline.RngState) restored.RngState = current.RngState;
             if (restored.RetuneOffer != null && restored.FindStash(restored.RetuneOffer.Uid) == null) restored.RetuneOffer = null;
             restored.StarterUids.RemoveAll(uid => restored.FindStash(uid) == null);
             return true;
