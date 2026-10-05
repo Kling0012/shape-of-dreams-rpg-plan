@@ -198,7 +198,12 @@ namespace SodRpg.Mod
     {
         private static void Postfix(EntityAbility __instance, int index)
         {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index);
+            if (!NetworkServer.active) return;
+            // This postfix runs inside native equip/unequip flows such as
+            // HeroSkill.OnLateStartServer's HandleLoadout; a MOD failure here would abort the
+            // remaining loadout slots. Log and keep the native flow alive (fail-soft).
+            try { HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index); }
+            catch (Exception ex) { Log.Error("Host: ability-remove attribution refresh: " + ex); }
         }
     }
 
@@ -207,9 +212,12 @@ namespace SodRpg.Mod
     {
         private static void Postfix(EntityAbility __instance, int index)
         {
-            if (NetworkServer.active) HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index);
+            if (!NetworkServer.active) return;
+            try { HostAuthority.NativeInstance?.RefreshNativeMemoryAttributionEquipment(__instance, index); }
+            catch (Exception ex) { Log.Error("Host: ability-set attribution refresh: " + ex); }
         }
     }
+
 
     internal sealed partial class HostAuthority
     {
