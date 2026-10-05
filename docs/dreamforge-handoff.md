@@ -2,9 +2,9 @@
 
 ## 鞄の容量超過（#200・現行仕様） / Satchel overflow (current behavior)
 
-鞄が満杯になると、従来どおり最低レア度・最低スコアの遺物を欠片に換える。`Rules.AddToSatchel` が `Content.SalvageShards` の量をローカルの `Profile` の `Materials.Shard` に即時加算する。未確保の鞄素材ではなく、ホストのドリームダスト払い出しや新しい取引・RPCを待たない。Infinityの無料供給上限と道標による素材化の抑止は変えない。保存は通常のまとめ保存に従い、容量超過ごとの保存は行わない。
+鞄が満杯になると、従来どおり最低レア度・最低スコアの遺物を欠片に換える。外す順序とInfinity予算の消費は各遺物の処理時に確定し、`Content.SalvageShards` の量・個数をローカルの `Profile` に集計する。そのtick内、または先に保存・確保の境界へ達した場合はその前に、`Materials.Shard` へまとめて加算する。未確保の鞄素材ではなく、ホストのドリームダスト払い出しや新しい取引・RPCを待たない。Infinityの無料供給上限と道標による素材化の抑止は変えない。通知は「鞄あふれ：欠片 +N（遺物 M 個）」にまとめ、素材化の抑止個数も示す。保存は通常のまとめ保存に従い、容量超過ごとの保存は行わない。
 
-When the satchel is full, the lowest-rarity, lowest-score relic is converted to shards as before. `Rules.AddToSatchel` immediately credits the `Content.SalvageShards` amount to `Materials.Shard` in the local `Profile`, not to unsecured satchel materials. New overflow does not grant host-paid Dream Dust or create trades/RPCs. Infinity free-supply limits and waypoint conversion suppression are unchanged. Persistence uses the usual batched saves, not a save per overflow.
+When the satchel is full, the lowest-rarity, lowest-score relic is converted to shards as before. Removal order and Infinity budget use are resolved per relic; the local `Profile` accumulates the `Content.SalvageShards` amount and relic count, then credits `Materials.Shard` within the tick or before an earlier save/secure boundary, not to unsecured satchel materials. New overflow does not grant host-paid Dream Dust or create trades/RPCs. Infinity free-supply limits and waypoint conversion suppression are unchanged. One summary reports "Satchel overflow: shards +N (M relics)" and any suppressed count. Persistence uses the usual batched saves, not a save per overflow.
 
 v2.3.1〜v2.4.0の保存に残る容量超過の `PendingTrades` は互換復旧だけを継続する。旧取引のreceiptを繰り返し照会し、旧ダスト取引そのものは再送しない。同じ台帳で未払い・未送信と確認された義務は既存の欠片回復処理を使い、支払い済みならダストも欠片も重複付与しない。確認不能な間は保留を残す。鍛冶・記録タブから手動で行う分解は変更しない。通信・保存形式の版も変更しない。
 

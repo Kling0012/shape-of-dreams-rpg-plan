@@ -13,22 +13,18 @@ namespace SodRpg.Core.Tests
             Loot.RollRelic(new Rng(seed), rarity, itemLevel);
 
         /// <summary>鞄に指定の遺物を1つ拾わせる（OnKill と同じ AddToSatchel 経路。追加は AddToSatchel 自身が行う）。</summary>
-        private static List<GameEvent> OverflowByPickup(Profile p, Relic dropped, TradeLedger trades = null, Waypoint? waypoint = null)
+        private static void OverflowByPickup(Profile p, Relic dropped, TradeLedger trades = null, Waypoint? waypoint = null)
         {
-            var ev = new List<GameEvent>();
             typeof(Rules).GetMethod("AddToSatchel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
-                .Invoke(null, new object[] { p, dropped, ev, trades, waypoint == Waypoint.EpicMirage });
-            return ev;
+                .Invoke(null, new object[] { p, dropped, trades, waypoint == Waypoint.EpicMirage });
         }
 
-        private static GameEvent OverflowEvent(List<GameEvent> ev) =>
-            Assert.Single(ev, e => e.SatchelOverflow != null);
 
         // ─────────────── あふれの選び方 ───────────────
 
         // 受け入れ条件：上限超過ではレア度の低い物から外れ、同じレア度の中ではスコアの低い物が先に外れる。
         [Fact]
-        public void Overflow_removes_lowest_rarity_then_lowest_score_and_immediately_banks_shards()
+        public void Overflow_removes_lowest_rarity_then_lowest_score_and_banks_shards_on_flush()
         {
             var p = Profile.CreateNew(123);
             Rules.BeginRun(p, "overflow-order");
@@ -44,19 +40,19 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 26).Select(i => Rolled(Rarity.Legendary, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Epic, 10, 99UL);
-            var ev = OverflowByPickup(p, dropped);
+            OverflowByPickup(p, dropped);
 
-            var overflow = OverflowEvent(ev);
-            // 外れたのはアンコモン（コモン2個より上だが、26個の伝説より下）ではなく、最も低レア度のスコア最小。
-            Assert.Equal(Rarity.Common, overflow.SatchelOverflow.Rarity);
-            Assert.Equal(Math.Min(commonLow.Score, commonHigh.Score) == commonLow.Score ? commonLow.Uid : commonHigh.Uid,
-                overflow.SatchelOverflow.Uid);
+            Assert.Equal(0, p.Material(Materials.Shard));
+            var removed = commonLow.Score <= commonHigh.Score ? commonLow : commonHigh;
+            Assert.DoesNotContain(removed, p.Run.Satchel);
+            var overflow = Rules.FlushSatchelOverflow(p);
+            Assert.NotNull(overflow);
+            Assert.Equal(1, overflow.SatchelOverflowCount);
             Assert.Equal(Content.SalvageShards(Rarity.Common), overflow.SatchelOverflowShards);
             Assert.Equal(Content.SalvageShards(Rarity.Common), p.Material(Materials.Shard));
             Assert.Equal(0, p.Run.SatchelShards);
-            // 鞄は上限内に戻り、外された物はもう入っていない。
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
-            Assert.DoesNotContain(overflow.SatchelOverflow, p.Run.Satchel);
+            Assert.Null(Rules.FlushSatchelOverflow(p));
             Assert.Contains(dropped, p.Run.Satchel);
         }
 
@@ -74,10 +70,9 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 29).Select(i => Rolled(Rarity.Uncommon, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Uncommon, 50, 98UL);
-            var ev = OverflowByPickup(p, dropped, trades);
+            OverflowByPickup(p, dropped, trades);
 
-            var overflow = OverflowEvent(ev);
-            Assert.NotEqual(reserved.Uid, overflow.SatchelOverflow.Uid);
+            Assert.Equal(1, Rules.FlushSatchelOverflow(p).SatchelOverflowCount);
             Assert.Contains(reserved, p.Run.Satchel);
             Assert.True(p.Run.Satchel.Count <= Workshop.SatchelCapacity(p));
         }
@@ -99,9 +94,9 @@ namespace SodRpg.Core.Tests
             var dropped = Rolled(Rarity.Common, 1, 999UL);
             trades.BeginSalvage(dropped, now: 0.0); // 新しく拾う物も予約しておけば、容量より予約の保護が優先される
             Assert.True(trades.IsReserved(dropped.Uid));
-            var ev = OverflowByPickup(p, dropped, trades);
+            OverflowByPickup(p, dropped, trades);
 
-            Assert.DoesNotContain(ev, e => e.SatchelOverflow != null);
+            Assert.Null(Rules.FlushSatchelOverflow(p));
             Assert.Equal(Workshop.SatchelCapacity(p) + 1, p.Run.Satchel.Count);
             Assert.Contains(dropped, p.Run.Satchel);
         }
@@ -117,9 +112,11 @@ namespace SodRpg.Core.Tests
             p.Run.Satchel.AddRange(Enumerable.Range(10, 30).Select(i => Rolled(Rarity.Uncommon, 1, (ulong)i)));
 
             var dropped = Rolled(Rarity.Common, 1, 777UL);
-            var ev = OverflowByPickup(p, dropped, waypoint: Waypoint.EpicMirage);
+            OverflowByPickup(p, dropped, waypoint: Waypoint.EpicMirage);
 
-            Assert.DoesNotContain(ev, e => e.SatchelOverflow != null);
+            var summary = Rules.FlushSatchelOverflow(p);
+            Assert.Equal(1, summary.SatchelOverflowDiscarded);
+            Assert.Equal(0, summary.SatchelOverflowShards);
             Assert.Equal(0, p.Run.SatchelShards);
             Assert.Equal(0, p.Material(Materials.Shard));
             Assert.Empty(p.PendingTrades);
@@ -382,7 +379,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void A_hundred_overflows_bank_the_exact_shards_without_creating_trades()
+        public void Serialization_settles_pending_overflow_without_consuming_or_double_granting_the_summary()
         {
             var p = Profile.CreateNew(130);
             Rules.BeginRun(p, "run-batch", heroKey: "Hero_Lacerta");
@@ -394,17 +391,28 @@ namespace SodRpg.Core.Tests
             int expected = 0;
             for (int i = 0; i < 100; i++)
             {
-                var overflow = OverflowEvent(OverflowByPickup(p,
-                    Rolled((Rarity)(i % 5), 10, (ulong)(2000 + i)), client));
-                expected += Content.SalvageShards(overflow.SatchelOverflow.Rarity);
-                Assert.Equal(before + expected, p.Material(Materials.Shard));
+                var dropped = Rolled((Rarity)(i % 5), 10, (ulong)(2000 + i));
+                var removed = p.Run.Satchel.Concat(new[] { dropped })
+                    .OrderBy(r => r.Rarity).ThenBy(r => r.Score).First();
+                expected += Content.SalvageShards(removed.Rarity);
+                OverflowByPickup(p, dropped, client);
+                Assert.Equal(before, p.Material(Materials.Shard));
             }
             Assert.Equal(capacity, p.Run.Satchel.Count);
             Assert.Equal(0, p.Run.SatchelShards);
             Assert.Empty(client.Snapshot());
+            var clone = p.Clone();
+            Assert.Equal(expected, Rules.FlushSatchelOverflow(clone).SatchelOverflowShards);
+            Assert.Equal(before + expected, clone.Material(Materials.Shard));
+            Assert.Equal(before, p.Material(Materials.Shard));
             var restored = ProfileCodec.Read(ProfileCodec.Write(p), new List<string>());
             Assert.Equal(before + expected, restored.Material(Materials.Shard));
             Assert.Empty(restored.PendingTrades);
+            var summary = Rules.FlushSatchelOverflow(p);
+            Assert.Equal(100, summary.SatchelOverflowCount);
+            Assert.Equal(expected, summary.SatchelOverflowShards);
+            Assert.Equal(before + expected, p.Material(Materials.Shard));
+            Assert.Null(Rules.FlushSatchelOverflow(p));
         }
 
         [Theory]
@@ -421,7 +429,9 @@ namespace SodRpg.Core.Tests
                 p.Run.Satchel.Add(Rolled(Rarity.Legendary, 20, (ulong)(3000 + i)));
             var dropped = Rolled(Rarity.Common, 1, 4000);
             dropped.InfinityFreeSupply = true;
-            var overflow = OverflowEvent(OverflowByPickup(p, dropped));
+            OverflowByPickup(p, dropped);
+            Assert.Equal(0, p.Material(Materials.Shard));
+            var overflow = Rules.FlushSatchelOverflow(p);
             Assert.Equal(expected, overflow.SatchelOverflowShards);
             Assert.Equal(expected, p.Material(Materials.Shard));
             Assert.Equal((double)(credit - expected), p.InfinityRewardBudget.Shards);

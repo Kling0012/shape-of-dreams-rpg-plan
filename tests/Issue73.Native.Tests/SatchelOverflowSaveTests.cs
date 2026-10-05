@@ -43,10 +43,12 @@ namespace Issue73.Native.Tests
                 heat: profile.Run.Heat, waypoint: Waypoint.None);
 
             // 同じ乱数・同じ鞄で、この撃破が生むあふれを先に確かめる（1つの撃破から複数あふれ）。
-            var probeEvents = Rules.OnKill(profile.Clone(), kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
+            var probe = profile.Clone();
+            var probeEvents = Rules.OnKill(probe, kill.Tier, kill.Level, kill.Nightmare, kill.HeroKey,
                 variantId: kill.VariantId, roomIndex: kill.RoomIndex, heat: kill.Heat, waypoint: kill.Waypoint);
-            var overflows = probeEvents.Where(e => e.SatchelOverflow != null).ToList();
-            Assert.True(overflows.Count >= 2);
+            int overflowCount = probeEvents.Count(e => e.Kind == EventKind.Drop);
+            Assert.True(overflowCount >= 2);
+            int expectedShards = overflowCount * Content.SalvageShards(Rarity.Common);
             int materialsBefore = profile.Material(Materials.Shard);
 
             Progress(session).Rewards.Add(kill);
@@ -60,11 +62,13 @@ namespace Issue73.Native.Tests
             Assert.Empty(((TradeLedger)Get(session, "_trades")).Snapshot());
             Assert.Empty(actor.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
             Assert.Equal(0, Get(session, "_saveCount"));
-            Assert.Equal(materialsBefore + overflows.Sum(e => Content.SalvageShards(e.SatchelOverflow.Rarity)),
-                profile.Material(Materials.Shard));
+            Assert.Equal(materialsBefore, profile.Material(Materials.Shard));
             Assert.Equal(0, DewPlayer.local.dreamDust);
             session.SaveNow();
             session.FlushSaves();
+            Assert.Equal(materialsBefore + expectedShards, profile.Material(Materials.Shard));
+            Call(session, "TickSatchelOverflow");
+            Assert.Equal(materialsBefore + expectedShards, profile.Material(Materials.Shard));
             var reloaded = new ProfileStore(new RealFileSystem(), storePath, 146).Load();
             Assert.Empty(reloaded.PendingTrades);
             Assert.Equal(profile.Material(Materials.Shard), reloaded.Material(Materials.Shard));

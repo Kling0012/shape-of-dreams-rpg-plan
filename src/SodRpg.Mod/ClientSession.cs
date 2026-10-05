@@ -201,8 +201,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
-                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "send build", "hello", "periodic save", "kill sync" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickInfinitySettings, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TickBossDisplay, TrackRun, TickKillClassification, TickRunChoices, TickInfinityRewards, TickCurseResync, TickSalvageExpiry, TickSatchelOverflow, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
+                _tickStepNames = new[] { "profile slots", "wire", "infinity settings", "gem slot conflict", "variant visuals", "monster cues", "boss effects", "track run", "kill classification", "run choices", "infinity rewards", "curse resync", "salvage expiry", "satchel overflow", "send build", "hello", "periodic save", "kill sync" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -1228,6 +1228,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
             _nextBuildSend = now + (HostConfirmed ? 30f : 5f);
         }
 
+        /// <summary>One local grant and one notice/log per tick; save barriers settle credit without consuming this notice.</summary>
+        internal void TickSatchelOverflow()
+        {
+            var summary = Rules.FlushSatchelOverflow(Profile);
+            if (summary != null) Emit(summary);
+        }
+
         /// <summary>旧あふれ取引の回復結果などを定期保存へまとめる。</summary>
         private void DeferSave(float seconds = 5f)
         {
@@ -1252,6 +1259,7 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// </summary>
         private bool SaveNow(bool confirm)
         {
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());

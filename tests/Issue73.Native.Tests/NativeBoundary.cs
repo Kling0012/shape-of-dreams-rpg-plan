@@ -221,6 +221,8 @@ namespace SodRpg.Mod
     internal static class Log
     {
         public static Action<string> ErrorSink;
+        public static Action<string> InfoSink;
+        public static void Info(string message) => InfoSink?.Invoke(message);
         public static void Error(string message)
         {
             if (ErrorSink != null) ErrorSink(message);
@@ -400,7 +402,10 @@ namespace SodRpg.Mod
         private string _curseSyncedKey = "";
         private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
         public readonly List<GameEvent> Events = new List<GameEvent>();
-        public ClientSession() { _notify = Events.Add; }
+        public ClientSession(Action<GameEvent> notify = null)
+        {
+            _notify = e => { Events.Add(e); notify?.Invoke(e); };
+        }
         public event Action ProfileChanged;
         private int _lastHuntLevel = -1;
         private readonly RoomCounter _rooms = new RoomCounter();

@@ -33,9 +33,10 @@ namespace SodRpg.Core.Game
         public string Text { get; }
         public Rarity? Rarity { get; }
         public Relic Relic { get; internal set; }
-        /// <summary>Removed overflow relic, already converted into profile shards; null for ordinary notifications.</summary>
-        public Relic SatchelOverflow { get; internal set; }
+        /// <summary>Tick summary only; no per-relic overflow event is allocated.</summary>
+        public int SatchelOverflowCount { get; internal set; }
         public int SatchelOverflowShards { get; internal set; }
+        public int SatchelOverflowDiscarded { get; internal set; }
         /// <summary>Kind が Hint のときのヒント。</summary>
         public Hint? HintId { get; set; }
         /// <summary>単独の結果に付随する依頼報酬・レベルアップの通知。</summary>
@@ -255,7 +256,7 @@ namespace SodRpg.Core.Game
                 ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                     $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を拾いました（まだ持ち帰っていません）",
                     $"Found {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity) { Relic = relic });
-                AddToSatchel(p, relic, ev, trades, Waypoints.Sum(killWaypoint).ShardMultiplier == 0);
+                AddToSatchel(p, relic, trades, Waypoints.Sum(killWaypoint).ShardMultiplier == 0);
                 AddHint(p, Hint.FirstDrop, ev);
                 AdvanceRelicBounties(p, relic, ev);
             }
@@ -283,38 +284,59 @@ namespace SodRpg.Core.Game
             return ev;
         }
 
-        private static void AddToSatchel(Profile p, Relic relic, List<GameEvent> ev, TradeLedger trades = null, bool suppressShards = false)
+        private static void AddToSatchel(Profile p, Relic relic, TradeLedger trades = null, bool suppressShards = false)
         {
             var run = p.Run;
             run.Satchel.Add(relic);
             int capacity = Workshop.SatchelCapacity(p);
             while (run.Satchel.Count > capacity)
             {
-                Relic worst = null;
-                foreach (var candidate in run.Satchel)
+                // Stable O(n) partial selection: never sort, allocate, or re-scan for Remove.
+                int worstIndex = -1, worstScore = 0;
+                Rarity worstRarity = Rarity.Legendary;
+                for (int i = 0; i < run.Satchel.Count; i++)
                 {
+                    var candidate = run.Satchel[i];
                     if (trades != null && trades.IsReserved(candidate.Uid)) continue;
-                    if (worst == null || candidate.Rarity < worst.Rarity ||
-                        (candidate.Rarity == worst.Rarity && candidate.Score < worst.Score)) worst = candidate;
+                    if (worstIndex >= 0 && candidate.Rarity > worstRarity) continue;
+                    int score = candidate.Score;
+                    if (worstIndex < 0 || candidate.Rarity < worstRarity || score < worstScore)
+                    {
+                        worstIndex = i;
+                        worstRarity = candidate.Rarity;
+                        worstScore = score;
+                    }
                 }
-                if (worst == null) break; // Reservations take precedence over capacity.
-                run.Satchel.Remove(worst);
-                if (suppressShards)
-                {
-                    ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                        $"持ち歩ける数を超えたため、「{worst.DisplayName}」を手放しました。道標の効果で報酬は得られません。",
-                        $"Satchel full: \"{worst.DisplayName}\" was discarded. The waypoint prevents rewards.")));
-                    continue;
-                }
-                int shards = Content.SalvageShards(worst.Rarity);
-                if (worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
-                // Removal and local credit belong to the same profile snapshot, including continue saves.
-                p.AddMaterial(Materials.Shard, shards);
-                ev.Add(new GameEvent(EventKind.Info, Loc.T(
-                    $"鞄があふれたため、「{worst.DisplayName}」を欠片+{shards}に換えました。",
-                    $"Satchel overflow: \"{worst.DisplayName}\" was converted into {shards} shards."), worst.Rarity)
-                { SatchelOverflow = worst, SatchelOverflowShards = shards });
+                if (worstIndex < 0) break; // Reservations take precedence over capacity.
+                var worst = run.Satchel[worstIndex];
+                run.Satchel.RemoveAt(worstIndex);
+                int shards = suppressShards ? 0 : Content.SalvageShards(worst.Rarity);
+                if (!suppressShards && worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
+                p.QueueSatchelOverflow(shards, suppressShards);
             }
+        }
+
+        /// <summary>Credits the local profile once per tick, or before a snapshot/secure boundary, without notifying.</summary>
+        public static void SettleSatchelOverflow(Profile p) => p?.SettleSatchelOverflow();
+
+        /// <summary>Consumes the tick totals exactly once. Saving may settle credit early, but never consumes the notice.</summary>
+        public static GameEvent FlushSatchelOverflow(Profile p)
+        {
+            if (p == null || p.SatchelOverflowCount == 0) return null;
+            p.SettleSatchelOverflow();
+            int count = p.SatchelOverflowCount, shards = p.SatchelOverflowShards, discarded = p.SatchelOverflowDiscarded;
+            p.SatchelOverflowCount = p.SatchelOverflowShards = p.SatchelOverflowDiscarded = 0;
+            string text = Loc.Japanese
+                ? $"鞄あふれ：欠片 +{shards}（遺物 {count} 個）"
+                : $"Satchel overflow: shards +{shards} ({count} relics)";
+            if (discarded != 0)
+                text += Loc.Japanese
+                    ? $"。道標の報酬停止で {discarded} 個は対価なし。"
+                    : $". The waypoint suppressed rewards for {discarded} relics.";
+            return new GameEvent(EventKind.Info, text)
+            {
+                SatchelOverflowCount = count, SatchelOverflowShards = shards, SatchelOverflowDiscarded = discarded,
+            };
         }
 
         /// <summary>Legacy pending dust trades only: call after consuming a definitive successful result.</summary>
@@ -437,6 +459,7 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            p.SettleSatchelOverflow();
             if (awardStarXp && !run.StarSecureRewarded)
                 AddStarXp(p, run.HeroKey, StarProgression.SecureXp, ev);
             run.StarSecureRewarded = true;
@@ -611,7 +634,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                 $"遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）",
                 $"Recovered lost relic \"{best.DisplayName}\" (unsecured)"), best.Rarity));
-            AddToSatchel(p, best, ev, trades);
+            AddToSatchel(p, best, trades);
             return ev;
         }
 
@@ -666,6 +689,7 @@ namespace SodRpg.Core.Game
             var ev = new List<GameEvent>();
             var run = p.Run;
             if (run == null) return ev;
+            p.SettleSatchelOverflow();
             if (reservedUids != null)
             {
                 var returnTarget = victory ? SalvageReturnTarget.Stash : SalvageReturnTarget.LostAndFound;
@@ -796,7 +820,7 @@ namespace SodRpg.Core.Game
                     p.LostAndFound.Remove(best);
                     ev.Add(new GameEvent(EventKind.Recovered, Loc.T($"迷い人の灯で、遺失物「{best.DisplayName}」を取り戻しました（まだ持ち帰っていません）。",
                         $"The lantern recovered the lost relic \"{best.DisplayName}\" (unsecured)."), best.Rarity));
-                    AddToSatchel(p, best, ev, trades);
+                    AddToSatchel(p, best, trades);
                     break;
                 }
                 case DreamEvent.ForgeShrine:
@@ -916,7 +940,7 @@ namespace SodRpg.Core.Game
                         ev.Add(new GameEvent(EventKind.Recovered, Loc.T(
                             $"霊廟から「{relic.PlainName}」を回収しました。強化は0になり、まだ持ち帰っていません。",
                             $"Recovered \"{relic.PlainName}\" from the mausoleum with enhancement reset to 0 (unsecured)."), relic.Rarity));
-                        AddToSatchel(p, relic, ev, trades);
+                        AddToSatchel(p, relic, trades);
                     }
                     break;
                 }
@@ -1050,7 +1074,7 @@ namespace SodRpg.Core.Game
             if (run != null)
             {
                 run.RelicsFound++;
-                AddToSatchel(p, relic, ev, trades);
+                AddToSatchel(p, relic, trades);
                 AdvanceRelicBounties(p, relic, ev);
             }
             else
@@ -1069,7 +1093,7 @@ namespace SodRpg.Core.Game
             ev.Add(new GameEvent(EventKind.Drop, Loc.T(
                 $"{Content.RarityName(relic.Rarity)}「{relic.DisplayName}」を手に入れました（まだ持ち帰っていません）",
                 $"Gained {Content.RarityName(relic.Rarity)} \"{relic.DisplayName}\" (unsecured)"), relic.Rarity));
-            AddToSatchel(p, relic, ev, trades);
+            AddToSatchel(p, relic, trades);
             AdvanceRelicBounties(p, relic, ev);
         }
 

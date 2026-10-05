@@ -133,6 +133,7 @@ namespace SodRpg.Mod
 
         private void FlushOldProfileWriter()
         {
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             if (_writer != null && !_writer.Flush())
                 throw new IOException(Loc.T("保存が終わっていないため、プロフィールを切り替えられません。", "The profile cannot switch until its saves finish."));
@@ -318,6 +319,7 @@ namespace SodRpg.Mod
             foreach (var r in _s.Profile.Stash) _seenUids.Add(r.Uid);
             _seenInit = true;
             _satchelTop.Clear();
+            _satchelTopRun = null;
             _satchelTopCount = -1;
             _sortedUntil = _satchelTopUntil = _transmuteUntil = _openFeatsUntil = 0;
             _openFeats.Clear();

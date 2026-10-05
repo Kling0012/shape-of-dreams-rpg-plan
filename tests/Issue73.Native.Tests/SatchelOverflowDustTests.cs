@@ -37,34 +37,71 @@ namespace Issue73.Native.Tests
             NetworkClient.active = false;
             NetworkedManagerBase<GameManager>.softInstance = null;
             Time.unscaledTime = 0;
+            Log.InfoSink = null;
         }
 
-        [Fact]
-        public void A_hundred_guest_overflows_bank_shards_without_trade_sends_or_saves()
+        [Theory]
+        [InlineData(100)]
+        [InlineData(500)]
+        public void Guest_overflows_match_stable_sequential_selection_and_bank_once_per_tick(int count)
         {
             var profile = Profile.CreateNew(176);
             Rules.BeginRun(profile, RunId);
-            for (int i = 0; i < Workshop.SatchelCapacity(profile); i++)
-                profile.Run.Satchel.Add(Loot.RollRelic(new Rng((ulong)i + 1), Rarity.Legendary, 20));
             var transport = new Actor();
-            var session = Session(profile, transport, 0, "local.json");
+            DreamforgeUi ui = null;
+            var session = Session(profile, transport, 0, "local.json", e => ui.Notify(e));
+            ui = new DreamforgeUi(session);
+            var logs = new List<string>();
+            Log.InfoSink = logs.Add;
+            var ledger = Ledger(session);
+            for (int i = 0; i < Workshop.SatchelCapacity(profile); i++)
+            {
+                var relic = Loot.RollRelic(new Rng((ulong)i + 1), (Rarity)(i % 5), 1 + i % 20);
+                profile.Run.Satchel.Add(relic);
+                if (i % 7 == 0) ledger.BeginSalvage(relic, now: 0);
+            }
+            var expectedSatchel = profile.Run.Satchel.ToList();
+            var cachedBefore = ui.CachedSatchel().Select(r => r.Uid).ToList();
+            ui.HudDeadline = 100;
             var pickup = typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic);
             int before = profile.Material(Materials.Shard);
             int expected = 0;
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < count; i++)
             {
-                var events = new List<GameEvent>();
-                pickup.Invoke(null, new object[] { profile,
-                    Loot.RollRelic(new Rng((ulong)i + 1000), (Rarity)(i % 5), 1),
-                    events, Ledger(session), false });
-                var overflow = Assert.Single(events, e => e.SatchelOverflow != null);
-                expected += Content.SalvageShards(overflow.SatchelOverflow.Rarity);
-                foreach (var e in events) session.Emit(e);
-                Assert.Equal(before + expected, profile.Material(Materials.Shard));
+                var dropped = Loot.RollRelic(new Rng((ulong)i + 1000), (Rarity)(i % 5), 1 + i % 30);
+                expectedSatchel.Add(dropped);
+                var removed = expectedSatchel.Where(r => !ledger.IsReserved(r.Uid))
+                    .OrderBy(r => r.Rarity).ThenBy(r => r.Score).First();
+                expectedSatchel.Remove(removed);
+                expected += Content.SalvageShards(removed.Rarity);
+                pickup.Invoke(null, new object[] { profile, dropped, ledger, false });
+                Assert.Equal(before, profile.Material(Materials.Shard));
+                Assert.Equal(expectedSatchel.Select(r => r.Uid), profile.Run.Satchel.Select(r => r.Uid));
             }
             Assert.Equal(0, Get(session, "_saveCount"));
             Assert.Empty(transport.Sent);
-            Assert.Empty(Ledger(session).Snapshot());
+            Assert.Empty(logs);
+            Assert.Empty(session.Events);
+            Call(session, "TickSatchelOverflow");
+            Assert.Equal(before + expected, profile.Material(Materials.Shard));
+            var summary = Assert.Single(session.Events);
+            Assert.Equal(count, summary.SatchelOverflowCount);
+            Assert.Equal(expected, summary.SatchelOverflowShards);
+            Assert.Single(logs);
+            Assert.Equal(1, ui.ToastCount);
+            Assert.Equal(0, ui.HudDeadline);
+            Assert.NotEmpty(cachedBefore.Except(profile.Run.Satchel.Select(r => r.Uid)));
+            Assert.Equal(profile.Run.Satchel.Select(r => r.Uid).OrderBy(uid => uid),
+                ui.CachedSatchel().Select(r => r.Uid).OrderBy(uid => uid));
+            Assert.Equal(profile.Run.Satchel.Select(r => r.Score).OrderByDescending(score => score),
+                ui.CachedSatchel().Select(r => r.Score));
+            Call(session, "TickSatchelOverflow");
+            Assert.Equal(before + expected, profile.Material(Materials.Shard));
+            Assert.Single(session.Events);
+            Assert.Single(logs);
+            Assert.Equal(1, ui.ToastCount);
+            Assert.Equal(0, Get(session, "_saveCount"));
+            Assert.Empty(transport.Sent);
             Assert.Empty(profile.PendingTrades);
             Assert.Equal(0, DewPlayer.local.dreamDust);
             Assert.Equal(0, profile.Run.SatchelShards);
@@ -72,7 +109,7 @@ namespace Issue73.Native.Tests
             session.FlushSaves();
             var restored = new ProfileStore(new RealFileSystem(), Path.Combine(_directory, "local.json"), 176).Load();
             Assert.Equal(before + expected, restored.Material(Materials.Shard));
-            Assert.Empty(restored.PendingTrades);
+            Assert.DoesNotContain(restored.PendingTrades, trade => trade.Kind == TradeKind.SatchelOverflowDust);
         }
 
         [Theory]
@@ -145,9 +182,9 @@ namespace Issue73.Native.Tests
             return ProfileCodec.Read(ProfileCodec.Write(profile), new List<string>());
         }
 
-        private ClientSession Session(Profile profile, Actor transport, long ledgerId, string fileName)
+        private ClientSession Session(Profile profile, Actor transport, long ledgerId, string fileName, Action<GameEvent> notify = null)
         {
-            var session = new ClientSession { Profile = profile, ActiveRunId = RunId };
+            var session = new ClientSession(notify) { Profile = profile, ActiveRunId = RunId };
             Set(session, "_continueHandshakeReady", true);
             Set(session, "_clientRpcOn", transport);
             Set(session, "_hostLedgerId", ledgerId);

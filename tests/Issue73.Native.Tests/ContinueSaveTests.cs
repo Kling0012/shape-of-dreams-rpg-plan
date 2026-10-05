@@ -495,13 +495,10 @@ namespace Issue73.Native.Tests
                 Assert.Equal(0, owner.dreamDust);
                 // A second overflow after the checkpoint must disappear on rollback, then pay once when replayed.
                 var later = Loot.RollRelic(new Rng(180), Rarity.Common, 1);
-                var laterEvents = new List<GameEvent>();
                 typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic)
-                    .Invoke(null, new object[] { profile, later, laterEvents, null, false });
-                var laterOverflow = Assert.Single(laterEvents, e => e.SatchelOverflow != null);
-                int laterShards = Content.SalvageShards(laterOverflow.SatchelOverflow.Rarity);
-                foreach (var e in laterEvents) session.Emit(e);
-                Assert.Equal(checkpointShards + laterShards, profile.Material(Materials.Shard));
+                    .Invoke(null, new object[] { profile, later, null, false });
+                int laterShards = Content.SalvageShards(later.Rarity);
+                Assert.Equal(checkpointShards, profile.Material(Materials.Shard));
                 session.SaveNow();
                 session.FlushSaves();
                 // 別の参加者セッションがディスクから読み、保存障壁の地点へ戻る。
@@ -509,6 +506,10 @@ namespace Issue73.Native.Tests
                 resumed.Profile = store.Load();
                 Set(resumed, "_store", store);
                 var queryTransport = new Actor();
+                // A reward still pending in memory must also disappear with the checkpoint restore.
+                typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic)
+                    .Invoke(null, new object[] { resumed.Profile,
+                        Loot.RollRelic(new Rng(181), Rarity.Common, 1), null, false });
                 Set(resumed, "_clientRpcOn", queryTransport);
                 Call(resumed, "ReceiveContinueHandshake", Hello("run", "checkpoint-178", "resume-178"));
                 Assert.Empty(((TradeLedger)Get(resumed, "_trades")).Snapshot());
@@ -516,10 +517,12 @@ namespace Issue73.Native.Tests
                 Assert.Empty(queryTransport.Sent.Select(s => s.Message).OfType<DreamforgeTradeMsg>());
                 Assert.Equal(checkpointShards, resumed.Profile.Material(Materials.Shard));
                 Assert.Equal(7, resumed.Profile.Run.SatchelShards);
-                laterEvents.Clear();
+                Call(resumed, "TickSatchelOverflow");
+                Assert.Equal(checkpointShards, resumed.Profile.Material(Materials.Shard));
                 typeof(Rules).GetMethod("AddToSatchel", BindingFlags.Static | BindingFlags.NonPublic)
-                    .Invoke(null, new object[] { resumed.Profile, later.Clone(), laterEvents, null, false });
-                Assert.Single(laterEvents, e => e.SatchelOverflow != null);
+                    .Invoke(null, new object[] { resumed.Profile, later.Clone(), null, false });
+                Assert.Equal(checkpointShards, resumed.Profile.Material(Materials.Shard));
+                Call(resumed, "TickSatchelOverflow");
                 Assert.Equal(checkpointShards + laterShards, resumed.Profile.Material(Materials.Shard));
                 Call(resumed, "ReceiveContinueHandshake", Hello("run", "checkpoint-178", "resume-178"));
                 Assert.Equal(checkpointShards + laterShards, resumed.Profile.Material(Materials.Shard));

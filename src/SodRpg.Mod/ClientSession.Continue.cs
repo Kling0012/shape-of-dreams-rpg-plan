@@ -207,6 +207,7 @@ private bool ContinueReady => !_nativeContinueRestoring && (LobbyReturnPending |
         private void PrepareContinueSnapshot()
         {
             SyncInfinityContinueSnapshot();
+            Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             Profile.PendingTrades.Clear();
             Profile.PendingTrades.AddRange(_trades.Snapshot());

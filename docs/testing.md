@@ -106,16 +106,51 @@ python tools/test_changed.py --all
 
 `tests/Issue73.Native.Tests` の現行回帰ケース：
 
-- `A_hundred_guest_overflows_bank_shards_without_trade_sends_or_saves`：参加者の容量超過100回をローカル欠片として加算し、取引送信・容量超過による保存を行わず、明示した通常保存で永続化する。
+- `Guest_overflows_match_stable_sequential_selection_and_bank_once_per_tick(int count)`：参加者の容量超過100／500回を、予約保護・レア度・スコア・同点時の順序を含む独立した逐次選択と比較。tick前は未加算、tick後は正しい合計で、本番 `Notify` を抽出して通知・ログ・トースト各1回、同数の鞄差し替え後の表示更新、空tickで追加なし、保存／送信なしを確認する。
 - `A_normal_save_keeps_settled_kills_and_local_overflow_shards_without_rejoin_double_grants`：通常保存から再参加しても、精算済み撃破と容量超過の欠片を重複付与しない。
 - `Local_overflow_shards_at_continue_checkpoint_restore_without_double_grants(bool infinity)`：通常／Infinityの参加者でチェックポイント時点の欠片を復元し、その後の容量超過を巻き戻して再実行しても1回分だけ付与する。
 - `Persisted_legacy_overflows_query_and_recover_exactly_once(bool alreadyPaid)`：保存済みの旧義務を照会し、未払いなら既存の欠片回復を1回、支払い済みなら重複付与なしで解決する。
 
-Coreの回帰ケースは最低レア度・最低スコア順、即時 `Materials.Shard` 加算、連続容量超過で新規取引がないこと、Infinity無料供給上限を扱う。手動分解の既存テストは変更しない。ネイティブハーネスはAPIダブルを使い、実ゲーム描画・実通信・実機の異常終了は対象外。
+Coreの回帰ケースは最低レア度・最低スコア順、tick／保存境界での `Materials.Shard` 一括加算、cloneの独立性、保存で通知を消費しないこと、Infinity無料供給上限を扱う。Continueでは保存後の確定済み／未加算の集約分を両方戻す。手動分解の既存テストは変更しない。ネイティブハーネスはAPIダブルを使い、実ゲーム描画・実通信・実機の異常終了は対象外。
+
+### #200 追加調査：あふれ1個ごとの費用
+
+100個が同じtickにあふれた正常系を比較する。旧ダスト経路は #167 型の v2.4.0 ソース、直前は `0730e01`、今回が集約後。保存・確保境界がtickより先に来ると欠片を先に確定するが、通知の合計は消費せず、そのtickに1回だけ出す。
+
+| 処理 | 旧ダスト経路 | 直前の欠片化 | 今回 | 根拠 |
+|---|---:|---:|---:|---|
+| ホスト取引受付／台帳記録 | 各100回 | 0 | 0 | `HostAuthority.Trades.cs:94-130`、`TradeAuthority.cs:318-352`。残した処理は旧未確定取引専用 |
+| 取引送信／返信 | 各100回 | 0 | 0 | 旧 `ClientSession.SatchelDust.cs:80-87`（削除済み）、`HostAuthority.Trades.cs:127-130` |
+| 本体ダスト付与／獲得通知RPC呼び出し | 各100回 | 0 | 0 | `HostAuthority.Trades.cs:34-35` と `Dew.Core.dll` の `DewPlayer.EarnDreamDust`：`IL_001c AddDreamDust`、`IL_0023 RpcInvokeOnEarnDreamDust` |
+| MODの明示的なホスト保存 | 0 | 0 | 0 | `OnTrade` は返信までで保存呼び出しなし。台帳のシリアライズは中断保存時の `HostAuthority.Continue.cs:7-10` |
+| あふれ準備のクライアント確認保存 | バッチ1回 | 0 | 0 | 旧 `ClientSession.SatchelDust.cs:80-87`。通常・中断の保存は別途維持 |
+| ローカル欠片の素材加算 | 通常成功時0 | 100回 | 1回 | `Profile.cs:342-359`、`ClientSession.cs:1231-1236` |
+| あふれ通知／ログ／Toast割り当て | 各100回 | 各100回 | 各1回 | `Rules.cs:323-339`、`DreamforgeUi.cs:138-157`、`Log.cs:9` |
+| あふれによるHUD更新要求 | 100回 | 100回 | 1回 | `DreamforgeUi.cs:147`。以前も要求は代入だけで、実再構築100回ではない |
+| あふれ選択 | 100回の線形走査、追加でRemoveの探索 | 同左 | 100回の安定O(n)部分選択＋RemoveAt | `Rules.cs:287-315`。拾ったときだけ判定し、全件ソートなし。取り除きとInfinity上限消費の時点は維持 |
+| 記録タブの鞄ソート／LINQ一覧割り当て | OnGUIの描画ごと | 同左 | 同じ表示キャッシュを再利用 | `DreamforgeUi.cs:1416-1433,2901`。通知で1回失効、同数の差し替えも反映。0.3秒更新の既存規約は維持 |
+| 素材加算による保管庫ソートのキー変化 | ダストではなし | 100回の素材変化 | 0 | `DreamforgeUi.cs:1287-1318`。素材を順序キーから外した。実ソート回数は描画タイミング依存 |
+| あふれによるProfileChanged／星図・装備再計算 | 0 | 0 | 0 | `ClientSession.cs:605-612,1193-1228`、`ProfileSlotView.cs:89,197`、`ClientSession.Continue.cs:292` |
+
+追加の否定確認：`Relic.Score` は `Relic.cs:161-167` の整数算術でLINQ／割り当てなし。図鑑への登録は拾得の `Rules.cs:254` の集合追加で、あふれ専用の重い再構築はない。図鑑の表示更新は `CodexView.cs:262-276` のcount／言語／dirtyによる遅延キャッシュ。ステータス表示は `DreamforgeUi.Window.cs:35-44`、HUD／トーストの実描画はRepaintのみで、イベントから直接描画しない。通常ドロップ／回収のイベント、戦利品生成、既存の描画時タイトル文字列や遺失物一覧ソートはあふれ専用処理ではなく、変更していない。
+
+本体DLLを使い捨てのメタデータ／IL読出しで確認した範囲では、`EarnDreamDust → AddDreamDust → set_dreamDust` にSave呼び出しはなく、SyncVar更新と `OnDreamDustChanged`、獲得RPCから `ClientEvent_OnEarnDreamDust` へ進む。つまり保存一括化だけではこれらの1個ごとのRPC・イベントは消えなかった。本体イベント購読先の実機費用・保存頻度や、他MODの購読処理の寄与率は未測定。
+
+### 使い捨てベンチ／スモーク
+
+Linux／.NET 10、Releaseの実Core DLLで、鞄30個・レア度／スコア混在、ウォームアップ20回＋60回の中央値。選択は本番privateメソッドのdelegateで呼び、生成・初期化・独立した逐次選択の検算は計測外。反復ごとに最終の鞄Uid順と欠片量が一致することを確認した。
+
+| あふれ数 | 直前のCore時間 | 集約後のCore時間 | 直前の割り当て | 集約後の割り当て | あふれ通知 |
+|---:|---:|---:|---:|---:|---:|
+| 100 | 0.2440 ms | 0.1356 ms | 43,312 B | 792 B | 100 → 1 |
+| 500 | 1.3028 ms | 0.7593 ms | 210,720 B | 792 B | 500 → 1 |
+
+この時間はCore処理だけで、Unity描画・実通信・Player.logのディスクI/Oは含まない。別の使い捨てスモークでは、本番から抽出した `TickSatchelOverflow → Emit → DreamforgeUi.Notify` をxUnit外で実行し、100個で300欠片／500個で1500欠片、ログ・トースト各1回／保存0回を観測。途中のシリアライズと空tickを挟んでも増えないことを確認した。実機GUI／Player.logそのものは未確認。ベンチとIL読出しの使い捨てファイルは納品に残さない。
+
 
 ## #146 鞄あふれ準備保存後の再参加（旧経路の検証記録）
 
-以下は #200 より前のダスト換金経路で得た検証記録。現在の新しい鞄あふれはローカルプロフィールへ欠片を即時加算し、準備保存・取引キューを作らない。旧保存の `PendingTrades` は受領記録の照会を繰り返し、ダスト取引自体は再送しない。同じ台帳で未払い・未送信と確認された場合は既存の欠片回復処理を使い、支払い済みは重複付与せず、確認不能な間は保留を維持する。現行の利用者向け仕様は [MOD README](../src/SodRpg.Mod/README.md#鞄のあふれと欠片issue-200) を参照。
+以下は #200 より前のダスト換金経路で得た検証記録。現在の新しい鞄あふれはローカルプロフィールへtick内または保存・確保境界前に欠片をまとめて加算し、準備保存・取引キューを作らない。旧保存の `PendingTrades` は受領記録の照会を繰り返し、ダスト取引自体は再送しない。同じ台帳で未払い・未送信と確認された場合は既存の欠片回復処理を使い、支払い済みは重複付与せず、確認不能な間は保留を維持する。現行の利用者向け仕様は [MOD README](../src/SodRpg.Mod/README.md#鞄のあふれと欠片issue-200) を参照。
 
 `Issue73.Native.Tests.SatchelOverflowSaveTests` の1件は、参加者の満杯の鞄から
 `GrantPendingKill → Emit → 換金準備保存` を実行し、実ディスクの保存を読み直して

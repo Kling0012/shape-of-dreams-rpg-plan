@@ -21,6 +21,7 @@ namespace SodRpg.Core.Game
 
         private static string WriteProfile(Profile p, bool includeContinue)
         {
+            p.SettleSatchelOverflow();
             var body = WriteBody(p, includeContinue);
             var root = new JsonObject()
                 .Add("format", Format)
