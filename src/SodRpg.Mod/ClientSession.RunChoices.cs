@@ -156,6 +156,9 @@ namespace SodRpg.Mod
             // ホストも参加者もここで解くため、確定後の深度・確保ボーナスが両者で一致する。
             if (_pendingRunVictory == true && Profile.Run.AwaitingChoice) Profile.Run.AwaitingChoice = false;
             FlushPendingPressureDividends();
+            // Shared waypoint settlement unlocks the participant's buttons, not their personal choice (#88).
+            // Pure White keeps the personal choice pending until an explicit choice or the run's conclusion.
+            if (InPureWhiteRoute && Profile.Run.AwaitingChoice && !_pendingRunVictory.HasValue) return;
             _runChoiceProgress.FlushRewards(Profile, ChoiceZoneIndex, CanChooseRunRules, Emit, _grantPendingKill);
         }
 

@@ -178,7 +178,8 @@ namespace SodRpg.Mod
         // Version 14 carries every selected keystone (up to the traveler's slots) in the build envelope.
         // Version 15 removes keystone drawbacks: the keystone wire grammar drops the downside transform list and conditions.
         // Version 16 adds sequenced kill facts and persisted receipt ACKs for compact, recoverable checkpoints.
-        public const int Version = 16;
+        // Version 17 requires each Pure White participant to resolve their own choice before kill settlement.
+        public const int Version = 17;
     }
 
     [Serializable]
