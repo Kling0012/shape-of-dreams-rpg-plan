@@ -8,6 +8,7 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **差分テストの選択漏れ（#170）**：データ初期化行の変更ではファイル内の型への依存も残し、表から期待値を読む既存テストの除外を防ぎました。通常のメンバー変更の絞り込みとコメントのみの除外は維持します。 / **Missed tests in diff selection (#170)**: object initialization changes retain file-level type dependencies so existing tests reading expected values from tables are included; ordinary member narrowing and comment-only skipping remain unchanged.
 - **インフィニティ開始後に移動できなくなる**：未確認の参加者から Hello が届かないと遠征全体の移動が止まり続ける問題を修正しました。ゲーム内の通信準備後に参加者ごとに30秒待ち、返事がなければ理由を1回通知してその遠征だけ通常モードへ戻します。ロビー待機時間は含めず、参加者・通信先・遠征の変更時は待機時間をリセットします。互換性確認と報酬の安全条件は維持します。 / **Infinity travel blocked by a silent guest**: after the game-scene transport is ready, each unconfirmed guest gets 30 seconds to send Hello. A missing reply falls back to normal mode for that expedition with one notice. Lobby time does not count; peer, transport and expedition changes reset the wait. Compatibility and reward-safety checks remain enforced.
 
 ---

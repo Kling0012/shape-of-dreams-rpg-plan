@@ -1,6 +1,7 @@
 """Unit tests for the change -> test mapping logic of tools/test_changed.py.
 
-Uses small temporary fake repo layouts on disk; never invokes git or dotnet.
+Uses small temporary fake repo layouts and the repository's catalog/test corpus;
+never invokes git or dotnet.
 Run from the repository root:
 
     python -m unittest discover -s tools/tests -p "test_test_changed.py"
@@ -213,6 +214,28 @@ class DiffNarrowingTests(unittest.TestCase):
             minus=['            new UniqueDef("unique.old_coif", "head.iron_coif"),'])})
         self.assertIn("T.VigilTests", selection.classes)
         self.assertNotIn("SodRpg.Core.Tests.UnrelatedTests", selection.classes)
+
+    def test_catalog_name_typo_selects_table_reader(self):
+        path = "src/SodRpg.Core/Game/Content.cs"
+        reader = "tests/SodRpg.Core.Tests/ContentTableV129Tests.cs"
+        content = tc.read_file(tc.REPO_ROOT, path)
+        old = next(line for line in content.splitlines() if '"unique.w_palmcannon"' in line)
+        new = old.replace("Boulderburst Hammer", "Boulderburst Hammeq")
+        minimal = {
+            path: content,
+            reader: tc.read_file(tc.REPO_ROOT, reader),
+            **{f"tests/A/Other{i}.cs": test_file("T", f"Other{i}") for i in range(4)},
+        }
+        for name, files in (("minimal", minimal),
+                            ("repository", tc.collect_files(tc.REPO_ROOT, [path]))):
+            with self.subTest(corpus=name):
+                files[path] = content.replace(old, new)
+                selection = tc.select_tests([path], files, {
+                    path: self.diff(plus=[new], minus=[old]),
+                })
+                self.assertIn("SodRpg.Core.Tests.ContentTableV129Tests", selection.classes)
+                self.assertFalse(selection.run_all)
+                self.assertNotIn("T.Other0", selection.classes)
 
     def test_comment_only_change_selects_nothing(self):
         selection = tc.select_tests([CORE], self.corpus(), {CORE: self.diff(
