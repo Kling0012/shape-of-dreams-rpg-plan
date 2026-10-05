@@ -25,7 +25,7 @@ namespace SodRpg.Core.Tests
             var second = NativeDeath(8, zone: 0, room: 2); // 後続の撃破
             Assert.True(ledger.ObserveDeath(first, now: 100.0));
             Assert.True(ledger.ObserveDeath(second, now: 100.0));
-            Assert.True(ledger.ReceiveFact(Fact(8, "kill-8")));
+            Assert.True(ledger.ReceiveFact(Fact(8, "kill-8"), now: 100.0));
 
             // 期限までは先頭が解決せず、後続も止まる（PendingCount>0 が確保到着・純白選択・勝利確定の待ち条件）。
             Assert.False(ledger.TryResolve(out _, now: 100.0 + KillClassificationLedger.MissingFactTimeoutSeconds - 0.001));
@@ -41,7 +41,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(1, profile.Run.Kills); // 欠けた撃破は報酬なし
 
             // 欠けていた記録が後から届いても、対価は付かない（消費すべき観測がもう無い）。
-            Assert.True(ledger.ReceiveFact(Fact(7, "kill-7")));
+            Assert.True(ledger.ReceiveFact(Fact(7, "kill-7"), now: 200.0));
             Assert.False(ledger.TryResolve(out _, now: 1000.0));
             Assert.Equal(1, profile.Run.Kills);
         }
@@ -60,7 +60,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, profile.Run.Kills);
 
             // 保存 → 再読込（expiredMonsters が保存・復元される）。
-            profile.KillClassification = ledger.Capture();
+            profile.KillClassification = ledger.Capture(now: 30.0);
             profile = RoundTrip(profile);
             Assert.Contains(7u, profile.KillClassification.ExpiredMonsterNetIds);
             var reloaded = new KillClassificationLedger();
@@ -69,14 +69,14 @@ namespace SodRpg.Core.Tests
 
             // 再観測しても無視され、遅れて届いた記録も対価には結び付かない。
             Assert.False(reloaded.ObserveDeath(NativeDeath(7, 0, 1), now: 501.0));
-            Assert.True(reloaded.ReceiveFact(Fact(7, "kill-7")));
+            Assert.True(reloaded.ReceiveFact(Fact(7, "kill-7"), now: 501.0));
             Assert.False(reloaded.TryResolve(out _, now: 1000.0));
             Assert.Equal(0, profile.Run.Kills);
 
             // 期限切れと同じ保存を読んだ別の台帳でも、記録の再届出では精算しない（重複配送の安全）。
             var duplicate = new KillClassificationLedger();
             duplicate.Restore(RoundTrip(profile).KillClassification, now: 600.0);
-            Assert.True(duplicate.ReceiveFact(Fact(7, "kill-7")));
+            Assert.True(duplicate.ReceiveFact(Fact(7, "kill-7"), now: 600.0));
             Assert.False(duplicate.TryResolve(out _, now: 2000.0));
             Assert.Equal(0, profile.Run.Kills);
         }
@@ -89,7 +89,7 @@ namespace SodRpg.Core.Tests
             var ledger = new KillClassificationLedger();
             Assert.True(ledger.ObserveDeath(NativeDeath(9, 0, 3), now: 100.0)); // 記録未着のまま保存
 
-            profile.KillClassification = ledger.Capture();
+            profile.KillClassification = ledger.Capture(now: 100.0);
             profile = RoundTrip(profile);
             var reloaded = new KillClassificationLedger();
             reloaded.Restore(profile.KillClassification, now: 200.0);
@@ -97,7 +97,7 @@ namespace SodRpg.Core.Tests
 
             // 期限は保存前の観測時刻ではなく、再読込の時刻から数える（時間は保存をまたがない）。
             Assert.False(reloaded.TryResolve(out _, now: 200.0 + KillClassificationLedger.MissingFactTimeoutSeconds - 0.001));
-            Assert.True(reloaded.ReceiveFact(Fact(9, "kill-9")));
+            Assert.True(reloaded.ReceiveFact(Fact(9, "kill-9"), now: 200.0));
             Assert.True(reloaded.TryResolve(out var kill, now: 200.0)); // 記録があれば待たずに精算
             Award(profile, kill);
             Assert.Equal(1, profile.Run.Kills);
@@ -105,7 +105,7 @@ namespace SodRpg.Core.Tests
             // 期限前に再読込しても、まだ解決していない撃破はもう一度期限を待つ（放棄されない）。
             var held = new KillClassificationLedger();
             Assert.True(held.ObserveDeath(NativeDeath(11, 0, 4), now: 0.0));
-            var saved = RoundTrip(WithClassification(profile, held.Capture()));
+            var saved = RoundTrip(WithClassification(profile, held.Capture(now: 0.0)));
             var again = new KillClassificationLedger();
             again.Restore(saved.KillClassification, now: 1000.0);
             Assert.Equal(1, again.PendingCount);
@@ -120,12 +120,12 @@ namespace SodRpg.Core.Tests
         public void Facts_cached_before_their_deaths_follow_the_same_expiry_rule()
         {
             var ledger = new KillClassificationLedger();
-            Assert.True(ledger.ReceiveFact(Fact(12, "kill-12"))); // 先に記録だけ届く
+            Assert.True(ledger.ReceiveFact(Fact(12, "kill-12"), now: 0.0)); // 先に記録だけ届く
             Assert.True(ledger.ObserveDeath(NativeDeath(12, 0, 5), now: 10.0));
             Assert.True(ledger.TryResolve(out var kill, now: 10.0)); // 観測と同時に精算
             Assert.Equal(12u, kill.MonsterNetId);
 
-            Assert.True(ledger.ReceiveFact(Fact(14, "kill-14"))); // 記録はあるが観測がない → 期限は関係ない
+            Assert.True(ledger.ReceiveFact(Fact(14, "kill-14"), now: 10.0)); // 記録はあるが観測がない → 期限は関係ない
             Assert.False(ledger.TryResolve(out _, now: 10_000.0));
             Assert.Equal(0, ledger.PendingCount);
         }

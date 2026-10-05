@@ -64,7 +64,7 @@ python tools/test_changed.py [--base <git ref>] [--list] [--all]
 選択されたテストクラスから `dotnet test <project> --filter` 式を組み立てる。
 フィルタは `FullyQualifiedName~名前空間.クラス` 条件を `|` で連結した 1 本の式で、
 長すぎる場合（既定の上限 15000 文字）は複数回の `dotnet test` 実行に分割する。
-テストプロジェクトは `tests/` 配下の `.csproj`（現在は `SodRpg.Core.Tests`）。
+テストプロジェクトは `tests/` 配下の `.csproj` を再帰収集する（`bin`/`obj` を除く）。
 
 - `dotnet` コマンド: 既定では `%LOCALAPPDATA%\dotnet-sdk\dotnet.exe` を使う。
   環境変数 `DOTNET` に実行ファイルのパスがあればそれを優先する。
@@ -94,12 +94,32 @@ python tools/test_changed.py --all
 ## #47 刻印の代償撤廃の回帰確認
 
 - `GeneratedHeroAcceptanceTests` は全82刻印の型付き効果、ダメージ・傷の非弱体化、
-  日英説明に「代償／Drawback」がないこと、通信版15のビルド往復を確認する。
+  日英説明に「代償／Drawback」がないこと、現在の通信仕様でのビルド往復を確認する。
 - `StarCarryoverV131Tests` は従来の形式3/4互換に加え、v1.31移行済みの形式4で
   保存した刻印IDが現在の生成定義に解決され、保持するPowerが引き継がれることを確認する。
   v1.31未移行の保存には、別仕様の効果変更時返却が引き続き適用される。
 - C11のHP支払い→障壁変換、C15の装備・選択変更の明示承認は既存テストを維持する。
 - テストクラス間の並列実行は `AssemblyInfo.cs` の設定で無効。
+
+## #73 台帳・戦闘バッファ・差分同期の回帰確認
+
+- `Issue73LedgerTests` は形式4→5の保存互換、連番の欠落・順序逆転・保存再読込を
+  含む報酬の過不足防止、30秒期限、曖昧な復旧、旧 `expiredMonsters` の移行を確認する。
+- `tests/Issue73.Native.Tests` は本番 Mod ソースをリンクする独立ハーネス。
+  途中参加の再送と差分の32 RPC/フレーム枠、FIFO合流・種類間公平性、保存済みACK後の圧縮、
+  空の仮peerの除外、配当の5秒遅延保存と書込済みリビジョン、入れ子のバッファ再利用、
+  Harmony経由の直接 `RemoveAbility` と装備epochを確認する。
+- ネイティブの通信・時計・エンティティだけをスタブ化する。配当の保存は実際の
+  `ProfileStore` / `AsyncProfileWriter` で一時ディレクトリへ書き、試験後に除去する。
+  `NativePersistence.targets` は SDK の Roslyn AST で `ClientSession.cs` の保存メソッドを
+  選び、そのままテストへコンパイルする。製品側の保存処理は複製・変更しない。
+- Core既存ハーネスの `ExposeAuthoredPendingMetadata` は、テスト公開の `PendingGimmick` と
+  アクセス範囲を揃えるため、生成したコンパイル単位だけで `AuthoredPendingGimmick` を
+  `internal` にする。製品ソースと値型メタデータの処理内容は変更しない。
+- `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all` で
+  両プロジェクトを実行する。単独確認は `dotnet test <project> --filter FullyQualifiedName~Issue73LedgerTests`
+  または `FullyQualifiedName~NativeAcceptanceTests`。
+  実機のフレーム時間・確保量・Unity本体のRPC転送はこのハーネスの検証範囲外。
 
 ## マッピングロジックの単体テスト
 

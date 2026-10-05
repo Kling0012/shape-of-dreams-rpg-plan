@@ -124,6 +124,7 @@ namespace SodRpg.Core.Game
         public AttributionBudget Budget { get; }
         public BridgePayload BasePayoff { get; }
         public IReadOnlyList<BridgePayload> Extras { get; }
+        public IReadOnlyList<BridgePayload> Payloads { get; }
         public int Rank { get; }
         public bool UsesNativeWindowLifetime { get; }
         public float CooldownSeconds { get; }
@@ -186,6 +187,7 @@ namespace SodRpg.Core.Game
             PairId = pairId; Endpoints = endpointCopy.AsReadOnly(); Rank = rank; GateKind = gateKind; OpeningSource = openingSource;
             OpeningTrigger = openingTrigger; PayoffSource = payoffSource; PayoffTrigger = payoffTrigger; BasePayoff = basePayoff;
             Extras = extraCopy.AsReadOnly(); Budget = budget; SourcePhase = sourcePhase; UsesNativeWindowLifetime = usesNativeWindowLifetime;
+            var payloads = new List<BridgePayload> { basePayoff }; payloads.AddRange(extraCopy); Payloads = payloads.AsReadOnly();
             CooldownSeconds = cooldownSeconds; WindowSeconds = windowSeconds; RetainedFiveRanks = retainedFiveRanks;
             MarkSeconds = markSeconds; WindowLifetimeScale = windowLifetimeScale;
         }
@@ -213,7 +215,7 @@ namespace SodRpg.Core.Game
         public BridgeSourcePhase SourcePhase { get; }
         public IReadOnlyList<BridgePayload> Payloads { get; }
         public float NativeDamage { get; }
-        private readonly IReadOnlyList<EquippedMechanismMemory> _endpoints;
+        private readonly EquippedMechanismMemory _firstEndpoint, _secondEndpoint;
         private readonly PairComboRuntime _runtime;
         private readonly long _definitionGeneration;
         internal BridgeSuccessTransaction(BridgeSuccessDefinition definition, long id, MemoryActivationEvent notification,
@@ -221,15 +223,15 @@ namespace SodRpg.Core.Game
         {
             PairId = definition.PairId; SuccessId = id; Notification = notification; SourcePhase = phase; NativeDamage = nativeDamage;
             _runtime = runtime; _definitionGeneration = definitionGeneration;
-            var payloads = new List<BridgePayload> { definition.BasePayoff }; payloads.AddRange(definition.Extras); Payloads = payloads.AsReadOnly();
-            var endpoints = new List<EquippedMechanismMemory>();
-            foreach (var endpoint in definition.Endpoints) endpoints.Add(equipment.Find(endpoint.Memory));
-            _endpoints = endpoints.AsReadOnly();
+            Payloads = definition.Payloads;
+            _firstEndpoint = equipment.Find(definition.Endpoints[0].Memory);
+            _secondEndpoint = equipment.Find(definition.Endpoints[1].Memory);
         }
         public bool IsCurrent(MechanismEquipment equipment)
         {
             if (equipment == null || !equipment.Admits(Notification)) return false;
-            foreach (var endpoint in _endpoints) if (equipment.Find(endpoint.Memory)?.InstanceId != endpoint.InstanceId) return false;
+            if (equipment.Find(_firstEndpoint.Memory)?.InstanceId != _firstEndpoint.InstanceId
+                || equipment.Find(_secondEndpoint.Memory)?.InstanceId != _secondEndpoint.InstanceId) return false;
             return _runtime.IsSuccessCurrent(PairId, _definitionGeneration, equipment);
         }
         public bool IsCurrent(MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks)
@@ -245,11 +247,17 @@ namespace SodRpg.Core.Game
             if (equipment == null || results == null) throw new ArgumentNullException();
             if (!IsCurrent(equipment)) return;
             var source = equipment.ResolveEventSource(Notification, true);
-            foreach (var payload in Payloads)
-                if (payload.Kind == BridgePayloadKind.Recharge)
-                    foreach (var recipient in equipment.Memories)
-                        if (payload.Recipient.Matches(recipient, source.Memory))
-                            results.Add(new DirectedRechargeRequest(payload.ChannelId, Notification, source, recipient, payload.ValueUnits, IsCurrent));
+            for (int p = 0; p < Payloads.Count; p++)
+            {
+                var payload = Payloads[p];
+                if (payload.Kind != BridgePayloadKind.Recharge) continue;
+                for (int i = 0; i < equipment.Memories.Count; i++)
+                {
+                    var recipient = equipment.Memories[i];
+                    if (payload.Recipient.Matches(recipient, source.Memory))
+                        results.Add(new DirectedRechargeRequest(payload.ChannelId, Notification, source, recipient, payload.ValueUnits, this));
+                }
+            }
         }
         public void CreateRechargeRequests(MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks,
             List<DirectedRechargeRequest> results)
@@ -271,12 +279,36 @@ namespace SodRpg.Core.Game
             public readonly Dictionary<long, string> MarkSources = new Dictionary<long, string>();
             public float WindowUntil;
             public float ReadyAt;
-            public readonly HashSet<string> Paid = new HashSet<string>(StringComparer.Ordinal);
-            public readonly HashSet<string> OpenedNotifications = new HashSet<string>(StringComparer.Ordinal);
+            public readonly HashSet<(long Activation, long Victim)> Paid = new HashSet<(long, long)>();
+            public readonly HashSet<(long Activation, long Packet, long Victim, MemoryEventKind Kind)> OpenedNotifications =
+                new HashSet<(long, long, long, MemoryEventKind)>();
         }
         private List<SuccessState> _successStates = new List<SuccessState>();
         private IReadOnlyDictionary<string, int> _successEndpointRanks = new Dictionary<string, int>(StringComparer.Ordinal);
         private long _successOwner, _successEpoch, _successSerial, _successGeneration;
+        private readonly List<long> _expiredSuccessMarks = new List<long>();
+        private readonly List<(long Activation, long Victim)> _paidSuccessScratch = new List<(long, long)>();
+        private readonly List<(long Activation, long Packet, long Victim, MemoryEventKind Kind)> _openedSuccessScratch =
+            new List<(long, long, long, MemoryEventKind)>();
+        private MemoryActivationAttribution _successAttribution;
+        public void PruneSuccessAttribution(MemoryActivationAttribution attribution)
+        {
+            _successAttribution = attribution;
+            foreach (var state in _successStates)
+            {
+                _paidSuccessScratch.Clear();
+                foreach (var key in state.Paid)
+                    if (state.Definition.Budget == AttributionBudget.PerKill ? !attribution.IsVictimRetained(key.Activation)
+                        : !attribution.IsActivationRetained(key.Activation) || key.Victim != 0 && !attribution.IsVictimRetained(key.Victim))
+                        _paidSuccessScratch.Add(key);
+                foreach (var key in _paidSuccessScratch) state.Paid.Remove(key);
+                _openedSuccessScratch.Clear();
+                foreach (var key in state.OpenedNotifications)
+                    if (key.Packet > 0 ? key.Packet <= attribution.RetiredSerial : !attribution.IsActivationRetained(key.Activation))
+                        _openedSuccessScratch.Add(key);
+                foreach (var key in _openedSuccessScratch) state.OpenedNotifications.Remove(key);
+            }
+        }
         public void SetSuccessEffects(IEnumerable<BridgeSuccessDefinition> definitions)
         {
             if (definitions == null) throw new ArgumentNullException(nameof(definitions));
@@ -313,8 +345,11 @@ namespace SodRpg.Core.Game
         }
         private static bool EndpointsAvailable(BridgeSuccessDefinition definition, MechanismEquipment equipment, IReadOnlyDictionary<string, int> endpointRanks)
         {
-            foreach (var endpoint in definition.Endpoints)
+            for (int i = 0; i < definition.Endpoints.Count; i++)
+            {
+                var endpoint = definition.Endpoints[i];
                 if (equipment.Find(endpoint.Memory) == null || !endpointRanks.TryGetValue(endpoint.StarId, out int rank) || rank < endpoint.MinimumRank) return false;
+            }
             return true;
         }
         /// <summary>Call on rank refresh as well as events so removing and restoring an endpoint cannot restore its old state.</summary>
@@ -322,9 +357,17 @@ namespace SodRpg.Core.Game
         {
             if (equipment == null || endpointRanks == null) throw new ArgumentNullException();
             RefreshSuccessEquipment(equipment);
-            var ranks = new Dictionary<string, int>(StringComparer.Ordinal);
-            foreach (var entry in endpointRanks) ranks.Add(entry.Key, entry.Value);
-            _successEndpointRanks = ranks;
+            bool changed = _successEndpointRanks.Count != endpointRanks.Count;
+            if (!changed)
+                foreach (var entry in endpointRanks)
+                    if (!_successEndpointRanks.TryGetValue(entry.Key, out int rank) || rank != entry.Value) { changed = true; break; }
+            if (changed)
+            {
+                var copy = new Dictionary<string, int>(StringComparer.Ordinal);
+                foreach (var entry in endpointRanks) copy.Add(entry.Key, entry.Value);
+                _successEndpointRanks = copy;
+            }
+            var ranks = _successEndpointRanks;
             foreach (var state in _successStates)
             {
                 bool available = EndpointsAvailable(state.Definition, equipment, ranks);
@@ -378,25 +421,24 @@ namespace SodRpg.Core.Game
             bool damageTargetReady = true)
         {
             if (equipment == null || endpointRanks == null || results == null || !Gimmicks.Finite(now) || !Gimmicks.Finite(nativeDamage)
-                || nativeDamage < 0 || !Enum.IsDefined(typeof(BridgeSourcePhase), phase)) throw new ArgumentException("Invalid bridge event.");
+                || nativeDamage < 0 || (uint)phase > (uint)BridgeSourcePhase.EndingExplosion) throw new ArgumentException("Invalid bridge event.");
             RefreshSuccessPrerequisites(equipment, endpointRanks);
-            if (!equipment.Admits(notification)) return;
+            if (!equipment.Admits(notification) || _successAttribution != null && !_successAttribution.IsNotificationCurrent(notification)) return;
             var source = equipment.ResolveEventSource(notification, hasOwnedSummon);
             if (source == null) return;
             foreach (var state in _successStates)
             {
                 var definition = state.Definition;
                 if (!state.Available) continue;
-                var expired = new List<long>();
-                foreach (var mark in state.Marks) if (now >= mark.Value) expired.Add(mark.Key);
-                foreach (long victim in expired) { state.Marks.Remove(victim); state.MarkSources.Remove(victim); }
-                bool isEndpoint = false;
-                foreach (var endpoint in definition.Endpoints) if (endpoint.Memory == source.Memory) isEndpoint = true;
+                _expiredSuccessMarks.Clear();
+                foreach (var mark in state.Marks) if (now >= mark.Value) _expiredSuccessMarks.Add(mark.Key);
+                foreach (long victim in _expiredSuccessMarks) { state.Marks.Remove(victim); state.MarkSources.Remove(victim); }
+                bool isEndpoint = definition.Endpoints[0].Memory == source.Memory || definition.Endpoints[1].Memory == source.Memory;
                 if (!isEndpoint) continue;
                 bool opening = definition.OpeningTrigger == notification.EventKind && definition.OpeningSource.Matches(source);
                 if (opening && definition.GateKind != BridgeGateKind.DirectReceiver)
                 {
-                    string openingKey = notification.ActivationId + ":" + notification.DamagePacketId + ":" + notification.VictimId + ":" + notification.EventKind;
+                    var openingKey = (notification.ActivationId, notification.DamagePacketId, notification.VictimId, notification.EventKind);
                     if (state.OpenedNotifications.Contains(openingKey)) continue;
                     if (definition.GateKind == BridgeGateKind.Mark)
                     {
@@ -419,21 +461,22 @@ namespace SodRpg.Core.Game
                 if (definition.GateKind == BridgeGateKind.Mark && (!state.Marks.TryGetValue(notification.VictimId, out float until) || now >= until)) continue;
                 if (now < state.ReadyAt) continue;
                 bool allPayloadsReady = true;
-                var payloads = new List<BridgePayload> { definition.BasePayoff }; payloads.AddRange(definition.Extras);
-                foreach (var payload in payloads)
+                for (int p = 0; p < definition.Payloads.Count; p++)
                 {
+                    var payload = definition.Payloads[p];
                     if (payload.Kind == BridgePayloadKind.Damage && (!damageTargetReady || notification.VictimId == 0
                         || payload.DamageBasis == BridgeDamageBasis.NativeHit && nativeDamage <= 0)) allPayloadsReady = false;
                     if (payload.Kind == BridgePayloadKind.Recharge)
                     {
                         bool recipientFound = false;
-                        foreach (var recipient in equipment.Memories) if (payload.Recipient.Matches(recipient, source.Memory)) recipientFound = true;
+                        for (int i = 0; i < equipment.Memories.Count; i++)
+                            if (payload.Recipient.Matches(equipment.Memories[i], source.Memory)) { recipientFound = true; break; }
                         if (!recipientFound) allPayloadsReady = false;
                     }
                 }
                 if (!allPayloadsReady) continue;
-                string key = MechanismAdmission.Key(definition.Budget, notification);
-                if (key == null || !state.Paid.Add(key)) continue;
+                var key = MechanismAdmission.Key(definition.Budget, notification);
+                if (!key.HasValue || !state.Paid.Add(key.Value)) continue;
                 state.ReadyAt = now + definition.CooldownSeconds;
                 results.Add(new BridgeSuccessTransaction(definition, checked(++_successSerial), notification, phase, nativeDamage, equipment, this, state.Generation));
             }

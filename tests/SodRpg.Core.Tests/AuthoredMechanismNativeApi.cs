@@ -211,22 +211,54 @@ namespace SodRpg.Mod
         internal event Action<MemoryActivationEvent, Hero, Entity, float> MemoryActivationPublished;
         internal event Action<Hero, long> MemoryAttributionEquipmentChanged;
         private readonly MemoryActivationAttribution _memoryAttribution = new MemoryActivationAttribution();
-        private readonly Dictionary<Hero, List<SkillTrigger>> _equipment = new Dictionary<Hero, List<SkillTrigger>>();
         private readonly Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>> _attributionEquipment = new Dictionary<Hero, Dictionary<HeroSkillLocation, SkillTrigger>>();
+        private readonly Dictionary<Hero, MechanismEquipment> _mechanismEquipment = new Dictionary<Hero, MechanismEquipment>();
+        private readonly Dictionary<Hero, HashSet<string>> _attributionMemoryIds = new Dictionary<Hero, HashSet<string>>();
         private bool _nativePublicationConnected;
         private long RefreshMemoryAttributionEquipment(Hero hero)
         {
-            var current = new List<SkillTrigger>(); var names = new List<string>();
-            foreach (var slot in LinkSkills) { var skill = hero.Skill.GetSkill(slot); current.Add(skill); if (skill != null) names.Add(skill.GetType().Name); }
-            var installed = new Dictionary<HeroSkillLocation, SkillTrigger>();
-            foreach (var slot in LinkSkills) { var skill = hero.Skill.GetSkill(slot); if (skill != null) installed.Add(slot, skill); }
-            _attributionEquipment[hero] = installed;
-            bool changed = !_equipment.TryGetValue(hero, out var old);
-            for (int i = 0; !changed && i < current.Count; i++) changed = current[i] != old[i];
-            if (changed) { _memoryAttribution.InvalidateOwner(hero.GetInstanceID()); _equipment[hero] = current; }
-            long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), names);
-            if (changed) MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
+            if (hero == null) return 0;
+            bool changed = !_attributionEquipment.TryGetValue(hero, out var equipment);
+            int count = 0;
+            foreach (var location in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(location);
+                if (skill == null) continue;
+                count++;
+                if (!changed && (!equipment.TryGetValue(location, out var previous) || previous != skill)) changed = true;
+            }
+            changed |= equipment != null && equipment.Count != count;
+            if (!changed) return _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            equipment = new Dictionary<HeroSkillLocation, SkillTrigger>();
+            var memories = new List<string>();
+            var mechanisms = new List<EquippedMechanismMemory>();
+            foreach (var location in LinkSkills)
+            {
+                var skill = hero.Skill.GetSkill(location);
+                if (skill == null) continue;
+                equipment.Add(location, skill);
+                string memory = skill.GetType().Name;
+                memories.Add(memory);
+                mechanisms.Add(new EquippedMechanismMemory(memory, skill.GetInstanceID(), ToMechanismSlot(location),
+                    skill.type == SkillType.Normal, skill.type == SkillType.Ultimate));
+            }
+            _memoryAttribution.InvalidateOwner(hero.GetInstanceID());
+            long epoch = _memoryAttribution.SetEquipment(hero.GetInstanceID(), memories);
+            _attributionEquipment[hero] = equipment;
+            _mechanismEquipment[hero] = new MechanismEquipment(hero.GetInstanceID(), epoch, mechanisms);
+            _attributionMemoryIds[hero] = new HashSet<string>(memories, StringComparer.Ordinal);
+            MemoryAttributionEquipmentChanged?.Invoke(hero, epoch);
             return epoch;
+        }
+        internal void EquipmentChangedForTest(Hero hero)
+        {
+            if (Mirror.NetworkServer.active && hero != null && _runtimes.ContainsKey(hero))
+                RefreshMemoryAttributionEquipment(hero);
+        }
+        private long EnsureMemoryAttributionEquipment(Hero hero)
+        {
+            long epoch = _memoryAttribution.EquipmentEpoch(hero.GetInstanceID());
+            return epoch != 0 ? epoch : RefreshMemoryAttributionEquipment(hero);
         }
         private long AttributedActivationSerial(Actor actor) => actor != null && _memoryAttribution.TryGetInstance(actor.GetInstanceID(), out var identity) ? identity.ActivationId : 0;
         private long AttributedVictimLifetime(Entity victim) => victim != null ? victim.GetInstanceID() : 0;

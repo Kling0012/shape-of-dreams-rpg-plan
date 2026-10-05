@@ -62,12 +62,8 @@ namespace SodRpg.Mod
         /// <summary>悪夢化した敵（netId → 接頭効果）。名札の表示と撃破時の報酬に使う。</summary>
         public Dictionary<uint, NightmareAffix> Nightmare { get; } = new Dictionary<uint, NightmareAffix>();
 
-        /// <summary>悪夢化の通知を受けた時刻（まだスポーンしていない敵を早まって消さないため）。</summary>
-        public Dictionary<uint, float> NightmareSeenAt { get; } = new Dictionary<uint, float>();
-
         /// <summary>夢の変種（netId → Core の変種ID）。名札と撃破時の報酬に使う。</summary>
         public Dictionary<uint, string> Variant { get; } = new Dictionary<uint, string>();
-        public Dictionary<uint, float> VariantSeenAt { get; } = new Dictionary<uint, float>();
 
         private sealed class VariantVisual
         {
@@ -204,8 +200,8 @@ namespace SodRpg.Mod
         {
             if (_tickSteps == null)
             {
-                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave };
-                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "track run", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save" };
+                _tickSteps = new Action[] { TickProfileSlots, Wire, TickGemSlotConflict, UpdateVariantVisuals, UpdateMonsterCues, TrackRun, TickKillClassification, TickRunChoices, TickCurseResync, TickSalvageExpiry, SendBuildIfNeeded, TickHello, TickPeriodicSave, TickKillSync };
+                _tickStepNames = new[] { "profile slots", "wire", "gem slot conflict", "variant visuals", "monster cues", "track run", "kill classification", "run choices", "curse resync", "salvage expiry", "send build", "hello", "periodic save", "kill sync" };
                 _tickStepNextLog = new float[_tickSteps.Length];
             }
             for (int i = 0; i < _tickSteps.Length; i++)
@@ -362,6 +358,11 @@ namespace SodRpg.Mod
                 if (results != null) results.ClientEvent_OnGameConcluded += _onConcluded;
             }
             var am = NetworkedManagerBase<ActorManager>.softInstance;
+            if (!NetworkServer.active && !ReferenceEquals(_hostAuthorityActor, null))
+            {
+                _hostAuthorityActor = null;
+                _hostAuthorityNeedsRenewal = true;
+            }
             var actor = NetworkClient.active && am != null ? am.serverActor : null;
             if (!ReferenceEquals(actor, _clientRpcOn))
             {
@@ -377,6 +378,7 @@ namespace SodRpg.Mod
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill); } catch (Exception) { }
+                    try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeKillReplayStartMsg>(OnKillReplayStart); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult); } catch (Exception) { }
                     try { _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport); } catch (Exception) { }
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -392,7 +394,6 @@ namespace SodRpg.Mod
                     SaveNow();
                 }
                 Nightmare.Clear();
-                NightmareSeenAt.Clear();
                 ClearVariants();
                 ClearMonsterCues();
                 _loggedVariantVisualFailure = false;
@@ -416,6 +417,7 @@ namespace SodRpg.Mod
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
+                    actor.CustomRpc_RegisterClientMessageHandler<DreamforgeKillReplayStartMsg>(OnKillReplayStart);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     actor.CustomRpc_RegisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -463,6 +465,7 @@ namespace SodRpg.Mod
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeVariantMsg>(_onVariant);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterCueMsg>(_onMonsterCue);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeMonsterKillMsg>(OnMonsterKill);
+                    _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeKillReplayStartMsg>(OnKillReplayStart);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeTradeResultMsg>(_onTradeResult);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgeBountyReportMsg>(_onBountyReport);
                     _clientRpcOn.CustomRpc_UnregisterClientMessageHandler<DreamforgePressureDividendMsg>(OnPressureDividend);
@@ -486,7 +489,6 @@ namespace SodRpg.Mod
             _sentDreamLevel = -1;
             _buildDirty = true;
             Nightmare.Clear();
-            NightmareSeenAt.Clear();
             ClearVariants();
             ClearMonsterCues();
             _loggedVariantVisualFailure = false;
@@ -586,7 +588,6 @@ namespace SodRpg.Mod
             {
                 if (!(info.victim is Monster m)) return;
                 Nightmare.Remove(m.netId);
-                NightmareSeenAt.Remove(m.netId);
                 RemoveVariant(m.netId);
                 RemoveMonsterCue(m.netId);
                 _monsterAuthority.Remove(m.netId);
@@ -614,7 +615,7 @@ namespace SodRpg.Mod
                     fightHeat = Profile.Run.Heat;
                     fightWaypoint = Profile.Run.ActiveWaypoint;
                 }
-                CaptureNativeKill(m.netId, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
+                CaptureNativeKill(m, new PendingRunKill(gm.runId, ChoiceZoneIndex, _zone?.currentRoomIndex ?? 0,
                     tier, level, NightmareAffix.None, null, heroKey, heat: fightHeat, waypoint: fightWaypoint));
             }
             catch (Exception ex)
@@ -858,75 +859,44 @@ namespace SodRpg.Mod
 
         private void OnNightmare(DreamforgeNightmareMsg msg)
         {
-            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
-                || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
+            if (msg == null || msg.protocol != Protocol.Version || !ObserveMonsterAuthority(msg.authorityGeneration)) return;
+            if (msg.removed)
+            {
+                _monsterAuthority.Remove(msg.netId);
+                Nightmare.Remove(msg.netId);
+                RemoveVariant(msg.netId);
+                RemoveMonsterCue(msg.netId);
+                return;
+            }
+            if (!_monsterAuthority.Set(msg.authorityGeneration, msg.netId, (NightmareAffix)msg.affixes, null)) return;
             var a = Nightmares.Sanitize(msg.affixes);
             if (a == NightmareAffix.None)
             {
                 Nightmare.Remove(msg.netId);
-                NightmareSeenAt.Remove(msg.netId);
                 RemoveVariant(msg.netId);
                 return;
             }
             RemoveVariant(msg.netId);
             Nightmare[msg.netId] = a;
-            NightmareSeenAt[msg.netId] = Time.unscaledTime;
-            TrimNightmareNameplates();
         }
 
         private void OnVariant(DreamforgeVariantMsg msg)
         {
-            if (msg == null || !ObserveMonsterAuthority(msg.authorityGeneration)
+            if (msg == null || msg.protocol != Protocol.Version || !ObserveMonsterAuthority(msg.authorityGeneration)
                 || !_monsterAuthority.Set(msg.authorityGeneration, msg.netId, NightmareAffix.None, msg.variantId)) return;
             var def = Variants.Get(msg.variantId);
             if (def == null)
             {
                 Nightmare.Remove(msg.netId);
-                NightmareSeenAt.Remove(msg.netId);
                 RemoveVariant(msg.netId);
                 return;
             }
             if (Variant.TryGetValue(msg.netId, out var previous) && previous != def.Id)
                 RemoveVariant(msg.netId);
             Nightmare.Remove(msg.netId);
-            NightmareSeenAt.Remove(msg.netId);
             Variant[msg.netId] = def.Id;
-            VariantSeenAt[msg.netId] = Time.unscaledTime;
-            TrimVariantNameplates();
             if (NetworkClient.spawned.TryGetValue(msg.netId, out var id) && id != null)
                 ApplyVariantVisual(msg.netId, id.GetComponent<Monster>(), def);
-        }
-
-        private readonly List<uint> _nameplateTrimScratch = new List<uint>(64);
-        private float _nextNameplateTrimAt;
-        private static readonly Func<uint, bool> NameplateAliveProbe = IsNameplateAlive;
-
-        // 名札の生存確認：スポーン済みで、まだ生きているモンスターか。
-        private static bool IsNameplateAlive(uint netId)
-        {
-            if (!NetworkClient.spawned.TryGetValue(netId, out var id) || id == null) return false;
-            var m = id.GetComponent<Monster>();
-            return m != null && m.isActive;
-        }
-
-        // 辞書が膨らんだら、死亡の取りこぼし分だけを期限切れにする。生きている敵の名札は消さない（#74）。
-        private void TrimNightmareNameplates()
-        {
-            if (!NameplateTrim.Due(Nightmare.Count, Time.unscaledTime, ref _nextNameplateTrimAt)) return;
-            foreach (uint netId in NameplateTrim.CollectStale(NightmareSeenAt, NameplateAliveProbe,
-                Time.unscaledTime, _nameplateTrimScratch))
-            {
-                Nightmare.Remove(netId);
-                NightmareSeenAt.Remove(netId);
-            }
-        }
-
-        private void TrimVariantNameplates()
-        {
-            if (!NameplateTrim.Due(Variant.Count, Time.unscaledTime, ref _nextNameplateTrimAt)) return;
-            foreach (uint netId in NameplateTrim.CollectStale(VariantSeenAt, NameplateAliveProbe,
-                Time.unscaledTime, _nameplateTrimScratch))
-                RemoveVariant(netId);
         }
 
         private void UpdateVariantVisuals()
@@ -935,17 +905,14 @@ namespace SodRpg.Mod
             _variantScratch.Clear();
             foreach (var kv in Variant)
             {
-                bool pending = !_variantVisuals.ContainsKey(kv.Key)
-                    && VariantSeenAt.TryGetValue(kv.Key, out float seen) && Time.unscaledTime - seen <= 10f;
                 if (!NetworkClient.spawned.TryGetValue(kv.Key, out var id) || id == null)
                 {
-                    if (!pending) _variantScratch.Add(kv.Key);
                     continue;
                 }
                 var m = id.GetComponent<Monster>();
                 if (m == null || !m.isActive)
                 {
-                    if (m == null || !pending) _variantScratch.Add(kv.Key);
+                    if (m == null) _variantScratch.Add(kv.Key);
                     continue;
                 }
                 ApplyVariantVisual(kv.Key, m, Variants.Get(kv.Value));
@@ -1002,7 +969,6 @@ namespace SodRpg.Mod
         public void RemoveVariant(uint netId)
         {
             Variant.Remove(netId);
-            VariantSeenAt.Remove(netId);
             if (!_variantVisuals.TryGetValue(netId, out var state)) return;
             _variantVisuals.Remove(netId);
             StopVariantVisual(state);
@@ -1013,7 +979,6 @@ namespace SodRpg.Mod
             foreach (var state in _variantVisuals.Values) StopVariantVisual(state);
             _variantVisuals.Clear();
             Variant.Clear();
-            VariantSeenAt.Clear();
             _variantScratch.Clear();
         }
 
@@ -1223,6 +1188,7 @@ namespace SodRpg.Mod
             {
                 if (confirm) ok = AsyncProfileWriter.ConfirmPrepared(_writer, Profile);
                 else _writer.Enqueue(Profile);
+                if (ok) RecordKillSaveRevision();
             }
             catch (Exception ex)
             {

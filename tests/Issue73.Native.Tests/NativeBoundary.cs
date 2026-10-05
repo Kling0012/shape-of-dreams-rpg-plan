@@ -1,0 +1,265 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using SodRpg.Core.Game;
+using Xunit;
+
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
+
+// Only native transport, clock and entity storage are doubled. The queues, admission,
+// equipment snapshots, scope pools and dividend save scheduling come from linked Mod files.
+namespace Mirror
+{
+    internal static class NetworkServer { public static bool active; }
+    internal static class NetworkClient { public static bool active; }
+}
+namespace UnityEngine
+{
+    internal static class Time { public static int frameCount; public static float unscaledTime; }
+}
+namespace SodRpg.Mod
+{
+    internal class Actor
+    {
+        private static int _nextId;
+        private readonly int _id = ++_nextId;
+        public int GetInstanceID() => _id;
+        public Actor parentActor;
+        public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
+        public void CustomRpc_SendMessageToClient(DewPlayer target, object message) => Sent.Add((target, message));
+        public void CustomRpc_SendMessageToAllClients(object message) => Sent.Add((null, message));
+        public void CustomRpc_SendMessageToServer(object message) => Sent.Add((null, message));
+        public Action<DamageData, Entity, ReactionChain> DamageSink;
+        public void DealDamage(DamageData damage, Entity target, ReactionChain chain) => DamageSink?.Invoke(damage, target, chain);
+        public void DoBasicAttackHit() { }
+        public void ApplyElemental() { }
+        public void InvokeOnApplyElemental() { }
+        public void InvokeOnAbilityInstanceBeforePrepare() { }
+        public void InvokeOnDealDamage() { }
+        public void InvokeOnKill() { }
+        public void ClearPooledEventsAndProcessors() { }
+    }
+    internal class Entity : Actor
+    {
+        public uint netId;
+        public bool isActive = true;
+        public float currentHealth = 100;
+        public EntityStatus Status = new EntityStatus();
+        public EntityRelation GetRelation(Entity other) => EntityRelation.Enemy;
+    }
+    internal class EntityStatus
+    {
+        public float currentShield;
+        public int fireStack, lightStack, darkStack;
+        public bool hasCold;
+        public bool HasElemental(ElementalType type) => false;
+        public bool TryGetStatusEffect<T>(out T effect) where T : class { effect = null; return false; }
+    }
+    internal sealed class Monster : Entity { public bool disableLoot; }
+    internal sealed class Hero : Entity
+    {
+        public readonly HeroSkill Skill = new HeroSkill();
+        public readonly EntityAbility Ability;
+        public Hero() { Ability = new EntityAbility(this); }
+        public void ApplyCooldownReductionByRatio(SkillTrigger skill, float ratio, bool ignore) => throw new NotSupportedException();
+    }
+    internal sealed class HeroSkill
+    {
+        public readonly Dictionary<HeroSkillLocation, SkillTrigger> Slots = new Dictionary<HeroSkillLocation, SkillTrigger>();
+        public SkillTrigger GetSkill(HeroSkillLocation location) => Slots.TryGetValue(location, out var skill) ? skill : null;
+    }
+    internal sealed class EntityAbility
+    {
+        public Entity entity;
+        public EntityAbility(Hero hero) { entity = hero; }
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void RemoveAbility(int index) => ((Hero)entity).Skill.Slots.Remove((HeroSkillLocation)index);
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public void SetAbility(int index, AbilityTrigger ability) => ((Hero)entity).Skill.Slots[(HeroSkillLocation)index] = (SkillTrigger)ability;
+    }
+    internal enum HeroSkillLocation { Q, W, E, R, Identity, Movement }
+    internal enum SkillType { Normal, Ultimate }
+    internal enum ElementalType { Fire, Cold, Light, Dark }
+    internal enum EntityRelation { Enemy }
+    internal class AbilityTrigger : Actor { public Entity owner; }
+    internal class SkillTrigger : AbilityTrigger
+    {
+        public SkillType type;
+        public float currentConfigUnscaledCooldownTime, currentConfigUnscaledMaxCooldownTime;
+        public void OnCastComplete() { }
+    }
+    internal sealed class St_D_CircleOfLife : SkillTrigger { }
+    internal sealed class St_D_TheKillingFlow : SkillTrigger { }
+    internal sealed class TestQ : SkillTrigger { }
+    internal sealed class TestW : SkillTrigger { }
+    internal sealed class AttackTrigger : AbilityTrigger
+    {
+        public void CallAttackCompleteBeforePrepareRoutines() { }
+        public void CallAttackCompleteRoutines() { }
+    }
+    internal class AbilityInstance : Actor { public Gem gem; }
+    internal sealed class Gem : Actor { }
+    internal sealed class ElementalStatusEffect : Actor { public bool isActive; }
+    internal sealed class Summon : Entity
+    {
+        public CastInfo info;
+        public T FindFirstAncestorOfType<T>() where T : class => null;
+    }
+    internal sealed class Ai_D_ChargedAnguillian_Lightning : Actor { }
+    internal sealed class Ai_D_IcyVeins_Damage : Actor { }
+    internal sealed class Ai_D_BeautifulThreat_Feather : Actor { }
+    internal sealed class Se_HunterBuff { public bool enableGoldAndExpDrops; }
+    internal struct ReactionChain { }
+    internal enum DamageAttribute { IsCrit }
+    internal struct DamageData { public float amount; public bool HasAttr(DamageAttribute attr) => false; }
+    internal struct CastInfo { public Entity caster; }
+    internal struct EventInfoCast { public AbilityInstance instance; public CastInfo info; }
+    internal struct EventInfoAbilityInstance { public AbilityInstance instance; public Actor actor; }
+    internal struct EventInfoApplyElemental { public Actor actor; public Entity victim; public ElementalType type; public int addedStack; }
+    internal struct EventInfoDamage { public Actor actor; public Entity victim; public DamageData damage; }
+    internal struct EventInfoKill { public Actor actor; public Entity victim; }
+    internal struct EventInfoAttackEffect { public Actor actor; public Entity victim; public ReactionChain chain; }
+    internal sealed class DewPlayer
+    {
+        public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
+        public uint netId;
+        public string guid;
+        public bool isHumanPlayer = true;
+    }
+    internal static class NetworkedManagerBase<T> { public static T softInstance; }
+    internal sealed class GameManager { public string runId; }
+    internal sealed class ActorManager { public Actor serverActor; }
+    internal sealed class ZoneManager { public int currentZoneIndex; public bool isInAnyTransition; }
+    internal static class Log { public static void Error(string message) => throw new InvalidOperationException(message); }
+    internal static class NativeAttributedMemoryCast
+    {
+        internal sealed class Cast { public MemoryActivationIdentity Identity; public SkillTrigger Skill; }
+        public static Cast Current;
+    }
+    internal static class NativeMemoryPayloadScope
+    {
+        internal sealed class Scope { public Actor Source; public Type ChildType; }
+        public static Scope Current;
+    }
+    internal sealed partial class HostAuthority
+    {
+        internal static HostAuthority NativeInstance;
+        internal static readonly RunGrowthLedger RunGrowthLedger = new RunGrowthLedger();
+        private Actor _registeredOn;
+        private ZoneManager _zone;
+        private readonly Random _rng = new Random(1);
+        private readonly Dictionary<Monster, MonsterRuntime> _monsters = new Dictionary<Monster, MonsterRuntime>();
+        private readonly Dictionary<Monster, NightmareAffix> _nightmares = new Dictionary<Monster, NightmareAffix>();
+        private readonly Dictionary<DewPlayer, string> _versionMismatches = new Dictionary<DewPlayer, string>();
+        internal sealed class MonsterRuntime
+        {
+            public Monster Monster;
+            public Variant Variant;
+            public Behavior Behavior;
+            public string KillEventId, KillEventStreamId, ClassificationVariant;
+            public uint KillEventNetId, SyncNetId;
+            public bool ClassificationQueued;
+            public NightmareAffix ClassificationNightmare;
+        }
+        internal sealed class Variant { public string Id; }
+        internal sealed class Behavior { public bool CueQueued; }
+        internal static bool Alive(Entity entity) => entity != null && entity.isActive && entity.currentHealth > 0;
+        private bool MechanismHandshakeAccepted(DewPlayer player) => true;
+        private void SendMonsterBehaviorCue(MonsterRuntime runtime, bool force, DewPlayer target = null)
+        {
+            // Native cue transport is not needed in these scenarios. Unexpected calls fail rather than inventing behavior.
+            throw new NotSupportedException("Behavior cue transport is outside the harness.");
+        }
+        internal static bool IsGuaranteedBasicV129(Actor actor, Entity from) => false;
+        internal void TryWeakspotBasic(Hero hero, Entity to, ref bool critical) { }
+        internal float NativeShieldBeforeDamage(Entity target) => target?.Status.currentShield ?? 0;
+        internal static bool AllNormalMemoriesReady(Entity entity) => true;
+        internal void OnNativeMemoryUsed(SkillTrigger skill, bool ready) => throw new NotSupportedException();
+        internal void OnNativeElementApplied(EventInfoApplyElemental info) => throw new NotSupportedException();
+        private void RegisterExactNativeMemoryAdapters() { }
+        private bool BindExactNativePayload(EventInfoAbilityInstance info) => false;
+        private static bool RequiresExactNativeProjectileScope(Actor actor) => false;
+        private void BindExactNativeBasicSource(AttackTrigger attack, AbilityInstance instance, Hero hero, MemoryActivationIdentity identity) => throw new NotSupportedException();
+        internal void BindResolveBeforePrepare(AttackTrigger attack, EventInfoCast cast) => throw new NotSupportedException();
+        internal void PublishAttributedBasicFired(AttackTrigger attack, AbilityInstance instance, CastInfo info) => throw new NotSupportedException();
+        private bool TryGetExactNativeDirectPayload(Actor actor, Entity target, ReactionChain chain, out MemoryActivationIdentity identity) { identity = default; return false; }
+        private bool ExactNativeChainMatches(Actor actor, ReactionChain chain) => true;
+        private bool IsPairReactionSource(Actor actor) => false;
+        private void OnIdentityStrikeBasicHit(Hero hero, Entity target, long activation) => throw new NotSupportedException();
+        private void PublishMemoryActivation(MemoryActivationEvent notification, Hero hero, Entity victim, float damage) => MemoryActivationPublished?.Invoke(notification, hero, victim, damage);
+        private readonly Dictionary<Actor, ReactionChain> _attributedNativeChains = new Dictionary<Actor, ReactionChain>();
+        private void ClearNativeEndingActor(Actor actor) { }
+        private void ResetNativeEndingAdapters() { }
+        private int _gimmickDamageDepth, _pairDamageDepth, _reactionEffectDepth;
+        private bool _reflectingDamage, _shattering;
+        private static readonly HeroSkillLocation[] LinkSkills = { HeroSkillLocation.Q, HeroSkillLocation.W, HeroSkillLocation.E, HeroSkillLocation.R, HeroSkillLocation.Identity, HeroSkillLocation.Movement };
+        private SkillTrigger FindMemory(Hero hero, string name)
+        {
+            foreach (var skill in hero.Skill.Slots.Values) if (skill.GetType().Name == name) return skill;
+            return null;
+        }
+        private readonly Dictionary<int, MemoryActivationIdentity> _nativeBaptismEndings = new Dictionary<int, MemoryActivationIdentity>();
+        private readonly Dictionary<Hero, HeroRuntime> _runtimes = new Dictionary<Hero, HeroRuntime>();
+        private readonly Dictionary<Hero, AuthoredState> _authoredMechanisms = new Dictionary<Hero, AuthoredState>();
+        private readonly Dictionary<HeroRuntime, object> _gimmickV129 = new Dictionary<HeroRuntime, object>();
+        private readonly Dictionary<Hero, BridgeState> _bridgeSuccessEffects = new Dictionary<Hero, BridgeState>();
+        private readonly Dictionary<Hero, PrimedState> _memoryPrimedRelay = new Dictionary<Hero, PrimedState>();
+        private bool HasOwnSummons(HeroRuntime runtime) => false;
+        private KeystonePayload TransformAuthoredPayload(Hero hero, KeystonePayload payload, string source, string receiver, KeystoneSourceKind kind) => throw new NotSupportedException();
+        internal sealed class HeroRuntime
+        {
+            public readonly List<PendingGimmick> PendingGimmicks = new List<PendingGimmick>();
+            public readonly Prunable Gimmicks = new Prunable(), PairCombos = new Prunable();
+        }
+        internal sealed class PendingGimmick { public AuthoredPending Authored; }
+        internal struct AuthoredPending { public bool Enabled; public object Legacy; public MemoryActivationEvent Notification; }
+        internal sealed class Prunable
+        {
+            public void PruneAttribution(MemoryActivationAttribution attribution) => throw new NotSupportedException();
+            public void PruneAttributedActivations(MemoryActivationAttribution attribution) => throw new NotSupportedException();
+        }
+        internal sealed class AuthoredState { public readonly Dictionary<string, Channel> Channels = new Dictionary<string, Channel>(); }
+        internal sealed class Channel { public readonly HashSet<long> Counted = new HashSet<long>(); public AuthoredMechanismEntry Entry; }
+        internal sealed class BridgeState { public PairComboRuntime Runtime; }
+        internal sealed class PrimedState { public MemoryPrimedRuntime Primed; public RelayWindowRuntime Relay; }
+        internal sealed class AuthoredGimmickDispatch
+        {
+            public AuthoredGimmickDispatch(HostAuthority host) { }
+            public void Clear() { }
+        }
+    }
+    internal sealed partial class ClientSession
+    {
+        private static ClientSession _hostSession;
+        internal static ulong HostAuthorityGeneration = 73;
+        public Profile Profile;
+        public Hero LocalHero;
+        public bool RunActive => Profile.Run != null;
+        private string _completedRunId;
+        private float _nextSave = float.MaxValue;
+        private bool _buildDirty;
+        private Actor _clientRpcOn;
+        private ZoneManager _zone;
+        private AsyncProfileWriter _writer;
+        private ProfileStore _store;
+        private readonly TradeLedger _trades = new TradeLedger();
+        private bool _dirty, _saveErrorFromWriteFailure;
+        private int _buildCacheFrame = -1, _saveCount;
+        private double _saveMsTotal;
+        public string SaveError { get; private set; }
+        private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
+        private readonly RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private string _pendingResultRunId;
+        private bool? _pendingRunVictory;
+        private bool MechanismHandshakeAccepted => true;
+        private readonly List<PendingRunKill> _pendingRunRewards = new List<PendingRunKill>();
+        private readonly Dictionary<uint, NightmareAffix> Nightmare = new Dictionary<uint, NightmareAffix>();
+        public readonly List<GameEvent> Events = new List<GameEvent>();
+        private void Emit(IEnumerable<GameEvent> events) => Events.AddRange(events);
+        private void ClearVariants() { }
+        private void ClearMonsterCues() { }
+        private void FlushPendingRunRewards() { }
+        private void TryFinishSecureArrival() { }
+        private void TryConcludeRun() { }
+    }
+}

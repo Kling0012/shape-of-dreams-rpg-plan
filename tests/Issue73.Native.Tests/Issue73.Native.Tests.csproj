@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Lib.Harmony" Version="2.4.2" />
+    <ProjectReference Include="../../src/SodRpg.Core/SodRpg.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.KillSync.cs" Link="ModUnderTest/HostAuthority.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativePowers.cs" Link="ModUnderTest/HostAuthority.NativePowers.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.MemoryActivationAttribution.cs" Link="ModUnderTest/HostAuthority.MemoryActivationAttribution.cs" />
+    <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.KillSync.cs" Link="ModUnderTest/ClientSession.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.PressureDividend.cs" Link="ModUnderTest/ClientSession.PressureDividend.cs" />
+    <Compile Include="../../src/SodRpg.Mod/ClientSession.Durability.cs" Link="ModUnderTest/ClientSession.Durability.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.cs" Link="ModUnderTest/NetMessages.cs" />
+    <Compile Include="../../src/SodRpg.Mod/NetMessages.KillSync.cs" Link="ModUnderTest/NetMessages.KillSync.cs" />
+    <Compile Include="../../src/SodRpg.Mod/PressureDividendMessages.cs" Link="ModUnderTest/PressureDividendMessages.cs" />
+  </ItemGroup>
+  <Import Project="NativePersistence.targets" />
+</Project>

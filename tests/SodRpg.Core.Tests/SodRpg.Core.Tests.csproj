@@ -32,7 +32,7 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.GemSlots.cs" Link="ModUnderTest/HostAuthority.GemSlots.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.PairCombos.cs" Link="ModUnderTest/HostAuthority.PairCombos.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.Hello.cs" Link="ModUnderTest/HostAuthority.Hello.cs" />
-    <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
+    <Compile Include="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs" Link="ModUnderTest/HostAuthority.AuthoredMechanisms.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.NativeMemoryCasts.cs" Link="ModUnderTest/HostAuthority.NativeMemoryCasts.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.AuthoredKeystones.cs" Link="ModUnderTest/HostAuthority.AuthoredKeystones.cs" />
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.DirectedRecharge.cs" Link="ModUnderTest/HostAuthority.DirectedRecharge.cs" />
@@ -51,5 +51,15 @@
     <Compile Include="../../src/SodRpg.Mod/HostAuthority.SpawnInit.cs" Link="ModUnderTest/HostAuthority.SpawnInit.cs" />
     <Compile Include="../../src/SodRpg.Mod/CodexPresenter.cs" Link="ModUnderTest/CodexPresenter.cs" />
   </ItemGroup>
+
+  <!-- The test-visible PendingGimmick needs the product's value metadata at the same accessibility.
+       Only visibility changes in this generated test compilation unit; src remains untouched. -->
+  <Target Name="ExposeAuthoredPendingMetadata" BeforeTargets="CoreCompile">
+    <PropertyGroup>
+      <AuthoredMechanismsSource>$([MSBuild]::Escape($([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/HostAuthority.AuthoredMechanisms.cs').Replace('private struct AuthoredPendingGimmick', 'internal struct AuthoredPendingGimmick'))))</AuthoredMechanismsSource>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(IntermediateOutputPath)HostAuthority.AuthoredMechanisms.cs"
+                      Lines="$(AuthoredMechanismsSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
 
 </Project>

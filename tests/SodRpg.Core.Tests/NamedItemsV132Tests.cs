@@ -492,8 +492,6 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Named_id_round_trips_and_old_saves_read_as_normal_relics()
         {
-            Assert.Equal(4, Profile.CurrentVersion); // 保存の版は上げない（設計 4）
-
             var p = Profile.CreateNew(6001);
             Rules.BeginRun(p, "named-save", heroKey: "Hero_Vesper");
             var enhanced = NamedRelic("named.test.w3"); // エピック（限界突破ができるのはレア以上なので）

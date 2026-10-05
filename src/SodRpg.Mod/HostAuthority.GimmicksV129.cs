@@ -14,7 +14,7 @@ namespace SodRpg.Mod
             public readonly GimmickWoundRuntime Wounds = new GimmickWoundRuntime();
             public readonly Dictionary<int, Entity> Victims = new Dictionary<int, Entity>();
             public readonly Dictionary<Actor, long> Casts = new Dictionary<Actor, long>();
-            public readonly Dictionary<long, object> PairActivations = new Dictionary<long, object>();
+            public readonly Dictionary<long, long> BasicActivations = new Dictionary<long, long>();
             public readonly Dictionary<int, GimmickHitContext> LastHits = new Dictionary<int, GimmickHitContext>();
             public readonly List<GimmickWoundRuntime.Tick> Ticks = new List<GimmickWoundRuntime.Tick>();
             public Action<EventInfoCast> CastHandler;
@@ -42,7 +42,11 @@ namespace SodRpg.Mod
             state.CastHandler = info =>
             {
                 if (info.instance != null && info.trigger is SkillTrigger)
+                {
+                    if (state.Casts.TryGetValue(info.instance, out long previous))
+                    { rt.Gimmicks.ForgetActivation(previous); rt.PairCombos.ForgetActivation(previous); }
                     state.Casts[info.instance] = ++_gimmickCastSequence;
+                }
             };
             rt.Hero.EntityEvent_OnCastCompleteBeforePrepare += state.CastHandler;
             _gimmickV129.Add(rt, state);
@@ -73,26 +77,21 @@ namespace SodRpg.Mod
             return 0;
         }
 
-        private object PairActivation(HeroRuntime rt, Actor actor)
+        private long PairActivation(HeroRuntime rt, Actor actor)
         {
             long attributed = AttributedActivationSerial(actor);
-            if (attributed != 0)
-            {
-                var verifiedState = InitializeGimmicksV129(rt);
-                if (!verifiedState.PairActivations.TryGetValue(-attributed, out var verifiedToken))
-                    verifiedState.PairActivations[-attributed] = verifiedToken = new object();
-                return verifiedToken;
-            }
-            // A summon lives across many attacks; each native primary attack is a separate activation.
+            if (attributed != 0) return -attributed;
+            // Reusable native scopes have reference identity only for their current dispatch.
             var basic = BasicAttackContext.Current;
-            if (basic != null && basic.Actor == actor)
-                return basic.Primary ? basic : null;
             var state = InitializeGimmicksV129(rt);
-            long serial = GimmickActivation(state, actor);
-            if (serial == 0) return null;
-            if (!state.PairActivations.TryGetValue(serial, out var token))
-                state.PairActivations[serial] = token = new object();
-            return token;
+            if (basic != null && basic.Actor == actor)
+            {
+                if (!basic.Primary) return 0;
+                if (!state.BasicActivations.TryGetValue(basic.Serial, out long serial))
+                    state.BasicActivations.Add(basic.Serial, serial = ++_gimmickCastSequence);
+                return serial;
+            }
+            return GimmickActivation(state, actor);
         }
 
         private static PairComboHitKind PairHitKind(Actor actor)
@@ -145,11 +144,15 @@ namespace SodRpg.Mod
             if (sourceKind != KeystoneSourceKind.MovementEvent && actor != null && TryGetMemoryActivation(actor, out var native))
                 sourceKind = native.NativePayloadKind == NativePayloadKind.MainBasicAttack ? KeystoneSourceKind.OwnedBasicAttack
                     : native.NativePayloadKind == NativePayloadKind.SummonAttack ? KeystoneSourceKind.OwnedSummon : KeystoneSourceKind.NativeMemory;
+            var buffers = RentMechanismDispatchBuffers();
+            try
+            {
+            var dispatch = buffers.Gimmick;
+            dispatch.Hero = rt.Hero; dispatch.LegacyRuntime = rt; dispatch.Source = memory; dispatch.SourceKind = sourceKind;
+            dispatch.Cooldown = skill != null ? skill.currentConfigMaxCooldownTime : 0f;
             rt.Gimmicks.Fire(trigger, memory, Time.time, id, damage, _gimmickDamageDepth != 0, requests,
                 GimmickActivation(state, actor), skill != null ? skill.currentConfigMaxCooldownTime : 0f, direct, IsGimmickBoss(victim), elements,
-                filter: entry => !IsAuthoredGimmick(rt.Hero, entry),
-                transform: entry => TransformLegacyGimmick(rt, entry.Def, memory, sourceKind, entry.StarId,
-                    skill != null ? skill.currentConfigMaxCooldownTime : 0f));
+                filter: dispatch.Filter, transform: dispatch.Transform);
             for (int i = 0; i < requests.Count; i++)
             {
                 var request = requests[i];
@@ -159,6 +162,8 @@ namespace SodRpg.Mod
                 if (request.Entry.Def.Effect == GimmickEffect.Primed)
                     rt.Powers.PrimeNextBasic(Time.time, request.Entry.Def.ValuePercent, Gimmicks.Duration(request.Entry.Def, 5f));
             }
+            }
+            finally { ReturnMechanismDispatchBuffers(buffers); }
         }
 
         private static int CountGimmickElements(Entity victim)
@@ -343,6 +348,8 @@ namespace SodRpg.Mod
         private void UpdateGimmicksV129(HeroRuntime rt, float now)
         {
             if (!_gimmickV129.TryGetValue(rt, out var state)) return;
+            foreach (long serial in state.BasicActivations.Values) rt.PairCombos.ForgetActivation(serial);
+            state.BasicActivations.Clear();
             if (!Alive(rt.Hero)) { state.Wounds.Clear(); state.LastHits.Clear(); return; }
             var dead = _gimmickVictimScratch;
             dead.Clear();
@@ -363,7 +370,7 @@ namespace SodRpg.Mod
             foreach (var cast in casts)
             {
                 rt.Gimmicks.ForgetActivation(state.Casts[cast]);
-                state.PairActivations.Remove(state.Casts[cast]);
+                rt.PairCombos.ForgetActivation(state.Casts[cast]);
                 state.Casts.Remove(cast);
             }
             state.Ticks.Clear();
@@ -426,7 +433,7 @@ namespace SodRpg.Mod
                 pair.Value.Wounds.Clear();
                 pair.Value.Victims.Clear();
                 pair.Value.Casts.Clear();
-                pair.Value.PairActivations.Clear();
+                pair.Value.BasicActivations.Clear();
                 pair.Value.LastHits.Clear();
             }
             foreach (var pair in _sapProcessors)

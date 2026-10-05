@@ -58,3 +58,124 @@
 - `DOTNET_ROLL_FORWARD=Major DOTNET=/usr/bin/dotnet python tools/test_changed.py`：
   選択107クラス、Failed 0 / Passed 90（.NET 8 ランタイムが無い環境のため ROLL_FORWARD 必要）。
 - 実機での長期遠征・ボス一斉撃破の再現確認は未実施。perf.flag / `dreamforge_perf` で Update/OnGUI/save avg を観測可。
+
+## #73：残存する確保と長期遠征（2026-10-05）
+
+- `HostAuthority.NativePowers.cs`：基本攻撃・ダメージ・属性付与の同期スコープを、
+  ネスト深度ごとの再利用バッファに変更。参加者ではスナップショットを作らない。
+  外側スコープは Harmony Finalizer で復元し、使い終えた Actor/Entity 参照を解放する。
+- ダメージ前のシールド全走査は、ホストの `ShieldbreakBurst` を持つ旅人へのダメージだけに限定。
+  `IReadOnlyList<BasicEffect>` は添字で走査し、インターフェース列挙子の確保を避ける。
+- 再利用されるスコープの参照を発動・召喚獣の致死判定の識別子に使わず、
+  ディスパッチごとに増えるシリアルを使用する。古いスコープと新しい攻撃を混同しない。
+- `HostAuthority.NewPowers.cs`：通常記憶の走査は値型列挙子で行う。
+  `HostAuthority.RunGrowth.cs`：持ち主の netId 文字列は HeroRuntime に保持し、netId が変わったときだけ再生成する。
+- `DreamforgeUi.cs`：確保地点の動的説明とキー付きボタンの文字列は、
+  数値・設定・言語が変わったときだけ再生成。契約一覧の `ToList()` を除去し、
+  選択による一覧変更時は描画ループを終了する。
+  名札用 Monster 参照は NetworkIdentity ごとにキャッシュし、不要・破棄済みエントリを掃除する。
+  差分同期では、未スポーン・関心領域外という理由だけでタグを期限切れにせず、ホストの明示的な除去を待つ。
+- 帰属・発動の装備スナップショットは `EntityAbility.SetAbility` / `RemoveAbility` で更新し、
+  ダメージごとの装備辞書・リスト再構築を廃止する。パケット・要求・味方障壁の作業バッファは
+  同期ネストごとに再利用し、刻印のペア識別子・遅延発動のクロージャを値メタデータへ変更する。
+- 帰属台帳は256シリアルごとに、4096シリアル前までの終了済み履歴を掃除する。
+  生存中の投射物・DoT、被害者の予算、遅延処理・発動中のネイティブ終端は保持する。
+  退役済みのパケットは再入場できないため、通知や予算の二重消費を防ぐ。
+  発動成功時の配当・有効ペイロード等の結果オブジェクトの確保は残り、戦闘全体が確保ゼロになる変更ではない。
+- ネットワークは Protocol 16、保存形式は5へ更新。既存形式の読込を維持し、
+  新形式を扱えない旧バイナリには読込を拒否させる。
+  撃破チェックポイントは未対応の事実・死亡とストリーム別の連番受信境界・順序逆転の例外を保存し、
+  新たな解決済み全履歴の複製を廃止する。ホスト再起動では新しいストリームを開始し、
+  未保存の連番の再利用・native netId の再利用が古い受信境界に誤一致しないようにする。
+  旧 GUID 履歴は分割再送時に連番へ移行し、報酬を再付与しない。
+  旧形式には参加者の受信記録がないため、移行前のホスト履歴は固定の互換データとして遠征終了まで保持する。
+  新しい撃破はその互換履歴へ追加しない。
+- ACK は `AsyncProfileWriter.WrittenRevision` で確認した保存済み境界だけを送る。
+  未受信事実がある間は ACK を先へ進めない。新しいストリームではホストと参加者の未確認事実のみ保存・再送し、
+  切断した参加者については切断前の未確認区間だけを保持する。
+  不在中の将来の撃破は、その参加者の再送台帳へ加えない。
+- 復帰時は不在区間を受信境界から除外し、保存済みの未解決死亡はストリームと netId 指定の要求で回復する。
+  撃破再送・未受信事実の回復・生存敵の途中参加同期は、合計32 RPC メッセージ/フレームまでに分割する。
+  定期の分類・行動合図は差分だけを送り、死亡・除去は明示的に同期する。
+  差分は値を合流した FIFO で保持し、除去・分類・行動合図をラウンドロビンで処理する。
+  更新の多い敵が後続の敵を飢餓状態にしないよう、同じ netId の更新でも待ち順は変えない。
+  実際に新しく発生した撃破の事実と最初のストリーム通知は即時送信し、
+  native 死亡の通知より前に分類を送る順序を維持する（再送の32件枠とは別）。
+- 接続直後の未知の参加者は最初のストリーム通知までの区間だけを保持し、
+  互換性を確認した Hello/受信通知の後だけ将来の参加区間を延長する。
+  MOD 非導入の味方が、将来の全撃破を保存に滞留させることはない。
+  空の仮参加区間は ACK 不要で除去し、切断後の空の `connection.*` peer は保持しない。
+  空または確認済み区間しか持たない仮 peer は保存・復元対象にも含めない。
+  権威未確定の死亡は観測セッションIDを保存し、復旧候補が一意な場合だけ過去のストリームへ結び付ける。
+  未確定・復旧候補なし・曖昧な死亡も実時間30秒で報酬なしとして完了し、後続の精算・進行・ACKを止め続けない。
+  ストリームと観測セッションに紐づく期限切れ墓標を保存し、遅着事実による再付与を防ぐ。
+  旧形式の `expiredMonsters` も移行読込する。未知の分類の捏造や推測による報酬付与はしない。
+- 夢の圧の配当も `DeferKillSave()` にまとめ、同一フレームでの全文保存の連続を避ける。
+  未解決・未保存の例外、および実際の所持品等の成長は保存に残るため、プロフィール全体の固定サイズは保証しない。
+
+本体資料は Managed DLL と逆コンパイルソースのみで、ゲームの起動プログラムを含まない。
+この環境では実戦の `dreamforge_perf` 前後比較、実画面、ホスト・参加者の再接続の実機確認はできない。
+ビルド・既存テストの結果と、実機で未確認の受入条件は納品報告で区別する。
+
+### #73 初回実装の検証結果（main 追従前）
+
+- 指定の Release ビルド：成功、警告5件、エラー0件。
+- 指定の `tools/test_changed.py --all`：終了コード1。テストプロジェクトのコンパイルエラー20件で停止し、
+  テスト本体は未実行（runner の Passed 0 / Failed 0 は成功を意味しない）。
+- テスト側のネイティブ API スタブは変更していない。リンクした本番ソースの新しいキャッシュ・値メタデータ・同期メンバーが
+  スタブに存在しないため、次の CS0103 / CS1061 が発生した。下表のファイルはすべて `src/SodRpg.Mod/` 配下。
+
+| ファイル | 行 | 不足メンバー |
+| --- | --- | --- |
+| `HostAuthority.PairCombos.cs` | 114 / 118 | `EnsureMemoryAttributionEquipment` / `PendingGimmick.Authored` |
+| `HostAuthority.Hello.cs` | 55 / 60 / 71 | `BindKillObservationSession` / `_killReplayPlayers` / `ClientSession` |
+| `HostAuthority.AuthoredMechanisms.cs` | 303 / 363 / 438 / 476 / 483 | `PendingGimmick.Authored` / `_attributionMemoryIds` / `PendingGimmick.Authored` / `PendingGimmick.Authored` / `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.NativeMemoryCasts.cs` | 34 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.AuthoredKeystones.cs` | 90 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.DirectedRecharge.cs` | 52 / 53 | `EnsureMemoryAttributionEquipment` / `_mechanismEquipment` |
+| `HostAuthority.MemoryPrimedRelay.cs` | 88 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.StunSourceFilter.cs` | 59 / 86 / 101 | `EnsureMemoryAttributionEquipment` |
+| `HostAuthority.GimmicksV129.cs` | 90 / 91 | `BasicAttackContext.Serial` |
+
+### #73 レビュー修正・main 追従
+
+- `origin/main` へ rebase。競合は5ファイル・16ブロック。
+  #70 の30秒期限・報酬なし完了・旧墓標を新台帳へ統合し、#71 の heat/waypoint 撃破時スナップショット、
+  #72 の保存再試行・例外時の未配当保持、#74 の TickGuard、#81 の Clone と明示的な `now` 引数を保持した。
+  名札は #73 の差分同期に合わせ、時間経過ではなくホストの明示的な除去で消す。
+- `LossOfIdentity` の直接 `Destroy()` が通る `EntityAbility.RemoveAbility(int)` をフックする。
+  `SetAbility(int, AbilityTrigger)` も同じ実変更地点で更新し、既存の装備インスタンス比較で
+  旧帰属を失効・epochを更新する。借用済みスナップショットは書き換えない。
+  Q/W/E/R/Identity/Movement以外と非アクティブHeroは対象外。ダメージごとの走査へ戻さない。
+- MOD 未導入・版不一致・切断の空の仮 peer を、共通の切断処理と保存フィルタで除去する。
+  実際の未確認区間と、互換参加者の再接続に必要な受信境界は保持する。
+  空の仮登録だけでは保存を要求しない。
+- 保存済みACKは二重付与と再送履歴の抑制に必要なため維持する。
+  期限前の追加処理は最短期限との比較だけとし、期限到達時の待ちキュー走査・既存のACK/保存/切断処理で収束させる。
+  新しい毎フレームの装備・敵全走査、無制限の例外再試行、追加の同期方式は導入しない。
+  実機の性能差はこの環境では未計測。
+- 指定の Release ビルド：成功、警告5件、エラー0件。
+  このレビュー修正ではテストを設計・追加・変更・実行していない。実ゲーム起動・再接続は未確認。
+
+### #73 テスト追従の検証結果
+
+- 製品ソースは変更せず、既存テストの `PendingGimmick.Authored`、装備スナップショット／
+  IDキャッシュ、装備変更通知、`BasicAttackContext.Serial`、Hello同期・権威世代のスタブを追従。
+  台帳の `ReceiveFact` / `Capture` は明示的な実時間を渡す。
+  旧Protocol／保存版の固定値だけを確認する期待値は除去し、形式3/4の互換フィクスチャを維持した。
+- 新規は `Issue73LedgerTests` の5ケースと、独立ネイティブハーネスの10ケース。
+  形式4→5、連番欠落・ACK・履歴圧縮後の報酬過不足、30秒期限・曖昧な死亡・旧墓標、
+  分割再送・FIFO差分、配当の遅延ディスク保存、入れ子のバッファ再利用、
+  直接 `RemoveAbility` のepoch更新、空の仮peer除外を検証した。
+  ネイティブハーネスは本番ソースをリンクし、保存メソッドはRoslyn ASTで変更せず選択する。
+  テスト側のHarmonyは検証ホストのCoreCLR 10に対応する2.4.2を使用する。
+- 指定コマンド
+  `DOTNET=/usr/bin/dotnet DOTNET_ROLL_FORWARD=Major python tools/test_changed.py --all`：
+  終了コード0、成功3,081件、失敗0件。既存の長時間ランダム等価試験2件は既定設定でスキップ。
+- 一時コンソールの単独実行：1,000／10,000撃破でチェックポイントを含む固定プロフィールは
+  1,166／1,168文字、未対応事実と解決済みGUIDは0件、連番境界は1,000／10,000。
+  10,000件を一度ずつ精算し、再読込後の重複配送は追加精算しなかった。
+  同じく本番 `TickKillReplay` で65事実を再送し、各フレームのRPCは23／23／20／0件、
+  全65件が過不足なく届いた。一時コードは除去済み。
+- この検証で製品側の不具合は未検出。固定プロフィールの計測は所持品等の成長を含まず、
+  実戦のフレーム時間・確保量、Unity本体のRPC転送・再接続の実機検証は未実施。

@@ -292,11 +292,11 @@ namespace SodRpg.Core.Game
         public RetuneOffer RetuneOffer { get; set; }
 
         /// <summary>
-        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4 に上げた。内容（星団の星・選択の星など）を足す版では必ず上げる。
+        /// 保存の版。v1.27 で 2、v1.28 で 3、v1.31 で 4、撃破受領フロンティアの保存で 5 に上げた。
         /// 古いMODは新しい版を読み取り専用で開き（LedgerVersionException）、知らない星や遺物を捨てて上書きしない。
-        /// 3→4 はリセットしない（ResetBeforeVersion は 3 のまま）。
+        /// 3→4→5 はリセットしない（ResetBeforeVersion は 3 のまま）。
         /// </summary>
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         /// <summary>この版より古い保存は読み込まず、写しを残して新しいプロフィールで始める。</summary>
         public const int ResetBeforeVersion = 3;

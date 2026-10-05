@@ -47,6 +47,7 @@ namespace SodRpg.Mod
             internal MechanismEquipment Equipment;
             internal string Admission;
             internal int HookSignature = -1;
+            internal bool HasSacrificePayload;
         }
         private readonly Dictionary<Hero, AuthoredKeystoneBinding> _authoredKeystones = new Dictionary<Hero, AuthoredKeystoneBinding>();
         private long _authoredKeystoneEpoch;
@@ -63,6 +64,9 @@ namespace SodRpg.Mod
             if (build.SelectedKeystones.Count == 0) { _authoredKeystones.Remove(hero); return; }
             var binding = new AuthoredKeystoneBinding { Build = build, Key = signature,
                 Runtime = new ScopedKeystoneModifiers(build.SelectedKeystones), Epoch = checked(++_authoredKeystoneEpoch) };
+            foreach (var key in build.SelectedKeystones)
+                foreach (var payload in key.Payloads)
+                    if (payload == KeystonePayloadKind.SacrificeShield) binding.HasSacrificePayload = true;
             _authoredKeystones[hero] = binding;
             RefreshAuthoredKeystone(hero);
         }
@@ -83,9 +87,9 @@ namespace SodRpg.Mod
         internal void RefreshAuthoredKeystone(Hero hero)
         {
             if (hero == null || !_authoredKeystones.TryGetValue(hero, out var binding)) return;
-            long nativeEpoch = RefreshMemoryAttributionEquipment(hero);
+            long nativeEpoch = EnsureMemoryAttributionEquipment(hero);
             var keys = binding.Build.SelectedKeystones;
-            int hooks = keys.Any(key => key.Payloads.Contains(KeystonePayloadKind.SacrificeShield))
+            int hooks = binding.HasSacrificePayload
                 ? (NativeAuthoredKeystoneDamage.Bound ? 1 : 0) | (NativeSacrificeShieldDispatch.GoldenBound ? 2 : 0)
                     | (NativeSacrificeShieldDispatch.ReductionBound ? 4 : 0) : 0;
             if (binding.NativeEpoch == nativeEpoch && binding.HookSignature == hooks) return;

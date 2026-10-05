@@ -198,7 +198,6 @@ namespace SodRpg.Mod
             _nextBuildSend = 0;
             _nextDreamEventNotice = 0;
             Nightmare.Clear();
-            NightmareSeenAt.Clear();
             ClearVariants();
             ClearMonsterCues();
         }

@@ -12,7 +12,9 @@ namespace SodRpg.Mod
         private readonly Action<DreamforgeRunChoicesMsg> _onRunChoices;
         private readonly RunChoiceProgress _runChoiceProgress = new RunChoiceProgress();
         private RunChoiceSnapshot _receivedRunChoices => _runChoiceProgress.Received;
-        private readonly RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private RunChoicePublisher _choicePublisher = new RunChoicePublisher();
+        private Actor _hostAuthorityActor;
+        private bool _hostAuthorityNeedsRenewal;
         private string _encodedRunChoices;
         private float _nextChoicesSync;
         private PendingRunRewards _pendingRunRewards => _runChoiceProgress.Rewards;
@@ -27,7 +29,7 @@ namespace SodRpg.Mod
             ? DreamDepth.Clamp(HostRun?.DreamDepth ?? _hostSession.Profile.LastDreamDepth) : 0;
         internal static string HostRunChoices => NetworkServer.active ? _hostSession?.EncodeRunChoices() : null;
         internal static ulong HostAuthorityGeneration => NetworkServer.active && _hostSession != null
-            ? _hostSession._choicePublisher.AuthorityGeneration : 0;
+            ? _hostSession.ObserveHostAuthorityPublisher() : 0;
         internal static bool CommitHostCombatChoice() => NetworkServer.active && _hostSession != null
             && _hostSession.CommitCombatChoice();
         /// <summary>戦闑では選択を解決できない経路（純白の入口）。この間は敵の必須初期化を確定待ちで止めない。</summary>
@@ -79,8 +81,30 @@ namespace SodRpg.Mod
             return null;
         }
 
-        private string EncodeRunChoices() => _encodedRunChoices = _choicePublisher.Encode(
-            RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
+        private ulong ObserveHostAuthorityPublisher()
+        {
+            var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
+            if (actor == null || ReferenceEquals(actor, _hostAuthorityActor)) return _choicePublisher.AuthorityGeneration;
+            if (!ReferenceEquals(_hostAuthorityActor, null) || _hostAuthorityNeedsRenewal)
+            {
+                var previous = _choicePublisher;
+                _choicePublisher = new RunChoicePublisher();
+                // Only transport authority/revisions change; run, zone and waypoint generations remain intact.
+                _choicePublisher.RestoreFinalized(previous.ExportFinalized(), previous.TerminalChoices, previous.TerminalVictory);
+                _encodedRunChoices = null;
+                _nextChoicesSync = 0;
+            }
+            _hostAuthorityActor = actor;
+            _hostAuthorityNeedsRenewal = false;
+            return _choicePublisher.AuthorityGeneration;
+        }
+
+        private string EncodeRunChoices()
+        {
+            if (NetworkServer.active) ObserveHostAuthorityPublisher();
+            return _encodedRunChoices = _choicePublisher.Encode(
+                RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
+        }
 
         private void PublishRunChoices()
         {

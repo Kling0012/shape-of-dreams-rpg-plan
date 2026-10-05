@@ -79,6 +79,22 @@ namespace SodRpg.Core.Game
         private readonly Dictionary<string, Slot> _slots = new Dictionary<string, Slot>(StringComparer.Ordinal);
         private readonly HashSet<long> _recipientAttacks = new HashSet<long>();
         private readonly HashSet<(string Channel, long Activation, long Victim)> _grants = new HashSet<(string, long, long)>();
+        private readonly List<string> _sourceScratch = new List<string>();
+        private readonly List<long> _attackScratch = new List<long>();
+        private readonly List<(string Channel, long Activation, long Victim)> _grantScratch = new List<(string, long, long)>();
+        private MemoryActivationAttribution _attribution;
+        public void PruneAttribution(MemoryActivationAttribution attribution)
+        {
+            _attribution = attribution;
+            _attackScratch.Clear();
+            foreach (long attack in _recipientAttacks) if (!attribution.IsActivationRetained(attack)) _attackScratch.Add(attack);
+            foreach (long attack in _attackScratch) _recipientAttacks.Remove(attack);
+            _grantScratch.Clear();
+            foreach (var grant in _grants)
+                if (grant.Activation != 0 && !attribution.IsActivationRetained(grant.Activation)
+                    || grant.Victim != 0 && !attribution.IsVictimRetained(grant.Victim)) _grantScratch.Add(grant);
+            foreach (var grant in _grantScratch) _grants.Remove(grant);
+        }
 
         public MemoryPrimedRuntime(long ownerId)
         {
@@ -120,18 +136,19 @@ namespace SodRpg.Core.Game
         }
 
         public bool OnSourceEvent(MemoryActivationEvent notification, float now, Func<MemoryPrimedDefinition, bool> filter = null,
-            bool triggerAlreadyAdmitted = false)
+            bool triggerAlreadyAdmitted = false, string channelId = null)
         {
             if (!Gimmicks.Finite(now)) throw new ArgumentOutOfRangeException(nameof(now));
             Prune(now);
             if (notification.OwnerId != _ownerId || notification.GeneratedOrigin != GeneratedOrigin.None
                 || notification.ActivationId <= 0 || notification.SourceMemory == null
+                || _attribution != null && !_attribution.IsEventRetained(notification)
                 || !_equipment.TryGetValue(notification.SourceMemory, out long epoch)
                 || epoch != notification.EquipmentEpoch) return false;
             bool armed = false;
             foreach (var definition in _definitions.Values)
             {
-                if (filter != null && !filter(definition)) continue;
+                if (channelId != null && definition.ChannelId != channelId || filter != null && !filter(definition)) continue;
                 if (definition.SourceMemory != notification.SourceMemory || !triggerAlreadyAdmitted && definition.Trigger != notification.EventKind) continue;
                 if (definition.Budget == AttributionBudget.PerKill && notification.EventKind != MemoryEventKind.Kill
                     || definition.Budget != AttributionBudget.PerActivation && notification.VictimId == 0) continue;
@@ -166,7 +183,7 @@ namespace SodRpg.Core.Game
             if (hit.OwnerId != _ownerId || hit.EventKind != MemoryEventKind.OwnedBasicAttackHit
                 || hit.NativePayloadKind != NativePayloadKind.MainBasicAttack || hit.GeneratedOrigin != GeneratedOrigin.None
                 || hit.ActivationId <= 0 || hit.DamagePacketId <= 0 || hit.VictimId == 0
-                || _recipientAttacks.Contains(hit.ActivationId)) return false;
+                || _recipientAttacks.Contains(hit.ActivationId) || _attribution != null && !_attribution.IsEventRetained(hit)) return false;
             bool found = false;
             NextBasicBonusCandidate winner = default;
             if (existingBonuses != null)
@@ -208,9 +225,9 @@ namespace SodRpg.Core.Game
 
         private void Prune(float now)
         {
-            var remove = new List<string>();
-            foreach (var pair in _slots) if (now >= pair.Value.ExpiresAt) remove.Add(pair.Key);
-            foreach (string source in remove) _slots.Remove(source);
+            _sourceScratch.Clear();
+            foreach (var pair in _slots) if (now >= pair.Value.ExpiresAt) _sourceScratch.Add(pair.Key);
+            foreach (string source in _sourceScratch) _slots.Remove(source);
         }
     }
 }

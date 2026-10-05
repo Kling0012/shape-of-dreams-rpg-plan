@@ -12,6 +12,9 @@ namespace SodRpg.Mod
         {
             public PairComboRuntime Runtime;
             public IReadOnlyDictionary<string, int> EndpointRanks;
+            public Func<string, string, decimal, decimal> TransformExpose;
+            public readonly Dictionary<(string Pair, string Channel), AuthoredMechanismSpec> Wards =
+                new Dictionary<(string, string), AuthoredMechanismSpec>();
         }
         private readonly Dictionary<Hero, BridgeSuccessHostState> _bridgeSuccessEffects = new Dictionary<Hero, BridgeSuccessHostState>();
         private void InitializeBridgeSuccessEffects() => MemoryActivationPublished += OnBridgeSuccessEvent;
@@ -37,6 +40,21 @@ namespace SodRpg.Mod
             var ranks = new Dictionary<string, int>(StringComparer.Ordinal);
             foreach (var pair in endpointRanks) ranks.Add(pair.Key, pair.Value);
             if (!_bridgeSuccessEffects.TryGetValue(hero, out var state)) state = new BridgeSuccessHostState { Runtime = heroRuntime.PairCombos };
+            if (state.TransformExpose == null) state.TransformExpose = (source, channel, units) =>
+            {
+                var result = TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.ModEffect, units / 100m,
+                    new KeystoneCaps(100), KeystonePayloadKind.Gimmick, GimmickEffect.Expose, channel),
+                    source, null, KeystoneSourceKind.NativeMemory);
+                return result.Value * 100m;
+            };
+            state.Wards.Clear();
+            foreach (var definition in copy)
+                foreach (var payload in definition.Payloads)
+                    if (payload.Kind == BridgePayloadKind.AlliedWard)
+                        state.Wards[(definition.PairId, payload.ChannelId)] = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard,
+                            ChannelId = payload.ChannelId, Ward = payload.Ward, UncappedValueUnits = payload.UncappedValueUnits,
+                            UncappedDurationSeconds = payload.UncappedDurationSeconds, UncappedRadiusMetres = payload.UncappedRadiusMetres,
+                            UncappedTargetCount = payload.UncappedTargetCount };
             state.Runtime.SetSuccessEffects(copy); state.EndpointRanks = ranks;
             state.Runtime.RefreshSuccessPrerequisites(CollectMechanismEquipment(hero, hero.GetInstanceID()), ranks);
             _bridgeSuccessEffects[hero] = state;
@@ -62,12 +80,17 @@ namespace SodRpg.Mod
         {
             if (!NetworkServer.active || !Alive(hero) || !_bridgeSuccessEffects.TryGetValue(hero, out var state)) return;
             var equipment = CollectMechanismEquipment(hero, notification.OwnerId);
-            var transactions = new List<BridgeSuccessTransaction>();
+            var buffers = RentMechanismDispatchBuffers();
+            try
+            {
+            var transactions = buffers.Bridges;
             bool summons = _runtimes.TryGetValue(hero, out var rt) && HasOwnSummons(rt);
             state.Runtime.FireAttributed(notification, Time.time, nativeDamage, equipment, state.EndpointRanks, transactions,
                 phase: NativeBridgeSourcePhase(notification), hasOwnedSummon: summons,
                 damageTargetReady: BridgeDamageTargetReady(hero, victim));
             foreach (var transaction in transactions) ApplyBridgeSuccess(hero, victim, transaction);
+            }
+            finally { ReturnMechanismDispatchBuffers(buffers); }
         }
         private static BridgeSourcePhase NativeBridgeSourcePhase(MemoryActivationEvent notification)
         {
@@ -90,13 +113,17 @@ namespace SodRpg.Mod
                 || !transaction.IsCurrent(state.Runtime, equipment, state.EndpointRanks)) return;
             if (transaction.Notification.EventKind == MemoryEventKind.OwnedBasicAttackFired
                 && (!_runtimes.TryGetValue(hero, out var firedOwner) || !HasOwnSummons(firedOwner))) return;
-            foreach (var payload in transaction.Payloads)
-                if (payload.Kind == BridgePayloadKind.Damage && !BridgeDamageTargetReady(hero, victim)) return;
-            var recharge = new List<DirectedRechargeRequest>();
+            for (int p = 0; p < transaction.Payloads.Count; p++)
+                if (transaction.Payloads[p].Kind == BridgePayloadKind.Damage && !BridgeDamageTargetReady(hero, victim)) return;
+            var buffers = RentMechanismDispatchBuffers();
+            try
+            {
+            var recharge = buffers.Recharges;
             transaction.CreateRechargeRequests(equipment, state.EndpointRanks, recharge);
             foreach (var request in recharge) ApplyDirectedRecharge(hero, request);
-            foreach (var payload in transaction.Payloads)
+            for (int p = 0; p < transaction.Payloads.Count; p++)
             {
+                var payload = transaction.Payloads[p];
                 if (!transaction.IsCurrent(state.Runtime, CollectMechanismEquipment(hero, transaction.Notification.OwnerId), state.EndpointRanks)) return;
                 if (!_runtimes.TryGetValue(hero, out var owner)) return;
                 if (payload.Kind == BridgePayloadKind.OrdinaryShield)
@@ -111,9 +138,7 @@ namespace SodRpg.Mod
                 if (payload.Kind == BridgePayloadKind.AlliedWard)
                 {
                     // The success transaction already spent the pair's quota; the ward uses the C12 recipient, cap and pool rules.
-                    var authored = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = payload.ChannelId, Ward = payload.Ward,
-                        UncappedValueUnits = payload.UncappedValueUnits, UncappedDurationSeconds = payload.UncappedDurationSeconds,
-                        UncappedRadiusMetres = payload.UncappedRadiusMetres, UncappedTargetCount = payload.UncappedTargetCount };
+                    var authored = state.Wards[(transaction.PairId, payload.ChannelId)];
                     DispatchAdmittedWard(owner, payload.Ward, transaction.Notification.SourceMemory, ModShieldEquipmentEpoch(owner),
                         authored: authored, sourceKind: KeystoneSourceKind.NativeMemory);
                     continue;
@@ -141,6 +166,8 @@ namespace SodRpg.Mod
                 finally { _pairDamageDepth--; }
             }
             DispatchAuthoredBridgeChannels(hero, victim, transaction);
+            }
+            finally { ReturnMechanismDispatchBuffers(buffers); }
         }
         private static bool BridgeDamageTargetReady(Hero hero, Entity victim) => victim != null && victim.isActive
             && victim.currentHealth > 0f && victim.GetRelation(hero) == EntityRelation.Enemy;
@@ -152,14 +179,7 @@ namespace SodRpg.Mod
         {
             if (!_bridgeSuccessEffects.TryGetValue(hero, out var state)) return 0;
             return (float)(state.Runtime.BridgeExposeUnits(AttributedVictimLifetime(victim), Time.time,
-                CollectMechanismEquipment(hero, hero.GetInstanceID()), state.EndpointRanks,
-                (source, channel, units) =>
-                {
-                    var result = TransformAuthoredPayload(hero, new KeystonePayload(KeystoneLayer.ModEffect, units / 100m,
-                        new KeystoneCaps(100), KeystonePayloadKind.Gimmick, GimmickEffect.Expose, channel),
-                        source, null, KeystoneSourceKind.NativeMemory);
-                    return result.Value * 100m;
-                }) / 100m);
+                CollectMechanismEquipment(hero, hero.GetInstanceID()), state.EndpointRanks, state.TransformExpose) / 100m);
         }
     }
 }
