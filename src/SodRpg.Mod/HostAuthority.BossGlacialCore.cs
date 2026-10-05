@@ -225,9 +225,9 @@ namespace SodRpg.Mod
             return profile;
         }
         private static readonly AccessTools.FieldRef<Gem_U_GlacialCore,Dictionary<ReactionChain,float>> SkollCoreBank
-            = AccessTools.FieldRefAccess<Gem_U_GlacialCore,Dictionary<ReactionChain,float>>("_remainingDamages");
+            = SafeReflection.FieldRef<Gem_U_GlacialCore,Dictionary<ReactionChain,float>>("_remainingDamages");
         private static readonly AccessTools.FieldRef<Gem,AbilityTargetValidatorWrapper> SkollCoreTargets
-            = AccessTools.FieldRefAccess<Gem,AbilityTargetValidatorWrapper>("tvDefaultHarmfulEffectTargets");
+            = SafeReflection.FieldRef<Gem,AbilityTargetValidatorWrapper>("tvDefaultHarmfulEffectTargets");
         internal bool SkollCoreGeneratedDamage() => AttributionGeneratedOrigin() != GeneratedOrigin.None;
         private bool SkollCoreRuntime(Gem_U_GlacialCore core, out HeroRuntime rt, out SkollCoreState state, bool create = false)
         {
@@ -335,6 +335,7 @@ namespace SodRpg.Mod
         {
             if (!SkollCoreRuntime(core,out var rt,out var state) || state.Remaining <= 0 || Time.time >= state.BurstUntil
                 || BossRewardStage(rt,BossProfiles.SkollRewardId) < 3) return nativeInterval;
+            if (SkollCoreBank == null || SkollCoreTargets == null) return nativeInterval;
             float bank=0; int bankScan=0; foreach (var entry in SkollCoreBank(core)) { if(bankScan++>=256) break; bank += entry.Value; }
             if (bank <= 0) return nativeInterval;
             var validator=SkollCoreTargets(core);
@@ -354,7 +355,7 @@ namespace SodRpg.Mod
             var target=state.Priority;
             state.Priority=null;
             if (Time.time >= state.PriorityUntil || !BossAlive(target) || target.creationTime != state.PriorityCreation || !BossNativeSameLife(target,state.PriorityLife)
-                || target.GetRelation(rt.Hero) != EntityRelation.Enemy || SkollCoreTargets(core)?.Evaluate(target) != true
+                || target.GetRelation(rt.Hero) != EntityRelation.Enemy || SkollCoreTargets == null || SkollCoreTargets(core)?.Evaluate(target) != true
                 || (target.position - rt.Hero.position).Flattened().sqrMagnitude > core.shootRadius * core.shootRadius) return;
             var info=projectile.info; info.target=target; projectile.info=info;
         }
