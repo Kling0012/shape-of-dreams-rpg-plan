@@ -1,5 +1,6 @@
 using System;
 using SodRpg.Core.Game;
+using SodRpg.Mod;
 using Xunit;
 
 namespace SodRpg.Core.Tests
@@ -12,9 +13,11 @@ namespace SodRpg.Core.Tests
             public int Processes, Creates, Destroys;
             public float Multiplier = 1f, Published;
             public Handle Last;
+            public Action<Handle> AfterProcessRaw;
             public bool IsAlive(Handle handle) => handle.Alive && handle.Amount > 0;
             public float Remaining(Handle handle) => handle.Amount;
-            public float ProcessRaw(Handle handle, float rawAmount) { Processes++; return rawAmount * Multiplier; }
+            public float ProcessRaw(Handle handle, float rawAmount)
+            { Processes++; AfterProcessRaw?.Invoke(handle); return rawAmount * Multiplier; }
             public Handle CreateRaw(float rawAmount, float seconds, float processedCap)
             {
                 Creates++;
@@ -103,6 +106,78 @@ namespace SodRpg.Core.Tests
             pools.Maintain(key, 100, 2, 2, true); Assert.Equal(0, pools.Count);
             pools.Apply(key, adapter, 6, 100, 3, 4, 2);
             pools.Maintain(key, 100, 3, 2, false); Assert.Equal(0, pools.Count);
+        }
+        [Theory]
+        [InlineData(ModShieldPoolKind.Ordinary, 15f)]
+        [InlineData(ModShieldPoolKind.Rampart, 10f)]
+        [InlineData(ModShieldPoolKind.Allied, 3f)]
+        public void NativeCreationWithoutShieldSkipsAwardAndNextGrantUsesOriginalCap(ModShieldPoolKind kind, float cap)
+        {
+            var pools = new ModShieldPools<Se_GenericShield_OneShot>();
+            var recipient = new Entity();
+            var root = new Actor();
+            var key = new ModShieldPoolKey(1, 2, kind);
+            Mirror.NetworkServer.active = true;
+            try
+            {
+                root.AfterShieldCreated = handle => { handle.DestroyIfActive(); handle.shield = null; };
+                Assert.False(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 20, 100, 0, 4, 1));
+                Assert.Equal(0, pools.Count);
+                Assert.Equal(0f, recipient.Status.currentShield);
+                root.AfterShieldCreated = null;
+                Assert.True(pools.Apply(key, new NativeModShieldAdapter(root, recipient), 20, 100, 1, 4, 1));
+                Assert.Equal(cap, recipient.Status.currentShield, 4);
+                Assert.Equal(1, pools.Count);
+            }
+            finally { Mirror.NetworkServer.active = false; }
+        }
+        [Theory]
+        [InlineData(ModShieldPoolKind.Ordinary, 15f)]
+        [InlineData(ModShieldPoolKind.Rampart, 10f)]
+        [InlineData(ModShieldPoolKind.Allied, 3f)]
+        public void DestroyedNativePoolIsReplacedWithoutResurrectingItsRemainingAmount(ModShieldPoolKind kind, float cap)
+        {
+            var pools = new ModShieldPools<Se_GenericShield_OneShot>();
+            var recipient = new Entity();
+            var root = new Actor();
+            var adapter = new NativeModShieldAdapter(root, recipient);
+            var key = new ModShieldPoolKey(1, 2, kind);
+            Se_GenericShield_OneShot previous = null;
+            Mirror.NetworkServer.active = true;
+            try
+            {
+                root.AfterShieldCreated = handle => previous = handle;
+                Assert.True(pools.Apply(key, adapter, 20, 100, 0, 4, 1));
+                previous.DestroyIfActive();
+                previous.shield = null;
+                root.AfterShieldCreated = null;
+                Assert.True(pools.Apply(key, adapter, 1, 100, 1, 4, 1));
+                Assert.Equal(1f, recipient.Status.currentShield);
+                Assert.True(pools.Apply(key, adapter, 20, 100, 2, 4, 1));
+                Assert.Equal(cap, recipient.Status.currentShield, 4);
+                Assert.False(previous.isActive);
+                Assert.Equal(1, pools.Count);
+            }
+            finally { Mirror.NetworkServer.active = false; }
+        }
+        [Fact]
+        public void ReceiverProcessorDestroyingCachedHandleCreatesAFreshAward()
+        {
+            var pools = new ModShieldPools<Handle>(); var adapter = new Adapter();
+            var key = new ModShieldPoolKey(1, 2, ModShieldPoolKind.Ordinary);
+            pools.Apply(key, adapter, 15, 100, 0, 4, 1);
+            var previous = adapter.Last;
+            adapter.AfterProcessRaw = handle =>
+            {
+                adapter.AfterProcessRaw = null;
+                handle.Alive = false;
+            };
+            Assert.True(pools.Apply(key, adapter, 6, 100, 1, 4, 1));
+            Assert.NotSame(previous, adapter.Last);
+            Assert.Equal(6f, adapter.Last.Amount);
+            Assert.Equal(2, adapter.Creates);
+            Assert.Equal(0, adapter.Destroys);
+            Assert.Equal(1, pools.Count);
         }
         [Fact]
         public void InvalidAmountsAndLowerCapsFailExplicitly()
