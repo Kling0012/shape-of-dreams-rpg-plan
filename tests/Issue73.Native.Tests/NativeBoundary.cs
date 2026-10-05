@@ -229,7 +229,7 @@ namespace SodRpg.Mod
         private bool TryGetExactNativeDirectPayload(Actor actor, Entity target, ReactionChain chain, out MemoryActivationIdentity identity) { identity = default; return false; }
         private bool ExactNativeChainMatches(Actor actor, ReactionChain chain) => true;
         private bool IsPairReactionSource(Actor actor) => false;
-        private void OnIdentityStrikeBasicHit(Hero hero, Entity target, long activation) => throw new NotSupportedException();
+        private void OnIdentityStrikeBasicHit(Hero hero, Entity target, long activation, bool critical = false, long victimLifetime = 0) => throw new NotSupportedException();
         private void PublishMemoryActivation(MemoryActivationEvent notification, Hero hero, Entity victim, float damage) => MemoryActivationPublished?.Invoke(notification, hero, victim, damage);
         private readonly Dictionary<Actor, ReactionChain> _attributedNativeChains = new Dictionary<Actor, ReactionChain>();
         private void ClearNativeEndingActor(Actor actor) { }

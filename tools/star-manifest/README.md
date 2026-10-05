@@ -108,9 +108,22 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 |---|---|---|
 | `AfterDisplacement` | ダッシュ・テレポートのあとの次の通常攻撃の命中で1回（1回の移動につき1回）。風の傷専用 | `windowSeconds` 必須（0.5〜10）。`everyN`・`bonusSpeed` は不可 |
 | `EveryNthBasicAttack` | 通常攻撃がN回命中するごと（`gimmick.everyN`、1 = 毎回）。一歩一殺専用 | `everyN` 必須（1〜100）。`bonusSpeed` は任意：変換した追加攻撃速度1%ごとの上乗せ%（0.2 = 0.2%）。`windowSeconds` は不可 |
+| `AfterDisplacementCritical` | ダッシュ・テレポート後、窓内の最初の通常攻撃の主命中が会心なら闇の斬撃。非会心でも準備を消費。斬撃時にMovement記憶の残りクールダウンを35%短縮する。風の傷専用 | `windowSeconds` 必須（0.5〜10）、`element: "Dark"`、`maxTargets` 1〜6（既定6）。`everyN`・`bonusSpeed` は不可。内部間隔1秒 |
+| `ConsecutiveCritical` | 同じ敵へ通常攻撃の主命中が3回連続で会心なら闇の斬撃。各命中間隔は窓以内。非会心・敵の変更・窓切れで連続数をリセット。一歩一殺専用 | `windowSeconds` 必須（0.5〜10）、`element: "Dark"`、`maxTargets` 1〜6（既定6）。3回固定で`everyN`・`bonusSpeed` は不可。内部間隔1秒 |
 | `DashBonusAsMemory` | ダッシュ攻撃の追加分（闇75%）を風の傷のダメージとして数える（ダメージは増えない）。風の傷専用 | `value: 0`。他の欄は不可 |
 
 `element` は `None/Fire/Cold/Light/Dark`、`shape` は `ForwardLine`（`width` = 幅m）／`ForwardArc`（`width` = 角度）、`range` は1〜15m、`maxTargets` は1〜16（既定8）。`condition/once/valuesByRank/triggerByIdentity/replaces/basis/pool` は不可。
+
+会心モードも同じ`gimmick`形を使う（星の`value`は`null`）：
+
+```json
+"gimmick": {"trigger": "OnHit", "effect": "IdentityStrike", "value": 120, "arg": 0, "cooldown": 0, "target": null,
+  "strike": {"mode": "AfterDisplacementCritical", "element": "Dark", "shape": "ForwardArc", "range": 4.5, "width": 120, "maxTargets": 6, "windowSeconds": 3}}
+"gimmick": {"trigger": "OnHit", "effect": "IdentityStrike", "value": 180, "arg": 0, "cooldown": 0, "target": null,
+  "strike": {"mode": "ConsecutiveCritical", "element": "Dark", "shape": "ForwardLine", "range": 6, "width": 2, "maxTargets": 6, "windowSeconds": 4}}
+```
+
+発生元はそれぞれ装備中の記憶『風の傷』／『一歩一殺』で、Identityに装着したエッセンス『神聖なる信仰』の本体のダメージ増幅・6秒の撃破追跡に入る。このエッセンスは斬撃の発動条件ではない。
 
 #### 5b. MemoryTuning（名前付きの本体記憶の静的な変更）
 
