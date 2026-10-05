@@ -334,9 +334,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(hostInfinity.Interval, plainGuest.Run.Infinity.Interval);
             Assert.Equal(hostInfinity.ClearedCombatTotal, plainGuest.Run.Infinity.ClearedCombatTotal);
 
-            // Protocol 20（永続するインフィニティ報酬上限を必須とする版）の不一致は認められない
-            Assert.Equal(20, SodRpg.Mod.Protocol.Version);
-            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(19, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
+            // Protocol 21（鞄の自動ダスト換金を含む版）の不一致は認められない
+            Assert.Equal(21, SodRpg.Mod.Protocol.Version);
+            Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(20, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
             Assert.False(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, null, SodRpg.Mod.Protocol.Version));
             Assert.True(SodRpg.Core.Game.ContentFingerprint.Matches(SodRpg.Mod.Protocol.Version, SodRpg.Core.Game.ContentFingerprint.Value, SodRpg.Mod.Protocol.Version));
         }

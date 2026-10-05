@@ -1,6 +1,6 @@
 # Dreamforge RPG（ゲーム内MOD）
 
-このInfinity統合ブランチは **Protocol 20・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2、#48・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
+このブランチは **Protocol 21・保存形式5（プロフィールリセットなし）**。最新mainのv2.1.2、#48・#97・#99・#104、Polaris強化、ボス装備アイコン、起動時の機能別パッチ修正に追従しています。協力プレイは全員のProtocolと内容を揃えてください。変更は[更新履歴](../../CHANGELOG.md)を参照。
 
 全14ボスセット84部位・11種のnative報酬adapterを実装済み。装備照合と報酬更新は#73の共通装備キャッシュ／epochを使い、`EntityAbility.SetAbility`／`RemoveAbility`で更新します。ボス撃破条件は共通の連番・ストリーム台帳へ記録します。[承認仕様と実装境界](../../docs/specs/issue-48-boss-sets.md)
 
@@ -44,6 +44,17 @@
 
 装備の変更は遠征の外か確保地点でのみ、星図は遠征の外でのみ変更できる。
 
+### 鞄のあふれと夢のダスト（Issue #123）
+
+- 容量を超えると、レア度の低い遺物から外し、同レア度ではスコアの低いものを先に外す。取引予約中の遺物は対象外。道標の報酬停止中はダストも欠片も得られない。保管庫・遺失物のあふれは従来どおり欠片。
+- 1個あたりコモン15／アンコモン30／レア60／エピック150／伝説300。強化値は加算しない。既存の `Economy.SalvageDust(rarity, 0)`（欠片3／6／12／30／60 ×5）と同額にし、手動分解との換金差を作らない。
+- 本体 r.1.4.0.13 の逆コンパイルでは、通常撃破は `PickupManager.OnKill` → `GameManager.GetKillGoldAmount` でゴールド、Jonasショップもゴールド払い。ダスト箱は `Shrine_DreamdustBox` の初期倍率0.25 × `GameManager.GetSpecialRewardAmount_DreamDust`。箱・ボス報酬と強化井戸のダスト価格は `DewGameplayExperienceSettings` のシリアライズされたFormulaで、提供されたDLL・逆コンパイルには数値アセットがない。「通常敵数体／ショップ1回」との正確な比較は復元できず、上記量の根拠は既存MODレート。本体の累計ダスト450の実績は規模の参考であり、ショップ価格ではない。
+- Coreは外した遺物と欠片の代替量を結果イベントとして返す。各持ち主のClientSessionが既存の取引台帳へ登録し、送信前に保存。ホストはRPCの送信者の `guid`、遠征ID、取引token／遺物Uidを照合し、その本人の `DewPlayer.EarnDreamDust` だけを呼ぶ。ホスト本人も同じ経路。
+- 成功・失敗の受領記録と上限で忘れたtokenの下限は既存の本体中断保存へ含め、本体の通貨と同じ地点へ復元する。再送・再接続は記録を照会し、重複応答は消費済みtokenとして無視。送信例外などで支払い済みか不明な間は、欠片も追加せず既存の照会経路で確認する。
+- 持ち主不在・遠征外・接続未準備・保存不可・付与失敗は警告して欠片へ戻す。本体の不一致・例外では以後この自動ダスト機能だけを無効化し、ほかの機能は継続する。`EarnDreamDust` は通貨を更新してからRPCを送るため、例外でも全額増えていれば成功として記録し、再付与も欠片付与もしない。確認不能な取引を利用者が明示放棄した場合、すでにダストが支払われた可能性のある自動分解には欠片を重ねない。
+- 保存形式5は変更せず、保留取引の省略可能な項目を追加。遠征IDと自動分解の通信を追加するため、mainのProtocol 20から21へ更新。フレームごとの処理は追加せず、あふれ発生時だけ処理する。
+- **EN:** Overflow removes the lowest rarity, then the lowest score, excluding reserved relics. Common/Uncommon/Rare/Epic/Legendary grant 15/30/60/150/300 Dream Dust through the host to the RPC owner only. Existing persisted trade receipts prevent duplicate payments; confirmed failures grant shards and reward-suppressing waypoints grant nothing. Native numeric chest/upgrade assets are unavailable, so rates match established unenhanced MOD salvage, not an inferred native enemy/shop price.
+
 ### 中断と「続きから」（Issue #97）
 
 - ロビー・タイトルへ戻っても未完了の遠征は残る。メニューの全タブに中断中の案内を表示し、遠征が終わるまでプロフィールの切替と星図の変更はできない。装備・鍛冶の操作条件は従来どおり。
@@ -52,7 +63,7 @@
 - #104：製作・上等製作・合成など、乱数を使うロビー変更を残す場合は、その結果とロビー変更後の乱数状態を一緒に引き継ぐ。保存後の遠征で消費した乱数も含む現在の状態を採用し、消費回数の加算では再構成しない。ロビー変更を戻す場合や乱数を使う変更がない場合は、乱数も保存地点へ戻す。プロフィールから生成する遺物Uidは、保管庫・遺失物・分解待ち・鞄・保留報酬の既存Uidとの重複を避ける。確認はUid生成時だけ行い、毎フレームの処理や保存項目は増やさない。ホスト・参加者ともに同じCore処理を使う。
 - 協力プレイではホストが再開する本体保存・チェックポイントに従う。参加者だけでホストの遠征を再開することはできず、各自のMOD保存に対応するチェックポイントが必要。本体の「続きから」がない場合も、中断中の表示だけで再開を保証するものではない。
 - チェックポイントのない旧保存も読み込めるが、過去の保存時点のMOD報酬状態を後から復元することはできない。未完了の遠征が残っていることと、本体の保存から安全に再開できることは別。
-- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 20と中断対応の相互確認を使う。
+- 新しい本体保存のチェックポイントが参加者側にない場合は、その遠征の報酬を停止して案内する（最新状態で続けて二重報酬を得ることはしない）。別IDで新規開始したときの未確保品の精算は従来どおり。保存形式5は据え置き、通信はProtocol 21と中断対応の相互確認を使う。
 - #48の未払い撃破と撃破factは、`bossTypeName`・`bossDropNightmare`・`bossDropDepth`も共通codecでチェックポイントへ保存・復元する。`rt.Boss`の予告・印・CDなどは部屋／Hero寿命の一時状態なので保存しない。本体再開で旧Heroを破棄し、新しいHeroのruntimeと復元済み装備・Buildから作り直す（mainの寿命規則を維持）。
 - Infinityの累計Combat部屋数・周期・圧段階を決める状態、地図／区間／部屋の世代、共通選択のreceipt、報酬予算・入場済み部屋・帰還記録も同じチェックポイントへ戻す。本体の復元完了と地図readyを待って照合し、ロード前の最新状態とは比較しない。時刻観測とACKの一時状態をリセットし、ロード・切断中の時間を予算に足さない。ロビーで選んだ次回のInfinity設定は維持する。
 - **EN:** A suspended expedition locks profile switching and Star Map edits until it ends. Use Continue if a native save is available; guests follow the host. MOD checkpoints restore the same run's satchel, unsecured shards, kills and rewards to the native save's point. Each participant needs a matching local checkpoint. Legacy saves remain readable, but missing checkpoints cannot reconstruct past MOD rewards; a suspended-run notice does not guarantee that Continue is available.

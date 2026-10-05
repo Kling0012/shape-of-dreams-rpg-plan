@@ -558,6 +558,8 @@ namespace SodRpg.Core.Game
             .Add("spendGold", (long)t.SpendGold).Add("spendDust", (long)t.SpendDust).Add("earnDust", (long)t.EarnDust)
             .Add("uid", t.Uid).Add("heat", (long)t.Heat).Add("batches", (long)t.Batches)
             .Add("merchantOfferId", t.MerchantOfferId)
+            .Add("runId", t.RunId).Add("fallbackShards", (long)t.FallbackShards)
+            .Add("overflowRelic", t.Kind == TradeKind.SatchelOverflowDust && t.Relic != null ? WriteRelic(t.Relic) : null)
             .Add("rarity", (long)t.Rarity).Add("enhance", (long)t.Enhance)
             .Add("ledger", unchecked((ulong)t.LedgerId).ToString(CultureInfo.InvariantCulture)).Add("lost", t.Lost);
 
@@ -570,13 +572,31 @@ namespace SodRpg.Core.Game
                 if (!(item is JsonObject j)
                     || !long.TryParse(Str(j, "token"), NumberStyles.None, CultureInfo.InvariantCulture, out long token) || token <= 0
                     || !seen.Add(token)
-                    || Long(j, "kind") < 0 || Long(j, "kind") > (long)TradeKind.SalvageForDust
+                    || Long(j, "kind") < 0 || Long(j, "kind") > (long)TradeKind.SatchelOverflowDust
                     || into.Count >= TradeLedger.MaxRestored)
                 {
                     notes.Add("pendingTrades: 形式が不正または多すぎる取引 → 除外");
                     continue;
                 }
                 ulong.TryParse(Str(j, "ledger"), NumberStyles.None, CultureInfo.InvariantCulture, out ulong ledgerBits);
+                Relic overflowRelic = null;
+                if ((TradeKind)Long(j, "kind") == TradeKind.SatchelOverflowDust)
+                {
+                    try
+                    {
+                        if (!(j.TryGet("overflowRelic", out object relicObject) && relicObject is JsonObject relicJson)
+                            || string.IsNullOrEmpty(Str(j, "runId")))
+                            throw new LedgerFormatException("Overflow trade payload is missing.");
+                        overflowRelic = ReadRelic(relicJson, new HashSet<string>(StringComparer.Ordinal));
+                        if (overflowRelic.Uid != Str(j, "uid") || (int)overflowRelic.Rarity != Long(j, "rarity"))
+                            throw new LedgerFormatException("Overflow trade payload does not match its request.");
+                    }
+                    catch (LedgerFormatException ex)
+                    {
+                        notes.Add("pendingTrades: " + ex.Message + " → 除外");
+                        continue;
+                    }
+                }
                 into.Add(new PendingTrade
                 {
                     Token = token, Kind = (TradeKind)Long(j, "kind"),
@@ -586,6 +606,8 @@ namespace SodRpg.Core.Game
                     Rarity = Clamp(Long(j, "rarity"), 0, int.MaxValue), Enhance = Clamp(Long(j, "enhance"), 0, int.MaxValue),
                     LedgerId = unchecked((long)ledgerBits), Lost = Bool(j, "lost", false),
                     MerchantOfferId = Str(j, "merchantOfferId"),
+                    RunId = Str(j, "runId"), Relic = overflowRelic,
+                    FallbackShards = Clamp(Long(j, "fallbackShards"), 0, int.MaxValue),
                 });
             }
         }

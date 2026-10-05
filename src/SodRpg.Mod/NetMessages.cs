@@ -162,6 +162,7 @@ namespace SodRpg.Mod
         public int spendDust;
         public int earnDust;
         public int protocol;
+        public string runId;
     }
 
     /// <summary>ホスト → クライアント：取引の結果。</summary>
@@ -187,7 +188,8 @@ namespace SodRpg.Mod
         // Version 19 binds MOD checkpoint barriers and resume handshakes to native continue saves.
         // Version 19 adds fixed-zone infinity epochs, shared boss choices and continue-save agreement.
         // Version 20 requires persistent Infinity reward caps; cap-less participants are incompatible.
-        public const int Version = 20;
+        // Version 21 adds owner-bound satchel overflow dust trades and their expedition identity.
+        public const int Version = 21;
     }
 
     [Serializable]
