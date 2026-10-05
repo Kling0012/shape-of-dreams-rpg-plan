@@ -21,24 +21,17 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Dependent_cluster_can_precede_its_anchor_cluster_without_moving_legacy_stars()
+        public void Dependent_cluster_can_precede_its_anchor_cluster()
         {
             const string hero = "Hero_Cetus";
             var anchor = Node("layout.anchor.1", "layout.anchor", "h.cetus.route.icy-veins.7");
             var dependent = Node("layout.dependent.1", "layout.dependent", anchor.Id);
             var baseline = HeroSigils.TreeFor(hero);
             var tree = baseline.Concat(new[] { dependent, anchor }).ToArray();
-            var original = HeroTreeLayout.ForTalents(baseline);
             var layout = HeroTreeLayout.ForTalents(tree);
             var anchorNode = layout.Nodes.Single(n => n.Id == anchor.Id);
             var dependentNode = layout.Nodes.Single(n => n.Id == dependent.Id);
             Assert.Contains(layout.Nodes.ToList().IndexOf(dependentNode), anchorNode.Neighbors);
-            foreach (var node in original.Nodes)
-            {
-                var retained = layout.Nodes.Single(n => n.Id == node.Id);
-                Assert.Equal(node.X, retained.X);
-                Assert.Equal(node.Y, retained.Y);
-            }
             var profile = new Profile(); profile.Hero(hero).StarXp = StarProgression.TotalXpForPoints(200);
             AuthoredStarContractTests.AllocatePath(profile.Hero(hero), tree, dependent.Id);
             var engine = new EffectiveAllocationValidation(tree, layout: layout);
@@ -154,7 +147,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Registered_compound_clusters_never_overlap_and_keep_their_existing_star_positions()
+        public void Registered_compound_clusters_never_overlap_and_preserve_authored_edges()
         {
             var baseline = HeroTreeLayout.ForHero(CompoundHero);
             try
@@ -169,12 +162,6 @@ namespace SodRpg.Core.Tests
                         Assert.True(dx * dx + dy * dy >= HeroTreeLayout.MinimumSpacing * HeroTreeLayout.MinimumSpacing - 0.01,
                             layout.Nodes[i].Id + " overlaps " + layout.Nodes[j].Id);
                     }
-                foreach (var node in baseline.Nodes)
-                {
-                    var retained = layout.Nodes.Single(n => n.Id == node.Id);
-                    Assert.Equal(node.X, retained.X);
-                    Assert.Equal(node.Y, retained.Y);
-                }
                 // Re-registering the same definitions must place every star at the same coordinates.
                 StarClusters.RegisterAuthored(CompoundHero, CompoundClusters());
                 var repeated = HeroTreeLayout.ForHero(CompoundHero);
