@@ -8,19 +8,32 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
-- **インフィニティの地図を1部屋ずつ表示（#208）**：開始部屋・訪問済み部屋と次の1部屋だけを表示し、ボスは周期10／15／20戦闘部屋をクリアしたときに次室として現れます。本体の有限地図・同ゾーン更新・同期・続きからを維持し、通常モードは変更しません。協力プレイは全員Protocol 23へ更新（保存形式5は据え置き）。 / **One-room-at-a-time Infinity map (#208)**: show the start, visited rooms and just one next room; reveal the boss as the next room after 10/15/20 combat clears. Preserve native finite graphs, same-zone refresh, synchronization and Continue without changing normal mode. All co-op players need Protocol 23; save format remains 5.
-- **読み込み失敗時の移行保存で進行が巻き戻る問題**：本体・バックアップの読み取り確認が済むまで星の移行結果を保存しないようにしました。一時的な読み取り失敗中は元のデータを保持し、再試行で新しい進行を選びます。移行結果の保存だけが失敗した場合は、引き続き警告してプレイを続けられます。 / **Progress rollback after a failed migration load**: validate source reads before persisting star migrations so a transient read failure cannot promote an older backup over newer progress. Migration-save failures still warn without blocking play.
-- **鞄あふれを欠片へ変換（#200）**：低レア度・同レア最低スコアの遺物を、従来の欠片フォールバック量で持ち主のローカルプロフィールへ同じティック内に付与します。新規の取引・送信・あふれごとの保存を廃止し、通常保存と再開地点にまとめます。旧未確定取引の照会・回復と手動分解は維持。 / **Satchel overflow now grants shards (#200)**: convert the lowest-rarity, then lowest-score relic into the existing shard-fallback amount, credited to its owner's local profile within the same tick. No new trades, sends, or per-overflow saves; normal saves and resume checkpoints persist the credit. Legacy pending-trade queries/recovery and manual salvage remain unchanged.
-- **鞄あふれの重さを削減（#200追加）**：欠片付与・通知・ログを1ティック1回に集約し、遺物ごとの表示文字列・通知割り当てを廃止しました。対象は全件ソートせず安定した線形部分選択を維持し、鞄の表示ソートを共有キャッシュ化。素材増加による保管庫の再ソートも止めました。保存境界では通知を消費せず先に欠片を確定し、続きからで二重付与しません。 / **Lighter satchel overflow (#200 follow-up)**: batch shard credit, notifications, and logging once per tick, eliminating per-relic overflow strings/events. Preserve stable linear partial selection without full sorting, share the satchel display cache, and prevent material-only changes from re-sorting the stash. Save barriers settle credit without consuming the summary; Continue restores it without double grants.
-- **鞄あふれを欠片へ変換（#200）**：低レア度・同レア最低スコアの遺物を、従来の欠片フォールバック量で持ち主のローカルプロフィールへ即時付与します。新規の取引・送信・あふれごとの保存を廃止し、通常保存と再開地点にまとめます。旧未確定取引の照会・回復と手動分解は維持。 / **Satchel overflow now grants shards (#200)**: convert the lowest-rarity, then lowest-score relic into the existing shard-fallback amount, credited immediately to its owner's local profile. No new trades, sends, or per-overflow saves; normal saves and resume checkpoints persist the credit. Legacy pending-trade queries/recovery and manual salvage remain unchanged.
+---
 
-- **インフィニティで開始しても通常モードになる**：シーン遷移で前の通信先の Hello 拒否記録が残り、新しい遠征を誤って通常モードへ戻す経路を修正しました。新しい通信先では互換性を確認し直し、初回マップのモードと通常モードになった理由を1回ログに出します。 / **Infinity starts falling back to normal mode**: clear Hello decisions when the scene's RPC actor changes so an old rejection cannot downgrade a new expedition; reconfirm compatibility on the new transport and log the initial map mode or normal-mode reason once.
-- **空殻の払い戻し通知の重複（#169・改訂2）**：移行結果を読み込み時に保存し、採用した本体またはバックアップだけを通知します。通知の二重連結と続きからでの再通知を修正し、保存失敗時は警告して続行します。保存形式・ポイント総数は変更ありません。 / **Duplicate Husk refund notices (#169, revision 2)**: persist migration on load, report only the selected main or backup, and avoid duplicate concatenation and repeated Continue notices. Save failures warn without stopping play; save format and total points are unchanged.
-- **前提を満たしているのに取れない星・自分を前提にした星（全キャラの星図の総点検）**：全キャラの星図を実際に買い進めて調べ、次を直しました。（1）ナキアの蛇の祝福の星が、自分より奥の星を前提にして取れない。（2）ヴェスパーの防壁・規律の星が、奥の星を前提にして取れない。（3）鍵の星だけを親にしていた奥の星が、鍵の星を選ばないと届かなかった（全キャラ）。普通の星からも線をつなぎました。（4）ミスト・空殻の移動の記憶の奥の星（命の星・再生の輪）が「受け手なし」で断られていた。（5）ナキアの橋の選択星が、自分の前提の星を置き換える案を選ぶと前提が払い戻されて選べなかった。あわせて、全星が前提どおりに取れることを確かめるテストを追加しました。 / Audited every hero's star map by actually walking it. Fixed stars that could never be bought: Nachia's Serpent Blessing and Vesper's Bulwark/Discipline listed stars behind them as prerequisites; deep stars hung only off a keystone (all heroes); Mist's and Husk's movement-memory deep/ring stars were refused for lacking a recipient; Nachia's bridge choices that replace their own prerequisite were refused. Added tests that walk every hero's whole map.
+## v2.5.0 — インフィニティの地図と、鞄あふれの軽量化（2026-10-06）
 
-- **ホストの記憶障壁で例外**：生成・更新中に無効化された障壁の生存確認を先に行い、null・破棄済みのハンドルを保持せず次の付与で作り直します。障壁量・上限は変えず、既存障壁の更新時にはアダプターと受け手情報を再利用します。 / **Host memory-shield exception**: validate shields before reading their amount, discard null/destroyed activations and recreate them on the next award; amounts and caps are unchanged, and live refreshes reuse the adapter and recipient entry.
-- **差分テストの選択漏れ（#170）**：データ初期化行の変更ではファイル内の型への依存も残し、表から期待値を読む既存テストの除外を防ぎました。通常のメンバー変更の絞り込みとコメントのみの除外は維持します。 / **Missed tests in diff selection (#170)**: object initialization changes retain file-level type dependencies so existing tests reading expected values from tables are included; ordinary member narrowing and comment-only skipping remain unchanged.
-- **インフィニティ開始後に移動できなくなる**：未確認の参加者から Hello が届かないと遠征全体の移動が止まり続ける問題を修正しました。ゲーム内の通信準備後に参加者ごとに30秒待ち、返事がなければ理由を1回通知してその遠征だけ通常モードへ戻します。ロビー待機時間は含めず、参加者・通信先・遠征の変更時は待機時間をリセットします。互換性確認と報酬の安全条件は維持します。 / **Infinity travel blocked by a silent guest**: after the game-scene transport is ready, each unconfirmed guest gets 30 seconds to send Hello. A missing reply falls back to normal mode for that expedition with one notice. Lobby time does not count; peer, transport and expedition changes reset the wait. Compatibility and reward-safety checks remain enforced.
+インフィニティの地図を、1部屋ずつ新しい部屋が現れる形にしました。重さの原因だった鞄あふれの処理も作り直しています。 / Infinity now reveals its map one room at a time, and satchel overflow no longer causes heavy slowdowns.
+
+### 更新前に確認 / Before updating
+
+- **協力プレイでは、参加者全員がこのバージョンに更新**してください。通信の仕組みが変わりました（Protocol 23）。 / Everyone in co-op must update; the network protocol changed (Protocol 23).
+- セーブデータはそのまま引き継げます。 / Saves carry over.
+- 更新後はゲームを再起動してください。 / Restart the game after updating.
+
+### 新しい要素・変更 / New and changed
+
+- **インフィニティの地図**：最初から普通の地図とボス部屋が見えるのではなく、通った部屋と次の1部屋だけが見え、進むたびに新しい部屋が1つずつ現れます。ボス部屋は、決めた数（10／15／20）の戦闘部屋をクリアしたときに、次の部屋として現れます。 / **Infinity map**: instead of showing the whole map and the boss room up front, only the rooms you have visited and the next room are shown, and a new room appears each time you move on. The boss room appears as the next room once you clear the chosen number of combat rooms (10/15/20).
+- **鞄があふれたときは欠片に換わる**：重さの原因になっていたため、遠征中に鞄があふれた遺物は、夢のダストではなく欠片に換わるようにしました。同じタイミングであふれた分は、まとめて1回の通知になります。 / **Satchel overflow now turns into shards**: overflowing relics now become shards instead of Dream Dust, which was causing heavy slowdowns. Overflow in the same moment is reported in one notice.
+
+### 不具合の修正 / Bug fixes
+
+- **インフィニティで開始しても通常の遠征になる**：前のシーンの通信の記録が残り、新しい遠征を誤って通常モードに戻していました。 / **Infinity started as a normal run**: leftover connection state from the previous scene turned the new run back to normal mode.
+- **インフィニティで移動できなくなる**：返事のない参加者がいると、全員が次の部屋へ進めなくなることがありました。返事がなければ、その遠征だけ通常モードで続けます。 / **Could not move on in Infinity** when a guest never answered; that run now continues in normal mode instead.
+- **取れない星**：全キャラの星図を総点検し、前提を満たしているのに取れない星を直しました（ナキア・ヴェスパーなど）。効果のない段にポイントを払えてしまう問題も直しました。 / **Stars that could not be taken**: every traveler's star map was checked and unreachable stars were fixed (Nachia, Vesper and others). You can no longer spend points on ranks that do nothing.
+- **空殻の払い戻しの通知が何度も出る**：一度だけ表示されるようにしました（ポイントが二重に戻ることはありませんでした）。 / **Husk refund notice repeated**: it now shows once (points were never refunded twice).
+- **読み込みに失敗したときに進行が巻き戻る**：セーブの読み込みが一時的に失敗したとき、古いデータで上書きしないようにしました。 / **Progress could roll back after a failed load**: a temporary load failure no longer overwrites your save with older data.
+- **記憶の障壁でエラーが出る**：ホストで記憶の仕掛けが障壁を張るとき、エラーが繰り返し出ることがありました。 / **Errors from memory shields** on the host.
+- **記憶の井戸のあと、遺物の名前が古いまま**：固有効果を交換したあと、一覧に古い名前が残っていました。 / **Old relic names after the Memory Well** swap.
 
 ---
 
