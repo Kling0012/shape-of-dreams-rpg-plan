@@ -379,7 +379,7 @@ namespace SodRpg.Mod
         internal static bool NativeSaveAgreement { get; set; }
         internal static void WriteEnvelope() { }
         internal static bool IsTechnicalRefresh => false;
-        internal static InfinityChoice CurrentChoice => null;
+        internal static InfinityChoice CurrentChoice => _choice;
         internal const string ChoiceKey = "dreamforge.infinity.choice";
         internal static bool CanAdvance => throw new NotSupportedException();
         internal static void Tick() { }
@@ -388,6 +388,7 @@ namespace SodRpg.Mod
         internal static void AcknowledgeLocal(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool PartyAcknowledged(InfinityChoice choice) => throw new NotSupportedException();
         internal static bool Regenerate(string intent) => throw new NotSupportedException();
+        internal static void PublishChoice(InfinityChoice choice) => _choice = choice;
         internal sealed class InfinityChoice
         {
             public string RunId;
@@ -395,6 +396,10 @@ namespace SodRpg.Mod
             public bool Boundary, Secure;
             public Pact Pact;
             public RunChoiceSnapshot Before;
+            public string BeforeChoices;
+            public bool PersonalTimedOut;
+            public float PersonalAckGraceSeconds = 30f;
+            public List<InfinityPersonalChoice> PersonalChoices;
         }
     }
     internal static class ContentFingerprint { internal const string Value = "native-test-content"; }

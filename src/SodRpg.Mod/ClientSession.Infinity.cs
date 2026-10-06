@@ -51,6 +51,7 @@ namespace SodRpg.Mod
             _infinityResultStarted = false;
             _nextInfinityAck = 0;
             ResetInfinitySaveHold();
+            ResetInfinityPersonalChoice();
             ResetInfinityRewardSamples();
         }
 
@@ -204,7 +205,8 @@ namespace SodRpg.Mod
             if (!CanChooseRunRules && (sharedChoices == null || sharedChoices.Settled || sharedChoices.Generation == 0)) return;
             if (NetworkServer.active) PublishRunChoicesForZone(ChoiceZoneIndex);
             Emit(Rules.ReachInfinityChoice(Profile, _trades));
-            if (!CanChooseRunRules) sharedChoices.ApplyTo(Profile.Run, ChoiceZoneIndex);
+            _infinityPersonalOfferedEvent = Profile.Run.OfferedEvent;
+            if (NetworkServer.active) InfinityMode.BeginPersonalChoice(Profile.Run);
             _nextDreamEventNotice = 0f;
             MarkDirty(true);
             if (NetworkServer.active) PersistHostInfinityState();
@@ -264,7 +266,8 @@ namespace SodRpg.Mod
             if (!CanChooseRunRules || state == null || state.Phase != InfinityPhase.AwaitingChoice
                 || !Profile.Run.AwaitingChoice || !CanResolveSecureChoice)
                 return SecureChoiceUnavailable();
-            if (!InfinityMode.CanAdvance || !HostInfinityBoundarySettled || !HostInfinityRewardsSettled)
+            if (InfinityMode.PersonalIntentPending) return null;
+            if (!InfinityMode.NativeSaveAgreement || !HostInfinityCanAdvance || !HostInfinityBoundarySettled || !HostInfinityRewardsSettled)
                 return Loc.T("全員の撃破・配当・取引と保存の確定を待っています。", "Waiting for party kills, dividends, trades and saves to settle.");
             if (state.ChoiceRevision == long.MaxValue || state.SegmentEpoch == long.MaxValue)
                 return Loc.T("インフィニティの世代上限に達しました。", "Infinity has reached its identity limit.");
@@ -273,7 +276,9 @@ namespace SodRpg.Mod
             var previous = InfinityMode.CurrentChoice;
             if (previous != null && previous.RunId == Profile.Run.RunId && !previous.Boundary
                 && previous.Revision > state.ChoiceRevision) return null;
-            InfinityMode.PublishChoice(new InfinityMode.InfinityChoice
+            InfinityMode.BeginPersonalChoice(Profile.Run);
+            RecordInfinityPersonalChoice(secure ? Pact.None : pact, skip: false);
+            InfinityMode.QueuePersonalIntent(new InfinityMode.InfinityChoice
             {
                 RunId = Profile.Run.RunId, Revision = state.ChoiceRevision + 1,
                 SegmentEpoch = state.SegmentEpoch, GraphEpoch = state.GraphEpoch, Secure = secure, Pact = pact,
@@ -286,6 +291,7 @@ namespace SodRpg.Mod
         private void TickInfinity()
         {
             CompleteInfinityStateSave();
+            TickInfinityPersonalChoice();
             InfinityMode.Tick();
             if (!InfinityMode.NativeSaveAgreement) return;
             var choice = InfinityMode.CurrentChoice;
@@ -298,11 +304,19 @@ namespace SodRpg.Mod
                     && (choice == null || choice.Boundary || choice.RunId != Profile.Run.RunId
                         || choice.SegmentEpoch != state.SegmentEpoch || choice.Revision != state.ChoiceRevision + 1))
                 {
+                    // The choices RPC and retained settings decision are independent channels.
+                    // A next-segment snapshot is not proof that the owner's choice receipt was lost.
+                    if (Profile.Run.AwaitingChoice && state.Phase == InfinityPhase.AwaitingChoice
+                        && shared.SegmentEpoch == state.SegmentEpoch + 1
+                        && shared.ChoiceRevision == state.ChoiceRevision + 1) return;
                     InfinityMode.DisableFeature("Infinity shared segment advanced without a durable local choice receipt; reload the matching profile/continue.");
                     return;
                 }
                 if (shared != null && shared.GraphEpoch > state.GraphEpoch
-                    && (shared.GraphEpoch != state.GraphEpoch + 1 || state.SettledGraphEpoch < state.GraphEpoch))
+                    && (shared.GraphEpoch != state.GraphEpoch + 1 || state.SettledGraphEpoch < state.GraphEpoch)
+                    && !(choice != null && !choice.Boundary && choice.RunId == Profile.Run.RunId
+                        && choice.GraphEpoch == state.GraphEpoch && choice.SegmentEpoch == state.SegmentEpoch
+                        && choice.Revision == state.ChoiceRevision + 1))
                 {
                     InfinityMode.DisableFeature("Infinity shared graph advanced without a durable local boundary receipt; reload the matching profile/continue.");
                     return;
@@ -336,7 +350,6 @@ namespace SodRpg.Mod
                 ObserveInfinityRoomTotal(state.ClearedCombatTotal);
             }
             TryOpenInfinityChoice();
-            if (!CanChooseRunRules && Profile.Run?.AwaitingChoice == true) choice?.Before?.ApplyTo(Profile.Run, ChoiceZoneIndex);
             AdvanceInfinityIdentity();
             if (choice == null || choice.RunId != (Profile.Run?.RunId ?? Profile.CompletedRunId)) return;
             bool alreadyApplied = choice.Secure ? Profile.CompletedRunSecuredReturn && Profile.CompletedRunId == choice.RunId
@@ -366,8 +379,11 @@ namespace SodRpg.Mod
                     }
                     else
                     {
-                        Emit(Rules.Delve(Profile, CanChooseRunRules ? choice.Pact : Pact.None));
+                        Pact personalPact = InfinityPersonalPact(choice);
+                        Emit(Rules.Delve(Profile, personalPact));
                         if (state.ChoiceRevision != choice.Revision) return;
+                        SendInfinityPactCurse(personalPact);
+                        InfinityMode.CommitPersonalWaypoints(choice, Profile.Run);
                         AdvanceInfinityIdentity();
                     }
                     _buildDirty = true;
@@ -400,8 +416,10 @@ namespace SodRpg.Mod
             }
             else if (choice.Boundary || state?.Phase == InfinityPhase.Transitioning)
             {
-                if (InfinityMode.Regenerate(choice.Boundary ? "regenerate" : "delve"))
+                if (InfinityMode.Regenerate(choice.Boundary ? "regenerate" : "delve") && choice.Boundary)
                     NetworkedManagerBase<GameSettingsManager>.instance.customData.Remove(InfinityMode.ChoiceKey);
+                // Retain the personal decision until replaced: a no-response release can
+                // regenerate in this frame, before native settings have reached guests.
             }
         }
     }

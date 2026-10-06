@@ -7,6 +7,9 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         private Waypoints.Totals ActiveWaypointTotals => Waypoints.Sum(ClientSession.HostRun?.ActiveWaypoint ?? Waypoint.None);
+        private Waypoints.Totals WaypointTotalsForHero(Hero hero) => ClientSession.HostRun?.Infinity == null
+            ? ActiveWaypointTotals : InfinityMode.WaypointTotalsForPlayer(hero?.owner?.guid);
+        private int _modifierPersonalWaypointVersion = -1;
         private RunState _modifierRun;
         private Waypoint _modifierWaypoint;
         private int _modifierDepth = -1;
@@ -49,11 +52,14 @@ namespace SodRpg.Mod
             var run = ClientSession.HostRun;
             int depth = run?.DreamDepth ?? 0;
             var waypoint = run?.ActiveWaypoint ?? Waypoint.None;
-            if (!ReferenceEquals(run, _modifierRun) || depth != _modifierDepth || waypoint != _modifierWaypoint)
+            int personalVersion = InfinityMode.PersonalWaypointVersion;
+            if (!ReferenceEquals(run, _modifierRun) || depth != _modifierDepth || waypoint != _modifierWaypoint
+                || personalVersion != _modifierPersonalWaypointVersion)
             {
                 _modifierRun = run;
                 _modifierDepth = depth;
                 _modifierWaypoint = waypoint;
+                _modifierPersonalWaypointVersion = personalVersion;
                 _pressureDirty = true;
                 foreach (var hero in _waypointHeroes.Keys)
                 {
@@ -96,7 +102,7 @@ namespace SodRpg.Mod
 
         private void SyncWaypointHeroes()
         {
-            // Shared combat rules apply to every active hero; an accepted Build is not required (equipment powers are).
+            // Ordinary mode remains shared; Infinity receiver hooks use the authenticated owner's waypoint.
             _waypointHeroScratch.Clear();
             _waypointAddScratch.Clear();
             WaypointRoster.Diff(_waypointHeroes.Keys, _am != null ? _am.allHeroes : (IEnumerable<Hero>)Array.Empty<Hero>(),
@@ -109,10 +115,10 @@ namespace SodRpg.Mod
                 {
                     // Receiver hooks include heals/shields from the isolated serverActor path.
                     Heal = (ref HealData data, Actor actor, Entity target) =>
-                        ScaleWaypointRecovery(ref data, ActiveWaypointTotals.HealingMultiplier),
+                        ScaleWaypointRecovery(ref data, WaypointTotalsForHero(hero).HealingMultiplier),
                     Shield = (ref HealData data, Actor actor, Entity target) =>
-                        ScaleWaypointRecovery(ref data, ActiveWaypointTotals.ShieldMultiplier),
-                    Health = (ref FinalStats stats) => stats.maxHealth *= (float)ActiveWaypointTotals.HeroHealthMultiplier,
+                        ScaleWaypointRecovery(ref data, WaypointTotalsForHero(hero).ShieldMultiplier),
+                    Health = (ref FinalStats stats) => stats.maxHealth *= (float)WaypointTotalsForHero(hero).HeroHealthMultiplier,
                 };
                 var captured = hero;
                 // Heroes with an accepted Build get these two rules from their runtime (OnSkillUse and HookSummon).
@@ -139,7 +145,7 @@ namespace SodRpg.Mod
             DataProcessor<DamageData, Actor, Entity> processor = (ref DamageData damage, Actor source, Entity target) =>
             {
                 if (_runtimes.ContainsKey(hero) || source == null || source.FindFirstOfType<Summon>() != summon) return;
-                damage.ApplyAmplification((float)ActiveWaypointTotals.SummonPowerMultiplier - 1f);
+                damage.ApplyAmplification((float)WaypointTotalsForHero(hero).SummonPowerMultiplier - 1f);
             };
             effects.Summons.Add(summon, processor);
             summon.dealtDamageProcessor.Add(processor);
@@ -194,13 +200,14 @@ namespace SodRpg.Mod
             _modifierRun = null;
             _modifierDepth = -1;
             _modifierWaypoint = Waypoint.None;
+            _modifierPersonalWaypointVersion = -1;
             _partyDepthSeen = -1;
         }
 
         private void ApplyWaypointMemoryCooldown(Hero hero, EventInfoSkillUse info)
         {
             var skill = info.skill;
-            double multiplier = ActiveWaypointTotals.MemoryCooldownMultiplier;
+            double multiplier = WaypointTotalsForHero(hero).MemoryCooldownMultiplier;
             if (multiplier >= 1 || skill == null || skill.type != SkillType.Normal
                 || info.type == HeroSkillLocation.Movement || info.type == HeroSkillLocation.Identity) return;
             // OnSkillUse follows the native cooldown assignment. Respect its reduction opt-out.

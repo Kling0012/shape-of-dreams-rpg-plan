@@ -25,6 +25,7 @@ namespace SodRpg.Mod
             GUILayout.Label(Loc.T("Dreamforge ─ 夢の遺物", "Dreamforge ─ Relics of the Dream"), _st.Title, GUILayout.ExpandWidth(true));
             if (GUILayout.Button(Loc.T($"閉じる [{cfg.menuKey}]", $"Close [{cfg.menuKey}]"), _st.Button, GUILayout.Width(140))) Close();
             GUILayout.EndHorizontal();
+            DrawInfinityChoiceNotice();
             GUILayout.BeginHorizontal();
             for (int i = 0; i < 6; i++)
             {
@@ -72,6 +73,12 @@ namespace SodRpg.Mod
                 default: DrawRecordsTab(cfg); break;
             }
             GUILayout.EndArea();
+        }
+
+        private void DrawInfinityChoiceNotice()
+        {
+            string notice = _s.InfinityChoiceNotice;
+            if (notice != null) GUILayout.Label(notice, _st.Warn);
         }
     }
 }

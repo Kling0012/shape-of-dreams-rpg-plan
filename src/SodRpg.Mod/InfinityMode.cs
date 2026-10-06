@@ -154,7 +154,7 @@ namespace SodRpg.Mod
             && (NetworkServer.active
                 || NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(HaltKey) != true);
         internal static bool IsTechnicalRefresh => _refresh;
-        internal static bool CanAdvance => NativeSaveAgreement && ClientSession.HostInfinityCanAdvance;
+        internal static bool CanAdvance => NativeSaveAgreement && ClientSession.HostInfinityCanAdvance && PersonalChoicesSettled;
         internal static bool Restoring => _restoring;
         internal static bool NativeEnvelopePresent => NetworkedManagerBase<GameSettingsManager>.softInstance?.customData.ContainsKey(RuntimeKey) == true;
 
@@ -176,6 +176,9 @@ namespace SodRpg.Mod
             public bool Secure;
             public Pact Pact;
             public string BeforeChoices;
+            public List<InfinityPersonalChoice> PersonalChoices;
+            public bool PersonalTimedOut;
+            public float PersonalAckGraceSeconds = ChoiceAckGraceSeconds;
             [JsonIgnore] public RunChoiceSnapshot Before;
         }
 
@@ -221,6 +224,8 @@ namespace SodRpg.Mod
             if (!Available) return;
             ClearPendingTravel();
             ResetServiceRoomWarnings();
+            ResetPersonalChoices();
+            ResetPersonalWaypoints(clearSettings: true);
             _restoring = false; _refresh = false;
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
@@ -243,6 +248,8 @@ namespace SodRpg.Mod
         {
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
             ClearPendingTravel();
+            ResetPersonalChoices();
+            ResetPersonalWaypoints(clearSettings: false);
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
             Acks.Clear(); _choice = null; _choiceText = null;
@@ -399,6 +406,7 @@ namespace SodRpg.Mod
             try
             {
                 HostAuthority.CheckInfinityRunCompatibility();
+                TickPersonalChoices();
                 TickPendingTravel();
                 TickNative();
             }
@@ -476,6 +484,7 @@ namespace SodRpg.Mod
             if (!Enabled || !NetworkServer.active) return true;
             var state = State;
             if (isSidetrackTransition || !IsTravelRequestValid(zone, state, to)) return false;
+            StartPersonalTravelWait();
             if (!CanAdvance || !ClientSession.HostInfinityRewardsSettled)
             {
                 HoldTravel(zone, state, to, advanceTurn, ignoreInterrupts);
@@ -687,11 +696,15 @@ namespace SodRpg.Mod
                 missingRemote = true;
             }
             if (!missingRemote) return true;
-            if (UnityEngine.Time.unscaledTime - _ackWaitStarted < ChoiceAckGraceSeconds) return false;
+            // Personal no-response already consumed its full 60-second allowance.
+            // Do not add another remote save ACK grace period to that same no-response.
+            if (choice.PersonalTimedOut) return true;
+            float remoteGrace = Math.Max(0f, Math.Min(ChoiceAckGraceSeconds, choice.PersonalAckGraceSeconds));
+            if (UnityEngine.Time.unscaledTime - _ackWaitStarted < remoteGrace) return false;
             if (!_ackWaitReleased)
             {
                 _ackWaitReleased = true;
-                Log.Warn("Infinity: choice ACK wait exceeded 30 seconds; host progression continues without remote confirmation.");
+                Log.Warn($"Infinity: choice ACK wait exceeded {remoteGrace:0} seconds; host progression continues without remote confirmation.");
             }
             return true;
         }
