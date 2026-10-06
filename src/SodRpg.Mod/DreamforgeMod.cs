@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         private HostAuthority _host;
         private DreamforgeUi _ui;
         private PerformanceTuner _performance;
+        private MobModelSession _mobModels;
         private bool _hasFocus = true;
         private bool _running;
         private bool _stopped;
@@ -56,7 +57,7 @@ namespace SodRpg.Mod
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
-                _ui = null;
+                _mobModels = new MobModelSession(mod?.path, config.customMobModels);
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
@@ -86,6 +87,7 @@ namespace SodRpg.Mod
             if (!_running) return;
             Loc.Japanese = config.japanese;
             _performance?.Configure(config);
+            _mobModels?.Configure(config.customMobModels);
         }
 
         private void OnApplicationFocus(bool hasFocus)
@@ -106,6 +108,7 @@ namespace SodRpg.Mod
             bool block = _ui != null && (_ui.Open || _ui.MouseOverPanel);
             BlockInputWhileMenuOpen.MenuOpen = block;
             _session.Tick();
+            _mobModels?.Tick();
             try
             {
                 _host?.Tick();
@@ -314,10 +317,12 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            var mobModels = _mobModels; _mobModels = null;
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
             try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }
             try { performance?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: performance restore: " + ex); }
+            try { mobModels?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: mob models dispose: " + ex); }
             if (_iconsStarted)
             {
                 _iconsStarted = false;
@@ -644,6 +649,14 @@ namespace SodRpg.Mod
             if (!CommandAllowed()) return;
             var p = _session.Profile;
             Debug.Log($"[DreamforgeRPG] Lv{p.DreamLevel} xp{p.DreamXp} stash{p.Stash.Count} shards{p.Material(Materials.Shard)} run={(p.Run != null ? p.Run.RunId + " heat" + p.Run.Heat + " satchel" + p.Run.Satchel.Count : "none")} active={_session.ActiveRunId} hostOk={_session.HostConfirmed} hostActive={_host.IsActive}");
+        }
+
+        [ConsoleCommand("Dreamforge: show custom mob pack status and exact build tokens", "dreamforge_mobstatus")]
+        private void MobStatusCommand()
+        {
+            Debug.Log("[DreamforgeRPG] mobs=" + (_mobModels?.Status ?? "unavailable")
+                + " game=" + Application.version + " unity=" + Application.unityVersion
+                + " target=" + MobModelAssets.CurrentTarget());
         }
     }
 }

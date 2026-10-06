@@ -15,7 +15,7 @@ namespace Mirror
 }
 namespace UnityEngine
 {
-    public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); }
+    public static class Application { public static string persistentDataPath = System.IO.Path.GetTempPath(); public static string version = "startup-tests", unityVersion = "startup-tests"; }
     public static class Debug { public static void Log(object value) { } }
     public static class Time { public static float unscaledDeltaTime, unscaledTime; }
     public static class Mathf { public static float Clamp(float value, float min, float max) => Math.Max(min, Math.Min(max, value)); }
@@ -74,6 +74,7 @@ namespace SodRpg.Mod
         public bool japanese;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
+        public bool customMobModels;
     }
     internal static class Log
     {
@@ -319,6 +320,19 @@ namespace SodRpg.Mod
         public static void Init(string path) { }
         public static void Preload() { }
         public static void Dispose() { }
+    }
+    // The real mob model runtime is exercised by MobRuntime.Tests; the startup harness only needs this surface.
+    internal sealed class MobModelSession : IDisposable
+    {
+        public string Status = "disabled";
+        public MobModelSession(string modPath, bool enabled) { }
+        public void Configure(bool enabled) { }
+        public void Tick() { }
+        public void Dispose() { }
+    }
+    internal static class MobModelAssets
+    {
+        public static string CurrentTarget() => "StandaloneWindows64";
     }
     internal static class BlockInputWhileMenuOpen { public static bool MenuOpen; }
     public class Entity

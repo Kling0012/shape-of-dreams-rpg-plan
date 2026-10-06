@@ -70,3 +70,28 @@ jobs:
       - run: dotnet test -c Release tests/SodRpg.Core.Tests --no-build --filter "Speed=Slow"
         env:
           SODRPG_SLOW: "1"
+
+  # Dreamborne mob sources: a clean checkout must reconstruct the exact 63
+  # source files from all 88 archive parts and pass the offline validators.
+  mob-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python tools/materialize_mob_assets.py
+      - run: python tools/materialize_mob_assets.py --verify-only
+      - run: python tools/validate_mob_assets.py
+      - run: python -m unittest discover -s tests/assets -v
+
+  # Mob asset build tooling: config validation, isolated project preparation
+  # and review packaging contracts (no Unity editor in CI).
+  mob-tools:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools/MobAssetBuilder/tests -v

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using SodRpg.Core.Game;
 using SodRpg.Core.Internal;
@@ -76,7 +75,7 @@ namespace SodRpg.Core.Tests
             }
             string bodyJson = Json.Write(body);
             string oldSave = Json.Write(new JsonObject().Add("format", ProfileCodec.Format).Add("version", (long)3)
-                .Add("checksum", "sha256:" + Sha256(bodyJson)).Add("body", body));
+                .Add("checksum", "sha256:" + LedgerSerializer.Sha256Hex(bodyJson)).Add("body", body));
             var loaded = ProfileCodec.Read(oldSave, new List<string>());
             Assert.Equal(0, loaded.FindStash(r.Uid).AffixRerolls);
         }
@@ -206,14 +205,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(5, p.Material(Materials.Tuning));
         }
 
-        private static string Sha256(string text)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var sb = new StringBuilder();
-                foreach (byte b in sha.ComputeHash(Encoding.UTF8.GetBytes(text))) sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
-        }
+
     }
 }

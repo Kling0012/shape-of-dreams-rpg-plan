@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using SodRpg.Core.Game;
 using SodRpg.Core.Internal;
@@ -341,10 +340,7 @@ namespace SodRpg.Core.Tests
             var legacy = new JsonObject();
             foreach (var kv in ((JsonObject)body).Properties)
                 legacy.Add(kv.Key, kv.Key == "heroes" ? WithoutStarXp(kv.Value) : kv.Value);
-            string checksum;
-            using (var sha = SHA256.Create())
-                checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(legacy))))
-                    .Replace("-", "").ToLowerInvariant();
+            string checksum = "sha256:" + LedgerSerializer.Sha256Hex(Json.Write(legacy));
             return Json.Write(new JsonObject().Add("format", ProfileCodec.Format)
                 .Add("version", (long)Profile.CurrentVersion).Add("checksum", checksum).Add("body", legacy));
         }

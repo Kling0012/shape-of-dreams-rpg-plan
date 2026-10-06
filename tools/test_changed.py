@@ -28,6 +28,12 @@ import os
 import re
 import subprocess
 import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -312,7 +312,7 @@ namespace SodRpg.Core.Tests
 
             // 旧形式（checksum つき）は欄ごと無視して読める
             int at = text.IndexOf("\"body\":", StringComparison.Ordinal);
-            var o = ProfileCodec.Read(text.Insert(at, "\"checksum\":\"sha256:legacy\","), new List<string>());
+            var o = ProfileCodec.Read(text.Insert(at, "\"checksum\":\"legacy\","), new List<string>());
             Assert.Equal(9, o.DreamLevel);
             Assert.Equal(text, ProfileCodec.Write(o));
         }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using SodRpg.Core.Game;
 using SodRpg.Core.Internal;
@@ -209,12 +208,7 @@ namespace SodRpg.Core.Tests
             var root = (JsonObject)Json.Parse(ProfileCodec.Write(p));
             Assert.True(root.TryGet("body", out object body));
             var oldBody = WithoutAwakening(body);
-            string checksum;
-            using (var sha = SHA256.Create())
-            {
-                checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(oldBody))))
-                    .Replace("-", "").ToLowerInvariant();
-            }
+            string checksum = "sha256:" + LedgerSerializer.Sha256Hex(Json.Write(oldBody));
             var oldSave = new JsonObject().Add("format", ProfileCodec.Format).Add("version", (long)Profile.CurrentVersion)
                 .Add("checksum", checksum).Add("body", oldBody);
             var q = ProfileCodec.Read(Json.Write(oldSave), new List<string>());
@@ -267,12 +261,7 @@ namespace SodRpg.Core.Tests
             // awakenLevel を持たない v1.26 までの保存を作る
             Assert.True(root.TryGet("body", out object body));
             var oldBody = StripKey(body, "awakenLevel");
-            string checksum;
-            using (var sha = SHA256.Create())
-            {
-                checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(oldBody))))
-                    .Replace("-", "").ToLowerInvariant();
-            }
+            string checksum = "sha256:" + LedgerSerializer.Sha256Hex(Json.Write(oldBody));
             var oldSave = new JsonObject().Add("format", ProfileCodec.Format).Add("version", (long)Profile.CurrentVersion)
                 .Add("checksum", checksum).Add("body", oldBody);
             var q = ProfileCodec.Read(Json.Write(oldSave), new List<string>());

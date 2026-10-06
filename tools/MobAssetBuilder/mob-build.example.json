@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "unityVersion": "6000.0.77f1",
+  "urpVersion": "17.0.4",
+  "gameVersion": "r.1.4.0.13_s",
+  "buildTarget": "StandaloneWindows64",
+  "renderPipelineAsset": "",
+  "sdkAssemblies": [],
+  "models": [
+    { "id": "ember_warden" },
+    { "id": "mirecap_stomper" },
+    { "id": "duskwing_oracle" },
+    { "id": "thorncrown_stag" },
+    { "id": "frostjaw_prowler" },
+    { "id": "runestone_tortoise" },
+    { "id": "glasswing_moth" },
+    { "id": "obsidian_scorpion" },
+    { "id": "lantern_wisp" },
+    { "id": "abyssal_bell" }
+  ],
+  "additionalPackages": []
+}

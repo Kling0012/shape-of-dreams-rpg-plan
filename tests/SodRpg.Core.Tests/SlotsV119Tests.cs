@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using SodRpg.Core.Game;
 using SodRpg.Core.Internal;
@@ -66,12 +65,7 @@ namespace SodRpg.Core.Tests
 
         private static string WithBody(object body)
         {
-            string checksum;
-            using (var sha = SHA256.Create())
-            {
-                checksum = "sha256:" + BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(Json.Write(body))))
-                    .Replace("-", "").ToLowerInvariant();
-            }
+            string checksum = "sha256:" + LedgerSerializer.Sha256Hex(Json.Write(body));
             return Json.Write(new JsonObject().Add("format", ProfileCodec.Format)
                 .Add("version", (long)Profile.CurrentVersion).Add("checksum", checksum).Add("body", body));
         }

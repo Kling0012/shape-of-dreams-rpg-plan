@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Text;
 using SodRpg.Core.Game;
 using SodRpg.Core.Internal;
@@ -393,17 +392,6 @@ namespace SodRpg.Core.Tests
 
         // ───────── 試験5：保存と互換（設計 4）─────────
 
-        private static string Sha256Hex(string text)
-        {
-            using (var sha = SHA256.Create())
-            {
-                var sb = new StringBuilder();
-                foreach (byte b in sha.ComputeHash(Encoding.UTF8.GetBytes(text)))
-                    sb.Append(b.ToString("x2"));
-                return sb.ToString();
-            }
-        }
-
         private static JsonObject FindRelic(JsonObject body, string uid)
         {
             foreach (var key in new[] { "stash", "lostAndFound", "satchel", "deferredWaypointRelics" })
@@ -436,7 +424,7 @@ namespace SodRpg.Core.Tests
                     if (ReferenceEquals(list[i], relic)) list[i] = edited;
             }
             foreach (var key in new[] { "stash", "lostAndFound", "satchel", "deferredWaypointRelics", "pendingSalvage" }) Replace(body, key);
-            string checksum = "sha256:" + Sha256Hex(Json.Write(body));
+            string checksum = "sha256:" + LedgerSerializer.Sha256Hex(Json.Write(body));
             return Json.Write(new JsonObject()
                 .Add("format", ProfileCodec.Format)
                 .Add("version", (long)Profile.CurrentVersion)

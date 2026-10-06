@@ -603,7 +603,7 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net
 報酬表・生成物・段階6fixtureの値は、この回帰修正では変更しません。
 値変更後は意味・型・単位・採用値の正準レコードを既存FNV-1a照合へ加えます。
 ボスセット率は既存 `boss-drop` レコードを使い、二重に加えません。JSONの空白／キー順は指紋へ影響しません。
-ファイルのSHA256検証は行いません。保存形式・Protocolは変更していません。
+ファイルのハッシュ検証は行いません。保存形式・Protocolは変更していません。
 既存の数値期待値は生の表と独立した式／RNG分岐を使い、正当な調整で初期fixtureを再固定する必要はありません。
 
 ```sh

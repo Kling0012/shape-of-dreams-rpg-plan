@@ -4,7 +4,7 @@ The tables under tools/balance/bosses/<boss>.json are the sole numeric source fo
 BossProfiles.*.cs payloads (channels, actions, reward actions and shared helper
 constants).  The runtime never reads JSON; it consumes the generated constants.
 """
-import hashlib
+import zlib
 import json
 import re
 from pathlib import Path
@@ -134,12 +134,12 @@ def tables_digest(tables):
     """Canonical digest of all tables; detects any cell edit (guard for pinned values)."""
     payload = json.dumps({boss: tables[boss] for boss in BOSS_ORDER},
                          sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return format(zlib.crc32(payload.encode("utf-8")) & 0xffffffff, "08x")
 
 
 # Frozen migration reference. The initial tables reproduced the compiled values exactly;
 # any cell edit moves away from it and legitimately changes the boss content fingerprint.
-FROZEN_DIGEST = "5fda4892782c3a651333df23949cb502f6d5abf587aba884352c102ae4e5445c"
+FROZEN_DIGEST = "e4d347bd"
 
 
 def _pascal(name):
@@ -200,8 +200,8 @@ def render_boss(boss, data):
 def tables_summary(tables=None):
     """Compact metadata for the comparison baseline; full tables stay in the JSON sources."""
     tables = load_all() if tables is None else tables
-    summary = {boss: hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":"),
-                                               ensure_ascii=True).encode("utf-8")).hexdigest()
+    summary = {boss: format(zlib.crc32(json.dumps(data, sort_keys=True, separators=(",", ":"),
+                                                 ensure_ascii=True).encode("utf-8")) & 0xffffffff, "08x")
                for boss, data in tables.items()}
     summary["tablesDigest"] = tables_digest(tables)
     return summary

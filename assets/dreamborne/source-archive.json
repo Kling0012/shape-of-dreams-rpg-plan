@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "format": "zip",
+  "archiveBytes": 5745387,
+  "fileCount": 63,
+  "uncompressedBytes": 40635566,
+  "chunkBytes": 65536,
+  "chunks": [
+    {
+      "path": "source-pack.zip.001",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.002",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.003",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.004",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.005",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.006",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.007",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.008",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.009",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.010",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.011",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.012",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.013",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.014",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.015",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.016",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.017",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.018",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.019",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.020",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.021",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.022",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.023",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.024",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.025",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.026",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.027",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.028",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.029",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.030",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.031",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.032",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.033",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.034",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.035",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.036",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.037",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.038",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.039",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.040",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.041",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.042",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.043",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.044",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.045",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.046",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.047",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.048",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.049",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.050",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.051",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.052",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.053",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.054",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.055",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.056",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.057",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.058",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.059",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.060",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.061",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.062",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.063",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.064",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.065",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.066",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.067",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.068",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.069",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.070",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.071",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.072",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.073",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.074",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.075",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.076",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.077",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.078",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.079",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.080",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.081",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.082",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.083",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.084",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.085",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.086",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.087",
+      "bytes": 65536
+    },
+    {
+      "path": "source-pack.zip.088",
+      "bytes": 43755
+    }
+  ]
+}

@@ -94,7 +94,9 @@
 
 
   <Target Name="ExtractIssue62NativeCallbacks" BeforeTargets="CoreCompile">
-    <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
+    <!-- Prefer a python already on PATH; MSBuild's cmd child may have no usable PATH at all, so fall back to the
+         absolute py launcher, which resolves registered interpreters itself (registry, not PATH). -->
+    <Exec Command="python &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot; || &quot;%windir%\py.exe&quot; -3 &quot;$(MSBuildProjectDirectory)/extract_issue62_native.py&quot; &quot;$(MSBuildProjectDirectory)/$(IntermediateOutputPath)Issue62.Native.cs&quot;" />
   </Target>
 
 </Project>
