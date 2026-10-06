@@ -594,9 +594,13 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet tools/BalanceSim/bin/Release/net
 ### 初期値の互換性と検証
 
 移行前のCore実行から、数値定義・抽選結果／RNG状態・価格／換算・確保報酬を6652項目保存した
-`tests/SodRpg.Core.Tests/Stage6OriginalValues.json` と、独立プロセスの内容指紋を比較する最小の移行回帰を追加しています。
+`tests/SodRpg.Core.Tests/Stage6OriginalValues.json` と照合する移行回帰を維持しています。
 このfixtureは互換性の観測であり、調整原本でも実行時fallbackでもありません。
-初期表の星図登録後ContentFingerprintは移行前後とも `10579-ab35d865a569c87b`。
+初期表だけを使った移行時の星図登録後ContentFingerprintは前後とも `10579-ab35d865a569c87b` でした。
+この旧版固定値との全体指紋比較は、段階6が無調整でも他の表を調整すると成立しません。
+#234のInfinity調整は内容照合へ正しく追加されるため、旧版指紋の固定値アサートは削除しました。
+段階6の6652項目の実定義／RNG比較と、既存 `ContentFingerprintTests` の同一内容受理・異なる内容拒否の検証は維持します。
+報酬表・生成物・段階6fixtureの値は、この回帰修正では変更しません。
 値変更後は意味・型・単位・採用値の正準レコードを既存FNV-1a照合へ加えます。
 ボスセット率は既存 `boss-drop` レコードを使い、二重に加えません。JSONの空白／キー順は指紋へ影響しません。
 ファイルのSHA256検証は行いません。保存形式・Protocolは変更していません。
