@@ -33,8 +33,8 @@ Turns every run into part of a long RPG journey: relics you keep, a risky "secur
 [list]
 [*] Enemies grow with your delve depth, and stronger gear draws more nightmares. Nightmares can be warded, thorned, ravenous or sundering.
 [*] 敵は深度に合わせて強くなり、強い装備で潜るほど悪夢の敵が増えます。悪夢には結界・棘皮・飢渇・破甲などの性質があります。
-[*] Dream pressure multiplies enemy HP and damage using the party's average Dream Level and spent star points, not player count. Low-level joiners lower the average; bosses use the same multiplier.
-[*] 「夢の圧」は、参加者の夢のレベルと振った星ポイントの平均から敵HP・与ダメージを強化します。人数の合計ではなく、低いレベルの人が加わると圧は下がります。ボスも同じ倍率です。
+[*] Dream pressure multiplies enemy HP and damage using the party's average Dream Level and spent star points, not player count. Low-level joiners lower the average. Higher pressure also mixes additional enemies into each combat wave, but never adds bosses; bosses still receive the HP and damage multipliers. Added enemies grant rewards scaled to their added density.
+[*] 「夢の圧」は、参加者の夢のレベルと振った星ポイントの平均から敵HP・与ダメージを強化します。人数の合計ではなく、低いレベルの人が加わると圧は下がります。圧が高まると敵の数も増え、戦闘中の各ウェーブに混ざって出現します。追加分の報酬は増加幅に応じて調整します。ボスの数は増やさず、HP・与ダメージの強化だけが反映されます。
 [*] 13 dream variants: base-game enemies reborn with new names, colors, abilities and better loot.
 [*] 本体の敵をもとにした「夢の変種」13種。名前・色・能力が変わり、倒すと良い戦利品が出ます。
 [/list]

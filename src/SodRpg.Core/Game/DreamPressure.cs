@@ -27,6 +27,16 @@ namespace SodRpg.Core.Game
         public double DamageMultiplier => (1 + DamagePerLevel * LevelsOverFree + DamagePerStarPoint * AverageSpentStarPoints)
             * DreamDepth.DamageMultiplier(Depth) * WaypointMultiplier * (1 + DamagePerInfinityStage * InfinityStage);
 
+        /// <summary>通常の圧には段番号がないため、最終HPの増分を圧1段のHP増分で換算する。</summary>
+        public double EnemyCountMultiplier => EnemyCountMultiplierForHealth(HealthMultiplier);
+
+        public static double EnemyCountMultiplierForHealth(double healthMultiplier)
+        {
+            if (double.IsNaN(healthMultiplier) || double.IsInfinity(healthMultiplier)) return 1;
+            double stages = Math.Floor(Math.Max(0, healthMultiplier - 1) / PressureBalance.EnemyCountHealthPerStage + 1e-9);
+            return 1 + Math.Min(PressureBalance.EnemyCountMaximumBonus, stages * PressureBalance.EnemyCountPerStage);
+        }
+
         private DreamPressure(double dreamLevel, double spentStarPoints, int depth = 0, double waypointMultiplier = 1, int infinityStage = 0)
         {
             _averageLevelAboveOne = dreamLevel - 1;

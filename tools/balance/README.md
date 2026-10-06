@@ -155,17 +155,20 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -
 
 ## 圧・悪夢・敵種・Infinityの調整（Issue #149 段階5）
 
-179係数を無調整で移行しました。表の1セルを編集して `tools/balance/run` を実行すると、
-生成・全通常テスト・Coreの実測・前回成功との比較まで実行します。ゲーム実行中のJSON読込はありません。
+段階5では179係数を無調整で移行しました。Issue #253では `pressure.json` に敵数と追加報酬予算の4係数を追加しました。
+表の1セルを編集して `tools/balance/run` を実行すると、生成・全通常テスト・Coreの実測・前回成功との比較まで実行します。ゲーム実行中のJSON読込はありません。
 
 | 原本 | 調整欄 | 生成先 |
 | --- | --- | --- |
-| `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
+| `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、敵数のHP換算幅／段ごとの増分／最大増分／追加報酬予算4欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
 | `monsters.json` | `behavior` 27欄、`nightmare` 39欄、`variants` の確率・性質・欠片9欄、`variantStats` の30種47能力値 | `Game/Balance/Monsters.Generated.cs` |
 | `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄 | `Game/Balance/Infinity.Generated.cs` |
 
 `pressure` は夢Lv1/5/10/20/30×使用星点0/50/250/500×深度0〜5×道標なし／儚い記憶
 ×Infinity段0/1/10/100を `DreamPressure` の実式で列挙します。潜行Heatは夢の深度とは別軸です。
+敵数の原本は `dreamPressure.enemyCountHealthPerStage=0.10`、`enemyCountPerStage=0.08`、`enemyCountMaximumBonus=0.60`、`enemyCountAdditionalRewardBudget=0.20`。
+`DreamPressure.EnemyCountMultiplier` は最終HPから圧段階を換算し、ホストは各ウェーブで実際に出た非ボスの増分を偏りのない整数体数へ丸めて、その出現処理へ混ぜる。global／section同時人口上限と元のウェーブ数は据え置き、満員ならそのウェーブ内で空きを待つ。
+追加体の係数は `min(1, enemyCountAdditionalRewardBudget / 敵数増加率)`。通常／Infinityとも通常の撃破報酬経路へ通し、変換後の通貨・遺物を係数処理してから既存Infinity出力予算を消費する。整数は確率丸め、分割できない遺物・Chaos・配当・回復は確率を調整する。追加の直接報酬は元敵比で期待値+20%までであり、抽選結果・戦闘時間クレジット・依頼達成時期まで含む部屋総収入の決定的上限ではない。
 悪夢の出現確率・接頭効果数・能力値、30変種の能力値・欠片倍率、行動係数も独立した単位で比較します。
 単独接頭効果の投影であり、ランダムな複合結果・勝率・実クリア時間を予測しません。
 

@@ -48,6 +48,7 @@ namespace SodRpg.Mod
                 catch (Exception ex) { Log.Warn("Native preflight failed; patching class by class instead: " + ex); }
                 stage = "patch installation";
                 PatchEachClass();
+                PressureEnemyCount.Install(harmony);
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
@@ -316,6 +317,7 @@ namespace SodRpg.Mod
             var host = _host; _host = null;
             var ui = _ui; _ui = null;
             var performance = _performance; _performance = null;
+            try { PressureEnemyCount.Stop(); } catch (Exception ex) { Log.Error("Startup cleanup: pressure enemy count: " + ex); }
             try { host?.Detach(); } catch (Exception ex) { Log.Error("Startup cleanup: host detach: " + ex); }
             try { session?.Unwire(); } catch (Exception ex) { Log.Error("Startup cleanup: session unwire: " + ex); }
             try { ui?.Dispose(); } catch (Exception ex) { Log.Error("Startup cleanup: UI dispose: " + ex); }

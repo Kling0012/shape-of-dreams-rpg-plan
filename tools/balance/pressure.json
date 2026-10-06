@@ -7,7 +7,11 @@
     "healthPerInfinityStage": 0.10,
     "damagePerLevel": 0.012,
     "damagePerStarPoint": 0.0025,
-    "damagePerInfinityStage": 0.04
+    "damagePerInfinityStage": 0.04,
+    "enemyCountHealthPerStage": 0.10,
+    "enemyCountPerStage": 0.08,
+    "enemyCountMaximumBonus": 0.60,
+    "enemyCountAdditionalRewardBudget": 0.20
   },
   "dreamDepth": {
     "maximum": 5,

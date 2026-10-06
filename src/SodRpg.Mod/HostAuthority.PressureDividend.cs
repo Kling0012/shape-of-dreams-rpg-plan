@@ -24,6 +24,8 @@ namespace SodRpg.Mod
         private readonly Dictionary<Monster, PressureDividendEnemy> _pressureDividendSpawns = new Dictionary<Monster, PressureDividendEnemy>();
         private readonly Dictionary<PressureDividendEnemy, PressureDividendRuntime> _pressureDividendRolls =
             new Dictionary<PressureDividendEnemy, PressureDividendRuntime>();
+        private readonly Dictionary<PressureDividendEnemy, double> _pressureDividendRewardScales =
+            new Dictionary<PressureDividendEnemy, double>();
         private const float PressureDividendDeathLifetime = 10f;
         private readonly Dictionary<Monster, float> _pressureDividendDeathExpiry = new Dictionary<Monster, float>();
         private readonly List<Monster> _pressureDividendDeathScratch = new List<Monster>();
@@ -69,6 +71,8 @@ namespace SodRpg.Mod
             if (eligible && monster.Status.TryGetStatusEffect<Se_HunterBuff>(out var hunter))
                 eligible = hunter.enableGoldAndExpDrops;
             spawn.CaptureDeath(eligible);
+            double scale = PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData);
+            if (scale < 1) _pressureDividendRewardScales.Add(spawn, scale);
             _pressureDividendDeathExpiry[monster] = Time.unscaledTime + PressureDividendDeathLifetime;
         }
 
@@ -78,6 +82,7 @@ namespace SodRpg.Mod
             {
                 _nativePressureLootSpawns.Remove(spawn);
                 _pressureDividendRolls.Remove(spawn);
+                _pressureDividendRewardScales.Remove(spawn);
                 _pressureDividendSpawns.Remove(monster);
             }
             _pressureDividendDeathExpiry.Remove(monster);
@@ -100,6 +105,7 @@ namespace SodRpg.Mod
             _pressureDividendDeathScratch.Clear();
             _nativePressureLootSpawns.Clear();
             _pressureDividendRolls.Clear();
+            _pressureDividendRewardScales.Clear();
         }
 
         /// <summary>
@@ -127,6 +133,9 @@ namespace SodRpg.Mod
             }
             var reward = rolls.TryAward(spawn.Death, attribution, channels, equippedMemories,
                 () => (decimal)_rng.NextDouble() * 10000m, () => Guid.NewGuid().ToString("N"));
+            // TryAward records the single award even if thinning drops it; replay must not reroll.
+            if (reward != null && _pressureDividendRewardScales.TryGetValue(spawn, out double scale)
+                && _rng.NextDouble() >= scale) return null;
             if (reward != null)
                 _registeredOn.CustomRpc_SendMessageToClient(owner, DreamforgePressureDividendMsg.FromReward(reward, hero.netId));
             return reward;

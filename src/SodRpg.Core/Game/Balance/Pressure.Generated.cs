@@ -11,6 +11,10 @@ namespace SodRpg.Core.Game
         internal const double DamagePerLevel = 0.012d;
         internal const double DamagePerStarPoint = 0.0025d;
         internal const double DamagePerInfinityStage = 0.04d;
+        internal const double EnemyCountHealthPerStage = 0.1d;
+        internal const double EnemyCountPerStage = 0.08d;
+        internal const double EnemyCountMaximumBonus = 0.6d;
+        internal const double EnemyCountAdditionalRewardBudget = 0.2d;
         internal const int MaximumDepth = 5;
         internal const double HealthPerDepth = 0.15d;
         internal const double DamagePerDepth = 0.08d;
@@ -18,6 +22,6 @@ namespace SodRpg.Core.Game
         internal const double AwakeningPerDepth = 0.25d;
         internal const double StarXpPerDepth = 0.2d;
         internal const int ExtraNodesPerDepth = 2;
-        internal static readonly string ContentFingerprintRecord = null;
+        internal static readonly string ContentFingerprintRecord = "balance:pressure:v1:dreamPressure/enemyCountPerStage:double:ratio/stage:0.08;dreamPressure/enemyCountAdditionalRewardBudget:double:ratio:0.2";
     }
 }

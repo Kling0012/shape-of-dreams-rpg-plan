@@ -169,6 +169,14 @@ namespace SodRpg.Mod
         private readonly HashSet<DewPlayer> _pressurePlayers = new HashSet<DewPlayer>();
         private readonly List<DewPlayer> _departedPlayers = new List<DewPlayer>();
         private DreamPressure _pressure = DreamPressure.Neutral;
+        internal double PressureEnemyCountMultiplier
+        {
+            get
+            {
+                if (_pressureDirty) RefreshPressure();
+                return _pressure.EnemyCountMultiplier;
+            }
+        }
         private int _pressurePlayerCount = -1;
         private readonly DataProcessor<DamageData, Actor, Entity> _pressureDamage;
         private readonly Action<DewPlayer> _onPressurePlayerAdded;
