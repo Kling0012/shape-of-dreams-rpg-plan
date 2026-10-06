@@ -246,6 +246,9 @@ internal static class Metrics
             Total("bosses", row.Bosses, "kills");
             Total("nightmares", row.Nightmares, "kills");
             Total("attemptedKills", row.Attempts, "kills");
+            Total("originalKills", row.Attempts - row.BonusKills, "kills");
+            Total("bonusKills", row.BonusKills, "kills");
+            Total("ordinaryRollMultiplier", InfinityIntervalScaling.RelicMultiplier(row.Interval), "pre-budget-EV-multiplier");
             Supply("relics", row.Relics, "relics");
             Supply("epic", row.Epic, "relics");
             Supply("epicPlus", row.Epic + row.Legendary, "relics");
@@ -269,7 +272,7 @@ internal static class Metrics
         }
         Write(path, new
         {
-            modelVersion = 1, mode = "infinity", contentFingerprint = ContentFingerprint.Value,
+            modelVersion = 2, mode = "infinity", contentFingerprint = ContentFingerprint.Value,
             conditions = new
             {
                 runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
@@ -285,11 +288,14 @@ internal static class Metrics
                     lesserPerRoom = InfinitySimulation.LesserPerRoom, normalPerRoom = InfinitySimulation.NormalPerRoom,
                     miniBossChance = InfinitySimulation.MiniBossChance,
                     normalBossSetPolicy = "first boss registered, other three unregistered; infinity all registered",
-                    timePolicy = "all session time is active combat; partial encounters refill but do not reward an incomplete kill",
+                    timePolicy = "fixed active node seconds shared by original and bonus actors; no guessed slowdown or native clear-speed claim; partial encounters refill but do not reward an incomplete kill",
                     initialState = "fresh zero-credit profile per row/player; one equipped existing relic, excluded from new supply; no allocated stars",
-                    rngPolicy = "same Core seed stream reset per row; encounter/equipment seeds drawn independently",
+                    rngPolicy = "same Core seed stream reset per row; encounter/equipment seeds drawn independently; separate deterministic wave RNG for initial fractional credit and bonus nightmares",
                     transitionPolicy = "normal secure each zone, victory after four zones; infinity real boss/soul/choice/Delve, fixed waypoint restored",
                     rewardsPolicy = "actual Drop events including overflow; boss sets subset of Legendary; held and secured resources included; no forced final return",
+                    pressurePolicy = "profile DreamLevel, zero spent stars, DreamDepth, active waypoint pressure, actual Infinity PressureStage; capped pressure count plus independent interval bonus",
+                    bonusPolicy = "one synthetic wave per Combat room; uniformly initialized fractional credit, bonus accrued per original actor, same-tier replicas; only extras use Core ScaleForBonus through actual Rules.OnKill; bosses not replicated",
+                    intervalRelicsPolicy = "Core independent ordinary Epic-or-below bonus rolls; multiplier is pre-budget EV, not found/hour; Legendary, limited and guaranteed authorizations unchanged",
                     exclusions = "no travel, idle, paid merchant/events, crafting, old-item recovery, discretionary bounty; no winrate or measured clear speed",
                     fundedBoss = "default-interval room entries sharing2700 combat seconds without admissions, then one registered Boss over5400 seconds; default interval is current Core content",
                     epicMirage = "300 minute 4x session at current Core default interval, depth0",

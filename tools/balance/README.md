@@ -5,7 +5,7 @@
 `star-progression.json` の星XP曲線・費用・報酬・刻印枠の解放、
 `gear.json` の装備レベル成長・固定攻魔上限、`sets.json` の通常セット2/3/6部位効果、
 `pressure.json` の夢の圧・深度、`monsters.json` の悪夢・変種・敵行動、
-`infinity.json` の供給予算・周期・圧段階上限、`powers.json` のPowerの時間・距離・条件（127欄）を
+`infinity.json` の供給予算・周期・圧段階上限・周期別補正、`powers.json` のPowerの時間・距離・条件（127欄）を
 型付きC#へ生成します。記憶ダメージはmanifestの480親＋258選択肢と旧ルート98成分、計836欄を移行済みです。
 星ID・段数・費用・選択肢・保存形式5・Protocol 23は維持し、調整した有効値（装備・セット・Powerを含む）を内容照合に含めます。
 段階2ではMemoryHaste・GimmickBoost・GimmickParam・Notable・Keystone・Statの
@@ -169,13 +169,28 @@ DOTNET_ROLL_FORWARD=LatestMajor /usr/bin/dotnet run --project tools/BalanceSim -
 | --- | --- | --- |
 | `pressure.json` | `dreamPressure` の無料夢レベル・HP／damageの夢レベル／星点／Infinity段係数7欄、敵数のHP換算幅／段ごとの増分／最大増分／追加報酬予算4欄、`dreamDepth` の最大深度・HP／damage／幸運／覚醒／星XP／追加部屋7欄 | `Game/Balance/Pressure.Generated.cs` |
 | `monsters.json` | `behavior` 27欄、`nightmare` 39欄、`variants` の確率・性質・欠片9欄、`variantStats` の30種47能力値 | `Game/Balance/Monsters.Generated.cs` |
-| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄 | `Game/Balance/Infinity.Generated.cs` |
+| `infinity.json` | `rates` 10欄、共通 `killMix` 4欄、`bursts` 16欄、`rooms` の4種cap／increment8欄、`run` の既定／3周期／圧上限5欄、`intervalScaling` の3周期×圧加算／敵数加算／通常遺物倍率9欄 | `Game/Balance/Infinity.Generated.cs` |
 
 `pressure` は夢Lv1/5/10/20/30×使用星点0/50/250/500×深度0〜5×道標なし／儚い記憶
 ×Infinity段0/1/10/100を `DreamPressure` の実式で列挙します。潜行Heatは夢の深度とは別軸です。
 敵数の原本は `dreamPressure.enemyCountHealthPerStage=0.10`、`enemyCountPerStage=0.08`、`enemyCountMaximumBonus=0.60`、`enemyCountAdditionalRewardBudget=0.20`。
 `DreamPressure.EnemyCountMultiplier` は最終HPから圧段階を換算し、ホストは各ウェーブで実際に出た非ボスの増分を偏りのない整数体数へ丸めて、その出現処理へ混ぜる。global／section同時人口上限と元のウェーブ数は据え置き、満員ならそのウェーブ内で空きを待つ。
 追加体の係数は `min(1, enemyCountAdditionalRewardBudget / 敵数増加率)`。通常／Infinityとも通常の撃破報酬経路へ通し、変換後の通貨・遺物を係数処理してから既存Infinity出力予算を消費する。整数は確率丸め、分割できない遺物・Chaos・配当・回復は確率を調整する。追加の直接報酬は元敵比で期待値+20%までであり、抽選結果・戦闘時間クレジット・依頼達成時期まで含む部屋総収入の決定的上限ではない。
+Issue #270の `intervalScaling` は20部屋を基準、15部屋を圧+2段・敵数+200%・通常遺物×1.5、10部屋を圧+4段・敵数+400%・通常遺物×2とする。圧の敵数上限とは別に加算し、追加報酬係数の分母には合計増加率を使う。遺物の追加抽選はEpic以下、既存の認可・無料出力上限内であり、Legendary・限定セット・固定保証・予算の補充値は増やさない。`--infinity-scope intervals` で60戦闘分×全3周期の実Core経済を確認できるが、固定部屋時間の模型であり実機のクリア速度予測ではない。
+
+### Issue #270：同一模型の修正前後比較
+
+各周期300プロフィール×戦闘60分、seed=1、装備Lv1、深度0、道標なし。修正前は作業開始時に生成したCore DLLへ現行BalanceSimを接続し、新設した周期補正APIだけを無補正にした一時アダプターを使用した。報酬・予算・圧の旧実装はそのDLLの実コードであり、前後とも#253の追加敵を同じ模型で数える。修正後は `DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode infinity --infinity-scope intervals --players 300 --seed 1`。
+
+| 周期 | 遺物／時 前→後 | Legendary／時 前→後 | Legendary発見数 前→後（300時間分） |
+| ---: | ---: | ---: | ---: |
+| 10 | 28.920→28.980 | 0.013333→0.006667 | 4→2 |
+| 15 | 28.006667→28.900 | 0.023333→0.003333 | 7→1 |
+| 20 | 24.273333→24.273333 | 0.020000→0.020000 | 6→6 |
+
+全周期で実ボス限定セットは前後とも0件。これは未観測であって抽選確率0の証明ではない。追加通常抽選にLegendaryを含めないことは、4,000固定seedの同条件ボス抽選の前後でLegendary個数が一致する最小回帰でも確認した。Legendary予算の補充基準は全周期で変更前後とも0.052875期待個数／戦闘時、修正後の実予約は10／15／20で0.011955／0.023922／0.011245。Epic以上と最終遺物の既存予算があるため、発見数／時の増加は抽選倍率より小さい。20周期は発見数・撃破数・予算予約が同じ結果だった。
+固定87.5秒／部屋の経済模型であり、増員後のUnity内の踏破速度・勝率・FPS・実coopを予測しない。最終指定ビルドは警告5／エラー0、生成チェック成功、全テスト2,694成功／0失敗／既存skip4。新設した最小回帰は5件（保存した周期・圧の上限・独立敵数加算・通常抽選とLegendary・予算境界）。一時ソース連結コンソールで人口上限・増員失敗時の本体継続を実行し、満員待機とレア度抽選をそれぞれ1万回、追加割り当て0bytesで確認した。
+
 悪夢の出現確率・接頭効果数・能力値、30変種の能力値・欠片倍率、行動係数も独立した単位で比較します。
 単独接頭効果の投影であり、ランダムな複合結果・勝率・実クリア時間を予測しません。
 

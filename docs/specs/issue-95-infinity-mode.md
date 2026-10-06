@@ -75,7 +75,7 @@
 ## 7. 難しさの伸び
 - ロビーDreamDepthと本体Limboは変更しない。DreamDepthは最大5で敵倍率だけでなくluck・覚醒・星XP・部屋数にも効く（R/src/SodRpg.Core/Game/DreamDepth.cs:8-17）。これを無限加算すると報酬方針も壊れる。
 - 潜行ごとのHeat増加は既存上限5を維持。悪夢確率、非悪夢の底上げ、変種最大1体／部屋を既存処理へ載せる（R/src/SodRpg.Core/Game/Nightmare.cs:92-137; Variants.cs:353-365）。ボス悪夢化はしない。
-- 部屋由来の圧段階を `b=min(100, floor(ClearedCombatTotal/Interval))` とし、既存夢の圧の最終HPに `1+0.10b`、攻撃に `1+0.04b` を掛ける提案。周期末から次の敵に適用し、潜行を選べばHeatでも難化する。
+- 部屋由来の圧段階は `b=min(100, floor(ClearedCombatTotal/Interval)+offset)`。#270のoffsetは20部屋=0、15部屋=2、10部屋=4で開始時から加える。既存夢の圧の最終HPに `1+0.10b`、攻撃に `1+0.04b` を掛け、潜行を選べばHeatでも難化する。圧由来の敵数に別枠の0%／200%／400%を加算し、#253の同じウェーブ内に混ぜる。本体同時人口上限とウェーブ数は変更しない。
 - 人数は本体、夢レベル／星は既存平均、深さ／道標／悪夢は既存経路のまま。native zoneIndexやambientLevelを難度カウンタにしない（R/src/SodRpg.Core/Game/DreamPressure.cs:16-51; R/src/SodRpg.Mod/HostAuthority.cs:394-464）。
 - 100段で圧倍率はHP11・攻撃5まで。その後も部屋は続くが難化は頭打ち、HUDに表示する。係数・上限は推奨初期値で本体の既存値ではない。全敵同時数やwave数を累計部屋数で増やさない。
 

@@ -32,7 +32,8 @@ namespace SodRpg.Core.Game
         public long SettledGraphEpoch { get; set; } = -1;
         public long SettledSegmentEpoch { get; set; } = -1;
         public HashSet<int> ClearedNodes { get; } = new HashSet<int>();
-        public int PressureStage => ValidInterval(Interval) ? (int)Math.Min((long)MaximumPressureStage, ClearedCombatTotal / Interval) : 0;
+        public int PressureStage => ValidInterval(Interval) ? (int)Math.Min((long)MaximumPressureStage,
+            ClearedCombatTotal / Interval + InfinityIntervalScaling.PressureOffset(Interval)) : 0;
         public bool BossDue => ClearsInCycle >= Interval;
         public static bool ValidInterval(int interval) => interval == ShortInterval || interval == MiddleInterval || interval == LongInterval;
 

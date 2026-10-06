@@ -113,6 +113,9 @@ namespace SodRpg.Core.Game
                 + KillMixBoss * Loot.DropChance(MonsterTier.Boss, 0) * (1 + Loot.BossExtraRelicChance) * (legendaryOnly ? bossLegend : boss);
             return ev * 3600 / ReferenceSeconds;
         }
+        /// <summary>Fixed guaranteed/limited sources retain their separate authorization and output count.</summary>
+        public static double OrdinaryRelicMultiplier(RunState run, Waypoint waypoint, MonsterTier tier) =>
+            run?.Infinity == null || GuaranteedWaypoint(waypoint, tier) ? 1 : InfinityIntervalScaling.RelicMultiplier(run.Infinity.Interval);
         public static double ExpectedKillHighRareCost(RunState run, MonsterTier rollTier, int heat, Waypoint waypoint,
             bool nightmare, string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
             => ExpectedKillCosts(run, rollTier, heat, waypoint, nightmare, bossTypeName, bossDropNightmare, bossDropDepth, out _);
@@ -139,6 +142,7 @@ namespace SodRpg.Core.Game
             double factor = chance * (rollTier == MonsterTier.Boss ? 1 + Loot.BossExtraRelicChance : 1);
             double ev = factor * probability;
             legendary = factor * legendaryProbability;
+            ev += factor * (probability - legendaryProbability) * (OrdinaryRelicMultiplier(run, waypoint, rollTier) - 1);
             if ((t.ForcedRarity.HasValue && t.ForcedRarity.Value < Rarity.Epic) || t.RelicSalvageMultiplier > 0 || t.AwakeningPerRelic > 0)
             { ev = 0; legendary = 0; }
             double copies = t.TwinRelics ? 2 : nightmare ? t.NightmareRewardMultiplier : 1;

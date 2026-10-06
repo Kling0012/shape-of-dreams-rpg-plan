@@ -173,8 +173,8 @@ namespace SodRpg.Mod
         {
             get
             {
-                if (_pressureDirty) RefreshPressure();
-                return _pressure.EnemyCountMultiplier;
+                StagePressure();
+                return InfinityIntervalScaling.EnemyCountMultiplier(_pressure, ClientSession.HostRun?.Infinity?.Interval ?? 0);
             }
         }
         private int _pressurePlayerCount = -1;
