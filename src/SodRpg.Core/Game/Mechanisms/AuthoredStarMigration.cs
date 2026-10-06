@@ -130,7 +130,10 @@ namespace SodRpg.Core.Game
                 points = checked(points + old); redefinedPoints = checked(redefinedPoints + old);
                 candidate.RemoveKeystone(selected);
             }
-            var layout = HeroTreeLayout.ForTalents(tree);
+            // Nothing allocated: every check below is vacuous, so skip building a layout (the dry run of RegisterMigrations
+            // and every empty hero hit this). A registered tree reuses the layout registration already built for it.
+            var layout = candidate.Talents.Count == 0 && candidate.KeystoneCount == 0 ? null
+                : StarClusters.TryGetRegisteredLayoutFor(tree, out var registeredLayout) ? registeredLayout : HeroTreeLayout.ForTalents(tree);
             bool EligibleKey(TalentDef key)
             {
                 int ranks = 0;
@@ -145,8 +148,10 @@ namespace SodRpg.Core.Game
             do
             {
                 changed = false; invalid.Clear();
+                // One traversal for the whole pass: nothing is refunded until the loop below, so every star sees the same state.
+                var reachable = candidate.Talents.Count == 0 ? null : layout.ReachabilitySnapshot(candidate);
                 foreach (var allocation in candidate.Talents)
-                    if (!layout.CanReach(candidate, nodes[allocation.Key])) invalid.Add(allocation.Key);
+                    if (!layout.CanReach(candidate, nodes[allocation.Key], reachable)) invalid.Add(allocation.Key);
                 foreach (string id in invalid) { Refund(id); changed = true; }
                 foreach (string selected in candidate.Keystones)
                 {
@@ -171,7 +176,7 @@ namespace SodRpg.Core.Game
                 candidate.RemoveKeystone(removed);
             }
             // CanReach admits a candidate adjacent to the allocated graph; it never admits an allocated disconnected island.
-            if (!layout.AllocationsConnected(candidate, null, candidate.Keystones))
+            if (layout != null && !layout.AllocationsConnected(candidate, null, candidate.Keystones))
                 throw new InvalidOperationException("Migration leaves an invalid keystone or disconnected allocation.");
             hero.Talents.Clear(); foreach (var allocation in candidate.Talents) hero.Talents.Add(allocation.Key, allocation.Value);
             hero.TalentChoices.Clear();

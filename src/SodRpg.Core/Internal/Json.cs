@@ -106,18 +106,22 @@ namespace SodRpg.Core.Internal
         private static void WriteString(StringBuilder sb, string s)
         {
             sb.Append('"');
-            foreach (char c in s)
+            // Append unescaped runs in one call: saved profiles embed whole snapshots as strings, which are mostly plain text.
+            int run = 0;
+            for (int i = 0; i < s.Length; i++)
             {
+                char c = s[i];
+                if (c != '"' && c != '\\' && c >= 0x20) continue;
+                if (i > run) sb.Append(s, run, i - run);
+                run = i + 1;
                 switch (c)
                 {
                     case '"': sb.Append("\\\""); break;
                     case '\\': sb.Append("\\\\"); break;
-                    default:
-                        if (c < 0x20) sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                        else sb.Append(c);
-                        break;
+                    default: sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture)); break;
                 }
             }
+            if (s.Length > run) sb.Append(s, run, s.Length - run);
             sb.Append('"');
         }
 

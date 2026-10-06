@@ -14,6 +14,18 @@ namespace SodRpg.Core.Game
             internal HeroTreeLayout Layout;
             internal string Fingerprint;
             internal IReadOnlyList<PairComboDef> Pairs;
+            private Dictionary<string, TalentDef> byId;
+            /// <summary>Local id to star (first wins, like a linear scan). Built on first use; read under <see cref="AuthoredLock"/>.</summary>
+            internal Dictionary<string, TalentDef> ById
+            {
+                get
+                {
+                    if (byId != null) return byId;
+                    var map = new Dictionary<string, TalentDef>(Tree.Count, StringComparer.Ordinal);
+                    foreach (var node in Tree) if (!map.ContainsKey(node.Id)) map.Add(node.Id, node);
+                    return byId = map;
+                }
+            }
         }
         private static readonly object AuthoredLock = new object();
         private static readonly Dictionary<string, InstalledTree> Installed = new Dictionary<string, InstalledTree>(StringComparer.Ordinal);
@@ -159,6 +171,16 @@ namespace SodRpg.Core.Game
                 tree = null; return false;
             }
         }
+        /// <summary>Local-id lookup in a registered hero tree; <paramref name="registered"/> is false when the hero has none.</summary>
+        internal static bool TryGetRegisteredTalent(string heroKey, string localId, out TalentDef talent, out bool registered)
+        {
+            lock (AuthoredLock)
+            {
+                talent = null;
+                registered = heroKey != null && Installed.TryGetValue(heroKey, out var value);
+                return registered && localId != null && Installed[heroKey].ById.TryGetValue(localId, out talent);
+            }
+        }
         internal static bool TryGetRegisteredLayout(string heroKey, out HeroTreeLayout layout)
         {
             lock (AuthoredLock)
@@ -167,15 +189,25 @@ namespace SodRpg.Core.Game
                 layout = null; return false;
             }
         }
+        /// <summary>The layout registered for exactly this tree instance; false for any other (unregistered or rebuilt) tree.</summary>
+        internal static bool TryGetRegisteredLayoutFor(IReadOnlyList<TalentDef> tree, out HeroTreeLayout layout)
+        {
+            lock (AuthoredLock)
+            {
+                foreach (var value in Installed.Values)
+                    if (ReferenceEquals(value.Tree, tree)) { layout = value.Layout; return true; }
+                layout = null; return false;
+            }
+        }
         internal static bool TryGetRegisteredTalent(string id, out TalentDef talent)
         {
             lock (AuthoredLock)
             {
                 talent = null;
+                if (id == null) return false;
                 foreach (var hero in Installed.Values)
-                    foreach (var node in hero.Tree)
+                    if (hero.ById.TryGetValue(id, out var node))
                     {
-                        if (node.Id != id) continue;
                         if (talent != null) throw new InvalidOperationException("A shared star ID requires its hero key: " + id);
                         talent = node;
                     }

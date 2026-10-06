@@ -82,7 +82,39 @@ namespace SodRpg.Core.Game
         public float DamageTakenMultiplier => 1f + DamageTakenPerDelvePct * Heat / 100f;
 
         public static Build Compute(Profile p, string heroKey, int heat, IEnumerable<Pact> pacts = null, int dailyId = 0)
-            => ComputeTree(p, heroKey, heat, HeroSigils.TreeFor(heroKey), HeroTreeLayout.ForHero(heroKey), pacts, dailyId);
+        {
+            var tree = HeroSigils.TreeFor(heroKey);
+            return ComputeTree(p, heroKey, heat, tree, HeroTreeLayout.ForHero(heroKey), pacts, dailyId,
+                validatedDefinitions: ValidatedDefinitions(tree));
+        }
+
+        private sealed class ValidatedTree
+        {
+            public string CapFingerprint, AuthoredFingerprint;
+            public Dictionary<string, TalentDef> Definitions;
+        }
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<IReadOnlyList<TalentDef>, ValidatedTree> ValidatedTrees
+            = new System.Runtime.CompilerServices.ConditionalWeakTable<IReadOnlyList<TalentDef>, ValidatedTree>();
+
+        /// <summary>
+        /// The id table of a registered or baseline tree, validated once per (tree instance, cap registry, authored registry).
+        /// HUD refreshes and the host's per-build checks call <see cref="Compute"/> constantly, and re-validating ~850 stars
+        /// with their scoped modifiers each time was the dominant cost. Anything that changes the answer changes a fingerprint.
+        /// </summary>
+        private static Dictionary<string, TalentDef> ValidatedDefinitions(IReadOnlyList<TalentDef> tree)
+        {
+            string caps = FractionalScopedModifiers.CapRegistryFingerprint;
+            string authored = StarClusters.AuthoredRegistryFingerprint;
+            if (ValidatedTrees.TryGetValue(tree, out var cached) && cached.CapFingerprint == caps && cached.AuthoredFingerprint == authored)
+                return cached.Definitions;
+            FractionalScopedModifiers.ValidateTree(tree);
+            var definitions = new Dictionary<string, TalentDef>(StringComparer.Ordinal);
+            foreach (var talent in tree) definitions.Add(talent.Id, talent);
+            var entry = new ValidatedTree { CapFingerprint = caps, AuthoredFingerprint = authored, Definitions = definitions };
+            ValidatedTrees.Remove(tree);
+            ValidatedTrees.Add(tree, entry);
+            return definitions;
+        }
 
         /// <summary>Runs the production build pipeline against an explicitly generated, connected tree.</summary>
         public static Build ComputeForTree(Profile p, string heroKey, int heat, IReadOnlyList<TalentDef> tree)

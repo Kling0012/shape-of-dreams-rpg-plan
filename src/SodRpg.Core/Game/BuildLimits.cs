@@ -39,18 +39,20 @@ namespace SodRpg.Core.Game
             Math.Max(StarProgression.MaxSpendablePoints, Registered.GimmickEntries));
         public static int MaxLinkEntries => checked(StarProgression.MaxSpendablePoints * Math.Max(1, Registered.MaximumLinksPerStar) + Content.SlotCount);
         public static int MaxPairComboEntries => PairCombos.All.Count;
-        public static int MaxStatEntries => Enum.GetValues(typeof(Stat)).Length;
-        public static int MaxPowerEntries => Enum.GetValues(typeof(Power)).Length - 1;
-        public static int MaxConditionalPowerEntries
+        // Enum definitions never change at run time; these limits are read for every Encode/Decode, so count them once.
+        private static readonly int StatEntryCount = Enum.GetValues(typeof(Stat)).Length;
+        private static readonly int PowerEntryCount = Enum.GetValues(typeof(Power)).Length - 1;
+        private static readonly int ConditionalPowerEntryCount = CountConditionalPowers();
+        private static int CountConditionalPowers()
         {
-            get
-            {
-                int count = 0;
-                foreach (Power power in Enum.GetValues(typeof(Power)))
-                    if (NewPowersV129.IsConditionalAttribute(power)) count++;
-                return count;
-            }
+            int count = 0;
+            foreach (Power power in Enum.GetValues(typeof(Power)))
+                if (NewPowersV129.IsConditionalAttribute(power)) count++;
+            return count;
         }
+        public static int MaxStatEntries => StatEntryCount;
+        public static int MaxPowerEntries => PowerEntryCount;
+        public static int MaxConditionalPowerEntries => ConditionalPowerEntryCount;
 
         public static int MaxPairIdLength
         {

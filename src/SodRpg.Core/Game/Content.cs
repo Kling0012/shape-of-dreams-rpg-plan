@@ -5155,11 +5155,8 @@ namespace SodRpg.Core.Game
         public static bool TryGetUnique(string id, out UniqueDef def) => UniqueById.TryGetValue(id ?? string.Empty, out def);
         public static bool TryGetTalent(string heroKey, string localId, out TalentDef def)
         {
-            if (StarClusters.TryGetRegisteredTree(heroKey, out var tree))
-            {
-                foreach (var node in tree) if (node.Id == localId) { def = node; return true; }
-                def = null; return false;
-            }
+            if (StarClusters.TryGetRegisteredTalent(heroKey, localId, out def, out bool registered)) return true;
+            if (registered) { def = null; return false; }
             return TalentByKey.TryGetValue(new AuthoredStarKey(HeroSigils.HasTree(heroKey) ? heroKey : null, localId ?? string.Empty), out def);
         }
 
