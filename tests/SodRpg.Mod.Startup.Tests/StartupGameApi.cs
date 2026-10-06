@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HarmonyLib;
 using SodRpg.Core.Game;
 using UnityEngine.InputSystem;
@@ -206,17 +207,34 @@ namespace SodRpg.Mod
         public void OnStartServer() { }
         public void StartRoom() { }
     }
-    public sealed class WorldNodeModifier { public int id; }
+    public struct ModifierData { public int id; public string type, clientData; }
+    public enum ResourceLoadSettings { Default, Light }
+    public class RoomModifierBase
+    {
+        public string name, roomOverride;
+        public bool disallowOtherModifiers, modifiesRewards, isMain, excludeFromPool;
+        public string[] allowedZones;
+        public int minZoneIndex, maxZoneIndex = int.MaxValue;
+        public bool available = true;
+        public Func<int, bool> CanSpawn = _ => true;
+        public virtual bool CanSpawnAtNode(int nodeIndex) => CanSpawn(nodeIndex);
+    }
     public sealed class Zone
     {
         public string name;
         public bool useSpecialGeneration;
         public int specialNodes;
         public List<object> startRooms = new List<object>(), combatRooms = new List<object>(), bossRooms = new List<object>();
+        public List<string> shopRooms = new List<string>();
+        public bool disableRoomModifiers;
     }
     public static class DewResources
     {
         public static readonly List<Zone> Zones = new List<Zone>();
+        public static T GetByShortTypeName<T>(string name, ResourceLoadSettings settings = ResourceLoadSettings.Default)
+            where T : class
+            => NetworkedManagerBase<ZoneManager>.softInstance?.NativeModifierPrefabs
+                .FirstOrDefault(modifier => modifier.name == name) as T;
         public static IEnumerable<T> FindAllByNameSubstring<T>(string name)
         {
             foreach (var zone in Zones)
@@ -356,6 +374,33 @@ namespace SodRpg.Mod
     {
         public int currentNodeIndex;
         public int _nextModifierId;
+        public void UpdateModifiersByHunterStatus(int currentTravelDestinationNode = -1)
+        {
+            if (!Mirror.NetworkServer.active) return;
+            for (int i = 0; i < nodes.Count; i++)
+            {
+                var node = nodes[i];
+                node.modifiers = node.modifiers == null ? new List<ModifierData>() : new List<ModifierData>(node.modifiers);
+                if (hunterStatuses[i] <= HunterStatus.AboutToBeTaken)
+                    node.modifiers.RemoveAll(modifier => modifier.type == "RoomMod_Hunted");
+                if (hunterStatuses[i] != HunterStatus.None
+                    && !(hunterStatuses[i] == HunterStatus.AboutToBeTaken && i == currentTravelDestinationNode))
+                {
+                    if (node.type == WorldNodeType.Merchant && !node.HasModifier("RoomMod_NoMerchant")
+                        && !node.HasModifier("RoomMod_MerchantBackpack"))
+                    {
+                        node.modifiers.Add(new ModifierData { id = _nextModifierId++, type = "RoomMod_MerchantBackpack" });
+                        node.modifiers.Add(new ModifierData { id = _nextModifierId++, type = "RoomMod_NoMerchant" });
+                    }
+                    int main = node.modifiers.FindLastIndex(modifier => modifier.type != "RoomMod_Hunted"
+                        && DewResources.GetByShortTypeName<RoomModifierBase>(modifier.type)?.isMain == true);
+                    if (main >= 0) node.modifiers.RemoveAt(main);
+                    if (!node.HasModifier("RoomMod_Hunted"))
+                        node.modifiers.Add(new ModifierData { id = _nextModifierId++, type = "RoomMod_Hunted" });
+                }
+                nodes[i] = node;
+            }
+        }
         public int currentZoneIndex;
         public WorldNodeData currentNode => nodes[currentNodeIndex];
         public uint worldSeed;
@@ -366,11 +411,37 @@ namespace SodRpg.Mod
         public int hunterStartNodeIndex = -1;
         public VoteType voteType;
         public LoadNodeSettings lastLoadNodeSettings = new LoadNodeSettings();
-        public readonly List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
+        public readonly List<ModifierData> modifiers = new List<ModifierData>();
         public readonly Dictionary<int, object> modifierServerData = new Dictionary<int, object>();
         public readonly List<object> visitedNodesSaveData = new List<object>();
         public readonly Mirror.SyncList<int> nodeDistanceMatrix = new Mirror.SyncList<int>();
         public int GetNodeDistance(int a, int b) => nodeDistanceMatrix[nodes.Count * a + b];
+        public readonly List<RoomModifierBase> NativeModifierPrefabs = new List<RoomModifierBase>();
+        public readonly HashSet<string> bannedRoomModifiersForCurrentLoop = new HashSet<string>();
+        public List<RoomModifierBase> LoadModifierLightPrefabsOfCurrentZone()
+            => currentZone.disableRoomModifiers ? new List<RoomModifierBase>()
+                : NativeModifierPrefabs.Where(modifier => !modifier.excludeFromPool && modifier.available
+                    && (modifier.allowedZones == null || modifier.allowedZones.Length == 0
+                        || modifier.allowedZones.Contains(currentZone.name))
+                    && currentZoneIndex >= modifier.minZoneIndex && currentZoneIndex <= modifier.maxZoneIndex
+                    && !bannedRoomModifiersForCurrentLoop.Contains(modifier.name)).ToList();
+        public int AddModifier(int nodeIndex, ModifierData modifier, Action<RoomModifierBase> beforePrepare = null)
+        {
+            var prefab = DewResources.GetByShortTypeName<RoomModifierBase>(modifier.type);
+            if (prefab == null) throw new InvalidOperationException("Unknown native modifier: " + modifier.type);
+            if (modifier.id == 0) modifier.id = _nextModifierId++;
+            if (modifier.clientData == null) modifier.clientData = "";
+            var node = nodes[nodeIndex];
+            node.modifiers = node.modifiers == null ? new List<ModifierData>() : new List<ModifierData>(node.modifiers);
+            if (prefab.isMain)
+                node.modifiers.RemoveAll(existing => DewResources.GetByShortTypeName<RoomModifierBase>(existing.type)?.isMain == true);
+            node.modifiers.Add(modifier);
+            if (!string.IsNullOrEmpty(prefab.roomOverride)) node.roomOverride = prefab.roomOverride;
+            nodes[nodeIndex] = node;
+            modifierServerData[modifier.id] = new object();
+            beforePrepare?.Invoke(prefab);
+            return modifier.id;
+        }
 
         public void AdvanceHunterTurn(bool forceMove = false) { AdvanceHunterTurnCalls++; }
         public int AdvanceHunterTurnCalls;
@@ -494,9 +565,11 @@ namespace SodRpg.Mod
     {
         public WorldNodeType type;
         public WorldNodeStatus status;
-        public List<WorldNodeModifier> modifiers;
+        public string room, roomOverride;
+        public List<ModifierData> modifiers;
         public UnityEngine.Vector2 position;
         public bool IsSidetrackNode() => position.x < 0;
+        public bool HasModifier(string name) => modifiers != null && modifiers.Any(modifier => modifier.type == name);
     }
     public enum WorldNodeType { Start = 0, Combat = 1, Event = 2, Merchant = 100, Quest = 101, Special = 200, ExitBoss = 1000 }
     public enum WorldNodeStatus { Unexplored, Revealed, RevealedFull, HasVisited }
