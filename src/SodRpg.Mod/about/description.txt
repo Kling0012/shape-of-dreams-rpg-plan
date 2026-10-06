@@ -1,5 +1,5 @@
-[b]v2.5.0: Infinity now reveals its map one room at a time (the boss room appears after the chosen number of rooms), satchel overflow turns into shards to stop heavy slowdowns, and many fixes. Saves carry over. Update all co-op players (Protocol 23) and restart the game.[/b]
-[b]v2.5.0：インフィニティの地図が1部屋ずつ現れるようになりました（ボス部屋は決めた数の部屋をクリアすると現れます）。重さの原因だった鞄あふれは欠片に換わるようにし、ほかにも多くの不具合を直しました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョン（Protocol 23）に更新し、ゲームを再起動してください。[/b]
+[b]v2.6.0: gear and star descriptions are bulleted and easier to read (main effect first, then conditions and caps). Saves carry over. Update all co-op players and restart the game.[/b]
+[b]v2.6.0：装備と星の説明を、効果の要点のあとに条件・上限を箇条書きで並べる形にし、読みやすくしました。セーブデータはそのまま引き継げます。協力プレイでは参加者全員がこのバージョンに更新し、ゲームを再起動してください。[/b]
 
 [h1]Dreamforge RPG[/h1]
 Turns every run into part of a long RPG journey: relics you keep, a risky "secure or delve" choice at every zone, a star map per Traveler, a forge, and long-term goals. Co-op ready.
