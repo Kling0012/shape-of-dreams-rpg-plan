@@ -120,7 +120,9 @@ namespace SodRpg.Core.Tests
         [InlineData(150, 150)]
         [InlineData(200, 200)]
         [InlineData(375, 375)]
-        [InlineData(376, 375)]
+        [InlineData(376, 376)]
+        [InlineData(752, 752)]
+        [InlineData(753, 752)]
         public void Wire_id_is_appended_and_received_values_are_capped(int value, int expected)
         {
             var decoded = Build.Decode("s:;p:6=40,21=80,42=18,43=" + value + ";h:0");
@@ -144,7 +146,7 @@ namespace SodRpg.Core.Tests
                 for (int rank = 0; rank < node.MaxRank; rank++) Rules.AddTalentRank(profile, hero, node.Id);
             Rules.SetKeystone(profile, hero, "h.husk.key2");
             var build = Build.Compute(profile, hero, 0);
-            Assert.Equal(69, build.Get(Power.ShadowStep));
+            Assert.Equal((int)(69m * (1m + 1.5m * build.SpentStarPoints / 500)), build.Get(Power.ShadowStep));
             Assert.Equal(0, build.Get(Power.Executioner));
             Assert.True(Rules.FreePoints(profile, hero) >= 0);
             Rules.RemoveKeystone(profile, hero, "h.husk.key2");

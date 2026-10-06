@@ -28576,16 +28576,24 @@
       "power": null,
       "growth": {
         "trigger": "ParrySuccess",
-        "threshold": 1,
-        "cap": 80,
+        "threshold": {
+          "valueRef": "mist.run.g1/growth/threshold"
+        },
+        "cap": {
+          "valueRef": "mist.run.g1/growth/cap"
+        },
         "effects": [
           {
             "stat": "AttackFlat",
-            "amount": 1
+            "amount": {
+              "valueRef": "mist.run.g1/growth/effects/0/amount"
+            }
           },
           {
             "stat": "CritDamagePct",
-            "amount": 0.3
+            "amount": {
+              "valueRef": "mist.run.g1/growth/effects/1/amount"
+            }
           }
         ]
       },
@@ -28625,7 +28633,9 @@
       "power": null,
       "growth": {
         "target": "mist.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "mist.run.m1/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -28639,7 +28649,7 @@
       "rankCost": 1,
       "nameJa": "冴える見切り",
       "nameEn": "Sharpening Read",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "mist.run.m2",
@@ -28665,7 +28675,9 @@
       "power": null,
       "growth": {
         "target": "mist.run.g1",
-        "capBonus": 20,
+        "capBonus": {
+          "valueRef": "mist.run.m2/growth/capBonus"
+        },
         "effectPct": 0,
         "doubleGain": false
       },
@@ -28679,7 +28691,7 @@
       "rankCost": 1,
       "nameJa": "途切れぬ応酬",
       "nameEn": "Unbroken Riposte",
-      "notes": "上限 +20"
+      "notes": "上限増分はバランス表から生成。 / Cap increase is generated from the balance table."
     },
     {
       "id": "mist.run.choice",
@@ -28715,7 +28727,9 @@
           "power": null,
           "growth": {
             "target": "mist.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "mist.run.choice/options/0/growth/capBonus"
+            },
             "effectPct": 50,
             "doubleGain": false
           },
@@ -28734,7 +28748,9 @@
           "power": null,
           "growth": {
             "target": "mist.run.g1",
-            "capBonus": 0,
+            "capBonus": {
+              "valueRef": "mist.run.choice/options/1/growth/capBonus"
+            },
             "effectPct": 0,
             "doubleGain": true
           },

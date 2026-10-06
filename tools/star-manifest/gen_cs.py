@@ -1295,6 +1295,7 @@ def render_outputs(results=None, views=None, effective=None, diagnostic=False):
     available.update(result.name for result in results)
     outputs[OUTPUT / "GeneratedRegistration.cs"] = registration(available)
     outputs[ROOT / "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"] = star_values.render_balance(views, effective)
+    outputs[ROOT / "src/SodRpg.Core/Game/StarRankBalance.g.cs"] = star_values.render_rank_balance()
     if diagnostic:
         outputs.update({DIAGNOSTICS / (result.name.title() + ".cs"): render_diagnostic(result) for result in results})
     return outputs

@@ -308,18 +308,22 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Growth_and_currency_stars_are_real_purchases_and_a_modifier_needs_its_growth()
+        public void Growth_modifiers_and_capped_currency_preserve_their_caps_while_paid_points_rank_damage()
         {
             try
             {
                 var (profile, tree) = Register();
                 var hero = profile.Hero(Hero);
                 AuthoredStarContractTests.AllocatePath(hero, tree, CapA);
-                // Nothing for the modifier to modify yet: refused like any star without a marginal effect.
-                Assert.ThrowsAny<AllocationValidationException>(() => Rules.AddTalentRank(profile, Hero, CapA));
+                var beforeModifier = Compute(profile);
+                Rules.AddTalentRank(profile, Hero, CapA);
+                var withoutGrowth = Compute(profile);
+                Assert.Empty(withoutGrowth.RunGrowths);
+                Assert.Equal(beforeModifier.SpentStarPoints + 1, withoutGrowth.SpentStarPoints);
+                Assert.True(withoutGrowth.Links.Where(l => l.Kind == LinkKind.MemoryDamage).Sum(l => l.Value)
+                    > beforeModifier.Links.Where(l => l.Kind == LinkKind.MemoryDamage).Sum(l => l.Value));
                 AuthoredStarContractTests.AllocatePath(hero, tree, Growth);
                 Rules.AddTalentRank(profile, Hero, Growth);
-                Rules.AddTalentRank(profile, Hero, CapA);
                 Rules.AddTalentRank(profile, Hero, CapB);
                 Rules.AddTalentRank(profile, Hero, Fork, choice: 1);
                 var entry = Assert.Single(Compute(profile).RunGrowths);
@@ -327,10 +331,16 @@ namespace SodRpg.Core.Tests
                 // Refunding a modifier lowers the cap again.
                 Rules.RemoveTalentRank(profile, Hero, CapB);
                 Assert.Equal(80, Assert.Single(Compute(profile).RunGrowths).Cap);
-                // Currency: three 4% stars fit exactly into the 12% cap; the fourth would add nothing and is refused.
+                // Currency remains capped at 12%; another paid point can still improve star damage.
                 for (int i = 1; i <= 3; i++) Rules.AddTalentRank(profile, Hero, "outer.v132.kg" + i);
                 Assert.Equal(12, Compute(profile).Get(Power.KillGoldPct));
-                Assert.ThrowsAny<AllocationValidationException>(() => Rules.AddTalentRank(profile, Hero, "outer.v132.kg4"));
+                var beforeCurrency = Compute(profile);
+                Rules.AddTalentRank(profile, Hero, "outer.v132.kg4");
+                var afterCurrency = Compute(profile);
+                Assert.Equal(12, afterCurrency.Get(Power.KillGoldPct));
+                Assert.Equal(beforeCurrency.SpentStarPoints + 1, afterCurrency.SpentStarPoints);
+                Assert.True(afterCurrency.Links.Where(l => l.Kind == LinkKind.MemoryDamage).Sum(l => l.Value)
+                    > beforeCurrency.Links.Where(l => l.Kind == LinkKind.MemoryDamage).Sum(l => l.Value));
                 Rules.AddTalentRank(profile, Hero, "outer.v132.elite");
                 Rules.AddTalentRank(profile, Hero, "outer.v132.basket");
                 Assert.Equal(25, Compute(profile).Get(Power.EliteKillGoldPct));

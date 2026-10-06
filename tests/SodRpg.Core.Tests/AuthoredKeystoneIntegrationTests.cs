@@ -77,7 +77,7 @@ namespace SodRpg.Core.Tests
         {
             var build = AuthoredBuild(Key());
             var purchasedEcho = build.Mechanisms.Single(m => m.StarId == "outer.key-fixture.echo");
-            Assert.Equal(40m, AuthoredKeystoneComposer.TransformAllocationPayload(build,
+            Assert.Equal(40m * (1m + 1.5m * build.SpentStarPoints / 500), AuthoredKeystoneComposer.TransformAllocationPayload(build,
                 AuthoredKeystoneComposer.GimmickPayload(purchasedEcho.Spec.Gimmick), Source).Value);
             var runtime = new ScopedKeystoneModifiers(new[] { build.SelectedKeystone });
             runtime.Configure(new[] { build.SelectedKeystone.KeystoneId }, 1, new[] { Source }, Array.Empty<string>());
@@ -112,7 +112,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(25m, request.Entry.Def.Value);
             var result = AuthoredKeystoneComposer.TransformAllocationPayload(build,
                 AuthoredKeystoneComposer.GimmickPayload(request.Entry.Def), Source);
-            Assert.Equal(20m, ScopedKeystoneModifiers.EchoDamage(80, result));
+            Assert.Equal(20m * (1m + 1.5m * build.SpentStarPoints / 500), ScopedKeystoneModifiers.EchoDamage(80, result));
             Assert.Equal(100m, AuthoredKeystoneComposer.TransformAllocationPayload(build,
                 new KeystonePayload(KeystoneLayer.NativeDamage, 100, new KeystoneCaps(1000)), Source).Value);
         }

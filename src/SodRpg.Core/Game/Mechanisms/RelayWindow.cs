@@ -9,6 +9,7 @@ namespace SodRpg.Core.Game
         public string ChannelId { get; }
         public string TargetMemory { get; }
         public decimal ValueUnits { get; }
+        public decimal ValueCapUnits { get; private set; } = 4000m;
         public int DurationModifierUnits { get; }
         public bool QuietRelay { get; }
         public float? EffectiveDurationSeconds { get; }
@@ -26,18 +27,27 @@ namespace SodRpg.Core.Game
             ChannelId = channelId; TargetMemory = targetMemory; ValueUnits = valueUnits;
             DurationModifierUnits = durationModifierUnits; QuietRelay = quietRelay;
         }
-        private RelayWindowDefinition(string id, string target, decimal value, float duration)
-            : this(id, target, value)
+        private RelayWindowDefinition(string id, string target, decimal value, float duration, decimal damageMultiplier)
+            : this(id, target, value / damageMultiplier)
         {
+            if (damageMultiplier < 1m || damageMultiplier > StarRankBalance.MaxMultiplier)
+                throw new ArgumentOutOfRangeException(nameof(damageMultiplier));
             if (!Gimmicks.Finite(duration) || duration <= 0 || duration > 16f) throw new ArgumentOutOfRangeException(nameof(duration));
+            ValueUnits = value;
+            ValueCapUnits = 4000m * damageMultiplier;
             EffectiveDurationSeconds = duration;
         }
-        public static RelayWindowDefinition FromEffective(string id, string target, decimal valueUnits, float durationSeconds)
-            => new RelayWindowDefinition(id, target, valueUnits, durationSeconds);
+        public static RelayWindowDefinition FromEffective(string id, string target, decimal valueUnits, float durationSeconds,
+            decimal damageMultiplier = 1m)
+        {
+            if (damageMultiplier < 1m || damageMultiplier > StarRankBalance.MaxMultiplier)
+                throw new ArgumentOutOfRangeException(nameof(damageMultiplier));
+            return new RelayWindowDefinition(id, target, valueUnits, durationSeconds, damageMultiplier);
+        }
 
         internal bool Same(RelayWindowDefinition other) => other != null && ChannelId == other.ChannelId
             && TargetMemory == other.TargetMemory && ValueUnits == other.ValueUnits
-            && DurationSeconds == other.DurationSeconds;
+            && DurationSeconds == other.DurationSeconds && ValueCapUnits == other.ValueCapUnits;
     }
 
     /// <summary>C10: one target window, with contributor expiries retained when their duration scopes differ.</summary>
@@ -128,15 +138,20 @@ namespace SodRpg.Core.Game
                 || nativeDamage.NativePayloadKind == NativePayloadKind.MainBasicAttack
                 || nativeDamage.NativePayloadKind == NativePayloadKind.SummonAttack) return 0;
             decimal units = 0;
+            decimal cap = 4000m;
             var expired = _expiredScratch;
             expired.Clear();
             foreach (var entry in _window)
             {
                 if (now >= entry.Value.ExpiresAt) expired.Add(entry.Key);
-                else units += entry.Value.Definition.ValueUnits;
+                else
+                {
+                    units += entry.Value.Definition.ValueUnits;
+                    cap = Math.Max(cap, entry.Value.Definition.ValueCapUnits);
+                }
             }
             foreach (string channel in expired) _window.Remove(channel);
-            return (float)(Math.Min(4000, units) / 10000m);
+            return (float)(Math.Min(cap, units) / 10000m);
         }
 
         public void Clear() { _window.Clear(); _uses.Clear(); }

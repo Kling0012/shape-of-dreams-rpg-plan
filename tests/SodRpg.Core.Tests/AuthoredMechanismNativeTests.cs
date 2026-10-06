@@ -282,6 +282,7 @@ namespace SodRpg.Core.Tests
             }
             finally { StarClusters.RegisterAuthored("Hero_Vesper", Array.Empty<AuthoredStarDef>()); }
             var (host, runtime) = Setup(build); runtime.Hero.currentHealth = 500;
+            float burstDamage = (float)(20m * (1m + 1.5m * build.SpentStarPoints / 500));
             var enemy = Enemy(); DewPhysics.Entities.Add(enemy);
             var failed = host.Activation(runtime.Hero, Identity); host.NotifyAuthored(runtime, Event(host, failed, MemoryEventKind.Hit, enemy)); host.FlushAuthored(runtime);
             Assert.Equal(500, runtime.Hero.currentHealth); Assert.Equal(1000, enemy.currentHealth);
@@ -289,14 +290,14 @@ namespace SodRpg.Core.Tests
                 Event(host, opening, gate == BridgeGateKind.Window ? MemoryEventKind.ConfirmedUse : MemoryEventKind.Hit, enemy));
             var payoff = host.Activation(runtime.Hero, Identity); var value = Event(host, payoff, MemoryEventKind.Hit, enemy);
             host.NotifyAuthored(runtime, value, enemy); host.FlushAuthored(runtime);
-            Assert.Equal(520, runtime.Hero.currentHealth); Assert.Equal(980, enemy.currentHealth);
+            Assert.Equal(520, runtime.Hero.currentHealth); Assert.Equal(1000 - burstDamage, enemy.currentHealth, 3);
             Assert.Equal(10.2f, runtime.Hero.Status.currentShield, 4);
             host.NotifyAuthored(runtime, value, enemy); host.FlushAuthored(runtime);
-            Assert.Equal(520, runtime.Hero.currentHealth); Assert.Equal(980, enemy.currentHealth);
+            Assert.Equal(520, runtime.Hero.currentHealth); Assert.Equal(1000 - burstDamage, enemy.currentHealth, 3);
             var generated = new MemoryActivationEvent(value.OwnerId, value.SourceMemory, value.ActivationId, host.Packet(), value.VictimId,
                 value.EventKind, value.NativePayloadKind, GeneratedOrigin.Bridge, value.EquipmentEpoch);
             host.NotifyAuthored(runtime, generated, enemy); host.FlushAuthored(runtime);
-            Assert.Equal(980, enemy.currentHealth);
+            Assert.Equal(1000 - burstDamage, enemy.currentHealth, 3);
         }
 
         [Fact]
@@ -306,20 +307,24 @@ namespace SodRpg.Core.Tests
                 Trigger = MemoryEventKind.ConfirmedUse, Primed = new MemoryPrimedDefinition("native.prime.a", Identity, MemoryEventKind.ConfirmedUse, 2000) };
             var preparedB = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.MemoryPrimed, ChannelId = "native.prime.b", Source = Source(Q),
                 Trigger = MemoryEventKind.ConfirmedUse, Primed = new MemoryPrimedDefinition("native.prime.b", Q, MemoryEventKind.ConfirmedUse, 3000) };
-            var (host, runtime) = Setup(Allocated("Hero_Vesper", new[] { preparedA, preparedB }, out _)); var enemy = Enemy();
+            var preparedBuild = Allocated("Hero_Vesper", new[] { preparedA, preparedB }, out _);
+            float preparedRank = (float)(1m + 1.5m * preparedBuild.SpentStarPoints / 500);
+            var (host, runtime) = Setup(preparedBuild); var enemy = Enemy();
             host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, Identity), MemoryEventKind.ConfirmedUse));
             host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, Q), MemoryEventKind.ConfirmedUse));
             host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, "", NativePayloadKind.MainBasicAttack), MemoryEventKind.OwnedBasicAttackHit, enemy), enemy);
-            host.FlushAuthored(runtime); Assert.Equal(970, enemy.currentHealth);
+            host.FlushAuthored(runtime); Assert.Equal(1000 - 30 * preparedRank, enemy.currentHealth, 3);
             host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, "", NativePayloadKind.MainBasicAttack), MemoryEventKind.OwnedBasicAttackHit, enemy), enemy);
-            host.FlushAuthored(runtime); Assert.Equal(950, enemy.currentHealth);
+            host.FlushAuthored(runtime); Assert.Equal(1000 - 50 * preparedRank, enemy.currentHealth, 3);
             var relay = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.RelayWindow, ChannelId = "native.relay", Source = Source("St_R_Tranquility"),
                 Trigger = MemoryEventKind.ConfirmedUse, Relay = new RelayWindowDefinition("native.relay", "St_Q_SuperNova", 2500) };
             runtime.Hero.Skill.Skills[HeroSkillLocation.R] = new St_R_Tranquility { owner = runtime.Hero };
             runtime.Hero.Skill.Skills[HeroSkillLocation.Q] = new St_Q_SuperNova { owner = runtime.Hero };
-            host.BindAuthored(runtime, Allocated("Hero_Yubar", new[] { relay }, out _));
+            var relayBuild = Allocated("Hero_Yubar", new[] { relay }, out _);
+            host.BindAuthored(runtime, relayBuild);
             host.NotifyAuthored(runtime, Event(host, host.Activation(runtime.Hero, "St_R_Tranquility"), MemoryEventKind.ConfirmedUse));
-            var hit = host.Activation(runtime.Hero, "St_Q_SuperNova"); Assert.Equal(125, host.RelayDamage(runtime, enemy, hit, 100));
+            var hit = host.Activation(runtime.Hero, "St_Q_SuperNova");
+            Assert.Equal(100 + (float)(25m * (1m + 1.5m * relayBuild.SpentStarPoints / 500)), host.RelayDamage(runtime, enemy, hit, 100), 3);
             UnityEngine.Time.time = 4; Assert.Equal(100, host.RelayDamage(runtime, enemy, hit, 100));
         }
 
@@ -369,14 +374,15 @@ namespace SodRpg.Core.Tests
         {
             var spec = Gimmick("native.echo", GimmickEffect.Echo, 40); spec.Source = Source(Q);
             var build = Allocated("Hero_Vesper", new[] { spec }, out _, Key("test.native.key"));
+            float rank = (float)(1m + 1.5m * build.SpentStarPoints / 500);
             var (host, runtime) = Setup(build); var enemy = Enemy();
             var activation = host.Activation(runtime.Hero, Q); var native = new DamageData(120);
             host.NativeKeyDamage(runtime, enemy, activation, ref native); Assert.Equal(120, native.currentAmount, 4);
             host.NotifyAuthored(runtime, Event(host, activation, MemoryEventKind.Hit, enemy), enemy, native.currentAmount);
-            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(904f, enemy.currentHealth, 3);
+            UnityEngine.Time.time = .3f; host.FlushAuthored(runtime); Assert.Equal(1000 - 96 * rank, enemy.currentHealth, 3);
             var next = host.Activation(runtime.Hero, Q); host.NotifyAuthored(runtime, Event(host, next, MemoryEventKind.Hit, enemy), enemy, 120);
             build.SelectedKeystone = null; host.BindAuthored(runtime, Build.Decode(build.Encode()));
-            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(856f, enemy.currentHealth, 3);
+            UnityEngine.Time.time = .6f; host.FlushAuthored(runtime); Assert.Equal(1000 - (96 + 48) * rank, enemy.currentHealth, 3);
         }
 
         [Fact]
@@ -387,13 +393,15 @@ namespace SodRpg.Core.Tests
             var key = new KeystoneDefinition("test.fine.echo.key", new[] { Q },
                 new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, new KeystoneMagnitude(1),
                     new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo })) });
-            var (host, runtime) = Setup(Allocated("Hero_Vesper", new[] { spec }, out _, key));
+            var build = Allocated("Hero_Vesper", new[] { spec }, out _, key);
+            var (host, runtime) = Setup(build);
             var enemy = Enemy(); enemy.currentHealth = .0000001f;
             var activation = host.Activation(runtime.Hero, Q); var damage = new DamageData(100);
             host.NativeKeyDamage(runtime, enemy, activation, ref damage);
             host.NotifyAuthored(runtime, Event(host, activation, MemoryEventKind.Hit, enemy), enemy, damage.currentAmount);
             UnityEngine.Time.time = .3f; host.FlushAuthored(runtime);
-            Assert.InRange(enemy.currentHealth, .0000000899989f, .0000000899991f);
+            float expected = .0000001f - (float)(.000000010001m * (1m + 1.5m * build.SpentStarPoints / 500));
+            Assert.InRange(enemy.currentHealth, expected - .0000000000001f, expected + .0000000000001f);
         }
 
         [Fact]
@@ -702,16 +710,18 @@ namespace SodRpg.Core.Tests
             var wound = Gimmick("native.wound", GimmickEffect.Wound, 30);
             var sap = Gimmick("native.sap", GimmickEffect.Sap, 10);
             var edge = Gimmick("native.edge", GimmickEffect.ElementEdge, 10);
-            var (host, runtime) = Setup(Allocated("Hero_Vesper", new[] { wound, sap, edge }, out _)); var enemy = Enemy();
+            var build = Allocated("Hero_Vesper", new[] { wound, sap, edge }, out _);
+            float rank = (float)(1m + 1.5m * build.SpentStarPoints / 500);
+            var (host, runtime) = Setup(build); var enemy = Enemy();
             enemy.Status.fireStack = 1; enemy.Status.hasCold = true;
             var hit = Event(host, host.Activation(runtime.Hero, Identity), MemoryEventKind.Hit, enemy);
             host.NotifyAuthored(runtime, hit, enemy); host.FlushAuthored(runtime);
-            Assert.Equal(980, enemy.currentHealth);
+            Assert.Equal(1000 - 20 * rank, enemy.currentHealth, 3);
             var outgoing = new DamageData(100);
             foreach (var processor in enemy.dealtDamageProcessor.Entries) processor(ref outgoing, enemy, runtime.Hero);
             Assert.Equal(90, outgoing.currentAmount, 4);
-            UnityEngine.Time.time = .5f; host.FlushAuthored(runtime); Assert.Equal(975, enemy.currentHealth);
-            UnityEngine.Time.time = 3; host.FlushAuthored(runtime); Assert.Equal(950, enemy.currentHealth);
+            UnityEngine.Time.time = .5f; host.FlushAuthored(runtime); Assert.Equal(1000 - 25 * rank, enemy.currentHealth, 3);
+            UnityEngine.Time.time = 3; host.FlushAuthored(runtime); Assert.Equal(1000 - 50 * rank, enemy.currentHealth, 3);
         }
 
         [Fact]

@@ -169,7 +169,8 @@ namespace SodRpg.Mod
                             preparation.SourceMemory, null, KeystoneSourceKind.NativeMemory);
                         if (primedResult.Value > 0)
                             primed.Add(new MemoryPrimedDefinition(preparation.ChannelId, preparation.SourceMemory, preparation.Trigger,
-                                primedResult.Value * 100m, (float)primedResult.DurationSeconds, preparation.Budget));
+                                primedResult.Value * 100m, (float)primedResult.DurationSeconds, preparation.Budget,
+                                damageMultiplier: StarDamageScaling.Multiplier(build.SpentStarPoints)));
                         break;
                     case AuthoredMechanismKind.RelayWindow:
                         var window = spec.Relay;
@@ -177,7 +178,8 @@ namespace SodRpg.Mod
                             RelayWindowDefinition.SourceMemory, window.TargetMemory, KeystoneSourceKind.NativeMemory);
                         if (relayResult.Value > 0)
                             relay.Add(RelayWindowDefinition.FromEffective(window.ChannelId, window.TargetMemory,
-                                relayResult.Value * 100m, (float)relayResult.DurationSeconds));
+                                relayResult.Value * 100m, (float)relayResult.DurationSeconds,
+                                StarDamageScaling.Multiplier(build.SpentStarPoints)));
                         break;
                     case AuthoredMechanismKind.MemoryTuning: tunings.Add(spec.Tuning); break;
                     case AuthoredMechanismKind.IdentityStrike: strikes.Add(new KeyValuePair<string, IdentityStrikeDefinition>(key, spec.IdentityStrike)); break;

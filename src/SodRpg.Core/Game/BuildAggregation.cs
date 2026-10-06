@@ -39,10 +39,14 @@ namespace SodRpg.Core.Game
                 }
                 string key = LinkKey(link);
                 if (byKey.TryGetValue(key, out var combined))
+                {
                     combined.ValueMilli = checked(combined.ValueMilli + link.ValueMilli);
+                    combined.StarValueMilli = checked(combined.StarValueMilli + link.StarValueMilli);
+                }
                 else
                 {
-                    combined = new LinkDef { Kind = link.Kind, Requires = CanonicalRequirements(link), ValueMilli = link.ValueMilli };
+                    combined = new LinkDef { Kind = link.Kind, Requires = CanonicalRequirements(link), ValueMilli = link.ValueMilli,
+                        StarValueMilli = link.StarValueMilli };
                     byKey.Add(key, combined);
                     result.Add(combined);
                 }

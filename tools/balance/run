@@ -168,7 +168,9 @@ def main() -> int:
                           "gear": gen_cs.gear_values.load_gear(),
                           "sets": gen_cs.set_values.load_sets(),
                           "stars": {"schemaVersion": stars_data["schemaVersion"],
-                                    "multipliers": stars_data["multipliers"]}}
+                                    "multipliers": stars_data["multipliers"],
+                                    "rankScaling": stars_data["rankScaling"],
+                                    "runGrowth": stars_data["runGrowth"]}}
         requested_dotnet = os.environ.get("DOTNET")
         dotnet = shutil.which(requested_dotnet or "dotnet")
         if dotnet is None:

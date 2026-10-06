@@ -211,7 +211,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(id, (int)power);
             Assert.Equal(cap, Content.PowerCap(power));
             Assert.Equal(cap - 1, Build.Decode(With((power, cap - 1)).Encode()).Get(power));
-            Assert.Equal((int)(cap * 2.5m), Build.Decode(With((power, int.MaxValue)).Encode()).Get(power));
+            int wireCap = StarDamageScaling.IsDamage(power)
+                ? (int)decimal.Ceiling(cap * (2.5m + 1m + 1.5m * 504 / 500))
+                : (int)(cap * 2.5m);
+            Assert.Equal(wireCap, Build.Decode(With((power, int.MaxValue)).Encode()).Get(power));
             Assert.Equal(0, Build.Decode(With((power, -1)).Encode()).Get(power));
             var profile = Profile.CreateNew(123);
             foreach (var slot in new[] { Slot.Armor, Slot.Charm })

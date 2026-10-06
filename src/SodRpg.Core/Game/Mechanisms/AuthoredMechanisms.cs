@@ -702,7 +702,7 @@ namespace SodRpg.Core.Game
                         PredicateKey = predicate, Strongest = strongest, Cooldown = cooldown, Effect = payload.Effect,
                         StarId = entry.StarId, ContributorIds = entry.ContributorIds, Memory = source.Memory,
                         ValueMilli = value * BuildPrecision.Scale / final.EveryN,
-                        ValueCeiling = (long)Math.Min(long.MaxValue, payload.Caps.Value * BuildPrecision.Scale),
+                        ValueCeiling = (long)Math.Min(long.MaxValue, payload.Caps.Value * BuildPrecision.Scale * StarDamageScaling.PayloadMultiplier(build, payload)),
                         DurationUnits = final.DurationSeconds * 100m, RadiusUnits = final.RadiusMetres * 100m,
                         ExtraTargets = final.TargetCount, ChanceUnits = final.ProbabilityPercent * 100m,
                     };
@@ -715,11 +715,13 @@ namespace SodRpg.Core.Game
             var s = entry.Spec;
             if (s.IdentityStrike != null || s.Tuning != null)
             {
-                // A typed static/strike payload is one never-saturating channel of its own: it is effective exactly while its star is allocated.
+                // Static tuning remains unranked; an identity strike's damage coefficient is a star quantity.
                 yield return new EffectiveAllocationChannel
                 {
                     Key = "typed:" + (int)s.Kind + ":" + s.ChannelId, PredicateKey = "typed:" + (int)s.Kind + ":" + s.ChannelId, StarId = entry.StarId,
-                    ContributorIds = entry.ContributorIds, Memory = SourceMemory(s), ValueMilli = BaseValue(s) * BuildPrecision.Scale / 100m,
+                    ContributorIds = entry.ContributorIds, Memory = SourceMemory(s),
+                    ValueMilli = BaseValue(s) * BuildPrecision.Scale / 100m
+                        * (s.IdentityStrike?.DealsDamage == true ? StarDamageScaling.Multiplier(build.SpentStarPoints) : 1m),
                     ValueCeiling = long.MaxValue / 4
                 };
                 yield break;

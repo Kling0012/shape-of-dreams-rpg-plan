@@ -13,14 +13,16 @@ namespace SodRpg.Core.Game
         public AttributionBudget Budget { get; }
 
         public MemoryPrimedDefinition(string channelId, string sourceMemory, MemoryEventKind trigger,
-            decimal valueUnits, float durationSeconds = 5f, AttributionBudget budget = AttributionBudget.PerActivation)
+            decimal valueUnits, float durationSeconds = 5f, AttributionBudget budget = AttributionBudget.PerActivation,
+            decimal damageMultiplier = 1m)
         {
             if (string.IsNullOrWhiteSpace(channelId) || string.IsNullOrWhiteSpace(sourceMemory))
                 throw new ArgumentException("A preparation requires a channel and source memory.");
             if (trigger != MemoryEventKind.ConfirmedUse && trigger != MemoryEventKind.Hit
                 && trigger != MemoryEventKind.CriticalHit && trigger != MemoryEventKind.Kill)
                 throw new ArgumentOutOfRangeException(nameof(trigger));
-            if (valueUnits <= 0 || valueUnits > 12000) throw new ArgumentOutOfRangeException(nameof(valueUnits));
+            if (damageMultiplier < 1m || damageMultiplier > StarRankBalance.MaxMultiplier
+                || valueUnits <= 0 || valueUnits > 12000 * damageMultiplier) throw new ArgumentOutOfRangeException(nameof(valueUnits));
             if (!Gimmicks.Finite(durationSeconds) || durationSeconds <= 0 || durationSeconds > 10)
                 throw new ArgumentOutOfRangeException(nameof(durationSeconds));
             if (budget != AttributionBudget.PerActivation && budget != AttributionBudget.PerActivationVictim

@@ -93,8 +93,9 @@ namespace SodRpg.Core.Tests
             Assert.Equal(expectedLinks.Select(BuildAggregation.LinkKey).OrderBy(k => k),
                 decoded.Links.Select(BuildAggregation.LinkKey).OrderBy(k => k));
             foreach (var expected in expectedLinks)
-                Assert.Equal(expected.ValueMilli, decoded.Links.Single(l => BuildAggregation.LinkKey(l)
-                    == BuildAggregation.LinkKey(expected)).ValueMilli);
+                Assert.Equal(StarDamageScaling.IsDamage(expected.Kind)
+                    ? StarDamageScaling.ScaleMilli(expected.ValueMilli, decoded.SpentStarPoints) : expected.ValueMilli,
+                    decoded.Links.Single(l => BuildAggregation.LinkKey(l) == BuildAggregation.LinkKey(expected)).ValueMilli);
             Assert.Contains(decoded.Links, l => l.Value > Links.EquippedCap(l.Kind, l.Requires.Length));
             Assert.Equal(build.Encode(), decoded.Encode());
 

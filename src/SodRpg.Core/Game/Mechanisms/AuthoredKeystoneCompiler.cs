@@ -100,7 +100,7 @@ namespace SodRpg.Core.Game
             decimal? valueOverride = null, decimal? probabilityOverride = null, decimal? durationOverride = null,
             decimal? radiusOverride = null, int? targetOverride = null, decimal? durationBaseOverride = null)
         {
-            decimal value = valueOverride ?? def.UncappedValue ?? def.EffectiveValueOrAuthored;
+            decimal value = valueOverride ?? def.UncappedValue ?? def.Value;
             decimal durationBase = durationBaseOverride ?? GimmickDurationBase(def, value);
             if (durationOverride.HasValue && durationBaseOverride.HasValue && def.Effect == GimmickEffect.Crescendo)
                 durationOverride *= durationBaseOverride.Value / GimmickDurationBase(def, value);
@@ -267,7 +267,8 @@ namespace SodRpg.Core.Game
             var keys = build.SelectedKeystones;
             long epoch = equipment?.EquipmentEpoch ?? 1;
             var runtime = equipment == null ? AllocationRuntime(keys, source, receiver, epoch) : CreateAllocationRuntime(keys, source, receiver, equipment, epoch);
-            return runtime.Apply(payload, new KeystoneContext(epoch, source, sourceKind, receiver, recipient, equipment, sourceSlot, recipientSlot, heroKey));
+            return StarDamageScaling.ScaleResult(build, payload,
+                runtime.Apply(payload, new KeystoneContext(epoch, source, sourceKind, receiver, recipient, equipment, sourceSlot, recipientSlot, heroKey)));
         }
 
 

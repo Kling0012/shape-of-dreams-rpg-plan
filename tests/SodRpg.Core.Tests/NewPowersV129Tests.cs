@@ -19,7 +19,9 @@ namespace SodRpg.Core.Tests
         {
             foreach (Power power in Enum.GetValues(typeof(Power)).Cast<Power>().Where(NewPowersV129.IsPower))
             {
-                int cap = (int)(Content.PowerCap(power) * 2.5m);
+                int cap = StarDamageScaling.IsDamage(power)
+                    ? (int)decimal.Ceiling(Content.PowerCap(power) * (2.5m + 1m + 1.5m * 504 / 500))
+                    : (int)(Content.PowerCap(power) * 2.5m);
                 var decoded = Build.Decode($"s:;p:{(int)power}={int.MaxValue};h:0");
                 Assert.Equal(cap, decoded.Get(power));
                 Assert.Equal(cap, Build.Decode(decoded.Encode()).Get(power));

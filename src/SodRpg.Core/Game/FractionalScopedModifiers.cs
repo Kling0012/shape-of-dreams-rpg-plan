@@ -167,7 +167,8 @@ namespace SodRpg.Core.Game
         public static bool ValidNativeEntry(NativeMemoryModifierEntry entry) => entry != null && Links.IsMemory(entry.Memory)
             && !entry.Memory.StartsWith("St_M_", StringComparison.Ordinal)
             && Profiles.TryGetValue(entry.CapProfileId ?? "", out var profile) && profile.Kind == entry.Kind
-            && entry.ValueMilli > 0 && entry.ValueMilli <= profile.Maximum.ValueMilli;
+            && entry.ValueMilli > 0 && entry.ValueMilli <= (StarDamageScaling.IsDamage(entry.Kind)
+                ? StarDamageScaling.ScaleMilli(profile.Maximum.ValueMilli, StarProgression.MaxSpendablePoints) : profile.Maximum.ValueMilli);
         public static float NativePercent(IReadOnlyList<NativeMemoryModifierEntry> entries, string memory, LinkKind kind)
         {
             long total = 0;
@@ -546,6 +547,7 @@ namespace SodRpg.Core.Game
             foreach (var e in native.Values)
             {
                 e.ValueMilli = Math.Min(e.ValueMilli, Profiles[e.CapProfileId].Maximum.ValueMilli);
+                if (StarDamageScaling.IsDamage(e.Kind)) e.ValueMilli = StarDamageScaling.ScaleMilli(e.ValueMilli, build.SpentStarPoints);
                 build.NativeModifiers.Add(e);
             }
             foreach (var raw in build.Gimmicks)

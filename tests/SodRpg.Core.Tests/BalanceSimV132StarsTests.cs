@@ -118,6 +118,38 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, V132Model.FirstZoneAtCap(null, 60));
         }
 
+        [Fact]
+        public void Four_training_entrances_reach_Z4_at_depth_zero_and_Z3_at_depth_one()
+        {
+            StarClusters.RegisterAllGenerated();
+            var options = Options.Parse(Array.Empty<string>());
+            foreach (string hero in new[] { "Hero_Vesper", "Hero_Cetus", "Hero_Mist", "Hero_Husk" })
+            {
+                var profile = Profile.CreateNew(1);
+                profile.Hero(hero).StarXp = StarProgression.TotalXpForPoints(StarProgression.MaxPoints);
+                string growthId = V132Builds.GrowthStarId(HeroSigils.TreeFor(hero));
+                V132Builds.BuyStars(profile, hero, new[] { new StarPurchase(growthId) });
+                var entry = Assert.Single(Build.Compute(profile, hero, 0).RunGrowths);
+                foreach (string policy in new[] { "secure", "greedy" })
+                    for (int depth = 0; depth <= 1; depth++)
+                    {
+                        var ledger = new RunGrowthLedger();
+                        ledger.EnsureRun(hero + "/" + policy + "/" + depth);
+                        var stacks = new int[options.Zones];
+                        for (int zone = 1; zone <= options.Zones; zone++)
+                        {
+                            int heat = V132Model.HeatDuringZone(policy, zone);
+                            for (int room = 0; room < V132Model.RoomsPerZone(options.Rooms, depth); room++)
+                                ledger.Gain("sim", entry, entry.Trigger,
+                                    V132Model.RoomUnits(entry.Trigger, depth, heat, options.Lesser + options.Normal + options.MiniBoss));
+                            ledger.Gain("sim", entry, entry.Trigger, V132Model.BossUnits(entry.Trigger, depth, heat));
+                            stacks[zone - 1] = ledger.Stacks("sim", entry.StarId);
+                        }
+                        Assert.Equal(4 - depth, V132Model.FirstZoneAtCap(stacks, entry.Cap));
+                    }
+            }
+        }
+
         // ───── 下流 ─────
 
         [Fact]

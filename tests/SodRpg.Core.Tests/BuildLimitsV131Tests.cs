@@ -111,7 +111,9 @@ namespace SodRpg.Core.Tests
                     decimal fromEquipment = Content.SlotCount * Links.EquippedCap(kind, requirements);
                     decimal fromStars = StarProgression.MaxSpendablePoints * Math.Max(
                         Links.EquippedCap(kind, requirements), BuildLimits.Registered.LinkValuePerPoint(kind, requirements));
-                    Assert.Equal(1000L * (fromEquipment + fromStars), BuildLimits.MaxLinkValueMilli(kind, requirements));
+                    decimal maximumRank = StarDamageScaling.IsDamage(kind) ? 1m + 1.5m * 504 / 500 : 1m;
+                    Assert.Equal(decimal.Ceiling(1000m * (fromEquipment + fromStars * maximumRank)),
+                        BuildLimits.MaxLinkValueMilli(kind, requirements));
                     Assert.InRange(BuildLimits.MaxLinkValueMilli(kind, requirements), 1, int.MaxValue);
                 }
             }

@@ -56,6 +56,8 @@ namespace SodRpg.Core.Game
     {
         public PairComboDef Def { get; set; }
         public int Ranks { get; set; }
+        public decimal DamageMultiplier { get; set; } = 1m;
+        public decimal EffectiveValue => Value * (Def != null && StarDamageScaling.IsDamage(Def.Effect) ? DamageMultiplier : 1m);
         public int Value => Def == null || Ranks <= 0 ? 0
             : Def.TableRankValues[Math.Min(Ranks, PairCombos.MaxRanks) - 1];
     }
@@ -84,7 +86,8 @@ namespace SodRpg.Core.Game
         public static PairComboEntry Clamp(PairComboEntry entry)
         {
             var def = entry?.Def == null ? null : Get(entry.Def.Id);
-            return def == null || def.AuthoredDefinition != null || entry.Ranks <= 0 ? null : new PairComboEntry { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks) };
+            return def == null || def.AuthoredDefinition != null || entry.Ranks <= 0 ? null : new PairComboEntry
+                { Def = def, Ranks = Math.Min(MaxRanks, entry.Ranks), DamageMultiplier = entry.DamageMultiplier };
         }
         public static PairComboEntry Activate(PairComboDef def, HeroState hero, int bridgeRanks)
         {

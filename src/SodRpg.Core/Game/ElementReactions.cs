@@ -126,7 +126,11 @@ namespace SodRpg.Core.Game
             return isolatedEffect ? 0 : state.Cinder;
         }
 
-        private static int Value(Build build, Power power) => Math.Max(0, Math.Min(Content.PowerCap(power), build.Get(power)));
+        private static int Value(Build build, Power power)
+        {
+            build.StarPowers.TryGetValue(power, out int stars);
+            return Math.Max(0, Math.Min(Content.PowerCap(power), build.Get(power) - stars)) + stars;
+        }
         private static float Positive(float value) => float.IsNaN(value) || float.IsInfinity(value) ? 0f : Math.Max(0f, value);
         private static bool Take(ref float ready, float now)
         {

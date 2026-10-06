@@ -106,8 +106,9 @@ namespace SodRpg.Core.Tests
             var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 40 },
                 300, new AuthoredKeystoneSpec { Percent = 50 });
             var request = Fire(build);
-            Assert.Equal(120m, request.Entry.Def.EffectiveValueOrAuthored);
-            Assert.Equal(120f, request.Entry.Def.ValuePercent);
+            decimal expected = 120m * (1m + 1.5m * build.SpentStarPoints / 500);
+            Assert.Equal(expected, request.Entry.Def.EffectiveValueOrAuthored);
+            Assert.Equal((float)expected, request.Entry.Def.ValuePercent);
         }
 
         [Theory]

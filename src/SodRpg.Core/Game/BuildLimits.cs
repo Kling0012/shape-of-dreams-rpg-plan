@@ -68,7 +68,11 @@ namespace SodRpg.Core.Game
                 || !Enum.IsDefined(typeof(LinkKind), kind)) return 0;
             decimal equipped = Links.EquippedCap(kind, requireCount);
             decimal perPoint = Math.Max(equipped, Registered.LinkValuePerPoint(kind, requireCount));
-            return BuildPrecision.FromDecimal(perPoint * StarProgression.MaxSpendablePoints + equipped * Content.SlotCount);
+            decimal envelope = perPoint * StarProgression.MaxSpendablePoints
+                * (StarDamageScaling.IsDamage(kind) ? StarRankBalance.MaxMultiplier : 1m) + equipped * Content.SlotCount;
+            // Capacity is an upper bound, not an encoded value: rank multiplication can
+            // produce sub-thousandths even though every individual wire value is exact.
+            return checked((int)decimal.Ceiling(envelope * BuildPrecision.Scale));
         }
 
         // Every list item includes its separator, including the final item, giving a conservative bound.

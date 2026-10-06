@@ -35,10 +35,13 @@ namespace SodRpg.Core.Tests
             var profile = new Profile(); profile.Hero(hero).StarXp = StarProgression.TotalXpForPoints(200);
             AuthoredStarContractTests.AllocatePath(profile.Hero(hero), tree, dependent.Id);
             var engine = new EffectiveAllocationValidation(tree, layout: layout);
-            decimal before = Build.ComputeForTree(profile, hero, 0, tree).Links.Where(l => l.Kind == LinkKind.MemoryDamage && l.Requires.Contains("St_D_IcyVeins")).Sum(l => l.Value);
             Rules.ApplyAllocationChange(profile, hero, new AllocationChange { Kind = AllocationChangeKind.Purchase, CandidateStarId = dependent.Id }, validation: engine);
-            decimal after = Build.ComputeForTree(profile, hero, 0, tree).Links.Where(l => l.Kind == LinkKind.MemoryDamage && l.Requires.Contains("St_D_IcyVeins")).Sum(l => l.Value);
-            Assert.Equal(before + 1m, after);
+            var purchased = Build.ComputeForTree(profile, hero, 0, tree);
+            decimal after = purchased.Links.Where(l => l.Kind == LinkKind.MemoryDamage && l.Requires.Contains("St_D_IcyVeins")).Sum(l => l.Value);
+            decimal expected = tree.Where(t => t.LinkPerRank?.Kind == LinkKind.MemoryDamage && t.LinkPerRank.Requires.Contains("St_D_IcyVeins"))
+                .Sum(t => decimal.Round(t.LinkPerRank.Value * (profile.Hero(hero).Talents.TryGetValue(t.Id, out int ranks) ? ranks : 0)
+                    * (1m + 1.5m * purchased.SpentStarPoints / 500), 3, MidpointRounding.AwayFromZero));
+            Assert.Equal(expected, after);
             Assert.True(engine.AllocationsConnected(profile.Hero(hero)));
         }
 

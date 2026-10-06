@@ -31,6 +31,9 @@ namespace SodRpg.Core.Game
         public string[] Requires;
         public LinkKind Kind;
         public int ValueMilli { get; set; }
+        /// <summary>Host-computed star portion of ValueMilli; not transmitted or trusted from a client.</summary>
+        public int StarValueMilli { get; set; }
+        public float StarValuePercent => StarValueMilli / (float)BuildPrecision.Scale;
         public decimal Value { get => ValueMilli / (decimal)BuildPrecision.Scale; set => ValueMilli = BuildPrecision.FromDecimal(value); }
         public float ValuePercent => ValueMilli / (float)BuildPrecision.Scale;
     }

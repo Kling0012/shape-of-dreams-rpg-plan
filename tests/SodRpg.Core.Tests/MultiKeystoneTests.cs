@@ -182,14 +182,14 @@ namespace SodRpg.Core.Tests
 
                 Rules.SetKeystone(p, Hero, key1.KeystoneId);
                 var one = Build.Compute(p, Hero, 0);
-                Assert.Equal(40m, AuthoredKeystoneComposer.TransformAllocationPayload(one,
+                Assert.Equal(40m * (1m + 1.5m * one.SpentStarPoints / 500), AuthoredKeystoneComposer.TransformAllocationPayload(one,
                     AuthoredKeystoneComposer.GimmickPayload(EchoEffect), Source).Value);
 
                 Rules.SetKeystone(p, Hero, key2.KeystoneId);
                 var both = Build.Compute(p, Hero, 0);
                 Assert.Equal(2, both.SelectedKeystones.Count);
                 // 1つ目の2倍と2つ目の1.5倍が両方乗る（20 × 2.0 × 1.5）。
-                Assert.Equal(60m, AuthoredKeystoneComposer.TransformAllocationPayload(both,
+                Assert.Equal(60m * (1m + 1.5m * both.SpentStarPoints / 500), AuthoredKeystoneComposer.TransformAllocationPayload(both,
                     AuthoredKeystoneComposer.GimmickPayload(EchoEffect), Source).Value);
                 Assert.Equal(one.SpentStarPoints + key2.Cost, both.SpentStarPoints);
 

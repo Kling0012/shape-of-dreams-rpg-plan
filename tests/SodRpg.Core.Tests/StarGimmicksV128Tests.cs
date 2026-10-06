@@ -180,7 +180,8 @@ namespace SodRpg.Core.Tests
                 var after = Build.Compute(p, star.HeroKey, 0);
                 foreach (var stat in before.Stats.Keys.Concat(after.Stats.Keys).Distinct())
                     Assert.Equal(before.Get(stat), after.Get(stat));
-                foreach (var power in before.Powers.Keys.Concat(after.Powers.Keys).Distinct())
+                Assert.Equal(before.Powers.Keys, after.Powers.Keys);
+                foreach (var power in before.Powers.Keys.Where(power => !StarDamageScaling.IsDamage(power)))
                     Assert.Equal(before.Get(power), after.Get(power));
                 var entry = Assert.Single(after.Gimmicks, g => g.StarId == star.Id);
                 Assert.Equal(star.Gimmick.Value * star.MaxRank, entry.Def.Value);

@@ -233,15 +233,16 @@ namespace SodRpg.Mod
             float speed = 0f;
             if (def.BonusSpeedUnitsPerPercent > 0 && skill is St_D_TheKillingFlow flow)
                 speed = IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(flow.gainedAd);
-            float amount = def.Damage(attack, ability, speed);
+            _runtimes.TryGetValue(hero, out var strikeRuntime);
+            float amount = def.Damage(attack, ability, speed)
+                * (float)StarDamageScaling.Multiplier(strikeRuntime?.Powers.Build.SpentStarPoints ?? 0);
             if (amount <= 0f || float.IsNaN(amount) || float.IsInfinity(amount)) return;
             // The critical channels fire inside EnterGenerated: the host damage processor returns at its generated-damage gate, so
             // they route their packets through the same corrections that processor applies past the gate, once per packet:
             // ApplyMemoryPacketCorrections (the stance-based outgoing amplification, the identity memory's own damage correction,
             // the relay window) and the strongest live Expose. The gate keeps rt.DamageDealt from applying anything a second time,
             // and the strike still triggers no mechanisms of its own.
-            HeroRuntime strikeRuntime = null;
-            bool criticalCorrections = def.IsCriticalMechanism && _runtimes.TryGetValue(hero, out strikeRuntime);
+            bool criticalCorrections = def.IsCriticalMechanism && strikeRuntime != null;
             bool magic = def.IsMagic(attack, ability);
             if (toVictim.x * toVictim.x + toVictim.z * toVictim.z < 1e-6f) toVictim = new Vector3(0f, 0f, 1f);
             ListReturnHandle<Entity> handle;
@@ -308,19 +309,22 @@ namespace SodRpg.Mod
         /// </summary>
         internal float MemoryDamagePercent(HeroRuntime rt, string memory)
         {
-            long memoryAmpMilli = 0;
+            long memoryAmpMilli = 0, starAmpMilli = 0;
             if (memory != null)
                 foreach (var link in rt.SatisfiedLinks)
                     if (link.Kind == LinkKind.MemoryDamage && Array.IndexOf(link.Requires, memory) >= 0)
                     {
                         memoryAmpMilli += link.ValueMilli;
+                        starAmpMilli += link.StarValueMilli;
                         LogLinkApplied(link);
                     }
-            float memoryAmp = rt.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
-                memoryAmpMilli / (float)BuildPrecision.Scale)
-                + (FindMemory(rt.Hero, memory) != null
-                    ? FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f);
-            return TransformAuthoredMemoryDamage(rt.Hero, memory, memoryAmp);
+            float nativeStars = FindMemory(rt.Hero, memory) != null
+                ? FractionalScopedModifiers.NativePercent(rt.AppliedBuild?.Build.NativeModifiers, memory, LinkKind.MemoryDamage) : 0f;
+            float starPercent = TransformAuthoredMemoryDamage(rt.Hero, memory,
+                starAmpMilli / (float)BuildPrecision.Scale + nativeStars);
+            float equipmentPercent = (memoryAmpMilli - starAmpMilli) / (float)BuildPrecision.Scale;
+            return rt.Gimmicks.CombinedMemoryDamagePercent(memory, Time.time,
+                equipmentPercent + starPercent, starPercent);
         }
 
         internal bool IdentityDashBonusEnabled(Hero hero) => hero != null && _identityDashBonus.Contains(hero);
