@@ -20,6 +20,7 @@ namespace SodRpg.Mod
     }
     internal partial class Actor
     {
+        public readonly Dictionary<string, string> persistentSyncedData = new Dictionary<string, string>();
         public void InvokeOnKill(EventInfoKill info) => typeof(NativeAttributedKill)
             .GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new object[] { info });
         public void CustomRpc_SendMessageToAllClients<T>(T message) => ClientMessages.Add(message);

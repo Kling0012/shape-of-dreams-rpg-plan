@@ -16,6 +16,10 @@ LEGACY = {
         "healthPerLevel": Decimal("0.025"), "healthPerStarPoint": Decimal("0.005"),
         "healthPerInfinityStage": Decimal("0.10"), "damagePerLevel": Decimal("0.012"),
         "damagePerStarPoint": Decimal("0.0025"), "damagePerInfinityStage": Decimal("0.04"),
+        "enemyCountHealthPerStage": Decimal("0.10"),
+        "enemyCountPerStage": Decimal("0"),
+        "enemyCountMaximumBonus": Decimal("0.60"),
+        "enemyCountAdditionalRewardBudget": Decimal("0"),
     },
     "dreamDepth": {
         "maximum": 5, "healthPerDepth": Decimal("0.15"), "damagePerDepth": Decimal("0.08"),
@@ -32,6 +36,10 @@ FIELDS = {
         "damagePerLevel": ("DamagePerLevel", "double", "ratio/level", 0, 100),
         "damagePerStarPoint": ("DamagePerStarPoint", "double", "ratio/point", 0, 100),
         "damagePerInfinityStage": ("DamagePerInfinityStage", "double", "ratio/stage", 0, 100),
+        "enemyCountHealthPerStage": ("EnemyCountHealthPerStage", "double", "health-ratio/stage", 0.000001, 100),
+        "enemyCountPerStage": ("EnemyCountPerStage", "double", "ratio/stage", 0, 1),
+        "enemyCountMaximumBonus": ("EnemyCountMaximumBonus", "double", "ratio", 0, 1),
+        "enemyCountAdditionalRewardBudget": ("EnemyCountAdditionalRewardBudget", "double", "ratio", 0, 1),
     },
     "dreamDepth": {
         "maximum": ("MaximumDepth", "int", "depth", 1, 5),

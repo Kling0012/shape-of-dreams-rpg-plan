@@ -85,6 +85,12 @@ namespace SodRpg.Mod
         public static void Warn(string message) => Warnings.Add(message);
         public static void Error(string message) => Errors.Add(message);
     }
+    // This harness models entry-point lifetime, not native encounter spawning.
+    internal static class PressureEnemyCount
+    {
+        internal static void Install(Harmony harmony) { }
+        internal static void Stop() { }
+    }
     // Game-boundary doubles for the real InfinityMode.cs (compiled into this project).
     // Only the members InfinityMode and its native patch classes touch are modeled; the
     // patch classes install onto these methods with real Harmony detours.

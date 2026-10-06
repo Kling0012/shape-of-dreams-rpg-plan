@@ -516,7 +516,8 @@ namespace SodRpg.Mod
             foreach (var pair in _killReplayPlayers)
                 if (_registeredOn != null && !pair.Value.ControlSent)
                     SendKillStreamControl(pair.Key, pair.Value);
-            runtime.KillEventId = Guid.NewGuid().ToString("N");
+            runtime.KillEventId = PressureCountRewards.EncodeEventId(Guid.NewGuid().ToString("N"),
+                PressureCountRewards.ScaleFromActorData(monster.persistentSyncedData));
             runtime.KillEventStreamId = _killStreamId;
             runtime.KillEventNetId = monster.netId;
             runtime.SyncNetId = monster.netId;

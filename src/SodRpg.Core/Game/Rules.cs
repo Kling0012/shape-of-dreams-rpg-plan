@@ -155,7 +155,7 @@ namespace SodRpg.Core.Game
 
         /// <summary>撃破報酬。heat/waypoint は戦ったときの値（保留していた撃破の精算用、#71）。省略時は現在の状態。</summary>
         public static List<GameEvent> OnKill(Profile p, MonsterTier tier, int itemLevel, NightmareAffix nightmare = NightmareAffix.None, string heroKey = null, TradeLedger trades = null, string variantId = null, int? roomIndex = null, int? heat = null, Waypoint? waypoint = null,
-            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0)
+            string bossTypeName = null, bool bossDropNightmare = false, int bossDropDepth = 0, double rewardScale = 1)
         {
             var ev = new List<GameEvent>();
             var run = p.Run;
@@ -174,7 +174,7 @@ namespace SodRpg.Core.Game
             if (variant != null && variant.ShardBonusPct != 100) reward.Shards = (int)Math.Min(int.MaxValue, (long)reward.Shards * variant.ShardBonusPct / 100 + LootBalance.VariantAdditiveShards);
             bool hoardPayout = killWaypoint == Waypoint.BossHoard
                 && !run.WaypointHoardReleased && tier == MonsterTier.Boss;
-            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, rareAllowed: rareAllowed);
+            Waypoints.ApplyKill(p, tier, isNightmare, rng, reward, itemLevel, focus, roomIndex ?? run.RoomsCleared, killWaypoint, out int waypointStarXp, out int waypointAwakening, rareAllowed: rareAllowed, rewardScale: rewardScale);
             if (tier == MonsterTier.Boss && rareAllowed)
             {
                 var bossPiece = BossSets.RollDrop(rng, bossTypeName, bossDropNightmare, bossDropDepth, itemLevel);
@@ -191,9 +191,10 @@ namespace SodRpg.Core.Game
             {
                 var hs = p.Hero(heroKey);
                 if (string.IsNullOrEmpty(run.HeroKey)) run.HeroKey = heroKey;
-                AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev);
+                AddStarXp(p, heroKey, (int)Math.Min(int.MaxValue, (long)StarProgression.KillXp(tier, isNightmare) + waypointStarXp), ev, rewardScale: rewardScale, rng: rng);
                 int points = DreamDepth.ScaleReward(Content.AwakenPoints(tier, isNightmare) + waypointAwakening,
                     DreamDepth.AwakeningMultiplier(run.DreamDepth) * Waypoints.Sum(killWaypoint).AwakeningMultiplier);
+                points = PressureCountRewards.ScaleInt(rng, points, rewardScale);
                 foreach (var uid in hs.Equipped)
                 {
                     var r = p.FindStash(uid);
@@ -1319,10 +1320,11 @@ namespace SodRpg.Core.Game
             p.Focus = focus;
         }
 
-        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, bool freeSupply = true)
+        private static void AddStarXp(Profile p, string heroKey, int amount, List<GameEvent> ev, bool freeSupply = true, double rewardScale = 1, Rng rng = null)
         {
             if (string.IsNullOrEmpty(heroKey)) return;
             amount = DreamDepth.ScaleReward(amount, DreamDepth.StarXpMultiplier(p.Run?.DreamDepth ?? 0));
+            if (rng != null) amount = PressureCountRewards.ScaleInt(rng, amount, rewardScale);
             if (freeSupply) amount = InfinityRewards.LimitStarXp(p, amount);
             var hero = p.Hero(heroKey);
             int before = StarProgression.Points(hero.StarXp);

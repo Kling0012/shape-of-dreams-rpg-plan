@@ -227,12 +227,17 @@ namespace SodRpg.Core.Game
 
         /// <summary>Transform only newly rolled enemy rewards; existing inventory and event rewards are untouched.
         /// waypoint is the one active when the kill happened (#71); pass run.ActiveWaypoint for immediate kills.</summary>
-        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening, bool rareAllowed = true)
+        internal static void ApplyKill(Profile p, MonsterTier tier, bool nightmare, Rng rng, KillReward reward, int itemLevel, Line? focus, int roomIndex, Waypoint waypoint, out int starXp, out int awakening, bool rareAllowed = true, double rewardScale = 1)
         {
             starXp = 0;
             awakening = 0;
             var run = p.Run;
-            if (waypoint == Waypoint.None) { InfinityRewards.LimitReward(p, reward); return; }
+            if (waypoint == Waypoint.None)
+            {
+                PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
+                InfinityRewards.LimitReward(p, reward);
+                return;
+            }
             var t = Sum(waypoint);
             if (run.WaypointRoom != roomIndex)
             {
@@ -291,6 +296,7 @@ namespace SodRpg.Core.Game
                 starXp = DreamDepth.ScaleReward(reward.Shards, WaypointBalance.StarXpPerShard);
                 reward.Shards = 0;
             }
+            PressureCountRewards.ScaleLoot(rng, reward, rewardScale);
             InfinityRewards.LimitReward(p, reward, t.DelayDropsUntilBoss ? WaypointBalance.HoardRewardMultiplier : 1);
             if (!t.DelayDropsUntilBoss) return;
             if (!run.WaypointHoardReleased)

@@ -27,6 +27,7 @@ namespace SodRpg.Mod
         private readonly int _id = ++_nextId;
         public int GetInstanceID() => _id;
         public Actor parentActor;
+        public readonly Dictionary<string, string> persistentSyncedData = new Dictionary<string, string>();
         public readonly List<(DewPlayer Target, object Message)> Sent = new List<(DewPlayer, object)>();
         public void CustomRpc_SendMessageToClient(DewPlayer target, object message) => Sent.Add((target, message));
         public void CustomRpc_SendMessageToAllClients(object message) => Sent.Add((null, message));
