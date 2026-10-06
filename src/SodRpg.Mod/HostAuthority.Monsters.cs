@@ -113,6 +113,8 @@ namespace SodRpg.Mod
                 float sq = (other.position - m.position).sqrMagnitude;
                 // Stable tie-break prevents dictionary iteration order deciding the recipient.
                 if (sq > nearestSq || (sq == nearestSq && nearest != null && other.netId >= nearest.netId)) continue;
+                // Existence check (!shieldTarget): nobody reads which ally it was, so the first one in range is enough.
+                if (!shieldTarget) return other;
                 nearest = other;
                 nearestSq = sq;
             }

@@ -107,11 +107,17 @@ namespace SodRpg.Core.Game
                         throw new InvalidOperationException("Invalid authored edge: " + node.Id);
             }
             var attainable = new HashSet<string>(StringComparer.Ordinal);
-            var edges = new List<AuthoredStarEdge>();
+            // Edges are undirected here; index them by endpoint so each pass checks a star's own neighbours, not every edge.
+            var neighbors = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+            void Link(string from, string to)
+            {
+                if (!neighbors.TryGetValue(from, out var list)) neighbors.Add(from, list = new List<string>());
+                list.Add(to);
+            }
             foreach (var node in tree)
             {
-                if (node.AuthoredStar == null) attainable.Add(node.Id);
-                else edges.AddRange(node.AuthoredStar.Edges);
+                if (node.AuthoredStar == null) { attainable.Add(node.Id); continue; }
+                foreach (var edge in node.AuthoredStar.Edges) { Link(edge.From, edge.To); Link(edge.To, edge.From); }
             }
             bool progressed;
             do
@@ -123,8 +129,9 @@ namespace SodRpg.Core.Game
                     if (def == null || attainable.Contains(node.Id)) continue;
                     bool adjacent = node.IsOuterAnchor && node.Id == def.AnchorId
                         || def.RetainedLegacy && node.Cluster == null;
-                    foreach (var edge in edges)
-                        if (edge.From == node.Id && attainable.Contains(edge.To) || edge.To == node.Id && attainable.Contains(edge.From)) adjacent = true;
+                    if (!adjacent && neighbors.TryGetValue(node.Id, out var near))
+                        foreach (string other in near)
+                            if (attainable.Contains(other)) { adjacent = true; break; }
                     if (!adjacent) continue;
                     bool prerequisitesSatisfied = true;
                     foreach (string id in def.RequiredStarIds) if (!attainable.Contains(id)) prerequisitesSatisfied = false;

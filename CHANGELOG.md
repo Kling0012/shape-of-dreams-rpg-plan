@@ -8,6 +8,8 @@ Dreamforge RPG（Shape of Dreams 用MOD）の更新履歴。新しい版が上�
 
 ## 未リリース / Unreleased
 
+- **軽量化（内部処理）**：星図の移行チェックが毎回やり直していた星図レイアウト全体の計算をやめました。保存データの読み込み・保存後の読み戻し検証が約160倍速く（計測：65ms → 0.4ms）、読み込み・続きの再開・保存の引っかかりが減ります。ほかに、ビルド集計の検証結果の再利用、星の検索・前提チェックの高速化、保存文字列の書き出しの高速化、群れの味方の存在確認の早期終了を入れました。挙動と数値は変わりません。 / **Lighter internals**: the star-map migration no longer rebuilds the whole layout each time, making profile load and the post-save verification read ~160x faster (65 ms to 0.4 ms measured). Also reused build validation, faster star lookups and prerequisite checks, faster string writing, and an early exit for the pack-ally check. No behaviour or number changes.
+
 ---
 
 ## v2.7.0 — インフィニティのゾーン巡りと修正（2026-10-06）
