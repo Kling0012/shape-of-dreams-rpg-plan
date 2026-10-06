@@ -137,10 +137,10 @@ foreach (var slot in slots)
         var lines = new List<string>();
         foreach (var p in u.Powers)
         {
-            string desc = BiBr(() => Content.FormatPower(p.Power, p.Value));
+            string desc = BiBr(() => Content.FormatPowerBullets(p.Power, p.Value));
             lines.Add($"**{Bi(() => Content.PowerName(p.Power))}** {desc}");
         }
-        if (u.BossMove != null) lines.Add(BiBr(() => BossProfiles.DescribeMove(u.BossMove)));
+        if (u.BossMove != null) lines.Add(BiBr(() => EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove))));
         string powers = lines.Count == 0 ? "（固有効果なし。セット効果を参照 / No part powers; see set bonuses）" : string.Join(NL, lines);
         string set = "-";
         string link = u.Link == null ? "-" : BiBr(() => Links.Describe(u.Link));
@@ -187,8 +187,8 @@ foreach (var slot in slots)
         foreach (var u in Content.Uniques.Where(u => u.SetId == s.Id))
         {
             string bs = Content.TryGetBase(u.BaseId, out var bd) ? SlotTitle(bd.Slot) : "-";
-            string powers = u.BossMove != null ? BiBr(() => BossProfiles.DescribeMove(u.BossMove))
-                : u.Powers.Count == 0 ? "-" : string.Join(NL, u.Powers.Select(p => BiBr(() => Content.FormatPower(p.Power, p.Value))));
+            string powers = u.BossMove != null ? BiBr(() => EffectLayout.Bullets(BossProfiles.DescribeMove(u.BossMove)))
+                : u.Powers.Count == 0 ? "-" : string.Join(NL, u.Powers.Select(p => BiBr(() => Content.FormatPowerBullets(p.Power, p.Value))));
             sb.Append($"| {bs} | {TxtBi(u.Name)} | {BaseCell(u.BaseId)} | {powers} |\n");
         }
         sb.Append('\n');
@@ -231,7 +231,7 @@ int powersListed = 0;
         else continue;
         int cap = Content.PowerCap(p);
         string capText = cap > 0 ? cap.ToString() : "-";
-        rows.Add($"| {Bi(() => Content.PowerName(p))} | {BiBr(() => Content.FormatPower(p, rep))} (値 {rep}) | {rangeText} | {capText} | {rarityText} | {slotsText} |");
+        rows.Add($"| {Bi(() => Content.PowerName(p))} | {BiBr(() => Content.FormatPowerBullets(p, rep))} (値 {rep}) | {rangeText} | {capText} | {rarityText} | {slotsText} |");
         powersListed++;
     }
     var sb = new StringBuilder();
@@ -273,7 +273,7 @@ int powersListed = 0;
     }
     sb.Append("\n固有品は名前付きの固定装備です。基礎と固有効果が決まっており、特性は抽選されます。\n\n");
     sb.Append(H2("アイテムレベル"));
-    sb.Append($"固定値の能力（攻撃力・魔力・最大HP・防御・HP回復・記憶加速・行動妨害耐性）は、アイテムレベルに応じて伸びます（レベル1で100%、1上がるごとに+3%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Content.ItemLevelScalingCap)}%）。%の能力値はレベルでは伸びません。最大レベルは{Content.MaxItemLevel}です。\n\n");
+    sb.Append($"固定値の攻撃力・魔力はレベル1で100%、1上がるごとに+{GearBalance.FlatDamageGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.AttackFlat, Content.ItemLevelScalingCap)}%。他の固定値（最大HP・防御・HP回復・記憶加速・行動妨害耐性）は1上がるごとに+{GearBalance.OtherFixedGrowthPct}%、レベル{Content.ItemLevelScalingCap}以上で{Content.LevelScalePct(Stat.MaxHealthFlat, Content.ItemLevelScalingCap)}%です。%の能力値はレベルでは伸びません。最大レベルは{Content.MaxItemLevel}です。保存済みの特性値は再抽選せず、基礎能力は現在の倍率で再計算します。\n\n");
     sb.Append(H2("強化 (Enhancement)"));
     sb.Append($"通常は+{Content.MaxEnhance}まで強化できます。+{Content.MaxEnhance}までは強化1段ごとに特性が+6%、固有効果が+5%。限界突破後の+{Content.MaxEnhance + 1}以降は特性が+4%、固有効果が+3%ずつ伸びます。\n\n");
     sb.Append("^ 強化 ^ 特性の倍率 ^ 固有効果の倍率 ^ 夢の欠片（レア以下） ^ 夢の欠片（エピック以上） ^\n");

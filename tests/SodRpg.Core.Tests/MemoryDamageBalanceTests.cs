@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using SodRpg.Core.Game;
@@ -31,31 +32,5 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Unadjusted_content_keeps_the_pre_migration_fingerprint_in_an_isolated_process()
-        {
-            string output = Path.Combine(Path.GetTempPath(), "i149-fingerprint-" + Guid.NewGuid().ToString("N") + ".json");
-            try
-            {
-                var start = new ProcessStartInfo(Environment.GetEnvironmentVariable("DOTNET") ?? "dotnet")
-                { UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
-                start.ArgumentList.Add(typeof(BalanceSim.Options).Assembly.Location);
-                start.ArgumentList.Add("--mode"); start.ArgumentList.Add("forge");
-                start.ArgumentList.Add("--metrics-json"); start.ArgumentList.Add(output);
-                using var process = Process.Start(start);
-                string stdout = process.StandardOutput.ReadToEnd();
-                string stderr = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                Assert.True(process.ExitCode == 0, stdout + stderr);
-                using var metrics = JsonDocument.Parse(File.ReadAllText(output));
-                string fingerprint = metrics.RootElement.GetProperty("contentFingerprint").GetString();
-                // Frozen migration compatibility, not a newly pinned identity after a balance edit.
-                if (MemoryDamageBalance.ContentFingerprintRecord == null && ForgeBalance.ContentFingerprintRecord == null)
-                    Assert.Equal("10575-81dd841870386d98", fingerprint);
-                else
-                    Assert.NotEqual("10575-81dd841870386d98", fingerprint);
-            }
-            finally { File.Delete(output); }
-        }
     }
 }

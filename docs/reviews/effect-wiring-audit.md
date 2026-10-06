@@ -4,6 +4,8 @@
 Core の Debug ビルド（`SodRpg.Core.dll`、21:48 時点）を読み込む使い捨てスクリプトで、実データ（土台360・固有品1190・セット48）を総当たりした。
 スクリプトは `C:/Temp/audit/` にある（`probe_content.ps1` `probe_stats.ps1` `probe_caps.ps1` `probe_ids.ps1` `sim_gear.ps1` `sim_build.ps1` `sim_stars.ps1`）。
 
+以下の数値は監査時点の記録。現行 #119/#121 は通常セットの純ダメージ係数1.25倍、固定攻魔+5%/レベル・上限250・該当2部位15へ更新済み。終曲はCD短縮なので据え置き。[現行の調整表](../../tools/balance/README.md)を参照。 / Values below are historical audit measurements; current #119/#121 increases normal-set pure damage by 1.25 and flat Attack/Power growth to 5% per level, cap250 and relevant 2-piece bonuses15. Finale remains unchanged as cooldown reduction.
+
 分類:
 A = 配線済み（実イベントを購読し、実在するゲームAPIを呼ぶ）／B = 配線済みだが条件が怪しい・到達しにくい／
 C = Coreに実装と試験があるが、ホスト・クライアントのどこからも呼ばれない／D = 実装なし（文章だけ）・明示的に未接続。

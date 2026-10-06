@@ -1465,6 +1465,9 @@ namespace SodRpg.Mod
                 + (r.Retunes > 0 ? Loc.T($" · 再調律{r.Retunes}/{Content.MaxRetunes}", $" · retuned {r.Retunes}/{Content.MaxRetunes}") : ""), _st.Small);
             GUILayout.EndVertical();
             GUILayout.EndHorizontal();
+            GUILayout.Label(Loc.T(
+                $"Lv1は100%。固定攻魔は1Lvごと+{GearBalance.FlatDamageGrowthPct}%、他の固定能力は+{GearBalance.OtherFixedGrowthPct}%（Lv{Content.ItemLevelScalingCap}で停止）。%能力は成長しません。保存済み特性は再抽選せず、基礎能力は再計算します。",
+                $"Lv1: 100%. Flat attack/power gain +{GearBalance.FlatDamageGrowthPct}% per level; other fixed stats +{GearBalance.OtherFixedGrowthPct}% (stops at Lv{Content.ItemLevelScalingCap}). Percent stats do not scale. Saved affixes are not rerolled; implicit stats recalculate."), _st.Small);
             if (r.DeveloperGranted)
                 GUILayout.Label(Loc.T("出所：開発付与", "Source: developer grant"), _st.Small);
             if (Content.MaxLimitBreaks(r.Rarity) > 0 && (r.LimitBreaks > 0 || r.Enhance >= Content.MaxEnhance))
@@ -1473,7 +1476,7 @@ namespace SodRpg.Mod
             var imp = r.Implicit;
             GUILayout.Label(UiStyles.Colored(Content.FormatStat(imp.Stat, imp.Value), "#c8c8ff") + Loc.T("  <color=#aaa>（この種類が必ず持つ性能）</color>", "  <color=#aaa>(always on this type)</color>"), _st.Label);
             // 固有効果は遺物の個性なので、特性より先に見せる。
-            foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPower(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
+            foreach (var pw in r.EffectivePowers()) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(pw.Power, pw.Value), "#e0b0ff"), _st.Label);
             if (r.BossMove != null)
                 GUILayout.Label(UiStyles.Colored(r.DescribeBossMove(), "#e0b0ff"), _st.Label);
             // 連携（v1.26）：条件と効果を1行で。ゲームの中なら各条件に ✓／・ が付く。
@@ -2010,7 +2013,7 @@ namespace SodRpg.Mod
                 string iconKey = StarIconKey(t);
                 _starNodes[i] = new StarNode
                 {
-                    Description = t == null ? null : StarMapPresentation.EffectDescription(t),
+                    Description = t == null ? null : StarMapPresentation.DisplayDescription(t),
                     ChoiceOptions = t != null && t.IsChoice ? new[] { new GUIContent(), new GUIContent() } : null,
                     Icon = RelicIcons.For("stars/" + (iconKey == "choice" ? "link" : iconKey)),
                     Keystone = t != null && t.IsKeystone,
@@ -2161,12 +2164,12 @@ namespace SodRpg.Mod
                 var pair = n.PairDefinition;
                 string title = pair == null ? t.Name.ToString() : pair.Name.ToString();
                 string description = pair != null && t.Mechanism == null
-                    ? StarMapPresentation.EffectDescription(t, Math.Max(1, n.Rank)) : n.Description;
+                    ? StarMapPresentation.DisplayDescription(t, Math.Max(1, n.Rank)) : n.Description;
                 if (t.IsChoice)
                 {
-                    description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank);
+                    description = StarMapPresentation.ChoiceDescription(t, n.Choice, n.Rank, true);
                     for (int optionIndex = 0; optionIndex < 2; optionIndex++)
-                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex)
+                        n.ChoiceOptions[optionIndex].text = StarMapPresentation.ChoiceOptionBody(t, optionIndex, true)
                             + "\n" + StarMapPresentation.DamageRankNote(t, optionIndex, spent);
                     n.EffectSummary = StarMapPresentation.EffectSummary(t, n.Choice);
                 }

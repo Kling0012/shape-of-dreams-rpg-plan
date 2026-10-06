@@ -77,8 +77,8 @@ namespace SodRpg.Core.Game
             string two = Content.FormatStat(TwoPiece.Stat, TwoPiece.Value);
             if (ThreePiece == null)
                 return Loc.T($"2つ装着：{two}", $"2 pieces: {two}");
-            return Loc.T($"2つ装着：{two}\n3つ装着：\n　{Content.FormatPower(ThreePiece.Power, ThreePiece.Value)}",
-                $"2 pieces: {two}\n3 pieces:\n　{Content.FormatPower(ThreePiece.Power, ThreePiece.Value)}");
+            string three = Content.FormatPowerBullets(ThreePiece.Power, ThreePiece.Value, "　");
+            return Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
         }
     }
 

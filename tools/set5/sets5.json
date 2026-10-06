@@ -1,16 +1,6 @@
 [
  {
   "set": "set.tide",
-  "sixPiece": [
-   {
-    "power": "StrafeShot",
-    "value": 24
-   },
-   {
-    "power": "BrittleIce",
-    "value": 40
-   }
-  ],
   "why": "潮が寄せて返すように、動きながら敵を鈍らせ、冷えた敵への会心を重くする。回避の返し波ではなく、歩き撃ちの戦い方になる。",
   "pieces": [
    {
@@ -70,20 +60,11 @@
     "flavorJa": "波打ち際に残る足跡は、すぐ凍って砕ける。",
     "flavorEn": "Footprints at the waterline freeze, then shatter."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.tide/sixPiece"
  },
  {
   "set": "set.lamp",
-  "sixPiece": [
-   {
-    "power": "OverflowingLife",
-    "value": 40
-   },
-   {
-    "power": "WatchfulHand",
-    "value": 18
-   }
-  ],
   "why": "自分を守る灯守から、余った回復を障壁に変え、倒れそうな仲間へ灯を分ける守り手に変わる。",
   "pieces": [
    {
@@ -143,16 +124,11 @@
     "flavorJa": "灯を掲げて歩く足は、夜道で迷わない。",
     "flavorEn": "Feet that walk holding a lamp never lose the night road."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.lamp/sixPiece"
  },
  {
   "set": "set.cinder",
-  "sixPiece": [
-   {
-    "power": "Wildfire",
-    "value": 32
-   }
-  ],
   "why": "火を重ねる戦い方に、火が3つ以上の敵から近くの敵へ燃え移る広がりが加わり、残り火が戦場全体へ移っていく。",
   "pieces": [
    {
@@ -212,16 +188,11 @@
     "flavorJa": "踏みしめた地面に、赤い足跡が残る。",
     "flavorEn": "Red footprints glow where the ground was trodden."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.cinder/sixPiece"
  },
  {
   "set": "set.dusk",
-  "sixPiece": [
-   {
-    "power": "UmbralHeritage",
-    "value": 50
-   }
-  ],
   "why": "闇を重ねた敵を倒すと、近くの敵へ闇が受け継がれ、仕留めるほど次の獲物が弱る連鎖の狩りになる。",
   "pieces": [
    {
@@ -281,20 +252,11 @@
     "flavorJa": "影が伸びる速さで、獲物との距離を詰める。",
     "flavorEn": "They close the gap as fast as shadows lengthen."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.dusk/sixPiece"
  },
  {
   "set": "set.winter",
-  "sixPiece": [
-   {
-    "power": "ImmovableStance",
-    "value": 10
-   },
-   {
-    "power": "BrittleIce",
-    "value": 40
-   }
-  ],
   "why": "冬枯れの木のように動かずに構えるほど与ダメージが上がり受けるダメージが下がる。冷えた敵への会心も重くなり、迎え撃つ戦い方になる。",
   "pieces": [
    {
@@ -354,20 +316,11 @@
     "flavorJa": "冬毛の靴は、雪を踏んでも音を立てない。",
     "flavorEn": "Winter-fur boots make no sound on the snow."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.winter/sixPiece"
  },
  {
   "set": "set.starsong",
-  "sixPiece": [
-   {
-    "power": "Finale",
-    "value": 22
-   },
-   {
-    "power": "TriumphSong",
-    "value": 5
-   }
-  ],
   "why": "Q・W・Eを使い切るとUltimateがすぐ戻り、使うたびに仲間も癒やす。星詠みの回転が一巡ごとに回る。",
   "pieces": [
    {
@@ -427,20 +380,11 @@
     "flavorJa": "星座の上を歩くように、足取りが軽い。",
     "flavorEn": "Each step feels like walking across a constellation."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.starsong/sixPiece"
  },
  {
   "set": "set.hunt",
-  "sixPiece": [
-   {
-    "power": "WanderersEdge",
-    "value": 22
-   },
-   {
-    "power": "SpilloverStrike",
-    "value": 40
-   }
-  ],
   "why": "一体を追い詰める狩りから、群れの別の獲物へ刃を移し、仕留めた余りの一撃で次の獲物を削る狩りに変わる。",
   "pieces": [
    {
@@ -500,20 +444,11 @@
     "flavorJa": "追跡の足跡は浅く、帰りの足取りは軽い。",
     "flavorEn": "Shallow tracks out, a light step home."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.hunt/sixPiece"
  },
  {
   "set": "set.bastion",
-  "sixPiece": [
-   {
-    "power": "ShieldBash",
-    "value": 42
-   },
-   {
-    "power": "ShieldbreakBurst",
-    "value": 8
-   }
-  ],
   "why": "張った障壁を、そのまま通常攻撃の追加ダメージに使い、割れたときには周囲へ爆ぜる。耐える城が打って出る盾に変わる。",
   "pieces": [
    {
@@ -573,20 +508,11 @@
     "flavorJa": "城壁の基礎のように、一度踏んだ地は譲らない。",
     "flavorEn": "Like the foundation of a wall, they never give up ground once trodden."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.bastion/sixPiece"
  },
  {
   "set": "set.wildfire",
-  "sixPiece": [
-   {
-    "power": "Frenzy",
-    "value": 3
-   },
-   {
-    "power": "Momentum",
-    "value": 4
-   }
-  ],
   "why": "囲まれるほど攻撃速度が上がり、敵を倒すたびさらに加速する。軍勢の勢いで燃え広がる戦い方になる。",
   "pieces": [
    {
@@ -646,20 +572,11 @@
     "flavorJa": "駆けた跡に、火が走る。",
     "flavorEn": "Wherever they run, the fire runs after."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.wildfire/sixPiece"
  },
  {
   "set": "set.grove",
-  "sixPiece": [
-   {
-    "power": "OverflowingLife",
-    "value": 40
-   },
-   {
-    "power": "ReadyGuard",
-    "value": 8
-   }
-  ],
   "why": "傷を癒やすだけの森から、回復の余りが障壁になり、静かに待つほど最初の衝撃を受け止める分厚い守りになる。",
   "pieces": [
    {
@@ -719,20 +636,11 @@
     "flavorJa": "深く根を張った靴は、傷ついても倒れない。",
     "flavorEn": "Boots with deep roots do not fall even when wounded."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.grove/sixPiece"
  },
  {
   "set": "set.reverie",
-  "sixPiece": [
-   {
-    "power": "StardustCycle",
-    "value": 14
-   },
-   {
-    "power": "RelayHand",
-    "value": 8
-   }
-  ],
   "why": "光を溜めた敵がクールダウンを回す源になり、倒した敵のたびに味方の記憶も回る。楽団の演奏が自分だけでなく仲間へ巡る。",
   "pieces": [
    {
@@ -792,20 +700,11 @@
     "flavorJa": "囁くように床を滑り、拍だけを残す。",
     "flavorEn": "They glide over the floor in whispers, leaving only the beat."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.reverie/sixPiece"
  },
  {
   "set": "set.phantom",
-  "sixPiece": [
-   {
-    "power": "Spellsweep",
-    "value": 42
-   },
-   {
-    "power": "ReturningBlade",
-    "value": 14
-   }
-  ],
   "why": "記憶の後の通常攻撃が周囲の別の敵へも映り、記憶で倒すとその記憶が早く戻る。幻影が増えるように攻撃が分身する。",
   "pieces": [
    {
@@ -865,20 +764,11 @@
     "flavorJa": "舞台の上で足音を立てない者だけが、一座に残る。",
     "flavorEn": "Only those who make no sound on stage remain in the troupe."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.phantom/sixPiece"
  },
  {
   "set": "set.permafrost",
-  "sixPiece": [
-   {
-    "power": "ReadyGuard",
-    "value": 8
-   },
-   {
-    "power": "TollOfGrudge",
-    "value": 20
-   }
-  ],
   "why": "静かな間を置くと最初の衝撃を障壁で受け、失ったHPが溜まると周囲へ反撃の衝撃が出る。凍らせて待ち、受けて返す戦い方になる。",
   "pieces": [
    {
@@ -938,20 +828,11 @@
     "flavorJa": "飾りの中の霜は、千年溶けていない。",
     "flavorEn": "The frost inside the pendant has not melted in a thousand years."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.permafrost/sixPiece"
  },
  {
   "set": "set.asura",
-  "sixPiece": [
-   {
-    "power": "Retaliation",
-    "value": 25
-   },
-   {
-    "power": "TollOfGrudge",
-    "value": 20
-   }
-  ],
   "why": "傷を負うほど反撃の力が上がり、失ったHPが溜まると周囲へ爆ぜる。血を流すことが攻撃の燃料になる。",
   "pieces": [
    {
@@ -1011,16 +892,11 @@
     "flavorJa": "牙に刻まれた傷の数が、そのまま道のりになる。",
     "flavorEn": "The nicks on the fang are a count of the road traveled."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.asura/sixPiece"
  },
  {
   "set": "set.gale",
-  "sixPiece": [
-   {
-    "power": "WanderersEdge",
-    "value": 28
-   }
-  ],
   "why": "回避の返しではなく、敵から敵へ渡り歩いて攻撃を当てるほど追加ダメージが出る。風のように標的を替える戦い方になる。",
   "pieces": [
    {
@@ -1080,20 +956,11 @@
     "flavorJa": "指輪を回すたび、風向きが変わる。",
     "flavorEn": "Each turn of the ring changes the direction of the wind."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.gale/sixPiece"
  },
  {
   "set": "set.firmament",
-  "sixPiece": [
-   {
-    "power": "AceInHand",
-    "value": 12
-   },
-   {
-    "power": "OpeningSalvo",
-    "value": 20
-   }
-  ],
   "why": "Ultimateが使える間は通常記憶が強く、使える状態から最初の記憶が早く戻る。Ultimateを切り札として温存する構えになる。",
   "pieces": [
    {
@@ -1153,20 +1020,11 @@
     "flavorJa": "垂飾の彗星は、誓いの日だけ尾を引く。",
     "flavorEn": "The pendant's comet trails its tail only on the day of the vow."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.firmament/sixPiece"
  },
  {
   "set": "set.ambush",
-  "sixPiece": [
-   {
-    "power": "OpeningSalvo",
-    "value": 22
-   },
-   {
-    "power": "PilingLuck",
-    "value": 2
-   }
-  ],
   "why": "戦闘の最初の記憶が早く戻り、外した攻撃が次の会心率を積み上げる。一撃目を決める奇襲の型に整う。",
   "pieces": [
    {
@@ -1226,20 +1084,11 @@
     "flavorJa": "暗闇でも、御守の眼だけが的を見失わない。",
     "flavorEn": "In the dark, only the charm's eye never loses the mark."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.ambush/sixPiece"
  },
  {
   "set": "set.ashrunner",
-  "sixPiece": [
-   {
-    "power": "RunUp",
-    "value": 50
-   },
-   {
-    "power": "Wildfire",
-    "value": 26
-   }
-  ],
   "why": "歩いて溜めた勢いを次の攻撃にまとめて乗せ、火が重なった敵から近くへ火を移す。駆け抜けて燃やす戦い方になる。",
   "pieces": [
    {
@@ -1299,20 +1148,11 @@
     "flavorJa": "懐の炉石は、走るほどに熱を帯びる。",
     "flavorEn": "The hearthstone in the pocket grows hotter the faster you run."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.ashrunner/sixPiece"
  },
  {
   "set": "set.mercy",
-  "sixPiece": [
-   {
-    "power": "SharedWard",
-    "value": 28
-   },
-   {
-    "power": "TriumphSong",
-    "value": 5
-   }
-  ],
   "why": "自分が張った障壁を近くの味方へ分け、Ultimateで仲間全員を癒やす。個人の癒しから、パーティ全体を支える儀式に変わる。",
   "pieces": [
    {
@@ -1372,20 +1212,11 @@
     "flavorJa": "癒し手の足は、倒れた者のそばでだけ速くなる。",
     "flavorEn": "A healer's feet quicken only beside the fallen."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.mercy/sixPiece"
  },
  {
   "set": "set.ironknight",
-  "sixPiece": [
-   {
-    "power": "ShieldbreakBurst",
-    "value": 10
-   },
-   {
-    "power": "TollOfGrudge",
-    "value": 18
-   }
-  ],
   "why": "障壁が割れると周囲へ爆ぜ、失ったHPが溜まると反撃の衝撃になる。耐えるだけの鉄騎が、受けた傷を力に変える。",
   "pieces": [
    {
@@ -1445,16 +1276,11 @@
     "flavorJa": "印章の押された盟約は、錆びても破れない。",
     "flavorEn": "A pact stamped with the seal does not break even when rusted."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.ironknight/sixPiece"
  },
  {
   "set": "set.eclipse",
-  "sixPiece": [
-   {
-    "power": "WeakPointWound",
-    "value": 75
-   }
-  ],
   "why": "闇で会心を重ねた敵に、3回目の会心ごとに追加ダメージが入る。月蝕のように一点を欠けさせる戦い方になる。",
   "pieces": [
    {
@@ -1514,20 +1340,11 @@
     "flavorJa": "月が隠れるたび、足音も影に呑まれる。",
     "flavorEn": "Whenever the moon hides, footsteps are swallowed by shadow."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.eclipse/sixPiece"
  },
  {
   "set": "set.thunderclap",
-  "sixPiece": [
-   {
-    "power": "PilingLuck",
-    "value": 2
-   },
-   {
-    "power": "FocusFire",
-    "value": 50
-   }
-  ],
   "why": "外した攻撃が会心率を積み上げ、同じ敵への5連撃ごとに追加ダメージが落ちる。雷が一点に落ちる集中の戦い方になる。",
   "pieces": [
    {
@@ -1587,20 +1404,11 @@
     "flavorJa": "ロケットの中で、小さな雷雲が鳴っている。",
     "flavorEn": "A tiny thundercloud rumbles inside the locket."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.thunderclap/sixPiece"
  },
  {
   "set": "set.myriad",
-  "sixPiece": [
-   {
-    "power": "Steam",
-    "value": 50
-   },
-   {
-    "power": "ElementalHarvest",
-    "value": 26
-   }
-  ],
   "why": "属性がそろった敵に火と冷気の蒸気反応が起き、複数の属性を持つ敵を倒すと周囲へ爆ぜる。属性を重ねること自体が引き金になる。",
   "pieces": [
    {
@@ -1660,20 +1468,11 @@
     "flavorJa": "一歩ごとに、色の違う火花が散る。",
     "flavorEn": "Every step scatters sparks of a different color."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.myriad/sixPiece"
  },
  {
   "set": "set.daybreak",
-  "sixPiece": [
-   {
-    "power": "OpeningSalvo",
-    "value": 22
-   },
-   {
-    "power": "ReadyGuard",
-    "value": 8
-   }
-  ],
   "why": "戦いの始まりに最初の記憶が早く戻り、静かな後の最初の接触で障壁が出る。万全の状態から一気に踏み出す、夜明けの一撃になる。",
   "pieces": [
    {
@@ -1733,20 +1532,11 @@
     "flavorJa": "御守の光環は、朝の最初の鐘に合わせて満ちる。",
     "flavorEn": "The charm's halo fills with the first bell of morning."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.daybreak/sixPiece"
  },
  {
   "set": "set.steamweave",
-  "sixPiece": [
-   {
-    "power": "ElementalHarvest",
-    "value": 28
-   },
-   {
-    "power": "PrismShift",
-    "value": 2
-   }
-  ],
   "why": "火と冷気を交互に付けると障壁が出て、複数の属性を持つ敵を倒すと周囲へ爆ぜる。属性を切り替え続ける戦い方になる。",
   "pieces": [
    {
@@ -1806,20 +1596,11 @@
     "flavorJa": "歩くたびに、足元で白い花が咲く。",
     "flavorEn": "A white blossom opens underfoot with every step."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.steamweave/sixPiece"
  },
  {
   "set": "set.eclipserite",
-  "sixPiece": [
-   {
-    "power": "StardustCycle",
-    "value": 14
-   },
-   {
-    "power": "UmbralHeritage",
-    "value": 45
-   }
-  ],
   "why": "光が5つ溜まるとクールダウンが回り、闇を持つ敵を倒すと闇が周囲に移る。光と闇を交互に溜め回す儀式になる。",
   "pieces": [
    {
@@ -1879,20 +1660,11 @@
     "flavorJa": "暁の霧が晴れる瞬間に、月は完全に隠れる。",
     "flavorEn": "The moon hides completely just as the dawn mist clears."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.eclipserite/sixPiece"
  },
  {
   "set": "set.cinderfall",
-  "sixPiece": [
-   {
-    "power": "UmbralHeritage",
-    "value": 50
-   },
-   {
-    "power": "ElementalHarvest",
-    "value": 26
-   }
-  ],
   "why": "闇を持つ敵を倒すと闇が広がり、火と闇の両方を持つ敵の最期に周囲へ爆ぜる。灰が降り積もるように属性が連鎖する。",
   "pieces": [
    {
@@ -1952,20 +1724,11 @@
     "flavorJa": "火芯のロケットは、灰の中でだけ温かい。",
     "flavorEn": "The cindercore locket is warm only amid the ash."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.cinderfall/sixPiece"
  },
  {
   "set": "set.icicanticle",
-  "sixPiece": [
-   {
-    "power": "StardustCycle",
-    "value": 14
-   },
-   {
-    "power": "BrittleIce",
-    "value": 45
-   }
-  ],
   "why": "光が5つ溜まるとクールダウンが回り、冷えた敵への会心が重くなる。光で冷気を砕く聖句になる。",
   "pieces": [
    {
@@ -2025,20 +1788,11 @@
     "flavorJa": "聖句を唱えるたび、足元の氷に光が灯る。",
     "flavorEn": "Each verse chanted lights the ice beneath the feet."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.icicanticle/sixPiece"
  },
  {
   "set": "set.shardknight",
-  "sixPiece": [
-   {
-    "power": "ShieldBash",
-    "value": 45
-   },
-   {
-    "power": "GleamingWard",
-    "value": 9
-   }
-  ],
   "why": "障壁がある間は通常攻撃に障壁量の追加ダメージが乗り、攻撃力・魔力も上がる。割れるのを待つ騎士が、障壁を保ち殴る騎士に変わる。",
   "pieces": [
    {
@@ -2098,20 +1852,11 @@
     "flavorJa": "雪華の御守は、砕けた盾の跡に咲く。",
     "flavorEn": "The snowbloom charm blossoms where a shield was broken."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.shardknight/sixPiece"
  },
  {
   "set": "set.bashbound",
-  "sixPiece": [
-   {
-    "power": "StarShield",
-    "value": 15
-   },
-   {
-    "power": "SharedWard",
-    "value": 30
-   }
-  ],
   "why": "Ultimateで障壁を張り、盾打ちの燃料と仲間への分け前にする。自分だけを守る盾が、パーティの盾に変わる。",
   "pieces": [
    {
@@ -2171,20 +1916,11 @@
     "flavorJa": "草鞋の足取りは、常に盾より半歩前にある。",
     "flavorEn": "The sandals' stride stays half a step ahead of the shield."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.bashbound/sixPiece"
  },
  {
   "set": "set.vanguardline",
-  "sixPiece": [
-   {
-    "power": "Breakout",
-    "value": 9
-   },
-   {
-    "power": "ImmovableStance",
-    "value": 8
-   }
-  ],
   "why": "囲まれた瞬間に障壁と鈍足で押し返し、動かずに構えるほど堅くなる。前線で受け止め、囲みを破る隊列になる。",
   "pieces": [
    {
@@ -2244,20 +1980,11 @@
     "flavorJa": "壁の印章は、隊列が崩れるまで外されない。",
     "flavorEn": "The wallseal stays on until the line itself breaks."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.vanguardline/sixPiece"
  },
  {
   "set": "set.rearmarks",
-  "sixPiece": [
-   {
-    "power": "AceInHand",
-    "value": 12
-   },
-   {
-    "power": "Spellsweep",
-    "value": 40
-   }
-  ],
   "why": "Ultimateが使える間は通常記憶が強く、記憶の後の通常攻撃が周囲へ広がる。後方から記憶と通常攻撃を組み合わせて撃つ構えになる。",
   "pieces": [
    {
@@ -2317,20 +2044,11 @@
     "flavorJa": "遠くを見る御守は、合図の旗を最初に見つける。",
     "flavorEn": "A charm that sees afar is first to spot the signal flag."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.rearmarks/sixPiece"
  },
  {
   "set": "set.watchcircle",
-  "sixPiece": [
-   {
-    "power": "OverflowingLife",
-    "value": 40
-   },
-   {
-    "power": "RelayHand",
-    "value": 8
-   }
-  ],
   "why": "回復の余りが障壁になり、敵を倒すと近くの味方の記憶が早く戻る。見守るだけの輪から、仲間の回転を支える輪になる。",
   "pieces": [
    {
@@ -2390,20 +2108,11 @@
     "flavorJa": "輪の外へ駆け出す足も、輪を守るために速い。",
     "flavorEn": "Even the feet that dash outside the circle are quick to protect it."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.watchcircle/sixPiece"
  },
  {
   "set": "set.relaychoir",
-  "sixPiece": [
-   {
-    "power": "Finale",
-    "value": 20
-   },
-   {
-    "power": "SharedWard",
-    "value": 28
-   }
-  ],
   "why": "Q・W・Eを使い切るとUltimateが早く戻り、張った障壁は仲間へも分かれる。歌をつなぐ合唱が、パーティ全体の回転になる。",
   "pieces": [
    {
@@ -2463,20 +2172,11 @@
     "flavorJa": "歌をつなぐ者は、歩みを途切れさせない。",
     "flavorEn": "One who carries a song onward never breaks stride."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.relaychoir/sixPiece"
  },
  {
   "set": "set.packfeast",
-  "sixPiece": [
-   {
-    "power": "OverflowingLife",
-    "value": 38
-   },
-   {
-    "power": "KindnessReturns",
-    "value": 22
-   }
-  ],
   "why": "召喚獣を癒やすと自分も癒え、余った回復は障壁になる。群れを癒やすほど召喚主も堅くなる宴になる。",
   "pieces": [
    {
@@ -2536,20 +2236,11 @@
     "flavorJa": "獣趾の靴で、群れの先頭を駆ける。",
     "flavorEn": "In pawed boots, run at the head of the pack."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.packfeast/sixPiece"
  },
  {
   "set": "set.lastblooms",
-  "sixPiece": [
-   {
-    "power": "KindnessReturns",
-    "value": 22
-   },
-   {
-    "power": "Lifeline",
-    "value": 4
-   }
-  ],
   "why": "召喚獣を癒やすと自分も癒え、超過回復で召喚獣のダメージが上がる。散るはずの召喚獣を癒やし、最期まで戦わせる弔いになる。",
   "pieces": [
    {
@@ -2609,20 +2300,11 @@
     "flavorJa": "護符の花は、倒れた獣の声を最後まで聞く。",
     "flavorEn": "The charm's flower listens to a fallen beast's voice to the very end."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.lastblooms/sixPiece"
  },
  {
   "set": "set.pinpoint",
-  "sixPiece": [
-   {
-    "power": "ImmovableStance",
-    "value": 8
-   },
-   {
-    "power": "PilingLuck",
-    "value": 2
-   }
-  ],
   "why": "動かず狙う間は与ダメージが上がり、外した攻撃が会心率を積み上げる。待って一点を撃ち抜く射手の型になる。",
   "pieces": [
    {
@@ -2682,16 +2364,11 @@
     "flavorJa": "御守の眼は、的の中心だけを覚えている。",
     "flavorEn": "The charm's eye remembers only the center of the mark."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.pinpoint/sixPiece"
  },
  {
   "set": "set.wanderblades",
-  "sixPiece": [
-   {
-    "power": "SpilloverStrike",
-    "value": 55
-   }
-  ],
   "why": "倒した一撃の余りが近くの別の敵へ飛び、渡り歩いて斬る流れが途切れない。剣舞が止まらず敵から敵へ渡る。",
   "pieces": [
    {
@@ -2751,20 +2428,11 @@
     "flavorJa": "指輪の羽根が、群れの先頭を示す。",
     "flavorEn": "The feather on the ring marks the lead of the flock."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.wanderblades/sixPiece"
  },
  {
   "set": "set.fortuneedge",
-  "sixPiece": [
-   {
-    "power": "CriticalEcho",
-    "value": 5
-   },
-   {
-    "power": "ReturningBlade",
-    "value": 14
-   }
-  ],
   "why": "会心のたびにQ・W・Eが早く戻り、記憶で倒すとその記憶が早く戻る。運を積んだ会心が、技の回転を生む。",
   "pieces": [
    {
@@ -2824,20 +2492,11 @@
     "flavorJa": "紅玉の傷は、当たりの数だけ増えていく。",
     "flavorEn": "The garnet gains a flaw for every win."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.fortuneedge/sixPiece"
  },
  {
   "set": "set.runupcharge",
-  "sixPiece": [
-   {
-    "power": "Breakout",
-    "value": 9
-   },
-   {
-    "power": "Frenzy",
-    "value": 3
-   }
-  ],
   "why": "走り込んで囲まれた瞬間に障壁と鈍足で突き破り、囲まれるほど攻撃速度が上がる。突撃から殲滅までが一続きの流れになる。",
   "pieces": [
    {
@@ -2897,20 +2556,11 @@
     "flavorJa": "指輪の傷は、先頭を駆けた証になる。",
     "flavorEn": "The nicks on the ring are proof of having run at the front."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.runupcharge/sixPiece"
  },
  {
   "set": "set.medleyband",
-  "sixPiece": [
-   {
-    "power": "Spellsweep",
-    "value": 42
-   },
-   {
-    "power": "ReturningBlade",
-    "value": 14
-   }
-  ],
   "why": "記憶の後の通常攻撃が周囲へ広がり、記憶で倒すとその記憶が早く戻る。複数の記憶を使い分けるほど旋律が続く。",
   "pieces": [
    {
@@ -2970,20 +2620,11 @@
     "flavorJa": "舞台の板を踏む音が、拍子になる。",
     "flavorEn": "The sound of steps on the stage becomes the beat."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.medleyband/sixPiece"
  },
  {
   "set": "set.gamblertrump",
-  "sixPiece": [
-   {
-    "power": "PileOn",
-    "value": 30
-   },
-   {
-    "power": "OpeningSalvo",
-    "value": 22
-   }
-  ],
   "why": "同じ記憶を3回続けるたびにその記憶が早く戻り、使える状態から最初の記憶も早く戻る。切り札を回し続ける賭けになる。",
   "pieces": [
    {
@@ -3043,20 +2684,11 @@
     "flavorJa": "星の靴は、勝負どころでだけ軽くなる。",
     "flavorEn": "Starshoes grow light only at the decisive moment."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.gamblertrump/sixPiece"
  },
  {
   "set": "set.barehand",
-  "sixPiece": [
-   {
-    "power": "DuelistsWay",
-    "value": 30
-   },
-   {
-    "power": "FocusFire",
-    "value": 45
-   }
-  ],
   "why": "敵が1体だけの間の通常攻撃が強くなり、同じ敵への5連撃ごとに追加ダメージが入る。一対一で打ち込む素手の型になる。",
   "pieces": [
    {
@@ -3116,20 +2748,11 @@
     "flavorJa": "足袋の底は薄く、地面の声をよく聞く。",
     "flavorEn": "Thin soles hear the voice of the ground well."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.barehand/sixPiece"
  },
  {
   "set": "set.crystalcircuit",
-  "sixPiece": [
-   {
-    "power": "CrystalResonance",
-    "value": 2
-   },
-   {
-    "power": "PileOn",
-    "value": 28
-   }
-  ],
   "why": "エッセンスの品質をさらに攻撃力・魔力へ換え、同じ記憶を回すほど早く戻る。結晶の回路が、一つの記憶の連打を支える。",
   "pieces": [
    {
@@ -3189,20 +2812,11 @@
     "flavorJa": "靴底を走る回路が、一歩ごとに小さく鳴る。",
     "flavorEn": "A circuit running through the sole hums softly with each step."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.crystalcircuit/sixPiece"
  },
  {
   "set": "set.dreamvigil",
-  "sixPiece": [
-   {
-    "power": "Devotion",
-    "value": 3
-   },
-   {
-    "power": "ReadyGuard",
-    "value": 8
-   }
-  ],
   "why": "聖堂を使うたびゾーンの間攻撃力・魔力が上がり、静かな間のあとの最初の接触で障壁が出る。寝ずの番が、場所を使うほど強くなる。",
   "pieces": [
    {
@@ -3262,20 +2876,11 @@
     "flavorJa": "夢の境を歩く靴は、眠らない者にだけ道を譲る。",
     "flavorEn": "Shoes that walk the edge of dreams yield the road only to the sleepless."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.dreamvigil/sixPiece"
  },
  {
   "set": "set.tithebound",
-  "sixPiece": [
-   {
-    "power": "TollOfGrudge",
-    "value": 22
-   },
-   {
-    "power": "UnbowedMind",
-    "value": 6
-   }
-  ],
   "why": "失ったHPが溜まると周囲へ衝撃が出て、スタンを受けると障壁とアンストッパブルを得る。血の代償が攻撃と耐久の両方になる。",
   "pieces": [
    {
@@ -3335,20 +2940,11 @@
     "flavorJa": "鎖の音が、血盟の誓いを歩くたびに唱える。",
     "flavorEn": "The chain's clink recites the pact's vow with every step."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.tithebound/sixPiece"
  },
  {
   "set": "set.prismdance",
-  "sixPiece": [
-   {
-    "power": "Eclipse",
-    "value": 12
-   },
-   {
-    "power": "FrostCrystal",
-    "value": 6
-   }
-  ],
   "why": "光・闇・冷気をそろえると、日蝕と氷晶の反応が起きる。属性を切り替えるだけでなく、反応を狙って組み立てる舞になる。",
   "pieces": [
    {
@@ -3408,20 +3004,11 @@
     "flavorJa": "光環の御守が、舞いの終わりの一拍を示す。",
     "flavorEn": "The halo charm marks the last beat of the dance."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.prismdance/sixPiece"
  },
  {
   "set": "set.breakoutcorps",
-  "sixPiece": [
-   {
-    "power": "Frenzy",
-    "value": 3
-   },
-   {
-    "power": "Shatter",
-    "value": 45
-   }
-  ],
   "why": "敵に囲まれるほど攻撃速度が上がり、倒すたび周囲へ爆ぜる。囲みを破る隊が、囲まれた中でこそ最大の力を出す。",
   "pieces": [
    {
@@ -3481,6 +3068,7 @@
     "flavorJa": "鉄の羽根は、囲みの外へ向かう風を知っている。",
     "flavorEn": "The iron feather knows the wind that blows toward the outside of the siege."
    }
-  ]
+  ],
+  "sixPieceRef": "tools/balance/sets.json#set.breakoutcorps/sixPiece"
  }
 ]

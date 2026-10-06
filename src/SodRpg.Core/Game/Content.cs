@@ -228,20 +228,20 @@ namespace SodRpg.Core.Game
         public string Describe()
         {
             string two = string.Join(Loc.T("、", ", "), TwoPiece.Select(s => Content.FormatStat(s.Stat, s.Value)));
-            string three = string.Join("\n", ThreePiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+            string three = string.Join("\n", ThreePiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
             string text = Loc.T($"2つ装着：{two}\n3つ装着：\n{three}", $"2 pieces: {two}\n3 pieces:\n{three}");
             if (BossStages.Count > 0)
-                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：", $"{s.RequiredPieces} pieces: ") + BossProfiles.DescribeMove(s.ProfileId)));
+                text = string.Join("\n", BossStages.Select(s => Loc.T($"{s.RequiredPieces}つ装着：\n", $"{s.RequiredPieces} pieces:\n") + EffectLayout.Bullets(BossProfiles.DescribeMove(s.ProfileId), "　")));
             if (SixPiece != null && SixPiece.Length > 0)
             {
-                string six = string.Join("\n", SixPiece.Select(p => "　" + Content.FormatPower(p.Power, p.Value)));
+                string six = string.Join("\n", SixPiece.Select(p => Content.FormatPowerBullets(p.Power, p.Value, "　")));
                 text += Loc.T($"\n6つ装着：\n{six}", $"\n6 pieces:\n{six}");
             }
             if (BossTypeName != null)
                 text += Loc.T("\n入手先：対応するボスからのみ", "\nSource: only from the matching boss");
             foreach (var stage in LinkStages)
-                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：", $"\nOptional {stage.RequiredPieces}-piece link: ")
-                    + (stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link));
+                text += Loc.T($"\n{stage.RequiredPieces}つ装着の任意連携：\n", $"\nOptional {stage.RequiredPieces}-piece link:\n")
+                    + EffectLayout.Bullets(stage.Link.Kind == LinkKind.BossReward ? BossProfiles.DescribeReward(BossReward, (int)stage.Link.Value) : Links.Describe(stage.Link), "　");
             return text;
         }
 
@@ -453,8 +453,8 @@ namespace SodRpg.Core.Game
             Slot.Weapon, Slot.Head, Slot.Armor, Slot.Hands, Slot.Feet, Slot.Charm,
         };
 
-        public const int MaxItemLevel = 60;
-        public const int ItemLevelScalingCap = 40;
+        public const int MaxItemLevel = GearBalance.MaxItemLevel;
+        public const int ItemLevelScalingCap = GearBalance.ItemLevelScalingCap;
         public const int StashCapacity = 80;
         public const int SatchelCapacity = 30;
         public const int LostAndFoundCapacity = 10;
@@ -4590,286 +4590,8 @@ namespace SodRpg.Core.Game
             .Concat(BossProfiles.CreateAzurakPieces()).Concat(BossProfiles.CreatePrimusPieces())
             .Concat(BossProfiles.CreateLightPieces()).Concat(BossProfiles.CreateMawPieces()).Concat(BossProfiles.CreateObliviaxPieces()).Concat(BossProfiles.CreatePolarisPieces()).ToArray();
 
-        public static readonly IReadOnlyList<SetDef> Sets = new[]
+        public static readonly IReadOnlyList<SetDef> Sets = SetBalanceValues.CreateSets().Concat(new[]
         {
-            new SetDef
-            {
-                Id = "set.tide", Name = new Txt("潮鳴りの装い", "Tidecaller's Regalia"),
-                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Frost, 45), new PowerLine(Power.EchoingDodge, 65) },
-                SixPiece = new[] { new PowerLine(Power.StrafeShot, 24), new PowerLine(Power.BrittleIce, 40) },
-            },
-            new SetDef
-            {
-                Id = "set.lamp", Name = new Txt("灯守の誓い", "Lampkeeper's Oath"),
-                TwoPiece = new[] { new StatLine(Stat.LightAmp, 10), new StatLine(Stat.MaxHealthPct, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Radiance, 75), new PowerLine(Power.SecondWind, 25) },
-                SixPiece = new[] { new PowerLine(Power.OverflowingLife, 40), new PowerLine(Power.WatchfulHand, 18) },
-            },
-            new SetDef
-            {
-                Id = "set.cinder", Name = new Txt("残火の誓約", "Cinder Covenant"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.AttackPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Ember, 45), new PowerLine(Power.Blaze, 50) },
-                SixPiece = new[] { new PowerLine(Power.Wildfire, 32) },
-            },
-            new SetDef
-            {
-                Id = "set.dusk", Name = new Txt("黄昏の狩装", "Dusk Hunter's Garb"),
-                TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.CritChancePct, 4) },
-                ThreePiece = new[] { new PowerLine(Power.Umbra, 75), new PowerLine(Power.Executioner, 40) },
-                SixPiece = new[] { new PowerLine(Power.UmbralHeritage, 50) },
-            },
-            new SetDef
-            {
-                Id = "set.winter", Name = new Txt("冬枯れの誓約", "Winterbound Oath"),
-                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.Armor, 6) },
-                ThreePiece = new[] { new PowerLine(Power.Frost, 45), new PowerLine(Power.Bulwark, 30) },
-                SixPiece = new[] { new PowerLine(Power.ImmovableStance, 10), new PowerLine(Power.BrittleIce, 40) },
-            },
-            new SetDef
-            {
-                Id = "set.starsong", Name = new Txt("星詠みの装束", "Starsinger's Raiment"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 10), new StatLine(Stat.PowerPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.UltimateSurge, 25), new PowerLine(Power.EchoingDodge, 65) },
-                SixPiece = new[] { new PowerLine(Power.Finale, 22), new PowerLine(Power.TriumphSong, 5) },
-            },
-            new SetDef
-            {
-                Id = "set.hunt", Name = new Txt("狩猟団の装備", "Huntmaster's Kit"),
-                TwoPiece = new[] { new StatLine(Stat.CritChancePct, 4), new StatLine(Stat.AttackSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Executioner, 40), new PowerLine(Power.Momentum, 5) },
-                SixPiece = new[] { new PowerLine(Power.WanderersEdge, 22), new PowerLine(Power.SpilloverStrike, 40) },
-            },
-            new SetDef
-            {
-                Id = "set.bastion", Name = new Txt("不落城の装い", "Bastion's Bulwark"),
-                TwoPiece = new[] { new StatLine(Stat.Armor, 8), new StatLine(Stat.MaxHealthPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.Bulwark, 35), new PowerLine(Power.Aegis, 25) },
-                SixPiece = new[] { new PowerLine(Power.ShieldBash, 42), new PowerLine(Power.ShieldbreakBurst, 8) },
-            },
-            new SetDef
-            {
-                Id = "set.wildfire", Name = new Txt("燎原の軍装", "Wildfire Warband"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.AttackSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Ember, 52), new PowerLine(Power.Shatter, 60) },
-                SixPiece = new[] { new PowerLine(Power.Frenzy, 3), new PowerLine(Power.Momentum, 4) },
-            },
-            new SetDef
-            {
-                Id = "set.grove", Name = new Txt("古森の守り", "Old Grove Ward"),
-                TwoPiece = new[] { new StatLine(Stat.HealthRegen, 3), new StatLine(Stat.Tenacity, 12) },
-                ThreePiece = new[] { new PowerLine(Power.Barrier, 10), new PowerLine(Power.SecondWind, 30) },
-                SixPiece = new[] { new PowerLine(Power.OverflowingLife, 40), new PowerLine(Power.ReadyGuard, 8) },
-            },
-            new SetDef
-            {
-                Id = "set.reverie", Name = new Txt("夢想の楽団", "Reverie Ensemble"),
-                TwoPiece = new[] { new StatLine(Stat.PowerPct, 6), new StatLine(Stat.Haste, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Resonance, 10), new PowerLine(Power.Radiance, 88) },
-                SixPiece = new[] { new PowerLine(Power.StardustCycle, 14), new PowerLine(Power.RelayHand, 8) },
-            },
-            new SetDef
-            {
-                Id = "set.phantom", Name = new Txt("幻影の一座", "Phantom Troupe"),
-                TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Umbra, 88), new PowerLine(Power.EchoingDodge, 78) },
-                SixPiece = new[] { new PowerLine(Power.Spellsweep, 42), new PowerLine(Power.ReturningBlade, 14) },
-            },
-            // v1.22：新しい枠を使うセット
-            new SetDef
-            {
-                Id = "set.permafrost", Name = new Txt("凍土の装い", "Permafrost Garb"),
-                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 10), new StatLine(Stat.Armor, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Thorns, 30), new PowerLine(Power.Frost, 45) },
-                SixPiece = new[] { new PowerLine(Power.ReadyGuard, 8), new PowerLine(Power.TollOfGrudge, 20) },
-            },
-            new SetDef
-            {
-                Id = "set.asura", Name = new Txt("修羅道の装い", "Path of Carnage"),
-                TwoPiece = new[] { new StatLine(Stat.AttackPct, 8), new StatLine(Stat.MaxHealthFlat, 40) },
-                ThreePiece = new[] { new PowerLine(Power.Bloodlust, 20), new PowerLine(Power.Lifesteal, 10) },
-                SixPiece = new[] { new PowerLine(Power.Retaliation, 25), new PowerLine(Power.TollOfGrudge, 20) },
-            },
-            new SetDef
-            {
-                Id = "set.gale", Name = new Txt("風舞の装い", "Galedancer's Attire"),
-                TwoPiece = new[] { new StatLine(Stat.MoveSpeedPct, 5), new StatLine(Stat.Haste, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Whirlwind, 60), new PowerLine(Power.Sprint, 15) },
-                SixPiece = new[] { new PowerLine(Power.WanderersEdge, 28) },
-            },
-            new SetDef
-            {
-                Id = "set.firmament", Name = new Txt("天穹の誓い", "Firmament Vow"),
-                TwoPiece = new[] { new StatLine(Stat.PowerPct, 6), new StatLine(Stat.Haste, 8) },
-                ThreePiece = new[] { new PowerLine(Power.UltimateSurge, 20), new PowerLine(Power.StarShield, 12) },
-                SixPiece = new[] { new PowerLine(Power.AceInHand, 12), new PowerLine(Power.OpeningSalvo, 20) },
-            },
-            new SetDef
-            {
-                Id = "set.ambush", Name = new Txt("闇討ちの装い", "Nightstrike Gear"),
-                TwoPiece = new[] { new StatLine(Stat.CritChancePct, 4), new StatLine(Stat.AttackSpeedPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.Umbra, 75), new PowerLine(Power.OpeningStrike, 60) },
-                SixPiece = new[] { new PowerLine(Power.OpeningSalvo, 22), new PowerLine(Power.PilingLuck, 2) },
-            },
-            new SetDef
-            {
-                Id = "set.ashrunner", Name = new Txt("灰走りの装い", "Ashrunner's Garb"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 10), new StatLine(Stat.MoveSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.Ember, 45), new PowerLine(Power.Tailwind, 15) },
-                SixPiece = new[] { new PowerLine(Power.RunUp, 50), new PowerLine(Power.Wildfire, 26) },
-            },
-            new SetDef
-            {
-                Id = "set.mercy", Name = new Txt("施療の誓い", "Healer's Pledge"),
-                TwoPiece = new[] { new StatLine(Stat.HealthRegen, 3), new StatLine(Stat.LightAmp, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Barrier, 10), new PowerLine(Power.Resonance, 10) },
-                SixPiece = new[] { new PowerLine(Power.SharedWard, 28), new PowerLine(Power.TriumphSong, 5) },
-            },
-            new SetDef
-            {
-                Id = "set.ironknight", Name = new Txt("鉄騎の誓い", "Ironknight's Oath"),
-                TwoPiece = new[] { new StatLine(Stat.Armor, 10), new StatLine(Stat.MaxHealthPct, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Thorns, 35), new PowerLine(Power.Aegis, 20) },
-                SixPiece = new[] { new PowerLine(Power.ShieldbreakBurst, 10), new PowerLine(Power.TollOfGrudge, 18) },
-            },
-            new SetDef
-            {
-                Id = "set.eclipse", Name = new Txt("月蝕の装い", "Eclipse Regalia"),
-                TwoPiece = new[] { new StatLine(Stat.DarkAmp, 10), new StatLine(Stat.CritDamagePct, 15) },
-                ThreePiece = new[] { new PowerLine(Power.Umbra, 75), new PowerLine(Power.SoulSiphon, 20) },
-                SixPiece = new[] { new PowerLine(Power.WeakPointWound, 75) },
-            },
-            new SetDef
-            {
-                Id = "set.thunderclap", Name = new Txt("迅雷の武装", "Thunderclap Arms"),
-                TwoPiece = new[] { new StatLine(Stat.AttackPct, 8), new StatLine(Stat.AttackSpeedPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.ChainLightning, 40), new PowerLine(Power.Frenzy, 3) },
-                SixPiece = new[] { new PowerLine(Power.PilingLuck, 2), new PowerLine(Power.FocusFire, 50) },
-            },
-            new SetDef
-            {
-                Id = "set.myriad", Name = new Txt("万象の装い", "Myriad Weaver's Vestments"),
-                TwoPiece = new[] { new StatLine(Stat.PowerPct, 7), new StatLine(Stat.Haste, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Convergence, 80), new PowerLine(Power.Overload, 15) },
-                SixPiece = new[] { new PowerLine(Power.Steam, 50), new PowerLine(Power.ElementalHarvest, 26) },
-            },
-            new SetDef
-            {
-                Id = "set.daybreak", Name = new Txt("払暁の誓い", "Daybreak Vow"),
-                TwoPiece = new[] { new StatLine(Stat.LightAmp, 10), new StatLine(Stat.AttackPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.Radiance, 75), new PowerLine(Power.Vigor, 15) },
-                SixPiece = new[] { new PowerLine(Power.OpeningSalvo, 22), new PowerLine(Power.ReadyGuard, 8) },
-            },
-            // v1.29：セット24のうち第1段4種。後続の第2段19種と合わせ23種を入力し、P37の1種は保留
-            new SetDef
-            {
-                Id = "set.steamweave", Name = new Txt("湯けむり織りの調べ", "Steamweaver's Cadence"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 8), new StatLine(Stat.ColdAmp, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Steam, 60), new PowerLine(Power.Frost, 50), new PowerLine(Power.Ember, 45) },
-                SixPiece = new[] { new PowerLine(Power.ElementalHarvest, 28), new PowerLine(Power.PrismShift, 2) },
-            },
-            new SetDef
-            {
-                Id = "set.eclipserite", Name = new Txt("蝕の儀の装い", "Eclipse-Rite Vestments"),
-                TwoPiece = new[] { new StatLine(Stat.LightAmp, 8), new StatLine(Stat.DarkAmp, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Eclipse, 14), new PowerLine(Power.Radiance, 75), new PowerLine(Power.Umbra, 75) },
-                SixPiece = new[] { new PowerLine(Power.StardustCycle, 14), new PowerLine(Power.UmbralHeritage, 45) },
-            },
-            new SetDef
-            {
-                Id = "set.cinderfall", Name = new Txt("降り灰の行軍", "Cinderfall March"),
-                TwoPiece = new[] { new StatLine(Stat.FireAmp, 8), new StatLine(Stat.DarkAmp, 8) },
-                ThreePiece = new[] { new PowerLine(Power.Cinder, 1), new PowerLine(Power.Ember, 50), new PowerLine(Power.Umbra, 70) },
-                SixPiece = new[] { new PowerLine(Power.UmbralHeritage, 50), new PowerLine(Power.ElementalHarvest, 26) },
-            },
-            new SetDef
-            {
-                Id = "set.icicanticle", Name = new Txt("氷晶の聖句", "Icicrystal Canticle"),
-                TwoPiece = new[] { new StatLine(Stat.ColdAmp, 8), new StatLine(Stat.LightAmp, 8) },
-                ThreePiece = new[] { new PowerLine(Power.FrostCrystal, 7), new PowerLine(Power.Frost, 55), new PowerLine(Power.Radiance, 75) },
-                SixPiece = new[] { new PowerLine(Power.StardustCycle, 14), new PowerLine(Power.BrittleIce, 45) },
-            },
-            new SetDef { Id = "set.shardknight", Name = new Txt("砕盾騎士団の誓い", "Oath of the Shardshield Knights"),
-                TwoPiece = new[] { new StatLine(Stat.Armor, 8), new StatLine(Stat.MaxHealthPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.ShieldbreakBurst, 10), new PowerLine(Power.Barrier, 12), new PowerLine(Power.ReadyGuard, 10) },
-                SixPiece = new[] { new PowerLine(Power.ShieldBash, 45), new PowerLine(Power.GleamingWard, 9) } },
-            new SetDef { Id = "set.bashbound", Name = new Txt("盾打ちの誓約", "Bashbound Covenant"),
-                TwoPiece = new[] { new StatLine(Stat.Armor, 8), new StatLine(Stat.ShieldPower, 8) },
-                ThreePiece = new[] { new PowerLine(Power.ShieldBash, 55), new PowerLine(Power.GleamingWard, 10), new PowerLine(Power.Aegis, 22) },
-                SixPiece = new[] { new PowerLine(Power.StarShield, 15), new PowerLine(Power.SharedWard, 30) } },
-            new SetDef { Id = "set.vanguardline", Name = new Txt("陣頭の隊列", "Frontline Formation"),
-                TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.Tenacity, 10) },
-                ThreePiece = new[] { new PowerLine(Power.VanguardsOath, 25), new PowerLine(Power.TollOfGrudge, 20), new PowerLine(Power.Bulwark, 30) },
-                SixPiece = new[] { new PowerLine(Power.Breakout, 9), new PowerLine(Power.ImmovableStance, 8) } },
-            new SetDef { Id = "set.rearmarks", Name = new Txt("後陣の射手隊", "Rearline Marksmen"),
-                TwoPiece = new[] { new StatLine(Stat.PowerPct, 5), new StatLine(Stat.Haste, 8) },
-                ThreePiece = new[] { new PowerLine(Power.RearguardsWay, 10), new PowerLine(Power.Medley, 5), new PowerLine(Power.OpeningSalvo, 22) },
-                SixPiece = new[] { new PowerLine(Power.AceInHand, 12), new PowerLine(Power.Spellsweep, 40) } },
-            new SetDef { Id = "set.watchcircle", Name = new Txt("見守りの輪", "Watcher's Circle"),
-                TwoPiece = new[] { new StatLine(Stat.HealPower, 8), new StatLine(Stat.HealthRegen, 3) },
-                ThreePiece = new[] { new PowerLine(Power.WatchfulHand, 20), new PowerLine(Power.SharedWard, 30), new PowerLine(Power.TriumphSong, 6) },
-                SixPiece = new[] { new PowerLine(Power.OverflowingLife, 40), new PowerLine(Power.RelayHand, 8) } },
-            new SetDef { Id = "set.relaychoir", Name = new Txt("継ぎ歌の合唱", "Relaysong Choir"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 8), new StatLine(Stat.MoveSpeedPct, 4) },
-                ThreePiece = new[] { new PowerLine(Power.RelayHand, 8), new PowerLine(Power.CoStar, 15), new PowerLine(Power.KindnessReturns, 20) },
-                SixPiece = new[] { new PowerLine(Power.Finale, 20), new PowerLine(Power.SharedWard, 28) } },
-            new SetDef { Id = "set.packfeast", Name = new Txt("群れの宴", "Feast of the Pack"),
-                TwoPiece = new[] { new StatLine(Stat.SummonPower, 10), new StatLine(Stat.MaxHealthPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.PackFeast, 4), new PowerLine(Power.Lifeline, 5), new PowerLine(Power.DeathBloom, 90) },
-                SixPiece = new[] { new PowerLine(Power.OverflowingLife, 38), new PowerLine(Power.KindnessReturns, 22) } },
-            new SetDef { Id = "set.lastblooms", Name = new Txt("弔い花の庭", "Garden of Funeral Blooms"),
-                TwoPiece = new[] { new StatLine(Stat.SummonPower, 8), new StatLine(Stat.Armor, 6) },
-                ThreePiece = new[] { new PowerLine(Power.DeathBloom, 100), new PowerLine(Power.PackFeast, 4), new PowerLine(Power.Thorns, 35) },
-                SixPiece = new[] { new PowerLine(Power.KindnessReturns, 22), new PowerLine(Power.Lifeline, 4) } },
-            new SetDef { Id = "set.pinpoint", Name = new Txt("一点狙いの狩人", "Single-Mark Hunters"),
-                TwoPiece = new[] { new StatLine(Stat.CritChancePct, 4), new StatLine(Stat.AttackPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.FocusFire, 70), new PowerLine(Power.DuelistsWay, 35), new PowerLine(Power.WeakPointWound, 80) },
-                SixPiece = new[] { new PowerLine(Power.ImmovableStance, 8), new PowerLine(Power.PilingLuck, 2) } },
-            new SetDef { Id = "set.wanderblades", Name = new Txt("渡り鳥の剣舞", "Migrant Bladedance"),
-                TwoPiece = new[] { new StatLine(Stat.AttackSpeedPct, 5), new StatLine(Stat.MoveSpeedPct, 4) },
-                ThreePiece = new[] { new PowerLine(Power.WanderersEdge, 25), new PowerLine(Power.CritSplash, 30), new PowerLine(Power.ReturningBlade, 15) },
-                SixPiece = new[] { new PowerLine(Power.SpilloverStrike, 90) } },
-            new SetDef { Id = "set.fortuneedge", Name = new Txt("運刃の賭け", "Gambit of the Fortune Edge"),
-                TwoPiece = new[] { new StatLine(Stat.CritChancePct, 4), new StatLine(Stat.CritDamagePct, 15) },
-                ThreePiece = new[] { new PowerLine(Power.PilingLuck, 2), new PowerLine(Power.BrittleIce, 50), new PowerLine(Power.WeakPointWound, 90) },
-                SixPiece = new[] { new PowerLine(Power.CriticalEcho, 5), new PowerLine(Power.ReturningBlade, 14) } },
-            new SetDef { Id = "set.runupcharge", Name = new Txt("助走の突撃隊", "Runup Charge Corps"),
-                TwoPiece = new[] { new StatLine(Stat.MoveSpeedPct, 5), new StatLine(Stat.AttackFlat, 10) },
-                ThreePiece = new[] { new PowerLine(Power.RunUp, 70), new PowerLine(Power.StrafeShot, 25), new PowerLine(Power.SpilloverStrike, 60) },
-                SixPiece = new[] { new PowerLine(Power.Breakout, 9), new PowerLine(Power.Frenzy, 3) } },
-            new SetDef { Id = "set.medleyband", Name = new Txt("連奏の楽団", "Medley Ensemble"),
-                TwoPiece = new[] { new StatLine(Stat.PowerPct, 5), new StatLine(Stat.Haste, 10) },
-                ThreePiece = new[] { new PowerLine(Power.Medley, 5), new PowerLine(Power.PileOn, 30), new PowerLine(Power.OpeningSalvo, 22) },
-                SixPiece = new[] { new PowerLine(Power.Spellsweep, 42), new PowerLine(Power.ReturningBlade, 14) } },
-            new SetDef { Id = "set.gamblertrump", Name = new Txt("切り札の勝負師", "Trump-Card Gambler"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 8), new StatLine(Stat.PowerPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.AceInHand, 12), new PowerLine(Power.ReturningBlade, 15), new PowerLine(Power.UltimateSurge, 25) },
-                SixPiece = new[] { new PowerLine(Power.PileOn, 30), new PowerLine(Power.OpeningSalvo, 22) } },
-            new SetDef { Id = "set.barehand", Name = new Txt("無手の矜持", "Creed of the Bare Hand"),
-                TwoPiece = new[] { new StatLine(Stat.AttackPct, 5), new StatLine(Stat.AttackSpeedPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.BareHandedPride, 2), new PowerLine(Power.Spellsweep, 45), new PowerLine(Power.CriticalEcho, 5) },
-                SixPiece = new[] { new PowerLine(Power.DuelistsWay, 30), new PowerLine(Power.FocusFire, 45) } },
-            new SetDef { Id = "set.crystalcircuit", Name = new Txt("結晶の回路", "Crystal Circuit Array"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 10), new StatLine(Stat.PowerFlat, 10) },
-                ThreePiece = new[] { new PowerLine(Power.CrystalCircuit, 12), new PowerLine(Power.CrystalResonance, 2), new PowerLine(Power.Finale, 22) },
-                SixPiece = new[] { new PowerLine(Power.CrystalResonance, 2), new PowerLine(Power.PileOn, 28) } },
-            new SetDef { Id = "set.dreamvigil", Name = new Txt("夢見の寝ずの番", "Dreamwatch Vigil"),
-                TwoPiece = new[] { new StatLine(Stat.Tenacity, 10), new StatLine(Stat.MaxHealthPct, 6) },
-                ThreePiece = new[] { new PowerLine(Power.DreamOmen, 25), new PowerLine(Power.ShardBoon, 8), new PowerLine(Power.LucidBoon, 8) },
-                SixPiece = new[] { new PowerLine(Power.Devotion, 3), new PowerLine(Power.ReadyGuard, 8) } },
-            new SetDef { Id = "set.tithebound", Name = new Txt("供犠の血盟", "Tithebound Blood Pact"),
-                TwoPiece = new[] { new StatLine(Stat.SacrificeReduction, 12), new StatLine(Stat.AttackPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.SecondWind, 30), new PowerLine(Power.Bloodlust, 30), new PowerLine(Power.SpilloverStrike, 55) },
-                SixPiece = new[] { new PowerLine(Power.TollOfGrudge, 22), new PowerLine(Power.UnbowedMind, 6) } },
-            new SetDef { Id = "set.prismdance", Name = new Txt("七彩の舞", "Prismatic Dance"),
-                TwoPiece = new[] { new StatLine(Stat.Haste, 8), new StatLine(Stat.PowerPct, 5) },
-                ThreePiece = new[] { new PowerLine(Power.PrismShift, 3), new PowerLine(Power.ElementalHarvest, 30), new PowerLine(Power.StardustCycle, 14) },
-                SixPiece = new[] { new PowerLine(Power.Eclipse, 12), new PowerLine(Power.FrostCrystal, 6) } },
-            new SetDef { Id = "set.breakoutcorps", Name = new Txt("包囲突破隊", "Breakout Corps"),
-                TwoPiece = new[] { new StatLine(Stat.MaxHealthPct, 6), new StatLine(Stat.MoveSpeedPct, 4) },
-                ThreePiece = new[] { new PowerLine(Power.Breakout, 10), new PowerLine(Power.UnbowedMind, 7), new PowerLine(Power.ImmovableStance, 9) },
-                SixPiece = new[] { new PowerLine(Power.Frenzy, 3), new PowerLine(Power.Shatter, 45) } },
             new SetDef
             {
                 Id = "set.boss_demon", Name = new Txt("荒ぶる樹界", "Rampaging Grove"),
@@ -4886,7 +4608,7 @@ namespace SodRpg.Core.Game
                     new SetLinkStage(6, new LinkDef { Requires = new[] { "St_U_Hysteria" }, Kind = LinkKind.BossReward, Value = 3 }),
                 },
             },
-        }.Concat(BossProfiles.CreateSkollSets()).Concat(BossProfiles.CreateInfernusSets()).Concat(BossProfiles.CreateInkSets())
+        }).Concat(BossProfiles.CreateSkollSets()).Concat(BossProfiles.CreateInfernusSets()).Concat(BossProfiles.CreateInkSets())
             .Concat(BossProfiles.CreateNyxSets()).Concat(BossProfiles.CreateErebosSets()).Concat(BossProfiles.CreateSeekerSets())
             .Concat(BossProfiles.CreateAzurakSets()).Concat(BossProfiles.CreatePrimusSets())
             .Concat(BossProfiles.CreateLightSets()).Concat(BossProfiles.CreateMawSets()).Concat(BossProfiles.CreateObliviaxSets()).Concat(BossProfiles.CreatePolarisSets()).ToArray();
@@ -5391,8 +5113,8 @@ namespace SodRpg.Core.Game
         {
             [Stat.AttackPct] = 100, // v1.28：120 → 100（星図の分が最大約60あるので、装備の分を残す）
             [Stat.PowerPct] = 100,
-            [Stat.AttackFlat] = 150,
-            [Stat.PowerFlat] = 150,
+            [Stat.AttackFlat] = GearBalance.AttackFlatCap,
+            [Stat.PowerFlat] = GearBalance.PowerFlatCap,
             [Stat.AttackSpeedPct] = 80,
             [Stat.CritChancePct] = 50,
             [Stat.CritDamagePct] = 150,
@@ -5603,11 +5325,14 @@ namespace SodRpg.Core.Game
             return chance > 0 ? head + $" (plus a {chance}% chance for 1 more)" : head;
         }
 
-        /// <summary>アイテムレベルによる倍率（%）。1で100%、40以上で217%。</summary>
-        public static int LevelScalePct(int itemLevel)
+        /// <summary>固定攻魔はレベルごと+5%、他の固定能力は+3%。%能力は伸びない。</summary>
+        public static int LevelScalePct(Stat stat, int itemLevel)
         {
+            if (!ScalesWithItemLevel(stat)) return GearBalance.BaseLevelScalePct;
             int l = Math.Max(1, Math.Min(itemLevel, ItemLevelScalingCap));
-            return 100 + 3 * (l - 1);
+            int growth = stat == Stat.AttackFlat || stat == Stat.PowerFlat
+                ? GearBalance.FlatDamageGrowthPct : GearBalance.OtherFixedGrowthPct;
+            return GearBalance.BaseLevelScalePct + growth * (l - 1);
         }
 
         /// <summary>強化の累計倍率（%）。1段ごとの伸びは上限に近づくほど小さくなる。</summary>
@@ -5900,6 +5625,9 @@ namespace SodRpg.Core.Game
                 default: return "-";
             }
         }
+
+        /// <summary>画面に出す固有効果：1行目に効果の要点、続けて条件・間隔・上限を「・」の箇条書きにする。</summary>
+        public static string FormatPowerBullets(Power p, int v, string indent = "") => EffectLayout.Bullets(FormatPower(p, v), indent);
 
         public static string FormatPower(Power p, int v)
         {

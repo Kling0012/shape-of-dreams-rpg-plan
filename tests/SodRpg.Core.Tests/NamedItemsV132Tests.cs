@@ -587,7 +587,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal("《静水の約束》 発見 0/2", NamedItems.MiniSetProgress("miniset.test.duo", new HashSet<string>()));
                 Assert.True(NamedItems.TryGetMiniSet("miniset.test.frost", out var frost));
                 Assert.True(NamedItems.TryGetMiniSet("miniset.test.duo", out var duo));
-                Assert.Equal("2つ装着：" + Content.FormatStat(Stat.ColdAmp, 8) + "\n3つ装着：\n　" + Content.FormatPower(Power.Frost, 30), frost.Describe());
+                Assert.Equal("2つ装着：" + Content.FormatStat(Stat.ColdAmp, 8) + "\n3つ装着：\n" + Content.FormatPowerBullets(Power.Frost, 30, "　"), frost.Describe());
                 Assert.Equal("2つ装着：" + Content.FormatStat(Stat.Armor, 12), duo.Describe());
 
                 Loc.Japanese = false;
@@ -595,7 +595,7 @@ namespace SodRpg.Core.Tests
                 Assert.Equal("\"Frostoath Insignia\" 2/3 worn", NamedItems.MiniSetLine(w1, 2));
                 Assert.Equal("\"Frostoath Insignia\" 1/3 found", NamedItems.MiniSetProgress("miniset.test.frost", new HashSet<string> { "n:named.test.h1" }));
                 Assert.Equal("\"Stillwater Pact\" 0/2 found", NamedItems.MiniSetProgress("miniset.test.duo", new HashSet<string>()));
-                Assert.Equal("2 pieces: " + Content.FormatStat(Stat.ColdAmp, 8) + "\n3 pieces:\n　" + Content.FormatPower(Power.Frost, 30), frost.Describe());
+                Assert.Equal("2 pieces: " + Content.FormatStat(Stat.ColdAmp, 8) + "\n3 pieces:\n" + Content.FormatPowerBullets(Power.Frost, 30, "　"), frost.Describe());
                 Assert.Equal("2 pieces: " + Content.FormatStat(Stat.Armor, 12), duo.Describe());
             }
             finally { Loc.Japanese = old; }
