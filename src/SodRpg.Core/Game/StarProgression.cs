@@ -5,24 +5,25 @@ namespace SodRpg.Core.Game
     /// <summary>旅人ごとの星の経験。夢のレベルとは別に恒久保存する。</summary>
     public static class StarProgression
     {
-        public const int MaxPoints = 500;
+        public const int MaxPoints = StarProgressionBalance.MaxPoints;
 
         /// <summary>経験で得るポイントの上限に、図鑑のボーナス（最大 Content.MaxCodexBonus）を加えた、振れる合計の上限。</summary>
         public const int MaxSpendablePoints = MaxPoints + Content.MaxCodexBonus;
-        public const int SecureXp = 20;
-        public const int VictoryXp = 100;
+        public const int SecureXp = StarProgressionBalance.SecureXp;
+        public const int VictoryXp = StarProgressionBalance.VictoryXp;
 
-        /// <summary>k個目のポイントに必要な経験（1〜500個目）。v1.31 で上限だけ150→500に伸ばし、曲線は不変。</summary>
+        /// <summary>k個目のポイントに必要な経験（1〜MaxPoints個目）。</summary>
         public static int CostForPoint(int k)
         {
             if (k < 1 || k > MaxPoints) throw new ArgumentOutOfRangeException(nameof(k));
-            return 6 * k + 50;
+            return StarProgressionBalance.PointCostPerPoint * k + StarProgressionBalance.PointCostOffset;
         }
 
         public static int TotalXpForPoints(int n)
         {
             n = Math.Max(0, Math.Min(MaxPoints, n));
-            return 3 * n * n + 53 * n;
+            return (int)((long)StarProgressionBalance.PointCostPerPoint * n * (n + 1L) / 2
+                + (long)StarProgressionBalance.PointCostOffset * n);
         }
 
         public static int Points(int xp)
@@ -30,7 +31,7 @@ namespace SodRpg.Core.Game
             int low = 0, high = MaxPoints;
             while (low < high)
             {
-                int mid = (low + high + 1) / 2;
+                int mid = low + (high - low + 1) / 2;
                 if (TotalXpForPoints(mid) <= xp) low = mid;
                 else high = mid - 1;
             }
@@ -39,8 +40,9 @@ namespace SodRpg.Core.Game
 
         public static int KillXp(MonsterTier tier, bool nightmare = false)
         {
-            int xp = tier == MonsterTier.Boss ? 20 : tier == MonsterTier.MiniBoss ? 5 : 1;
-            return nightmare ? xp * 2 : xp;
+            int xp = tier == MonsterTier.Boss ? StarProgressionBalance.BossKillXp
+                : tier == MonsterTier.MiniBoss ? StarProgressionBalance.MiniBossKillXp : StarProgressionBalance.NormalKillXp;
+            return nightmare ? xp * StarProgressionBalance.NightmareMultiplier : xp;
         }
 
         public static int LegacyXp(int kills) => (int)Math.Min(int.MaxValue, Math.Max(0L, kills) * 6 / 5);
@@ -52,15 +54,15 @@ namespace SodRpg.Core.Game
     }
 
     /// <summary>
-    /// 星のレベルで増える刻印の枠（v2.0.2 設計）。閾値はこの表にだけ持つ：
-    /// レベル200で2つ目、400で3つ目が開く。レベルは StarProgression.Points（獲得ポイント、上限500）。
+    /// 星のレベルで増える刻印の枠。閾値の原本は tools/balance/star-progression.json。
+    /// レベルは StarProgression.Points（獲得ポイント）。
     /// </summary>
     public static class KeystoneSlots
     {
-        public const int Max = 3;
+        public const int Max = StarProgressionBalance.MaxKeystoneSlots;
 
         /// <summary>i 個目（2 始まり）の枠が開く星のレベル。</summary>
-        public static readonly int[] UnlockLevels = { 200, 400 };
+        public static readonly int[] UnlockLevels = StarProgressionBalance.KeystoneUnlockLevels;
 
         /// <summary>星のレベルに対して同時に選べる刻印の数。</summary>
         public static int CountFor(int starLevel)

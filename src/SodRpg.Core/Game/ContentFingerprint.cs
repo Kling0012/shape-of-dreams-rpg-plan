@@ -39,6 +39,8 @@ namespace SodRpg.Core.Game
             ids.AddRange(ForgeBalance.ContentFingerprintRecords);
             if (MemoryDamageBalance.ContentFingerprintRecord != null)
                 ids.Add(MemoryDamageBalance.ContentFingerprintRecord);
+            if (StarProgressionBalance.ContentFingerprintRecord != null)
+                ids.Add(StarProgressionBalance.ContentFingerprintRecord);
             ids.Add(GearBalance.ContentFingerprintRecord);
             ids.Add(SetBalanceValues.ContentFingerprintRecord);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);

@@ -27554,7 +27554,9 @@
         "capBonus": {
           "valueRef": "vesper.run.m1/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "vesper.run.m1/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -27596,7 +27598,9 @@
         "capBonus": {
           "valueRef": "vesper.run.m2/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "vesper.run.m2/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -27648,7 +27652,9 @@
             "capBonus": {
               "valueRef": "vesper.run.choice/options/0/growth/capBonus"
             },
-            "effectPct": 50,
+            "effectPct": {
+              "valueRef": "vesper.run.choice/options/0/growth/effectPct"
+            },
             "doubleGain": false
           },
           "stat": null,
@@ -27669,7 +27675,9 @@
             "capBonus": {
               "valueRef": "vesper.run.choice/options/1/growth/capBonus"
             },
-            "effectPct": 0,
+            "effectPct": {
+              "valueRef": "vesper.run.choice/options/1/growth/effectPct"
+            },
             "doubleGain": true
           },
           "stat": null,

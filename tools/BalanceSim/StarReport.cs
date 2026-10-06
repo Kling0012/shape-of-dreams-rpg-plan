@@ -16,7 +16,7 @@ internal static class StarReport
         text.AppendLine($"- 新規プロフィールに星経験 StarProgression.TotalXpForPoints({StarProgression.MaxPoints}) を与え（ポイント {StarProgression.MaxPoints}、図鑑ボーナスなし）、節目 {string.Join("/", sim.Checkpoints.Select(Culture))} まで `Rules.AddTalentRank` / `Rules.SetKeystone` で実際に購入します。計算はすべて `Build.Compute` の実経路です。");
         text.AppendLine($"- ツリーは実行時に登録されているもの（`HeroSigils.TreeFor`）をそのまま使い、authored 星群の追加・差し替えにコードの変更は要りません。対象は HeroStarRoutes に現れる旅人 {sim.Heroes.Count} 人（{string.Join("・", sim.Heroes.Select(HeroName))}）。");
         text.AppendLine($"- 熟練度は最初から満タン（撃破数 1,000,000 → Mastery.Level=10、核の前提 HeroSigils.KeystoneMastery={HeroSigils.KeystoneMastery} を充足）。星の払い戻しはせず、節目をまたいで同じ割り振りを続けます。");
-        text.AppendLine($"- 夢のレベルは入力仮定 --dream-level={o.DreamLevel}（上限 {Content.MaxDreamLevel}）。500ポイント（星経験 776,500）に要する遊戯量を考えると、終盤の節目では夢レベルが天井に張り付く想定です。");
+        text.AppendLine($"- 夢のレベルは入力仮定 --dream-level={o.DreamLevel}（上限 {Content.MaxDreamLevel}）。{StarProgression.MaxPoints}ポイント（星経験 {StarProgression.TotalXpForPoints(StarProgression.MaxPoints).ToString("N0", CultureInfo.InvariantCulture)}）に要する遊戯量を考えると、終盤の節目では夢レベルが天井に張り付く想定です。");
         text.AppendLine("- 戦略は3種。能力値優先＝プロキシ増分/ポイントが最大の購入を毎回選ぶ。記憶特化＝星数最大の星群（authored 星群がなければ記憶ルート）を登録順で完成させ、閉じている間は核以外の最安のつなぎ星を買い、完成後は能力値優先。核先行＝核の前提（6ランク＋到達）を最安で満たして `Rules.SetKeystone`、残りは能力値優先。");
         text.AppendLine("- 力の代理値（プロキシ）は本体が悪夢化抽選の強さに使う式（攻撃力%か魔力%の大きい方＋最大HP%の半分）をクランプ前のまま使います。戦闘の出力ではありません。仕掛け・連携・固有効果は条件付きのまま Host へ渡されるため、件数（効果の幅）のみ別掲します。");
         text.AppendLine("- 夢の圧は `DreamPressure.ForPlayer(夢Lv, 使用ポイント).WithRunModifiers(深度)` の実式、深度の効果は `DreamDepth` / `Nightmares` の実式です。ゲームの定数は一切変更していません。");
@@ -89,7 +89,9 @@ internal static class StarReport
         text.AppendLine("| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |");
         foreach (int points in sim.Checkpoints)
         {
-            var row = new StringBuilder($"| {points} | {StarProgression.TotalXpForPoints(points)} | {StarProgression.TotalXpForPoints(points) / StarProgression.SecureXp} ");
+            int xp = StarProgression.TotalXpForPoints(points);
+            string secures = StarProgression.SecureXp == 0 ? "—" : Culture(xp / StarProgression.SecureXp);
+            var row = new StringBuilder($"| {points} | {xp} | {secures} ");
             for (int depth = 0; depth <= DreamDepth.Maximum; depth++)
                 row.Append($"| {Number(DreamPressure.ForPlayer(o.DreamLevel, points).WithRunModifiers(depth).HealthMultiplier)} ");
             row.Append("|");

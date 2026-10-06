@@ -207,6 +207,8 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.reasons.append(f"build file changed: {path}")
             continue
         if path in ("tools/balance/forge.json", "tools/balance/stars.json",
+                    "tools/balance/run-growth.json", "tools/balance/star-progression.json",
+                    "tools/balance/star_progression_values.py",
                     "tools/balance/gen_cs.py", "tools/balance/star_values.py",
                     "src/SodRpg.Core/Game/Balance/Forge.Generated.cs",
                     "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"):
@@ -329,7 +331,8 @@ def collect_changed(root: Path, base: str) -> list[str]:
         changed.add(line.strip().replace("\\", "/"))
     for line in run_git(root, "ls-files", "--others", "--exclude-standard").splitlines():
         path = line.strip().replace("\\", "/")
-        if path.endswith(".cs") or is_data_file(path) or path in ("tools/balance/gen_cs.py", "tools/balance/star_values.py"):
+        if path.endswith(".cs") or is_data_file(path) or path in ("tools/balance/gen_cs.py", "tools/balance/star_values.py",
+                                                               "tools/balance/star_progression_values.py"):
             changed.add(path)
     return sorted(p for p in changed if p and not p.startswith(".ref/"))
 

@@ -26611,7 +26611,9 @@
         "capBonus": {
           "valueRef": "cetus.run.m1/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "cetus.run.m1/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -26653,7 +26655,9 @@
         "capBonus": {
           "valueRef": "cetus.run.m2/growth/capBonus"
         },
-        "effectPct": 0,
+        "effectPct": {
+          "valueRef": "cetus.run.m2/growth/effectPct"
+        },
         "doubleGain": false
       },
       "stat": null,
@@ -26705,7 +26709,9 @@
             "capBonus": {
               "valueRef": "cetus.run.choice/options/0/growth/capBonus"
             },
-            "effectPct": 50,
+            "effectPct": {
+              "valueRef": "cetus.run.choice/options/0/growth/effectPct"
+            },
             "doubleGain": false
           },
           "stat": null,
@@ -26726,7 +26732,9 @@
             "capBonus": {
               "valueRef": "cetus.run.choice/options/1/growth/capBonus"
             },
-            "effectPct": 0,
+            "effectPct": {
+              "valueRef": "cetus.run.choice/options/1/growth/effectPct"
+            },
             "doubleGain": true
           },
           "stat": null,

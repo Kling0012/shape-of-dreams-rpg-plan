@@ -333,7 +333,8 @@ namespace SodRpg.Core.Tests
             Rules.OnKill(p, MonsterTier.Normal, 10);
             Rules.Secure(p);
             Rules.EndRun(p, true);
-            Assert.Equal((1 + StarProgression.SecureXp + StarProgression.VictoryXp) * 2, p.Hero("Hero_Lacerta").StarXp);
+            Assert.Equal((StarProgressionBalanceTests.KillXp(MonsterTier.Normal) + StarProgressionBalanceTests.Number("rewards", "secureXp")
+                + StarProgressionBalanceTests.Number("rewards", "victoryXp")) * 2, p.Hero("Hero_Lacerta").StarXp);
             Rules.BeginRun(p, "second", dreamDepth: -4);
             Assert.Equal(0, p.Run.DreamDepth);
             Assert.Equal(5, p.LastDreamDepth);

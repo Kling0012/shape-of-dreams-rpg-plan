@@ -8,6 +8,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 TABLE_PATH = ROOT / "tools/balance/stars.json"
+GROWTH_TABLE_PATH = ROOT / "tools/balance/run-growth.json"
 MANIFEST_DIR = ROOT / "tools/star-manifest"
 HEROES = ("aurena", "bismuth", "cetus", "husk", "lacerta", "mist", "nachia", "vesper", "yubar")
 HERO_KEYS = {"Hero_" + name.title() for name in HEROES}
@@ -107,6 +108,8 @@ def legacy_numeric_source(path, table=None):
 
 # Identity of the stage2 adopted semantic payloads at the initial cutover.
 INITIAL_STAGE2_IDENTITY = 13790957529443898316
+# Original adopted effect percentages add no new record at the numeric cutover.
+INITIAL_GROWTH_EFFECT_PERCENT_IDENTITY = 13997727163470566896
 
 
 def integer(value, path):
@@ -215,9 +218,41 @@ def load_table(path=TABLE_PATH):
     return validate_table(read_json(path), path)
 
 
+def load_growth_table(path=GROWTH_TABLE_PATH):
+    return validate_growth_table(read_json(path), path)
+
+
+def validate_growth_table(table, path=GROWTH_TABLE_PATH):
+    if not isinstance(table, dict) or set(table) != {"schemaVersion", "effects"}:
+        raise ValueError(f"{path}: expected exactly schemaVersion and effects")
+    if type(table["schemaVersion"]) is not int or table["schemaVersion"] != 1:
+        raise ValueError(f"{path}/schemaVersion: expected integer 1")
+    effects = table["effects"]
+    if not isinstance(effects, dict):
+        raise ValueError(f"{path}/effects: expected an object")
+    for key, value in effects.items():
+        if not isinstance(key, str) or not key:
+            raise ValueError(f"{path}/effects: keys must be nonempty strings")
+        context = f"{path}/effects/{key}"
+        field = key.rsplit("/", 1)[-1]
+        if field == "amount":
+            amount = milli(value, context)
+            if not 1 <= amount <= 1000000:
+                raise ValueError(f"{context}: amount must be 0.001..1000 in exact thousandths")
+        else:
+            bounds = {"threshold": (1, 1000), "cap": (1, 500),
+                      "capBonus": (0, 200), "effectPct": (0, 500)}
+            if field not in bounds:
+                raise ValueError(f"{context}: unknown growth numeric field")
+            lo, hi = bounds[field]
+            if not lo <= integer(value, context) <= hi:
+                raise ValueError(f"{context}: {field} must be an integer {lo}..{hi}")
+    return table
+
+
 def validate_table(table, path=TABLE_PATH):
-    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "runGrowth", "rankScaling"}:
-        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, runGrowth, rankScaling")
+    if not isinstance(table, dict) or set(table) != {"schemaVersion", "multipliers", "effects", "rankScaling"}:
+        raise ValueError(f"{path}: expected exactly schemaVersion, multipliers, effects, rankScaling")
     if type(table["schemaVersion"]) is not int or table["schemaVersion"] != 1:
         raise ValueError(f"{path}/schemaVersion: expected integer 1")
     multipliers = table["multipliers"]
@@ -250,13 +285,6 @@ def validate_table(table, path=TABLE_PATH):
             if field in fields:
                 raise ValueError(f"{path}/effects/{key}: generated identifier collides with {fields[field]}")
             fields[field] = key
-    growth = table["runGrowth"]
-    if not isinstance(growth, dict):
-        raise ValueError(f"{path}/runGrowth: expected an object")
-    for key, value in growth.items():
-        if not isinstance(key, str) or not key:
-            raise ValueError(f"{path}/runGrowth: keys must be nonempty strings")
-        milli(value, f"{path}/runGrowth/{key}")
     rank = table["rankScaling"]
     if not isinstance(rank, dict) or set(rank) != {"damageGain", "pointDenominator", "maxPoints"}:
         raise ValueError(f"{path}/rankScaling: expected damageGain, pointDenominator, maxPoints")
@@ -340,11 +368,12 @@ def effective_value(table, key, owner, path, kind="MemoryDamage", unit="milli"):
     return effective
 
 
-def resolve_manifest(name, raw, table):
+def resolve_manifest(name, raw, table, growth_table=None):
     """Return a fresh numeric view; raw valueRef objects remain untouched."""
     data = deepcopy(raw)
     owner = "shared" if name == "outer" else raw.get("hero")
     references = {}
+    growth_table = load_growth_table() if growth_table is None else validate_growth_table(growth_table)
     for index, star in enumerate(data.get("stars", [])):
         sid = star.get("id")
         objects = [("value", star, f"tools/star-manifest/{name}.json/stars/{index}")]
@@ -355,18 +384,21 @@ def resolve_manifest(name, raw, table):
         for effect_path, obj, path in objects:
             if obj.get("kind") not in ("RunGrowth", "RunGrowthMod"):
                 continue
-            growth = obj.get("growth", {})
-            fields = [(field, growth, field) for field in ("threshold", "cap", "capBonus") if field in growth]
+            growth = obj.get("growth")
+            if not isinstance(growth, dict):
+                raise ValueError(f"{path}/growth: expected an object")
+            numeric_fields = ("threshold", "cap") if obj["kind"] == "RunGrowth" else ("capBonus", "effectPct")
+            fields = [(field, growth, field) for field in numeric_fields]
             fields.extend((f"effects/{i}/amount", effect, "amount")
                           for i, effect in enumerate(growth.get("effects", [])))
             for field_path, container, field in fields:
                 key = f"{sid}/{effect_path.removesuffix('value')}growth/{field_path}"
-                reference = container[field]
+                reference = container.get(field)
                 if not isinstance(reference, dict) or reference != {"valueRef": key}:
                     raise ValueError(f"{path}/growth/{field_path}: expected canonical valueRef {key}")
-                if key not in table["runGrowth"]:
+                if key not in growth_table["effects"]:
                     raise ValueError(f"{path}/growth/{field_path}: missing runGrowth reference {key}")
-                value = number(table["runGrowth"][key], key)
+                value = number(growth_table["effects"][key], key)
                 milli(value, key)
                 if field != "amount":
                     if value != value.to_integral_value():
@@ -414,12 +446,13 @@ def resolve_manifest(name, raw, table):
     return data, references
 
 
-def resolve_all(table=None, manifests=None, root=ROOT):
+def resolve_all(table=None, manifests=None, root=ROOT, growth_table=None):
     table = load_table() if table is None else validate_table(table)
     manifests = load_manifests() if manifests is None else manifests
+    growth_table = load_growth_table() if growth_table is None else validate_growth_table(growth_table)
     resolved, effective = {}, {}
     for name, raw in manifests.items():
-        data, references = resolve_manifest(name, raw, table)
+        data, references = resolve_manifest(name, raw, table, growth_table)
         duplicates = effective.keys() & references.keys()
         if duplicates:
             raise ValueError(f"tools/star-manifest/{name}.json: duplicate reference {sorted(duplicates)[0]}")
@@ -432,7 +465,10 @@ def resolve_all(table=None, manifests=None, root=ROOT):
         # Obsolete same-ID effects exist only in the baseline construction path.
         effective[key] = (effective_value(table, key, owner, key, kind, unit)
                           if legacy_adopted(key, resolved) else number(table["effects"][key], key))
-    extra = (table["effects"].keys() | table["runGrowth"].keys()) - effective.keys()
+    extra_growth = growth_table["effects"].keys() - effective.keys()
+    if extra_growth:
+        raise ValueError(f"tools/balance/run-growth.json/effects/{sorted(extra_growth)[0]}: extra unreferenced effect")
+    extra = table["effects"].keys() - effective.keys()
     if extra:
         raise ValueError(f"tools/balance/stars.json/effects/{sorted(extra)[0]}: extra unreferenced effect")
     return resolved, effective
@@ -516,17 +552,31 @@ def render_balance(manifests, effective):
     return "\n".join(lines)
 
 
-def render_rank_balance(table=None):
+def rank_fingerprint_record(table, growth_table):
+    rank = table["rankScaling"]
+    record = ("balance:stars:rank:v1|gain:" + format(number(rank["damageGain"], "rankScaling/damageGain").normalize(), "f")
+              + f"|denominator:{rank['pointDenominator']}|maxPoints:{rank['maxPoints']}|growth:"
+              + "|".join(f"{key}:milli:{milli(value, key)}"
+                         for key, value in sorted(growth_table["effects"].items())
+                         if not key.endswith("/effectPct")))
+    effect_percent = "balance:run-growth:effect-percent:v1|" + "|".join(
+        f"{key}:int:{integer(value, key)}"
+        for key, value in sorted(growth_table["effects"].items()) if key.endswith("/effectPct"))
+    if content_identity(effect_percent) != INITIAL_GROWTH_EFFECT_PERCENT_IDENTITY:
+        record += "\n" + effect_percent
+    return record
+
+
+def render_rank_balance(table=None, growth_table=None):
     table = load_table() if table is None else validate_table(table)
+    growth_table = load_growth_table() if growth_table is None else validate_growth_table(growth_table)
     rank = table["rankScaling"]
     gain = number(rank["damageGain"], "rankScaling/damageGain") / rank["pointDenominator"]
     maximum = 1 + gain * rank["maxPoints"]
-    record = ("balance:stars:rank:v1|gain:" + format(number(rank["damageGain"], "rankScaling/damageGain").normalize(), "f")
-              + f"|denominator:{rank['pointDenominator']}|maxPoints:{rank['maxPoints']}|growth:"
-              + "|".join(f"{key}:milli:{milli(value, key)}" for key, value in sorted(table["runGrowth"].items())))
+    record = rank_fingerprint_record(table, growth_table)
     return "\n".join([
         "// <auto-generated />",
-        "// Source: tools/balance/stars.json; regenerate with python tools/balance/gen_cs.py.",
+        "// Sources: tools/balance/stars.json, tools/balance/run-growth.json; regenerate with python tools/balance/gen_cs.py.",
         "namespace SodRpg.Core.Game", "{", "    internal static class StarRankBalance", "    {",
         f"        internal const decimal DamagePerPoint = {decimal_literal(gain)};",
         f"        internal const decimal MaxMultiplier = {decimal_literal(maximum)};",
