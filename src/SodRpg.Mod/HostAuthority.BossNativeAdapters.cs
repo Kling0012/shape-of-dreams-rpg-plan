@@ -74,7 +74,7 @@ namespace SodRpg.Mod
                         if (method.IsAbstract || method.ContainsGenericParameters || method.GetMethodBody() == null
                             || method.DeclaringType == typeof(Actor) && (method.Name == nameof(Actor.LogicUpdate)
                                 || method.Name == nameof(Actor.FrameUpdate) || method.Name == "InvokeOnCreateIfDidnt")) continue;
-                        foreach (var instruction in PatchProcessor.ReadMethodBody(method))
+                        foreach (var instruction in ReadNativeBody(method))
                         {
                             if (instruction.Key != OpCodes.Call && instruction.Key != OpCodes.Callvirt) continue;
                             if (!(instruction.Value is MethodInfo called)) continue;
@@ -91,6 +91,17 @@ namespace SodRpg.Mod
                     }
                 }
         }
+        // #247: shipped Dew.Contents methods stubbed to a single ret keep their original
+        // fat-header exception table; Harmony's MethodBodyReader throws on those stale
+        // clause offsets (e.g. Shrine_MorasDomain_HerPresence.SpawnRewards, try offset 78
+        // over a one-byte body). A stub calls nothing, so an undecodable body must skip
+        // that one method instead of aborting the whole target scan.
+        private static IEnumerable<KeyValuePair<OpCode, object>> ReadNativeBody(MethodBase method)
+        {
+            try { return PatchProcessor.ReadMethodBody(method); }
+            catch { return Array.Empty<KeyValuePair<OpCode, object>>(); }
+        }
+
         private static void Prefix(object __instance, out Actor __state)
         {
             __state = Current;
