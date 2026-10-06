@@ -1259,6 +1259,13 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
         /// </summary>
         private bool SaveNow(bool confirm)
         {
+            // Track guest and ordinary periodic Infinity writes too; otherwise a failed
+            // guest kill receipt can hold the party boundary before a choice even exists.
+            if (Profile.Run?.Infinity != null)
+            {
+                BeginInfinitySaveHold(Profile.Run.RunId);
+                _nextInfinitySaveRetry = Time.unscaledTime + 5f;
+            }
             Rules.SettleSatchelOverflow(Profile);
             PersistRunDurability();
             Profile.PendingTrades.Clear();
@@ -1276,6 +1283,8 @@ if (LobbyReturnPending || Profile.LobbyReturnedRunIds.Contains(
                 return !confirm; // 確認なしの保存は従来どおり何もしない
             }
             if (_writer == null) _writer = new AsyncProfileWriter(_store);
+            if (_infinityPendingSaveRun == NetworkedManagerBase<GameManager>.softInstance?.runId)
+                _infinityPendingSaveWriter = _writer;
             var sw = System.Diagnostics.Stopwatch.StartNew();
             bool ok = true;
             try

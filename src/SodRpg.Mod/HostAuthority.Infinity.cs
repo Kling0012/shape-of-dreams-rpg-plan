@@ -118,7 +118,7 @@ namespace SodRpg.Mod
                 if (host == null || !InfinityRosterCompatible(DewPlayer.gamePlayers)) return false;
                 foreach (var fact in host._killUnacknowledged.Values)
                 {
-                    if (fact.Sequence > ClientSession.DurableHostKillReceipt(fact.StreamId)) return false;
+                    if (fact.Sequence > ClientSession.HostKillReceiptForProgress(fact.StreamId)) return false;
                     foreach (var cursor in host._killReplayPlayers.Values)
                         if (PeerNeedsFact(host._killPeers[cursor.PeerId], fact)) return false;
                 }

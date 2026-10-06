@@ -108,11 +108,11 @@ LastStarlight の捕捉はホスト上の生存中・登録済みの旅人が正
 ### Infinityの地図とゾーン（Issue #208・#232）
 
 - 開始部屋・現地図の訪問済み部屋と次の1部屋だけを表示する。新しい部屋に入るごとに次室を1つ開示し、ボスは実Combatクリア10／15／20部屋の周期に達したときだけ次室として現れる。商人・イベントは周期に数えない。
-- 本体の有限グラフ・部屋寿命・読み込みを維持し、現地図を使い切ったら精算と全員の保存ACK後に同ゾーンを更新して続ける。全世代の地図を蓄積しない。全体／ミニ地図・ゲームパッド・tooltipの候補はホストが既存Mirrorで同期する。続きからもnative node statusから同じ次室を復元する。
+- 本体の有限グラフ・部屋寿命・読み込みを維持し、現地図を使い切ったら精算と全員の保存ACK後に同ゾーンを更新して続ける。保存待ちは5秒ごとに再試行し、30秒で警告してその遠征だけ解除する。未精算の撃破・報酬・取引の確認と重複排除は維持し、続きからでは報酬とreceiptを一緒に巻き戻す。全世代の地図を蓄積しない。全体／ミニ地図・ゲームパッド・tooltipの候補はホストが既存Mirrorで同期する。続きからもnative node statusから同じ次室を復元する。
 - ボス撃破後の「潜行」では本体の全 `Zone_` リソースから順序・tierに関係なく次のゾーンを抽選する。候補が複数なら直前のゾーンを避け、ボスも移動先の本来の候補から抽選する。開始ゾーンと、ボス前の部屋不足による同ゾーン更新は従来どおり。
 - ランIDから作る専用シードと保存済み区間／地図世代で抽選し、ホストのnative zone・node statusと既存共有状態を同期する。Continueも保存されたゾーンと地図へ戻る。本体のゾーン番号・ambientLevelは進めず、既存の深度・夢の圧で難化する。ゾーン切り替えが失敗した回だけ警告1回で元のゾーンを更新する。
 - 協力プレイは全員Protocol 24へ更新する（旧版の純白の勝利処理を混在させない）。保存形式5・Infinity codec version 1・既存envelopeの項目は変更なし。旧保存は従来のゾーンのまま再開し、次の潜行から抽選する。通常モードは変更しない。[設計と根拠](../../docs/specs/issue-95-infinity-mode.md)。
-- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. All co-op players need Protocol 24; save format 5 is unchanged.
+- **EN:** Infinity reveals visited rooms and one next room, with native bosses after 10/15/20 combat clears. Delve after a boss chooses among all native zones, avoiding the previous one when alternatives exist; exhaustion before a boss regenerates the same zone. Run-specific seeds and saved epochs keep zone/boss choices reproducible, with host synchronization and Continue restoration. Native zone index/ambient difficulty stays unchanged; existing depth/pressure scaling and reward limits remain. Failed switches warn once and regenerate the previous zone. Save waits retry every five seconds and, after 30 seconds, warn and lift only that expedition's save hold; unsettled rewards/trades and deduplication remain guarded. Continue may roll back rewards and their receipts together. All co-op players need Protocol 24; save format 5 is unchanged.
 
 
 ### 「ロビーに戻る」の敗北精算（Issue #112）

@@ -107,6 +107,119 @@ namespace Issue73.Native.Tests
             Assert.Equal(1, new ProfileStore(new RealFileSystem(), SavePath, 226).Load().Run.Infinity.ClearedCombatTotal);
         }
 
+        [Theory]
+        [InlineData("failed")]
+        [InlineData("delayed")]
+        [InlineData("missing")]
+        public void Save_hold_expires_without_claiming_durability_and_late_recovery_keeps_one_clear(string mode)
+        {
+            _session = HostSession(out var transport);
+            _files.FailWrite = mode == "failed";
+            if (mode != "delayed") _files.Release.Set();
+            if (mode == "missing") Set(_session, "_store", null);
+            CountCombatRoom();
+            ClientSession.CountHostInfinityRoom();
+            var writer = (AsyncProfileWriter)Get(_session, "_writer");
+            if (mode == "delayed") Assert.True(_files.Started.Wait(5000));
+            if (mode == "failed") Assert.False(writer.WaitForRevision(_session.Profile.Revision, 5000));
+            for (int attempt = 1; attempt <= 5; attempt++)
+            {
+                Time.unscaledTime = 100f + 5f * attempt;
+                Call(_session, "CompleteInfinityStateSave");
+                if (mode == "failed") Assert.False(writer.WaitForRevision(_session.Profile.Revision, 5000));
+                Assert.False(ClientSession.HostInfinitySaveHoldSatisfied);
+            }
+            Time.unscaledTime = 129.99f;
+            Call(_session, "CompleteInfinityStateSave");
+            Assert.False(ClientSession.HostInfinitySaveHoldSatisfied);
+            Assert.Empty(transport.Sent);
+            Time.unscaledTime = 130f;
+            Call(_session, "CompleteInfinityStateSave");
+            Call(_session, "CompleteInfinityStateSave");
+            Assert.True(ClientSession.HostInfinitySaveHoldSatisfied);
+            Assert.False(ClientSession.HostInfinityStateDurable);
+            Assert.Single(_session.Events, e => e.Kind == EventKind.Warning);
+            var sharedMessage = Assert.Single(transport.Sent.Select(s => s.Message).OfType<DreamforgeRunChoicesMsg>());
+            Assert.True(RunChoiceSnapshot.TryDecode(sharedMessage.choices, out var shared));
+            Assert.Equal(1, shared.Infinity.ClearedCombatTotal);
+
+            // A waiver must not cross into another native expedition, even before reset.
+            NetworkedManagerBase<GameManager>.softInstance.runId = "next";
+            Assert.False(ClientSession.HostInfinitySaveHoldSatisfied);
+            NetworkedManagerBase<GameManager>.softInstance.runId = "run";
+            Assert.True(ClientSession.HostInfinitySaveHoldSatisfied);
+
+            _files.FailWrite = false;
+            _files.Release.Set();
+            if (mode == "missing") Set(_session, "_store", new ProfileStore(_files, SavePath, 226));
+            ClientSession.CountHostInfinityRoom(); // Re-observing the same clear never awards it again.
+            writer = (AsyncProfileWriter)Get(_session, "_writer");
+            Assert.True(writer.WaitForRevision(_session.Profile.Revision, 5000));
+            Call(_session, "CompleteInfinityStateSave");
+            var restored = new ProfileStore(new RealFileSystem(), SavePath, 226).Load();
+            Assert.Equal(1, restored.Run.RoomsCleared);
+            Assert.Equal(1, restored.Run.Infinity.ClearedCombatTotal);
+            Assert.Single(_session.Events, e => e.Kind == EventKind.Warning);
+        }
+
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Failed_local_saves_release_settled_receipts_but_preserve_reward_deduplication_and_continue_rollback(bool host)
+        {
+            _session = HostSession(out var transport);
+            NetworkServer.active = host;
+            NetworkClient.active = true;
+            Set(_session, "_continueHandshakeReady", true);
+            ((MonsterAuthorityState)Get(_session, "_monsterAuthority")).Observe(1, out _);
+            _files.FailWrite = true;
+            _files.Release.Set();
+            ClientSession.PrepareHostKillStream("run", "stream", 3);
+            InfinityRewards.AdvanceCombat(_session.Profile, 60); // Earn supply credit before testing an actual dividend.
+            _session.SaveNow();
+            var checkpoint = RunCheckpoint.Capture(_session.Profile, "before-dividend");
+            var dividend = DreamforgePressureDividendMsg.FromReward(
+                new PressureDividendReward("run", 0, 1, "7", "save-failure-dividend"), 7);
+            Call(_session, "OnPressureDividend", dividend);
+            _session.SaveNow();
+            var writer = (AsyncProfileWriter)Get(_session, "_writer");
+            Assert.False(writer.WaitForRevision(_session.Profile.Revision, 5000));
+            Assert.Equal(0, ClientSession.HostKillReceiptForProgress("stream"));
+            Time.unscaledTime = 130f;
+            Call(_session, "CompleteInfinityStateSave");
+            Assert.True(ClientSession.HostInfinitySaveHoldSatisfied);
+            Assert.Equal(0, ClientSession.DurableHostKillReceipt("stream"));
+            Assert.Equal(3, ClientSession.HostKillReceiptForProgress("stream"));
+            Call(_session, "TickKillSync");
+            var message = Assert.Single(transport.Sent.Select(s => s.Message).OfType<DreamforgeKillReceiptMsg>());
+            Assert.Equal(3, Assert.Single(message.receipts).receivedThrough);
+            Call(_session, "OnPressureDividend", dividend);
+            Assert.Equal(1, _session.Profile.Run.SatchelShards);
+
+            // An unsettled death remains withheld even in fail-soft mode.
+            var ledger = (KillClassificationLedger)Get(_session, "_killClassifications");
+            Assert.True(ledger.ObserveDeath(new PendingMonsterDeath(42,
+                new PendingRunKill("run", 0, 1, MonsterTier.Normal, 8, NightmareAffix.None, null, "hero"),
+                "stream"), Time.unscaledTime));
+            _session.SaveNow();
+            Assert.Equal(0, ClientSession.HostKillReceiptForProgress("stream"));
+            Assert.Equal(1, ledger.PendingCount);
+
+            _files.FailWrite = false;
+            _session.SaveNow();
+            Assert.True(writer.WaitForRevision(_session.Profile.Revision, 5000));
+            Call(_session, "RestoreContinueCheckpoint", checkpoint, "resumed");
+            Assert.Null(Get(_session, "_infinitySaveHoldReleasedRun"));
+            Assert.Equal(0, _session.Profile.Run.SatchelShards);
+            _session.ActiveRunId = "run"; // Native TrackRun reattaches the restored expedition before reward delivery.
+            Call(_session, "OnPressureDividend", dividend);
+            Call(_session, "OnPressureDividend", dividend);
+            Assert.Equal(1, _session.Profile.Run.SatchelShards);
+            _session.SaveNow();
+            Assert.True(writer.WaitForRevision(_session.Profile.Revision, 5000));
+            Assert.Equal(1, new ProfileStore(new RealFileSystem(), SavePath, 226).Load().Run.SatchelShards);
+        }
+
         private string SavePath => Path.Combine(_directory, "profile.json");
 
         private ClientSession HostSession(out Actor transport)

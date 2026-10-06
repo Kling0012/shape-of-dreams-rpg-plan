@@ -52,7 +52,7 @@
   </Target>
 
   <Target Name="CompileInfinityContinue" BeforeTargets="CoreCompile">
-    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="InfinityStateDurable;HostInfinityStateDurable;PersistHostInfinityState;SaveInfinityState;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
+    <ExtractNativePersistence SourcePath="$(MSBuildProjectDirectory)/../../src/SodRpg.Mod/ClientSession.Infinity.cs" OutputPath="$(MSBuildProjectDirectory)/$(IntermediateOutputPath)InfinityContinue.g.cs" RoslynPath="$(MSBuildToolsPath)/Roslyn/bincore" ClassName="ClientSession" Methods="InfinityStateDurable;HostInfinityStateDurable;InfinitySaveHoldReleased;InfinitySaveHoldSatisfied;HostInfinitySaveHoldSatisfied;PersistHostInfinityState;SaveInfinityState;SaveInfinityReceipt;BeginInfinitySaveHold;ResetInfinitySaveHold;CompleteInfinityStateSave;CountHostInfinityRoom;SyncInfinityContinueSnapshot;ObserveInfinityRoomTotal;TickInfinity;TryOpenInfinityChoice;AdvanceInfinityIdentity;ResetInfinityContinueState" />
     <ItemGroup>
       <Compile Include="$(IntermediateOutputPath)InfinityContinue.g.cs" />
     </ItemGroup>

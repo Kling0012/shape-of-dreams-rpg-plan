@@ -396,6 +396,9 @@ namespace SodRpg.Mod
         private long _infinityPendingSaveRevision;
         private string _infinityPendingSaveRun;
         private AsyncProfileWriter _infinityPendingSaveWriter;
+        private float _infinityPendingSaveStarted, _nextInfinitySaveRetry;
+        private string _infinitySaveHoldReleasedRun;
+        private bool _infinityPendingPublication;
         private bool _dirty, _saveErrorFromWriteFailure;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;

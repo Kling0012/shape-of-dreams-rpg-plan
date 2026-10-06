@@ -11,7 +11,7 @@ namespace SodRpg.Mod
         internal static bool HostChosenInfinityEnabled => NetworkServer.active && _hostSession != null
             && _hostSession.Profile.LastInfinityEnabled;
         internal static int HostChosenInfinityInterval => _hostSession?.Profile.LastInfinityInterval ?? InfinityRunState.DefaultInterval;
-        internal static bool HostInfinityCanAdvance => HostInfinityStateDurable && HostAuthority.InfinityCanAdvance;
+        internal static bool HostInfinityCanAdvance => HostInfinitySaveHoldSatisfied && HostAuthority.InfinityCanAdvance;
         internal static bool HostInfinityBoundarySettled => HostAuthority.InfinityBoundarySettled;
         internal static long HostInfinityRetireBeforeSegment(long current) => HostAuthority.InfinityRetireBeforeSegment(current);
 
@@ -31,9 +31,7 @@ namespace SodRpg.Mod
                 session._choicePublisher = new RunChoicePublisher();
                 session._encodedRunChoices = null;
                 session._nextChoicesSync = 0;
-                session._infinityPendingSaveRevision = 0;
-                session._infinityPendingSaveRun = null;
-                session._infinityPendingSaveWriter = null;
+                session.ResetInfinitySaveHold();
                 session.MarkDirty(true);
                 session.SaveNow();
                 session.PublishRunChoices();
@@ -93,9 +91,7 @@ namespace SodRpg.Mod
                 || _infinityInitializedRun == Profile.Run.RunId) return;
             _infinityInitializedRun = Profile.Run.RunId;
             _infinityResultStarted = false;
-            _infinityPendingSaveRevision = 0;
-            _infinityPendingSaveRun = null;
-            _infinityPendingSaveWriter = null;
+            ResetInfinitySaveHold();
             _infinityAcknowledgedRevision = -1; _infinityAcknowledgedGraph = -1;
             if (Profile.Run.Infinity == null)
             {
