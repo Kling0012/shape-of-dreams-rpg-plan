@@ -34,6 +34,13 @@ namespace SodRpg.Core.Game
             LastWritten = Math.Max(0, current);
         }
 
+        /// <summary>A known absolute native rewrite replaces the whole cap, including our previous contribution.</summary>
+        public void ObserveNativeReplacement(int current)
+        {
+            OurContribution = 0;
+            LastWritten = Math.Max(0, current);
+        }
+
         public GemSlotDecision Decide(int current, int desired)
         {
             int cap = Math.Max(0, current);
