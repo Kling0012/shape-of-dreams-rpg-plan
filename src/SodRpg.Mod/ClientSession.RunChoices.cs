@@ -106,6 +106,8 @@ namespace SodRpg.Mod
 
         private string EncodeRunChoices()
         {
+            if (NetworkServer.active && Profile.Run?.Infinity != null && !InfinityStateDurable)
+                return _encodedRunChoices;
             if (NetworkServer.active) ObserveHostAuthorityPublisher();
             return _encodedRunChoices = _choicePublisher.Encode(
                 RunActive ? Profile.Run : null, Profile.LastDreamDepth, _runChoiceProgress.ZoneIndex);
@@ -114,6 +116,7 @@ namespace SodRpg.Mod
         private void PublishRunChoices()
         {
             if (!NetworkServer.active || _clientRpcOn == null) return;
+            if (Profile.Run?.Infinity != null && !InfinityStateDurable) return;
             _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
             {
                 protocol = Protocol.Version, choices = EncodeRunChoices(),
@@ -125,6 +128,7 @@ namespace SodRpg.Mod
         private void PublishRunChoicesForZone(int zoneIndex)
         {
             if (!NetworkServer.active || _clientRpcOn == null || !RunActive) return;
+            if (Profile.Run.Infinity != null && !InfinityStateDurable) return;
             _clientRpcOn.CustomRpc_SendMessageToAllClients(new DreamforgeRunChoicesMsg
             {
                 protocol = Protocol.Version,

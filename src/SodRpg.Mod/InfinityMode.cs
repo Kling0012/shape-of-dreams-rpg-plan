@@ -406,7 +406,7 @@ namespace SodRpg.Mod
             var state = State;
             if (zone == null || state == null) return;
             RegisterAcks();
-            if (!NativeSaveAgreement) return;
+            if (!NativeSaveAgreement || !ClientSession.HostInfinityStateDurable) return;
             if (zone.isInAnyTransition) return;
             if (zone.currentZone == null || zone.currentZone.name != state.FixedZoneId)
             { DisableFeature("Infinity native zone does not match the fixed graph."); return; }
@@ -451,14 +451,16 @@ namespace SodRpg.Mod
             {
                 if (state.TryCountCombatClear(state.GraphEpoch, zone.currentNodeIndex, room.isActive, zone.isInAnyTransition, room.isRevisit))
                 {
-                    RefreshReveal(zone, zone.currentNodeIndex, RevealedNext(zone));
+                    // Arrival already chose the next room. Only the boss threshold changes
+                    // that projection; ordinary clears need no graph scan or SyncList writes.
+                    if (state.Phase == InfinityPhase.BossDue)
+                        RefreshReveal(zone, zone.currentNodeIndex);
                     ClientSession.CountHostInfinityRoom();
                 }
             }
             else if (zone.currentNode.type == WorldNodeType.ExitBoss && room.isActive && !zone.isInAnyTransition)
             {
-                state.ObserveBossClear();
-                ClientSession.PersistHostInfinityState();
+                if (state.ObserveBossClear()) ClientSession.PersistHostInfinityState();
             }
         }
 

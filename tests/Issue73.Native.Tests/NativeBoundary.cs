@@ -393,6 +393,9 @@ namespace SodRpg.Mod
         private float _nextInfinityAck;
         private string _infinityInitializedRun;
         private RunChoiceSnapshot _infinityMirroredSnapshot;
+        private long _infinityPendingSaveRevision;
+        private string _infinityPendingSaveRun;
+        private AsyncProfileWriter _infinityPendingSaveWriter;
         private bool _dirty, _saveErrorFromWriteFailure;
         private int _buildCacheFrame = -1, _saveCount;
         private double _saveMsTotal;
@@ -424,7 +427,6 @@ namespace SodRpg.Mod
         internal static void ValidateHostInfinityContinue() { }
         internal static bool HostInfinityBoundarySettled => throw new NotSupportedException();
         internal static long HostInfinityRetireBeforeSegment(long current) => throw new NotSupportedException();
-        internal static bool PersistHostInfinityState() => throw new NotSupportedException();
         private bool TryInfinitySecure(out string error)
         {
             RequireOrdinaryRun();

@@ -239,6 +239,9 @@ namespace SodRpg.Mod
         private string _infinityInitializedRun;
         private bool _infinityResultStarted;
         private long _infinityAcknowledgedRevision, _infinityAcknowledgedGraph, _infinityObservedClears;
+        private long _infinityPendingSaveRevision;
+        private string _infinityPendingSaveRun;
+        private AsyncProfileWriter _infinityPendingSaveWriter;
         private object _nativeContinueCheckpoint;
         private bool ContinueReady => true;
         private RunChoiceSnapshot _receivedRunChoices => null;
@@ -264,6 +267,7 @@ namespace SodRpg.Mod
         internal static bool RemoteHostInfinityAvailable, RemoteHostHelloAnswered;
         internal static bool RunActive, InGame, CanChooseRunRules, CanChooseDepth;
         internal static bool PersistHostInfinityState() => true;
+        internal static bool HostInfinityStateDurable => true;
         internal static void CountHostInfinityRoom() { }
         internal static void OpenHostInfinityChoice() { }
         internal static void FinishNativeContinueRestore() { }
@@ -322,11 +326,14 @@ namespace SodRpg.Mod
         public uint worldSeed;
         public bool isInAnyTransition, isInRoomTransition, isVoting;
         public Zone currentZone;
-        public List<WorldNodeData> nodes = new List<WorldNodeData>();
+        public readonly Mirror.SyncList<WorldNodeData> nodes = new Mirror.SyncList<WorldNodeData>();
+        public readonly List<HunterStatus> hunterStatuses = new List<HunterStatus>();
+        public int hunterStartNodeIndex = -1;
+        public VoteType voteType;
         public readonly List<WorldNodeModifier> modifiers = new List<WorldNodeModifier>();
         public readonly Dictionary<int, object> modifierServerData = new Dictionary<int, object>();
         public readonly List<object> visitedNodesSaveData = new List<object>();
-        public List<int> nodeDistanceMatrix = new List<int>();
+        public readonly Mirror.SyncList<int> nodeDistanceMatrix = new Mirror.SyncList<int>();
         public int GetNodeDistance(int a, int b) => nodeDistanceMatrix[nodes.Count * a + b];
         public bool IsNodeConnected(int from, int to)
             => GetNodeDistance(from, to) == 1 || GetNodeDistance(to, from) == 1;
@@ -377,6 +384,8 @@ namespace SodRpg.Mod
                     for (int b = 0; b < nodes.Count; b++) nodeDistanceMatrix.Add(Math.Abs(a - b));
             visitedNodesSaveData.Clear();
             for (int i = 0; i < nodes.Count; i++) visitedNodesSaveData.Add(null);
+            hunterStatuses.Clear();
+            for (int i = 0; i < nodes.Count; i++) hunterStatuses.Add(HunterStatus.None);
             SetCurrentNodeIndexAndRevealAdjacent(0);
         }
         public void SetCurrentNodeIndexAndRevealAdjacent(int index)
