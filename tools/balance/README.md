@@ -733,3 +733,56 @@ Power側の調整数値の原本は `tools/balance/powers.json` です。
 - 説明文（`Content.FormatPower` と `NewPowersV129.Describe` の日英両文）は生成定数を
   補間します。移行時に2言語×全Power×代表値の全文が移行前と一致することを確認しました。
   ゲーム実行時のJSON読込・Protocol・保存形式の変更はありません。
+
+## 本体の追加枠上限と復帰時の整理（Issue #248）
+
+`stars.json.essenceSlots` を原本として、`StarRankBalance.g.cs` に
+星1つの追加量・場所ごとの上限・旅人ごとの合計上限を生成します。
+星・鍵石／刻印・遺物・セットなど、Buildへ入るすべての出所を集計した後、
+アイデンティティ記憶と移動の記憶のエッセンス枠をそれぞれ最大+1、合計最大+2へ丸めます。
+通信から復元したBuildにも同じ制限を適用します。保存形式・Protocol・星IDは変更しません。
+本体の祠などによる元の枠数はMODの追加量ではなく、取り除きません。
+
+### 追加枠を持つ星の全一覧と最大値
+
+各セルは `h.<旅人の英小文字>.route.<下記の名前>.slot` の星IDです。
+すべて1段・追加量+1。アイデンティティは「記憶の器を広げる」、
+移動は「回避の器を広げる」。鍵石／刻印・装備／セット・生成manifestの追加効果には、
+現行定義で本体の枠数を増やすものはありません。記憶の装着枠・遺物の装備枠も増やしません。
+
+| 旅人 | アイデンティティの星 | 移動の星 | 星の素の合計 | 修正前の実効上限 | 修正後の実効上限 |
+| --- | --- | --- | ---: | ---: | ---: |
+| Aurena | `claw`、`beautiful-threat` | `feathery-dash` | +3 | +2 | +2 |
+| Bismuth | `prismatic-eyes` | `distorting-sprint` | +2 | +2 | +2 |
+| Cetus | `icy-veins`、`charged` | `frost-charge` | +3 | +2 | +2 |
+| Husk | `killing-flow`、`wind-scar` | `flash-step` | +3 | +2 | +2 |
+| Lacerta | `double-tap`、`powder` | `nimble-dodge` | +3 | +2 | +2 |
+| Mist | `en-garde`、`priorite` | `fast-feet` | +3 | +2 | +2 |
+| Nachia | `pack-heart`、`circle-life` | `dreamy-waltz` | +3 | +2 | +2 |
+| Vesper | `resolve`、`mercy` | `charge` | +3 | +2 | +2 |
+| Yubar | `converging-stars`、`exotic-matter` | `flicker` | +3 | +2 | +2 |
+
+素の合計は重複するアイデンティティの星も数えた理論値で、星点予算を超えて
+星図全体を同時取得できるという意味ではありません。修正前も場所ごとの能力値上限と
+`EssenceSlots.ClampAdded` が実効量を抑えており、設計値だけで実効追加量が+2を超える経路はありません。
+
+### 確認した不具合と安全な復帰
+
+- 本体の `DewPersistence.GemData` は装着場所を保存し、`ApplyPlayerData` は枠番号を
+  そのまま `HeroSkill.EquipGem` へ渡します。本体のこの復元経路には枠上限の確認がありません。
+- 修正前の `HostAuthority.UpdateGemSlot` は枠数が減った時しか溢れを調べなかったため、
+  既存セーブの高い枠番号のエッセンスが、枠数の維持・増加時には残りました。
+  修正後は正常に読み戻せた本体枠数に対し、毎回装着場所を整理します。
+  `HeroSkill.UnequipGem` の既存経路で元のエッセンスを所有者付きで足元へ戻し、
+  破壊・再生成しません。取り外しに失敗したものは次回に再試行します。
+- 本体が追加枠を既に取り消した後のMOD解除で、その枠をもう一度引かないようにしました。
+  枠数の不一致回数による機能停止は廃止し、部品単位の台帳を再適用・ホスト再生成でも共有します。
+
+原本の場所は `HeroStarRoutes.AddEssenceSlots`、集計は `Build.ComputeTree`、
+通信の丸めは `Build.Decode`、本体への反映は `HostAuthority.GemSlots.cs` です。
+本体側の根拠はローカルの `DewPersistence.cs:272,277,1214-1218,1333`、
+`HeroSkill.cs:926-969,998-1012,1180-1200`（r1.4.0.13の逆コンパイル）です。
+通常の反復適用は修正前も増殖せず、報告された実機でのすべての発生条件まで特定したわけではありません。
+本体UIは `GetMaxGemCount`、操作は `EditSkillManager` の同じ上限を使います。
+Q/W/E/Rや装着記憶数を増やさず、MOD由来の追加量を既存範囲に保ちます。
+実機・協力プレイの表示と操作は未確認です。

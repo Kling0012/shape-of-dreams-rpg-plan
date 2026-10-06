@@ -481,6 +481,7 @@ namespace SodRpg.Core.Game
             b.Links.Clear();
             b.Links.AddRange(links);
             StarDamageScaling.ApplyEffectiveGimmicks(b);
+            EssenceSlots.Normalize(b);
             return b;
         }
 
@@ -756,6 +757,7 @@ namespace SodRpg.Core.Game
                 b.Links.AddRange(links);
                 ScopedBuildCodec.Apply(b);
                 StarDamageScaling.ApplyEffectiveGimmicks(b);
+                EssenceSlots.Normalize(b);
                 b.ValidateCounts();
                 return b;
             }

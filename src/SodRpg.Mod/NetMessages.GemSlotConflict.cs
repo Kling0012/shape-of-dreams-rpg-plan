@@ -2,7 +2,7 @@ using System;
 
 namespace SodRpg.Mod
 {
-    /// <summary>Optional host-to-owner slot warning; existing protocol messages remain unchanged.</summary>
+    /// <summary>Legacy optional slot warning retained for wire compatibility; new hosts always clear it.</summary>
     [Serializable]
     public class DreamforgeGemSlotConflictMsg
     {

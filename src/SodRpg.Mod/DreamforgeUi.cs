@@ -433,10 +433,6 @@ namespace SodRpg.Mod
             var hostWarnings = HostAuthority.VersionWarnings;
             for (int i = 0; i < hostWarnings.Count; i++)
                 sb.Append("\n<size=13><color=#ff7070>").Append(hostWarnings[i]).Append("</color></size>");
-            if (Mirror.NetworkServer.active ? HostAuthority.AnyGemSlotConflict : _s.GemSlotConflict)
-                sb.Append("\n<size=13><color=#ff7070>").Append(Loc.T(
-                    "ほかのMODがエッセンスの枠を変えているため、星図による枠の追加を止めました",
-                    "Another mod is changing essence slots, so the star map's extra slot is disabled.")).Append("</color></size>");
             bool compact = cfg.hudMode == HudMode.Compact;
             if (run != null && _s.ActiveRunId != null)
             {

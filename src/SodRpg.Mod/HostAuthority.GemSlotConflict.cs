@@ -4,8 +4,8 @@ namespace SodRpg.Mod
 {
     internal sealed partial class HostAuthority
     {
-        // Send on every application so owners that register late receive the current latch.
-        internal void SendGemSlotConflict(Hero hero, bool disabled)
+        // Retain the optional wire message for older clients, clearing their obsolete warning.
+        internal void ClearGemSlotConflict(Hero hero)
         {
             if (!NetworkServer.active || _registeredOn == null || hero == null || hero.netId == 0) return;
             var owner = hero.owner;
@@ -14,7 +14,7 @@ namespace SodRpg.Mod
             {
                 heroNetId = hero.netId,
                 protocol = Protocol.Version,
-                disabled = disabled,
+                disabled = false,
             });
         }
     }

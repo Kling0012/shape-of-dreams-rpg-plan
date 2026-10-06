@@ -66,7 +66,7 @@ namespace SodRpg.Mod
         }
         internal void TickGemSlotsForTest() => TickGemSlots();
         internal void DetachGemSlotsForTest() => DetachGemSlots();
-        internal void SendGemSlotConflict(Hero hero, bool disabled) { }
+        internal void ClearGemSlotConflict(Hero hero) { }
         internal void RestoreForTest(HeroRuntime runtime) => RestoreGemSlots(runtime);
     }
 }
@@ -130,7 +130,7 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Inactive_cleanup_drops_ownership_without_writing_or_recapturing_the_same_component()
+        public void Inactive_cleanup_retains_ownership_for_reactivation_without_recapturing_our_bonus()
         {
             var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
             host.ApplyForTest(rt, Both());
@@ -139,51 +139,43 @@ namespace SodRpg.Core.Tests
             Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
             Assert.Equal(2, hero.Skill.Writes);
             hero.isActive = true;
-            new HostAuthority().ApplyForTest(Runtime(hero), Both());
+            var nextHost = new HostAuthority(); var nextRuntime = Runtime(hero);
+            nextHost.ApplyForTest(nextRuntime, Both());
             Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
-            Assert.Equal(2, hero.Skill.Writes);
+            nextHost.RestoreForTest(nextRuntime);
+            Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
         }
 
         [Fact]
-        public void Periodic_absolute_rewrites_disable_both_locations_without_more_writes_or_growth()
+        public void Periodic_absolute_rewrites_keep_both_bonuses_and_cleanup_preserves_reset_native_caps()
         {
-            var hero = new Hero(); var host = new HostAuthority();
-            host.ApplyForTest(Runtime(hero), Both());
-            for (int i = 1; i <= 3; i++)
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            for (int i = 1; i <= 20; i++)
             {
                 UnityEngine.Time.unscaledTime = i;
                 hero.Skill.Caps[0] = 2;
                 host.TickGemSlotsForTest();
+                Assert.Equal(new[] { 3, 3 }, hero.Skill.Caps);
             }
-            Assert.True(host.IsGemSlotConflict(hero));
+            hero.Skill.Caps[0] = 2;
+            host.RestoreForTest(rt);
             Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
-            int writes = hero.Skill.Writes;
-            hero.Skill.Caps[0] = 7;
-            UnityEngine.Time.unscaledTime = 4;
-            host.TickGemSlotsForTest();
-            host.ApplyForTest(Runtime(hero), Both());
-            host.DetachGemSlotsForTest();
-            Assert.Equal(new[] { 7, 2 }, hero.Skill.Caps);
-            Assert.Equal(writes, hero.Skill.Writes);
         }
 
         [Fact]
-        public void Delta_preserving_external_writer_latches_and_cleanup_subtracts_only_our_current_part()
+        public void Repeated_external_additions_remain_valid_without_disabling_either_bonus()
         {
-            var hero = new Hero(); var host = new HostAuthority();
-            host.ApplyForTest(Runtime(hero), Both());
-            for (int i = 1; i <= 3; i++)
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            host.ApplyForTest(rt, Both());
+            for (int i = 1; i <= 10; i++)
             {
-                UnityEngine.Time.unscaledTime = i;
                 hero.Skill.Caps[0]++;
-                host.ApplyForTest(Runtime(hero), Both());
+                host.ApplyForTest(rt, Both());
+                Assert.Equal(new[] { 3 + i, 3 }, hero.Skill.Caps);
             }
-            Assert.True(host.IsGemSlotConflict(hero));
-            Assert.Equal(new[] { 5, 2 }, hero.Skill.Caps);
-            int writes = hero.Skill.Writes;
-            host.ApplyForTest(Runtime(hero), Both());
-            Assert.Equal(new[] { 5, 2 }, hero.Skill.Caps);
-            Assert.Equal(writes, hero.Skill.Writes);
+            host.RestoreForTest(rt);
+            Assert.Equal(new[] { 12, 2 }, hero.Skill.Caps);
         }
 
         [Fact]
@@ -211,6 +203,39 @@ namespace SodRpg.Core.Tests
             host.RestoreForTest(rt);
             Assert.Same(gem, Assert.Single(hero.Skill.Dropped));
             Assert.Empty(hero.Skill.gems); Assert.Equal(new[] { 2, 2 }, hero.Skill.Caps);
+        }
+
+        [Fact]
+        public void Loaded_legacy_overflow_is_dropped_without_a_native_cap_shrink()
+        {
+            var hero = new Hero(); var host = new HostAuthority(); var rt = Runtime(hero);
+            hero.Skill.Caps[0] = hero.Skill.Caps[1] = 0;
+            // Native resume restores each saved location, but does not persist MOD slot caps.
+            var valid = new Gem(); var excess = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 0 }] = valid;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 7 }] = excess;
+            host.ApplyForTest(rt, Both());
+            Assert.Equal(new[] { 1, 1 }, hero.Skill.Caps);
+            Assert.Same(excess, Assert.Single(hero.Skill.Dropped));
+            Assert.True(hero.Skill.gems.ContainsValue(valid));
+            host.ApplyForTest(rt, Both());
+            Assert.Single(hero.Skill.Dropped);
+        }
+
+        [Fact]
+        public void Overflow_loaded_after_first_application_is_repaired_and_external_slots_are_preserved()
+        {
+            var hero = new Hero(); var host = new HostAuthority();
+            hero.Skill.Caps[0] = 8;
+            host.ApplyForTest(Runtime(hero), Both());
+            var external = new Gem(); var overflow = new Gem();
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 8 }] = external;
+            hero.Skill.gems[new GemLocation { skill = HeroSkillLocation.Identity, index = 9 }] = overflow;
+            UnityEngine.Time.unscaledTime = 1;
+            host.TickGemSlotsForTest();
+            Assert.Equal(9, hero.Skill.Caps[0]);
+            Assert.Same(overflow, Assert.Single(hero.Skill.Dropped));
+            Assert.True(hero.Skill.gems.ContainsValue(external));
         }
 
         [Theory]
