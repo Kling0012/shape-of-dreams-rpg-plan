@@ -87,6 +87,12 @@ namespace SodRpg.Core.Game
     {
         public string RunId { get; set; }
         public InfinityRunState Infinity { get; set; }
+        private long _overflowDreamDustTotal;
+        /// <summary>Cumulative optional overflow bonus earned in this run; restored with native checkpoints.</summary>
+        public long OverflowDreamDustTotal { get => _overflowDreamDustTotal; set => _overflowDreamDustTotal = Math.Max(0, value); }
+        private long _overflowDreamDustLedgerId;
+        /// <summary>Native host ledger bound before enabling overflow bonus accrual.</summary>
+        public long OverflowDreamDustLedgerId { get => _overflowDreamDustLedgerId; set => _overflowDreamDustLedgerId = Math.Max(0, value); }
         /// <summary>遠征を始めた旅人。撃破がない遠征の精算にも使う。</summary>
         public string HeroKey { get; set; }
         /// <summary>同じ確保の繰り返しで星の経験を二重に得ないための印。</summary>
@@ -160,6 +166,8 @@ namespace SodRpg.Core.Game
             {
                 RunId = RunId,
                 Infinity = Infinity?.Clone(),
+                OverflowDreamDustTotal = OverflowDreamDustTotal,
+                OverflowDreamDustLedgerId = OverflowDreamDustLedgerId,
                 HeroKey = HeroKey,
                 StarSecureRewarded = StarSecureRewarded,
                 Heat = Heat,
@@ -338,6 +346,14 @@ namespace SodRpg.Core.Game
         /// 支払い済みの対価・返却を取りこぼさないために保存する。起動後にホストへ照会して解決する。
         /// </summary>
         public List<PendingTrade> PendingTrades { get; } = new List<PendingTrade>();
+        /// <summary>Transient per-user configuration; never serialized or rolled back by a checkpoint.</summary>
+        public bool ReceiveOverflowDreamDust { get; set; }
+        /// <summary>One outstanding cumulative overflow bonus, retained when its expedition ends.</summary>
+        public string OverflowBonusPendingRunId { get; set; }
+        private long _overflowBonusPendingLedgerId;
+        public long OverflowBonusPendingLedgerId { get => _overflowBonusPendingLedgerId; set => _overflowBonusPendingLedgerId = Math.Max(0, value); }
+        private long _overflowBonusPendingTotal;
+        public long OverflowBonusPendingTotal { get => _overflowBonusPendingTotal; set => _overflowBonusPendingTotal = Math.Max(0, value); }
 
         // Transient tick totals. Only settled material balances enter a save/checkpoint.
         internal int UncreditedSatchelOverflowShards;
@@ -477,6 +493,7 @@ namespace SodRpg.Core.Game
         /// <summary>Installs an owned, decoded checkpoint without replacing the slot's Profile reference.</summary>
         internal void RestoreFrom(Profile source)
         {
+            // ReceiveOverflowDreamDust remains live configuration, not checkpoint state.
             LoadedVersion = source.LoadedVersion;
             Revision = source.Revision;
             RngState = source.RngState;
@@ -499,6 +516,9 @@ namespace SodRpg.Core.Game
             StarterV119Granted = source.StarterV119Granted;
             Stats = source.Stats;
             Run = source.Run;
+            OverflowBonusPendingRunId = source.OverflowBonusPendingRunId;
+            OverflowBonusPendingLedgerId = source.OverflowBonusPendingLedgerId;
+            OverflowBonusPendingTotal = source.OverflowBonusPendingTotal;
             CompletedRunId = source.CompletedRunId;
             LobbyReturnAuthority = source.LobbyReturnAuthority;
             CompletedRunSecuredReturn = source.CompletedRunSecuredReturn;
@@ -554,6 +574,10 @@ namespace SodRpg.Core.Game
                 BulkSalvageMaxRarity = BulkSalvageMaxRarity,
                 BestItemLevel = BestItemLevel,
                 Japanese = Japanese,
+                ReceiveOverflowDreamDust = ReceiveOverflowDreamDust,
+                OverflowBonusPendingRunId = OverflowBonusPendingRunId,
+                OverflowBonusPendingLedgerId = OverflowBonusPendingLedgerId,
+                OverflowBonusPendingTotal = OverflowBonusPendingTotal,
                 StartDepth = StartDepth,
                 LastDreamDepth = LastDreamDepth,
                 LastInfinityEnabled = LastInfinityEnabled,

@@ -72,6 +72,7 @@ namespace SodRpg.Mod
     public sealed class DreamforgeConfig
     {
         public bool japanese;
+        public bool overflowDreamDust;
         public LightweightMode lightweight;
         public Key menuKey, securePanelKey, secureKey, delveKey;
     }

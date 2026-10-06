@@ -330,6 +330,7 @@ namespace SodRpg.Mod
             _pendingRunVictory = null;
             _pendingResultRunId = null;
             int pacts = Profile.Run.Pacts.Count;
+            TickOverflowBonus(); // Keep the final cumulative obligation before EndRun clears Run.
             Emit(Rules.EndRun(Profile, victory, _trades.ReservedSalvageUids()));
             if (pacts > 0) SendCurseClear();
             ActiveRunId = null;

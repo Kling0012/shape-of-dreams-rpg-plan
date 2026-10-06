@@ -58,6 +58,7 @@ namespace SodRpg.Mod
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");
                 _ui = null;
                 _session = new ClientSession(dir, e => _ui?.Notify(e));
+                _session.ConfigureOverflowBonus(config.overflowDreamDust);
                 _iconsStarted = true;
                 RelicIcons.Init(mod?.path);
                 RelicIcons.Preload();
@@ -86,6 +87,7 @@ namespace SodRpg.Mod
             if (!_running) return;
             Loc.Japanese = config.japanese;
             _performance?.Configure(config);
+            _session?.ConfigureOverflowBonus(config.overflowDreamDust);
         }
 
         private void OnApplicationFocus(bool hasFocus)

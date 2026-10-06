@@ -26,6 +26,9 @@ namespace SodRpg.Mod
         [LabelText("Show drops below Rare / レア未満の拾得通知")]
         public bool showToasts = true;
 
+        [LabelText("Overflow relics: shards + Dream Dust /\n鞄からあふれた遺物で、欠片に加えてドリームダストも受け取る")]
+        public bool overflowDreamDust = false;
+
         [LabelText("HUD / 左のパネルの表示")]
         public HudMode hudMode = HudMode.Full;
 

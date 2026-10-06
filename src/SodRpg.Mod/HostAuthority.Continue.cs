@@ -20,6 +20,7 @@ namespace SodRpg.Mod
         {
             if (_pendingContinueTrades == null) return;
             _tradeAuthority.RestoreCheckpoint(_pendingContinueTrades);
+            ResetOverflowBonusCheckpoint();
             _pendingContinueTrades = null;
         }
 

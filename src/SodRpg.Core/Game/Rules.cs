@@ -313,6 +313,18 @@ namespace SodRpg.Core.Game
                 int shards = suppressShards ? 0 : Content.SalvageShards(worst.Rarity);
                 if (!suppressShards && worst.InfinityFreeSupply) shards = InfinityRewards.LimitShards(p, shards);
                 p.QueueSatchelOverflow(shards, suppressShards);
+                if (p.ReceiveOverflowDreamDust && !suppressShards
+                    && (p.OverflowBonusPendingRunId == null || p.OverflowBonusPendingRunId == run.RunId))
+                {
+                    int dust = Economy.SatchelOverflowDust(worst.Rarity);
+                    if (dust > 0)
+                    {
+                        run.OverflowDreamDustTotal += Math.Min(dust, long.MaxValue - run.OverflowDreamDustTotal);
+                        p.OverflowBonusPendingRunId = run.RunId;
+                        p.OverflowBonusPendingLedgerId = run.OverflowDreamDustLedgerId;
+                        p.OverflowBonusPendingTotal = run.OverflowDreamDustTotal;
+                    }
+                }
             }
         }
 

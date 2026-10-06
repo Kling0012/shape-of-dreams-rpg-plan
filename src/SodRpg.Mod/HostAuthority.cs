@@ -258,6 +258,7 @@ namespace SodRpg.Mod
                     _incomingBuilds.Remove(player);
                     RemoveBuildValidationPeer(player);
                     RemoveKillPeer(player);
+                    _overflowBonusPeers.Remove(player); // Durable currency receipts remain keyed by guid.
                 }
                 _pressureDirty = true;
             };
@@ -323,6 +324,7 @@ namespace SodRpg.Mod
                 "boss effects", "boss visuals", "identity strikes", "gimmicks v129", "sap prune", "attribution prune", "runtime", "run growth", "currency",
                 "shield pools", "spawns", "monster prune", "monster behaviors", "kill replay", "sunders",
                 "nightmare regen", "classification resync",
+                "overflow bonus",
             };
             _tickStages = new Action[]
             {
@@ -331,6 +333,7 @@ namespace SodRpg.Mod
                 StageBossEffects, TickBossVisualSnapshots, UpdateIdentityStrikes, StageGimmicksV129, StageSapPrune, PruneMemoryAttribution, StageRuntimes, StageRunGrowth, StageCurrency,
                 StageModShieldPools, ProcessSpawns, StageMonsterPrune, StageMonsterBehaviors, TickKillReplay, StageSunders,
                 StageNightmareRegen, StageClassificationResync,
+                TickOverflowBonus,
             };
             _tickGuard = new TickGuard(_tickStages, _tickStageNames, 10f, message => Log.Error("Host tick " + message));
         }

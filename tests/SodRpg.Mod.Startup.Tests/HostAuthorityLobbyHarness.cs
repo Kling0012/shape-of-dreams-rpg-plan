@@ -26,6 +26,8 @@ namespace SodRpg.Mod
 
         private static bool PeerNeedsFact(KillReplayPeer peer, AuthoritativeRunKill fact) => false;
         private void BindKillObservationSession(DewPlayer player, string observationSessionId) { }
+        private void RegisterOverflowBonus(Actor actor) { }
+        private void UnregisterOverflowBonus(Actor actor) { }
 
         private sealed class KillReplayCursor { public string PeerId; }
     }
@@ -37,5 +39,6 @@ namespace SodRpg.Mod
         internal static string ContinueRunId => NetworkedManagerBase<GameManager>.softInstance?.runId;
         internal static string ContinueCheckpointId, ContinueResumeSession;
         internal static long HostKillReceiptForProgress(string streamId) => 0;
+        internal void ConfigureOverflowBonus(bool enabled) { Profile.ReceiveOverflowDreamDust = enabled; }
     }
 }

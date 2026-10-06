@@ -36,6 +36,10 @@ namespace SodRpg.Mod
             BeforeSendToServer?.Invoke(message);
             Sent.Add((null, message));
         }
+        public void CustomRpc_RegisterServerMessageHandler<T>(string name, Action<T, DewPlayer> handler) { }
+        public void CustomRpc_UnregisterServerMessageHandler<T>(Action<T, DewPlayer> handler) { }
+        public void CustomRpc_RegisterClientMessageHandler<T>(Action<T> handler) { }
+        public void CustomRpc_UnregisterClientMessageHandler<T>(Action<T> handler) { }
         public Action<DamageData, Entity, ReactionChain> DamageSink;
         public void DealDamage(DamageData damage, Entity target, ReactionChain chain) => DamageSink?.Invoke(damage, target, chain);
         public void DoBasicAttackHit() { }
@@ -139,6 +143,8 @@ namespace SodRpg.Mod
     {
         public static DewPlayer local;
         public static readonly List<DewPlayer> gamePlayers = new List<DewPlayer>();
+        public static readonly List<DewPlayer> lobbyPlayers = new List<DewPlayer>();
+        public string playerName;
         public uint netId;
         public string guid;
         public bool isHumanPlayer = true;
