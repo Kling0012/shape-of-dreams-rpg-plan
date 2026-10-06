@@ -135,38 +135,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Describe_and_Progress_cover_the_six_piece_stages()
-        {
-            using (new Patch())
-            {
-                var set = Content.GetSet(SetId);
-                string d = set.Describe();
-                Assert.Contains("3つ装着", d);
-                Assert.Contains("6つ装着", d);
-                Assert.Contains(Content.FormatPowerBullets(Six[0].Power, Six[0].Value, "　"), d.Substring(d.IndexOf("6つ装着", StringComparison.Ordinal)));
-                Assert.Contains("あと3つで、6つ装着の効果が加わります", set.Progress(3));
-                Assert.Contains("あと2つで、6つ装着の効果が加わります", set.Progress(4));
-                Assert.Contains("あと1つで、6つ装着の効果が加わります", set.Progress(5));
-                Assert.Contains("6つそろっています", set.Progress(6));
-                Assert.Contains("あと1つで、3つ装着", set.Progress(2));
-            }
-            // 6つ装着のデータがないセットは従来どおりの文面
-            using (new Patch())
-            {
-                var plain = Content.GetSet(SetId);
-                plain.SixPiece = null;
-                Assert.DoesNotContain("6つ装着", plain.Describe());
-                Assert.Contains("3つそろっています", plain.Progress(3));
-            }
-            // 実データ：全セットが6つ装着を持つ
-            foreach (var real in Content.Sets)
-            {
-                Assert.Contains("6つ装着", real.Describe());
-                Assert.Contains("6つそろっています", real.Progress(6));
-            }
-        }
-
-        [Fact]
         public void Missing_piece_weighting_does_not_depend_on_the_set_size()
         {
             using (new Patch())

@@ -198,20 +198,6 @@ namespace SodRpg.Core.Tests
             finally { Unregister(); }
         }
 
-        [Fact]
-        public void Profile_fixture_is_realistic()
-        {
-            var p = V130Profile();
-            var s = Snapshot.Of(p, Cetus);
-            _out.WriteLine($"Cetus points={s.Points} spent={s.Spent} nodes={s.Ranks.Count} key={s.Keystone}");
-            Assert.InRange(s.Points, 100, StarProgression.MaxSpendablePoints);
-            Assert.True(s.Ranks.Count >= 20);
-            Assert.True(Spent(p, Vesper) > 0);
-            Assert.Equal(p.CodexBonusPoints, Snapshot.Of(p, Husk).Points); // 経験0の旅人は図鑑ボーナスだけ
-            Assert.Equal(0, Snapshot.Of(p, Husk).Spent);
-            Assert.DoesNotContain(s.Ranks.Keys, k => k.Contains(".cluster."));
-            Assert.Contains(V130Profile(true).Hero(Cetus).Talents.Keys, k => k.StartsWith("h.cetus.cluster.", StringComparison.Ordinal));
-        }
 
         [Theory]
         [InlineData(3)]

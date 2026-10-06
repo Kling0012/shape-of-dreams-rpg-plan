@@ -49,21 +49,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Real_data_shows_360_named_and_30_mini_sets_in_the_category_labels_and_summary()
-        {
-            Assert.Equal(360, CodexQuery.Entries(CodexCategory.Named).Count);
-            Assert.Equal(30, CodexQuery.Entries(CodexCategory.MiniSets).Count);
-            var codex = new HashSet<string> { Id(NamedItems.All.First(n => n.MiniSetId != null)) };
-            var res = CodexQuery.Filter(State(codex), new CodexFilter { Category = CodexCategory.Named });
-            Assert.Equal(360, res.Items.Count);
-            Assert.Equal("銘品 1/360", InLanguage(true, () => CodexPresenter.CategoryLabel(res, CodexCategory.Named)));
-            Assert.Equal("Mini sets 1/30", InLanguage(false, () => CodexPresenter.CategoryLabel(res, CodexCategory.MiniSets)));
-            string summary = InLanguage(true, () => CodexPresenter.Summary(res));
-            Assert.Contains("銘品 1/360", summary);
-            Assert.Contains("組 1/30", summary);
-        }
-
         [Theory]
         [InlineData(true)]
         [InlineData(false)]

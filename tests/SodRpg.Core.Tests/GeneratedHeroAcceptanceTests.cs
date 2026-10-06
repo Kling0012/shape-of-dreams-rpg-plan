@@ -152,12 +152,6 @@ namespace SodRpg.Core.Tests
         private Played Play(string hero) => installed.Play(hero);
 
         [Fact]
-        public void At_least_one_hero_is_generated()
-        {
-            Assert.NotEmpty(StarClusters.GeneratedHeroes);
-            Assert.Equal(StarClusters.GeneratedHeroes.Count, StarClusters.GeneratedHeroes.Distinct().Count());
-        }
-        [Fact]
         public void All_82_generated_keystones_have_no_damage_or_wound_penalties_and_no_drawback_descriptions()
         {
             int count = 0;

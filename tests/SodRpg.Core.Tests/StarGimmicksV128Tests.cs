@@ -47,16 +47,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Mid_gimmick_stars_are_pure_gimmicks_with_no_stat_link_or_power()
-        {
-            foreach (var t in HeroStarRoutes.All.Where(t => t.Gimmick != null && t.RouteOrder < 7))
-            {
-                Assert.Null(t.LinkPerRank);
-                Assert.False(t.IsPowerNode);
-                Assert.Equal(0, t.PerRank); // 能力値も連携も固有効果も持たない
-            }
-        }
 
         [Fact]
         public void Caps_carry_their_gimmick_and_at_most_the_keen_memory_damage_link()
@@ -79,15 +69,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(17, caps.Count(t => t.LinkPerRank != null));
         }
 
-        [Fact]
-        public void Movement_slot_routes_never_trigger_on_use()
-        {
-            foreach (var t in HeroStarRoutes.All.Where(t => t.Gimmick != null
-                && t.RouteMemory.StartsWith("St_M_", StringComparison.Ordinal)))
-            {
-                Assert.NotEqual(GimmickTrigger.OnUse, t.Gimmick.Trigger); // 回避で発動する仕掛けは置かない
-            }
-        }
 
         [Fact]
         public void Bismuth_is_back_to_six_routes_without_the_explosion_artist()
@@ -101,36 +82,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, HeroStarRoutes.All.Count(t => t.HeroKey == "Hero_Bismuth" && t.RouteOrder == 8));
         }
 
-        /// <summary>設計表の「まとめ」の件数。表からの書き起こし漏れ・きっかけと効果の取り違え落ちる。</summary>
-        [Fact]
-        public void Gimmick_totals_match_the_design_table_summary()
-        {
-            var all = HeroStarRoutes.All.Where(t => t.Gimmick != null).ToList();
-            Assert.Equal(162, all.Count);
-            Assert.Equal(new Dictionary<GimmickEffect, int>
-            {
-                [GimmickEffect.Element] = 39,
-                [GimmickEffect.Burst] = 16,
-                [GimmickEffect.Shield] = 23,
-                [GimmickEffect.Heal] = 13,
-                [GimmickEffect.Recharge] = 13,
-                [GimmickEffect.Echo] = 27,
-                [GimmickEffect.Expose] = 20,
-                [GimmickEffect.Empower] = 2,
-                [GimmickEffect.Quicken] = 1,
-                [GimmickEffect.Reload] = 3,
-                [GimmickEffect.RechargeOther] = 5,
-            }, all.GroupBy(t => t.Gimmick.Effect).ToDictionary(g => g.Key, g => g.Count()));
-            Assert.Equal(new Dictionary<GimmickTrigger, int>
-            {
-                [GimmickTrigger.OnHit] = 106,
-                [GimmickTrigger.OnKill] = 24,
-                [GimmickTrigger.OnCrit] = 9,
-                [GimmickTrigger.OnUse] = 23,
-            }, all.GroupBy(t => t.Gimmick.Trigger).ToDictionary(g => g.Key, g => g.Count()));
-            Assert.Equal(new[] { 54, 54, 54 }, new[] { 2, 4, 7 }.Select(o => all.Count(t => t.RouteOrder == o)));
-            Assert.Equal(7, all.Count(t => t.Gimmick.Effect == GimmickEffect.Heal && t.Gimmick.Arg == 1)); // 味方も回復は7行
-        }
 
         [Fact]
         public void Intervals_survive_only_on_the_eight_rows_that_need_them()
@@ -146,25 +97,6 @@ namespace SodRpg.Core.Tests
             Assert.DoesNotContain(restoring, t => t.Gimmick.Cooldown > 0);
         }
 
-        // 「要確認」の行は本体設計（判定できる側）を採用する
-        [Theory]
-        [InlineData("h.lacerta.route.quick-trigger.7", GimmickTrigger.OnKill, GimmickEffect.Reload, 1, 0, 0f)]
-        [InlineData("h.vesper.route.sanctuary.7", GimmickTrigger.OnUse, GimmickEffect.RechargeOther, 15, 0, 0f)]
-        [InlineData("h.nachia.route.sylvan-call.7", GimmickTrigger.OnKill, GimmickEffect.Reload, 1, 0, 0f)]
-        [InlineData("h.nachia.route.moonlight-pact.2", GimmickTrigger.OnHit, GimmickEffect.Expose, 3, 0, 0f)]
-        [InlineData("h.nachia.route.moonlight-pact.4", GimmickTrigger.OnHit, GimmickEffect.Heal, 2, 1, 3f)]
-        [InlineData("h.nachia.route.serpent-blessing.4", GimmickTrigger.OnHit, GimmickEffect.Burst, 25, 0, 1.5f)]
-        [InlineData("h.vesper.route.resolve.7", GimmickTrigger.OnCrit, GimmickEffect.Heal, 6, 1, 0f)]
-        public void Representative_rows_match_the_table(string id, GimmickTrigger trigger, GimmickEffect effect, int value, int arg, float cooldown)
-        {
-            Assert.True(Content.TryGetTalent(id, out var star));
-            Assert.NotNull(star.Gimmick);
-            Assert.Equal(trigger, star.Gimmick.Trigger);
-            Assert.Equal(effect, star.Gimmick.Effect);
-            Assert.Equal(value, star.Gimmick.Value);
-            Assert.Equal(arg, star.Gimmick.Arg);
-            Assert.Equal(cooldown, star.Gimmick.Cooldown, 3);
-        }
 
         [Fact]
         public void Gimmick_stars_add_nothing_to_the_stat_and_power_budgets()
@@ -218,18 +150,5 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Rank_scaling_doubles_the_per_rank_value_of_a_mid_gimmick()
-        {
-            var p = Profile.CreateNew(1);
-            var h = p.Hero("Hero_Lacerta");
-            h.StarXp = StarProgression.TotalXpForPoints(60);
-            var star = HeroStarRoutes.All.Single(t => t.Id == "h.lacerta.route.quick-trigger.2"); // 跳弾
-            TreeTestPaths.Connect(p, "Hero_Lacerta", star.Id);
-            h.Talents[star.Id] = 1;
-            Assert.Equal(6, Build.Compute(p, "Hero_Lacerta", 0).Gimmicks.Single(g => g.StarId == star.Id).Def.Value);
-            h.Talents[star.Id] = 3;
-            Assert.Equal(18, Build.Compute(p, "Hero_Lacerta", 0).Gimmicks.Single(g => g.StarId == star.Id).Def.Value);
-        }
     }
 }

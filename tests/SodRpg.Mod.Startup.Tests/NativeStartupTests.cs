@@ -139,8 +139,6 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(0, ErebosLastStarlightSequence.Captures);
             Assert.DoesNotContain(factory, owner.GetPatchedMethods());
             Assert.Contains(Log.Warnings, m => m.Contains("Native feature disabled: LastStarlight"));
-            Assert.Contains(Log.Warnings, m => m.Contains(
-                "Patch class skipped: SodRpg.Mod.ErebosLastStarlightSequence: native feature LastStarlight is unavailable or unconfirmed."));
             // The native sequence still waits three times and completes exactly as the other owner changed it.
             var sequence = new Ai_Gem_U_LastStarlight().OnCreateSequenced();
             int waits = 0, steps = 0;

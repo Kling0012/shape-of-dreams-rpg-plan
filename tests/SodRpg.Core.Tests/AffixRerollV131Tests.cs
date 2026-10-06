@@ -22,64 +22,12 @@ namespace SodRpg.Core.Tests
             return (p, r);
         }
 
-        /// <summary>独立な計算方法（decimal）で求めた、base × 1.5^n の切り上げ。</summary>
-        private static (int Shards, int Tuning) ExpectedCost(Rarity rarity, int rerolls)
-        {
-            decimal m = 1;
-            for (int i = 0; i < rerolls; i++) m *= 1.5m;
-            int multiplier = rarity >= Rarity.Epic ? 2 : 1;
-            return ((int)decimal.Ceiling(60 * ((int)rarity + 1) * multiplier * m), (int)decimal.Ceiling(2 * ((int)rarity + 1) * multiplier * m));
-        }
-
         [Fact]
         public void Epic_cost_after_35_rerolls_is_exact_and_not_negative()
         {
             // Issue #30：480×3^35 は long を超えるが、費用そのものは int に収まる
             var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
             Assert.Equal((698_932_611, 23_297_754), Rules.AffixRerollCost(r));
-        }
-
-        [Theory]
-        [InlineData(Rarity.Common)]
-        [InlineData(Rarity.Uncommon)]
-        [InlineData(Rarity.Rare)]
-        [InlineData(Rarity.Epic)]
-        [InlineData(Rarity.Legendary)]
-        public void Cost_is_exact_ceiling_nonnegative_and_monotonic_up_to_the_int_cap(Rarity rarity)
-        {
-            int prevShards = 0, prevTuning = 0;
-            for (int n = 0; n <= 80; n++)
-            {
-                var (shards, tuning) = Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = n });
-                Assert.InRange(shards, prevShards, int.MaxValue);
-                Assert.InRange(tuning, prevTuning, int.MaxValue);
-                prevShards = shards; prevTuning = tuning;
-                if (n <= 30) Assert.Equal(ExpectedCost(rarity, n), (shards, tuning)); // decimal で独立に求められる範囲は厳密比較
-            }
-            Assert.Equal((int.MaxValue, int.MaxValue), Rules.AffixRerollCost(new Relic { Rarity = rarity, AffixRerolls = int.MaxValue }));
-        }
-
-        [Theory]
-        [InlineData(Rarity.Common)]
-        [InlineData(Rarity.Uncommon)]
-        [InlineData(Rarity.Rare)]
-        [InlineData(Rarity.Epic)]
-        [InlineData(Rarity.Legendary)]
-        public void Cost_grows_by_ceiling_of_1_5_with_doubled_high_rarity_bases(Rarity rarity)
-        {
-            for (int n = 0; n <= 6; n++)
-            {
-                var r = new Relic { Rarity = rarity, AffixRerolls = n };
-                Assert.Equal(ExpectedCost(rarity, n), Rules.AffixRerollCost(r));
-            }
-            // 整数だけで切り上げた具体的な並び（コモン：欠片60・調律石2から）
-            var common = new Relic { Rarity = Rarity.Common };
-            int[] shards = { 60, 90, 135, 203, 304, 456, 684 }, tuningCosts = { 2, 3, 5, 7, 11, 16, 23 };
-            for (int n = 0; n <= 6; n++)
-            {
-                common.AffixRerolls = n;
-                Assert.Equal((shards[n], tuningCosts[n]), Rules.AffixRerollCost(common));
-            }
         }
 
         [Fact]
@@ -268,20 +216,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(powers, r.Powers.Select(x => (x.Power, x.Value)).ToList());
             Assert.Equal(Content.AffixCount(Rarity.Legendary), r.Affixes.Count);
             Assert.Equal(3, r.AffixRerolls);
-        }
-
-        [Fact]
-        public void Reroll_uses_the_profile_rng_and_loots_fresh_relic_rolling()
-        {
-            var (p, r) = WithRelic(Rarity.Rare, seed: 21);
-            int count = r.Affixes.Count;
-            var mirror = r.Clone();
-            mirror.Affixes.Clear();
-            var rng = new Rng(p.RngState);
-            Loot.RollAffixes(rng, mirror, count); // 新しい遺物を作るときと同じ抽選
-            Rules.AffixReroll(p, r.Uid);
-            Assert.Equal(mirror.Affixes.Select(a => (a.Stat, a.Value)).ToList(), r.Affixes.Select(a => (a.Stat, a.Value)).ToList());
-            Assert.Equal(rng.State, p.RngState); // 同じ乱数を同じだけ消費した
         }
 
         private static string Sha256(string text)

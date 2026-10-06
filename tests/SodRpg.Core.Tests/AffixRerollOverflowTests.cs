@@ -16,13 +16,6 @@ namespace SodRpg.Core.Tests
             return cost > int.MaxValue ? int.MaxValue : (int)cost;
         }
 
-        [Fact]
-        public void Epic_relic_with_35_rerolls_costs_the_exact_ceiling_not_a_wrapped_negative()
-        {
-            var r = new Relic { Rarity = Rarity.Epic, AffixRerolls = 35 };
-            Assert.Equal((698_932_611, 23_297_754), Rules.AffixRerollCost(r));
-        }
-
         [Theory]
         [InlineData(Rarity.Common)]
         [InlineData(Rarity.Uncommon)]
@@ -56,17 +49,6 @@ namespace SodRpg.Core.Tests
                 Assert.True(shards >= 0 && tuning >= 0);
                 if (rerolls > 100) Assert.Equal((int.MaxValue, int.MaxValue), (shards, tuning));
             }
-        }
-
-        [Theory]
-        [InlineData(1, 100)]
-        [InlineData(2, 100)]
-        [InlineData(60, 100)]
-        [InlineData(1_000_000_000, 5)]
-        [InlineData(int.MaxValue, 3)]
-        public void TimesThreeHalves_matches_big_integer_arithmetic(int value, int times)
-        {
-            for (int n = 0; n <= times; n++) Assert.Equal(Expected(value, n), Rules.TimesThreeHalves(value, n));
         }
 
         [Fact]

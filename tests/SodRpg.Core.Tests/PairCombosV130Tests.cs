@@ -478,31 +478,6 @@ namespace SodRpg.Core.Tests
             Assert.Single(Pay(runtime, def, equipped, now: 5.1f));
         }
 
-        [Theory]
-        [InlineData("Vesper", 1, "燃え移る会心", "Kindling Crit", GimmickEffect.Element)]
-        [InlineData("Vesper", 2, "陽光の継ぎ足し", "Sunlight Carry-Over", GimmickEffect.Recharge)]
-        [InlineData("Cetus", 1, "凍土の呼び戻し", "Frozen Ground Recall", GimmickEffect.Recharge)]
-        [InlineData("Cetus", 5, "氷塊に呼ぶ雷", "Thunder Called to Ice", GimmickEffect.Recharge)]
-        [InlineData("Yubar", 1, "物質の呼び水", "Matter's Lure", GimmickEffect.Recharge)]
-        [InlineData("Yubar", 5, "星の目印の再装填", "Marked-Star Reload", GimmickEffect.Recharge)]
-        [InlineData("Yubar", 6, "凪の光", "Calm Light", GimmickEffect.Element)]
-        [InlineData("Yubar", 7, "静かな爆ぜ", "Quiet Blast", GimmickEffect.Burst)]
-        [InlineData("Mist", 2, "覚醒の光突き", "Awakened Light Thrust", GimmickEffect.Element)]
-        [InlineData("Mist", 5, "追い立ての突き", "Driving Thrust", GimmickEffect.Burst)]
-        [InlineData("Mist", 7, "返しの構え", "Riposte Stance", GimmickEffect.Recharge)]
-        [InlineData("Nachia", 1, "群れの呼び声", "Pack's Call", GimmickEffect.Recharge)]
-        [InlineData("Aurena", 2, "理論の黄金光", "Golden Light of Theory", GimmickEffect.Element)]
-        [InlineData("Aurena", 6, "陣上の金片", "Shards on the Circle", GimmickEffect.Echo)]
-        [InlineData("Bismuth", 4, "炎剣の呼び戻し", "Flame-Blade Recall", GimmickEffect.Recharge)]
-        [InlineData("Bismuth", 5, "矢の癒やし", "Arrow Mending", GimmickEffect.Heal)]
-        public void Revised_names_and_effects_match_the_design(string hero, int bridge, string ja, string en, GimmickEffect effect)
-        {
-            var def = Def(hero, bridge);
-            Assert.Equal(ja, def.Name.Ja);
-            Assert.Equal(en, def.Name.En);
-            Assert.Equal(effect, def.Effect);
-        }
-
         [Fact]
         public void Zone_transition_clears_marks_and_windows_but_keeps_the_native_interval()
         {

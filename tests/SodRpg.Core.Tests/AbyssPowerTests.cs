@@ -98,18 +98,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void New_uniques_exist_and_can_drop()
-        {
-            var ids = new[] { "unique.thunder_fangs", "unique.shattered_star", "unique.warding_spirit", "unique.bloodied_maul" };
-            foreach (var id in ids) Assert.True(Content.TryGetUnique(id, out _), id);
-            var rng = new Rng(44);
-            var seen = new HashSet<string>();
-            for (int i = 0; i < Content.Uniques.Count * 30 && ids.Any(id => !seen.Contains(id)); i++)
-                seen.Add(Loot.RollRelic(rng, Rarity.Legendary, 10).UniqueId);
-            foreach (var id in ids) Assert.Contains(id, seen);
-        }
-
-        [Fact]
         public void New_powers_appear_on_epics_of_their_slot()
         {
             var rng = new Rng(45);

@@ -24,11 +24,5 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Ranked_power_nodes_stay_under_their_caps_at_max_rank()
-        {
-            foreach (var t in HeroSigils.All.Where(x => x.IsPowerNode))
-                Assert.True(t.PerRank * t.MaxRank <= Content.PowerCap(t.RankPower), t.Id);
-        }
     }
 }

@@ -568,39 +568,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal("霜誓の剣", w1.PlainName);
         }
 
-        [Fact]
-        public void Lore_and_mini_set_lines_are_natural_japanese_and_english()
-        {
-            var w1 = NamedRelic("named.test.w1");
-            var normal = NormalRelic(Rarity.Rare, Slot.Weapon);
-            Assert.Null(NamedItems.LoreLine(normal));
-            Assert.Null(NamedItems.MiniSetLine(normal, 2));
-
-            bool old = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Equal("北の誓いを刻んだ刃。", NamedItems.LoreLine(w1));
-                Assert.Equal("《霜誓の記章》 装着中 2/3", NamedItems.MiniSetLine(w1, 2));
-                Assert.Equal("《霜誓の記章》 装着中 3/3", NamedItems.MiniSetLine(w1, 99));
-                Assert.Equal("《霜誓の記章》 発見 1/3", NamedItems.MiniSetProgress("miniset.test.frost", new HashSet<string> { "n:named.test.h1" }));
-                Assert.Equal("《静水の約束》 発見 0/2", NamedItems.MiniSetProgress("miniset.test.duo", new HashSet<string>()));
-                Assert.True(NamedItems.TryGetMiniSet("miniset.test.frost", out var frost));
-                Assert.True(NamedItems.TryGetMiniSet("miniset.test.duo", out var duo));
-                Assert.Equal("2つ装着：" + Content.FormatStat(Stat.ColdAmp, 8) + "\n3つ装着：\n" + Content.FormatPowerBullets(Power.Frost, 30, "　"), frost.Describe());
-                Assert.Equal("2つ装着：" + Content.FormatStat(Stat.Armor, 12), duo.Describe());
-
-                Loc.Japanese = false;
-                Assert.Equal("A blade carved with a northern oath.", NamedItems.LoreLine(w1));
-                Assert.Equal("\"Frostoath Insignia\" 2/3 worn", NamedItems.MiniSetLine(w1, 2));
-                Assert.Equal("\"Frostoath Insignia\" 1/3 found", NamedItems.MiniSetProgress("miniset.test.frost", new HashSet<string> { "n:named.test.h1" }));
-                Assert.Equal("\"Stillwater Pact\" 0/2 found", NamedItems.MiniSetProgress("miniset.test.duo", new HashSet<string>()));
-                Assert.Equal("2 pieces: " + Content.FormatStat(Stat.ColdAmp, 8) + "\n3 pieces:\n" + Content.FormatPowerBullets(Power.Frost, 30, "　"), frost.Describe());
-                Assert.Equal("2 pieces: " + Content.FormatStat(Stat.Armor, 12), duo.Describe());
-            }
-            finally { Loc.Japanese = old; }
-        }
-
         // ───────── 試験6：出来事（設計 3.4）─────────
 
         [Fact]

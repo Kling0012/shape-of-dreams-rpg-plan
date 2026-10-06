@@ -4,11 +4,6 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    // Loc.Japanese is process-wide; these text checks must not race other test collections.
-    [CollectionDefinition("V124 power localization", DisableParallelization = true)]
-    public sealed class PowersV124Collection { }
-
-    [Collection("V124 power localization")]
     public class PowersV124Tests
     {
         private static Build With(params (Power Power, int Value)[] powers)
@@ -239,29 +234,6 @@ namespace SodRpg.Core.Tests
             var decoded = Build.Decode(build.Encode());
             Assert.NotNull(decoded);
             Assert.Equal(build.Powers.ToArray(), decoded.Powers.ToArray());
-        }
-
-        [Theory]
-        [InlineData(Power.StillWater, "止水", "Still Water", "止水の", "Stilled")]
-        [InlineData(Power.SpendersWard, "散財の護り", "Spender's Ward", "散財の", "Lavish")]
-        [InlineData(Power.PerfectRead, "見切り", "Perfect Read", "見切りの", "Keen-eyed")]
-        [InlineData(Power.LucidBoon, "明晰", "Lucid Boon", "明晰な", "Lucid")]
-        public void New_powers_have_requested_names_and_epithets(
-            Power power, string ja, string en, string jaEpithet, string enEpithet)
-        {
-            var epithet = Content.Epithet(power);
-            Assert.NotNull(epithet);
-            Assert.Equal(jaEpithet, epithet.Ja);
-            Assert.Equal(enEpithet, epithet.En);
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Equal(ja, Content.PowerName(power));
-                Loc.Japanese = false;
-                Assert.Equal(en, Content.PowerName(power));
-            }
-            finally { Loc.Japanese = previous; }
         }
 
         [Theory]

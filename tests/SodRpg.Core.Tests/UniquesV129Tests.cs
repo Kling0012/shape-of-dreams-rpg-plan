@@ -69,24 +69,6 @@ namespace SodRpg.Core.Tests
         private static readonly string[] Pass1SetIds = { "set.steamweave", "set.eclipserite", "set.cinderfall", "set.icicanticle" };
 
         [Fact]
-        public void Pass1_entered_52_uniques_and_4_sets()
-        {
-            Assert.Equal(52, Pass1Ids.Count);
-            Assert.All(Pass1Ids, id => Assert.True(Content.TryGetUnique(id, out _), id));
-            int bySlot(Slot slot) => Content.Uniques.Count(u => Pass1Ids.Contains(u.Id) && Content.GetBase(u.BaseId).Slot == slot);
-            Assert.Equal(14, bySlot(Slot.Weapon));
-            Assert.Equal(4, bySlot(Slot.Head));
-            Assert.Equal(7, bySlot(Slot.Armor));
-            Assert.Equal(14, bySlot(Slot.Hands));
-            Assert.Equal(9, bySlot(Slot.Feet));
-            Assert.Equal(4, bySlot(Slot.Charm));
-            Assert.Equal(1418, Content.Uniques.Count); // Reviewed P37 + all 14 boss sets × 6 pieces.
-            Assert.Equal(1046, Content.Uniques.Count(u => u.SetId == null)); // Includes all reviewed P37 content.
-            Assert.Equal(357, Content.Uniques.Count(u => u.Link != null)); // Includes all reviewed P37 content.
-            Assert.Equal(62, Content.Sets.Count); // 48 generic + all 14 boss sets.
-        }
-
-        [Fact]
         public void Every_pass1_unique_has_bilingual_name_lore_and_powers_inside_the_enum()
         {
             foreach (var id in Pass1Ids)

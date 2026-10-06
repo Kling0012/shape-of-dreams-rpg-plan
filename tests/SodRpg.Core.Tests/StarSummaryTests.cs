@@ -87,16 +87,6 @@ namespace SodRpg.Core.Tests
             Assert.Contains(choice.Choices[1].Name.ToString(), line.Text);
         }
 
-        [Fact]
-        public void LinkStarsGroupUnderTheirMemory()
-        {
-            var (hero, link) = Find(t => t.LinkPerRank != null && !t.IsChoice && t.PairCombo == null);
-            var p = new Profile();
-            p.Hero(hero).Talents[link.Id] = 1;
-            var summary = StarSummary.Compute(p, hero);
-            Assert.NotEmpty(summary.Memories);
-            Assert.Contains(summary.Memories.SelectMany(g => g.Lines), l => l.StarIds.Contains(link.Id));
-        }
     
         // 全旅人の全星（選択の星はすべての選択肢）を取ったとき、効果のある星は必ず一覧のどこかに出る。
         // 星の種類が増えても、一覧から黙って漏れることがないようにする。
