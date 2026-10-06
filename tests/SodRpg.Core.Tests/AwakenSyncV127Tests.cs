@@ -55,7 +55,8 @@ namespace SodRpg.Core.Tests
             Rules.Equip(p, "Hero_Husk", relic.Uid);
             Rules.BeginRun(p, "Hero_Husk");
 
-            int[] thresholds = { 0, Content.AwakenThresholdFor(1), Content.AwakenThresholdFor(2), Content.AwakenThresholdFor(3) };
+            int[] thresholds = ForgeBalanceTests.Raw().GetProperty("awakening").GetProperty("thresholds")
+                .EnumerateArray().Select(x => x.GetInt32()).ToArray();
             for (int level = 1; level <= Content.MaxAwakenLevel; level++)
             {
                 relic.AwakenPoints = thresholds[level] - 1;

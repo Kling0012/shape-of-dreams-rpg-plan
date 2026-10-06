@@ -52,9 +52,10 @@ namespace SodRpg.Core.Tests
             p.Materials[Materials.Shard] = 0;
 
             Assert.Throws<InvalidOperationException>(() => Rules.LimitBreak(p, r.Uid, m.Uid)); // 調律石不足
-            p.AddMaterial(Materials.Tuning, 10);
+            int multiplier = ForgeBalanceTests.Number("enhancement", "epicMaterialMultiplier");
+            p.AddMaterial(Materials.Tuning, ForgeBalanceTests.At("limitBreak", "tuningCosts", 0) * multiplier);
             Assert.Throws<InvalidOperationException>(() => Rules.LimitBreak(p, r.Uid, m.Uid)); // 欠片不足
-            p.AddMaterial(Materials.Shard, 400);
+            p.AddMaterial(Materials.Shard, ForgeBalanceTests.At("limitBreak", "shardCosts", 0) * multiplier);
 
             var e = Rules.LimitBreak(p, r.Uid, m.Uid);
             Assert.Equal(EventKind.LevelUp, e.Kind);
@@ -62,14 +63,13 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, p.Material(Materials.Tuning));
             Assert.Equal(0, p.Material(Materials.Shard));
             Assert.Null(p.FindStash(m.Uid)); // 素材は消える
-            Assert.Equal(10, Content.MaxEnhanceFor(r));
+            Assert.Equal(ForgeBalanceTests.Number("enhancement", "baseCap") + ForgeBalanceTests.Number("enhancement", "stepPerBreak"), Content.MaxEnhanceFor(r));
 
-            // 2回目は調律石20・欠片800
             p.AddMaterial(Materials.Shard, 10000);
             MaxOut(p, r);
             var m2 = AddRelic(p, Rarity.Epic, Slot.Weapon, 13);
-            p.Materials[Materials.Tuning] = 20;
-            p.Materials[Materials.Shard] = 800;
+            p.Materials[Materials.Tuning] = ForgeBalanceTests.At("limitBreak", "tuningCosts", 1) * multiplier;
+            p.Materials[Materials.Shard] = ForgeBalanceTests.At("limitBreak", "shardCosts", 1) * multiplier;
             Rules.LimitBreak(p, r.Uid, m2.Uid);
             Assert.Equal(2, r.LimitBreaks);
             Assert.Equal(0, p.Material(Materials.Tuning));
@@ -164,7 +164,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(20, lg.Enhance);
             Assert.Equal(5, lg.EnhanceMilestones);
             // The source boost is applied before the aggregate cap. The second power is unchanged.
-            Assert.Equal((power0 * 120 + 50) / 100, lg.Powers[0].Value);
+            Assert.Equal((power0 * ForgeBalanceTests.Number("enhancement", "milestonePowerPercent") + 50) / 100, lg.Powers[0].Value);
             Assert.Equal(power1, lg.Powers[1].Value);
         }
 
@@ -229,7 +229,7 @@ namespace SodRpg.Core.Tests
             r.Enhance = enhance;
             r.EnhanceMilestones = milestones;
             var first = r.Powers[0];
-            int boosted = (first.Value * 120 + 50) / 100;
+            int boosted = (first.Value * ForgeBalanceTests.Number("enhancement", "milestonePowerPercent") + 50) / 100;
             r.Powers[0] = new PowerLine(first.Power, boosted);
             var legacy = Reread(ProfileCodec.Write(p), body => StripKey(body, "milestonePowerApplied"));
             var loaded = legacy.FindStash(r.Uid);

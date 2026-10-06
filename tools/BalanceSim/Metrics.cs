@@ -9,6 +9,7 @@ namespace BalanceSim;
 internal sealed record MetricValue(string Id, string Label, double? Value, string Status = "measured");
 internal sealed record StarEfficiencyMetricValue(string Id, string Label, decimal? Value, string Unit,
     string Status = "measured");
+internal sealed record ForgeMetricValue(string Id, string Label, decimal? Value, string Unit, string Status);
 
 internal static class Metrics
 {
@@ -24,17 +25,18 @@ internal static class Metrics
 
     public static void WriteForge(string path, IReadOnlyList<ForgeEntry> entries)
     {
-        var metrics = new List<MetricValue>();
-        foreach (var entry in entries)
-        {
-            string id = $"forge/{entry.Rarity}/{entry.LimitBreaks}/{entry.CurrentEnhance}";
-            string label = $"{entry.Rarity} 突破{entry.LimitBreaks} +{entry.CurrentEnhance}";
-            string status = entry.IsCap ? "cap" : "measured";
-            metrics.Add(new MetricValue(id + "/failurePercent", label + " 失敗率 (%)", entry.FailurePercent, status));
-            metrics.Add(new MetricValue(id + "/baseShardCost", label + " 基本欠片", entry.BaseShardCost, status));
-        }
-        Write(path, new { modelVersion = 1, mode = "forge", contentFingerprint = ContentFingerprint.Value,
-            conditions = new { runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes() }, metrics, forge = entries });
+        var metrics = entries.Select(entry => new ForgeMetricValue(
+            entry.Id, entry.Label, entry.Value, entry.Unit, entry.Status)).ToArray();
+        Write(path, new { modelVersion = 2, mode = "forge", contentFingerprint = ContentFingerprint.Value,
+            conditions = new
+            {
+                runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+                projectionPolicy = ForgeReport.ProjectionPolicy,
+                rerollCounts = ForgeReport.RerollCounts,
+                workshopPolicy = "each active upgrade independently; other upgrades at zero",
+                eventPolicy = "eligible target with required sacrifices available; no trade reservation",
+                valuePolicy = "charged costs, cumulative multipliers and base rewards; null at cap/inapplicable, not zero",
+            }, metrics, forge = entries });
     }
 
     public static void WriteStarEfficiency(string path, StarEfficiencyMeasurement measurement)

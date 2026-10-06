@@ -26,13 +26,14 @@ namespace SodRpg.Core.Tests
             var (p, r) = WithRelic(Rarity.Common);
             int affixes = r.Affixes.Count;
             Assert.Empty(r.Powers);
-            for (int i = 0; i < 2; i++) Rules.Enhance(p, r.Uid);
+            int firstMilestone = ForgeBalanceTests.At("enhancement", "milestones", 0);
+            for (int i = 0; i < firstMilestone - 1; i++) Rules.Enhance(p, r.Uid);
             Assert.Equal(affixes, r.Affixes.Count);
             var e3 = Rules.Enhance(p, r.Uid);
             Assert.Equal(affixes + 1, r.Affixes.Count);
             Assert.Equal(1, r.EnhanceMilestones);
             Assert.Equal(EventKind.LevelUp, e3.Kind);
-            r.Enhance = 5;
+            r.Enhance = ForgeBalanceTests.At("enhancement", "milestones", 1);
             Rules.GrantEnhanceMilestones(new Rng(7), r);
             Assert.Single(r.Powers);
             Assert.Equal(2, r.EnhanceMilestones);
@@ -48,7 +49,7 @@ namespace SodRpg.Core.Tests
         public void Old_enhanced_relics_get_their_milestones_once()
         {
             var (p, r) = WithRelic(Rarity.Uncommon);
-            r.Enhance = 5; // v1.20 より前に強化した物
+            r.Enhance = ForgeBalanceTests.At("enhancement", "milestones", 1);
             int affixes = r.Affixes.Count;
             Assert.Equal(1, Rules.ApplyEnhanceMilestones(p));
             Assert.Equal(affixes + 1, r.Affixes.Count);
@@ -65,9 +66,10 @@ namespace SodRpg.Core.Tests
             var original = r.Affixes[0];
             Rules.Retune(p, r.Uid, 0);
             Assert.NotNull(p.RetuneOffer);
-            Assert.Equal(Content.RetuneChoices, p.RetuneOffer.Options.Count);
-            Assert.Equal(Content.RetuneChoices, p.RetuneOffer.Options.Select(o => o.Stat).Distinct().Count());
-            Assert.Equal(tuning - Content.RetuneCost(0), p.Material(Materials.Tuning));
+            int choices = ForgeBalanceTests.Number("retune", "choices");
+            Assert.Equal(choices, p.RetuneOffer.Options.Count);
+            Assert.Equal(choices, p.RetuneOffer.Options.Select(o => o.Stat).Distinct().Count());
+            Assert.Equal(tuning - ForgeBalanceTests.Number("retune", "baseTuningCost"), p.Material(Materials.Tuning));
             Assert.Equal(1, r.Retunes);
             Assert.Same(original, r.Affixes[0]); // 選ぶまでは変わらない
             // 候補が出ている間は、もう一度の再調律・強化・分解はできない
@@ -107,7 +109,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(p.RetuneOffer.Uid, back.RetuneOffer.Uid);
             Assert.Equal(p.RetuneOffer.Index, back.RetuneOffer.Index);
             Assert.Equal(p.RetuneOffer.Options.Select(o => (o.Stat, o.Value)), back.RetuneOffer.Options.Select(o => (o.Stat, o.Value)));
-            Assert.Equal(1, back.FindStash(r.Uid).EnhanceMilestones);
+            Assert.Equal(ForgeBalanceTests.Milestones(back.FindStash(r.Uid).Enhance), back.FindStash(r.Uid).EnhanceMilestones);
             var copy = p.Clone();
             Assert.NotNull(copy.RetuneOffer);
             Assert.NotSame(p.RetuneOffer, copy.RetuneOffer);

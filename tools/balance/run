@@ -52,7 +52,9 @@ def shown(entry: dict | None) -> str:
         return "—"
     value = number(entry["value"])
     if entry["status"] == "cap":
-        return value + "（上限・強化不可）"
+        return value + "（上限・次の操作不可）"
+    if entry["status"] == "inapplicable":
+        return value + "（対象外）"
     if entry["status"] == "not-reached":
         return "未到達"
     if entry["status"] == "no-damage-nodes":
@@ -70,7 +72,8 @@ def comparison(current: dict, previous: dict | None) -> str:
              "Git revision 現在: `" + (current.get("gitRevision") or "unknown") + "`",
              "Git revision 前回: " + ("`" + (previous.get("gitRevision") or "unknown") + "`" if previous else "—"), "",
              "数値はJSONの未丸め値。相対差は (現在−前回)/前回 ×100%。前回0・未到達・比較不可は —。",
-             "率 (%) の絶対差は percentage points (pp)、効率の差は %/点。未到達割合の差はfractionのまま。型・単位が異なる行は比較しません。",
+             "率 (%) の絶対差は percentage points (pp)、効率の差は %/点。ratio は倍率/確率の比率そのもの。欠片・調律石・個数等は行の単位で比較し、型・単位が異なる行は比較しません。",
+             "forge はCoreの実支払い・累計倍率・基本報酬・独立した工房状態の投影で、戦闘性能予測ではありません。上限/対象外は未定義で0とは区別します。",
              "star-values は実登録された星の種類・効果・欄・単位別の定義値。異種量は合算せず、DPS・発動頻度・実戦Buildの模型ではありません。追加/削除と実測0を区別します。", ""]
     if "tableMetadata" in current:
         lines.extend(["調整表メタデータ 現在: `" + json_text(current["tableMetadata"], sort_keys=True) + "`",
@@ -89,7 +92,7 @@ def comparison(current: dict, previous: dict | None) -> str:
             lines.extend(["比較不可: " + ("前回なし" if prior is None else "モデル版または正規化条件が異なります") + "。現在値のみ。", ""])
         prior_metrics = {e["id"]: e for e in prior["metrics"]} if prior else {}
         current_metrics = {e["id"]: e for e in snapshot["metrics"]}
-        lines.extend(["| 指標 | 現在 | 前回成功 | 差 | 相対差 |", "| --- | ---: | ---: | ---: | ---: |"])
+        lines.extend(["| 指標 | 単位 | 現在 | 前回成功 | 差 | 相対差 |", "| --- | --- | ---: | ---: | ---: | ---: |"])
         for metric_id in dict.fromkeys((*current_metrics, *prior_metrics)):
             entry = current_metrics.get(metric_id)
             old = prior_metrics.get(metric_id)
@@ -116,7 +119,8 @@ def comparison(current: dict, previous: dict | None) -> str:
             current_value = shown(entry) if entry is not None else "削除"
             previous_value = ("比較不可" if not compatible and prior is not None else
                               shown(old) if old is not None else "追加/なし")
-            lines.append(f"| {label} | {current_value} | {previous_value} | {delta} | {relative} |")
+            unit = (entry or old).get("unit", "—").replace("|", "\\|").replace("\n", " ")
+            lines.append(f"| {label} | {unit} | {current_value} | {previous_value} | {delta} | {relative} |")
         lines.append("")
     return "\n".join(lines) + "\n"
 

@@ -77,43 +77,43 @@ namespace SodRpg.Core.Game
             {
                 Id = Upgrade.BigSatchel, Key = "bigSatchel",
                 Name = new Txt("大きな鞄", "Bigger Satchel"),
-                Description = new Txt("遠征中に持ち歩ける遺物が1段につき5個増えます（10段まで）。", "Carry 5 more unsecured relics per level on an expedition (up to 10 levels)."),
-                Costs = new[] { (100, 0), (200, 2), (400, 4), (600, 6), (800, 8), (1000, 10), (1300, 12), (1600, 14), (2000, 16), (2500, 20) },
+                Description = new Txt($"遠征中に持ち歩ける遺物が1段につき{ForgeBalance.BigSatchelCapacityPerLevel}個増えます（{ForgeBalance.BigSatchelCosts.Length}段まで）。", $"Carry {ForgeBalance.BigSatchelCapacityPerLevel} more unsecured relics per level on an expedition (up to {ForgeBalance.BigSatchelCosts.Length} levels)."),
+                Costs = ForgeBalance.BigSatchelCosts,
             },
             new UpgradeDef
             {
                 Id = Upgrade.WideStash, Key = "wideStash",
                 Name = new Txt("広い保管庫", "Wider Stash"),
-                Description = new Txt("保管庫に入る遺物が増えます（1〜3段目は20個ずつ、4〜10段目は40個ずつ）。", "Your stash holds more relics (20 per level for levels 1-3, 40 per level for levels 4-10)."),
-                Costs = new[] { (80, 0), (160, 1), (320, 3), (500, 5), (700, 7), (900, 9), (1200, 11), (1500, 13), (1900, 16), (2400, 20) },
+                Description = new Txt($"保管庫に入る遺物が増えます（1〜{ForgeBalance.WideStashFirstBandLevels}段目は{ForgeBalance.WideStashFirstBandCapacity}個ずつ、{ForgeBalance.WideStashFirstBandLevels + 1}〜{ForgeBalance.WideStashCosts.Length}段目は{ForgeBalance.WideStashLaterCapacity}個ずつ）。", $"Your stash holds more relics ({ForgeBalance.WideStashFirstBandCapacity} per level for levels 1-{ForgeBalance.WideStashFirstBandLevels}, {ForgeBalance.WideStashLaterCapacity} per level for levels {ForgeBalance.WideStashFirstBandLevels + 1}-{ForgeBalance.WideStashCosts.Length})."),
+                Costs = ForgeBalance.WideStashCosts,
             },
             new UpgradeDef
             {
                 Id = Upgrade.BountyReroll, Key = "bountyReroll",
                 Name = new Txt("依頼の引き直し", "Bounty Reroll"),
-                Description = new Txt("依頼を引き直せる回数が、遠征ごとに1回増えます。", "One more bounty reroll per expedition."),
-                Costs = new[] { (150, 2), (300, 4) },
+                Description = new Txt($"依頼を引き直せる回数が、遠征ごとに{ForgeBalance.BountyRerollRerollsPerLevel}回増えます。", $"{ForgeBalance.BountyRerollRerollsPerLevel} more bounty reroll(s) per expedition per level."),
+                Costs = ForgeBalance.BountyRerollCosts,
             },
             new UpgradeDef
             {
                 Id = Upgrade.EchoLantern, Key = "echoLantern",
                 Name = new Txt("残響の灯", "Echo Lantern"),
-                Description = new Txt("全滅したときに戻ってくる欠片が、段階ごとに5%増えます。", "Shard echoes rise by 5% per level if your party falls."),
-                Costs = new[] { (200, 2), (400, 5) },
+                Description = new Txt($"全滅したときに戻ってくる欠片が、段階ごとに{ForgeBalance.EchoLanternPercentPerLevel}%増えます。", $"Shard echoes rise by {ForgeBalance.EchoLanternPercentPerLevel}% per level if your party falls."),
+                Costs = ForgeBalance.EchoLanternCosts,
             },
             new UpgradeDef
             {
                 Id = Upgrade.LostMap, Key = "lostMap",
                 Name = new Txt("遺失物の地図", "Map of the Lost"),
-                Description = new Txt("遺失物を取り戻すのに必要な戦闘部屋が1つ減ります。", "Clear one fewer combat room to recover a lost relic."),
-                Costs = new[] { (250, 3) },
+                Description = new Txt($"遺失物を取り戻すのに必要な戦闘部屋が{ForgeBalance.LostMapRoomsPerLevel}つ減ります。", $"Clear {ForgeBalance.LostMapRoomsPerLevel} fewer combat room(s) to recover a lost relic."),
+                Costs = ForgeBalance.LostMapCosts,
             },
             new UpgradeDef
             {
                 Id = Upgrade.PactStars, Key = "pactStars",
                 Name = new Txt("契約の星座", "Pact Constellation"),
-                Description = new Txt("深く潜るときの契約の選択肢が1つ増えます。", "One more pact to choose from when you delve deeper."),
-                Costs = new[] { (350, 6) },
+                Description = new Txt($"深く潜るときの契約の選択肢が{ForgeBalance.PactStarsOffersPerLevel}つ増えます。", $"{ForgeBalance.PactStarsOffersPerLevel} more pact(s) to choose from when you delve deeper."),
+                Costs = ForgeBalance.PactStarsCosts,
             },
         };
 
@@ -142,19 +142,20 @@ namespace SodRpg.Core.Game
 
         public static int Level(Profile p, Upgrade u) => p.Upgrades.TryGetValue(u, out int lv) ? lv : 0;
 
-        public static int SatchelCapacity(Profile p) => Content.SatchelCapacity + 5 * Level(p, Upgrade.BigSatchel);
+        public static int SatchelCapacity(Profile p) => Content.SatchelCapacity + ForgeBalance.BigSatchelCapacityPerLevel * Level(p, Upgrade.BigSatchel);
         public static int StashCapacity(Profile p) => Content.StashCapacity + StashBonus(Level(p, Upgrade.WideStash));
 
-        /// <summary>広い保管庫の段ごとの増分：1〜3段目は20個、4段目からは40個（v1.31）。</summary>
+        /// <summary>表の2つの段階帯の増分を累計する。</summary>
         public static int StashBonus(int level)
         {
             level = Math.Max(0, level);
-            return 20 * Math.Min(level, 3) + 40 * Math.Max(0, level - 3);
+            return ForgeBalance.WideStashFirstBandCapacity * Math.Min(level, ForgeBalance.WideStashFirstBandLevels)
+                + ForgeBalance.WideStashLaterCapacity * Math.Max(0, level - ForgeBalance.WideStashFirstBandLevels);
         }
-        public static int RoomsToRecover(Profile p) => Math.Max(2, Content.RoomsToRecoverLost - Level(p, Upgrade.LostMap));
-        public static int EchoPercent(Profile p) => 25 + 5 * (p == null ? 0 : Level(p, Upgrade.EchoLantern));
-        public static int PactsOffered(Profile p) => Pacts.Offered + (p == null ? 0 : Level(p, Upgrade.PactStars));
-        public static int RerollsPerRun(Profile p) => Level(p, Upgrade.BountyReroll);
+        public static int RoomsToRecover(Profile p) => Math.Max(ForgeBalance.LostMapMinimumRooms, Content.RoomsToRecoverLost - ForgeBalance.LostMapRoomsPerLevel * Level(p, Upgrade.LostMap));
+        public static int EchoPercent(Profile p) => ForgeBalance.EchoLanternBasePercent + ForgeBalance.EchoLanternPercentPerLevel * (p == null ? 0 : Level(p, Upgrade.EchoLantern));
+        public static int PactsOffered(Profile p) => Pacts.Offered + ForgeBalance.PactStarsOffersPerLevel * (p == null ? 0 : Level(p, Upgrade.PactStars));
+        public static int RerollsPerRun(Profile p) => ForgeBalance.BountyRerollRerollsPerLevel * Level(p, Upgrade.BountyReroll);
 
         /// <summary>全滅時に持ち帰る欠片（切り上げ、1以上ある場合は最低1）。</summary>
         public static int Echo(Profile p, int satchelShards)

@@ -25,7 +25,8 @@ namespace SodRpg.Core.Tests
             // Chance does not consume a draw at either probability boundary.
             bool failed = percent >= 100 || (percent > 0 && rng.NextDouble() < percent / 100.0);
             int level = failed
-                ? (rng.NextDouble() < 0.5 ? System.Math.Max(0, relic.Enhance - 1) : relic.Enhance)
+                ? (rng.NextDouble() < ForgeBalanceTests.Raw().GetProperty("enhanceFailure").GetProperty("demotionChance").GetDouble()
+                    ? System.Math.Max(0, relic.Enhance - ForgeBalanceTests.Number("enhanceFailure", "demotionSteps")) : relic.Enhance)
                 : relic.Enhance + 1;
             return (level, failed, rng.State);
         }
@@ -41,16 +42,15 @@ namespace SodRpg.Core.Tests
             Rules.GrantEnhanceMilestones(new Rng(131), r);
             int milestones = r.EnhanceMilestones;
             int shards = p.Material(Materials.Shard);
-            int cost = Content.EnhanceCost(start) * 2; // Epic+ relics pay twice the base enhancement fee.
+            int cost = ForgeBalanceTests.At("enhancement", "shardCosts", start)
+                * ForgeBalanceTests.Number("enhancement", "epicMaterialMultiplier");
             var expected = ForecastForge(r, seed);
             var affixes = r.Affixes.Select(a => (a.Stat, a.Value)).ToArray();
             var powers = r.Powers.Select(a => (a.Power, a.Value)).ToArray();
             p.StoreRng(new Rng(seed));
             Rules.Enhance(p, r.Uid);
             Assert.Equal(expected.Level, r.Enhance);
-            // Milestone thresholds remain independent historical fixtures in stage 0.
-            int earned = expected.Level >= 20 ? 5 : expected.Level >= 15 ? 4
-                : expected.Level >= 10 ? 3 : expected.Level >= 5 ? 2 : expected.Level >= 3 ? 1 : 0;
+            int earned = ForgeBalanceTests.Milestones(expected.Level);
             Assert.Equal(System.Math.Max(milestones, earned), r.EnhanceMilestones);
             Assert.Equal(shards - cost, p.Material(Materials.Shard));
             if (expected.Failed)
@@ -97,7 +97,7 @@ namespace SodRpg.Core.Tests
             r.Powers[0] = new PowerLine(first.Power, baseValue);
             r.Enhance = 20;
             Rules.GrantEnhanceMilestones(new Rng(131), r);
-            int boosted = (baseValue * 120 + 50) / 100;
+            int boosted = (baseValue * ForgeBalanceTests.Number("enhancement", "milestonePowerPercent") + 50) / 100;
             Assert.Equal(boosted, r.Powers[0].Value);
             Assert.True(r.MilestonePowerApplied);
             Assert.True(r.Clone().MilestonePowerApplied);
@@ -119,7 +119,7 @@ namespace SodRpg.Core.Tests
             Rules.Enhance(saved, loaded.Uid);
             Assert.Equal(recovery.Level, loaded.Enhance);
             Assert.Equal(recovery.RngState, saved.RngState);
-            Assert.Equal(5, loaded.EnhanceMilestones);
+            Assert.Equal(ForgeBalanceTests.Milestones(20), loaded.EnhanceMilestones);
             Assert.Equal(boosted, loaded.Powers[0].Value);
             Assert.Equal(affixes, loaded.Affixes.Count);
             // Simulate recovery to +20 independently of the forge roll's outcome.
@@ -130,12 +130,15 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(DreamEvent.ForgeShrine, 19, 20)]
-        [InlineData(DreamEvent.Fountain, 19, 20)]
-        [InlineData(DreamEvent.TemperingAltar, 18, 20)]
-        public void Event_enhancements_are_guaranteed_independently_of_forge_risk(DreamEvent dreamEvent, int start, int expected)
+        [InlineData(DreamEvent.ForgeShrine, 19)]
+        [InlineData(DreamEvent.Fountain, 19)]
+        [InlineData(DreamEvent.TemperingAltar, 18)]
+        public void Event_enhancements_are_guaranteed_independently_of_forge_risk(DreamEvent dreamEvent, int start)
         {
             var (p, r) = Legendary();
+            string key = dreamEvent == DreamEvent.ForgeShrine ? "forgeShrineSteps"
+                : dreamEvent == DreamEvent.Fountain ? "fountainSteps" : "temperingAltarSteps";
+            int expected = System.Math.Min(Content.MaxEnhanceFor(r), start + ForgeBalanceTests.Number("guaranteedEnhancement", key));
             Rules.BeginRun(p, "enhancement-event");
             p.Run.Bounties.Clear();
             Rules.ReachSecurePoint(p);
@@ -149,8 +152,8 @@ namespace SodRpg.Core.Tests
             p.StoreRng(new Rng(3));
             Rules.UseEvent(p, dreamEvent);
             Assert.Equal(expected, r.Enhance);
-            Assert.True(r.MilestonePowerApplied);
-            Assert.Equal(5, r.EnhanceMilestones);
+            Assert.Equal(expected >= ForgeBalanceTests.At("enhancement", "milestones", 4), r.MilestonePowerApplied);
+            Assert.Equal(ForgeBalanceTests.Milestones(expected), r.EnhanceMilestones);
         }
 
         [Theory]
@@ -167,7 +170,7 @@ namespace SodRpg.Core.Tests
             Waypoints.ApplyKill(p, MonsterTier.Normal, false, rng, reward, 10, null, 1, waypoint, out _, out _);
             var relic = Assert.Single(reward.Relics);
             Assert.Equal(expected, relic.Enhance);
-            Assert.Equal(expected >= 3 ? 1 : 0, relic.EnhanceMilestones);
+            Assert.Equal(ForgeBalanceTests.Milestones(expected), relic.EnhanceMilestones);
         }
     }
 }

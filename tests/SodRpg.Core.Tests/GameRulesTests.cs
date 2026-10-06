@@ -194,7 +194,7 @@ namespace SodRpg.Core.Tests
             Assert.Empty(p.Stash);
             Assert.False(p.IsEquippedAnywhere(r.Uid));
             Assert.Equal(Content.SalvageShards(Rarity.Epic), p.Material(Materials.Shard));
-            Assert.Equal(1, p.Material(Materials.Tuning));
+            Assert.Equal(ForgeBalanceTests.Number("salvage", "epicTuning"), p.Material(Materials.Tuning));
         }
 
         [Fact]

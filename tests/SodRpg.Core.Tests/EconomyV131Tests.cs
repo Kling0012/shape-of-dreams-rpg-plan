@@ -77,8 +77,8 @@ namespace SodRpg.Core.Tests
         {
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare })
             {
-                int n = r == Rarity.Rare ? 12 : 5;
-                int cost = r == Rarity.Common ? 10 : r == Rarity.Uncommon ? 20 : 60;
+                int n = ForgeBalanceTests.At("synthesis", "inputs", (int)r);
+                int cost = ForgeBalanceTests.At("synthesis", "shardCosts", (int)r);
                 var few = Stocked(r, n - 1, cost, 0);
                 Assert.Throws<InvalidOperationException>(() => Rules.Transmute(few, r));
                 Assert.Equal(n - 1, few.Stash.Count);
@@ -98,32 +98,35 @@ namespace SodRpg.Core.Tests
         [Fact]
         public void Legendary_transmute_costs_shards_and_tuning_and_fails_without_tuning()
         {
-            const int n = 16;
-            var few = Stocked(Rarity.Epic, n - 1, 300, 4);
+            int n = ForgeBalanceTests.At("synthesis", "inputs", (int)Rarity.Epic);
+            int shards = ForgeBalanceTests.At("synthesis", "shardCosts", (int)Rarity.Epic);
+            int tuning = ForgeBalanceTests.At("synthesis", "tuningCosts", (int)Rarity.Epic);
+            var few = Stocked(Rarity.Epic, n - 1, shards, tuning);
             Assert.Throws<InvalidOperationException>(() => Rules.Transmute(few, Rarity.Epic));
             Assert.Equal(n - 1, few.Stash.Count);
-            Assert.Equal(300, few.Material(Materials.Shard));
-            Assert.Equal(4, few.Material(Materials.Tuning));
+            Assert.Equal(shards, few.Material(Materials.Shard));
+            Assert.Equal(tuning, few.Material(Materials.Tuning));
 
-            var noTuning = Stocked(Rarity.Epic, n, 300, 3);
+            var noTuning = Stocked(Rarity.Epic, n, shards, tuning - 1);
             Assert.Throws<InvalidOperationException>(() => Rules.Transmute(noTuning, Rarity.Epic));
             Assert.Equal(n, noTuning.Stash.Count);
-            Assert.Equal(300, noTuning.Material(Materials.Shard));
-            Assert.Equal(3, noTuning.Material(Materials.Tuning));
+            Assert.Equal(shards, noTuning.Material(Materials.Shard));
+            Assert.Equal(tuning - 1, noTuning.Material(Materials.Tuning));
 
-            var poor = Stocked(Rarity.Epic, n, 299, 4);
+            var poor = Stocked(Rarity.Epic, n, shards - 1, tuning);
             Assert.Throws<InvalidOperationException>(() => Rules.Transmute(poor, Rarity.Epic));
             Assert.Equal(n, poor.Stash.Count);
-            Assert.Equal(299, poor.Material(Materials.Shard));
-            Assert.Equal(4, poor.Material(Materials.Tuning));
+            Assert.Equal(shards - 1, poor.Material(Materials.Shard));
+            Assert.Equal(tuning, poor.Material(Materials.Tuning));
 
-            var p = Stocked(Rarity.Epic, n, 300, 4);
+            var p = Stocked(Rarity.Epic, n, shards, tuning);
             Rules.Transmute(p, Rarity.Epic);
             Assert.Equal(Rarity.Legendary, Assert.Single(p.Stash).Rarity);
             Assert.Equal(0, p.Material(Materials.Shard));
             Assert.Equal(0, p.Material(Materials.Tuning));
 
-            var tgt = Stocked(Rarity.Epic, n, 450, 4);
+            int targeted = shards * ForgeBalanceTests.Number("synthesis", "targetCostPercent") / 100;
+            var tgt = Stocked(Rarity.Epic, n, targeted, tuning);
             Rules.Transmute(tgt, Rarity.Epic, target: Slot.Weapon);
             var result = Assert.Single(tgt.Stash);
             Assert.Equal(Rarity.Legendary, result.Rarity);

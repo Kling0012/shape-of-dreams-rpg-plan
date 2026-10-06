@@ -91,7 +91,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.Fountain: return Loc.T("一番弱い遺物を捧げる", "Offer the weakest relic");
                 case DreamEvent.Chalice: return Loc.T("欠片を賭ける", "Wager the shards");
                 case DreamEvent.Lantern: return Loc.T("遺失物を取り戻す", "Recover a lost relic");
-                case DreamEvent.ForgeShrine: return Loc.T("欠片20（エピック以上は40）で強化する", "Enhance for 20 shards (40 for Epic+)");
+                case DreamEvent.ForgeShrine: return Loc.T($"欠片{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（エピック以上は{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）で強化する", $"Enhance for {Content.GuaranteedEnhanceCost(e, Rarity.Common)} shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} for Epic+)");
                 case DreamEvent.TwinMirror: return Loc.T("欠片30（エピック以上は60）で写し取る", "Copy for 30 shards (60 for Epic+)");
                 case DreamEvent.Stargazer: return Loc.T("星を読む", "Read the stars");
                 case DreamEvent.Cauldron: return Loc.T("3つを溶かす", "Melt three relics");
@@ -103,7 +103,7 @@ namespace SodRpg.Core.Game
                 case DreamEvent.ShadowExchange: return Loc.T("欠片25（エピック以上は50）で最初の特性を引き直す", "Reroll the first affix for 25 shards (50 for Epic+)");
                 case DreamEvent.LostMausoleum: return Loc.T("欠片60を払い、強化を失って回収する", "Pay 60 shards and recover with lost enhancement");
                 case DreamEvent.RelicWager: return Loc.T("一番強い対象の遺物を賭ける", "Wager the strongest eligible relic");
-                case DreamEvent.TemperingAltar: return Loc.T("最初の特性を捧げて2段階強化する", "Sacrifice the first affix to enhance twice");
+                case DreamEvent.TemperingAltar: return Loc.T($"最初の特性を捧げて{Content.GuaranteedEnhanceSteps(e)}段階強化する", $"Sacrifice the first affix to enhance by {Content.GuaranteedEnhanceSteps(e)} levels");
                 case DreamEvent.StoneBroker: return Loc.T("欠片35を調律石2に換える", "Trade 35 shards for 2 tuning stones");
                 case DreamEvent.ShardKiln: return Loc.T("調律石2を欠片45に換える", "Trade 2 tuning stones for 45 shards");
                 case DreamEvent.StarOffering: return Loc.T("遺物を捧げて星の経験を得る", "Sacrifice a relic for star experience");
@@ -139,15 +139,15 @@ namespace SodRpg.Core.Game
                     return Loc.T($"ゴールドで中身の分からない遺物を1つ買えます。必ずアンコモン以上で、深く潜っているほど良い物が出ます。",
                         "Buy a mystery relic with gold (Uncommon or better; better when deeper).");
                 case DreamEvent.Fountain:
-                    return Loc.T("まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+1強化されます。", "Sacrifice your weakest unsecured relic to enhance your best one by +1.");
+                    return Loc.T($"まだ持ち帰っていない遺物のうち一番弱い物を捧げると、一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。", $"Sacrifice your weakest unsecured relic to enhance your best one by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.Chalice:
                     return Loc.T($"まだ持ち帰っていない欠片{run?.SatchelShards ?? 0}を賭けます。50%の確率で2倍になり、外れるとすべて失います。",
                         $"Wager your {run?.SatchelShards ?? 0} unsecured shards: 50% to double them, otherwise you lose them all.");
                 case DreamEvent.Lantern:
                     return Loc.T("遺失物のうち一番良い物を1つ、この場で取り戻せます（確保するまでは、まだ持ち帰っていない扱いです）。", "Recover your best lost relic right here (it stays unsecured until you secure).");
                 case DreamEvent.ForgeShrine:
-                    return Loc.T("まだ持ち帰っていない欠片を20（対象がエピック以上なら40）払うと、まだ持ち帰っていない遺物のうち一番強い物が+1強化されます。",
-                        "Pay 20 unsecured shards (40 if the target is Epic or better) to enhance your best unsecured relic by +1.");
+                    return Loc.T($"まだ持ち帰っていない欠片を{Content.GuaranteedEnhanceCost(e, Rarity.Common)}（対象がエピック以上なら{Content.GuaranteedEnhanceCost(e, Rarity.Epic)}）払うと、まだ持ち帰っていない遺物のうち一番強い物が+{Content.GuaranteedEnhanceSteps(e)}強化されます。",
+                        $"Pay {Content.GuaranteedEnhanceCost(e, Rarity.Common)} unsecured shards ({Content.GuaranteedEnhanceCost(e, Rarity.Epic)} if the target is Epic or better) to enhance your best unsecured relic by +{Content.GuaranteedEnhanceSteps(e)}.");
                 case DreamEvent.TwinMirror:
                     return Loc.T("まだ持ち帰っていない欠片を30（元の遺物がエピック以上なら60）払うと、まだ持ち帰っていない遺物のうち一番強い物と同じ種類・同じレア度の遺物が、もう1つ手に入ります（固有品の場合はエピックになります）。",
                         "Pay 30 unsecured shards (60 if the source is Epic or better) to get another relic of the same type and rarity as your best unsecured relic (legendaries become epic).");
@@ -182,8 +182,8 @@ namespace SodRpg.Core.Game
                     return Loc.T("エピック未満・固有品以外の対象から一番強い未確保の遺物を賭けます。対象がレアなら20%、それ未満なら50%で同じ土台・レベルの1つ上のレア度の新品に交換し、外れると分解相当の未確保の欠片になります。元の遺物と強化は失います。",
                         "Wager your strongest eligible unsecured non-unique relic below Epic. A Rare target has a 20% chance (50% below Rare) to become a fresh relic of the same base and level, one rarity higher; otherwise, unsecured shards equal to its salvage value. The original relic and enhancements are lost.");
                 case DreamEvent.TemperingAltar:
-                    return Loc.T("対象のうち一番強い未確保の遺物の最初の特性を失う代わりに、強化を2段階進めます。強化の節目は通常どおり得られます。",
-                        "Lose the first affix of your strongest eligible unsecured relic to enhance it twice. Enhancement milestones are granted normally.");
+                    return Loc.T($"対象のうち一番強い未確保の遺物の最初の特性を失う代わりに、強化を{Content.GuaranteedEnhanceSteps(e)}段階進めます。強化の節目は通常どおり得られます。",
+                        $"Lose the first affix of your strongest eligible unsecured relic to enhance it by {Content.GuaranteedEnhanceSteps(e)} levels. Enhancement milestones are granted normally.");
                 case DreamEvent.StoneBroker:
                     return Loc.T("未確保の欠片35を失い、未確保の調律石2を得ます。", "Trade 35 unsecured shards for 2 unsecured tuning stones.");
                 case DreamEvent.ShardKiln:
@@ -239,7 +239,7 @@ namespace SodRpg.Core.Game
                     break;
                 case DreamEvent.Fountain:
                     if (run.Satchel.Count(r => trades == null || !trades.IsReserved(r.Uid)) < 2
-                        || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => r.Enhance < Content.MaxEnhanceFor(r)))
+                        || !run.Satchel.Where(r => trades == null || !trades.IsReserved(r.Uid)).OrderBy(r => r.Score).Skip(1).Any(r => Content.CanGuaranteedEnhance(r, e)))
                         reason = Loc.T("まだ持ち帰っていない遺物が2つ以上必要です（そのうち1つは、まだ強化できる物）。", "Need 2+ unsecured relics (one enhanceable).");
                     break;
                 case DreamEvent.Chalice:
@@ -253,10 +253,10 @@ namespace SodRpg.Core.Game
                     Relic target = null;
                     foreach (var relic in run.Satchel)
                     {
-                        if (relic.Enhance >= Content.MaxEnhanceFor(relic) || (trades != null && trades.IsReserved(relic.Uid))) continue;
+                        if (!Content.CanGuaranteedEnhance(relic, e) || (trades != null && trades.IsReserved(relic.Uid))) continue;
                         if (target == null || relic.Score > target.Score) target = relic;
                     }
-                    int cost = target != null && target.Rarity >= Rarity.Epic ? 40 : 20;
+                    int cost = Content.GuaranteedEnhanceCost(e, target?.Rarity ?? Rarity.Common);
                     if (run.SatchelShards < cost) reason = Loc.T($"まだ持ち帰っていない欠片が{cost}必要です（いま{run.SatchelShards}）。", $"Need {cost} unsecured shards (you have {run.SatchelShards}).");
                     else if (target == null) reason = Loc.T("まだ強化できる未確保の遺物が必要です。", "Need an enhanceable unsecured relic.");
                     break;
@@ -396,7 +396,7 @@ namespace SodRpg.Core.Game
                     pool = pool.Where(r => r.UniqueId == null && r.Rarity < Rarity.Epic);
                     break;
                 case DreamEvent.TemperingAltar:
-                    pool = pool.Where(r => r.Affixes.Count > 0 && r.Enhance + 2 <= Content.MaxEnhanceFor(r));
+                    pool = pool.Where(r => r.Affixes.Count > 0 && Content.CanGuaranteedEnhance(r, e));
                     break;
                 case DreamEvent.StarOffering:
                     pool = pool.Where(r => r.Rarity >= Rarity.Rare);

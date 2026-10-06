@@ -35,10 +35,8 @@ namespace SodRpg.Core.Game
         private static string Compute(string caps, string authored)
         {
             var ids = new List<string>();
-            // Keep the pre-table content identity at its original coefficients.
-            // Non-legacy forge coefficients must still fail the normal content handshake.
-            if (ForgeBalance.ContentFingerprintRecord != null)
-                ids.Add(ForgeBalance.ContentFingerprintRecord);
+            // Default forge values contribute no new records; stage0 tuple identity remains compatible.
+            ids.AddRange(ForgeBalance.ContentFingerprintRecords);
             if (MemoryDamageBalance.ContentFingerprintRecord != null)
                 ids.Add(MemoryDamageBalance.ContentFingerprintRecord);
             ids.Add(GearBalance.ContentFingerprintRecord);

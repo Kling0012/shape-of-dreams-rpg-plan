@@ -1058,8 +1058,8 @@ namespace SodRpg.Mod
             "確保すれば安全ですが、深く潜ると遺物が多く、良い物が出やすくなります。そのぶん敵は強くなり、受けるダメージも増えます。全滅すると、まだ持ち帰っていない物は遺失物になり、次の遠征で戦闘部屋を" + Content.RoomsToRecoverLost + "つ突破すると一番良い物を1つだけ取り戻せます。手応えを見ながら、どこで確保するかを決めるのがこのMODの駆け引きです。\n\n" +
             "<b>装備の育て方</b>\n" +
             "・装備：旅人ごとに6つの枠（主装備・頭・防具・手・足・装飾品）に装着します。\n" +
-            "・鍛冶：欠片で強化し（+3と+5で特性や固有効果が増えます）、調律石で特性を3つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の2倍です。いらない物は分解して欠片に戻せます。\n" +
-            "・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、" + Content.AwakenThresholdFor(1) + "・" + Content.AwakenThresholdFor(2) + "・" + Content.AwakenThresholdFor(3) + "で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は1.25・1.5・1.8倍）。気に入った1本を使い込みましょう。\n" +
+            $"・鍛冶：欠片で強化し（+{Content.EnhanceMilestoneFirst}と+{Content.EnhanceMilestoneSecond}で特性や固有効果が増えます）、調律石で特性を{Content.RetuneChoices}つの候補から選び直します。エピック以上は強化・再調律・限界突破・特性の洗い直しの素材費用が基本の{Content.ForgeMaterialCostMultiplier(Rarity.Epic)}倍です。いらない物は分解して欠片に戻せます。\n" +
+            $"・覚醒：固有品は、装着した旅人で敵を倒すと覚醒の力が溜まり、{Content.AwakenThresholdFor(1)}・{Content.AwakenThresholdFor(2)}・{Content.AwakenThresholdFor(3)}で覚醒Ⅰ・Ⅱ・Ⅲになります（固有効果は{Content.AwakenPowerPctAt(1) / 100m:0.##}・{Content.AwakenPowerPctAt(2) / 100m:0.##}・{Content.AwakenPowerPctAt(3) / 100m:0.##}倍）。気に入った1本を使い込みましょう。\n" +
             "・星図：旅人ごとの星の経験で最大" + StarProgression.MaxPoints + "ポイントを得ます。図鑑・テスト用の追加分は別枠です。始まりの星から線でつながる星へ伸ばし、到達刻印は星のレベルに応じて最大3つまで選べます。夢のレベルは星のポイントではなく、工房や夢の圧（敵の強さ）に関わります。\n" +
             "・工房：余った素材で、鞄や保管庫の拡張など、ずっと続く便利な強化を解放します。\n" +
             "・依頼：遠征ごとに3つ出ます。達成すると、欠片と経験値（依頼によっては調律石も）がもらえます。",
@@ -1074,8 +1074,8 @@ namespace SodRpg.Mod
             "Securing is safe. Delving gives more and better relics, but enemies get tougher and you take more damage. If your party falls, unsecured loot becomes Lost & Found; clear " + Content.RoomsToRecoverLost + " combat rooms next expedition to recover the best piece. Deciding when to secure is the heart of this mod.\n\n" +
             "<b>Growing your gear</b>\n" +
             "- Gear: each Traveler has six slots: weapon, head, armor, hands, feet and charm.\n" +
-            "- Forge: enhance with shards (+3 and +5 add an affix or a power), reroll an affix with tuning stones and pick from 3 options. Epics and legendaries pay twice the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
-            "- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at " + Content.AwakenThresholdFor(1) + ", " + Content.AwakenThresholdFor(2) + " and " + Content.AwakenThresholdFor(3) + " they reach Awakening I, II and III (powers x1.25, x1.5, x1.8). Pick a favourite and keep using it.\n" +
+            $"- Forge: enhance with shards (+{Content.EnhanceMilestoneFirst} and +{Content.EnhanceMilestoneSecond} add an affix or a power), reroll an affix with tuning stones and pick from {Content.RetuneChoices} options. Epics and legendaries pay x{Content.ForgeMaterialCostMultiplier(Rarity.Epic)} the base materials for enhancement, retuning, limit breaks and affix rerolls. Salvage the rest into shards.\n" +
+            $"- Awakening: legendaries gather power as the Traveler wearing them defeats enemies; at {Content.AwakenThresholdFor(1)}, {Content.AwakenThresholdFor(2)} and {Content.AwakenThresholdFor(3)} they reach Awakening I, II and III (powers x{Content.AwakenPowerPctAt(1) / 100m:0.##}, x{Content.AwakenPowerPctAt(2) / 100m:0.##}, x{Content.AwakenPowerPctAt(3) / 100m:0.##}). Pick a favourite and keep using it.\n" +
             "- Star Map: each Traveler earns up to " + StarProgression.MaxPoints + " points from their own star XP, plus separate codex/test bonuses. Grow along connections from the starting star; choose up to three keystones as your star level rises. Dream Level affects workshop access and dream pressure (enemy strength), not star points.\n" +
             "- Workshop: unlock permanent upgrades shared by all Travelers.\n" +
             "- Bounties: 3 per expedition, rewarding shards, tuning stones and experience.");
@@ -1527,8 +1527,8 @@ namespace SodRpg.Mod
             string next = Content.AwakenNumeral(level + 1);
             int nextPower = Content.AwakenPowerPctAt(level + 1), nextAffix = Content.AwakenAffixPctAt(level + 1);
             return done + Loc.T(
-                $"覚醒{next}まで {bar} {now}/{to}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は2倍）。覚醒{next}で固有効果が{nextPower / 100f:0.##}倍、特性が{nextAffix / 100f:0.##}倍になります（全3段）。</color>",
-                $"Awakening {next} {bar} {now}/{to}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x2). Awakening {next}: powers x{nextPower / 100f:0.##}, affixes x{nextAffix / 100f:0.##} (3 levels).</color>");
+                $"覚醒{next}まで {bar} {now}/{to}\n<color=#8a8aa0>装着した旅人で敵を倒すと溜まります（エリート{Content.AwakenPoints(MonsterTier.MiniBoss, false)}・ボス{Content.AwakenPoints(MonsterTier.Boss, false)}・悪夢化は{Content.AwakenNightmareMultiplier}倍）。覚醒{next}で固有効果が{nextPower / 100f:0.##}倍、特性が{nextAffix / 100f:0.##}倍になります（全{Content.MaxAwakenLevel}段）。</color>",
+                $"Awakening {next} {bar} {now}/{to}\n<color=#8a8aa0>Fills as the Traveler wearing it defeats enemies (elite {Content.AwakenPoints(MonsterTier.MiniBoss, false)}, boss {Content.AwakenPoints(MonsterTier.Boss, false)}, nightmares x{Content.AwakenNightmareMultiplier}). Awakening {next}: powers x{nextPower / 100f:0.##}, affixes x{nextAffix / 100f:0.##} ({Content.MaxAwakenLevel} levels).</color>");
         }
 
         private void Comparison(Relic sel, Relic cur)
@@ -1599,14 +1599,14 @@ namespace SodRpg.Mod
                 ValidateEnhanceConfirmation();
                 int failureChance = Rules.EnhanceFailureChance(sel);
                 if (failureChance > 0)
-                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると、半分の確率で1段下がります）",
-                        $"Failure chance: {failureChance}% (a failure has a 50% chance to lower enhancement by one level)"), "#ff8080"), _st.Small);
+                    GUILayout.Label(UiStyles.Colored(Loc.T($"失敗の確率 {failureChance}%（失敗すると、{Content.EnhanceDemotionChance * 100:0.######}%の確率で{Content.EnhanceDemotionSteps}段下がります）",
+                        $"Failure chance: {failureChance}% (a failure has a {Content.EnhanceDemotionChance * 100:0.######}% chance to lower enhancement by {Content.EnhanceDemotionSteps} level(s))"), "#ff8080"), _st.Small);
                 GUILayout.BeginHorizontal();
                 GUI.enabled = !_s.Trades.IsReserved(sel.Uid);
                 int maxEnhance = Content.MaxEnhanceFor(sel);
                 if (sel.Enhance < maxEnhance)
                 {
-                    int enhanceCost = Content.EnhanceCost(sel.Enhance) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
+                    int enhanceCost = Content.EnhanceCost(sel);
                     GUI.enabled = !_s.Trades.IsReserved(sel.Uid) && p.RetuneOffer == null && p.Material(Materials.Shard) >= enhanceCost;
                     bool confirm = _confirmEnhance == sel && _confirmEnhanceTarget == sel.Enhance + 1;
                     string enhanceLabel = confirm
@@ -1693,7 +1693,7 @@ namespace SodRpg.Mod
                         if (GUILayout.Button(Content.FormatStat(a.Stat, a.Value), _retuneIndex == i ? _st.ButtonWrapSel : _st.ButtonWrap, ShrinkWidth)) _retuneIndex = i;
                     }
                     GUILayout.EndHorizontal();
-                    int rtCost = Content.RetuneCost(sel.Retunes) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
+                    int rtCost = Content.RetuneCost(sel);
                     bool rtAfford = p.Material(Materials.Tuning) >= rtCost;
                     GUI.enabled = _retuneIndex >= 0 && rtAfford && !_s.Trades.IsReserved(sel.Uid);
                     string rtLabel = !rtAfford ? Loc.T($"調律石が足りません（{rtCost}必要・所持{p.Material(Materials.Tuning)}）", $"Not enough tuning stones ({rtCost} needed, have {p.Material(Materials.Tuning)})")
@@ -1739,8 +1739,8 @@ namespace SodRpg.Mod
 
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("合成：同じレア度の遺物を決まった個数集めて、1つ上のレア度の遺物1つに変えます", "Transmute: turn a set number of relics of one rarity into 1 of the next"), _st.Header);
-            GUILayout.Label(Loc.T("鍵をかけた物・装着中の物は使わず、残りの中から弱い順に必要な個数を使います。エピックからは固有品が生まれます（欠片と調律石が要ります）。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片1.5倍）。",
-                "Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot (1.5x shards)."), _st.Small);
+            GUILayout.Label(Loc.T($"鍵をかけた物・装着中の物は使わず、残りの中から弱い順に必要な個数を使います。エピックからは固有品が生まれます（欠片と調律石が要ります）。上の絞り込みで枠を選ぶと、結果をその枠にできます（欠片{Content.TransmuteTargetCostPct / 100m:0.##}倍）。",
+                $"Locked and equipped relics are never used; the weakest of the rest go in. Epics become a legendary (costs shards and tuning stones). Pick a slot filter above to choose the result's slot ({Content.TransmuteTargetCostPct / 100m:0.##}x shards)."), _st.Small);
             GUILayout.BeginHorizontal();
             foreach (Rarity r in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
             {
@@ -1792,7 +1792,7 @@ namespace SodRpg.Mod
             if (r.EnhanceMilestones < 4 && Content.EnhanceMilestoneFourth <= ceiling)
                 return Loc.T($"+{Content.EnhanceMilestoneFourth}で特性がもう1行増えます。", $"+{Content.EnhanceMilestoneFourth}: one more affix.");
             if (!r.MilestonePowerApplied && r.EnhanceMilestones < 5 && Content.EnhanceMilestoneFifth <= ceiling)
-                return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が1.2倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows 1.2x.");
+                return Loc.T($"+{Content.EnhanceMilestoneFifth}で固有効果1つの値が{Content.LimitBreakPowerPct / 100m:0.##}倍になります。", $"+{Content.EnhanceMilestoneFifth}: one power's value grows {Content.LimitBreakPowerPct / 100m:0.##}x.");
             return null;
         }
 
@@ -1806,7 +1806,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             int maxBreaks = Content.MaxLimitBreaks(sel.Rarity);
             int n = sel.LimitBreaks + 1;
-            int tuningCost = Content.LimitBreakTuningCost(n) * (sel.Rarity >= Rarity.Epic ? 2 : 1), shardCost = Content.LimitBreakShardCost(n) * (sel.Rarity >= Rarity.Epic ? 2 : 1);
+            int tuningCost = Content.LimitBreakTuningCost(n, sel.Rarity), shardCost = Content.LimitBreakShardCost(n, sel.Rarity);
             int capNow = Content.MaxEnhanceFor(sel), capNext = Content.MaxEnhanceFor(sel.Rarity, n);
             if (_limitBreakTarget != sel.Uid)
             {
@@ -1878,7 +1878,7 @@ namespace SodRpg.Mod
             var p = _s.Profile;
             if (!Open || _tab != 1 || _selected != r.Uid || p.FindStash(r.Uid) != r
                 || r.Enhance + 1 != _confirmEnhanceTarget || r.Enhance >= Content.MaxEnhanceFor(r)
-                || p.Material(Materials.Shard) < Content.EnhanceCost(r.Enhance) * (r.Rarity >= Rarity.Epic ? 2 : 1)
+                || p.Material(Materials.Shard) < Content.EnhanceCost(r)
                 || _s.Trades.IsReserved(r.Uid) || p.RetuneOffer != null)
                 _confirmEnhance = null;
         }
