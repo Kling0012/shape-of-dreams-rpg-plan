@@ -1,0 +1,1857 @@
+{
+  "schemaVersion": 1,
+  "sets": [
+    {
+      "id": "set.tide",
+      "name": {
+        "ja": "潮鳴りの装い",
+        "en": "Tidecaller's Regalia"
+      },
+      "twoPiece": [
+        {
+          "stat": "ColdAmp",
+          "value": 10
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Frost",
+          "value": 45
+        },
+        {
+          "power": "EchoingDodge",
+          "value": 81
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "StrafeShot",
+          "value": 24
+        },
+        {
+          "power": "BrittleIce",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "set.lamp",
+      "name": {
+        "ja": "灯守の誓い",
+        "en": "Lampkeeper's Oath"
+      },
+      "twoPiece": [
+        {
+          "stat": "LightAmp",
+          "value": 10
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Radiance",
+          "value": 75
+        },
+        {
+          "power": "SecondWind",
+          "value": 25
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OverflowingLife",
+          "value": 40
+        },
+        {
+          "power": "WatchfulHand",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "id": "set.cinder",
+      "name": {
+        "ja": "残火の誓約",
+        "en": "Cinder Covenant"
+      },
+      "twoPiece": [
+        {
+          "stat": "FireAmp",
+          "value": 10
+        },
+        {
+          "stat": "AttackPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Ember",
+          "value": 45
+        },
+        {
+          "power": "Blaze",
+          "value": 63
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Wildfire",
+          "value": 32
+        }
+      ]
+    },
+    {
+      "id": "set.dusk",
+      "name": {
+        "ja": "黄昏の狩装",
+        "en": "Dusk Hunter's Garb"
+      },
+      "twoPiece": [
+        {
+          "stat": "DarkAmp",
+          "value": 10
+        },
+        {
+          "stat": "CritChancePct",
+          "value": 4
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Umbra",
+          "value": 75
+        },
+        {
+          "power": "Executioner",
+          "value": 50
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "UmbralHeritage",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "set.winter",
+      "name": {
+        "ja": "冬枯れの誓約",
+        "en": "Winterbound Oath"
+      },
+      "twoPiece": [
+        {
+          "stat": "ColdAmp",
+          "value": 10
+        },
+        {
+          "stat": "Armor",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Frost",
+          "value": 45
+        },
+        {
+          "power": "Bulwark",
+          "value": 30
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ImmovableStance",
+          "value": 10
+        },
+        {
+          "power": "BrittleIce",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "set.starsong",
+      "name": {
+        "ja": "星詠みの装束",
+        "en": "Starsinger's Raiment"
+      },
+      "twoPiece": [
+        {
+          "stat": "Haste",
+          "value": 10
+        },
+        {
+          "stat": "PowerPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "UltimateSurge",
+          "value": 25
+        },
+        {
+          "power": "EchoingDodge",
+          "value": 81
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Finale",
+          "value": 22
+        },
+        {
+          "power": "TriumphSong",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "set.hunt",
+      "name": {
+        "ja": "狩猟団の装備",
+        "en": "Huntmaster's Kit"
+      },
+      "twoPiece": [
+        {
+          "stat": "CritChancePct",
+          "value": 4
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Executioner",
+          "value": 50
+        },
+        {
+          "power": "Momentum",
+          "value": 5
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "WanderersEdge",
+          "value": 22
+        },
+        {
+          "power": "SpilloverStrike",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "set.bastion",
+      "name": {
+        "ja": "不落城の装い",
+        "en": "Bastion's Bulwark"
+      },
+      "twoPiece": [
+        {
+          "stat": "Armor",
+          "value": 8
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Bulwark",
+          "value": 35
+        },
+        {
+          "power": "Aegis",
+          "value": 25
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ShieldBash",
+          "value": 53
+        },
+        {
+          "power": "ShieldbreakBurst",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.wildfire",
+      "name": {
+        "ja": "燎原の軍装",
+        "en": "Wildfire Warband"
+      },
+      "twoPiece": [
+        {
+          "stat": "FireAmp",
+          "value": 10
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Ember",
+          "value": 52
+        },
+        {
+          "power": "Shatter",
+          "value": 75
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Frenzy",
+          "value": 3
+        },
+        {
+          "power": "Momentum",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "set.grove",
+      "name": {
+        "ja": "古森の守り",
+        "en": "Old Grove Ward"
+      },
+      "twoPiece": [
+        {
+          "stat": "HealthRegen",
+          "value": 3
+        },
+        {
+          "stat": "Tenacity",
+          "value": 12
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Barrier",
+          "value": 10
+        },
+        {
+          "power": "SecondWind",
+          "value": 30
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OverflowingLife",
+          "value": 40
+        },
+        {
+          "power": "ReadyGuard",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.reverie",
+      "name": {
+        "ja": "夢想の楽団",
+        "en": "Reverie Ensemble"
+      },
+      "twoPiece": [
+        {
+          "stat": "PowerPct",
+          "value": 6
+        },
+        {
+          "stat": "Haste",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Resonance",
+          "value": 10
+        },
+        {
+          "power": "Radiance",
+          "value": 88
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "StardustCycle",
+          "value": 14
+        },
+        {
+          "power": "RelayHand",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.phantom",
+      "name": {
+        "ja": "幻影の一座",
+        "en": "Phantom Troupe"
+      },
+      "twoPiece": [
+        {
+          "stat": "DarkAmp",
+          "value": 10
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Umbra",
+          "value": 88
+        },
+        {
+          "power": "EchoingDodge",
+          "value": 98
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Spellsweep",
+          "value": 53
+        },
+        {
+          "power": "ReturningBlade",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "id": "set.permafrost",
+      "name": {
+        "ja": "凍土の装い",
+        "en": "Permafrost Garb"
+      },
+      "twoPiece": [
+        {
+          "stat": "ColdAmp",
+          "value": 10
+        },
+        {
+          "stat": "Armor",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Thorns",
+          "value": 30
+        },
+        {
+          "power": "Frost",
+          "value": 45
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ReadyGuard",
+          "value": 8
+        },
+        {
+          "power": "TollOfGrudge",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "set.asura",
+      "name": {
+        "ja": "修羅道の装い",
+        "en": "Path of Carnage"
+      },
+      "twoPiece": [
+        {
+          "stat": "AttackPct",
+          "value": 8
+        },
+        {
+          "stat": "MaxHealthFlat",
+          "value": 40
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Bloodlust",
+          "value": 20
+        },
+        {
+          "power": "Lifesteal",
+          "value": 10
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Retaliation",
+          "value": 25
+        },
+        {
+          "power": "TollOfGrudge",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "set.gale",
+      "name": {
+        "ja": "風舞の装い",
+        "en": "Galedancer's Attire"
+      },
+      "twoPiece": [
+        {
+          "stat": "MoveSpeedPct",
+          "value": 5
+        },
+        {
+          "stat": "Haste",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Whirlwind",
+          "value": 75
+        },
+        {
+          "power": "Sprint",
+          "value": 15
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "WanderersEdge",
+          "value": 28
+        }
+      ]
+    },
+    {
+      "id": "set.firmament",
+      "name": {
+        "ja": "天穹の誓い",
+        "en": "Firmament Vow"
+      },
+      "twoPiece": [
+        {
+          "stat": "PowerPct",
+          "value": 6
+        },
+        {
+          "stat": "Haste",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "UltimateSurge",
+          "value": 20
+        },
+        {
+          "power": "StarShield",
+          "value": 12
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "AceInHand",
+          "value": 12
+        },
+        {
+          "power": "OpeningSalvo",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "set.ambush",
+      "name": {
+        "ja": "闇討ちの装い",
+        "en": "Nightstrike Gear"
+      },
+      "twoPiece": [
+        {
+          "stat": "CritChancePct",
+          "value": 4
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Umbra",
+          "value": 75
+        },
+        {
+          "power": "OpeningStrike",
+          "value": 75
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OpeningSalvo",
+          "value": 22
+        },
+        {
+          "power": "PilingLuck",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "set.ashrunner",
+      "name": {
+        "ja": "灰走りの装い",
+        "en": "Ashrunner's Garb"
+      },
+      "twoPiece": [
+        {
+          "stat": "FireAmp",
+          "value": 10
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Ember",
+          "value": 45
+        },
+        {
+          "power": "Tailwind",
+          "value": 15
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "RunUp",
+          "value": 63
+        },
+        {
+          "power": "Wildfire",
+          "value": 26
+        }
+      ]
+    },
+    {
+      "id": "set.mercy",
+      "name": {
+        "ja": "施療の誓い",
+        "en": "Healer's Pledge"
+      },
+      "twoPiece": [
+        {
+          "stat": "HealthRegen",
+          "value": 3
+        },
+        {
+          "stat": "LightAmp",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Barrier",
+          "value": 10
+        },
+        {
+          "power": "Resonance",
+          "value": 10
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "SharedWard",
+          "value": 28
+        },
+        {
+          "power": "TriumphSong",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "set.ironknight",
+      "name": {
+        "ja": "鉄騎の誓い",
+        "en": "Ironknight's Oath"
+      },
+      "twoPiece": [
+        {
+          "stat": "Armor",
+          "value": 10
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Thorns",
+          "value": 35
+        },
+        {
+          "power": "Aegis",
+          "value": 20
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ShieldbreakBurst",
+          "value": 10
+        },
+        {
+          "power": "TollOfGrudge",
+          "value": 18
+        }
+      ]
+    },
+    {
+      "id": "set.eclipse",
+      "name": {
+        "ja": "月蝕の装い",
+        "en": "Eclipse Regalia"
+      },
+      "twoPiece": [
+        {
+          "stat": "DarkAmp",
+          "value": 10
+        },
+        {
+          "stat": "CritDamagePct",
+          "value": 15
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Umbra",
+          "value": 75
+        },
+        {
+          "power": "SoulSiphon",
+          "value": 20
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "WeakPointWound",
+          "value": 94
+        }
+      ]
+    },
+    {
+      "id": "set.thunderclap",
+      "name": {
+        "ja": "迅雷の武装",
+        "en": "Thunderclap Arms"
+      },
+      "twoPiece": [
+        {
+          "stat": "AttackPct",
+          "value": 8
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "ChainLightning",
+          "value": 50
+        },
+        {
+          "power": "Frenzy",
+          "value": 3
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "PilingLuck",
+          "value": 2
+        },
+        {
+          "power": "FocusFire",
+          "value": 63
+        }
+      ]
+    },
+    {
+      "id": "set.myriad",
+      "name": {
+        "ja": "万象の装い",
+        "en": "Myriad Weaver's Vestments"
+      },
+      "twoPiece": [
+        {
+          "stat": "PowerPct",
+          "value": 7
+        },
+        {
+          "stat": "Haste",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Convergence",
+          "value": 80
+        },
+        {
+          "power": "Overload",
+          "value": 15
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Steam",
+          "value": 50
+        },
+        {
+          "power": "ElementalHarvest",
+          "value": 26
+        }
+      ]
+    },
+    {
+      "id": "set.daybreak",
+      "name": {
+        "ja": "払暁の誓い",
+        "en": "Daybreak Vow"
+      },
+      "twoPiece": [
+        {
+          "stat": "LightAmp",
+          "value": 10
+        },
+        {
+          "stat": "AttackPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Radiance",
+          "value": 75
+        },
+        {
+          "power": "Vigor",
+          "value": 15
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OpeningSalvo",
+          "value": 22
+        },
+        {
+          "power": "ReadyGuard",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.steamweave",
+      "name": {
+        "ja": "湯けむり織りの調べ",
+        "en": "Steamweaver's Cadence"
+      },
+      "twoPiece": [
+        {
+          "stat": "FireAmp",
+          "value": 8
+        },
+        {
+          "stat": "ColdAmp",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Steam",
+          "value": 60
+        },
+        {
+          "power": "Frost",
+          "value": 50
+        },
+        {
+          "power": "Ember",
+          "value": 45
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ElementalHarvest",
+          "value": 28
+        },
+        {
+          "power": "PrismShift",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "set.eclipserite",
+      "name": {
+        "ja": "蝕の儀の装い",
+        "en": "Eclipse-Rite Vestments"
+      },
+      "twoPiece": [
+        {
+          "stat": "LightAmp",
+          "value": 8
+        },
+        {
+          "stat": "DarkAmp",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Eclipse",
+          "value": 14
+        },
+        {
+          "power": "Radiance",
+          "value": 75
+        },
+        {
+          "power": "Umbra",
+          "value": 75
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "StardustCycle",
+          "value": 14
+        },
+        {
+          "power": "UmbralHeritage",
+          "value": 45
+        }
+      ]
+    },
+    {
+      "id": "set.cinderfall",
+      "name": {
+        "ja": "降り灰の行軍",
+        "en": "Cinderfall March"
+      },
+      "twoPiece": [
+        {
+          "stat": "FireAmp",
+          "value": 8
+        },
+        {
+          "stat": "DarkAmp",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Cinder",
+          "value": 1
+        },
+        {
+          "power": "Ember",
+          "value": 50
+        },
+        {
+          "power": "Umbra",
+          "value": 70
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "UmbralHeritage",
+          "value": 50
+        },
+        {
+          "power": "ElementalHarvest",
+          "value": 26
+        }
+      ]
+    },
+    {
+      "id": "set.icicanticle",
+      "name": {
+        "ja": "氷晶の聖句",
+        "en": "Icicrystal Canticle"
+      },
+      "twoPiece": [
+        {
+          "stat": "ColdAmp",
+          "value": 8
+        },
+        {
+          "stat": "LightAmp",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "FrostCrystal",
+          "value": 7
+        },
+        {
+          "power": "Frost",
+          "value": 55
+        },
+        {
+          "power": "Radiance",
+          "value": 75
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "StardustCycle",
+          "value": 14
+        },
+        {
+          "power": "BrittleIce",
+          "value": 56
+        }
+      ]
+    },
+    {
+      "id": "set.shardknight",
+      "name": {
+        "ja": "砕盾騎士団の誓い",
+        "en": "Oath of the Shardshield Knights"
+      },
+      "twoPiece": [
+        {
+          "stat": "Armor",
+          "value": 8
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "ShieldbreakBurst",
+          "value": 10
+        },
+        {
+          "power": "Barrier",
+          "value": 12
+        },
+        {
+          "power": "ReadyGuard",
+          "value": 10
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ShieldBash",
+          "value": 56
+        },
+        {
+          "power": "GleamingWard",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "id": "set.bashbound",
+      "name": {
+        "ja": "盾打ちの誓約",
+        "en": "Bashbound Covenant"
+      },
+      "twoPiece": [
+        {
+          "stat": "Armor",
+          "value": 8
+        },
+        {
+          "stat": "ShieldPower",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "ShieldBash",
+          "value": 69
+        },
+        {
+          "power": "GleamingWard",
+          "value": 10
+        },
+        {
+          "power": "Aegis",
+          "value": 22
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "StarShield",
+          "value": 15
+        },
+        {
+          "power": "SharedWard",
+          "value": 30
+        }
+      ]
+    },
+    {
+      "id": "set.vanguardline",
+      "name": {
+        "ja": "陣頭の隊列",
+        "en": "Frontline Formation"
+      },
+      "twoPiece": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        },
+        {
+          "stat": "Tenacity",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "VanguardsOath",
+          "value": 25
+        },
+        {
+          "power": "TollOfGrudge",
+          "value": 20
+        },
+        {
+          "power": "Bulwark",
+          "value": 30
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Breakout",
+          "value": 9
+        },
+        {
+          "power": "ImmovableStance",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.rearmarks",
+      "name": {
+        "ja": "後陣の射手隊",
+        "en": "Rearline Marksmen"
+      },
+      "twoPiece": [
+        {
+          "stat": "PowerPct",
+          "value": 5
+        },
+        {
+          "stat": "Haste",
+          "value": 8
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "RearguardsWay",
+          "value": 10
+        },
+        {
+          "power": "Medley",
+          "value": 5
+        },
+        {
+          "power": "OpeningSalvo",
+          "value": 22
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "AceInHand",
+          "value": 12
+        },
+        {
+          "power": "Spellsweep",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "set.watchcircle",
+      "name": {
+        "ja": "見守りの輪",
+        "en": "Watcher's Circle"
+      },
+      "twoPiece": [
+        {
+          "stat": "HealPower",
+          "value": 8
+        },
+        {
+          "stat": "HealthRegen",
+          "value": 3
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "WatchfulHand",
+          "value": 20
+        },
+        {
+          "power": "SharedWard",
+          "value": 30
+        },
+        {
+          "power": "TriumphSong",
+          "value": 6
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OverflowingLife",
+          "value": 40
+        },
+        {
+          "power": "RelayHand",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.relaychoir",
+      "name": {
+        "ja": "継ぎ歌の合唱",
+        "en": "Relaysong Choir"
+      },
+      "twoPiece": [
+        {
+          "stat": "Haste",
+          "value": 8
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 4
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "RelayHand",
+          "value": 8
+        },
+        {
+          "power": "CoStar",
+          "value": 15
+        },
+        {
+          "power": "KindnessReturns",
+          "value": 20
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Finale",
+          "value": 20
+        },
+        {
+          "power": "SharedWard",
+          "value": 28
+        }
+      ]
+    },
+    {
+      "id": "set.packfeast",
+      "name": {
+        "ja": "群れの宴",
+        "en": "Feast of the Pack"
+      },
+      "twoPiece": [
+        {
+          "stat": "SummonPower",
+          "value": 10
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "PackFeast",
+          "value": 4
+        },
+        {
+          "power": "Lifeline",
+          "value": 5
+        },
+        {
+          "power": "DeathBloom",
+          "value": 113
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "OverflowingLife",
+          "value": 38
+        },
+        {
+          "power": "KindnessReturns",
+          "value": 22
+        }
+      ]
+    },
+    {
+      "id": "set.lastblooms",
+      "name": {
+        "ja": "弔い花の庭",
+        "en": "Garden of Funeral Blooms"
+      },
+      "twoPiece": [
+        {
+          "stat": "SummonPower",
+          "value": 8
+        },
+        {
+          "stat": "Armor",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "DeathBloom",
+          "value": 125
+        },
+        {
+          "power": "PackFeast",
+          "value": 4
+        },
+        {
+          "power": "Thorns",
+          "value": 35
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "KindnessReturns",
+          "value": 22
+        },
+        {
+          "power": "Lifeline",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "id": "set.pinpoint",
+      "name": {
+        "ja": "一点狙いの狩人",
+        "en": "Single-Mark Hunters"
+      },
+      "twoPiece": [
+        {
+          "stat": "CritChancePct",
+          "value": 4
+        },
+        {
+          "stat": "AttackPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "FocusFire",
+          "value": 88
+        },
+        {
+          "power": "DuelistsWay",
+          "value": 35
+        },
+        {
+          "power": "WeakPointWound",
+          "value": 100
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "ImmovableStance",
+          "value": 8
+        },
+        {
+          "power": "PilingLuck",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "id": "set.wanderblades",
+      "name": {
+        "ja": "渡り鳥の剣舞",
+        "en": "Migrant Bladedance"
+      },
+      "twoPiece": [
+        {
+          "stat": "AttackSpeedPct",
+          "value": 5
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 4
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "WanderersEdge",
+          "value": 25
+        },
+        {
+          "power": "CritSplash",
+          "value": 38
+        },
+        {
+          "power": "ReturningBlade",
+          "value": 15
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "SpilloverStrike",
+          "value": 113
+        }
+      ]
+    },
+    {
+      "id": "set.fortuneedge",
+      "name": {
+        "ja": "運刃の賭け",
+        "en": "Gambit of the Fortune Edge"
+      },
+      "twoPiece": [
+        {
+          "stat": "CritChancePct",
+          "value": 4
+        },
+        {
+          "stat": "CritDamagePct",
+          "value": 15
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "PilingLuck",
+          "value": 2
+        },
+        {
+          "power": "BrittleIce",
+          "value": 63
+        },
+        {
+          "power": "WeakPointWound",
+          "value": 113
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "CriticalEcho",
+          "value": 5
+        },
+        {
+          "power": "ReturningBlade",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "id": "set.runupcharge",
+      "name": {
+        "ja": "助走の突撃隊",
+        "en": "Runup Charge Corps"
+      },
+      "twoPiece": [
+        {
+          "stat": "MoveSpeedPct",
+          "value": 5
+        },
+        {
+          "stat": "AttackFlat",
+          "value": 15
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "RunUp",
+          "value": 88
+        },
+        {
+          "power": "StrafeShot",
+          "value": 25
+        },
+        {
+          "power": "SpilloverStrike",
+          "value": 75
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Breakout",
+          "value": 9
+        },
+        {
+          "power": "Frenzy",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "id": "set.medleyband",
+      "name": {
+        "ja": "連奏の楽団",
+        "en": "Medley Ensemble"
+      },
+      "twoPiece": [
+        {
+          "stat": "PowerPct",
+          "value": 5
+        },
+        {
+          "stat": "Haste",
+          "value": 10
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Medley",
+          "value": 5
+        },
+        {
+          "power": "PileOn",
+          "value": 30
+        },
+        {
+          "power": "OpeningSalvo",
+          "value": 22
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Spellsweep",
+          "value": 53
+        },
+        {
+          "power": "ReturningBlade",
+          "value": 14
+        }
+      ]
+    },
+    {
+      "id": "set.gamblertrump",
+      "name": {
+        "ja": "切り札の勝負師",
+        "en": "Trump-Card Gambler"
+      },
+      "twoPiece": [
+        {
+          "stat": "Haste",
+          "value": 8
+        },
+        {
+          "stat": "PowerPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "AceInHand",
+          "value": 12
+        },
+        {
+          "power": "ReturningBlade",
+          "value": 15
+        },
+        {
+          "power": "UltimateSurge",
+          "value": 25
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "PileOn",
+          "value": 30
+        },
+        {
+          "power": "OpeningSalvo",
+          "value": 22
+        }
+      ]
+    },
+    {
+      "id": "set.barehand",
+      "name": {
+        "ja": "無手の矜持",
+        "en": "Creed of the Bare Hand"
+      },
+      "twoPiece": [
+        {
+          "stat": "AttackPct",
+          "value": 5
+        },
+        {
+          "stat": "AttackSpeedPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "BareHandedPride",
+          "value": 2
+        },
+        {
+          "power": "Spellsweep",
+          "value": 56
+        },
+        {
+          "power": "CriticalEcho",
+          "value": 5
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "DuelistsWay",
+          "value": 30
+        },
+        {
+          "power": "FocusFire",
+          "value": 56
+        }
+      ]
+    },
+    {
+      "id": "set.crystalcircuit",
+      "name": {
+        "ja": "結晶の回路",
+        "en": "Crystal Circuit Array"
+      },
+      "twoPiece": [
+        {
+          "stat": "Haste",
+          "value": 10
+        },
+        {
+          "stat": "PowerFlat",
+          "value": 15
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "CrystalCircuit",
+          "value": 12
+        },
+        {
+          "power": "CrystalResonance",
+          "value": 2
+        },
+        {
+          "power": "Finale",
+          "value": 22
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "CrystalResonance",
+          "value": 2
+        },
+        {
+          "power": "PileOn",
+          "value": 28
+        }
+      ]
+    },
+    {
+      "id": "set.dreamvigil",
+      "name": {
+        "ja": "夢見の寝ずの番",
+        "en": "Dreamwatch Vigil"
+      },
+      "twoPiece": [
+        {
+          "stat": "Tenacity",
+          "value": 10
+        },
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "DreamOmen",
+          "value": 25
+        },
+        {
+          "power": "ShardBoon",
+          "value": 8
+        },
+        {
+          "power": "LucidBoon",
+          "value": 8
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Devotion",
+          "value": 3
+        },
+        {
+          "power": "ReadyGuard",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "id": "set.tithebound",
+      "name": {
+        "ja": "供犠の血盟",
+        "en": "Tithebound Blood Pact"
+      },
+      "twoPiece": [
+        {
+          "stat": "SacrificeReduction",
+          "value": 12
+        },
+        {
+          "stat": "AttackPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "SecondWind",
+          "value": 30
+        },
+        {
+          "power": "Bloodlust",
+          "value": 30
+        },
+        {
+          "power": "SpilloverStrike",
+          "value": 69
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "TollOfGrudge",
+          "value": 22
+        },
+        {
+          "power": "UnbowedMind",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "set.prismdance",
+      "name": {
+        "ja": "七彩の舞",
+        "en": "Prismatic Dance"
+      },
+      "twoPiece": [
+        {
+          "stat": "Haste",
+          "value": 8
+        },
+        {
+          "stat": "PowerPct",
+          "value": 5
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "PrismShift",
+          "value": 3
+        },
+        {
+          "power": "ElementalHarvest",
+          "value": 30
+        },
+        {
+          "power": "StardustCycle",
+          "value": 14
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Eclipse",
+          "value": 12
+        },
+        {
+          "power": "FrostCrystal",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "id": "set.breakoutcorps",
+      "name": {
+        "ja": "包囲突破隊",
+        "en": "Breakout Corps"
+      },
+      "twoPiece": [
+        {
+          "stat": "MaxHealthPct",
+          "value": 6
+        },
+        {
+          "stat": "MoveSpeedPct",
+          "value": 4
+        }
+      ],
+      "threePiece": [
+        {
+          "power": "Breakout",
+          "value": 10
+        },
+        {
+          "power": "UnbowedMind",
+          "value": 7
+        },
+        {
+          "power": "ImmovableStance",
+          "value": 9
+        }
+      ],
+      "sixPiece": [
+        {
+          "power": "Frenzy",
+          "value": 3
+        },
+        {
+          "power": "Shatter",
+          "value": 56
+        }
+      ]
+    }
+  ]
+}

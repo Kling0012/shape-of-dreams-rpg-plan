@@ -165,6 +165,8 @@ def main() -> int:
             raise RuntimeError("生成C#が最新ではありません")
         stars_data = json.loads((HERE / "stars.json").read_text(encoding="utf-8"), parse_float=Decimal)
         table_metadata = {"forge": forge_data,
+                          "gear": gen_cs.gear_values.load_gear(),
+                          "sets": gen_cs.set_values.load_sets(),
                           "stars": {"schemaVersion": stars_data["schemaVersion"],
                                     "multipliers": stars_data["multipliers"]}}
         requested_dotnet = os.environ.get("DOTNET")

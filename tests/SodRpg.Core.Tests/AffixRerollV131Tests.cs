@@ -167,7 +167,7 @@ namespace SodRpg.Core.Tests
             foreach (var a in r.Affixes)
             {
                 var def = Content.AffixPool(r.Slot).First(x => x.Stat == a.Stat);
-                int level = Content.ScalesWithItemLevel(a.Stat) ? Content.LevelScalePct(r.ItemLevel) : 100;
+                int level = Content.LevelScalePct(a.Stat, r.ItemLevel);
                 int pct = Content.RarityValuePct(r.Rarity) * level / 100;
                 Assert.InRange(a.Value, Relic.Scale(def.Min, pct), Relic.Scale(def.Max, pct));
             }

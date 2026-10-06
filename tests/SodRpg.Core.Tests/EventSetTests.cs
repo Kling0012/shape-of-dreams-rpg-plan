@@ -185,7 +185,45 @@ namespace SodRpg.Core.Tests
             Rules.Equip(p, "H", SetPiece(p, "set.tide.charm").Uid);
             var b3 = Build.Compute(p, "H", 0);
             Assert.Equal(45, b3.Get(Power.Frost)); // v1.27：霜は 1.5倍
-            Assert.Equal(65, b3.Get(Power.EchoingDodge)); // v1.27：回避の残響は上乗せ%の尺度（6.5倍）
+            Assert.Equal(81, b3.Get(Power.EchoingDodge));
+        }
+
+        [Theory]
+        [InlineData("set.runupcharge", Stat.AttackFlat, Power.RunUp, 88, Power.StrafeShot, 25)]
+        [InlineData("set.crystalcircuit", Stat.PowerFlat, Power.Finale, 22, Power.CrystalResonance, 2)]
+        public void Ordinary_set_fixed_stats_and_bonuses_activate_only_at_their_thresholds(
+            string setId, Stat flat, Power damage, int damageValue, Power unchanged, int unchangedValue)
+        {
+            var p = Profile.CreateNew(1);
+            var ids = Content.Uniques.Where(u => u.SetId == setId).Select(u => u.Id).ToArray();
+            var stages = new List<Build>();
+            var implicitFlats = new List<int>();
+            int implicitFlat = 0;
+            foreach (var id in ids)
+            {
+                var relic = SetPiece(p, id);
+                relic.Affixes.Clear();
+                relic.Powers.Clear();
+                if (relic.Implicit.Stat == flat) implicitFlat += relic.Implicit.Value;
+                implicitFlats.Add(implicitFlat);
+                Rules.Equip(p, "H", relic.Uid);
+                stages.Add(Build.Compute(p, "H", 0));
+            }
+            Assert.Equal(implicitFlats[0], stages[0].Get(flat));
+            Assert.Equal(implicitFlats[1] + 15, stages[1].Get(flat));
+            Assert.Equal(0, stages[1].Get(damage));
+            Assert.Equal(damageValue, stages[2].Get(damage));
+            Assert.Equal(unchangedValue, stages[2].Get(unchanged));
+            Assert.Equal(damageValue, stages[5].Get(damage));
+            Assert.Equal(implicitFlats[5] + 15, stages[5].Get(flat));
+            if (damage == Power.Finale)
+            {
+                var runtime = new PowerRuntime(stages[2], 0);
+                Assert.Equal(0f, runtime.TakeFinale(0f, 0));
+                Assert.Equal(0f, runtime.TakeFinale(1f, 1));
+                Assert.Equal(0.22f, runtime.TakeFinale(2f, 2));
+                Assert.Equal(0f, runtime.TakeFinale(3f, 2));
+            }
         }
 
         [Fact]

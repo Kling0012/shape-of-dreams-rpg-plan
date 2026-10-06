@@ -41,6 +41,8 @@ namespace SodRpg.Core.Game
                 ids.Add(ForgeBalance.ContentFingerprintRecord);
             if (MemoryDamageBalance.ContentFingerprintRecord != null)
                 ids.Add(MemoryDamageBalance.ContentFingerprintRecord);
+            ids.Add(GearBalance.ContentFingerprintRecord);
+            ids.Add(SetBalanceValues.ContentFingerprintRecord);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
             foreach (var u in Content.Uniques)
             {
