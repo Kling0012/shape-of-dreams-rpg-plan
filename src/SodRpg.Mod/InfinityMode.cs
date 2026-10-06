@@ -58,7 +58,8 @@ namespace SodRpg.Mod
             typeof(InfinityMapClosestNode), typeof(InfinityMapHover), typeof(InfinityMapNodeTooltip),
             typeof(InfinityMapTooltip), typeof(InfinityMapTravelTooltip), typeof(InfinityMapDescription),
             typeof(InfinityMapPingPosition), typeof(InfinityMapCacheChanged), typeof(InfinityMapEdgeStatus),
-            typeof(InfinityHunterAdvance),
+            // InfinityHunterAdvance is deliberately absent: its failure degrades only the
+            // hunter adjustment (see DreamforgeMod.PatchEachClass), never Infinity itself.
          };
 
         internal static bool Available { get; private set; }
@@ -240,6 +241,7 @@ namespace SodRpg.Mod
             if (!Available) return;
             ClearPendingTravel();
             _restoring = false; _refresh = false;
+            _hunterAdjustSuspended = false;
             _newInfinity = ClientSession.HostChosenInfinityEnabled;
             _initial = null; _runId = null;
             _generationReportedRun = null;
@@ -259,6 +261,7 @@ namespace SodRpg.Mod
         {
             _restoring = true; _initial = null; _newInfinity = false; _refresh = false;
             ClearPendingTravel();
+            _hunterAdjustSuspended = false;
             Acks.Clear(); _choice = null; _choiceText = null;
         }
         internal static void FinishRestore()

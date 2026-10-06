@@ -60,13 +60,17 @@ namespace SodRpg.Mod
                 else
                 {
                     // #229: prefer a route the hunt has not claimed; the unfiltered #228
-                    // event-paced ordering runs (and is capped) when every fresh room is taken.
-                    next = ChooseNextRevealRoom(zone, current, hunterFreeOnly: true);
+                    // event-paced ordering runs (and is capped) when every fresh room is taken
+                    // or the hunter adjustment has suspended itself.
+                    next = -1;
+                    if (HunterAdjustmentActive)
+                        try { next = ChooseNextRevealRoom(zone, current, hunterFreeOnly: true); }
+                        catch (Exception ex) { SuspendHunterAdjustment(nameof(RefreshReveal), ex); }
                     if (next < 0) next = ChooseNextRevealRoom(zone, current, hunterFreeOnly: false);
                 }
             }
             // #229: the single forward option never loads as hunter territory; a warning mark is fine.
-            CapHunterWarning(zone, next);
+            TryCapForwardHunter(zone, next);
             for (int i = 0; i < zone.nodes.Count; i++)
             {
                 var node = zone.nodes[i];
@@ -99,6 +103,7 @@ namespace SodRpg.Mod
                     events++;
                     if (visited) visitedEvents++;
                 }
+                if (!IsFreshRevealRoom(zone, i, current)) continue;
                 // #229: the hunter-free pass skips claimed rooms; the graph-wide mix counters
                 // above stay unfiltered so the event pacing itself is unchanged.
                 if (hunterFreeOnly && !IsHunterFree(zone, i)) continue;

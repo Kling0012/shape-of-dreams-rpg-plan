@@ -137,6 +137,27 @@ namespace SodRpg.Mod.Startup.Tests
             Assert.Equal(HunterStatus.AboutToBeTaken, zone.hunterStatuses[3]);
         }
 
+        [Fact]
+        public void HunterAdjustmentSuspendsAloneAndNeverStopsInfinity()
+        {
+            var (_, zone, _) = StartRevealGraph();
+            Assert.True(InfinityMode.HunterAdjustmentActive);
+            InfinityMode.SuspendHunterAdjustment(nameof(HunterAdjustmentSuspendsAloneAndNeverStopsInfinity),
+                new Exception("hunter adjustment failed"));
+            Assert.False(InfinityMode.HunterAdjustmentActive);
+
+            // Native hunting passes through untouched: the cap no longer applies.
+            zone.hunterStatuses[1] = HunterStatus.Level3;
+            zone.AdvanceHunterTurn();
+            Assert.Equal(HunterStatus.Level3, zone.hunterStatuses[1]);
+
+            // Infinity itself stays enabled and the reveal keeps its native event pacing.
+            Assert.True(InfinityMode.Available);
+            Assert.True(InfinityMode.Enabled);
+            zone.SetCurrentNodeIndexAndRevealAdjacent(1);
+            Assert.Equal(3, InfinityMode.RevealedNext(zone));
+        }
+
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
