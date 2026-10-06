@@ -61,6 +61,20 @@ dotnet run --project tools/BalanceSim -c Release -- --mode sets --out tools/Bala
 dotnet run --project tools/BalanceSim -c Release -- --mode v132stars --runs 10 --players 100 --seed 3 --out tools/BalanceSim/result-v1.32-stars.md
 ```
 
+### 記憶ダメージの軽量比較（Issue #149 段階1）
+
+`--mode star-efficiency` は実登録 `HeroSigils.TreeFor` のMemoryDamageだけを最大rankまで集計し、
+旅人×記憶×全A/全BのChoice構成×固有/shared/合計の `%/点` と旅人別min/maxを出す。
+接続専用星は費用に含めず、CapGは星全体の費用と記憶成分だけを使う。混合Choiceの最適化や
+実戦DPSではない。500ptの重い `stars` シミュレーションは呼ばない。
+
+```sh
+DOTNET_ROLL_FORWARD=LatestMajor dotnet run --project tools/BalanceSim -c Release -- --mode star-efficiency --metrics-json /tmp/star-efficiency.json
+```
+
+調整の唯一原本は `tools/balance/stars.json`。生成・全検証・鍛冶／記憶効率／遠征の前回成功比較は
+[tools/balance/run](../balance/README.md) を使う。下の #120 表は当時の変更記録で、現行表ではない。
+
 ### #120：記憶ダメージのポイント効率
 
 記憶の冴え40星と鍛錬の入口1星の数値を変更。記憶ごとに、その記憶のダメージを増やす星・選択肢を最大まで取得した値の合計を、取得費用の合計で割ります。接続に必要な別効果の星はこの費用に含めず、別の記憶の選択肢は同時取得したものとして扱いません。表は旅人固有の記憶別効率の最小〜最大（%/点）で、生成済み星図を実際に登録して集計した値です。
@@ -118,7 +132,7 @@ $dotnet = if ($env:DOTNET_ROOT) {
 | `--lesser` | `10` | 部屋あたりの Lesser 撃破数（0以上） |
 | `--normal` | `8` | 部屋あたりの Normal 撃破数（0以上） |
 | `--miniboss` | `0.25` | 部屋ごとに MiniBoss を1体倒す確率（0〜1） |
-| `--mode` | `expeditions` | `expeditions`（遠征）/ `stars`（v1.31 星振り）/ `sets`（v1.32 セット6部位）/ `v132stars`（v1.32 星図の追加効果） |
+| `--mode` | `expeditions` | `expeditions`（遠征）/ `forge`（鍛冶）/ `star-efficiency`（記憶別%/点）/ `infinity` / `stars`（星振り）/ `sets` / `v132stars` |
 | `--dream-level` | `30` | stars: 夢の圧に仮定する夢レベル（1〜30） |
 | `--policy` | `secure` | `secure` / `delve1` / `greedy` |
 | `--wipe` | `0.15` | 遠征ごとの全滅確率（0〜1） |

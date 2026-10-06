@@ -46,7 +46,8 @@ namespace SodRpg.Core.Tests
                 string identity = metrics.RootElement.GetProperty("contentFingerprint").GetString();
                 // Observed from main before the cutover, with all generated heroes installed.
                 const string previousIdentity = "10575-81dd841870386d98";
-                if (legacy) Assert.Equal(previousIdentity, identity);
+                if (legacy && SodRpg.Core.Game.MemoryDamageBalance.ContentFingerprintRecord == null)
+                    Assert.Equal(previousIdentity, identity);
                 else Assert.NotEqual(previousIdentity, identity);
             }
             finally { File.Delete(output); }

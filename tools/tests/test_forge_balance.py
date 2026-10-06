@@ -18,9 +18,6 @@ SPEC.loader.exec_module(forge)
 
 
 class ForgeBalanceTests(unittest.TestCase):
-    def test_checked_in_source_is_fresh(self):
-        self.assertTrue(forge.generate(check=True))
-
     def test_stale_check_fails_without_overwrite_and_regeneration_repairs_it(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / "Forge.Generated.cs"

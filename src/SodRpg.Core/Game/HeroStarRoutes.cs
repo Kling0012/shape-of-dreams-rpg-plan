@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SodRpg.Core.Game
@@ -49,8 +50,14 @@ namespace SodRpg.Core.Game
             public void P(string ja, string en, Power power, int value)
                 => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en), power, value, NextRanks));
 
-            public void L(string ja, string en, LinkKind kind, int value)
+            public void L(string ja, string en, LinkKind kind, decimal value)
             {
+                if (kind != LinkKind.MemoryDamage)
+                {
+                    if (value != decimal.Truncate(value) || value < int.MinValue || value > int.MaxValue)
+                        throw new InvalidOperationException("Route " + NextId + ": non-MemoryDamage link values must be exact Int32 integers.");
+                    value = checked((int)value);
+                }
                 Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en),
                     new LinkDef { Kind = kind, Value = value, Requires = new[] { memory } }, NextRanks));
             }
@@ -63,7 +70,7 @@ namespace SodRpg.Core.Game
                 });
 
             /// <summary>頂点の星。「記憶の冴え」（keen、既存の値）と仕掛けを両方持つ。</summary>
-            public void CapG(string ja, string en, int keen, GimmickTrigger trigger, GimmickEffect effect, int value, int arg = 0, float cooldown = 0f)
+            public void CapG(string ja, string en, decimal keen, GimmickTrigger trigger, GimmickEffect effect, int value, int arg = 0, float cooldown = 0f)
                 => Add(new TalentDef(NextId, Line.Offense, new Txt(ja, en),
                     new LinkDef { Kind = LinkKind.MemoryDamage, Value = keen, Requires = new[] { memory } }, NextRanks)
                 {
@@ -80,34 +87,34 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Vesper", "resolve", "St_D_Resolve");
             r.L("不退の誓い", "Unyielding Oath", LinkKind.Guard, 2);
             r.G("威圧の一撃", "Intimidating Strike", GimmickTrigger.OnCrit, GimmickEffect.Expose, 3);
-            r.L("跳ね除ける一撃の冴え", "Keen Repelling Blow", LinkKind.MemoryDamage, 4);
+            r.L("跳ね除ける一撃の冴え", "Keen Repelling Blow", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_resolve_3_link_value);
             r.G("決意の障壁", "Barrier of Resolve", GimmickTrigger.OnCrit, GimmickEffect.Shield, 2);
             r.L("揺るがぬ足場", "Unshaken Ground", LinkKind.Guard, 1);
             r.P("決意の鉄槌", "Hammer of Resolve", Power.Fetters, 3);
             r.G("不動の誓い", "Unmoved Vow", GimmickTrigger.OnCrit, GimmickEffect.Heal, 6, 1);
 
             r = new Route(nodes, "Vesper", "mercy", "St_D_MercyOfEl");
-            r.L("四撃の聖光の冴え", "Keen Fourth-Shot Light", LinkKind.MemoryDamage, 4);
+            r.L("四撃の聖光の冴え", "Keen Fourth-Shot Light", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_mercy_1_link_value);
             r.G("光の兆し", "Sign of Light", GimmickTrigger.OnCrit, GimmickEffect.Element, 30, 2);
             r.S("慈悲の連打", "Merciful Flurry", Stat.AttackSpeedPct, 2);
             r.G("慈悲の残光", "Lingering Mercy", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
-            r.L("重なる連撃の冴え", "Keen Stacking Flurry", LinkKind.MemoryDamage, 4);
+            r.L("重なる連撃の冴え", "Keen Stacking Flurry", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_mercy_5_link_value);
             r.S("聖光の芯", "Heart of Holy Light", Stat.PowerPct, 2);
-            r.CapG("慈悲の分け与え", "Shared Mercy", 18, GimmickTrigger.OnCrit, GimmickEffect.Heal, 5, 1);
+            r.CapG("慈悲の分け与え", "Shared Mercy", MemoryDamageBalance.Effect_h_vesper_route_mercy_7_link_value, GimmickTrigger.OnCrit, GimmickEffect.Heal, 5, 1);
 
             r = new Route(nodes, "Vesper", "charge", "St_M_Charge");
             r.L("盾の助走", "Shielded Run-Up", LinkKind.Guard, 2);
             r.G("衝突の隙", "Impact Opening", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
             r.L("突進の呼吸", "Charging Breath", LinkKind.Guard, 1);
             r.G("衝突の火花", "Impact Sparks", GimmickTrigger.OnHit, GimmickEffect.Element, 50);
-            r.L("体当たりの冴え", "Keen Ramming Blow", LinkKind.MemoryDamage, 4);
+            r.L("体当たりの冴え", "Keen Ramming Blow", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_charge_5_link_value);
             r.S("重装の盾", "Heavy Bulwark", Stat.ShieldPower, 3);
             r.G("盾突きの構え", "Shield Bash Stance", GimmickTrigger.OnHit, GimmickEffect.Shield, 8);
 
             r = new Route(nodes, "Vesper", "cruel-sun", "St_Q_CruelSun");
             r.L("日輪の蓄熱", "Solar Heat Reserve", LinkKind.MemorySurge, 2);
             r.G("日輪の火種", "Solar Ember", GimmickTrigger.OnHit, GimmickEffect.Element, 30);
-            r.L("日輪の打撃の冴え", "Keen Solar Smash", LinkKind.MemoryDamage, 4);
+            r.L("日輪の打撃の冴え", "Keen Solar Smash", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_cruel_sun_3_link_value);
             r.G("日輪の還り", "Return of the Sun", GimmickTrigger.OnKill, GimmickEffect.Recharge, 8);
             r.P("灼ける裁き", "Searing Judgment", Power.Fetters, 3);
             r.S("太陽を支える体", "Sun-Bearing Body", Stat.MaxHealthPct, 2);
@@ -118,7 +125,7 @@ namespace SodRpg.Core.Game
             r.G("律の光", "Light of Order", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
             r.L("踏み込む決意", "Resolute Advance", LinkKind.MemorySurge, 2);
             r.G("律する二撃", "Disciplined Double", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("踏み込む打撃の冴え", "Keen Advancing Smash", LinkKind.MemoryDamage, 4);
+            r.L("踏み込む打撃の冴え", "Keen Advancing Smash", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_discipline_5_link_value);
             r.S("連打の息吹", "Breath of Blows", Stat.AttackSpeedPct, 1);
             r.G("裁きの再突撃", "Judgment Recharge", GimmickTrigger.OnKill, GimmickEffect.Recharge, 30);
 
@@ -132,9 +139,9 @@ namespace SodRpg.Core.Game
             r.G("洗礼の昂ぶり", "Fervor of Baptism", GimmickTrigger.OnUse, GimmickEffect.Empower, 20);
 
             r = new Route(nodes, "Vesper", "sanctuary", "St_R_SanctuaryOfEl");
-            r.L("聖域の爆光の冴え", "Keen Holy Burst", LinkKind.MemoryDamage, 4);
+            r.L("聖域の爆光の冴え", "Keen Holy Burst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_sanctuary_1_link_value);
             r.G("光に晒される", "Exposed by Light", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
-            r.L("降り注ぐ祝福の冴え", "Keen Descending Blessing", LinkKind.MemoryDamage, 4);
+            r.L("降り注ぐ祝福の冴え", "Keen Descending Blessing", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_vesper_route_sanctuary_3_link_value);
             r.G("聖域の慈雨", "Sanctuary Rain", GimmickTrigger.OnUse, GimmickEffect.Heal, 2, 1);
             r.L("聖域の門", "Sanctuary Gate", LinkKind.Guard, 1);
             r.S("聖域を包む光", "Light Enfolding the Sanctum", Stat.ShieldPower, 3);
@@ -142,22 +149,22 @@ namespace SodRpg.Core.Game
 
             // Lacerta: distinguish AD double shots from AP fire; defense fills the kit's weakness.
             r = new Route(nodes, "Lacerta", "double-tap", "St_D_DoubleTap");
-            r.L("二連射の冴え", "Keen Double Shot", LinkKind.MemoryDamage, 4);
+            r.L("二連射の冴え", "Keen Double Shot", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_double_tap_1_link_value);
             r.G("二射の残響", "Twin-Shot Echo", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
-            r.L("重なる弾道の冴え", "Keen Twin Trajectories", LinkKind.MemoryDamage, 4);
+            r.L("重なる弾道の冴え", "Keen Twin Trajectories", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_double_tap_3_link_value);
             r.G("火の弾道", "Fire Trajectory", GimmickTrigger.OnHit, GimmickEffect.Element, 50);
-            r.L("追い撃ちの冴え", "Keen Follow-Up Shot", LinkKind.MemoryDamage, 4);
+            r.L("追い撃ちの冴え", "Keen Follow-Up Shot", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_double_tap_5_link_value);
             r.S("反動の受け身", "Recoil Brace", Stat.MaxHealthPct, 2);
-            r.CapG("速射の連携", "Rapid Link", 20, GimmickTrigger.OnHit, GimmickEffect.RechargeOther, 10);
+            r.CapG("速射の連携", "Rapid Link", MemoryDamageBalance.Effect_h_lacerta_route_double_tap_7_link_value, GimmickTrigger.OnHit, GimmickEffect.RechargeOther, 10);
 
             r = new Route(nodes, "Lacerta", "powder", "St_D_SalamanderPowder");
-            r.L("発火の冴え", "Keen Ignition", LinkKind.MemoryDamage, 4);
+            r.L("発火の冴え", "Keen Ignition", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_powder_1_link_value);
             r.G("火薬の種火", "Powder Spark", GimmickTrigger.OnHit, GimmickEffect.Element, 30);
-            r.L("四射目の炸裂の冴え", "Keen Fourth-Shot Blast", LinkKind.MemoryDamage, 4);
+            r.L("四射目の炸裂の冴え", "Keen Fourth-Shot Blast", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_powder_3_link_value);
             r.G("火薬庫の誘爆", "Powder Keg Sympathy", GimmickTrigger.OnCrit, GimmickEffect.Burst, 30);
-            r.L("燃え広がる粉の冴え", "Keen Spreading Powder", LinkKind.MemoryDamage, 4);
+            r.L("燃え広がる粉の冴え", "Keen Spreading Powder", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_powder_5_link_value);
             r.S("燃焼の濃度", "Burning Intensity", Stat.FireAmp, 2);
-            r.CapG("延焼", "Wildfire", 20, GimmickTrigger.OnKill, GimmickEffect.Element, 100);
+            r.CapG("延焼", "Wildfire", MemoryDamageBalance.Effect_h_lacerta_route_powder_7_link_value, GimmickTrigger.OnKill, GimmickEffect.Element, 100);
 
             r = new Route(nodes, "Lacerta", "nimble-dodge", "St_M_NimbleDodge");
             r.L("射線の離脱", "Leaving the Firing Line", LinkKind.Guard, 1);
@@ -171,7 +178,7 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Lacerta", "hand-cannon", "St_Q_HandCannon");
             r.L("砲口の熱", "Muzzle Heat", LinkKind.MemorySurge, 2);
             r.G("至近の弱点", "Point-Blank Weakness", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
-            r.L("砲声の冴え", "Keen Cannon Roar", LinkKind.MemoryDamage, 5);
+            r.L("砲声の冴え", "Keen Cannon Roar", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_hand_cannon_3_link_value);
             r.G("弾込めの手際", "Quick Reload", GimmickTrigger.OnKill, GimmickEffect.Recharge, 8);
             r.L("砲身の冷却", "Barrel Cooling", LinkKind.MemoryHaste, 2);
             r.S("火炎砲の芯", "Flame Cannon Core", Stat.FireAmp, 2);
@@ -189,7 +196,7 @@ namespace SodRpg.Core.Game
             r = new Route(nodes, "Lacerta", "precision", "St_R_PrecisionShot");
             r.L("狙いの蓄積", "Gathered Aim", LinkKind.MemorySurge, 2);
             r.G("徹甲の傷", "Armor-Piercing Wound", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
-            r.L("貫く弾芯の冴え", "Keen Piercing Core", LinkKind.MemoryDamage, 5);
+            r.L("貫く弾芯の冴え", "Keen Piercing Core", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_precision_3_link_value);
             r.G("照準の木霊", "Aiming Echo", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
             r.L("照準の復帰", "Sight Recovery", LinkKind.MemoryHaste, 2);
             r.P("狙い澄ました一撃", "Steadied Shot", Power.Fetters, 3);
@@ -200,37 +207,37 @@ namespace SodRpg.Core.Game
             r.G("跳弾", "Ricochet", GimmickTrigger.OnHit, GimmickEffect.Echo, 6);
             r.L("抜き撃ちの勢い", "Quickdraw Momentum", LinkKind.MemorySurge, 2);
             r.G("熱を帯びた弾", "Heated Rounds", GimmickTrigger.OnHit, GimmickEffect.Element, 50);
-            r.L("三連貫通の冴え", "Keen Triple Pierce", LinkKind.MemoryDamage, 4);
+            r.L("三連貫通の冴え", "Keen Triple Pierce", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_lacerta_route_quick_trigger_5_link_value);
             r.S("射撃の持久力", "Shooting Endurance", Stat.MaxHealthPct, 2);
             r.G("三射の再装填", "Triple-Shot Reload", GimmickTrigger.OnKill, GimmickEffect.Reload, 1);
 
             // Cetus: HP feeds bonus-health scaling; cold and skill stuns sustain shields.
             r = new Route(nodes, "Cetus", "icy-veins", "St_D_IcyVeins");
-            r.L("冷血の炸裂の冴え", "Keen Coldblood Burst", LinkKind.MemoryDamage, 4);
+            r.L("冷血の炸裂の冴え", "Keen Coldblood Burst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_icy_veins_1_link_value);
             r.G("冷血の兆し", "Cold-Blood Sign", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 1);
             r.P("氷の外殻", "Ice Carapace", Power.Barrier, 2);
             r.G("冷血の薄氷", "Cold-Blooded Rime", GimmickTrigger.OnHit, GimmickEffect.Shield, 2);
-            r.L("五連の霜爆の冴え", "Keen Five-Stack Frostburst", LinkKind.MemoryDamage, 4);
+            r.L("五連の霜爆の冴え", "Keen Five-Stack Frostburst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_icy_veins_5_link_value);
             r.S("凍れる脈", "Frozen Pulse", Stat.ShieldPower, 3);
             r.G("冷血の脆化", "Cold Brittleness", GimmickTrigger.OnHit, GimmickEffect.Expose, 12);
 
             r = new Route(nodes, "Cetus", "charged", "St_D_ChargedAnguillian");
-            r.L("蓄電の冴え", "Keen Stored Charge", LinkKind.MemoryDamage, 4);
+            r.L("蓄電の冴え", "Keen Stored Charge", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_charged_1_link_value);
             r.G("帯電の火花", "Charged Spark", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
             r.S("帯電の鱗", "Charged Scales", Stat.LightAmp, 3);
             r.G("雷の余韻", "Thunder Reverb", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("放電の冴え", "Keen Discharge", LinkKind.MemoryDamage, 4);
+            r.L("放電の冴え", "Keen Discharge", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_charged_5_link_value);
             r.S("帯電の器", "Charged Vessel", Stat.MaxHealthPct, 2);
-            r.CapG("電光の飛び火", "Lightning Leap", 18, GimmickTrigger.OnKill, GimmickEffect.Element, 100, 2);
+            r.CapG("電光の飛び火", "Lightning Leap", MemoryDamageBalance.Effect_h_cetus_route_charged_7_link_value, GimmickTrigger.OnKill, GimmickEffect.Element, 100, 2);
 
             r = new Route(nodes, "Cetus", "frost-charge", "St_M_FrostyCharge");
             r.L("氷走りの備え", "Frost Run Readiness", LinkKind.Guard, 1);
             r.G("霜の足跡", "Frost Footprint", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 1);
             r.L("氷走りの再起", "Frost Run Renewal", LinkKind.Guard, 1);
             r.G("氷走りの薄氷", "Frost-Run Rime", GimmickTrigger.OnHit, GimmickEffect.Shield, 2);
-            r.L("氷突進の冴え", "Keen Frost Ram", LinkKind.MemoryDamage, 4);
+            r.L("氷突進の冴え", "Keen Frost Ram", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_frost_charge_5_link_value);
             r.S("氷山の質量", "Iceberg Mass", Stat.MaxHealthPct, 2);
-            r.CapG("氷の轍", "Icy Wake", 16, GimmickTrigger.OnHit, GimmickEffect.Burst, 100);
+            r.CapG("氷の轍", "Icy Wake", MemoryDamageBalance.Effect_h_cetus_route_frost_charge_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Burst, 100);
 
             r = new Route(nodes, "Cetus", "embrace-chill", "St_Q_EmbracingTheChill");
             r.L("冷気の循環", "Chill Circulation", LinkKind.MemoryHaste, 2);
@@ -239,12 +246,12 @@ namespace SodRpg.Core.Game
             r.G("凍える領域", "Freezing Domain", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
             r.L("氷域の余力", "Ice Field Reserve", LinkKind.MemorySurge, 2);
             r.S("氷域の厚み", "Ice Field Depth", Stat.ShieldPower, 3);
-            r.CapG("寒気の癒やし", "Chill's Mercy", 16, GimmickTrigger.OnUse, GimmickEffect.Heal, 6, 1);
+            r.CapG("寒気の癒やし", "Chill's Mercy", MemoryDamageBalance.Effect_h_cetus_route_embrace_chill_7_link_value, GimmickTrigger.OnUse, GimmickEffect.Heal, 6, 1);
 
             r = new Route(nodes, "Cetus", "boreal-chunk", "St_Q_BigBorealChunk");
             r.L("氷河の蓄積", "Glacier Accumulation", LinkKind.MemorySurge, 2);
             r.G("氷河の種", "Glacier Seed", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 1);
-            r.L("崩れ氷の炸裂の冴え", "Keen Collapsing Ice", LinkKind.MemoryDamage, 5);
+            r.L("崩れ氷の炸裂の冴え", "Keen Collapsing Ice", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_boreal_chunk_3_link_value);
             r.G("氷河の被膜", "Glacier Film", GimmickTrigger.OnUse, GimmickEffect.Shield, 2);
             r.L("氷河の再成", "Glacier Renewal", LinkKind.MemoryHaste, 2);
             r.S("寒波の深さ", "Depth of the Cold Wave", Stat.ColdAmp, 2);
@@ -260,32 +267,32 @@ namespace SodRpg.Core.Game
             r.G("爽快な追い打ち", "Refreshing Follow-Up", GimmickTrigger.OnKill, GimmickEffect.Recharge, 30);
 
             r = new Route(nodes, "Cetus", "frozen-fists", "St_R_FrozenFists");
-            r.L("近接乱打の冴え", "Keen Melee Barrage", LinkKind.MemoryDamage, 4);
+            r.L("近接乱打の冴え", "Keen Melee Barrage", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_cetus_route_frozen_fists_1_link_value);
             r.G("凍てつく拳", "Freezing Fist", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 1);
             r.L("近接の氷殻", "Melee Ice Shell", LinkKind.Guard, 2);
             r.G("拳の二連", "Double Fist", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
             r.L("拳の仕切り直し", "Fist Reset", LinkKind.MemoryHaste, 2);
             r.S("凍拳の氷盾", "Frozen Fist Shield", Stat.ShieldPower, 3);
-            r.CapG("礼儀の氷膜", "Courtesy Frost", 18, GimmickTrigger.OnKill, GimmickEffect.Shield, 7);
+            r.CapG("礼儀の氷膜", "Courtesy Frost", MemoryDamageBalance.Effect_h_cetus_route_frozen_fists_7_link_value, GimmickTrigger.OnKill, GimmickEffect.Shield, 7);
 
             // Yubar: AP explosions and defensive windows, not more generic crit/haste.
             r = new Route(nodes, "Yubar", "converging-stars", "St_D_ConvergencePoint");
-            r.L("星弾の冴え", "Keen Starshot", LinkKind.MemoryDamage, 4);
+            r.L("星弾の冴え", "Keen Starshot", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_converging_stars_1_link_value);
             r.G("星の目印", "Star Marker", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
-            r.L("跳ねる星屑の冴え", "Keen Ricocheting Stardust", LinkKind.MemoryDamage, 4);
+            r.L("跳ねる星屑の冴え", "Keen Ricocheting Stardust", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_converging_stars_3_link_value);
             r.G("跳ね返る星屑", "Rebounding Stardust", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("巡る星芒の冴え", "Keen Orbiting Starlight", LinkKind.MemoryDamage, 4);
+            r.L("巡る星芒の冴え", "Keen Orbiting Starlight", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_converging_stars_5_link_value);
             r.S("星弾を継ぐ手", "Starshot Relay", Stat.AttackSpeedPct, 1);
-            r.CapG("星の連なり", "Star Chain", 20, GimmickTrigger.OnHit, GimmickEffect.Element, 200, 2);
+            r.CapG("星の連なり", "Star Chain", MemoryDamageBalance.Effect_h_yubar_route_converging_stars_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Element, 200, 2);
 
             r = new Route(nodes, "Yubar", "exotic-matter", "St_D_ExoticMatter");
-            r.L("未知物質の冴え", "Keen Exotic Matter", LinkKind.MemoryDamage, 4);
+            r.L("未知物質の冴え", "Keen Exotic Matter", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_exotic_matter_1_link_value);
             r.G("未知の輝き", "Unknown Glow", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
-            r.L("凝縮する塊の冴え", "Keen Condensed Mass", LinkKind.MemoryDamage, 4);
+            r.L("凝縮する塊の冴え", "Keen Condensed Mass", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_exotic_matter_3_link_value);
             r.G("未知の重み", "Unknown Weight", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("四重の光爆の冴え", "Keen Fourfold Lightburst", LinkKind.MemoryDamage, 4);
+            r.L("四重の光爆の冴え", "Keen Fourfold Lightburst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_exotic_matter_5_link_value);
             r.S("異質な光", "Exotic Light", Stat.LightAmp, 2);
-            r.CapG("物質の還流", "Matter Reflux", 20, GimmickTrigger.OnKill, GimmickEffect.RechargeOther, 15);
+            r.CapG("物質の還流", "Matter Reflux", MemoryDamageBalance.Effect_h_yubar_route_exotic_matter_7_link_value, GimmickTrigger.OnKill, GimmickEffect.RechargeOther, 15);
 
             r = new Route(nodes, "Yubar", "flicker", "St_M_Flicker");
             r.L("転移の備え", "Blink Readiness", LinkKind.Guard, 1);
@@ -301,23 +308,23 @@ namespace SodRpg.Core.Game
             r.G("光の残り香", "Scent of Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
             r.L("爆光の余韻", "Radiant Blast Echo", LinkKind.MemorySurge, 2);
             r.G("往復する残光", "Returning Afterglow", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("往復光波の冴え", "Keen Round-Trip Lightwave", LinkKind.MemoryDamage, 4);
+            r.L("往復光波の冴え", "Keen Round-Trip Lightwave", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_ethereal_5_link_value);
             r.S("光束の密度", "Light Beam Density", Stat.LightAmp, 2);
             r.G("光の呼び戻し", "Recall of Light", GimmickTrigger.OnKill, GimmickEffect.Recharge, 25);
 
             r = new Route(nodes, "Yubar", "supernova", "St_Q_SuperNova");
             r.L("星核の蓄積", "Star Core Accumulation", LinkKind.MemorySurge, 2);
             r.G("星核の殻", "Star Core Shell", GimmickTrigger.OnUse, GimmickEffect.Shield, 1);
-            r.L("星核の爆発の冴え", "Keen Stellar Detonation", LinkKind.MemoryDamage, 5);
+            r.L("星核の爆発の冴え", "Keen Stellar Detonation", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_supernova_3_link_value);
             r.G("超新星の余波", "Supernova Aftershock", GimmickTrigger.OnHit, GimmickEffect.Burst, 20);
             r.P("超新星の昂り", "Supernova Surge", Power.Overload, 4);
             r.S("星光の圧縮", "Starlight Compression", Stat.LightAmp, 2);
             r.G("星の残響", "Starry Reverb", GimmickTrigger.OnHit, GimmickEffect.Echo, 40);
 
             r = new Route(nodes, "Yubar", "cataclysm", "St_R_Cataclysm");
-            r.L("隕石の軌道の冴え", "Keen Meteor Track", LinkKind.MemoryDamage, 4);
+            r.L("隕石の軌道の冴え", "Keen Meteor Track", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_cataclysm_1_link_value);
             r.G("火球の兆し", "Sign of the Fireball", GimmickTrigger.OnHit, GimmickEffect.Element, 30);
-            r.L("降下する天罰の冴え", "Keen Falling Judgment", LinkKind.MemoryDamage, 4);
+            r.L("降下する天罰の冴え", "Keen Falling Judgment", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_yubar_route_cataclysm_3_link_value);
             r.G("隕石の火の粉", "Meteor Sparks", GimmickTrigger.OnHit, GimmickEffect.Burst, 25);
             r.L("隕石の余熱", "Meteor Afterheat", LinkKind.MemorySurge, 2);
             r.S("天体を支える器", "Celestial Vessel", Stat.MaxHealthPct, 2);
@@ -335,22 +342,22 @@ namespace SodRpg.Core.Game
             // Husk: attack-speed conversion belongs to the identity; Death Mark and the
             // annihilation shockwave explicitly carry AP markers in the shipped data.
             r = new Route(nodes, "Husk", "killing-flow", "St_D_TheKillingFlow");
-            r.L("一撃の冴え", "Keen Single Strike", LinkKind.MemoryDamage, 5);
+            r.L("一撃の冴え", "Keen Single Strike", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_killing_flow_1_link_value);
             r.G("殺意の染み", "Taint of Intent", GimmickTrigger.OnHit, GimmickEffect.Element, 35, 3);
-            r.L("加速の刃の冴え", "Keen Swiftsteel", LinkKind.MemoryDamage, 4);
+            r.L("加速の刃の冴え", "Keen Swiftsteel", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_killing_flow_3_link_value);
             r.G("一歩一殺の残像", "Afterimage of the Flow", GimmickTrigger.OnHit, GimmickEffect.Echo, 12);
-            r.L("歩みの一閃の冴え", "Keen Striding Flash", LinkKind.MemoryDamage, 4);
+            r.L("歩みの一閃の冴え", "Keen Striding Flash", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_killing_flow_5_link_value);
             r.S("一歩の剛力", "One-Step Strength", Stat.AttackPct, 2);
-            r.CapG("殺気の飛び火", "Spark of Killing Intent", 20, GimmickTrigger.OnKill, GimmickEffect.Element, 115, 3);
+            r.CapG("殺気の飛び火", "Spark of Killing Intent", MemoryDamageBalance.Effect_h_husk_route_killing_flow_7_link_value, GimmickTrigger.OnKill, GimmickEffect.Element, 115, 3);
 
             r = new Route(nodes, "Husk", "wind-scar", "St_D_ScarOfTheWind");
-            r.L("風刃の冴え", "Keen Wind Blade", LinkKind.MemoryDamage, 5);
+            r.L("風刃の冴え", "Keen Wind Blade", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_wind_scar_1_link_value);
             r.G("風傷の闇", "Dark of the Windscar", GimmickTrigger.OnHit, GimmickEffect.Element, 35, 3);
-            r.L("切り裂く風の冴え", "Keen Slashing Wind", LinkKind.MemoryDamage, 4);
+            r.L("切り裂く風の冴え", "Keen Slashing Wind", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_wind_scar_3_link_value);
             r.G("風傷の癒やし", "Windscar Mending", GimmickTrigger.OnHit, GimmickEffect.Heal, 2);
-            r.L("追い風の一閃の冴え", "Keen Tailwind Flash", LinkKind.MemoryDamage, 4);
+            r.L("追い風の一閃の冴え", "Keen Tailwind Flash", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_wind_scar_5_link_value);
             r.S("深い風傷", "Deep Wind Scar", Stat.DarkAmp, 2);
-            r.CapG("風の傷痕", "Wind's Wound", 20, GimmickTrigger.OnHit, GimmickEffect.Expose, 18);
+            r.CapG("風の傷痕", "Wind's Wound", MemoryDamageBalance.Effect_h_husk_route_wind_scar_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Expose, 18);
 
             r = new Route(nodes, "Husk", "flash-step", "St_M_FlashStep");
             r.L("瞬歩の備え", "Flash Step Readiness", LinkKind.Guard, 1);
@@ -366,7 +373,7 @@ namespace SodRpg.Core.Game
             r.G("裂傷の闇", "Shadow of the Slash", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
             r.L("赤刃の余勢", "Red Blade Momentum", LinkKind.MemorySurge, 3);
             r.G("傷の巡り", "Wound Cycle", GimmickTrigger.OnHit, GimmickEffect.Recharge, 5);
-            r.L("赤青の斬撃の冴え", "Keen Red-Blue Slashes", LinkKind.MemoryDamage, 5);
+            r.L("赤青の斬撃の冴え", "Keen Red-Blue Slashes", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_laceration_5_link_value);
             r.S("裂け目の闇", "Darkness in the Rift", Stat.DarkAmp, 2);
             r.G("二度裂く", "Cut Twice", GimmickTrigger.OnHit, GimmickEffect.Echo, 35);
 
@@ -375,16 +382,16 @@ namespace SodRpg.Core.Game
             r.G("刻印の闇", "Shadow of the Mark", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
             r.L("刻印の余波", "Mark Aftershock", LinkKind.MemorySurge, 3);
             r.G("刻印の疼き", "Aching Mark", GimmickTrigger.OnHit, GimmickEffect.Expose, 5);
-            r.L("呪楔の弾道の冴え", "Keen Cursed Wedge", LinkKind.MemoryDamage, 5);
+            r.L("呪楔の弾道の冴え", "Keen Cursed Wedge", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_death_mark_5_link_value);
             r.S("刻み込む闇", "Engraved Darkness", Stat.DarkAmp, 2);
             r.G("刻印の回収", "Mark Reclaimed", GimmickTrigger.OnKill, GimmickEffect.Recharge, 35);
 
             r = new Route(nodes, "Husk", "annihilation", "St_R_AnnihilationStance");
-            r.L("剣気の冴え", "Keen Sword Wave", LinkKind.MemoryDamage, 5);
+            r.L("剣気の冴え", "Keen Sword Wave", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_annihilation_1_link_value);
             r.G("滅殺の備え", "Annihilation Readiness", GimmickTrigger.OnUse, GimmickEffect.Shield, 3);
             r.L("覚醒の余勢", "Awakening Momentum", LinkKind.MemorySurge, 2);
             r.G("剣気の余波", "Sword Aura Aftermath", GimmickTrigger.OnHit, GimmickEffect.Burst, 23, 0, 0.85f);
-            r.L("滅びの波動の冴え", "Keen Ruinous Wave", LinkKind.MemoryDamage, 5);
+            r.L("滅びの波動の冴え", "Keen Ruinous Wave", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_annihilation_5_link_value);
             r.S("剣気を放つ腕", "Wave-Releasing Arm", Stat.AttackPct, 2);
             r.G("剣気の吸命", "Aura Lifesteal", GimmickTrigger.OnKill, GimmickEffect.Heal, 6);
 
@@ -393,28 +400,28 @@ namespace SodRpg.Core.Game
             r.G("隠れ身の闇", "Shadow of Stealth", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
             r.L("奇襲の余波", "Ambush Aftershock", LinkKind.MemorySurge, 3);
             r.G("解除の波紋", "Reveal Ripple", GimmickTrigger.OnHit, GimmickEffect.Burst, 29);
-            r.L("影裂きの炸裂の冴え", "Keen Shadow-Rending Blast", LinkKind.MemoryDamage, 5);
+            r.L("影裂きの炸裂の冴え", "Keen Shadow-Rending Blast", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_husk_route_deception_5_link_value);
             r.S("潜む闇の濃さ", "Lurking Dark Intensity", Stat.DarkAmp, 2);
             r.G("影の侵食", "Creeping Shadow", GimmickTrigger.OnHit, GimmickEffect.Element, 230, 3);
 
             // Mist: AP opening shields/parries versus AD marked-target and thrust damage.
             r = new Route(nodes, "Mist", "en-garde", "St_D_AstridsMasterpieceEnGarde");
-            r.L("初太刀の冴え", "Keen Opening Thrust", LinkKind.MemoryDamage, 4);
+            r.L("初太刀の冴え", "Keen Opening Thrust", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_en_garde_1_link_value);
             r.G("初撃の余韻", "Opening Echo", GimmickTrigger.OnHit, GimmickEffect.Echo, 6);
             r.L("三撃の守り", "Three-Strike Guard", LinkKind.Guard, 2);
             r.G("見切りの構え", "Reading the Opening", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("仕掛けの連撃の冴え", "Keen Engaging Flurry", LinkKind.MemoryDamage, 4);
+            r.L("仕掛けの連撃の冴え", "Keen Engaging Flurry", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_en_garde_5_link_value);
             r.S("受け止める器", "Shield-Bearing Vessel", Stat.MaxHealthPct, 2);
             r.G("構えの連携", "Stance Link", GimmickTrigger.OnHit, GimmickEffect.RechargeOther, 15);
 
             r = new Route(nodes, "Mist", "priorite", "St_D_AstridsMasterpiecePriorite");
-            r.L("標的を穿つ冴え", "Keen Mark Piercing", LinkKind.MemoryDamage, 4);
+            r.L("標的を穿つ冴え", "Keen Mark Piercing", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_priorite_1_link_value);
             r.G("標的の戦利", "Spoils of the Mark", GimmickTrigger.OnKill, GimmickEffect.Heal, 1);
-            r.L("決闘刃の冴え", "Keen Duelist's Blade", LinkKind.MemoryDamage, 4);
+            r.L("決闘刃の冴え", "Keen Duelist's Blade", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_priorite_3_link_value);
             r.G("追い立ての刃", "Driving Blade", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("重なる刺突の冴え", "Keen Stacking Thrusts", LinkKind.MemoryDamage, 4);
+            r.L("重なる刺突の冴え", "Keen Stacking Thrusts", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_priorite_5_link_value);
             r.S("刻み続ける剣", "Relentless Marking Blade", Stat.AttackSpeedPct, 1);
-            r.CapG("標的の連鎖爆発", "Marked Chain Blast", 20, GimmickTrigger.OnHit, GimmickEffect.Burst, 120);
+            r.CapG("標的の連鎖爆発", "Marked Chain Blast", MemoryDamageBalance.Effect_h_mist_route_priorite_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Burst, 120);
 
             r = new Route(nodes, "Mist", "fast-feet", "St_M_FastFeet");
             r.L("足運びの備え", "Footwork Readiness", LinkKind.Guard, 1);
@@ -430,7 +437,7 @@ namespace SodRpg.Core.Game
             r.G("閃きの光", "Flash of Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
             r.L("突剣の余勢", "Thrusting Momentum", LinkKind.MemorySurge, 2);
             r.G("突剣の二段", "Double Thrust", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("飛び込み突きの冴え", "Keen Lunging Thrust", LinkKind.MemoryDamage, 4);
+            r.L("飛び込み突きの冴え", "Keen Lunging Thrust", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_fleche_5_link_value);
             r.S("傷を塞ぐ体", "Wound-Mending Body", Stat.MaxHealthPct, 2);
             r.G("突き抜けの再突撃", "Breakthrough Charge", GimmickTrigger.OnKill, GimmickEffect.Reload, 1);
 
@@ -439,7 +446,7 @@ namespace SodRpg.Core.Game
             r.G("踏み込みの守り", "Advancing Guard", GimmickTrigger.OnHit, GimmickEffect.Shield, 1);
             r.L("刺突の余韻", "Thrust Echo", LinkKind.MemorySurge, 2);
             r.G("突きの衝撃", "Thrust Impact", GimmickTrigger.OnHit, GimmickEffect.Burst, 25);
-            r.L("深く刺す冴え", "Keen Deep Stab", LinkKind.MemoryDamage, 4);
+            r.L("深く刺す冴え", "Keen Deep Stab", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_lunge_5_link_value);
             r.S("突剣の下支え", "Thrust Support", Stat.Armor, 2);
             r.G("霧雨の追い突き", "Mist-Rain Follow-Thrusts", GimmickTrigger.OnHit, GimmickEffect.Echo, 40);
 
@@ -453,24 +460,24 @@ namespace SodRpg.Core.Game
             r.G("受け流しの構え", "Parry Guard", GimmickTrigger.OnUse, GimmickEffect.Shield, 8);
 
             r = new Route(nodes, "Mist", "determination", "St_R_UnbreakableDetermination");
-            r.L("覚醒の雷光の冴え", "Keen Awakened Lightning", LinkKind.MemoryDamage, 4);
+            r.L("覚醒の雷光の冴え", "Keen Awakened Lightning", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_determination_1_link_value);
             r.G("覚醒の守り", "Guard of Awakening", GimmickTrigger.OnUse, GimmickEffect.Shield, 2);
             r.L("意志の余光", "Resolve Afterglow", LinkKind.MemorySurge, 2);
             r.G("電撃の余韻", "Lightning Reverberation", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
-            r.L("立ち上がる剣の冴え", "Keen Rising Blade", LinkKind.MemoryDamage, 4);
+            r.L("立ち上がる剣の冴え", "Keen Rising Blade", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_mist_route_determination_5_link_value);
             r.S("再起する体", "Renewing Body", Stat.MaxHealthPct, 2);
             r.G("覚醒の鼓動", "Awakened Heartbeat", GimmickTrigger.OnKill, GimmickEffect.Heal, 6);
 
             // Nachia: transferable armor/speed and AP summons. Moonlight Pact can lose
             // its active cast through a constellation, so its links are equipment-based.
             r = new Route(nodes, "Nachia", "pack-heart", "St_D_HeartOfThePack");
-            r.L("団結の光爆の冴え", "Keen Unity Lightburst", LinkKind.MemoryDamage, 4);
+            r.L("団結の光爆の冴え", "Keen Unity Lightburst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_pack_heart_1_link_value);
             r.G("団結の光", "Light of Unity", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
-            r.L("心音の炸裂の冴え", "Keen Heartbeat Blast", LinkKind.MemoryDamage, 4);
+            r.L("心音の炸裂の冴え", "Keen Heartbeat Blast", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_pack_heart_3_link_value);
             r.G("団結の追い爆発", "Unity Afterburst", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("重なる団結の冴え", "Keen Stacking Unity", LinkKind.MemoryDamage, 4);
+            r.L("重なる団結の冴え", "Keen Stacking Unity", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_pack_heart_5_link_value);
             r.S("団結の癒やし", "Healing of Unity", Stat.HealPower, 3);
-            r.CapG("団結の木霊", "Unity Echo", 18, GimmickTrigger.OnHit, GimmickEffect.Echo, 20);
+            r.CapG("団結の木霊", "Unity Echo", MemoryDamageBalance.Effect_h_nachia_route_pack_heart_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Echo, 20);
 
             r = new Route(nodes, "Nachia", "circle-life", "St_D_CircleOfLife");
             r.L("巡る命の守り", "Life Cycle Guard", LinkKind.Guard, 2);
@@ -495,18 +502,18 @@ namespace SodRpg.Core.Game
             r.G("森の薄衣", "Forest Veil", GimmickTrigger.OnUse, GimmickEffect.Shield, 1);
             r.L("群れの余勢", "Pack Momentum", LinkKind.MemorySurge, 2);
             r.G("森の癒やし", "Forest Mending", GimmickTrigger.OnUse, GimmickEffect.Heal, 2, 1);
-            r.L("飛びかかる群れの冴え", "Keen Leaping Pack", LinkKind.MemoryDamage, 4);
+            r.L("飛びかかる群れの冴え", "Keen Leaping Pack", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_sylvan_call_5_link_value);
             r.S("若葉の牙", "Fangs of New Leaves", Stat.SummonPower, 4);
             r.G("猟犬の補充", "Hound Resupply", GimmickTrigger.OnKill, GimmickEffect.Reload, 1);
 
             r = new Route(nodes, "Nachia", "moonlight-pact", "St_Q_MoonlightPact");
-            r.L("月下の跳躍の冴え", "Keen Moonlit Leap", LinkKind.MemoryDamage, 4);
+            r.L("月下の跳躍の冴え", "Keen Moonlit Leap", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_moonlight_pact_1_link_value);
             r.G("爪痕", "Claw Mark", GimmickTrigger.OnHit, GimmickEffect.Expose, 3);
-            r.L("月獣の爪痕の冴え", "Keen Moonbeast Claws", LinkKind.MemoryDamage, 4);
+            r.L("月獣の爪痕の冴え", "Keen Moonbeast Claws", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_moonlight_pact_3_link_value);
             r.G("月光の癒やし", "Moonlit Mending", GimmickTrigger.OnHit, GimmickEffect.Heal, 2, 1, 3f);
-            r.L("月光の斬撃の冴え", "Keen Moonlight Slash", LinkKind.MemoryDamage, 4);
+            r.L("月光の斬撃の冴え", "Keen Moonlight Slash", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_moonlight_pact_5_link_value);
             r.S("月獣の牙", "Moonbeast Fangs", Stat.SummonPower, 4);
-            r.CapG("月下の再跳躍", "Moonlit Re-Leap", 18, GimmickTrigger.OnKill, GimmickEffect.Recharge, 20);
+            r.CapG("月下の再跳躍", "Moonlit Re-Leap", MemoryDamageBalance.Effect_h_nachia_route_moonlight_pact_7_link_value, GimmickTrigger.OnKill, GimmickEffect.Recharge, 20);
 
             r = new Route(nodes, "Nachia", "natures-whisper", "St_R_NaturesWhisper");
             r.L("指揮の巡り", "Command Cycle", LinkKind.MemoryHaste, 2);
@@ -522,29 +529,29 @@ namespace SodRpg.Core.Game
             r.G("蛇の余韻", "Serpent Reverb", GimmickTrigger.OnHit, GimmickEffect.Echo, 6);
             r.L("祝福の余韻", "Blessing Echo", LinkKind.MemorySurge, 2);
             r.G("蛇の追い咬み", "Serpent's Second Bite", GimmickTrigger.OnHit, GimmickEffect.Burst, 25, 0, 1.5f);
-            r.L("蛇の追い撃ちの冴え", "Keen Serpent Follow-Up", LinkKind.MemoryDamage, 4);
+            r.L("蛇の追い撃ちの冴え", "Keen Serpent Follow-Up", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_nachia_route_serpent_blessing_5_link_value);
             r.P("蛇の守り", "Serpent Ward", Power.StarShield, 3);
             r.G("蛇鱗の加護", "Serpent Scale Ward", GimmickTrigger.OnUse, GimmickEffect.Shield, 8);
 
             // Aurena: AP healing does not scale with the HP sacrificed. AD claws/theory
             // remain separate; no extra max-HP tax is imposed on the sacrifice branches.
             r = new Route(nodes, "Aurena", "claw", "St_D_DisintegratingClaw");
-            r.L("分解爪の冴え", "Keen Dismantling Claw", LinkKind.MemoryDamage, 4);
+            r.L("分解爪の冴え", "Keen Dismantling Claw", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_claw_1_link_value);
             r.G("分解の光", "Dismantling Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
-            r.L("解きほぐす一撃の冴え", "Keen Unraveling Blow", LinkKind.MemoryDamage, 4);
+            r.L("解きほぐす一撃の冴え", "Keen Unraveling Blow", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_claw_3_link_value);
             r.G("分解の二度爪", "Double Claw", GimmickTrigger.OnHit, GimmickEffect.Echo, 10);
-            r.L("金色の爪痕の冴え", "Keen Golden Clawmarks", LinkKind.MemoryDamage, 4);
+            r.L("金色の爪痕の冴え", "Keen Golden Clawmarks", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_claw_5_link_value);
             r.S("傷を塞ぐ爪", "Wound-Mending Claw", Stat.HealPower, 2);
-            r.CapG("分解の脆化", "Dismantling Brittleness", 20, GimmickTrigger.OnHit, GimmickEffect.Expose, 12);
+            r.CapG("分解の脆化", "Dismantling Brittleness", MemoryDamageBalance.Effect_h_aurena_route_claw_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Expose, 12);
 
             r = new Route(nodes, "Aurena", "beautiful-threat", "St_D_BeautifulThreat");
-            r.L("金羽の冴え", "Keen Golden Plume", LinkKind.MemoryDamage, 4);
+            r.L("金羽の冴え", "Keen Golden Plume", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_beautiful_threat_1_link_value);
             r.G("金羽の薄衣", "Golden Feather Veil", GimmickTrigger.OnHit, GimmickEffect.Shield, 1);
-            r.L("羽撃ちの冴え", "Keen Feather Strike", LinkKind.MemoryDamage, 4);
+            r.L("羽撃ちの冴え", "Keen Feather Strike", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_beautiful_threat_3_link_value);
             r.G("金羽の二射", "Golden Double", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
-            r.L("羽根の嵐の冴え", "Keen Feather Storm", LinkKind.MemoryDamage, 4);
+            r.L("羽根の嵐の冴え", "Keen Feather Storm", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_beautiful_threat_5_link_value);
             r.S("命を返す羽根", "Life-Restoring Feather", Stat.HealPower, 2);
-            r.CapG("金羽の輝き", "Golden Feather Radiance", 20, GimmickTrigger.OnHit, GimmickEffect.Element, 200, 2);
+            r.CapG("金羽の輝き", "Golden Feather Radiance", MemoryDamageBalance.Effect_h_aurena_route_beautiful_threat_7_link_value, GimmickTrigger.OnHit, GimmickEffect.Element, 200, 2);
 
             r = new Route(nodes, "Aurena", "feathery-dash", "St_M_FeatheryDash");
             r.L("羽ばたきの備え", "Wingbeat Readiness", LinkKind.Guard, 1);
@@ -556,11 +563,11 @@ namespace SodRpg.Core.Game
             r.L("黄金の風切り", "Golden Windcut", LinkKind.Guard, 6);
 
             r = new Route(nodes, "Aurena", "golden-burst", "St_Q_GoldenBurst");
-            r.L("金光の炸裂の冴え", "Keen Golden Blast", LinkKind.MemoryDamage, 4);
+            r.L("金光の炸裂の冴え", "Keen Golden Blast", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_golden_burst_1_link_value);
             r.G("黄金の被膜", "Golden Film", GimmickTrigger.OnUse, GimmickEffect.Shield, 2, 0, 4f);
             r.L("爆光の余力", "Golden Blast Reserve", LinkKind.MemorySurge, 2);
             r.G("腐食の脆化", "Corroded Weakness", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("腐食の輝きの冴え", "Keen Corroded Shine", LinkKind.MemoryDamage, 4);
+            r.L("腐食の輝きの冴え", "Keen Corroded Shine", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_golden_burst_5_link_value);
             r.S("緩やかな献身", "Gentle Devotion", Stat.SacrificeReduction, 3);
             r.G("金光の余波", "Golden Reverberation", GimmickTrigger.OnHit, GimmickEffect.Echo, 40);
 
@@ -569,12 +576,12 @@ namespace SodRpg.Core.Game
             r.G("金片の光", "Shard Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
             r.L("還流の余力", "Return Flow Reserve", LinkKind.MemorySurge, 2);
             r.G("金片の薄衣", "Shard Veil", GimmickTrigger.OnHit, GimmickEffect.Shield, 1, 0, 3f);
-            r.L("金片の弾道の冴え", "Keen Shard Trajectory", LinkKind.MemoryDamage, 4);
+            r.L("金片の弾道の冴え", "Keen Shard Trajectory", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_reduction_5_link_value);
             r.S("欠片に残す命", "Life Spared in the Shards", Stat.SacrificeReduction, 3);
             r.G("金片の破裂", "Shard Burst", GimmickTrigger.OnHit, GimmickEffect.Burst, 80);
 
             r = new Route(nodes, "Aurena", "dangerous-theory", "St_R_DangerousTheory");
-            r.L("危険な一撃の冴え", "Keen Perilous Strike", LinkKind.MemoryDamage, 4);
+            r.L("危険な一撃の冴え", "Keen Perilous Strike", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_dangerous_theory_1_link_value);
             r.G("理論の閃き", "Flash of Theory", GimmickTrigger.OnCrit, GimmickEffect.Element, 30, 2);
             r.L("論証の余波", "Proof Aftershock", LinkKind.MemorySurge, 2);
             r.G("危険な副作用", "Dangerous Side Effect", GimmickTrigger.OnCrit, GimmickEffect.Heal, 2);
@@ -583,24 +590,24 @@ namespace SodRpg.Core.Game
             r.G("危険な結論", "Dangerous Conclusion", GimmickTrigger.OnCrit, GimmickEffect.Burst, 110);
 
             r = new Route(nodes, "Aurena", "chain-reaction", "St_R_ChainReaction");
-            r.L("連鎖環の炸裂の冴え", "Keen Chain-Ring Blast", LinkKind.MemoryDamage, 4);
+            r.L("連鎖環の炸裂の冴え", "Keen Chain-Ring Blast", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_chain_reaction_1_link_value);
             r.G("分解の光", "Dismantle Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2, 1f);
             r.L("連鎖の余光", "Chain Afterglow", LinkKind.MemorySurge, 2);
             r.G("分解の脆弱化", "Dissolving Weakness", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("巡る分解光の冴え", "Keen Circling Dissolution", LinkKind.MemoryDamage, 4);
+            r.L("巡る分解光の冴え", "Keen Circling Dissolution", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_aurena_route_chain_reaction_5_link_value);
             r.S("陣を巡る命", "Life Circling the Array", Stat.HealPower, 2);
             r.G("連鎖の加速", "Accelerated Chain", GimmickTrigger.OnKill, GimmickEffect.Recharge, 20);
 
             // Bismuth: travelers.json loadoutTrait contains only PrismaticEyes. Books
             // use AP for light/fire and AD for sword/dark arrows; none is an Ultimate.
             r = new Route(nodes, "Bismuth", "prismatic-eyes", "St_D_PrismaticEyes");
-            r.L("頁の刃の冴え", "Keen Page Blade", LinkKind.MemoryDamage, 4);
+            r.L("頁の刃の冴え", "Keen Page Blade", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_prismatic_eyes_1_link_value);
             r.G("光の読み進め", "Reading the Light", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 2);
-            r.L("翻る頁撃ちの冴え", "Keen Flipping-Page Strike", LinkKind.MemoryDamage, 4);
+            r.L("翻る頁撃ちの冴え", "Keen Flipping-Page Strike", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_prismatic_eyes_3_link_value);
             r.G("頁の余韻", "Page Reverb", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
-            r.L("彩の追撃の冴え", "Keen Prismatic Follow-Up", LinkKind.MemoryDamage, 4);
+            r.L("彩の追撃の冴え", "Keen Prismatic Follow-Up", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_prismatic_eyes_5_link_value);
             r.S("頁を送る拍子", "Page-Turning Tempo", Stat.AttackSpeedPct, 1);
-            r.CapG("読了の連携", "Reading Link", 20, GimmickTrigger.OnKill, GimmickEffect.RechargeOther, 10);
+            r.CapG("読了の連携", "Reading Link", MemoryDamageBalance.Effect_h_bismuth_route_prismatic_eyes_7_link_value, GimmickTrigger.OnKill, GimmickEffect.RechargeOther, 10);
 
             r = new Route(nodes, "Bismuth", "distorting-sprint", "St_M_Sprint");
             r.L("書架の退避", "Bookshelf Retreat", LinkKind.Guard, 1);
@@ -616,14 +623,14 @@ namespace SodRpg.Core.Game
             r.G("冷たい余白", "Cold Margin", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 1);
             r.L("霊弾の余光", "Soul Missile Afterglow", LinkKind.MemorySurge, 2);
             r.G("光文の注釈", "Light Annotation", GimmickTrigger.OnHit, GimmickEffect.Expose, 4);
-            r.L("霊弾の炸裂の冴え", "Keen Soul-Missile Burst", LinkKind.MemoryDamage, 4);
+            r.L("霊弾の炸裂の冴え", "Keen Soul-Missile Burst", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_innocence_5_link_value);
             r.S("光文字の濃さ", "Light Script Intensity", Stat.LightAmp, 2);
             r.G("魂の木霊", "Soul Echo", GimmickTrigger.OnHit, GimmickEffect.Echo, 30);
 
             r = new Route(nodes, "Bismuth", "infernal-tales", "St_QR_InfernalTales");
             r.L("炎文の余熱", "Fire Script Afterheat", LinkKind.MemorySurge, 2);
             r.G("炎文の火種", "Script Ember", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 0, 1f);
-            r.L("業火の輪の冴え", "Keen Hellfire Ring", LinkKind.MemoryDamage, 5);
+            r.L("業火の輪の冴え", "Keen Hellfire Ring", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_infernal_tales_3_link_value);
             r.G("炎の飛び火", "Flying Sparks", GimmickTrigger.OnHit, GimmickEffect.Burst, 20, 0, 1f);
             r.L("炎文の巡り", "Fire Script Cycle", LinkKind.MemoryHaste, 2);
             r.S("火文字の濃さ", "Fire Script Intensity", Stat.FireAmp, 2);
@@ -634,14 +641,14 @@ namespace SodRpg.Core.Game
             r.G("剣の護り", "Sword's Guard", GimmickTrigger.OnHit, GimmickEffect.Shield, 1);
             r.L("剣閃の余韻", "Sword Flash Echo", LinkKind.MemorySurge, 2);
             r.G("魔剣の斬撃波", "Blade Wave", GimmickTrigger.OnHit, GimmickEffect.Burst, 25);
-            r.L("勇剣の冴え", "Keen Valiant Edge", LinkKind.MemoryDamage, 5);
+            r.L("勇剣の冴え", "Keen Valiant Edge", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_valiant_heart_5_link_value);
             r.S("心を守る装丁", "Heart-Warding Binding", Stat.ShieldPower, 3);
             r.G("勇気の追い風", "Courage's Tailwind", GimmickTrigger.OnKill, GimmickEffect.Recharge, 30);
 
             r = new Route(nodes, "Bismuth", "distorted-mind", "St_QR_DistortedMind");
             r.L("闇文の蓄積", "Dark Script Accumulation", LinkKind.MemorySurge, 2);
             r.G("闇文の染み", "Dark Script Stain", GimmickTrigger.OnHit, GimmickEffect.Element, 30, 3);
-            r.L("精神矢の冴え", "Keen Mind Arrow", LinkKind.MemoryDamage, 5);
+            r.L("精神矢の冴え", "Keen Mind Arrow", LinkKind.MemoryDamage, MemoryDamageBalance.Effect_h_bismuth_route_distorted_mind_3_link_value);
             r.G("精神の木霊", "Mind Echo", GimmickTrigger.OnHit, GimmickEffect.Echo, 8);
             r.L("闇文の巡り", "Dark Script Cycle", LinkKind.MemoryHaste, 2);
             r.S("闇文字の濃さ", "Dark Script Intensity", Stat.DarkAmp, 2);

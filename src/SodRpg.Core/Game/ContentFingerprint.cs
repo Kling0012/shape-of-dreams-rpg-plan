@@ -39,6 +39,8 @@ namespace SodRpg.Core.Game
             // Non-legacy forge coefficients must still fail the normal content handshake.
             if (ForgeBalance.ContentFingerprintRecord != null)
                 ids.Add(ForgeBalance.ContentFingerprintRecord);
+            if (MemoryDamageBalance.ContentFingerprintRecord != null)
+                ids.Add(MemoryDamageBalance.ContentFingerprintRecord);
             foreach (var b in Content.Bases) ids.Add("b:" + b.Id);
             foreach (var u in Content.Uniques)
             {

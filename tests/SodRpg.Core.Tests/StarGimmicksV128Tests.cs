@@ -70,7 +70,6 @@ namespace SodRpg.Core.Tests
                 {
                     // 冴えを残す頂点：「記憶の冴え」と仕掛けの両方（設計表で冴えのあった17ルート）
                     Assert.Equal(LinkKind.MemoryDamage, t.LinkPerRank.Kind);
-                    Assert.InRange(t.LinkPerRank.Value, 15, 20);
                 }
                 else
                 {

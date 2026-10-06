@@ -96,13 +96,21 @@ namespace SodRpg.Core.Game
             }
         }
 
-        /// <summary>Install every generated hero's authored tree and its migration rules. Idempotent and thread-safe.</summary>
-        public static void RegisterAllGenerated()
+        /// <summary>Install every generated hero. With an error handler, reject only the failed hero; tools fail loudly.</summary>
+        public static void RegisterAllGenerated(Action<string, Exception> onError = null)
         {
             lock (GeneratedLock)
             {
                 if (generatedRegistered) return;
-                foreach (string hero in GeneratedHeroes) RegisterGeneratedHero(hero);
+                foreach (string hero in GeneratedHeroes)
+                {
+                    try { RegisterGeneratedHero(hero); }
+                    catch (Exception error) when (onError != null)
+                    {
+                        RemoveAuthoredRegistration(hero);
+                        onError(hero, error);
+                    }
+                }
                 generatedRegistered = true;
             }
         }

@@ -342,7 +342,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_IcyVeins",
-          "value": 2,
+          "valueRef": "cetus.mem.icy-veins.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -944,7 +944,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_IcyVeins",
-          "value": 2,
+          "valueRef": "cetus.mem.icy-veins.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -1544,7 +1544,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_IcyVeins",
-          "value": 2,
+          "valueRef": "cetus.mem.icy-veins.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -2751,7 +2751,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 2,
+          "valueRef": "cetus.mem.embrace-chill.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -3353,7 +3353,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 2,
+          "valueRef": "cetus.mem.embrace-chill.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -3953,7 +3953,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 2,
+          "valueRef": "cetus.mem.embrace-chill.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -5157,7 +5157,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_BackOff",
-          "value": 2,
+          "valueRef": "cetus.mem.back-off.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -5759,7 +5759,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_BackOff",
-          "value": 2,
+          "valueRef": "cetus.mem.back-off.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -6359,7 +6359,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_BackOff",
-          "value": 2,
+          "valueRef": "cetus.mem.back-off.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -10149,7 +10149,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_ChargedAnguillian",
-          "value": 2,
+          "valueRef": "cetus.mem.charged.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -10752,7 +10752,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_ChargedAnguillian",
-          "value": 2,
+          "valueRef": "cetus.mem.charged.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -11354,7 +11354,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_ChargedAnguillian",
-          "value": 2,
+          "valueRef": "cetus.mem.charged.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -12560,7 +12560,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_BigBorealChunk",
-          "value": 2,
+          "valueRef": "cetus.mem.boreal-chunk.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -13162,7 +13162,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_BigBorealChunk",
-          "value": 2,
+          "valueRef": "cetus.mem.boreal-chunk.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -13762,7 +13762,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_BigBorealChunk",
-          "value": 2,
+          "valueRef": "cetus.mem.boreal-chunk.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -14968,7 +14968,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_FrozenFists",
-          "value": 2,
+          "valueRef": "cetus.mem.frozen-fists.c1.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -15570,7 +15570,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_FrozenFists",
-          "value": 2,
+          "valueRef": "cetus.mem.frozen-fists.c2.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -16170,7 +16170,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_FrozenFists",
-          "value": 2,
+          "valueRef": "cetus.mem.frozen-fists.c3.choice/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26651,7 +26651,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_IcyVeins",
-          "value": 2,
+          "valueRef": "h.cetus.cold/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26664,7 +26664,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_ChargedAnguillian",
-          "value": 2,
+          "valueRef": "h.cetus.cold/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26760,7 +26760,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_EmbracingTheChill",
-          "value": 2,
+          "valueRef": "h.cetus.tide/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26773,7 +26773,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_BigBorealChunk",
-          "value": 2,
+          "valueRef": "h.cetus.tide/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26811,7 +26811,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_BackOff",
-          "value": 4,
+          "valueRef": "h.cetus.steady/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -26824,7 +26824,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_FrozenFists",
-          "value": 2,
+          "valueRef": "h.cetus.steady/options/1/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -27649,7 +27649,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_Q_EmbracingTheChill",
-      "value": 2,
+      "valueRef": "h.cetus.route.embrace-chill.5/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -27671,7 +27671,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_Q_BigBorealChunk",
-      "value": 2,
+      "valueRef": "h.cetus.route.boreal-chunk.1/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -27723,7 +27723,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_R_BackOff",
-      "value": 2,
+      "valueRef": "h.cetus.route.back-off.3/value",
       "param": null,
       "receiver": null,
       "target": null,
@@ -27772,7 +27772,7 @@
       "region": "migration",
       "kind": "MemoryDamage",
       "memory": "St_D_IcyVeins",
-      "value": 3,
+      "valueRef": "h.cetus.cluster.icy-veins.1/value",
       "param": null,
       "receiver": null,
       "target": null,

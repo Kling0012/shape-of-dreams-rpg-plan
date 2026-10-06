@@ -2,7 +2,7 @@
 
 設計表 `docs/specs/v1.31-clusters-*.md` の**新しい星**（旅人固有の新規ID・刻印、共有外縁160）と、設計表が効果を**変える既存星**（移行行）を、1星1オブジェクトの JSON に書き起こしたもの。C01（AuthoredStarContract）の登録APIができたら、このJSONから C# のデータを生成する。設計の正は設計表と [正式仕様](../../docs/specs/v1.31-new-mechanisms.md)・[レビュー](../../docs/specs/v1.31-design-review.md)。食い違いはJSON側で勝手に直さず `notes` に書く。
 
-後続の数値調整はこのマニフェストを更新して再生成する。#120 の記憶の冴え・遠征の鍛錬の現行値は JSON を正とし、変更前後の集計と計測の限界は [BalanceSim の報告](../BalanceSim/README.md#120記憶ダメージのポイント効率) を参照。v1.31 の設計表は当時の設計値を記録したままにする。費用・段数・説明文の書式・保存形式は変えない。
+後続の数値調整はマニフェストを更新して再生成する。ただし **MemoryDamageはIssue #149 段階1で `tools/balance/stars.json` を唯一の数値原本へ切替済み**。調整・生成・軽量な記憶別%/点比較は [balanceツール](../balance/README.md) を使う。鍛錬など未移行の値は引き続きmanifestを正とし、v1.31 の設計表は当時の設計値を記録したままにする。費用・段数・説明文の書式・保存形式は変えない。
 
 ファイル：`tools/star-manifest/<hero>.json`（vesper, lacerta, cetus, yubar, husk, mist, nachia, aurena, bismuth）と `outer.json`（共有外縁、hero は "shared"）。10ファイルは**すべて下記の正準形に統一**されている（書式は UTF-8・LF・インデント2）。
 
@@ -46,8 +46,15 @@
   "notes": "設計表との食い違い・要確認（なければ空文字）"
 }
 ```
+**MemoryDamageだけは上の `value` を同じ位置の `valueRef` に置き換える。**
+親星は `"<星ID>/value"`、Choice子は `"<親星ID>/options/0/value"` または
+`options/1/value`。`value` との併存・欠落・別kindでの `valueRef` は不可。
+480親＋258子の基準値と旧ルート98成分は `tools/balance/stars.json` にある。
+validate／genは同じDecimal解決済みviewを使い、raw JSONには値を書き戻さない。
+MemoryDamageは正の0.001刻みで既存Linkへ生成し、MemoryHasteのAmountは整数制約を維持する。
 
-- `kind` ごとの必須欄：MemoryDamage/MemoryHaste/GimmickBoost/GimmickParam は `memory` か `receiver` と数値 `value`（GimmickParam は `param` も）。Notable は `gimmick` か `power`。Stat は `stat`（**outer のみ**）。Choice は `options` ちょうど2つ（Choice 自身の効果欄は全て null）。Keystone は `keystone`（region も `keystone`）。
+
+- `kind` ごとの必須欄：MemoryDamageは `memory` と上記 `valueRef`。MemoryHaste/GimmickBoost/GimmickParam は `memory` か `receiver` と数値 `value`（GimmickParam は `param` も）。Notable は `gimmick` か `power`。Stat は `stat`（**outer のみ**）。Choice は `options` ちょうど2つ（Choice 自身の効果欄は全て null）。Keystone は `keystone`（region も `keystone`）。
 - `value` は設計表の単位のまま（1 = 1%、確率は%ポイント）。整数化しない。
 - 名前は設計表にあればそれを使い、無ければ効果が分かる短い自然な日本語と英語を付ける。人名は書かない。
 - 1つの星に効果が複数ある設計は、設計表の表記どおり別の星に分ける。分けられない刻印だけ `keystone.*Spec` を使う。
@@ -147,6 +154,8 @@ GimmickBoost/GimmickParam だけが `target: {"star", "effect"}` を持つ（他
 
 ### 選択肢（Choice の `options`）
 `options[0]` = 選択肢A、`options[1]` = B。キーは `kind, memory, value, param, receiver, target, gimmick, power, stat, nameJa, nameEn`（この順・全て必須、使わない欄と無い名前は `null`）。`kind` は Choice/Keystone 以外。GimmickBoost/GimmickParam の選択肢は星と同じく `target` を持つ。旧 `label` は廃止（順序で表す）。
+MemoryDamageの選択肢だけは、キー順の `value` を `valueRef` に置き換える（上記参照）。
+
 
 ### 刻印（Keystone）
 `keystone` は `upside`（文章）と `upsideSpec`（機械可読の配列、書いていなければ `null`）。`null` は「機械可読化していない」の意味で、**文章が正**。刻印にデバフ（代償）はもう無い。
@@ -174,6 +183,7 @@ Spec の要素は次のキーだけ：
 設計表が**効果を変える既存星**1つにつき1行。表の移行節が挙げる既存星（旧Stat・Guard・MemorySurge の置換、トリガーやCDの変更、橋の中心の再定義、既存刻印への代償の追加など）をすべて書く。変更のない星は書かない。`id` は既存ID（検証で照合）。
 
 キーは次の順・全て必須：`id, region("migration"), kind, memory, value, param, receiver, target, gimmick, power, stat, options, keystone, requires, requiresAny, maxRank, mechanisms, nameJa, nameEn, notes`。
+MemoryDamageの移行行だけは `value` を `valueRef` に置き換え、同IDの置換後効果を参照する。
 - 効果の欄は新規の星と同じ意味で、**置換後**の効果を書く。`value` は1段あたりの値、`maxRank` は既存の段数。段ごとに値が違うときは `gimmick.valuesByRank`。
 - 旧効果の複数段Choice は `kind: "Choice"` と `options` 2つ。既存のStatのままの星は `kind: "Stat"` + `stat`。
 - `kind: null` は置換後の機械表現が設計表に無い場合だけ。効果欄は全て `null` にして `notes` に設計表の記述を書く。

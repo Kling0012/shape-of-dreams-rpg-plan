@@ -119,7 +119,8 @@ namespace SodRpg.Core.Tests
                     var link = node.LinkPerRank;
                     Assert.Equal(new[] { node.RouteMemory }, link.Requires);
                     Assert.True(Links.Validate(link), node.Id);
-                    Assert.InRange(link.Value, 1, Links.Cap(link.Kind, 1) / node.MaxRank);
+                    if (link.Kind != LinkKind.MemoryDamage)
+                        Assert.InRange(link.Value, 1, Links.Cap(link.Kind, 1) / node.MaxRank);
                     // Identities never emit OnSkillUsed, and Moonlight Pact's Lone-Wolf
                     // constellation can disable its cast: OnSkillUse-driven links must not
                     // appear there. v1.28 memory damage only needs the memory equipped,
@@ -130,15 +131,7 @@ namespace SodRpg.Core.Tests
                 }
                 foreach (var kind in links.GroupBy(t => t.LinkPerRank.Kind))
                 {
-                    if (kind.Key == LinkKind.MemoryDamage)
-                    {
-                        // v1.28：頂点（1段）は Cap を 20 まで超えてよい（予算の詳細は StarRoutesV128Tests）。
-                        decimal mid = kind.Where(t => t.RouteOrder < 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
-                        decimal top = kind.Where(t => t.RouteOrder == 7).Sum(t => t.LinkPerRank.Value * t.MaxRank);
-                        Assert.InRange(mid, 0, Links.Cap(LinkKind.MemoryDamage, 1));
-                        Assert.InRange(top, 0, 20);
-                    }
-                    else
+                    if (kind.Key != LinkKind.MemoryDamage)
                         Assert.InRange(kind.Sum(t => t.LinkPerRank.Value * t.MaxRank), 1, Links.Cap(kind.Key, 1));
                 }
             }

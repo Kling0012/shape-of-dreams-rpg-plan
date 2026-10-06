@@ -23,6 +23,35 @@ namespace SodRpg.Core.Tests
         { Kind = ClusterStarKind.MemoryDamage, Name = Name, Memory = memory, Amount = 3 };
 
         [Fact]
+        public void Decimal_damage_survives_authored_copy_and_build_without_fractionalizing_integer_effects()
+        {
+            var anchor = Anchor();
+            var damage = Damage();
+            damage.Amount = 4.4m;
+            var node = Star("outer.test.fractional-damage", damage);
+            anchor.Edges = new[] { new AuthoredStarEdge(anchor.LocalStarId, node.LocalStarId) };
+            var definitions = new[] { anchor, node };
+            var tree = StarClusters.GenerateAuthored(definitions, Base()).TreeFor(Hero);
+            var profile = new Profile();
+            AllocatePath(profile.Hero(Hero), tree, anchor.LocalStarId, node.LocalStarId);
+            profile.Hero(Hero).Talents[anchor.LocalStarId] = 1;
+            decimal before = Build.ComputeForTree(profile, Hero, 0, tree).Links
+                .Where(x => x.Kind == LinkKind.MemoryDamage && x.Requires.Contains(Memory)).Sum(x => x.Value);
+            profile.Hero(Hero).Talents[node.LocalStarId] = 1;
+            decimal after = Build.ComputeForTree(profile, Hero, 0, tree).Links
+                .Where(x => x.Kind == LinkKind.MemoryDamage && x.Requires.Contains(Memory)).Sum(x => x.Value);
+            Assert.Equal(4.4m, after - before);
+            Assert.Equal(4400, tree.Single(t => t.Id == node.LocalStarId).LinkPerRank.ValueMilli);
+            Assert.Null(tree.Single(t => t.Id == node.LocalStarId).NativeModifier);
+
+            damage.Amount = 4.4001m;
+            Assert.Throws<ArgumentOutOfRangeException>(() => StarClusters.GenerateAuthored(definitions, Base()));
+            damage.Amount = 4.4m;
+            anchor.Effect.Amount = 1.1m;
+            Assert.Throws<InvalidOperationException>(() => StarClusters.GenerateAuthored(definitions, Base()));
+        }
+
+        [Fact]
         public void SavedSuffixRemainsStableAfterReorderAndUsesHeroQualifiedOuterKeys()
         {
             var a = Anchor();

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Generate compile-time forge coefficients; --check never writes files."""
+"""Generate compile-time forge and star content; --check never writes files."""
 
 import argparse
+import importlib.util
 import json
 import sys
 from pathlib import Path
+
+sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[2]
 FORGE_PATH = ROOT / "tools" / "balance" / "forge.json"
@@ -76,17 +79,24 @@ namespace SodRpg.Core.Game
 """
 
 
+def _star_generator():
+    directory = ROOT / "tools" / "star-manifest"
+    sys.path.insert(0, str(directory))
+    spec = importlib.util.spec_from_file_location("balance_star_generator", directory / "gen_cs.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 def generate(check=False):
-    expected = render_forge(load_forge()).encode("utf-8")
-    actual = OUTPUT_PATH.read_bytes() if OUTPUT_PATH.exists() else None
-    if actual == expected:
-        return True
-    if check:
-        print("Forge.Generated.cs is stale; run python tools/balance/gen_cs.py", file=sys.stderr)
-        return False
-    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT_PATH.write_bytes(expected)
-    return True
+    # Resolve and render every domain before publishing any file. Invalid new
+    # star content cannot update forge while leaving an older star map behind.
+    forge = render_forge(load_forge())
+    stars = _star_generator()
+    outputs = stars.render_outputs()
+    outputs[OUTPUT_PATH] = forge
+    return stars.publish_outputs(outputs, check=check)
 
 
 def main():
@@ -96,7 +106,7 @@ def main():
     try:
         return 0 if generate(check=args.check) else 1
     except (OSError, ValueError) as error:
-        print(f"forge generation failed: {error}", file=sys.stderr)
+        print(f"balance generation failed: {error}", file=sys.stderr)
         return 1
 
 

@@ -51,7 +51,8 @@ namespace SodRpg.Mod
                 stage = "resource initialization";
                 Loc.Japanese = config.japanese;
                 // Install the generated star maps and their migration rules before any profile is loaded or any build is computed.
-                StarClusters.RegisterAllGenerated();
+                StarClusters.RegisterAllGenerated((hero, error) =>
+                    Log.Warn("Generated star map disabled for " + hero + "; other features remain available: " + error));
                 _performance = new PerformanceTuner();
                 _performance.Start(config, _hasFocus);
                 string dir = Path.Combine(Application.persistentDataPath, "QuickSave", "Mods", "DreamforgeRPG");

@@ -31,6 +31,7 @@ import sys
 sys.dont_write_bytecode = True
 
 import validate as canonical
+import star_values
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -164,7 +165,13 @@ def display_value(value):
 
 
 class Compiler:
-    def __init__(self, name, data, outer):
+    def __init__(self, name, data, outer, resolved=False):
+        if not resolved:
+            manifests = star_values.load_manifests()
+            manifests.update({name: data, "outer": outer})
+            views, _ = star_values.resolve_all(manifests=manifests)
+            data, outer = views[name], views["outer"]
+        self.data, self.outer = data, outer
         self.name, self.hero = name, data["hero"]
         self.source = data["source"]
         self.rows = data["stars"] + outer["stars"]
@@ -827,12 +834,9 @@ class Compiler:
             if row.get("receiver") or row["memory"].startswith("@"):
                 self.fail(sid, option_path + "memory", row["memory"], "native modifiers require one actual nonmovement memory, not a receiver/slot selector")
             members["Memory"] = cs(row["memory"])
-            # Legacy integer native links preserve the engine's declared cap.
-            # Fractional native links require an explicit registered cap profile.
-            if number(row["value"]) != number(row["value"]).to_integral_value():
-                self.fail(sid, option_path + "value", row["value"], "fractional NativeMemoryModifierDef requires an explicitly declared CapProfileId; manifest does not specify one")
-            else:
-                members["Amount"] = whole(row["value"])
+            # MemoryDamage keeps the existing decimal LinkDef -> ValueMilli path.
+            # Haste and every non-memory integer consumer retain exact Int32 validation.
+            members["Amount"] = star_values.decimal_literal(row["value"]) if kind == "MemoryDamage" else whole(row["value"])
         elif kind in ("GimmickBoost", "GimmickParam"):
             memory = row.get("receiver") or row.get("memory")
             target = row["target"]
@@ -1031,7 +1035,7 @@ class Compiler:
         receiver_only = self.receiver_only_bridge(row)
         if receiver_only:
             owned = RECEIVER_ONLY_BRIDGES[receiver_only]
-            used = set(re.findall(r"St_\w+", json.dumps([row.get(k) for k in ("memory", "receiver", "target", "gimmick", "options")], ensure_ascii=False)))
+            used = set(re.findall(r"St_\w+", json.dumps([row.get(k) for k in ("memory", "receiver", "target", "gimmick", "options")], ensure_ascii=False, default=str)))
             if not used or not used <= set(owned):
                 self.fail(sid, "memory", sorted(used), "a receiver-only bridge star may only use the memories its cluster declares: " + display_value(owned))
             ownership = obj("MemoryOwnership", {"TargetMemory": cs(owned[0]), "SourceMemories": array(list(owned[1:]))})
@@ -1056,8 +1060,8 @@ class Compiler:
             for row in self.rows:
                 self.fail(row["id"], "hero", self.hero, "expected " + expected_hero + "; shared outer must expand into the concrete owner")
             return self
-        schema_errors, _ = canonical.check(self.name, self.legacy, self.route_rows, self.effects, canonical.collect_effects())
-        outer_errors, _ = canonical.check("outer", self.legacy, self.route_rows, self.effects, canonical.collect_effects())
+        schema_errors, _ = canonical.check(self.name, self.legacy, self.route_rows, self.effects, canonical.collect_effects(), self.data)
+        outer_errors, _ = canonical.check("outer", self.legacy, self.route_rows, self.effects, canonical.collect_effects(), self.outer)
         for error in schema_errors + outer_errors:
             owner = error.split(":", 1)[0].split("#", 1)[0].split(".upsideSpec", 1)[0]
             affected = [owner] if owner in self.by_id else [s["id"] for s in self.rows]
@@ -1190,8 +1194,7 @@ def render_diagnostic(result):
 
 
 def load(name):
-    with (HERE / (name + ".json")).open(encoding="utf-8") as stream:
-        return json.load(stream)
+    return star_values.read_json(HERE / (name + ".json"))
 
 
 def registered_heroes():
@@ -1240,10 +1243,14 @@ def registration(compiled):
         lines += ["                case " + cs("Hero_" + name.title()) + ": return Create" + name.title() + what + "();" for name in names]
         lines += ["                default: throw new ArgumentException(\"No generated star map for \" + heroKey);", "            }", "        }", ""]
     lines += [
-              "        /// <summary>Install every generated hero's authored tree and its migration rules. Idempotent and thread-safe.</summary>",
-              "        public static void RegisterAllGenerated()", "        {", "            lock (GeneratedLock)", "            {",
+              "        /// <summary>Install every generated hero. With an error handler, reject only the failed hero; tools fail loudly.</summary>",
+              "        public static void RegisterAllGenerated(Action<string, Exception> onError = null)", "        {", "            lock (GeneratedLock)", "            {",
               "                if (generatedRegistered) return;",
-              "                foreach (string hero in GeneratedHeroes) RegisterGeneratedHero(hero);",
+              "                foreach (string hero in GeneratedHeroes)", "                {",
+              "                    try { RegisterGeneratedHero(hero); }",
+              "                    catch (Exception error) when (onError != null)", "                    {",
+              "                        RemoveAuthoredRegistration(hero);",
+              "                        onError(hero, error);", "                    }", "                }",
               "                generatedRegistered = true;", "            }", "        }", "    }", "}", ""]
     return chr(10).join(lines)
 
@@ -1273,10 +1280,47 @@ def report(results):
     return "\n".join(lines)
 
 
+def render_outputs(results=None, views=None, effective=None, diagnostic=False):
+    """Validate/render the complete requested set before any output is published."""
+    if views is None or effective is None:
+        views, effective = star_values.resolve_all()
+    if results is None:
+        results = [Compiler(name, views[name], views["outer"], resolved=True).compile() for name in HEROES]
+    failures = [f"{result.name}: {failure.star}: {failure.reason}"
+                for result in results for failure in result.failures]
+    if failures:
+        raise ValueError("Refusing generated output:\\n" + "\\n".join(failures))
+    outputs = {OUTPUT / (result.name.title() + ".Generated.cs"): result.render() for result in results}
+    available = {name for name in HEROES if (OUTPUT / (name.title() + ".Generated.cs")).is_file()}
+    available.update(result.name for result in results)
+    outputs[OUTPUT / "GeneratedRegistration.cs"] = registration(available)
+    outputs[ROOT / "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"] = star_values.render_balance(views, effective)
+    if diagnostic:
+        outputs.update({DIAGNOSTICS / (result.name.title() + ".cs"): render_diagnostic(result) for result in results})
+    return outputs
+
+
+def publish_outputs(outputs, check=False):
+    changed = [(path, content.encode("utf-8")) for path, content in outputs.items()
+               if not path.exists() or path.read_bytes() != content.encode("utf-8")]
+    if check:
+        for path, _ in changed:
+            display_path = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+            print(display_path.as_posix() + " is stale; run python tools/balance/gen_cs.py", file=sys.stderr)
+        return not changed
+    for path, content in changed:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        display_path = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+        print("Wrote " + display_path.as_posix())
+    return True
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("hero", nargs="?", choices=HEROES)
     parser.add_argument("--all", action="store_true", help="compile every concrete hero")
+    parser.add_argument("--check", action="store_true", help="fail on stale generated output without writing")
     parser.add_argument("--report", action="store_true", help="report only; never write generated C#")
     parser.add_argument("--diagnostic", action="store_true", help="also write the guarded test-only maps used by RegistrationDiagnostics (tests/SodRpg.Core.Tests/Diagnostics, git-ignored)")
     parser.add_argument("--markdown", type=Path, help="write the report (requires --report)")
@@ -1286,8 +1330,9 @@ def main(argv=None):
     if args.markdown and not args.report:
         parser.error("--markdown requires --report")
     try:
-        outer = load("outer")
-        results = [Compiler(name, load(name), outer).compile() for name in (HEROES if args.all else (args.hero,))]
+        views, effective = star_values.resolve_all()
+        results = [Compiler(name, views[name], views["outer"], resolved=True).compile()
+                   for name in (HEROES if args.all else (args.hero,))]
         for result in results:
             failed = {f.star.split(".grant", 1)[0] for f in result.failures}
             print(f"{result.name}: clean={len(result.mapped)} failed={len(failed)} total={len(result.rows)}")
@@ -1300,24 +1345,11 @@ def main(argv=None):
             if failed_heroes:
                 print("Report only: no generated files written; some selected heroes have unmapped rows.", file=sys.stderr)
             return 1 if failed_heroes else 0
-        # A hero is written only when it compiles with zero failures, never partially. Every selected hero is
-        # translated before the first output mutation, so a render error leaves existing output untouched.
-        clean = [result for result in results if not result.failures]
-        outputs = [(OUTPUT / (r.name.title() + ".Generated.cs"), r.render()) for r in clean]
-        selected_failed = {r.name for r in failed_heroes}
-        available = {name for name in HEROES if (OUTPUT / (name.title() + ".Generated.cs")).is_file() and name not in selected_failed}
-        available.update(r.name for r in clean)
-        outputs.append((OUTPUT / "GeneratedRegistration.cs", registration(available)))
-        if args.diagnostic:
-            outputs.extend((DIAGNOSTICS / (r.name.title() + ".cs"), render_diagnostic(r)) for r in results)
-        for path, content in outputs:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8", newline=chr(10))
-            print("Wrote " + path.relative_to(ROOT).as_posix())
-        for result in failed_heroes:
-            stale = OUTPUT / (result.name.title() + ".Generated.cs")
-            print("Not generated: " + result.name + " has unmapped rows" + ("; its older " + stale.name + " is left in place but is NOT registered. Delete it or regenerate." if stale.is_file() else ""), file=sys.stderr)
-        return 1 if failed_heroes else 0
+        if failed_heroes:
+            print("No generated files written: selected manifests have validation failures.", file=sys.stderr)
+            return 1
+        outputs = render_outputs(results, views, effective, args.diagnostic)
+        return 0 if publish_outputs(outputs, check=args.check) else 1
     except (OSError, ValueError, KeyError, TypeError) as error:
         print("Generator failed: " + str(error), file=sys.stderr)
         return 1
