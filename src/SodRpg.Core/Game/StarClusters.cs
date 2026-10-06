@@ -38,7 +38,7 @@ namespace SodRpg.Core.Game
         public ClusterStarKind Kind { get; set; }
         public Txt Name { get; set; }
         public string Memory { get; set; }
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
         public GimmickParam Param { get; set; }
         public GimmickDef Gimmick { get; set; }
         public Power Power { get; set; }
@@ -164,6 +164,10 @@ namespace SodRpg.Core.Game
             if (star.Name == null || string.IsNullOrWhiteSpace(star.Name.Ja) || string.IsNullOrWhiteSpace(star.Name.En))
                 throw Invalid(id, "Both display names are required.");
             if (star.MaxRank <= 0 || star.RankCost <= 0) throw Invalid(id, "Ranks and costs must be positive.");
+            if (star.Kind == ClusterStarKind.MemoryDamage)
+                BuildPrecision.FromDecimal(star.Amount);
+            else
+                IntegerAmount(star, id);
             if (star.Kind == ClusterStarKind.Choice)
             {
                 if (option || cluster.AuthoredEdges == null && star.MaxRank != 1 || star.Options == null || star.Options.Count != 2)
@@ -253,6 +257,14 @@ namespace SodRpg.Core.Game
                 throw Invalid(id, "Unsupported gimmick parameter.");
         }
 
+        private static int IntegerAmount(ClusterStarDef star, string id)
+        {
+            decimal amount = star.Amount;
+            if (amount != decimal.Truncate(amount) || amount < int.MinValue || amount > int.MaxValue)
+                throw Invalid(id, "Non-MemoryDamage amounts must be exact integers in the Int32 range.");
+            return checked((int)amount);
+        }
+
         private static bool AllowedMemory(StarClusterDef cluster, string memory, Dictionary<string, TalentDef> existing)
         {
             if (cluster.AuthoredMemories != null)
@@ -305,17 +317,18 @@ namespace SodRpg.Core.Game
             string id = authoredId ?? StarId(cluster, order);
             TalentDef talent;
             if (star.KeystoneDefinition != null)
-                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, star.Amount, new Txt("", ""));
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, IntegerAmount(star, id), new Txt("", ""));
             else
             if ((star.Kind == ClusterStarKind.MemoryDamage || star.Kind == ClusterStarKind.MemoryHaste) && star.NativeModifier == null)
                 talent = new TalentDef(id, Line.Offense, star.Name,
                     new LinkDef { Kind = star.Kind == ClusterStarKind.MemoryDamage ? LinkKind.MemoryDamage : LinkKind.MemoryHaste,
-                        Value = star.Amount, Requires = new[] { star.Memory } }, star.MaxRank);
+                        Value = star.Kind == ClusterStarKind.MemoryDamage ? star.Amount : IntegerAmount(star, id),
+                        Requires = new[] { star.Memory } }, star.MaxRank);
             else if (star.Kind == ClusterStarKind.Notable && star.Power != Power.None)
-                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, star.Amount, star.MaxRank);
+                talent = new TalentDef(id, Line.Offense, star.Name, star.Power, IntegerAmount(star, id), star.MaxRank);
             else
                 talent = new TalentDef(id, Line.Offense, star.Name, star.Stat,
-                    star.Kind == ClusterStarKind.Stat ? star.Amount : 0, star.MaxRank);
+                    star.Kind == ClusterStarKind.Stat ? IntegerAmount(star, id) : 0, star.MaxRank);
             talent.HeroKey = cluster.HeroKey;
             talent.Tier = 2;
             talent.RankCost = star.RankCost;
@@ -331,11 +344,11 @@ namespace SodRpg.Core.Game
             talent.RunGrowth = star.RunGrowth;
             talent.RunGrowthModifier = star.RunGrowthModifier;
             if (star.Gimmick != null) talent.Gimmick = Gimmicks.Clamp(new GimmickEntry { StarId = id, Memory = star.Memory, Def = star.Gimmick }).Def;
-            if (star.Kind == ClusterStarKind.GimmickBoost) talent.GimmickBoost = star.Amount;
+            if (star.Kind == ClusterStarKind.GimmickBoost) talent.GimmickBoost = IntegerAmount(star, id);
             if (star.Kind == ClusterStarKind.GimmickParam && star.ScopedModifier == null)
             {
                 talent.GimmickParameter = star.Param;
-                talent.GimmickParamAmount = star.Amount;
+                talent.GimmickParamAmount = IntegerAmount(star, id);
             }
             if (star.Kind == ClusterStarKind.Choice)
             {

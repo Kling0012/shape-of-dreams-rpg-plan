@@ -339,7 +339,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.mem.powder.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -936,7 +936,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.mem.powder.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -1533,7 +1533,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_SalamanderPowder",
-          "value": 2,
+          "valueRef": "lacerta.mem.powder.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -2724,7 +2724,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -3315,7 +3315,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -3907,7 +3907,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_HandCannon",
-          "value": 2,
+          "valueRef": "lacerta.mem.hand-cannon.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -5089,7 +5089,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.mem.quick-trigger.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -5680,7 +5680,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.mem.quick-trigger.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -6271,7 +6271,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_QuickTrigger",
-          "value": 2,
+          "valueRef": "lacerta.mem.quick-trigger.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -10012,7 +10012,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.mem.double-tap.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -10609,7 +10609,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.mem.double-tap.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -11206,7 +11206,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_D_DoubleTap",
-          "value": 2,
+          "valueRef": "lacerta.mem.double-tap.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -12397,7 +12397,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 3,
+          "valueRef": "lacerta.mem.incendiary.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -12989,7 +12989,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 3,
+          "valueRef": "lacerta.mem.incendiary.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -13580,7 +13580,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_Q_IncendiaryRounds",
-          "value": 2,
+          "valueRef": "lacerta.mem.incendiary.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -14765,7 +14765,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.mem.precision.c1.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -15356,7 +15356,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.mem.precision.c2.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,
@@ -15947,7 +15947,7 @@
         {
           "kind": "MemoryDamage",
           "memory": "St_R_PrecisionShot",
-          "value": 2,
+          "valueRef": "lacerta.mem.precision.c3.x1/options/0/value",
           "param": null,
           "receiver": null,
           "target": null,

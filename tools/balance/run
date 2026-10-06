@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate, validate, measure and compare stage0 balance snapshots."""
+"""Generate, validate, measure and compare stage1 balance snapshots."""
 from __future__ import annotations
 
 import argparse
@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
+from decimal import Decimal
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -23,9 +24,26 @@ def execute(command: list[str], env: dict[str, str]) -> None:
     subprocess.run(command, cwd=ROOT, env=env, check=True)
 
 
-def number(value: int | float | None) -> str:
+def json_text(value, *, sort_keys: bool = False) -> str:
+    """Keep Decimal values as JSON numbers; stdlib json only supports binary floats."""
+    if isinstance(value, Decimal):
+        if not value.is_finite():
+            raise ValueError("Non-finite JSON number")
+        return str(value)
+    if isinstance(value, dict):
+        items = sorted(value.items()) if sort_keys else value.items()
+        return "{" + ", ".join(json.dumps(key, ensure_ascii=False) + ": " +
+                              json_text(item, sort_keys=sort_keys) for key, item in items) + "}"
+    if isinstance(value, list):
+        return "[" + ", ".join(json_text(item, sort_keys=sort_keys) for item in value) + "]"
+    return json.dumps(value, ensure_ascii=False, allow_nan=False)
+
+
+def number(value: int | float | Decimal | None) -> str:
     if value is None:
         return "—"
+    if isinstance(value, Decimal):
+        return str(value)
     return format(value, ".17g")
 
 
@@ -37,12 +55,14 @@ def shown(entry: dict | None) -> str:
         return value + "（上限・強化不可）"
     if entry["status"] == "not-reached":
         return "未到達"
+    if entry["status"] == "no-damage-nodes":
+        return "対象星なし（効率未定義）"
     return value
 
 
 def comparison(current: dict, previous: dict | None) -> str:
     validated = current["validation"]["testsPassed"]
-    lines = ["# stage0 バランス比較", "",
+    lines = ["# stage1 バランス比較", "",
              "検証: " + ("全通常テスト成功（--slow 指定時のみ低速も実行）" if validated else
                          "レポート専用・テスト未実行（検証済み基準には使いません）"), "",
              "現在: " + current["createdAt"],
@@ -50,10 +70,10 @@ def comparison(current: dict, previous: dict | None) -> str:
              "Git revision 現在: `" + (current.get("gitRevision") or "unknown") + "`",
              "Git revision 前回: " + ("`" + (previous.get("gitRevision") or "unknown") + "`" if previous else "—"), "",
              "数値はJSONの未丸め値。相対差は (現在−前回)/前回 ×100%。前回0・未到達・比較不可は —。",
-             "失敗率 (%) の絶対差は percentage points (pp)、相対差は %。未到達割合の差はfractionのままです。", ""]
+             "率 (%) の絶対差は percentage points (pp)、効率の差は %/点。未到達割合の差はfractionのまま。型・単位が異なる行は比較しません。", ""]
     if "tableMetadata" in current:
-        lines.extend(["鍛冶定義 現在: `" + json.dumps(current["tableMetadata"], ensure_ascii=False, sort_keys=True) + "`",
-                      "鍛冶定義 前回: " + ("`" + json.dumps(previous["tableMetadata"], ensure_ascii=False, sort_keys=True) + "`"
+        lines.extend(["調整表メタデータ 現在: `" + json_text(current["tableMetadata"], sort_keys=True) + "`",
+                      "調整表メタデータ 前回: " + ("`" + json_text(previous["tableMetadata"], sort_keys=True) + "`"
                                            if previous and "tableMetadata" in previous else "—"), ""])
     for snapshot in current["snapshots"]:
         prior = next((s for s in previous["snapshots"] if s["mode"] == snapshot["mode"]), None) if previous else None
@@ -62,8 +82,8 @@ def comparison(current: dict, previous: dict | None) -> str:
         lines.extend(["## " + snapshot["mode"], "",
                       "ContentFingerprint 現在: `" + snapshot["contentFingerprint"] + "`",
                       "ContentFingerprint 前回: " + ("`" + prior["contentFingerprint"] + "`" if prior else "—"),
-                      "前回条件: " + ("`" + json.dumps(prior["conditions"], ensure_ascii=False, sort_keys=True) + "`" if prior else "—"),
-                      "条件: `" + json.dumps(snapshot["conditions"], ensure_ascii=False, sort_keys=True) + "`", ""])
+                      "前回条件: " + ("`" + json_text(prior["conditions"], sort_keys=True) + "`" if prior else "—"),
+                      "条件: `" + json_text(snapshot["conditions"], sort_keys=True) + "`", ""])
         if not compatible:
             lines.extend(["比較不可: " + ("前回なし" if prior is None else "モデル版または正規化条件が異なります") + "。現在値のみ。", ""])
         prior_metrics = {e["id"]: e for e in prior["metrics"]} if prior else {}
@@ -73,13 +93,22 @@ def comparison(current: dict, previous: dict | None) -> str:
             entry = current_metrics.get(metric_id)
             old = prior_metrics.get(metric_id)
             delta = relative = "—"
-            if compatible and old is not None and entry is not None and old["status"] == entry["status"] and old["value"] is not None and entry["value"] is not None:
-                difference = entry["value"] - old["value"]
+            same_quantity = (old is not None and entry is not None and old.get("unit") == entry.get("unit")
+                             and type(old["value"]) in (int, float, Decimal) and type(entry["value"]) in (int, float, Decimal))
+            if compatible and same_quantity and old["status"] == entry["status"]:
+                old_value = Decimal(str(old["value"]))
+                difference = Decimal(str(entry["value"])) - old_value
                 delta = number(difference)
-                if entry["id"].endswith("/failurePercent"):
+                if entry["id"].endswith("/failurePercent") or entry.get("unit") == "percent":
                     delta += " pp"
-                if old["value"] != 0:
-                    relative = number(difference / old["value"] * 100) + "%"
+                elif entry.get("unit") == "percent/point":
+                    delta += " %/点"
+                elif entry.get("unit") == "points":
+                    delta += " 点"
+                elif entry.get("unit") == "nodes":
+                    delta += " 星"
+                if old_value != 0:
+                    relative = number(difference / old_value * 100) + "%"
             label = (entry or old)["label"].replace("|", "\\|").replace("\n", " ")
             current_value = shown(entry) if entry is not None else "削除"
             previous_value = ("比較不可" if not compatible and prior is not None else
@@ -95,7 +124,7 @@ def atomic_json(path: Path, data: dict) -> None:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
                                          prefix=".baseline-", suffix=".tmp", delete=False) as stream:
             temporary = Path(stream.name)
-            json.dump(data, stream, ensure_ascii=False, indent=2, allow_nan=False)
+            stream.write(json_text(data))
             stream.write("\n")
             stream.flush()
             os.fsync(stream.fileno())
@@ -115,7 +144,7 @@ def git_revision() -> str | None:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="stage0 鍛冶＋小規模遠征の生成・検証・前回成功比較")
+    parser = argparse.ArgumentParser(description="stage1 鍛冶＋記憶ダメージ効率＋小規模遠征の生成・検証・前回成功比較")
     parser.add_argument("--no-tests", action="store_true", help="テストなし。検証済み基準とは別のレポート専用基準を使用")
     parser.add_argument("--slow", action="store_true", help="既存の低速テストも実行（既定は通常全テスト）")
     parser.add_argument("--out-dir", type=Path, default=HERE / "results", help="結果・基準の保存先")
@@ -134,6 +163,10 @@ def main() -> int:
             raise RuntimeError("C#生成に失敗しました")
         if not gen_cs.generate(check=True):
             raise RuntimeError("生成C#が最新ではありません")
+        stars_data = json.loads((HERE / "stars.json").read_text(encoding="utf-8"), parse_float=Decimal)
+        table_metadata = {"forge": forge_data,
+                          "stars": {"schemaVersion": stars_data["schemaVersion"],
+                                    "multipliers": stars_data["multipliers"]}}
         requested_dotnet = os.environ.get("DOTNET")
         dotnet = shutil.which(requested_dotnet or "dotnet")
         if dotnet is None:
@@ -151,12 +184,12 @@ def main() -> int:
         out_dir = args.out_dir.resolve()
         out_dir.mkdir(parents=True, exist_ok=True)
         baseline_path = out_dir / ("last-report-only.json" if args.no_tests else "last-success.json")
-        previous = json.loads(baseline_path.read_text(encoding="utf-8")) if baseline_path.exists() else None
+        previous = json.loads(baseline_path.read_text(encoding="utf-8"), parse_float=Decimal) if baseline_path.exists() else None
         with tempfile.TemporaryDirectory(dir=out_dir, prefix=".pending-") as pending:
             staging = Path(pending)
             dll = ROOT / "tools/BalanceSim/bin/Release/net8.0/BalanceSim.dll"
             snapshots = []
-            for mode in ("forge", "expeditions"):
+            for mode in ("forge", "star-efficiency", "expeditions"):
                 # Each invocation starts a separate process, isolating static Core state.
                 command = [dotnet, str(dll), "--mode", mode, "--out", str(staging / f"{mode}.md"),
                            "--metrics-json", str(staging / f"{mode}.json")]
@@ -164,16 +197,16 @@ def main() -> int:
                     command.extend(["--runs", str(args.runs), "--players", str(args.players), "--seed", str(args.seed),
                                     "--zones", "2", "--rooms", "2"])
                 execute(command, env)
-                snapshots.append(json.loads((staging / f"{mode}.json").read_text(encoding="utf-8")))
+                snapshots.append(json.loads((staging / f"{mode}.json").read_text(encoding="utf-8"), parse_float=Decimal))
             current = {"modelVersion": 1, "createdAt": datetime.now(timezone.utc).isoformat(),
                        "validation": {"testsPassed": not args.no_tests, "slow": args.slow},
-                       "gitRevision": git_revision(), "tableMetadata": forge_data, "snapshots": snapshots}
-            (staging / "current.json").write_text(json.dumps(current, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+                       "gitRevision": git_revision(), "tableMetadata": table_metadata, "snapshots": snapshots}
+            (staging / "current.json").write_text(json_text(current) + "\n", encoding="utf-8")
             (staging / "comparison.md").write_text(comparison(current, previous), encoding="utf-8")
             name = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ") + ("-report-only" if args.no_tests else "-validated")
             destination = out_dir / name
             os.replace(staging, destination)
-            # The sole baseline commit occurs after generation/build/tests/both simulations/report succeed.
+            # The sole baseline commit occurs after generation/build/tests/all measurements/report succeed.
             atomic_json(baseline_path, current)
         print("比較: " + str(destination / "comparison.md"))
         print("基準: " + str(baseline_path))

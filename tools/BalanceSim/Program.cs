@@ -32,6 +32,21 @@ internal static class Program
                 Console.Write(forgeReport);
                 return 0;
             }
+            if (options.StarEfficiency)
+            {
+                var measurement = StarEfficiencyReport.Measure();
+                string efficiencyReport = StarEfficiencyReport.Render(measurement);
+                if (options.Out != null)
+                {
+                    string efficiencyPath = Path.GetFullPath(options.Out);
+                    string? efficiencyDirectory = Path.GetDirectoryName(efficiencyPath);
+                    if (efficiencyDirectory != null) Directory.CreateDirectory(efficiencyDirectory);
+                    File.WriteAllText(efficiencyPath, efficiencyReport, new UTF8Encoding(false));
+                }
+                if (options.MetricsJson != null) Metrics.WriteStarEfficiency(options.MetricsJson, measurement);
+                Console.Write(efficiencyReport);
+                return 0;
+            }
             if (options.Infinity)
             {
                 var infinity = new InfinitySimulation(options);

@@ -7,6 +7,8 @@ using SodRpg.Core.Game;
 namespace BalanceSim;
 
 internal sealed record MetricValue(string Id, string Label, double? Value, string Status = "measured");
+internal sealed record StarEfficiencyMetricValue(string Id, string Label, decimal? Value, string Unit,
+    string Status = "measured");
 
 internal static class Metrics
 {
@@ -33,6 +35,51 @@ internal static class Metrics
         }
         Write(path, new { modelVersion = 1, mode = "forge", contentFingerprint = ContentFingerprint.Value,
             conditions = new { runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes() }, metrics, forge = entries });
+    }
+
+    public static void WriteStarEfficiency(string path, StarEfficiencyMeasurement measurement)
+    {
+        var metrics = new List<StarEfficiencyMetricValue>();
+        foreach (var hero in measurement.Heroes)
+        {
+            string id = $"star-efficiency/{hero.Hero}/registration";
+            metrics.Add(new(id + "/treeNodes", hero.Hero + " 登録ツリー星数", hero.TreeNodes, "nodes"));
+            metrics.Add(new(id + "/choiceNodes", hero.Hero + " Choice星数", hero.ChoiceNodes, "nodes"));
+            metrics.Add(new(id + "/directDamageNodes", hero.Hero + " 通常ダメージ星数", hero.DirectDamageNodes, "nodes"));
+            metrics.Add(new(id + "/damageChoiceNodes", hero.Hero + " ダメージ選択星数", hero.DamageChoiceNodes, "nodes"));
+        }
+        foreach (var entry in measurement.Entries)
+        {
+            string id = $"star-efficiency/{entry.Hero}/{entry.Memory}/{entry.Scenario}/{entry.Origin}";
+            string label = $"{entry.Hero} {entry.Memory} {entry.Scenario} {entry.Origin}";
+            metrics.Add(new(id + "/damagePercent", label + " ダメージ (%)", entry.DamagePercent, "percent"));
+            metrics.Add(new(id + "/pointCost", label + " 費用 (点)", entry.PointCost, "points"));
+            metrics.Add(new(id + "/percentPerPoint", label + " 効率 (%/点)", entry.PercentPerPoint,
+                "percent/point", entry.PercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+        }
+        foreach (var range in measurement.Ranges)
+        {
+            string id = $"star-efficiency/{range.Hero}/range/{range.Scenario}/{range.Origin}";
+            string label = $"{range.Hero} {range.Scenario} {range.Origin}";
+            metrics.Add(new(id + "/minPercentPerPoint", label + " min (%/点)", range.MinPercentPerPoint,
+                "percent/point", range.MinPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+            metrics.Add(new(id + "/maxPercentPerPoint", label + " max (%/点)", range.MaxPercentPerPoint,
+                "percent/point", range.MaxPercentPerPoint.HasValue ? "measured" : "no-damage-nodes"));
+        }
+        Write(path, new
+        {
+            modelVersion = 1, mode = "star-efficiency", contentFingerprint = ContentFingerprint.Value,
+            conditions = new
+            {
+                runtime = RuntimeIdentity(), registeredHeroes = RegisteredHeroes(),
+                choicePolicy = StarEfficiencyReport.ChoicePolicy, scenarios = StarEfficiencyReport.Scenarios,
+                origins = StarEfficiencyReport.Origins, ranks = "maximum",
+                costPolicy = "target damage nodes only; full parent cost for Choice/CapG; no connection-only nodes",
+                rangePolicy = "min/max across positive-cost memory rows per hero/scenario/origin; not choice extrema",
+            },
+            metrics, heroes = measurement.Heroes, configurations = measurement.Configurations,
+            entries = measurement.Entries, ranges = measurement.Ranges, choiceOptions = measurement.ChoiceOptions,
+        });
     }
 
     public static void WriteExpeditions(string path, Options options, Simulation simulation)

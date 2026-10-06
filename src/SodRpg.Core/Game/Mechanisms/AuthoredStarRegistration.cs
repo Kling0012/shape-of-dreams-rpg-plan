@@ -81,6 +81,19 @@ namespace SodRpg.Core.Game
             foreach (char c in value) { hash ^= c; hash = unchecked(hash * 1099511628211UL); }
             return hash.ToString("x16", CultureInfo.InvariantCulture);
         }
+        // Rejection must also remove a tree published before migration validation failed.
+        // Do not rebuild the rejected definitions or require the baseline to validate here.
+        internal static void RemoveAuthoredRegistration(string heroKey)
+        {
+            lock (AuthoredLock)
+            {
+                Installed.Remove(heroKey);
+                Migrations.Remove(heroKey);
+                Rules.RegisterAllocationValidation(heroKey, null);
+                registryFingerprint = ComputeRegistryFingerprint();
+            }
+        }
+
         /// <summary>Replace one hero's authored dataset atomically. An empty set restores the baseline tree.</summary>
         public static AuthoredStarRegistry RegisterAuthored(string heroKey, IEnumerable<AuthoredStarDef> definitions)
         {

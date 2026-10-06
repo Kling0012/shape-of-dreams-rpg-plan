@@ -194,7 +194,7 @@ def select_tests(changed, files, diffs=None) -> Selection:
          changes; a widely used declared type still selects everything;
       3. changed data files (tools/star-manifest/*.json, tools/lowrarity/*.json,
          tools/balance/*.json, generated .cs) select tests referencing their path or types;
-      4. build files (*.csproj, Directory.Build.*), the forge inputs, or types
+      4. build files (*.csproj, Directory.Build.*), balance inputs, or types
          used by more than 60% of the test files select everything.
     """
     selection = Selection()
@@ -206,10 +206,12 @@ def select_tests(changed, files, diffs=None) -> Selection:
             selection.run_all = True
             selection.reasons.append(f"build file changed: {path}")
             continue
-        if path in ("tools/balance/forge.json", "tools/balance/gen_cs.py",
-                    "src/SodRpg.Core/Game/Balance/Forge.Generated.cs"):
+        if path in ("tools/balance/forge.json", "tools/balance/stars.json",
+                    "tools/balance/gen_cs.py", "tools/balance/star_values.py",
+                    "src/SodRpg.Core/Game/Balance/Forge.Generated.cs",
+                    "src/SodRpg.Core/Game/Balance/Stars.Generated.cs"):
             selection.run_all = True
-            selection.reasons.append(f"forge balance input changed: {path}")
+            selection.reasons.append(f"balance input changed: {path}")
             continue
         if path.startswith("tests/") and path.endswith(".cs"):
             # Rule 1: the test file itself changed.
@@ -327,7 +329,7 @@ def collect_changed(root: Path, base: str) -> list[str]:
         changed.add(line.strip().replace("\\", "/"))
     for line in run_git(root, "ls-files", "--others", "--exclude-standard").splitlines():
         path = line.strip().replace("\\", "/")
-        if path.endswith(".cs") or is_data_file(path) or path == "tools/balance/gen_cs.py":
+        if path.endswith(".cs") or is_data_file(path) or path in ("tools/balance/gen_cs.py", "tools/balance/star_values.py"):
             changed.add(path)
     return sorted(p for p in changed if p and not p.startswith(".ref/"))
 

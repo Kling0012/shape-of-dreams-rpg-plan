@@ -11,6 +11,12 @@ import json
 import os
 import re
 import sys
+from decimal import Decimal
+from pathlib import Path
+
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'balance'))
+import star_values
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 GAME = os.path.normpath(os.path.join(HERE, '..', '..', 'src', 'SodRpg.Core', 'Game'))
@@ -85,7 +91,7 @@ def check_growth(o, ctx, kind, hero, refs, errors, S):
                 errors.append(f'{ctx}: growth.effects[{i}].stat {e["stat"]!r} is unknown, unsupported or duplicated')
             seen.add(e['stat'])
             a = e['amount']
-            if not (isinstance(a, (int, float)) and not isinstance(a, bool) and a > 0
+            if not (isinstance(a, (int, float, Decimal)) and not isinstance(a, bool) and a > 0
                     and abs(a * 1000 - round(a * 1000)) < 1e-9 and round(a * 1000) <= GROWTH_MAX_MILLI):
                 errors.append(f'{ctx}: growth.effects[{i}].amount must be a positive number in thousandths (0.5, 0.3, 1, ...)')
     else:
@@ -191,7 +197,7 @@ def check_gimmick(g, ctx, legacy, hero, refs, errors, memory=None):
     if not isinstance(g.get('effect'), str) or not g.get('effect'):
         errors.append(f'{ctx}: gimmick.effect missing')
     for k in ('value', 'arg', 'cooldown'):
-        if not isinstance(g.get(k), (int, float)) or isinstance(g.get(k), bool):
+        if not isinstance(g.get(k), (int, float, Decimal)) or isinstance(g.get(k), bool):
             errors.append(f'{ctx}: gimmick.{k} must be number')
     if not memory_ok(g.get('target')):
         errors.append(f'{ctx}: bad gimmick.target {g.get("target")!r}')
@@ -209,7 +215,7 @@ def check_gimmick(g, ctx, legacy, hero, refs, errors, memory=None):
     if 'everyN' in g and not (isinstance(g['everyN'], int) and g['everyN'] >= 1):
         errors.append(f'{ctx}: everyN must be int >= 1')
     if 'valuesByRank' in g and not (isinstance(g['valuesByRank'], list) and g['valuesByRank']
-                                    and all(isinstance(x, (int, float)) for x in g['valuesByRank'])):
+                                    and all(isinstance(x, (int, float, Decimal)) for x in g['valuesByRank'])):
         errors.append(f'{ctx}: valuesByRank must be non-empty number list')
     if 'triggerByIdentity' in g:
         t = g['triggerByIdentity']
@@ -245,7 +251,7 @@ def check_tuning(g, ctx, errors, memory):
         if k in g:
             errors.append(f'{ctx}: MemoryTuning does not take gimmick.{k}')
     v = g.get('value')
-    if not (isinstance(v, (int, float)) and not isinstance(v, bool) and lo <= v <= hi):
+    if not (isinstance(v, (int, float, Decimal)) and not isinstance(v, bool) and lo <= v <= hi):
         errors.append(f'{ctx}: MemoryTuning {t["kind"]} value is a percentage in {lo}..{hi}')
     elif t['kind'] == 'StanceSwordQiAttackBasis' and v != 100:
         errors.append(f'{ctx}: StanceSwordQiAttackBasis takes no amount (value 100)')
@@ -264,7 +270,7 @@ def check_strike(g, ctx, errors, memory=None):
         errors.append(f'{ctx}: strike must be an object with mode in {sorted(STRIKE_MODES)} and keys within {sorted(STRIKE_KEYS)}')
         return
     mode = st['mode']
-    num = lambda v: isinstance(v, (int, float)) and not isinstance(v, bool)
+    num = lambda v: isinstance(v, (int, float, Decimal)) and not isinstance(v, bool)
     if g.get('trigger') != 'OnHit' or g.get('cooldown') != 0 or g.get('arg') != 0 or g.get('target') is not None:
         errors.append(f'{ctx}: IdentityStrike needs trigger OnHit (own basic attack hit), arg 0, cooldown 0, target null')
     for k in ('condition', 'once', 'valuesByRank', 'triggerByIdentity', 'replaces', 'basis', 'pool'):
@@ -334,9 +340,13 @@ def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
         gt = g.get('target') if isinstance(g, dict) else None
         if gt and rec != gt:
             errors.append(f'{ctx}: receiver {rec!r} must equal gimmick.target {gt!r}')
-    if kind in ('MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Stat') and not isinstance(o.get('value'), (int, float)) \
+    if kind in ('MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam', 'Stat') and (not isinstance(o.get('value'), (int, float, Decimal)) or isinstance(o.get('value'), bool)) \
             and not (kind_rule == 'migration' and o.get('stat')):
         errors.append(f'{ctx}: {kind} needs numeric value')
+    if kind == 'MemoryHaste' and isinstance(o.get('value'), (int, float, Decimal)):
+        value = Decimal(str(o['value']))
+        if value != value.to_integral_value() or not -2147483648 <= value <= 2147483647:
+            errors.append(f'{ctx}/value: MemoryHaste requires an exact Int32; fractional values cannot be rounded')
     if kind in ('MemoryDamage', 'MemoryHaste', 'GimmickBoost', 'GimmickParam') and not (mem or rec):
         errors.append(f'{ctx}: {kind} needs memory or receiver')
     if kind == 'GimmickParam' and not o.get('param'):
@@ -346,7 +356,7 @@ def check_effect_obj(o, ctx, kind_rule, legacy, hero, refs, errors, S, effects):
     for k in ('power', 'stat'):
         v = o.get(k)
         if v is not None and not (isinstance(v, dict) and set(v) == {'name', 'perRank'} and isinstance(v['name'], str)
-                                  and isinstance(v['perRank'], (int, float))):
+                                  and isinstance(v['perRank'], (int, float, Decimal))):
             errors.append(f'{ctx}: bad {k} (expect {{name, perRank}})')
     if mem and mem.startswith('St_M_') and g is not None:
         errors.append(f'{ctx}: movement memory {mem} used as trigger source')
@@ -413,7 +423,7 @@ def check_spec_list(lst, ctx, legacy, hero, refs, errors):
         if 'max' in e and 'delta' not in e:
             errors.append(f'{c2}: max only with delta')
         for k in ('pct', 'delta', 'to', 'from', 'max'):
-            if k in e and (not isinstance(e[k], (int, float)) or isinstance(e[k], bool)):
+            if k in e and (not isinstance(e[k], (int, float, Decimal)) or isinstance(e[k], bool)):
                 errors.append(f'{c2}: {k} must be number')
         if 'memory' in e and 'memories' in e:
             errors.append(f'{c2}: memory and memories are exclusive')
@@ -440,15 +450,16 @@ def load_ids(name):
         return set()
 
 
-def check(name, legacy, routes, enum_effects, all_effects):
+def check(name, legacy, routes, enum_effects, all_effects, data=None):
     errors = []
     path = os.path.join(HERE, name + '.json')
     if not os.path.exists(path):
         return [f'{name}: file missing'], 0
-    try:
-        data = json.load(open(path, encoding='utf-8'))
-    except Exception as ex:  # noqa: BLE001
-        return [f'{name}: invalid JSON: {ex}'], 0
+    if data is None:
+        try:
+            data = star_values.resolve_all()[0][name]
+        except (OSError, ValueError, KeyError, TypeError) as ex:
+            return [str(ex)], 0
     if set(data) != {'hero', 'source', 'stars'}:
         errors.append(f'{name}: top-level keys must be hero/source/stars (found {sorted(data)})')
     stars = data.get('stars', [])
@@ -642,13 +653,18 @@ def main():
         print(f'cannot read legacy ids from {GAME}: {ex}')
         sys.exit(1)
     all_effects = collect_effects()
+    try:
+        resolved, _ = star_values.resolve_all()
+    except (OSError, ValueError, KeyError, TypeError) as ex:
+        print(f'cannot resolve star values: {ex}')
+        sys.exit(1)
     total = 0
     for n in names:
         if n not in EXPECTED:
             print(f'{n}: unknown name')
             total += 1
             continue
-        errs, prov = check(n, legacy, routes, enum_effects, all_effects)
+        errs, prov = check(n, legacy, routes, enum_effects, all_effects, resolved[n])
         total += len(errs)
         extra = f' (仮置き keystone {prov})' if prov and not errs else ''
         print(f'{n}: ' + ('OK' if not errs else f'{len(errs)} errors') + extra)
