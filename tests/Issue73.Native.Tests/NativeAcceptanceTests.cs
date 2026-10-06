@@ -14,7 +14,7 @@ using Xunit;
 
 namespace Issue73.Native.Tests
 {
-    public sealed class NativeAcceptanceTests : IDisposable
+    public sealed partial class NativeAcceptanceTests : IDisposable
     {
         private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         public NativeAcceptanceTests()
@@ -23,6 +23,7 @@ namespace Issue73.Native.Tests
             Time.frameCount = 1;
             Time.unscaledTime = 100;
             DewPlayer.gamePlayers.Clear();
+            DewPlayer.local = null;
             NetworkedManagerBase<GameManager>.softInstance = new GameManager { runId = "run" };
             HostAuthority.NativeInstance = null;
             InfinityMode.NativeSaveAgreement = false;
@@ -31,6 +32,7 @@ namespace Issue73.Native.Tests
         public void Dispose()
         {
             DewPlayer.gamePlayers.Clear();
+            DewPlayer.local = null;
             HostAuthority.NativeInstance = null;
             InfinityMode.NativeSaveAgreement = false;
             Set(typeof(ClientSession), "_hostSession", null);

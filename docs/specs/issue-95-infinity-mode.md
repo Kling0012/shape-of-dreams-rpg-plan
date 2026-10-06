@@ -69,7 +69,7 @@
 - 推奨はホストがパーティ全体の「確保して帰還／深く潜る」を決定。荷物、取引予約、出来事、契約は個人のまま。参加者個別退出は採らない。通常モードの個人確保は変更しない。
 - 確保：各人の未決撃破・配当・取引の終了条件を満たして既存の確保を1回適用し、CompletedRunIdと帰還結果を耐久保存。踏破XP・勝利／敗北・本体ending解放は付けない。
 - その後ホストで `GameManager.WrapUpAndShowResult(Conceded)` を呼び、本体の結果同期／ready／ロビー再開を残す。MODはSecuredReturnを優先して本体Concededを敗北精算しない。本体のConceded履歴・mastery等の精算と「放棄」表示は残るため、表示上はInfinity帰還と区別する。
-- 潜行：本体の終結APIを呼ばず、各人の選択確定後に既存Delveを1回適用、鞄を維持、次Segmentへ。全員の保存ACK後に次ゾーンを抽選し、noAdvanceで再生成する。
+- 潜行：本体の終結APIを呼ばず、各人の選択確定後に既存Delveを1回適用、鞄を維持、次Segmentへ。保存ACKを選択ごとに最大30秒待ってから次ゾーンを抽選し、noAdvanceで再生成する。遠隔ACKが未着なら警告して待機を解除するが、ホスト自身の保存・選択receiptと実際の撃破台帳の整合性は維持する（#259）。
 - Infinity選択待ちを戦闘／遅着報酬による既存の自動Delveで解除しない（R/src/SodRpg.Mod/ClientSession.RunChoices.cs:153-177）。全員KOは従来のGameOver、切断は帰還・勝利とみなさない。
 
 ## 7. 難しさの伸び
@@ -103,6 +103,7 @@
 - RunId／epoch／確定境界／遷移intentを両方に保存。native envelopeを地図の権威、MODの保存済receiptを報酬の権威とする。不一致では新規報酬と進行を止め、既存回復経路で未精算を解く。曖昧な保存から部屋や報酬を推測して作らない。
 - 着手時はProfile版5、Protocol18。段階1は保存形式5の省略可能項目追加・Protocol19、段階2は予算・記録追加を示すProtocol20へ更新した。現在のProtocol24でも版差は警告のみで参加者を拒否しない。旧保存はOFF・epoch0・予算0で読み込む。解読できない保存形式から状態を推測しない。
 - 途中参加は現区間と生存敵を分割同期し、入場前の撃破は新規配布しない。ホスト交代のライブ移行は前提にせず、本体continue＋同ホストプロフィールから復帰する。
+- #259: ホスト自身は直接受領／耐久frontierを使い、遠隔撃破再送peerに数えない。実client identityが未確立の接続候補は30秒だけreceiptを待ち、未着なら仮義務を解除する。仮peerは永続化せず、切断／再開で不可能なACK義務を残さない。遅着receiptは現在区間から再開する。識別済みclientの本物の未受領区間と未保存のホスト撃破は捨てない。調査一覧・未確定の通常UI経路は [#259退行調査](../reviews/issue-259-v272-regressions.md)。
 - 段階2の記録は、固定ゾーン・周期・選択DreamDepth・本体難易度別に、帰還時最大累計Combat部屋数とその帰還の圧段階、帰還回数、直近帰還の部屋数／圧を保存する。未帰還・敗北・切断の到達は帰還記録を更新しない。Heatは既存RunReportに残す。最高未帰還到達・専用累計ボス／敗北カウンタは今回の記録指標には追加しない。
 - ProfileStats／RunReport／Codec／記録UIへ集約値と直近結果だけ追加。部屋ごとの全履歴は保存しない（R/src/SodRpg.Core/Game/Profile.cs:210-247; R/src/SodRpg.Mod/DreamforgeUi.cs:3008-3011）。
 

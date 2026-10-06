@@ -120,6 +120,10 @@ namespace SodRpg.Mod
         private static readonly Action<DreamforgeInfinityAckMsg, DewPlayer> OnAck = ReceiveAck;
         private static readonly Dictionary<string, long> Acks = new Dictionary<string, long>(StringComparer.Ordinal);
         private static readonly List<string> DepartedAcks = new List<string>();
+        private const float ChoiceAckGraceSeconds = 30f;
+        private static InfinityChoice _ackWaitingChoice;
+        private static float _ackWaitStarted;
+        private static bool _ackWaitReleased;
         private static string _choiceText;
         private static InfinityChoice _choice;
         private static bool HasNextRoom(ZoneManager zone) => RevealedNext(zone) >= 0;
@@ -223,6 +227,7 @@ namespace SodRpg.Mod
             _initial = null; _runId = null;
             _generationReportedRun = null;
             _choice = null; _choiceText = null; Acks.Clear();
+            _ackWaitingChoice = null;
             var settings = NetworkedManagerBase<GameSettingsManager>.softInstance;
             if (NetworkServer.active && settings != null)
             {
@@ -240,6 +245,7 @@ namespace SodRpg.Mod
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
             Acks.Clear(); _choice = null; _choiceText = null;
+            _ackWaitingChoice = null;
         }
         internal static void FinishRestore()
         {
@@ -659,6 +665,13 @@ namespace SodRpg.Mod
 
         internal static bool PartyAcknowledged(InfinityChoice choice)
         {
+            if (choice == null) return false;
+            if (!ReferenceEquals(choice, _ackWaitingChoice))
+            {
+                _ackWaitingChoice = choice;
+                _ackWaitStarted = UnityEngine.Time.unscaledTime;
+                _ackWaitReleased = false;
+            }
             DepartedAcks.Clear();
             foreach (var pair in Acks)
             {
@@ -667,8 +680,22 @@ namespace SodRpg.Mod
                 if (!present) DepartedAcks.Add(pair.Key);
             }
             foreach (var key in DepartedAcks) Acks.Remove(key);
+            bool missingRemote = false;
             foreach (var player in DewPlayer.gamePlayers)
-                if (player.isHumanPlayer && (!Acks.TryGetValue(player.guid, out long revision) || revision != choice.Revision)) return false;
+            {
+                if (player == null || !player.isHumanPlayer
+                    || Acks.TryGetValue(player.guid, out long revision) && revision == choice.Revision) continue;
+                // A remote timeout cannot manufacture the host's local save/choice receipt.
+                if (player == DewPlayer.local) return false;
+                missingRemote = true;
+            }
+            if (!missingRemote) return true;
+            if (UnityEngine.Time.unscaledTime - _ackWaitStarted < ChoiceAckGraceSeconds) return false;
+            if (!_ackWaitReleased)
+            {
+                _ackWaitReleased = true;
+                Log.Warn("Infinity: choice ACK wait exceeded 30 seconds; host progression continues without remote confirmation.");
+            }
             return true;
         }
     }

@@ -10,6 +10,7 @@ namespace SodRpg.Mod
     internal sealed partial class HostAuthority
     {
         private const int KillReplayMessagesPerFrame = 32;
+        private const float KillReceiptGraceSeconds = 30f;
         private readonly struct MonsterClassificationDelta
         {
             public readonly NightmareAffix Nightmare;
@@ -95,6 +96,8 @@ namespace SodRpg.Mod
             public KillParticipationRange Participation;
             public bool Started, HeardReceipt, ControlSent;
             public float NextStartRetry;
+            public float ReceiptWaitingSince;
+            public bool ReceiptWaitReleased;
             public readonly List<MonsterRuntime> Monsters = new List<MonsterRuntime>();
             public readonly Queue<RequestedKillFact> Requested = new Queue<RequestedKillFact>();
         }
@@ -206,6 +209,7 @@ namespace SodRpg.Mod
                     var cursor = pair.Value;
                     // An RPC actor replacement is not a native disconnect: keep its participation interval open.
                     cursor.Started = cursor.HeardReceipt = cursor.ControlSent = false;
+                    cursor.ReceiptWaitingSince = Time.unscaledTime;
                     cursor.MonsterIndex = 0;
                     cursor.Monsters.Clear();
                     foreach (var runtime in _monsters.Values) cursor.Monsters.Add(runtime);
@@ -225,12 +229,12 @@ namespace SodRpg.Mod
         private void RegisterKillPeer(DewPlayer player)
         {
             EnsureKillRun();
-            if (player == null || !player.isHumanPlayer || string.IsNullOrEmpty(_killRunId)
+            if (player == null || player == DewPlayer.local || !player.isHumanPlayer || string.IsNullOrEmpty(_killRunId)
                 || !DewPlayer.gamePlayers.Contains(player)
                 || _killReplayPlayers.ContainsKey(player)) return;
             string id = "connection." + ClientSession.HostAuthorityGeneration.ToString(CultureInfo.InvariantCulture)
                 + "." + player.netId.ToString(CultureInfo.InvariantCulture);
-            var cursor = new KillReplayCursor { PeerId = id, JoinSequence = _killSequence };
+            var cursor = new KillReplayCursor { PeerId = id, JoinSequence = _killSequence, ReceiptWaitingSince = Time.unscaledTime };
             cursor.Participation = new KillParticipationRange { StreamId = _killStreamId, After = _killSequence, Through = _killSequence };
             _killReplayPlayers.Add(player, cursor);
             if (!_killPeers.ContainsKey(id)) _killPeers.Add(id, new KillReplayPeer { Id = id, NativeOwnerId = player.guid });
@@ -241,12 +245,13 @@ namespace SodRpg.Mod
         private static bool IsProvisionalKillPeer(KillReplayPeer peer) =>
             peer.Id.StartsWith("connection.", StringComparison.Ordinal);
 
+        // A connection candidate has no durable client identity to replay to after restore.
+        // Its live pre-receipt interval is retained only for the bounded transport grace.
         private static bool ShouldPersistKillPeer(KillReplayPeer peer)
         {
-            if (!IsProvisionalKillPeer(peer)) return true;
-            foreach (var range in peer.Participation)
-                if (range.Through > range.After && range.Through > peer.ReceivedThrough(range.StreamId)) return true;
-            return false;
+            if (IsProvisionalKillPeer(peer)) return false;
+            var local = DewPlayer.local;
+            return local == null || string.IsNullOrEmpty(local.guid) || peer.NativeOwnerId != local.guid;
         }
 
         private bool IsKillPeerActive(string peerId)
@@ -277,6 +282,9 @@ namespace SodRpg.Mod
             cursor.Monsters.Clear();
             cursor.Requested.Clear();
             if (!_killPeers.TryGetValue(cursor.PeerId, out var peer)) return;
+            // No client ever established receipt ownership. A departed transport candidate
+            // must not leave an impossible debt in the saved replay ledger.
+            if (IsProvisionalKillPeer(peer)) peer.Participation.Clear();
             PruneKillParticipation(peer);
             if (IsProvisionalKillPeer(peer) && peer.Participation.Count == 0 && !IsKillPeerActive(peer.Id))
                 _killPeers.Remove(peer.Id);
@@ -393,6 +401,17 @@ namespace SodRpg.Mod
                 if (!_killPeers.ContainsKey(peerId)) _killPeers.Add(peerId, new KillReplayPeer { Id = peerId, NativeOwnerId = caller.guid });
                 if (provisional) _killPeers[peerId].Participation.AddRange(previous.Participation);
                 else _killPeers[peerId].Participation.Add(cursor.Participation);
+            }
+            if (cursor.ReceiptWaitReleased)
+            {
+                cursor.ReceiptWaitReleased = false;
+                cursor.JoinSequence = _killSequence;
+                cursor.Participation = new KillParticipationRange
+                {
+                    StreamId = _killStreamId, ObservationSessionId = cursor.ObservationSessionId,
+                    After = _killSequence, Through = _killSequence,
+                };
+                _killPeers[cursor.PeerId].Participation.Add(cursor.Participation);
             }
             var peer = _killPeers[cursor.PeerId];
             if (!cursor.HeardReceipt)
@@ -542,7 +561,7 @@ namespace SodRpg.Mod
                 bossTypeName, bossDropNightmare, bossDropDepth, runtime.GraphEpoch, runtime.SegmentEpoch, runtime.RoomEpoch);
             RestoreHostFact(fact);
             foreach (var pair in _killReplayPlayers)
-                pair.Value.Participation.Through = fact.Sequence;
+                if (!pair.Value.ReceiptWaitReleased) pair.Value.Participation.Through = fact.Sequence;
             ClientSession.PublishHostKillFact(fact);
             var actor = NetworkedManagerBase<ActorManager>.softInstance?.serverActor;
             actor?.CustomRpc_SendMessageToAllClients(
@@ -708,6 +727,18 @@ namespace SodRpg.Mod
             foreach (var player in _killReplayDeparted) RemoveKillPeer(player);
             foreach (var player in DewPlayer.gamePlayers)
                 if (player != null) RegisterKillPeer(player);
+            foreach (var cursor in _killReplayPlayers.Values)
+            {
+                if (cursor.HeardReceipt || cursor.ReceiptWaitReleased
+                    || Time.unscaledTime - cursor.ReceiptWaitingSince < KillReceiptGraceSeconds) continue;
+                var peer = _killPeers[cursor.PeerId];
+                if (!IsProvisionalKillPeer(peer)) continue; // Identified clients retain their real recovery debts.
+                cursor.ReceiptWaitReleased = true;
+                peer.Participation.Clear();
+                Log.Warn("Kill replay: no receipt from " + peer.NativeOwnerId
+                    + " within 30 seconds; provisional receipt wait released. Host progression continues.");
+                ClientSession.DirtyHostKillReplay();
+            }
             _killReplayRound.Clear();
             _killReplayTargets.Clear();
             foreach (var pair in _killReplayPlayers)
