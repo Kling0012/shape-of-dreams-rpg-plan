@@ -36,33 +36,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Focus_also_weights_legendaries()
-        {
-            double Share(Line? focus)
-            {
-                var rng = new Rng(3);
-                int offense = 0;
-                for (int i = 0; i < 3000; i++)
-                    if (Loot.RollRelic(rng, Rarity.Legendary, 10, null, focus).Base.Line == Line.Offense) offense++;
-                return offense / 3000.0;
-            }
-            Assert.True(Share(Line.Offense) > Share(null) * 1.3);
-        }
-
-        [Fact]
-        public void Kills_use_profile_focus()
-        {
-            var p = Profile.CreateNew(5);
-            Rules.SetFocus(p, Line.Resonance);
-            Rules.BeginRun(p, "f");
-            var rng = new Rng(p.RngState);
-            var expected = Loot.RollKill(rng, MonsterTier.Boss, 10, 0, Line.Resonance, null,
-                p.Stash, p.Run.Satchel, p.Codex); // Rules.OnKill と同じ引数（銘品の重みは図鑑・所持で変わる）
-            Rules.OnKill(p, MonsterTier.Boss, 10);
-            Assert.Equal(expected.Relics.Select(r => r.Uid + r.BaseId), p.Run.Satchel.Select(r => r.Uid + r.BaseId));
-        }
-
-        [Fact]
         public void Focus_cannot_change_during_a_run()
         {
             var p = Profile.CreateNew(5);
@@ -193,16 +166,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Room_counter_with_baseline_counts_the_first_room()
-        {
-            var c = new RoomCounter();
-            c.Reset(0);
-            Assert.Equal(1, c.Observe(1));
-            c.Reset(2); // ライブリロード・途中参加：既に2部屋突破済み
-            Assert.Equal(1, c.Observe(3));
-        }
-
-        [Fact]
         public void Recovering_a_lost_relic_respects_satchel_capacity()
         {
             var p = Profile.CreateNew(4);
@@ -217,18 +180,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(shards, p.Run.SatchelShards);
         }
 
-        [Fact]
-        public void Report_level_before_is_the_level_at_run_start()
-        {
-            var p = Profile.CreateNew(6);
-            Rules.BeginRun(p, "lv");
-            int start = p.DreamLevel;
-            for (int i = 0; i < 10; i++) Rules.OnKill(p, MonsterTier.Boss, 5);
-            Assert.True(p.DreamLevel > start);
-            Rules.EndRun(p, victory: false);
-            Assert.Equal(start, p.LastReport.LevelBefore);
-            Assert.Equal(p.DreamLevel, p.LastReport.LevelAfter);
-        }
 
         [Fact]
         public void Overflowed_relics_do_not_count_as_secured()

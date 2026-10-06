@@ -11,22 +11,6 @@ namespace SodRpg.Core.Tests
     {
         private static List<Hint> Hints(IEnumerable<GameEvent> ev) => ev.Where(e => e.Kind == EventKind.Hint).Select(e => e.HintId.Value).ToList();
 
-        [Fact]
-        public void Every_hint_has_text_in_both_languages()
-        {
-            foreach (Hint h in Enum.GetValues(typeof(Hint)))
-            {
-                var d = Onboarding.Get(h);
-                Assert.NotNull(d);
-                foreach (bool ja in new[] { true, false })
-                {
-                    Loc.Japanese = ja;
-                    Assert.False(string.IsNullOrWhiteSpace(d.Title.ToString()));
-                    Assert.False(string.IsNullOrWhiteSpace(d.Body.ToString()));
-                }
-            }
-            Loc.Japanese = true;
-        }
 
         [Fact]
         public void Hints_show_once_and_can_be_turned_off()

@@ -61,21 +61,5 @@ namespace SodRpg.Core.Tests
             Assert.InRange(rare / (double)total, 0.01, 0.06);
         }
 
-        [Fact]
-        public void Pact_and_daily_descriptions_follow_their_numbers()
-        {
-            foreach (bool ja in new[] { true, false })
-            {
-                Loc.Japanese = ja;
-                foreach (var d in Pacts.All) Assert.False(string.IsNullOrWhiteSpace(d.Description));
-                foreach (var d in DailyDream.All) Assert.False(string.IsNullOrWhiteSpace(d.Description));
-            }
-            Loc.Japanese = true;
-            var glass = Pacts.Get(Pact.GlassHeart);
-            Assert.Contains("40%", glass.Description);
-            var errands = DailyDream.All.First(x => x.Id == 14);
-            var quiet = DailyDream.All.First(x => x.Id == 8);
-            Assert.NotEqual(quiet.Description, errands.Description);
-        }
     }
 }

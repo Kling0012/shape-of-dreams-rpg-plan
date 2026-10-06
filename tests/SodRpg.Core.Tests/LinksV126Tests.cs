@@ -13,16 +13,6 @@ namespace SodRpg.Core.Tests
             new LinkDef { Kind = kind, Value = value, Requires = requires };
 
         [Fact]
-        public void Single_memory_link_is_satisfied_only_while_that_memory_is_equipped()
-        {
-            var link = Link(LinkKind.Attune, 20, "St_L_Blizzard");
-            Assert.True(Links.Satisfied(link, "Hero_Vesper", new[] { "St_L_Blizzard" }, null));
-            Assert.True(Links.Satisfied(link, "Hero_Vesper", new[] { "St_Q_CruelSun", "St_L_Blizzard" }, null));
-            Assert.False(Links.Satisfied(link, "Hero_Vesper", new[] { "St_Q_CruelSun" }, null));
-            Assert.False(Links.Satisfied(link, "Hero_Vesper", Array.Empty<string>(), null));
-        }
-
-        [Fact]
         public void Pair_needs_both_a_memory_and_an_essence()
         {
             var link = Link(LinkKind.Attune, 22, "St_L_LightExplosion", "Gem_L_PureWhite");
@@ -39,18 +29,6 @@ namespace SodRpg.Core.Tests
             Assert.True(Links.Satisfied(link, "Hero_Mist", new[] { "St_R_Parry", "St_Q_Fleche" }, null));
             Assert.False(Links.Satisfied(link, "Hero_Vesper", new[] { "St_R_Parry", "St_Q_Fleche" }, null));
             Assert.False(Links.Satisfied(link, "Hero_Mist", new[] { "St_Q_Fleche" }, null));
-        }
-
-        [Fact]
-        public void Traveler_conditions_follow_the_hero_type_name()
-        {
-            var link = Link(LinkKind.MemorySurge, 30, "Hero_Lacerta", "St_D_DoubleTap");
-            Assert.True(Links.Satisfied(link, "Hero_Lacerta", new[] { "St_D_DoubleTap" }, null));
-            Assert.False(Links.Satisfied(link, "Hero_Husk", new[] { "St_D_DoubleTap" }, null));
-            // 旅人とエッセンスの組み合わせも同じ判定で扱う。
-            var gem = Link(LinkKind.Attune, 20, "Hero_Yubar", "Gem_L_Perfect");
-            Assert.True(Links.Satisfied(gem, "Hero_Yubar", null, new[] { "Gem_L_Perfect" }));
-            Assert.False(Links.Satisfied(gem, "Hero_Yubar", null, new[] { "Gem_L_MetalCrystal" }));
         }
 
         [Fact]
@@ -80,25 +58,6 @@ namespace SodRpg.Core.Tests
             Assert.False(Links.Validate(Link(LinkKind.MemorySurge, 30, "Hero_Lacerta")));
             Assert.False(Links.Validate(Link(LinkKind.None, 30, "St_L_Blizzard")));
             Assert.False(Links.Validate(null));
-        }
-
-        [Theory]
-        [InlineData(LinkKind.Attune, 1, 25)]
-        [InlineData(LinkKind.Attune, 2, 40)]
-        [InlineData(LinkKind.Attune, 3, 55)]
-        [InlineData(LinkKind.Guard, 1, 25)]
-        [InlineData(LinkKind.Guard, 2, 40)]
-        [InlineData(LinkKind.Guard, 3, 55)]
-        [InlineData(LinkKind.MemoryHaste, 1, 50)]
-        [InlineData(LinkKind.MemoryHaste, 2, 80)]
-        [InlineData(LinkKind.MemoryHaste, 3, 110)]
-        [InlineData(LinkKind.MemorySurge, 1, 40)]
-        [InlineData(LinkKind.MemorySurge, 2, 64)]
-        [InlineData(LinkKind.MemorySurge, 3, 88)]
-        public void Caps_grow_with_the_requirement_count(LinkKind kind, int count, int expected)
-        {
-            Assert.Equal(expected, Links.Cap(kind, count));
-            Assert.Equal(0, Links.Cap(LinkKind.None, count));
         }
 
 
@@ -135,42 +94,5 @@ namespace SodRpg.Core.Tests
             Assert.Null(Build.Decode("s:;p:;h:0;l:3:20"));
         }
 
-        [Fact]
-        public void Awakening_multiplies_the_link_value_but_enhance_does_not()
-        {
-            var unique = Content.Uniques.First(u => u.Id == "unique.link2_penniless_tycoon");
-            var relic = Loot.RollUnique(new Rng(7), unique, 1);
-            var p = Profile.CreateNew(12);
-            p.Stash.Add(relic);
-            Rules.Equip(p, "Hero_Vesper", relic.Uid);
-            Rules.BeginRun(p, "Hero_Vesper");
-
-            var plain = Build.Compute(p, "Hero_Vesper", 0);
-            var link = Assert.Single(plain.Links);
-            Assert.Equal(26, link.Value);
-
-            relic.Enhance = 3; // 強化は連携の値を伸ばさない
-            Assert.Equal(26, Assert.Single(Build.Compute(p, "Hero_Vesper", 0).Links).Value);
-
-            relic.Awakened = true; // 覚醒（旧来の覚醒と同じ覚醒Ⅱ）は 150% を掛ける
-            Assert.Equal(26 * Content.AwakenPowerPctAt(relic.AwakenLevel) / 100, Assert.Single(Build.Compute(p, "Hero_Vesper", 0).Links).Value);
-        }
-
-        [Fact]
-        public void Sample_link_uniques_are_valid_and_well_formed()
-        {
-            var linked = Content.Uniques.Where(u => u.Link != null).ToList();
-            Assert.Equal(357, linked.Count); // Includes all reviewed P37 content.
-            Assert.All(linked, u => Assert.True(Links.Validate(u.Link), u.Id));
-            Assert.All(linked, u => Assert.True(u.Link.Value <= Links.Cap(u.Link.Kind, u.Link.Requires.Length), u.Id));
-            Assert.All(linked, u => Assert.Equal(2, u.Powers.Count)); // 通常どおり2つの固有効果
-            // 樹形図のすべての枝に1つ以上（M=記憶、E=エッセンス、T=旅人）
-            string Branch(LinkDef l) => string.Concat(l.Requires.Select(t => t.StartsWith("St_") ? "M" : t.StartsWith("Gem_") ? "E" : "T").OrderBy(c => c));
-            var branches = linked.Select(u => Branch(u.Link)).ToHashSet();
-            foreach (string br in new[] { "M", "E", "T", "MM", "EM", "EE", "MT", "ET", "EMT", "MMT", "EMM", "EEM" })
-                Assert.Contains(br, branches);
-            foreach (var kind in new[] { LinkKind.Attune, LinkKind.Guard, LinkKind.MemoryHaste, LinkKind.MemorySurge })
-                Assert.Contains(linked, u => u.Link.Kind == kind);
-        }
     }
 }

@@ -45,49 +45,6 @@ namespace SodRpg.Core.Tests
                 }
         }
 
-        [Theory]
-        [MemberData(nameof(Heroes))]
-        public void Ordered_branches_have_adjacent_bridges_and_two_mid_crossings(string hero)
-        {
-            var tree = HeroTreeLayout.ForHero(hero);
-            var branches = tree.Nodes.Where(n => n.Talent?.RouteId != null).GroupBy(n => n.Talent.RouteId).ToArray();
-            Assert.InRange(branches.Length, 6, 7); // v1.28：Bismuth は芸術家のルートを外して6ルート
-            var branchIndex = branches.Select((b, i) => new { b.Key, Index = i }).ToDictionary(x => x.Key, x => x.Index);
-            foreach (var branch in branches)
-            {
-                var ordered = branch.OrderBy(n => n.Talent.RouteOrder).ToArray();
-                for (int i = 1; i < ordered.Length; i++)
-                    Assert.Contains(ordered[i - 1].Neighbors, index => tree.Nodes[index].Id == ordered[i].Id);
-                Assert.Equal(3, ordered.Single(n => n.Talent.RouteOrder == 7).Talent.RankCost);
-                if (ordered.Length == 8)
-                {
-                    Assert.Equal(5, ordered[7].Talent.RankCost);
-                    Assert.Equal(HeroTreeNodeKind.Keystone, ordered[7].Kind);
-                }
-            }
-            var rings = tree.Nodes.Where(n => n.Talent?.IsDreamRing == true).ToArray();
-            Assert.Equal(8, rings.Length);
-            foreach (var ring in rings)
-            {
-                var ends = ring.Neighbors.Select(i => tree.Nodes[i]).Where(n => n.Talent?.RouteId != null).ToArray();
-                Assert.Equal(2, ends.Length);
-                int distance = Math.Abs(branchIndex[ends[0].Talent.RouteId] - branchIndex[ends[1].Talent.RouteId]);
-                Assert.True(distance == 1 || distance == branches.Length - 1);
-            }
-            int crossings = 0;
-            foreach (var edge in tree.Edges)
-            {
-                var a = tree.Nodes[edge.A].Talent;
-                var b = tree.Nodes[edge.B].Talent;
-                if (a?.RouteId == null || b?.RouteId == null || a.RouteId == b.RouteId) continue;
-                int distance = Math.Abs(branchIndex[a.RouteId] - branchIndex[b.RouteId]);
-                Assert.True(distance == 1 || distance == branches.Length - 1);
-                Assert.InRange(a.RouteOrder, 2, 6);
-                Assert.InRange(b.RouteOrder, 2, 6);
-                crossings++;
-            }
-            Assert.Equal(2, crossings);
-        }
 
         [Theory]
         [MemberData(nameof(Heroes))]

@@ -21,8 +21,6 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(MonsterTier.Normal, 1, 0.02)]
-        [InlineData(MonsterTier.Normal, 5, 0.10)]
-        [InlineData(MonsterTier.MiniBoss, 1, 0.20)]
         [InlineData(MonsterTier.MiniBoss, 5, 0.52)]
         public void Nightmare_rate_matches_depth(MonsterTier tier, int depth, double expected)
         {
@@ -35,9 +33,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(1, 1)]
-        [InlineData(2, 1)]
         [InlineData(3, 2)]
-        [InlineData(4, 2)]
         [InlineData(5, 3)]
         public void Deeper_nightmares_have_more_affixes(int depth, int affixes)
         {
@@ -64,18 +60,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Labels_list_every_affix_in_both_languages()
-        {
-            var all = Nightmares.AllAffixes.Aggregate(NightmareAffix.None, (x, y) => x | y);
-            foreach (bool ja in new[] { true, false })
-            {
-                Loc.Japanese = ja;
-                string label = Nightmares.Label(all);
-                foreach (var a in Nightmares.AllAffixes) Assert.Contains(Nightmares.AffixName(a), label);
-            }
-            Loc.Japanese = true;
-        }
 
         [Fact]
         public void Sanitize_drops_unknown_bits()

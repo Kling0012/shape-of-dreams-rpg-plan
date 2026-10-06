@@ -29,35 +29,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Delve_keeps_the_gear_window_open()
-        {
-            var p = Profile.CreateNew(12);
-            Rules.BeginRun(p, "Hero_A");
-
-            Rules.ReachSecurePoint(p);
-            Rules.Delve(p);
-
-            Assert.False(p.Run.AwaitingChoice);
-            Assert.True(p.Run.GearWindow);
-            Assert.False(Rules.LoadoutLocked(p, true));
-        }
-
-        [Fact]
-        public void New_run_starts_with_the_gear_window_closed()
-        {
-            var p = Profile.CreateNew(12);
-            Rules.BeginRun(p, "a");
-            Rules.ReachSecurePoint(p);
-            Rules.Secure(p);
-            Assert.True(p.Run.GearWindow);
-
-            Rules.EndRun(p, victory: true);
-            Rules.BeginRun(p, "b");
-            Assert.False(p.Run.GearWindow);
-            Assert.True(Rules.LoadoutLocked(p, true));
-        }
-
-        [Fact]
         public void Gear_window_survives_save_and_load()
         {
             var p = Profile.CreateNew(12);

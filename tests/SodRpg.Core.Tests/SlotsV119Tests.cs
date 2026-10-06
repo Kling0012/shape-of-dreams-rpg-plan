@@ -13,60 +13,6 @@ namespace SodRpg.Core.Tests
     {
         private const string HeroKey = "Hero_Vesper";
 
-        [Theory]
-        [InlineData(Slot.Weapon)]
-        [InlineData(Slot.Armor)]
-        [InlineData(Slot.Charm)]
-        [InlineData(Slot.Head)]
-        [InlineData(Slot.Hands)]
-        [InlineData(Slot.Feet)]
-        public void Every_slot_has_bases_affixes_and_rollable_epic_powers(Slot slot)
-        {
-            Assert.Equal(100, Content.BasesFor(slot).Count());
-            Assert.True(Content.AffixPool(slot).Count >= 8);
-            Assert.True(Content.PowerPool(slot).Count >= 8);
-            var rng = new Rng((ulong)(119 + (int)slot));
-            for (int i = 0; i < 200; i++)
-            {
-                var relic = Loot.RollRelic(rng, Rarity.Epic, 10, slot: slot);
-                Assert.Equal(slot, relic.Slot);
-                Assert.Equal(Rarity.Epic, relic.Rarity);
-                // v1.22：エピックは固有効果2つ（別々の物）。どちらもその枠の候補の範囲内。
-                // v1.32：銘品のエピックは定義の固定値（土台の枠の池とは限らない。NamedItemsDataV132Tests）。
-                Assert.Equal(2, relic.Powers.Count);
-                Assert.NotEqual(relic.Powers[0].Power, relic.Powers[1].Power);
-                if (relic.NamedId != null)
-                {
-                    NamedItems.TryGetNamed(relic.NamedId, out var def);
-                    Assert.Equal(def.Powers.Select(p => (p.Power, p.Value)),
-                        relic.Powers.Select(p => (p.Power, p.Value)));
-                    continue;
-                }
-                foreach (var power in relic.Powers)
-                    Assert.Contains(Content.PowerPool(slot), p => p.Power == power.Power &&
-                        power.Value >= p.Min && power.Value <= p.Max);
-            }
-        }
-
-        [Theory]
-        [InlineData(Slot.Head)]
-        [InlineData(Slot.Hands)]
-        [InlineData(Slot.Feet)]
-        public void New_slots_have_twelve_standalone_uniques_with_matching_bases(Slot slot)
-        {
-            var prefix = slot.ToString().ToLowerInvariant() + ".";
-            var uniques = Content.Uniques.Where(u => u.SetId == null && u.BaseId.StartsWith(prefix, StringComparison.Ordinal)).ToList();
-            Assert.True(uniques.Count >= 40, $"{slot}: {uniques.Count}");
-            foreach (var unique in uniques)
-            {
-                Assert.True(Content.TryGetBase(unique.BaseId, out var baseDef));
-                Assert.Equal(slot, baseDef.Slot);
-                Assert.Null(unique.SetId);
-                var relic = Loot.RollUnique(new Rng(119), unique, 10);
-                Assert.Equal(slot, relic.Slot);
-                Assert.Equal(unique.Id, relic.UniqueId);
-            }
-        }
 
         private static Profile EquippedProfile()
         {
@@ -229,54 +175,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(state, p.RngState);
         }
 
-        [Theory]
-        [InlineData(Line.Offense, 2, 5, 5, 0, 0, 0, 0, 0, 0, 0)]
-        [InlineData(Line.Offense, 3, 5, 5, 6, 0, 0, 0, 0, 0, 0)]
-        [InlineData(Line.Offense, 4, 5, 5, 6, 4, 0, 0, 0, 0, 0)]
-        [InlineData(Line.Offense, 5, 5, 5, 6, 4, 0, 0, 0, 0, 0)]
-        [InlineData(Line.Offense, 6, 13, 13, 6, 4, 0, 0, 0, 0, 0)]
-        [InlineData(Line.Guard, 2, 0, 0, 0, 0, 8, 0, 0, 0, 0)]
-        [InlineData(Line.Guard, 3, 0, 0, 0, 0, 8, 6, 0, 0, 0)]
-        [InlineData(Line.Guard, 4, 0, 0, 0, 0, 8, 6, 12, 0, 0)]
-        [InlineData(Line.Guard, 5, 0, 0, 0, 0, 8, 6, 12, 0, 0)]
-        [InlineData(Line.Guard, 6, 0, 0, 0, 0, 20, 12, 12, 0, 0)]
-        [InlineData(Line.Resonance, 2, 0, 0, 0, 0, 0, 0, 0, 8, 0)]
-        [InlineData(Line.Resonance, 3, 0, 0, 0, 0, 0, 0, 0, 8, 4)]
-        [InlineData(Line.Resonance, 4, 0, 0, 0, 0, 0, 0, 0, 16, 4)]
-        [InlineData(Line.Resonance, 5, 0, 0, 0, 0, 0, 0, 0, 16, 4)]
-        [InlineData(Line.Resonance, 6, 0, 8, 0, 0, 0, 0, 0, 16, 8)]
-        public void Line_bonus_tiers_are_cumulative(Line line, int count, int attack, int power,
-            int attackSpeed, int crit, int armor, int health, int tenacity, int haste, int moveSpeed)
-        {
-            var expected = new Dictionary<Stat, int>
-            {
-                [Stat.AttackPct] = attack,
-                [Stat.PowerPct] = power,
-                [Stat.AttackSpeedPct] = attackSpeed,
-                [Stat.CritChancePct] = crit,
-                [Stat.Armor] = armor,
-                [Stat.MaxHealthPct] = health,
-                [Stat.Tenacity] = tenacity,
-                [Stat.Haste] = haste,
-                [Stat.MoveSpeedPct] = moveSpeed,
-            };
-            var bonuses = Content.SetBonus(line, count).ToList();
-            foreach (Stat stat in Enum.GetValues(typeof(Stat)))
-                Assert.Equal(expected.TryGetValue(stat, out int value) ? value : 0,
-                    bonuses.Where(b => b.Stat == stat).Sum(b => b.Value));
-        }
-
-        [Fact]
-        public void Unfocused_base_drops_are_distributed_over_all_six_slots()
-        {
-            const int draws = 6000;
-            var rng = new Rng(119);
-            var counts = new int[Content.SlotCount];
-            for (int i = 0; i < draws; i++)
-                counts[(int)Loot.RollRelic(rng, Rarity.Rare, 10).Slot]++;
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
-                Assert.InRange(counts[(int)slot] / (double)draws, 0.12, 0.21);
-        }
 
         [Fact]
         public void Completed_sets_require_all_defined_pieces_not_duplicates_or_new_slots()

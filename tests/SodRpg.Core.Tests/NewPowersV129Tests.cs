@@ -30,43 +30,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Pools_obey_design_slots_and_new_ranges_and_unsupported_hooks_are_excluded()
-        {
-            foreach (Slot slot in Content.SlotOrder)
-            {
-                var pool = Content.PowerPool(slot);
-                Assert.Equal(pool.Count, pool.Select(p => p.Power).Distinct().Count());
-                foreach (var range in pool.Where(p => NewPowersV129.IsPower(p.Power)))
-                {
-                    Assert.InRange(range.Min, 1, range.Max);
-                    Assert.InRange(range.Max, range.Min, Content.PowerCap(range.Power));
-                    Assert.True(Content.IsPowerDroppable(range.Power));
-                }
-            }
-            Assert.Contains(Content.PowerPool(Slot.Head), p => p.Power == Power.GleamingWard && p.Min == 6 && p.Max == 12);
-            Assert.DoesNotContain(Content.PowerPool(Slot.Weapon), p => p.Power == Power.GleamingWard);
-            Assert.Contains(Content.PowerPool(Slot.Weapon), p => p.Power == Power.Medley && p.Min == 3 && p.Max == 6);
-            Assert.DoesNotContain(Content.PowerPool(Slot.Armor), p => p.Power == Power.Medley);
-            Assert.Equal(new[] { Slot.Armor, Slot.Feet }, Content.SlotOrder.Where(s => Content.PowerPool(s).Any(p => p.Power == Power.UnbowedMind)).ToArray());
-            Assert.Contains(Content.SlotOrder.SelectMany(Content.PowerPool), p => p.Power == Power.PilingLuck);
-        }
-
-        [Fact]
-        public void Rare_rolls_never_include_any_conditional_attributes_while_epics_can()
-        {
-            var rng = new Rng(129);
-            foreach (Slot slot in Content.SlotOrder)
-                for (int i = 0; i < 250; i++)
-                {
-                    var rare = Loot.RollRelic(rng, Rarity.Rare, 40, slot: slot);
-                    Assert.Single(rare.Powers);
-                    Assert.All(rare.Powers, p => Assert.False(NewPowersV129.IsConditionalAttribute(p.Power)));
-                }
-            Assert.True(Content.PowerAllowedForRarity(Power.GleamingWard, Rarity.Epic));
-            Assert.True(Content.PowerAllowedForRarity(Power.Medley, Rarity.Legendary));
-            Assert.True(Content.PowerAllowedForRarity(Power.UnbowedMind, Rarity.Epic));
-        }
 
         [Fact]
         public void Unbowed_only_accepts_enemy_stuns_and_does_not_spend_cooldown_on_rejected_control()

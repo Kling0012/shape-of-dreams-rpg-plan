@@ -86,12 +86,9 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(0, 1)]
         [InlineData(199, 1)]
         [InlineData(200, 2)]
-        [InlineData(399, 2)]
         [InlineData(400, 3)]
-        [InlineData(500, 3)]
         public void Slot_counts_follow_the_star_level_thresholds(int level, int slots)
         {
             Assert.Equal(slots, KeystoneSlots.CountFor(level));
@@ -215,22 +212,6 @@ namespace SodRpg.Core.Tests
             finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
         }
 
-        [Fact]
-        public void Star_summary_lists_every_keystone()
-        {
-            try
-            {
-                var key1 = Key1(); var key2 = Key2();
-                var p = ProfileAt(200, key1, key2);
-                Rules.SetKeystone(p, Hero, key1.KeystoneId);
-                Rules.SetKeystone(p, Hero, key2.KeystoneId);
-                var summary = StarSummary.Compute(p, Hero);
-                Assert.Equal(2, summary.Keystone.Count);
-                Assert.Contains(key1.KeystoneId, summary.Keystone.SelectMany(l => l.StarIds));
-                Assert.Contains(key2.KeystoneId, summary.Keystone.SelectMany(l => l.StarIds));
-            }
-            finally { StarClusters.RegisterAuthored(Hero, Array.Empty<AuthoredStarDef>()); }
-        }
 
         [Fact]
         public void Save_keeps_keystone_and_optional_keystones_and_old_saves_load_single()

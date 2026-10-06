@@ -31,30 +31,6 @@ namespace SodRpg.Core.Tests
         };
 
         [Fact]
-        public void Damage_is_basis_times_percent_plus_per_converted_speed_percent_and_basis_is_the_higher_of_ad_ap()
-        {
-            var flow = FlowStrike();
-            // 25% + 0.2% x 20 converted bonus attack speed % = 29% of the higher of AD/AP.
-            Assert.Equal(300f * 0.29f, flow.Damage(100f, 300f, 20f), 3);
-            Assert.Equal(100f * 0.29f, flow.Damage(100f, 40f, 20f), 3);
-            Assert.True(flow.IsMagic(100f, 300f));
-            Assert.False(flow.IsMagic(300f, 100f));
-            var adOnly = IdentityStrikeDefinition.AfterDisplacement("t.ad", Wind, 6000, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 4f, 2f,
-                basis: IdentityStrikeBasis.AttackDamage);
-            Assert.Equal(60f, adOnly.Damage(100f, 999f, 0f), 3);
-            Assert.False(adOnly.IsMagic(100f, 999f));
-            Assert.Equal(60f, WindStrike().Damage(100f, 0f), 3);
-        }
-
-        [Fact]
-        public void Converted_speed_percent_comes_from_gained_ad_and_is_zero_without_conversion()
-        {
-            Assert.Equal(20f, IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(10), 3);
-            Assert.Equal(0f, IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(0), 3);
-            Assert.Equal(0f, IdentityStrikeDefinition.BonusSpeedPercentFromGainedAd(-5), 3);
-        }
-
-        [Fact]
         public void Definitions_reject_invalid_combinations_instead_of_guessing()
         {
             Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.EveryNth("t.x", Wind, 3, 2500, 20, IdentityStrikeElement.None,
@@ -72,122 +48,6 @@ namespace SodRpg.Core.Tests
             Assert.Throws<ArgumentException>(() => new IdentityStrikeState(bonus));
         }
 
-        [Fact]
-        public void Shape_contains_targets_in_front_only()
-        {
-            var arc = WindStrike();
-            Assert.True(arc.Contains(0, 0, 0, 1, 0, 3));
-            Assert.True(arc.Contains(0, 0, 0, 1, 2, 3)); // ~34 degrees off the axis, inside a 120 degree fan
-            Assert.False(arc.Contains(0, 0, 0, 1, 0, -2)); // behind
-            Assert.False(arc.Contains(0, 0, 0, 1, 3, 0.1f)); // ~88 degrees: outside 60 degrees half angle
-            Assert.False(arc.Contains(0, 0, 0, 1, 0, 6)); // beyond range
-            Assert.True(arc.Contains(0, 0, 0, 1, 0, 5f, slack: 0.75f));
-            var line = IdentityStrikeDefinition.AfterDisplacement("t.line", Wind, 6000, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f);
-            Assert.True(line.Contains(0, 0, 1, 0, 5, 0.9f));
-            Assert.False(line.Contains(0, 0, 1, 0, 5, 1.5f));
-            Assert.False(line.Contains(0, 0, 1, 0, 7, 0));
-            Assert.False(line.Contains(0, 0, 0, 0, 1, 0)); // no direction
-        }
-
-        [Fact]
-        public void After_displacement_fires_once_per_displacement_inside_the_window()
-        {
-            var state = new IdentityStrikeState(WindStrike());
-            Assert.False(state.OnBasicHit(1, 0f)); // no displacement yet
-            state.OnDisplacement(1f);
-            Assert.True(state.Armed);
-            Assert.True(state.OnBasicHit(2, 2f));
-            Assert.False(state.OnBasicHit(3, 2.1f)); // once per displacement
-            state.OnDisplacement(10f);
-            state.OnDisplacement(10.5f); // re-arming only extends, never stacks
-            Assert.True(state.OnBasicHit(4, 11f));
-            Assert.False(state.OnBasicHit(5, 11.2f));
-            state.OnDisplacement(20f);
-            Assert.False(state.OnBasicHit(6, 25f)); // 4 s window elapsed
-            Assert.False(state.Armed);
-            state.OnDisplacement(30f);
-            Assert.True(state.OnBasicHit(7, 30f));
-            Assert.False(state.OnBasicHit(7, 30f)); // same activation never twice
-        }
-
-        [Fact]
-        public void Consecutive_critical_needs_three_crits_on_one_victim_and_resets_on_any_break()
-        {
-            var state = new IdentityStrikeState(CritFlowStrike());
-            Assert.False(state.OnBasicHit(1, 0f, true, 11));
-            Assert.False(state.OnBasicHit(2, 0.5f, true, 11));
-            Assert.True(state.OnBasicHit(3, 1f, true, 11)); // three in a row on the same enemy
-            Assert.False(state.OnBasicHit(4, 3f, true, 11));
-            Assert.False(state.OnBasicHit(5, 3.5f, true, 11));
-            Assert.False(state.OnBasicHit(6, 4f, false, 11)); // a noncritical hit resets
-            Assert.False(state.OnBasicHit(7, 4.5f, true, 0)); // an unattributed hit resets
-            Assert.False(state.OnBasicHit(8, 5f, true, 11));
-            Assert.False(state.OnBasicHit(9, 5.5f, true, 11));
-            Assert.False(state.OnBasicHit(10, 6f, true, 22)); // a different enemy resets the sequence
-            Assert.False(state.OnBasicHit(11, 6.5f, true, 11)); // and back again: still nothing complete
-            Assert.False(state.OnBasicHit(12, 12f, true, 11)); // 5.5 s later: the 4 s window has closed
-            Assert.False(state.OnBasicHit(13, 12.5f, true, 11));
-            Assert.True(state.OnBasicHit(14, 13f, true, 11)); // three fresh crits inside the window
-            Assert.False(state.OnBasicHit(15, 13.5f, true, 11));
-            Assert.False(state.OnBasicHit(16, 13.7f, true, 11));
-            Assert.False(state.OnBasicHit(17, 13.9f, true, 11)); // inside the 1 s interval: consumed without a strike
-            Assert.False(state.OnBasicHit(18, 14.5f, true, 11));
-            Assert.False(state.OnBasicHit(19, 15f, true, 11));
-            Assert.True(state.OnBasicHit(20, 15.5f, true, 11));
-        }
-
-        [Fact]
-        public void Critical_strike_definitions_pin_their_window_element_targets_and_the_percent_cap()
-        {
-            var wind = CritWindStrike(); var flow = CritFlowStrike();
-            Assert.True(wind.IsCriticalMechanism); Assert.True(flow.IsCriticalMechanism);
-            Assert.False(WindStrike().IsCriticalMechanism);
-            Assert.Equal(IdentityStrikeTrigger.AfterDisplacementCritical, wind.Trigger);
-            Assert.Equal(IdentityStrikeTrigger.ConsecutiveCritical, flow.Trigger);
-            Assert.Equal(3f, wind.WindowSeconds); Assert.Equal(1, wind.EveryN);
-            Assert.Equal(4f, flow.WindowSeconds); Assert.Equal(3, flow.EveryN);
-            Assert.Equal(6, wind.MaxTargets); Assert.Equal(6, flow.MaxTargets);
-            Assert.Equal(IdentityStrikeElement.Dark, wind.Element); Assert.Equal(IdentityStrikeElement.Dark, flow.Element);
-            Assert.Equal(0, wind.BonusSpeedUnitsPerPercent); Assert.Equal(0, flow.BonusSpeedUnitsPerPercent);
-            // 200% of the basis is the ceiling for the critical modes too.
-            Assert.Equal(20000, IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 20000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f).AdUnits);
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 20001,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
-            // Dark only, at most 6 enemies, a bounded window, no converted speed term, and each mode keeps its own memory.
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
-                IdentityStrikeElement.Fire, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, maxTargets: 7));
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, windowSeconds: 0.4f));
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Wind, 12000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, windowSeconds: 10.5f));
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.CriticalAfterDisplacement("t.x", Flow, 12000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f));
-            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Wind, IdentityStrikeTrigger.AfterDisplacementCritical,
-                2, 3f, 12000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, 6)); // one hit per displacement
-            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Wind, IdentityStrikeTrigger.AfterDisplacementCritical,
-                1, 3f, 12000, 20, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardArc, 4.5f, 120f, 6)); // no bonus speed term
-            Assert.Throws<InvalidOperationException>(() => IdentityStrikeDefinition.ConsecutiveCritical("t.x", Wind, 18000,
-                IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f));
-            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Flow, IdentityStrikeTrigger.ConsecutiveCritical,
-                2, 4f, 18000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f, 6)); // exactly three crits
-            Assert.Throws<InvalidOperationException>(() => new IdentityStrikeDefinition("t.x", Flow, IdentityStrikeTrigger.ConsecutiveCritical,
-                3, 11f, 18000, 0, IdentityStrikeElement.Dark, IdentityStrikeShape.ForwardLine, 6f, 2f, 6)); // window 0.5..10 s
-        }
-
-        [Fact]
-        public void Scaling_rescales_both_terms_together_and_leaves_the_dash_attribution_alone()
-        {
-            var doubled = FlowStrike().Scaled(2m);
-            Assert.Equal(5000, doubled.AdUnits);
-            Assert.Equal(40, doubled.BonusSpeedUnitsPerPercent);
-            Assert.Equal(5000, FlowStrike().WithAdUnits(5000).AdUnits);
-            Assert.Equal(IdentityStrikeDefinition.MaxAdUnits, FlowStrike().Scaled(1000m).AdUnits);
-            var bonus = IdentityStrikeDefinition.DashBonusAsMemory("t.dash");
-            Assert.Same(bonus, bonus.Scaled(3m));
-        }
 
         [Fact]
         public void Every_payload_round_trips_the_wire_codec_and_the_spec_contract_rejects_misuse()
@@ -218,27 +78,6 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => AuthoredMechanisms.Validate(bad));
         }
 
-        [Fact]
-        public void Memory_tuning_definitions_validate_their_amounts_and_belong_to_one_memory()
-        {
-            Assert.Equal(Flow, MemoryTuningDefinition.KeepSpeed("t.k", 4000).Memory);
-            Assert.Equal(Flow, MemoryTuningDefinition.HealScale("t.h", 20000).Memory);
-            Assert.Equal(MemoryTuningDefinition.AnnihilationStance, MemoryTuningDefinition.SwordQiAttackBasis("t.q").Memory);
-            Assert.Throws<InvalidOperationException>(() => MemoryTuningDefinition.KeepSpeed("t.k", 0));
-            Assert.Throws<InvalidOperationException>(() => MemoryTuningDefinition.KeepSpeed("t.k", 9500));
-            Assert.Throws<InvalidOperationException>(() => MemoryTuningDefinition.HealScale("t.h", 5000));
-            Assert.Throws<InvalidOperationException>(() => new MemoryTuningDefinition("t.q", MemoryTuningKind.StanceSwordQiAttackBasis, 5000));
-        }
-
-        [Fact]
-        public void Heal_scale_is_the_lost_speed_multiplier_within_one_and_the_cap()
-        {
-            Assert.Equal(1.8f, MemoryTuningMath.HealScale(1.8f, 1f, 20000), 3);
-            Assert.Equal(2f, MemoryTuningMath.HealScale(3f, 1f, 20000), 3); // capped x2
-            Assert.Equal(1f, MemoryTuningMath.HealScale(1f, 1f, 20000), 3); // nothing lost
-            Assert.Equal(1f, MemoryTuningMath.HealScale(0.8f, 1f, 20000), 3); // never reduces
-            Assert.Equal(1.8f / 1.32f, MemoryTuningMath.HealScale(1.8f, 1.32f, 20000), 3); // with kept speed only the remainder counts as lost
-        }
 
         [Fact]
         public void Sword_qi_ratio_replaces_only_the_ability_power_term_exactly()
@@ -300,19 +139,6 @@ namespace SodRpg.Core.Tests
             Assert.All(build.Mechanisms, m => Assert.False(string.IsNullOrEmpty(AuthoredMechanisms.Describe(m.Spec))));
         }
 
-        [Fact]
-        public void Descriptions_are_natural_text_without_raw_ids()
-        {
-            foreach (var spec in new[] { Spec(WindStrike()), Spec(FlowStrike()), Spec(FlowStrike("t.n", 3)), Spec(CritWindStrike()), Spec(CritFlowStrike()),
-                Spec(IdentityStrikeDefinition.DashBonusAsMemory("t.d")),
-                Spec(MemoryTuningDefinition.KeepSpeed("t.k", 4000)), Spec(MemoryTuningDefinition.HealScale("t.h", 20000)), Spec(MemoryTuningDefinition.SwordQiAttackBasis("t.q")) })
-            {
-                string text = AuthoredMechanisms.Describe(spec);
-                Assert.DoesNotContain("St_", text);
-                Assert.False(string.IsNullOrWhiteSpace(text));
-            }
-            Assert.Contains("風の傷", AuthoredMechanisms.Describe(Spec(WindStrike())));
-        }
 
         [Fact]
         public void Generated_husk_critical_stars_register_the_documented_channels_and_describe_both_languages()

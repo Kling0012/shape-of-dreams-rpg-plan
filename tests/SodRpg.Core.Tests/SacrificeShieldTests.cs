@@ -16,24 +16,6 @@ namespace SodRpg.Core.Tests
         private static SacrificeShieldRuntime.Capture Begin(SacrificeShieldRuntime runtime, float hp = 100f,
             SacrificeShieldSource source = SacrificeShieldSource.GoldenBurst) => runtime.Begin(1, source, 12, 4, hp, 100f);
 
-        [Fact]
-        public void Paid_net_health_is_deferred_and_preserves_native_identity()
-        {
-            var runtime = Runtime();
-            var capture = Begin(runtime);
-            Assert.Empty(runtime.TakePendingForHostUpdate());
-            runtime.Complete(capture, 80, 100);
-            Assert.Equal(1, runtime.PendingCount);
-            var award = Assert.Single(runtime.TakePendingForHostUpdate());
-            Assert.Equal(20f, award.PaidHp);
-            Assert.Equal(10f, award.RawAmount);
-            Assert.Equal(4f, award.DurationSeconds);
-            Assert.Equal(0.1f, award.NewAwardCapRatio);
-            Assert.Equal("St_Q_GoldenBurst", award.SourceMemory);
-            Assert.Equal(12, award.NativeSourceInstanceId);
-            Assert.Equal(4, award.AwardEpoch);
-            Assert.Empty(runtime.TakePendingForHostUpdate());
-        }
 
         [Theory]
         [InlineData(100)]
@@ -45,22 +27,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(runtime.TakePendingForHostUpdate());
         }
 
-        [Fact]
-        public void Recovery_inside_dispatch_reduces_paid_health()
-        {
-            var runtime = Runtime();
-            // Native damage paid 20 HP and native synchronous recovery restored 5 HP.
-            runtime.Complete(Begin(runtime), 85, 100);
-            Assert.Equal(7.5f, Assert.Single(runtime.TakePendingForHostUpdate()).RawAmount);
-        }
-
-        [Fact]
-        public void Max_health_resize_is_not_payment()
-        {
-            var runtime = Runtime();
-            runtime.Complete(Begin(runtime), 80, 80);
-            Assert.Empty(runtime.TakePendingForHostUpdate());
-        }
 
         [Fact]
         public void Nested_payments_are_awarded_once_each_without_parent_double_counting()

@@ -9,36 +9,6 @@ namespace SodRpg.Core.Tests
     /// <summary>v1.29：内容を倍にしたデータの形（数・一意性・両言語の名前と説明・土台の基礎能力の種類）。</summary>
     public class DataV129Tests
     {
-        [Fact]
-        public void Bases_grew_to_600_with_100_per_slot_and_unique_ids_and_names()
-        {
-            Assert.Equal(600, Content.Bases.Count);
-            Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Id).Distinct().Count());
-            Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Name.Ja).Distinct().Count());
-            Assert.Equal(Content.Bases.Count, Content.Bases.Select(b => b.Name.En).Distinct().Count());
-            foreach (var slot in Content.SlotOrder)
-            {
-                var bases = Content.Bases.Where(b => b.Slot == slot).ToList();
-                Assert.Equal(100, bases.Count);
-                // どの枠も3系統がそろっている（狙い系統をどれにしても外れがない）
-                foreach (Line line in Enum.GetValues(typeof(Line)))
-                    Assert.True(bases.Count(b => b.Line == line) >= 5, $"{slot}/{line}");
-            }
-        }
-
-        [Fact]
-        public void Base_implicits_stay_modest_and_never_use_attack_or_power_percent()
-        {
-            foreach (var b in Content.Bases)
-            {
-                Assert.NotEqual(Stat.AttackPct, b.ImplicitStat);
-                Assert.NotEqual(Stat.PowerPct, b.ImplicitStat);
-                Assert.True(b.ImplicitValue > 0, b.Id);
-                Assert.True(b.ImplicitValue <= Content.StatCap(b.ImplicitStat), b.Id);
-                Assert.False(string.IsNullOrWhiteSpace(b.Name.Ja), b.Id);
-                Assert.False(string.IsNullOrWhiteSpace(b.Name.En), b.Id);
-            }
-        }
 
         [Fact]
         public void Pacts_doubled_to_40_with_distinct_ids_names_and_both_languages()

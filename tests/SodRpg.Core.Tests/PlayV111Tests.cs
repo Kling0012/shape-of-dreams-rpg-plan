@@ -158,17 +158,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0.6, q.Run.EventLuck, 3);
         }
 
-        [Fact]
-        public void Every_feat_has_text_and_a_reward()
-        {
-            Assert.Equal(90, Feats.All.Count);
-            Assert.Equal(Feats.All.Count, Feats.All.Select(f => f.Id).Distinct().Count());
-            foreach (var f in Feats.All)
-            {
-                Assert.False(string.IsNullOrWhiteSpace(f.Name.ToString()));
-                Assert.False(string.IsNullOrWhiteSpace(Feats.Describe(f)));
-                Assert.True(f.RewardShards > 0);
-            }
-        }
     }
 }

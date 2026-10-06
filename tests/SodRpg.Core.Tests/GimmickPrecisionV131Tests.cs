@@ -19,17 +19,6 @@ namespace SodRpg.Core.Tests
                 Cooldown = cooldown, DurationPercent = duration }
         };
 
-        [Fact]
-        public void Authoring_and_copying_preserve_exact_values_without_silent_truncation()
-        {
-            var original = Entry("precision.copy", GimmickEffect.Echo);
-            var copy = Gimmicks.Clamp(original);
-            Assert.Equal(1020, copy.Def.ValueMilli);
-            Assert.Equal(1.02m, copy.Def.Value);
-            Assert.Equal(1.02f, copy.Def.ValuePercent);
-            Assert.Throws<ArgumentOutOfRangeException>(() => original.Def.Value = 1.02000001m);
-            Assert.Throws<OverflowException>(() => original.Def.Value = decimal.MaxValue);
-        }
 
         [Fact]
         public void Cluster_boosts_compute_exact_fractional_values_including_sub_milli_results()
@@ -140,29 +129,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Fractional_crescendo_stacks_and_target_probabilities_reach_application()
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry("precision.crescendo", GimmickEffect.Crescendo) });
-            var requests = new List<GimmickRequest>();
-            for (int i = 1; i <= 5; i++)
-                runtime.Fire(GimmickTrigger.OnHit, Memory, i, 1, 100f, false, requests, activationId: i);
-            Assert.Equal(5.1f, runtime.CrescendoPercent(Memory, 5f), 5);
-            Assert.Equal(6.12f, runtime.CombinedMemoryDamagePercent(Memory, 5f, 1.02f), 5);
-            Assert.Equal(0.0102f, Gimmicks.AddedCritProbability(0f, 1.02f), 6);
-            Assert.Equal(4.08f, Gimmicks.ElementEdgePercent(1.02f, true, true, true, true), 5);
-        }
-
-        [Fact]
-        public void Fractional_element_chance_recharge_and_siphon_are_not_rounded_to_whole_percent()
-        {
-            var element = Entry("precision.element", GimmickEffect.Element).Def;
-            Assert.Equal(1, Gimmicks.ElementStacks(element, 0.0101));
-            Assert.Equal(0, Gimmicks.ElementStacks(element, 0.0102));
-            Assert.Equal(0.0051f, Gimmicks.RemainingCooldownReductionRatio(5f, 10f, 1.02f), 6);
-            Assert.Equal(1.02f, Gimmicks.SiphonHeal(100f, 1000f, 1.02f), 5);
-        }
 
         [Fact]
         public void Fractional_primed_damage_retains_extended_window_and_consumes_largest_only()

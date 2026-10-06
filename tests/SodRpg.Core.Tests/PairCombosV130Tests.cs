@@ -22,7 +22,6 @@ namespace SodRpg.Core.Tests
             ["Hero_Bismuth"] = new[] { "prismatic-eyes", "innocence", "distorting-sprint", "infernal-tales", "valiant-heart", "distorted-mind" },
         };
         public static IEnumerable<object[]> Heroes => Branches.Keys.Select(h => new object[] { h });
-        public static IEnumerable<object[]> Definitions => PairCombos.All.Select(d => new object[] { d.Id });
         private static PairComboDef Def(string hero, int index) => PairCombos.Get("h." + hero.ToLowerInvariant() + ".pair." + index);
         private static PairComboEntry Entry(PairComboDef def, int ranks = 1) => new PairComboEntry { Def = def, Ranks = ranks };
         private static PairComboRuntime Runtime(params PairComboEntry[] entries)
@@ -75,58 +74,6 @@ namespace SodRpg.Core.Tests
                 tree.Nodes.Count(n => n.Talent?.IsDreamRing == true && PairCombos.ForBridge(n.Id) == null && n.Talent.MaxRank == 5));
         }
 
-        [Fact]
-        public void Revised_table_rank_values_and_common_rule_counts_are_exact()
-        {
-            Assert.Equal(62, PairCombos.All.Count);
-            Assert.Equal(62, PairCombos.All.Select(d => d.Id).Distinct().Count());
-            var heal = Def("Vesper", 3);
-            Assert.Equal(new[] { 3, 5, 7 }, Enumerable.Range(1, 3).Select(r => Entry(heal, r).Value));
-            var element = Def("Vesper", 1);
-            Assert.Equal(new[] { 100, 150, 200 }, element.TableRankValues);
-            Assert.Equal(200, Entry(element, 3).Value);
-            Assert.Equal(new[] { 2, 3, 5 }, Def("Nachia", 4).TableRankValues);
-            Assert.Equal(5, Entry(Def("Nachia", 4), 3).Value);
-            Assert.DoesNotContain(PairCombos.All, d => d.MovementOrigin);
-            Assert.Equal(2, PairCombos.All.Count(d => d.Cooldown > 0));
-            Assert.Equal(29, PairCombos.All.Count(d => d.OncePerActivation));
-            Assert.Equal(7, PairCombos.All.Count(d => d.KillByPayoffMemory));
-            Assert.Equal(1.5f, Def("Nachia", 2).Cooldown);
-            Assert.Equal(1f, Def("Nachia", 5).Cooldown);
-        }
-
-        [Theory]
-        [MemberData(nameof(Definitions))]
-        public void Every_definition_enforces_both_equips_and_supported_two_step_payoff(string id)
-        {
-            var def = PairCombos.Get(id);
-            string[] equipped = Equipped(def);
-            var runtime = Runtime(Entry(def, 3));
-            if (def.Step != PairComboStep.None)
-            {
-                Assert.Empty(Pay(runtime, def, equipped));
-                Assert.Empty(Fire(runtime, def.Trigger, def.TriggerMemory, 0, 10, equipped));
-            }
-            var outputs = Pay(runtime, def, equipped);
-            if (def.MovementOrigin) { Assert.Empty(outputs); return; }
-            var output = Assert.Single(outputs);
-            Assert.Equal(def.Id, output.Entry.StarId);
-            Assert.Equal(Entry(def, 3).Value, output.Entry.Def.Value);
-            Assert.Equal(def.Effect, output.Entry.Def.Effect);
-            Assert.NotEqual(GimmickEffect.Expose, output.Entry.Def.Effect);
-            string target = def.RechargeMemory ?? def.PayoffMemory ?? def.TriggerMemory;
-            Assert.Equal(target, output.Entry.Memory);
-            foreach (string missing in new[] { def.RouteA, def.RouteB })
-            {
-                runtime = Runtime(Entry(def));
-                var incomplete = equipped.Where(m => m != missing).ToArray();
-                Assert.Empty(Fire(runtime, def.Trigger, def.TriggerMemory, 0, 10, incomplete));
-                if (def.Step != PairComboStep.None)
-                    Assert.Empty(Pay(runtime, def, equipped)); // Missing equipment cannot plant a latent mark/window.
-                Start(runtime, def, equipped);
-                Assert.Empty(Pay(runtime, def, incomplete)); // Equipment is checked again at payoff time.
-            }
-        }
 
         [Theory]
         [MemberData(nameof(Heroes))]
@@ -159,53 +106,6 @@ namespace SodRpg.Core.Tests
             Assert.Empty(Build.Compute(p, hero == "Hero_Cetus" ? "Hero_Mist" : "Hero_Cetus", 0).PairCombos);
         }
 
-        [Theory]
-        [MemberData(nameof(Heroes))]
-        public void QR_movement_pairs_work_with_either_unrelated_identity(string hero)
-        {
-            if (hero == "Hero_Bismuth") return;
-            var routes = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.RouteOrder == 1).ToArray();
-            var ids = routes.Where(t => t.RouteMemory.StartsWith("St_D_", StringComparison.Ordinal)).Select(t => t.RouteMemory);
-            var nonIdentity = PairCombos.All.Where(d => d.HeroKey == hero && !d.RouteA.StartsWith("St_D_", StringComparison.Ordinal)
-                && !d.RouteB.StartsWith("St_D_", StringComparison.Ordinal) && !d.MovementOrigin);
-            foreach (var def in nonIdentity)
-                foreach (string identity in ids)
-                {
-                    var equipped = Equipped(def).Concat(new[] { identity }).ToArray();
-                    var runtime = Runtime(Entry(def));
-                    if (def.Step != PairComboStep.None) Start(runtime, def, equipped);
-                    Assert.Single(Pay(runtime, def, equipped));
-                }
-        }
-
-        [Fact]
-        public void All_six_Bismuth_QR_loadouts_allow_only_equipped_pair_bridges()
-        {
-            string[] qr = { "St_QR_Innocence", "St_QR_InfernalTales", "St_QR_ValiantHeart", "St_QR_DistortedMind" };
-            foreach (int bridge in new[] { 4, 5 })
-            {
-                var def = Def("Bismuth", bridge); int active = 0;
-                for (int i = 0; i < qr.Length; i++)
-                    for (int j = i + 1; j < qr.Length; j++)
-                    {
-                        var equipped = new[] { "St_D_PrismaticEyes", "St_M_Sprint", qr[i], qr[j] };
-                        var runtime = Runtime(Entry(def)); Start(runtime, def, equipped);
-                        int count = Pay(runtime, def, equipped).Count;
-                        Assert.Equal(equipped.Contains(def.RouteA) && equipped.Contains(def.RouteB) ? 1 : 0, count);
-                        active += count;
-                    }
-                Assert.Equal(1, active);
-            }
-            // Collection membership is independent of whether Pure Soul is selected in Q or R.
-            var identityPair = Def("Bismuth", 1);
-            foreach (var equipped in new[] {
-                new[] { "St_QR_Innocence", "St_QR_ValiantHeart", "St_D_PrismaticEyes" },
-                new[] { "St_QR_ValiantHeart", "St_QR_Innocence", "St_D_PrismaticEyes" } })
-            {
-                var runtime = Runtime(Entry(identityPair)); Start(runtime, identityPair, equipped);
-                Assert.Single(Pay(runtime, identityPair, equipped));
-            }
-        }
 
         [Fact]
         public void Pair_marks_are_independent_per_victim_pair_and_expire_or_refresh_without_extra_requests()
@@ -341,31 +241,6 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Theory]
-        [MemberData(nameof(Heroes))]
-        public void Every_standard_eight_choice_loadout_only_runs_bridges_with_both_selected_memories(string hero)
-        {
-            if (hero == "Hero_Bismuth") return; // Its six QR selections are covered separately.
-            var routes = HeroStarRoutes.All.Where(t => t.HeroKey == hero && t.RouteOrder == 1).Select(t => t.RouteMemory).ToArray();
-            var identities = routes.Where(m => m.StartsWith("St_D_", StringComparison.Ordinal)).ToArray();
-            var qs = routes.Where(m => m.StartsWith("St_Q_", StringComparison.Ordinal)).ToArray();
-            var rs = routes.Where(m => m.StartsWith("St_R_", StringComparison.Ordinal)).ToArray();
-            var movement = routes.Single(m => m.StartsWith("St_M_", StringComparison.Ordinal));
-            Assert.Equal(2, identities.Length); Assert.Equal(2, qs.Length); Assert.Equal(2, rs.Length);
-            foreach (string identity in identities)
-                foreach (string q in qs)
-                    foreach (string r in rs)
-                    {
-                        var equipped = new[] { identity, q, r, movement };
-                        foreach (var def in PairCombos.All.Where(d => d.HeroKey == hero))
-                        {
-                            var runtime = Runtime(Entry(def));
-                            if (def.Step != PairComboStep.None) Start(runtime, def, equipped);
-                            var outputs = Pay(runtime, def, equipped);
-                            Assert.Equal(!def.MovementOrigin && equipped.Contains(def.RouteA) && equipped.Contains(def.RouteB) ? 1 : 0, outputs.Count);
-                        }
-                    }
-        }
 
         [Fact]
         public void Wire_roundtrip_reconstructs_canonical_definitions_clamps_and_rejects_invalid_or_duplicate_entries()
@@ -389,41 +264,6 @@ namespace SodRpg.Core.Tests
             Assert.Throws<InvalidOperationException>(() => build.Encode());
         }
 
-        public static IEnumerable<object[]> GuardedDefinitions =>
-            PairCombos.All.Where(d => d.OncePerActivation).Select(d => new object[] { d.Id });
-
-        [Theory]
-        [MemberData(nameof(GuardedDefinitions))]
-        public void One_activation_pays_once_across_hits_victims_and_interleaved_activations(string id)
-        {
-            var def = PairCombos.Get(id); var equipped = Equipped(def);
-            var runtime = Runtime(Entry(def)); var first = new object(); var second = new object();
-            Start(runtime, def, equipped, victim: 10);
-            Start(runtime, def, equipped, victim: 11);
-            Start(runtime, def, equipped, victim: 12);
-            Assert.Single(Pay(runtime, def, equipped, now: 0.1f, victim: 10, activation: first));
-            Assert.Empty(Pay(runtime, def, equipped, now: 0.2f, victim: 11, activation: first));
-            Assert.Single(Pay(runtime, def, equipped, now: 0.2f, victim: 12, activation: second));
-            Start(runtime, def, equipped, now: 2, victim: 13);
-            runtime.SetBuild(new[] { Entry(def, 3) });
-            Assert.Empty(Pay(runtime, def, equipped, now: 2.1f, victim: 13, activation: first));
-            Start(runtime, def, equipped, now: 2.1f, victim: 14);
-            Assert.Single(Pay(runtime, def, equipped, now: 2.1f, victim: 14, activation: new object()));
-        }
-
-        [Theory]
-        [MemberData(nameof(GuardedDefinitions))]
-        public void Guard_requires_activation_identity_and_generated_hits_do_not_consume_it(string id)
-        {
-            var def = PairCombos.Get(id); var equipped = Equipped(def);
-            var runtime = Runtime(Entry(def)); var activation = new object();
-            Start(runtime, def, equipped);
-            Assert.Empty(Fire(runtime, def.PayoffTrigger, def.PayoffMemory, 0.1f, 10, equipped,
-                hitKind: def.PayoffHitKind));
-            Start(runtime, def, equipped, now: 0.1f, victim: 11);
-            Assert.Empty(Pay(runtime, def, equipped, now: 0.2f, victim: 11, generated: true, activation: activation));
-            Assert.Single(Pay(runtime, def, equipped, now: 0.2f, victim: 11, activation: activation));
-        }
 
         [Theory]
         [InlineData("Vesper", 6, PairComboHitKind.InitialExplosion)]

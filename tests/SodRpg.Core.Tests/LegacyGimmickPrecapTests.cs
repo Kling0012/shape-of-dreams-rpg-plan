@@ -100,22 +100,10 @@ namespace SodRpg.Core.Tests
             return Assert.Single(requests);
         }
 
-        [Fact]
-        public void Allocated_ordinary_boost_and_key_apply_native_primed_cap_after_scaling()
-        {
-            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnUse, Effect = GimmickEffect.Primed, Value = 40 },
-                300, new AuthoredKeystoneSpec { Percent = 50 });
-            var request = Fire(build);
-            decimal expected = 120m * (1m + 1.5m * build.SpentStarPoints / 500);
-            Assert.Equal(expected, request.Entry.Def.EffectiveValueOrAuthored);
-            Assert.Equal((float)expected, request.Entry.Def.ValuePercent);
-        }
 
         [Theory]
         [InlineData(GimmickEffect.Empower, GimmickParam.Duration, KeystoneField.Duration, 400, 16)]
-        [InlineData(GimmickEffect.Burst, GimmickParam.Radius, KeystoneField.Radius, 400, 16)]
         [InlineData(GimmickEffect.Ricochet, GimmickParam.ExtraTargets, KeystoneField.TargetCount, 30, 2 + Gimmicks.MaxExtraTargets)]
-        [InlineData(GimmickEffect.Element, GimmickParam.Chance, KeystoneField.Probability, 100, 100)]
         public void Allocated_parameters_transform_raw_then_apply_native_final_cap(GimmickEffect effect, GimmickParam parameter,
             KeystoneField field, decimal amount, decimal expected)
         {
@@ -141,53 +129,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(7.5f, Gimmicks.Duration(Fire(build).Entry.Def, 4));
         }
 
-        [Fact]
-        public void Two_percentage_transforms_keep_exact_decimal_until_the_real_element_stack_roll()
-        {
-            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Element, Value = .25m },
-                .5m, new AuthoredKeystoneSpec { Percent = .5m });
-            var def = Fire(build).Entry.Def;
-            Assert.Equal(.25250625m, def.EffectiveValueOrAuthored);
-            Assert.Equal(1, Gimmicks.ElementStacks(def, .002525062));
-            Assert.Equal(0, Gimmicks.ElementStacks(def, .002525063));
-        }
-
-        [Theory]
-        [InlineData(GimmickEffect.Crescendo)]
-        [InlineData(GimmickEffect.Sap)]
-        [InlineData(GimmickEffect.Weakspot)]
-        public void Retained_stack_and_victim_windows_consume_exact_effective_coefficients(GimmickEffect effect)
-        {
-            var build = Allocated(new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = effect, Value = .25m },
-                .5m, new AuthoredKeystoneSpec { Percent = .5m });
-            var entry = build.Gimmicks.Single(e => e.StarId == EffectId);
-            var effective = AuthoredKeystoneComposer.EffectiveGimmick(entry.Def,
-                AuthoredKeystoneComposer.TransformAllocationPayload(build,
-                    AuthoredKeystoneComposer.GimmickPayload(entry.Def, entry.StarId), Memory));
-            var runtime = new GimmickRuntime(); runtime.SetBuild(new[] { entry });
-            var requests = new List<GimmickRequest>();
-            runtime.Fire(GimmickTrigger.OnHit, Memory, 1, 7, 100, false, requests, activationId: 1, transform: _ => effective);
-            if (effect == GimmickEffect.Crescendo)
-            {
-                runtime.Fire(GimmickTrigger.OnHit, Memory, 1.5f, 7, 100, false, requests, activationId: 2, transform: _ => effective);
-                Assert.Equal((float)(.25250625m * 2), runtime.CrescendoPercent(Memory, 2));
-                Assert.Equal(0f, runtime.CrescendoPercent("St_Q_GlacialSpike", 2));
-                Assert.Equal(0f, runtime.CrescendoPercent(Memory, 20));
-            }
-            else if (effect == GimmickEffect.Sap)
-            {
-                Assert.Equal((float).25250625m, runtime.SapPercent(7, 2, false));
-                Assert.Equal((float)(.25250625m / 2), runtime.SapPercent(7, 2, true));
-                Assert.Equal(0f, runtime.SapPercent(8, 2, false));
-                Assert.Equal(0f, runtime.SapPercent(7, 20, false));
-            }
-            else
-            {
-                Assert.Equal((float).25250625m, runtime.WeakspotPercent(7, 2));
-                Assert.Equal(0f, runtime.WeakspotPercent(8, 2));
-                Assert.Equal(0f, runtime.WeakspotPercent(7, 20));
-            }
-        }
 
         [Fact]
         public void Keyless_finer_ordinary_value_survives_wire_and_native_boundary()

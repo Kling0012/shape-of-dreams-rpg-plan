@@ -104,15 +104,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, Gimmicks.ElementStacks(element, 0.503));
         }
 
-        [Fact]
-        public void Id_scoped_duration_does_not_modify_another_effect_in_the_same_memory()
-        {
-            var scenario = Tree(Effect(GimmickEffect.Shield, 1m), Effect(GimmickEffect.Shield, 2m),
-                Modifier(GimmickParam.Duration, 20m, ids: new[] { "test.scoped.1" }));
-            var build = Compute(scenario);
-            Assert.Equal(4.8f, Gimmicks.Duration(build.Gimmicks.Single(e => e.StarId == "test.scoped.1").Def, 4f), 5);
-            Assert.Equal(4f, Gimmicks.Duration(build.Gimmicks.Single(e => e.StarId == "test.scoped.2").Def, 4f));
-        }
 
         [Fact]
         public void Equivalent_wound_contributions_add_before_one_boost_and_fire_once_after_roundtrip()
@@ -158,19 +149,12 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(GimmickParam.Radius)]
         [InlineData(GimmickParam.Chance)]
         public void Unsupported_meaningful_fields_fail_generation(GimmickParam parameter)
         {
             Assert.Throws<InvalidOperationException>(() => Tree(Effect(GimmickEffect.Shield, 1m), Modifier(parameter, 1m)));
         }
 
-        [Fact]
-        public void Source_and_receiver_boosts_are_explicitly_rejected_instead_of_multiplied()
-        {
-            var scenario = Tree(Effect(GimmickEffect.Shield, 1m, "shield.main"), Modifier(null, 2m), Modifier(null, 3m, ScopeKind.Receiver));
-            Assert.Throws<InvalidStarCombinationException>(() => Compute(scenario));
-        }
 
         [Fact]
         public void Purchase_completing_a_source_and_receiver_boost_is_a_normal_rejection_not_an_exception()

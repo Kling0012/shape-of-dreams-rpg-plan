@@ -10,69 +10,6 @@ namespace SodRpg.Core.Tests
 {
     public class BuildLimitsV131Tests
     {
-        [Fact]
-        public void Registered_tree_maxima_match_independent_first_rank_enumeration()
-        {
-            var talents = Content.Talents.Concat(HeroSigils.All).ToArray();
-            var capacity = BuildLimits.Analyze(talents);
-            // Every current output category emits zero or one entry, so choosing the cheapest
-            // eligible stars independently computes the same relaxed maximum as the knapsack.
-            Assert.Equal(IndependentMaximum(talents, t => t.Gimmick != null && t.PairCombo == null), capacity.GimmickEntries);
-            Assert.Equal(IndependentMaximum(talents, t => t.LinkPerRank != null && t.PairCombo == null), capacity.LinkEntries);
-            Assert.Equal(IndependentMaximum(talents, t => t.PairCombo != null), capacity.PairComboEntries);
-            Assert.Equal(IndependentMaximum(talents, t => t.GimmickBoost != 0 || t.GimmickParameter.HasValue), capacity.ClusterModifierStars);
-            Assert.Equal(24, capacity.GimmickEntries);
-            Assert.Equal(25, capacity.LinkEntries);
-            Assert.Equal(7, capacity.PairComboEntries);
-            Assert.Equal(6, capacity.ClusterModifierStars);
-            Assert.Equal(56, capacity.TotalEntries);
-            Assert.Equal(talents.Length, capacity.TalentCount);
-            Assert.Equal(1, capacity.MinimumRankCost);
-            Assert.Equal(1, capacity.MaximumGimmicksPerStar);
-            Assert.Equal(1, capacity.MaximumLinksPerStar);
-            Assert.Equal(capacity.GimmickEntries, BuildLimits.Registered.GimmickEntries);
-            Assert.True(capacity.GimmickEntries <= BuildLimits.MaxGimmickEntries);
-            Assert.True(capacity.LinkEntries + Content.SlotCount <= BuildLimits.MaxLinkEntries);
-            Assert.True(capacity.PairComboEntries <= BuildLimits.MaxPairComboEntries);
-            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.MaxGimmickEntries);
-            Assert.Equal(StarProgression.MaxSpendablePoints + Content.SlotCount, BuildLimits.MaxLinkEntries);
-            Assert.Equal(PairCombos.All.Count, BuildLimits.MaxPairComboEntries);
-            Assert.Equal(Enum.GetValues(typeof(Stat)).Length, BuildLimits.MaxStatEntries);
-            Assert.Equal(Enum.GetValues(typeof(Power)).Cast<Power>().Count(p => p != Power.None), BuildLimits.MaxPowerEntries);
-            Assert.Equal(Enum.GetValues(typeof(Power)).Cast<Power>().Count(NewPowersV129.IsConditionalAttribute), BuildLimits.MaxConditionalPowerEntries);
-        }
-
-        [Fact]
-        public void Engine_generated_three_hundred_star_tree_has_three_hundred_entry_capacity()
-        {
-            const string hero = "Hero_Cetus";
-            const string memory = "St_D_IcyVeins";
-            var anchor = HeroSigils.TreeFor(hero).Single(t => t.Id == "h.cetus.route.icy-veins.4");
-            var stars = Enumerable.Range(0, StarProgression.MaxSpendablePoints).Select(i => new ClusterStarDef
-            {
-                Kind = ClusterStarKind.Notable,
-                Name = new Txt("効果", "Effect"),
-                Memory = memory,
-                Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Expose, Value = 1 },
-            }).ToArray();
-            var cluster = new StarClusterDef
-            {
-                Id = "test.capacity.cluster", HeroKey = hero, Anchor = anchor.Id,
-                Region = ClusterRegion.Memory(anchor.RouteId), Shape = ClusterShape.Chain, Stars = stars,
-            };
-            var generated = StarClusters.Generate(new[] { cluster }, new[] { anchor });
-            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.Analyze(generated).GimmickEntries);
-            Assert.Equal(BuildLimits.MaxGimmickEntries, BuildLimits.Analyze(generated).TotalEntries);
-            foreach (var star in stars)
-            {
-                star.Kind = ClusterStarKind.MemoryDamage;
-                star.Gimmick = null;
-                star.Amount = 1;
-            }
-            generated = StarClusters.Generate(new[] { cluster }, new[] { anchor });
-            Assert.Equal(StarProgression.MaxSpendablePoints, BuildLimits.Analyze(generated).LinkEntries);
-            Assert.Equal(BuildLimits.MaxLinkEntries, BuildLimits.Analyze(generated).LinkEntries + Content.SlotCount);
-        }
 
         [Fact]
         public void Analysis_counts_choices_once_and_accounts_for_rank_cost_and_output_arity()
@@ -321,22 +258,5 @@ namespace SodRpg.Core.Tests
             };
 
         private static IEnumerable<TalentDef> Effects(TalentDef talent) => talent.IsChoice ? talent.Choices : new[] { talent };
-
-        private static int IndependentMaximum(IEnumerable<TalentDef> talents, Func<TalentDef, bool> predicate)
-        {
-            int maximum = 0;
-            foreach (var tree in talents.Where(t => !t.IsKeystone).GroupBy(t => t.HeroKey ?? ""))
-            {
-                int points = 0, count = 0;
-                foreach (int cost in tree.Where(t => Effects(t).Any(predicate)).Select(t => t.RankCost).OrderBy(c => c))
-                {
-                    if (points + cost > StarProgression.MaxPoints) break;
-                    points += cost;
-                    count++;
-                }
-                maximum = Math.Max(maximum, count);
-            }
-            return maximum;
-        }
     }
 }

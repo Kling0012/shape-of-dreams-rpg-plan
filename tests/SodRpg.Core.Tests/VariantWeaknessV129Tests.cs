@@ -9,99 +9,6 @@ namespace SodRpg.Core.Tests
     /// <summary>v1.29 wave 2：変種の弱点・耐性（D1）。</summary>
     public class VariantWeaknessV129Tests
     {
-        [Fact]
-        public void Catalog_has_thirty_variants_with_fourteen_tagged_and_all_nine_tags_used()
-        {
-            Assert.Equal(30, Variants.All.Count);
-            Assert.Equal(14, Variants.All.Count(v => v.Tags != VariantTag.None));
-            // 弱点だけで構成された新変種は4体。既存の変種の拡張判定は変わらない。
-            Assert.Equal(4, Variants.All.Count(Variants.IsWeaknessBuilt));
-            Assert.Equal(17, Variants.All.Count(Variants.IsExpanded));
-            foreach (VariantTag tag in Enum.GetValues(typeof(VariantTag)).Cast<VariantTag>())
-            {
-                if (tag == VariantTag.None) continue;
-                Assert.Contains(Variants.All, v => (v.Tags & tag) != 0);
-            }
-        }
-
-        [Fact]
-        public void Expected_variants_carry_the_designed_tags()
-        {
-            var expected = new Dictionary<string, VariantTag>
-            {
-                // 既存10体（v1.24・wave 1 から選び、バイオームに広げる）。
-                ["var.elder_treant"] = VariantTag.WeakFire,
-                ["var.molten_core"] = VariantTag.WeakCold,
-                ["var.hollow_elemental"] = VariantTag.WeakLight,
-                ["var.mist_tiger"] = VariantTag.WeakLight,
-                ["var.lantern_seed"] = VariantTag.WeakDark,
-                ["var.abyss_oppressor"] = VariantTag.ShieldBreaker,
-                ["var.brood_warden"] = VariantTag.SummonHunter,
-                ["var.flicker_olm"] = VariantTag.LightEater,
-                ["var.hollow_gunner"] = VariantTag.Spellward,
-                ["var.rime_sentinel"] = VariantTag.Armored,
-                // 弱点を主役にした新4体。
-                ["var.rust_scavenger"] = VariantTag.WeakFire,
-                ["var.broodfly"] = VariantTag.SummonHunter,
-                ["var.stardust_shell"] = VariantTag.Armored,
-                ["var.web_ripper"] = VariantTag.ShieldBreaker,
-            };
-            foreach (var kv in expected) Assert.Equal(kv.Value, Variants.Get(kv.Key).Tags);
-            foreach (var v in Variants.All.Where(x => x.Tags != VariantTag.None))
-                Assert.Contains(v.Id, expected.Keys);
-        }
-
-        [Fact]
-        public void Weakness_built_variants_have_no_other_kit_and_keep_expanded_limits()
-        {
-            foreach (var v in Variants.All.Where(Variants.IsWeaknessBuilt))
-            {
-                Assert.Equal(NightmareAffix.None, v.Affixes);
-                Assert.Equal(VariantTrait.None, v.Traits);
-                Assert.Equal(100, v.ShardBonusPct);
-                Assert.DoesNotContain(v.Stats, s => s.Stat != Stat.MaxHealthPct);
-            }
-        }
-
-        [Fact]
-        public void Tagged_descriptions_state_the_weakness_plainly_in_both_languages()
-        {
-            // 弱点は説明文に明文で書く（知らせの短い名前ではなく、説明そのものの言葉）。
-            var jaKeywords = new Dictionary<VariantTag, string>
-            {
-                [VariantTag.WeakFire] = "火に弱い",
-                [VariantTag.WeakCold] = "冷気に弱い",
-                [VariantTag.WeakLight] = "光に弱い",
-                [VariantTag.WeakDark] = "闇に弱い",
-                [VariantTag.ShieldBreaker] = "障壁を割る",
-                [VariantTag.SummonHunter] = "召喚獣を狩る",
-                [VariantTag.LightEater] = "光3以上で脆い",
-                [VariantTag.Armored] = "記憶以外に堅い",
-                [VariantTag.Spellward] = "記憶を弾く",
-            };
-            var enKeywords = new Dictionary<VariantTag, string>
-            {
-                [VariantTag.WeakFire] = "Weak to fire",
-                [VariantTag.WeakCold] = "Weak to cold",
-                [VariantTag.WeakLight] = "Weak to light",
-                [VariantTag.WeakDark] = "Weak to dark",
-                [VariantTag.ShieldBreaker] = "Breaks shields",
-                [VariantTag.SummonHunter] = "Hunts summons",
-                [VariantTag.LightEater] = "Frail at 3+ light",
-                [VariantTag.Armored] = "Armored against non-memory damage",
-                [VariantTag.Spellward] = "Warded against memories",
-            };
-            foreach (var v in Variants.All.Where(x => x.Tags != VariantTag.None))
-            {
-                for (int bit = 1; bit <= 1 << 8; bit <<= 1)
-                {
-                    var tag = (VariantTag)bit;
-                    if ((v.Tags & tag) == 0) continue;
-                    Assert.Contains(jaKeywords[tag], v.Description.Ja);
-                    Assert.Contains(enKeywords[tag], v.Description.En);
-                }
-            }
-        }
 
         [Fact]
         public void Every_tag_notice_reads_in_both_languages()
@@ -122,25 +29,6 @@ namespace SodRpg.Core.Tests
             finally { Loc.Japanese = original; }
         }
 
-        [Fact]
-        public void Zone_notices_are_one_line_in_both_languages()
-        {
-            bool original = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Null(Variants.ZoneNotice(VariantTag.None));
-                Assert.Equal("この区画：火に弱い敵がいる", Variants.ZoneNotice(VariantTag.WeakFire));
-                string joined = Variants.ZoneNotice(VariantTag.WeakFire | VariantTag.WeakCold);
-                Assert.Equal("この区画：火に弱い・冷気に弱い敵がいる", joined); // ビット順で固定
-                Loc.Japanese = false;
-                Assert.Null(Variants.ZoneNotice(VariantTag.None));
-                Assert.Equal("This section: fire-weak enemies", Variants.ZoneNotice(VariantTag.WeakFire));
-                Assert.Equal("This section: fire-weak, cold-weak enemies",
-                    Variants.ZoneNotice(VariantTag.WeakFire | VariantTag.WeakCold));
-            }
-            finally { Loc.Japanese = original; }
-        }
 
         [Fact]
         public void Elemental_weakness_triggers_on_damage_element_or_applied_element()

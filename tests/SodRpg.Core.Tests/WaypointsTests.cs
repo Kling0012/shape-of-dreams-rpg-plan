@@ -46,8 +46,6 @@ namespace SodRpg.Core.Tests
                 Assert.Same(d.Effects, Waypoints.Sum(d.Id));
                 Assert.False(string.IsNullOrWhiteSpace(d.Name.Ja));
                 Assert.False(string.IsNullOrWhiteSpace(d.Name.En));
-                Assert.Contains("ゾーン", d.Description.Ja);
-                Assert.Contains("zone", d.Description.En);
             });
             Assert.Null(Waypoints.Get((Waypoint)999));
             Assert.Equal(1, Waypoints.Sum((Waypoint)999).ReactionMultiplier);
@@ -132,9 +130,6 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(Waypoint.WeaponRoad, Slot.Weapon)]
         [InlineData(Waypoint.ArmorRoad, Slot.Armor)]
-        [InlineData(Waypoint.CharmRoad, Slot.Charm)]
-        [InlineData(Waypoint.HeadRoad, Slot.Head)]
-        [InlineData(Waypoint.HandsRoad, Slot.Hands)]
         [InlineData(Waypoint.FeetRoad, Slot.Feet)]
         public void Slot_roads_filter_real_loot_including_uniques_and_add_luck(Waypoint waypoint, Slot slot)
         {

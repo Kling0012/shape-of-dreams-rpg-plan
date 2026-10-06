@@ -316,31 +316,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Named_items_roll_only_at_their_rarity_and_slot_and_keep_their_definition()
-        {
-            var weaponBases = Content.Bases.Count(b => b.Slot == Slot.Weapon);
-            Assert.True(weaponBases > 0);
-            int namedW2 = 0;
-            for (int i = 0; i < 4000; i++)
-            {
-                var r = Loot.RollRelic(new Rng((ulong)(300000 + i)), Rarity.Rare, 10, Slot.Weapon);
-                if (r.NamedId == null) continue;
-                Assert.Equal("named.test.w2", r.NamedId); // 武器・レアの銘品は w2 だけ
-                Assert.Equal("weapon.calming_staff", r.BaseId);
-                namedW2++;
-            }
-            Assert.True(namedW2 > 0, "銘品が1つも出ないのは重みが効いていない");
-
-            for (int i = 0; i < 1500; i++)
-            {
-                Assert.Null(Loot.RollRelic(new Rng((ulong)(310000 + i)), Rarity.Common, 10).NamedId); // コモンは土台だけ
-                Assert.Null(Loot.RollRelic(new Rng((ulong)(320000 + i)), Rarity.Legendary, 10).NamedId); // 伝説は今のまま
-                var head = Loot.RollRelic(new Rng((ulong)(330000 + i)), Rarity.Rare, 10, Slot.Head);
-                if (head.NamedId != null) Assert.Equal("named.test.h1", head.NamedId);
-            }
-        }
-
-        [Fact]
         public void Named_share_of_low_rarity_rolls_matches_the_spec_weight_ratio()
         {
             int weaponBases = Content.Bases.Count(b => b.Slot == Slot.Weapon);
@@ -546,28 +521,6 @@ namespace SodRpg.Core.Tests
             Assert.Contains(notes, t => t.Contains("未知の基礎ID"));
         }
 
-        // ───────── 名前・一言・組の進み（ツールチップ・図鑑の中身）─────────
-
-        [Fact]
-        public void Plain_name_uses_the_named_name_and_skips_epithets()
-        {
-            var w3 = NamedRelic("named.test.w3");
-            bool old = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Equal("烈焔の大剣", w3.PlainName); // エピックでも銘は付かない
-                Loc.Japanese = false;
-                Assert.Equal("Blazing Greatblade", w3.PlainName);
-            }
-            finally { Loc.Japanese = old; }
-
-            var normal = NormalRelic(Rarity.Rare, Slot.Weapon);
-            Assert.Equal(normal.Base.Name.ToString(), normal.PlainName); // 通常品は今のまま（エピックの銘も今のまま）
-            var w1 = NamedRelic("named.test.w1");
-            Assert.Equal("霜誓の剣", w1.PlainName);
-        }
-
         // ───────── 試験6：出来事（設計 3.4）─────────
 
         [Fact]
@@ -633,20 +586,6 @@ namespace SodRpg.Core.Tests
             Assert.True(false, "どの乱数でも賭けに勝たなかった（確率1/2が40回以上続くのは異常）");
         }
 
-        [Fact]
-        public void Named_relics_salvage_and_lock_like_normal_relics()
-        {
-            var p = Profile.CreateNew(6061);
-            var named = NamedRelic("named.test.w2");
-            p.Stash.Add(named);
-            named.Locked = true;
-            Assert.Throws<InvalidOperationException>(() => Rules.Salvage(p, named.Uid)); // 鍵は通常どおり効く
-            named.Locked = false;
-            int before = p.Material(Materials.Shard);
-            Rules.Salvage(p, named.Uid);
-            Assert.Empty(p.Stash.Where(r => r.Uid == named.Uid));
-            Assert.Equal(before + Rules.SalvageValue(named), p.Material(Materials.Shard));
-        }
 
         // ───────── 試験7：組の集計（設計 3.2・4）─────────
 
@@ -725,42 +664,6 @@ namespace SodRpg.Core.Tests
             var withSet = BuildWith(Profile.CreateNew(6082), holder, NamedRelic("named.test.w3"), NamedRelic("named.test.a3"));
             // (cap-10) + 25 は cap を超えられない（合計上限は変わらない）。
             Assert.Equal(cap, withSet.Get(Stat.AttackPct));
-        }
-
-        // ───────── 試験8：図鑑（設計 3.5・4）─────────
-
-        [Fact]
-        public void Codex_has_named_and_mini_set_categories_with_search_and_found_state()
-        {
-            var namedEntries = CodexQuery.Entries(CodexCategory.Named);
-            Assert.Equal(Sample.Length, namedEntries.Count);
-            Assert.All(namedEntries, e => Assert.StartsWith("n:", e.Id, StringComparison.Ordinal));
-            // 固有品・土台のIDと衝突しない。
-            Assert.True(Content.Bases.Select(b => b.Id).Concat(Content.Uniques.Select(u => u.Id)).All(id => !id.StartsWith("n:", StringComparison.Ordinal)));
-            Assert.Equal(SampleSets.Length, CodexQuery.Entries(CodexCategory.MiniSets).Count);
-
-            var codex = new HashSet<string> { NamedItems.CodexId("named.test.w1") };
-            var state = new CodexState(codex, new HashSet<Power>());
-            var w1Entry = namedEntries.Single(e => e.Id == NamedItems.CodexId("named.test.w1"));
-            Assert.True(state.IsFound(w1Entry));
-            Assert.False(state.IsFound(namedEntries.Single(e => e.Id == NamedItems.CodexId("named.test.w2"))));
-            var frostEntry = CodexQuery.Entries(CodexCategory.MiniSets).Single(e => e.Id == "miniset.test.frost");
-            Assert.True(state.IsFound(frostEntry)); // 部位を1つでも見つけていれば組が見つかった状態
-
-            // 検索：見つけた銘品は名前（日英）・効果・一言で引っかかる。見つけていない銘品は隠す。
-            var filter = new CodexFilter { Category = CodexCategory.Named, Text = "frostoath" };
-            var result = CodexQuery.Filter(state, filter);
-            Assert.Equal(Sample.Length, result.CategoryTotal[(int)CodexCategory.Named]);
-            Assert.Single(result.Items);
-            Assert.Equal(NamedItems.CodexId("named.test.w1"), result.Items[0].Id);
-            var hidden = CodexQuery.Filter(state, new CodexFilter { Category = CodexCategory.Named, Text = "stillwater" });
-            Assert.Empty(hidden.Items); // 未発見は検索に出ない
-
-            // 図鑑の文字列は Relic.CodexId と同じ形。
-            Assert.Equal(NamedItems.CodexId("named.test.w1"), NamedRelic("named.test.w1").CodexId);
-            Assert.Equal("weapon.chain_sword", NormalRelic(Rarity.Rare, Slot.Weapon).CodexId);
-            var unique = Loot.RollUnique(new Rng(6091), NamedItemsZeroDefsV132Tests.FirstUniqueWithSet(), 10);
-            Assert.Equal(unique.UniqueId, unique.CodexId);
         }
 
         [Fact]

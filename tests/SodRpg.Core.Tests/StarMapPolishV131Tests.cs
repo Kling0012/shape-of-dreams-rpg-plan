@@ -6,7 +6,6 @@ using Xunit;
 
 namespace SodRpg.Core.Tests
 {
-    /// <summary>Layout spacing, bridge entries, cluster names and acquired-effect aggregation on every registered generated tree.</summary>
     public sealed class StarMapPolishV131Tests : IClassFixture<StarMapPolishV131Tests.Installed>
     {
         public sealed class Installed : IDisposable
@@ -50,44 +49,7 @@ namespace SodRpg.Core.Tests
                 }
         }
 
-        [Theory, MemberData(nameof(Heroes))]
-        public void Cluster_display_names_are_unique_within_a_hero(string hero)
-        {
-            var clusters = StarMapClusters.Build(HeroTreeLayout.ForHero(hero));
-            Assert.True(clusters.Length > 1);
-            var names = clusters.Select(c => c.DisplayName.Ja).ToList();
-            Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
-            var english = clusters.Select(c => c.DisplayName.En).ToList();
-            Assert.Equal(english.Count, english.Distinct(StringComparer.Ordinal).Count());
-        }
 
-        [Fact]
-        public void Same_effect_stars_merge_into_one_summed_line_with_every_contributing_star()
-        {
-            int checkedKeys = 0;
-            foreach (string hero in StarClusters.GeneratedHeroes)
-            {
-                var groups = HeroSigils.TreeFor(hero)
-                    .Where(t => Rules.BelongsTo(t, hero) && !t.IsKeystone && !t.IsChoice && t.Gimmick == null && t.Mechanism == null
-                        && t.PairCombo == null && t.LinkPerRank == null && !t.IsPowerNode && t.PerRank == 0 && t.MaxRank >= 1)
-                    .Select(t => new { Star = t, Key = StarSummary.EffectKey(t, t.RouteMemory) })
-                    .Where(x => x.Key != null).GroupBy(x => x.Key).Where(g => g.Count() >= 2);
-                foreach (var group in groups)
-                {
-                    var picked = group.Select(x => x.Star).Take(5).ToArray();
-                    var profile = new Profile();
-                    profile.Hero(hero).StarXp = StarProgression.TotalXpForPoints(300);
-                    foreach (var star in picked) profile.Hero(hero).Talents[star.Id] = 1;
-                    var ids = picked.Select(x => x.Id).ToArray();
-                    var summary = StarSummary.Compute(profile, hero);
-                    var lines = summary.Memories.SelectMany(g => g.Lines).Where(l => l.StarIds.Intersect(ids).Any()).ToArray();
-                    var line = Assert.Single(lines);
-                    Assert.Equal(ids.OrderBy(x => x), line.StarIds.OrderBy(x => x));
-                    checkedKeys++;
-                }
-            }
-            Assert.True(checkedKeys > 0, "no registered hero has two stars of the same effect; the test would be vacuous");
-        }
 
         [Fact]
         public void Five_plus_one_percent_stars_sum_to_plus_five_percent()

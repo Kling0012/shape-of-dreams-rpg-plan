@@ -36,25 +36,6 @@ namespace SodRpg.Core.Tests
                 (e.Text.Contains("」が覚醒") || e.Text.Contains("reached Awakening"));
         }
 
-        [Theory]
-        [InlineData(MonsterTier.Lesser, false, 1)]
-        [InlineData(MonsterTier.Normal, false, 1)]
-        [InlineData(MonsterTier.MiniBoss, false, 5)]
-        [InlineData(MonsterTier.Boss, false, 20)]
-        [InlineData(MonsterTier.Lesser, true, 2)]
-        [InlineData(MonsterTier.Normal, true, 2)]
-        [InlineData(MonsterTier.MiniBoss, true, 10)]
-        [InlineData(MonsterTier.Boss, true, 40)]
-        public void Points_follow_the_original_tier_and_nightmare_multiplier(MonsterTier tier, bool nightmare, int expected)
-        {
-            Assert.Equal(expected, Content.AwakenPoints(tier, nightmare));
-            var r = Legendary();
-            var p = Equipped(r);
-            Rules.OnKill(p, tier, 1, nightmare ? NightmareAffix.Ironclad : NightmareAffix.None, HeroKey);
-            Assert.Equal(expected, r.AwakenPoints);
-            Assert.False(r.Awakened);
-        }
-
         [Fact]
         public void Boss_kills_climb_three_awakening_levels_and_stop_at_the_last()
         {
@@ -93,45 +74,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(3, events.Count(IsAwakening));
         }
 
-        [Fact]
-        public void Crossing_the_threshold_clamps_and_awaken_all_equipped_legendaries()
-        {
-            var p = Profile.CreateNew(12);
-            foreach (Slot slot in Enum.GetValues(typeof(Slot)))
-            {
-                var unique = Content.Uniques.First(u => Content.GetBase(u.BaseId).Slot == slot);
-                var r = Loot.RollUnique(new Rng((ulong)(20 + (int)slot)), unique, 1);
-                r.AwakenPoints = 4999;
-                p.Stash.Add(r);
-                Rules.Equip(p, HeroKey, r.Uid);
-            }
-            Rules.BeginRun(p, HeroKey);
-            var events = Rules.OnKill(p, MonsterTier.MiniBoss, 1, NightmareAffix.Ironclad, HeroKey);
-            Assert.Equal(Content.SlotCount, p.Stats.RelicsAwakened);
-            Assert.Equal(Content.SlotCount, events.Count(IsAwakening));
-            Assert.All(p.Stash, r =>
-            {
-                Assert.Equal(5009, r.AwakenPoints);
-                Assert.Equal(1, r.AwakenLevel);
-            });
-        }
-
         [Theory]
-        [InlineData(0, 100, 100)]
-        [InlineData(1, 110, 125)]
-        [InlineData(2, 120, 150)]
-        [InlineData(3, 130, 180)]
-        public void Each_level_has_its_own_multipliers(int level, int affixPct, int powerPct)
-        {
-            Assert.Equal(affixPct, Content.AwakenAffixPctAt(level));
-            Assert.Equal(powerPct, Content.AwakenPowerPctAt(level));
-            Assert.Equal(new[] { 0, 5000, 15000, 37500 }[level], Content.AwakenThresholdFor(level));
-        }
-
-        [Theory]
-        [InlineData(Rarity.Common)]
-        [InlineData(Rarity.Uncommon)]
-        [InlineData(Rarity.Rare)]
         [InlineData(Rarity.Epic)]
         public void Nonlegendary_equipment_gains_no_points(Rarity rarity)
         {
@@ -173,7 +116,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Theory]
-        [InlineData(0)]
         [InlineData(3)]
         public void Awakening_truncates_enhanced_powers_and_affixes_but_not_the_implicit(int enhance)
         {

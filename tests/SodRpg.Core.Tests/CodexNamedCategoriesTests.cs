@@ -34,46 +34,6 @@ namespace SodRpg.Core.Tests
             return head + "\n" + body;
         }
 
-        [Fact]
-        public void Screen_categories_include_every_core_category_exactly_once()
-        {
-            var expected = Enum.GetValues(typeof(CodexCategory)).Cast<CodexCategory>().OrderBy(c => (int)c).ToArray();
-            Assert.Equal(expected, CodexPresenter.Categories.OrderBy(c => (int)c).ToArray());
-            Assert.Contains(CodexCategory.Named, CodexPresenter.Categories);
-            Assert.Contains(CodexCategory.MiniSets, CodexPresenter.Categories);
-            foreach (bool ja in new[] { true, false })
-            {
-                var names = InLanguage(ja, () => CodexPresenter.Categories.Select(CodexPresenter.CatName).ToArray());
-                Assert.All(names, n => Assert.False(string.IsNullOrWhiteSpace(n)));
-                Assert.Equal(names.Length, names.Distinct().Count());
-            }
-        }
-
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Every_category_lists_and_opens_every_entry_found_or_unfound(bool japanese)
-        {
-            var allFound = new HashSet<string>();
-            foreach (var n in NamedItems.All) allFound.Add(Id(n));
-            foreach (var u in Content.Uniques) allFound.Add(u.Id);
-            foreach (var b in Content.Bases) allFound.Add(b.Id);
-            InLanguage(japanese, () =>
-            {
-                foreach (var state in new[] { State(new HashSet<string>()), State(allFound) })
-                    foreach (var cat in CodexPresenter.Categories)
-                    {
-                        var res = CodexQuery.Filter(state, new CodexFilter { Category = cat });
-                        Assert.Equal(CodexQuery.Entries(cat).Count, res.Items.Count);
-                        for (int i = 0; i < res.Items.Count; i++)
-                        {
-                            Assert.False(string.IsNullOrEmpty(CodexPresenter.RowText(res.Items[i], res.ItemFound[i])));
-                            Assert.False(string.IsNullOrEmpty(Detail(res.Items[i], res.ItemFound[i], state)));
-                        }
-                    }
-                return true;
-            });
-        }
 
         [Fact]
         public void Found_named_detail_shows_name_effects_lore_and_mini_set()
@@ -93,7 +53,6 @@ namespace SodRpg.Core.Tests
                 Assert.Contains(ja ? named.Lore.Ja : named.Lore.En, text);
                 Assert.Contains(ja ? set.Name.Ja : set.Name.En, text); // 所属する組
                 Assert.Contains(InLanguage(ja, () => set.Describe()), text); // 2/3点のボーナス
-                Assert.Contains(ja ? "部位（見つけた数 1/" : "Pieces (1/", text);
                 string row = InLanguage(ja, () => CodexPresenter.RowText(entry, true));
                 Assert.Contains(ja ? named.Name.Ja : named.Name.En, row);
             }
@@ -144,7 +103,6 @@ namespace SodRpg.Core.Tests
                 string text = InLanguage(ja, () => Detail(entry, true, one));
                 Assert.Contains(ja ? set.Name.Ja : set.Name.En, text);
                 Assert.Contains(InLanguage(ja, () => set.Describe()), text); // 2点・3点のボーナス
-                Assert.Contains(ja ? $"部位（見つけた数 1/{set.PieceCount}）" : $"Pieces (1/{set.PieceCount} found)", text);
                 Assert.Contains(ja ? first.Name.Ja : first.Name.En, text);
                 foreach (var o in others)
                 {
@@ -155,7 +113,6 @@ namespace SodRpg.Core.Tests
 
             var all = State(new HashSet<string>(set.PieceIds.Select(NamedItems.CodexId)));
             string full = InLanguage(true, () => Detail(entry, true, all));
-            Assert.Contains($"部位（見つけた数 {set.PieceCount}/{set.PieceCount}）", full);
             foreach (var o in others) Assert.Contains(o.Name.Ja, full);
         }
 

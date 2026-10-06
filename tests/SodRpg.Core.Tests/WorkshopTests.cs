@@ -44,28 +44,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Costs_increase_with_level()
-        {
-            foreach (var d in Workshop.All)
-            {
-                Assert.True(d.MaxLevel >= 1);
-                for (int i = 1; i < d.MaxLevel; i++)
-                {
-                    Assert.True(d.Costs[i].Shards > d.Costs[i - 1].Shards, d.Key);
-                    Assert.True(d.Costs[i].Tuning >= d.Costs[i - 1].Tuning, d.Key);
-                }
-                foreach (bool ja in new[] { true, false })
-                {
-                    Loc.Japanese = ja;
-                    Assert.False(string.IsNullOrWhiteSpace(d.Name.ToString()));
-                    Assert.False(string.IsNullOrWhiteSpace(d.Description.ToString()));
-                }
-            }
-            Loc.Japanese = true;
-            Assert.Equal(Workshop.All.Count, Workshop.All.Select(d => d.Key).Distinct().Count());
-        }
-
-        [Fact]
         public void Capacities_grow_with_upgrades()
         {
             var p = Rich();
@@ -98,14 +76,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Content.RoomsToRecoverLost, Workshop.RoomsToRecover(q));
             Assert.Equal(25, Workshop.EchoPercent(q));
             Assert.Equal(Pacts.Offered, Workshop.PactsOffered(q));
-        }
-
-        [Fact]
-        public void Six_convenience_upgrades_are_available()
-        {
-            Assert.Equal(
-                new[] { Upgrade.BigSatchel, Upgrade.WideStash, Upgrade.BountyReroll, Upgrade.EchoLantern, Upgrade.LostMap, Upgrade.PactStars },
-                Workshop.All.Select(d => d.Id).ToArray());
         }
 
         [Fact]

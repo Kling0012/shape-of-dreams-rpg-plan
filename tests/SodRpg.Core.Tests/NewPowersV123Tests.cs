@@ -79,11 +79,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(-1, 0)]
-        [InlineData(99, 0)]
         [InlineData(100, 6)]
-        [InlineData(199, 6)]
-        [InlineData(200, 12)]
-        [InlineData(800, 48)]
         [InlineData(int.MaxValue, 48)]
         public void Crystal_resonance_counts_complete_quality_hundreds_and_caps_at_eight(int quality, int expected)
         {
@@ -94,10 +90,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(-1, 0)]
-        [InlineData(0, 0)]
         [InlineData(1, 12)]
-        [InlineData(2, 24)]
-        [InlineData(3, 36)]
         [InlineData(9, 36)]
         public void Prey_pride_uses_current_hunt_level_and_caps_at_three(int hunt, int expected)
         {

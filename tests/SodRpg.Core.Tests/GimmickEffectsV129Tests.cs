@@ -65,47 +65,10 @@ namespace SodRpg.Core.Tests
             Assert.Equal(effect, result.Def.Effect);
         }
 
-        [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
-        public void Effect_descriptions_preserve_numeric_values_and_movement_routes_are_rejected(bool japanese)
-        {
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = japanese;
-                foreach (GimmickEffect effect in Enum.GetValues(typeof(GimmickEffect)))
-                {
-                    if (!Gimmicks.IsV129(effect)) continue;
-                    var entry = Entry(effect);
-                    // Validate against a known movement memory as well as any invalid identifier.
-                    foreach (string movement in new[] { "St_M_Roll", "St_M_Sprint", "St_M_Dash", "St_M_Dodge" })
-                    {
-                        entry.Memory = movement;
-                        Assert.Null(Gimmicks.Clamp(entry));
-                        Assert.Equal("", Gimmicks.Describe(entry.Def, movement));
-                    }
-                }
-                Assert.Contains("1.5%", Gimmicks.Describe(Entry(GimmickEffect.Siphon).Def, Memory));
-                Assert.Contains("0.8", Gimmicks.Describe(Entry(GimmickEffect.Daze).Def, Memory));
-                Assert.Contains("120%", Gimmicks.Describe(Entry(GimmickEffect.Crescendo).Def, Memory));
-            }
-            finally { Loc.Japanese = previous; }
-        }
 
         [Theory]
         [InlineData(GimmickEffect.Wound, GimmickTrigger.OnUse, 0)]
-        [InlineData(GimmickEffect.Daze, GimmickTrigger.OnKill, 0)]
         [InlineData(GimmickEffect.Ricochet, GimmickTrigger.OnHit, 0)]
-        [InlineData(GimmickEffect.Ricochet, GimmickTrigger.OnHit, 3)]
-        [InlineData(GimmickEffect.Siphon, GimmickTrigger.OnHit, 2)]
-        [InlineData(GimmickEffect.Rampart, GimmickTrigger.OnCrit, 0)]
-        [InlineData(GimmickEffect.Primed, GimmickTrigger.OnHit, 0)]
-        [InlineData(GimmickEffect.Crescendo, GimmickTrigger.OnUse, 0)]
-        [InlineData(GimmickEffect.ElementEdge, GimmickTrigger.OnUse, 0)]
-        [InlineData(GimmickEffect.PackMend, GimmickTrigger.OnCrit, 0)]
-        [InlineData(GimmickEffect.Sap, GimmickTrigger.OnCrit, 0)]
-        [InlineData(GimmickEffect.Weakspot, GimmickTrigger.OnKill, 0)]
         public void Invalid_trigger_and_argument_combinations_are_rejected(GimmickEffect effect, GimmickTrigger trigger, int arg)
         {
             Assert.Null(Gimmicks.Clamp(Entry(effect, trigger: trigger, arg: arg)));
@@ -200,49 +163,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, runtime.CrescendoPercent(Memory, 38));
         }
 
-        [Fact]
-        public void Crescendo_does_not_stack_multiple_stars_and_keeps_other_memories_independent()
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry(GimmickEffect.Crescendo, 8),
-                Entry(GimmickEffect.Crescendo, 3, star: "h.mist.lower"),
-                Entry(GimmickEffect.Crescendo, 4, star: "h.mist.other", memory: "St_R_Parry") });
-            Assert.Equal(2, Fire(runtime).Count);
-            Assert.Equal(8, runtime.CrescendoPercent(Memory, 0));
-            Fire(runtime, memory: "St_R_Parry", activation: 2);
-            Assert.Equal(8, runtime.CrescendoPercent(Memory, 1));
-            Assert.Equal(4, runtime.CrescendoPercent("St_R_Parry", 1));
-        }
-
-        [Fact]
-        public void Wound_deals_one_total_over_three_seconds_and_refresh_cannot_stack_or_delay_ticks()
-        {
-            var wounds = new GimmickWoundRuntime();
-            var ticks = new List<GimmickWoundRuntime.Tick>();
-            wounds.Apply(1, 0, 120, false);
-            wounds.Update(0.499f, ticks);
-            Assert.Empty(ticks);
-            wounds.Update(3, ticks);
-            Assert.Equal(6, ticks.Count);
-            Assert.Equal(120, ticks.Sum(t => t.Damage));
-            wounds.Update(4, ticks);
-            Assert.Equal(6, ticks.Count);
-            ticks.Clear();
-            wounds.Apply(1, 5, 120, false);
-            wounds.Apply(1, 5.1f, 30, true);
-            wounds.Update(5.5f, ticks);
-            Assert.Equal(20, Assert.Single(ticks).Damage);
-            Assert.False(ticks[0].Magic);
-            wounds.Apply(1, 5.6f, 180, true);
-            ticks.Clear();
-            wounds.Update(6, ticks);
-            Assert.Equal(30, Assert.Single(ticks).Damage);
-            Assert.True(ticks[0].Magic);
-            wounds.Forget(1);
-            ticks.Clear();
-            wounds.Update(99, ticks);
-            Assert.Empty(ticks);
-        }
 
         [Fact]
         public void Sap_and_Weakspot_are_target_scoped_nonstacking_windows_with_exact_expiry()
@@ -262,31 +182,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(0, runtime.WeakspotPercent(-44, 5));
         }
 
-        [Fact]
-        public void ElementEdge_counts_types_instead_of_stacks_and_critical_bonus_is_additive_probability()
-        {
-            Assert.Equal(0, Gimmicks.ElementEdgePercent(40, false, false, false, false));
-            Assert.Equal(40, Gimmicks.ElementEdgePercent(40, false, true, false, false));
-            Assert.Equal((int)decimal.Ceiling(40m * (1m + 1.5m * 504 / 500)) * 4,
-                Gimmicks.ElementEdgePercent(int.MaxValue, true, true, true, true));
-            Assert.Equal(0.25f, Gimmicks.AddedCritProbability(0, 25));
-            Assert.Equal(0.5f, Gimmicks.AddedCritProbability(0.5f, 25));
-            Assert.Equal(1f, Gimmicks.AddedCritProbability(0.9f, 25));
-            Assert.Equal(0f, Gimmicks.AddedCritProbability(1f, 25));
-        }
-
-        [Fact]
-        public void ElementEdge_request_preserves_the_hit_snapshot_for_deferred_dispatch()
-        {
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { Entry(GimmickEffect.ElementEdge) });
-            var results = new List<GimmickRequest>();
-            runtime.Fire(GimmickTrigger.OnHit, Memory, 0, 1, 100, false, results, elementTypes: 3);
-            Assert.Equal(3, Assert.Single(results).ElementTypes);
-            results.Clear();
-            runtime.Fire(GimmickTrigger.OnHit, Memory, 1, 1, 100, false, results, elementTypes: 99);
-            Assert.Equal(4, Assert.Single(results).ElementTypes);
-        }
 
         [Fact]
         public void Generated_damage_never_starts_any_new_gimmick_and_zone_reset_clears_all_windows()

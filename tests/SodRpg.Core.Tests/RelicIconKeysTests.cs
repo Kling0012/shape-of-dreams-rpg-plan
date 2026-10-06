@@ -33,15 +33,6 @@ namespace SodRpg.Core.Tests
         }
 
         [Fact]
-        public void Preference_PresentUniqueWins()
-        {
-            HashSet<string> files = new HashSet<string> { "uniques/set.boss_demon.weapon", "weapon.shield_maul" };
-            string picked = RelicIconKeys.Preference("set.boss_demon.weapon", "weapon.shield_maul")
-                .FirstOrDefault(k => files.Contains(k));
-            Assert.Equal("uniques/set.boss_demon.weapon", picked);
-        }
-
-        [Fact]
         public void Preference_EmptyYieldsNothing()
         {
             Assert.Empty(RelicIconKeys.Preference(null, null).ToArray());

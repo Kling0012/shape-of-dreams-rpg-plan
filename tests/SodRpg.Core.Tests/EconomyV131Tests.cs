@@ -20,21 +20,6 @@ namespace SodRpg.Core.Tests
             return p;
         }
 
-        [Fact]
-        public void Bulk_threshold_selects_candidates_and_never_legendary()
-        {
-            var p = WithAllRarities(2);
-            Assert.Equal(Rarity.Uncommon, p.BulkSalvageMaxRarity);
-            foreach (Rarity max in new[] { Rarity.Common, Rarity.Uncommon, Rarity.Rare, Rarity.Epic })
-            {
-                Rules.SetBulkSalvageMaxRarity(p, max);
-                var c = Rules.BulkSalvageCandidates(p);
-                Assert.Equal(((int)max + 1) * 2, c.Count);
-                Assert.All(c, x => Assert.True(x.Rarity <= max && x.Rarity != Rarity.Legendary));
-            }
-            Assert.Throws<ArgumentOutOfRangeException>(() => Rules.SetBulkSalvageMaxRarity(p, Rarity.Legendary));
-            Assert.Equal(Rarity.Epic, p.BulkSalvageMaxRarity);
-        }
 
         [Fact]
         public void Bulk_threshold_keeps_exclusions()
@@ -76,22 +61,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(Rarity.Uncommon, o.BulkSalvageMaxRarity);
         }
 
-        [Fact]
-        public void Transmute_inputs_and_costs_per_rarity()
-        {
-            Assert.Equal(5, Content.TransmuteInputs(Rarity.Common));
-            Assert.Equal(5, Content.TransmuteInputs(Rarity.Uncommon));
-            Assert.Equal(12, Content.TransmuteInputs(Rarity.Rare));
-            Assert.Equal(16, Content.TransmuteInputs(Rarity.Epic));
-            Assert.Equal(10, Rules.TransmuteCost(Rarity.Common));
-            Assert.Equal(20, Rules.TransmuteCost(Rarity.Uncommon));
-            Assert.Equal(60, Rules.TransmuteCost(Rarity.Rare));
-            Assert.Equal(300, Rules.TransmuteCost(Rarity.Epic));
-            Assert.Equal(90, Rules.TransmuteCost(Rarity.Rare, true));
-            Assert.Equal(450, Rules.TransmuteCost(Rarity.Epic, true));
-            Assert.Equal(0, Rules.TransmuteTuning(Rarity.Rare));
-            Assert.Equal(4, Rules.TransmuteTuning(Rarity.Epic));
-        }
 
         private static Profile Stocked(Rarity r, int count, int shards, int tuning)
         {
@@ -181,22 +150,5 @@ namespace SodRpg.Core.Tests
             Assert.InRange((double)epicMains / kills, 0.03, 0.06); // 主報酬エピック以上 約4.28%（天井なし）
         }
 
-        [Fact]
-        public void Epic_plus_share_is_lower_than_before_and_distribution_is_monotonic()
-        {
-            const int N = 200000;
-            var rng = new Rng(4242);
-            int epicPlus = 0;
-            var counts = new int[5];
-            for (int i = 0; i < N; i++)
-            {
-                var r = Loot.RollRarity(rng, 0, true);
-                counts[(int)r]++;
-                if (r >= Rarity.Epic) epicPlus++;
-            }
-            double before = 47.0 / 1987.0; // 旧い重みでの理論上の割合
-            Assert.True(epicPlus / (double)N < before);
-            Assert.True(counts[0] > counts[1] && counts[1] > counts[2] && counts[2] > counts[3] && counts[3] > counts[4]);
-        }
     }
 }

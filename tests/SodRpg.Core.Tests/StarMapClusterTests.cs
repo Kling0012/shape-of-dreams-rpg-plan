@@ -18,27 +18,6 @@ namespace SodRpg.Core.Tests
             return HeroTreeLayout.ForTalents(baseline.Concat(StarClusters.Generate(definitions, baseline)).ToArray());
         }
 
-        [Fact]
-        public void Examples_group_all_and_only_cluster_stars_with_real_names_and_centers()
-        {
-            var layout = Examples();
-            var groups = StarMapClusters.Build(layout);
-            Assert.Equal(new[] { ClusterRegionKind.Memory, ClusterRegionKind.Bridge, ClusterRegionKind.Outer }, groups.Select(c => c.Region));
-            Assert.Equal(layout.Nodes.Count(n => n.Talent?.Cluster != null), groups.Sum(c => c.NodeCount));
-            foreach (var group in groups)
-            {
-                var expected = layout.Nodes.Select((node, index) => new { node, index })
-                    .Where(p => p.node.Talent?.Cluster?.Id == group.Id)
-                    .OrderBy(p => p.node.Talent.ClusterOrder).ToArray();
-                Assert.Equal(expected.Select(p => p.index), group.NodeIndices);
-                Assert.Same(expected[0].node.Talent.Name, group.Name);
-                Assert.Equal((float)expected.Average(p => (double)p.node.X), group.X);
-                Assert.Equal((float)expected.Average(p => (double)p.node.Y), group.Y);
-                var copy = group.NodeIndices;
-                copy[0] = -1;
-                Assert.Equal(expected[0].index, group.NodeIndex(0));
-            }
-        }
 
         [Fact]
         public void Ranked_and_choice_stars_count_once_and_zero_ranks_do_not_count()

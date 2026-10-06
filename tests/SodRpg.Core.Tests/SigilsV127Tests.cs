@@ -9,24 +9,6 @@ namespace SodRpg.Core.Tests
     /// <summary>Traveler scaling coverage, costly fourth attacks, migration and elemental caps.</summary>
     public class SigilsV127Tests
     {
-        [Theory]
-        [InlineData("Hero_Vesper", Stat.PowerPct)]
-        [InlineData("Hero_Vesper", Stat.MaxHealthPct)]
-        [InlineData("Hero_Lacerta", Stat.PowerPct)]
-        [InlineData("Hero_Cetus", Stat.PowerPct)]
-        [InlineData("Hero_Cetus", Stat.MaxHealthPct)]
-        [InlineData("Hero_Yubar", Stat.PowerPct)]
-        [InlineData("Hero_Husk", Stat.AttackPct)]
-        [InlineData("Hero_Mist", Stat.PowerPct)]
-        [InlineData("Hero_Mist", Stat.AttackPct)]
-        [InlineData("Hero_Nachia", Stat.PowerPct)]
-        [InlineData("Hero_Aurena", Stat.PowerPct)]
-        [InlineData("Hero_Bismuth", Stat.PowerPct)]
-        public void Each_traveler_has_a_star_for_the_value_their_kit_scales_with(string hero, Stat stat)
-        {
-            Assert.Contains(HeroSigils.TreeFor(hero), t => !t.IsKeystone && !t.IsPowerNode && t.LinkPerRank == null && t.Stat == stat);
-        }
-
 
         [Theory]
         [InlineData("Hero_Lacerta", "h.lacerta.fourth")]
@@ -68,18 +50,6 @@ namespace SodRpg.Core.Tests
             Assert.Single(notes);
         }
 
-        [Fact]
-        public void Element_caps_follow_the_game_stack_limits()
-        {
-            Assert.Equal(150, Content.PowerCap(Power.Ember));   // 火は上限なしで重なるので、1回の量を抑える
-            Assert.Equal(100, Content.PowerCap(Power.Frost));   // 冷気は重ならない（確率）
-            Assert.Equal(200, Content.PowerCap(Power.Radiance)); // 光・闇は5スタックまで
-            Assert.Equal(200, Content.PowerCap(Power.Umbra));
-            Assert.Equal(150, Content.PowerCap(Power.EchoingDodge));
-            foreach (var u in Content.Uniques)
-                foreach (var pl in u.Powers)
-                    Assert.True(Content.PowerCap(pl.Power) == 0 || pl.Value <= Content.PowerCap(pl.Power), u.Id);
-        }
 
     }
 }

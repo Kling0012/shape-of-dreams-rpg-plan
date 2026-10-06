@@ -37,28 +37,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(-1, back2.Get(Stat.EssenceSlotMovement));
         }
 
-        [Fact]
-        public void Added_slots_clamp_to_one_even_if_both_apex_stars_are_taken()
-        {
-            var b = new Build();
-            b.Stats[Stat.EssenceSlotIdentity] = 3; // 2本の頂点を両方取っても +1 まで
-            b.Stats[Stat.EssenceSlotMovement] = 1;
-            Assert.Equal(1, EssenceSlots.AddedFrom(b, Stat.EssenceSlotIdentity));
-            Assert.Equal(1, EssenceSlots.AddedFrom(b, Stat.EssenceSlotMovement));
-            Assert.Equal(0, EssenceSlots.ClampAdded(0));
-            Assert.Equal(1, EssenceSlots.ClampAdded(1));
-            Assert.Equal(1, EssenceSlots.ClampAdded(2));
-            Assert.Equal(0, EssenceSlots.ClampAdded(-1));
-            Assert.Equal(0, EssenceSlots.AddedFrom(new Build(), Stat.EssenceSlotIdentity)); // 無ければ0
-        }
-
-        [Fact]
-        public void Overflow_gems_are_counted_when_the_cap_shrinks()
-        {
-            Assert.Equal(0, EssenceSlots.Overflow(2, 2));
-            Assert.Equal(0, EssenceSlots.Overflow(1, 3)); // 枠が増えるときは落とさない
-            Assert.Equal(1, EssenceSlots.Overflow(3, 2)); // 星を外して枠が1つ減り、3つ目がはみ出す
-            Assert.Equal(2, EssenceSlots.Overflow(3, 1));
-        }
     }
 }

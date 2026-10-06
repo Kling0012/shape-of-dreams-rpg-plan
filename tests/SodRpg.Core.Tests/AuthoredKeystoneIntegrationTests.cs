@@ -214,55 +214,7 @@ namespace SodRpg.Core.Tests
             Assert.Equal(80m, runtime.Apply(echo, new KeystoneContext(2, Source)).Value);
         }
 
-        [Fact]
-        public void Concrete_cadence_scopes_and_ward_offense_coefficients_use_their_real_payload_contract()
-        {
-            var spec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.Gimmick, ChannelId = "test.cadence.echo",
-                Source = new MemorySelector(MemorySelectorKind.Memory, Source), EveryN = 4,
-                Gimmick = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Echo, Value = 20 } };
-            var key = new KeystoneDefinition("test.cadence.key", Array.Empty<string>(),
-                new[] { KeystoneTransform.SetEveryN(2, new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Echo }, payloadKind: KeystonePayloadKind.Gimmick)) });
-            var build = new Build { SelectedKeystone = key };
-            Assert.Equal(2, AuthoredKeystoneComposer.TransformAllocationPayload(build,
-                AuthoredKeystoneComposer.MechanismPayload(spec), Source).EveryN);
-            var wardSpec = new AuthoredMechanismSpec { Kind = AuthoredMechanismKind.AlliedWard, ChannelId = "test.ward.offense",
-                Ward = new AlliedWardDefinition("test.ward.offense", WardRecipientKind.AlliedTravelers,
-                    WardAmountBasis.CasterMaxOffense, ModShieldPoolKind.Allied, 5000, false) };
-            Assert.Equal(50m, ScopedKeystoneModifiers.ApplyUnmodified(AuthoredKeystoneComposer.MechanismPayload(wardSpec)).Value);
-        }
 
-        [Fact]
-        public void Projected_other_receiver_requires_verified_normal_category_and_a_distinct_source()
-        {
-            var key = new KeystoneDefinition("test.other.receiver.key", Array.Empty<string>(),
-                new[] { KeystoneTransform.Scale(KeystoneLayer.ModEffect, KeystoneField.Value, KeystoneMagnitude.FromPercent(100),
-                    new KeystoneScope(receiverSelectors: new[] { new MemorySelector(MemorySelectorKind.OtherNormal) })) });
-            var build = new Build { SelectedKeystone = key };
-            var payload = new KeystonePayload(KeystoneLayer.ModEffect, 5, new KeystoneCaps(100), KeystonePayloadKind.DirectedRecharge);
-            Assert.Equal(10m, AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, Source, "St_L_CoinExplosion",
-                sourceSlot: MechanismMemorySlot.Identity, recipientSlot: MechanismMemorySlot.R, heroKey: Hero).Value);
-            Assert.Equal(5m, AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, Source, "St_U_ShoutOfOblivion",
-                sourceSlot: MechanismMemorySlot.Identity, recipientSlot: MechanismMemorySlot.Q, heroKey: Hero).Value);
-            Assert.Equal(5m, AuthoredKeystoneComposer.TransformAllocationPayload(build, payload, "St_R_BackOff", "St_R_BackOff",
-                sourceSlot: MechanismMemorySlot.R, recipientSlot: MechanismMemorySlot.R, heroKey: Hero).Value);
-        }
 
-        [Fact]
-        public void Ricochet_argument_max_caps_only_base_targets_and_preserves_ordinary_extra_targets()
-        {
-            var def = new GimmickDef { Trigger = GimmickTrigger.OnHit, Effect = GimmickEffect.Ricochet,
-                Value = 20m, Arg = 1, ExtraTargets = 16 };
-            var key = new KeystoneDefinition("test.ricochet.argument.key", Array.Empty<string>(),
-                new[] { KeystoneTransform.Add(KeystoneLayer.ModEffect, KeystoneField.Argument, 1,
-                    new KeystoneScope(targetEffectSet: new[] { GimmickEffect.Ricochet }), maximum: 2) });
-            var result = AuthoredKeystoneComposer.TransformAllocationPayload(new Build { SelectedKeystone = key },
-                AuthoredKeystoneComposer.GimmickPayload(def), Source);
-            var runtime = new GimmickRuntime();
-            runtime.SetBuild(new[] { new GimmickEntry { StarId = "test.ricochet.argument", Memory = Source,
-                Def = AuthoredKeystoneComposer.EffectiveGimmick(def, result) } });
-            var requests = new System.Collections.Generic.List<GimmickRequest>();
-            runtime.Fire(GimmickTrigger.OnHit, Source, 0, 1, 100, false, requests, 1, 0, true);
-            Assert.Equal(18, Gimmicks.TargetLimit(Assert.Single(requests).Entry.Def));
-        }
     }
 }

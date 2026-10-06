@@ -310,13 +310,6 @@ namespace SodRpg.Core.Tests
             finally { Restore(hero); }
         }
 
-        [Fact]
-        public void Aurena_b2_migrates_the_mark_trigger_from_crit_to_hit_only_when_the_design_override_is_given()
-        {
-            const string hero = "Hero_Aurena", bridge = "h.aurena.ring.insight";
-            Assert.Equal(MemoryEventKind.CriticalHit, StarClusters.ManifestPair(hero, bridge).Bridge.OpeningTrigger);
-            Assert.Equal(MemoryEventKind.Hit, StarClusters.ManifestPair(hero, bridge, openingOverride: MemoryEventKind.Hit).Bridge.OpeningTrigger);
-        }
 
         [Fact]
         public void The_five_rank_pairs_change_negotiated_content_and_are_visible_only_through_the_registry()

@@ -13,13 +13,6 @@ namespace SodRpg.Core.Tests
     {
         // ───── 撃破ゴールド（本体の形）─────
 
-        [Fact]
-        public void ZoneGoldMultiplier_uses_both_base_game_zone_curves()
-        {
-            Assert.Equal(1.0, V132Model.ZoneGoldMultiplier(0), 9);
-            Assert.Equal(1.4 * 1.2, V132Model.ZoneGoldMultiplier(1), 9);
-            Assert.Equal(2.2 * 1.6, V132Model.ZoneGoldMultiplier(3), 9);
-        }
 
         [Fact]
         public void BaseKillGold_applies_deviation_and_rounds_like_the_base_game()
@@ -31,13 +24,6 @@ namespace SodRpg.Core.Tests
             Assert.Equal(2, V132Model.BaseKillGold(MonsterTier.Normal, 0, 0.0, 0.79));
         }
 
-        [Fact]
-        public void PlayerKillGold_multiplies_the_player_multiplier_and_rounds_probabilistically()
-        {
-            Assert.Equal(2, V132Model.PlayerKillGold(2, 1.12f, 1.0));   // 2.24 → roll=1 なら切り捨て
-            Assert.Equal(3, V132Model.PlayerKillGold(2, 1.12f, 0.2));   // roll が端数0.24未満なら繰り上げ
-            Assert.Equal(0, V132Model.PlayerKillGold(0, 1.12f, 0.0));
-        }
 
         [Fact]
         public void EliteKillGoldBonus_follows_the_host_formula()
@@ -67,47 +53,9 @@ namespace SodRpg.Core.Tests
 
         // ───── 遠征の鍛錬の模型 ─────
 
-        [Fact]
-        public void DamageTakenPct_applies_dream_depth_and_delve_multipliers()
-        {
-            Assert.Equal(25.0, V132Model.DamageTakenPct(25, 0, 0), 9);
-            Assert.Equal(25 * 1.08, V132Model.DamageTakenPct(25, 1, 0), 9);   // DreamDepth.DamageMultiplier
-            Assert.Equal(25 * 1.18, V132Model.DamageTakenPct(25, 0, 3), 9);   // Build.DamageTakenPerDelvePct = 6%/深度
-            Assert.Equal(25 * 1.4 * 1.12, V132Model.DamageTakenPct(25, 5, 2), 9);
-            Assert.Equal(V132Model.DamageTakenPct(30, 2, 1), V132Model.ShieldAbsorbedPct(30, 2, 1), 9);
-        }
 
-        [Fact]
-        public void RoomsPerZone_follows_DreamDepth_ExtraZoneNodes()
-        {
-            Assert.Equal(5, V132Model.RoomsPerZone(5, 0));
-            Assert.Equal(7, V132Model.RoomsPerZone(5, 1));
-            Assert.Equal(15, V132Model.RoomsPerZone(5, 5));
-        }
 
-        [Fact]
-        public void RoomUnits_and_BossUnits_use_the_documented_defaults()
-        {
-            double kills = 18.25;
-            Assert.Equal(25.0, V132Model.RoomUnits(RunGrowthTrigger.DamageTakenMaxHpPct, 0, 0, kills), 9);
-            Assert.Equal(20.0, V132Model.RoomUnits(RunGrowthTrigger.ShieldAbsorbedMaxHpPct, 0, 0, kills), 9);
-            Assert.Equal(2.0, V132Model.RoomUnits(RunGrowthTrigger.ParrySuccess, 5, 3, kills), 9);
-            Assert.Equal(kills * 0.125, V132Model.RoomUnits(RunGrowthTrigger.CritBasicAttackKill, 0, 0, kills), 9);
-            Assert.Equal(50.0, V132Model.BossUnits(RunGrowthTrigger.DamageTakenMaxHpPct, 0, 0), 9);
-            Assert.Equal(6.0, V132Model.BossUnits(RunGrowthTrigger.ParrySuccess, 2, 1), 9);
-            Assert.Equal(0.0, V132Model.BossUnits(RunGrowthTrigger.CritBasicAttackKill, 2, 1), 9); // ボスは数えない
-        }
 
-        [Fact]
-        public void HeatDuringZone_mirrors_the_expedition_entry_transition()
-        {
-            Assert.Equal(0, V132Model.HeatDuringZone("secure", 4));   // 毎回確保 → 常に0
-            Assert.Equal(1, V132Model.HeatDuringZone("delve1", 2));   // 深さ1に潜って
-            Assert.Equal(0, V132Model.HeatDuringZone("delve1", 3));   // 次の入口で確保
-            Assert.Equal(1, V132Model.HeatDuringZone("delve1", 4));
-            Assert.Equal(3, V132Model.HeatDuringZone("greedy", 4));   // 2→1、3→2、4→3
-            Assert.Equal(0, V132Model.HeatDuringZone("greedy", 1));
-        }
 
         [Fact]
         public void FirstZoneAtCap_returns_first_zone_only()

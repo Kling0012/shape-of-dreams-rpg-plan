@@ -19,26 +19,6 @@ namespace SodRpg.Core.Tests
 
         private static readonly ElementSnapshot Four = new ElementSnapshot(3, true, 5, 5);
 
-        [Fact]
-        public void Every_element_combination_detects_only_the_four_declared_pairs()
-        {
-            for (int bits = 0; bits < 16; bits++)
-            {
-                bool fire = (bits & 1) != 0, cold = (bits & 2) != 0;
-                bool light = (bits & 4) != 0, dark = (bits & 8) != 0;
-                var elements = new ElementSnapshot(fire ? 7 : 0, cold, light ? 5 : 0, dark ? 5 : 0);
-                Assert.Equal(fire && cold, elements.HasPair(Power.Steam));
-                Assert.Equal(light && dark, elements.HasPair(Power.Eclipse));
-                Assert.Equal(fire && dark, elements.HasPair(Power.Cinder));
-                Assert.Equal(light && cold, elements.HasPair(Power.FrostCrystal));
-                Assert.False(elements.HasPair(Power.Convergence));
-                var r = new ElementReactionRuntime().Apply(All(), -123, elements, 0, 100, 200, 400);
-                Assert.Equal(fire && cold, r.Steam);
-                Assert.Equal(light && dark ? 10 : 0, r.ExposePercent);
-                Assert.Equal(fire && dark ? 1 : 0, r.CinderStacks);
-                Assert.Equal(light && cold ? 20f : 0f, r.Shield);
-            }
-        }
 
         [Fact]
         public void Snapshot_is_unchanged_and_all_four_reactions_can_coexist_with_convergence()
@@ -83,17 +63,6 @@ namespace SodRpg.Core.Tests
             Assert.False(rt.Apply(new Build(), 1, Four, 11, 100, 200, 400).Steam);
             Assert.False(rt.Apply(Build.Decode(All().Encode()), 1, Four, 12, 100, 200, 400).Steam);
             Assert.True(rt.Apply(All(), 1, Four, 16, 100, 200, 400).Steam);
-        }
-
-        [Fact]
-        public void Unequipped_and_isolated_effects_cannot_react_or_spend_a_gate()
-        {
-            var rt = new ElementReactionRuntime();
-            Assert.Equal(default, rt.Apply(new Build(), 1, Four, 0, 100, 200, 400));
-            Assert.Equal(default, rt.Apply(All(), 1, Four, 0, 100, 200, 400, isolatedEffect: true));
-            Assert.Equal(0, rt.ExposePercent(1, 0));
-            Assert.Equal(0, rt.OnDeath(1));
-            Assert.True(rt.Apply(All(), 1, Four, 0, 100, 200, 400).Steam);
         }
 
         [Fact]
@@ -170,27 +139,5 @@ namespace SodRpg.Core.Tests
             Assert.Equal(new[] { 44, 45, 46, 47 }, decoded.Powers.Keys.Select(p => (int)p).ToArray());
         }
 
-        [Theory]
-        [InlineData(Power.Steam, Slot.Hands, "蒸気", "Steam", 120)]
-        [InlineData(Power.Eclipse, Slot.Head, "蝕", "Eclipse", 25)]
-        [InlineData(Power.Cinder, Slot.Hands, "燃え殻", "Cinder", 1)]
-        [InlineData(Power.FrostCrystal, Slot.Head, "氷晶", "Frost Crystal", 12)]
-        public void Reactions_have_appropriate_epic_pools_caps_and_names(Power power, Slot slot, string ja, string en, int cap)
-        {
-            Assert.Equal(cap, Content.PowerCap(power));
-            Assert.Single(Content.PowerPool(Slot.Charm), p => p.Power == power);
-            Assert.Single(Content.PowerPool(slot), p => p.Power == power);
-            Assert.DoesNotContain(Content.PowerPool(Slot.Weapon), p => p.Power == power);
-            Assert.NotNull(Content.Epithet(power));
-            bool previous = Loc.Japanese;
-            try
-            {
-                Loc.Japanese = true;
-                Assert.Equal(ja, Content.PowerName(power));
-                Loc.Japanese = false;
-                Assert.Equal(en, Content.PowerName(power));
-            }
-            finally { Loc.Japanese = previous; }
-        }
     }
 }

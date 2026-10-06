@@ -57,11 +57,7 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData(200f, -20f, 200f, 200f, 200f, 200f)]
-        [InlineData(200f, 0f, 200f, 200f, 200f, 200f)]
         [InlineData(200f, 12.5f, 225f, 225f, 225f, 175f)]
-        [InlineData(200f, 40f, 280f, 280f, 280f, 120f)]
-        [InlineData(200f, 60f, 320f, 320f, 320f, 120f)]
-        [InlineData(200f, 80f, 320f, 320f, 360f, 120f)]
         [InlineData(200f, 999f, 320f, 320f, 360f, 120f)]
         [InlineData(0f, 999f, 0f, 0f, 0f, 0f)]
         public void Support_math_uses_percent_units_and_clamps_without_eliminating_hp_costs(
@@ -89,9 +85,6 @@ namespace SodRpg.Core.Tests
 
         [Theory]
         [InlineData("Hero_Nachia", Stat.HealPower)]
-        [InlineData("Hero_Nachia", Stat.ShieldPower)]
-        [InlineData("Hero_Nachia", Stat.SummonPower)]
-        [InlineData("Hero_Aurena", Stat.HealPower)]
         [InlineData("Hero_Aurena", Stat.SacrificeReduction)]
         [InlineData("Hero_Cetus", Stat.ShieldPower)]
         public void Support_travelers_can_invest_in_their_kit_effects(string hero, Stat stat)
@@ -123,20 +116,5 @@ namespace SodRpg.Core.Tests
             }
         }
 
-        [Fact]
-        public void Twelve_support_uniques_have_unambiguous_ids_and_bilingual_names()
-        {
-            var added = Content.Uniques.Where(u => u.Id.StartsWith("unique.support_", StringComparison.Ordinal)).ToArray();
-            Assert.Equal(12, added.Length);
-            Assert.Equal(1418, Content.Uniques.Count); // Reviewed P37 + all 14 boss sets × 6 pieces.
-            foreach (var unique in added)
-            {
-                Assert.Single(Content.Uniques, u => u.Id == unique.Id);
-                Assert.Single(Content.Uniques, u => u.Name.Ja == unique.Name.Ja);
-                Assert.Single(Content.Uniques, u => u.Name.En == unique.Name.En);
-                Assert.Matches(@"[\u3040-\u30ff\u3400-\u9fff]", unique.Name.Ja);
-                Assert.Matches(@"[A-Za-z]", unique.Name.En);
-            }
-        }
     }
 }

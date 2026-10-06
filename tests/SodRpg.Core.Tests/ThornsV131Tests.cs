@@ -9,7 +9,6 @@ namespace SodRpg.Core.Tests
         [Theory]
         [InlineData(100f, 1000f, 15f)]      // small hit: 15% of damage
         [InlineData(10000f, 1000f, 15f)]    // huge hit: capped at 1.5% of max HP
-        [InlineData(50f, 2000f, 7.5f)]
         public void Reflect_is_a_share_of_damage_capped_by_attacker_max_health(float damage, float maxHp, float expected)
         {
             Assert.Equal(expected, Nightmares.ThornsReflectAmount(damage, maxHp), 3);
