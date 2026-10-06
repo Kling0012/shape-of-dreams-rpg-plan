@@ -8,23 +8,23 @@ namespace SodRpg.Core.Game
     /// <summary>Localized star-map text, independent of the host UI.</summary>
     public static partial class StarMapPresentation
     {
-        public static string ChoiceDescription(TalentDef star, int chosen, int rank)
+        public static string ChoiceDescription(TalentDef star, int chosen, int rank, bool bulleted = false)
         {
             ValidateChoice(star, chosen);
             if (rank < 0 || rank > star.MaxRank || rank > 0 && chosen < 0)
                 throw new InvalidOperationException("Invalid allocated choice state: " + star.Id);
-            try { return ChoiceDescriptionCore(star, chosen, rank); }
+            try { return ChoiceDescriptionCore(star, chosen, rank, bulleted); }
             catch (Exception error) { return DescriptionFallback(star, error); }
         }
 
-        private static string ChoiceDescriptionCore(TalentDef star, int chosen, int rank)
+        private static string ChoiceDescriptionCore(TalentDef star, int chosen, int rank, bool bulleted)
         {
             // 二つの効果は見出しと空行で段落に分ける（#46：説明が密着して、どちらの候補か分からなくなる）。
             // 見出しの「効果 A/B」は選択パネルの列の見出しと同じ言葉なので、ツールチップとパネルが対応する。
             string text = (chosen < 0 ? Loc.T("未選択：どちらか1つを選んでください。", "Unselected: choose one option.")
                 : Loc.T("選択中の効果：", "Chosen effect:"))
-                + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen)
-                + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen);
+                + "\n" + ChoiceOptionHeading(0) + "\n" + ChoiceOptionLabel(star, 0, chosen, bulleted)
+                + "\n\n" + ChoiceOptionHeading(1) + "\n" + ChoiceOptionLabel(star, 1, chosen, bulleted);
             // 段数で強さが変わる二択（#101）：候補本文が段数を書かない型（Mechanism）のときだけ、親星の段数・費用を添える。
             return ChoiceNeedsRankNote(star) ? text + "\n\n" + RanksNote(star) : text;
         }
@@ -43,13 +43,31 @@ namespace SodRpg.Core.Game
             return Loc.T($"<color=#9fe0ff><b>■ 効果 {letter}</b></color>", $"<color=#9fe0ff><b>■ Effect {letter}</b></color>");
         }
 
-        public static string ChoiceOptionLabel(TalentDef star, int option, int chosen)
+        public static string ChoiceOptionLabel(TalentDef star, int option, int chosen, bool bulleted = false)
         {
             ValidateChoice(star, chosen);
             if (option < 0 || option > 1) throw new ArgumentOutOfRangeException(nameof(option));
             TalentDef selected = star.Choices[option];
             return (option == chosen ? Loc.T("［選択中］", "[Chosen] ") : Loc.T("［未選択］", "[Unselected] "))
-                + selected.Name + Loc.T("：", ": ") + EffectDescription(selected);
+                + selected.Name + Loc.T("：", ": ") + (bulleted ? DisplayDescription(selected) : EffectDescription(selected));
+        }
+
+        /// <summary>
+        /// 画面に出す効果。1行目に効果の要点、続けて条件・間隔・上限を「・」の箇条書きにする。
+        /// 刻印と二択は、すでに段落に分かれているのでそのまま（二択は各候補だけ箇条書き）。
+        /// 集計・検索・テキスト書き出しは、1行の <see cref="EffectDescription"/> を使う。
+        /// </summary>
+        public static string DisplayDescription(TalentDef star, int rank = 1)
+        {
+            try
+            {
+                RequireStar(star);
+                if (star.IsChoice) return ChoiceDescription(star, -1, 0, true);
+                string text = EffectDescription(star, rank);
+                if (star.KeystoneDefinition != null || star.IsKeystone) return text;
+                return EffectLayout.Bullets(text);
+            }
+            catch (Exception error) { return DescriptionFallback(star, error); }
         }
 
         /// <summary>Build on content/language changes, not inside the per-frame drawing loop.</summary>
@@ -147,18 +165,18 @@ namespace SodRpg.Core.Game
         }
 
         /// <summary>選択の星の1つの選択肢を、名前と効果の本文で（選択中の印は付けない。印は画面側で色と ✓ で出す）。</summary>
-        public static string ChoiceOptionBody(TalentDef star, int option)
+        public static string ChoiceOptionBody(TalentDef star, int option, bool bulleted = false)
         {
             ValidateChoice(star, -1);
             if (option < 0 || option > 1) throw new ArgumentOutOfRangeException(nameof(option));
-            try { return ChoiceOptionBodyCore(star, option); }
+            try { return ChoiceOptionBodyCore(star, option, bulleted); }
             catch (Exception error) { return DescriptionFallback(star, error); }
         }
 
-        private static string ChoiceOptionBodyCore(TalentDef star, int option)
+        private static string ChoiceOptionBodyCore(TalentDef star, int option, bool bulleted)
         {
             TalentDef selected = star.Choices[option];
-            string body = "<b>" + selected.Name + "</b>" + NL + EffectDescription(selected);
+            string body = "<b>" + selected.Name + "</b>" + NL + (bulleted ? DisplayDescription(selected) : EffectDescription(selected));
             return ChoiceNeedsRankNote(star) && selected.Mechanism != null ? body + NL + RanksNote(star) : body;
         }
 

@@ -143,7 +143,7 @@ namespace SodRpg.Core.Tests
                 string d = set.Describe();
                 Assert.Contains("3つ装着", d);
                 Assert.Contains("6つ装着", d);
-                Assert.Contains(Content.FormatPower(Six[0].Power, Six[0].Value), d.Substring(d.IndexOf("6つ装着", StringComparison.Ordinal)));
+                Assert.Contains(Content.FormatPowerBullets(Six[0].Power, Six[0].Value, "　"), d.Substring(d.IndexOf("6つ装着", StringComparison.Ordinal)));
                 Assert.Contains("あと3つで、6つ装着の効果が加わります", set.Progress(3));
                 Assert.Contains("あと2つで、6つ装着の効果が加わります", set.Progress(4));
                 Assert.Contains("あと1つで、6つ装着の効果が加わります", set.Progress(5));

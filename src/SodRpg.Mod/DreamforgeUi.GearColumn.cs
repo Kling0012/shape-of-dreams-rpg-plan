@@ -56,7 +56,7 @@ namespace SodRpg.Mod
             var build = _s.CurrentBuild(hero);
             if (build.Stats.Count == 0 && build.Powers.Count == 0 && build.BossMoves.Count == 0) GUILayout.Label(Loc.T("まだ何も装着していません。真ん中の一覧から遺物を選び、「装着する」を押してください。", "Nothing equipped yet. Pick a relic from the middle list and press Equip."), _st.Small);
             foreach (var kv in build.Stats) if (kv.Value != 0) GUILayout.Label(Content.FormatStat(kv.Key, kv.Value), _st.Small);
-            foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPower(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
+            foreach (var kv in build.Powers) GUILayout.Label(UiStyles.Colored(Content.FormatPowerBullets(kv.Key, kv.Value), "#e0b0ff"), _st.Small);
             foreach (var move in build.BossMoves)
                 GUILayout.Label(UiStyles.Colored(BossBuildCodec.Describe(move), "#e0b0ff"), _st.Small);
             foreach (var kv in build.Sets)
