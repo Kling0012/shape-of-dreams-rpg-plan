@@ -48,13 +48,20 @@ namespace SodRpg.Mod
             if (state == null && TryReadEnvelope(out var envelope)) state = envelope.State;
             if (state == null) return;
             int next = -1;
-            if (state.Phase == InfinityPhase.BossDue)
+            // Arrival selects before OnRoomClear counts this combat. Reserve the last combat
+            // for a native well when needed, and visit the non-combat shop first.
+            int projectedClears = state.ClearsInCycle
+                + (zone.nodes[current].type == WorldNodeType.Combat && !state.ClearedNodes.Contains(current) ? 1 : 0);
+            if (state.Phase == InfinityPhase.BossDue
+                || state.Phase == InfinityPhase.Exploring && projectedClears >= state.Interval - 1)
+                next = ChooseRequiredServiceRoom(zone, current);
+            if (next < 0 && state.Phase == InfinityPhase.BossDue)
             {
                 for (int i = 0; i < zone.nodes.Count; i++)
                     if (zone.nodes[i].type == WorldNodeType.ExitBoss && i != current) { next = i; break; }
                 if (next < 0) { DisableFeature("Infinity reveal graph has no scheduled boss."); return; }
             }
-            else if (state.Phase == InfinityPhase.Exploring)
+            else if (next < 0 && state.Phase == InfinityPhase.Exploring)
             {
                 if (IsFreshRevealRoom(zone, retained, current)) next = retained;
                 else
@@ -83,7 +90,7 @@ namespace SodRpg.Mod
         }
 
         // Match the native graph's Event/Combat mix, but bring a distant event forward after
-        // at most three combat visits per event. BossDue still takes precedence in RefreshReveal.
+        // at most three combat visits per event. The service deadline precedes this ordinary pacing.
         // Only saved native statuses are used: revisits and Continue cannot reset the pacing.
         private static int ChooseNextRevealRoom(ZoneManager zone, int current, bool hunterFreeOnly)
         {

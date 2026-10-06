@@ -418,6 +418,7 @@ namespace SodRpg.Mod.Startup.Tests
             var zone = BeginGameWithRunAlreadyTracked(session, "after-lobby-wait");
             DewPlayer.gamePlayers.Add(guest);
             zone.GenerateWorldAuto();
+            Log.Warnings.Clear(); // Observe Hello grace independently of native room-pool warnings.
             CheckCompatibilityAt(120f);
             CheckCompatibilityAt(149.9f);
             Assert.Empty(Log.Warnings);
@@ -456,6 +457,7 @@ namespace SodRpg.Mod.Startup.Tests
             DewPlayer.gamePlayers.Add(guest);
             var authority = RegisterHostAuthority();
             zone.GenerateWorldAuto();
+            Log.Warnings.Clear(); // This fixture observes compatibility, not native room availability.
             ClientSession.HostInfinityRewardsSettled = true;
             SingletonDewNetworkBehaviour<Room>.softInstance = new Room { isActive = true, didClearRoom = true };
             CheckCompatibilityAt(0);

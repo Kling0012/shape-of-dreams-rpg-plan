@@ -220,6 +220,7 @@ namespace SodRpg.Mod
         {
             if (!Available) return;
             ClearPendingTravel();
+            ResetServiceRoomWarnings();
             _restoring = false; _refresh = false;
             _hunterAdjustSuspended = false;
             _hunterMoveCounter = 0;
@@ -373,6 +374,7 @@ namespace SodRpg.Mod
                 State.FixedZoneId = asset.name;
                 _refresh = false;
             }
+            EnsureServiceRooms(zone);
             ReferencedModifiers.Clear(); RetiredModifiers.Clear();
             foreach (var node in zone.nodes)
                 if (node.modifiers != null)
